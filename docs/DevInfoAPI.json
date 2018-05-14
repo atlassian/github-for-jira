@@ -1,0 +1,610 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "description" : "Jira Software Devinfo Rest API",
+    "version" : "v1",
+    "title" : "Jira Software Devinfo Rest API"
+  },
+  "basePath" : "/developmenttool/1.0/devinfo",
+  "tags" : [ {
+    "name" : "devinfo",
+    "description" : "REST API Which provides access to development information store. This API can only be used by JIRA Connect Addons. A 403 response will be sent to any request not received from a Connect Addon."
+  } ],
+  "schemes" : [ "http", "https" ],
+  "paths" : {
+    "/devinfo/bulk" : {
+      "post" : {
+        "tags" : [ "devinfo" ],
+        "summary" : "Stores development information provided in the request to make them available when viewing issues in JIRA",
+        "description" : "",
+        "operationId" : "storeDevelopmentInformation",
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "body",
+          "description" : "Request object, which contains development information to store",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/DevInformation"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Request was received and processed, individual entities may still fail however as shown in the response details for that entity",
+            "schema" : {
+              "$ref" : "#/definitions/PersistenceResponse"
+            }
+          }
+        }
+      }
+    },
+    "/devinfo/bulkByProperties" : {
+      "delete" : {
+        "tags" : [ "devinfo" ],
+        "summary" : "Deletes all development information entities which have all provided properties",
+        "description" : "Entities for deletion will be looked up by query properties. For example if request is DELETE bulk?accountId=123&projectId=ABC all entities which have properties accountId=123 and projectId=ABC will be deleted.",
+        "operationId" : "deleteByProperties",
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "responses" : {
+          "202" : {
+            "description" : "Delete request accepted and queued for execution"
+          },
+          "400" : {
+            "description" : "If multiple values of the same property specified "
+          }
+        }
+      }
+    },
+    "/devinfo/issue/{issuekey}/{entitytype}" : {
+      "get" : {
+        "tags" : [ "devinfo" ],
+        "summary" : "For the specified issue, retrieves the development information entities of the specified entity type.",
+        "description" : "",
+        "operationId" : "get",
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "issuekey",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "entitytype",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "enum" : [ "COMMIT", "BRANCH", "PULL_REQUEST", "REPOSITORY" ]
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns query result. If nothing found empty list returned",
+            "schema" : {
+              "$ref" : "#/definitions/Development Information Entity"
+            }
+          },
+          "400" : {
+            "description" : "Wrong entity type specified"
+          }
+        }
+      }
+    },
+    "/devinfo/repository/{repositoryId}" : {
+      "delete" : {
+        "tags" : [ "devinfo" ],
+        "summary" : "Deletes specified repository and all related development information entities",
+        "description" : "",
+        "operationId" : "deleteRepository",
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "repositoryId",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Delete request accepted and queued for execution"
+          },
+          "404" : {
+            "description" : "Repository not found"
+          }
+        }
+      }
+    },
+    "/devinfo/repository/{repositoryId}/{entitytype}/{entityid}" : {
+      "delete" : {
+        "tags" : [ "devinfo" ],
+        "summary" : "Deletes particular development information entity",
+        "description" : "",
+        "operationId" : "deleteEntity",
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "repositoryId",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "entityid",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "entitytype",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "enum" : [ "COMMIT", "BRANCH", "PULL_REQUEST", "REPOSITORY" ]
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Delete request accepted and queued for execution"
+          },
+          "400" : {
+            "description" : "Wrong entity type specified"
+          },
+          "404" : {
+            "description" : "Entity not found"
+          }
+        }
+      }
+    }
+  },
+  "definitions" : {
+    "Author" : {
+      "type" : "object",
+      "required" : [ "name" ],
+      "properties" : {
+        "name" : {
+          "type" : "string",
+          "description" : "Name of this user in a format suitable for display",
+          "readOnly" : true
+        },
+        "email" : {
+          "type" : "string",
+          "description" : "The email of the user, used to associate the user with a JIRA user",
+          "readOnly" : true
+        },
+        "username" : {
+          "type" : "string",
+          "description" : "The username of the user, used to associate the user with a JIRA user if there are multiple users for a given email",
+          "readOnly" : true
+        },
+        "url" : {
+          "type" : "string",
+          "description" : "A url to the profile for this user",
+          "readOnly" : true
+        },
+        "avatar" : {
+          "type" : "string",
+          "description" : "A url to the avatar for this user",
+          "readOnly" : true
+        }
+      },
+      "description" : "Structure which describes user who created particular entity"
+    },
+    "Branch" : {
+      "type" : "object",
+      "required" : [ "id", "lastCommit", "name", "url" ],
+      "properties" : {
+        "name" : {
+          "type" : "string",
+          "description" : "Displayed name of the branch",
+          "readOnly" : true
+        },
+        "url" : {
+          "type" : "string",
+          "description" : "The url of the branch",
+          "readOnly" : true
+        },
+        "createPullRequestUrl" : {
+          "type" : "string",
+          "description" : "A url that is displayed to the user which will take them to a page where they can create a pull request from this branch",
+          "readOnly" : true
+        },
+        "lastCommit" : {
+          "description" : "The last commit on this branch, used to display the date of the latest activity for this branch",
+          "readOnly" : true,
+          "$ref" : "#/definitions/Commit"
+        },
+        "id" : {
+          "type" : "string",
+          "description" : "An id that is defined for this entity. This id will be used for any cross entity linking. Must be unique across all entities of the same entity type",
+          "readOnly" : true
+        },
+        "issueKeys" : {
+          "type" : "array",
+          "description" : "A list of issues which contains this entity, must have at least one entry and 200 at most",
+          "readOnly" : true,
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "timestamp" : {
+          "type" : "string",
+          "description" : "A timestamp for this entity in ISO 8601 date time format. This is used to drop out of order requests on a per entity basis",
+          "readOnly" : true
+        }
+      },
+      "description" : "Entity which represents a branch of particular repository in version control system"
+    },
+    "Commit" : {
+      "type" : "object",
+      "required" : [ "author", "authorTimestamp", "displayId", "fileCount", "hash", "id", "url" ],
+      "properties" : {
+        "hash" : {
+          "type" : "string",
+          "description" : "The hash of the commit",
+          "readOnly" : true
+        },
+        "flags" : {
+          "type" : "array",
+          "description" : "The set of flags for this commit that supply any additional context",
+          "readOnly" : true,
+          "uniqueItems" : true,
+          "items" : {
+            "type" : "string",
+            "enum" : [ "MERGE_COMMIT" ]
+          }
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "Commit message",
+          "readOnly" : true
+        },
+        "url" : {
+          "type" : "string",
+          "description" : "The url for this commit",
+          "readOnly" : true
+        },
+        "files" : {
+          "type" : "array",
+          "description" : "Set of file change summary information",
+          "readOnly" : true,
+          "items" : {
+            "$ref" : "#/definitions/File"
+          }
+        },
+        "displayId" : {
+          "type" : "string",
+          "description" : "A shortened identifier for the commit, used for display",
+          "readOnly" : true
+        },
+        "authorTimestamp" : {
+          "type" : "string",
+          "description" : "The Author date of this commit. Formatted as a UTC ISO 8601 date time format",
+          "readOnly" : true
+        },
+        "author" : {
+          "description" : "Details of the author of this commit",
+          "readOnly" : true,
+          "$ref" : "#/definitions/Author"
+        },
+        "fileCount" : {
+          "type" : "integer",
+          "format" : "int32",
+          "description" : "The total number of files added, removed or modified by this commit",
+          "readOnly" : true
+        },
+        "id" : {
+          "type" : "string",
+          "description" : "An id that is defined for this entity. This id will be used for any cross entity linking. Must be unique across all entities of the same entity type",
+          "readOnly" : true
+        },
+        "issueKeys" : {
+          "type" : "array",
+          "description" : "A list of issues which contains this entity, must have at least one entry and 200 at most",
+          "readOnly" : true,
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "timestamp" : {
+          "type" : "string",
+          "description" : "A timestamp for this entity in ISO 8601 date time format. This is used to drop out of order requests on a per entity basis",
+          "readOnly" : true
+        }
+      },
+      "description" : "Entity which represents a particular commit of a version control system"
+    },
+    "DevInformation" : {
+      "type" : "object",
+      "properties" : {
+        "repositories" : {
+          "type" : "array",
+          "description" : "List of repositories containing development information to store",
+          "readOnly" : true,
+          "items" : {
+            "$ref" : "#/definitions/Repository"
+          }
+        },
+        "preventTransitions" : {
+          "type" : "boolean",
+          "description" : "Prevent automatic transitions and smart commits being fired",
+          "readOnly" : true,
+          "default" : false
+        },
+        "properties" : {
+          "type" : "object",
+          "description" : "Properties that are assigned to all the development entities contained in this update",
+          "readOnly" : true,
+          "additionalProperties" : {
+            "type" : "string"
+          }
+        }
+      },
+      "description" : "Request object for development information push operation. Contains development information to store and its properties"
+    },
+    "Development Information Entity" : {
+      "type" : "object",
+      "required" : [ "id" ],
+      "properties" : {
+        "id" : {
+          "type" : "string",
+          "description" : "An id that is defined for this entity. This id will be used for any cross entity linking. Must be unique across all entities of the same entity type",
+          "readOnly" : true
+        }
+      },
+      "description" : "Abstract class which contains common properties for all development information entities"
+    },
+    "Entity Error" : {
+      "type" : "object",
+      "required" : [ "errorMessage", "id", "type" ],
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "description" : "Type of entity to which this error relates",
+          "readOnly" : true,
+          "enum" : [ "COMMIT", "BRANCH", "PULL_REQUEST", "REPOSITORY" ]
+        },
+        "id" : {
+          "type" : "string",
+          "description" : "An id of the entity to which this error relates",
+          "readOnly" : true
+        },
+        "errorMessage" : {
+          "type" : "string",
+          "description" : "Description of the problem which happened during operation on the entity",
+          "readOnly" : true
+        },
+        "repositoryId" : {
+          "type" : "string",
+          "description" : "If entity is a child of some repository, appropriate repository id will be set to this property",
+          "readOnly" : true
+        }
+      },
+      "description" : "An error occurred during particular entity persistence or validation"
+    },
+    "File" : {
+      "type" : "object",
+      "properties" : {
+        "path" : {
+          "type" : "string",
+          "description" : "The file path that is displayed to the user",
+          "readOnly" : true
+        },
+        "changeType" : {
+          "type" : "string",
+          "description" : "An operation performed on this file",
+          "readOnly" : true,
+          "enum" : [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
+        },
+        "linesAdded" : {
+          "type" : "integer",
+          "format" : "int32",
+          "description" : "Amount of lines added to the file",
+          "readOnly" : true
+        },
+        "linesRemoved" : {
+          "type" : "integer",
+          "format" : "int32",
+          "description" : "Amount of lines removed from the file",
+          "readOnly" : true
+        },
+        "url" : {
+          "type" : "string",
+          "description" : "A url for this file",
+          "readOnly" : true
+        }
+      },
+      "description" : "Structure which describes a diffstat summary information of particular file"
+    },
+    "PersistenceResponse" : {
+      "type" : "object",
+      "properties" : {
+        "errors" : {
+          "type" : "array",
+          "description" : "Errors occurred during entity storing",
+          "readOnly" : true,
+          "items" : {
+            "$ref" : "#/definitions/Entity Error"
+          }
+        },
+        "errorMessages" : {
+          "type" : "array",
+          "description" : "Errors occurred during request processing",
+          "readOnly" : true,
+          "items" : {
+            "type" : "string"
+          }
+        }
+      },
+      "description" : "Object which contains response for Development Information Push operation. In case of success it will be empty, otherwise it will contain errors occurred"
+    },
+    "PullRequest" : {
+      "type" : "object",
+      "required" : [ "author", "displayId", "id", "lastUpdate", "sourceBranch", "status", "title", "url" ],
+      "properties" : {
+        "status" : {
+          "type" : "string",
+          "description" : "The status of the pull request. Priority applies between these states with preference given in the order OPEN, MERGED, DECLINED, UNKNOWN",
+          "readOnly" : true,
+          "enum" : [ "OPEN", "MERGED", "DECLINED", "UNKNOWN" ]
+        },
+        "title" : {
+          "type" : "string",
+          "description" : "Displayed title of the pull request",
+          "readOnly" : true
+        },
+        "url" : {
+          "type" : "string",
+          "description" : "The url for this pull request",
+          "readOnly" : true
+        },
+        "displayId" : {
+          "type" : "string",
+          "description" : "A shortened identifier for the pull request suitable for display",
+          "readOnly" : true
+        },
+        "author" : {
+          "description" : "Author of the pull request",
+          "readOnly" : true,
+          "$ref" : "#/definitions/Author"
+        },
+        "commentCount" : {
+          "type" : "integer",
+          "format" : "int32",
+          "readOnly" : true
+        },
+        "sourceBranch" : {
+          "type" : "string",
+          "description" : "The id of the source branch of this PR. This is used to match this PR against the branch",
+          "readOnly" : true
+        },
+        "destinationBranch" : {
+          "type" : "string",
+          "description" : "The id of destination branch of this PR",
+          "readOnly" : true
+        },
+        "reviewers" : {
+          "type" : "array",
+          "description" : "List of pull request reviewers",
+          "readOnly" : true,
+          "items" : {
+            "$ref" : "#/definitions/Reviewer"
+          }
+        },
+        "lastUpdate" : {
+          "type" : "string",
+          "description" : "The last time this PR was updated, used to display the date of the latest activity for this PR. Formatted as a UTC ISO 8601 date time format",
+          "readOnly" : true
+        },
+        "id" : {
+          "type" : "string",
+          "description" : "An id that is defined for this entity. This id will be used for any cross entity linking. Must be unique across all entities of the same entity type",
+          "readOnly" : true
+        },
+        "issueKeys" : {
+          "type" : "array",
+          "description" : "A list of issues which contains this entity, must have at least one entry and 200 at most",
+          "readOnly" : true,
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "timestamp" : {
+          "type" : "string",
+          "description" : "A timestamp for this entity in ISO 8601 date time format. This is used to drop out of order requests on a per entity basis",
+          "readOnly" : true
+        }
+      },
+      "description" : "Entity which represents a pull request"
+    },
+    "Repository" : {
+      "type" : "object",
+      "required" : [ "id", "name", "url" ],
+      "properties" : {
+        "name" : {
+          "type" : "string",
+          "description" : "Repository displayed name",
+          "readOnly" : true
+        },
+        "description" : {
+          "type" : "string",
+          "readOnly" : true
+        },
+        "url" : {
+          "type" : "string",
+          "description" : "A url to this repository for display",
+          "readOnly" : true
+        },
+        "forkOf" : {
+          "type" : "string",
+          "description" : "Id of the repository this repository was forked from, if this repository is a fork",
+          "readOnly" : true
+        },
+        "avatar" : {
+          "type" : "string",
+          "description" : "A URL to the avatar for this repository",
+          "readOnly" : true
+        },
+        "avatarDescription" : {
+          "type" : "string",
+          "description" : "A description of the avatar for this repository",
+          "readOnly" : true
+        },
+        "commits" : {
+          "type" : "array",
+          "description" : "List of commits for this repository",
+          "readOnly" : true,
+          "items" : {
+            "$ref" : "#/definitions/Commit"
+          }
+        },
+        "branches" : {
+          "type" : "array",
+          "description" : "List of branches for this repository",
+          "readOnly" : true,
+          "items" : {
+            "$ref" : "#/definitions/Branch"
+          }
+        },
+        "pullRequests" : {
+          "type" : "array",
+          "description" : "List of pull requests for this repository",
+          "readOnly" : true,
+          "items" : {
+            "$ref" : "#/definitions/PullRequest"
+          }
+        },
+        "id" : {
+          "type" : "string",
+          "description" : "An id that is defined for this entity. This id will be used for any cross entity linking. Must be unique across all entities of the same entity type",
+          "readOnly" : true
+        }
+      },
+      "description" : "Entity representing a code repository. As part of push request may be a container for development information data such as commits, pull requests and branches"
+    },
+    "Reviewer" : {
+      "type" : "object",
+      "required" : [ "name" ],
+      "properties" : {
+        "name" : {
+          "type" : "string",
+          "description" : "Displayed name of this reviewer",
+          "readOnly" : true
+        },
+        "approved" : {
+          "type" : "boolean",
+          "description" : "Whether this reviewer has approved the pull request",
+          "readOnly" : true,
+          "default" : false
+        },
+        "url" : {
+          "type" : "string",
+          "description" : "A url to the profile for this reviewer",
+          "readOnly" : true
+        },
+        "avatar" : {
+          "type" : "string",
+          "description" : "A url to the avatar for this reviewer",
+          "readOnly" : true
+        }
+      },
+      "description" : "Structure which describes reviewer of the particular Pull Request"
+    }
+  }
+}
