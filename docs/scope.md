@@ -12,7 +12,7 @@ It is unknown what the migration path is for existing users.
 
 ## Non Functional Requirements
 
-* **[SHOULD]** Uses [GitHub Apps](https://developer.github.com/apps/) to leverage per repo settings without broad permissions.
+* **[MUST]** Uses [GitHub Apps](https://developer.github.com/apps/) to leverage per repo settings without broad permissions.
 
 
 ## Equivalence to existing [DVCS Connector](https://confluence.atlassian.com/adminjiracloud/connect-jira-cloud-to-github-814188429.html)
