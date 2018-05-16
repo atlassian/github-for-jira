@@ -16,5 +16,10 @@
   "authentication": {
     "type": "jwt"
   },
+  "scopes": [
+    "READ",
+    "WRITE",
+    "ADMIN"
+  ],
   "apiVersion": 1
 }
