@@ -2,12 +2,12 @@
   "name": "GitHub Integration",
   "description": "Application for integrating with GitHub",
   "key": "com.github.integration",
-  "baseUrl": "https://<placeholder.url>",
+  "baseUrl": "https://jira-github-integration.herokuapp.com/",
   "lifecycle": {
-    "installed": "/events/installed",
-    "uninstalled": "/events/uninstalled",
-    "enabled": "/events/enabled",
-    "disabled": "/events/disabled"
+    "installed": "/jira/events/installed",
+    "uninstalled": "/jira/events/uninstalled",
+    "enabled": "/jira/events/enabled",
+    "disabled": "/jira/events/disabled"
   },
   "vendor": {
     "name": "GitHub",
