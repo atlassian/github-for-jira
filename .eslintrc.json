@@ -1,0 +1,11 @@
+{
+  "extends": "airbnb-base",
+  "rules": {
+    "consistent-return": 0,
+    "camelcase": 0,
+    "strict": ["error", "never"]
+  },
+  "env": {
+    "jest": true
+  }
+}
