@@ -1,0 +1,20 @@
+{
+  "name": "GitHub Integration",
+  "description": "Application for integrating with GitHub",
+  "key": "com.github.integration",
+  "baseUrl": "https://<placeholder.url>",
+  "lifecycle": {
+    "installed": "/events/installed",
+    "uninstalled": "/events/uninstalled",
+    "enabled": "/events/enabled",
+    "disabled": "/events/disabled"
+  },
+  "vendor": {
+    "name": "GitHub",
+    "url": "http://www.github.com"
+  },
+  "authentication": {
+    "type": "jwt"
+  },
+  "apiVersion": 1
+}
