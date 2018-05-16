@@ -4,7 +4,7 @@
   "repository": "https://github.com/integrations/jira.git",
   "scripts": {
     "dev": "nodemon --exec \"npm start\"",
-    "start": "probot run ./index.js",
+    "start": "probot run ./lib",
     "lint": "eslint \"./**/*.js\"",
     "test": "jest",
     "test:watch": "jest --watch --notify --notifyMode=change --coverage"
