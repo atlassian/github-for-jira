@@ -4,30 +4,47 @@
   "repository": "https://github.com/integrations/jira.git",
   "scripts": {
     "dev": "nodemon --exec \"npm start\"",
-    "start": "probot run ./lib",
-    "lint": "eslint \"./**/*.js\"",
+    "start": "probot run ./lib/configure-robot",
+    "ci": "npm test && npm run lint",
+    "lint": "standard --fix",
     "test": "jest",
     "test:watch": "jest --watch --notify --notifyMode=change --coverage"
   },
   "dependencies": {
+    "atlassian-jwt": "^0.1.5",
+    "axios": "^0.18.0",
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
+    "moment": "^2.22.1",
     "probot": "^6.0.0"
   },
   "devDependencies": {
-    "eslint": "^4.19.1",
-    "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.11.0",
     "jest": "^22.4.3",
+    "nock": "^9.2.6",
     "nodemon": "^1.17.2",
-    "smee-client": "^1.0.1"
+    "smee-client": "^1.0.1",
+    "standard": "^11.0.1",
+    "testdouble": "^3.8.1",
+    "testdouble-jest": "^2.0.0"
   },
   "engines": {
     "node": ">= 8.3.0"
   },
+  "jest": {
+    "roots": [
+      "test"
+    ],
+    "testEnvironment": "node",
+    "setupTestFrameworkScriptFile": "./test/helper.js"
+  },
   "standard": {
     "env": [
       "jest"
+    ],
+    "global": [
+      "td",
+      "app",
+      "nock"
     ]
   }
 }
