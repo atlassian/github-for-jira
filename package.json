@@ -15,7 +15,6 @@
     "axios": "^0.18.0",
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
-    "moment": "^2.22.1",
     "probot": "^6.0.0"
   },
   "devDependencies": {
