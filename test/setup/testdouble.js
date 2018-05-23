@@ -2,7 +2,7 @@ const { createRobot } = require('probot')
 const { findPrivateKey } = require('probot/lib/private-key')
 const cacheManager = require('cache-manager')
 const createGitHubApp = require('probot/lib/github-app')
-const configureRobot = require('../lib/configure-robot')
+const configureRobot = require('../../lib/configure-robot')
 
 global.nock = require('nock')
 global.td = require('testdouble')

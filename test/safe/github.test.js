@@ -25,19 +25,19 @@ describe('GitHub Actions', () => {
   describe('issue_comment', () => {
     describe('created', () => {
       it('should update the GitHub issue with a linked Jira ticket', async () => {
-        process.env.ATLASSIAN_URL = 'test-atlassian-instance.net'
+        const githubApi = td.api('https://api.github.com')
+        const jiraApi = td.api('https://test-atlassian-instance.net')
 
-        const editComment = td.request(
-          'https://api.github.com',
-          '/repos/test-repo-owner/test-repo-name/issues/comments/test-comment-id',
-          'PATCH'
-        )
+        td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
+          .thenReturn({
+            key: 'TEST-123'
+          })
 
         await app.receive(payload)
 
-        td.verify(editComment({
+        td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/comments/test-comment-id', {
           number: 'test-issue-number',
-          body: 'Test example with linked Jira issue: [TEST-123](test-atlassian-instance.net/browse/TEST-123)'
+          body: 'Test example with linked Jira issue: [TEST-123](https://test-atlassian-instance.net/browse/TEST-123)'
         }))
       })
     })
