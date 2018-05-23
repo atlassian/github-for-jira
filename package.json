@@ -35,7 +35,7 @@
       "test"
     ],
     "testEnvironment": "node",
-    "setupTestFrameworkScriptFile": "./test/helper.js"
+    "setupTestFrameworkScriptFile": "./test/setup"
   },
   "standard": {
     "env": [
