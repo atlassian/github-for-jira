@@ -34,7 +34,7 @@ describe('GitHub Actions', () => {
 
         td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/contents/.github/jira.yml'))
           .thenReturn({
-            content: Buffer.from("jira: https://test-atlassian-instance.net").toString('base64')
+            content: Buffer.from('jira: https://test-atlassian-instance.net').toString('base64')
           })
 
         td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
