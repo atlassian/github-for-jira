@@ -30,14 +30,17 @@ describe('Jira util', () => {
         .thenResolve({
           status: 200,
           data: {
-            key: 'TEST-123'
+            key: 'TEST-123',
+            fields: {
+              summary: 'Example Issue'
+            }
           }
         })
 
       const text = 'Should linkify [TEST-123] as a link'
       const result = await util.addJiraIssueLinks(text)
 
-      expect(result).toBe('Should linkify [TEST-123](http://example.com/browse/TEST-123) as a link')
+      expect(result).toBe('Should linkify [TEST-123 Example Issue](http://example.com/browse/TEST-123) as a link')
     })
 
     it('should not linkify invalid Jira references', async () => {
@@ -68,7 +71,10 @@ describe('Jira util', () => {
         .thenResolve({
           status: 200,
           data: {
-            key: 'TEST-200'
+            key: 'TEST-200',
+            fields: {
+              summary: 'Another Example Issue'
+            }
           }
         })
 
@@ -82,7 +88,7 @@ describe('Jira util', () => {
       const text = 'Should linkify [TEST-200] and not [TEST-100] as a link'
       const result = await util.addJiraIssueLinks(text)
 
-      expect(result).toBe('Should linkify [TEST-200](http://example.com/browse/TEST-200) and not [TEST-100] as a link')
+      expect(result).toBe('Should linkify [TEST-200 Another Example Issue](http://example.com/browse/TEST-200) and not [TEST-100] as a link')
     })
   })
 })
