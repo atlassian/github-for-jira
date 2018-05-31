@@ -38,13 +38,7 @@ const payload = {
 describe('GitHub Actions', () => {
   describe('push', () => {
     it('should update the Jira issue with the linked GitHub commit', async () => {
-      const githubApi = td.api('https://api.github.com')
       const jiraApi = td.api('https://test-atlassian-instance.net')
-
-      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/contents/.github/jira.yml'))
-        .thenReturn({
-          content: Buffer.from('jira: https://test-atlassian-instance.net').toString('base64')
-        })
 
       await app.receive(payload)
 

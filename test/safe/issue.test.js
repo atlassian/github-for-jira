@@ -32,11 +32,6 @@ describe('GitHub Actions', () => {
         const githubApi = td.api('https://api.github.com')
         const jiraApi = td.api('https://test-atlassian-instance.net')
 
-        td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/contents/.github/jira.yml'))
-          .thenReturn({
-            content: Buffer.from('jira: https://test-atlassian-instance.net').toString('base64')
-          })
-
         td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
           .thenReturn({
             key: 'TEST-123',
