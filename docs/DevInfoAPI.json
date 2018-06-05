@@ -5,7 +5,7 @@
     "version" : "v1",
     "title" : "Jira Software Devinfo Rest API"
   },
-  "basePath" : "/developmenttool/1.0/devinfo",
+  "basePath" : "/developmenttool/0.9/devinfo",
   "tags" : [ {
     "name" : "devinfo",
     "description" : "REST API Which provides access to development information store. This API can only be used by JIRA Connect Addons. A 403 response will be sent to any request not received from a Connect Addon."
@@ -57,31 +57,25 @@
         }
       }
     },
-    "/devinfo/issue/{issuekey}/{entitytype}" : {
+    "/devinfo/repository/{repositoryKey}" : {
       "get" : {
         "tags" : [ "devinfo" ],
-        "summary" : "For the specified issue, retrieves the development information entities of the specified entity type.",
+        "summary" : "Retrieves the development information entities for the specified repository.",
         "description" : "",
         "operationId" : "get",
         "consumes" : [ "application/json" ],
         "produces" : [ "application/json" ],
         "parameters" : [ {
-          "name" : "issuekey",
+          "name" : "repositoryKey",
           "in" : "path",
           "required" : true,
           "type" : "string"
-        }, {
-          "name" : "entitytype",
-          "in" : "path",
-          "required" : true,
-          "type" : "string",
-          "enum" : [ "COMMIT", "BRANCH", "PULL_REQUEST", "REPOSITORY" ]
         } ],
         "responses" : {
           "200" : {
             "description" : "Returns query result. If nothing found empty list returned",
             "schema" : {
-              "$ref" : "#/definitions/Development Information Entity"
+              "$ref" : "#/definitions/Repository"
             }
           },
           "400" : {
@@ -337,18 +331,6 @@
         }
       },
       "description" : "Request object for development information push operation. Contains development information to store and its properties"
-    },
-    "Development Information Entity" : {
-      "type" : "object",
-      "required" : [ "id" ],
-      "properties" : {
-        "id" : {
-          "type" : "string",
-          "description" : "An id that is defined for this entity. This id will be used for any cross entity linking. Must be unique across all entities of the same entity type",
-          "readOnly" : true
-        }
-      },
-      "description" : "Abstract class which contains common properties for all development information entities"
     },
     "Entity Error" : {
       "type" : "object",
