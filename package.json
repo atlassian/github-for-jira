@@ -25,7 +25,8 @@
     "smee-client": "^1.0.1",
     "standard": "^11.0.1",
     "testdouble": "^3.8.1",
-    "testdouble-jest": "^2.0.0"
+    "testdouble-jest": "^2.0.0",
+    "testdouble-nock": "^0.1.0"
   },
   "engines": {
     "node": ">= 8.3.0"
