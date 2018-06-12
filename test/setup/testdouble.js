@@ -9,7 +9,7 @@ global.td = require('testdouble')
 
 beforeAll(() => {
   require('testdouble-jest')(td, jest)
-  require('./testdouble-nock')(td, nock)
+  require('testdouble-nock')(td, nock)
 
   nock('https://api.github.com')
     .post(/\/installations\/[\d\w-]+\/access_tokens/)
