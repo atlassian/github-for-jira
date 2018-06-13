@@ -16,13 +16,6 @@ describe('Jira util', () => {
       util = getJiraUtil(context)
     })
 
-    it('should linkify Jira references', async () => {
-      const text = 'Should linkify [TEST-123] as a link'
-      const result = await util.addJiraIssueLinks(text, false)
-
-      expect(result).toBe('Should linkify [TEST-123](http://example.com/browse/TEST-123) as a link')
-    })
-
     it('should linkify Jira references to valid issues', async () => {
       td.when(context.jira.issues.get('TEST-123', {
         fields: 'summary'
@@ -41,13 +34,6 @@ describe('Jira util', () => {
       const result = await util.addJiraIssueLinks(text)
 
       expect(result).toBe('Should linkify [TEST-123 Example Issue](http://example.com/browse/TEST-123) as a link')
-    })
-
-    it('should not linkify invalid Jira references', async () => {
-      const text = 'Should not linkify TEST-123 as a link'
-      const result = await util.addJiraIssueLinks(text, false)
-
-      expect(result).toBe('Should not linkify TEST-123 as a link')
     })
 
     it('should not linkify Jira references to invalid issues', async () => {
