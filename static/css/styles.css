@@ -1,0 +1,27 @@
+.title {
+  float: left;
+}
+
+.actions {
+  float: right;
+}
+
+.content {
+  clear: both;
+}
+
+.empty-message {
+  padding: 120px 0;
+  text-align: center;
+}
+
+.empty-message h4 {
+  margin-bottom: 16px;
+}
+
+.connection-avatar {
+  border-radius: 4px;
+  height: 24px;
+  vertical-align: middle;
+  width: 24px;
+}
