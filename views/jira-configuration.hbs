@@ -1,12 +1,66 @@
-<header>
-  <h1>GitHub Configuration</h1>
-</header>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="ap-local-base-url" content="{{localBaseUrl}}">
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+    <link rel="stylesheet" href="/public/atlassian-ui-kit/bundle.css" media="all" />
+    <link rel="stylesheet" href="/public/css/styles.css" media="all" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  </head>
+  <body class="aui-page-hybrid">
+    <div class="ac-content">
+      <header class="title">
+        <h1>GitHub Configuration</h1>
+      </header>
 
-<section>
-  {{#if subscriptions}}
-    You have subscriptions!
-  {{else}}
-    You have no subscriptions
-    <button class="ak-button ak-button__appearance-primary">Add a GitHub Organization</button>
-  {{/if}}
-</section>
+      <nav class="actions">
+        <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+      </nav>
+
+      <section class="content">
+        {{#if connections}}
+          <p>You have connections!</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Organization</th>
+                <th>Repositories</th>
+                <th>Added</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each connections}}
+                <tr>
+                  <td><img class="connection-avatar" src="{{ account.avatar_url }}" height="24" width="24" /> {{ account.login }}</td>
+                  <td>
+                    {{#if isGlobalInstall }}
+                      All
+                    {{else}}
+                      Limited
+                    {{/if}}
+                  </td>
+                  <td>{{ updated_at }}</td>
+                  <td>
+                    <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Delete</button>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        {{else}}
+          <div class="empty-message">
+            <h4>You aren't connected to any organizations! Let's fix that!</h4>
+            <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+          </div>
+        {{/if}}
+      </section>
+
+      <script src="/public/js/script.js"></script>
+    </div>
+    <script src="{{host}}/atlassian-connect/all.js"></script>
+  </body>
+</html>
