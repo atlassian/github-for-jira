@@ -3,10 +3,10 @@
   "private": true,
   "repository": "https://github.com/integrations/jira.git",
   "scripts": {
-    "dev": "nodemon --exec \"npm start\"",
-    "start": "probot run ./lib/configure-robot",
     "ci": "npm test && npm run lint",
+    "dev": "nodemon --exec \"npm start\"",
     "lint": "standard --fix",
+    "start": "probot run --webhook-path=/github/events ./lib/configure-robot",
     "test": "jest",
     "test:watch": "jest --watch --notify --notifyMode=change --coverage"
   },
