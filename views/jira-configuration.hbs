@@ -12,54 +12,54 @@
   </head>
   <body class="aui-page-hybrid">
     <div class="ac-content">
-      <header class="title">
-        <h1>GitHub Configuration</h1>
-      </header>
+      <div class="page-content">
+        <header class="title">
+          <h1>GitHub Configuration</h1>
+        </header>
 
-      <nav class="actions">
-        <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
-      </nav>
+        <nav class="actions">
+          <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+        </nav>
 
-      <section class="content">
-        {{#if connections}}
-          <p>You have connections!</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Organization</th>
-                <th>Repositories</th>
-                <th>Added</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {{#each connections}}
+        <section class="content">
+          {{#if connections}}
+            <table>
+              <thead>
                 <tr>
-                  <td><img class="connection-avatar" src="{{ account.avatar_url }}" height="24" width="24" /> {{ account.login }}</td>
-                  <td>
-                    {{#if isGlobalInstall }}
-                      All
-                    {{else}}
-                      Limited
-                    {{/if}}
-                  </td>
-                  <td>{{ updated_at }}</td>
-                  <td>
-                    <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Delete</button>
-                  </td>
+                  <th>Organization</th>
+                  <th>Repositories</th>
+                  <th>Added</th>
+                  <th></th>
                 </tr>
-              {{/each}}
-            </tbody>
-          </table>
-        {{else}}
-          <div class="empty-message">
-            <h4>You aren't connected to any organizations! Let's fix that!</h4>
-            <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
-          </div>
-        {{/if}}
-      </section>
-
-      <script src="/public/js/script.js"></script>
+              </thead>
+              <tbody>
+                {{#each connections}}
+                  <tr>
+                    <td><img class="connection-avatar" src="{{ account.avatar_url }}" height="24" width="24" /> {{ account.login }}</td>
+                    <td>
+                      {{#if isGlobalInstall }}
+                        All
+                      {{else}}
+                        Limited
+                      {{/if}}
+                    </td>
+                    <td>{{ updated_at }}</td>
+                    <td>
+                      <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Delete</button>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          {{else}}
+            <div class="empty-message">
+              <h4>You aren't connected to any organizations! Let's fix that!</h4>
+              <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+            </div>
+          {{/if}}
+        </section>
+        <script src="/public/js/script.js"></script>
+      </div>
     </div>
     <script src="{{host}}/atlassian-connect/all.js"></script>
   </body>
