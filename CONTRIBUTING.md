@@ -42,7 +42,8 @@ The next step for running the app locally is to configure a GitHub App. For that
 
 Follow the [Probot docs for configuring up a GitHub App][configure-github-app] skipping the addition of `WEBHOOK_PROXY_URL` to your `.env` file, the only other difference being these values for the GitHub App settings:
 
-- **User authorization callback URL**: `https://DOMAIN/github/oauth/callback`
+- **User authorization callback URL**: `https://DOMAIN/github/callback`
+- **Setup URL**: `https://DOMAIN/pages/github-configuration`
 - **Webhook URL**: `https://DOMAIN/github/events`
 
 Your new GitHub app will need the following permissions:
@@ -68,7 +69,7 @@ Once you've setup your app, add your `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRE
 #### Configuring the Jira instance
 
 1. Create a new [free developer instance][jira-developer-instance] on Jira Cloud.
-2. From the left sidebar in Jira, select **Settings** -> **Add-ons** -> **Manage add-ons**.
+2. From the left sidebar in Jira, select **Settings** -> **Add-ons** -> **Manage add-ons**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar.)
 3. Scroll down to beneath the User-installed add-ons table and select **Settings**.
 4. On the Settings pop-up, add **Enable development mode** and click **Apply**.
 5. From the right header, select **Upload add-on** and enter `https://DOMAIN/jira/atlassian-connect.json`.
