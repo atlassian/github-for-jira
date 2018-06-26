@@ -33,7 +33,7 @@
       $('.install-link').click(function (event) {
         event.preventDefault();
 
-        $.post('/pages/github-configuration', {
+        $.post('/github/configuration', {
           installationId: $(event.target).data('installation-id')
         }, function (data) {
           window.close()
