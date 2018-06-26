@@ -20,13 +20,13 @@ const payload = {
       html_url: 'test-pull-request-url',
       head: {
         repo: {
-          html_url: 'test-pull-request-head-url',
+          html_url: 'test-pull-request-head-url'
         },
         ref: 'test-pull-request-head-ref'
       },
       base: {
         repo: {
-          html_url: 'test-pull-request-base-url',
+          html_url: 'test-pull-request-base-url'
         },
         ref: 'test-pull-request-base-ref'
       },
@@ -74,12 +74,12 @@ describe('GitHub Actions', () => {
                   url: 'test-pull-request-author-url'
                 },
                 commentCount: 'test-pull-request-comment-count',
-                destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
+                destinationBranch: 'test-pull-request-base-url/tree/test-pull-request-base-ref',
                 displayId: 'test-pull-request-number',
                 id: 'test-pull-request-id',
                 issueKeys: ['TEST-123'],
                 lastUpdate: 'test-pull-request-update-time',
-                sourceBranch: "test-pull-request-head-url/tree/test-pull-request-head-ref",
+                sourceBranch: 'test-pull-request-head-url/tree/test-pull-request-head-ref',
                 status: 'OPEN',
                 title: '[TEST-123] Test pull request.',
                 timestamp: 'test-pull-request-update-time',
