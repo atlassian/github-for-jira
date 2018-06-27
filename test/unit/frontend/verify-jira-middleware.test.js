@@ -49,7 +49,7 @@ describe('#verifyJiraMiddleware', () => {
 
     await subject(req, res, next)
 
-    td.verify(res.sendStatus(404))
+    td.verify(next(td.matchers.contains(new Error('Not Found'))))
   })
 
   it('should return a 401 for an invalid jwt', async () => {
@@ -67,6 +67,6 @@ describe('#verifyJiraMiddleware', () => {
 
     await subject(req, res, next)
 
-    td.verify(res.sendStatus(401))
+    td.verify(next(td.matchers.contains(new Error('Unauthorized'))))
   })
 })
