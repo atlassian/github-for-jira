@@ -1,32 +1,9 @@
-const payload = {
-  event: 'issues',
-  payload: {
-    action: 'opened',
-    issue: {
-      id: 'test-issue-id',
-      number: 123456789,
-      body: 'Test example issue with linked Jira issue: [TEST-123]'
-    },
-    repository: {
-      name: 'test-repo-name',
-      owner: {
-        login: 'test-repo-owner'
-      }
-    },
-    sender: {
-      type: 'User',
-      login: 'TestUser'
-    },
-    installation: {
-      id: 'test-installation-id'
-    }
-  }
-}
-
 describe('GitHub Actions', () => {
   describe('issue', () => {
     describe('created', () => {
       it('should update the GitHub issue with a linked Jira ticket', async () => {
+        const payload = require('../fixtures/issue-basic.json')
+
         const githubApi = td.api('https://api.github.com')
         const jiraApi = td.api('https://test-atlassian-instance.net')
 
