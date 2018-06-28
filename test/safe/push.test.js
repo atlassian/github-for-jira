@@ -1,50 +1,22 @@
-const payload = {
-  event: 'push',
-  payload: {
-    action: 'created',
-    commits: [
-      {
-        id: 'test-commit-id',
-        hash: 'test-commit-hash',
-        author: {
-          username: 'test-commit-author-username'
-        },
-        message: '[TEST-123] Test commit.',
-        added: ['test-added'],
-        modified: ['test-modified'],
-        removed: ['test-removal']
-      }
-    ],
-    repository: {
-      id: 'test-repo-id',
-      name: 'test-repo-name',
-      full_name: 'example/test-repo-name',
-      url: 'test-repo-url',
-      owner: {
-        login: 'test-repo-owner'
-      }
-    },
-    sender: {
-      type: 'User',
-      login: 'TestUser'
-    },
-    installation: {
-      id: 'test-installation-id'
-    }
-  }
-}
-
 describe('GitHub Actions', () => {
   describe('push', () => {
-    it('should update the Jira issue with the linked GitHub commit', async () => {
-      const jiraApi = td.api('https://test-atlassian-instance.net')
-      const githubApi = td.api('https://api.github.com')
+    let jiraApi
+    let githubApi
 
-      td.when(githubApi.get('/users/test-commit-author-username')).thenReturn({
-        login: 'test-commit-author-username',
-        avatar_url: 'test-commit-author-avatar',
-        html_url: 'test-commit-author-url'
-      })
+    beforeEach(() => {
+      jiraApi = td.api('https://test-atlassian-instance.net')
+      githubApi = td.api('https://api.github.com')
+
+      td.when(githubApi.get('/users/test-commit-author-username'))
+        .thenReturn({
+          login: 'test-commit-author-username',
+          avatar_url: 'test-commit-author-avatar',
+          html_url: 'test-commit-author-url'
+        })
+    })
+
+    it('should update the Jira issue with the linked GitHub commit', async () => {
+      const payload = require('../fixtures/push-basic.json')
 
       await app.receive(payload)
 
@@ -72,6 +44,89 @@ describe('GitHub Actions', () => {
             ]
           }
         ]
+      }))
+    })
+
+    it('should run a #comment command in the commit message', async () => {
+      const payload = require('../fixtures/push-comment.json')
+
+      await app.receive(payload)
+
+      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+        body: 'This is a comment'
+      }))
+    })
+
+    it('should run a #time command in the commit message', async () => {
+      const payload = require('../fixtures/push-worklog.json')
+
+      await app.receive(payload)
+
+      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/worklog', {
+        timeSpentSeconds: td.matchers.isA(Number),
+        comment: 'This is a worklog'
+      }))
+    })
+
+    it('should run a transition command in the commit message', async () => {
+      const payload = require('../fixtures/push-transition.json')
+
+      td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
+        .thenReturn({
+          transitions: [
+            {
+              id: 'test-transition-id',
+              name: 'Resolve'
+            }
+          ]
+        })
+
+      await app.receive(payload)
+
+      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
+        transition: {
+          id: 'test-transition-id'
+        }
+      }))
+    })
+
+    it('should run a transition command in the commit message', async () => {
+      const payload = require('../fixtures/push-transition-comment.json')
+
+      td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
+        .thenReturn({
+          transitions: [
+            {
+              id: 'test-transition-id',
+              name: 'Resolve'
+            }
+          ]
+        })
+
+      await app.receive(payload)
+
+      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
+        transition: {
+          id: 'test-transition-id'
+        }
+      }))
+
+      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+        body: 'This is a transition'
+      }))
+    })
+
+    it('should run commands on all issues in the commit message', async () => {
+      const payload = require('../fixtures/push-multiple.json')
+
+      await app.receive(payload)
+
+      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+        body: 'This is a comment'
+      }))
+
+      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-246/comment', {
+        body: 'This is a comment'
       }))
     })
   })

@@ -1,0 +1,46 @@
+{
+  "event": "pull_request",
+  "payload": {
+    "action": "opened",
+    "repository": {
+      "id": "test-repo-id",
+      "name": "test-repo-name",
+      "full_name": "example/test-repo-name",
+      "url": "test-repo-url",
+      "owner": {
+        "login": "test-repo-owner"
+      }
+    },
+    "pull_request": {
+      "id": "test-pull-request-id",
+      "number": "test-pull-request-number",
+      "state": "open",
+      "title": "[TEST-123] Test pull request.",
+      "comments": "test-pull-request-comment-count",
+      "html_url": "test-pull-request-url",
+      "head": {
+        "repo": {
+          "html_url": "test-pull-request-head-url"
+        },
+        "ref": "test-pull-request-head-ref"
+      },
+      "base": {
+        "repo": {
+          "html_url": "test-pull-request-base-url"
+        },
+        "ref": "test-pull-request-base-ref"
+      },
+      "user": {
+        "login": "test-pull-request-user-login"
+      },
+      "updated_at": "test-pull-request-update-time"
+    },
+    "sender": {
+      "type": "User",
+      "login": "TestUser"
+    },
+    "installation": {
+      "id": "test-installation-id"
+    }
+  }
+}
