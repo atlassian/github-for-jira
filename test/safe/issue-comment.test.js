@@ -1,11 +1,13 @@
 const payload = {
-  event: 'issues',
+  event: 'issue_comment',
   payload: {
-    action: 'opened',
+    action: 'created',
     issue: {
-      id: 'test-issue-id',
-      number: 123456789,
-      body: 'Test example issue with linked Jira issue: [TEST-123]'
+      number: 'test-issue-number'
+    },
+    comment: {
+      body: 'Test example comment with linked Jira issue: [TEST-123]',
+      id: 'test-comment-id'
     },
     repository: {
       name: 'test-repo-name',
@@ -24,7 +26,7 @@ const payload = {
 }
 
 describe('GitHub Actions', () => {
-  describe('issue', () => {
+  describe('issue_comment', () => {
     describe('created', () => {
       it('should update the GitHub issue with a linked Jira ticket', async () => {
         const githubApi = td.api('https://api.github.com')
@@ -40,9 +42,9 @@ describe('GitHub Actions', () => {
 
         await app.receive(payload)
 
-        td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/123456789', {
-          body: 'Test example issue with linked Jira issue: [TEST-123 Example Issue](https://test-atlassian-instance.net/browse/TEST-123)',
-          id: 'test-issue-id'
+        td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/comments/test-comment-id', {
+          number: 'test-issue-number',
+          body: 'Test example comment with linked Jira issue: [TEST-123 Example Issue](https://test-atlassian-instance.net/browse/TEST-123)'
         }))
       })
     })
