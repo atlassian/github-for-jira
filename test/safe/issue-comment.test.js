@@ -29,6 +29,8 @@ describe('GitHub Actions', () => {
   describe('issue_comment', () => {
     describe('created', () => {
       it('should update the GitHub issue with a linked Jira ticket', async () => {
+        const payload = require('../fixtures/issue-comment-basic.json')
+
         const githubApi = td.api('https://api.github.com')
         const jiraApi = td.api('https://test-atlassian-instance.net')
 
