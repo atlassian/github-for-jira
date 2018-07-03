@@ -46,3 +46,7 @@ beforeEach(() => {
     })
   }))
 })
+
+afterEach(() => {
+  nock.cleanAll()
+})
