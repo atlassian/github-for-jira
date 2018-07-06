@@ -43,7 +43,7 @@ The next step for running the app locally is to configure a GitHub App. For that
 Follow the [Probot docs for configuring up a GitHub App][configure-github-app] skipping the addition of `WEBHOOK_PROXY_URL` to your `.env` file, the only other difference being these values for the GitHub App settings:
 
 - **User authorization callback URL**: `https://DOMAIN/github/callback`
-- **Setup URL**: `https://DOMAIN/pages/github-configuration`
+- **Setup URL**: `https://DOMAIN/github/configuration`
 - **Webhook URL**: `https://DOMAIN/github/events`
 
 Your new GitHub app will need the following permissions:
