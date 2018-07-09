@@ -14,11 +14,11 @@
     <div class="ac-content">
       <div class="page-content">
         <header class="title">
-          <h1>GitHub Configuration</h1>
+          <h1>GitHub configuration</h1>
         </header>
 
         <nav class="actions">
-          <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+          <button class="ak-button ak-button__appearance-primary add-organization-link">Add an organization</button>
         </nav>
 
         <section class="content">
@@ -40,12 +40,13 @@
                       {{#if isGlobalInstall }}
                         All
                       {{else}}
-                        Limited
+                        Selected
                       {{/if}}
                     </td>
                     <td>{{ updated_at }}</td>
                     <td>
-                      <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Delete</button>
+                      <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
+                      <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
                     </td>
                   </tr>
                 {{/each}}
@@ -53,8 +54,9 @@
             </table>
           {{else}}
             <div class="empty-message">
-              <h4>You aren't connected to any organizations! Let's fix that!</h4>
-              <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+              <h4>You don't have any connected GitHub organizations. Let's fix that!</h4>
+              <p>You'll be redirected to GitHub to select the organizations and repositories you'd like to connect with Jira.</p>
+              <button class="ak-button ak-button__appearance-primary add-organization-link">Add an organization</button>
             </div>
           {{/if}}
         </section>
@@ -65,7 +67,24 @@
         const params = new URLSearchParams(window.location.search.substring(1))
 
         $('.add-organization-link').click(function () {
+          event.preventDefault()
+
           const child = window.open(`/github/redirect?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`)
+
+          const interval = setInterval(function () {
+            if (child.closed) {
+              clearInterval(interval)
+
+              AP.navigator.reload()
+            }
+          }, 100)
+        })
+
+        $('.configure-connection-link').click(function (event) {
+          event.preventDefault()
+
+          const installationLink = $(event.target).data('installation-link')
+          const child = window.open(installationLink)
 
           const interval = setInterval(function () {
             if (child.closed) {
