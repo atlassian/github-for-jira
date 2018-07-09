@@ -1,5 +1,6 @@
 .page-content {
   padding: 20px;
+  min-height: 600px;
 }
 
 .title {
@@ -12,6 +13,7 @@
 
 .content {
   clear: both;
+  padding-top: 16px;
 }
 
 .empty-message {
@@ -19,8 +21,8 @@
   text-align: center;
 }
 
-.empty-message h4 {
-  margin-bottom: 16px;
+.empty-message p {
+  margin: 12px 0 16px;
 }
 
 .connection-avatar {
