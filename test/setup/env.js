@@ -5,7 +5,8 @@ const defaults = Object.assign({
   APP_URL: 'https://test-github-app-instance.com',
   ATLASSIAN_URL: 'https://test-atlassian-instance.net',
   ATLASSIAN_SECRET: 'test-secret',
-  PRIVATE_KEY_PATH: './test/setup/test-key.pem'
+  PRIVATE_KEY_PATH: './test/setup/test-key.pem',
+  GITHUB_CLIENT_SECRET: 'test-github-secret'
 }, process.env)
 
 Object.assign(process.env, defaults)
