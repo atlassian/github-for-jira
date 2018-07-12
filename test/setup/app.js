@@ -6,7 +6,7 @@ const createGitHubApp = require('probot/lib/github-app')
 beforeEach(() => {
   const models = td.replace('../../lib/models', {
     Installation: td.object(['getForHost']),
-    Subscription: td.object(['getAllForInstallation'])
+    Subscription: td.object(['getAllForInstallation', 'install'])
   })
 
   td.when(models.Installation.getForHost(process.env.ATLASSIAN_URL))
