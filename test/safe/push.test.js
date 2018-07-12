@@ -129,5 +129,23 @@ describe('GitHub Actions', () => {
         body: 'This is a comment'
       }))
     })
+
+    it('should not run a command without a Jira issue', async () => {
+      const payload = require('../fixtures/push-no-issues.json')
+
+      td.when(jiraApi.post(), { ignoreExtraArgs: true })
+        .thenThrow(new Error('Should not make any changes to Jira.'))
+
+      await app.receive(payload)
+    })
+
+    it('should support commits without smart commands', async () => {
+      const payload = require('../fixtures/push-empty.json')
+
+      td.when(jiraApi.post(), { ignoreExtraArgs: true })
+        .thenThrow(new Error('Should not make any changes to Jira.'))
+
+      await app.receive(payload)
+    })
   })
 })
