@@ -5,14 +5,14 @@
     "version" : "v1",
     "title" : "Jira Software Devinfo Rest API"
   },
-  "basePath" : "/developmenttool/0.9/devinfo",
+  "basePath" : "/devinfo/0.10/",
   "tags" : [ {
     "name" : "devinfo",
     "description" : "REST API Which provides access to development information store. This API can only be used by JIRA Connect Addons. A 403 response will be sent to any request not received from a Connect Addon."
   } ],
   "schemes" : [ "http", "https" ],
   "paths" : {
-    "/devinfo/bulk" : {
+    "/bulk" : {
       "post" : {
         "tags" : [ "devinfo" ],
         "summary" : "Stores development information provided in the request to make them available when viewing issues in JIRA",
@@ -39,7 +39,7 @@
         }
       }
     },
-    "/devinfo/bulkByProperties" : {
+    "/bulkByProperties" : {
       "delete" : {
         "tags" : [ "devinfo" ],
         "summary" : "Deletes all development information entities which have all provided properties",
@@ -57,7 +57,7 @@
         }
       }
     },
-    "/devinfo/repository/{repositoryKey}" : {
+    "/repository/{repositoryKey}" : {
       "get" : {
         "tags" : [ "devinfo" ],
         "summary" : "Retrieves the development information entities for the specified repository.",
@@ -84,7 +84,7 @@
         }
       }
     },
-    "/devinfo/repository/{repositoryId}" : {
+    "/repository/{repositoryId}" : {
       "delete" : {
         "tags" : [ "devinfo" ],
         "summary" : "Deletes specified repository and all related development information entities",
@@ -108,7 +108,7 @@
         }
       }
     },
-    "/devinfo/repository/{repositoryId}/{entitytype}/{entityid}" : {
+    "/repository/{repositoryId}/{entitytype}/{entityid}" : {
       "delete" : {
         "tags" : [ "devinfo" ],
         "summary" : "Deletes particular development information entity",
