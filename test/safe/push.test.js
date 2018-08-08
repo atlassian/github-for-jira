@@ -20,7 +20,7 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload)
 
-      td.verify(jiraApi.post('/rest/developmenttool/0.9/devinfo/bulk', {
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
