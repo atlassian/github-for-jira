@@ -12,6 +12,8 @@ describe('GitHub Actions', () => {
         html_url: 'test-pull-request-author-url'
       })
 
+      Date.now = jest.fn(() => 12345678)
+
       await app.receive(payload)
 
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
@@ -38,9 +40,11 @@ describe('GitHub Actions', () => {
                 status: 'OPEN',
                 title: '[TEST-123] Test pull request.',
                 timestamp: 'test-pull-request-update-time',
-                url: 'test-pull-request-url'
+                url: 'test-pull-request-url',
+                updateSequenceId: 12345678
               }
-            ]
+            ],
+            updateSequenceId: 12345678
           }
         ]
       }))
