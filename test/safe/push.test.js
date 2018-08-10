@@ -18,6 +18,7 @@ describe('GitHub Actions', () => {
     it('should update the Jira issue with the linked GitHub commit', async () => {
       const payload = require('../fixtures/push-basic.json')
 
+      Date.now = jest.fn(() => 12345678)
       await app.receive(payload)
 
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
@@ -39,9 +40,11 @@ describe('GitHub Actions', () => {
                 displayId: 'test-c',
                 fileCount: 3,
                 id: 'test-commit-id',
-                issueKeys: ['TEST-123']
+                issueKeys: ['TEST-123'],
+                updateSequenceId: 12345678
               }
-            ]
+            ],
+            updateSequenceId: 12345678
           }
         ]
       }))
