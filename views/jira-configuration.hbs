@@ -47,6 +47,7 @@
                     <td>
                       <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
                       <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
+                      <button class="ak-button ak-button__appearance-link sync-connection-link" data-account-login="{{ account.login }}" data-installation-id="{{ id }}">Sync</button>
                     </td>
                   </tr>
                 {{/each}}
@@ -103,6 +104,23 @@
             url: `/jira/configuration?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`,
             data: {
               installationId: $(event.target).data('installation-id')
+            },
+            success: function (data) {
+              AP.navigator.reload()
+            }
+          })
+        })
+
+        $('.sync-connection-link').click(function (event) {
+          event.preventDefault()
+
+          $.ajax({
+            type: 'GET',
+            url: `/jira/sync`,
+            data: {
+              installationId: $(event.target).data('installation-id'),
+              repo: 'testrepo',
+              owner: $(event.target).data('account-login')
             },
             success: function (data) {
               AP.navigator.reload()
