@@ -47,7 +47,7 @@
                     <td>
                       <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
                       <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
-                      <button class="ak-button ak-button__appearance-link sync-connection-link" data-account-login="{{ account.login }}" data-installation-id="{{ id }}">Sync</button>
+                      <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">Sync</button>
                     </td>
                   </tr>
                 {{/each}}
@@ -119,11 +119,13 @@
             url: `/jira/sync`,
             data: {
               installationId: $(event.target).data('installation-id'),
-              repo: 'testrepo',
-              owner: $(event.target).data('account-login')
+              host: $(event.target).data('jira-host')
             },
             success: function (data) {
               AP.navigator.reload()
+            },
+            error: function (error) {
+              console.log(error)
             }
           })
         })
