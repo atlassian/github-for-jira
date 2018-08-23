@@ -12,7 +12,7 @@ describe('sync/pull-request', () => {
         jiraHost
       })
 
-    const processPullRequests = require('../../../lib/sync/pull-request')
+    const { processPullRequests } = require('../../../lib/sync/pull-request')
 
     const repository = {
       name: 'test',
@@ -25,8 +25,8 @@ describe('sync/pull-request', () => {
 
     const githubApi = td.api('https://api.github.com')
 
-    td.when(githubApi.get('/repos/integrations/test/pulls?per_page=100&state=all'))
-      .thenReturn(require('../../fixtures/api/pull-request-list'))
+    td.when(githubApi.post('/graphql'))
+      .thenReturn(require('../../fixtures/api/graphql/pull-request-nodes.json'))
 
     await processPullRequests(app)(job)
   })
