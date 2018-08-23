@@ -1,0 +1,33 @@
+{
+  "repository": {
+    "pullRequests": {
+      "nodes": [
+        {
+          "author": {
+            "avatarUrl": "https://avatars0.githubusercontent.com/u/13207348?v=4",
+            "login": "tcbyrd",
+            "url": "https://github.com/tcbyrd"
+          },
+          "databaseId": 206505945,
+          "comments": {
+            "totalCount": 1
+          },
+          "repository": {
+            "url": "https://github.com/tcbyrd/testrepo"
+          },
+          "baseRef": {
+            "name": "master"
+          },
+          "headRef": {
+            "name": "multiple-files"
+          },
+          "number": 95,
+          "state": "MERGED",
+          "title": "Multiple files",
+          "updatedAt": "2018-08-17T19:24:12Z",
+          "url": "https://github.com/tcbyrd/testrepo/pull/95"
+        }
+      ]
+    }
+  }
+}
