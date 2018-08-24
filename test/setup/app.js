@@ -1,7 +1,7 @@
-const { createRobot } = require('probot')
+const { Application } = require('probot')
 const { findPrivateKey } = require('probot/lib/private-key')
 const cacheManager = require('cache-manager')
-const createGitHubApp = require('probot/lib/github-app')
+const { createApp: createGitHubApp } = require('probot/lib/github-app')
 
 beforeEach(() => {
   const models = td.replace('../../lib/models', {
@@ -35,7 +35,7 @@ beforeEach(() => {
 
   const configureRobot = require('../../lib/configure-robot')
 
-  global.app = configureRobot(createRobot({
+  global.app = configureRobot(new Application({
     app: createGitHubApp({
       id: 12257,
       cert: findPrivateKey()
