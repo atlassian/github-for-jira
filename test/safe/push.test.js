@@ -33,9 +33,44 @@ describe('GitHub Actions', () => {
                 hash: 'test-commit-id',
                 message: '[TEST-123] Test commit.',
                 author: {
-                  name: 'test-commit-author-username',
-                  avatar: 'test-commit-author-avatar',
-                  url: 'test-commit-author-url'
+                  name: 'test-commit-name',
+                  email: 'test-email@example.com',
+                  avatar: 'https://github.com/test-commit-author-username.png',
+                  url: 'https://github.com/test-commit-author-username'
+                },
+                displayId: 'test-c',
+                fileCount: 3,
+                id: 'test-commit-id',
+                issueKeys: ['TEST-123'],
+                updateSequenceId: 12345678
+              }
+            ],
+            updateSequenceId: 12345678
+          }
+        ]
+      }))
+    })
+
+    it('should update the Jira issue when no username is present', async () => {
+      const payload = require('../fixtures/push-no-username.json')
+
+      Date.now = jest.fn(() => 12345678)
+      await app.receive(payload)
+
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+        preventTransitions: false,
+        repositories: [
+          {
+            name: 'example/test-repo-name',
+            url: 'test-repo-url',
+            id: 'test-repo-id',
+            commits: [
+              {
+                hash: 'test-commit-id',
+                message: '[TEST-123] Test commit.',
+                author: {
+                  name: 'test-commit-name',
+                  email: 'test-email@example.com'
                 },
                 displayId: 'test-c',
                 fileCount: 3,
