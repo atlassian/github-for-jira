@@ -8,8 +8,7 @@
         "hash": "test-commit-hash",
         "author": {
           "name": "test-commit-name",
-          "email": "test-email@example.com",
-          "username": "test-commit-author-username"
+          "email": "test-email@example.com"
         },
         "message": "[TEST-123] Test commit.",
         "added": ["test-added"],
