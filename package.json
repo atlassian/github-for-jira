@@ -8,7 +8,8 @@
     "lint": "standard --fix",
     "start": "probot run --webhook-path=/github/events ./lib/configure-robot",
     "test": "jest",
-    "test:watch": "jest --watch --notify --notifyMode=change --coverage"
+    "test:watch": "jest --watch --notify --notifyMode=change --coverage",
+    "worker": "node bin/worker"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
