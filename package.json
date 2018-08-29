@@ -7,7 +7,7 @@
     "dev": "nodemon --exec \"npm start\"",
     "lint": "standard --fix",
     "start": "probot run --webhook-path=/github/events ./lib/configure-robot",
-    "test": "jest",
+    "test": "jest && standard",
     "test:watch": "jest --watch --notify --notifyMode=change --coverage",
     "worker": "node bin/worker"
   },
@@ -48,9 +48,6 @@
     "node": ">= 8.3.0"
   },
   "jest": {
-    "roots": [
-      "test"
-    ],
     "testEnvironment": "node",
     "setupTestFrameworkScriptFile": "./test/setup",
     "globalTeardown": "./test/teardown"
