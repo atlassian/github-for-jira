@@ -6,7 +6,8 @@ const defaults = Object.assign({
   ATLASSIAN_URL: 'https://test-atlassian-instance.net',
   ATLASSIAN_SECRET: 'test-secret',
   PRIVATE_KEY_PATH: './test/setup/test-key.pem',
-  GITHUB_CLIENT_SECRET: 'test-github-secret'
+  GITHUB_CLIENT_SECRET: 'test-github-secret',
+  LOG_LEVEL: 'fatal'
 }, process.env)
 
 Object.assign(process.env, defaults)
