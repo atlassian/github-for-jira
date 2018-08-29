@@ -14,7 +14,6 @@
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
     "@atlaskit/reduced-ui-pack": "^8.11.1",
-    "@types/bull": "^3.3.19",
     "atlassian-jwt": "^0.1.5",
     "axios": "^0.18.0",
     "body-parser": "^1.18.3",
@@ -33,6 +32,7 @@
     "sequelize-encrypted": "^1.0.0"
   },
   "devDependencies": {
+    "@types/bull": "^3.3.19",
     "jest": "^22.4.3",
     "keygrip": "^1.0.2",
     "nock": "^9.3.2",
