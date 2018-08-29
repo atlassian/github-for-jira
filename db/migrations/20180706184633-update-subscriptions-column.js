@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -15,7 +15,7 @@ module.exports = {
 
     await queryInterface.changeColumn('Subscriptions', 'gitHubInstallationId', {
       allowNull: false,
-      type: Sequelize.INTEGER,
+      type: Sequelize.INTEGER
     })
 
     await queryInterface.changeColumn('Subscriptions', 'jiraHost', {
@@ -26,11 +26,11 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     await queryInterface.changeColumn('Subscriptions', 'gitHubInstallationId', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.INTEGER
     })
 
     await queryInterface.changeColumn('Subscriptions', 'jiraHost', {
       type: Sequelize.STRING
     })
   }
-};
+}
