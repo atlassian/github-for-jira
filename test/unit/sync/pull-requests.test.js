@@ -1,15 +1,6 @@
 const nock = require('nock')
 
 describe('sync/pull-request', () => {
-  let jiraClient
-
-  beforeEach(() => {
-    jiraClient = {
-      baseURL: 'http://example.com',
-      issues: td.object(['get'])
-    }
-  })
-
   test('list with no jira references', async () => {
     const models = td.replace('../../../lib/models')
 
