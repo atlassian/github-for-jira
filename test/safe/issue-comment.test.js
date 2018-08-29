@@ -1,30 +1,3 @@
-const payload = {
-  event: 'issue_comment',
-  payload: {
-    action: 'created',
-    issue: {
-      number: 'test-issue-number'
-    },
-    comment: {
-      body: 'Test example comment with linked Jira issue: [TEST-123]',
-      id: 'test-comment-id'
-    },
-    repository: {
-      name: 'test-repo-name',
-      owner: {
-        login: 'test-repo-owner'
-      }
-    },
-    sender: {
-      type: 'User',
-      login: 'TestUser'
-    },
-    installation: {
-      id: 'test-installation-id'
-    }
-  }
-}
-
 describe('GitHub Actions', () => {
   describe('issue_comment', () => {
     describe('created', () => {
