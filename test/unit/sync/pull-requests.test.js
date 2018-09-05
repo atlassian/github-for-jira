@@ -47,7 +47,7 @@ describe('sync/pull-request', () => {
               commentCount: 0,
               destinationBranch: 'undefined/tree/',
               displayId: '#96',
-              id: 210583241,
+              id: 96,
               issueKeys: ['TES-15'],
               lastUpdate: '2018-08-23T21:38:05Z',
               sourceBranch: 'undefined/tree/evernote-test',
