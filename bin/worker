@@ -1,0 +1,6 @@
+#!/usr/bin/env node
+require('dotenv').config()
+
+const worker = require('../lib/worker')
+
+worker.start()

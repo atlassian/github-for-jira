@@ -1,0 +1,38 @@
+{
+  "data": {
+    "repository": {
+      "pullRequests": {
+        "edges": [
+          {
+            "cursor": "Y3Vyc29yOnYyOpK5MjAxOC0wOC0yM1QxNzozODowNS0wNDowMM4MjT7J",
+            "node": {
+              "author": {
+                "avatarUrl": "https://avatars0.githubusercontent.com/u/13207348?v=4",
+                "login": "tcbyrd",
+                "url": "https://github.com/tcbyrd"
+              },
+              "databaseId": 210583241,
+              "comments": {
+                "totalCount": 0
+              },
+              "repository": {
+                "url": "https://github.com/tcbyrd/testrepo"
+              },
+              "baseRef": {
+                "name": "master"
+              },
+              "headRef": {
+                "name": "evernote-test"
+              },
+              "number": 96,
+              "state": "OPEN",
+              "title": "Evernote test",
+              "updatedAt": "2018-08-23T21:38:05Z",
+              "url": "https://github.com/tcbyrd/testrepo/pull/96"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
