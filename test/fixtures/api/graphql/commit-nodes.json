@@ -1,0 +1,26 @@
+{
+  "repository": {
+    "ref": {
+      "target": {
+        "history": {
+          "nodes": [
+            {
+              "author": {
+                "avatarUrl": "https://avatars0.githubusercontent.com/u/13207348?v=4",
+                "name": "Tommy Byrd",
+                "user": {
+                  "url": "https://github.com/tcbyrd"
+                }
+              },
+              "authoredDate": "2018-08-17T19:24:11Z",
+              "changedFiles": 3,
+              "message": "Merge pull request #95 from tcbyrd/multiple-files\n\n[TES-17] Multiple files",
+              "oid": "4fbbe4e8291912d07943a54d512a9c64c9fa8775",
+              "url": "https://github.com/tcbyrd/testrepo/commit/4fbbe4e8291912d07943a54d512a9c64c9fa8775"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
