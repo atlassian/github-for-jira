@@ -67,7 +67,7 @@
         /* globals $, AP */
         const params = new URLSearchParams(window.location.search.substring(1))
 
-        $('.add-organization-link').click(function () {
+        $('.add-organization-link').click(function (event) {
           event.preventDefault()
 
           const child = window.open(`/github/redirect?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`)
