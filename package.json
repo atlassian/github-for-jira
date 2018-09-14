@@ -25,7 +25,7 @@
     "github-oauth": "^0.2.2",
     "pg": "^7.4.3",
     "primer": "^10.6.0",
-    "probot": "^7.0.0",
+    "probot": "^7.1.2",
     "probot-config": "^0.1.0",
     "sequelize": "^4.37.10",
     "sequelize-cli": "^4.0.0",
