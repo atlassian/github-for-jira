@@ -1,0 +1,902 @@
+---
+swagger: "2.0"
+info:
+  description: "Jira Software Devinfo Rest API"
+  version: "0.10"
+  title: "Jira Software Devinfo Rest API"
+basePath: "/rest/devinfo/0.10"
+schemes:
+- "http"
+- "https"
+paths:
+  /bulk:
+    post:
+      summary: "Store development information."
+      description: "Stores development information provided in the request to make\
+        \ it available when viewing issues in JIRA. Existing repository and entity\
+        \ data for the same ID will be replaced if the updateSequenceId of existing\
+        \ data is less than the incoming data. Submissions are performed asynchronously.\
+        \ Submitted data will eventually be available in Jira; most updates are available\
+        \ within a short period of time, but may take some time during peak load and/or\
+        \ maintenance times."
+      operationId: "storeDevelopmentInformation"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Request object, which contains development information"
+        required: true
+        schema:
+          $ref: "#/definitions/DevInformation"
+      - name: "Authorization"
+        in: "header"
+        description: "All requests must be signed with a Connect JWT token that corresponds\
+          \ to the provider app installed in Jira.  If the JWT token corresponds to\
+          \ an app that does not define the jiraDevelopmentTool module it will be\
+          \ rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/\
+          \ for more details."
+        required: true
+        type: "string"
+      responses:
+        202:
+          description: "Submission accepted. Each submitted repository and entity\
+            \ that is of a valid format will be eventually available in Jira."
+          schema:
+            $ref: "#/definitions/StoreDevinfoResult"
+        400:
+          description: "Request has incorrect format. It will fail in the following\
+            \ cases: If no repositories or development information entities were provided,\
+            \ or  more than 5 properties were submitted, or there are one or more\
+            \ properties with leading underscore '_' symbol in their keys."
+          schema:
+            $ref: "#/definitions/ErrorMessages"
+        401:
+          description: "Missing a JWT token, or token is invalid."
+        403:
+          description: "The JWT token used does not correspond to an app that defines\
+            \ the jiraDevelopmentTool module, or the app does not define the 'WRITE'\
+            \ scope"
+        413:
+          description: "Data is too large. Submit fewer devinfo entities in each payload."
+          schema:
+            $ref: "#/definitions/ErrorMessages"
+        429:
+          description: "API rate limit has been exceeded."
+        500:
+          description: "An unknown error has occurred."
+          schema:
+            $ref: "#/definitions/ErrorMessages"
+        503:
+          description: "Service is unavailable due to maintenance or other reasons."
+  /bulkByProperties:
+    delete:
+      summary: "Delete development information by properties."
+      description: "Deletes development information entities which have all the provided\
+        \ properties. Entities will be deleted that match ALL of the properties (i.e.\
+        \ treated as an AND). For example if request is DELETE bulk?accountId=123&projectId=ABC\
+        \ entities which have properties accountId=123 and projectId=ABC will be deleted.\
+        \ Special property '_updateSequenceId' can be used to delete all entities\
+        \ with updateSequenceId less or equal than the value specified. In addition\
+        \ to the optional '_updateSequenceId', one or more query params must be supplied\
+        \ to specify properties to delete by. Deletion is performed asynchronously:\
+        \ specified entities will eventually be removed from Jira. "
+      operationId: "deleteByProperties"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "Authorization"
+        in: "header"
+        description: "All requests must be signed with a Connect JWT token that corresponds\
+          \ to the provider app installed in Jira.  If the JWT token corresponds to\
+          \ an app that does not define the jiraDevelopmentTool module it will be\
+          \ rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/\
+          \ for more details."
+        required: true
+        type: "string"
+      - name: "_updateSequenceId"
+        in: "query"
+        description: "An optional property to use to control deletion. Only stored\
+          \ data with an updateSequenceId less than or equal to that provided will\
+          \ be deleted. This can be used to help ensure submit/delete requests are\
+          \ applied correctly if they are issued close together. "
+        required: false
+        type: "integer"
+        format: "int64"
+      responses:
+        202:
+          description: "Delete accepted. Data will eventually be removed from Jira. "
+        400:
+          description: "Request has incorrect format. It will fail in the following\
+            \ cases: If no query properties are specified. If '_updateSequenceId'\
+            \ is not a numeric value. If multiple values of the same property key\
+            \ are specified. Deleting data for many property values, for the same\
+            \ property key, requires multiple requests to this resource. "
+          schema:
+            $ref: "#/definitions/ErrorMessages"
+        401:
+          description: "Missing a JWT token, or token is invalid."
+        403:
+          description: "The JWT token used does not correspond to an app that defines\
+            \ the jiraDevelopmentTool module, or the app does not define the 'DELETE'\
+            \ scope"
+        429:
+          description: "API rate limit has been exceeded."
+        500:
+          description: "An unknown error has occurred."
+          schema:
+            $ref: "#/definitions/ErrorMessages"
+        503:
+          description: "Service is unavailable due to maintenance or other reasons."
+  /github/migrationComplete:
+    post:
+      operationId: "githubMigrationCompleted"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        default:
+          description: "successful operation"
+  /github/undoMigration:
+    post:
+      operationId: "undoGithubMigration"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        default:
+          description: "successful operation"
+  /repository/{repositoryId}:
+    get:
+      summary: "Get repository."
+      description: "For the specified repository ID, retrieves the repository and\
+        \ the most recent 400 development information entities. The result will be\
+        \ what is currently stored, ignoring any pending updates or deletes."
+      operationId: "getRepository"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "repositoryId"
+        in: "path"
+        description: "The ID of repository to fetch"
+        required: true
+        type: "string"
+      - name: "Authorization"
+        in: "header"
+        description: "All requests must be signed with a Connect JWT token that corresponds\
+          \ to the provider app installed in Jira.  If the JWT token corresponds to\
+          \ an app that does not define the jiraDevelopmentTool module it will be\
+          \ rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/\
+          \ for more details."
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "The repository data currently stored for the given ID."
+          schema:
+            $ref: "#/definitions/Repository"
+        401:
+          description: "Missing a JWT token, or token is invalid."
+        403:
+          description: "The JWT token used does not correspond to an app that defines\
+            \ the jiraDevelopmentTool module, or the app does not define the 'READ'\
+            \ scope"
+        404:
+          description: "No data found for the given repository ID."
+        429:
+          description: "API rate limit has been exceeded."
+        500:
+          description: "An unknown error has occurred."
+          schema:
+            $ref: "#/definitions/ErrorMessages"
+        503:
+          description: "Service is unavailable due to maintenance or other reasons."
+    delete:
+      summary: "Delete repository."
+      description: "Deletes the repository data stored by the given ID and all related\
+        \ development information entities. Deletion is performed asynchronously."
+      operationId: "deleteRepository"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "repositoryId"
+        in: "path"
+        description: "The ID of repository to delete"
+        required: true
+        type: "string"
+      - name: "_updateSequenceId"
+        in: "query"
+        description: "An optional property to use to control deletion. Only stored\
+          \ data with an updateSequenceId less than or equal to that provided will\
+          \ be deleted. This can be used to help ensure submit/delete requests are\
+          \ applied correctly if they are issued close together. "
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "Authorization"
+        in: "header"
+        description: "All requests must be signed with a Connect JWT token that corresponds\
+          \ to the provider app installed in Jira.  If the JWT token corresponds to\
+          \ an app that does not define the jiraDevelopmentTool module it will be\
+          \ rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/\
+          \ for more details."
+        required: true
+        type: "string"
+      responses:
+        202:
+          description: "Delete request has been accepted. Data will eventually be\
+            \ removed from Jira if it exists."
+        401:
+          description: "Missing a JWT token, or token is invalid."
+        403:
+          description: "The JWT token used does not correspond to an app that defines\
+            \ the jiraDevelopmentTool module, or the app does not define the 'DELETE'\
+            \ scope"
+        429:
+          description: "API rate limit has been exceeded."
+        500:
+          description: "An unknown error has occurred."
+          schema:
+            $ref: "#/definitions/ErrorMessages"
+        503:
+          description: "Service is unavailable due to maintenance or other reasons."
+  /repository/{repositoryId}/{entityType}/{entityId}:
+    delete:
+      summary: "Delete development information entity."
+      description: "Deletes particular development information entity. Deletion is\
+        \ performed asynchronously."
+      operationId: "deleteEntity"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "repositoryId"
+        in: "path"
+        required: true
+        type: "string"
+      - name: "entityType"
+        in: "path"
+        required: true
+        type: "string"
+        enum:
+        - "commit"
+        - "branch"
+        - "pull_request"
+      - name: "entityId"
+        in: "path"
+        required: true
+        type: "string"
+      - name: "_updateSequenceId"
+        in: "query"
+        description: "An optional property to use to control deletion. Only stored\
+          \ data with an updateSequenceId less than or equal to that provided will\
+          \ be deleted. This can be used to help ensure submit/delete requests are\
+          \ applied correctly if they are issued close together. "
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "Authorization"
+        in: "header"
+        description: "All requests must be signed with a Connect JWT token that corresponds\
+          \ to the provider app installed in Jira.  If the JWT token corresponds to\
+          \ an app that does not define the jiraDevelopmentTool module it will be\
+          \ rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/\
+          \ for more details."
+        required: true
+        type: "string"
+      responses:
+        202:
+          description: "Delete request has been accepted. Data will eventually be\
+            \ removed from Jira if it exists."
+        400:
+          description: "Wrong entity type specified"
+          schema:
+            $ref: "#/definitions/ErrorMessages"
+        401:
+          description: "Missing a JWT token, or token is invalid."
+        403:
+          description: "The JWT token used does not correspond to an app that defines\
+            \ the jiraDevelopmentTool module, or the app does not define the 'DELETE'\
+            \ scope"
+        429:
+          description: "API rate limit has been exceeded."
+        500:
+          description: "An unknown error has occurred."
+          schema:
+            $ref: "#/definitions/ErrorMessages"
+        503:
+          description: "Service is unavailable due to maintenance or other reasons."
+definitions:
+  Author:
+    type: "object"
+    required:
+    - "name"
+    properties:
+      name:
+        type: "string"
+        example: "Jane Doe"
+        description: "The name of this user in a format suitable for display. Max\
+          \ length is 255 characters"
+        readOnly: true
+      username:
+        type: "string"
+        example: "jdoe"
+        description: "The username of the user, used to associate the user with a\
+          \ JIRA user if there are multiple users for a given email. Max length is\
+          \ 255 characters"
+        readOnly: true
+      email:
+        type: "string"
+        example: "jane_doe@atlassian.com"
+        description: "The email address of the user, used to associate the user with\
+          \ a JIRA user. Max length is 255 characters"
+        readOnly: true
+      avatar:
+        type: "string"
+        example: "https://atlassian.com/account/jane_doe/avatar/32"
+        description: "The URL of the avatar for this user. Max length is 1024 characters"
+        readOnly: true
+      url:
+        type: "string"
+        example: "https://atlassian.com/account/jane_doe"
+        description: "The URL of the profile for this user. Max length is 1024 characters"
+        readOnly: true
+    description: "Describes the author of a particular entity"
+  Branch:
+    allOf:
+    - $ref: "#/definitions/DevInfoEntity"
+    - type: "object"
+      required:
+      - "lastCommit"
+      - "name"
+      - "url"
+      properties:
+        name:
+          type: "string"
+          example: "master"
+          description: "The name of the branch. Max length is 255 characters"
+          readOnly: true
+        createPullRequestUrl:
+          type: "string"
+          example: "https://bitbucket.org/atlassianlabs/atlassian-connect-jira-example/pull-requests/new"
+          description: "The URL of the page for creating a pull request from this\
+            \ branch. Max length is 1024 characters"
+          readOnly: true
+        url:
+          type: "string"
+          example: "https://bitbucket.org/atlassianlabs/atlassian-connect-jira-example/branch/master"
+          description: "The URL of the branch. Max length is 1024 characters"
+          readOnly: true
+        lastCommit:
+          description: "The most recent commit on this branch, used to display the\
+            \ date of the latest activity for this branch"
+          readOnly: true
+          $ref: "#/definitions/Commit"
+      description: "Represents a branch in the version control system"
+  Commit:
+    allOf:
+    - $ref: "#/definitions/DevInfoEntity"
+    - type: "object"
+      required:
+      - "author"
+      - "authorTimestamp"
+      - "displayId"
+      - "fileCount"
+      - "hash"
+      - "message"
+      - "url"
+      properties:
+        hash:
+          type: "string"
+          example: "a7727ee6350c33cdf90826dc21abaa26a5704370"
+          description: "The hash of the commit. Max length is 255 characters"
+          readOnly: true
+        flags:
+          type: "array"
+          example: "[MERGE_COMMIT]"
+          description: "The set of flags for this commit"
+          readOnly: true
+          uniqueItems: true
+          items:
+            type: "string"
+            enum:
+            - "MERGE_COMMIT"
+        message:
+          type: "string"
+          example: "README.md edited online with Bitbucket"
+          description: "The commit message. Max length is 1024 characters"
+          readOnly: true
+        author:
+          description: "The author of this commit"
+          readOnly: true
+          $ref: "#/definitions/Author"
+        fileCount:
+          type: "integer"
+          format: "int32"
+          example: 1
+          description: "The total number of files added, removed, or modified by this\
+            \ commit"
+          readOnly: true
+          minimum: 0
+        displayId:
+          type: "string"
+          example: "a7727ee"
+          description: "Shortened identifier for this commit, used for display. Max\
+            \ length is 255 characters"
+          readOnly: true
+        files:
+          type: "array"
+          description: "List of file changes. Max number of files is 10. Currently,\
+            \ only the first 5 files are shown (sorted by path) in the UI. This UI\
+            \ behavior may change without notice"
+          readOnly: true
+          items:
+            $ref: "#/definitions/File"
+        url:
+          type: "string"
+          example: "https://bitbucket.org/atlassianlabs/atlassian-connect-jira-example/commits/a7727ee6350c33cdf90826dc21abaa26a5704370"
+          description: "The URL of this commit. Max length is 1024 characters"
+          readOnly: true
+        authorTimestamp:
+          type: "string"
+          example: "2016-10-31T23:27:25+00:00"
+          description: "The author timestamp of this commit. Formatted as a UTC ISO\
+            \ 8601 date time format"
+          readOnly: true
+      description: "Represents a commit in the version control system"
+  DevInfoEntity:
+    type: "object"
+    required:
+    - "id"
+    - "issueKeys"
+    - "updateSequenceId"
+    properties:
+      id:
+        type: "string"
+        example: "c6c7c750-cee2-48e2-b920-d7706dfd11f9"
+        description: "The ID of this entity. Will be used for cross entity linking.\
+          \ Must be unique by entity type within a repository, i.e., only one commit\
+          \ can have ID 'X' in repository 'Y'. But adding, e.g., a branch with ID\
+          \ 'X' to repository 'Y' is acceptable. Only alphanumeric characters, and\
+          \ '~.-_', are allowed. Max length is 1024 characters"
+        readOnly: true
+      issueKeys:
+        type: "array"
+        example: "[\"ISSUE-1\",\"TEST-2\"]"
+        description: "List of issues keys that this entity is associated with. They\
+          \ must be valid JIRA issue keys. Minimum number of issue keys is 1. Maximum\
+          \ number of issue keys is 100"
+        readOnly: true
+        items:
+          type: "string"
+      updateSequenceId:
+        type: "integer"
+        format: "int64"
+        example: 1523494301248
+        description: " An ID used to apply an ordering to updates for this entity\
+          \ in the case of out-of-order receipt of update requests. This can be any\
+          \ monotonically increasing number. A suggested implementation is to use\
+          \ epoch millis from the provider system, but other alternatives are valid\
+          \ (e.g. a provider could store a counter against each entity and increment\
+          \ that on each update to Jira). Updates for an entity that are received\
+          \ with an updateSqeuenceId lower than what is currently stored will be ignored. "
+        readOnly: true
+    description: "The super class for all Dev Info entities"
+  DevInformation:
+    type: "object"
+    required:
+    - "repositories"
+    properties:
+      repositories:
+        type: "array"
+        description: "List of repositories containing development information. Must\
+          \ not contain duplicates. Maximum number of repositories is 100. Maximum\
+          \ number of entities across all repositories is 1000"
+        readOnly: true
+        items:
+          $ref: "#/definitions/Repository"
+      preventTransitions:
+        type: "boolean"
+        description: "Flag to prevent automatic issue transitions and smart commits\
+          \ being fired, default is false"
+        readOnly: true
+      properties:
+        type: "object"
+        description: "Arbitrary properties to tag the submitted repositories with.\
+          \ These properties can be used for delete operations to e.g. clean up all\
+          \ development information associated with an account in the event that the\
+          \ account is removed from the provider system. Note that these properties\
+          \ will never be returned with repository or entity data. They are not intended\
+          \ for use as metadata to associate with a repository. Maximum length of\
+          \ each key or value is 255 characters. Maximum allowed number of properties\
+          \ key/value pairs is 5. Properties keys cannot start with '_' character.\
+          \ Properties keys cannot contain ':' character. "
+        readOnly: true
+        additionalProperties:
+          type: "string"
+    description: "Request object for development information push operations, entities\
+      \ are grouped by repository"
+  EntityError:
+    type: "object"
+    required:
+    - "id"
+    properties:
+      id:
+        type: "string"
+        description: "Entity id"
+        readOnly: true
+      errorMessages:
+        type: "array"
+        description: "Error message"
+        readOnly: true
+        items:
+          $ref: "#/definitions/ErrorMessage"
+    description: "Represents error happened with particular entity"
+  EntityIds:
+    type: "object"
+    properties:
+      pullRequests:
+        type: "array"
+        description: "Pull requests ids"
+        readOnly: true
+        items:
+          type: "string"
+      branches:
+        type: "array"
+        description: "Branches ids"
+        readOnly: true
+        items:
+          type: "string"
+      commits:
+        type: "array"
+        description: "Commits ids"
+        readOnly: true
+        items:
+          type: "string"
+    description: "Ids of entities grouped by entity type"
+  ErrorMessage:
+    type: "object"
+    required:
+    - "message"
+    properties:
+      message:
+        type: "string"
+        description: "A human-readable message describing the error."
+        readOnly: true
+      errorTraceId:
+        type: "string"
+        description: "An optional trace ID that can be used by Jira developers to\
+          \ locate the source of the error."
+        readOnly: true
+    description: "A message supplied in the case of an error."
+  ErrorMessages:
+    type: "object"
+    required:
+    - "errorMessages"
+    properties:
+      errorMessages:
+        type: "array"
+        description: "List of errors occurred."
+        readOnly: true
+        items:
+          $ref: "#/definitions/ErrorMessage"
+    description: "A response returned in the case of an error."
+  File:
+    type: "object"
+    required:
+    - "changeType"
+    - "linesAdded"
+    - "linesRemoved"
+    - "path"
+    - "url"
+    properties:
+      path:
+        type: "string"
+        example: "/home/user/src/atlassian-connect-jira-example/README.md"
+        description: "The path of the file. Max length is 1024 characters"
+        readOnly: true
+      url:
+        type: "string"
+        example: "https://bitbucket.org/atlassianlabs/atlassian-connect-jira-example/src/a7727ee6350c33cdf90826dc21abaa26a5704370/README.md"
+        description: "The URL of this file. Max length is 1024 characters"
+        readOnly: true
+      changeType:
+        type: "string"
+        example: "MODIFIED"
+        description: "The operation performed on this file"
+        readOnly: true
+        enum:
+        - "ADDED"
+        - "COPIED"
+        - "DELETED"
+        - "MODIFIED"
+        - "MOVED"
+        - "UNKNOWN"
+      linesAdded:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Number of lines added to the file"
+        readOnly: true
+        minimum: 0
+      linesRemoved:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Number of lines removed from the file"
+        readOnly: true
+        minimum: 0
+    description: "Describes changes to a file"
+  PullRequest:
+    allOf:
+    - $ref: "#/definitions/DevInfoEntity"
+    - type: "object"
+      required:
+      - "author"
+      - "commentCount"
+      - "displayId"
+      - "lastUpdate"
+      - "sourceBranch"
+      - "status"
+      - "title"
+      - "url"
+      properties:
+        status:
+          type: "string"
+          example: "OPEN"
+          description: "The status of the pull request. In the case of concurrent\
+            \ updates, priority is given in the order OPEN, MERGED, DECLINED, UNKNOWN"
+          readOnly: true
+          enum:
+          - "OPEN"
+          - "MERGED"
+          - "DECLINED"
+          - "UNKNOWN"
+        author:
+          description: "The author of this pull request"
+          readOnly: true
+          $ref: "#/definitions/Author"
+        sourceBranch:
+          type: "string"
+          example: "ISSUE-1-feature-branch"
+          description: "The name of the source branch of this PR. Max length is 255\
+            \ characters"
+          readOnly: true
+        title:
+          type: "string"
+          example: "Pull request 2, fixing all the issues caused by pull request #1"
+          description: "Title of the pull request. Max length is 1024 characters"
+          readOnly: true
+        commentCount:
+          type: "integer"
+          format: "int32"
+          example: 42
+          description: "The number of comments on the pull request"
+          readOnly: true
+        reviewers:
+          type: "array"
+          description: "The list of reviewers of this pull request"
+          readOnly: true
+          items:
+            $ref: "#/definitions/Reviewer"
+        lastUpdate:
+          type: "string"
+          example: "2016-10-31T23:27:25+00:00"
+          description: "The most recent update to this PR. Formatted as a UTC ISO\
+            \ 8601 date time format"
+          readOnly: true
+        destinationBranch:
+          type: "string"
+          example: "master"
+          description: "The name of destination branch of this PR. Max length is 255\
+            \ characters"
+          readOnly: true
+        sourceBranchUrl:
+          type: "string"
+          example: "https://bitbucket.org/atlassianlabs/atlassian-connect-jira-example/branch/ISSUE-1-feature-branch"
+          description: "The url of the source branch of this PR. This is used to match\
+            \ this PR against the branch. Max length is 255 characters"
+          readOnly: true
+        displayId:
+          type: "string"
+          example: "Pull request 2"
+          description: "Shortened identifier for this pull request, used for display.\
+            \ Max length is 255 characters"
+          readOnly: true
+        url:
+          type: "string"
+          example: "https://bitbucket.org/atlassianlabs/atlassian-connect-jira-example/pull-requests/2"
+          description: "The URL of this pull request. Max length is 1024 characters"
+          readOnly: true
+      description: "Represents a pull request"
+  Repository:
+    type: "object"
+    required:
+    - "id"
+    - "name"
+    - "updateSequenceId"
+    - "url"
+    properties:
+      name:
+        type: "string"
+        example: "atlassian-connect-jira-example"
+        description: "The name of this repository. Max length is 255 characters"
+        readOnly: true
+      description:
+        type: "string"
+        example: "The repository which stores code of the Atlassian Connect Add-on\
+          \ Devinfo application."
+        description: "Description of this repository. Max length is 1024 characters"
+        readOnly: true
+      avatarDescription:
+        type: "string"
+        example: "Avatar description"
+        description: "Description of the avatar for this repository. Max length is\
+          \ 1024 characters"
+        readOnly: true
+      forkOf:
+        type: "string"
+        example: "56c7c750-cee2-48e2-b920-d7706dfd11f7"
+        description: "The ID of the repository this repository was forked from, if\
+          \ it's a fork. Max length is 255 characters"
+        readOnly: true
+      avatar:
+        type: "string"
+        example: "http://bitbucket.org/atlassianlabs/atlassian-connect-jira-example/avatar/32"
+        description: "The URL of the avatar for this repository. Max length is 1024\
+          \ characters"
+        readOnly: true
+      pullRequests:
+        type: "array"
+        description: "List of pull requests to update in this repository. Must not\
+          \ contain duplicate entity IDs. Maximum number of commits is 400"
+        readOnly: true
+        items:
+          $ref: "#/definitions/PullRequest"
+      branches:
+        type: "array"
+        description: "List of branches to update in this repository. Must not contain\
+          \ duplicate entity IDs. Maximum number of commits is 400"
+        readOnly: true
+        items:
+          $ref: "#/definitions/Branch"
+      commits:
+        type: "array"
+        description: "List of commits to update in this repository. Must not contain\
+          \ duplicate entity IDs. Maximum number of commits is 400"
+        readOnly: true
+        items:
+          $ref: "#/definitions/Commit"
+      url:
+        type: "string"
+        example: "https://bitbucket.org/atlassianlabs/atlassian-connect-jira-example"
+        description: "The URL of this repository. Max length is 1024 characters"
+        readOnly: true
+      id:
+        type: "string"
+        example: "c6c7c750-cee2-48e2-b920-d7706dfd11f9"
+        description: "The ID of this entity. Will be used for cross entity linking.\
+          \ Must be unique by entity type within a repository, i.e., only one commit\
+          \ can have ID 'X' in repository 'Y'. But adding, e.g., a branch with ID\
+          \ 'X' to repository 'Y' is acceptable. Only alphanumeric characters, and\
+          \ '~.-_', are allowed. Max length is 1024 characters"
+        readOnly: true
+      updateSequenceId:
+        type: "integer"
+        format: "int64"
+        example: 1523494301248
+        description: " An ID used to apply an ordering to updates for this entity\
+          \ in the case of out-of-order receipt of update requests. This can be any\
+          \ monotonically increasing number. A suggested implementation is to use\
+          \ epoch millis from the provider system, but other alternatives are valid\
+          \ (e.g. a provider could store a counter against each entity and increment\
+          \ that on each update to Jira). Updates for an entity that are received\
+          \ with an updateSqeuenceId lower than what is currently stored will be ignored. "
+        readOnly: true
+    description: "Represents a repository, containing development information such\
+      \ as commits, pull requests, and branches"
+  RepositoryErrors:
+    type: "object"
+    properties:
+      errorMessages:
+        type: "array"
+        description: "Repository errors"
+        readOnly: true
+        items:
+          $ref: "#/definitions/ErrorMessage"
+      pullRequests:
+        type: "array"
+        description: "Pull requests errors"
+        readOnly: true
+        items:
+          $ref: "#/definitions/EntityError"
+      branches:
+        type: "array"
+        description: "Branches errors"
+        readOnly: true
+        items:
+          $ref: "#/definitions/EntityError"
+      commits:
+        type: "array"
+        description: "Commits errors"
+        readOnly: true
+        items:
+          $ref: "#/definitions/EntityError"
+    description: "Represents errors related to particular repository and its entities"
+  Reviewer:
+    type: "object"
+    required:
+    - "name"
+    properties:
+      name:
+        type: "string"
+        example: "Jane Doe"
+        description: "The name of this reviewer. Max length is 255 characters"
+        readOnly: true
+      approvalStatus:
+        type: "string"
+        example: "APPROVED"
+        description: "The approval status of this reviewer, default is UNAPPROVED"
+        readOnly: true
+        enum:
+        - "APPROVED"
+        - "UNAPPROVED"
+      avatar:
+        type: "string"
+        example: "https://atlassian.com/account/jane_doe/avatar/32"
+        description: "The URL of the avatar for this reviewer. Max length is 1024\
+          \ characters"
+        readOnly: true
+      url:
+        type: "string"
+        example: "https://atlassian.com/account/jane_doe"
+        description: "The URL of the profile for this reviewer. Max length is 1024\
+          \ characters"
+        readOnly: true
+    description: "The reviewer of a pull request"
+  StoreDevinfoResult:
+    type: "object"
+    properties:
+      failedDevinfoEntities:
+        type: "object"
+        description: "IDs of devinfo entities that have not been accepted for submission\
+          \ and caused error descriptions, usually due to a problem with the request\
+          \ data. The entities (if present) will be grouped by their repository id\
+          \ and type. Entity IDs are listed with errors associated with that devinfo\
+          \ entity that have prevented it being submitted. "
+        readOnly: true
+        additionalProperties:
+          $ref: "#/definitions/RepositoryErrors"
+      acceptedDevinfoEntities:
+        type: "object"
+        description: "The IDs of devinfo entities that have been accepted for submission\
+          \ grouped by their repository ids. Note that a devinfo entity that isn't\
+          \ updated due to it's updateSequenceId being out of order is not considered\
+          \ a failed submission. "
+        readOnly: true
+        additionalProperties:
+          $ref: "#/definitions/EntityIds"
+      unknownIssueKeys:
+        type: "array"
+        description: "Issue keys that are not known on this Jira instance (if any).\
+          \ These may be invalid keys (e.g. `UTF-8` is sometimes incorrectly identified\
+          \ as a Jira issue key), or they may be for projects that no longer exist.\
+          \ If a devinfo entity has been associated with issue keys other than those\
+          \ in this array it will still be stored against those valid keys. "
+        readOnly: true
+        items:
+          type: "string"
+    description: "The result of a successful store development information request"
