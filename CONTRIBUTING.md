@@ -66,6 +66,17 @@ It will also need the following event subscriptions:
 
 Once you've setup your app, add your `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` from your GitHub app page to the `.env` file. You will also need add a `STORAGE_SECRET` to your `.env` file (running `openssl rand -hex 32` should provide a suitable secret).
 
+#### Running the application
+
+When you are developing you will prefer to run the app and automatically restart it when you do changes to the source code. In that case you should use:
+
+```
+$ npm run dev
+```
+
+For production you should just use `npm run start`.
+
+
 #### Configuring the Jira instance
 
 1. Create a new [free developer instance][jira-developer-instance] on Jira Cloud.
