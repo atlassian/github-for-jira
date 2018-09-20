@@ -235,12 +235,12 @@ describe('Smart commit parsing', () => {
     })
 
     it('should parse multiple issue keys', () => {
-      const text = 'JRA-090 JRA-091 JRA-092'
+      const text = 'JRA-090 JRA-091 JRA-092-JRA-093, JRA-094'
 
       const result = smartCommit(text)
 
       expect(result).toMatchObject({
-        issueKeys: ['JRA-090', 'JRA-091', 'JRA-092']
+        issueKeys: ['JRA-090', 'JRA-091', 'JRA-092', 'JRA-093', 'JRA-094']
       })
     })
 
