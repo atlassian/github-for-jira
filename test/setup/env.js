@@ -7,7 +7,9 @@ const defaults = Object.assign({
   ATLASSIAN_SECRET: 'test-secret',
   PRIVATE_KEY_PATH: './test/setup/test-key.pem',
   GITHUB_CLIENT_SECRET: 'test-github-secret',
-  LOG_LEVEL: 'fatal'
+  LOG_LEVEL: 'fatal',
+  STORAGE_SECRET: '8cad66340bc92edbae2ae3a792d351f48c61d1d8efe7b2d9408b0025c1f7f845',
+  SETUP: 'yes' // indicates that the setup did run
 }, process.env)
 
 Object.assign(process.env, defaults)
