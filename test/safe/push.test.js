@@ -82,21 +82,21 @@ describe('GitHub Actions', () => {
                     changeType: 'MODIFIED',
                     linesAdded: 10,
                     linesRemoved: 2,
-                    url: 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
                   },
                   {
                     path: 'test-added',
                     changeType: 'ADDED',
                     linesAdded: 4,
                     linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
                   },
                   {
                     path: 'test-removal',
                     changeType: 'DELETED',
                     linesAdded: 0,
                     linesRemoved: 4,
-                    url: 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
                   }
                 ],
                 id: 'test-commit-id',
@@ -139,21 +139,21 @@ describe('GitHub Actions', () => {
                     changeType: 'MODIFIED',
                     linesAdded: 10,
                     linesRemoved: 2,
-                    url: 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
                   },
                   {
                     path: 'test-added',
                     changeType: 'ADDED',
                     linesAdded: 4,
                     linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
                   },
                   {
                     path: 'test-removal',
                     changeType: 'DELETED',
                     linesAdded: 0,
                     linesRemoved: 4,
-                    url: 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
                   }
                 ],
                 id: 'test-commit-id',
