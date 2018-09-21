@@ -59,6 +59,7 @@ describe('GitHub Actions', () => {
                 issueKeys: ['TEST-123'],
                 lastUpdate: 'test-pull-request-update-time',
                 sourceBranch: 'test-pull-request-head-ref',
+                sourceBranchUrl: 'test-pull-request-head-url/tree/test-pull-request-head-ref',
                 status: 'OPEN',
                 title: '[TEST-123] Test pull request.',
                 timestamp: 'test-pull-request-update-time',
