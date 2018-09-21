@@ -6,7 +6,7 @@
       "id": "test-repo-id",
       "name": "test-repo-name",
       "full_name": "example/test-repo-name",
-      "url": "test-repo-url",
+      "html_url": "test-repo-url",
       "owner": {
         "login": "test-repo-owner"
       }
@@ -22,7 +22,8 @@
         "repo": {
           "html_url": "test-pull-request-head-url"
         },
-        "ref": "test-pull-request-head-ref"
+        "ref": "test-pull-request-head-ref",
+        "sha": "test-pull-request-sha"
       },
       "base": {
         "repo": {
