@@ -13,6 +13,42 @@ describe('GitHub Actions', () => {
           avatar_url: 'test-commit-author-avatar',
           html_url: 'test-commit-author-url'
         })
+
+      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
+        .thenReturn({
+          files: [
+            {
+              'filename': 'test-modified',
+              'additions': 10,
+              'deletions': 2,
+              'changes': 12,
+              'status': 'modified',
+              'raw_url': 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified',
+              'blob_url': 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified',
+              'patch': '@@ -29,7 +29,7 @@\n.....'
+            },
+            {
+              'filename': 'test-added',
+              'additions': 4,
+              'deletions': 0,
+              'changes': 4,
+              'status': 'added',
+              'raw_url': 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added',
+              'blob_url': 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added',
+              'patch': '@@ -29,7 +29,7 @@\n.....'
+            },
+            {
+              'filename': 'test-removal',
+              'additions': 0,
+              'deletions': 4,
+              'changes': 4,
+              'status': 'removed',
+              'raw_url': 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal',
+              'blob_url': 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal',
+              'patch': '@@ -29,7 +29,7 @@\n.....'
+            }
+          ]
+        })
     })
 
     it('should update the Jira issue with the linked GitHub commit', async () => {
@@ -40,6 +76,29 @@ describe('GitHub Actions', () => {
                 },
                 displayId: 'test-c',
                 fileCount: 3,
+                files: [
+                  {
+                    path: 'test-modified',
+                    changeType: 'MODIFIED',
+                    linesAdded: 10,
+                    linesRemoved: 2,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
+                  },
+                  {
+                    path: 'test-added',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-removal',
+                    changeType: 'DELETED',
+                    linesAdded: 0,
+                    linesRemoved: 4,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
+                  }
+                ],
                 id: 'test-commit-id',
                 issueKeys: ['TEST-123'],
                 updateSequenceId: 12345678
@@ -74,6 +133,29 @@ describe('GitHub Actions', () => {
                 },
                 displayId: 'test-c',
                 fileCount: 3,
+                files: [
+                  {
+                    path: 'test-modified',
+                    changeType: 'MODIFIED',
+                    linesAdded: 10,
+                    linesRemoved: 2,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
+                  },
+                  {
+                    path: 'test-added',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-removal',
+                    changeType: 'DELETED',
+                    linesAdded: 0,
+                    linesRemoved: 4,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
+                  }
+                ],
                 id: 'test-commit-id',
                 issueKeys: ['TEST-123'],
                 updateSequenceId: 12345678
