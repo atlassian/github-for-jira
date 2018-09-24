@@ -66,21 +66,33 @@ describe('GitHub Actions', () => {
         ]
       }))
     })
+    it('should not update Jira issue if there are no issue Keys in the branch name', async () => {
+      const payload = require('../fixtures/branch-no-issues.json')
+      const getLastCommit = jest.fn()
+
+      await app.receive(payload)
+      expect(getLastCommit).not.toBeCalled()
+    })
+
+    it('should exit early if ref_type is not a branch', async () => {
+      const payload = require('../fixtures/branch-invalid-ref_type.json')
+      const parseSmartCommit = jest.fn()
+
+      await app.receive(payload)
+      expect(parseSmartCommit).not.toBeCalled()
+    })
   })
 
-  it('should not update Jira issue if there are no issue Keys in the branch name', async () => {
-    const payload = require('../fixtures/branch-no-issues.json')
-    const getLastCommit = jest.fn()
+  describe('delete a branch', () => {
+    it('should call the devinfo delete API when a branch is deleted', async () => {
+      const payload = require('../fixtures/branch-delete.json')
 
-    await app.receive(payload)
-    expect(getLastCommit).not.toBeCalled()
-  })
+      const jiraApi = td.api('https://test-atlassian-instance.net')
 
-  it('should exit early if ref_type is not a branch', async () => {
-    const payload = require('../fixtures/branch-invalid-ref_type.json')
-    const parseSmartCommit = jest.fn()
+      Date.now = jest.fn(() => 12345678)
+      await app.receive(payload)
 
-    await app.receive(payload)
-    expect(parseSmartCommit).not.toBeCalled()
+      td.verify(jiraApi.delete('/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref?_updateSequenceId=12345678'))
+    })
   })
 })
