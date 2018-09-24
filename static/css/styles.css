@@ -31,3 +31,8 @@
   vertical-align: middle;
   width: 24px;
 }
+
+.error-message {
+  background: #d04437;
+  color: #fff;
+}
