@@ -1,7 +1,7 @@
 {
   "event": "create",
   "payload": {
-    "ref": "anotherref",
+    "ref": "no-issue-keys",
     "ref_type": "branch",
     "master_branch": "master",
     "repository": {
