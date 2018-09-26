@@ -1,0 +1,24 @@
+{
+  "event": "create",
+  "payload": {
+    "ref": "no-issue-keys",
+    "ref_type": "branch",
+    "master_branch": "master",
+    "repository": {
+      "id": "test-repo-id",
+      "name": "test-repo-name",
+      "full_name": "example/test-repo-name",
+      "html_url": "test-repo-url",
+      "owner": {
+        "login": "test-repo-owner"
+      }
+    },
+    "sender": {
+      "type": "User",
+      "login": "TestUser"
+    },
+    "installation": {
+      "id": "test-installation-id"
+    }
+  }
+}
