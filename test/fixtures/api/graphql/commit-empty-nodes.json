@@ -1,0 +1,13 @@
+{
+  "data": {
+    "repository": {
+      "ref": {
+        "target": {
+          "history": {
+            "edges": []
+          }
+        }
+      }
+    }
+  }
+}
