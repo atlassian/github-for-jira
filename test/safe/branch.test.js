@@ -63,7 +63,10 @@ describe('GitHub Actions', () => {
             ],
             updateSequenceId: 12345678
           }
-        ]
+        ],
+        properties: {
+          installationId: 'test-installation-id'
+        }
       }))
     })
     it('should not update Jira issue if there are no issue Keys in the branch name', async () => {
