@@ -18,7 +18,7 @@ describe('sync/pull-request', () => {
     jiraHost = process.env.ATLASSIAN_URL
     jiraApi = td.api('https://test-atlassian-instance.net')
 
-    installationId = 1
+    installationId = 'test-installation-id'
     Date.now = jest.fn(() => 12345678)
 
     td.when(models.Subscription.getSingleInstallation(jiraHost, installationId))
@@ -58,7 +58,8 @@ describe('sync/pull-request', () => {
               id: 96,
               issueKeys: ['TES-15'],
               lastUpdate: '2018-08-23T21:38:05Z',
-              sourceBranch: 'https://github.com/tcbyrd/testrepo/tree/evernote-test',
+              sourceBranch: 'evernote-test',
+              sourceBranchUrl: 'https://github.com/tcbyrd/testrepo/tree/evernote-test',
               status: 'OPEN',
               timestamp: '2018-08-23T21:38:05Z',
               title: '[TES-15] Evernote test',
@@ -68,7 +69,10 @@ describe('sync/pull-request', () => {
           ],
           updateSequenceId: 12345678
         }
-      ]
+      ],
+      properties: {
+        installationId: 'test-installation-id'
+      }
     }))
   })
 
@@ -103,7 +107,8 @@ describe('sync/pull-request', () => {
               id: 96,
               issueKeys: ['TES-15'],
               lastUpdate: '2018-08-23T21:38:05Z',
-              sourceBranch: 'https://github.com/tcbyrd/testrepo/tree/evernote-test',
+              sourceBranch: 'evernote-test',
+              sourceBranchUrl: 'https://github.com/tcbyrd/testrepo/tree/evernote-test',
               status: 'OPEN',
               timestamp: '2018-08-23T21:38:05Z',
               title: '[TES-15] Evernote test',
@@ -113,7 +118,10 @@ describe('sync/pull-request', () => {
           ],
           updateSequenceId: 12345678
         }
-      ]
+      ],
+      properties: {
+        installationId: 'test-installation-id'
+      }
     }))
   })
 

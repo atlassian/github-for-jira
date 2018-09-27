@@ -1,0 +1,82 @@
+{
+  "data": {
+    "repository": {
+      "ref": {
+        "target": {
+          "history": {
+            "edges": [
+              {
+                "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 97",
+                "node": {
+                  "author": {
+                    "avatarUrl": "test-author-url",
+                    "name": "test-author-name",
+                    "user": {
+                      "url": "https://github.com/test-login"
+                    }
+                  },
+                  "authoredDate": "test-authored-date",
+                  "changedFiles": 3,
+                  "message": "[TES-17] test-commit-message",
+                  "oid": "test-oid",
+                  "url": "https://github.com/test-login/test-repo/commit/test-sha"
+                }
+              },
+              {
+                "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 98",
+                "node": {
+                  "author": {
+                    "avatarUrl": "test-author-url",
+                    "name": "test-author-name",
+                    "user": {
+                      "url": "https://github.com/test-login"
+                    }
+                  },
+                  "authoredDate": "test-authored-date",
+                  "changedFiles": 2,
+                  "message": "[TES-15] another test-commit-message",
+                  "oid": "test-oid",
+                  "url": "https://github.com/test-login/test-repo/commit/test-sha"
+                }
+              },
+              {
+                "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
+                "node": {
+                  "author": {
+                    "avatarUrl": "test-author-url",
+                    "name": "test-author-name",
+                    "user": {
+                      "url": "https://github.com/test-login"
+                    }
+                  },
+                  "authoredDate": "test-authored-date",
+                  "changedFiles": 2,
+                  "message": "TES-14-TES-15 message with multiple keys",
+                  "oid": "test-oid",
+                  "url": "https://github.com/test-login/test-repo/commit/test-sha"
+                }
+              },
+              {
+                "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
+                "node": {
+                  "author": {
+                    "avatarUrl": "test-author-url",
+                    "name": "test-author-name",
+                    "user": {
+                      "url": "https://github.com/test-login"
+                    }
+                  },
+                  "authoredDate": "test-authored-date",
+                  "changedFiles": 2,
+                  "message": "message with no issue keys",
+                  "oid": "test-oid",
+                  "url": "https://github.com/test-login/test-repo/commit/test-sha"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

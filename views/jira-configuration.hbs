@@ -47,7 +47,23 @@
                     <td>
                       <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
                       <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
-                      <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">Sync</button>
+                    </td>
+                  </tr>
+                {{/each}}
+                {{#each failedConnections}}
+                  <tr>
+                    <td class="error-message">
+                      #{{ id }}
+                      {{#if deleted}}
+                        This installation seems to be removed from GitHub but not from the database
+                      {{else}}
+                        There was an error getting the information of this installation
+                      {{/if}}
+                    </td>
+                    <td></td>
+                    <td>{{ updated_at }}</td>
+                    <td>
+                      <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
                     </td>
                   </tr>
                 {{/each}}
@@ -78,7 +94,6 @@
             </div>
           {{/if}}
         </section>
-        <script src="/public/js/script.js"></script>
       </div>
       <script>
         /* globals $, AP */
