@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="ap-local-base-url" content="{{localBaseUrl}}">
-  <title>{{title}}</title>
+  <title>Setup</title>
   <link rel="stylesheet" href="/public/primer/build.css" media="all" />
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 </head>
@@ -17,15 +17,24 @@
 
     <form method="post" action="/github/setup">
       <div class="input-group">
-        <input class="form-control input-lg" type="text" name="jiraHost" required placeholder="Jira Cloud Site"
-          aria-label="Jira Cloud Site" autofocus>
-        <strong class="input-group-button pl-2 pr-2 border">
-          .atlassian.net
-        </strong>
+        <input class="form-control input-lg" type="text" name="jiraSubdomain" placeholder="Jira Cloud Site"
+          aria-label="Jira Cloud Site" value="{{jiraSubdomain}}" autofocus>
+        <span class="input-group-button">
+          <select name="jiraDomain" class="form-select" aria-label="Preference">
+            {{#each jiraDomainOptions}}
+              <option {{#if selected}}selected{{/if}}>{{value}}</option>
+            {{/each}}
+          </select>
+        </span>
       </div>
       <p class="pt-2">
         <button class="btn btn-primary" type="submit">Continue</button>
       </p>
+      {{#if error}}
+        <div class="flash flash-error mb-2">
+          {{error}}
+        </div>
+      {{/if}}
     </form>
   </section>
 </body>
