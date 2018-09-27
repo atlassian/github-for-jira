@@ -30,6 +30,8 @@
                   <th>Repositories</th>
                   <th>Added</th>
                   <th></th>
+                  <th>Sync Status</th>
+                  <th>Retry</th>
                 </tr>
               </thead>
               <tbody>
@@ -47,6 +49,12 @@
                     <td>
                       <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
                       <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
+                    </td>
+                    <td>
+                      <span id="{{id}}-status"> {{ syncStatus }} </span> 
+                    </td>
+                    <td>
+                      <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">🔄</button>
                     </td>
                   </tr>
                 {{/each}}
