@@ -31,7 +31,7 @@ TODO: Change staging to production and add in images.
 2. Open the left sidebar by clicking on **Personal Settings**, if the left side bar is not already open. From the left sidebar in Jira, select **Jira Settings** -> **Add-ons** -> **Manage add-ons**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar.)
 3. Scroll down to beneath the User-installed add-ons table and select **Settings**.
 4. On the Settings pop-up, add **Enable development mode** and click **Apply**.
-5. From the right header, select **Upload add-on** and enter `https://jira-integration-production.herokuapp.com//jira/atlassian-connect.json`.
+5. From the right header, select **Upload add-on** and enter `https://jira-integration-production.herokuapp.com/jira/atlassian-connect.json`.
 6. Click **Upload**.
 7. Click the **Get Started** button to connect your GitHub account.
 
