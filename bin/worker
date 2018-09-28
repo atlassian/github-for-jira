@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 require('dotenv').config()
 
+if (process.env.NEWRELIC_KEY) {
+  require('newrelic')
+}
+
 const worker = require('../lib/worker')
 
 worker.start()
