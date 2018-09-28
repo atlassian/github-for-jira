@@ -32,7 +32,8 @@ describe('sync/commits', () => {
         id: 1,
         get: () => repoSyncStateFixture,
         set: () => repoSyncStateFixture,
-        save: () => Promise.resolve({})
+        save: () => Promise.resolve({}),
+        update: () => Promise.resolve({})
       })
   })
 
