@@ -80,6 +80,7 @@ describe('sync/commits', () => {
             }
           ],
           id: 'test-repo-id',
+          url: 'test-repo-url',
           updateSequenceId: 12345678
         }
       ],
@@ -166,6 +167,7 @@ describe('sync/commits', () => {
             }
           ],
           id: 'test-repo-id',
+          url: 'test-repo-url',
           updateSequenceId: 12345678
         }
       ],

@@ -12,7 +12,7 @@ describe('sync/pull-request', () => {
     repository = {
       name: 'test',
       owner: { login: 'integrations' },
-      html_url: 'https://github.com/tcbyrd/testrepo'
+      html_url: 'test-repo-url'
     }
 
     jiraHost = process.env.ATLASSIAN_URL
@@ -53,13 +53,13 @@ describe('sync/pull-request', () => {
                 url: 'https://github.com/tcbyrd'
               },
               commentCount: 0,
-              destinationBranch: 'https://github.com/tcbyrd/testrepo/tree/master',
+              destinationBranch: 'test-repo-url/tree/master',
               displayId: '#96',
               id: 96,
               issueKeys: ['TES-15'],
               lastUpdate: '2018-08-23T21:38:05Z',
               sourceBranch: 'evernote-test',
-              sourceBranchUrl: 'https://github.com/tcbyrd/testrepo/tree/evernote-test',
+              sourceBranchUrl: 'test-repo-url/tree/evernote-test',
               status: 'OPEN',
               timestamp: '2018-08-23T21:38:05Z',
               title: '[TES-15] Evernote test',
@@ -67,6 +67,7 @@ describe('sync/pull-request', () => {
               updateSequenceId: 12345678
             }
           ],
+          url: 'test-repo-url',
           updateSequenceId: 12345678
         }
       ],
@@ -102,13 +103,13 @@ describe('sync/pull-request', () => {
                 url: 'https://github.com/tcbyrd'
               },
               commentCount: 0,
-              destinationBranch: 'https://github.com/tcbyrd/testrepo/tree/master',
+              destinationBranch: 'test-repo-url/tree/master',
               displayId: '#96',
               id: 96,
               issueKeys: ['TES-15'],
               lastUpdate: '2018-08-23T21:38:05Z',
               sourceBranch: 'evernote-test',
-              sourceBranchUrl: 'https://github.com/tcbyrd/testrepo/tree/evernote-test',
+              sourceBranchUrl: 'test-repo-url/tree/evernote-test',
               status: 'OPEN',
               timestamp: '2018-08-23T21:38:05Z',
               title: '[TES-15] Evernote test',
@@ -116,6 +117,7 @@ describe('sync/pull-request', () => {
               updateSequenceId: 12345678
             }
           ],
+          url: 'test-repo-url',
           updateSequenceId: 12345678
         }
       ],
