@@ -16,7 +16,6 @@
                     }
                   },
                   "authoredDate": "test-authored-date",
-                  "changedFiles": 3,
                   "message": "[TES-17] test-commit-message",
                   "oid": "test-oid",
                   "url": "https://github.com/test-login/test-repo/commit/test-sha"

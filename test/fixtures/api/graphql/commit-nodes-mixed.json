@@ -33,7 +33,6 @@
                     }
                   },
                   "authoredDate": "test-authored-date",
-                  "changedFiles": 2,
                   "message": "[TES-15] another test-commit-message",
                   "oid": "test-oid",
                   "url": "https://github.com/test-login/test-repo/commit/test-sha"
@@ -50,7 +49,6 @@
                     }
                   },
                   "authoredDate": "test-authored-date",
-                  "changedFiles": 2,
                   "message": "TES-14-TES-15 message with multiple keys",
                   "oid": "test-oid",
                   "url": "https://github.com/test-login/test-repo/commit/test-sha"
@@ -67,7 +65,6 @@
                     }
                   },
                   "authoredDate": "test-authored-date",
-                  "changedFiles": 2,
                   "message": "message with no issue keys",
                   "oid": "test-oid",
                   "url": "https://github.com/test-login/test-repo/commit/test-sha"
