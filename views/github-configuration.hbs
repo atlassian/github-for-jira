@@ -6,9 +6,10 @@
     <meta name="ap-local-base-url" content="{{localBaseUrl}}">
     <title>{{title}}</title>
     <link rel="stylesheet" href="/public/primer/build.css" media="all" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="/public/js/jquery.min.js"></script>
   </head>
   <body class="bg-gray px-3 py-6">
+    <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
     <section class="mx-auto" style="max-width: 510px">
       <h2 class="f2 text-center text-normal">Connect an organization to Jira</h2>
       <p class="text-gray text-center mb-4">Which organization do you want to connect to?</p>
@@ -29,16 +30,6 @@
         <a href="{{ info.html_url }}/installations/new">Install {{ info.name }}</a>.
       </p>
     </section>
-    <script>
-      $('.install-link').click(function (event) {
-        event.preventDefault();
-
-        $.post('/github/configuration', {
-          installationId: $(event.target).data('installation-id')
-        }, function (data) {
-          window.close()
-        });
-      });
-    </script>
+    <script src="/public/js/github-configuration.js"></script>
   </body>
 </html>

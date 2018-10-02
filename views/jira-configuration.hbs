@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
     <link rel="stylesheet" href="/public/atlassian-ui-kit/bundle.css" media="all" />
     <link rel="stylesheet" href="/public/css/styles.css" media="all" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="/public/js/jquery.min.js"></script>
   </head>
   <body class="aui-page-hybrid">
     <div class="ac-content">
@@ -51,7 +51,7 @@
                       <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
                     </td>
                     <td>
-                      <span id="{{id}}-status"> {{ syncStatus }} </span> 
+                      <span id="{{id}}-status"> {{ syncStatus }} </span>
                     </td>
                     <td>
                       <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">🔄</button>
@@ -86,73 +86,7 @@
           {{/if}}
         </section>
       </div>
-      <script>
-        /* globals $, AP */
-        const params = new URLSearchParams(window.location.search.substring(1))
-
-        $('.add-organization-link').click(function (event) {
-          event.preventDefault()
-
-          const child = window.open(`/github/redirect?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`)
-
-          const interval = setInterval(function () {
-            if (child.closed) {
-              clearInterval(interval)
-
-              AP.navigator.reload()
-            }
-          }, 100)
-        })
-
-        $('.configure-connection-link').click(function (event) {
-          event.preventDefault()
-
-          const installationLink = $(event.target).data('installation-link')
-          const child = window.open(installationLink)
-
-          const interval = setInterval(function () {
-            if (child.closed) {
-              clearInterval(interval)
-
-              AP.navigator.reload()
-            }
-          }, 100)
-        })
-
-        $('.delete-connection-link').click(function (event) {
-          event.preventDefault()
-
-          $.ajax({
-            type: 'DELETE',
-            url: `/jira/configuration?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`,
-            data: {
-              installationId: $(event.target).data('installation-id')
-            },
-            success: function (data) {
-              AP.navigator.reload()
-            }
-          })
-        })
-
-        $('.sync-connection-link').click(function (event) {
-          event.preventDefault()
-
-          $.ajax({
-            type: 'GET',
-            url: `/jira/sync`,
-            data: {
-              installationId: $(event.target).data('installation-id'),
-              host: $(event.target).data('jira-host')
-            },
-            success: function (data) {
-              AP.navigator.reload()
-            },
-            error: function (error) {
-              console.log(error)
-            }
-          })
-        })
-      </script>
+      <script src="/public/js/jira-configuration.js"></script>
     </div>
     <script src="{{host}}/atlassian-connect/all.js"></script>
   </body>
