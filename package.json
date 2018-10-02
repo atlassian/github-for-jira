@@ -23,6 +23,7 @@
     "express": "^4.16.3",
     "express-sslify": "^1.2.0",
     "github-oauth": "^0.2.2",
+    "helmet": "^3.13.0",
     "newrelic": "^4.8.1",
     "pg": "^7.4.3",
     "primer": "^10.6.0",
