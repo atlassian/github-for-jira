@@ -11,6 +11,7 @@
     },
     "repository": {
       "name": "test-repo-name",
+      "html_url": "test-repo-url",
       "owner": {
         "login": "test-repo-owner"
       }
