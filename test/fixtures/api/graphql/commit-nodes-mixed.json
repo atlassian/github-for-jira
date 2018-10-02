@@ -9,11 +9,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 97",
                 "node": {
                   "author": {
-                    "avatarUrl": "test-author-url",
-                    "name": "test-author-name",
-                    "user": {
-                      "url": "https://github.com/test-login"
-                    }
+                    "name": "test-author-name"
                   },
                   "authoredDate": "test-authored-date",
                   "changedFiles": 3,
@@ -26,11 +22,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 98",
                 "node": {
                   "author": {
-                    "avatarUrl": "test-author-url",
-                    "name": "test-author-name",
-                    "user": {
-                      "url": "https://github.com/test-login"
-                    }
+                    "name": "test-author-name"
                   },
                   "authoredDate": "test-authored-date",
                   "message": "[TES-15] another test-commit-message",
@@ -42,11 +34,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
                 "node": {
                   "author": {
-                    "avatarUrl": "test-author-url",
-                    "name": "test-author-name",
-                    "user": {
-                      "url": "https://github.com/test-login"
-                    }
+                    "name": "test-author-name"
                   },
                   "authoredDate": "test-authored-date",
                   "message": "TES-14-TES-15 message with multiple keys",
@@ -58,11 +46,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
                 "node": {
                   "author": {
-                    "avatarUrl": "test-author-url",
-                    "name": "test-author-name",
-                    "user": {
-                      "url": "https://github.com/test-login"
-                    }
+                    "name": "test-author-name"
                   },
                   "authoredDate": "test-authored-date",
                   "message": "message with no issue keys",

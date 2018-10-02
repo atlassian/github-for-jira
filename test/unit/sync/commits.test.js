@@ -63,9 +63,7 @@ describe('sync/commits', () => {
           commits: [
             {
               author: {
-                avatar: 'test-author-url',
-                name: 'test-author-name',
-                url: 'https://github.com/test-login'
+                name: 'test-author-name'
               },
               authorTimestamp: 'test-authored-date',
               displayId: 'test-o',
@@ -115,9 +113,7 @@ describe('sync/commits', () => {
           commits: [
             {
               author: {
-                avatar: 'test-author-url',
-                name: 'test-author-name',
-                url: 'https://github.com/test-login'
+                name: 'test-author-name'
               },
               authorTimestamp: 'test-authored-date',
               displayId: 'test-o',
@@ -132,9 +128,7 @@ describe('sync/commits', () => {
             },
             {
               author: {
-                avatar: 'test-author-url',
-                name: 'test-author-name',
-                url: 'https://github.com/test-login'
+                name: 'test-author-name'
               },
               authorTimestamp: 'test-authored-date',
               displayId: 'test-o',
@@ -149,9 +143,7 @@ describe('sync/commits', () => {
             },
             {
               author: {
-                avatar: 'test-author-url',
-                name: 'test-author-name',
-                url: 'https://github.com/test-login'
+                name: 'test-author-name'
               },
               authorTimestamp: 'test-authored-date',
               displayId: 'test-o',

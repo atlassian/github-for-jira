@@ -9,11 +9,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
                 "node": {
                   "author": {
-                    "avatarUrl": "test-author-url",
-                    "name": "test-author-name",
-                    "user": {
-                      "url": "https://github.com/test-login"
-                    }
+                    "name": "test-author-name"
                   },
                   "authoredDate": "test-authored-date",
                   "message": "test-commit-message",
