@@ -16,6 +16,7 @@
     <p class="text-gray text-center mb-4">What's your Jira Cloud Site?</p>
 
     <form method="post" action="/github/setup">
+      <input type="hidden" name="_csrf" value="{{csrfToken}}">
       <div class="input-group">
         <input class="form-control input-lg" type="text" name="jiraSubdomain" placeholder="Jira Cloud Site"
           aria-label="Jira Cloud Site" value="{{jiraSubdomain}}" autofocus>
