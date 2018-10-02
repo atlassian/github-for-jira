@@ -63,6 +63,7 @@ describe('sync/commits', () => {
           commits: [
             {
               author: {
+                email: 'test-author-email@example.com',
                 name: 'test-author-name'
               },
               authorTimestamp: 'test-authored-date',
@@ -113,6 +114,7 @@ describe('sync/commits', () => {
           commits: [
             {
               author: {
+                email: 'test-author-email@example.com',
                 name: 'test-author-name'
               },
               authorTimestamp: 'test-authored-date',
@@ -128,6 +130,7 @@ describe('sync/commits', () => {
             },
             {
               author: {
+                email: 'test-author-email@example.com',
                 name: 'test-author-name'
               },
               authorTimestamp: 'test-authored-date',
@@ -143,6 +146,7 @@ describe('sync/commits', () => {
             },
             {
               author: {
+                email: 'test-author-email@example.com',
                 name: 'test-author-name'
               },
               authorTimestamp: 'test-authored-date',

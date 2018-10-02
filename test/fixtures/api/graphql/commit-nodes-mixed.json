@@ -9,6 +9,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 97",
                 "node": {
                   "author": {
+                    "email": "test-author-email@example.com",
                     "name": "test-author-name"
                   },
                   "authoredDate": "test-authored-date",
@@ -22,6 +23,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 98",
                 "node": {
                   "author": {
+                    "email": "test-author-email@example.com",
                     "name": "test-author-name"
                   },
                   "authoredDate": "test-authored-date",
@@ -34,6 +36,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
                 "node": {
                   "author": {
+                    "email": "test-author-email@example.com",
                     "name": "test-author-name"
                   },
                   "authoredDate": "test-authored-date",
@@ -46,6 +49,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
                 "node": {
                   "author": {
+                    "email": "test-author-email@example.com",
                     "name": "test-author-name"
                   },
                   "authoredDate": "test-authored-date",
