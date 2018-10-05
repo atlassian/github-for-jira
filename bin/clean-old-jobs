@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+require('dotenv').config()
+
+const worker = require('../lib/worker')
+
+worker.clean().then(() => {
+  console.log('Failed and completed jobs cleaned')
+  process.exit(1)
+}).catch((err) => {
+  console.error('Error cleaning queues:', {err})
+  process.exit(1)
+})
