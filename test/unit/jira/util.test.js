@@ -1,4 +1,5 @@
 const getJiraUtil = require('../../../lib/jira/util')
+const { getJiraId } = require('../../../lib/jira/util/id')
 
 describe('Jira util', () => {
   describe('#addJiraIssueLinks', () => {
@@ -54,5 +55,10 @@ describe('Jira util', () => {
 
       expect(result).toBe('Should linkify [TEST-200 Another Example Issue](http://example.com/browse/TEST-200) and not [TEST-100] as a link')
     })
+  })
+
+  describe('#getJiraId', () => {
+    expect(getJiraId('AP-3-large_push')).toEqual('AP-3-large_push')
+    expect(getJiraId('AP-3-large_push/foobar')).toEqual('~41502d332d6c617267655f707573682f666f6f626172')
   })
 })
