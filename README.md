@@ -25,24 +25,27 @@ Connect your code with your project management in Jira. A separate Jira subscrip
 This app officially supports GitHub.com and Jira Cloud. Support for GitHub Enterprise and/or Jira server may be considered in the future.
 
 ### Installation from Atlassian
-TODO: Change staging to production and add in images.
-
 1. Sign into your Jira Cloud account
-2. Open the left sidebar by clicking on **Personal Settings**, if the left side bar is not already open. From the left sidebar in Jira, select **Jira Settings** -> **Add-ons** -> **Manage add-ons**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar.)
-3. Scroll down to beneath the User-installed add-ons table and select **Settings**.
-4. On the Settings pop-up, add **Enable development mode** and click **Apply**.
-5. From the right header, select **Upload add-on** and enter `https://jira-integration-production.herokuapp.com/jira/atlassian-connect.json`.
-6. Click **Upload**.
+2. Open the left sidebar by clicking on **Personal Settings**, if the left side bar is not already open. From the left sidebar in Jira, select **Jira Settings** -> **Add-ons** -> **Find new add-ons**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar.)
+3. Search for **GitHub for Jira** and Click **Install**
+![image](https://user-images.githubusercontent.com/13207348/46588299-08550800-ca68-11e8-8ed4-290533320ef4.png)
 7. Click the **Get Started** button to connect your GitHub account.
 
-Next you will need to connext up your GitHub organization to Jira, see the following steps.
+Next you will need to connect your GitHub organization to Jira, see the following steps.
 
-### Installation from 
-1. Go to https://github.com/marketplace/jira-github
-2. ... TODO.
+### Installation from GitHub Marketplace
+1. Go to https://github.com/marketplace/jira-software-github
+2. Complete the (free) order for your GitHub Organization
+3. On the installation setting screen, choose which repositories you want to use with the Jira Integration and press **Save**:
+![image](https://user-images.githubusercontent.com/13207348/46588321-4baf7680-ca68-11e8-872a-a6d48924d655.png)
+4. Once installation completes, you will be redirected to https://jira.github.com/github/setup. Enter the site name for your Jira instance here and click **Continue**
+5. Once on the Atlassian add-on page, click **Install**.
+6. Once the add-on is installed, click the **Get Started** button.
 
 ### Connecting your GitHub organization to Jira
-As part of the installation flow you should be directed to install the Jira app on GitHub to your organization. You can also manage existing connections or add additional organizations any time within the Manage Add-ons section of your Jira settings.
+As part of the installation flow you should be directed to install the Jira app on GitHub to your organization. You can also manage existing connections or add additional organizations any time within the Manage Add-ons section of your Jira settings:
+![image](https://user-images.githubusercontent.com/13207348/46588391-633b2f00-ca69-11e8-9c50-4249054b0cfa.png)
+
 
 #### Selecting GitHub repositories
 If you originally gave the app access to "All repositories" and you've created a new repository on GitHub after installing the GitHub integration for Jira, your new repository will automatically work with the integration. If you installed the app on a subset of repositories, the app will need to manually edit your repository selection by:
@@ -54,13 +57,13 @@ If you originally gave the app access to "All repositories" and you've created a
 By granting the app access, you are providing the following authorizations to your GitHub and Jira accounts:
 
 #### Jira Permission Scopes
-Currently the app requires no permission on Jira.
+Read, Write, and Admin for Development Information (branches, commits, and pull requests)
 
 #### GitHub Permission Scopes
 
 |Permission scope|Why we need it|
 |---|---|
-|**Read** access to metadata| To sync development information to Jira|
+|**Read** access to code & metadata | To sync development information to Jira|
 |**Read** and **write** access to issues and pull requests| To power Smart Commit actions and unfurl Jira URLs|
 
 ## Using the integration
@@ -69,7 +72,11 @@ Currently the app requires no permission on Jira.
 To access the development information in Jira...
 
 ### Take action using Smart Commits
-Smart commits are documented on the [Atlassian site](https://confluence.atlassian.com/fisheye/using-smart-commits-298976812.html) and allow to you comment on issues on the commit messages. For example: `[JRA-123] fix typo` will be sent through to Jira.
+Smart commits are documented on the [Atlassian site](https://confluence.atlassian.com/fisheye/using-smart-commits-298976812.html) and allow to you comment on Jira issue in commit messages, branches, and pull requests. For example: `[JRA-123] fix typo` will be sent through to Jira and appear in the Development Information section of the Jira issue with the key `JRA-123`
+
+> example
+![image](https://user-images.githubusercontent.com/13207348/46588447-61be3680-ca6a-11e8-9976-ba3d1d3c42bf.png)
+
 
 ## Migrating from the DVCS connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
