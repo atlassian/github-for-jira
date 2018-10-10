@@ -29,6 +29,11 @@
         Don't see your organization?
         <a href="{{ info.html_url }}/installations/new">Install {{ info.name }}</a>.
       </p>
+      <p class="text-gray text-center my-4">
+        <strong>Please note</strong>: we currently sync data from all repositories you've selected in the GitHub App's installation settings.
+        If there a large number of repositories in the installation, initial data sync will take some time to complete.
+        To review the repositories you've selected for an installation, <a href="{{ info.html_url }}/installations">click here.</a>
+      </p>
     </section>
     <script src="/public/js/github-configuration.js"></script>
   </body>
