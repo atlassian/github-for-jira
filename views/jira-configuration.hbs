@@ -16,10 +16,12 @@
         <header class="title">
           <h1>GitHub configuration</h1>
         </header>
-
+        
+        {{#if hasConnections}}
         <nav class="actions">
-          <button class="ak-button ak-button__appearance-primary add-organization-link">Add an organization</button>
+            <button class="ak-button ak-button__appearance-primary add-organization-link">Add an organization</button>
         </nav>
+        {{/if}}
 
         <section class="content">
           {{#if hasConnections}}
@@ -81,10 +83,16 @@
             <div class="empty-message">
               <h4>You don't have any connected GitHub organizations. Let's fix that!</h4>
               <p>You'll be redirected to GitHub to select the organizations and repositories you'd like to connect with Jira.</p>
-              <button class="ak-button ak-button__appearance-primary add-organization-link">Add an organization</button>
+              <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
             </div>
           {{/if}}
         </section>
+
+        {{#if hasConnections}}
+           <p>Metadata for commits, branches, and pull requests that use the <a href="https://confluence.atlassian.com/jirasoftwarecloud/processing-issues-with-smart-commits-788960027.html">Smart Commit syntax</a>
+           will be synced to Jira and appear in the <a href="https://confluence.atlassian.com/jirasoftwarecloud/viewing-the-development-information-for-an-issue-777002795.html">Development Information panel</a>
+           of the relevant issue.</p>
+        {{/if}}
       </div>
       <script src="/public/js/jira-configuration.js"></script>
     </div>
