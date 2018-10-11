@@ -22,6 +22,12 @@ describe('GitHub Actions', () => {
           id: 'test-issue-id'
         }))
       })
+
+      it('should not break if the issue has a null body', async () => {
+        const payload = require('../fixtures/issue-null-body.json')
+        // should not throw
+        await app.receive(payload)
+      })
     })
   })
 })
