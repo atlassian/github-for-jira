@@ -1,0 +1,25 @@
+{
+  "event": "issues",
+  "payload": {
+    "action": "opened",
+    "issue": {
+      "id": "test-issue-id",
+      "number": 123456789,
+      "body": null
+    },
+    "repository": {
+      "name": "test-repo-name",
+      "html_url": "test-repo-url",
+      "owner": {
+        "login": "test-repo-owner"
+      }
+    },
+    "sender": {
+      "type": "User",
+      "login": "TestUser"
+    },
+    "installation": {
+      "id": "test-installation-id"
+    }
+  }
+}
