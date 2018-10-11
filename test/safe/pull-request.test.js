@@ -75,5 +75,22 @@ describe('GitHub Actions', () => {
         }
       }))
     })
+
+    it('should not update the Jira issue if the source repo of a pull_request was deleted', async () => {
+      const payload = require('../fixtures/pull-request-null-repo.json')
+
+      const githubApi = td.api('https://api.github.com')
+
+      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+        login: 'test-pull-request-author-login',
+        avatar_url: 'test-pull-request-author-avatar',
+        html_url: 'test-pull-request-author-url'
+      })
+
+      Date.now = jest.fn(() => 12345678)
+
+      // should not throw
+      await app.receive(payload)
+    })
   })
 })
