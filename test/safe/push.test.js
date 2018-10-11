@@ -271,6 +271,9 @@ describe('GitHub Actions', () => {
       td.when(jiraApi.post(), { ignoreExtraArgs: true })
         .thenThrow(new Error('Should not make any changes to Jira.'))
 
+      td.when(githubApi.get(), { ignoreExtraArgs: true })
+        .thenThrow(new Error('Should not make any API request to GitHub.'))
+
       await app.receive(payload)
     })
   })
