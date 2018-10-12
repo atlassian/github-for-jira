@@ -173,97 +173,212 @@ describe('GitHub Actions', () => {
       }))
     })
 
-    it('should run a #comment command in the commit message', async () => {
-      const payload = require('../fixtures/push-comment.json')
-
-      await app.receive(payload)
-
-      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
-        body: 'This is a comment'
-      }))
-    })
-
-    it('should run a #time command in the commit message', async () => {
-      const payload = require('../fixtures/push-worklog.json')
-
-      await app.receive(payload)
-
-      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/worklog', {
-        timeSpentSeconds: td.matchers.isA(Number),
-        comment: 'This is a worklog'
-      }))
-    })
-
-    it('should run a transition command in the commit message', async () => {
-      const payload = require('../fixtures/push-transition.json')
-
-      td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
-        .thenReturn({
-          transitions: [
-            {
-              id: 'test-transition-id',
-              name: 'Resolve'
-            }
-          ]
-        })
-
-      await app.receive(payload)
-
-      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
-        transition: {
-          id: 'test-transition-id'
-        }
-      }))
-    })
-
-    it('should run a transition command in the commit message', async () => {
-      const payload = require('../fixtures/push-transition-comment.json')
-
-      td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
-        .thenReturn({
-          transitions: [
-            {
-              id: 'test-transition-id',
-              name: 'Resolve'
-            }
-          ]
-        })
-
-      await app.receive(payload)
-
-      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
-        transition: {
-          id: 'test-transition-id'
-        }
-      }))
-
-      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
-        body: 'This is a transition'
-      }))
-    })
-
-    it('should run commands on all issues in the commit message', async () => {
+    it('should only send 10 files if push contains more than 10 files changed', async () => {
       const payload = require('../fixtures/push-multiple.json')
 
+      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
+        .thenReturn(require('../fixtures/more-than-10-files.json'))
+
+      Date.now = jest.fn(() => 12345678)
       await app.receive(payload)
 
-      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
-        body: 'This is a comment'
-      }))
-
-      td.verify(jiraApi.post('/rest/api/latest/issue/TEST-246/comment', {
-        body: 'This is a comment'
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+        preventTransitions: false,
+        repositories: [
+          {
+            name: 'example/test-repo-name',
+            url: 'test-repo-url',
+            id: 'test-repo-id',
+            commits: [
+              {
+                hash: 'test-commit-id',
+                message: 'TEST-123 TEST-246 #comment This is a comment',
+                author: {
+                  avatar: 'https://github.com/test-commit-author-username.png',
+                  url: 'https://github.com/test-commit-author-username'
+                },
+                displayId: 'test-c',
+                fileCount: 12,
+                files: [
+                  {
+                    path: 'test-modified',
+                    changeType: 'MODIFIED',
+                    linesAdded: 10,
+                    linesRemoved: 2,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
+                  },
+                  {
+                    path: 'test-added-1',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-added-2',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-added-3',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-added-4',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-added-5',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-added-6',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-added-7',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-added-8',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  },
+                  {
+                    path: 'test-added-9',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+                  }
+                ],
+                id: 'test-commit-id',
+                issueKeys: ['TEST-123', 'TEST-246'],
+                updateSequenceId: 12345678
+              }
+            ],
+            updateSequenceId: 12345678
+          }
+        ],
+        properties: {
+          installationId: 'test-installation-id'
+        }
       }))
     })
 
-    it('should not run a command without a Jira issue', async () => {
-      const payload = require('../fixtures/push-no-issues.json')
+    // Commenting these out for the moment. DevInfo API runs these
+    // transitions automatially based on the commit message, but we may
+    // use them elsewhere for manual transitions
+    // it('should run a #comment command in the commit message', async () => {
+    //   const payload = require('../fixtures/push-comment.json')
 
-      td.when(jiraApi.post(), { ignoreExtraArgs: true })
-        .thenThrow(new Error('Should not make any changes to Jira.'))
+    //   await app.receive(payload)
 
-      await app.receive(payload)
-    })
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+    //     body: 'This is a comment'
+    //   }))
+    // })
+
+    // it('should run a #time command in the commit message', async () => {
+    //   const payload = require('../fixtures/push-worklog.json')
+
+    //   await app.receive(payload)
+
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/worklog', {
+    //     timeSpentSeconds: td.matchers.isA(Number),
+    //     comment: 'This is a worklog'
+    //   }))
+    // })
+
+    // it('should run a transition command in the commit message', async () => {
+    //   const payload = require('../fixtures/push-transition.json')
+
+    //   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
+    //     .thenReturn({
+    //       transitions: [
+    //         {
+    //           id: 'test-transition-id',
+    //           name: 'Resolve'
+    //         }
+    //       ]
+    //     })
+
+    //   await app.receive(payload)
+
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
+    //     transition: {
+    //       id: 'test-transition-id'
+    //     }
+    //   }))
+    // })
+
+    // it('should run a transition command in the commit message', async () => {
+    //   const payload = require('../fixtures/push-transition-comment.json')
+
+    //   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
+    //     .thenReturn({
+    //       transitions: [
+    //         {
+    //           id: 'test-transition-id',
+    //           name: 'Resolve'
+    //         }
+    //       ]
+    //     })
+
+    //   await app.receive(payload)
+
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
+    //     transition: {
+    //       id: 'test-transition-id'
+    //     }
+    //   }))
+
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+    //     body: 'This is a transition'
+    //   }))
+    // })
+
+    // it('should run commands on all issues in the commit message', async () => {
+    //   const payload = require('../fixtures/push-multiple.json')
+
+    //   await app.receive(payload)
+
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+    //     body: 'This is a comment'
+    //   }))
+
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-246/comment', {
+    //     body: 'This is a comment'
+    //   }))
+    // })
+
+    // it('should not run a command without a Jira issue', async () => {
+    //   const payload = require('../fixtures/push-no-issues.json')
+
+    //   td.when(jiraApi.post(), { ignoreExtraArgs: true })
+    //     .thenThrow(new Error('Should not make any changes to Jira.'))
+
+    //   await app.receive(payload)
+    // })
 
     it('should support commits without smart commands', async () => {
       const payload = require('../fixtures/push-empty.json')
