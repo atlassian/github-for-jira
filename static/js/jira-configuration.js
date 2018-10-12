@@ -50,7 +50,8 @@ $('.sync-connection-link').click(function (event) {
 
   $.ajax({
     type: 'GET',
-    url: `/jira/sync`,
+    // TODO: make this work for real
+    url: `/jira/sync/tcbyrd/testrepo`,
     data: {
       installationId: $(event.target).data('installation-id'),
       host: $(event.target).data('jira-host')
