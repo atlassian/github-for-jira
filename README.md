@@ -77,6 +77,8 @@ Smart commits are documented on the [Atlassian site](https://confluence.atlassia
 > example
 ![image](https://user-images.githubusercontent.com/13207348/46588447-61be3680-ca6a-11e8-9976-ba3d1d3c42bf.png)
 
+### Link issues in GitHub
+If an issue body contains a Jira issue key, then the integration will try to expand the link. For example: `[JRA-123]` will be expanded into a link `JRA-123 fix typo` and linked over to Jira. Currently only keys surrounded by `[ ]` work. 
 
 ## Migrating from the DVCS connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
