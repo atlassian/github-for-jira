@@ -12,6 +12,7 @@ Connect your code with your project management in Jira. A separate Jira subscrip
 - [Using the integration](#using-the-integration)
   - [Development information in Jira](#development-information-in-jira)
   - [Take action using Smart Commits](#take-action-using-smart-commits)
+  - [Link issues in GitHub](#link-issues-in-github)
 - [Migrating from the DVCS connector](#migrating-from-the-dvcs-connector)
 - [Need help?](#questions-need-help)
 - [Contributing](#contributing)
