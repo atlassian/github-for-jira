@@ -12,6 +12,7 @@ Connect your code with your project management in Jira. A separate Jira subscrip
 - [Using the integration](#using-the-integration)
   - [Development information in Jira](#development-information-in-jira)
   - [Take action using Smart Commits](#take-action-using-smart-commits)
+  - [Link issues in GitHub](#link-issues-in-github)
 - [Migrating from the DVCS connector](#migrating-from-the-dvcs-connector)
 - [Need help?](#questions-need-help)
 - [Contributing](#contributing)
@@ -77,6 +78,8 @@ Smart commits are documented on the [Atlassian site](https://confluence.atlassia
 > example
 ![image](https://user-images.githubusercontent.com/13207348/46588447-61be3680-ca6a-11e8-9976-ba3d1d3c42bf.png)
 
+### Link issues in GitHub
+If an issue body contains a Jira issue key, then the integration will try to expand the link. For example: `[JRA-123]` will be expanded into a link `JRA-123 fix typo` and linked over to Jira. Currently only keys surrounded by `[ ]` work. 
 
 ## Migrating from the DVCS connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
