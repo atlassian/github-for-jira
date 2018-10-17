@@ -4,7 +4,7 @@ const params = new URLSearchParams(window.location.search.substring(1))
 $('.add-organization-link').click(function (event) {
   event.preventDefault()
 
-  const child = window.open(`/github/redirect?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`)
+  const child = window.open(`https://jira.tcbyrd.app/github/redirect?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`)
 
   const interval = setInterval(function () {
     if (child.closed) {
