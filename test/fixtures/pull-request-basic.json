@@ -16,6 +16,7 @@
       "number": "test-pull-request-number",
       "state": "open",
       "title": "[TEST-123] Test pull request.",
+      "body": "Issue key in PR body [TEST-456]",
       "comments": "test-pull-request-comment-count",
       "html_url": "test-pull-request-url",
       "head": {
