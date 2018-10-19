@@ -145,6 +145,7 @@ describe('sync/commits', () => {
             },
             {
               author: {
+                avatar: 'test-avatar-url',
                 email: 'test-author-email@example.com',
                 name: 'test-author-name'
               },
@@ -161,6 +162,7 @@ describe('sync/commits', () => {
             },
             {
               author: {
+                avatar: 'test-avatar-url',
                 email: 'test-author-email@example.com',
                 name: 'test-author-name'
               },
