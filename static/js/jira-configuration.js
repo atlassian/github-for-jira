@@ -54,7 +54,8 @@ $('.sync-connection-link').click(function (event) {
     url: `/jira/sync`,
     data: {
       installationId: $(event.target).data('installation-id'),
-      host: $(event.target).data('jira-host')
+      host: $(event.target).data('jira-host'),
+      _csrf: document.getElementById('_csrf').value
     },
     success: function (data) {
       AP.navigator.reload()

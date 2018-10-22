@@ -57,6 +57,7 @@
                       <span id="{{id}}-status"> {{ syncStatus }} </span>
                     </td>
                     <td>
+                      <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                       <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">🔄</button>
                     </td>
                   </tr>
