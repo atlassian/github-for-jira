@@ -1,6 +1,5 @@
 const { Application } = require('probot')
 const { findPrivateKey } = require('probot/lib/private-key')
-const cacheManager = require('cache-manager')
 const { createApp: createGitHubApp } = require('probot/lib/github-app')
 
 beforeEach(() => {
@@ -40,10 +39,6 @@ beforeEach(() => {
       id: 12257,
       cert: findPrivateKey()
     }),
-    cache: cacheManager.caching({
-      store: 'memory',
-      ttl: 60 * 60 // 1 hour
-    })
   }))
 })
 
