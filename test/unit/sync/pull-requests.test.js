@@ -4,18 +4,26 @@ describe('sync/pull-request', () => {
   let jiraHost
   let jiraApi
   let installationId
-  let repository
 
   beforeEach(() => {
     jest.setTimeout(10000)
     const models = td.replace('../../../lib/models')
-    const repoSyncStateFixture = require('../../../lib/models/sync-state.example.json')
-
-    repository = {
-      name: 'test-repo-name',
-      owner: { login: 'integrations' },
-      html_url: 'test-repo-url',
-      id: 'test-repo-id'
+    const repoSyncStatus = {
+      "installationId": 12345678,
+      "jiraHost": "tcbyrd.atlassian.net",
+      "repos": {
+        "test-repo-id": {
+          repository: {
+            name: 'test-repo-name',
+            owner: { login: 'integrations' },
+            html_url: 'test-repo-url',
+            id: 'test-repo-id'
+          },
+          "pullStatus": "pending",
+          "branchStatus": "complete",
+          "commitStatus": "complete"
+        }
+      }
     }
 
     jiraHost = process.env.ATLASSIAN_URL
@@ -28,8 +36,8 @@ describe('sync/pull-request', () => {
       .thenReturn({
         jiraHost,
         id: 1,
-        get: () => repoSyncStateFixture,
-        set: () => repoSyncStateFixture,
+        get: () => repoSyncStatus,
+        set: () => repoSyncStatus,
         save: () => Promise.resolve({}),
         update: () => Promise.resolve({})
       })
@@ -96,10 +104,10 @@ describe('sync/pull-request', () => {
   // })
 
   test('should not sync if nodes are empty', async () => {
-    const { processPullRequests } = require('../../../lib/sync/pull-request')
+    const { processInstallation } = require('../../../lib/sync/installation')
 
     const job = {
-      data: { installationId, jiraHost, repository }
+      data: { installationId, jiraHost }
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
@@ -116,19 +124,19 @@ describe('sync/pull-request', () => {
       .thenThrow(new Error('test error'))
 
     const queues = {
-      pullRequests: {
+      installation: {
         add: jest.fn()
       }
     }
-    await processPullRequests(app, queues)(job)
-    expect(queues.pullRequests.add).not.toHaveBeenCalled()
+    await processInstallation(app, queues)(job)
+    expect(queues.installation.add).not.toHaveBeenCalled()
   })
 
   test('should not sync if nodes do not contain issue keys', async () => {
-    const { processPullRequests } = require('../../../lib/sync/pull-request')
+    const { processInstallation } = require('../../../lib/sync/installation')
 
     const job = {
-      data: { installationId, jiraHost, repository },
+      data: { installationId, jiraHost },
       opts: {
         removeOnComplete: true,
         removeOnFail: true
@@ -144,11 +152,11 @@ describe('sync/pull-request', () => {
       .thenThrow(new Error('test error'))
 
     const queues = {
-      pullRequests: {
+      installation: {
         add: jest.fn()
       }
     }
-    await processPullRequests(app, queues)(job)
-    expect(queues.pullRequests.add).toHaveBeenCalledWith(job.data, job.opts)
+    await processInstallation(app, queues)(job)
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
   })
 })
