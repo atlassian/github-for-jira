@@ -115,14 +115,24 @@ describe('sync/pull-request', () => {
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'))
 
-    await processPullRequests(app)(job)
+    const queues = {
+      pullRequests: {
+        add: jest.fn()
+      }
+    }
+    await processPullRequests(app, queues)(job)
+    expect(queues.pullRequests.add).not.toHaveBeenCalled()
   })
 
   test('should not sync if nodes do not contain issue keys', async () => {
     const { processPullRequests } = require('../../../lib/sync/pull-request')
 
     const job = {
-      data: { installationId, jiraHost, repository }
+      data: { installationId, jiraHost, repository },
+      opts: {
+        removeOnComplete: true,
+        removeOnFail: true
+      }
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
@@ -133,6 +143,12 @@ describe('sync/pull-request', () => {
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'))
 
-    await processPullRequests(app)(job)
+    const queues = {
+      pullRequests: {
+        add: jest.fn()
+      }
+    }
+    await processPullRequests(app, queues)(job)
+    expect(queues.pullRequests.add).toHaveBeenCalledWith(job.data, job.opts)
   })
 })

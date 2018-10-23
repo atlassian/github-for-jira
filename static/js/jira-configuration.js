@@ -1,9 +1,9 @@
 /* globals $, AP */
 const params = new URLSearchParams(window.location.search.substring(1))
+const appUrl = document.querySelector('meta[name=public-url]').getAttribute('content')
 
 $('.add-organization-link').click(function (event) {
   event.preventDefault()
-  const appUrl = document.querySelector('meta[name=public-url]').getAttribute('content')
 
   const child = window.open(`${appUrl}/github/redirect?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`)
 
@@ -50,11 +50,13 @@ $('.sync-connection-link').click(function (event) {
   event.preventDefault()
 
   $.ajax({
-    type: 'GET',
+    type: 'POST',
     url: `/jira/sync`,
     data: {
       installationId: $(event.target).data('installation-id'),
-      host: $(event.target).data('jira-host')
+      jiraHost: $(event.target).data('jira-host'),
+      token: params.get('jwt'),
+      _csrf: document.getElementById('_csrf').value
     },
     success: function (data) {
       AP.navigator.reload()

@@ -41,7 +41,8 @@ describe('sync/commits', () => {
     const { processCommits } = require('../../../lib/sync/commits')
 
     const job = {
-      data: { installationId, jiraHost, lastCursor: '1234', repository }
+      data: { installationId, jiraHost, lastCursor: '1234', repository },
+      opts: { removeOnFail: true, removeOnComplete: true }
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
@@ -54,7 +55,13 @@ describe('sync/commits', () => {
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
       .reply(200, emptyNodesFixture)
 
-    await processCommits(app)(job)
+    const queues = {
+      commits: {
+        add: jest.fn()
+      }
+    }
+    await processCommits(app, queues)(job)
+    expect(queues.commits.add).toHaveBeenCalledWith(job.data, job.opts)
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
       preventTransitions: false,
@@ -93,7 +100,8 @@ describe('sync/commits', () => {
     const { processCommits } = require('../../../lib/sync/commits')
 
     const job = {
-      data: { installationId, jiraHost, lastCursor: '1234', repository }
+      data: { installationId, jiraHost, lastCursor: '1234', repository },
+      opts: { removeOnFail: true, removeOnComplete: true }
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
@@ -106,7 +114,13 @@ describe('sync/commits', () => {
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
       .reply(200, emptyNodesFixture)
 
-    await processCommits(app)(job)
+    const queues = {
+      commits: {
+        add: jest.fn()
+      }
+    }
+    await processCommits(app, queues)(job)
+    expect(queues.commits.add).toHaveBeenCalledWith(job.data, job.opts)
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
       preventTransitions: false,
@@ -131,6 +145,7 @@ describe('sync/commits', () => {
             },
             {
               author: {
+                avatar: 'test-avatar-url',
                 email: 'test-author-email@example.com',
                 name: 'test-author-name'
               },
@@ -147,6 +162,7 @@ describe('sync/commits', () => {
             },
             {
               author: {
+                avatar: 'test-avatar-url',
                 email: 'test-author-email@example.com',
                 name: 'test-author-name'
               },
@@ -177,7 +193,8 @@ describe('sync/commits', () => {
     const { processCommits } = require('../../../lib/sync/commits')
 
     const job = {
-      data: { installationId, jiraHost, lastCursor: '1234', repository }
+      data: { installationId, jiraHost, lastCursor: '1234', repository },
+      opts: { removeOnFail: true, removeOnComplete: true }
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
@@ -193,14 +210,21 @@ describe('sync/commits', () => {
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'))
 
-    await processCommits(app)(job)
+    const queues = {
+      commits: {
+        add: jest.fn()
+      }
+    }
+    await processCommits(app, queues)(job)
+    expect(queues.commits.add).toHaveBeenCalledWith(job.data, job.opts)
   })
 
   test('should not call Jira if no data is returned', async () => {
     const { processCommits } = require('../../../lib/sync/commits')
 
     const job = {
-      data: { installationId, jiraHost, lastCursor: '1234', repository }
+      data: { installationId, jiraHost, lastCursor: '1234', repository },
+      opts: {}
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
@@ -214,6 +238,6 @@ describe('sync/commits', () => {
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'))
 
-    await processCommits(app)(job)
+    await processCommits(app, {})(job)
   })
 })
