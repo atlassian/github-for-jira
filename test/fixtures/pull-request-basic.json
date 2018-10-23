@@ -13,9 +13,10 @@
     },
     "pull_request": {
       "id": "test-pull-request-id",
-      "number": "test-pull-request-number",
+      "number": 1,
       "state": "open",
       "title": "[TEST-123] Test pull request.",
+      "body": "[TEST-123] body of the test pull request.",
       "comments": "test-pull-request-comment-count",
       "html_url": "test-pull-request-url",
       "head": {

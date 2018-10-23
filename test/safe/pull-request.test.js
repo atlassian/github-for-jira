@@ -12,9 +12,22 @@ describe('GitHub Actions', () => {
         html_url: 'test-pull-request-author-url'
       })
 
+      td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
+        .thenReturn({
+          key: 'TEST-123',
+          fields: {
+            summary: 'Example Issue'
+          }
+        })
+
       Date.now = jest.fn(() => 12345678)
 
       await app.receive(payload)
+
+      td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
+        body: '[TEST-123 Example Issue](https://test-atlassian-instance.net/browse/TEST-123) body of the test pull request.',
+        id: 'test-pull-request-id'
+      }))
 
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
@@ -54,8 +67,8 @@ describe('GitHub Actions', () => {
                 },
                 commentCount: 'test-pull-request-comment-count',
                 destinationBranch: 'test-pull-request-base-url/tree/test-pull-request-base-ref',
-                displayId: '#test-pull-request-number',
-                id: 'test-pull-request-number',
+                displayId: '#1',
+                id: 1,
                 issueKeys: ['TEST-123'],
                 lastUpdate: 'test-pull-request-update-time',
                 sourceBranch: 'test-pull-request-head-ref',
