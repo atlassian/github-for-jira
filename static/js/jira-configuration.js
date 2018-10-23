@@ -54,7 +54,8 @@ $('.sync-connection-link').click(function (event) {
     url: `/jira/sync`,
     data: {
       installationId: $(event.target).data('installation-id'),
-      host: $(event.target).data('jira-host'),
+      jiraHost: $(event.target).data('jira-host'),
+      token: params.get('jwt'),
       _csrf: document.getElementById('_csrf').value
     },
     success: function (data) {
