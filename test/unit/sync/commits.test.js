@@ -9,19 +9,19 @@ describe('sync/commits', () => {
   beforeEach(() => {
     const models = td.replace('../../../lib/models')
     const repoSyncStatus = {
-      "installationId": 12345678,
-      "jiraHost": "tcbyrd.atlassian.net",
-      "repos": {
-        "test-repo-id": {
+      'installationId': 12345678,
+      'jiraHost': 'tcbyrd.atlassian.net',
+      'repos': {
+        'test-repo-id': {
           repository: {
             name: 'test-repo-name',
             owner: { login: 'integrations' },
             html_url: 'test-repo-url',
             id: 'test-repo-id'
           },
-          "pullStatus": "complete",
-          "branchStatus": "complete",
-          "commitStatus": "pending"
+          'pullStatus': 'complete',
+          'branchStatus': 'complete',
+          'commitStatus': 'pending'
         }
       }
     }
