@@ -246,6 +246,12 @@ describe('sync/commits', () => {
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'))
 
-    await processInstallation(app, {})(job)
+    const queues = {
+      installation: {
+        add: jest.fn()
+      }
+    }
+    await processInstallation(app, queues)(job)
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
   })
 })
