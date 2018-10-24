@@ -21,5 +21,6 @@ module.exports = {
     await queryInterface.removeColumn('Subscriptions', 'selectedRepositories')
     await queryInterface.removeColumn('Subscriptions', 'repoSyncState')
     await queryInterface.removeColumn('Subscriptions', 'syncStatus')
+    await queryInterface.sequelize.query('DROP TYPE "enum_Subscriptions_syncStatus";')
   }
 }
