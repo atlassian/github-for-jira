@@ -22,6 +22,12 @@ beforeEach(() => {
       }
     ])
 
+  td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 'test-installation-id'))
+    .thenReturn({
+      projects: ['TES', 'JIR'],
+      update: () => Promise.resolve()
+    })
+
   nock('https://api.github.com')
     .post(/\/installations\/[\d\w-]+\/access_tokens/)
     .reply(200, {
