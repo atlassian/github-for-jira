@@ -23,6 +23,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 98",
                 "node": {
                   "author": {
+                    "avatarUrl": "test-avatar-url",
                     "email": "test-author-email@example.com",
                     "name": "test-author-name"
                   },
@@ -36,6 +37,7 @@
                 "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
                 "node": {
                   "author": {
+                    "avatarUrl": "test-avatar-url",
                     "email": "test-author-email@example.com",
                     "name": "test-author-name"
                   },
