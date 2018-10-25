@@ -128,12 +128,12 @@ describe('sync/pull-request', () => {
       .thenThrow(new Error('test error'))
 
     const queues = {
-      installation: {
+      pullRequests: {
         add: jest.fn()
       }
     }
     await processInstallation(app, queues)(job)
-    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
+    expect(queues.pullRequests.add).not.toHaveBeenCalled()
   })
 
   test('should not sync if nodes do not contain issue keys', async () => {
