@@ -49,11 +49,7 @@ describe('sync/commits', () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
     const job = {
-<<<<<<< HEAD
       data: { installationId, jiraHost },
-=======
-      data: { installationId, jiraHost, lastCursor: '1234', repository },
->>>>>>> master
       opts: { removeOnFail: true, removeOnComplete: true }
     }
 
@@ -68,21 +64,12 @@ describe('sync/commits', () => {
       .reply(200, emptyNodesFixture)
 
     const queues = {
-<<<<<<< HEAD
       installation: {
         add: jest.fn()
       }
     }
     await processInstallation(app, queues)(job)
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
-=======
-      commits: {
-        add: jest.fn()
-      }
-    }
-    await processCommits(app, queues)(job)
-    expect(queues.commits.add).toHaveBeenCalledWith(job.data, job.opts)
->>>>>>> master
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
       preventTransitions: false,
@@ -121,11 +108,7 @@ describe('sync/commits', () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
     const job = {
-<<<<<<< HEAD
       data: { installationId, jiraHost },
-=======
-      data: { installationId, jiraHost, lastCursor: '1234', repository },
->>>>>>> master
       opts: { removeOnFail: true, removeOnComplete: true }
     }
 
@@ -140,21 +123,12 @@ describe('sync/commits', () => {
       .reply(200, emptyNodesFixture)
 
     const queues = {
-<<<<<<< HEAD
       installation: {
         add: jest.fn()
       }
     }
     await processInstallation(app, queues)(job)
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
-=======
-      commits: {
-        add: jest.fn()
-      }
-    }
-    await processCommits(app, queues)(job)
-    expect(queues.commits.add).toHaveBeenCalledWith(job.data, job.opts)
->>>>>>> master
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
       preventTransitions: false,
@@ -227,11 +201,7 @@ describe('sync/commits', () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
     const job = {
-<<<<<<< HEAD
       data: { installationId, jiraHost },
-=======
-      data: { installationId, jiraHost, lastCursor: '1234', repository },
->>>>>>> master
       opts: { removeOnFail: true, removeOnComplete: true }
     }
 
@@ -249,32 +219,19 @@ describe('sync/commits', () => {
       .thenThrow(new Error('test error'))
 
     const queues = {
-<<<<<<< HEAD
       installation: {
         add: jest.fn()
       }
     }
     await processInstallation(app, queues)(job)
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
-=======
-      commits: {
-        add: jest.fn()
-      }
-    }
-    await processCommits(app, queues)(job)
-    expect(queues.commits.add).toHaveBeenCalledWith(job.data, job.opts)
->>>>>>> master
   })
 
   test('should not call Jira if no data is returned', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
     const job = {
-<<<<<<< HEAD
       data: { installationId, jiraHost },
-=======
-      data: { installationId, jiraHost, lastCursor: '1234', repository },
->>>>>>> master
       opts: {}
     }
 
@@ -289,7 +246,6 @@ describe('sync/commits', () => {
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'))
 
-<<<<<<< HEAD
     const queues = {
       installation: {
         add: jest.fn()
@@ -297,8 +253,5 @@ describe('sync/commits', () => {
     }
     await processInstallation(app, queues)(job)
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
-=======
-    await processCommits(app, {})(job)
->>>>>>> master
   })
 })

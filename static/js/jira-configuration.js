@@ -50,13 +50,8 @@ $('.sync-connection-link').click(function (event) {
   event.preventDefault()
 
   $.ajax({
-<<<<<<< HEAD
-    type: 'GET',
-    url: `${appUrl}/jira/sync`,
-=======
     type: 'POST',
     url: `/jira/sync`,
->>>>>>> master
     data: {
       installationId: $(event.target).data('installation-id'),
       jiraHost: $(event.target).data('jira-host'),
