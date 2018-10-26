@@ -5,6 +5,8 @@ describe('sync/commits', () => {
   let jiraApi
   let installationId
   let emptyNodesFixture
+  let delay
+  let attempts = 3
 
   beforeEach(() => {
     const models = td.replace('../../../lib/models')
@@ -25,7 +27,7 @@ describe('sync/commits', () => {
         }
       }
     }
-
+    delay = process.env.LIMITER_PER_INSTALLATION = 2000
     emptyNodesFixture = require('../../fixtures/api/graphql/commit-empty-nodes.json')
 
     jiraHost = process.env.ATLASSIAN_URL
@@ -50,7 +52,7 @@ describe('sync/commits', () => {
 
     const job = {
       data: { installationId, jiraHost },
-      opts: { removeOnFail: true, removeOnComplete: true }
+      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
@@ -109,7 +111,7 @@ describe('sync/commits', () => {
 
     const job = {
       data: { installationId, jiraHost },
-      opts: { removeOnFail: true, removeOnComplete: true }
+      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
@@ -202,7 +204,7 @@ describe('sync/commits', () => {
 
     const job = {
       data: { installationId, jiraHost },
-      opts: { removeOnFail: true, removeOnComplete: true }
+      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
@@ -232,7 +234,7 @@ describe('sync/commits', () => {
 
     const job = {
       data: { installationId, jiraHost },
-      opts: {}
+      opts: { attempts, removeOnFail: true, removeOnComplete: true }
     }
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })

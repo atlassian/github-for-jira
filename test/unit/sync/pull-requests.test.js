@@ -110,7 +110,8 @@ describe('sync/pull-request', () => {
       data: { installationId, jiraHost },
       opts: {
         removeOnComplete: true,
-        removeOnFail: true
+        removeOnFail: true,
+        attempts: 3
       }
     }
 
@@ -128,6 +129,9 @@ describe('sync/pull-request', () => {
       .thenThrow(new Error('test error'))
 
     const queues = {
+      installation: {
+        add: jest.fn()
+      },
       pullRequests: {
         add: jest.fn()
       }
@@ -138,12 +142,14 @@ describe('sync/pull-request', () => {
 
   test('should not sync if nodes do not contain issue keys', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
-
+    process.env.LIMITER_PER_INSTALLATION = 2000
     const job = {
       data: { installationId, jiraHost },
       opts: {
         removeOnComplete: true,
-        removeOnFail: true
+        removeOnFail: true,
+        attempts: 3,
+        delay: 2000
       }
     }
 
