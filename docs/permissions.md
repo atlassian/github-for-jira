@@ -19,7 +19,7 @@ Below are the use cases for the permissions requested by the GitHub App, along w
 
 ### Webhook Subscriptions
 The integration is subscribed to the following webhooks in order to find events that contain Jira issue keys.
-- [Commit Commment](https://developer.github.com/v3/activity/events/types/#commitcommentevent)
+- [Commit Comment](https://developer.github.com/v3/activity/events/types/#commitcommentevent)
 - [Create](https://developer.github.com/v3/activity/events/types/#createevent)
 - [Delete](https://developer.github.com/v3/activity/events/types/#deleteevent)
 - [Issue Comment](https://developer.github.com/v3/activity/events/types/#issuecommentevent)
@@ -53,8 +53,8 @@ Below are the use cases for the JIRA API scopes in use by this integration, alon
 
 #### Add worklog
 - Used to add worklogs manually from syntax found in GitHub events
-[Documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v2/#api-api-2-issue-issueIdOrKey-worklog-post)
-[App scope](https://developer.atlassian.com/cloud/jira/platform/scopes/) required: `WRITE`
+- [Documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v2/#api-api-2-issue-issueIdOrKey-worklog-post)
+- [App scope](https://developer.atlassian.com/cloud/jira/platform/scopes/) required: `WRITE`
 
 #### Delete development information entity
 - Used to delete development information when it is removed from GitHub (e.g., when a branch is deleted, the integraiton can also delete it from Jira)
