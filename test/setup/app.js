@@ -6,7 +6,8 @@ const { createApp: createGitHubApp } = require('probot/lib/github-app')
 beforeEach(() => {
   const models = td.replace('../../lib/models', {
     Installation: td.object(['getForHost']),
-    Subscription: td.object(['getAllForInstallation', 'install', 'getSingleInstallation'])
+    Subscription: td.object(['getAllForInstallation', 'install', 'getSingleInstallation']),
+    Project: td.object(['upsert'])
   })
 
   td.when(models.Installation.getForHost(process.env.ATLASSIAN_URL))
@@ -21,6 +22,12 @@ beforeEach(() => {
         jiraHost: process.env.ATLASSIAN_URL
       }
     ])
+
+  td.when(models.Project.upsert('PROJ-1', process.env.ATLASSIAN_URL))
+    .thenReturn({
+      projectKey: 'PROJ',
+      upsert: () => Promise.resolve()
+    })
 
   nock('https://api.github.com')
     .post(/\/installations\/[\d\w-]+\/access_tokens/)
