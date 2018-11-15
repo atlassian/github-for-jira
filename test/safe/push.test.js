@@ -2,10 +2,13 @@ describe('GitHub Actions', () => {
   describe('push', () => {
     let jiraApi
     let githubApi
-
+    let push
     beforeEach(() => {
       jiraApi = td.api('https://test-atlassian-instance.net')
       githubApi = td.api('https://api.github.com')
+      process.env.REDIS_URL = 'redis://test'
+      const { queues } = require('../../lib/worker')
+      push = td.replace(queues, 'push')
 
       td.when(githubApi.get('/users/test-commit-author-username'))
         .thenReturn({
@@ -51,239 +54,211 @@ describe('GitHub Actions', () => {
         })
     })
 
-    it('should update the Jira issue with the linked GitHub commit', async () => {
-      const payload = require('../fixtures/push-basic.json')
+    it('should add push event to the queue if Jira issue keys are present', async () => {
+      const event = require('../fixtures/push-basic.json')
+      await app.receive(event)
 
-      Date.now = jest.fn(() => 12345678)
-      await app.receive(payload)
-
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-        preventTransitions: false,
-        repositories: [
-          {
-            name: 'example/test-repo-name',
-            url: 'test-repo-url',
-            id: 'test-repo-id',
-            commits: [
-              {
-                hash: 'test-commit-id',
-                message: '[TEST-123] Test commit.',
-                author: {
-                  name: 'test-commit-name',
-                  email: 'test-email@example.com',
-                  avatar: 'https://github.com/test-commit-author-username.png',
-                  url: 'https://github.com/test-commit-author-username'
-                },
-                displayId: 'test-c',
-                fileCount: 3,
-                files: [
-                  {
-                    path: 'test-modified',
-                    changeType: 'MODIFIED',
-                    linesAdded: 10,
-                    linesRemoved: 2,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
-                  },
-                  {
-                    path: 'test-added',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-removal',
-                    changeType: 'DELETED',
-                    linesAdded: 0,
-                    linesRemoved: 4,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
-                  }
-                ],
-                id: 'test-commit-id',
-                issueKeys: ['TEST-123'],
-                updateSequenceId: 12345678
-              }
-            ],
-            updateSequenceId: 12345678
-          }
-        ],
-        properties: {
-          installationId: 'test-installation-id'
-        }
-      }))
+      td.verify(push.add(
+        {
+          repository: event.payload.repository,
+          shas: [ { id: 'test-commit-id', issueKeys: ['TEST-123'] }],
+          jiraHost: 'https://test-atlassian-instance.net',
+          installationId: event.payload.installation.id
+        }, { removeOnFail: true, removeOnComplete: true }))
     })
 
-    it('should update the Jira issue when no username is present', async () => {
-      const payload = require('../fixtures/push-no-username.json')
-
-      Date.now = jest.fn(() => 12345678)
-      await app.receive(payload)
-
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-        preventTransitions: false,
-        repositories: [
-          {
-            name: 'example/test-repo-name',
-            url: 'test-repo-url',
-            id: 'test-repo-id',
-            commits: [
-              {
-                hash: 'test-commit-id',
-                message: '[TEST-123] Test commit.',
-                author: {
-                  name: 'test-commit-name',
-                  email: 'test-email@example.com'
-                },
-                displayId: 'test-c',
-                fileCount: 3,
-                files: [
-                  {
-                    path: 'test-modified',
-                    changeType: 'MODIFIED',
-                    linesAdded: 10,
-                    linesRemoved: 2,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
-                  },
-                  {
-                    path: 'test-added',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-removal',
-                    changeType: 'DELETED',
-                    linesAdded: 0,
-                    linesRemoved: 4,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
-                  }
-                ],
-                id: 'test-commit-id',
-                issueKeys: ['TEST-123'],
-                updateSequenceId: 12345678
-              }
-            ],
-            updateSequenceId: 12345678
-          }
-        ],
-        properties: {
-          installationId: 'test-installation-id'
-        }
-      }))
+    it('should not add push event to the queue if there are no Jira issue keys present', async (done) => {
+      const event = require('../fixtures/push-no-issues.json')
+      await app.receive(event)
+      done()
     })
 
-    it('should only send 10 files if push contains more than 10 files changed', async () => {
-      const payload = require('../fixtures/push-multiple.json')
-
-      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
-        .thenReturn(require('../fixtures/more-than-10-files.json'))
-
-      Date.now = jest.fn(() => 12345678)
-      await app.receive(payload)
-
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-        preventTransitions: false,
-        repositories: [
-          {
-            name: 'example/test-repo-name',
-            url: 'test-repo-url',
-            id: 'test-repo-id',
-            commits: [
-              {
-                hash: 'test-commit-id',
-                message: 'TEST-123 TEST-246 #comment This is a comment',
-                author: {
-                  avatar: 'https://github.com/test-commit-author-username.png',
-                  url: 'https://github.com/test-commit-author-username'
-                },
-                displayId: 'test-c',
-                fileCount: 12,
-                files: [
-                  {
-                    path: 'test-modified',
-                    changeType: 'MODIFIED',
-                    linesAdded: 10,
-                    linesRemoved: 2,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
-                  },
-                  {
-                    path: 'test-added-1',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-added-2',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-added-3',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-added-4',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-added-5',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-added-6',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-added-7',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-added-8',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-added-9',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  }
-                ],
-                id: 'test-commit-id',
-                issueKeys: ['TEST-123', 'TEST-246'],
-                updateSequenceId: 12345678
-              }
-            ],
-            updateSequenceId: 12345678
-          }
-        ],
-        properties: {
-          installationId: 'test-installation-id'
-        }
-      }))
+    it('should handle payloads where only some commits have issue keys', async () => {
+      const event = require('../fixtures/push-mixed.json')
+      await app.receive(event)
+      td.verify(push.add(
+        {
+          repository: event.payload.repository,
+          shas: [
+            { id: 'test-commit-id-1', issueKeys: ['TEST-123', 'TEST-246'] },
+            { id: 'test-commit-id-2', issueKeys: ['TEST-345' ] }
+          ],
+          jiraHost: 'https://test-atlassian-instance.net',
+          installationId: event.payload.installation.id
+        }, { removeOnFail: true, removeOnComplete: true }))
     })
+
+    // it('should update the Jira issue when no username is present', async () => {
+    //   const payload = require('../fixtures/push-no-username.json')
+
+    //   Date.now = jest.fn(() => 12345678)
+    //   await app.receive(payload)
+
+    //   td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+    //     preventTransitions: false,
+    //     repositories: [
+    //       {
+    //         name: 'example/test-repo-name',
+    //         url: 'test-repo-url',
+    //         id: 'test-repo-id',
+    //         commits: [
+    //           {
+    //             hash: 'test-commit-id',
+    //             message: '[TEST-123] Test commit.',
+    //             author: {
+    //               name: 'test-commit-name',
+    //               email: 'test-email@example.com'
+    //             },
+    //             displayId: 'test-c',
+    //             fileCount: 3,
+    //             files: [
+    //               {
+    //                 path: 'test-modified',
+    //                 changeType: 'MODIFIED',
+    //                 linesAdded: 10,
+    //                 linesRemoved: 2,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
+    //               },
+    //               {
+    //                 path: 'test-added',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               },
+    //               {
+    //                 path: 'test-removal',
+    //                 changeType: 'DELETED',
+    //                 linesAdded: 0,
+    //                 linesRemoved: 4,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
+    //               }
+    //             ],
+    //             id: 'test-commit-id',
+    //             issueKeys: ['TEST-123'],
+    //             updateSequenceId: 12345678
+    //           }
+    //         ],
+    //         updateSequenceId: 12345678
+    //       }
+    //     ],
+    //     properties: {
+    //       installationId: 'test-installation-id'
+    //     }
+    //   }))
+    // })
+
+    // it('should only send 10 files if push contains more than 10 files changed', async () => {
+    //   const payload = require('../fixtures/push-multiple.json')
+
+    //   td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
+    //     .thenReturn(require('../fixtures/more-than-10-files.json'))
+
+    //   Date.now = jest.fn(() => 12345678)
+    //   await app.receive(payload)
+
+    //   td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+    //     preventTransitions: false,
+    //     repositories: [
+    //       {
+    //         name: 'example/test-repo-name',
+    //         url: 'test-repo-url',
+    //         id: 'test-repo-id',
+    //         commits: [
+    //           {
+    //             hash: 'test-commit-id',
+    //             message: 'TEST-123 TEST-246 #comment This is a comment',
+    //             author: {
+    //               avatar: 'https://github.com/test-commit-author-username.png',
+    //               url: 'https://github.com/test-commit-author-username'
+    //             },
+    //             displayId: 'test-c',
+    //             fileCount: 12,
+    //             files: [
+    //               {
+    //                 path: 'test-modified',
+    //                 changeType: 'MODIFIED',
+    //                 linesAdded: 10,
+    //                 linesRemoved: 2,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
+    //               },
+    //               {
+    //                 path: 'test-added-1',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               },
+    //               {
+    //                 path: 'test-added-2',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               },
+    //               {
+    //                 path: 'test-added-3',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               },
+    //               {
+    //                 path: 'test-added-4',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               },
+    //               {
+    //                 path: 'test-added-5',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               },
+    //               {
+    //                 path: 'test-added-6',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               },
+    //               {
+    //                 path: 'test-added-7',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               },
+    //               {
+    //                 path: 'test-added-8',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               },
+    //               {
+    //                 path: 'test-added-9',
+    //                 changeType: 'ADDED',
+    //                 linesAdded: 4,
+    //                 linesRemoved: 0,
+    //                 url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
+    //               }
+    //             ],
+    //             id: 'test-commit-id',
+    //             issueKeys: ['TEST-123', 'TEST-246'],
+    //             updateSequenceId: 12345678
+    //           }
+    //         ],
+    //         updateSequenceId: 12345678
+    //       }
+    //     ],
+    //     properties: {
+    //       installationId: 'test-installation-id'
+    //     }
+    //   }))
+    // })
 
     // Commenting these out for the moment. DevInfo API runs these
     // transitions automatially based on the commit message, but we may
@@ -380,16 +355,16 @@ describe('GitHub Actions', () => {
     //   await app.receive(payload)
     // })
 
-    it('should support commits without smart commands', async () => {
-      const payload = require('../fixtures/push-empty.json')
+    // it('should support commits without smart commands', async () => {
+    //   const payload = require('../fixtures/push-empty.json')
 
-      td.when(jiraApi.post(), { ignoreExtraArgs: true })
-        .thenThrow(new Error('Should not make any changes to Jira.'))
+    //   td.when(jiraApi.post(), { ignoreExtraArgs: true })
+    //     .thenThrow(new Error('Should not make any changes to Jira.'))
 
-      td.when(githubApi.get(), { ignoreExtraArgs: true })
-        .thenThrow(new Error('Should not make any API request to GitHub.'))
+    //   td.when(githubApi.get(), { ignoreExtraArgs: true })
+    //     .thenThrow(new Error('Should not make any API request to GitHub.'))
 
-      await app.receive(payload)
-    })
+    //   await app.receive(payload)
+    // })
   })
 })
