@@ -3,3 +3,5 @@ npm-debug.log
 *.pem
 .env
 coverage
+.vscode
+big-commit-payload.json
