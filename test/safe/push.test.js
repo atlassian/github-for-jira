@@ -1,10 +1,8 @@
 describe('GitHub Actions', () => {
   describe('push', () => {
-    let jiraApi
     let githubApi
     let push
     beforeEach(() => {
-      jiraApi = td.api('https://test-atlassian-instance.net')
       githubApi = td.api('https://api.github.com')
       process.env.REDIS_URL = 'redis://test'
       const { queues } = require('../../lib/worker')
@@ -61,7 +59,7 @@ describe('GitHub Actions', () => {
       td.verify(push.add(
         {
           repository: event.payload.repository,
-          shas: [ { id: 'test-commit-id', issueKeys: ['TEST-123'] }],
+          shas: [{ id: 'test-commit-id', issueKeys: ['TEST-123'] }],
           jiraHost: 'https://test-atlassian-instance.net',
           installationId: event.payload.installation.id
         }, { removeOnFail: true, removeOnComplete: true }))
@@ -81,7 +79,7 @@ describe('GitHub Actions', () => {
           repository: event.payload.repository,
           shas: [
             { id: 'test-commit-id-1', issueKeys: ['TEST-123', 'TEST-246'] },
-            { id: 'test-commit-id-2', issueKeys: ['TEST-345' ] }
+            { id: 'test-commit-id-2', issueKeys: ['TEST-345'] }
           ],
           jiraHost: 'https://test-atlassian-instance.net',
           installationId: event.payload.installation.id
