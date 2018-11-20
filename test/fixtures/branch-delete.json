@@ -1,5 +1,5 @@
 {
-  "event": "delete",
+  "name": "delete",
   "payload": {
     "ref": "TES-123-test-ref",
     "ref_type": "branch",

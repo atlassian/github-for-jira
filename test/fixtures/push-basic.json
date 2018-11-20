@@ -1,5 +1,5 @@
 {
-  "event": "push",
+  "name": "push",
   "payload": {
     "commits": [
       {

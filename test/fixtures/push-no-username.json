@@ -1,14 +1,14 @@
 {
-  "event": "push",
+  "name": "push",
   "payload": {
     "action": "created",
     "commits": [
       {
-        "id": "test-commit-id",
+        "id": "commit-no-username",
         "hash": "test-commit-hash",
         "author": {
-          "name": "test-commit-name",
-          "email": "test-email@example.com"
+          "email": "test-email@example.com",
+          "name": "test-commit-name"
         },
         "message": "[TEST-123] Test commit.",
         "added": ["test-added"],
