@@ -124,7 +124,7 @@ describe('GitHub Actions', () => {
       const job = {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL)
       }
-      
+
       td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
         .thenReturn(require('../fixtures/more-than-10-files.json'))
 
