@@ -8,7 +8,7 @@
     },
     "message": "[TEST-123] Test commit.",
     "authorTimestamp": "test-commit-date",
-    "url": "https://github.com/octokit/Hello-World/commit/commit-no-username"
+    "html_url": "https://github.com/octokit/Hello-World/commit/commit-no-username"
   },
   "sha": "commit-no-username",
   "files": [
