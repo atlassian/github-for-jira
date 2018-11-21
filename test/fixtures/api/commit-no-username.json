@@ -7,8 +7,7 @@
       "date": "test-commit-date"
     },
     "message": "[TEST-123] Test commit.",
-    "authorTimestamp": "test-commit-date",
-    "html_url": "https://github.com/octokit/Hello-World/commit/commit-no-username"
+    "authorTimestamp": "test-commit-date"
   },
   "sha": "commit-no-username",
   "files": [
@@ -42,5 +41,6 @@
       "blob_url": "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal",
       "patch": "@@ -29,7 +29,7 @@\n....."
     }
-  ]
+  ],
+  "html_url": "https://github.com/octokit/Hello-World/commit/commit-no-username"
 }
