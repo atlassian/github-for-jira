@@ -18,7 +18,7 @@ Below are the use cases for the permissions requested by the GitHub App, along w
 
 
 ### Webhook Subscriptions
-The integration is subscribed to the following webhooks in order to find events that contain Jira issue keys.
+To find events that contain Jra issue keys, the integration subscribes to the following webhooks:
 - [Commit Comment](https://developer.github.com/v3/activity/events/types/#commitcommentevent)
 - [Create](https://developer.github.com/v3/activity/events/types/#createevent)
 - [Delete](https://developer.github.com/v3/activity/events/types/#deleteevent)
