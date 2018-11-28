@@ -57,7 +57,7 @@ Below are the use cases for the JIRA API scopes in use by this integration, alon
 - [App scope](https://developer.atlassian.com/cloud/jira/platform/scopes/) required: `WRITE`
 
 #### Delete development information entity
-- Used to delete development information when it is removed from GitHub (e.g., when a branch is deleted, the integraiton can also delete it from Jira)
+- Used to delete development information from Jira that was removed from GitHub (e.g., when a branch is deleted, the integraiton can also delete it from Jira)
 - [Documentation](https://developer.atlassian.com/cloud/jira/software/rest/#api-rest-devinfo-0-10-repository-repositoryId-entityType-entityId-delete)
 - [App scope](https://developer.atlassian.com/cloud/jira/platform/scopes/) required: `DELETE`
 
