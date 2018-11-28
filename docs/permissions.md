@@ -72,7 +72,7 @@ Below are the use cases for the JIRA API scopes in use by this integration, alon
 - [App scope](https://developer.atlassian.com/cloud/jira/platform/scopes/) required: `DELETE`
 
 #### Get repository
-- Used to verify information exists for a givnen GitHub repository ID
+- Used to verify information exists for a given GitHub repository ID
 - [Documentation](https://developer.atlassian.com/cloud/jira/software/rest/#api-rest-devinfo-0-10-repository-repositoryId-get)
 - [App scope](https://developer.atlassian.com/cloud/jira/platform/scopes/) required: `READ`
 
