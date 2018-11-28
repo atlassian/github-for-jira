@@ -1,5 +1,5 @@
 {
-  "event": "create",
+  "name": "create",
   "payload": {
     "ref": "tes-123",
     "ref_type": "not-branch",

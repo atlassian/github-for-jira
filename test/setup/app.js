@@ -23,6 +23,9 @@ beforeEach(() => {
       }
     ])
 
+  td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 'test-installation-id'))
+    .thenReturn({ id: 1, jiraHost: process.env.ATLASSIAN_URL })
+
   td.when(models.Project.upsert('PROJ-1', process.env.ATLASSIAN_URL))
     .thenReturn({
       projectKey: 'PROJ',

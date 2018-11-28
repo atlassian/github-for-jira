@@ -1,5 +1,5 @@
 {
-  "event": "create",
+  "name": "create",
   "payload": {
     "ref": "no-issue-keys",
     "ref_type": "branch",
