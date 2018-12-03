@@ -16,7 +16,8 @@ After installing the integration, clicking "Getting started" in Jira can lead to
 Uninstalling and reinstalling the integration is the most common fix for this.
 
 1. Click **Uninstall** from the Manage Apps page of your Jira settings.
-2. Reinstall the [integration using this link](https://marketplace-cdn.atlassian.com/files/1.1.0-AC/artifact/descriptor/345df622-da2f-4b1f-a5a3-068806c57031/atlassian-connect.json).
+2. Click **Settings** and enable **Developer Mode**.
+3. Click **Upload App** and [paste this URL to reinstall the integration](https://marketplace-cdn.atlassian.com/files/1.1.0-AC/artifact/descriptor/345df622-da2f-4b1f-a5a3-068806c57031/atlassian-connect.json).
 
 Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
 
