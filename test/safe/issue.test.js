@@ -18,7 +18,7 @@ describe('GitHub Actions', () => {
         await app.receive(payload)
 
         td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/123456789', {
-          body: 'Test example issue with linked Jira issue: [TEST-123 Example Issue](https://test-atlassian-instance.net/browse/TEST-123)',
+          body: 'Test example issue with linked Jira issue: [[TEST-123]](https://test-atlassian-instance.net/browse/TEST-123)',
           id: 'test-issue-id'
         }))
       })

@@ -1,140 +1,85 @@
 describe('GitHub Actions', () => {
-  describe('push', () => {
-    let jiraApi
-    let githubApi
+  let jiraApi, githubApi, push, processPush, createJobData
 
+  describe('add to push queue', () => {
     beforeEach(() => {
-      jiraApi = td.api('https://test-atlassian-instance.net')
-      githubApi = td.api('https://api.github.com')
-
-      td.when(githubApi.get('/users/test-commit-author-username'))
-        .thenReturn({
-          login: 'test-commit-author-username',
-          avatar_url: 'test-commit-author-avatar',
-          html_url: 'test-commit-author-url'
-        })
-
-      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
-        .thenReturn({
-          files: [
-            {
-              'filename': 'test-modified',
-              'additions': 10,
-              'deletions': 2,
-              'changes': 12,
-              'status': 'modified',
-              'raw_url': 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified',
-              'blob_url': 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified',
-              'patch': '@@ -29,7 +29,7 @@\n.....'
-            },
-            {
-              'filename': 'test-added',
-              'additions': 4,
-              'deletions': 0,
-              'changes': 4,
-              'status': 'added',
-              'raw_url': 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added',
-              'blob_url': 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added',
-              'patch': '@@ -29,7 +29,7 @@\n.....'
-            },
-            {
-              'filename': 'test-removal',
-              'additions': 0,
-              'deletions': 4,
-              'changes': 4,
-              'status': 'removed',
-              'raw_url': 'https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal',
-              'blob_url': 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal',
-              'patch': '@@ -29,7 +29,7 @@\n.....'
-            }
-          ]
-        })
+      process.env.REDIS_URL = 'redis://test'
+      const { queues } = require('../../lib/worker')
+      push = td.replace(queues, 'push')
     })
 
-    it('should update the Jira issue with the linked GitHub commit', async () => {
-      const payload = require('../fixtures/push-basic.json')
+    it('should add push event to the queue if Jira issue keys are present', async () => {
+      const event = require('../fixtures/push-basic.json')
+      await app.receive(event)
 
+      td.verify(push.add(
+        {
+          repository: event.payload.repository,
+          shas: [{ id: 'test-commit-id', issueKeys: ['TEST-123'] }],
+          jiraHost: process.env.ATLASSIAN_URL,
+          installationId: event.payload.installation.id
+        }, { removeOnFail: true, removeOnComplete: true }))
+    })
+
+    it('should not add push event to the queue if there are no Jira issue keys present', async (done) => {
+      const event = require('../fixtures/push-no-issues.json')
+      await app.receive(event)
+      done()
+    })
+
+    it('should handle payloads where only some commits have issue keys', async () => {
+      const event = require('../fixtures/push-mixed.json')
+      await app.receive(event)
+      td.verify(push.add(
+        {
+          repository: event.payload.repository,
+          shas: [
+            { id: 'test-commit-id-1', issueKeys: ['TEST-123', 'TEST-246'] },
+            { id: 'test-commit-id-2', issueKeys: ['TEST-345'] }
+          ],
+          jiraHost: 'https://test-atlassian-instance.net',
+          installationId: event.payload.installation.id
+        }, { removeOnFail: true, removeOnComplete: true }))
+    })
+  })
+
+  describe('process push payloads', () => {
+    beforeEach(() => {
+      jiraApi = td.api(process.env.ATLASSIAN_URL)
+      githubApi = td.api('https://api.github.com')
+      processPush = require('../../lib/transforms/push').processPush
+      createJobData = require('../../lib/transforms/push').createJobData
       Date.now = jest.fn(() => 12345678)
-      await app.receive(payload)
-
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-        preventTransitions: false,
-        repositories: [
-          {
-            name: 'example/test-repo-name',
-            url: 'test-repo-url',
-            id: 'test-repo-id',
-            commits: [
-              {
-                hash: 'test-commit-id',
-                message: '[TEST-123] Test commit.',
-                author: {
-                  name: 'test-commit-name',
-                  email: 'test-email@example.com',
-                  avatar: 'https://github.com/test-commit-author-username.png',
-                  url: 'https://github.com/test-commit-author-username'
-                },
-                displayId: 'test-c',
-                fileCount: 3,
-                files: [
-                  {
-                    path: 'test-modified',
-                    changeType: 'MODIFIED',
-                    linesAdded: 10,
-                    linesRemoved: 2,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified'
-                  },
-                  {
-                    path: 'test-added',
-                    changeType: 'ADDED',
-                    linesAdded: 4,
-                    linesRemoved: 0,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added'
-                  },
-                  {
-                    path: 'test-removal',
-                    changeType: 'DELETED',
-                    linesAdded: 0,
-                    linesRemoved: 4,
-                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
-                  }
-                ],
-                id: 'test-commit-id',
-                issueKeys: ['TEST-123'],
-                updateSequenceId: 12345678
-              }
-            ],
-            updateSequenceId: 12345678
-          }
-        ],
-        properties: {
-          installationId: 'test-installation-id'
-        }
-      }))
     })
 
     it('should update the Jira issue when no username is present', async () => {
-      const payload = require('../fixtures/push-no-username.json')
+      const event = require('../fixtures/push-no-username.json')
+      const job = {
+        data: createJobData(event.payload, process.env.ATLASSIAN_URL)
+      }
 
-      Date.now = jest.fn(() => 12345678)
-      await app.receive(payload)
+      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
+        .thenReturn(require('../fixtures/api/commit-no-username.json'))
+
+      await processPush(app)(job)
 
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
-            name: 'example/test-repo-name',
+            name: 'test-repo-name',
             url: 'test-repo-url',
             id: 'test-repo-id',
             commits: [
               {
-                hash: 'test-commit-id',
+                hash: 'commit-no-username',
                 message: '[TEST-123] Test commit.',
                 author: {
-                  name: 'test-commit-name',
-                  email: 'test-email@example.com'
+                  email: 'test-email@example.com',
+                  name: 'test-commit-name'
                 },
-                displayId: 'test-c',
+                authorTimestamp: 'test-commit-date',
+                displayId: 'commit',
                 fileCount: 3,
                 files: [
                   {
@@ -159,8 +104,9 @@ describe('GitHub Actions', () => {
                     url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal'
                   }
                 ],
-                id: 'test-commit-id',
+                id: 'commit-no-username',
                 issueKeys: ['TEST-123'],
+                url: 'https://github.com/octokit/Hello-World/commit/commit-no-username',
                 updateSequenceId: 12345678
               }
             ],
@@ -174,19 +120,21 @@ describe('GitHub Actions', () => {
     })
 
     it('should only send 10 files if push contains more than 10 files changed', async () => {
-      const payload = require('../fixtures/push-multiple.json')
+      const event = require('../fixtures/push-multiple.json')
+      const job = {
+        data: createJobData(event.payload, process.env.ATLASSIAN_URL)
+      }
 
       td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
         .thenReturn(require('../fixtures/more-than-10-files.json'))
 
-      Date.now = jest.fn(() => 12345678)
-      await app.receive(payload)
+      await processPush(app)(job)
 
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
-            name: 'example/test-repo-name',
+            name: 'test-repo-name',
             url: 'test-repo-url',
             id: 'test-repo-id',
             commits: [
@@ -194,8 +142,8 @@ describe('GitHub Actions', () => {
                 hash: 'test-commit-id',
                 message: 'TEST-123 TEST-246 #comment This is a comment',
                 author: {
-                  avatar: 'https://github.com/test-commit-author-username.png',
-                  url: 'https://github.com/test-commit-author-username'
+                  email: 'test-email@example.com',
+                  name: 'test-commit-name'
                 },
                 displayId: 'test-c',
                 fileCount: 12,
@@ -371,14 +319,14 @@ describe('GitHub Actions', () => {
     //   }))
     // })
 
-    // it('should not run a command without a Jira issue', async () => {
-    //   const payload = require('../fixtures/push-no-issues.json')
+    it('should not run a command without a Jira issue', async () => {
+      const payload = require('../fixtures/push-no-issues.json')
 
-    //   td.when(jiraApi.post(), { ignoreExtraArgs: true })
-    //     .thenThrow(new Error('Should not make any changes to Jira.'))
+      td.when(jiraApi.post(), { ignoreExtraArgs: true })
+        .thenThrow(new Error('Should not make any changes to Jira.'))
 
-    //   await app.receive(payload)
-    // })
+      await app.receive(payload)
+    })
 
     it('should support commits without smart commands', async () => {
       const payload = require('../fixtures/push-empty.json')

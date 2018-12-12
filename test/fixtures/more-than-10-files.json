@@ -1,4 +1,12 @@
 {
+  "commit": {
+    "author": {
+      "email": "test-email@example.com",
+      "name": "test-commit-name"
+    },
+    "message": "TEST-123 TEST-246 #comment This is a comment"
+  },
+  "sha": "test-commit-id",
   "files": [
     {
       "filename": "test-modified",
