@@ -19,7 +19,7 @@ describe('GitHub Actions', () => {
 
         td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/comments/test-comment-id', {
           number: 'test-issue-number',
-          body: 'Test example comment with linked Jira issue: [TEST-123 Example Issue](https://test-atlassian-instance.net/browse/TEST-123)'
+          body: 'Test example comment with linked Jira issue: [[TEST-123]](https://test-atlassian-instance.net/browse/TEST-123)'
         }))
       })
     })
