@@ -28,7 +28,7 @@ describe('Jira util', () => {
 
       const result = util.addJiraIssueLinks(text, issues)
 
-      expect(result).toBe('Should linkify [TEST-123 Example Issue](http://example.com/browse/TEST-123) as a link')
+      expect(result).toBe('Should linkify [[TEST-123]](http://example.com/browse/TEST-123) as a link')
     })
 
     it('should not linkify Jira references to invalid issues', () => {
@@ -53,7 +53,7 @@ describe('Jira util', () => {
 
       const result = util.addJiraIssueLinks(text, issues)
 
-      expect(result).toBe('Should linkify [TEST-200 Another Example Issue](http://example.com/browse/TEST-200) and not [TEST-100] as a link')
+      expect(result).toBe('Should linkify [[TEST-200]](http://example.com/browse/TEST-200) and not [TEST-100] as a link')
     })
   })
 
