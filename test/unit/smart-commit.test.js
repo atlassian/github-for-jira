@@ -253,6 +253,16 @@ describe('Smart commit parsing', () => {
         issueKeys: ['JRA-090']
       })
     })
+
+    it('should ignore issue keys in a Markdown URL', () => {
+      const text = '[JRA-090](https://mycompany.atlassian.net/browse/JRA-090) JRA-091'
+
+      const result = smartCommit(text)
+
+      expect(result).toMatchObject({
+        issueKeys: ['JRA-091']
+      })
+    })
   })
 
   it('should ignore irrelevant text', () => {
