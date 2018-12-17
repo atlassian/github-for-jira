@@ -28,7 +28,7 @@ describe('Jira util', () => {
 
       const result = util.addJiraIssueLinks(text, issues)
 
-      expect(result).toBe('Should linkify [[TEST-123]](http://example.com/browse/TEST-123) as a link')
+      expect(result).toBe('Should linkify [jira/TEST-123](http://example.com/browse/TEST-123) as a link')
     })
 
     it('should not linkify Jira references to invalid issues', () => {
@@ -53,7 +53,35 @@ describe('Jira util', () => {
 
       const result = util.addJiraIssueLinks(text, issues)
 
-      expect(result).toBe('Should linkify [[TEST-200]](http://example.com/browse/TEST-200) and not [TEST-100] as a link')
+      expect(result).toBe('Should linkify [jira/TEST-200](http://example.com/browse/TEST-200) and not [TEST-100] as a link')
+    })
+
+    it('should not re-linkify issue keys in a Markdown URL', async () => {
+      const text = '[jira/JRA-090](https://mycompany.atlassian.net/browse/JRA-090)'
+
+      const issues = [
+        {
+          key: 'JRA-090'
+        }
+      ]
+      const result = util.addJiraIssueLinks(text, issues)
+      expect(result).toBe('[jira/JRA-090](https://mycompany.atlassian.net/browse/JRA-090)')
+    })
+
+    it('Still linkifies issue keys outside of markdown links', async () => {
+      const text = '[jira/JRA-090](https://mycompany.atlassian.net/browse/JRA-090) [JRA-091]'
+
+      const issues = [
+        {
+          key: 'JRA-090'
+        },
+        {
+          key: 'JRA-091'
+        }
+      ]
+
+      const result = util.addJiraIssueLinks(text, issues)
+      expect(result).toBe('[jira/JRA-090](https://mycompany.atlassian.net/browse/JRA-090) [jira/JRA-091](http://example.com/browse/JRA-091)')
     })
   })
 
