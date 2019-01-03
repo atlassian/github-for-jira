@@ -24,6 +24,10 @@ Still having trouble? [Contact GitHub Support for additional help](#getting-addi
 
 After installing the integration, your sync status should move from `PENDING` to `ACTIVE` to `COMPLETE`. 
 
+You can check your sync status in the integration settings:
+
+**Jira Settings** -> **Add-ons** -> **Manage Add-ons** -> **GitHub** -> **Get started**
+
 ### Sync status definitions
 
 | Status   | Definition                 |
@@ -50,7 +54,9 @@ Still having trouble? [Contact GitHub Support for additional help](#getting-addi
 
 ## Nothing showing up in Jira
 
-Check that you're adding your Jira issue keys in your commits, branches, or pull request titles. These are the only places on GitHub where you can put your Jira issue keys that will cause updates to be sent to the Jira issue.
+First [check that your sync status has reached `COMPLETE`](#sync-status-not-reaching-complete). No information will be displayed in Jira until the status is `COMPLETE`.
+
+Next check that you're adding your Jira issue keys in your commits, branches, or pull request titles. These are the only places on GitHub where you can put your Jira issue keys that will cause updates to be sent to the Jira issue.
 
 For more information, check out [Using the integration](https://github.com/integrations/jira#using-the-integration).
 
