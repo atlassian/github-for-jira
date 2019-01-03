@@ -24,6 +24,14 @@ Still having trouble? [Contact GitHub Support for additional help](#getting-addi
 
 After installing the integration, your sync status should move from `PENDING` to `ACTIVE` to `COMPLETE`. 
 
+### Sync status definitions
+
+| Status   | Definition                 |
+|----------|----------------------------|
+| PENDING  | The sync has not started.  |
+| ACTIVE   | The sync has started and is still in progress. No information will be displayed in Jira. |
+| COMPLETE | The sync has finished. Information will be displayed in Jira. |
+
 The sync should take a maximum of ~5 hours. If your sync status is still `ACTIVE` after 5 hours:
 
 1. Open the integration settings: **Jira Settings** -> **Add-ons** -> **Manage Add-ons** -> **GitHub** -> **Get started**
