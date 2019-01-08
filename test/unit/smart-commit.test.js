@@ -214,13 +214,13 @@ describe('Smart commit parsing', () => {
       })
     })
 
-    it('should parse an issue key with an underscore and numbers', () => {
+    it('should not parse an issue key with an underscore and numbers', () => {
       const text = 'J_1993A-090'
 
       const result = smartCommit(text)
 
       expect(result).toMatchObject({
-        issueKeys: ['J_1993A-090']
+        issueKeys: undefined
       })
     })
 
@@ -235,7 +235,7 @@ describe('Smart commit parsing', () => {
     })
 
     it('should parse multiple issue keys', () => {
-      const text = 'JRA-090 JRA-091 JRA-092-JRA-093, JRA-094, branchname.JRA-095, branchname_JRA-096, [DEV-4189][DEV-4191] <JRA-123>'
+      const text = 'JRA-090-JRA-091 JRA-092-JRA-093, JRA-094, branchname.JRA-095, branchname_JRA-096, [DEV-4189][DEV-4191] <JRA-123>'
 
       const result = smartCommit(text)
 
