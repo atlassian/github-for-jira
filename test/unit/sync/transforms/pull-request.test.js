@@ -33,7 +33,7 @@ describe('pull_request transform', () => {
         html_url: 'https://github.com/test-owner/test-repo'
       }
     }
-    
+
     Date.now = jest.fn(() => 12345678)
 
     const { data } = transformPullRequest(payload, payload.pull_request.author)
