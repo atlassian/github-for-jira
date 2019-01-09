@@ -7,6 +7,7 @@ This file will help you troubleshoot the common issues that can occur with the  
 - [App is not responding](#app-is-not-responding)
 - [Sync status not reaching complete](#sync-status-not-reaching-complete)
 - [Nothing showing up in Jira](#nothing-showing-up-in-jira)
+- [Workflow transitions are not running](#workflow-transitions-are-not-running)
 - [Getting additional help](#getting-additional-help)
 
 ## App is not responding
@@ -59,6 +60,18 @@ First [check that your sync status has reached `COMPLETE`](#sync-status-not-reac
 Next check that you're adding your Jira issue keys in your commits, branches, or pull request titles. These are the only places on GitHub where you can put your Jira issue keys that will cause updates to be sent to the Jira issue.
 
 For more information, check out [Using the integration](https://github.com/integrations/jira#using-the-integration).
+
+Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
+
+## Workflow transitions are not running
+
+In order for transitions to run from your smart commit syntax, a permissions requirement must be met.
+
+The email address used for the commit in GitHub that has the transition in the commit message must match an email address that has permission to run the transition in your Jira instance.
+
+You can check the email address on GitHub by adding `.patch` to the end of a commit URL. For example:
+
+`https://github.com/atom/atom/commit/834f8f3d73d84e98a423fe0720abd833d5ca7a87.patch`
 
 Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
 
