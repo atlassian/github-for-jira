@@ -48,7 +48,7 @@ describe('Jira util', () => {
       ]
 
       const result = util.addJiraIssueLinks(source, issues)
-      expect(result).toBe(rendered);
+      expect(result).toBe(rendered)
     })
 
     it('should linkify Jira references to valid issues', () => {
