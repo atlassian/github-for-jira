@@ -25,7 +25,7 @@ describe('GitHub Actions', () => {
       await app.receive(payload)
 
       td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
-        body: '[[TEST-123]](https://test-atlassian-instance.net/browse/TEST-123) body of the test pull request.',
+        body: '[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
         id: 'test-pull-request-id'
       }))
 
