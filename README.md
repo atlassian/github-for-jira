@@ -88,7 +88,7 @@ Existing users of Jira's built-in DVCS connector that meet the [requirements](#r
 3. Follow the prompt to upgrade your GitHub connection
 
 ## Questions? Need help?
-Please fill out GitHub's [Support form](https://github.com/contact?form%5Bsubject%5D=Re:+GitHub%2BJira+Integration) and your request will be routed to the right team at GitHub.
+Take a look through the [troubleshooting steps in our support guide](SUPPORT.md).
 
 ## Contributing
 Want to help improve the integration between GitHub and Jira? Check out the [contributing docs](CONTRIBUTING.md) to get involved.
