@@ -111,6 +111,25 @@ describe('API', () => {
         })
     })
 
+    it('should return 401 if the token is invalid', () => {
+      nock('https://api.github.com')
+        .post('/graphql')
+        .reply(401, {
+          HttpError: {
+            'message': 'Bad credentials',
+            'documentation_url': 'https://developer.github.com/v4'
+          }
+        })
+
+      return supertest(app)
+        .get('/api')
+        .set('Authorization', 'Bearer bad token')
+        .expect(401)
+        .then(response => {
+          expect(response.body).toMatchSnapshot()
+        })
+    })
+
     it('should return 500 if an error happens', () => {
       return supertest(app)
         .get('/api')
