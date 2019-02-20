@@ -27,7 +27,7 @@ This app officially supports GitHub.com and Jira Cloud. Support for GitHub Enter
 
 ### Installation from Atlassian
 1. Sign into your Jira Cloud account
-2. Open the left sidebar by clicking on **Personal Settings**, if the left side bar is not already open. From the left sidebar in Jira, select **Jira Settings** -> **Add-ons** -> **Find new add-ons**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar.)
+2. Open the left sidebar by clicking on **Personal Settings**, if the left side bar is not already open. From the left sidebar in Jira, select **Jira Settings** -> **Apps** -> **Find new Apps**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar.)
 3. Search for **GitHub for Jira** and Click **Install**
 ![image](https://user-images.githubusercontent.com/13207348/46588299-08550800-ca68-11e8-8ed4-290533320ef4.png)
 7. Click the **Get Started** button to connect your GitHub account.
@@ -78,8 +78,15 @@ Smart commits are documented on the [Atlassian site](https://confluence.atlassia
 > example
 ![image](https://user-images.githubusercontent.com/13207348/46588447-61be3680-ca6a-11e8-9976-ba3d1d3c42bf.png)
 
-### Link issues in GitHub
-If an issue body contains a Jira issue key, then the integration will try to expand the link. For example: `[JRA-123]` will be expanded into a link `JRA-123 fix typo` and linked over to Jira. Currently only keys surrounded by `[ ]` work. 
+### Link issues in github
+**Updated**
+
+If an issue body contains a valid Jira issue key on your instance, the integration will automatically expand it into a reference link when surround in brackets `[]`. For example: `[JRA-123]` will be turned into a link to `https://<your-instance>.atlassian.net/browse/JRA-123` . Markdown references are only visible when editing an Issue/PR comment, and appear at the bottom of the text area:
+
+![image](https://user-images.githubusercontent.com/13207348/53053377-2c414500-346f-11e9-9f79-8b78681bd60e.png)
+
+This makes it so Jira issues can be linked inside a comment without it interrupting the flow of the comment as a whole.
+
 
 ## Migrating from the DVCS connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:

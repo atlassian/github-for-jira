@@ -23,7 +23,7 @@
         "repo": {
           "html_url": "test-pull-request-head-url"
         },
-        "ref": "test-pull-request-head-ref",
+        "ref": "TEST-321-test-pull-request-head-ref",
         "sha": "test-pull-request-sha"
       },
       "base": {
