@@ -24,6 +24,33 @@ describe('Jira util', () => {
       util = getJiraUtil(jiraClient)
     })
 
+    test('it should handle multiple Jira references appropriately', () => {
+      const { source, rendered } = loadFixture('multiple-links')
+      const issues = [
+        {
+          key: 'TEST-2019',
+          fields: {
+            summary: 'First Issue'
+          }
+        },
+        {
+          key: 'TEST-2020',
+          fields: {
+            summary: 'Second Issue'
+          }
+        },
+        {
+          key: 'TEST-2021',
+          fields: {
+            summary: 'Third Issue'
+          }
+        }
+      ]
+
+      const result = util.addJiraIssueLinks(source, issues)
+      expect(result).toBe(rendered)
+    })
+
     it('should linkify Jira references to valid issues', () => {
       const { source, rendered } = loadFixture('existing-reference-link')
       const issues = [
