@@ -6,6 +6,9 @@ $('.install-link').click(function (event) {
     installationId: $(event.target).data('installation-id'),
     _csrf: document.getElementById('_csrf').value
   }, function (data) {
+    if (data.err) {
+      return console.log(data.err)
+    }
     window.close()
   })
 })
