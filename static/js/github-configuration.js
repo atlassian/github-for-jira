@@ -7,7 +7,7 @@ $('.install-link').click(function (event) {
     _csrf: document.getElementById('_csrf').value
   }, function (data) {
     if (data.err) {
-      return console.log(data.err.message)
+      return console.log(data.err)
     }
     window.close()
   })
