@@ -107,5 +107,24 @@ describe('GitHub Actions', () => {
       // should not throw
       await app.receive(payload)
     })
+
+    it('should delete the reference to a pull request when issue keys are removed from the title', async () => {
+      const payload = require('../fixtures/pull-request-remove-keys.json')
+      const { repository, pull_request: pullRequest } = payload.payload
+      const githubApi = td.api('https://api.github.com')
+      const jiraApi = td.api('https://test-atlassian-instance.net')
+
+      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+        login: 'test-pull-request-author-login',
+        avatar_url: 'test-pull-request-author-avatar',
+        html_url: 'test-pull-request-author-url'
+      })
+
+      Date.now = jest.fn(() => 12345678)
+
+      await app.receive(payload)
+
+      td.verify(jiraApi.delete(`/rest/devinfo/0.10/repository/${repository.id}/pull_request/${pullRequest.number}?_updateSequenceId=12345678`))
+    })
   })
 })

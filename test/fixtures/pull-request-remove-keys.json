@@ -1,0 +1,34 @@
+{
+  "name": "pull_request",
+  "payload": {
+    "action": "edited",
+    "number": 104,
+    "pull_request": {
+      "number": 104,
+      "state": "open",
+      "locked": false,
+      "title": "Testing a deleted user",
+      "head": {
+        "ref": "test-ref"
+      },
+      "user": {
+        "login": "test-user"
+      }
+    },
+    "changes": {
+      "title": {
+        "from": "[TES-123] Testing a deleted user"
+      }
+    },
+    "repository": {
+      "id": 78124909,
+      "private": true
+    },
+    "sender": {
+      "type": "User"
+    },
+    "installation": {
+      "id": "test-installation-id"
+    }
+  }
+}
