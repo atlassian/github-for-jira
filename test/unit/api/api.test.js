@@ -1,7 +1,7 @@
 const nock = require('nock')
 const supertest = require('supertest')
 
-const successfulAuthResponse = {
+const successfulAuthResponseWrite = {
   'data': {
     'viewer': {
       'login': 'gimenete',
@@ -9,6 +9,20 @@ const successfulAuthResponse = {
       'organization': {
         'repository': {
           'viewerPermission': 'WRITE'
+        }
+      }
+    }
+  }
+}
+
+const successfulAuthResponseAdmin = {
+  'data': {
+    'viewer': {
+      'login': 'monalisa',
+      'isEmployee': true,
+      'organization': {
+        'repository': {
+          'viewerPermission': 'ADMIN'
         }
       }
     }
@@ -42,7 +56,19 @@ describe('API', () => {
     })
 
     it('should return 200 if a valid token is provided', () => {
-      nock('https://api.github.com').post('/graphql').reply(200, successfulAuthResponse)
+      nock('https://api.github.com').post('/graphql').reply(200, successfulAuthResponseWrite)
+
+      return supertest(app)
+        .get('/api')
+        .set('Authorization', 'Bearer xxx')
+        .expect(200)
+        .then(response => {
+          expect(response.body).toMatchSnapshot()
+        })
+    })
+
+    it('should return 200 if token belongs to an admin', () => {
+      nock('https://api.github.com').post('/graphql').reply(200, successfulAuthResponseAdmin)
 
       return supertest(app)
         .get('/api')
@@ -148,7 +174,7 @@ describe('API', () => {
     let jiraClient
 
     beforeEach(() => {
-      nock('https://api.github.com').post('/graphql').reply(200, successfulAuthResponse)
+      nock('https://api.github.com').post('/graphql').reply(200, successfulAuthResponseWrite)
 
       models = td.replace('../../../lib/models', {
         Subscription: td.object(['getAllForInstallation', 'findOrStartSync']),
