@@ -2,6 +2,8 @@
 
 exports[`API Authentication should return 200 if a valid token is provided 1`] = `Object {}`;
 
+exports[`API Authentication should return 200 if token belongs to an admin 1`] = `Object {}`;
+
 exports[`API Authentication should return 401 if the GraphQL query returns errors 1`] = `
 Object {
   "errors": Array [
