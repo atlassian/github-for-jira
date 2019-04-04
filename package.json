@@ -7,7 +7,7 @@
     "dev": "nodemon --exec \"npm start\"",
     "lint": "standard --fix",
     "es": "eslint",
-    "start": "probot run --webhook-path=/github/events ./lib/configure-robot",
+    "start": "node ./lib/run.js",
     "test": "jest --forceExit && standard",
     "test:watch": "jest --watch --notify --notifyMode=change",
     "worker": "node bin/worker"
