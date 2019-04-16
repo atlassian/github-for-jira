@@ -34,7 +34,16 @@
                   <th>Added</th>
                   <th></th>
                   <th>Sync Status</th>
-                  <th>Retry</th>
+                  <th>Retry <span id="sync-modal-btn" class="sync-modal-btn">ℹ️</span></th>
+                  <div id="sync-modal" class="sync-modal">
+                    <div class="sync-modal-content">
+                      <span class="close">&times;</span>
+                      <p><strong>Normal</strong> - Retry if the sync failed and you haven't changed the configuration on GitHub.
+                      This will not attempt to rediscover the GitHub repositories in your installation.</p>
+                      <p><strong>Full</strong> - Rediscover your GitHub repositories and perform another full sync.
+                      Use this is you've changed the configuration on GitHub or would otherwise like to rescan all repositories.</p>
+                    </div>
+                  </div>
                 </tr>
               </thead>
               <tbody>
@@ -58,7 +67,11 @@
                     </td>
                     <td>
                       <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                      <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">🔄</button>
+                      <select id="sync-type">
+                        <option value="normal">Normal</option>
+                        <option value="full">Full</option>
+                      </select>
+                      <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">Submit</button>
                     </td>
                   </tr>
                 {{/each}}

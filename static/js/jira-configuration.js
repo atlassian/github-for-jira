@@ -55,6 +55,7 @@ $('.sync-connection-link').click(function (event) {
     data: {
       installationId: $(event.target).data('installation-id'),
       jiraHost: $(event.target).data('jira-host'),
+      syncType: document.getElementById('sync-type').value,
       token: params.get('jwt'),
       _csrf: document.getElementById('_csrf').value
     },
@@ -66,3 +67,24 @@ $('.sync-connection-link').click(function (event) {
     }
   })
 })
+
+const modal = document.getElementById('sync-modal')
+
+const btn = document.getElementById('sync-modal-btn')
+
+const span = document.getElementsByClassName('close')[0]
+
+btn.onclick = function () {
+  modal.style.display = 'block'
+}
+
+span.onclick = function () {
+  modal.style.display = 'none'
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function (event) {
+  if (event.target === modal) {
+    modal.style.display = 'none'
+  }
+}
