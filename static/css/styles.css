@@ -37,7 +37,7 @@
   color: #fff;
 }
 
-.sync-modal {
+.sync-retry-modal {
   display: none;
   position: fixed;
   z-index: 1;
@@ -50,14 +50,21 @@
   background-color: rgba(0,0,0,0.4);
 }
 
-.sync-modal-btn {
+.sync-retry-modal-btn {
   cursor: pointer;
   font-size: 14px;
   position: relative;
   top: 1px;
 }
 
-.sync-modal-content {
+.sync-status-modal-btn {
+  cursor: pointer;
+  font-size: 14px;
+  position: relative;
+  top: 1px;
+}
+
+.sync-retry-modal-content {
   background-color: #fefefe;
   margin: 15% auto;
   padding: 10px;

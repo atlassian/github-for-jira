@@ -68,23 +68,35 @@ $('.sync-connection-link').click(function (event) {
   })
 })
 
-const modal = document.getElementById('sync-modal')
+const retryModal = document.getElementById('sync-retry-modal')
+const statusModal = document.getElementById('sync-status-modal')
+const retryBtn = document.getElementById('sync-retry-modal-btn')
+const statusBtn = document.getElementById('sync-status-modal-btn')
+const retrySpan = document.getElementById('retry-close')
+const statusSpan = document.getElementById('status-close')
 
-const btn = document.getElementById('sync-modal-btn')
-
-const span = document.getElementsByClassName('close')[0]
-
-btn.onclick = function () {
-  modal.style.display = 'block'
+retryBtn.onclick = function () {
+  retryModal.style.display = 'block'
 }
 
-span.onclick = function () {
-  modal.style.display = 'none'
+statusBtn.onclick = function () {
+  statusModal.style.display = 'block'
+}
+
+retrySpan.onclick = function () {
+  retryModal.style.display = 'none'
+}
+
+statusSpan.onclick = function () {
+  statusModal.style.display = 'none'
 }
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
-  if (event.target === modal) {
-    modal.style.display = 'none'
+  if (event.target === retryModal) {
+    retryModal.style.display = 'none'
+  }
+  if (event.target === statusModal) {
+    statusModal.style.display = 'none'
   }
 }

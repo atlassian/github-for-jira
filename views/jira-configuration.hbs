@@ -33,11 +33,21 @@
                   <th>Repositories</th>
                   <th>Added</th>
                   <th></th>
-                  <th>Sync Status</th>
-                  <th>Retry <span id="sync-modal-btn" class="sync-modal-btn">ℹ️</span></th>
-                  <div id="sync-modal" class="sync-modal">
-                    <div class="sync-modal-content">
-                      <span class="close">&times;</span>
+                  <th>Sync Status <span id="sync-status-modal-btn" class="sync-status-modal-btn">ℹ️</span></th></th>
+                  <div id="sync-status-modal" class="sync-retry-modal">
+                    <div class="sync-retry-modal-content">
+                      <span id="status-close" class="close">&times;</span>
+                      <p><strong>ACTIVE</strong> - The sync has started and is still in progress for this account. New data may not immediately be displayed in Jira.</p>
+                      <p><strong>FAILED</strong> - There was a problem syncing data from your account. If there were temporary technical issues, a normal resync will pick up from where it left off and continue with the sync.
+                      If it continues to return to FAILED state after re-trying, a full resync may be necessary.</p>
+                      <p><strong>PENDING</strong> - The sync has been queued, but is not actively syncing data from GitHub.</p>
+                      <p><strong>COMPLETE</strong> - The sync has finished. Information from selected repositories will be shown in Jira's development information panel.</p>
+                    </div>
+                  </div>
+                  <th>Retry <span id="sync-retry-modal-btn" class="sync-retry-modal-btn">ℹ️</span></th>
+                  <div id="sync-retry-modal" class="sync-retry-modal">
+                    <div class="sync-retry-modal-content">
+                      <span id="retry-close" class="close">&times;</span>
                       <p><strong>Normal</strong> - Retry if the sync failed and you haven't changed the configuration on GitHub.
                       This will not attempt to rediscover the GitHub repositories in your installation.</p>
                       <p><strong>Full</strong> - Rediscover your GitHub repositories and perform another full sync.
