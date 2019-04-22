@@ -55,6 +55,7 @@ $('.sync-connection-link').click(function (event) {
     data: {
       installationId: $(event.target).data('installation-id'),
       jiraHost: $(event.target).data('jira-host'),
+      syncType: document.getElementById('sync-type').value,
       token: params.get('jwt'),
       _csrf: document.getElementById('_csrf').value
     },
@@ -66,3 +67,36 @@ $('.sync-connection-link').click(function (event) {
     }
   })
 })
+
+const retryModal = document.getElementById('sync-retry-modal')
+const statusModal = document.getElementById('sync-status-modal')
+const retryBtn = document.getElementById('sync-retry-modal-btn')
+const statusBtn = document.getElementById('sync-status-modal-btn')
+const retrySpan = document.getElementById('retry-close')
+const statusSpan = document.getElementById('status-close')
+
+retryBtn.onclick = function () {
+  retryModal.style.display = 'block'
+}
+
+statusBtn.onclick = function () {
+  statusModal.style.display = 'block'
+}
+
+retrySpan.onclick = function () {
+  retryModal.style.display = 'none'
+}
+
+statusSpan.onclick = function () {
+  statusModal.style.display = 'none'
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function (event) {
+  if (event.target === retryModal) {
+    retryModal.style.display = 'none'
+  }
+  if (event.target === statusModal) {
+    statusModal.style.display = 'none'
+  }
+}
