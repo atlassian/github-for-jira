@@ -86,6 +86,8 @@ Object {
 }
 `;
 
+exports[`API Endpoints sync should reset repoSyncState if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for test-installation-id\\"}"`;
+
 exports[`API Endpoints sync should return 404 if no installation is found 1`] = `"Not Found"`;
 
 exports[`API Endpoints sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for test-installation-id\\"}"`;
