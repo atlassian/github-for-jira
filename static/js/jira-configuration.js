@@ -48,14 +48,15 @@ $('.delete-connection-link').click(function (event) {
 
 $('.sync-connection-link').click(function (event) {
   event.preventDefault()
+  const installationId = $(event.target).data('installation-id')
 
   $.ajax({
     type: 'POST',
     url: `/jira/sync`,
     data: {
-      installationId: $(event.target).data('installation-id'),
+      installationId: installationId,
       jiraHost: $(event.target).data('jira-host'),
-      syncType: document.getElementById('sync-type').value,
+      syncType: document.getElementById(`${installationId}-sync-type`).value,
       token: params.get('jwt'),
       _csrf: document.getElementById('_csrf').value
     },
