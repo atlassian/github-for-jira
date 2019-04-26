@@ -27,7 +27,7 @@ After installing the integration, your sync status should move from `PENDING` to
 
 You can check your sync status in the integration settings:
 
-**Jira Settings** -> **Add-ons** -> **Manage Add-ons** -> **GitHub** -> **Get started**
+**Jira Settings** -> **Apps** -> **Manage Apps** -> **GitHub** -> **Get started**
 
 ### Sync status definitions
 
