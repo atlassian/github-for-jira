@@ -11,11 +11,23 @@ function getCookieHeader (payload) {
   ]
 }
 
+const authenticatedUserResponse = {
+  'login': 'test-user'
+}
+
+const organizationMembershipResponse = {
+  'role': 'member'
+}
+
 const userInstallationsResponse = {
   'total_count': 2,
   'installations': [
     {
-      'id': 1
+      'account': {
+        'login': 'test-org'
+      },
+      'id': 1,
+      'target_type': 'Organization'
     },
     {
       'id': 3
@@ -70,6 +82,23 @@ describe('Frontend', () => {
           .expect(401)
       })
 
+      it('should return a 401 if the user is not an admin of the Org', () => {
+        nock('https://api.github.com').get('/user/installations').reply(200, userInstallationsResponse)
+        nock('https://api.github.com').get('/user').reply(200, authenticatedUserResponse)
+        nock('https://api.github.com').get('/orgs/test-org/memberships/test-user').reply(200, organizationMembershipResponse)
+        return supertest(subject)
+          .post('/github/configuration')
+          .send({
+            installationId: 1
+          })
+          .type('form')
+          .set('cookie', getCookieHeader({
+            githubToken: 'test-github-token',
+            jiraHost: 'test-jira-host'
+          }))
+          .expect(401)
+      })
+
       it('should return a 400 if no installationId is present in the body', () => {
         return supertest(subject)
           .post('/github/configuration')
@@ -87,7 +116,7 @@ describe('Frontend', () => {
         await supertest(subject)
           .post('/github/configuration')
           .send({
-            installationId: 1
+            installationId: 3
           })
           .type('form')
           .set('cookie', getCookieHeader({
@@ -97,7 +126,7 @@ describe('Frontend', () => {
           .expect(200)
 
         td.verify(models.Subscription.install({
-          installationId: '1',
+          installationId: '3',
           host: 'test-jira-host'
         }))
       })
