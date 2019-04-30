@@ -20,17 +20,17 @@
       <div class="Box box-shadow">
         <div class="">
           {{#each installations}}
-            <a href="{{ account.login }}" data-installation-id="{{ id }}" class="install-link Box-row Box-row--hover-gray muted-link d-block clearfix">
-              <img class="avatar float-left mr-2" data-installation-id="{{ id }}" src="{{ account.avatar_url }}" alt="" height="20" width="20">
-              <span class="text-bold text-gray-dark" data-installation-id="{{ id }}">{{ account.login }}</span>
-            </a>
+              <a href="{{ account.login }}" data-installation-id="{{ id }}" class="install-link Box-row Box-row--hover-gray muted-link d-block clearfix">
+                <img class="avatar float-left mr-2" data-installation-id="{{ id }}" src="{{ account.avatar_url }}" alt="" height="20" width="20">
+                <span class="text-bold text-gray-dark" data-installation-id="{{ id }}">{{ account.login }}</span>
+              </a>
           {{/each}}
         </div>
       </div>
 
       <p class="text-gray text-center my-4">
-        Don't see your organization?
-        <a href="{{ info.html_url }}/installations/new">Install {{ info.name }}</a>.
+        Don't see your account?
+        <a href="{{ info.html_url }}/installations/new">Install {{ info.name }}</a> on your user account or an Organization you own.
       </p>
       <p class="text-gray text-left my-4">
         <strong> Please note</strong>: We currently sync data from all repositories you've selected in the installation's settings.
