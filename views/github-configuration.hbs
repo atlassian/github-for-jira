@@ -1,44 +1,64 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="ap-local-base-url" content="{{localBaseUrl}}">
-    <title>{{title}}</title>
-    <link rel="stylesheet" href="/public/primer/build.css" media="all" />
-    <script src="/public/js/jquery.min.js"></script>
-  </head>
-  <body class="bg-gray px-3 py-6">
-    <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
-    <section class="mx-auto" style="max-width: 510px">
-      <p class="text-gray text-center my-4">
-        <img src="/public/octicons/mark-github.svg" height="35px;" /> <img src="/public/jira-logo.png" height="35px;" style="border-radius: 25px; padding:5px; background-color: #154894;"/>
-      </p>
-      <h2 class="f2 text-center text-normal">Connect an organization to Jira</h2>
-      <p class="text-gray text-center mb-4">Which organization do you want to connect to?</p>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="ap-local-base-url" content="{{localBaseUrl}}">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/public/primer/build.css" media="all" />
+  <script src="/public/js/jquery.min.js"></script>
+</head>
+<body class="bg-gray px-3 py-6">
+  <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
+  <section class="mx-auto" style="max-width: 510px">
+    <p class="text-gray text-center my-4">
+      <img src="/public/octicons/mark-github.svg" height="45px;" />
+    </p>
+    <h2 class="f2 text-center text-normal">Connect an Organization to Jira</h2>
+    <p class="text-gray text-center mb-4">Which organization do you want to connect to?</p>
 
-      <div class="Box box-shadow">
-        <div class="">
-          {{#each installations}}
-              <a href="{{ account.login }}" data-installation-id="{{ id }}" class="install-link Box-row Box-row--hover-gray muted-link d-block clearfix">
-                <img class="avatar float-left mr-2" data-installation-id="{{ id }}" src="{{ account.avatar_url }}" alt="" height="20" width="20">
-                <span class="text-bold text-gray-dark" data-installation-id="{{ id }}">{{ account.login }}</span>
-              </a>
-          {{/each}}
-        </div>
+    <div class="Box box-shadow">
+      <div class="">
+        {{#each installations}}
+        <a href="{{ account.login }}" data-installation-id="{{ id }}"
+          class="install-link Box-row Box-row--hover-gray muted-link d-block clearfix">
+          <img class="avatar float-left mr-2" data-installation-id="{{ id }}" src="{{ account.avatar_url }}" alt=""
+            height="25px" width="25px">
+          <span class="text-bold text-gray-dark" data-installation-id="{{ id }}">{{ account.login }}</span>
+        </a>
+        {{/each}}
+      </div>
+    </div>
+    <p class="text-gray text-center my-4">
+      Don't see your account?
+      <a href="{{ info.html_url }}/installations/new">Install {{ info.name }}</a> on your user account or an
+      Organization you own.
+    </p>
+
+    <p class="text-gray text-left my-4">
+      <strong> Please note</strong>: We currently sync data from all repositories you've selected in the installation's
+      settings.
+      If there a large number of repositories in the installation, initial data sync will take some time to complete.
+      To review or update the repositories you've selected for an installation, <a
+        href="{{ info.html_url }}/installations/new">click here.</a>
+    </p>
+    <div class="Box box-shadow my-3">
+      <div class="Box-row Box-row--hover-gray muted-link d-block clearfix">
+        <p class="text-gray text-center my-2">
+          <img data-jira-host="{{ jiraHost }}" src="/public/jira-logo.png" alt="" height="45px" width="45px"
+            style="border-radius: 25px; padding:5px; background-color: #154894;">
+          <br />
+          <span class="text-bold text-gray-dark" data-jira-host="{{ jiraHost }}">{{ jiraHost }}</span>
+        </p>
+        <p class="text-gray text-center my-2">
+          <a href="/jira/subscriptions">Manage subscriptions to other Jira instances</a>
+        </p>
       </div>
 
-      <p class="text-gray text-center my-4">
-        Don't see your account?
-        <a href="{{ info.html_url }}/installations/new">Install {{ info.name }}</a> on your user account or an Organization you own.
-      </p>
-      <p class="text-gray text-left my-4">
-        <strong> Please note</strong>: We currently sync data from all repositories you've selected in the installation's settings.
-        If there a large number of repositories in the installation, initial data sync will take some time to complete.
-        To review or update the repositories you've selected for an installation, <a href="{{ info.html_url }}/installations/new">click here.</a>
-      </p>
+    </div>
 
-    </section>
-    <script src="/public/js/github-configuration.js"></script>
-  </body>
+  </section>
+  <script src="/public/js/github-configuration.js"></script>
+</body>
+
 </html>
