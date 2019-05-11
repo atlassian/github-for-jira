@@ -228,6 +228,7 @@ describe('API', () => {
           .get('/api/test-installation-id')
           .set('Authorization', 'Bearer xxx')
           .set('host', '127.0.0.1')
+          .send('jiraHost=https://test-atlassian-instance.net')
           .expect(200)
           .then(response => {
             expect(response.body).toMatchSnapshot()
@@ -249,20 +250,20 @@ describe('API', () => {
       })
 
       it('should return the repoSyncState information for an existing installation', () => {
-        td.when(models.Subscription.getAllForInstallation('test-installation-id'))
-          .thenReturn([
+        td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 'test-installation-id'))
+          .thenReturn(
             {
               dataValues: {
                 repoSyncState: { todo: 'more info' }
               }
             }
-          ])
+          )
 
         td.when(locals.client.apps.getInstallation({ installation_id: 'test-installation-id' }))
           .thenReturn({ data: {} })
 
         return supertest(subject)
-          .get('/api/test-installation-id/repoSyncState.json')
+          .get('/api/test-installation-id/repoSyncState.json?jiraHost=https://test-atlassian-instance.net')
           .set('Authorization', 'Bearer xxx')
           .set('host', '127.0.0.1')
           .expect(200)
@@ -311,6 +312,43 @@ describe('API', () => {
           .then(response => {
             expect(response.text).toMatchSnapshot()
             expect(models.Subscription.findOrStartSync).toHaveBeenCalled()
+          })
+      })
+
+      it('should reset repoSyncState if asked to', () => {
+        td.when(models.Installation.getForHost('me.atlassian.net'))
+          .thenReturn([{}])
+
+        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', 'test-installation-id'))
+          .thenReturn([
+            {
+              dataValues: {
+                repoSyncState: { todo: 'more info' }
+              }
+            }
+          ])
+
+        models.Subscription.findOrStartSync = jest.fn()
+
+        td.when(locals.client.apps.getInstallation({ installation_id: 'test-installation-id' }))
+          .thenReturn({ data: {} })
+
+        return supertest(subject)
+          .post('/api/test-installation-id/sync?installationId=test-installation-id')
+          .set('Authorization', 'Bearer xxx')
+          .set('host', '127.0.0.1')
+          .send('jiraHost=me.atlassian.net')
+          .send('resetType=full')
+          .expect(202)
+          .then(response => {
+            expect(response.text).toMatchSnapshot()
+            expect(models.Subscription.findOrStartSync).toHaveBeenCalledWith([
+              {
+                dataValues: {
+                  repoSyncState: { todo: 'more info' }
+                }
+              }
+            ], 'full')
           })
       })
     })
