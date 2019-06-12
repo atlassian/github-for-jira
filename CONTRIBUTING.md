@@ -82,8 +82,8 @@ For production you should just use `npm run start`.
 #### Configuring the Jira instance
 
 1. Create a new [free developer instance][jira-developer-instance] on Jira Cloud.
-2. From the left sidebar in Jira, select **Settings** -> **Add-ons** -> **Manage add-ons**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar.)
-3. Scroll down to beneath the User-installed add-ons table and select **Settings**.
+2. From the left sidebar in Jira, select **Settings** -> **Apps** -> **Manage apps**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar.)
+3. Verify the filter is set to `User-installed`, and select **Settings* beneath the User-installed add-ons table.
 4. On the Settings pop-up, add **Enable development mode** and click **Apply**.
 5. From the right header, select **Upload add-on** and enter `https://DOMAIN/jira/atlassian-connect.json`.
 6. Click **Upload**.
