@@ -1,7 +1,5 @@
 ## Contributing
 
-[![Build Status](https://travis-ci.com/integrations/jira.svg?branch=master)](https://travis-ci.com/integrations/jira)
-
 [code-of-conduct]: CODE_OF_CONDUCT.md
 [fork]: /fork
 [license]: LICENSE
