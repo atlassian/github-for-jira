@@ -20,12 +20,13 @@
     <div class="Box box-shadow">
       <div class="">
         {{#each installations}}
-        <a href="{{ account.login }}" data-installation-id="{{ id }}"
-          class="install-link Box-row Box-row--hover-gray muted-link d-block clearfix">
-          <img class="avatar float-left mr-2" data-installation-id="{{ id }}" src="{{ account.avatar_url }}" alt=""
+        <div class="Box-row Box-row--hover-gray d-block clearfix">
+          <img class="avatar float-left mr-2" src="{{ account.avatar_url }}" alt=""
             height="25px" width="25px">
-          <span class="text-bold text-gray-dark" data-installation-id="{{ id }}">{{ account.login }}</span>
-        </a>
+          <span class="text-bold text-gray-dark">{{ account.login }}</span>
+          <button class="install-link btn btn-info float-right"  data-installation-id="{{ id }}" type="submit">Install</button>
+          <a href="/github/subscriptions/{{ id }}" class="float-right my-1 px-1">Manage</a>
+        </div>
         {{/each}}
       </div>
     </div>
@@ -49,9 +50,6 @@
             style="border-radius: 25px; padding:5px; background-color: #154894;">
           <br />
           <span class="text-bold text-gray-dark" data-jira-host="{{ jiraHost }}">{{ jiraHost }}</span>
-        </p>
-        <p class="text-gray text-center my-2">
-          <a href="/github/subscriptions">Manage subscriptions to other Jira instances</a>
         </p>
       </div>
 
