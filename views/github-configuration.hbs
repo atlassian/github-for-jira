@@ -24,8 +24,14 @@
           <img class="avatar float-left mr-2" src="{{ account.avatar_url }}" alt=""
             height="25px" width="25px">
           <span class="text-bold text-gray-dark">{{ account.login }}</span>
-          <button class="install-link btn btn-info float-right"  data-installation-id="{{ id }}" type="submit">Install</button>
-          <a href="/github/subscriptions/{{ id }}" class="float-right my-1 px-1">Manage</a>
+          {{#if admin}}
+            <button class="install-link btn btn-info float-right"  data-installation-id="{{ id }}" type="submit">Install</button>
+            <a href="/github/subscriptions/{{ id }}" class="float-right my-1 px-1">Manage</a>
+          {{else}}
+            <button disabled class="tooltipped tooltipped-e install-link btn btn-info float-right" aria-label="You are not an owner on this installation." data-installation-id="{{ id }}" type="submit">
+              Install
+            </button>
+          {{/if}}
         </div>
         {{/each}}
       </div>
