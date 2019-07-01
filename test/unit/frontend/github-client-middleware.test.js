@@ -5,20 +5,15 @@ const octokit = require('@octokit/rest')
 describe('GitHub client middleware', () => {
   let isAdmin
 
-  const organizationAdminResponse = {
-    'role': 'admin'
-  }
-
-  const organizationMemberResponse = {
-    'role': 'member'
-  }
-
   beforeEach(() => {
     isAdmin = isAdminFunction(octokit())
   })
 
   it('isAdmin returns true if user is admin of a given organization', async () => {
-    nock('https://api.github.com').get('/orgs/test-org/memberships/test-user').reply(200, organizationAdminResponse)
+    nock('https://api.github.com')
+      .get('/orgs/test-org/memberships/test-user')
+      .reply(200, { 'role': 'admin' })
+
     const result = await isAdmin({
       org: 'test-org',
       username: 'test-user',
@@ -29,7 +24,10 @@ describe('GitHub client middleware', () => {
   })
 
   it('isAdmin returns false if user is not an admin of a given organization', async () => {
-    nock('https://api.github.com').get('/orgs/test-org/memberships/test-user').reply(200, organizationMemberResponse)
+    nock('https://api.github.com')
+      .get('/orgs/test-org/memberships/test-user')
+      .reply(200, { 'role': 'member' })
+
     const result = await isAdmin({
       org: 'test-org',
       username: 'test-user',
