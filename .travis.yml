@@ -16,3 +16,4 @@ script:
 # Setup Postgres database for testing
 services:
   - postgresql
+  - redis-server
