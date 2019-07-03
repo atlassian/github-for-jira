@@ -9,5 +9,7 @@ notifications:
 services:
   - postgresql
 before_script:
+  - psql -c 'create database jira-test;' -U postgres
+script:
   - sequelize db:create --env test
   - sequelize db:migrate --env test
