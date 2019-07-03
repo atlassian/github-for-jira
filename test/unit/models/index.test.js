@@ -1,4 +1,4 @@
-const { Installation, Subscription } = require('../../../lib/models/')
+const { Installation, Subscription } = require('../../../lib/models')
 const { getHashedKey } = require('../../../lib/models/installation')
 
 process.env.STORAGE_SECRET = 'test-secret'
@@ -6,7 +6,7 @@ process.env.STORAGE_SECRET = 'test-secret'
 describe('test installation model', () => {
   const newInstallPayload = {
     'key': 'com.github.integration.production',
-    'clientKey': '7c331861-733c-3193-b98b-b325d9d94cf1',
+    'clientKey': 'a-totally-unique-client-key',
     'publicKey': 'this-is-a-public-key',
     'sharedSecret': 'shared-secret',
     'serverVersion': '100104',
@@ -20,7 +20,7 @@ describe('test installation model', () => {
   // this payload is identical to newInstallPayload except for a renamed `baseUrl`
   const renamedInstallPayload = {
     'key': 'com.github.integration.production',
-    'clientKey': '7c331861-733c-3193-b98b-b325d9d94cf1', // This is the same clientKey as before
+    'clientKey': 'a-totally-unique-client-key', // This is the same clientKey as above
     'publicKey': 'this-is-a-public-key',
     'sharedSecret': 'shared-secret',
     'serverVersion': '100104',
@@ -31,36 +31,47 @@ describe('test installation model', () => {
     'eventType': 'installed'
   }
 
+  // Setup an installation
+  const existingInstallPayload = {
+    'key': 'com.github.integration.production',
+    'clientKey': 'a-totally-unique-client-key',
+    'publicKey': 'this-is-a-public-key',
+    'sharedSecret': 'shared-secret',
+    'serverVersion': '100104',
+    'pluginsVersion': '1.415.0',
+    'baseUrl': 'https://existing-instance.atlassian.net',
+    'productType': 'jira',
+    'description': 'Atlassian JIRA at https://existing-instance.atlassian.net ',
+    'eventType': 'installed'
+  }
+
   beforeEach(async () => {
+    // Clean up the database
     Installation.truncate({ cascade: true, restartIdentity: true })
     Subscription.truncate({ cascade: true, restartIdentity: true })
-    const existingInstallPayload = {
-      'key': 'com.github.integration.production',
-      'clientKey': 'a-totally-unique-client-key',
-      'publicKey': 'this-is-a-public-key',
-      'sharedSecret': 'shared-secret',
-      'serverVersion': '100104',
-      'pluginsVersion': '1.415.0',
-      'baseUrl': 'https://existing-instance.atlassian.net',
-      'productType': 'jira',
-      'description': 'Atlassian JIRA at https://existing-instance.atlassian.net ',
-      'eventType': 'installed'
-    }
-    const hashedKey = getHashedKey(existingInstallPayload.clientKey)
+
     const installation = await Installation.install({
       host: existingInstallPayload.baseUrl,
       sharedSecret: existingInstallPayload.sharedSecret,
-      clientKey: hashedKey
+      clientKey: existingInstallPayload.clientKey
     })
+
+    // Setup two subscriptions for this host
     await Subscription.install({
       host: installation.jiraHost,
       installationId: '1234',
       clientKey: installation.clientKey
     })
+
+    await Subscription.install({
+      host: installation.jiraHost,
+      installationId: '2345',
+      clientKey: installation.clientKey
+    })
   })
 
   // Close connection when tests are done
-  afterAll(async () => Installation.close())
+  afterAll(async () => { Installation.close() })
 
   it('installs app when it receives an install payload from jira', async () => {
     const installation = await Installation.install({
@@ -95,7 +106,17 @@ describe('test installation model', () => {
     expect(updatedInstallation.jiraHost).toBe(renamedInstallPayload.baseUrl)
   })
 
-  it('updates all Subscriptions for a given jiraHost when a site is renamed', async () => {
+  it('updates all Subscriptions for a given jira clientKey when a site is renamed', async () => {
+    const updatedInstallation = await Installation.install({
+      host: renamedInstallPayload.baseUrl,
+      sharedSecret: renamedInstallPayload.sharedSecret,
+      clientKey: renamedInstallPayload.clientKey
+    })
 
+    const updatedSubscriptions = await Subscription.getAllForClientKey(updatedInstallation.clientKey)
+
+    for (const subscription of updatedSubscriptions) {
+      expect(subscription.jiraHost).toBe(renamedInstallPayload.baseUrl)
+    }
   })
 })
