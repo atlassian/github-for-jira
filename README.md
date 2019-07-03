@@ -1,5 +1,9 @@
 # GitHub.com + Jira Software integration
 
+| Build |
+|-------|
+| [![Build Status](https://travis-ci.com/integrations/jira.svg?branch=master)](https://travis-ci.com/integrations/jira) |
+
 ## About
 Connect your code with your project management in Jira. A separate Jira subscription is required. With two of your most important tools connected, you'll spend less time managing projects and more time working on them. This integration is an open source project, built and maintained by GitHub.
 
@@ -73,7 +77,7 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 To access the development information in Jira...
 
 ### Take action using Smart Commits
-Smart commits are documented on the [Atlassian site](https://confluence.atlassian.com/fisheye/using-smart-commits-298976812.html) and allow to you comment on Jira issue in commit messages, branches, and pull requests. For example: `[JRA-123] fix typo` will be sent through to Jira and appear in the Development Information section of the Jira issue with the key `JRA-123`
+Smart commits are documented on the [Atlassian site](https://confluence.atlassian.com/fisheye/using-smart-commits-298976812.html) and allow you to comment on Jira issue in commit messages, branches, and pull requests. For example: `[JRA-123] fix typo` will be sent through to Jira and appear in the Development Information section of the Jira issue with the key `JRA-123`
 
 > example
 ![image](https://user-images.githubusercontent.com/13207348/46588447-61be3680-ca6a-11e8-9976-ba3d1d3c42bf.png)
