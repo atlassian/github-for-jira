@@ -4,3 +4,10 @@ node_js:
   - "10.14.1"
 notifications:
   disabled: true
+
+# Setup Postgres database for testing
+services:
+  - postgresql
+before_script:
+  - sequelize db:create --env test
+  - sequelize db:migrate --env test
