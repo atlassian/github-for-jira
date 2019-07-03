@@ -71,7 +71,7 @@ describe('test installation model', () => {
   })
 
   // Close connection when tests are done
-  afterAll(async () => { Installation.close() })
+  afterAll(async () => Installation.close())
 
   it('installs app when it receives an install payload from jira', async () => {
     const installation = await Installation.install({
