@@ -8,7 +8,7 @@
     "lint": "standard --fix",
     "es": "eslint",
     "start": "node ./lib/run.js",
-    "test": "jest && standard",
+    "test": "jest --forceExit && standard",
     "test:watch": "jest --watch --notify --notifyMode=change",
     "worker": "node bin/worker"
   },
