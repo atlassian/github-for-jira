@@ -9,6 +9,7 @@ module.exports = {
         FROM "Installations"
         WHERE "Subscriptions"."jiraHost" = 
           "Installations"."jiraHost"
+        LIMIT 1
       )
       WHERE EXISTS (
         SELECT "clientKey"
