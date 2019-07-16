@@ -4,3 +4,16 @@ node_js:
   - "10.14.1"
 notifications:
   disabled: true
+env:
+  global:
+    - NODE_ENV=test
+install:
+  - npm install
+script:
+  - sequelize db:create --env test
+  - sequelize db:migrate --env test
+  - npm test
+# Setup Postgres database for testing
+services:
+  - postgresql
+  - redis-server
