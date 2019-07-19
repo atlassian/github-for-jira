@@ -184,7 +184,7 @@ describe('sync/branches', () => {
       opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
     }
 
-    const associatedPRhasKeys = require('../../fixtures/api/graphql/branch-associated-PR-has-keys.json')
+    const associatedPRhasKeys = require('../../fixtures/api/graphql/branch-associated-pr-has-keys.json')
     nockBranchRequst(associatedPRhasKeys)
 
     const queues = {
