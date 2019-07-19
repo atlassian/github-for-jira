@@ -23,7 +23,7 @@ function makeExpectedResponse ({branchName}) {
               fileCount: 0,
               hash: 'test-oid',
               id: 'test-oid',
-              issueKeys: ['TES-123'].concat(issueKeys).reverse().filter(Boolean),
+              issueKeys: ['TES-123'],
               message: 'TES-123 test-commit-message',
               url: 'test-repo-url/commit/test-sha',
               updateSequenceId: 12345678
@@ -235,5 +235,29 @@ describe('sync/branches', () => {
         installationId: 'test-installation-id'
       }
     }))
+  })
+
+  test('should not call Jira if no issue keys are found', async () => {
+    const { processInstallation } = require('../../../lib/sync/installation')
+
+    const job = {
+      data: { installationId, jiraHost },
+      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
+    }
+
+    const branchNoIssueKeys = require('../../fixtures/api/graphql/branch-no-issue-keys.json')
+    nockBranchRequst(branchNoIssueKeys)
+
+    const queues = {
+      installation: {
+        add: jest.fn()
+      }
+    }
+
+    td.when(jiraApi.post(), { ignoreExtraArgs: true })
+      .thenThrow(new Error('test error'))
+
+    await processInstallation(app, queues)(job)
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
   })
 })
