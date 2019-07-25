@@ -1,0 +1,9 @@
+{
+  "data": {
+    "repository": {
+      "defaultBranchRef": {
+        "name": "master"
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 const nock = require('nock')
+const defaultBranchFixture = require('../../fixtures/api/graphql/default-branch.json')
 
 describe('sync/commits', () => {
   let jiraHost
@@ -59,7 +60,10 @@ describe('sync/commits', () => {
 
     const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json')
 
-    const { commitsNoLastCursor, commitsWithLastCursor } = require('../../fixtures/api/graphql/commit-queries')
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+
+    nock('https://api.github.com').post('/graphql', getDefaultBranch)
+      .reply(200, defaultBranchFixture)
     nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
       .reply(200, commitNodesFixture)
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
@@ -118,7 +122,10 @@ describe('sync/commits', () => {
 
     const mixedCommitNodes = require('../../fixtures/api/graphql/commit-nodes-mixed.json')
 
-    const { commitsNoLastCursor, commitsWithLastCursor } = require('../../fixtures/api/graphql/commit-queries')
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+
+    nock('https://api.github.com').post('/graphql', getDefaultBranch)
+      .reply(200, defaultBranchFixture)
     nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
       .reply(200, mixedCommitNodes)
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
@@ -211,7 +218,10 @@ describe('sync/commits', () => {
 
     const commitsNoKeys = require('../../fixtures/api/graphql/commit-nodes-no-keys.json')
 
-    const { commitsNoLastCursor, commitsWithLastCursor } = require('../../fixtures/api/graphql/commit-queries')
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+
+    nock('https://api.github.com').post('/graphql', getDefaultBranch)
+      .reply(200, defaultBranchFixture)
     nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
       .reply(200, commitsNoKeys)
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
@@ -239,7 +249,10 @@ describe('sync/commits', () => {
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 
-    const { commitsNoLastCursor, commitsWithLastCursor } = require('../../fixtures/api/graphql/commit-queries')
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+
+    nock('https://api.github.com').post('/graphql', getDefaultBranch)
+      .reply(200, defaultBranchFixture)
     nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
       .reply(200, emptyNodesFixture)
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
