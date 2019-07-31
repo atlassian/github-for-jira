@@ -1,6 +1,7 @@
 const Keygrip = require('keygrip')
 const supertest = require('supertest')
 const nock = require('nock')
+const { getHashedKey } = require('../../../lib/models/installation')
 
 function getCookieHeader (payload) {
   const cookie = Buffer.from(JSON.stringify(payload)).toString('base64')
@@ -113,10 +114,12 @@ describe('Frontend', () => {
       it('should return a 200 and install a Subscription', async () => {
         nock('https://api.github.com').get('/user/installations').reply(200, userInstallationsResponse)
 
+        const jiraClientKey = 'a-unique-client-key'
         await supertest(subject)
           .post('/github/configuration')
           .send({
-            installationId: 3
+            installationId: 1,
+            clientKey: jiraClientKey
           })
           .type('form')
           .set('cookie', getCookieHeader({
@@ -126,8 +129,9 @@ describe('Frontend', () => {
           .expect(200)
 
         td.verify(models.Subscription.install({
-          installationId: '3',
-          host: 'test-jira-host'
+          installationId: '1',
+          host: 'test-jira-host',
+          clientKey: getHashedKey(jiraClientKey)
         }))
       })
     })

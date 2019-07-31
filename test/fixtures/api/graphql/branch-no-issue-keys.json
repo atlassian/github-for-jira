@@ -1,0 +1,50 @@
+{
+  "data": {
+    "repository": {
+      "refs": {
+        "edges": [
+          {
+            "cursor": "MQ",
+            "node": {
+              "associatedPullRequests": {
+                "nodes": [
+                  {
+                    "title": "Test Pull Request with no issue keys"
+                  }
+                ]
+              },
+              "name": "dev",
+              "target": {
+                "author": {
+                  "avatarUrl": "https://camo.githubusercontent.com/test-avatar",
+                  "email": "test-author-email@example.com",
+                  "name": "test-author-name"
+                },
+                "authoredDate": "test-authored-date",
+                "history": {
+                  "nodes": [
+                    {
+                      "message": "test-commit-message",
+                      "oid": "test-oid",
+                      "authoredDate": "test-authored-date",
+                      "author": {
+                        "avatarUrl": "https://camo.githubusercontent.com/test-avatar",
+                        "email": "test-author-email@example.com",
+                        "name": "test-author-name",
+                        "user": null
+                      },
+                      "url": "test-repo-url/commit/test-sha"
+                    }
+                  ]
+                },
+                "oid": "test-oid",
+                "message": "test-commit-message",
+                "url": "test-repo-url/commit/test-sha"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

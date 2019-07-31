@@ -43,65 +43,73 @@ describe('sync/pull-request', () => {
       })
   })
 
-  /**
-   * TODO: I can't get this test to work even though it matches the commit test.
-   * Nock says the call doesn't match
-   */
+  test('should sync to Jira when Pull Request Nodes have jira references', async () => {
+    const { processInstallation } = require('../../../lib/sync/installation')
 
-  // test('should sync to Jira when Pull Request Nodes have jira references', async () => {
-  //   const { processPullRequests } = require('../../../lib/sync/pull-request')
+    const job = {
+      data: { installationId, jiraHost },
+      opts: {
+        removeOnComplete: true,
+        removeOnFail: true,
+        attempts: 3
+      }
+    }
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 
-  //   const job = {
-  //     data: { installationId, jiraHost, lastCursor: '1234', repository }
-  //   }
+    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries')
+    const pullWithKeyInTitle = require('../../fixtures/api/graphql/pull-request-nodes.json')
 
-  //   nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
+      .reply(200, pullWithKeyInTitle)
+    nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
+      .reply(200, pullWithKeyInTitle)
 
-  //   const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries')
-  //   const fixture = require('../../fixtures/api/graphql/pull-request-nodes.json')
+    const queues = {
+      installation: {
+        add: jest.fn()
+      },
+      pullRequests: {
+        add: jest.fn()
+      }
+    }
+    await processInstallation(app, queues)(job)
 
-  //   nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
-  //     .reply(200, fixture)
-  //   nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
-  //     .reply(200, fixture)
-
-  //   await processPullRequests(app)(job)
-
-  //   td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-  //     preventTransitions: false,
-  //     repositories: [
-  //       {
-  //         pullRequests: [
-  //           {
-  //             author: {
-  //               avatar: 'https://avatars0.githubusercontent.com/u/13207348?v=4',
-  //               name: 'tcbyrd',
-  //               url: 'https://github.com/tcbyrd'
-  //             },
-  //             commentCount: 0,
-  //             destinationBranch: 'test-repo-url/tree/master',
-  //             displayId: '#96',
-  //             id: 96,
-  //             issueKeys: ['TES-15'],
-  //             lastUpdate: '2018-08-23T21:38:05Z',
-  //             sourceBranch: 'evernote-test',
-  //             sourceBranchUrl: 'test-repo-url/tree/evernote-test',
-  //             status: 'OPEN',
-  //             timestamp: '2018-08-23T21:38:05Z',
-  //             title: '[TES-15] Evernote test',
-  //             url: 'https://github.com/tcbyrd/testrepo/pull/96',
-  //             updateSequenceId: 12345678
-  //           }
-  //         ],
-  //         url: 'test-repo-url',
-  //         updateSequenceId: 12345678
-  //       }
-  //     ],
-  //     properties: {
-  //       installationId: 'test-installation-id'
-  //     }
-  //   }))
-  // })
+    td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      preventTransitions: false,
+      repositories: [
+        {
+          id: 'test-repo-id',
+          pullRequests: [
+            {
+              author: {
+                avatar: 'https://avatars0.githubusercontent.com/u/13207348?v=4',
+                name: 'tcbyrd',
+                url: 'https://github.com/tcbyrd'
+              },
+              commentCount: 0,
+              destinationBranch: 'test-repo-url/tree/master',
+              displayId: '#96',
+              id: 96,
+              issueKeys: ['TES-15'],
+              lastUpdate: '2018-08-23T21:38:05Z',
+              sourceBranch: 'evernote-test',
+              sourceBranchUrl: 'test-repo-url/tree/evernote-test',
+              status: 'OPEN',
+              timestamp: '2018-08-23T21:38:05Z',
+              title: '[TES-15] Evernote test',
+              url: 'https://github.com/tcbyrd/testrepo/pull/96',
+              updateSequenceId: 12345678
+            }
+          ],
+          url: 'test-repo-url',
+          updateSequenceId: 12345678
+        }
+      ],
+      properties: {
+        installationId: 'test-installation-id'
+      }
+    }))
+  })
 
   test('should not sync if nodes are empty', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
