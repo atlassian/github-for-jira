@@ -16,8 +16,16 @@ const authenticatedUserResponse = {
   'login': 'test-user'
 }
 
+const adminUserResponse = {
+  'login': 'admin-user'
+}
+
 const organizationMembershipResponse = {
   'role': 'member'
+}
+
+const organizationAdminResponse = {
+  'role': 'admin'
 }
 
 const userInstallationsResponse = {
@@ -113,6 +121,8 @@ describe('Frontend', () => {
 
       it('should return a 200 and install a Subscription', async () => {
         nock('https://api.github.com').get('/user/installations').reply(200, userInstallationsResponse)
+        nock('https://api.github.com').get('/user').reply(200, adminUserResponse)
+        nock('https://api.github.com').get('/orgs/test-org/memberships/admin-user').reply(200, organizationAdminResponse)
 
         const jiraClientKey = 'a-unique-client-key'
         await supertest(subject)
