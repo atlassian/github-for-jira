@@ -1,67 +1,67 @@
-const SmartCommitLexer = require('./smart-commit-lexer.js')
+const SmartCommitTokenizer = require('../../lib/smart-commit-tokenizer.js')
 
-const lex = function (source) {
-  const lexer = SmartCommitLexer()
-  lexer.reset(source)
-  return Array.from(lexer)
+const tokenize = function (source) {
+  const tokenizer = SmartCommitTokenizer()
+  tokenizer.reset(source)
+  return Array.from(tokenizer)
 }
 
 const valuesForType = function (tokens, type) {
   return tokens.filter(token => token.type === type).map(token => token.value)
 }
 
-describe('SmartCommitsLexer', () => {
+describe('SmartCommitTokenizer', () => {
   describe('issue keys', () => {
     it('extracts a single issue key', () => {
-      const tokens = lex('JRA-123')
+      const tokens = tokenize('JRA-123')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123'])
     })
 
     it('extracts multiple issue keys', () => {
-      const tokens = lex('JRA-123 JRA-456')
+      const tokens = tokenize('JRA-123 JRA-456')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123', 'JRA-456'])
     })
 
     it('extracts lowercase issue keys', () => {
-      const tokens = lex('jra-123')
+      const tokens = tokenize('jra-123')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['jra-123'])
     })
 
     it('extracts issue keys embedded in branch names', () => {
-      const tokens = lex('feature/jra-123-my-feature')
+      const tokens = tokenize('feature/jra-123-my-feature')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['jra-123'])
     })
 
     it('extracts issue keys prefixed with a hash', () => {
-      const tokens = lex('#JRA-123 [#JRA-456]')
+      const tokens = tokenize('#JRA-123 [#JRA-456]')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123', 'JRA-456'])
     })
 
     it('extracts issue key surrounded by other text', () => {
-      const tokens = lex('there is some text here JRA-123 and some text here')
+      const tokens = tokenize('there is some text here JRA-123 and some text here')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123'])
     })
 
     it('does not extract issue key that contain underscores', () => {
-      const tokens = lex('J_1993A-090 J_1993A-090')
+      const tokens = tokenize('J_1993A-090 J_1993A-090')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual([])
     })
 
     it('does not extract issue key that start with underscores or numbers', () => {
-      const tokens = lex('_1993A-090 1993A-090')
+      const tokens = tokenize('_1993A-090 1993A-090')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual([])
     })
 
     it('extracts issue keys from branch names', () => {
-      const tokens = lex('branchname_JRA-096 feature/lief-12155-test-jira')
+      const tokens = tokenize('branchname_JRA-096 feature/lief-12155-test-jira')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-096', 'lief-12155'])
     })
@@ -69,14 +69,14 @@ describe('SmartCommitsLexer', () => {
 
   describe('transitions', () => {
     it('extracts issue key and comment text', () => {
-      const tokens = lex('JRA-34 #comment corrected indent issue')
+      const tokens = tokenize('JRA-34 #comment corrected indent issue')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-34'])
       expect(valuesForType(tokens, 'comment')).toEqual(['corrected indent issue'])
     })
 
     it('extracts issue key, transition, and comment text', () => {
-      const tokens = lex('JRA-090 #close Fixed this today')
+      const tokens = tokenize('JRA-090 #close Fixed this today')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-090'])
       expect(valuesForType(tokens, 'comment')).toEqual(['Fixed this today'])
@@ -84,7 +84,7 @@ describe('SmartCommitsLexer', () => {
     })
 
     it('extracts transition containing hyphen', () => {
-      const tokens = lex('JRA-090 #finish-work Fixed this today')
+      const tokens = tokenize('JRA-090 #finish-work Fixed this today')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-090'])
       expect(valuesForType(tokens, 'comment')).toEqual(['Fixed this today'])
@@ -92,14 +92,14 @@ describe('SmartCommitsLexer', () => {
     })
 
     it('ignores issue keys within a comment', () => {
-      const tokens = lex('JRA-123 #comment This is related to JRA-456')
+      const tokens = tokenize('JRA-123 #comment This is related to JRA-456')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123'])
       expect(valuesForType(tokens, 'comment')).toEqual(['This is related to JRA-456'])
     })
 
     it('exctracts transition without issue or comment', () => {
-      const tokens = lex('#development')
+      const tokens = tokenize('#development')
 
       expect(valuesForType(tokens, 'transition')).toEqual(['development'])
     })
@@ -107,7 +107,7 @@ describe('SmartCommitsLexer', () => {
 
   describe('time', () => {
     it('extracts issue key and time', () => {
-      const tokens = lex('JRA-34 #time 1w 2d')
+      const tokens = tokenize('JRA-34 #time 1w 2d')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-34'])
       expect(valuesForType(tokens, 'weeks')).toEqual(['1'])
@@ -115,7 +115,7 @@ describe('SmartCommitsLexer', () => {
     })
 
     it('extracts issue key, time, and work log comment text', () => {
-      const tokens = lex('JRA-34 #time 1w 2d 4h 30m Total work logged')
+      const tokens = tokenize('JRA-34 #time 1w 2d 4h 30m Total work logged')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-34'])
       expect(valuesForType(tokens, 'weeks')).toEqual(['1'])
@@ -126,7 +126,7 @@ describe('SmartCommitsLexer', () => {
     })
 
     it('extracts decimal times', () => {
-      const tokens = lex('JRA-34 #time 1.11w 2.22d 4.44h 3.33m')
+      const tokens = tokenize('JRA-34 #time 1.11w 2.22d 4.44h 3.33m')
 
       expect(valuesForType(tokens, 'weeks')).toEqual(['1.11'])
       expect(valuesForType(tokens, 'days')).toEqual(['2.22'])
@@ -135,7 +135,7 @@ describe('SmartCommitsLexer', () => {
     })
 
     it('only extracts comment from single line', () => {
-      const tokens = lex('JRA-34 #time this is the comment\nthis is not')
+      const tokens = tokenize('JRA-34 #time this is the comment\nthis is not')
 
       expect(valuesForType(tokens, 'workLogComment')).toEqual(['this is the comment'])
     });
@@ -143,7 +143,7 @@ describe('SmartCommitsLexer', () => {
 
   describe('advanced', () => {
     it('extracts multiple issues with time, comment, and a transition', () => {
-      const tokens = lex('JRA-123 JRA-234 JRA-345 #resolve #time 2d 5h #comment ahead of schedule')
+      const tokens = tokenize('JRA-123 JRA-234 JRA-345 #resolve #time 2d 5h #comment ahead of schedule')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123', 'JRA-234', 'JRA-345'])
       expect(valuesForType(tokens, 'transition')).toEqual(['resolve', 'comment'])
@@ -153,7 +153,7 @@ describe('SmartCommitsLexer', () => {
     })
 
     it('extracts multiple issues with time, comment, and a transition', () => {
-      const tokens = lex('#comment This is a comment #start-development #time 4m')
+      const tokens = tokenize('#comment This is a comment #start-development #time 4m')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual([])
       expect(valuesForType(tokens, 'transition')).toEqual(['comment', 'start-development'])
@@ -164,7 +164,7 @@ describe('SmartCommitsLexer', () => {
 
   describe('multiline source', () => {
     it('pulls issue keys, transitions, and comments', () => {
-      tokens = lex(`WS-2 #close This one is done\nWS-3 #reopen This one needs work`)
+      tokens = tokenize(`WS-2 #close This one is done\nWS-3 #reopen This one needs work`)
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['WS-2', 'WS-3'])
       expect(valuesForType(tokens, 'transition')).toEqual(['close', 'reopen'])
@@ -172,7 +172,7 @@ describe('SmartCommitsLexer', () => {
     });
 
     it('splits work log from the next line', () => {
-      tokens = lex(`WS-2 #time 1w almost done\nWS-3 #reopen`)
+      tokens = tokenize(`WS-2 #time 1w almost done\nWS-3 #reopen`)
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['WS-2', 'WS-3'])
       expect(valuesForType(tokens, 'workLogComment')).toEqual(['almost done'])
@@ -182,14 +182,12 @@ describe('SmartCommitsLexer', () => {
 
   describe('syntax examples', () => {
     it('accepts any kind of syntax', () => {
-      lex(`WS-2\n\nThis fixes a problem.\n\nWS-2 #done #time 1w 2d 3h 4m`)
-      lex(`This is a bunch of junk\n\n\twith  no #@FJ94Afa39 key or #whatever`)
-      lex(`.....#close Something foo bar....\n\nbaz`)
-      lex(`.....#time Something foo bar 1d 3w\n`)
-      lex(`WS-2\n\nThis fixes a problem.\r\n\r\nWS-2 #done #time 1w 2d 3h 4m`)
-      lex(`WS-2\r\rWS-3\n\nWhatever\r\nMore`)
+      tokenize(`WS-2\n\nThis fixes a problem.\n\nWS-2 #done #time 1w 2d 3h 4m`)
+      tokenize(`This is a bunch of junk\n\n\twith  no #@FJ94Afa39 key or #whatever`)
+      tokenize(`.....#close Something foo bar....\n\nbaz`)
+      tokenize(`.....#time Something foo bar 1d 3w\n`)
+      tokenize(`WS-2\n\nThis fixes a problem.\r\n\r\nWS-2 #done #time 1w 2d 3h 4m`)
+      tokenize(`WS-2\r\rWS-3\n\nWhatever\r\nMore`)
     })
   })
 })
-
-const prettyFormat = require('pretty-format');
