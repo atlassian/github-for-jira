@@ -138,7 +138,7 @@ describe('SmartCommitTokenizer', () => {
       const tokens = tokenize('JRA-34 #time this is the comment\nthis is not')
 
       expect(valuesForType(tokens, 'workLogComment')).toEqual(['this is the comment'])
-    });
+    })
   })
 
   describe('advanced', () => {
@@ -164,21 +164,21 @@ describe('SmartCommitTokenizer', () => {
 
   describe('multiline source', () => {
     it('pulls issue keys, transitions, and comments', () => {
-      tokens = tokenize(`WS-2 #close This one is done\nWS-3 #reopen This one needs work`)
+      const tokens = tokenize(`WS-2 #close This one is done\nWS-3 #reopen This one needs work`)
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['WS-2', 'WS-3'])
       expect(valuesForType(tokens, 'transition')).toEqual(['close', 'reopen'])
       expect(valuesForType(tokens, 'comment')).toEqual(['This one is done', 'This one needs work'])
-    });
+    })
 
     it('splits work log from the next line', () => {
-      tokens = tokenize(`WS-2 #time 1w almost done\nWS-3 #reopen`)
+      const tokens = tokenize(`WS-2 #time 1w almost done\nWS-3 #reopen`)
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['WS-2', 'WS-3'])
       expect(valuesForType(tokens, 'workLogComment')).toEqual(['almost done'])
       expect(valuesForType(tokens, 'transition')).toEqual(['reopen'])
-    });
-  });
+    })
+  })
 
   describe('syntax examples', () => {
     it('accepts any kind of syntax', () => {
