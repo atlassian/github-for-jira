@@ -6,7 +6,7 @@ const issueKeysRegex = new RegExp(`(?:(?<=[\\s${punct}])|^)(?:[a-zA-Z][a-zA-Z\\d
 
 module.exports = function () {
   const transition = {match: /#[a-z-]+?(?: |$)/, value: text => text.slice(1).trimRight(), push: 'transition'}
-  const newline = {match: /\n/, lineBreaks: true}
+  const newline = {match: /\n/, lineBreaks: true, next: 'main'}
 
   return moo.states({
     main: {

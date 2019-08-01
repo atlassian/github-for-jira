@@ -133,6 +133,12 @@ describe('SmartCommitsLexer', () => {
       expect(valuesForType(tokens, 'hours')).toEqual(['4.44'])
       expect(valuesForType(tokens, 'minutes')).toEqual(['3.33'])
     })
+
+    it('only extracts comment from single line', () => {
+      const tokens = lex('JRA-34 #time this is the comment\nthis is not')
+
+      expect(valuesForType(tokens, 'workLogComment')).toEqual(['this is the comment'])
+    });
   })
 
   describe('advanced', () => {
@@ -154,11 +160,34 @@ describe('SmartCommitsLexer', () => {
       expect(valuesForType(tokens, 'minutes')).toEqual(['4'])
       expect(valuesForType(tokens, 'comment')).toEqual(['This is a comment'])
     })
+  })
 
-    it('is flexible', () => {
-      const tokens = lex('[TEST-123] body of the test pull request.\n')
+  describe('multiline source', () => {
+    it('pulls issue keys, transitions, and comments', () => {
+      tokens = lex(`WS-2 #close This one is done\nWS-3 #reopen This one needs work`)
 
-      expect(valuesForType(tokens, 'issueKey')).toEqual(['TEST-123'])
+      expect(valuesForType(tokens, 'issueKey')).toEqual(['WS-2', 'WS-3'])
+      expect(valuesForType(tokens, 'transition')).toEqual(['close', 'reopen'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['This one is done', 'This one needs work'])
+    });
+
+    it('splits work log from the next line', () => {
+      tokens = lex(`WS-2 #time 1w almost done\nWS-3 #reopen`)
+
+      expect(valuesForType(tokens, 'issueKey')).toEqual(['WS-2', 'WS-3'])
+      expect(valuesForType(tokens, 'workLogComment')).toEqual(['almost done'])
+      expect(valuesForType(tokens, 'transition')).toEqual(['reopen'])
+    });
+  });
+
+  describe('syntax examples', () => {
+    it('accepts any kind of syntax', () => {
+      lex(`WS-2\n\nThis fixes a problem.\n\nWS-2 #done #time 1w 2d 3h 4m`)
+      lex(`This is a bunch of junk\n\n\twith  no #@FJ94Afa39 key or #whatever`)
+      lex(`.....#close Something foo bar....\n\nbaz`)
+      lex(`.....#time Something foo bar 1d 3w\n`)
     })
   })
 })
+
+const prettyFormat = require('pretty-format');
