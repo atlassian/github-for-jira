@@ -6,10 +6,6 @@ const lex = function(source) {
   return Array.from(lexer);
 }
 
-const filterByType = function(tokens, type) {
-  return tokens.filter(token => token.type == type);
-}
-
 const valuesForType = function(tokens, type) {
   return tokens.filter(token => token.type == type).map(token => token.value);
 }
@@ -51,6 +47,24 @@ describe('SmartCommitsLexer', () => {
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123']);
     });
+
+    it('does not extract issue key that contain underscores', () => {
+      const tokens = lex('J_1993A-090 J_1993A-090');
+
+      expect(valuesForType(tokens, 'issueKey')).toEqual([]);
+    });
+
+    it('does not extract issue key that start with underscores or numbers', () => {
+      const tokens = lex('_1993A-090 1993A-090');
+
+      expect(valuesForType(tokens, 'issueKey')).toEqual([]);
+    });
+
+    it('extracts issue keys from branch names', () => {
+      const tokens = lex('branchname_JRA-096');
+
+      expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-096']);
+    });
   });
 
   describe('transitions', () => {
@@ -82,6 +96,12 @@ describe('SmartCommitsLexer', () => {
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123']);
       expect(valuesForType(tokens, 'comment')).toEqual(['This is related to JRA-456']);
+    });
+
+    it('exctracts transition without issue or comment', () => {
+      const tokens = lex('#development');
+
+      expect(valuesForType(tokens, 'transition')).toEqual(['development']);
     });
   });
 
@@ -124,6 +144,15 @@ describe('SmartCommitsLexer', () => {
       expect(valuesForType(tokens, 'days')).toEqual(['2']);
       expect(valuesForType(tokens, 'hours')).toEqual(['5']);
       expect(valuesForType(tokens, 'comment')).toEqual(['ahead of schedule']);
+    });
+
+    it('extracts multiple issues with time, comment, and a transition', () => {
+      const tokens = lex('#comment This is a comment #start-development #time 4m');
+
+      expect(valuesForType(tokens, 'issueKey')).toEqual([]);
+      expect(valuesForType(tokens, 'transition')).toEqual(['comment', 'start-development']);
+      expect(valuesForType(tokens, 'minutes')).toEqual(['4']);
+      expect(valuesForType(tokens, 'comment')).toEqual(['This is a comment']);
     });
   });
 });

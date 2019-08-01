@@ -1,4 +1,5 @@
-const smartCommit = require('../../lib/transforms/smart-commit')
+// const smartCommit = require('../../lib/transforms/smart-commit')
+const smartCommit = require('../../lib/transforms/smart-commit-new')
 
 describe('Smart commit parsing', () => {
   it('should parse a smart commit', () => {
@@ -20,6 +21,7 @@ describe('Smart commit parsing', () => {
   })
 
   describe('Commands', () => {
+    // TODO: Is this a valid Smart Commits string? With no issue key, does JIRA know what to do?
     it('should parse a command', () => {
       const text = '#development'
 
@@ -215,7 +217,7 @@ describe('Smart commit parsing', () => {
     })
 
     it('should not parse an issue key with an underscore and numbers', () => {
-      const text = 'J_1993A-090'
+      const text = 'J_1993A-090 J_1993A-090'
 
       const result = smartCommit(text)
 
