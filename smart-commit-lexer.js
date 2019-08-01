@@ -6,6 +6,7 @@ const issueKeysRegex = new RegExp(`(?:(?<=[\\s${punct}])|^)(?:[a-zA-Z][a-zA-Z\\d
 
 module.exports = function () {
   const transition = {match: /#[a-z-]+?(?: |$)/, value: text => text.slice(1).trimRight(), push: 'transition'}
+  const carriage_return = {match: /\r/}
   const newline = {match: /\n/, lineBreaks: true, next: 'main'}
 
   return moo.states({
@@ -15,12 +16,14 @@ module.exports = function () {
       time: {match: '#time ', push: 'workLog'},
       transition,
       ignoredText: /[^\s]+?/,
+      carriage_return,
       newline
     },
     transition: {
       time: {match: '#time ', push: 'workLog'},
       transition,
       comment: {match: /[^#\n]+/, value: text => text.trim()},
+      carriage_return,
       newline
     },
     workLog: {
@@ -31,6 +34,7 @@ module.exports = function () {
       minutes: {match: /[\d.]+?m(?!\B)/, value: text => text.slice(0, -1)},
       whitespace: /[ \t]+/,
       workLogComment: /.+/,
+      carriage_return,
       newline
     }
   })

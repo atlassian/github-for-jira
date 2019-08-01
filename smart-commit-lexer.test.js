@@ -186,6 +186,8 @@ describe('SmartCommitsLexer', () => {
       lex(`This is a bunch of junk\n\n\twith  no #@FJ94Afa39 key or #whatever`)
       lex(`.....#close Something foo bar....\n\nbaz`)
       lex(`.....#time Something foo bar 1d 3w\n`)
+      lex(`WS-2\n\nThis fixes a problem.\r\n\r\nWS-2 #done #time 1w 2d 3h 4m`)
+      lex(`WS-2\r\rWS-3\n\nWhatever\r\nMore`)
     })
   })
 })
