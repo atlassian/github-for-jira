@@ -1,5 +1,4 @@
-// const smartCommit = require('../../lib/transforms/smart-commit')
-const smartCommit = require('../../lib/transforms/smart-commit-new')
+const smartCommit = require('../../lib/transforms/smart-commit')
 
 describe('Smart commit parsing', () => {
   it('should parse a smart commit', () => {
