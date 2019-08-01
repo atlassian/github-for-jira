@@ -17,6 +17,7 @@ Connect your code with your project management in Jira. A separate Jira subscrip
   - [Development information in Jira](#development-information-in-jira)
   - [Take action using Smart Commits](#take-action-using-smart-commits)
   - [Link issues in GitHub](#link-issues-in-github)
+  - [Manage Jira Subscriptions](#manage-jira-subscriptions)
 - [Migrating from the DVCS connector](#migrating-from-the-dvcs-connector)
 - [Need help?](#questions-need-help)
 - [Contributing](#contributing)
@@ -83,14 +84,20 @@ Smart commits are documented on the [Atlassian site](https://confluence.atlassia
 ![image](https://user-images.githubusercontent.com/13207348/46588447-61be3680-ca6a-11e8-9976-ba3d1d3c42bf.png)
 
 ### Link issues in github
-**Updated**
-
 If an issue body contains a valid Jira issue key on your instance, the integration will automatically expand it into a reference link when surround in brackets `[]`. For example: `[JRA-123]` will be turned into a link to `https://<your-instance>.atlassian.net/browse/JRA-123` . Markdown references are only visible when editing an Issue/PR comment, and appear at the bottom of the text area:
 
 ![image](https://user-images.githubusercontent.com/13207348/53053377-2c414500-346f-11e9-9f79-8b78681bd60e.png)
 
 This makes it so Jira issues can be linked inside a comment without it interrupting the flow of the comment as a whole.
 
+### Manage Jira Subscriptions
+**New**
+
+Admins of an installation can view and delete subscriptions to other Jira instances, without having to log in to the Jira instance itself:
+
+![image](https://user-images.githubusercontent.com/13207348/59897474-d2b83b00-93ba-11e9-81cd-93e0f3db0833.png)
+
+This is useful if your installation is setup to send Development information to an instance you no longer have access to, or to audit instances other admins in your org may have previously configured. This only gives you the permission to delete the connection, and will not give you access to the instance itself. You will still need to be granted access in Jira if you want to be able to view the Development information that's been sent to that instance.
 
 ## Migrating from the DVCS connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
