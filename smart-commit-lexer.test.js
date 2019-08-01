@@ -1,4 +1,4 @@
-const SmartCommitLexer = require('../../lib/smart-commit-lexer.js')
+const SmartCommitLexer = require('./smart-commit-lexer.js')
 
 const lex = function (source) {
   const lexer = SmartCommitLexer()
@@ -7,7 +7,7 @@ const lex = function (source) {
 }
 
 const valuesForType = function (tokens, type) {
-  return tokens.filter(token => token.type == type).map(token => token.value)
+  return tokens.filter(token => token.type === type).map(token => token.value)
 }
 
 describe('SmartCommitsLexer', () => {

@@ -25,10 +25,10 @@ module.exports = function () {
     },
     workLog: {
       transition,
-      weeks: {match: /[\d\.]+?w(?!\B)/, value: text => text.slice(0, -1)},
-      days: {match: /[\d\.]+?d(?!\B)/, value: text => text.slice(0, -1)},
-      hours: {match: /[\d\.]+?h(?!\B)/, value: text => text.slice(0, -1)},
-      minutes: {match: /[\d\.]+?m(?!\B)/, value: text => text.slice(0, -1)},
+      weeks: {match: /[\d.]+?w(?!\B)/, value: text => text.slice(0, -1)},
+      days: {match: /[\d.]+?d(?!\B)/, value: text => text.slice(0, -1)},
+      hours: {match: /[\d.]+?h(?!\B)/, value: text => text.slice(0, -1)},
+      minutes: {match: /[\d.]+?m(?!\B)/, value: text => text.slice(0, -1)},
       whitespace: /[ \t]+/,
       workLogComment: /.+/,
       newline
