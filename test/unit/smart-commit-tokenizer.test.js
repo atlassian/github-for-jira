@@ -160,6 +160,13 @@ describe('SmartCommitTokenizer', () => {
       expect(valuesForType(tokens, 'minutes')).toEqual(['4'])
       expect(valuesForType(tokens, 'comment')).toEqual(['This is a comment'])
     })
+
+    it('supports unicode characters', () => {
+      const tokens = tokenize('JRA-123 #comment ✌🏻 all done')
+
+      expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['✌🏻 all done'])
+    })
   })
 
   describe('multiline source', () => {
@@ -188,6 +195,8 @@ describe('SmartCommitTokenizer', () => {
       tokenize(`.....#time Something foo bar 1d 3w\n`)
       tokenize(`WS-2\n\nThis fixes a problem.\r\n\r\nWS-2 #done #time 1w 2d 3h 4m`)
       tokenize(`WS-2\r\rWS-3\n\nWhatever\r\nMore`)
+      tokenize(`there is an invisible unicode character here -> <-`)
+      tokenize(`😌 Emoji are totally 💯 fine ✨`)
     })
   })
 })
