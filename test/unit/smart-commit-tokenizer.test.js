@@ -24,16 +24,10 @@ describe('SmartCommitTokenizer', () => {
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123', 'JRA-456'])
     })
 
-    it('extracts lowercase issue keys', () => {
-      const tokens = tokenize('jra-123')
-
-      expect(valuesForType(tokens, 'issueKey')).toEqual(['jra-123'])
-    })
-
     it('extracts issue keys embedded in branch names', () => {
-      const tokens = tokenize('feature/jra-123-my-feature')
+      const tokens = tokenize('feature/JRA-123-my-feature')
 
-      expect(valuesForType(tokens, 'issueKey')).toEqual(['jra-123'])
+      expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123'])
     })
 
     it('extracts issue keys prefixed with a hash', () => {
@@ -61,9 +55,9 @@ describe('SmartCommitTokenizer', () => {
     })
 
     it('extracts issue keys from branch names', () => {
-      const tokens = tokenize('branchname_JRA-096 feature/lief-12155-test-jira')
+      const tokens = tokenize('branchname_JRA-096 feature/LIEF-12155-test-jira')
 
-      expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-096', 'lief-12155'])
+      expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-096', 'LIEF-12155'])
     })
   })
 

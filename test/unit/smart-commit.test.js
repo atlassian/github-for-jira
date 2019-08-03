@@ -254,16 +254,6 @@ describe('Smart commit parsing', () => {
         issueKeys: ['JRA-090']
       })
     })
-
-    it('uppercases issue keys', () => {
-      const text = 'jra-090'
-
-      const result = smartCommit(text)
-
-      expect(result).toMatchObject({
-        issueKeys: ['JRA-090']
-      })
-    })
   })
 
   it('should ignore irrelevant text', () => {
