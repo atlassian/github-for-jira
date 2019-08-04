@@ -20,15 +20,16 @@ describe('Smart commit parsing', () => {
   })
 
   describe('Commands', () => {
-    // TODO: Is this a valid Smart Commits string? With no issue key, does JIRA know what to do?
     it('should parse a command', () => {
-      const text = '#development'
+      const text = 'JRA-123 #development'
 
       const result = smartCommit(text)
 
       expect(result).toEqual({
+        issueKeys: ['JRA-123'],
         commands: [
           {
+            issueKeys: ['JRA-123'],
             kind: 'transition',
             name: 'development'
           }
@@ -37,21 +38,25 @@ describe('Smart commit parsing', () => {
     })
 
     it('should parse multiple commands in a row', () => {
-      const text = '#comment This is a comment #start-development #time 4m'
+      const text = 'JRA-123 #comment This is a comment #start-development #time 4m'
 
       const result = smartCommit(text)
 
       expect(result).toEqual({
+        issueKeys: ['JRA-123'],
         commands: [
           {
+            issueKeys: ['JRA-123'],
             kind: 'comment',
-            text: 'This is a comment'
+            text: 'This is a comment '
           },
           {
+            issueKeys: ['JRA-123'],
             kind: 'transition',
             name: 'start-development'
           },
           {
+            issueKeys: ['JRA-123'],
             kind: 'worklog',
             time: 240
           }
@@ -60,13 +65,15 @@ describe('Smart commit parsing', () => {
     })
 
     it('should parse a #comment command', () => {
-      const text = '#comment This is a comment'
+      const text = 'JRA-123 #comment This is a comment'
 
       const result = smartCommit(text)
 
       expect(result).toEqual({
+        issueKeys: ['JRA-123'],
         commands: [
           {
+            issueKeys: ['JRA-123'],
             kind: 'comment',
             text: 'This is a comment'
           }
@@ -76,13 +83,15 @@ describe('Smart commit parsing', () => {
 
     describe('#time', () => {
       it('should parse a #time command', () => {
-        const text = '#time 1w 2d 3h 4m'
+        const text = 'JRA-123 #time 1w 2d 3h 4m'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
+          issueKeys: ['JRA-123'],
           commands: [
             {
+              issueKeys: ['JRA-123'],
               kind: 'worklog',
               time: 604800 + 172800 + 10800 + 240
             }
@@ -91,13 +100,15 @@ describe('Smart commit parsing', () => {
       })
 
       it('should parse a #time command with a comment', () => {
-        const text = '#time 1w 2d 3h 4m This is a comment'
+        const text = 'JRA-123 #time 1w 2d 3h 4m This is a comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
+          issueKeys: ['JRA-123'],
           commands: [
             {
+              issueKeys: ['JRA-123'],
               kind: 'worklog',
               time: 604800 + 172800 + 10800 + 240,
               text: 'This is a comment'
@@ -107,13 +118,15 @@ describe('Smart commit parsing', () => {
       })
 
       it('should parse time units in any order', () => {
-        const text = '#time 1h 2m 3w 4d This is a different comment'
+        const text = 'JRA-123 #time 1h 2m 3w 4d This is a different comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
+          issueKeys: ['JRA-123'],
           commands: [
             {
+              issueKeys: ['JRA-123'],
               kind: 'worklog',
               time: 3600 + 120 + 1814400 + 345600,
               text: 'This is a different comment'
@@ -123,31 +136,35 @@ describe('Smart commit parsing', () => {
       })
 
       it('should not parse invalid time units', () => {
-        const text = '#time 1q This is a comment'
+        const text = 'JRA-123 #time 1q This is a comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
           commands: [
             {
+              issueKeys: ["JRA-123"],
               kind: 'worklog',
               time: 0,
               text: '1q This is a comment'
             }
-          ]
+          ],
+          issueKeys: ["JRA-123"]
         })
       })
     })
 
     describe('#transition', () => {
       it('should parse a transition command', () => {
-        const text = '#resolve'
+        const text = 'JRA-123 #resolve'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
+          issueKeys: ['JRA-123'],
           commands: [
             {
+              issueKeys: ['JRA-123'],
               kind: 'transition',
               name: 'resolve'
             }
@@ -156,13 +173,15 @@ describe('Smart commit parsing', () => {
       })
 
       it('should parse a transition command with a hyphen', () => {
-        const text = '#start-development'
+        const text = 'JRA-123 #start-development'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
+          issueKeys: ['JRA-123'],
           commands: [
             {
+              issueKeys: ['JRA-123'],
               kind: 'transition',
               name: 'start-development'
             }
@@ -171,13 +190,15 @@ describe('Smart commit parsing', () => {
       })
 
       it('should parse a transition command with a comment', () => {
-        const text = '#resolve This is a comment'
+        const text = 'JRA-123 #resolve This is a comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
+          issueKeys: ['JRA-123'],
           commands: [
             {
+              issueKeys: ['JRA-123'],
               kind: 'transition',
               name: 'resolve',
               text: 'This is a comment'
@@ -187,13 +208,15 @@ describe('Smart commit parsing', () => {
       })
 
       it('should parse a transition command with a comment and a hyphen', () => {
-        const text = '#start-development This is a comment'
+        const text = 'JRA-123 #start-development This is a comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
+          issueKeys: ['JRA-123'],
           commands: [
             {
+              issueKeys: ['JRA-123'],
               kind: 'transition',
               name: 'start-development',
               text: 'This is a comment'

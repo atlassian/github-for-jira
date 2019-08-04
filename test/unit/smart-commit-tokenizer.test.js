@@ -66,14 +66,14 @@ describe('SmartCommitTokenizer', () => {
       const tokens = tokenize('JRA-34 #comment corrected indent issue')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-34'])
-      expect(valuesForType(tokens, 'comment')).toEqual(['corrected indent issue'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['corrected', 'indent', 'issue'])
     })
 
     it('extracts issue key, transition, and comment text', () => {
       const tokens = tokenize('JRA-090 #close Fixed this today')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-090'])
-      expect(valuesForType(tokens, 'comment')).toEqual(['Fixed this today'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['Fixed', 'this', 'today'])
       expect(valuesForType(tokens, 'transition')).toEqual(['close'])
     })
 
@@ -81,7 +81,7 @@ describe('SmartCommitTokenizer', () => {
       const tokens = tokenize('JRA-090 #finish-work Fixed this today')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-090'])
-      expect(valuesForType(tokens, 'comment')).toEqual(['Fixed this today'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['Fixed', 'this', 'today'])
       expect(valuesForType(tokens, 'transition')).toEqual(['finish-work'])
     })
 
@@ -89,13 +89,7 @@ describe('SmartCommitTokenizer', () => {
       const tokens = tokenize('JRA-123 #comment This is related to JRA-456')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123'])
-      expect(valuesForType(tokens, 'comment')).toEqual(['This is related to JRA-456'])
-    })
-
-    it('exctracts transition without issue or comment', () => {
-      const tokens = tokenize('#development')
-
-      expect(valuesForType(tokens, 'transition')).toEqual(['development'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['This', 'is', 'related', 'to', 'JRA-456'])
     })
   })
 
@@ -143,23 +137,23 @@ describe('SmartCommitTokenizer', () => {
       expect(valuesForType(tokens, 'transition')).toEqual(['resolve', 'comment'])
       expect(valuesForType(tokens, 'days')).toEqual(['2'])
       expect(valuesForType(tokens, 'hours')).toEqual(['5'])
-      expect(valuesForType(tokens, 'comment')).toEqual(['ahead of schedule'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['ahead', 'of', 'schedule'])
     })
 
     it('extracts multiple issues with time, comment, and a transition', () => {
-      const tokens = tokenize('#comment This is a comment #start-development #time 4m')
+      const tokens = tokenize('JRA-123 #comment This is a comment #start-development #time 4m')
 
-      expect(valuesForType(tokens, 'issueKey')).toEqual([])
+      expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123'])
       expect(valuesForType(tokens, 'transition')).toEqual(['comment', 'start-development'])
       expect(valuesForType(tokens, 'minutes')).toEqual(['4'])
-      expect(valuesForType(tokens, 'comment')).toEqual(['This is a comment'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['This', 'is', 'a', 'comment'])
     })
 
     it('supports unicode characters', () => {
       const tokens = tokenize('JRA-123 #comment ✌🏻 all done')
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123'])
-      expect(valuesForType(tokens, 'comment')).toEqual(['✌🏻 all done'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['✌🏻', 'all', 'done'])
     })
   })
 
@@ -169,7 +163,7 @@ describe('SmartCommitTokenizer', () => {
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['WS-2', 'WS-3'])
       expect(valuesForType(tokens, 'transition')).toEqual(['close', 'reopen'])
-      expect(valuesForType(tokens, 'comment')).toEqual(['This one is done', 'This one needs work'])
+      expect(valuesForType(tokens, 'comment')).toEqual(['This', 'one', 'is', 'done', 'This', 'one', 'needs', 'work'])
     })
 
     it('splits work log from the next line', () => {
@@ -191,6 +185,9 @@ describe('SmartCommitTokenizer', () => {
       tokenize(`WS-2\r\rWS-3\n\nWhatever\r\nMore`)
       tokenize(`there is an invisible unicode character here -> <-`)
       tokenize(`😌 Emoji are totally 💯 fine ✨`)
+      tokenize(`Rename Node#move to Node#move_within`)
     })
   })
 })
+
+const prettyFormat = require('pretty-format')
