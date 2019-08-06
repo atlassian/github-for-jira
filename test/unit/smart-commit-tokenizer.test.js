@@ -183,11 +183,9 @@ describe('SmartCommitTokenizer', () => {
       tokenize(`.....#time Something foo bar 1d 3w\n`)
       tokenize(`WS-2\n\nThis fixes a problem.\r\n\r\nWS-2 #done #time 1w 2d 3h 4m`)
       tokenize(`WS-2\r\rWS-3\n\nWhatever\r\nMore`)
-      tokenize(`there is an invisible unicode character here -> <-`)
+      tokenize(`there is an invisible unicode character here -> <-`) // eslint-disable-line no-irregular-whitespace
       tokenize(`😌 Emoji are totally 💯 fine ✨`)
       tokenize(`Rename Node#move to Node#move_within`)
     })
   })
 })
-
-const prettyFormat = require('pretty-format')

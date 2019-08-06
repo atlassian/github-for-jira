@@ -7,14 +7,6 @@ describe('Smart commit parsing', () => {
     const result = smartCommit(text)
 
     expect(result).toEqual({
-      commands: [
-        {
-          kind: 'transition',
-          name: 'resolve',
-          text: 'Finally finished',
-          issueKeys: ['JRA-090']
-        }
-      ],
       issueKeys: ['JRA-090']
     })
   })
@@ -26,14 +18,7 @@ describe('Smart commit parsing', () => {
       const result = smartCommit(text)
 
       expect(result).toEqual({
-        issueKeys: ['JRA-123'],
-        commands: [
-          {
-            issueKeys: ['JRA-123'],
-            kind: 'transition',
-            name: 'development'
-          }
-        ]
+        issueKeys: ['JRA-123']
       })
     })
 
@@ -43,24 +28,7 @@ describe('Smart commit parsing', () => {
       const result = smartCommit(text)
 
       expect(result).toEqual({
-        issueKeys: ['JRA-123'],
-        commands: [
-          {
-            issueKeys: ['JRA-123'],
-            kind: 'comment',
-            text: 'This is a comment '
-          },
-          {
-            issueKeys: ['JRA-123'],
-            kind: 'transition',
-            name: 'start-development'
-          },
-          {
-            issueKeys: ['JRA-123'],
-            kind: 'worklog',
-            time: 240
-          }
-        ]
+        issueKeys: ['JRA-123']
       })
     })
 
@@ -70,14 +38,7 @@ describe('Smart commit parsing', () => {
       const result = smartCommit(text)
 
       expect(result).toEqual({
-        issueKeys: ['JRA-123'],
-        commands: [
-          {
-            issueKeys: ['JRA-123'],
-            kind: 'comment',
-            text: 'This is a comment'
-          }
-        ]
+        issueKeys: ['JRA-123']
       })
     })
 
@@ -88,14 +49,7 @@ describe('Smart commit parsing', () => {
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          issueKeys: ['JRA-123'],
-          commands: [
-            {
-              issueKeys: ['JRA-123'],
-              kind: 'worklog',
-              time: 604800 + 172800 + 10800 + 240
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
@@ -105,15 +59,7 @@ describe('Smart commit parsing', () => {
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          issueKeys: ['JRA-123'],
-          commands: [
-            {
-              issueKeys: ['JRA-123'],
-              kind: 'worklog',
-              time: 604800 + 172800 + 10800 + 240,
-              text: 'This is a comment'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
@@ -123,15 +69,7 @@ describe('Smart commit parsing', () => {
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          issueKeys: ['JRA-123'],
-          commands: [
-            {
-              issueKeys: ['JRA-123'],
-              kind: 'worklog',
-              time: 3600 + 120 + 1814400 + 345600,
-              text: 'This is a different comment'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
@@ -141,15 +79,7 @@ describe('Smart commit parsing', () => {
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          commands: [
-            {
-              issueKeys: ["JRA-123"],
-              kind: 'worklog',
-              time: 0,
-              text: '1q This is a comment'
-            }
-          ],
-          issueKeys: ["JRA-123"]
+          issueKeys: ['JRA-123']
         })
       })
     })
@@ -161,14 +91,7 @@ describe('Smart commit parsing', () => {
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          issueKeys: ['JRA-123'],
-          commands: [
-            {
-              issueKeys: ['JRA-123'],
-              kind: 'transition',
-              name: 'resolve'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
@@ -178,14 +101,7 @@ describe('Smart commit parsing', () => {
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          issueKeys: ['JRA-123'],
-          commands: [
-            {
-              issueKeys: ['JRA-123'],
-              kind: 'transition',
-              name: 'start-development'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
@@ -195,15 +111,7 @@ describe('Smart commit parsing', () => {
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          issueKeys: ['JRA-123'],
-          commands: [
-            {
-              issueKeys: ['JRA-123'],
-              kind: 'transition',
-              name: 'resolve',
-              text: 'This is a comment'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
@@ -213,15 +121,7 @@ describe('Smart commit parsing', () => {
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          issueKeys: ['JRA-123'],
-          commands: [
-            {
-              issueKeys: ['JRA-123'],
-              kind: 'transition',
-              name: 'start-development',
-              text: 'This is a comment'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
     })
@@ -233,7 +133,7 @@ describe('Smart commit parsing', () => {
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: ['JRA-090']
       })
     })
@@ -243,7 +143,7 @@ describe('Smart commit parsing', () => {
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: undefined
       })
     })
@@ -253,7 +153,7 @@ describe('Smart commit parsing', () => {
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: undefined
       })
     })
@@ -263,7 +163,7 @@ describe('Smart commit parsing', () => {
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: ['JRA-090', 'JRA-091', 'JRA-092', 'JRA-093', 'JRA-094', 'JRA-095', 'JRA-096', 'DEV-4189', 'DEV-4191', 'JRA-123']
       })
     })
@@ -273,7 +173,7 @@ describe('Smart commit parsing', () => {
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: ['JRA-090']
       })
     })
@@ -284,7 +184,7 @@ describe('Smart commit parsing', () => {
 
     const result = smartCommit(text)
 
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       issueKeys: ['JRA-090', 'JRA-091', 'JRA-092']
     })
   })
