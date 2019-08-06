@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="ap-local-base-url" content="{{localBaseUrl}}">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/public/primer/build.css" media="all" />
+  <script src="/public/js/jquery.min.js"></script>
+</head>
+<body class="bg-gray px-3 py-6">
+  <section class="mx-auto" style="max-width: 510px">
+    <p class="text-gray text-center my-4">
+      <img src="/public/octicons/mark-github.svg" height="45px;" />
+    </p>
+    <h2 class="f2 text-center text-normal">Manage Jira Subscriptions</h2>
+    <p class="text-gray text-center mb-4">From here you can review and delete subscriptions to other Jira instances connected this installation.</p>
+    <div class="Box box-shadow">
+      <div class="">
+        {{#if hasSubscriptions }}
+          {{#each subscriptions}}
+            <div class="Box-row Box-row--hover-gray muted-link d-block clearfix">
+              <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+              <input type="hidden" id="installationId" name="installationId" value="{{ gitHubInstallationId }}">
+              <input type="hidden" id="jiraHost" name="jiraHost" value="{{ jiraHost }}">
+              <span class="text-bold text-gray-dark float-left my-2">{{ jiraHost }}</span>
+              <button class="delete-link btn btn-danger float-right" data-jira-host="{{ jiraHost }}" data-installation-id="{{ gitHubInstallationId }}">Delete</button>
+            </div>
+          {{/each}}
+        {{else}}
+          <div class="Box-row Box-row--hover-gray muted-link d-block clearfix">
+            <span class="text-bold text-gray-dark" data-installation-id="{{ id }}">No subscriptions found for this installation</span>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+  </section>
+  <script src="/public/js/github-configuration.js"></script>
+</body>
+
+</html>
