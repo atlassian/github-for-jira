@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@types/bull": "^3.3.19",
+    "babel-eslint": "^10.0.2",
     "eslint": "^5.7.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.14.0",
@@ -67,6 +68,7 @@
     "globalTeardown": "./test/teardown"
   },
   "standard": {
+    "parser": "babel-eslint",
     "env": [
       "jest"
     ],
