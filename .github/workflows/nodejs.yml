@@ -17,10 +17,9 @@ jobs:
         version: 10.x
     - name: npm install, build, and test
       run: |
-        npm i -g sequelize
-        sequelize db:create --env test
-        sequelize db:migrate --env test
         npm install
+        ./node_modules/.bin/sequelize db:create --env test
+        ./node_modules/.bin/sequelize db:migrate --env test
         npm test
     services:
       postgresql:
