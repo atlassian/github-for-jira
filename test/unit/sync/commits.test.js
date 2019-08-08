@@ -206,6 +206,69 @@ describe('sync/commits', () => {
     }))
   })
 
+  test('should default to master branch if defaultBranchRef is null', async () => {
+    const { processInstallation } = require('../../../lib/sync/installation')
+
+    const job = {
+      data: { installationId, jiraHost },
+      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
+    }
+
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+
+    const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json')
+    const defaultBranchNullFixture = require('../../fixtures/api/graphql/default-branch-null.json')
+
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+
+    nock('https://api.github.com').post('/graphql', getDefaultBranch)
+      .reply(200, defaultBranchNullFixture)
+    nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
+      .reply(200, commitNodesFixture)
+    nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
+      .reply(200, emptyNodesFixture)
+
+    const queues = {
+      installation: {
+        add: jest.fn()
+      }
+    }
+    await processInstallation(app, queues)(job)
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
+
+    td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      preventTransitions: false,
+      repositories: [
+        {
+          commits: [
+            {
+              author: {
+                email: 'test-author-email@example.com',
+                name: 'test-author-name'
+              },
+              authorTimestamp: 'test-authored-date',
+              displayId: 'test-o',
+              fileCount: 0,
+              hash: 'test-oid',
+              id: 'test-oid',
+              issueKeys: ['TES-17'],
+              message: '[TES-17] test-commit-message',
+              timestamp: 'test-authored-date',
+              url: 'https://github.com/test-login/test-repo/commit/test-sha',
+              updateSequenceId: 12345678
+            }
+          ],
+          id: 'test-repo-id',
+          url: 'test-repo-url',
+          updateSequenceId: 12345678
+        }
+      ],
+      properties: {
+        installationId: 'test-installation-id'
+      }
+    }))
+  })
+
   test('should not call Jira if no issue keys are present', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
