@@ -9,18 +9,18 @@ module.exports = {
 
     await queryInterface.addIndex('Subscriptions', {
       fields: ['jiraHost'],
-      name: 'index-on-jira-host'
+      name: 'Subscriptions_jiraHost_idx'
     })
 
     await queryInterface.addIndex('Subscriptions', {
       fields: ['jiraClientKey'],
-      name: 'index-on-jira-client-key'
+      name: 'Subscriptions_jiraClientKey_idx'
     })
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeIndex('Subscriptions', 'index-on-installation-and-jira-host')
-    await queryInterface.removeIndex('Subscriptions', 'index-on-jira-host')
-    await queryInterface.removeIndex('Subscriptions', 'index-on-jira-client-key')
+    await queryInterface.removeIndex('Subscriptions', 'Subscriptions_gitHubInstallationId_jiraHost_idx')
+    await queryInterface.removeIndex('Subscriptions', 'Subscriptions_jiraHost_idx')
+    await queryInterface.removeIndex('Subscriptions', 'Subscriptions_jiraClientKey_idx')
   }
 }
