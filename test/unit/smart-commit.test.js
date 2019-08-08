@@ -7,197 +7,121 @@ describe('Smart commit parsing', () => {
     const result = smartCommit(text)
 
     expect(result).toEqual({
-      commands: [
-        {
-          kind: 'transition',
-          name: 'resolve',
-          text: 'Finally finished',
-          issueKeys: ['JRA-090']
-        }
-      ],
       issueKeys: ['JRA-090']
     })
   })
 
   describe('Commands', () => {
     it('should parse a command', () => {
-      const text = '#development'
+      const text = 'JRA-123 #development'
 
       const result = smartCommit(text)
 
       expect(result).toEqual({
-        commands: [
-          {
-            kind: 'transition',
-            name: 'development'
-          }
-        ]
+        issueKeys: ['JRA-123']
       })
     })
 
     it('should parse multiple commands in a row', () => {
-      const text = '#comment This is a comment #start-development #time 4m'
+      const text = 'JRA-123 #comment This is a comment #start-development #time 4m'
 
       const result = smartCommit(text)
 
       expect(result).toEqual({
-        commands: [
-          {
-            kind: 'comment',
-            text: 'This is a comment'
-          },
-          {
-            kind: 'transition',
-            name: 'start-development'
-          },
-          {
-            kind: 'worklog',
-            time: 240
-          }
-        ]
+        issueKeys: ['JRA-123']
       })
     })
 
     it('should parse a #comment command', () => {
-      const text = '#comment This is a comment'
+      const text = 'JRA-123 #comment This is a comment'
 
       const result = smartCommit(text)
 
       expect(result).toEqual({
-        commands: [
-          {
-            kind: 'comment',
-            text: 'This is a comment'
-          }
-        ]
+        issueKeys: ['JRA-123']
       })
     })
 
     describe('#time', () => {
       it('should parse a #time command', () => {
-        const text = '#time 1w 2d 3h 4m'
+        const text = 'JRA-123 #time 1w 2d 3h 4m'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          commands: [
-            {
-              kind: 'worklog',
-              time: 604800 + 172800 + 10800 + 240
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
       it('should parse a #time command with a comment', () => {
-        const text = '#time 1w 2d 3h 4m This is a comment'
+        const text = 'JRA-123 #time 1w 2d 3h 4m This is a comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          commands: [
-            {
-              kind: 'worklog',
-              time: 604800 + 172800 + 10800 + 240,
-              text: 'This is a comment'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
       it('should parse time units in any order', () => {
-        const text = '#time 1h 2m 3w 4d This is a different comment'
+        const text = 'JRA-123 #time 1h 2m 3w 4d This is a different comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          commands: [
-            {
-              kind: 'worklog',
-              time: 3600 + 120 + 1814400 + 345600,
-              text: 'This is a different comment'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
       it('should not parse invalid time units', () => {
-        const text = '#time 1q This is a comment'
+        const text = 'JRA-123 #time 1q This is a comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          commands: [
-            {
-              kind: 'worklog',
-              time: 0,
-              text: '1q This is a comment'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
     })
 
     describe('#transition', () => {
       it('should parse a transition command', () => {
-        const text = '#resolve'
+        const text = 'JRA-123 #resolve'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          commands: [
-            {
-              kind: 'transition',
-              name: 'resolve'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
       it('should parse a transition command with a hyphen', () => {
-        const text = '#start-development'
+        const text = 'JRA-123 #start-development'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          commands: [
-            {
-              kind: 'transition',
-              name: 'start-development'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
       it('should parse a transition command with a comment', () => {
-        const text = '#resolve This is a comment'
+        const text = 'JRA-123 #resolve This is a comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          commands: [
-            {
-              kind: 'transition',
-              name: 'resolve',
-              text: 'This is a comment'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
 
       it('should parse a transition command with a comment and a hyphen', () => {
-        const text = '#start-development This is a comment'
+        const text = 'JRA-123 #start-development This is a comment'
 
         const result = smartCommit(text)
 
         expect(result).toEqual({
-          commands: [
-            {
-              kind: 'transition',
-              name: 'start-development',
-              text: 'This is a comment'
-            }
-          ]
+          issueKeys: ['JRA-123']
         })
       })
     })
@@ -209,17 +133,17 @@ describe('Smart commit parsing', () => {
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: ['JRA-090']
       })
     })
 
     it('should not parse an issue key with an underscore and numbers', () => {
-      const text = 'J_1993A-090'
+      const text = 'J_1993A-090 J_1993A-090'
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: undefined
       })
     })
@@ -229,7 +153,7 @@ describe('Smart commit parsing', () => {
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: undefined
       })
     })
@@ -239,7 +163,7 @@ describe('Smart commit parsing', () => {
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: ['JRA-090', 'JRA-091', 'JRA-092', 'JRA-093', 'JRA-094', 'JRA-095', 'JRA-096', 'DEV-4189', 'DEV-4191', 'JRA-123']
       })
     })
@@ -249,7 +173,7 @@ describe('Smart commit parsing', () => {
 
       const result = smartCommit(text)
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         issueKeys: ['JRA-090']
       })
     })
@@ -260,7 +184,7 @@ describe('Smart commit parsing', () => {
 
     const result = smartCommit(text)
 
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       issueKeys: ['JRA-090', 'JRA-091', 'JRA-092']
     })
   })
