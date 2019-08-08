@@ -21,13 +21,12 @@ jobs:
         sequelize db:create --env test
         sequelize db:migrate --env test
         npm test
-
-  services:
-    postgresql:
-      image: postgres
-      ports:
-      - 5432/tcp
-    redis:
-      image: redis
-      ports:
-      - 6379/tcp
+    services:
+      postgresql:
+        image: postgres
+        ports:
+        - 5432/tcp
+      redis:
+        image: redis
+        ports:
+        - 6379/tcp
