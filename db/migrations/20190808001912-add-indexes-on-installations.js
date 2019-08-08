@@ -9,4 +9,4 @@ module.exports = {
   down: async (queryInterface, Sequelize) => {
     await queryInterface.removeIndex('Installations', 'Installations_jiraHost_idx')
   }
-};
+}
