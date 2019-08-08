@@ -4,7 +4,7 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.addIndex('Subscriptions', {
       fields: ['gitHubInstallationId', 'jiraHost'],
-      name: 'index-on-installation-and-jira-host'
+      name: 'Subscriptions_gitHubInstallationId_jiraHost_idx'
     })
 
     await queryInterface.addIndex('Subscriptions', {
