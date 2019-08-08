@@ -3,5 +3,6 @@ npm-debug.log
 *.pem
 .env
 coverage
-.vscode
+.vscodelog/*
 .DS_Store
+log/*
