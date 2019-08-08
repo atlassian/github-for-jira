@@ -11,9 +11,23 @@ jobs:
     - uses: actions/checkout@master
     - name: Use Node.js 10.x
       uses: actions/setup-node@v1
+      env:
+        NODE_ENV: test
       with:
         version: 10.x
     - name: npm install, build, and test
       run: |
         npm install
+        sequelize db:create --env test
+        sequelize db:migrate --env test
         npm test
+
+  services:
+    postgresql:
+      image: postgres
+      ports:
+      - 5432/tcp
+    redis:
+      image: redis
+      ports:
+      - 6379/tcp
