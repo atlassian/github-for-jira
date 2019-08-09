@@ -10,7 +10,7 @@
     "host": "127.0.0.1",
     "dialect": "postgres",
     "operatorsAliases": false,
-    "username": "root"
+    "username": "postgres"
   },
   "production": {
     "dialect": "postgres",
