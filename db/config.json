@@ -9,7 +9,8 @@
     "database": "jira-test",
     "host": "127.0.0.1",
     "dialect": "postgres",
-    "operatorsAliases": false
+    "operatorsAliases": false,
+    "username": "root"
   },
   "production": {
     "dialect": "postgres",
