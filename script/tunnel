@@ -21,7 +21,7 @@ elif is_installed lt; then
 else
   echo_red "No tunnel utility found!"
   echo "To install, run this:"
-  echo_bold "  brew install ngrok # requires license"
+  echo_bold "  brew cask install ngrok # requires license"
   echo "            or"
-  echo_bold "  brew install localtunnel # free"
+  echo_bold "  npm install -g localtunnel # free"
 fi
