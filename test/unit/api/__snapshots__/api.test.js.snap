@@ -73,8 +73,8 @@ Object {
   "failedConnections": Array [],
   "hasConnections": true,
   "host": "https://test-atlassian-instance.net",
-  "installationId": "test-installation-id",
-  "repoSyncState": "http://127.0.0.1/api/test-installation-id/repoSyncState.json",
+  "installationId": "1234",
+  "repoSyncState": "http://127.0.0.1/api/1234/repoSyncState.json",
 }
 `;
 
@@ -86,13 +86,13 @@ Object {
 }
 `;
 
-exports[`API Endpoints sync should reset repoSyncState if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for test-installation-id\\"}"`;
+exports[`API Endpoints sync should reset repoSyncState if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
 
 exports[`API Endpoints sync should return 404 if no installation is found 1`] = `"Not Found"`;
 
-exports[`API Endpoints sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for test-installation-id\\"}"`;
+exports[`API Endpoints sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
 
-exports[`API Endpoints undo should migrate an installation 1`] = `"Successfully called migration complete for test-installation-id"`;
+exports[`API Endpoints undo should migrate an installation 1`] = `"Successfully called migration complete for 1234"`;
 
 exports[`API Endpoints undo should migrate an installation 2`] = `
 [MockFunction] {
@@ -114,7 +114,7 @@ exports[`API Endpoints undo should migrate an installation 2`] = `
 
 exports[`API Endpoints undo should return 404 if no installation is found 1`] = `"Not Found"`;
 
-exports[`API Endpoints undo should undo a migration 1`] = `"Successfully called migration undo for test-installation-id"`;
+exports[`API Endpoints undo should undo a migration 1`] = `"Successfully called migration undo for 1234"`;
 
 exports[`API Endpoints undo should undo a migration 2`] = `
 [MockFunction] {
