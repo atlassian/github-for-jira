@@ -1,3 +1,3 @@
 tunnel: script/tunnel
-web: nodemon --exec "npm start"
-worker: nodemon --exec "npm run worker"
+web: npm run dev
+worker: npm run dev:worker
