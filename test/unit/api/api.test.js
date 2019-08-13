@@ -211,21 +211,21 @@ describe('API', () => {
       })
 
       it('should return information for an existing installation', () => {
-        td.when(models.Subscription.getAllForInstallation('test-installation-id'))
+        td.when(models.Subscription.getAllForInstallation('1234'))
           .thenReturn([
             {
               dataValues: {
                 jiraHost: process.env.ATLASSIAN_URL
               },
-              gitHubInstallationId: 'test-installation-id'
+              gitHubInstallationId: 1234
             }
           ])
 
-        td.when(locals.client.apps.getInstallation({ installation_id: 'test-installation-id' }))
+        td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} })
 
         return supertest(subject)
-          .get('/api/test-installation-id')
+          .get('/api/1234')
           .set('Authorization', 'Bearer xxx')
           .set('host', '127.0.0.1')
           .send('jiraHost=https://test-atlassian-instance.net')
@@ -250,7 +250,7 @@ describe('API', () => {
       })
 
       it('should return the repoSyncState information for an existing installation', () => {
-        td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 'test-installation-id'))
+        td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, '1234'))
           .thenReturn(
             {
               dataValues: {
@@ -259,11 +259,11 @@ describe('API', () => {
             }
           )
 
-        td.when(locals.client.apps.getInstallation({ installation_id: 'test-installation-id' }))
+        td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} })
 
         return supertest(subject)
-          .get('/api/test-installation-id/repoSyncState.json?jiraHost=https://test-atlassian-instance.net')
+          .get('/api/1234/repoSyncState.json?jiraHost=https://test-atlassian-instance.net')
           .set('Authorization', 'Bearer xxx')
           .set('host', '127.0.0.1')
           .expect(200)
@@ -289,7 +289,7 @@ describe('API', () => {
         td.when(models.Installation.getForHost('me.atlassian.net'))
           .thenReturn([{}])
 
-        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', 'test-installation-id'))
+        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', '1234'))
           .thenReturn([
             {
               dataValues: {
@@ -300,11 +300,11 @@ describe('API', () => {
 
         models.Subscription.findOrStartSync = jest.fn()
 
-        td.when(locals.client.apps.getInstallation({ installation_id: 'test-installation-id' }))
+        td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} })
 
         return supertest(subject)
-          .post('/api/test-installation-id/sync?installationId=test-installation-id')
+          .post('/api/1234/sync?installationId=1234')
           .set('Authorization', 'Bearer xxx')
           .set('host', '127.0.0.1')
           .send('jiraHost=me.atlassian.net')
@@ -319,7 +319,7 @@ describe('API', () => {
         td.when(models.Installation.getForHost('me.atlassian.net'))
           .thenReturn([{}])
 
-        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', 'test-installation-id'))
+        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', '1234'))
           .thenReturn([
             {
               dataValues: {
@@ -330,11 +330,11 @@ describe('API', () => {
 
         models.Subscription.findOrStartSync = jest.fn()
 
-        td.when(locals.client.apps.getInstallation({ installation_id: 'test-installation-id' }))
+        td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} })
 
         return supertest(subject)
-          .post('/api/test-installation-id/sync?installationId=test-installation-id')
+          .post('/api/1234/sync?installationId=1234')
           .set('Authorization', 'Bearer xxx')
           .set('host', '127.0.0.1')
           .send('jiraHost=me.atlassian.net')
@@ -371,14 +371,14 @@ describe('API', () => {
         td.when(models.Installation.getForHost('me.atlassian.net'))
           .thenReturn([{}])
 
-        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', 'test-installation-id'))
+        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', '1234'))
           .thenReturn({ update })
 
-        td.when(locals.client.apps.getInstallation({ installation_id: 'test-installation-id' }))
+        td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} })
 
         return supertest(subject)
-          .post('/api/test-installation-id/migrate?installationId=test-installation-id')
+          .post('/api/1234/migrate?installationId=1234')
           .set('Authorization', 'Bearer xxx')
           .set('host', '127.0.0.1')
           .send('jiraHost=me.atlassian.net')
@@ -396,14 +396,14 @@ describe('API', () => {
         td.when(models.Installation.getForHost('me.atlassian.net'))
           .thenReturn([{}])
 
-        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', 'test-installation-id'))
+        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', '1234'))
           .thenReturn({ update })
 
-        td.when(locals.client.apps.getInstallation({ installation_id: 'test-installation-id' }))
+        td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} })
 
         return supertest(subject)
-          .post('/api/test-installation-id/migrate/undo?installationId=test-installation-id')
+          .post('/api/1234/migrate/undo?installationId=1234')
           .set('Authorization', 'Bearer xxx')
           .set('host', '127.0.0.1')
           .send('jiraHost=me.atlassian.net')
