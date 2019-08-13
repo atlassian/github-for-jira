@@ -14,9 +14,9 @@ elif [ -z ${TUNNEL_SUBDOMAIN} ]; then
   exit 1
 fi
 
-if is_installed ngrok1; then
+if is_installed ngrok; then
   exec ngrok http "${TUNNEL_PORT}" --subdomain="${TUNNEL_SUBDOMAIN}" --log=stdout
-elif is_installed lt1; then
+elif is_installed lt; then
   exec lt --port "${TUNNEL_PORT}" --subdomain "${TUNNEL_SUBDOMAIN}" --print-requests
 else
   echo_red "No tunnel utility found!"
