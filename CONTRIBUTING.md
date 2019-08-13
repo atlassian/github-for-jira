@@ -73,7 +73,7 @@ Finally, set the `APP_URL` env variable to `https://DOMAIN`.
 When you are developing you will prefer to run the app and automatically restart it when you do changes to the source code. In that case you should use:
 
 ```
-$ npm run dev
+$ script/server
 ```
 
 For production you should just use `npm run start`.
