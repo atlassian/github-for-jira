@@ -59,7 +59,7 @@ function makeExpectedResponse ({branchName}) {
       }
     ],
     properties: {
-      installationId: 'test-installation-id'
+      installationId: 1234
     }
   }
 }
@@ -109,7 +109,7 @@ describe('sync/branches', () => {
     jiraHost = process.env.ATLASSIAN_URL
     jiraApi = td.api('https://test-atlassian-instance.net')
 
-    installationId = 'test-installation-id'
+    installationId = 1234
     Date.now = jest.fn(() => 12345678)
 
     td.when(
@@ -232,7 +232,7 @@ describe('sync/branches', () => {
         }
       ],
       properties: {
-        installationId: 'test-installation-id'
+        installationId: 1234
       }
     }))
   })

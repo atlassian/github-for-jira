@@ -16,14 +16,14 @@ beforeEach(() => {
       sharedSecret: process.env.ATLASSIAN_SECRET
     })
 
-  td.when(models.Subscription.getAllForInstallation('test-installation-id'))
+  td.when(models.Subscription.getAllForInstallation(1234))
     .thenReturn([
       {
         jiraHost: process.env.ATLASSIAN_URL
       }
     ])
 
-  td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 'test-installation-id'))
+  td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 1234))
     .thenReturn({ id: 1, jiraHost: process.env.ATLASSIAN_URL })
 
   td.when(models.Project.upsert('PROJ-1', process.env.ATLASSIAN_URL))
