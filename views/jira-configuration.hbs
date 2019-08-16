@@ -46,6 +46,7 @@
                       <p><strong>COMPLETE</strong> - The sync has finished. Information from selected repositories will be shown in Jira's development information panel.</p>
                     </div>
                   </div>
+                  <th>Last Update</th>
                   <th>Retry <span id="sync-retry-modal-btn" class="sync-retry-modal-btn">ℹ️</span></th>
                   <div id="sync-retry-modal" class="sync-retry-modal">
                     <div class="sync-retry-modal-content">
@@ -69,13 +70,22 @@
                         Selected
                       {{/if}}
                     </td>
-                    <td>{{ updated_at }}</td>
+                    <td>
+                      <span title="{{ installedAt.absolute }}">
+                        {{ installedAt.relative }}
+                      </span>
+                    </td>
                     <td>
                       <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
                       <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
                     </td>
                     <td>
                       <span id="{{id}}-status"> {{ syncStatus }} </span>
+                    </td>
+                    <td>
+                      <span title="{{ subscriptionUpdatedAt.absolute }}">
+                        {{ subscriptionUpdatedAt.relative }}
+                      </span>
                     </td>
                     <td>
                       <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
@@ -97,8 +107,11 @@
                         There was an error getting the information of this installation
                       {{/if}}
                     </td>
-                    <td></td>
-                    <td>{{ updated_at }}</td>
+                    <td>
+                      <span title="{{ installedAt.absolute }}">
+                        {{ installedAt.relative }}
+                      </span>
+                    </td>
                     <td>
                       <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
                     </td>
