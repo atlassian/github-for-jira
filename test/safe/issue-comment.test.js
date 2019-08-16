@@ -17,7 +17,7 @@ describe('GitHub Actions', () => {
 
         await app.receive(payload)
 
-        td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/comments/test-comment-id', {
+        td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/comments/5678', {
           number: 'test-issue-number',
           body: 'Test example comment with linked Jira issue: [TEST-123]\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123'
         }))

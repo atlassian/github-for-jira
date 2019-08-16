@@ -65,7 +65,7 @@ describe('GitHub Actions', () => {
           }
         ],
         properties: {
-          installationId: 'test-installation-id'
+          installationId: 1234
         }
       }))
     })

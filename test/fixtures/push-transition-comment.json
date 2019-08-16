@@ -29,7 +29,7 @@
       "login": "TestUser"
     },
     "installation": {
-      "id": "test-installation-id"
+      "id": 1234
     }
   }
 }

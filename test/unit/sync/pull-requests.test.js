@@ -29,7 +29,7 @@ describe('sync/pull-request', () => {
     jiraHost = process.env.ATLASSIAN_URL
     jiraApi = td.api('https://test-atlassian-instance.net')
 
-    installationId = 'test-installation-id'
+    installationId = 1234
     Date.now = jest.fn(() => 12345678)
 
     td.when(models.Subscription.getSingleInstallation(jiraHost, installationId))
@@ -106,7 +106,7 @@ describe('sync/pull-request', () => {
         }
       ],
       properties: {
-        installationId: 'test-installation-id'
+        installationId: 1234
       }
     }))
   })
