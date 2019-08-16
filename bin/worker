@@ -9,7 +9,7 @@ const Sentry = require('@sentry/node')
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV,
+  environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
   release: process.env.HEROKU_SLUG_COMMIT
 })
 
