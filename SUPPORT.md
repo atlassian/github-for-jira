@@ -36,6 +36,8 @@ You can check your sync status in the integration settings:
 | PENDING  | The sync has not started.  |
 | ACTIVE   | The sync has started and is still in progress. No information will be displayed in Jira. |
 | COMPLETE | The sync has finished. Information will be displayed in Jira. |
+| STALLED  | The sync has not finished but has stopped being updated. Partial information may appear in Jira. |
+| FAILED   | The sync hit an error and stopped without completing. Partial information may appear in Jira. |
 
 The time it takes to complete the sync will depend on the size of your installation. Since the sync scans commits for every repository in your installation, be mindful that selecting "All Repositories" will perform a scan of every repository in your account, including forks. If you have repositories with hundreds of thousands of forks (e.g. a fork of the Linux repo), the scan might take several hours to complete.
 
@@ -51,6 +53,17 @@ Because everyone's repository histories are different, it's difficult to determi
 This will rediscover all repositories in your installation and start a new sync.
 
 Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
+
+## Sync is STALLED
+
+When an ACTIVE sync hasn't made progress for some time, the status will move to STALLED. This can happen when an unexpected error occurs.
+
+To resolve, follow these steps to resume the sync:
+
+1. Open the integration settings: **Jira Settings** -> **Add-ons** -> **Manage Add-ons** -> **GitHub** -> **Get started**
+2. Under **Retry**, click the dropdown and select "Normal", then click **Submit**
+
+If the sync returns to the STALLED status, [contact GitHub Support for additional help](#getting-additional-help).
 
 ## Nothing showing up in Jira
 
