@@ -34,7 +34,7 @@ describe('sync/commits', () => {
     jiraHost = process.env.ATLASSIAN_URL
     jiraApi = td.api('https://test-atlassian-instance.net')
 
-    installationId = 'test-installation-id'
+    installationId = 1234
     Date.now = jest.fn(() => 12345678)
 
     td.when(models.Subscription.getSingleInstallation(jiraHost, installationId))
@@ -105,7 +105,7 @@ describe('sync/commits', () => {
         }
       ],
       properties: {
-        installationId: 'test-installation-id'
+        installationId: 1234
       }
     }))
   })
@@ -201,7 +201,7 @@ describe('sync/commits', () => {
         }
       ],
       properties: {
-        installationId: 'test-installation-id'
+        installationId: 1234
       }
     }))
   })
@@ -264,7 +264,7 @@ describe('sync/commits', () => {
         }
       ],
       properties: {
-        installationId: 'test-installation-id'
+        installationId: 1234
       }
     }))
   })

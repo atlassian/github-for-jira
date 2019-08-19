@@ -36,7 +36,7 @@
     "newrelic": "^4.13.1",
     "pg": "^7.4.3",
     "primer": "^10.6.0",
-    "probot": "^7.1.2",
+    "probot": "^7.5.2",
     "probot-config": "^0.1.0",
     "request": "^2.88.0",
     "sequelize": "^4.37.10",
