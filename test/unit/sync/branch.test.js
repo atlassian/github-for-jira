@@ -84,7 +84,6 @@ describe('sync/branches', () => {
   let jiraApi
   let installationId
   let delay
-  let attempts = 3
 
   beforeEach(() => {
     const models = td.replace('../../../lib/models')
