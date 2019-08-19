@@ -1,4 +1,5 @@
 const nock = require('nock')
+const createJob = require('../../setup/create-job')
 
 describe('sync/pull-request', () => {
   let jiraHost
@@ -46,14 +47,8 @@ describe('sync/pull-request', () => {
   test('should sync to Jira when Pull Request Nodes have jira references', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: {
-        removeOnComplete: true,
-        removeOnFail: true,
-        attempts: 3
-      }
-    }
+    const job = createJob({ data: { installationId, jiraHost } })
+
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 
     const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries')
@@ -114,14 +109,7 @@ describe('sync/pull-request', () => {
   test('should not sync if nodes are empty', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: {
-        removeOnComplete: true,
-        removeOnFail: true,
-        attempts: 3
-      }
-    }
+    const job = createJob({ data: { installationId, jiraHost } })
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 
@@ -151,15 +139,7 @@ describe('sync/pull-request', () => {
   test('should not sync if nodes do not contain issue keys', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
     process.env.LIMITER_PER_INSTALLATION = 2000
-    const job = {
-      data: { installationId, jiraHost },
-      opts: {
-        removeOnComplete: true,
-        removeOnFail: true,
-        attempts: 3,
-        delay: 2000
-      }
-    }
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } })
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 

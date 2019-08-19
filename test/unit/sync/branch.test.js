@@ -1,6 +1,7 @@
 const nock = require('nock')
 const parseSmartCommit = require('../../../lib/transforms/smart-commit')
 const emptyNodesFixture = require('../../fixtures/api/graphql/branch-empty-nodes.json')
+const createJob = require('../../setup/create-job')
 
 function makeExpectedResponse ({branchName}) {
   const { issueKeys } = parseSmartCommit(branchName)
@@ -127,10 +128,7 @@ describe('sync/branches', () => {
   test('should sync to Jira when branch refs have jira references', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
-    }
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
 
     nock('https://api.github.com')
       .post('/installations/1/access_tokens')
@@ -155,10 +153,7 @@ describe('sync/branches', () => {
   test('should send data if issue keys are only present in commits', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
-    }
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
 
     const branchCommitsHaveKeys = require('../../fixtures/api/graphql/branch-commits-have-keys.json')
     nockBranchRequst(branchCommitsHaveKeys)
@@ -179,10 +174,7 @@ describe('sync/branches', () => {
   test('should send data if issue keys are only present in an associatd PR title', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
-    }
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
 
     const associatedPRhasKeys = require('../../fixtures/api/graphql/branch-associated-pr-has-keys.json')
     nockBranchRequst(associatedPRhasKeys)
@@ -240,10 +232,7 @@ describe('sync/branches', () => {
   test('should not call Jira if no issue keys are found', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
-    }
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
 
     const branchNoIssueKeys = require('../../fixtures/api/graphql/branch-no-issue-keys.json')
     nockBranchRequst(branchNoIssueKeys)
