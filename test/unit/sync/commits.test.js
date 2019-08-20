@@ -75,7 +75,7 @@ describe('sync/commits', () => {
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-      preventTransitions: false,
+      preventTransitions: true,
       repositories: [
         {
           commits: [
@@ -134,7 +134,7 @@ describe('sync/commits', () => {
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-      preventTransitions: false,
+      preventTransitions: true,
       repositories: [
         {
           commits: [
@@ -228,7 +228,7 @@ describe('sync/commits', () => {
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-      preventTransitions: false,
+      preventTransitions: true,
       repositories: [
         {
           commits: [
