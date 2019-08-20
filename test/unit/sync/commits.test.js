@@ -1,5 +1,6 @@
 const nock = require('nock')
 const defaultBranchFixture = require('../../fixtures/api/graphql/default-branch.json')
+const createJob = require('../../setup/create-job')
 
 describe('sync/commits', () => {
   let jiraHost
@@ -7,7 +8,6 @@ describe('sync/commits', () => {
   let installationId
   let emptyNodesFixture
   let delay
-  let attempts = 3
 
   beforeEach(() => {
     const models = td.replace('../../../lib/models')
@@ -51,10 +51,7 @@ describe('sync/commits', () => {
   test('should sync to Jira when Commit Nodes have jira references', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
-    }
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 
@@ -113,10 +110,7 @@ describe('sync/commits', () => {
   test('should send Jira all commits that have Issue Keys', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
-    }
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 
@@ -209,10 +203,7 @@ describe('sync/commits', () => {
   test('should default to master branch if defaultBranchRef is null', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
-    }
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 
@@ -272,10 +263,7 @@ describe('sync/commits', () => {
   test('should not call Jira if no issue keys are present', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: { delay, attempts, removeOnFail: true, removeOnComplete: true }
-    }
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 
@@ -305,10 +293,7 @@ describe('sync/commits', () => {
   test('should not call Jira if no data is returned', async () => {
     const { processInstallation } = require('../../../lib/sync/installation')
 
-    const job = {
-      data: { installationId, jiraHost },
-      opts: { attempts, removeOnFail: true, removeOnComplete: true }
-    }
+    const job = createJob({ data: { installationId, jiraHost } })
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
 
