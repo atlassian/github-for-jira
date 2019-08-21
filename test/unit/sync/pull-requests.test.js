@@ -70,7 +70,7 @@ describe('sync/pull-request', () => {
     await processInstallation(app, queues)(job)
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-      preventTransitions: false,
+      preventTransitions: true,
       repositories: [
         {
           id: 'test-repo-id',
