@@ -6,7 +6,7 @@ const createJob = require('../../setup/create-job')
 function makeExpectedResponse ({branchName}) {
   const { issueKeys } = parseSmartCommit(branchName)
   return {
-    preventTransitions: false,
+    preventTransitions: true,
     repositories: [
       {
         branches: [
@@ -187,7 +187,7 @@ describe('sync/branches', () => {
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-      preventTransitions: false,
+      preventTransitions: true,
       repositories: [
         {
           branches: [
