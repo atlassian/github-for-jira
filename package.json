@@ -4,8 +4,8 @@
   "repository": "https://github.com/integrations/jira.git",
   "scripts": {
     "ci": "npm test && npm run lint",
-    "dev": "nodemon --exec \"npm start\"",
-    "dev:worker": "nodemon --exec \"node bin/worker\"",
+    "dev": "nodemon --exec \"node --inspect ./lib/run.js\"",
+    "dev:worker": "nodemon --exec \"node --inspect=9230 bin/worker\"",
     "lint": "standard --fix",
     "es": "eslint",
     "start": "node ./lib/run.js",
