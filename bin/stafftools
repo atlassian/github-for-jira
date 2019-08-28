@@ -1,0 +1,141 @@
+#!/usr/bin/env ruby
+require 'bundler/inline'
+require 'cgi'
+require 'open3'
+require 'json'
+
+gemfile do
+  source 'https://rubygems.org'
+
+  gem 'colorize'
+  gem 'excon'
+  gem 'thor'
+end
+
+class JiraStaffTools < Thor
+  class_option :token, desc: "Personal access token (defaults to GITHUB_TOKEN)"
+  class_option :host, default: "https://jira.github.com", desc: "Jira integration host (useful to test against staging or development)"
+  class_option :debug, desc: "Output full request and response (hepful when an error occurs)", type: :boolean
+
+  desc "info <git_hub_installation_id>", "Display summary of GitHub installation"
+  def info(git_hub_installation_id)
+    body = info_response(git_hub_installation_id)
+    output_json(body)
+  end
+
+  desc "status <git_hub_installation_id>", "Display repo sync status"
+  def status(git_hub_installation_id)
+    jira_host = get_jira_host(git_hub_installation_id)
+    response = client.get(
+      "/api/#{CGI.escape(git_hub_installation_id)}/repoSyncState.json",
+      "jiraHost" => jira_host
+    )
+
+    output_json(response.body)
+  end
+
+  desc "sync <git_hub_installation_id>", "Trigger sync (defaults to 'normal')"
+  option :reset, type: :boolean, desc: "Clear sync status and start from beginning ('full')"
+  def sync(git_hub_installation_id)
+    sync_type = "full" if options[:reset]
+    jira_host = get_jira_host(git_hub_installation_id)
+
+    response = client.post(
+      "/api/#{CGI.escape(git_hub_installation_id)}/sync",
+      "jiraHost" => jira_host,
+      "resetType" => sync_type
+    )
+
+    output_json(response.body)
+  end
+
+  no_commands do
+    def get_jira_host(git_hub_installation_id)
+      data = JSON.parse(info_response(git_hub_installation_id))
+      data["host"]
+    end
+
+    def client
+      @client ||= Client.new(options[:host], options[:token] || ENV["GITHUB_TOKEN"], options[:debug])
+    end
+
+    def info_response(git_hub_installation_id)
+      response = client.get("/api/#{CGI.escape(git_hub_installation_id)}")
+      response.body
+    end
+
+    def output_json(json_string)
+      if Helper.jq_available?
+        out, _err, _status = Open3.capture3('jq -C', stdin_data: json_string)
+        puts out
+      else
+        puts JSON.pretty_generate(JSON.parse(json_string))
+      end
+    end
+  end
+end
+
+class Client
+  attr_reader :host, :token, :debug
+  def initialize(host, token, debug)
+    @host = host
+    @token = token
+    @debug = debug
+  end
+
+  def get(path, query = {})
+    excon.request(expects: [200, 201], method: :get, path: path, query: query)
+  end
+
+  def post(path, body)
+    excon.post(
+      path: path,
+      body: URI.encode_www_form(body),
+      headers: {"Content-Type" => "application/x-www-form-urlencoded"}
+    )
+  end
+
+  private def excon
+    @excon ||= Excon.new(
+      host,
+      headers: default_headers,
+      persistent: true,
+      debug: debug,
+    )
+  end
+
+  private def default_headers
+    {
+      Authorization: "Bearer #{token}"
+    }
+  end
+end
+
+module Helper
+  extend self
+
+  def jq_available?
+    @jq_available ||= begin
+      _out, _err, status = Open3.capture3("which jq")
+      if status.success?
+        true
+      else
+        STDERR.puts "Warn: jq not installed, output won't be pretty printed.".yellow
+        STDERR.print "      To install, run this command: ".yellow
+        STDERR.puts "brew install jq".italic.white
+        false
+      end
+    end
+  end
+end
+
+if ENV["GITHUB_TOKEN"].nil?
+  puts "✨ Pro tip: if you set GITHUB_TOKEN, you don't need to set `--token` every time".italic
+end
+
+begin
+  JiraStaffTools.start(ARGV)
+rescue Excon::Error::HTTPStatus => e
+  STDERR.puts "Unexpected response: #{e.response.status} #{e.response.body}".red
+  STDERR.puts "Try command again with --debug to see what went wrong."
+end
