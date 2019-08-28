@@ -49,6 +49,12 @@ class JiraStaffTools < Thor
     output_json(response.body)
   end
 
+  desc "jira <client_key>", "Display installation for Jira instance"
+  def jira(client_key)
+    response = client.get("/api/jira/#{CGI.escape(client_key)}")
+    output_json(response.body)
+  end
+
   no_commands do
     def get_jira_host(git_hub_installation_id)
       data = JSON.parse(info_response(git_hub_installation_id))
