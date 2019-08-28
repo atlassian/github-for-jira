@@ -37,7 +37,7 @@ class JiraStaffTools < Thor
   desc "sync <git_hub_installation_id>", "Trigger sync (defaults to 'normal')"
   option :reset, type: :boolean, desc: "Clear sync status and start from beginning ('full')"
   def sync(git_hub_installation_id)
-    sync_type = options[:reset] && "full"
+    sync_type = "full" if options[:reset]
     jira_host = get_jira_host(git_hub_installation_id)
 
     response = client.post(
@@ -69,7 +69,7 @@ class JiraStaffTools < Thor
         out, _err, _status = Open3.capture3('jq -C', stdin_data: json_string)
         puts out
       else
-        puts json_string
+        puts JSON.pretty_generate(JSON.parse(json_string))
       end
     end
   end
