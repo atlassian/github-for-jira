@@ -48,6 +48,18 @@ class JiraStaffTools < Thor
 
     output_json(response.body)
   end
+  
+  desc "migrate <git_hub_installation_id>", "Mark as migrated from DVCS and set sync to COMPLETE"
+  def migrate(git_hub_installation_id)
+    jira_host = get_jira_host(git_hub_installation_id)
+
+    response = client.post(
+      "/api/#{CGI.escape(git_hub_installation_id)}/migrate",
+      "jiraHost" => jira_host
+    )
+
+    output_json(response.body)
+  end
 
   desc "jira <client_key>", "Display installation for Jira instance"
   def jira(client_key)
