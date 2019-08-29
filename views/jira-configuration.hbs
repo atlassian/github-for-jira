@@ -81,6 +81,9 @@
                     </td>
                     <td>
                       <span id="{{id}}-status"> {{ syncStatus }} </span>
+                      {{#if syncWarning}}
+                        <a href="#trigger" data-ak-tooltip="{{ syncWarning }}" data-ak-tooltip-position="top">⚠️</a>
+                      {{/if}}
                     </td>
                     <td>
                       <span title="{{ subscriptionUpdatedAt.absolute }}">
