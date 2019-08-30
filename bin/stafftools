@@ -2,7 +2,9 @@
 require 'bundler/inline'
 require 'cgi'
 require 'open3'
+require 'io/console'
 require 'json'
+require 'yaml'
 
 gemfile do
   source 'https://rubygems.org'
@@ -13,7 +15,6 @@ gemfile do
 end
 
 class JiraStaffTools < Thor
-  class_option :token, desc: "Personal access token (defaults to GITHUB_TOKEN)"
   class_option :host, default: "https://jira.github.com", desc: "Jira integration host (useful to test against staging or development)"
   class_option :debug, desc: "Output full request and response (hepful when an error occurs)", type: :boolean
 
@@ -67,6 +68,30 @@ class JiraStaffTools < Thor
     output_json(response.body)
   end
 
+  desc "jira-uninstall <client_key>", "Uninstall the Jira instance"
+  long_desc <<~DESC
+    Trigger the same uninstall process that occurs when a customer
+    uninstalls the GitHub for Jira Atlassian Marketplace app.
+    
+    Note: this does not uninstall the app from a customer's Jira
+          instance, it only removes the data from our side.
+  DESC
+  option :force, type: :boolean, desc: "Force uninstall for an authorized Jira installation"
+  def jira_uninstall(client_key)
+    response = client.post("/api/jira/#{CGI.escape(client_key)}/uninstall", {force: options[:force]})
+    output =
+      if response.status == 204
+        {message: "Uninstall successful"}
+      else
+        {
+          status: response.status_line,
+          body: response.body
+        }
+      end
+
+    output_json(output.to_json)
+  end
+
   no_commands do
     def get_jira_host(git_hub_installation_id)
       data = JSON.parse(info_response(git_hub_installation_id))
@@ -74,7 +99,7 @@ class JiraStaffTools < Thor
     end
 
     def client
-      @client ||= Client.new(options[:host], options[:token] || ENV["GITHUB_TOKEN"], options[:debug])
+      @client ||= Client.new(options[:host], Config.token, options[:debug])
     end
 
     def info_response(git_hub_installation_id)
@@ -105,7 +130,7 @@ class Client
     excon.request(expects: [200, 201], method: :get, path: path, query: query)
   end
 
-  def post(path, body)
+  def post(path, body = {})
     excon.post(
       path: path,
       body: URI.encode_www_form(body),
@@ -147,11 +172,59 @@ module Helper
   end
 end
 
-if ENV["GITHUB_TOKEN"].nil?
-  puts "✨ Pro tip: if you set GITHUB_TOKEN, you don't need to set `--token` every time".italic
+class Config
+  def self.token
+    instance.data[:token]
+  end
+
+  def self.instance
+    @instance ||= new
+  end
+
+  def self.wizard
+    return if token
+
+    print <<~MESSAGE.chomp
+      #{"To use this tool, you'll need to add a personal access token.".cyan}
+
+      1. Visit https://github.com/settings/tokens
+      2. Click "Generate new token"
+      3. Check "repo", "read:org", and "read:user" scopes, then click "Save"
+      4. Copy the token to your clipboard
+      5. Click "Enable SSO", then follow prompts
+
+      #{"Press [enter] when you're finished. ".white}
+    MESSAGE
+
+    STDIN.gets
+    print "Enter your personal access token: "
+
+    instance.data[:token] = STDIN.noecho(&:gets).chomp
+    instance.save
+  end
+
+  def data
+    @data ||= begin
+      if File.exists?(path)
+        YAML.load(File.read(path))
+      else
+        {}
+      end
+    end
+  end
+
+  def save
+    FileUtils.mkdir_p(File.dirname(path))
+    File.open(path, 'w') { |file| file.write(data.to_yaml) }
+  end
+
+  def path
+    File.expand_path("~/.config/jira-stafftools")
+  end
 end
 
 begin
+  Config.wizard
   JiraStaffTools.start(ARGV)
 rescue Excon::Error::HTTPStatus => e
   STDERR.puts "Unexpected response: #{e.response.status} #{e.response.body}".red
