@@ -1,3 +1,5 @@
+const { logger } = require('probot/lib/logger')
+
 const { Installation, Subscription } = require('../../../lib/models')
 const middleware = require('../../../lib/github/middleware')
 
@@ -11,7 +13,8 @@ describe('Probot event middleware', () => {
         payload: {
           sender: { type: 'not bot' },
           installation: { id: 1234 }
-        }
+        },
+        log: logger
       }
 
       Installation.getForHost = jest.fn((jiraHost) => {
