@@ -82,7 +82,9 @@
                     <td>
                       <span id="{{id}}-status"> {{ syncStatus }} </span>
                       {{#if syncWarning}}
-                        <a href="#trigger" data-ak-tooltip="{{ syncWarning }}" data-ak-tooltip-position="top">⚠️</a>
+                        <a href="#trigger" data-ak-tooltip="{{ syncWarning }}" data-ak-tooltip-position="top">
+                          <span id="{{id}}-status">{{ syncStatus }}</span>*
+                        </a>
                       {{/if}}
                     </td>
                     <td>
