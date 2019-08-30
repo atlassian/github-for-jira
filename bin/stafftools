@@ -67,6 +67,30 @@ class JiraStaffTools < Thor
     output_json(response.body)
   end
 
+  desc "jira-uninstall <client_key>", "Uninstall the Jira instance"
+  long_desc <<~DESC
+    Trigger the same uninstall process that occurs when a customer
+    uninstalls the GitHub for Jira Atlassian Marketplace app.
+    
+    Note: this does not uninstall the app from a customer's Jira
+          instance, it only removes the data from our side.
+  DESC
+  option :force, type: :boolean, desc: "Force uninstall for an authorized Jira installation"
+  def jira_uninstall(client_key)
+    response = client.post("/api/jira/#{CGI.escape(client_key)}/uninstall", {force: options[:force]})
+    output =
+      if response.status == 204
+        {message: "Uninstall successful"}
+      else
+        {
+          status: response.status_line,
+          body: response.body
+        }
+      end
+
+    output_json(output.to_json)
+  end
+
   no_commands do
     def get_jira_host(git_hub_installation_id)
       data = JSON.parse(info_response(git_hub_installation_id))
@@ -105,7 +129,7 @@ class Client
     excon.request(expects: [200, 201], method: :get, path: path, query: query)
   end
 
-  def post(path, body)
+  def post(path, body = {})
     excon.post(
       path: path,
       body: URI.encode_www_form(body),
