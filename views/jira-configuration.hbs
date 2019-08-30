@@ -80,7 +80,13 @@
                       <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
                     </td>
                     <td>
-                      <span id="{{id}}-status"> {{ syncStatus }} </span>
+                      {{#if syncWarning}}
+                        <a href="#trigger" data-ak-tooltip="{{ syncWarning }}" data-ak-tooltip-position="top" class="muted-link">
+                          <span id="{{id}}-status"> {{ syncStatus }} </span>*
+                        </a>
+                      {{else}}
+                        <span id="{{id}}-status"> {{ syncStatus }} </span>
+                      {{/if}}
                     </td>
                     <td>
                       <span title="{{ subscriptionUpdatedAt.absolute }}">
