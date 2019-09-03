@@ -109,9 +109,9 @@ describe('API', () => {
       return supertest(app)
         .get('/api')
         .set('Authorization', 'Bearer xxx')
-        .expect(401)
         .then(response => {
           expect(response.body).toMatchSnapshot()
+          expect(response.status).toEqual(401)
         })
     })
 

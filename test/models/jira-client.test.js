@@ -1,4 +1,5 @@
 const nock = require('nock')
+const { logger } = require('probot/lib/logger')
 
 const JiraClient = require('../../lib/models/jira-client')
 
@@ -6,7 +7,7 @@ describe(JiraClient, () => {
   describe('isAuthorized()', () => {
     const buildClient = ({ status }) => {
       const installation = { jiraHost: 'https://example.atlassian.net', sharedSecret: 'secret' }
-      const jiraClient = new JiraClient(installation)
+      const jiraClient = new JiraClient(installation, logger)
 
       nock('https://example.atlassian.net')
         .get('/rest/devinfo/0.10/existsByProperties?fakeProperty=1')
