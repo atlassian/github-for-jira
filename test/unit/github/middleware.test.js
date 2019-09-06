@@ -1,4 +1,5 @@
 const { logger } = require('probot/lib/logger')
+const Octokit = require('@octokit/rest')
 
 const { Installation, Subscription } = require('../../../lib/models')
 const middleware = require('../../../lib/github/middleware')
@@ -14,6 +15,7 @@ describe('Probot event middleware', () => {
           sender: { type: 'not bot' },
           installation: { id: 1234 }
         },
+        github: Octokit(),
         log: logger
       }
 
