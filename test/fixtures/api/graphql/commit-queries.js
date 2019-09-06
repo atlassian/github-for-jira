@@ -2,7 +2,7 @@ const query = 'query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
 
 module.exports.commitsNoLastCursor = {
   query,
-  variables: { owner: 'integrations', repo: 'test-repo-name', per_page: 50, default_ref: 'master' }
+  variables: { owner: 'integrations', repo: 'test-repo-name', per_page: 20, default_ref: 'master' }
 }
 
 module.exports.commitsWithLastCursor = {
@@ -10,7 +10,7 @@ module.exports.commitsWithLastCursor = {
   variables: {
     owner: 'integrations',
     repo: 'test-repo-name',
-    per_page: 50,
+    per_page: 20,
     cursor: 'Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99',
     default_ref: 'master'
   }
