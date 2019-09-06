@@ -54,7 +54,9 @@ This will rediscover all repositories in your installation and start a new sync.
 
 #### Referencing too many issues
 
-The Jira API only allows us to link 100 issues to a particular branch or commit. As a result, if we process any branch or commit message with over 100 issue keys, we only send the first 100 and show a warning message on the Sync status column. This warning does not affect the overall sync status for any other commits or branches referencing fewer than 100 issue keys in the installation.
+`Exceeded issue key reference limit. Some issues may not be linked.`
+
+This warning is shown when a branch or commit includes more than 100 issue keys. When a branch or commit exceeds this limit, we only send the first 100. This is enforced by Jira. This doesn't impact branches or commits that are under the limit or impact the sync status.
 
 Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
 
