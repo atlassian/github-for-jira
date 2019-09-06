@@ -52,6 +52,12 @@ Because everyone's repository histories are different, it's difficult to determi
 
 This will rediscover all repositories in your installation and start a new sync.
 
+#### Referencing too many issues
+
+`Exceeded issue key reference limit. Some issues may not be linked.`
+
+This warning is shown when a branch or commit includes more than 100 issue keys. When a branch or commit exceeds this limit, we only send the first 100. This is enforced by Jira. This doesn't impact branches or commits that are under the limit or impact the sync status.
+
 Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
 
 ## Sync is STALLED
