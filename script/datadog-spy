@@ -1,0 +1,7 @@
+#!/bin/bash
+# 
+# Run this script to spy on Datadog metrics locally.
+# 
+# This comes in handy when adding new metrics.
+# 
+nc -ucl 8125
