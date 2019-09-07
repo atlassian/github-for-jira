@@ -30,6 +30,7 @@
     "express": "^4.16.3",
     "express-sslify": "^1.2.0",
     "helmet": "^3.13.0",
+    "hot-shots": "^6.3.0",
     "markdown": "^0.5.0",
     "moment": "^2.24.0",
     "moo": "^0.5.0",
