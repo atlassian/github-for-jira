@@ -27,7 +27,7 @@ describe(enhanceOctokit, () => {
           name: 'jira-integration.github-request',
           type: 'h',
           value: (value) => value > 0 && value < 20, // Value changes depending on how long nock takes
-          tags: { path: '/events', method: 'GET' }
+          tags: { path: '/events', method: 'GET', status: '200' }
         })
       })
 
@@ -36,7 +36,7 @@ describe(enhanceOctokit, () => {
 
         const debugLog = log.debugValues[0]
         expect(log.debugValues).toHaveLength(1)
-        expect(debugLog.metadata).toEqual({ path: '/events', method: 'GET' })
+        expect(debugLog.metadata).toEqual({ path: '/events', method: 'GET', status: 200 })
         expect(debugLog.message).toMatch(/GitHub request time: \d+ms/)
       })
     })
@@ -54,7 +54,7 @@ describe(enhanceOctokit, () => {
           name: 'jira-integration.github-request',
           type: 'h',
           value: (value) => value > 0 && value < 20, // Value changes depending on how long nock takes
-          tags: { path: '/events', method: 'GET' }
+          tags: { path: '/events', method: 'GET', status: '500' }
         })
       })
 
@@ -63,7 +63,7 @@ describe(enhanceOctokit, () => {
 
         const debugLog = log.debugValues[0]
         expect(log.debugValues).toHaveLength(1)
-        expect(debugLog.metadata).toEqual({ path: '/events', method: 'GET' })
+        expect(debugLog.metadata).toEqual({ path: '/events', method: 'GET', status: 500 })
         expect(debugLog.message).toMatch(/GitHub request time: \d+ms/)
       })
     })
