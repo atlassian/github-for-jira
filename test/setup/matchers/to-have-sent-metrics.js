@@ -87,11 +87,13 @@ expect.extend({
 
         if (matchingName && matchingType && matchingValue) {
           let matchingTags = true
-          Object.entries(expectedMetric.tags).forEach(([name, expectedValue]) => {
-            if (actualMetric.tags[name] !== expectedValue) {
-              matchingTags = false
-            }
-          })
+          if (expectedMetric.tags) {
+            Object.entries(expectedMetric.tags).forEach(([name, expectedValue]) => {
+              if (actualMetric.tags[name] !== expectedValue) {
+                matchingTags = false
+              }
+            })
+          }
 
           if (matchingTags) {
             matchingMetrics.push(actualMetric)
