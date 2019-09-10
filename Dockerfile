@@ -11,7 +11,6 @@ WORKDIR /usr/local/src
 
 # build project
 RUN yarn --production=false --network-timeout 1000000 && touch .env
-RUN yarn run build
 
 # set create logs and set owner and group
 RUN mkdir -p logs && \

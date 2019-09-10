@@ -126,10 +126,10 @@ default_permissions:
 
 
 # The name of the GitHub App. Defaults to the name specified in package.json
-# name: Jira Dev Environment
+name: Mya Jira Plugin
 
 # The homepage of your GitHub App.
-# url: https://github.com/integrations/jira
+url: https://github.com/mya-systems/mya-jira-plugin
 
 # A description of the GitHub App.
 # description: An app to do local development for the official Jira GitHub App - https://github.com/integrations/jira
