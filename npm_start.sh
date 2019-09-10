@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -x
 
 NODE_USER=node
 NODE_DEBUG_LOG_DIR=~${NODE_USER}/.npm/_logs
@@ -19,12 +19,34 @@ export DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES
 export STORAGE_SECRET=${STORAGE_SECRET}
 echo -e ${private_key} > private-key.pem
 
+
+cat <<EOF > .env
+# The ID of your GitHub App
+APP_ID=${APP_ID}
+APP_URL=${APP_URL}
+WEBHOOK_SECRET=${WEBHOOK_SECRET}
+GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+
+# Use `trace` to get verbose logging or `info` to show less
+LOG_LEVEL=${LOG_LEVEL:=debug}
+
+
+# The Postgres URL used to connect to the database and secret for encrypting data
+DATABASE_URL=${DATABASE_URL}
+STORAGE_SECRET=${STORAGE_SECRET}
+
+# Unique identifier for this instance, used in the Atlassian Connect manifest to
+# differentiate this instance from other deployments (staging, dev instances, etc).
+INSTANCE_NAME=${ENVIRONMENT}
+EOF
+
 # This should stay in foreground until it exits:
 echo "Starting Mya-Jira-Plugin v.${APP_VERSION}"
 printf "Starting Node.js server version: %s (NPM version: %s)\n" "$( node --version 2>&1 )" "$( npm --version 2>&1 )"
 
-# TODO - make sure to set postgres db url via env var
-source ./script/db_create
+# Run whenever you need to recreate the db
+./script/db_create
 npm start 2>&1
 RC=$?
 

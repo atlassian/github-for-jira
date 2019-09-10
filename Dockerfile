@@ -1,7 +1,9 @@
 FROM 861281107445.dkr.ecr.us-west-2.amazonaws.com/mya-node-base:latest
 
 ARG APP_VERSION
+ARG BUILD_TIME
 ENV APP_VERSION=${APP_VERSION} \
+  BUILD_TIME=${BUILD_TIME} \
   PORT=8000 \
   NODE_ENV=production
 

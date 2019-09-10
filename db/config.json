@@ -12,13 +12,13 @@
     "operatorsAliases": false
   },
   "production": {
-    "dialect": "postgres",
-    "use_env_variable": "DATABASE_URL",
-    "disable_sql_logging": true,
-    "operatorsAliases": false,
-    "ssl": true,
-    "dialectOptions": {
-      "ssl": true
-    }
+       "use_env_variable":"DATABASE_URL",
+       "dialect":"postgres",
+       "ssl":true,
+       "dialectOptions":{
+          "ssl":{
+             "require":true
+          }
+       }
   }
 }
