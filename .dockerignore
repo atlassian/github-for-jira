@@ -1,0 +1,9 @@
+.circleci
+.dockerignore
+.env.example
+.git
+.gitignore
+.coveragerc
+.make_common.sh
+docker-compose.*
+Dockerfile
