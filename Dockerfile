@@ -12,7 +12,7 @@ ADD . /usr/local/src
 WORKDIR /usr/local/src
 
 # build project
-RUN yarn --production=false --network-timeout 1000000 && touch .env
+RUN npm install
 
 # set create logs and set owner and group
 RUN mkdir -p logs && \
