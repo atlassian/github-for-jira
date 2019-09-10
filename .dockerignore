@@ -5,5 +5,7 @@
 .gitignore
 .coveragerc
 .make_common.sh
+*.pem
+.env
 docker-compose.*
 Dockerfile

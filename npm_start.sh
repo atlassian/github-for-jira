@@ -1,22 +1,11 @@
-#!/bin/bash -x
+#!/bin/bash
 
 NODE_USER=node
 NODE_DEBUG_LOG_DIR=~${NODE_USER}/.npm/_logs
-
-# Set some secrets
-# The ID of your GitHub App
-export APP_ID=${APP_ID}
-export APP_URL=${APP_URL}
-export WEBHOOK_SECRET=${WEBHOOK_SECRET}
-export GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-export GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-
-# Use 'trace' to get verbose logging or 'info' to show less
-export LOG_LEVEL=${LOG_LEVEL:=debug}
+export NODE_ENV=${ENVIRONMENT}
 
 # The Postgres URL used to connect to the database and secret for encrypting data
 export DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_NAME}"
-export STORAGE_SECRET=${STORAGE_SECRET}
 echo -e ${private_key} > private-key.pem
 
 
@@ -28,9 +17,9 @@ WEBHOOK_SECRET=${WEBHOOK_SECRET}
 GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
 GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
 
-# Use `trace` to get verbose logging or `info` to show less
+# Use 'trace' to get verbose logging or 'info' to show less
 LOG_LEVEL=${LOG_LEVEL:=debug}
-
+NODE_ENV=${NODE_ENV}
 
 # The Postgres URL used to connect to the database and secret for encrypting data
 DATABASE_URL=${DATABASE_URL}
@@ -46,7 +35,7 @@ echo "Starting Mya-Jira-Plugin v.${APP_VERSION}"
 printf "Starting Node.js server version: %s (NPM version: %s)\n" "$( node --version 2>&1 )" "$( npm --version 2>&1 )"
 
 # Run whenever you need to recreate the db
-./script/db_create
+./script/db_create 2>&1
 npm start 2>&1
 RC=$?
 
