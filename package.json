@@ -4,7 +4,8 @@
   "repository": "https://github.com/integrations/jira.git",
   "scripts": {
     "ci": "npm test && npm run lint",
-    "dev": "nodemon --exec \"npm start\"",
+    "dev": "nodemon --exec \"node --inspect ./lib/run.js\"",
+    "dev:worker": "nodemon --exec \"node --inspect=9230 bin/worker\"",
     "lint": "standard --fix",
     "es": "eslint",
     "start": "node ./lib/run.js",
@@ -15,22 +16,32 @@
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
     "@atlaskit/reduced-ui-pack": "^8.11.1",
+    "@sentry/integrations": "^5.5.0",
+    "@sentry/node": "^5.5.0",
     "atlassian-jwt": "^0.1.5",
     "axios": "^0.18.0",
     "body-parser": "^1.18.3",
     "bottleneck": "2.9.0",
     "bull": "^3.4.7",
+    "bunyan-sentry-stream": "^1.2.1",
     "cookie-session": "^2.0.0-beta.3",
     "csurf": "^1.9.0",
     "date-fns": "^1.29.0",
     "express": "^4.16.3",
     "express-sslify": "^1.2.0",
     "helmet": "^3.13.0",
+    "hot-shots": "^6.3.0",
     "markdown": "^0.5.0",
+<<<<<<< HEAD
     "newrelic": "^5.11.0",
+=======
+    "moment": "^2.24.0",
+    "moo": "^0.5.0",
+    "newrelic": "^4.13.1",
+>>>>>>> 794e0e2a162edbb22cdf0bd2b78c32ec027891a7
     "pg": "^7.4.3",
     "primer": "^10.6.0",
-    "probot": "^7.1.2",
+    "probot": "^7.5.2",
     "probot-config": "^0.1.0",
     "request": "^2.88.0",
     "sequelize": "^4.37.10",
@@ -39,6 +50,7 @@
   },
   "devDependencies": {
     "@types/bull": "^3.3.19",
+    "babel-eslint": "^10.0.2",
     "eslint": "^5.7.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.14.0",
@@ -66,6 +78,7 @@
     "globalTeardown": "./test/teardown"
   },
   "standard": {
+    "parser": "babel-eslint",
     "env": [
       "jest"
     ],

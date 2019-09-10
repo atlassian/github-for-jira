@@ -86,7 +86,7 @@ describe('GitHub Actions', () => {
           }
         ],
         properties: {
-          installationId: 'test-installation-id'
+          installationId: 1234
         }
       }))
     })
@@ -197,7 +197,7 @@ describe('GitHub Actions', () => {
             updateSequenceId: 12345678
           }
         ],
-        properties: {installationId: 'test-installation-id'}
+        properties: {installationId: 1234}
       }))
     })
   })
