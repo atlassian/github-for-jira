@@ -7,6 +7,7 @@ export NODE_ENV=${ENVIRONMENT}
 # The Postgres URL used to connect to the database and secret for encrypting data
 export DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_NAME}"
 echo -e ${private_key} > private-key.pem
+export LOG_LEVEL=${LOG_LEVEL:=debug}
 
 
 cat <<EOF > .env
@@ -36,7 +37,7 @@ printf "Starting Node.js server version: %s (NPM version: %s)\n" "$( node --vers
 
 # Run whenever you need to recreate the db
 ./script/db_create 2>&1
-npm start 2>&1
+npm run dev 2>&1
 RC=$?
 
 

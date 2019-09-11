@@ -19,7 +19,7 @@
     "@sentry/integrations": "^5.5.0",
     "@sentry/node": "^5.5.0",
     "atlassian-jwt": "^0.1.5",
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "body-parser": "^1.18.3",
     "bottleneck": "2.9.0",
     "bull": "^3.4.7",
@@ -32,19 +32,15 @@
     "helmet": "^3.13.0",
     "hot-shots": "^6.3.0",
     "markdown": "^0.5.0",
-<<<<<<< HEAD
-    "newrelic": "^5.11.0",
-=======
     "moment": "^2.24.0",
     "moo": "^0.5.0",
-    "newrelic": "^4.13.1",
->>>>>>> 794e0e2a162edbb22cdf0bd2b78c32ec027891a7
+    "newrelic": "^5.11.0",
     "pg": "^7.4.3",
     "primer": "^10.6.0",
     "probot": "^7.5.2",
-    "probot-config": "^0.1.0",
+    "probot-config": "^0.2.0",
     "request": "^2.88.0",
-    "sequelize": "^4.37.10",
+    "sequelize": "^4.44.3",
     "sequelize-cli": "^4.0.0",
     "sequelize-encrypted": "^1.0.0"
   },
