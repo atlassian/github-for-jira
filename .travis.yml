@@ -10,9 +10,7 @@ env:
 install:
   - npm install
 script:
-  - sequelize db:create --env test
-  - sequelize db:migrate --env test
-  - npm test
+  - script/test
 # Setup Postgres database for testing
 services:
   - postgresql

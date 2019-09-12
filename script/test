@@ -1,0 +1,6 @@
+#!/bin/bash
+
+npx sequelize db:create --env test || true
+npx sequelize db:migrate --env test
+
+npm test
