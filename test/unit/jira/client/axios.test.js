@@ -22,6 +22,20 @@ describe('Jira axios instance', () => {
           value: (value) => value > 0 && value < 20
         })
       })
+
+      it('removes URL query params from path', async () => {
+        nock(jiraHost).get('/foo/bar?baz=true').reply(200)
+
+        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret', new LogDouble())
+
+        await expect(async () => {
+          await jiraAxiosInstance.get('/foo/bar?baz=true')
+        }).toHaveSentMetrics({
+          name: 'jira-integration.jira_request',
+          type: 'h',
+          tags: { path: '/foo/bar' }
+        })
+      })
     })
 
     describe('when request fails', () => {
