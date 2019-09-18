@@ -79,7 +79,9 @@ expect.extend({
         const matchingType = actualMetric.type === expectedMetric.type
 
         let matchingValue = null
-        if (typeof expectedMetric.value === 'function') {
+        if (!expectedMetric.hasOwnProperty('value')) {
+          matchingValue = true
+        } else if (typeof expectedMetric.value === 'function') {
           matchingValue = expectedMetric.value(actualMetric.value)
         } else {
           matchingValue = actualMetric.value === expectedMetric.value
