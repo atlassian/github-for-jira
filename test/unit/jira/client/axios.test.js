@@ -19,7 +19,7 @@ describe('Jira axios instance', () => {
           name: 'jira-integration.jira_request',
           type: 'h',
           tags: { path: '/foo/bar', method: 'GET', status: '200' },
-          value: (value) => value > 0 && value < 20
+          value: (value) => value > 0 && value < 50
         })
       })
 
