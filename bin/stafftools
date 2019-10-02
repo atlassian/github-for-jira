@@ -62,9 +62,9 @@ class JiraStaffTools < Thor
     output_json(response.body)
   end
 
-  desc "jira <client_key>", "Display installation for Jira instance"
-  def jira(client_key)
-    response = client.get("/api/jira/#{CGI.escape(client_key)}")
+  desc "jira <client_key_or_jira_host>", "Display installation for Jira instance"
+  def jira(client_key_or_jira_host)
+    response = client.get("/api/jira/#{CGI.escape(client_key_or_jira_host)}")
     output_json(response.body)
   end
 
@@ -90,6 +90,19 @@ class JiraStaffTools < Thor
       end
 
     output_json(output.to_json)
+  end
+
+  desc "resync_failed", "Resume most recently failed syncs"
+  option :limit, type: :numeric, default: 10, desc: "Number of failed subscriptions to resync"
+  option :offset, type: :numeric, default: 0, desc: "Useful to skip the first n failed syncs"
+  def resync_failed
+    response = client.post(
+      "/api/resyncFailed",
+      "limit" => options[:limit],
+      "offset" => options[:offset],
+    )
+
+    output_json(response.body)
   end
 
   no_commands do
