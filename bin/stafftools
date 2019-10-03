@@ -4,6 +4,8 @@ require 'cgi'
 require 'open3'
 require 'io/console'
 require 'json'
+require 'shellwords'
+require 'uri'
 require 'yaml'
 
 gemfile do
@@ -103,6 +105,29 @@ class JiraStaffTools < Thor
     )
 
     output_json(response.body)
+  end
+
+  desc "errors <jira_host>", "Open browser to Sentry errors for Jira host"
+  def errors(jira_host)
+    params = {
+      # Sentry expects some very specific URL values, like quoted strings and JSON arrays.
+      # To accommodate, this uses `to_json` to ensure the values appear correctly.
+      aggregations: [].to_json,
+      conditions: [["jiraHost" , "=", jira_host]].to_json,
+      fields: ["id","issue.id","project.name","platform","timestamp"].to_json,
+      orderby: "-timestamp".to_json,
+      projects: [1240711].to_json,
+      range: "7d".to_json,
+      end: "null",
+      limit: 1000,
+      start: "null", 
+      utc: "null",
+    }
+
+    url = URI("https://sentry.io/organizations/github-integrations/discover")
+    url.query = URI.encode_www_form(params)
+    
+    `open #{url.to_s.shellescape}`
   end
 
   no_commands do
