@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 require('dotenv').config()
 
-const Sentry = require('@sentry/node')
+const { Sentry, initializeSentry } = require('../lib/config/sentry')
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
-  release: process.env.HEROKU_SLUG_COMMIT
-})
+initializeSentry()
 
 const statsd = require('../lib/config/statsd')
 const { Subscription } = require('../lib/models')
