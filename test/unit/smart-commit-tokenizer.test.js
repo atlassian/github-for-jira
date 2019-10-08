@@ -110,7 +110,7 @@ describe('SmartCommitTokenizer', () => {
       expect(valuesForType(tokens, 'days')).toEqual(['2'])
       expect(valuesForType(tokens, 'hours')).toEqual(['4'])
       expect(valuesForType(tokens, 'minutes')).toEqual(['30'])
-      expect(valuesForType(tokens, 'workLogComment')).toEqual(['Total work logged'])
+      expect(valuesForType(tokens, 'workLogComment')).toEqual(['Total', 'work', 'logged'])
     })
 
     it('extracts decimal times', () => {
@@ -125,7 +125,7 @@ describe('SmartCommitTokenizer', () => {
     it('only extracts comment from single line', () => {
       const tokens = tokenize('JRA-34 #time this is the comment\nthis is not')
 
-      expect(valuesForType(tokens, 'workLogComment')).toEqual(['this is the comment'])
+      expect(valuesForType(tokens, 'workLogComment')).toEqual(['this', 'is', 'the', 'comment'])
     })
   })
 
@@ -170,7 +170,7 @@ describe('SmartCommitTokenizer', () => {
       const tokens = tokenize(`WS-2 #time 1w almost done\nWS-3 #reopen`)
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['WS-2', 'WS-3'])
-      expect(valuesForType(tokens, 'workLogComment')).toEqual(['almost done'])
+      expect(valuesForType(tokens, 'workLogComment')).toEqual(['almost', 'done'])
       expect(valuesForType(tokens, 'transition')).toEqual(['reopen'])
     })
   })
@@ -186,6 +186,9 @@ describe('SmartCommitTokenizer', () => {
       tokenize(`there is an invisible unicode character here -> <-`) // eslint-disable-line no-irregular-whitespace
       tokenize(`😌 Emoji are totally 💯 fine ✨`)
       tokenize(`Rename Node#move to Node#move_within`)
+      /* eslint-disable */
+      tokenize(`JRA-123 #resolve do the thing to the code #time 3h `) // Ends with a unicode line separator
+      /* eslint-enable */
     })
   })
 })
