@@ -5,7 +5,7 @@ const worker = require('../lib/worker')
 
 worker.clean().then(() => {
   console.log('Failed and completed jobs cleaned')
-  process.exit(1)
+  process.exit(0)
 }).catch((err) => {
   console.error('Error cleaning queues:', {err})
   process.exit(1)
