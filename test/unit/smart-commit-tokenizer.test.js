@@ -187,7 +187,15 @@ describe('SmartCommitTokenizer', () => {
       tokenize(`😌 Emoji are totally 💯 fine ✨`)
       tokenize(`Rename Node#move to Node#move_within`)
       /* eslint-disable */
-      tokenize(`JRA-123 #resolve do the thing to the code #time 3h `) // Ends with a unicode line separator
+      // Linter isn't happy about unicode whitespace characters
+      // This example ends with a unicode line separator
+      tokenize(`JRA-123 #resolve do the thing to the code #time 3h `)
+      // These examples includes every type of Unicode whitespace character
+      const allUnicodeWhitespaceCharacters = "foo bar foo bar foo bar foo᠎bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo​bar foo bar foo bar foo　bar foo﻿bar"
+      tokenize(`${allUnicodeWhitespaceCharacters}`)
+      tokenize(`JRA-123 #resolve ${allUnicodeWhitespaceCharacters} #time 3h`)
+      tokenize(`JRA-123 #resolve #time ${allUnicodeWhitespaceCharacters} 3h`)
+      tokenize(`JRA-123 #resolve #time 3h ${allUnicodeWhitespaceCharacters}`)
       /* eslint-enable */
     })
   })
