@@ -32,6 +32,12 @@ jobs:
         NODE_ENV: test
       with:
         node-version: 12.x
+    - name: Cache Primes
+      id: cache-primes
+      uses: actions/cache@v1
+      with:
+        path: ./node_modules
+        key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
     - name: NPM Install
       env:
         NODE_ENV: test
