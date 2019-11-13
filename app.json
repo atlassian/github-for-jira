@@ -22,6 +22,9 @@
     "SENTRY_DSN": {
       "description": "Sentry.io configuration: https://docs.sentry.io/quickstart/#configure-the-dsn"
     },
+    "SENTRY_ENVIRONMENT": {
+      "description": "THe Sentry.io Environment to bucket these errors under."
+    },
     "DISABLE_STATS": {
       "description": "Disable the probot stats plugin for scalability",
       "value": "true"
