@@ -1,11 +1,34 @@
 {
-  "extends": "standard",
+  "extends": [
+    "airbnb-base",
+    "plugin:jsdoc/recommended"
+  ],
   "rules": {
     "consistent-return": 0,
     "camelcase": 0,
-    "strict": ["error", "never"]
+    "prefer-object-spread": 0,
+    "no-else-return": 0,
+    "arrow-parens": 0,
+    "operator-linebreak": 0,
+    "lines-between-class-members": 0,
+    "max-classes-per-file": 0,
+    "implicit-arrow-linebreak": 0,
+    "strict": ["error", "never"],
+    "no-only-tests/no-only-tests": "error",
+    "jsdoc/require-jsdoc": 0, // Don't require jsdoc, just lint it if we have it
+    "jsdoc/require-param": 0, // Don't require that all params are documented
+    "jsdoc/require-returns": 0 // Don't require that all returns are documented
   },
   "env": {
     "jest": true
-  }
+  },
+  "globals": {
+    "td": "writeable",
+    "app": "writeable",
+    "nock": "writeable"
+  },
+  "plugins": [
+    "no-only-tests",
+    "jsdoc"
+  ]
 }

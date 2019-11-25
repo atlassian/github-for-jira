@@ -1,4 +1,3 @@
-'use strict'
 
 module.exports = {
   up: async (queryInterface) => {
@@ -10,7 +9,7 @@ module.exports = {
         "Subscriptions"."updatedAt" AS updated_at,
         "Subscriptions"."repoSyncState" AS repo_sync_state
        FROM "Subscriptions";
-    `)
+    `);
 
     await queryInterface.sequelize.query(`
       CREATE VIEW analytics.Projects AS (
@@ -23,11 +22,10 @@ module.exports = {
           "createdAt" as created_at
         FROM
           "Projects"
-      )`
-    )
+      )`);
   },
 
   down: async (queryInterface) => {
-    await queryInterface.sequelize.query('DROP VIEW analytics.projects')
-  }
-}
+    await queryInterface.sequelize.query('DROP VIEW analytics.projects');
+  },
+};

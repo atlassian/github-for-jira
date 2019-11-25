@@ -1,41 +1,44 @@
-const nock = require('nock')
-const defaultBranchFixture = require('../../fixtures/api/graphql/default-branch.json')
-const createJob = require('../../setup/create-job')
+/* eslint-disable global-require */
+
+const nock = require('nock');
+const defaultBranchFixture = require('../../fixtures/api/graphql/default-branch.json');
+const createJob = require('../../setup/create-job');
 
 describe('sync/commits', () => {
-  let jiraHost
-  let jiraApi
-  let installationId
-  let emptyNodesFixture
-  let delay
+  let jiraHost;
+  let jiraApi;
+  let installationId;
+  let emptyNodesFixture;
+  let delay;
 
   beforeEach(() => {
-    const models = td.replace('../../../lib/models')
+    const models = td.replace('../../../lib/models');
     const repoSyncStatus = {
-      'installationId': 12345678,
-      'jiraHost': 'tcbyrd.atlassian.net',
-      'repos': {
+      installationId: 12345678,
+      jiraHost: 'tcbyrd.atlassian.net',
+      repos: {
         'test-repo-id': {
           repository: {
             name: 'test-repo-name',
             owner: { login: 'integrations' },
             html_url: 'test-repo-url',
-            id: 'test-repo-id'
+            id: 'test-repo-id',
           },
-          'pullStatus': 'complete',
-          'branchStatus': 'complete',
-          'commitStatus': 'pending'
-        }
-      }
-    }
-    delay = process.env.LIMITER_PER_INSTALLATION = 2000
-    emptyNodesFixture = require('../../fixtures/api/graphql/commit-empty-nodes.json')
+          pullStatus: 'complete',
+          branchStatus: 'complete',
+          commitStatus: 'pending',
+        },
+      },
+    };
+    process.env.LIMITER_PER_INSTALLATION = 2000;
+    delay = process.env.LIMITER_PER_INSTALLATION;
+    emptyNodesFixture = require('../../fixtures/api/graphql/commit-empty-nodes.json');
 
-    jiraHost = process.env.ATLASSIAN_URL
-    jiraApi = td.api('https://test-atlassian-instance.net')
+    jiraHost = process.env.ATLASSIAN_URL;
+    jiraApi = td.api('https://test-atlassian-instance.net');
 
-    installationId = 1234
-    Date.now = jest.fn(() => 12345678)
+    installationId = 1234;
+    Date.now = jest.fn(() => 12345678);
 
     td.when(models.Subscription.getSingleInstallation(jiraHost, installationId))
       .thenReturn({
@@ -44,35 +47,35 @@ describe('sync/commits', () => {
         get: () => repoSyncStatus,
         set: () => repoSyncStatus,
         save: () => Promise.resolve({}),
-        update: () => Promise.resolve({})
-      })
-  })
+        update: () => Promise.resolve({}),
+      });
+  });
 
   test('should sync to Jira when Commit Nodes have jira references', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
+    const { processInstallation } = require('../../../lib/sync/installation');
 
-    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json')
+    const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json');
 
-    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries');
 
     nock('https://api.github.com').post('/graphql', getDefaultBranch)
-      .reply(200, defaultBranchFixture)
+      .reply(200, defaultBranchFixture);
     nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
-      .reply(200, commitNodesFixture)
+      .reply(200, commitNodesFixture);
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
-      .reply(200, emptyNodesFixture)
+      .reply(200, emptyNodesFixture);
 
     const queues = {
       installation: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
-    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
       preventTransitions: true,
@@ -82,7 +85,7 @@ describe('sync/commits', () => {
             {
               author: {
                 email: 'test-author-email@example.com',
-                name: 'test-author-name'
+                name: 'test-author-name',
               },
               authorTimestamp: 'test-authored-date',
               displayId: 'test-o',
@@ -93,45 +96,45 @@ describe('sync/commits', () => {
               message: '[TES-17] test-commit-message',
               timestamp: 'test-authored-date',
               url: 'https://github.com/test-login/test-repo/commit/test-sha',
-              updateSequenceId: 12345678
-            }
+              updateSequenceId: 12345678,
+            },
           ],
           id: 'test-repo-id',
           url: 'test-repo-url',
-          updateSequenceId: 12345678
-        }
+          updateSequenceId: 12345678,
+        },
       ],
       properties: {
-        installationId: 1234
-      }
-    }))
-  })
+        installationId: 1234,
+      },
+    }));
+  });
 
   test('should send Jira all commits that have Issue Keys', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
+    const { processInstallation } = require('../../../lib/sync/installation');
 
-    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const mixedCommitNodes = require('../../fixtures/api/graphql/commit-nodes-mixed.json')
+    const mixedCommitNodes = require('../../fixtures/api/graphql/commit-nodes-mixed.json');
 
-    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries');
 
     nock('https://api.github.com').post('/graphql', getDefaultBranch)
-      .reply(200, defaultBranchFixture)
+      .reply(200, defaultBranchFixture);
     nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
-      .reply(200, mixedCommitNodes)
+      .reply(200, mixedCommitNodes);
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
-      .reply(200, emptyNodesFixture)
+      .reply(200, emptyNodesFixture);
 
     const queues = {
       installation: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
-    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
       preventTransitions: true,
@@ -141,7 +144,7 @@ describe('sync/commits', () => {
             {
               author: {
                 email: 'test-author-email@example.com',
-                name: 'test-author-name'
+                name: 'test-author-name',
               },
               authorTimestamp: 'test-authored-date',
               displayId: 'test-o',
@@ -152,13 +155,13 @@ describe('sync/commits', () => {
               message: '[TES-17] test-commit-message',
               timestamp: 'test-authored-date',
               url: 'https://github.com/test-login/test-repo/commit/test-sha',
-              updateSequenceId: 12345678
+              updateSequenceId: 12345678,
             },
             {
               author: {
                 avatar: 'test-avatar-url',
                 email: 'test-author-email@example.com',
-                name: 'test-author-name'
+                name: 'test-author-name',
               },
               authorTimestamp: 'test-authored-date',
               displayId: 'test-o',
@@ -169,13 +172,13 @@ describe('sync/commits', () => {
               message: '[TES-15] another test-commit-message',
               timestamp: 'test-authored-date',
               url: 'https://github.com/test-login/test-repo/commit/test-sha',
-              updateSequenceId: 12345678
+              updateSequenceId: 12345678,
             },
             {
               author: {
                 avatar: 'test-avatar-url',
                 email: 'test-author-email@example.com',
-                name: 'test-author-name'
+                name: 'test-author-name',
               },
               authorTimestamp: 'test-authored-date',
               displayId: 'test-o',
@@ -186,46 +189,46 @@ describe('sync/commits', () => {
               message: 'TES-14-TES-15 message with multiple keys',
               timestamp: 'test-authored-date',
               url: 'https://github.com/test-login/test-repo/commit/test-sha',
-              updateSequenceId: 12345678
-            }
+              updateSequenceId: 12345678,
+            },
           ],
           id: 'test-repo-id',
           url: 'test-repo-url',
-          updateSequenceId: 12345678
-        }
+          updateSequenceId: 12345678,
+        },
       ],
       properties: {
-        installationId: 1234
-      }
-    }))
-  })
+        installationId: 1234,
+      },
+    }));
+  });
 
   test('should default to master branch if defaultBranchRef is null', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
+    const { processInstallation } = require('../../../lib/sync/installation');
 
-    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json')
-    const defaultBranchNullFixture = require('../../fixtures/api/graphql/default-branch-null.json')
+    const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json');
+    const defaultBranchNullFixture = require('../../fixtures/api/graphql/default-branch-null.json');
 
-    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries');
 
     nock('https://api.github.com').post('/graphql', getDefaultBranch)
-      .reply(200, defaultBranchNullFixture)
+      .reply(200, defaultBranchNullFixture);
     nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
-      .reply(200, commitNodesFixture)
+      .reply(200, commitNodesFixture);
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
-      .reply(200, emptyNodesFixture)
+      .reply(200, emptyNodesFixture);
 
     const queues = {
       installation: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
-    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
       preventTransitions: true,
@@ -235,7 +238,7 @@ describe('sync/commits', () => {
             {
               author: {
                 email: 'test-author-email@example.com',
-                name: 'test-author-name'
+                name: 'test-author-name',
               },
               authorTimestamp: 'test-authored-date',
               displayId: 'test-o',
@@ -246,75 +249,75 @@ describe('sync/commits', () => {
               message: '[TES-17] test-commit-message',
               timestamp: 'test-authored-date',
               url: 'https://github.com/test-login/test-repo/commit/test-sha',
-              updateSequenceId: 12345678
-            }
+              updateSequenceId: 12345678,
+            },
           ],
           id: 'test-repo-id',
           url: 'test-repo-url',
-          updateSequenceId: 12345678
-        }
+          updateSequenceId: 12345678,
+        },
       ],
       properties: {
-        installationId: 1234
-      }
-    }))
-  })
+        installationId: 1234,
+      },
+    }));
+  });
 
   test('should not call Jira if no issue keys are present', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
+    const { processInstallation } = require('../../../lib/sync/installation');
 
-    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } })
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const commitsNoKeys = require('../../fixtures/api/graphql/commit-nodes-no-keys.json')
+    const commitsNoKeys = require('../../fixtures/api/graphql/commit-nodes-no-keys.json');
 
-    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries');
 
     nock('https://api.github.com').post('/graphql', getDefaultBranch)
-      .reply(200, defaultBranchFixture)
+      .reply(200, defaultBranchFixture);
     nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
-      .reply(200, commitsNoKeys)
+      .reply(200, commitsNoKeys);
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
-      .reply(200, emptyNodesFixture)
+      .reply(200, emptyNodesFixture);
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
-      .thenThrow(new Error('test error'))
+      .thenThrow(new Error('test error'));
 
     const queues = {
       installation: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
-    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
-  })
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+  });
 
   test('should not call Jira if no data is returned', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
+    const { processInstallation } = require('../../../lib/sync/installation');
 
-    const job = createJob({ data: { installationId, jiraHost } })
+    const job = createJob({ data: { installationId, jiraHost } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries')
+    const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries');
 
     nock('https://api.github.com').post('/graphql', getDefaultBranch)
-      .reply(200, defaultBranchFixture)
+      .reply(200, defaultBranchFixture);
     nock('https://api.github.com').post('/graphql', commitsNoLastCursor)
-      .reply(200, emptyNodesFixture)
+      .reply(200, emptyNodesFixture);
     nock('https://api.github.com').post('/graphql', commitsWithLastCursor)
-      .reply(200, emptyNodesFixture)
+      .reply(200, emptyNodesFixture);
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
-      .thenThrow(new Error('test error'))
+      .thenThrow(new Error('test error'));
 
     const queues = {
       installation: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
-    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
-  })
-})
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+  });
+});

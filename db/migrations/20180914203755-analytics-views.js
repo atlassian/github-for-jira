@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.sequelize.query('CREATE SCHEMA analytics;')
+    await queryInterface.sequelize.query('CREATE SCHEMA analytics;');
 
     await queryInterface.sequelize.query(`
       CREATE VIEW analytics.Subscriptions AS (
@@ -13,7 +13,7 @@ module.exports = {
         FROM
           "Subscriptions"
       )
-    `)
+    `);
 
     await queryInterface.sequelize.query(`
       CREATE VIEW analytics.Installations AS (
@@ -26,10 +26,10 @@ module.exports = {
         FROM
           "Installations"
       )
-    `)
+    `);
   },
 
   down: async (queryInterface) => {
-    await queryInterface.sequelize.query('DROP SCHEMA analytics CASCADE;')
-  }
-}
+    await queryInterface.sequelize.query('DROP SCHEMA analytics CASCADE;');
+  },
+};

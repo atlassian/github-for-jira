@@ -1,13 +1,12 @@
-'use strict'
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async (queryInterface) => {
     await queryInterface.sequelize.query(`
       UPDATE "Subscriptions"
       SET "jiraClientKey" = (
         SELECT "clientKey"
         FROM "Installations"
-        WHERE "Subscriptions"."jiraHost" = 
+        WHERE "Subscriptions"."jiraHost" =
           "Installations"."jiraHost"
         LIMIT 1
       )
@@ -16,10 +15,10 @@ module.exports = {
         FROM "Installations"
         WHERE "Subscriptions"."jiraHost" = "Installations"."jiraHost"
       )
-    `)
+    `);
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.sequelize.query(`
       UPDATE "Subscriptions"
       SET "jiraClientKey" = NULL
@@ -28,6 +27,6 @@ module.exports = {
         FROM "Installations"
         WHERE "Subscriptions"."jiraHost" = "Installations"."jiraHost"
       )
-    `)
-  }
-}
+    `);
+  },
+};
