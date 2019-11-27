@@ -71,7 +71,9 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupTestFrameworkScriptFile": "./test/setup",
+    "setupFilesAfterEnv": [
+      "./test/setup"
+    ],
     "globalTeardown": "./test/teardown"
   },
   "standard": {
