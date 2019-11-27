@@ -56,7 +56,7 @@
     "eslint-plugin-standard": "^4.0.0",
     "jest": "^24.9.0",
     "keygrip": "^1.0.2",
-    "nock": "^11.7.0",
+    "nock": "^9.6.1",
     "nodemon": "^1.17.2",
     "react": "^16.6.0",
     "smee-client": "^1.0.1",

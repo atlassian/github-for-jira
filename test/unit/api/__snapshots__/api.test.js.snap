@@ -105,7 +105,7 @@ exports[`API Endpoints undo should migrate an installation 2`] = `
   ],
   "results": Array [
     Object {
-      "isThrow": false,
+      "type": "return",
       "value": undefined,
     },
   ],
@@ -127,7 +127,7 @@ exports[`API Endpoints undo should undo a migration 2`] = `
   ],
   "results": Array [
     Object {
-      "isThrow": false,
+      "type": "return",
       "value": undefined,
     },
   ],
