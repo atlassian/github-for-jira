@@ -67,7 +67,7 @@
     "testdouble-nock": "^0.2.0"
   },
   "engines": {
-    "node": ">= 12.x"
+    "node": ">= 12.x < 13"
   },
   "jest": {
     "testEnvironment": "node",
