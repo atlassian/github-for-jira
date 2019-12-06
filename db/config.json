@@ -19,6 +19,9 @@
     "ssl": true,
     "dialectOptions": {
       "ssl": true
+    },
+    "pool": {
+      "max": 5
     }
   }
 }
