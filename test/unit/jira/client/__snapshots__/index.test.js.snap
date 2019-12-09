@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Test getting a jira client Instllation exists 1`] = `
+exports[`Test getting a jira client Installation exists 1`] = `
 Object {
   "baseURL": "https://base-url.atlassian.net",
   "devinfo": Object {

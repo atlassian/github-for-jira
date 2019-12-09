@@ -13,7 +13,7 @@ describe('Test getting a jira client', () => {
     await installation.enable()
   })
 
-  test('Instllation exists', async () => {
+  test('Installation exists', async () => {
     const client = await getJiraClient(BASE_URL, 1, {})
     expect(client).toMatchSnapshot()
   })
