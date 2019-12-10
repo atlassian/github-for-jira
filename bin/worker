@@ -12,6 +12,6 @@ const worker = require('../lib/worker')
 const throngWorkers = process.env.WEB_CONCURRENCY || 1
 
 throng({
-  throngWorkers,
+  workers: throngWorkers,
   lifetime: Infinity
 }, worker.start)
