@@ -8,10 +8,10 @@
     "dev:worker": "nodemon --exec \"node --inspect=9230 bin/worker\"",
     "lint": "standard --fix",
     "es": "eslint",
-    "start": "node ./lib/run.js",
+    "start": "node --no-deprecation ./lib/run.js",
     "test": "standard && jest --forceExit",
     "test:watch": "jest --watch --notify --notifyMode=change",
-    "worker": "node bin/worker"
+    "worker": "node --no-deprecation bin/worker"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
