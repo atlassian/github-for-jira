@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 require('dotenv').config()
+const throng = require('throng')
 
 if (process.env.NEWRELIC_KEY) {
   require('newrelic')
@@ -8,5 +9,9 @@ if (process.env.NEWRELIC_KEY) {
 require('../lib/config/sentry').initializeSentry()
 
 const worker = require('../lib/worker')
+const throngWorkers = process.env.WEB_CONCURRENCY || 1
 
-worker.start()
+throng({
+  throngWorkers,
+  lifetime: Infinity
+}, worker.start)
