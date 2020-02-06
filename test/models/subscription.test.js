@@ -15,29 +15,38 @@ describe(Subscription, () => {
     return sub.reload()
   }
 
+  beforeEach(async () => {
+    this.sub1 = await createSubscription()
+    this.sub2 = await createSubscription()
+    this.sub3 = await createSubscription()
+    this.sub4 = await createSubscription()
+    this.sub5 = await createSubscription()
+    this.sub6 = await createSubscription()
+    await setUpdatedAt(this.sub2, moment().subtract(10, 'd'))
+    await setUpdatedAt(this.sub3, moment().subtract(20, 'd'))
+
+    await setUpdatedAt(this.sub4, moment().subtract(10, 'd'))
+    await this.sub4.update({ syncStatus: 'COMPLETE' }, { silent: true })
+
+    await setUpdatedAt(this.sub5, moment().subtract(10, 'd'))
+    await this.sub5.update({ syncStatus: 'PENDING' }, { silent: true })
+
+    await setUpdatedAt(this.sub6, moment().subtract(15, 'd'))
+    await this.sub6.update({ syncStatus: null }, { silent: true })
+  })
+
   it('retrieves aged sync count', async () => {
-    await createSubscription()
-    const sub2 = await createSubscription()
-    const sub3 = await createSubscription()
-    const sub4 = await createSubscription()
-    const sub5 = await createSubscription()
-    const sub6 = await createSubscription()
-    await setUpdatedAt(sub2, moment().subtract(10, 'd'))
-    await setUpdatedAt(sub3, moment().subtract(20, 'd'))
-
-    await setUpdatedAt(sub4, moment().subtract(10, 'd'))
-    await sub4.update({ syncStatus: 'COMPLETE' }, { silent: true })
-
-    await setUpdatedAt(sub5, moment().subtract(10, 'd'))
-    await sub5.update({ syncStatus: 'PENDING' }, { silent: true })
-
-    await setUpdatedAt(sub6, moment().subtract(10, 'd'))
-    await sub6.update({ syncStatus: null }, { silent: true })
-
-    const agedSubscriptions = await Subscription.agedSyncCounts(7)
+    const agedSubscriptions = await Subscription.agedSyncCounts('7 days')
     expect(agedSubscriptions.length).toBe(3)
     expect(agedSubscriptions.find((h) => h.syncStatus === 'ACTIVE')).toMatchObject({ count: '2', syncStatus: 'ACTIVE' })
     expect(agedSubscriptions.find((h) => h.syncStatus === 'PENDING')).toMatchObject({ count: '1', syncStatus: 'PENDING' })
     expect(agedSubscriptions.find((h) => h.syncStatus === null)).toMatchObject({ count: '1', syncStatus: null })
+  })
+
+  it('retreives aged counts within a time range', async () => {
+    const agedSubscriptions = await Subscription.agedSyncCounts('7 days', '11 days')
+    expect(agedSubscriptions.length).toBe(2)
+    expect(agedSubscriptions.find((h) => h.syncStatus === 'ACTIVE')).toMatchObject({ count: '1', syncStatus: 'ACTIVE' })
+    expect(agedSubscriptions.find((h) => h.syncStatus === 'PENDING')).toMatchObject({ count: '1', syncStatus: 'PENDING' })
   })
 })
