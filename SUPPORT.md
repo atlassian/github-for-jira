@@ -45,7 +45,7 @@ Because everyone's repository histories are different, it's difficult to determi
 
 1. Open the GitHub Apps settings in GitHub.
 2. Click **Configure** in Jira.
-3. In Repository access, select only the repositories you with to sync to Jira.
+3. In Repository access, select only the repositories you wish to sync to Jira.
 4. Click **Save**
 5. Open the integration settings: **Jira Settings** -> **Add-ons** -> **Manage Add-ons** -> **GitHub** -> **Get started**
 6. Under **Retry**, click the dropdown and select "Full", then click **Submit**
