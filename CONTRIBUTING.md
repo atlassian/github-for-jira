@@ -93,7 +93,7 @@ For production you should just use `npm run start`.
 
 1. [Fork][fork] and clone the repository
 1. Configure and install the dependencies: `npm install`
-1. Make sure the tests pass on your machine: `npm test`, note: these tests also apply the linter, so no need to lint seperately
+1. Make sure the tests pass on your machine: `npm test`, note: these tests also apply the linter, so no need to lint separately
 1. Create a new branch: `git checkout -b my-branch-name`
 1. Make your change, add tests, and make sure the tests still pass
 1. Push to your fork and [submit a pull request][pr]
