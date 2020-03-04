@@ -8,7 +8,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:11
+        image: postgres:10
         env:
           # The username of the actions runner that postgres defaults to
           POSTGRES_USER: runner
