@@ -9,11 +9,15 @@ exports.config = {
   /**
    * Array of application names.
    */
-  app_name: ['Jira Integration'],
+  app_name: [process.env.NEWRELIC_APP_NAME],
   /**
    * Your New Relic license key.
    */
   license_key: process.env.NEWRELIC_KEY,
+
+  // If the key exists, enable, otherwise disable
+  agent_enabled: !!process.env.NEWRELIC_KEY,
+
   logging: {
     /**
      * Level at which to log. 'trace' is most useful to New Relic when diagnosing
