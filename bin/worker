@@ -2,10 +2,7 @@
 require('dotenv').config()
 const throng = require('throng')
 
-if (process.env.NEWRELIC_KEY) {
-  require('newrelic')
-}
-
+require('newrelic')
 require('../lib/config/sentry').initializeSentry()
 
 const worker = require('../lib/worker')
