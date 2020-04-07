@@ -1,7 +1,7 @@
 const webhookTimeout = require('../../lib/middleware/webhook-timeout')
 
 describe('Webhook Timeout', () => {
-  it('sets timedout context with seconds', async () => {
+  it('sets timedout context with milliseconds', async () => {
     const context = {}
     await webhookTimeout(async () => { await sleep(3) }, 1)(context)
     expect(context.timedout).toBeGreaterThan(0)
