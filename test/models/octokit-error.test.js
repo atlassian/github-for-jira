@@ -61,6 +61,19 @@ describe(OctokitError, () => {
     })
   })
 
+  it('adds original exception', () => {
+    const requestOptions = {}
+    const error = buildHttpError({
+      code: 403,
+      message: 'Server error',
+      headers: { 'x-github-request-id': 'E553:6597:B5C6C1:1623C44:5D7192D1' }
+    })
+
+    const octokitError = new OctokitError(error, requestOptions)
+
+    expect(octokitError.sentryScope.extra.originalException).toEqual(error)
+  })
+
   it('sets the message', () => {
     const requestOptions = {
       method: 'GET',
