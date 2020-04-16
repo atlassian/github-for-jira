@@ -3,14 +3,14 @@ const createJob = ({ data, opts }) => {
   const defaultOpts = {
     attempts: 3,
     removeOnFail: true,
-    removeOnComplete: true
-  }
+    removeOnComplete: true,
+  };
 
   return {
-    data: data,
+    data,
     opts: Object.assign(defaultOpts, opts || {}),
-    sentry: { setUser: () => { } }
-  }
-}
+    sentry: { setUser: () => { } },
+  };
+};
 
-module.exports = createJob
+module.exports = createJob;

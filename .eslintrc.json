@@ -1,14 +1,66 @@
 {
-  "extends": "standard",
+  "extends": [
+    "airbnb-base",
+    "plugin:jsdoc/recommended"
+  ],
   "rules": {
     "consistent-return": 0,
     "camelcase": 0,
-    "strict": ["error", "never"]
+    "prefer-object-spread": 0,
+    "no-else-return": 0,
+    "arrow-parens": 0,
+    "operator-linebreak": 0,
+    "lines-between-class-members": 0,
+    "max-classes-per-file": 0,
+    "implicit-arrow-linebreak": 0,
+    "strict": ["error", "never"],
+    "no-only-tests/no-only-tests": "error",
+    "jsdoc/require-jsdoc": 0, // Don't require jsdoc, just lint it if we have it
+    "jsdoc/require-param": 0, // Don't require that all params are documented
+    "jsdoc/require-returns": 0, // Don't require that all returns are documented
+
+    // Jira-specific options:
+    // we would like to update the codebase to remove these overrides
+    "array-callback-return": 0,
+    "block-scoped-var": 0,
+    "class-methods-use-this": 0,
+    "func-names": 0,
+    "global-require": 0,
+    "import/no-extraneous-dependencies": 0,
+    "import/order": 0,
+    "jsdoc/require-param-description": 0,
+    "jsdoc/require-param-type": 0,
+    "jsdoc/require-returns-description": 0,
+    "jsdoc/require-returns-type": 0,
+    "max-len": 0,
+    "no-await-in-loop": 0,
+    "no-console": 0,
+    "no-continue": 0,
+    "no-lonely-if": 0,
+    "no-multi-assign": 0,
+    "no-nested-ternary": 0,
+    "no-param-reassign": 0,
+    "no-prototype-builtins": 0,
+    "no-restricted-syntax": 0,
+    "no-shadow": 0,
+    "no-undef": 0,
+    "no-underscore-dangle": 0,
+    "no-unused-vars": 0,
+    "no-use-before-define": 0,
+    "no-var": 0,
+    "prefer-const": 0,
+    "prefer-destructuring": 0,
+    "radix": 0,
+    "vars-on-top": 0
   },
   "env": {
     "jest": true
   },
   "globals": {
     "td": "writeable"
-  }
+  },
+  "plugins": [
+    "no-only-tests",
+    "jsdoc"
+  ]
 }
