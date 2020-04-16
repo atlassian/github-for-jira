@@ -1,37 +1,37 @@
-const nock = require('nock')
-const createJob = require('../../setup/create-job')
+const nock = require('nock');
+const createJob = require('../../setup/create-job');
 
 describe('sync/pull-request', () => {
-  let jiraHost
-  let jiraApi
-  let installationId
+  let jiraHost;
+  let jiraApi;
+  let installationId;
 
   beforeEach(() => {
-    jest.setTimeout(10000)
-    const models = td.replace('../../../lib/models')
+    jest.setTimeout(10000);
+    const models = td.replace('../../../lib/models');
     const repoSyncStatus = {
-      'installationId': 12345678,
-      'jiraHost': 'tcbyrd.atlassian.net',
-      'repos': {
+      installationId: 12345678,
+      jiraHost: 'tcbyrd.atlassian.net',
+      repos: {
         'test-repo-id': {
           repository: {
             name: 'test-repo-name',
             owner: { login: 'integrations' },
             html_url: 'test-repo-url',
-            id: 'test-repo-id'
+            id: 'test-repo-id',
           },
-          'pullStatus': 'pending',
-          'branchStatus': 'complete',
-          'commitStatus': 'complete'
-        }
-      }
-    }
+          pullStatus: 'pending',
+          branchStatus: 'complete',
+          commitStatus: 'complete',
+        },
+      },
+    };
 
-    jiraHost = process.env.ATLASSIAN_URL
-    jiraApi = td.api('https://test-atlassian-instance.net')
+    jiraHost = process.env.ATLASSIAN_URL;
+    jiraApi = td.api('https://test-atlassian-instance.net');
 
-    installationId = 1234
-    Date.now = jest.fn(() => 12345678)
+    installationId = 1234;
+    Date.now = jest.fn(() => 12345678);
 
     td.when(models.Subscription.getSingleInstallation(jiraHost, installationId))
       .thenReturn({
@@ -40,34 +40,34 @@ describe('sync/pull-request', () => {
         get: () => repoSyncStatus,
         set: () => repoSyncStatus,
         save: () => Promise.resolve({}),
-        update: () => Promise.resolve({})
-      })
-  })
+        update: () => Promise.resolve({}),
+      });
+  });
 
   test('should sync to Jira when Pull Request Nodes have jira references', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
+    const { processInstallation } = require('../../../lib/sync/installation');
 
-    const job = createJob({ data: { installationId, jiraHost } })
+    const job = createJob({ data: { installationId, jiraHost } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries')
-    const pullWithKeyInTitle = require('../../fixtures/api/graphql/pull-request-nodes.json')
+    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries');
+    const pullWithKeyInTitle = require('../../fixtures/api/graphql/pull-request-nodes.json');
 
     nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
-      .reply(200, pullWithKeyInTitle)
+      .reply(200, pullWithKeyInTitle);
     nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
-      .reply(200, pullWithKeyInTitle)
+      .reply(200, pullWithKeyInTitle);
 
     const queues = {
       installation: {
-        add: jest.fn()
+        add: jest.fn(),
       },
       pullRequests: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
       preventTransitions: true,
@@ -79,7 +79,7 @@ describe('sync/pull-request', () => {
               author: {
                 avatar: 'https://avatars0.githubusercontent.com/u/13207348?v=4',
                 name: 'tcbyrd',
-                url: 'https://github.com/tcbyrd'
+                url: 'https://github.com/tcbyrd',
               },
               commentCount: 0,
               destinationBranch: 'test-repo-url/tree/master',
@@ -93,68 +93,68 @@ describe('sync/pull-request', () => {
               timestamp: '2018-08-23T21:38:05Z',
               title: '[TES-15] Evernote test',
               url: 'https://github.com/tcbyrd/testrepo/pull/96',
-              updateSequenceId: 12345678
-            }
+              updateSequenceId: 12345678,
+            },
           ],
           url: 'test-repo-url',
-          updateSequenceId: 12345678
-        }
+          updateSequenceId: 12345678,
+        },
       ],
       properties: {
-        installationId: 1234
-      }
-    }))
-  })
+        installationId: 1234,
+      },
+    }));
+  });
 
   test('should not sync if nodes are empty', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
+    const { processInstallation } = require('../../../lib/sync/installation');
 
-    const job = createJob({ data: { installationId, jiraHost } })
+    const job = createJob({ data: { installationId, jiraHost } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries')
-    const fixture = require('../../fixtures/api/graphql/pull-request-empty-nodes.json')
+    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries');
+    const fixture = require('../../fixtures/api/graphql/pull-request-empty-nodes.json');
 
     nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
-      .reply(200, fixture)
+      .reply(200, fixture);
     nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
-      .reply(200, fixture)
+      .reply(200, fixture);
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
-      .thenThrow(new Error('test error'))
+      .thenThrow(new Error('test error'));
 
     const queues = {
       installation: {
-        add: jest.fn()
+        add: jest.fn(),
       },
       pullRequests: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
-    expect(queues.pullRequests.add).not.toHaveBeenCalled()
-  })
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
+    expect(queues.pullRequests.add).not.toHaveBeenCalled();
+  });
 
   test('should not sync if nodes do not contain issue keys', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
-    process.env.LIMITER_PER_INSTALLATION = 2000
-    const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } })
+    const { processInstallation } = require('../../../lib/sync/installation');
+    process.env.LIMITER_PER_INSTALLATION = 2000;
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const fixture = require('../../fixtures/api/graphql/pull-request-no-keys.json')
-    nock('https://api.github.com').post('/graphql').reply(200, fixture)
+    const fixture = require('../../fixtures/api/graphql/pull-request-no-keys.json');
+    nock('https://api.github.com').post('/graphql').reply(200, fixture);
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
-      .thenThrow(new Error('test error'))
+      .thenThrow(new Error('test error'));
 
     const queues = {
       installation: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
-    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
-  })
-})
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+  });
+});
