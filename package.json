@@ -6,7 +6,7 @@
     "ci": "npm test && npm run lint",
     "dev": "nodemon --exec \"node --inspect ./lib/run.js\"",
     "dev:worker": "nodemon --exec \"node --inspect=9230 bin/worker\"",
-    "lint": "eslint --ext .js,.jsx,.ts,.tsx lib test",
+    "lint": "eslint lib test",
     "start": "node --no-deprecation ./lib/run.js",
     "test": "jest --forceExit",
     "posttest": "npm run lint",
