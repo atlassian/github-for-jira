@@ -1,4 +1,4 @@
-const transformPullRequest = require('../../../../lib/sync/transforms/pull-request')
+const transformPullRequest = require('../../../../lib/sync/transforms/pull-request');
 
 describe('pull_request transform', () => {
   it('should send the ghost user to Jira when GitHub user has been deleted', () => {
@@ -7,36 +7,36 @@ describe('pull_request transform', () => {
         author: null, // GraphQL returns `null` when author of PR has been deleted from GitHub
         databaseId: 1234568,
         comments: {
-          totalCount: 1
+          totalCount: 1,
         },
         repository: {
-          url: 'https://github.com/test-owner/test-repo'
+          url: 'https://github.com/test-owner/test-repo',
         },
         baseRef: {
-          name: 'master'
+          name: 'master',
         },
         headRef: {
-          name: 'test-branch'
+          name: 'test-branch',
         },
         number: 123,
         state: 'MERGED',
         title: 'TES-123 Test Pull Request title',
         body: '',
         updatedAt: '2018-04-18T15:42:13Z',
-        url: 'https://github.com/test-owner/test-repo/pull/123'
+        url: 'https://github.com/test-owner/test-repo/pull/123',
       },
       repository: {
         id: 1234568,
         name: 'test-repo',
         full_name: 'test-owner/test-repo',
         owner: { login: 'test-login' },
-        html_url: 'https://github.com/test-owner/test-repo'
-      }
-    }
+        html_url: 'https://github.com/test-owner/test-repo',
+      },
+    };
 
-    Date.now = jest.fn(() => 12345678)
+    Date.now = jest.fn(() => 12345678);
 
-    const { data } = transformPullRequest(payload, payload.pull_request.author)
+    const { data } = transformPullRequest(payload, payload.pull_request.author);
     expect(data).toMatchObject({
       id: 1234568,
       name: 'test-owner/test-repo',
@@ -47,7 +47,7 @@ describe('pull_request transform', () => {
           author: {
             avatar: 'https://github.com/ghost.png',
             name: 'Deleted User',
-            url: 'https://github.com/ghost'
+            url: 'https://github.com/ghost',
           },
           commentCount: 1,
           destinationBranch: 'https://github.com/test-owner/test-repo/tree/master',
@@ -61,13 +61,13 @@ describe('pull_request transform', () => {
           timestamp: '2018-04-18T15:42:13Z',
           title: 'TES-123 Test Pull Request title',
           url: 'https://github.com/test-owner/test-repo/pull/123',
-          updateSequenceId: 12345678
-        }
+          updateSequenceId: 12345678,
+        },
       ],
       url: 'https://github.com/test-owner/test-repo',
-      updateSequenceId: 12345678
-    })
-  })
+      updateSequenceId: 12345678,
+    });
+  });
 
   it('should return no data if there are no issue keys', () => {
     const payload = {
@@ -75,36 +75,36 @@ describe('pull_request transform', () => {
         author: null,
         databaseId: 1234568,
         comments: {
-          totalCount: 1
+          totalCount: 1,
         },
         repository: {
-          url: 'https://github.com/test-owner/test-repo'
+          url: 'https://github.com/test-owner/test-repo',
         },
         baseRef: {
-          name: 'master'
+          name: 'master',
         },
         headRef: {
-          name: 'test-branch'
+          name: 'test-branch',
         },
         number: 123,
         state: 'MERGED',
         title: 'Test Pull Request title',
         body: '',
         updatedAt: '2018-04-18T15:42:13Z',
-        url: 'https://github.com/test-owner/test-repo/pull/123'
+        url: 'https://github.com/test-owner/test-repo/pull/123',
       },
       repository: {
         id: 1234568,
         name: 'test-repo',
         full_name: 'test-owner/test-repo',
         owner: { login: 'test-login' },
-        html_url: 'https://github.com/test-owner/test-repo'
-      }
-    }
+        html_url: 'https://github.com/test-owner/test-repo',
+      },
+    };
 
-    Date.now = jest.fn(() => 12345678)
+    Date.now = jest.fn(() => 12345678);
 
-    const { data } = transformPullRequest(payload, payload.pull_request.author)
-    expect(data).toBeUndefined()
-  })
-})
+    const { data } = transformPullRequest(payload, payload.pull_request.author);
+    expect(data).toBeUndefined();
+  });
+});
