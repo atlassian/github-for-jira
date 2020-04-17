@@ -8,28 +8,28 @@
  * ])
  */
 class LogDouble {
-  constructor () {
-    this.debugValues = []
-    this.infoValues = []
-    this.warnValues = []
-    this.errorValues = []
+  constructor() {
+    this.debugValues = [];
+    this.infoValues = [];
+    this.warnValues = [];
+    this.errorValues = [];
   }
 
-  debug (metadata, message) {
-    this.debugValues.push({ metadata, message })
+  debug(metadata, message) {
+    this.debugValues.push({ metadata, message });
   }
 
-  info (metadata, message) {
-    this.infoValues.push({ metadata, message })
+  info(metadata, message) {
+    this.infoValues.push({ metadata, message });
   }
 
-  warn (metadata, message) {
-    this.warnValues.push({ metadata, message })
+  warn(metadata, message) {
+    this.warnValues.push({ metadata, message });
   }
 
-  error (metadata, message) {
-    this.errorValues.push({ metadata, message })
+  error(metadata, message) {
+    this.errorValues.push({ metadata, message });
   }
 }
 
-module.exports = LogDouble
+module.exports = LogDouble;
