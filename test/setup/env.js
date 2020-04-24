@@ -12,6 +12,10 @@ const defaults = Object.assign({
   // Generate a secure, random one with `openssl rand -hex 32` in your .env file
   STORAGE_SECRET: '8cad66340bc92edbae2ae3a792d351f48c61d1d8efe7b2d9408b0025c1f7f845',
   SETUP: 'yes', // indicates that the setup did run
+
+  // use a different database than development
+  // that way tests don't enqueue jobs that development tries to run
+  REDIS_URL: 'redis://127.0.0.1:6379/2',
 }, process.env);
 
 Object.assign(process.env, defaults);
