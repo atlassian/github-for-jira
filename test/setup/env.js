@@ -16,6 +16,7 @@ const defaults = Object.assign({
   // use a different database than development
   // that way tests don't enqueue jobs that development tries to run
   REDIS_URL: 'redis://127.0.0.1:6379/2',
+  NO_BACKGROUND_WEBHOOKS: 'true',
 }, process.env);
 
 Object.assign(process.env, defaults);
