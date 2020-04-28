@@ -1,7 +1,7 @@
 const { Application } = require('probot');
 const { findPrivateKey } = require('probot/lib/private-key');
 const cacheManager = require('cache-manager');
-const { createApp: createGitHubApp } = require('probot/lib/github-app');
+const { App } = require('@octokit/app');
 
 beforeEach(() => {
   const models = td.replace('../../lib/models', {
@@ -46,9 +46,9 @@ beforeEach(() => {
   const configureRobot = require('../../lib/configure-robot');
 
   global.app = configureRobot(new Application({
-    app: createGitHubApp({
+    app: new App({
       id: 12257,
-      cert: findPrivateKey(),
+      privateKey: findPrivateKey(),
     }),
     cache: cacheManager.caching({
       store: 'memory',

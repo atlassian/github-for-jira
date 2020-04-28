@@ -1,5 +1,5 @@
 const { logger } = require('probot/lib/logger');
-const Octokit = require('@octokit/rest');
+const { Octokit } = require('@octokit/rest');
 
 const { Installation, Subscription } = require('../../../lib/models');
 const middleware = require('../../../lib/github/middleware');
