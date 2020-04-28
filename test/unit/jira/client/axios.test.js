@@ -24,7 +24,7 @@ describe('Jira axios instance', () => {
             status: '200',
             env: 'test',
           },
-          value: (value) => value > 0 && value < 50,
+          value: (value) => value > 0 && value < 100,
         });
       });
 
