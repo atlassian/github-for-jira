@@ -4,7 +4,7 @@ describe(OctokitError, () => {
   const buildHttpError = ({ message, code, headers }) => {
     const error = new Error(message);
 
-    error.code = code || 400;
+    error.status = code || 400;
     error.headers = headers || {};
 
     return error;
