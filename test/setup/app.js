@@ -54,6 +54,9 @@ beforeEach(() => {
       store: 'memory',
       ttl: 60 * 60, // 1 hour
     }),
+    throttleOptions: {
+      enabled: false,
+    },
   }));
 });
 

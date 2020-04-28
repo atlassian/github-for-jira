@@ -26,7 +26,7 @@ describe(enhanceOctokit, () => {
         }).toHaveSentMetrics({
           name: 'jira-integration.github-request',
           type: 'h',
-          value: (value) => value > 0 && value < 50, // Value changes depending on how long nock takes
+          value: (value) => value > 0 && value < 100, // Value changes depending on how long nock takes
           tags: { path: '/events', method: 'GET', status: '200' },
         });
       });
