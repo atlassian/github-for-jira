@@ -51,27 +51,8 @@ Object {
 
 exports[`API Authentication should return 401 if the token is invalid 1`] = `
 Object {
-  "HttpError": Object {
-    "documentation_url": "https://developer.github.com/v4",
-    "message": "Bad credentials",
-  },
-  "headers": Object {
-    "content-type": "application/json",
-  },
-  "name": "HttpError",
-  "request": Object {
-    "body": "{\\"query\\":\\"{\\\\n  viewer {\\\\n    login\\\\n    isEmployee\\\\n    organization(login: \\\\\\"github\\\\\\") {\\\\n      repository(name: \\\\\\"ecosystem-primitives\\\\\\") {\\\\n        viewerPermission\\\\n      }\\\\n    }\\\\n  }\\\\n}\\\\n\\"}",
-    "headers": Object {
-      "accept": "application/json",
-      "authorization": "token [REDACTED]",
-      "content-type": "application/json",
-      "user-agent": "octokit.js/16.43.1 Node.js/12.16.2 (macOS Catalina; x64)",
-    },
-    "method": "POST",
-    "request": Object {},
-    "url": "https://api.github.com/graphql",
-  },
-  "status": 401,
+  "documentation_url": "https://developer.github.com/v4",
+  "message": "Bad credentials",
 }
 `;
 
