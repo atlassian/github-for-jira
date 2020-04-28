@@ -6,3 +6,6 @@ coverage
 .vscodelog/*
 .DS_Store
 log/*
+.envrc
+.tool-versions
+newrelic_agent.log
