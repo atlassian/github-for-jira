@@ -5,7 +5,7 @@ describe('Webhook Timeout', () => {
     const context = {};
     await webhookTimeout(async () => { await sleep(3); }, 1)(context);
     expect(context.timedout).toBeGreaterThan(0);
-    expect(context.timedout).toBeLessThan(15);
+    expect(context.timedout).toBeLessThan(100);
   });
 
   it('clears timeout if successful', async () => {
