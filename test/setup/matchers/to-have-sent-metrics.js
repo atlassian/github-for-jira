@@ -45,7 +45,7 @@ it('checks tags too', async () => {
 })
 
 */
-const diff = require('jest-diff');
+const diff = require('jest-diff').default;
 const statsd = require('../../../lib/config/statsd');
 
 const parseStatsdMessage = (stastsdMessage) => {

@@ -18,8 +18,13 @@ describe('Jira axios instance', () => {
         }).toHaveSentMetrics({
           name: 'jira-integration.jira_request',
           type: 'h',
-          tags: { path: '/foo/bar', method: 'GET', status: '200' },
-          value: (value) => value > 0 && value < 50,
+          tags: {
+            path: '/foo/bar',
+            method: 'GET',
+            status: '200',
+            env: 'test',
+          },
+          value: (value) => value > 0 && value < 100,
         });
       });
 
@@ -53,8 +58,13 @@ describe('Jira axios instance', () => {
         }).toHaveSentMetrics({
           name: 'jira-integration.jira_request',
           type: 'h',
-          tags: { path: '/foo/bar', method: 'GET', status: '500' },
-          value: (value) => value > 0 && value < 50,
+          tags: {
+            path: '/foo/bar',
+            method: 'GET',
+            status: '500',
+            env: 'test',
+          },
+          value: (value) => value > 0 && value < 100,
         });
       });
     });

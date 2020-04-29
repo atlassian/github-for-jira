@@ -9,3 +9,4 @@ log/*
 .envrc
 .tool-versions
 newrelic_agent.log
+.vscode
