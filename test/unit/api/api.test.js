@@ -43,15 +43,19 @@ const createApp = (locals) => {
 
 describe('API', () => {
   describe('Authentication', () => {
-    const app = createApp();
+    let app;
 
-    it('should return 404 if no token is provided', () => supertest(app)
-      .get('/')
-      .set('Authorization', 'Bearer xxx')
-      .expect(404)
-      .then(response => {
-        expect(response.body).toMatchSnapshot();
-      }));
+    beforeAll(() => {
+      app = createApp();
+    });
+
+    it('should return 404 if no token is provided', () =>
+      supertest(app)
+        .get('/api')
+        .expect(404)
+        .then(response => {
+          expect(response.body).toMatchSnapshot();
+        }));
 
     it('should return 200 if a valid token is provided', () => {
       nock('https://api.github.com').post('/graphql').reply(200, successfulAuthResponseWrite);
@@ -153,14 +157,6 @@ describe('API', () => {
           expect(response.body.HttpError).toMatchSnapshot();
         });
     });
-
-    it('should return 500 if an error happens', () => supertest(app)
-      .get('/api')
-      .set('Authorization', 'xxx') // malformed header
-      .expect(500)
-      .then(response => {
-        expect(response.body).toMatchSnapshot();
-      }));
   });
 
   describe('Endpoints', () => {

@@ -47,8 +47,8 @@ describe('test installation model', () => {
 
   beforeEach(async () => {
     // Clean up the database
-    Installation.truncate({ cascade: true, restartIdentity: true });
-    Subscription.truncate({ cascade: true, restartIdentity: true });
+    await Installation.truncate({ cascade: true, restartIdentity: true });
+    await Subscription.truncate({ cascade: true, restartIdentity: true });
 
     const installation = await Installation.install({
       host: existingInstallPayload.baseUrl,
