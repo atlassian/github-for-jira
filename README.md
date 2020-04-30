@@ -109,7 +109,12 @@ Existing users of Jira's built-in DVCS connector that meet the [requirements](#r
 Take a look through the [troubleshooting steps in our support guide](SUPPORT.md).
 
 ## Contributing
-Want to help improve the integration between GitHub and Jira? Check out the [contributing docs](CONTRIBUTING.md) to get involved.
+
+We are very grateful for help in the Open Source community with maintaining the Jira Integration. For the best way to have your contribution included, we ask that you follow this process:
+
+Please start by creating an issue/discussion about the change you are wanting to make. Often we need to deliberate whether new features are appropriate for us to maintain long term. Sometimes those dicussions need to include internal Product Managers. It is never a great feeling to start with a fully fleshed pull request, only to find it closed unmerged. Starting with a discussion helps avoid wasted effort.
+
+For more information on setting up the integration between GitHub and Jira, check out the [contributing docs](CONTRIBUTING.md).
 
 ## License
 The project is available as open source under the terms of the [MIT License](LICENSE).

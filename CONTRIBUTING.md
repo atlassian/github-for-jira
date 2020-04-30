@@ -17,6 +17,10 @@ Contributions to this product are [released][releases] to the public under the [
 
 Please note that this project is released with a [Contributor Code of Conduct][code-of-conduct]. By participating in this project you agree to abide by its terms.
 
+## Discussion
+
+All changes need to start with a discussion. To make sure we all understand the the impact of a change, and the long term maintenance for it. Please start an issue/discussion first before diving too far into a pull request.
+
 ## Getting Started
 This app is written in [ES6 JavaScript](https://nodejs.org/en/docs/es6/) and runs on [Node.js](https://nodejs.org/). After cloning the repository, install the dependencies by running:
 
