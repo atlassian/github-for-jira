@@ -32,7 +32,7 @@ Object {
     login
     isEmployee
     organization(login: \\"github\\") {
-      repository(name: \\"ecosystem-primitives\\") {
+      repository(name: \\"ce-extensibility\\") {
         viewerPermission
       }
     }
