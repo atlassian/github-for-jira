@@ -71,8 +71,8 @@
   "jest": {
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "./test/setup"
+      "<rootDir>/test/setup"
     ],
-    "globalTeardown": "./test/teardown"
+    "globalTeardown": "<rootDir>/test/teardown"
   }
 }
