@@ -58,7 +58,12 @@ describe(enhanceOctokit, () => {
           name: 'jira-integration.github-request',
           type: 'h',
           value: (value) => value > 0 && value < 1000, // Value changes depending on how long nock takes
-          tags: { path: '/events', method: 'GET', status: '500' },
+          tags: {
+            path: '/events',
+            method: 'GET',
+            status: '500',
+            env: 'test',
+          },
         });
       });
 
