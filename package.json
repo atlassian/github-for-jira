@@ -39,7 +39,7 @@
     "primer": "^10.6.0",
     "probot": "^9.11.3",
     "request": "^2.88.0",
-    "sequelize": "^5.15.1",
+    "sequelize": "^5.21.7",
     "sequelize-cli": "^5.5.1",
     "sequelize-encrypted": "^1.0.0",
     "throng": "^4.0.0"
