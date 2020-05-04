@@ -131,3 +131,5 @@ exports[`API Endpoints undo should undo a migration 2`] = `
   ],
 }
 `;
+
+exports[`API Endpoints verify should return 'Installation already enbled' 1`] = `"Installation already enabled"`;
