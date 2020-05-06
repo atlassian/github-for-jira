@@ -38,7 +38,7 @@ describe(AxiosErrorDecorator, () => {
         method: undefined,
         path: '/foo/bar',
         host: 'www.example.com',
-        headers: { accept: 'application/json, text/plain, */*', host: 'www.example.com', 'user-agent': 'axios/0.18.1' },
+        headers: { accept: 'application/json, text/plain, */*', host: 'www.example.com', 'user-agent': 'axios/0.19.2' },
       });
     });
 

@@ -1,4 +1,4 @@
-const { logger } = require('probot');
+const { logger } = require('probot/lib/logger');
 const { GitHubAPI } = require('../../../lib/config/github-api');
 
 const { Installation, Subscription } = require('../../../lib/models');

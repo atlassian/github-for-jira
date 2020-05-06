@@ -1,5 +1,5 @@
 const nock = require('nock');
-const { logger } = require('probot');
+const { logger } = require('probot/lib/logger');
 
 const JiraClient = require('../../lib/models/jira-client');
 
