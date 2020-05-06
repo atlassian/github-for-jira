@@ -19,7 +19,7 @@
     "@sentry/integrations": "^5.15.5",
     "@sentry/node": "^5.15.5",
     "atlassian-jwt": "^0.1.5",
-    "axios": "^0.18.1",
+    "axios": "^0.19.2",
     "body-parser": "^1.18.3",
     "bull": "^3.12.1",
     "bunyan-sentry-stream": "^1.2.1",
