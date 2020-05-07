@@ -155,7 +155,7 @@ describe('API', () => {
         .set('Authorization', 'Bearer bad token')
         .expect(401)
         .then(response => {
-          expect(response.body.HttpError).toMatchSnapshot();
+          expect(response.body).toMatchSnapshot();
         });
     });
   });
@@ -188,11 +188,12 @@ describe('API', () => {
     });
 
     describe('installation', () => {
-      it('should return 404 if no installation is found', () => {
-        td.when(models.Subscription.getAllForInstallation('unkown-installation-id')).thenReturn([]);
+      it('should return 404 if no installation is found', async () => {
+        const invalidId = 99999999;
+        td.when(models.Subscription.getAllForInstallation(invalidId.toString())).thenReturn([]);
 
         return supertest(subject)
-          .get('/api/unkown-installation-id')
+          .get(`/api/${invalidId}`)
           .set('Authorization', 'Bearer xxx')
           .expect(404)
           .then(response => {
@@ -200,7 +201,7 @@ describe('API', () => {
           });
       });
 
-      it('should return information for an existing installation', () => {
+      it('should return information for an existing installation', async () => {
         td.when(models.Subscription.getAllForInstallation('1234'))
           .thenReturn([
             {
@@ -227,11 +228,12 @@ describe('API', () => {
     });
 
     describe('repoSyncState', () => {
-      it('should return 404 if no installation is found', () => {
-        td.when(models.Subscription.getAllForInstallation('unkown-installation-id')).thenReturn([]);
+      it('should return 404 if no installation is found', async () => {
+        const invalidId = 99999999;
+        td.when(models.Subscription.getAllForInstallation(invalidId.toString())).thenReturn([]);
 
         return supertest(subject)
-          .get('/api/unkown-installation-id/repoSyncState.json')
+          .get(`/api/${invalidId}/repoSyncState.json`)
           .set('Authorization', 'Bearer xxx')
           .expect(404)
           .then(response => {
@@ -239,7 +241,7 @@ describe('API', () => {
           });
       });
 
-      it('should return the repoSyncState information for an existing installation', () => {
+      it('should return the repoSyncState information for an existing installation', async () => {
         td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, '1234'))
           .thenReturn(
             {
@@ -264,16 +266,19 @@ describe('API', () => {
     });
 
     describe('sync', () => {
-      it('should return 404 if no installation is found', () => supertest(subject)
-        .post('/api/unkown-installation-id/sync')
-        .set('Authorization', 'Bearer xxx')
-        .send('jiraHost=unknownhost.atlassian.net')
-        .expect(404)
-        .then(response => {
-          expect(response.text).toMatchSnapshot();
-        }));
+      it('should return 404 if no installation is found', async () => {
+        const invalidId = 99999999;
+        return supertest(subject)
+          .post(`/api/${invalidId}/sync`)
+          .set('Authorization', 'Bearer xxx')
+          .send('jiraHost=unknownhost.atlassian.net')
+          .expect(404)
+          .then(response => {
+            expect(response.text).toMatchSnapshot();
+          });
+      });
 
-      it('should trigger the sync or start function', () => {
+      it('should trigger the sync or start function', async () => {
         td.when(models.Installation.getForHost('me.atlassian.net'))
           .thenReturn([{}]);
 
@@ -303,7 +308,7 @@ describe('API', () => {
           });
       });
 
-      it('should reset repoSyncState if asked to', () => {
+      it('should reset repoSyncState if asked to', async () => {
         td.when(models.Installation.getForHost('me.atlassian.net'))
           .thenReturn([{}]);
 
@@ -367,16 +372,19 @@ describe('API', () => {
     });
 
     describe('undo', () => {
-      it('should return 404 if no installation is found', () => supertest(subject)
-        .post('/api/unkown-installation-id/migrate/undo')
-        .set('Authorization', 'Bearer xxx')
-        .send('jiraHost=unknownhost.atlassian.net')
-        .expect(404)
-        .then(response => {
-          expect(response.text).toMatchSnapshot();
-        }));
+      it('should return 404 if no installation is found', async () => {
+        const invalidId = 99999999;
+        return supertest(subject)
+          .post(`/api/${invalidId}/migrate/undo`)
+          .set('Authorization', 'Bearer xxx')
+          .send('jiraHost=unknownhost.atlassian.net')
+          .expect(404)
+          .then(response => {
+            expect(response.text).toMatchSnapshot();
+          });
+      });
 
-      it('should migrate an installation', () => {
+      it('should migrate an installation', async () => {
         const update = jest.fn();
 
         td.when(models.Installation.getForHost('me.atlassian.net'))
@@ -401,7 +409,7 @@ describe('API', () => {
           });
       });
 
-      it('should undo a migration', () => {
+      it('should undo a migration', async () => {
         const update = jest.fn();
 
         td.when(models.Installation.getForHost('me.atlassian.net'))
