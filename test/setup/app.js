@@ -5,8 +5,13 @@ const { App } = require('@octokit/app');
 
 beforeEach(() => {
   const models = td.replace('../../lib/models', {
-    Installation: td.object(['getForHost']),
-    Subscription: td.object(['getAllForInstallation', 'install', 'getSingleInstallation']),
+    Installation: td.object(['getForHost', 'findByPk']),
+    Subscription: td.object([
+      'getAllForInstallation',
+      'install',
+      'getSingleInstallation',
+      'findOrStartSync',
+    ]),
     Project: td.object(['upsert']),
   });
 

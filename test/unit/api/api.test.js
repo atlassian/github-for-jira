@@ -1,5 +1,6 @@
 const nock = require('nock');
 const supertest = require('supertest');
+const { Installation } = require('../../../lib/models');
 
 const successfulAuthResponseWrite = {
   data: {
@@ -168,10 +169,7 @@ describe('API', () => {
     beforeEach(() => {
       nock('https://api.github.com').post('/graphql').reply(200, successfulAuthResponseWrite);
 
-      models = td.replace('../../../lib/models', {
-        Subscription: td.object(['getAllForInstallation', 'findOrStartSync']),
-        Installation: td.object(['getForHost']),
-      });
+      models = td.replace('../../../lib/models');
       locals = {
         client: {
           apps: td.object(),
@@ -345,6 +343,31 @@ describe('API', () => {
               },
             ], 'full');
           });
+      });
+    });
+
+    describe('verify', () => {
+      const installationId = '1234';
+      const retInstallation = {
+        gitHubInstallationId: Number(installationId),
+        enabled: true,
+        id: installationId,
+        jiraHost: process.env.ATLASSIAN_URL,
+      };
+
+      beforeEach(() => {
+        td.replace(Installation, 'findByPk');
+        td.when(Installation.findByPk(installationId))
+          .thenReturn(retInstallation);
+      });
+
+      it('should return \'Installation already enbled\'', async () => {
+        await supertest(subject)
+          .post(`/api/jira/${installationId}/verify`)
+          .set('Authorization', 'Bearer xxx')
+          .expect(200)
+          .expect('Content-Type', /json/)
+          .then(response => expect(response.body.message).toMatchSnapshot());
       });
     });
 

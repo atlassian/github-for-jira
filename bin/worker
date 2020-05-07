@@ -1,14 +1,19 @@
 #!/usr/bin/env node
-require('dotenv').config()
-const throng = require('throng')
+require('dotenv').config();
+const throng = require('throng');
 
-require('newrelic')
-require('../lib/config/sentry').initializeSentry()
+require('newrelic');
+require('../lib/config/sentry').initializeSentry();
 
-const worker = require('../lib/worker')
-const throngWorkers = process.env.WEB_CONCURRENCY || 1
+const worker = require('../lib/worker');
 
-throng({
-  workers: throngWorkers,
-  lifetime: Infinity
-}, worker.start)
+const throngWorkers = Number(process.env.WEB_CONCURRENCY || 1);
+
+if (throngWorkers === 1) {
+  worker.start();
+} else {
+  throng({
+    workers: throngWorkers,
+    lifetime: Infinity,
+  }, worker.start);
+}
