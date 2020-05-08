@@ -49,15 +49,27 @@ describe('sync/pull-request', () => {
 
     const job = createJob({ data: { installationId, jiraHost } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
+    nock('https://api.github.com').persist().post('/installations/1/access_tokens').reply(200, { token: '1234' });
+    nock('https://api.github.com').persist().post('/app/installations/1234/access_tokens').reply(200, { token: '1234' });
 
-    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries');
+    const {
+      pullsNoLastCursor,
+      pullsWithLastCursor,
+      pullsNoCommentNoLastCursor,
+      pullsNoCommentWithLastCursor,
+    } = require('../../fixtures/api/graphql/pull-queries');
     const pullWithKeyInTitle = require('../../fixtures/api/graphql/pull-request-nodes.json');
+    const pullWithKeyInTitleNoComments = JSON.parse(JSON.stringify(pullWithKeyInTitle));
+    delete pullWithKeyInTitleNoComments.data.repository.pullRequests.edges[0].node.comments;
 
     nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
       .reply(200, pullWithKeyInTitle);
     nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
       .reply(200, pullWithKeyInTitle);
+    nock('https://api.github.com').post('/graphql', pullsNoCommentNoLastCursor)
+      .reply(200, pullWithKeyInTitleNoComments);
+    nock('https://api.github.com').post('/graphql', pullsNoCommentWithLastCursor)
+      .reply(200, pullWithKeyInTitleNoComments);
     nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/96')
       .reply(200, { comments: 0 });
 
@@ -113,14 +125,15 @@ describe('sync/pull-request', () => {
 
     const job = createJob({ data: { installationId, jiraHost } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
+    nock('https://api.github.com').persist().post('/installations/1/access_tokens').reply(200, { token: '1234' });
+    nock('https://api.github.com').persist().post('/app/installations/1234/access_tokens').reply(200, { token: '1234' });
 
-    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries');
+    const { pullsNoLastCursor, pullsNoCommentNoLastCursor } = require('../../fixtures/api/graphql/pull-queries');
     const fixture = require('../../fixtures/api/graphql/pull-request-empty-nodes.json');
 
     nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
       .reply(200, fixture);
-    nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
+    nock('https://api.github.com').post('/graphql', pullsNoCommentNoLastCursor)
       .reply(200, fixture);
     nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/96')
       .reply(200, { comments: 0 });
@@ -144,11 +157,22 @@ describe('sync/pull-request', () => {
     const { processInstallation } = require('../../../lib/sync/installation');
     process.env.LIMITER_PER_INSTALLATION = 2000;
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } });
+    const {
+      pullsNoLastCursor,
+      pullsNoCommentNoLastCursor,
+    } = require('../../fixtures/api/graphql/pull-queries');
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
+    nock('https://api.github.com').persist().post('/installations/1/access_tokens').reply(200, { token: '1234' });
+    nock('https://api.github.com').persist().post('/app/installations/1234/access_tokens').reply(200, { token: '1234' });
 
     const fixture = require('../../fixtures/api/graphql/pull-request-no-keys.json');
-    nock('https://api.github.com').post('/graphql').reply(200, fixture);
+    const fixtureNoCommentCount = JSON.parse(JSON.stringify(fixture));
+    delete fixtureNoCommentCount.data.repository.pullRequests.edges[0].node.comments;
+
+    nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
+      .reply(200, fixture);
+    nock('https://api.github.com').post('/graphql', pullsNoCommentNoLastCursor)
+      .reply(200, fixtureNoCommentCount);
     nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/96')
       .reply(200, { comments: 0 });
 

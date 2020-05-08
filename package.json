@@ -43,6 +43,7 @@
     "probot": "^9.11.3",
     "rate-limit-redis": "^1.7.0",
     "request": "^2.88.0",
+    "scientist": "^1.1.1",
     "sequelize": "^5.21.7",
     "sequelize-cli": "^5.5.1",
     "sequelize-encrypted": "^1.0.0",
