@@ -58,6 +58,8 @@ describe('sync/pull-request', () => {
       .reply(200, pullWithKeyInTitle);
     nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
       .reply(200, pullWithKeyInTitle);
+    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/96')
+      .reply(200, { comments: 0 });
 
     const queues = {
       installation: {
@@ -120,6 +122,8 @@ describe('sync/pull-request', () => {
       .reply(200, fixture);
     nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
       .reply(200, fixture);
+    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/96')
+      .reply(200, { comments: 0 });
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'));
@@ -145,6 +149,8 @@ describe('sync/pull-request', () => {
 
     const fixture = require('../../fixtures/api/graphql/pull-request-no-keys.json');
     nock('https://api.github.com').post('/graphql').reply(200, fixture);
+    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/96')
+      .reply(200, { comments: 0 });
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'));
