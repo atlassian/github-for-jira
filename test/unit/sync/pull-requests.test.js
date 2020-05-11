@@ -51,15 +51,15 @@ describe('sync/pull-request', () => {
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries');
-    const pullWithKeyInTitle = require('../../fixtures/api/graphql/pull-request-nodes.json');
+    const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/pull-request-list.json')));
+    pullRequestList[0].title = '[TES-15] Evernote Test';
 
-    nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
-      .reply(200, pullWithKeyInTitle);
-    nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
-      .reply(200, pullWithKeyInTitle);
-    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/96')
+    // GET /repos/:owner/:repo/pulls
+    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc')
+      .reply(200, pullRequestList);
+    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/51')
       .reply(200, { comments: 0 });
+
 
     const queues = {
       installation: {
@@ -79,22 +79,22 @@ describe('sync/pull-request', () => {
           pullRequests: [
             {
               author: {
-                avatar: 'https://avatars0.githubusercontent.com/u/13207348?v=4',
-                name: 'tcbyrd',
-                url: 'https://github.com/tcbyrd',
+                avatar: 'https://avatars0.githubusercontent.com/u/173?v=4',
+                name: 'bkeepers',
+                url: 'https://api.github.com/users/bkeepers',
               },
               commentCount: 0,
-              destinationBranch: 'test-repo-url/tree/master',
-              displayId: '#96',
-              id: 96,
+              destinationBranch: 'test-repo-url/tree/devel',
+              displayId: '#51',
+              id: 51,
               issueKeys: ['TES-15'],
-              lastUpdate: '2018-08-23T21:38:05Z',
-              sourceBranch: 'evernote-test',
-              sourceBranchUrl: 'test-repo-url/tree/evernote-test',
-              status: 'OPEN',
-              timestamp: '2018-08-23T21:38:05Z',
-              title: '[TES-15] Evernote test',
-              url: 'https://github.com/tcbyrd/testrepo/pull/96',
+              lastUpdate: '2018-05-04T14:06:56Z',
+              sourceBranch: 'use-the-force',
+              sourceBranchUrl: 'test-repo-url/tree/use-the-force',
+              status: 'DECLINED',
+              timestamp: '2018-05-04T14:06:56Z',
+              title: '[TES-15] Evernote Test',
+              url: 'https://api.github.com/repos/integrations/test/pulls/51',
               updateSequenceId: 12345678,
             },
           ],
@@ -102,9 +102,7 @@ describe('sync/pull-request', () => {
           updateSequenceId: 12345678,
         },
       ],
-      properties: {
-        installationId: 1234,
-      },
+      properties: { installationId: 1234 },
     }));
   });
 
@@ -115,15 +113,8 @@ describe('sync/pull-request', () => {
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries');
-    const fixture = require('../../fixtures/api/graphql/pull-request-empty-nodes.json');
-
-    nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
-      .reply(200, fixture);
-    nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
-      .reply(200, fixture);
-    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/96')
-      .reply(200, { comments: 0 });
+    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc')
+      .reply(200, []);
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'));
@@ -147,10 +138,11 @@ describe('sync/pull-request', () => {
 
     nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
-    const fixture = require('../../fixtures/api/graphql/pull-request-no-keys.json');
-    nock('https://api.github.com').post('/graphql').reply(200, fixture);
-    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/96')
-      .reply(200, { comments: 0 });
+    const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/pull-request-list.json')));
+
+    // GET /repos/:owner/:repo/pulls
+    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc')
+      .reply(200, pullRequestList);
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'));
