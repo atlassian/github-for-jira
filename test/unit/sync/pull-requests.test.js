@@ -94,7 +94,7 @@ describe('sync/pull-request', () => {
               status: 'DECLINED',
               timestamp: '2018-05-04T14:06:56Z',
               title: '[TES-15] Evernote Test',
-              url: 'https://api.github.com/repos/integrations/test/pulls/51',
+              url: 'https://github.com/integrations/test/pull/51',
               updateSequenceId: 12345678,
             },
           ],
