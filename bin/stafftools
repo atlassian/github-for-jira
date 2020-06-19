@@ -27,38 +27,17 @@ class JiraStaffTools < Thor
   end
 
   desc "status <git_hub_installation_id>", "Display repo sync status"
+  option :current, type: :boolean, desc: "Show the current repo being synced"
   def status(git_hub_installation_id)
     jira_host = get_jira_host(git_hub_installation_id)
     response = client.get(
       "/api/#{CGI.escape(git_hub_installation_id)}/repoSyncState.json",
       "jiraHost" => jira_host
     )
-
-    output_json(response.body)
-  end
-
-  desc "current <git_hub_installation_id>", "Display the current sync item"
-  def current(git_hub_installation_id)
-    jira_host = get_jira_host(git_hub_installation_id)
-    response = client.get(
-      "/api/#{CGI.escape(git_hub_installation_id)}/repoSyncState.json",
-      "jiraHost" => jira_host
-    )
-
-    repos = JSON.parse(response.body)["repos"]
-
-    current = repos.values.detect do |r|
-      [r["pullStatus"], r["branchStatus"], r["commitStatus"]] != (["complete"] * 3)
-    end
-
-    if current
-      puts "Working on #{current["repository"]["owner"]["login"]}/#{current["repository"]["name"]}"
-      puts "\t*  pullStatus: #{current["pullStatus"]} @ #{current["lastPullCursor"]}" if current["pullStatus"]
-      puts "\t*  branchStatus: #{current["branchStatus"]} @ #{current["lastBranchCursor"]}" if current["branchStatus"]
-      puts "\t*  commitStatus: #{current["commitStatus"]} @ #{current["lastCommitCursor"]}" if current["commitStatus"]
-      puts "#{repos.length - repos.values.index(current)} of #{repos.length} Repositories left to sync."
+    if options[:current]
+      status_current(response.body)
     else
-      puts "Did not find any item in progress"
+      output_json(response.body)
     end
   end
 
@@ -176,6 +155,24 @@ class JiraStaffTools < Thor
         puts out
       else
         puts JSON.pretty_generate(JSON.parse(json_string))
+      end
+    end
+
+    def status_current(body)
+      repos = JSON.parse(body)["repos"]
+
+      current = repos.values.detect do |r|
+        [r["pullStatus"], r["branchStatus"], r["commitStatus"]] != (["complete"] * 3)
+      end
+
+      if current
+        puts "Working on #{current["repository"]["owner"]["login"]}/#{current["repository"]["name"]}"
+        puts "\t*  pullStatus: #{current["pullStatus"]} @ #{current["lastPullCursor"]}" if current["pullStatus"]
+        puts "\t*  branchStatus: #{current["branchStatus"]} @ #{current["lastBranchCursor"]}" if current["branchStatus"]
+        puts "\t*  commitStatus: #{current["commitStatus"]} @ #{current["lastCommitCursor"]}" if current["commitStatus"]
+        puts "#{repos.length - repos.values.index(current)} of #{repos.length} Repositories left to sync."
+      else
+        puts "Did not find any item in progress"
       end
     end
   end
