@@ -37,6 +37,36 @@ class JiraStaffTools < Thor
     output_json(response.body)
   end
 
+  desc "current <git_hub_installation_id>", "Display the current sync item"
+  def current(git_hub_installation_id)
+    jira_host = get_jira_host(git_hub_installation_id)
+    response = client.get(
+      "/api/#{CGI.escape(git_hub_installation_id)}/repoSyncState.json",
+      "jiraHost" => jira_host
+    )
+
+    foundIt = false
+    repos = JSON.parse(response.body)["repos"]
+    doneCount = 0
+
+    repos.each do |repo_id, r|
+      if [r["pullStatus"], r["branchStatus"], r["commitStatus"]] == (["complete"] * 3)
+        doneCount += 1
+        next
+      end
+
+      puts "Working on #{r["repository"]["owner"]["login"]}/#{r["repository"]["name"]}"
+      puts "\t*  pullStatus: #{r["pullStatus"]} @ #{r["lastPullCursor"]}" if r["pullStatus"]
+      puts "\t*  branchStatus: #{r["branchStatus"]} @ #{r["lastBranchCursor"]}" if r["branchStatus"]
+      puts "\t*  commitStatus: #{r["commitStatus"]} @ #{r["lastCommitCursor"]}" if r["commitStatus"]
+      puts "#{repos.length - doneCount} of #{repos.length} Repositories left to sync."
+      foundIt = true
+      break
+    end
+
+    puts "Did not find any item in progress" unless foundIt
+  end
+
   desc "sync <git_hub_installation_id>", "Trigger sync (defaults to 'normal')"
   option :reset, type: :boolean, desc: "Clear sync status and start from beginning ('full')"
   def sync(git_hub_installation_id)
@@ -51,7 +81,7 @@ class JiraStaffTools < Thor
 
     output_json(response.body)
   end
-  
+
   desc "migrate <git_hub_installation_id>", "Mark as migrated from DVCS and set sync to COMPLETE"
   def migrate(git_hub_installation_id)
     jira_host = get_jira_host(git_hub_installation_id)
@@ -74,7 +104,7 @@ class JiraStaffTools < Thor
   long_desc <<~DESC
     Trigger the same uninstall process that occurs when a customer
     uninstalls the GitHub for Jira Atlassian Marketplace app.
-    
+
     Note: this does not uninstall the app from a customer's Jira
           instance, it only removes the data from our side.
   DESC
@@ -120,13 +150,13 @@ class JiraStaffTools < Thor
       range: "7d".to_json,
       end: "null",
       limit: 1000,
-      start: "null", 
+      start: "null",
       utc: "null",
     }
 
     url = URI("https://sentry.io/organizations/github-integrations/discover")
     url.query = URI.encode_www_form(params)
-    
+
     `open #{url.to_s.shellescape}`
   end
 
