@@ -45,26 +45,21 @@ class JiraStaffTools < Thor
       "jiraHost" => jira_host
     )
 
-    foundIt = false
     repos = JSON.parse(response.body)["repos"]
-    doneCount = 0
 
-    repos.each do |repo_id, r|
-      if [r["pullStatus"], r["branchStatus"], r["commitStatus"]] == (["complete"] * 3)
-        doneCount += 1
-        next
-      end
-
-      puts "Working on #{r["repository"]["owner"]["login"]}/#{r["repository"]["name"]}"
-      puts "\t*  pullStatus: #{r["pullStatus"]} @ #{r["lastPullCursor"]}" if r["pullStatus"]
-      puts "\t*  branchStatus: #{r["branchStatus"]} @ #{r["lastBranchCursor"]}" if r["branchStatus"]
-      puts "\t*  commitStatus: #{r["commitStatus"]} @ #{r["lastCommitCursor"]}" if r["commitStatus"]
-      puts "#{repos.length - doneCount} of #{repos.length} Repositories left to sync."
-      foundIt = true
-      break
+    current = repos.values.detect do |r|
+      [r["pullStatus"], r["branchStatus"], r["commitStatus"]] != (["complete"] * 3)
     end
 
-    puts "Did not find any item in progress" unless foundIt
+    if current
+      puts "Working on #{current["repository"]["owner"]["login"]}/#{current["repository"]["name"]}"
+      puts "\t*  pullStatus: #{current["pullStatus"]} @ #{current["lastPullCursor"]}" if current["pullStatus"]
+      puts "\t*  branchStatus: #{current["branchStatus"]} @ #{current["lastBranchCursor"]}" if current["branchStatus"]
+      puts "\t*  commitStatus: #{current["commitStatus"]} @ #{current["lastCommitCursor"]}" if current["commitStatus"]
+      puts "#{repos.length - repos.values.index(current)} of #{repos.length} Repositories left to sync."
+    else
+      puts "Did not find any item in progress"
+    end
   end
 
   desc "sync <git_hub_installation_id>", "Trigger sync (defaults to 'normal')"
