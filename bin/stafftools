@@ -26,7 +26,7 @@ class JiraStaffTools < Thor
     output_json(body)
   end
 
-  desc "status <git_hub_installation_id>", "Display repo sync status"
+  desc "status <git_hub_installation_id> [--current]", "Display repo sync status"
   option :current, type: :boolean, desc: "Show the current repo being synced"
   def status(git_hub_installation_id)
     jira_host = get_jira_host(git_hub_installation_id)
@@ -41,7 +41,7 @@ class JiraStaffTools < Thor
     end
   end
 
-  desc "sync <git_hub_installation_id>", "Trigger sync (defaults to 'normal')"
+  desc "sync <git_hub_installation_id> [--full]", "Trigger sync (defaults to 'normal')"
   option :reset, type: :boolean, desc: "Clear sync status and start from beginning ('full')"
   def sync(git_hub_installation_id)
     sync_type = "full" if options[:reset]
