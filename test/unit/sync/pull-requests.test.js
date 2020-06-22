@@ -49,8 +49,6 @@ describe('sync/pull-request', () => {
 
     const job = createJob({ data: { installationId, jiraHost } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
-
     const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/pull-request-list.json')));
     pullRequestList[0].title = '[TES-15] Evernote Test';
 
@@ -111,8 +109,6 @@ describe('sync/pull-request', () => {
 
     const job = createJob({ data: { installationId, jiraHost } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
-
     nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc')
       .reply(200, []);
 
@@ -135,8 +131,6 @@ describe('sync/pull-request', () => {
     const { processInstallation } = require('../../../lib/sync/installation');
     process.env.LIMITER_PER_INSTALLATION = 2000;
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } });
-
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
     const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/pull-request-list.json')));
 
