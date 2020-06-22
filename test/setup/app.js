@@ -38,7 +38,7 @@ beforeEach(() => {
     });
 
   nock('https://api.github.com')
-    .post(/\/installations\/[\d\w-]+\/access_tokens/)
+    .post(/\/app\/installations\/[\d\w-]+\/access_tokens/)
     .reply(200, {
       token: 'mocked-token',
       expires_at: '9999-12-31T23:59:59Z',

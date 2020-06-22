@@ -53,8 +53,6 @@ describe('sync/commits', () => {
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
-
     const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json');
 
     const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries');
@@ -111,8 +109,6 @@ describe('sync/commits', () => {
     const { processInstallation } = require('../../../lib/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
-
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
     const mixedCommitNodes = require('../../fixtures/api/graphql/commit-nodes-mixed.json');
 
@@ -205,8 +201,6 @@ describe('sync/commits', () => {
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
-
     const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json');
     const defaultBranchNullFixture = require('../../fixtures/api/graphql/default-branch-null.json');
 
@@ -265,8 +259,6 @@ describe('sync/commits', () => {
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
-
     const commitsNoKeys = require('../../fixtures/api/graphql/commit-nodes-no-keys.json');
 
     const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries');
@@ -294,8 +286,6 @@ describe('sync/commits', () => {
     const { processInstallation } = require('../../../lib/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost } });
-
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' });
 
     const { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } = require('../../fixtures/api/graphql/commit-queries');
 
