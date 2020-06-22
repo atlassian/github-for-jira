@@ -162,7 +162,7 @@ class JiraStaffTools < Thor
       repos = JSON.parse(body)["repos"]
 
       current = repos.values.detect do |r|
-        [r["pullStatus"], r["branchStatus"], r["commitStatus"]] != (["complete"] * 3)
+        [r["pullStatus"], r["branchStatus"], r["commitStatus"]] != %w(completed completed completed)
       end
 
       if current
