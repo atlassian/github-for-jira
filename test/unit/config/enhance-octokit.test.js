@@ -1,4 +1,4 @@
-const { Octokit } = require('@octokit/rest');
+const { GitHubAPI } = require('../../../lib/config/github-api');
 const nock = require('nock');
 const LogDouble = require('../../setup/log-double');
 
@@ -11,13 +11,13 @@ describe(enhanceOctokit, () => {
 
     beforeEach(() => {
       log = new LogDouble();
-      octokit = Octokit();
+      octokit = GitHubAPI();
+      enhanceOctokit(octokit, log);
     });
 
     describe('when successful', () => {
       beforeEach(() => {
-        nock('https://api.github.com').get(/.+/).reply(200, []);
-        enhanceOctokit(octokit, log);
+        nock('https://api.github.com').get('/events').reply(200, []);
       });
 
       it('sends reqest timing', async () => {
@@ -26,8 +26,13 @@ describe(enhanceOctokit, () => {
         }).toHaveSentMetrics({
           name: 'jira-integration.github-request',
           type: 'h',
-          value: (value) => value > 0 && value < 100, // Value changes depending on how long nock takes
-          tags: { path: '/events', method: 'GET', status: '200' },
+          value: (value) => value > 0 && value < 1000, // Value changes depending on how long nock takes
+          tags: {
+            path: '/events',
+            method: 'GET',
+            status: '200',
+            env: 'test',
+          },
         });
       });
 
@@ -43,8 +48,7 @@ describe(enhanceOctokit, () => {
 
     describe('when fails', () => {
       beforeEach(() => {
-        nock('https://api.github.com').get(/.+/).reply(500, []);
-        enhanceOctokit(octokit, log);
+        nock('https://api.github.com').get('/events').reply(500, []);
       });
 
       it('sends reqest timing', async () => {
@@ -53,8 +57,13 @@ describe(enhanceOctokit, () => {
         }).toHaveSentMetrics({
           name: 'jira-integration.github-request',
           type: 'h',
-          value: (value) => value > 0 && value < 50, // Value changes depending on how long nock takes
-          tags: { path: '/events', method: 'GET', status: '500' },
+          value: (value) => value > 0 && value < 1000, // Value changes depending on how long nock takes
+          tags: {
+            path: '/events',
+            method: 'GET',
+            status: '500',
+            env: 'test',
+          },
         });
       });
 

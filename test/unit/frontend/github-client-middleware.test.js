@@ -1,12 +1,12 @@
 const nock = require('nock');
 const { isAdminFunction } = require('../../../lib/frontend/github-client-middleware');
-const { Octokit } = require('@octokit/rest');
+const { GitHubAPI } = require('../../../lib/config/github-api');
 
 describe('GitHub client middleware', () => {
   let isAdmin;
 
   beforeEach(() => {
-    isAdmin = isAdminFunction(Octokit());
+    isAdmin = isAdminFunction(GitHubAPI());
   });
 
   it('isAdmin returns true if user is admin of a given organization', async () => {
