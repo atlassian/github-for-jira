@@ -24,7 +24,7 @@
     "bottleneck": "^2.19.5",
     "bull": "^3.12.1",
     "bunyan-sentry-stream": "^1.2.1",
-    "cookie-session": "^1.4.0",
+    "cookie-session": "^2.0.0-rc.1",
     "csurf": "^1.11.0",
     "date-fns": "^1.29.0",
     "express": "^4.17.1",
