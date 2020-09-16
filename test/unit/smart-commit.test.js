@@ -138,6 +138,16 @@ describe('Smart commit parsing', () => {
       });
     });
 
+    it('should parse an issue key, case insensitively, and transform it to uppercase', () => {
+      const text = 'jra-090';
+
+      const result = smartCommit(text);
+
+      expect(result).toEqual({
+        issueKeys: ['JRA-090'],
+      });
+    });
+
     it('should not parse an issue key with an underscore and numbers', () => {
       const text = 'J_1993A-090 J_1993A-090';
 
