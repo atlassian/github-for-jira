@@ -3,7 +3,7 @@ const { findPrivateKey } = require('probot/lib/private-key');
 const cacheManager = require('cache-manager');
 const { App } = require('@octokit/app');
 
-beforeEach(() => {
+beforeEach(async () => {
   const models = td.replace('../../lib/models', {
     Installation: td.object(['getForHost', 'findByPk']),
     Subscription: td.object([
@@ -50,7 +50,7 @@ beforeEach(() => {
 
   const configureRobot = require('../../lib/configure-robot');
 
-  global.app = configureRobot(new Application({
+  global.app = await configureRobot(new Application({
     app: new App({
       id: 12257,
       privateKey: findPrivateKey(),
