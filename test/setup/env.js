@@ -4,7 +4,10 @@ const defaults = Object.assign({
   NODE_ENV: 'test',
   APP_URL: 'https://test-github-app-instance.com',
   ATLASSIAN_URL: 'https://test-atlassian-instance.net',
+  HYDRO_BASE_URL: 'https://hydro-base-url.com/api/v1/events',
   ATLASSIAN_SECRET: 'test-secret',
+  // Generated for tests
+  HYDRO_APP_SECRET: '2dd220c366ec5b86104efd7324c2d405',
   PRIVATE_KEY_PATH: './test/setup/test-key.pem',
   GITHUB_CLIENT_SECRET: 'test-github-secret',
   LOG_LEVEL: 'fatal',
