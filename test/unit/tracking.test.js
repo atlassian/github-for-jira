@@ -36,6 +36,7 @@ describe('Hydro Gateway Protobuf Submissions', () => {
     nock(basePath)
       .post(parsedURL.path)
       .reply(status, function (uri, requestBody) {
+        expect(this.req.headers['x-hydro-app']).toBe('jira-integration');
         const hmac = crypto.createHmac('sha256', AppSecret);
         hmac.update(requestBody.toString());
         expect(this.req.headers.authorization).toBe(`Hydro ${hmac.digest('hex')}`);
