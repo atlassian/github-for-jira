@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Webhook: /events/enabled Pending Installation 1`] = `"jira.v0.Action"`;
+
+exports[`Webhook: /events/enabled Pending Installation 2`] = `
+Object {
+  "actionSource": "webhook",
+  "association": "installation",
+  "installationId": 19,
+  "jiraHostname": "https://test-host.jira.com",
+  "type": "enabled",
+}
+`;
