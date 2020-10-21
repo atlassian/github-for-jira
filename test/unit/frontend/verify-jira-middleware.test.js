@@ -17,6 +17,10 @@ describe('#verifyJiraMiddleware', () => {
     subject = require('../../../lib/frontend/verify-jira-middleware');
   });
 
+  afterEach(() => {
+    td.reset();
+  });
+
   describe('GET request', () => {
     const buildRequest = (jiraHost, secret = 'secret') => {
       const jwtValue = jwt.encode('test-jwt', secret);

@@ -53,6 +53,9 @@ describe('Frontend', () => {
 
     subject = require('../../../lib/frontend/app')(app.app);
   });
+  afterEach(() => {
+    td.reset();
+  });
 
   describe('GitHub Configuration', () => {
     describe('#post', () => {

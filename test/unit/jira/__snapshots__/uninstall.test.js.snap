@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Webhook: /events/uninstalled Existing Installation 1`] = `"jira.v0.Action"`;
+
+exports[`Webhook: /events/uninstalled Existing Installation 2`] = `
+Object {
+  "actionSource": "webhook",
+  "association": "installation",
+  "githubInstallationId": 10,
+  "installationId": 19,
+  "jiraHostname": "https://test-host.jira.com",
+  "type": "destroyed",
+}
+`;
+
+exports[`Webhook: /events/uninstalled Existing Installation 3`] = `"jira.v0.Action"`;
+
+exports[`Webhook: /events/uninstalled Existing Installation 4`] = `
+Object {
+  "actionSource": "webhook",
+  "association": "subscription",
+  "githubInstallationId": 10,
+  "installationId": 19,
+  "jiraHostname": "https://test-host.jira.com",
+  "type": "destroyed",
+}
+`;
+
+exports[`Webhook: /events/uninstalled Existing Installation, no Subscriptions 1`] = `"jira.v0.Action"`;
+
+exports[`Webhook: /events/uninstalled Existing Installation, no Subscriptions 2`] = `
+Object {
+  "actionSource": "webhook",
+  "association": "installation",
+  "githubInstallationId": 10,
+  "installationId": 19,
+  "jiraHostname": "https://test-host.jira.com",
+  "type": "destroyed",
+}
+`;

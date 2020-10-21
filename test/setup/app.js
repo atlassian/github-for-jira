@@ -5,12 +5,19 @@ const { App } = require('@octokit/app');
 
 beforeEach(async () => {
   const models = td.replace('../../lib/models', {
-    Installation: td.object(['getForHost', 'findByPk']),
+    Installation: td.object([
+      'getForHost',
+      'findByPk',
+      'build',
+      'getPendingHost',
+      'install',
+    ]),
     Subscription: td.object([
       'getAllForInstallation',
       'install',
       'getSingleInstallation',
       'findOrStartSync',
+      'getAllForHost',
     ]),
     Project: td.object(['upsert']),
   });
@@ -67,4 +74,5 @@ beforeEach(async () => {
 
 afterEach(() => {
   nock.cleanAll();
+  td.reset();
 });
