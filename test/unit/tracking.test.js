@@ -14,7 +14,6 @@ const { Action, ActionType } = require('../../lib/proto/v0/action');
 const parsedURL = url.parse(BaseURL);
 const basePath = parsedURL.href.replace(parsedURL.path, '');
 const origDisabledState = isDisabled();
-const AppSecret = process.env.HYDRO_APP_SECRET;
 
 beforeAll(() => {
   setIsDisabled(false);
@@ -37,8 +36,8 @@ describe('Hydro Gateway Protobuf Submissions', () => {
       .post(parsedURL.path)
       .reply(status, function (uri, requestBody) {
         expect(this.req.headers['x-hydro-app']).toBe('jira-integration');
-        const hmac = crypto.createHmac('sha256', AppSecret);
-        hmac.update(requestBody.toString());
+        const hmac = crypto.createHmac('sha256', process.env.HYDRO_APP_SECRET);
+        hmac.update(JSON.stringify(requestBody));
         expect(this.req.headers.authorization).toBe(`Hydro ${hmac.digest('hex')}`);
         return errMsg;
       });
