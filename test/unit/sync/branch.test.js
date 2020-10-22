@@ -120,6 +120,10 @@ describe('sync/branches', () => {
     });
   });
 
+  afterEach(() => {
+    td.reset();
+  });
+
   test('should sync to Jira when branch refs have jira references', async () => {
     const { processInstallation } = require('../../../lib/sync/installation');
 

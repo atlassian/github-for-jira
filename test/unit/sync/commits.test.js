@@ -48,6 +48,10 @@ describe('sync/commits', () => {
       });
   });
 
+  afterEach(() => {
+    td.reset();
+  });
+
   test('should sync to Jira when Commit Nodes have jira references', async () => {
     const { processInstallation } = require('../../../lib/sync/installation');
 
