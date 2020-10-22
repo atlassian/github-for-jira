@@ -44,6 +44,10 @@ describe('sync/pull-request', () => {
       });
   });
 
+  afterEach(() => {
+    td.reset();
+  });
+
   describe.each([
     ['[TES-15] Evernote Test', 'use-the-force'],
     ['Evernote Test', 'TES-15'],
