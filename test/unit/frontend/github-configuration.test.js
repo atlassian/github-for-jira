@@ -2,6 +2,8 @@ const Keygrip = require('keygrip');
 const supertest = require('supertest');
 const nock = require('nock');
 const { getHashedKey } = require('../../../lib/models/installation');
+const testTracking = require('../../setup/tracking');
+const { setIsDisabled } = require('../../../lib/tracking');
 
 function getCookieHeader(payload) {
   const cookie = Buffer.from(JSON.stringify(payload)).toString('base64');
@@ -55,6 +57,7 @@ describe('Frontend', () => {
   });
   afterEach(() => {
     td.reset();
+    setIsDisabled(true);
   });
 
   describe('GitHub Configuration', () => {
@@ -117,9 +120,24 @@ describe('Frontend', () => {
         .expect(400));
 
       it('should return a 200 and install a Subscription', async () => {
+        const jiraHost = 'test-jira-host';
+
+        const installation = {
+          id: 19,
+          jiraHost,
+          clientKey: 'abc123',
+          enabled: true,
+          secrets: 'def234',
+          sharedSecret: 'ghi345',
+        };
         nock('https://api.github.com').get('/user/installations').reply(200, userInstallationsResponse);
         nock('https://api.github.com').get('/user').reply(200, adminUserResponse);
         nock('https://api.github.com').get('/orgs/test-org/memberships/admin-user').reply(200, organizationAdminResponse);
+        testTracking();
+
+        td.when(models.Installation.getForHost(jiraHost))
+          // Allows us to modify installation before it's finally called
+          .thenResolve(installation);
 
         const jiraClientKey = 'a-unique-client-key';
         await supertest(subject)
@@ -131,13 +149,13 @@ describe('Frontend', () => {
           .type('form')
           .set('cookie', getCookieHeader({
             githubToken: 'test-github-token',
-            jiraHost: 'test-jira-host',
+            jiraHost,
           }))
           .expect(200);
 
         td.verify(models.Subscription.install({
           installationId: '1',
-          host: 'test-jira-host',
+          host: jiraHost,
           clientKey: getHashedKey(jiraClientKey),
         }));
       });
