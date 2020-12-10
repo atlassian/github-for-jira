@@ -27,7 +27,7 @@ This app is written in [ES6 JavaScript](https://nodejs.org/en/docs/es6/) and run
 $ script/bootstrap
 ```
 
-This will install `node` and `mysql`, which are required to run the app. You will need to start up the postgres instance, and then run:
+This will install `node` and `postgres`, which are required to run the app. You will need to start up the postgres instance, and then run:
 
 ```
 $ script/db_create
