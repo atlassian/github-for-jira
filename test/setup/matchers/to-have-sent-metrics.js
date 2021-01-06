@@ -45,73 +45,71 @@ it('checks tags too', async () => {
 })
 
 */
-const statsd = require('../../../lib/config/statsd')
-const diff = require('jest-diff')
+const diff = require('jest-diff').default;
+const statsd = require('../../../lib/config/statsd');
 
 const parseStatsdMessage = (stastsdMessage) => {
-  const [metric, type, tagsString] = stastsdMessage.split('|')
-  const [name, value] = metric.split(':')
-  const tags = {}
+  const [metric, type, tagsString] = stastsdMessage.split('|');
+  const [name, value] = metric.split(':');
+  const tags = {};
 
   tagsString.substring(1).split(',').map((tagString) => {
-    const [key, value] = tagString.split(':')
-    tags[key] = value
-  })
+    const [key, value] = tagString.split(':');
+    tags[key] = value;
+  });
 
   return {
     name,
     value: parseInt(value),
     type,
-    tags
-  }
-}
+    tags,
+  };
+};
 
 expect.extend({
-  async toHaveSentMetrics (testFunction, ...expectedMetrics) {
-    statsd.mockBuffer = []
-    await testFunction()
-    const actualMetrics = statsd.mockBuffer.map((message) => parseStatsdMessage(message))
-    const matchingMetrics = []
+  async toHaveSentMetrics(testFunction, ...expectedMetrics) {
+    statsd.mockBuffer = [];
+    await testFunction();
+    const actualMetrics = statsd.mockBuffer.map((message) => parseStatsdMessage(message));
+    const matchingMetrics = [];
 
-    expectedMetrics.forEach((expectedMetric) => {
-      return actualMetrics.find((actualMetric) => {
-        const matchingName = actualMetric.name === expectedMetric.name
-        const matchingType = actualMetric.type === expectedMetric.type
+    expectedMetrics.forEach((expectedMetric) => actualMetrics.find((actualMetric) => {
+      const matchingName = actualMetric.name === expectedMetric.name;
+      const matchingType = actualMetric.type === expectedMetric.type;
 
-        let matchingValue = null
-        if (!expectedMetric.hasOwnProperty('value')) {
-          matchingValue = true
-        } else if (typeof expectedMetric.value === 'function') {
-          matchingValue = expectedMetric.value(actualMetric.value)
-        } else {
-          matchingValue = actualMetric.value === expectedMetric.value
+      let matchingValue = null;
+      if (!expectedMetric.hasOwnProperty('value')) {
+        matchingValue = true;
+      } else if (typeof expectedMetric.value === 'function') {
+        matchingValue = expectedMetric.value(actualMetric.value);
+      } else {
+        matchingValue = actualMetric.value === expectedMetric.value;
+      }
+
+      if (matchingName && matchingType && matchingValue) {
+        let matchingTags = true;
+        if (expectedMetric.tags) {
+          Object.entries(expectedMetric.tags).forEach(([name, expectedValue]) => {
+            if (actualMetric.tags[name] !== expectedValue) {
+              matchingTags = false;
+            }
+          });
         }
 
-        if (matchingName && matchingType && matchingValue) {
-          let matchingTags = true
-          if (expectedMetric.tags) {
-            Object.entries(expectedMetric.tags).forEach(([name, expectedValue]) => {
-              if (actualMetric.tags[name] !== expectedValue) {
-                matchingTags = false
-              }
-            })
-          }
-
-          if (matchingTags) {
-            matchingMetrics.push(actualMetric)
-          }
+        if (matchingTags) {
+          matchingMetrics.push(actualMetric);
         }
-      })
-    })
+      }
+    }));
 
-    const pass = matchingMetrics.length === expectedMetrics.length
+    const pass = matchingMetrics.length === expectedMetrics.length;
 
     return {
       message: () => {
-        const diffString = diff(expectedMetrics, actualMetrics, { expand: true })
-        return this.utils.matcherHint('toHaveSentMetrics', 'function', 'metrics') + `\n\n${diffString}`
+        const diffString = diff(expectedMetrics, actualMetrics, { expand: true });
+        return `${this.utils.matcherHint('toHaveSentMetrics', 'function', 'metrics')}\n\n${diffString}`;
       },
-      pass
-    }
-  }
-})
+      pass,
+    };
+  },
+});

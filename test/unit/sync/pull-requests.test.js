@@ -1,37 +1,37 @@
-const nock = require('nock')
-const createJob = require('../../setup/create-job')
+const nock = require('nock');
+const createJob = require('../../setup/create-job');
 
 describe('sync/pull-request', () => {
-  let jiraHost
-  let jiraApi
-  let installationId
+  let jiraHost;
+  let jiraApi;
+  let installationId;
 
   beforeEach(() => {
-    jest.setTimeout(10000)
-    const models = td.replace('../../../lib/models')
+    jest.setTimeout(10000);
+    const models = td.replace('../../../lib/models');
     const repoSyncStatus = {
-      'installationId': 12345678,
-      'jiraHost': 'tcbyrd.atlassian.net',
-      'repos': {
+      installationId: 12345678,
+      jiraHost: 'tcbyrd.atlassian.net',
+      repos: {
         'test-repo-id': {
           repository: {
             name: 'test-repo-name',
             owner: { login: 'integrations' },
             html_url: 'test-repo-url',
-            id: 'test-repo-id'
+            id: 'test-repo-id',
           },
-          'pullStatus': 'pending',
-          'branchStatus': 'complete',
-          'commitStatus': 'complete'
-        }
-      }
-    }
+          pullStatus: 'pending',
+          branchStatus: 'complete',
+          commitStatus: 'complete',
+        },
+      },
+    };
 
-    jiraHost = process.env.ATLASSIAN_URL
-    jiraApi = td.api('https://test-atlassian-instance.net')
+    jiraHost = process.env.ATLASSIAN_URL;
+    jiraApi = td.api('https://test-atlassian-instance.net');
 
-    installationId = 1234
-    Date.now = jest.fn(() => 12345678)
+    installationId = 1234;
+    Date.now = jest.fn(() => 12345678);
 
     td.when(models.Subscription.getSingleInstallation(jiraHost, installationId))
       .thenReturn({
@@ -40,121 +40,123 @@ describe('sync/pull-request', () => {
         get: () => repoSyncStatus,
         set: () => repoSyncStatus,
         save: () => Promise.resolve({}),
-        update: () => Promise.resolve({})
-      })
-  })
+        update: () => Promise.resolve({}),
+      });
+  });
 
-  test('should sync to Jira when Pull Request Nodes have jira references', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
+  afterEach(() => {
+    td.reset();
+  });
 
-    const job = createJob({ data: { installationId, jiraHost } })
+  describe.each([
+    ['[TES-15] Evernote Test', 'use-the-force'],
+    ['Evernote Test', 'TES-15'],
+  ])('PR Title: %p, PR Head Ref: %p', (title, head) => {
+    test('should sync to Jira when Pull Request Nodes have jira references', async () => {
+      const { processInstallation } = require('../../../lib/sync/installation');
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+      const job = createJob({ data: { installationId, jiraHost } });
 
-    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries')
-    const pullWithKeyInTitle = require('../../fixtures/api/graphql/pull-request-nodes.json')
+      const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/pull-request-list.json')));
+      pullRequestList[0].title = title;
+      pullRequestList[0].head.ref = head;
 
-    nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
-      .reply(200, pullWithKeyInTitle)
-    nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
-      .reply(200, pullWithKeyInTitle)
+      // GET /repos/:owner/:repo/pulls
+      nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc')
+        .reply(200, pullRequestList);
+      nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls/51')
+        .reply(200, { comments: 0 });
 
-    const queues = {
-      installation: {
-        add: jest.fn()
-      },
-      pullRequests: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
 
-    td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-      preventTransitions: true,
-      repositories: [
-        {
-          id: 'test-repo-id',
-          pullRequests: [
-            {
-              author: {
-                avatar: 'https://avatars0.githubusercontent.com/u/13207348?v=4',
-                name: 'tcbyrd',
-                url: 'https://github.com/tcbyrd'
+      const queues = {
+        installation: {
+          add: jest.fn(),
+        },
+        pullRequests: {
+          add: jest.fn(),
+        },
+      };
+      await processInstallation(app, queues)(job);
+
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+        preventTransitions: true,
+        repositories: [
+          {
+            id: 'test-repo-id',
+            pullRequests: [
+              {
+                author: {
+                  avatar: 'https://avatars0.githubusercontent.com/u/173?v=4',
+                  name: 'bkeepers',
+                  url: 'https://api.github.com/users/bkeepers',
+                },
+                commentCount: 0,
+                destinationBranch: 'test-repo-url/tree/devel',
+                displayId: '#51',
+                id: 51,
+                issueKeys: ['TES-15'],
+                lastUpdate: '2018-05-04T14:06:56Z',
+                sourceBranch: head,
+                sourceBranchUrl: `test-repo-url/tree/${head}`,
+                status: 'DECLINED',
+                timestamp: '2018-05-04T14:06:56Z',
+                title,
+                url: 'https://github.com/integrations/test/pull/51',
+                updateSequenceId: 12345678,
               },
-              commentCount: 0,
-              destinationBranch: 'test-repo-url/tree/master',
-              displayId: '#96',
-              id: 96,
-              issueKeys: ['TES-15'],
-              lastUpdate: '2018-08-23T21:38:05Z',
-              sourceBranch: 'evernote-test',
-              sourceBranchUrl: 'test-repo-url/tree/evernote-test',
-              status: 'OPEN',
-              timestamp: '2018-08-23T21:38:05Z',
-              title: '[TES-15] Evernote test',
-              url: 'https://github.com/tcbyrd/testrepo/pull/96',
-              updateSequenceId: 12345678
-            }
-          ],
-          url: 'test-repo-url',
-          updateSequenceId: 12345678
-        }
-      ],
-      properties: {
-        installationId: 1234
-      }
-    }))
-  })
+            ],
+            url: 'test-repo-url',
+            updateSequenceId: 12345678,
+          },
+        ],
+        properties: { installationId: 1234 },
+      }));
+    });
+  });
 
   test('should not sync if nodes are empty', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
+    const { processInstallation } = require('../../../lib/sync/installation');
 
-    const job = createJob({ data: { installationId, jiraHost } })
+    const job = createJob({ data: { installationId, jiraHost } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
-
-    const { pullsNoLastCursor, pullsWithLastCursor } = require('../../fixtures/api/graphql/pull-queries')
-    const fixture = require('../../fixtures/api/graphql/pull-request-empty-nodes.json')
-
-    nock('https://api.github.com').post('/graphql', pullsNoLastCursor)
-      .reply(200, fixture)
-    nock('https://api.github.com').post('/graphql', pullsWithLastCursor)
-      .reply(200, fixture)
+    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc')
+      .reply(200, []);
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
-      .thenThrow(new Error('test error'))
+      .thenThrow(new Error('test error'));
 
     const queues = {
       installation: {
-        add: jest.fn()
+        add: jest.fn(),
       },
       pullRequests: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
-    expect(queues.pullRequests.add).not.toHaveBeenCalled()
-  })
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
+    expect(queues.pullRequests.add).not.toHaveBeenCalled();
+  });
 
   test('should not sync if nodes do not contain issue keys', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation')
-    process.env.LIMITER_PER_INSTALLATION = 2000
-    const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } })
+    const { processInstallation } = require('../../../lib/sync/installation');
+    process.env.LIMITER_PER_INSTALLATION = 2000;
+    const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } });
 
-    nock('https://api.github.com').post('/installations/1/access_tokens').reply(200, { token: '1234' })
+    const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/pull-request-list.json')));
 
-    const fixture = require('../../fixtures/api/graphql/pull-request-no-keys.json')
-    nock('https://api.github.com').post('/graphql').reply(200, fixture)
+    // GET /repos/:owner/:repo/pulls
+    nock('https://api.github.com').get('/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc')
+      .reply(200, pullRequestList);
 
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
-      .thenThrow(new Error('test error'))
+      .thenThrow(new Error('test error'));
 
     const queues = {
       installation: {
-        add: jest.fn()
-      }
-    }
-    await processInstallation(app, queues)(job)
-    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts)
-  })
-})
+        add: jest.fn(),
+      },
+    };
+    await processInstallation(app, queues)(job);
+    expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+  });
+});
