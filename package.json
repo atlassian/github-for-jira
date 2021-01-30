@@ -20,7 +20,7 @@
     "@sentry/integrations": "^5.15.5",
     "@sentry/node": "^5.15.5",
     "atlassian-jwt": "^0.1.5",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "body-parser": "^1.18.3",
     "bottleneck": "^2.19.5",
     "bull": "^3.12.1",
