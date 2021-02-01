@@ -11,7 +11,7 @@
     "test": "jest --forceExit",
     "posttest": "npm run lint",
     "test:watch": "jest --watch --notify --notifyMode=change",
-    "worker": "node --no-deprecation bin/worker"
+    "worker": "node --no-deprecation --inspect=9329 bin/worker"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
