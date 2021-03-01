@@ -13,17 +13,17 @@ Object {
 `;
 
 exports[`POST /github/subscription missing body.installationId 1`] = `
-Object {
-  "0": Object {
-    "err": "installationId and jiraHost must be provided to delete a subscription.",
+Array [
+  Object {
+    "err": Any<String>,
   },
-}
+]
 `;
 
 exports[`POST /github/subscription missing body.jiraHost 1`] = `
-Object {
-  "0": Object {
-    "err": "installationId and jiraHost must be provided to delete a subscription.",
+Array [
+  Object {
+    "err": Any<String>,
   },
-}
+]
 `;
