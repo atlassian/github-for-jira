@@ -40,6 +40,7 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 - **Callback URL**: `https://DOMAIN/github/callback`
 - **Setup URL**: `https://DOMAIN/github/configuration`
 - **Webhook URL**: `https://DOMAIN/github/events`
+- **Webhook Secret**: `development`
 
 Your new GitHub app will need the following repository permissions:
 
@@ -124,10 +125,10 @@ For production, you should just use `npm run start`.
 ## Configuring the Jira instance
 
 1. Create a new [free developer instance][jira-developer-instance] on Jira Cloud.
-2. From the header menu, select **Apps** -> **Manage your apps**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar).
+2. From the header menu, select **Apps** -> **Manage your apps**.
 3. Verify the filter is set to `User-installed`, and select **Settings** beneath the User-installed apps table.
-4. On the Settings pop-up, add **Enable development mode** and click **Apply**.
-5. From the right header, select **Upload app** and enter `https://DOMAIN/jira/atlassian-connect.json`
+4. On the Settings pop-up, add **Enable development mode** and click **Apply**. Refresh the page.
+5. On the right side of the header, there should now appear a button **Upload app**. Click it and enter `https://DOMAIN/jira/atlassian-connect.json`
 6. Click **Upload**.
 7. That's it! You're done. :tada:
 
