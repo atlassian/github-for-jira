@@ -15,9 +15,23 @@ Contributions to this product are [released][releases] to the public under the [
 
 Please note that this project is released with a [Contributor Code of Conduct][code-of-conduct]. By participating in this project you agree to abide by its terms.
 
-## Configuring a GitHub App
+## Installing a tunneling tool
 
-The first step for running the app locally is to configure a GitHub App. For that you will need to use [ngrok](https://ngrok.com) to expose a URL publicly - referred to as `DOMAIN` in this doc - which will tunnel traffic back to your computer. If you choose to proceed with ngrok, you can do that by running `ngrok http 4002` after installing it.
+To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed. 
+
+Install ngrok: 
+```
+brew cask install ngrok
+```
+
+Or install localtunnel:
+```
+npm install -g localtunnel
+```
+
+A tunnel will automatically be created using one of the installed tools when you later start the server (see `tunnel.js`). This tunnel will expose a URL through which internet traffic can reach your local machine. This URL will be called `DOMAIN` in the rest of this document.
+
+## Configuring a GitHub App
 
 Create a new [GitHub App](https://github.com/settings/apps), setting the following config:
 
@@ -55,6 +69,8 @@ Once you've set up your GitHub app and cloned this repo, copy the content from `
 + `STORAGE_SECRET`: It needs to be set to a 32 char secret (anything else fails). You can generate one by running `openssl rand -hex 32` in your terminal.
 +  `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing it. If you don't have one now, please set the value of this variable after going through the step 1 of "Configuring the Jira instance" section of this document.
++ `TUNNEL_SUBDOMAIN`: the subdomain you want to use to allow access from the internet to your local machine (just replace &lt;yourname&gt; with your name)
++ `INSTANCE_NAME`: choose a name for your instance
 
 ## Running dependencies
 
@@ -79,7 +95,7 @@ This will install all dependencies, including `node` and `postgres`, which are r
 **Note:** Most certainly, if you are running Postgres in docker, it won’t have any info about your local user, so the superuser will be named postgres instead of having the same name as your Mac user. You can fix this by:
 * Open db/config.json
 * Add "username": "postgres", inside "development" and "test".
-* Be careful to not commit this file!
+* Be careful to not commit the changes in this file!
 
 To set up the databases and keep their schemas up to date, run:
 
