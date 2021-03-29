@@ -17,9 +17,9 @@ Please note that this project is released with a [Contributor Code of Conduct][c
 
 ## Installing a tunneling tool
 
-To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed. 
+To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed.
 
-Install ngrok: 
+Install ngrok:
 ```
 brew cask install ngrok
 ```
@@ -89,9 +89,7 @@ Install the dependencies by running:
 $ script/bootstrap
 ```
 
-This will install all dependencies, including `node` and `postgres`, which are required to run the app. However, we recommend running `postgres` and `redis` in docker instead of doing it locally. You can do so by running:
-
-`docker run -p 5432:5432 --name postgres -e POSTGRES_HOST_AUTH_METHOD=trust postgres` and `docker run -p 6379:6379 redis`.
+This will install all dependencies, including `node` and `postgres`, which are required to run the app. However, we recommend running `postgres` and `redis` in docker instead of doing it locally. You can do so by running: `docker-compose up`.
 
 **Note:** Most certainly, if you are running Postgres in docker, it won’t have any info about your local user, so the superuser will be named postgres instead of having the same name as your Mac user. You can fix this by:
 * Open db/config.json
