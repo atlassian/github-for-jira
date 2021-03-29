@@ -1,0 +1,13 @@
+services:
+
+  postgres:
+    image: "postgres"
+    ports:
+      - "5432:5432"
+    env_file:
+      - db/database.env
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
