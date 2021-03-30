@@ -72,6 +72,7 @@ Once you've set up your GitHub app and cloned this repo, copy the content from `
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing it. If you don't have one now, please set the value of this variable after going through the step 1 of "Configuring the Jira instance" section of this document.
 + `TUNNEL_SUBDOMAIN`: the subdomain you want to use to allow access from the internet to your local machine (just replace &lt;yourname&gt; with your name)
 + `INSTANCE_NAME`: choose a name for your instance
++ `WEBHOOK_PROXY_URL`: `https://DOMAIN/github/events`
 
 ## Running dependencies
 
