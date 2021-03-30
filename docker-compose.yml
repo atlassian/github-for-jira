@@ -4,8 +4,8 @@ services:
     image: "postgres"
     ports:
       - "5432:5432"
-    env_file:
-      - db/database.env
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD: trust
 
   redis:
     image: "redis:alpine"
