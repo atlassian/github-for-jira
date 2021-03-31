@@ -1,103 +1,103 @@
 /* globals $, AP */
-const params = new URLSearchParams(window.location.search.substring(1))
-const appUrl = document.querySelector('meta[name=public-url]').getAttribute('content')
+const params = new URLSearchParams(window.location.search.substring(1));
+const appUrl = document.querySelector('meta[name=public-url]').getAttribute('content');
 
-$('.add-organization-link').click(function (event) {
-  event.preventDefault()
+$('.add-organization-link').click((event) => {
+  event.preventDefault();
 
-  const child = window.open(`${appUrl}/github/redirect?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`)
+  const child = window.open(`${appUrl}/github/redirect?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`);
 
-  const interval = setInterval(function () {
+  const interval = setInterval(() => {
     if (child.closed) {
-      clearInterval(interval)
+      clearInterval(interval);
 
-      AP.navigator.reload()
+      AP.navigator.reload();
     }
-  }, 100)
-})
+  }, 100);
+});
 
-$('.configure-connection-link').click(function (event) {
-  event.preventDefault()
+$('.configure-connection-link').click((event) => {
+  event.preventDefault();
 
-  const installationLink = $(event.target).data('installation-link')
-  const child = window.open(installationLink)
+  const installationLink = $(event.target).data('installation-link');
+  const child = window.open(installationLink);
 
-  const interval = setInterval(function () {
+  const interval = setInterval(() => {
     if (child.closed) {
-      clearInterval(interval)
+      clearInterval(interval);
 
-      AP.navigator.reload()
+      AP.navigator.reload();
     }
-  }, 100)
-})
+  }, 100);
+});
 
-$('.delete-connection-link').click(function (event) {
-  event.preventDefault()
+$('.delete-connection-link').click((event) => {
+  event.preventDefault();
 
   $.ajax({
     type: 'DELETE',
     url: `/jira/configuration?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`,
     data: {
-      installationId: $(event.target).data('installation-id')
+      installationId: $(event.target).data('installation-id'),
     },
-    success: function (data) {
-      AP.navigator.reload()
-    }
-  })
-})
+    success(data) {
+      AP.navigator.reload();
+    },
+  });
+});
 
-$('.sync-connection-link').click(function (event) {
-  event.preventDefault()
-  const installationId = $(event.target).data('installation-id')
+$('.sync-connection-link').click((event) => {
+  event.preventDefault();
+  const installationId = $(event.target).data('installation-id');
 
   $.ajax({
     type: 'POST',
-    url: `/jira/sync`,
+    url: '/jira/sync',
     data: {
-      installationId: installationId,
+      installationId,
       jiraHost: $(event.target).data('jira-host'),
       syncType: document.getElementById(`${installationId}-sync-type`).value,
       token: params.get('jwt'),
-      _csrf: document.getElementById('_csrf').value
+      _csrf: document.getElementById('_csrf').value,
     },
-    success: function (data) {
-      AP.navigator.reload()
+    success(data) {
+      AP.navigator.reload();
     },
-    error: function (error) {
-      console.log(error)
-    }
-  })
-})
+    error(error) {
+      console.log(error);
+    },
+  });
+});
 
-const retryModal = document.getElementById('sync-retry-modal')
-const statusModal = document.getElementById('sync-status-modal')
-const retryBtn = document.getElementById('sync-retry-modal-btn')
-const statusBtn = document.getElementById('sync-status-modal-btn')
-const retrySpan = document.getElementById('retry-close')
-const statusSpan = document.getElementById('status-close')
+const retryModal = document.getElementById('sync-retry-modal');
+const statusModal = document.getElementById('sync-status-modal');
+const retryBtn = document.getElementById('sync-retry-modal-btn');
+const statusBtn = document.getElementById('sync-status-modal-btn');
+const retrySpan = document.getElementById('retry-close');
+const statusSpan = document.getElementById('status-close');
 
 retryBtn.onclick = function () {
-  retryModal.style.display = 'block'
-}
+  retryModal.style.display = 'block';
+};
 
 statusBtn.onclick = function () {
-  statusModal.style.display = 'block'
-}
+  statusModal.style.display = 'block';
+};
 
 retrySpan.onclick = function () {
-  retryModal.style.display = 'none'
-}
+  retryModal.style.display = 'none';
+};
 
 statusSpan.onclick = function () {
-  statusModal.style.display = 'none'
-}
+  statusModal.style.display = 'none';
+};
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
   if (event.target === retryModal) {
-    retryModal.style.display = 'none'
+    retryModal.style.display = 'none';
   }
   if (event.target === statusModal) {
-    statusModal.style.display = 'none'
+    statusModal.style.display = 'none';
   }
-}
+};
