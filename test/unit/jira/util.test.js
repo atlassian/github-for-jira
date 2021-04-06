@@ -105,7 +105,7 @@ describe('Jira util', () => {
     });
 
     it('should only pull issue keys from reference links', () => {
-      const { source, rendered } = loadFixture('find-exxisting-references');
+      const { source, rendered } = loadFixture('find-existing-references');
       const issues = [
         {
           key: 'TEST-2019',
