@@ -104,8 +104,8 @@ describe('Jira util', () => {
       expect(result).toBe(rendered);
     });
 
-    it.only('should handle multiple references and not add duplicate reference links', () => {
-      const { source, rendered } = loadFixture('mytest');
+    it('should only pull issue keys from reference links', () => {
+      const { source, rendered } = loadFixture('find-exxisting-references');
       const issues = [
         {
           key: 'TEST-2019',
@@ -129,8 +129,6 @@ describe('Jira util', () => {
 
       const result = util.addJiraIssueLinks(source, issues);
 
-      console.log(result);
-      console.log(rendered);
       expect(result).toBe(rendered);
     });
   });
