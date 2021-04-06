@@ -1,30 +1,30 @@
 /* globals $ */
-$('.install-link').click(function (event) {
-  event.preventDefault()
+$('.install-link').click((event) => {
+  event.preventDefault();
 
   $.post('/github/configuration', {
     installationId: $(event.target).data('installation-id'),
     _csrf: document.getElementById('_csrf').value,
-    clientKey: document.getElementById('clientKey').value
-  }, function (data) {
+    clientKey: document.getElementById('clientKey').value,
+  }, (data) => {
     if (data.err) {
-      return console.log(data.err)
+      return console.log(data.err);
     }
-    window.close()
-  })
-})
+    window.close();
+  });
+});
 
-$('.delete-link').click(function (event) {
-  event.preventDefault()
+$('.delete-link').click((event) => {
+  event.preventDefault();
 
   $.post('/github/subscription', {
     installationId: $(event.target).data('installation-id'),
     jiraHost: $(event.target).data('jira-host'),
-    _csrf: document.getElementById('_csrf').value
-  }, function (data) {
+    _csrf: document.getElementById('_csrf').value,
+  }, (data) => {
     if (data.err) {
-      return console.log(data.err)
+      return console.log(data.err);
     }
-    window.close()
-  })
-})
+    window.close();
+  });
+});

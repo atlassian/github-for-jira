@@ -1,7 +1,8 @@
 describe('GitHub Actions', () => {
   describe('issue', () => {
     describe('created', () => {
-      it('should update the GitHub issue with a linked Jira ticket', async () => {
+      // eslint-disable-next-line no-only-tests/no-only-tests
+      it.only('should update the GitHub issue with a linked Jira ticket', async () => {
         const payload = require('../fixtures/issue-basic.json');
 
         const githubApi = td.api('https://api.github.com');

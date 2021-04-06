@@ -4,6 +4,7 @@
   "repository": "https://github.com/integrations/jira.git",
   "scripts": {
     "ci": "npm test && npm run lint",
+    "coverage": "npm test --coverage --watchAll=false && open coverage/index.html",
     "dev": "nodemon --exec \"node --inspect ./lib/run.js\"",
     "dev:worker": "nodemon --exec \"node --inspect=9230 bin/worker\"",
     "lint": "eslint lib test bin/worker",
@@ -36,6 +37,7 @@
     "hot-shots": "^7.4.1",
     "ioredis": "^4.16.3",
     "markdown": "^0.5.0",
+    "marked": "^2.0.1",
     "moment": "^2.24.0",
     "moo": "^0.5.0",
     "newrelic": "^6.2.0",
@@ -79,6 +81,12 @@
     "setupFilesAfterEnv": [
       "<rootDir>/test/setup"
     ],
-    "globalTeardown": "<rootDir>/test/teardown"
+    "globalTeardown": "<rootDir>/test/teardown",
+    "collectCoverage": true,
+    "coverageReporters": [
+      "lcov",
+      "html"
+    ],
+    "coverageDirectory": "./output/code-coverage/"
   }
 }

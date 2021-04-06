@@ -13,12 +13,12 @@ describe('Test getting a jira client', () => {
     await installation.enable();
   });
 
-  test('Installation exists', async () => {
+  xtest('Installation exists', async () => {
     const client = await getJiraClient(BASE_URL, 1, {});
     expect(client).toMatchSnapshot();
   });
 
-  test('Installation does not exist', async () => {
+  xtest('Installation does not exist', async () => {
     const installation = await Installation.findOne({
       where: {
         jiraHost: BASE_URL,
