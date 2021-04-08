@@ -17,9 +17,9 @@ Please note that this project is released with a [Contributor Code of Conduct][c
 
 ## Installing a tunneling tool
 
-To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed. 
+To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed.
 
-Install ngrok: 
+Install ngrok:
 ```
 brew cask install ngrok
 ```
@@ -65,12 +65,13 @@ It will also need to subscribe to the following events:
 Once you've set up your GitHub app and cloned this repo, copy the content from `.env.example` and paste it to a new file called `.env`, with the following configuration:
 
 + `APP_ID` and `GITHUB_CLIENT_ID`: Copy these values over from your new GitHub app page.
-+ `GITHUB_CLIENT_SECRET`: You'll need to generate a new one on your GitHub app page by hitting the `Generate a new client secret` button. Copy and paste the generated secret.
 + `APP_URL`: `https://DOMAIN`
-+ `STORAGE_SECRET`: It needs to be set to a 32 char secret (anything else fails). You can generate one by running `openssl rand -hex 32` in your terminal.
++ `GITHUB_CLIENT_SECRET`: You'll need to generate a new one on your GitHub app page by hitting the `Generate a new client secret` button. Copy and paste the generated secret.
++ `TUNNEL_SUBDOMAIN`: the subdomain you want to use to allow access from the internet to your local machine (just replace &lt;yourname&gt; with your name)
 +  `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing it. If you don't have one now, please set the value of this variable after going through the step 1 of "Configuring the Jira instance" section of this document.
-+ `TUNNEL_SUBDOMAIN`: the subdomain you want to use to allow access from the internet to your local machine (just replace &lt;yourname&gt; with your name)
++ `WEBHOOK_PROXY_URL`: https://DOMAIN/github/events
++ `STORAGE_SECRET`: It needs to be set to a 32 char secret (anything else fails). You can generate one by running `openssl rand -hex 32 | pbcopy` in your terminal and paste directly to your .env file.
 + `INSTANCE_NAME`: choose a name for your instance
 + `WEBHOOK_PROXY_URL`: `https://DOMAIN/github/events`
 
@@ -90,9 +91,7 @@ Install the dependencies by running:
 $ script/bootstrap
 ```
 
-This will install all dependencies, including `node` and `postgres`, which are required to run the app. However, we recommend running `postgres` and `redis` in docker instead of doing it locally. You can do so by running:
-
-`docker run -p 5432:5432 --name postgres -e POSTGRES_HOST_AUTH_METHOD=trust postgres` and `docker run -p 6379:6379 redis`.
+This will install all dependencies, including `node` and `postgres`, which are required to run the app. However, we recommend running `postgres` and `redis` in docker instead of doing it locally. You can do so by running: `docker-compose up`.
 
 **Note:** Most certainly, if you are running Postgres in docker, it won’t have any info about your local user, so the superuser will be named postgres instead of having the same name as your Mac user. You can fix this by:
 * Open db/config.json
