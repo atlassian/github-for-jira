@@ -73,7 +73,7 @@ describe('test installation model', () => {
   // Close connection when tests are done
   afterAll(async () => Installation.close());
 
-  xit('installs app when it receives an install payload from jira', async () => {
+  it('installs app when it receives an install payload from jira', async () => {
     const installation = await Installation.install({
       host: newInstallPayload.baseUrl,
       sharedSecret: newInstallPayload.sharedSecret,
@@ -89,7 +89,7 @@ describe('test installation model', () => {
     expect(installation.clientKey).toBe(hashedKey);
   });
 
-  xit('updates the jiraHost for an installation when a site is renamed', async () => {
+  it('updates the jiraHost for an installation when a site is renamed', async () => {
     const newInstallation = await Installation.install({
       host: newInstallPayload.baseUrl,
       sharedSecret: newInstallPayload.sharedSecret,
@@ -106,7 +106,7 @@ describe('test installation model', () => {
     expect(updatedInstallation.jiraHost).toBe(renamedInstallPayload.baseUrl);
   });
 
-  xit('updates all Subscriptions for a given jira clientKey when a site is renamed', async () => {
+  it('updates all Subscriptions for a given jira clientKey when a site is renamed', async () => {
     const updatedInstallation = await Installation.install({
       host: renamedInstallPayload.baseUrl,
       sharedSecret: renamedInstallPayload.sharedSecret,
