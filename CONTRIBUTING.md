@@ -81,9 +81,7 @@ Please ensure that you have [homebrew](https://brew.sh/) installed. Instructions
 
 This app is written in [ES6 JavaScript](https://nodejs.org/en/docs/es6/) and runs on [Node.js](https://nodejs.org/).
 
-Required version of Node: v10.13.0
-
-**WARNING:**  Newer versions of Node do not work with "pg": "^7.4.3". It will simply hang on every DB operation with no logs whatsoever. Check you version with `node --version`; Run `nvm use 10.13` if you need to change it.
+**Required version of Node**: v12.x
 
 Install the dependencies by running:
 
