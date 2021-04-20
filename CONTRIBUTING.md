@@ -38,6 +38,23 @@ $ npm test
 
 The next step for running the app locally is to configure a GitHub App. For that you will likely need to use a tool like [ngrok](https://ngrok.com) to expose a URL publicly (referred to as `DOMAIN` in these docs) which will tunnel traffic back to your computer.
 
+## Installing a tunneling tool
+
+To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed.
+
+Install ngrok:
+```
+For brew of 2.7 or higher :
+brew install --cask ngrok
+
+For brew of 2.6 or lower :
+brew cask install ngrok
+
+Or install localtunnel:
+```
+npm install -g localtunnel
+
+
 #### Configuring a GitHub App
 
 Follow the [Probot docs for configuring up a GitHub App][configure-github-app] skipping the addition of `WEBHOOK_PROXY_URL` to your `.env` file, the only other difference being these values for the GitHub App settings:
