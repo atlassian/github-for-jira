@@ -2,10 +2,10 @@ const transformPullRequest = require('../../../lib/transforms/pull-request');
 
 describe('pull_request transform', () => {
   it('should not contain branches on the payload if pull request status is closed.', async () => {
-    const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/pull-request-list.json')));
-    pullRequestList[1].title = '[TES-123] Branch payload Test';
+    const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/transform-pull-request-list.json')));
+    pullRequestList[0].title = '[TES-123] Branch payload Test';
     const payload = {
-      pull_request: pullRequestList[1],
+      pull_request: pullRequestList[0],
       repository: {
         id: 1234568,
         name: 'test-repo',
@@ -37,12 +37,12 @@ describe('pull_request transform', () => {
           displayId: '#51',
           id: 51,
           issueKeys: ['TES-123'],
-          lastUpdate: pullRequestList[1].updated_at,
+          lastUpdate: pullRequestList[0].updated_at,
           sourceBranch: 'use-the-force',
           sourceBranchUrl: 'https://github.com/integrations/test/tree/use-the-force',
           status: 'MERGED',
-          timestamp: pullRequestList[1].updated_at,
-          title: pullRequestList[1].title,
+          timestamp: pullRequestList[0].updated_at,
+          title: pullRequestList[0].title,
           url: 'https://github.com/integrations/test/pull/51',
           updateSequenceId: 12345678,
         },
@@ -54,10 +54,10 @@ describe('pull_request transform', () => {
   });
 
   it('should contain branches on the payload if pull request status is different than closed.', async () => {
-    const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/pull-request-list.json')));
-    pullRequestList[2].title = '[TES-123] Branch payload Test';
+    const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/transform-pull-request-list.json')));
+    pullRequestList[1].title = '[TES-123] Branch payload Test';
     const payload = {
-      pull_request: pullRequestList[2],
+      pull_request: pullRequestList[1],
       repository: {
         id: 1234568,
         name: 'test-repo',
@@ -95,12 +95,12 @@ describe('pull_request transform', () => {
           displayId: '#51',
           id: 51,
           issueKeys: ['TES-123'],
-          lastUpdate: pullRequestList[2].updated_at,
+          lastUpdate: pullRequestList[1].updated_at,
           sourceBranch: 'use-the-force',
           sourceBranchUrl: 'https://github.com/integrations/test/tree/use-the-force',
           status: 'OPEN',
-          timestamp: pullRequestList[2].updated_at,
-          title: pullRequestList[2].title,
+          timestamp: pullRequestList[1].updated_at,
+          title: pullRequestList[1].title,
           url: 'https://github.com/integrations/test/pull/51',
           updateSequenceId: 12345678,
         },
