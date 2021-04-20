@@ -43,17 +43,20 @@ The next step for running the app locally is to configure a GitHub App. For that
 To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed.
 
 Install ngrok:
-```
+
 For brew of 2.7 or higher :
+```
 brew install --cask ngrok
 
 For brew of 2.6 or lower :
+```
 brew cask install ngrok
 
 Or install localtunnel:
 ```
 npm install -g localtunnel
-
+```
+A tunnel will automatically be created using one of the installed tools when you later start the server (see `tunnel.js`). This tunnel will expose a URL through which internet traffic can reach your local machine. This URL will be called `DOMAIN` in the rest of this document.
 
 #### Configuring a GitHub App
 
