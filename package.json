@@ -35,7 +35,6 @@
     "helmet": "^3.21.2",
     "hot-shots": "^7.4.1",
     "ioredis": "^4.16.3",
-    "markdown": "^0.5.0",
     "moment": "^2.24.0",
     "moo": "^0.5.0",
     "newrelic": "^6.2.0",
