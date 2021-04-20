@@ -47,11 +47,11 @@ Install ngrok:
 For brew of 2.7 or higher :
 ```
 brew install --cask ngrok
-
+```
 For brew of 2.6 or lower :
 ```
 brew cask install ngrok
-
+```
 Or install localtunnel:
 ```
 npm install -g localtunnel
