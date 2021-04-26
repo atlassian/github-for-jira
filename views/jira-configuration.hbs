@@ -27,6 +27,8 @@
         <section class="content">
           {{#if hasConnections}}
 
+           <div>{{numberOfSyncedRepos}} / {{ totalNumberOfRepos }} repos synced</div>
+
             <table>
               <thead>
                 <tr>
@@ -62,7 +64,6 @@
               </thead>
               <tbody>
                 {{#each connections}}
-                <div>You have {{ repoSyncState }} repos to install</div>
                   <tr>
                     <td><img class="connection-avatar" src="{{ account.avatar_url }}" height="24" width="24" /> {{ account.login }}</td>
                     <td>
