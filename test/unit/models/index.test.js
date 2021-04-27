@@ -45,7 +45,7 @@ describe('test installation model', () => {
     eventType: 'installed',
   };
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     // Clean up the database
     await Installation.truncate({ cascade: true, restartIdentity: true });
     await Subscription.truncate({ cascade: true, restartIdentity: true });
