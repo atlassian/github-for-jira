@@ -26,9 +26,6 @@
 
         <section class="content">
           {{#if hasConnections}}
-
-           <div>{{numberOfSyncedRepos}} / {{ totalNumberOfRepos }} repos synced</div>
-
             <table>
               <thead>
                 <tr>
@@ -36,6 +33,7 @@
                   <th>Repositories</th>
                   <th>Added</th>
                   <th></th>
+                  <th>Repos Synced</th>
                   <th>Sync Status <span id="sync-status-modal-btn" class="sync-status-modal-btn">ℹ️</span></th></th>
                   <div id="sync-status-modal" class="sync-retry-modal">
                     <div class="sync-retry-modal-content">
@@ -81,6 +79,9 @@
                     <td>
                       <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
                       <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
+                    </td>
+                    <td>
+                      {{ numberOfSyncedRepos }} / {{ totalNumberOfRepos }}
                     </td>
                     <td>
                       {{#if syncWarning}}
