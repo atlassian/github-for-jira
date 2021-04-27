@@ -67,7 +67,6 @@ Once you've set up your GitHub app and cloned this repo, copy the content from `
 + `APP_ID` and `GITHUB_CLIENT_ID`: Copy these values over from your new GitHub app page.
 + `APP_URL`: `https://DOMAIN`
 + `GITHUB_CLIENT_SECRET`: You'll need to generate a new one on your GitHub app page by hitting the `Generate a new client secret` button. Copy and paste the generated secret.
-+ `TUNNEL_SUBDOMAIN`: the subdomain you want to use to allow access from the internet to your local machine (just replace &lt;yourname&gt; with your name)
 +  `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing it. If you don't have one now, please set the value of this variable after going through the step 1 of "Configuring the Jira instance" section of this document.
 + `WEBHOOK_PROXY_URL`: https://DOMAIN/github/events
