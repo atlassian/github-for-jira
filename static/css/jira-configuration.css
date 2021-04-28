@@ -1,0 +1,8 @@
+.jiraConfigurationTable {
+    table-layout: fixed ;
+    width: 100% ;
+}
+
+.jiraConfigurationTable__connectionLinks > :first-child {
+    padding-left: 0;
+}
