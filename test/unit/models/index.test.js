@@ -45,11 +45,13 @@ describe('test installation model', () => {
     eventType: 'installed',
   };
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     // Clean up the database
     await Installation.truncate({ cascade: true, restartIdentity: true });
     await Subscription.truncate({ cascade: true, restartIdentity: true });
+  });
 
+  beforeAll(async () => {
     const installation = await Installation.install({
       host: existingInstallPayload.baseUrl,
       sharedSecret: existingInstallPayload.sharedSecret,
