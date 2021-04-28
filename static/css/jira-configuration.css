@@ -37,3 +37,7 @@
     background-color: #FFEBE6;
     color: #BF2600;
 }
+
+.jiraConfigurationTable__refresh {
+    font-weight: bold;
+}
