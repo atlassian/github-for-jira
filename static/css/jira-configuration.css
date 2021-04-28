@@ -6,3 +6,34 @@
 .jiraConfigurationTable__connectionLinks > :first-child {
     padding-left: 0;
 }
+
+.jiraConfigurationTable__syncStatus {
+    border-radius: 5px;
+    font-weight: bold;
+    padding: 0.2em 0.3em;
+}
+
+.PENDING {
+    background-color: #DFE1E6;
+    color: #42526E;
+}
+
+.ACTIVE {
+    background-color: #DEEBFF;
+    color: #0747A6;
+}
+
+.STALLED {
+    background-color: #FFF0B3;
+    color: #172B4D;
+}
+
+.COMPLETE {
+    background-color: #E3FCEF;
+    color: #006644;
+}
+
+.FAILED {
+    background-color: #FFEBE6;
+    color: #BF2600;
+}

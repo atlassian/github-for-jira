@@ -99,10 +99,10 @@
                     <td>
                       {{#if syncWarning}}
                         <a href="#trigger" data-ak-tooltip="{{ syncWarning }}" data-ak-tooltip-position="top" class="muted-link">
-                          <span id="{{id}}-status"> {{ syncStatus }} </span>*
+                          <span id="{{id}}-status" class="{{ syncStatus }} jiraConfigurationTable__syncStatus"> {{ syncStatus }} </span>*
                         </a>
                       {{else}}
-                        <span id="{{id}}-status"> {{ syncStatus }} </span>
+                        <span id="{{id}}-status" class="{{ syncStatus }} jiraConfigurationTable__syncStatus"> {{ syncStatus }} </span>
                       {{/if}}
                     </td>
 
