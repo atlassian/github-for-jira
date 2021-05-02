@@ -13,27 +13,27 @@
     padding: 0.2em 0.3em;
 }
 
-.PENDING {
+.jiraConfigurationTable__pending {
     background-color: #DFE1E6;
     color: #42526E;
 }
 
-.ACTIVE {
+.jiraConfigurationTable__active {
     background-color: #DEEBFF;
     color: #0747A6;
 }
 
-.STALLED {
+.jiraConfigurationTable__stalled {
     background-color: #FFF0B3;
     color: #172B4D;
 }
 
-.COMPLETE {
+.jiraConfigurationTable__complete {
     background-color: #E3FCEF;
     color: #006644;
 }
 
-.FAILED {
+.jiraConfigurationTable__failed {
     background-color: #FFEBE6;
     color: #BF2600;
 }
