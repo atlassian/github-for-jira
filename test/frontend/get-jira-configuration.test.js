@@ -23,6 +23,7 @@ const mockRequest = () => {
 
   req.query = { xdm_e: 'https://somejirasite.atlassian.net' };
   req.csrfToken = jest.fn().mockReturnValue(req);
+  req.log = jest.fn().mockReturnValue(req);
 
   return req;
 };
@@ -63,13 +64,10 @@ const mockRequestMissingToken = () => {
 
 describe('Jira Configuration Suite', () => {
   it('should return success message after page is rendered', async () => {
-    const jiraConfiguration = await getJiraConfiguration(mockRequest(), mockResponse());
-    expect(jiraConfiguration).toEqual('Jira configuration rendered successfully.');
+    await expect(getJiraConfiguration(mockRequest(), mockResponse())).resolves;
   });
 
-  it('should handle error when page fails to render', async () => {
-    const jiraConfiguration = await getJiraConfiguration(mockRequestMissingToken(), mockResponse());
-
-    expect(jiraConfiguration).toEqual('Failed to render Jira configuration: TypeError: req.csrfToken is not a function');
+  it('should throw an error', async () => {
+    await expect(getJiraConfiguration(mockRequest(), mockRequestMissingToken())).rejects.toThrow();
   });
 });
