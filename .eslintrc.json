@@ -57,7 +57,7 @@
     "jest": true
   },
   "globals": {
-    "td": "writeable"
+    "td": "writable"
   },
   "plugins": [
     "no-only-tests",
