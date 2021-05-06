@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
     <link rel="stylesheet" href="/public/atlassian-ui-kit/bundle.css" media="all" />
     <link rel="stylesheet" href="/public/css/styles.css" media="all" />
+    <link rel="stylesheet" href="/public/css/jira-configuration.css" media="all" />
     <script src="/public/js/jquery.min.js"></script>
   </head>
   <body class="aui-page-hybrid">
@@ -17,7 +18,7 @@
         <header class="title">
           <h1>GitHub configuration</h1>
         </header>
-        
+
         {{#if hasConnections}}
         <nav class="actions">
             <button class="ak-button ak-button__appearance-primary add-organization-link">Manage Organizations</button>
@@ -26,13 +27,17 @@
 
         <section class="content">
           {{#if hasConnections}}
-            <table>
+            <table class="jiraConfigurationTable">
               <thead>
                 <tr>
                   <th>Organization</th>
-                  <th>Repositories</th>
-                  <th>Added</th>
+
                   <th></th>
+
+                  <th>Added</th>
+
+                  <th>Repos Synced</th>
+
                   <th>Sync Status <span id="sync-status-modal-btn" class="sync-status-modal-btn">ℹ️</span></th></th>
                   <div id="sync-status-modal" class="sync-retry-modal">
                     <div class="sync-retry-modal-content">
@@ -46,7 +51,9 @@
                       <p><strong>COMPLETE</strong> - The sync has finished. Information from selected repositories will be shown in Jira's development information panel.</p>
                     </div>
                   </div>
+
                   <th>Last Sync Update</th>
+
                   <th>Retry <span id="sync-retry-modal-btn" class="sync-retry-modal-btn">ℹ️</span></th>
                   <div id="sync-retry-modal" class="sync-retry-modal">
                     <div class="sync-retry-modal-content">
@@ -57,42 +64,58 @@
                       Use this is you've changed the configuration on GitHub or would otherwise like to rescan all repositories.</p>
                     </div>
                   </div>
+
                 </tr>
               </thead>
               <tbody>
                 {{#each connections}}
                   <tr>
+                    {{!-- Organization --}}
                     <td><img class="connection-avatar" src="{{ account.avatar_url }}" height="24" width="24" /> {{ account.login }}</td>
-                    <td>
-                      {{#if isGlobalInstall }}
-                        All
-                      {{else}}
-                        Selected
-                      {{/if}}
+
+                    {{!-- No header --}}
+                    <td class="jiraConfigurationTable__connectionLinks">
+                      <button class="ak-button ak-button__appearance-link delete-connection-link bob" data-installation-id="{{ id }}">Remove</button>
+                      <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
                     </td>
+
+                    {{!-- Added --}}
                     <td>
                       <span title="{{ installedAt.absolute }}">
                         {{ installedAt.relative }}
                       </span>
                     </td>
+
+                    {{!-- Repos Synced --}}
                     <td>
-                      <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
-                      <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
+                      {{#ifAllReposSynced numberOfSyncedRepos totalNumberOfRepos}}
+                        <span>{{ totalNumberOfRepos }}</span>
+                      {{else}}
+                        <span>{{ numberOfSyncedRepos }} / {{ totalNumberOfRepos }}</span>
+                      {{/ifAllReposSynced}}
+                      {{#if isGlobalInstall }}
+                        <span>(All)</span>
+                      {{else}}
+                        <span>(Selected)</span>
+                      {{/if}}
                     </td>
+
                     <td>
                       {{#if syncWarning}}
                         <a href="#trigger" data-ak-tooltip="{{ syncWarning }}" data-ak-tooltip-position="top" class="muted-link">
-                          <span id="{{id}}-status"> {{ syncStatus }} </span>*
+                          <span id="{{id}}-status" class="jiraConfigurationTable__{{ toLowerCase syncStatus }} jiraConfigurationTable__syncStatus"> {{ syncStatus }} </span>*
                         </a>
                       {{else}}
-                        <span id="{{id}}-status"> {{ syncStatus }} </span>
+                        <span id="{{id}}-status" class="jiraConfigurationTable__{{ toLowerCase syncStatus }} jiraConfigurationTable__syncStatus"> {{ syncStatus }} </span>
                       {{/if}}
                     </td>
+
                     <td>
                       <span title="{{ subscriptionUpdatedAt.absolute }}">
                         {{ subscriptionUpdatedAt.relative }}
                       </span>
                     </td>
+
                     <td>
                       <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                       <select id="{{id}}-sync-type">
@@ -138,6 +161,8 @@
            <p>Metadata for commits, branches, and pull requests that use the <a href="https://confluence.atlassian.com/jirasoftwarecloud/processing-issues-with-smart-commits-788960027.html">Smart Commit syntax</a>
            will be synced to Jira and appear in the <a href="https://confluence.atlassian.com/jirasoftwarecloud/viewing-the-development-information-for-an-issue-777002795.html">Development Information panel</a>
            of the relevant issue.</p>
+
+           <p>To view your Organization’s updated sync status, <span class="jiraConfigurationTable__refresh">please refresh</span> this page.</p>
         {{/if}}
       </div>
       <script src="/public/js/jira-configuration.js"></script>
