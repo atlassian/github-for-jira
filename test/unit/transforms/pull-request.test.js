@@ -22,7 +22,7 @@ describe('pull_request transform', () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pull_request.user);
+    const { data } = await transformPullRequest(payload, payload.pull_request.user, []);
     expect(data).toMatchObject({
       id: 1234568,
       name: 'test-owner/test-repo',
@@ -80,7 +80,7 @@ describe('pull_request transform', () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pull_request.user, githubMock);
+    const { data } = await transformPullRequest(payload, payload.pull_request.user, [], githubMock);
     expect(data).toMatchObject({
       id: 1234568,
       name: 'test-owner/test-repo',
