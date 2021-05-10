@@ -22,7 +22,7 @@ describe('pull_request transform', () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pull_request.user, []);
+    const { data } = await transformPullRequest(payload, payload.pull_request.user, payload.pull_request.reviewers, []);
     expect(data).toMatchObject({
       id: 1234568,
       name: 'test-owner/test-repo',
@@ -36,6 +36,7 @@ describe('pull_request transform', () => {
           destinationBranch: 'https://github.com/integrations/test/tree/devel',
           displayId: '#51',
           id: 51,
+          reviewers: [],
           issueKeys: ['TES-123'],
           lastUpdate: pullRequestList[0].updated_at,
           sourceBranch: 'use-the-force',
@@ -72,15 +73,9 @@ describe('pull_request transform', () => {
       },
     };
 
-    const githubMock = {
-      pulls: {
-        get: () => ({ data: { comments: 1 } }),
-      },
-    };
-
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pull_request.user, [], githubMock);
+    const { data } = await transformPullRequest(payload, payload.pull_request.user, payload.pull_request.reviewers, []);
     expect(data).toMatchObject({
       id: 1234568,
       name: 'test-owner/test-repo',
@@ -166,7 +161,7 @@ describe('pull_request transform', () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pull_request.user, commitList, githubMock);
+    const { data } = await transformPullRequest(payload, payload.pull_request.user, payload.pull_request.reviewers, commitList, githubMock);
     expect(data).toMatchObject({
       pullRequests: [
         {
