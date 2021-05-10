@@ -153,15 +153,9 @@ describe('pull_request transform', () => {
       },
     };
 
-    const githubMock = {
-      pulls: {
-        get: () => ({ data: { comments: 1 } }),
-      },
-    };
-
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pull_request.user, payload.pull_request.reviewers, commitList, githubMock);
+    const { data } = await transformPullRequest(payload, payload.pull_request.user, payload.pull_request.reviewers, commitList);
     expect(data).toMatchObject({
       pullRequests: [
         {
