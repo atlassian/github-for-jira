@@ -23,7 +23,7 @@ Still having trouble? [Contact GitHub Support for additional help](#getting-addi
 
 ## Sync status not reaching complete
 
-After installing the integration, your sync status should move from `PENDING` to `ACTIVE` to `COMPLETE`. 
+After installing the integration, your sync status should move from `PENDING` to `IN PROGRESS` to `COMPLETE`. 
 
 You can check your sync status in the integration settings:
 
@@ -34,14 +34,14 @@ You can check your sync status in the integration settings:
 | Status   | Definition                 |
 |----------|----------------------------|
 | PENDING  | The sync has not started.  |
-| ACTIVE   | The sync has started and is still in progress. No information will be displayed in Jira. |
+| IN PROGRESS   | The sync has started and is still in progress. No information will be displayed in Jira. |
 | COMPLETE | The sync has finished. Information will be displayed in Jira. |
 | STALLED  | The sync has not finished but has stopped being updated. Partial information may appear in Jira. |
 | FAILED   | The sync hit an error and stopped without completing. Partial information may appear in Jira. |
 
 The time it takes to complete the sync will depend on the size of your installation. Since the sync scans commits for every repository in your installation, be mindful that selecting "All Repositories" will perform a scan of every repository in your account, including forks. If you have repositories with hundreds of thousands of forks (e.g. a fork of the Linux repo), the scan might take several hours to complete.
 
-Because everyone's repository histories are different, it's difficult to determine how long the scan should take for a specific installation, but on average the sync can process around 100 commits per second. If it's still stuck in `ACTIVE` after a few hours, please check your installation for any large repositories first and attempt a full re-sync:
+Because everyone's repository histories are different, it's difficult to determine how long the scan should take for a specific installation, but on average the sync can process around 100 commits per second. If it's still stuck in `IN PROGRESS` after a few hours, please check your installation for any large repositories first and attempt a full re-sync:
 
 1. Open the GitHub Apps settings in GitHub.
 2. Click **Configure** in Jira.
@@ -62,7 +62,7 @@ Still having trouble? [Contact GitHub Support for additional help](#getting-addi
 
 ## Sync is STALLED
 
-When an ACTIVE sync hasn't made progress for some time, the status will move to STALLED. This can happen when an unexpected error occurs.
+When an IN PROGRESS sync hasn't made progress for some time, the status will move to STALLED. This can happen when an unexpected error occurs.
 
 To resolve, follow these steps to resume the sync:
 
