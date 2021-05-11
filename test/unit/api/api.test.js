@@ -372,6 +372,14 @@ describe('API', () => {
     });
 
     describe('undo', () => {
+      beforeEach(() => {
+        process.env.NODE_ENV = 'production';
+      });
+
+      afterEach(() => {
+        process.env.NODE_ENV = 'test';
+      });
+
       it('should return 404 if no installation is found', async () => {
         const invalidId = 99999999;
         return supertest(subject)
