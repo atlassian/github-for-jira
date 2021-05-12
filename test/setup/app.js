@@ -3,10 +3,22 @@ const { findPrivateKey } = require('probot/lib/private-key');
 const cacheManager = require('cache-manager');
 const { App } = require('@octokit/app');
 
-beforeEach(() => {
+beforeEach(async () => {
   const models = td.replace('../../lib/models', {
-    Installation: td.object(['getForHost']),
-    Subscription: td.object(['getAllForInstallation', 'install', 'getSingleInstallation']),
+    Installation: td.object([
+      'getForHost',
+      'findByPk',
+      'build',
+      'getPendingHost',
+      'install',
+    ]),
+    Subscription: td.object([
+      'getAllForInstallation',
+      'install',
+      'getSingleInstallation',
+      'findOrStartSync',
+      'getAllForHost',
+    ]),
     Project: td.object(['upsert']),
   });
 
@@ -33,7 +45,7 @@ beforeEach(() => {
     });
 
   nock('https://api.github.com')
-    .post(/\/installations\/[\d\w-]+\/access_tokens/)
+    .post(/\/app\/installations\/[\d\w-]+\/access_tokens/)
     .reply(200, {
       token: 'mocked-token',
       expires_at: '9999-12-31T23:59:59Z',
@@ -45,7 +57,7 @@ beforeEach(() => {
 
   const configureRobot = require('../../lib/configure-robot');
 
-  global.app = configureRobot(new Application({
+  global.app = await configureRobot(new Application({
     app: new App({
       id: 12257,
       privateKey: findPrivateKey(),
@@ -62,4 +74,5 @@ beforeEach(() => {
 
 afterEach(() => {
   nock.cleanAll();
+  td.reset();
 });
