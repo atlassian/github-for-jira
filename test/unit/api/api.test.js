@@ -443,19 +443,7 @@ describe('API', () => {
     });
 
     describe('undo and complete - nonprod', () => {
-      it('should return 404 if no installation is found', async () => {
-        const invalidId = 99999999;
-        return supertest(subject)
-          .post(`/api/${invalidId}/migrate/undo`)
-          .set('Authorization', 'Bearer xxx')
-          .send('jiraHost=unknownhost.atlassian.net')
-          .expect(404)
-          .then(response => {
-            expect(response.text).toMatchSnapshot();
-          });
-      });
-
-      it('should migrate an installation', async () => {
+      it('should not migrate an installation', async () => {
         const update = jest.fn();
 
         td.when(models.Installation.getForHost('me.atlassian.net'))
@@ -479,7 +467,7 @@ describe('API', () => {
           });
       });
 
-      it('should undo a migration', async () => {
+      it('should not undo a migration', async () => {
         const update = jest.fn();
 
         td.when(models.Installation.getForHost('me.atlassian.net'))
@@ -490,6 +478,7 @@ describe('API', () => {
 
         td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} });
+        expect(jiraClient.devinfo.migration.undo).not.toHaveBeenCalled();
 
         return supertest(subject)
           .post('/api/1234/migrate/undo?installationId=1234')
@@ -500,7 +489,6 @@ describe('API', () => {
           .then(response => {
             expect(response.text).toMatchSnapshot();
             expect(update).toMatchSnapshot();
-            expect(jiraClient.devinfo.migration.undo).not.toHaveBeenCalled();
           });
       });
     });
