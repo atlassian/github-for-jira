@@ -130,7 +130,7 @@ exports[`API Endpoints undo and complete - nonprod should not undo a migration 2
 }
 `;
 
-exports[`API Endpoints undo and complete - prod should migrate an installation 1`] = `"Successfully called migration complete for 1234"`;
+exports[`API Endpoints undo and complete - prod should migrate an installation 1`] = `"Successfully called migrationComplete"`;
 
 exports[`API Endpoints undo and complete - prod should migrate an installation 2`] = `
 [MockFunction] {
@@ -152,7 +152,7 @@ exports[`API Endpoints undo and complete - prod should migrate an installation 2
 
 exports[`API Endpoints undo and complete - prod should return 404 if no installation is found 1`] = `"Not Found"`;
 
-exports[`API Endpoints undo and complete - prod should undo a migration 1`] = `"Successfully called migration undo for 1234"`;
+exports[`API Endpoints undo and complete - prod should undo a migration 1`] = `"Successfully called migrationUndo"`;
 
 exports[`API Endpoints undo and complete - prod should undo a migration 2`] = `
 [MockFunction] {
