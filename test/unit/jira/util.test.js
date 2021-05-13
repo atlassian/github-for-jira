@@ -24,7 +24,7 @@ describe('Jira util', () => {
       util = getJiraUtil(jiraClient);
     });
 
-    test('it should handle multiple Jira references appropriately', () => {
+    it('it should handle multiple Jira references appropriately', () => {
       const { source, rendered } = loadFixture('multiple-links');
       const issues = [
         {
@@ -76,7 +76,6 @@ describe('Jira util', () => {
           },
         },
       ];
-
       const result = util.addJiraIssueLinks(source, issues);
       expect(result).toBe(rendered);
     });
@@ -102,6 +101,34 @@ describe('Jira util', () => {
       ];
 
       const result = util.addJiraIssueLinks(source, issues);
+      expect(result).toBe(rendered);
+    });
+
+    it('should only pull issue keys from reference links', () => {
+      const { source, rendered } = loadFixture('find-existing-references');
+      const issues = [
+        {
+          key: 'TEST-2019',
+          fields: {
+            summary: 'First Issue',
+          },
+        },
+        {
+          key: 'TEST-2020',
+          fields: {
+            summary: 'Second Issue',
+          },
+        },
+        {
+          key: 'TEST-2021',
+          fields: {
+            summary: 'Third Issue',
+          },
+        },
+      ];
+
+      const result = util.addJiraIssueLinks(source, issues);
+
       expect(result).toBe(rendered);
     });
   });

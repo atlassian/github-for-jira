@@ -46,10 +46,6 @@ describe('test installation model', () => {
   };
 
   beforeEach(async () => {
-    // Clean up the database
-    await Installation.truncate({ cascade: true, restartIdentity: true });
-    await Subscription.truncate({ cascade: true, restartIdentity: true });
-
     const installation = await Installation.install({
       host: existingInstallPayload.baseUrl,
       sharedSecret: existingInstallPayload.sharedSecret,
@@ -68,6 +64,12 @@ describe('test installation model', () => {
       installationId: '2345',
       clientKey: installation.clientKey,
     });
+  });
+
+  afterEach(async () => {
+    // Clean up the database
+    await Installation.truncate({ cascade: true, restartIdentity: true });
+    await Subscription.truncate({ cascade: true, restartIdentity: true });
   });
 
   // Close connection when tests are done
@@ -114,6 +116,7 @@ describe('test installation model', () => {
     });
 
     const updatedSubscriptions = await Subscription.getAllForClientKey(updatedInstallation.clientKey);
+    expect(updatedSubscriptions.length).toBe(2);
 
     for (const subscription of updatedSubscriptions) {
       expect(subscription.jiraHost).toBe(renamedInstallPayload.baseUrl);
