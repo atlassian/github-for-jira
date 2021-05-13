@@ -371,7 +371,7 @@ describe('API', () => {
       });
     });
 
-    describe('undo', () => {
+    describe('undo and complete - prod', () => {
       beforeEach(() => {
         process.env.NODE_ENV = 'production';
       });
@@ -403,7 +403,6 @@ describe('API', () => {
 
         td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} });
-
         return supertest(subject)
           .post('/api/1234/migrate?installationId=1234')
           .set('Authorization', 'Bearer xxx')
@@ -439,6 +438,69 @@ describe('API', () => {
             expect(response.text).toMatchSnapshot();
             expect(update).toMatchSnapshot();
             expect(jiraClient.devinfo.migration.undo).toHaveBeenCalled();
+          });
+      });
+    });
+
+    describe('undo and complete - nonprod', () => {
+      it('should return 404 if no installation is found', async () => {
+        const invalidId = 99999999;
+        return supertest(subject)
+          .post(`/api/${invalidId}/migrate/undo`)
+          .set('Authorization', 'Bearer xxx')
+          .send('jiraHost=unknownhost.atlassian.net')
+          .expect(404)
+          .then(response => {
+            expect(response.text).toMatchSnapshot();
+          });
+      });
+
+      it('should migrate an installation', async () => {
+        const update = jest.fn();
+
+        td.when(models.Installation.getForHost('me.atlassian.net'))
+          .thenReturn([{}]);
+
+        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', '1234'))
+          .thenReturn({ update });
+
+        td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
+          .thenReturn({ data: {} });
+        return supertest(subject)
+          .post('/api/1234/migrate?installationId=1234')
+          .set('Authorization', 'Bearer xxx')
+          .set('host', '127.0.0.1')
+          .send('jiraHost=me.atlassian.net')
+          .expect(200)
+          .then(response => {
+            expect(response.text).toMatchSnapshot();
+            expect(update).toMatchSnapshot();
+            expect(jiraClient.devinfo.migration.complete).not.toHaveBeenCalled();
+          });
+      });
+
+      it('should undo a migration', async () => {
+        const update = jest.fn();
+
+        td.when(models.Installation.getForHost('me.atlassian.net'))
+          .thenReturn([{}]);
+
+        td.when(models.Subscription.getSingleInstallation('me.atlassian.net', '1234'))
+          .thenReturn({ update });
+
+        td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
+          .thenReturn({ data: {} });
+
+        return supertest(subject)
+          .post('/api/1234/migrate/undo?installationId=1234')
+          .set('Authorization', 'Bearer xxx')
+          .set('host', '127.0.0.1')
+          .send('jiraHost=me.atlassian.net')
+          .expect(200)
+          .then(response => {
+            expect(response.text).toMatchSnapshot();
+            expect(update).toMatchSnapshot();
+            expect(jiraClient.devinfo.migration.undo).not.toHaveBeenCalled();
           });
       });
     });

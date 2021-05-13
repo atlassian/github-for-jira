@@ -80,9 +80,6 @@
     "setupFilesAfterEnv": [
       "<rootDir>/test/setup"
     ],
-    "setupFiles": [
-      "<rootDir>/jest/setEnvVars"
-    ],
     "globalTeardown": "<rootDir>/test/teardown"
   }
 }
