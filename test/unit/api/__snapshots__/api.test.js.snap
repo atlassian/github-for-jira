@@ -90,7 +90,7 @@ exports[`API Endpoints sync should return 404 if no installation is found 1`] = 
 
 exports[`API Endpoints sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
 
-exports[`API Endpoints undo and complete - nonprod should not migrate an installation 1`] = `"migrationComplete will only be called in prod"`;
+exports[`API Endpoints undo and complete - nonprod should not migrate an installation 1`] = `"Sync complete"`;
 
 exports[`API Endpoints undo and complete - nonprod should not migrate an installation 2`] = `
 [MockFunction] {
@@ -110,7 +110,7 @@ exports[`API Endpoints undo and complete - nonprod should not migrate an install
 }
 `;
 
-exports[`API Endpoints undo and complete - nonprod should not undo a migration 1`] = `"migrationUndo will only be called in prod"`;
+exports[`API Endpoints undo and complete - nonprod should not undo a migration 1`] = `"Sync failed"`;
 
 exports[`API Endpoints undo and complete - nonprod should not undo a migration 2`] = `
 [MockFunction] {

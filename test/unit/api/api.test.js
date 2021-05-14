@@ -403,6 +403,7 @@ describe('API', () => {
 
         td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} });
+
         return supertest(subject)
           .post('/api/1234/migrate?installationId=1234')
           .set('Authorization', 'Bearer xxx')
@@ -454,6 +455,7 @@ describe('API', () => {
 
         td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} });
+
         return supertest(subject)
           .post('/api/1234/migrate?installationId=1234')
           .set('Authorization', 'Bearer xxx')
@@ -463,7 +465,7 @@ describe('API', () => {
           .then(response => {
             expect(response.text).toMatchSnapshot();
             expect(update).toMatchSnapshot();
-            expect(jiraClient.devinfo.migration.complete).not.toHaveBeenCalled();
+            expect(jiraClient.devinfo.migration.complete).toHaveBeenCalled();
           });
       });
 
@@ -478,7 +480,6 @@ describe('API', () => {
 
         td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} });
-        expect(jiraClient.devinfo.migration.undo).not.toHaveBeenCalled();
 
         return supertest(subject)
           .post('/api/1234/migrate/undo?installationId=1234')
@@ -489,6 +490,7 @@ describe('API', () => {
           .then(response => {
             expect(response.text).toMatchSnapshot();
             expect(update).toMatchSnapshot();
+            expect(jiraClient.devinfo.migration.undo).toHaveBeenCalled();
           });
       });
     });
