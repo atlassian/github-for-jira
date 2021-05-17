@@ -18,7 +18,7 @@
     color: #42526E;
 }
 
-.jiraConfigurationTable__active {
+.jiraConfigurationTable__in-progress {
     background-color: #DEEBFF;
     color: #0747A6;
 }

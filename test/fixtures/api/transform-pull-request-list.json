@@ -352,6 +352,7 @@
       "type": "User",
       "site_admin": true
     },
+    "reviewers": [],
     "body": "",
     "created_at": "2018-05-03T15:46:01Z",
     "updated_at": "2018-05-04T14:06:56Z",
