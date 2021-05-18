@@ -15,6 +15,12 @@ Contributions to this product are [released][releases] to the public under the [
 
 Please note that this project is released with a [Contributor Code of Conduct][code-of-conduct]. By participating in this project you agree to abide by its terms.
 
+## Getting Started
+
+Please ensure that you have [homebrew](https://brew.sh/) installed. Instructions for setting this application up on an OS other than OSX are currently not outlined.
+
+This app is written in [ES6 JavaScript](https://nodejs.org/en/docs/es6/) and runs on [Node.js](https://nodejs.org/). After cloning the repository, install the dependencies by running:
+
 ## Installing a tunneling tool
 
 To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed.
