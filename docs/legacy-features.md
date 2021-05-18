@@ -28,7 +28,7 @@ Note: The same method is used for Github & Github Enterprise, but an additional 
 
 Once the customer has installed Jira Software <> GitHub together they can manage that integration with several different options. They are:
 - Link a GitHub account (link one or more accounts)
-- Delete a GitHub ccount
+- Delete a GitHub account
 - Add or remove repos from the connected GitHub account
 - Re-sync an individual repo (Soft sync or Full sync)
 - Toggle smart commits on/off per repo
