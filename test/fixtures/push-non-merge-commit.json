@@ -1,0 +1,53 @@
+{
+  "author": null,
+  "commit": {
+    "author": {
+      "email": "test-email@example.com",
+      "name": "test-commit-name",
+      "date": "test-commit-date"
+    },
+    "message": "[TEST-123] Test commit.",
+    "authorTimestamp": "test-commit-date"
+  },
+  "sha": "commit-no-username",
+  "files": [
+    {
+      "filename": "test-modified",
+      "additions": 10,
+      "deletions": 2,
+      "changes": 12,
+      "status": "modified",
+      "raw_url": "https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified",
+      "blob_url": "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified",
+      "patch": "@@ -29,7 +29,7 @@\n....."
+    },
+    {
+      "filename": "test-added",
+      "additions": 4,
+      "deletions": 0,
+      "changes": 4,
+      "status": "added",
+      "raw_url": "https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added",
+      "blob_url": "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added",
+      "patch": "@@ -29,7 +29,7 @@\n....."
+    },
+    {
+      "filename": "test-removal",
+      "additions": 0,
+      "deletions": 4,
+      "changes": 4,
+      "status": "removed",
+      "raw_url": "https://github.com/octocat/Hello-World/raw/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal",
+      "blob_url": "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal",
+      "patch": "@@ -29,7 +29,7 @@\n....."
+    }
+  ],
+  "html_url": "https://github.com/octokit/Hello-World/commit/commit-no-username",
+  "parents": [
+    {
+      "sha": "csdhjfbsdf89u2q3rfakeshakdsfisndfisdfasidf",
+      "url": "https://api.github.com/repos/octokit/Hello-World/commits/cb6553cf5973a032154c613d2ca1cac216a8054b",
+      "html_url": "https://github.com/octokit/Hello-World/commit/cb6553cf5973a032154c613d2ca1cac216a8054b"
+    }
+  ]
+}

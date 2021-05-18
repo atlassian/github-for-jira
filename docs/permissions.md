@@ -18,7 +18,7 @@ Below are the use cases for the permissions requested by the GitHub App, along w
 
 
 ### Webhook Subscriptions
-To find events that contain Jra issue keys, the integration subscribes to the following webhooks:
+To find events that contain Jira issue keys, the integration subscribes to the following webhooks:
 - [Commit Comment](https://developer.github.com/v3/activity/events/types/#commitcommentevent)
 - [Create](https://developer.github.com/v3/activity/events/types/#createevent)
 - [Delete](https://developer.github.com/v3/activity/events/types/#deleteevent)
@@ -29,7 +29,7 @@ To find events that contain Jra issue keys, the integration subscribes to the fo
 - [Push](https://developer.github.com/v3/activity/events/types/#pushevent)
 
 ### Jira Platform Permissions
-Below are the use cases for the JIRA API scopes in use by this integration, along with their API documentation link and required scope.
+Below are the use cases for the Jira API scopes in use by this integration, along with their API documentation link and required scope.
 
 #### Get issue
 - Used to retrieve issue titles and bodies to unfurl links in GitHub issues and pull requests
@@ -57,7 +57,7 @@ Below are the use cases for the JIRA API scopes in use by this integration, alon
 - [App scope](https://developer.atlassian.com/cloud/jira/platform/scopes/) required: `WRITE`
 
 #### Delete development information entity
-- Used to delete development information from Jira that was removed from GitHub (e.g., when a branch is deleted, the integraiton can also delete it from Jira)
+- Used to delete development information from Jira that was removed from GitHub (e.g., when a branch is deleted, the integration can also delete it from Jira)
 - [Documentation](https://developer.atlassian.com/cloud/jira/software/rest/#api-rest-devinfo-0-10-repository-repositoryId-entityType-entityId-delete)
 - [App scope](https://developer.atlassian.com/cloud/jira/platform/scopes/) required: `DELETE`
 
