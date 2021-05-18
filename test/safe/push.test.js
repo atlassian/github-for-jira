@@ -342,5 +342,131 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload);
     });
+
+    it('should add the MERGE_COMMIT flag when a merge commit is made', async () => {
+      const event = require('../fixtures/push-no-username.json');
+      const job = {
+        data: createJobData(event.payload, process.env.ATLASSIAN_URL),
+      };
+
+      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
+        .thenReturn(require('../fixtures/push-merge-commit.json'));
+
+      await processPush(app)(job);
+
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+        preventTransitions: false,
+        repositories: [
+          {
+            name: 'test-repo-name',
+            url: 'test-repo-url',
+            id: 'test-repo-id',
+            commits: [
+              {
+                hash: 'commit-no-username',
+                message: '[TEST-123] Test commit.',
+                author: { email: 'test-email@example.com', name: 'test-commit-name' },
+                authorTimestamp: 'test-commit-date',
+                displayId: 'commit',
+                fileCount: 3,
+                files: [
+                  {
+                    path: 'test-modified',
+                    changeType: 'MODIFIED',
+                    linesAdded: 10,
+                    linesRemoved: 2,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified',
+                  },
+                  {
+                    path: 'test-added',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added',
+                  },
+                  {
+                    path: 'test-removal',
+                    changeType: 'DELETED',
+                    linesAdded: 0,
+                    linesRemoved: 4,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal',
+                  },
+                ],
+                id: 'commit-no-username',
+                issueKeys: ['TEST-123'],
+                url: 'https://github.com/octokit/Hello-World/commit/commit-no-username',
+                updateSequenceId: 12345678,
+                flags: ['MERGE_COMMIT'],
+              },
+            ],
+            updateSequenceId: 12345678,
+          },
+        ],
+        properties: { installationId: 1234 },
+      }));
+    });
+
+    it('should not add the MERGE_COMMIT flag when a commit is not a merge commit', async () => {
+      const event = require('../fixtures/push-no-username.json');
+      const job = {
+        data: createJobData(event.payload, process.env.ATLASSIAN_URL),
+      };
+
+      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
+        .thenReturn(require('../fixtures/push-non-merge-commit'));
+
+      await processPush(app)(job);
+
+      // flag property should not be present
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+        preventTransitions: false,
+        repositories: [
+          {
+            name: 'test-repo-name',
+            url: 'test-repo-url',
+            id: 'test-repo-id',
+            commits: [
+              {
+                hash: 'commit-no-username',
+                message: '[TEST-123] Test commit.',
+                author: { email: 'test-email@example.com', name: 'test-commit-name' },
+                authorTimestamp: 'test-commit-date',
+                displayId: 'commit',
+                fileCount: 3,
+                files: [
+                  {
+                    path: 'test-modified',
+                    changeType: 'MODIFIED',
+                    linesAdded: 10,
+                    linesRemoved: 2,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified',
+                  },
+                  {
+                    path: 'test-added',
+                    changeType: 'ADDED',
+                    linesAdded: 4,
+                    linesRemoved: 0,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added',
+                  },
+                  {
+                    path: 'test-removal',
+                    changeType: 'DELETED',
+                    linesAdded: 0,
+                    linesRemoved: 4,
+                    url: 'https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal',
+                  },
+                ],
+                id: 'commit-no-username',
+                issueKeys: ['TEST-123'],
+                url: 'https://github.com/octokit/Hello-World/commit/commit-no-username',
+                updateSequenceId: 12345678,
+              },
+            ],
+            updateSequenceId: 12345678,
+          },
+        ],
+        properties: { installationId: 1234 },
+      }));
+    });
   });
 });

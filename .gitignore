@@ -10,3 +10,4 @@ log/*
 .tool-versions
 newrelic_agent.log
 .vscode
+db/config.json
