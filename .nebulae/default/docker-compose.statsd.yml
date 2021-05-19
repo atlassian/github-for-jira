@@ -1,0 +1,11 @@
+version: "3"
+services:
+  microservice:
+    environment:
+      MICROS_PLATFORM_STATSD_NAME: "platform-statsd"
+      NEBULAE_PLATFORM_STATSD_MOCK_API_PORT: "8088"
+      NEBULAE_PLATFORM_STATSD_PORT: "8125"
+    depends_on:
+     - "platform-statsd"
+  platform-statsd:
+    image: "docker.atl-paas.net/atlassian/mock-statsd:0.5.1"

@@ -1,5 +1,6 @@
 {
   "name": "jira",
+  "version": "0.0.2",
   "private": true,
   "repository": "https://github.com/integrations/jira.git",
   "scripts": {

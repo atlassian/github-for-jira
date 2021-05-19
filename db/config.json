@@ -6,16 +6,10 @@
     "username": "postgres"
   },
   "test": {
+    "database": "jira-test",
+    "host": "127.0.0.1",
     "dialect": "postgres",
-    "use_env_variable": "PG_DATABASE_URL",
-    "disable_sql_logging": true,
-    "ssl": true,
-    "dialectOptions": {
-      "ssl": true
-    },
-    "pool": {
-      "max": 15
-    }
+    "username": "postgres"
   },
   "production": {
     "dialect": "postgres",
