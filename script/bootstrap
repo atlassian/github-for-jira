@@ -3,6 +3,7 @@
 # script/bootstrap: Resolve all dependencies that the application requires to
 #                   run.
 
+
 set -e
 
 PATH="$PATH:node_modules/.bin"
