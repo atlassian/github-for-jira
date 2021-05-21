@@ -1,0 +1,34 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [Test] # Dependent workflow
+    branches: [master] # Only do it on master branch
+    types: [completed] # Only after dependent workflow is done
+
+jobs:
+  deploy-to-heroku:
+    runs-on: ubuntu-latest
+
+    # Should only deploy if the dependent workflow is successful
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js 12.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - name: Cache node_modules
+      id: cache-primes
+      uses: actions/cache@v1
+      with:
+        path: ./node_modules
+        key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
+    - name: NPM Install
+      run: npm install
+    - uses: akhileshns/heroku-deploy@v3.12.12
+      with:
+        heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+        heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
+        heroku_email: ${{secrets.HEROKU_EMAIL}}
