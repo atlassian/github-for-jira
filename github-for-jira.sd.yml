@@ -1,4 +1,4 @@
-buildNumber: 0.0.2
+buildNumber: 0.0.1
 name: Github For Jira
 description: Connect app for integrating GitHub into Jira
 organization: Engineering-DevOps
@@ -7,7 +7,7 @@ notifications:
 
 links:
   healthcheck:
-    uri: /healthcheck
+    uri: /_ping
   source:
     url: https://github.com/atlassian-forks/github-for-jira.git
 
@@ -16,7 +16,7 @@ compose:
     image: docker.atl-paas.net/atlassian/github-for-jira
     ports:
       - 8080:8080
-    tag: 0.0.2
+    tag: 0.0.1
 
 cleanup: true
 

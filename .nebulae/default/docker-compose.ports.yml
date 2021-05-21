@@ -9,7 +9,7 @@ services:
      - "6379"
   microservice:
     ports:
-     - "55450:8080"
+     - "8080:8080"
   nebulae.postgres-db.database:
     ports:
      - "5432"

@@ -1,12 +1,12 @@
 configuration:
-  id: "65a8e4e4-5512-4bf8-bd22-4a1ea45ba6f6"
+  id: "2f922743-41ad-4268-ba60-12864c05ea91"
   name: "default"
   entryPoint:
     hostname: "microservice"
     port: 8080
   outputDirectory: "file:///Users/rrathbone/atlassian/jira/.nebulae/default/"
-  projectName: "github-for-jira-default-65a8e4e4"
-  networkName: "github-for-jira-default-65a8e4e4_default"
+  projectName: "github-for-jira-default-2f922743"
+  networkName: "github-for-jira-default-2f922743_default"
   docker:
     downTimeout: 0
 dockerComposeFiles:
