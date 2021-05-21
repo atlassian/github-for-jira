@@ -1,7 +1,7 @@
 version: "3"
 services:
   microservice:
-    image: "docker.atl-paas.net/atlassian/github-for-jira:0.0.2"
+    image: "docker.atl-paas.net/atlassian/github-for-jira:0.0.1"
     environment:
       ASAP_AUDIENCE: "github-for-jira"
       ASAP_PUBLIC_KEY_FALLBACK_REPOSITORY_URL: "https://asap-distribution.us-east-1.staging.paas-inf.net/"
@@ -9,7 +9,7 @@ services:
       MICROS_AWS_AVAILABILITY_ZONE: "none"
       MICROS_AWS_REGION: "none"
       MICROS_BUSINESS_UNIT: "Paas/Other"
-      MICROS_DEPLOYMENT_ID: "2f922743-41ad-4268-ba60-12864c05ea91"
+      MICROS_DEPLOYMENT_ID: "04c7fb1f-b8eb-47d6-95f9-e97c81285548"
       MICROS_ENV: "local"
       MICROS_ENVTYPE: "local"
       MICROS_GROUP: "WebServer"
@@ -20,8 +20,8 @@ services:
       MICROS_SERVICE_DOMAIN_NAME: "microservice"
       MICROS_SERVICE_PORT: "8080"
       MICROS_SERVICE_PROTOCOL: "HTTP"
-      MICROS_SERVICE_VERSION: "0.0.2"
-      NEBULAE_SANDBOX_ID: "2f922743-41ad-4268-ba60-12864c05ea91"
+      MICROS_SERVICE_VERSION: "0.0.1"
+      NEBULAE_SANDBOX_ID: "04c7fb1f-b8eb-47d6-95f9-e97c81285548"
       NEBULAE_SANDBOX_NAME: "default"
       NODE_ENV: "test"
       PORT: "8080"
