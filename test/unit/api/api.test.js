@@ -1,6 +1,6 @@
 const nock = require('nock');
 const supertest = require('supertest');
-const { Installation } = require('../../../lib/models');
+const { Installation } = require('../../../src/models');
 
 const successfulAuthResponseWrite = {
   data: {
@@ -31,7 +31,7 @@ const successfulAuthResponseAdmin = {
 };
 
 const createApp = (locals) => {
-  const api = require('../../../lib/api');
+  const api = require('../../../src/api');
   const express = require('express');
   const app = express();
   app.use((req, res, next) => {

@@ -6,12 +6,12 @@
  * @readonly
  * @enum {string}
  */
-const ActionType = {
-  CREATED: 'created',
-  ENABLED: 'enabled',
-  DISABLED: 'disabled',
-  DESTROYED: 'destroyed',
-};
+export enum ActionType {
+  CREATED = 'created',
+  ENABLED = 'enabled',
+  DISABLED = 'disabled',
+  DESTROYED = 'destroyed',
+}
 
 /**
  * Enum for Association Types
@@ -19,10 +19,10 @@ const ActionType = {
  * @readonly
  * @enum {string}
  */
-const Association = {
-  SUBSCRIPTION: 'subscription',
-  INSTALLATION: 'installation',
-};
+export enum Association {
+  SUBSCRIPTION = 'subscription',
+  INSTALLATION = 'installation',
+}
 
 /**
  * Enum for Action Sources
@@ -30,15 +30,15 @@ const Association = {
  * @readonly
  * @enum {string}
  */
-const ActionSource = {
+export enum ActionSource {
   /** An action that came from the Web UI Console in Jira */
-  WEB_CONSOLE: 'web_console',
+  WEB_CONSOLE = 'web_console',
 
   /** An action from the Stafftools Script */
-  STAFFTOOLS: 'stafftools',
+  STAFFTOOLS = 'stafftools',
 
   /** An action from a Jira Webhook */
-  WEBHOOK: 'webhook',
+  WEBHOOK = 'webhook',
 };
 
 /**
@@ -55,31 +55,16 @@ const ActionSource = {
  *
  * @implements {BaseProtobuf}
  */
-class Action {
-  constructor() {
-    /** @type {ActionType} */
-    this.type;
+export class Action {
+  public type: ActionType;
+  public association: Association;
+  public installationId: number;
+  public githubInstallationId: number;
+  public jiraHostname: string;
+  public actionSource: ActionSource;
+  public githubActorId: number;
 
-    /** @type {Association} */
-    this.association;
-
-    /** @type {?number} */
-    this.installationId;
-
-    /** @type {?number} */
-    this.githubInstallationId;
-
-    /** @type {?string} */
-    this.jiraHostname;
-
-    /** @type {ActionSource} */
-    this.actionSource;
-
-    /** @type {?number} */
-    this.githubActorId;
-  }
-
-  get schema() {
+  get schema(): string {
     return 'jira.v0.Action';
   }
 }
@@ -90,7 +75,7 @@ class Action {
  * @param {import('../../models/installation')} [installation]
  * @returns {Promise<Action>}
  */
-async function ActionFromInstallation(installation) {
+export async function ActionFromInstallation(installation):Promise<Action> {
   const action = new Action();
   action.association = Association.INSTALLATION;
   if (installation != null) {
@@ -111,7 +96,7 @@ async function ActionFromInstallation(installation) {
  * @param {import('../../models/installation')} [installation]
  * @returns {Action}
  */
-function ActionFromSubscription(subscription, installation) {
+export function ActionFromSubscription(subscription, installation) {
   const action = new Action();
   action.association = Association.SUBSCRIPTION;
   if (subscription != null) {
@@ -123,12 +108,3 @@ function ActionFromSubscription(subscription, installation) {
   }
   return action;
 }
-
-module.exports = {
-  Action,
-  ActionFromInstallation,
-  ActionFromSubscription,
-  ActionType,
-  Association,
-  ActionSource,
-};

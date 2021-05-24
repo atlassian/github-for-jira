@@ -1,4 +1,4 @@
-const { getHashedKey } = require('../../../lib/models/installation');
+const { getHashedKey } = require('../../../src/models/installation');
 const testTracking = require('../../setup/tracking');
 
 let installation;
@@ -30,7 +30,7 @@ describe('Webhook: /events/uninstalled', () => {
       // Allows us to modify subscriptions before it's finally called
       .thenDo(async () => subscriptions);
 
-    uninstall = require('../../../lib/jira/uninstall');
+    uninstall = require('../../../src/jira/uninstall');
   });
 
   afterEach(() => {

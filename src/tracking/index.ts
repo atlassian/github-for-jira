@@ -1,13 +1,12 @@
-const process = require('process');
-const https = require('https');
-const { default: axios } = require('axios');
-const crypto = require('crypto');
+import process from 'process';
+import https from 'https';
+import axios from 'axios';
+import crypto from 'crypto';
+import {logger} from 'probot/lib/logger';
+import statsd, {asyncDistTimer} from '../config/statsd';
+import {Action} from '../proto/v0/action';
 
-const { logger } = require('probot/lib/logger');
-const statsd = require('../config/statsd');
-const { asyncDistTimer } = require('../config/statsd');
-
-const BaseURL = process.env.HYDRO_BASE_URL;
+export const BaseURL = process.env.HYDRO_BASE_URL;
 
 const axiosInstance = axios.create({
   // Set a short timeout, this are disposable
@@ -28,35 +27,20 @@ const logErrStatuses = {
 };
 let disabled = ['true', '1'].includes(process.env.TRACKING_DISABLED);
 
-if (BaseURL == null) {
+if (!BaseURL) {
   disabled = true;
   logger.warn('No Hydro Base URL set, disabling tracking');
 }
 
-/**
- * Ability to turn tracking on/off.
- *
- * @param {boolean} state - If the tracking should be disabled or not
- * @returns {void}
- */
-function setIsDisabled(state) {
-  disabled = state;
+// TODO: change this to getter/setter
+export const setIsDisabled = (value: boolean): void => {
+  disabled = value;
 }
 
-/**
- * Return if tracking is disabled or not.
- *
- * @returns {boolean} If tracking is disabled
- */
-function isDisabled() {
-  return disabled;
-}
+export const isDisabled = (): boolean => disabled;
 
 /**
  * Submit Events to the HTTP Gateway
- *
- * @param {import('../proto/v0/action').BaseProtobuf | import('../proto/v0/action').BaseProtobuf[]} protos - The protobuf we want to submit
- * @returns {Promise<boolean>} A promise that when resolved indicates if the submission was received successfully
  *
  * @example
  * ```
@@ -67,7 +51,7 @@ function isDisabled() {
  * await submitProto(data);
  * ```
  */
-async function submitProto(protos) {
+export const submitProto = async (protos: Action | Action[]): Promise<boolean> => {
   if (disabled) {
     return true;
   }
@@ -111,9 +95,7 @@ async function submitProto(protos) {
       logger.error(err);
       status = 'exception';
     } else {
-      /** @type {import('axios').AxiosError} */
       const axError = err;
-      /** @type {any} - The response data */
       let respData;
 
       resp = axError.response;
@@ -125,9 +107,9 @@ async function submitProto(protos) {
       }
 
       if (status in logErrStatuses) {
-        logger.error(logErrStatuses[status], { status, resp: respData, data });
+        logger.error(logErrStatuses[status], {status, resp: respData, data});
       } else {
-        logger.error('Hydro Submission Issue', { status, resp: respData, data });
+        logger.error('Hydro Submission Issue', {status, resp: respData, data});
       }
     }
   }
@@ -144,17 +126,10 @@ async function submitProto(protos) {
     const [name, count] = stats;
     statsd.increment(
       submissionMetricName,
-      count,
+      count as number,
       [`schema:${name}`, `status:${status}`],
     );
   });
 
   return status === 200;
 }
-
-module.exports = {
-  submitProto,
-  setIsDisabled,
-  isDisabled,
-  BaseURL,
-};

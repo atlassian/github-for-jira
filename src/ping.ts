@@ -1,14 +1,15 @@
-const Redis = require('ioredis');
+import Redis from 'ioredis';
+import getRedisInfo from './config/redis-info';
+import {sequelize} from './models';
+import {Application} from 'probot';
 
-const getRedisInfo = require('./config/redis-info');
-const { sequelize } = require('./models');
 
 /**
  * Create a /_ping endpoint
  *
  * @param {import('probot').Application} robot - The probot app
  */
-module.exports = (robot) => {
+export default (robot: Application) => {
   const app = robot.route('/');
   const cache = new Redis(getRedisInfo('ping').redisOptions);
 
@@ -17,18 +18,19 @@ module.exports = (robot) => {
    *
    * It's a race between the setTimeout and our ping + authenticate.
    */
+  // TODO: is this endpoint even called?
   app.get('/_ping', async (req, res) => {
     let connectionsOk = true;
     try {
       await Promise.race([
         Promise.all([
-          cache.ping().catch((_, reject) => {
+          cache.ping().catch(() => {
             req.log.error('Error issuing PING to redis');
-            reject(new Error('connection'));
+            return Promise.reject(new Error('connection'));
           }),
-          sequelize.authenticate().catch((_, reject) => {
+          sequelize.authenticate().catch(() => {
             req.log.error('Error issuing authenticate to Sequelize');
-            reject(new Error('connection'));
+            return Promise.reject(new Error('connection'));
           }),
         ]),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500)),

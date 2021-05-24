@@ -1,19 +1,17 @@
-const Redis = require('ioredis');
-const RateLimit = require('express-rate-limit');
-const RedisStore = require('rate-limit-redis');
-
-const { GitHubAPI } = require('probot');
-const { createAppAuth } = require('@octokit/auth-app');
-
-const { findPrivateKey } = require('probot/lib/private-key');
-
-const getRedisInfo = require('./config/redis-info');
-const setupFrontend = require('./frontend');
-const setupGitHub = require('./github');
-const setupJira = require('./jira');
-const setupPing = require('./ping');
-const statsd = require('./config/statsd');
-const { isIp4InCidrs } = require('./config/cidr-validator');
+import {Application, GitHubAPI} from "probot";
+import Redis from 'ioredis';
+import RateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
+import {createAppAuth} from '@octokit/auth-app';
+import {findPrivateKey} from 'probot/lib/private-key';
+import getRedisInfo from './config/redis-info';
+import setupFrontend from './frontend';
+import setupGitHub from './github';
+import setupJira from './jira';
+import setupPing from './ping';
+import statsd from './config/statsd';
+import {isIp4InCidrs} from './config/cidr-validator';
+import {Logger} from 'probot/lib/github/logging';
 
 /**
  * Get the list of GitHub CIDRs from the /meta endpoint
@@ -24,10 +22,9 @@ const { isIp4InCidrs } = require('./config/cidr-validator');
  * the first installation and query as it. It only happens on boot, and
  * shouldn't affect anything else, it's theoretically safe.
  *
- * @param {import('probot').Logger} logger - The Application's logger
  * @returns {string[]} A list of CIDRs for GitHub webhooks
  */
-async function getGitHubCIDRs(logger) {
+async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
   let api = GitHubAPI({
     authStrategy: createAppAuth,
     auth: {
@@ -41,7 +38,9 @@ async function getGitHubCIDRs(logger) {
   const inst = await api.apps.listInstallations({
     per_page: 1,
   });
-  const { token } = await api.auth({
+  // TODO: need to update this.  `api.auth` doesn't exist, must be a deprecated func
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const {token} = await (api as any).auth({
     type: 'installation',
     installationId: inst.data[0].id,
   });
@@ -51,15 +50,11 @@ async function getGitHubCIDRs(logger) {
   });
   const metaResp = await api.meta.get();
   const GitHubCIDRs = metaResp.data.hooks;
-  logger.info({ GitHubCIDRs }, 'CIDRs that can skip rate limiting');
+  logger.info({GitHubCIDRs}, 'CIDRs that can skip rate limiting');
   return GitHubCIDRs;
 }
 
-/**
- *
- * @param {import('probot').Application} app - The probot application
- */
-module.exports = async (app) => {
+export default async (app: Application): Promise<Application> => {
   if (process.env.USE_RATE_LIMITING === 'true') {
     const GitHubCIDRs = await getGitHubCIDRs(app.log);
     const client = new Redis(getRedisInfo('rate-limiter').redisOptions);
@@ -71,20 +66,14 @@ module.exports = async (app) => {
        * Check if we should skip rate limiting
        *
        * NOTE: This is only expected to be done for IP CIDRs we trust (github)
-       *
-       * @param {import('express').Request} req
-       * @returns {boolean} if the IP is within our non-rate-limited cidrs
        */
       skip(req) {
         return isIp4InCidrs(req.ip, GitHubCIDRs);
       },
       /**
        * Handle when a users hits the rate limit
-       *
-       * @param {import('express').Request} req
-       * @param {import('express').Response} res
        */
-      handler(req, res) {
+      handler(_, res) {
         // We don't include path in this metric as the bots scanning us generate many of them
         statsd.increment('express.rate_limited');
         res.status(429).send('Too many requests, please try again later.');

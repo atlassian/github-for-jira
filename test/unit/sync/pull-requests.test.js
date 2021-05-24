@@ -53,7 +53,7 @@ describe('sync/pull-request', () => {
     ['Evernote Test', 'TES-15'],
   ])('PR Title: %p, PR Head Ref: %p', (title, head) => {
     test('should sync to Jira when Pull Request Nodes have jira references', async () => {
-      const { processInstallation } = require('../../../lib/sync/installation');
+      const { processInstallation } = require('../../../src/sync/installation');
 
       const job = createJob({ data: { installationId, jiraHost } });
 
@@ -115,7 +115,7 @@ describe('sync/pull-request', () => {
   });
 
   test('should not sync if nodes are empty', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost } });
 
@@ -138,7 +138,7 @@ describe('sync/pull-request', () => {
   });
 
   test('should not sync if nodes do not contain issue keys', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
     process.env.LIMITER_PER_INSTALLATION = 2000;
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } });
 

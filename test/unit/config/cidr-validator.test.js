@@ -1,4 +1,4 @@
-const { isIp4InCidrs } = require('../../../lib/config/cidr-validator');
+const { isIp4InCidrs } = require('../../../src/config/cidr-validator');
 
 describe('cidr-validator', () => {
   test.each([

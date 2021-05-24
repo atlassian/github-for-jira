@@ -1,9 +1,9 @@
 const Keygrip = require('keygrip');
 const supertest = require('supertest');
 const nock = require('nock');
-const { getHashedKey } = require('../../../lib/models/installation');
+const { getHashedKey } = require('../../../src/models/installation');
 const testTracking = require('../../setup/tracking');
-const { setIsDisabled } = require('../../../lib/tracking');
+const { setIsDisabled } = require('../../../src/tracking');
 
 function getCookieHeader(payload) {
   const cookie = Buffer.from(JSON.stringify(payload)).toString('base64');
@@ -53,7 +53,7 @@ describe('Frontend', () => {
   beforeEach(() => {
     models = td.replace('../../../lib/models');
 
-    subject = require('../../../lib/frontend/app')(app.app);
+    subject = require('../../../src/frontend/app')(app.app);
   });
   afterEach(() => {
     td.reset();

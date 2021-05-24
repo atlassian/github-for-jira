@@ -1,4 +1,4 @@
-const webhookTimeout = require('../../lib/middleware/webhook-timeout');
+const webhookTimeout = require('../../src/middleware/webhook-timeout');
 
 describe('Webhook Timeout', () => {
   it('sets timedout context with milliseconds', async () => {

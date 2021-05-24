@@ -1,17 +1,25 @@
 {
-  "name": "jira",
-  "private": true,
+  "name": "github-for-jira",
+  "version": "0.0.0",
+  "description": "Github integration for Atlassian Jira",
   "repository": "https://github.com/integrations/jira.git",
+  "engines": {
+    "node": ">= 14.16 <15"
+  },
+  "main": "src/main.ts",
   "scripts": {
-    "ci": "npm test && npm run lint",
-    "dev": "nodemon --exec \"node --inspect ./lib/run.js\"",
+    "dev": "nodemon --exec \\\"node --inspect src/run.js\\\"",
     "dev:worker": "nodemon --exec \"node --inspect=9230 bin/worker\"",
-    "lint": "eslint lib test bin/worker",
-    "start": "node --no-deprecation ./lib/run.js",
-    "test": "jest --forceExit",
-    "posttest": "npm run lint",
-    "test:watch": "jest --watch --notify --notifyMode=change",
-    "worker": "node --no-deprecation bin/worker"
+    "start": "run-p start:main start:worker",
+    "start:main": "ts-node .",
+    "start:worker": "ts-node bin/worker",
+    "start:production": "node .",
+    "clean": "rimraf coverage build tmp",
+    "build": "tsc -p ../tsconfig.release.json",
+    "build:watch": "tsc -w -p ../tsconfig.release.json",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
@@ -48,14 +56,23 @@
     "sequelize": "^5.21.7",
     "sequelize-cli": "^5.5.1",
     "sequelize-encrypted": "^1.0.0",
-    "throng": "^4.0.0"
+    "throng": "^4.0.0",
+    "tslib": "~2.2.0"
   },
   "devDependencies": {
     "@types/bull": "^3.12.2",
+    "@types/jest": "~26.0.23",
+    "@types/moo": "^0.5.4",
+    "@types/newrelic": "^6.2.0",
+    "@types/node": "~14.14.44",
+    "@typescript-eslint/eslint-plugin": "~4.23.0",
+    "@typescript-eslint/parser": "~4.23.0",
     "babel-eslint": "^10.0.3",
-    "eslint": "^6.8.0",
+    "eslint": "~7.26.0",
     "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "~8.3.0",
     "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-jest": "~24.3.6",
     "eslint-plugin-jsdoc": "^16.1.1",
     "eslint-plugin-no-only-tests": "^2.3.1",
     "eslint-plugin-node": "^7.0.1",
@@ -65,21 +82,21 @@
     "keygrip": "^1.0.2",
     "nock": "^9.6.1",
     "nodemon": "^2.0.3",
+    "npm-run-all": "^4.1.5",
+    "prettier": "~2.3.0",
     "react": "^16.6.0",
+    "rimraf": "~3.0.2",
     "smee-client": "^1.0.1",
     "supertest": "^4.0.2",
     "testdouble": "^3.12.4",
     "testdouble-jest": "^2.0.0",
-    "testdouble-nock": "^0.2.0"
+    "testdouble-nock": "^0.2.0",
+    "ts-jest": "~26.5.6",
+    "ts-node": "^10.0.0",
+    "tsutils": "~3.21.0",
+    "typescript": "~4.2.4"
   },
-  "engines": {
-    "node": ">= 12.x < 13"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "<rootDir>/test/setup"
-    ],
-    "globalTeardown": "<rootDir>/test/teardown"
+  "volta": {
+    "node": "14.17.0"
   }
 }

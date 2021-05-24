@@ -1,5 +1,5 @@
-const { Installation } = require('../../../../lib/models');
-const getJiraClient = require('../../../../lib/jira/client');
+const { Installation } = require('../../../../src/models');
+const getJiraClient = require('../../../../src/jira/client');
 
 const BASE_URL = 'https://base-url.atlassian.net';
 

@@ -1,4 +1,4 @@
-const SmartCommitTokenizer = require('../../lib/smart-commit-tokenizer.js');
+const SmartCommitTokenizer = require('../../src/smart-commit-tokenizer.js');
 
 const tokenize = function (source) {
   const tokenizer = SmartCommitTokenizer();

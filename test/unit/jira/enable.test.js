@@ -22,7 +22,7 @@ describe('Webhook: /events/enabled', () => {
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
 
-    enable = require('../../../lib/jira/enable');
+    enable = require('../../../src/jira/enable');
   });
 
   afterEach(() => {

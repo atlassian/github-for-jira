@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 require('dotenv').config()
 
-const { queues } = require('../lib/worker')
+const { queues } = require('../src/worker')
 queues.metrics.add({})
   .then(() => process.exit(0))
   .catch((error) => {

@@ -1,4 +1,4 @@
-const transformPullRequest = require('../../../lib/transforms/pull-request');
+const transformPullRequest = require('../../../src/transforms/pull-request');
 
 describe('pull_request transform', () => {
   it('should not contain branches on the payload if pull request status is closed.', async () => {

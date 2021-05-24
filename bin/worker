@@ -3,9 +3,9 @@ require('dotenv').config();
 const throng = require('throng');
 
 require('newrelic');
-require('../lib/config/sentry').initializeSentry();
+require('../src/config/sentry').initializeSentry();
 
-const worker = require('../lib/worker');
+const worker = require('../src/worker');
 
 const throngWorkers = Number(process.env.WEB_CONCURRENCY || 1);
 

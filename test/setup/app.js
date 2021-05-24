@@ -55,7 +55,7 @@ beforeEach(async () => {
       content: Buffer.from(`jira: ${process.env.ATLASSIAN_URL}`).toString('base64'),
     });
 
-  const configureRobot = require('../../lib/configure-robot');
+  const configureRobot = require('../../src/configure-robot');
 
   global.app = await configureRobot(new Application({
     app: new App({

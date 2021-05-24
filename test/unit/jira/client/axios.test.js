@@ -1,6 +1,6 @@
 const nock = require('nock');
 
-const getJiraAxios = require('../../../../lib/jira/client/axios');
+const getJiraAxios = require('../../../../src/jira/client/axios');
 const LogDouble = require('../../../setup/log-double');
 
 describe('Jira axios instance', () => {

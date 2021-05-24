@@ -33,7 +33,7 @@ describe('DELETE /jira/configuration', () => {
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
 
-    deleteJiraConfiguration = require('../../../lib/frontend/delete-jira-configuration');
+    deleteJiraConfiguration = require('../../../src/frontend/delete-jira-configuration');
   });
 
   afterEach(() => {

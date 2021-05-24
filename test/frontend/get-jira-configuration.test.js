@@ -1,4 +1,4 @@
-const getJiraConfiguration = require('../../lib/frontend/get-jira-configuration');
+const getJiraConfiguration = require('../../src/frontend/get-jira-configuration');
 
 beforeAll(() => {
   // Create a spy on console (console.error in this case) and provide some mocked implementation

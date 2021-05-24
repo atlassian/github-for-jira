@@ -1,4 +1,4 @@
-const reduceProjectKeys = require('../../../lib/jira/util/reduce-project-keys');
+const reduceProjectKeys = require('../../../src/jira/util/reduce-project-keys');
 
 describe('Reduces an array of Issue Keys to their unique projects', () => {
   test('Reduces commits payload when an array is empty', () => {

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const getJiraUtil = require('../../../lib/jira/util');
-const { getJiraId } = require('../../../lib/jira/util/id');
+const getJiraUtil = require('../../../src/jira/util');
+const { getJiraId } = require('../../../src/jira/util/id');
 
 describe('Jira util', () => {
   function loadFixture(name) {

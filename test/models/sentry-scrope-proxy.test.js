@@ -1,4 +1,4 @@
-const SentryScopeProxy = require('../../lib/models/sentry-scope-proxy');
+const SentryScopeProxy = require('../../src/models/sentry-scope-proxy');
 
 describe(SentryScopeProxy, () => {
   describe('.processEvent', () => {

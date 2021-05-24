@@ -1,6 +1,8 @@
-const OctokitError = require('../models/octokit-error');
-const statsd = require('./statsd');
-const { extractPath } = require('../jira/client/axios');
+import OctokitError from '../models/octokit-error';
+import statsd from './statsd';
+import {extractPath} from '../jira/client/axios';
+import {GitHubAPI} from 'probot';
+import {LoggerWithTarget} from 'probot/lib/wrap-logger';
 
 const instrumentRequests = (octokit, log) => {
   octokit.hook.wrap('request', async (request, options) => {
@@ -38,9 +40,8 @@ const instrumentRequests = (octokit, log) => {
  * This acts like an Octokit plugin but works on Octokit instances.
  * (Because Probot instantiates the Octokit client for us, we can't use plugins.)
  */
-module.exports = (octokit, log) => {
+export default (octokit: GitHubAPI, log: LoggerWithTarget): GitHubAPI => {
   OctokitError.wrapRequestErrors(octokit);
   instrumentRequests(octokit, log);
-
   return octokit;
 };

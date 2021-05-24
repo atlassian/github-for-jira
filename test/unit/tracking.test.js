@@ -1,16 +1,16 @@
 const url = require('url');
 const nock = require('nock');
 const crypto = require('crypto');
-const statsd = require('../../lib/config/statsd');
+const statsd = require('../../src/config/statsd');
 
 const {
   submitProto,
   isDisabled,
   setIsDisabled,
   BaseURL,
-} = require('../../lib/tracking');
+} = require('../../src/tracking');
 
-const { Action, ActionType } = require('../../lib/proto/v0/action');
+const { Action, ActionType } = require('../../src/proto/v0/action');
 
 const parsedURL = url.parse(BaseURL);
 const basePath = parsedURL.href.replace(parsedURL.path, '');
