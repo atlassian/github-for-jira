@@ -1,7 +1,7 @@
 const url = require('url');
 const nock = require('nock');
 
-const { setIsDisabled, BaseURL } = require('../../lib/tracking');
+const { setIsDisabled, BaseURL } = require('../../src/tracking');
 
 /**
  * Test that tracking works by storing a snapshot of the tracking proto sent.

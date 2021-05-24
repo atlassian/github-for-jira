@@ -1,8 +1,8 @@
-const { GitHubAPI } = require('../../../lib/config/github-api');
+const { GitHubAPI } = require('../../../src/config/github-api');
 const nock = require('nock');
 const LogDouble = require('../../setup/log-double');
 
-const enhanceOctokit = require('../../../lib/config/enhance-octokit');
+const enhanceOctokit = require('../../../src/config/enhance-octokit');
 
 describe(enhanceOctokit, () => {
   describe('request metrics', () => {

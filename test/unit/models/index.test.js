@@ -1,5 +1,5 @@
-const { Installation, Subscription } = require('../../../lib/models');
-const { getHashedKey } = require('../../../lib/models/installation');
+const { Installation, Subscription } = require('../../../src/models');
+const { getHashedKey } = require('../../../src/models/installation');
 
 process.env.STORAGE_SECRET = 'test-secret';
 

@@ -1,4 +1,4 @@
-const transformPullRequest = require('../../../../lib/sync/transforms/pull-request');
+const transformPullRequest = require('../../../../src/sync/transforms/pull-request');
 
 describe('pull_request transform', () => {
   it('should send the ghost user to Jira when GitHub user has been deleted', async () => {

@@ -1,6 +1,6 @@
 const nock = require('nock');
-const { isAdminFunction } = require('../../../lib/frontend/github-client-middleware');
-const { GitHubAPI } = require('../../../lib/config/github-api');
+const { isAdminFunction } = require('../../../src/frontend/github-client-middleware');
+const { GitHubAPI } = require('../../../src/config/github-api');
 
 describe('GitHub client middleware', () => {
   let isAdmin;

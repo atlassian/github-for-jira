@@ -1,4 +1,4 @@
-const { sortedRepos } = require('../../../../lib/sync/installation');
+const { sortedRepos } = require('../../../../src/sync/installation');
 const repoSyncState = require('../../../fixtures/repo-sync-state.json');
 const sortedReposFunc = require('../../../fixtures/sorted-repos.json');
 

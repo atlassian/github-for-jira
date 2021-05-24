@@ -1,4 +1,4 @@
-const OctokitError = require('../../lib/models/octokit-error');
+const OctokitError = require('../../src/models/octokit-error');
 
 describe(OctokitError, () => {
   const buildHttpError = ({ message, code, headers }) => {

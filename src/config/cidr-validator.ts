@@ -1,4 +1,4 @@
-const newrelic = require('newrelic');
+import newrelic from 'newrelic';
 
 /**
  * The following IP/CIDR functions adapted from a blog post
@@ -51,10 +51,6 @@ function isIp4InCidr(ip) {
  * > isIp4InCidrs('192.168.1.5', ['10.10.0.0/16', '192.168.1.1/24']);
  * true
  */
-function isIp4InCidrs(ip, cidrs) {
+export const isIp4InCidrs = (ip: string, cidrs: string[]): boolean => {
   return cidrs.some(isIp4InCidr(ip));
 }
-
-module.exports = {
-  isIp4InCidrs,
-};

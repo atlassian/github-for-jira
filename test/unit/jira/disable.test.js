@@ -1,5 +1,5 @@
-const { getHashedKey } = require('../../../lib/models/installation');
-const disable = require('../../../lib/jira/disable');
+const { getHashedKey } = require('../../../src/models/installation');
+const disable = require('../../../src/jira/disable');
 const testTracking = require('../../setup/tracking');
 
 let installation;

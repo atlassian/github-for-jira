@@ -1,13 +1,39 @@
-node_modules
-npm-debug.log
-*.pem
-.env
-coverage
-.vscodelog/*
-.DS_Store
-log/*
-.envrc
-.tool-versions
-newrelic_agent.log
-.vscode
+# DB Config
 db/config.json
+
+# Environment Files
+.env
+.envrc
+
+# DB Secret File
+*.pem
+
+# Transpiled files
+build/
+
+# Node Modules
+node_modules/
+
+# Coverage
+coverage
+
+# log
+log/
+npm-debug.log
+
+# new relic
+newrelic_agent.log
+
+# IDEs
+.idea/
+.vscode/
+.vscodelog/*
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Misc
+.DS_Store

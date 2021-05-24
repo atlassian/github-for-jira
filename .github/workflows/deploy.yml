@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   workflow_run:
-    workflows: [Test] # Dependent workflow
+    workflows: ["Test & Build"] # Dependent workflow
     branches: [master] # Only do it on master branch
     types: [completed] # Only after dependent workflow is done
 

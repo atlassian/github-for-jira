@@ -1,7 +1,7 @@
 const nock = require('nock');
 const { logger } = require('probot/lib/logger');
 
-const JiraClient = require('../../lib/models/jira-client');
+const JiraClient = require('../../src/models/jira-client');
 
 describe(JiraClient, () => {
   describe('isAuthorized()', () => {

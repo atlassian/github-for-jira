@@ -5,7 +5,7 @@ describe('GitHub Actions', () => {
   describe('add to push queue', () => {
     beforeEach(() => {
       process.env.REDIS_URL = 'redis://test';
-      const { queues } = require('../../lib/worker');
+      const { queues } = require('../../src/worker');
       push = td.replace(queues, 'push');
     });
 
@@ -50,8 +50,8 @@ describe('GitHub Actions', () => {
     beforeEach(() => {
       jiraApi = td.api(process.env.ATLASSIAN_URL);
       githubApi = td.api('https://api.github.com');
-      processPush = require('../../lib/transforms/push').processPush;
-      createJobData = require('../../lib/transforms/push').createJobData;
+      processPush = require('../../src/transforms/push').processPush;
+      createJobData = require('../../src/transforms/push').createJobData;
       Date.now = jest.fn(() => 12345678);
     });
 

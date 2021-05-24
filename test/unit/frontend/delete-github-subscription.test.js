@@ -4,7 +4,7 @@ const testTracking = require('../../setup/tracking');
 const {
   isDisabled,
   setIsDisabled,
-} = require('../../../lib/tracking');
+} = require('../../../src/tracking');
 
 let installation;
 let subscription;
@@ -47,7 +47,7 @@ describe('POST /github/subscription', () => {
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
 
-    deleteGitHubSubscription = require('../../../lib/frontend/delete-github-subscription');
+    deleteGitHubSubscription = require('../../../src/frontend/delete-github-subscription');
   });
 
   afterEach(() => {

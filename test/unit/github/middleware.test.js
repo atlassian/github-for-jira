@@ -1,8 +1,8 @@
 const { logger } = require('probot/lib/logger');
-const { GitHubAPI } = require('../../../lib/config/github-api');
+const { GitHubAPI } = require('../../../src/config/github-api');
 
-const { Installation, Subscription } = require('../../../lib/models');
-const middleware = require('../../../lib/github/middleware');
+const { Installation, Subscription } = require('../../../src/models');
+const middleware = require('../../../src/github/middleware');
 
 describe('Probot event middleware', () => {
   describe('when processing fails for one subscription', () => {

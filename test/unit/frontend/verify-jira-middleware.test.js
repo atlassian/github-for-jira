@@ -14,7 +14,7 @@ describe('#verifyJiraMiddleware', () => {
     res.locals = {};
     next = td.function('next');
 
-    subject = require('../../../lib/frontend/verify-jira-middleware');
+    subject = require('../../../src/frontend/verify-jira-middleware');
   });
 
   afterEach(() => {

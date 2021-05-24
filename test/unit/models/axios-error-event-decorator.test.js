@@ -1,7 +1,7 @@
 const axios = require('axios');
 const nock = require('nock');
 
-const AxiosErrorDecorator = require('../../../lib/models/axios-error-event-decorator');
+const AxiosErrorDecorator = require('../../../src/models/axios-error-event-decorator');
 
 describe(AxiosErrorDecorator, () => {
   const buildEvent = () => ({ extra: {}, tags: {} });

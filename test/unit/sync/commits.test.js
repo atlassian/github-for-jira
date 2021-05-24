@@ -53,7 +53,7 @@ describe('sync/commits', () => {
   });
 
   test('should sync to Jira when Commit Nodes have jira references', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
@@ -110,7 +110,7 @@ describe('sync/commits', () => {
   });
 
   test('should send Jira all commits that have Issue Keys', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
@@ -201,7 +201,7 @@ describe('sync/commits', () => {
   });
 
   test('should default to master branch if defaultBranchRef is null', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
@@ -259,7 +259,7 @@ describe('sync/commits', () => {
   });
 
   test('should not call Jira if no issue keys are present', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
@@ -287,7 +287,7 @@ describe('sync/commits', () => {
   });
 
   test('should not call Jira if no data is returned', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost } });
 

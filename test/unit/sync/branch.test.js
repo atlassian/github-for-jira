@@ -1,5 +1,5 @@
 const nock = require('nock');
-const parseSmartCommit = require('../../../lib/transforms/smart-commit');
+const parseSmartCommit = require('../../../src/transforms/smart-commit');
 const emptyNodesFixture = require('../../fixtures/api/graphql/branch-empty-nodes.json');
 const createJob = require('../../setup/create-job');
 
@@ -125,7 +125,7 @@ describe('sync/branches', () => {
   });
 
   test('should sync to Jira when branch refs have jira references', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
@@ -146,7 +146,7 @@ describe('sync/branches', () => {
   });
 
   test('should send data if issue keys are only present in commits', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
@@ -167,7 +167,7 @@ describe('sync/branches', () => {
   });
 
   test('should send data if issue keys are only present in an associatd PR title', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 
@@ -225,7 +225,7 @@ describe('sync/branches', () => {
   });
 
   test('should not call Jira if no issue keys are found', async () => {
-    const { processInstallation } = require('../../../lib/sync/installation');
+    const { processInstallation } = require('../../../src/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
 

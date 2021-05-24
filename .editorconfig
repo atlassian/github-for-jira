@@ -1,14 +1,15 @@
 root = true
 
 [*]
-indent_style = space
-indent_size = 2
 charset = utf-8
+end_of_line = lf
 trim_trailing_whitespace = true
 insert_final_newline = true
-end_of_line = lf
-# editorconfig-tools is unable to ignore longs strings or urls
-max_line_length = off
 
-[CHANGELOG.md]
-indent_size = unset
+[*.md]
+insert_final_newline = false
+trim_trailing_whitespace = false
+
+[*.{js,jsx,json,ts,tsx,yml}]
+indent_size = 2
+indent_style = space
