@@ -3,13 +3,7 @@ name: Github For Jira
 description: Connect app for integrating GitHub into Jira
 organization: Engineering-DevOps
 notifications:
-  email: "fusion-arc@atlassian.com"
-
-links:
-  healthcheck:
-    uri: /_ping
-  source:
-    url: https://github.com/atlassian-forks/github-for-jira.git
+  email: fusion-arc@atlassian.com
 
 compose:
   microservice:
@@ -17,6 +11,12 @@ compose:
     ports:
       - 8080:8080
     tag: 0.0.1
+
+links:
+  healthcheck:
+    uri: /healthcheck
+  source:
+    url: https://github.com/atlassian-forks/github-for-jira.git
 
 cleanup: true
 
@@ -40,7 +40,7 @@ resources:
 
 config:
   environmentVariables:
-    NODE_ENV: test
+    NODE_ENV: production
     PORT: "8080"
 
 scaling:

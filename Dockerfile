@@ -1,4 +1,4 @@
-FROM node:slim
+FROM node:10.9
 
 COPY package*.json ./
 RUN npm install

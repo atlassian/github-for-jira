@@ -13,3 +13,4 @@ newrelic_agent.log
 .vscode
 db/config.json
 .idea
+.nebulae
