@@ -32,7 +32,7 @@
     "STORAGE_SECRET": {
       "description": "The secret used to encrypt secrets in the database"
     },
-    "DATABASE_URL": {
+    "PG_DATABASE_URL": {
       "description": "The Postgres connection URL for the backing database"
     }
   },

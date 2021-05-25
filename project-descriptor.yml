@@ -1,0 +1,13 @@
+service:
+  # The name of your service
+  name: github-for-jira
+
+  descriptor:
+    # Location of your service descriptor
+    path: github-for-jira.sd.yml
+    build:
+      commands:
+        # The steps to build your Docker image. It might be a raw `docker build`
+        # like below, or it might be a script or several scripts if your build
+        # process is more involved.
+        - docker build -t atlassian/github-for-jira:0.0.1 .
