@@ -1,12 +1,12 @@
 const nock = require('nock');
-const { isAdminFunction } = require('../../../src/frontend/github-client-middleware');
+const { isAdmin } = require('../../../src/frontend/github-client-middleware');
 const { GitHubAPI } = require('../../../src/config/github-api');
 
 describe('GitHub client middleware', () => {
-  let isAdmin;
+  let adminFunction;
 
   beforeEach(() => {
-    isAdmin = isAdminFunction(GitHubAPI());
+    adminFunction = isAdmin(GitHubAPI());
   });
 
   it('isAdmin returns true if user is admin of a given organization', async () => {
@@ -14,7 +14,7 @@ describe('GitHub client middleware', () => {
       .get('/orgs/test-org/memberships/test-user')
       .reply(200, { role: 'admin' });
 
-    const result = await isAdmin({
+    const result = await adminFunction({
       org: 'test-org',
       username: 'test-user',
       type: 'Organization',
@@ -28,7 +28,7 @@ describe('GitHub client middleware', () => {
       .get('/orgs/test-org/memberships/test-user')
       .reply(200, { role: 'member' });
 
-    const result = await isAdmin({
+    const result = await adminFunction({
       org: 'test-org',
       username: 'test-user',
       type: 'Organization',
@@ -38,7 +38,7 @@ describe('GitHub client middleware', () => {
   });
 
   it('isAdmin returns true if repo is owned by a given user', async () => {
-    const result = await isAdmin({
+    const result = await adminFunction({
       org: 'test-user',
       username: 'test-user',
       type: 'User',
@@ -48,7 +48,7 @@ describe('GitHub client middleware', () => {
   });
 
   it('isAdmin returns false if repo is owned by another user', async () => {
-    const result = await isAdmin({
+    const result = await adminFunction({
       org: 'different-user',
       username: 'test-user',
       type: 'User',

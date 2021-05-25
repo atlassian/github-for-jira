@@ -1,11 +1,3 @@
-/* eslint-disable no-unused-expressions */
-
-/**
- * Enum for Action Proto Types
- *
- * @readonly
- * @enum {string}
- */
 export enum ActionType {
   CREATED = 'created',
   ENABLED = 'enabled',
@@ -13,23 +5,11 @@ export enum ActionType {
   DESTROYED = 'destroyed',
 }
 
-/**
- * Enum for Association Types
- *
- * @readonly
- * @enum {string}
- */
 export enum Association {
   SUBSCRIPTION = 'subscription',
   INSTALLATION = 'installation',
 }
 
-/**
- * Enum for Action Sources
- *
- * @readonly
- * @enum {string}
- */
 export enum ActionSource {
   /** An action that came from the Web UI Console in Jira */
   WEB_CONSOLE = 'web_console',
@@ -39,12 +19,7 @@ export enum ActionSource {
 
   /** An action from a Jira Webhook */
   WEBHOOK = 'webhook',
-};
-
-/**
- * @typedef BaseProtobuf
- * @property {string} schema
- */
+}
 
 /**
  * Track an action on a subscription/installation
@@ -53,7 +28,6 @@ export enum ActionSource {
  *
  * Must be updated manually when the hydro-schemas change.
  *
- * @implements {BaseProtobuf}
  */
 export class Action {
   public type: ActionType;

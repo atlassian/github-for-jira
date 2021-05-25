@@ -1,17 +1,6 @@
 const Sequelize = require('sequelize');
 
 module.exports = class Project extends Sequelize.Model {
-  static init(sequelize, DataTypes) {
-    return super.init(
-      {
-        projectKey: DataTypes.STRING,
-        occurrences: DataTypes.INTEGER,
-        jiraHost: DataTypes.STRING,
-      },
-      { sequelize },
-    );
-  }
-
   static async getAllForHost(host) {
     return Project.findAll({
       where: {

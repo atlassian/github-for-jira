@@ -2,11 +2,11 @@
 //        instance, mainly to use the `auth()` method. Probot needs refactored
 //        so that method is more easily accessible.
 
-const { createProbot } = require('probot');
-const { findPrivateKey } = require('probot/lib/private-key');
+import { createProbot } from 'probot';
+import { findPrivateKey } from 'probot/lib/private-key';
 
 const probot = createProbot({
-  id: process.env.APP_ID,
+  id: parseInt(process.env.APP_ID),
   cert: findPrivateKey(),
 
   // These aren't needed by worker process
@@ -17,6 +17,6 @@ const probot = createProbot({
 });
 
 // Load an empty app so we can get access to probot's auth handling
-const app = probot.load(() => {});
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export default probot.load(() => {});
 
-module.exports = app;

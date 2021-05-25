@@ -1,39 +1,22 @@
-const crypto = require('crypto');
-const Sequelize = require('sequelize');
-const EncryptedField = require('sequelize-encrypted');
-const Subscription = require('./subscription');
+import crypto from 'crypto';
+import Sequelize from 'sequelize';
+import Subscription from './subscription';
 
 if (!process.env.STORAGE_SECRET) {
   throw new Error('STORAGE_SECRET is not defined.');
 }
 
-const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
-
-function getHashedKey(clientKey) {
+export const getHashedKey = (clientKey: string): string => {
   const keyHash = crypto.createHmac('sha256', process.env.STORAGE_SECRET);
   keyHash.update(clientKey);
 
   return keyHash.digest('hex');
 }
 
-class Installation extends Sequelize.Model {
-  static init(sequelize, DataTypes) {
-    return super.init({
-      jiraHost: DataTypes.STRING,
-      secrets: encrypted.vault('secrets'),
-      sharedSecret: encrypted.field('sharedSecret', {
-        type: DataTypes.STRING,
-        allowNull: false,
-      }),
-      clientKey: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      enabled: Sequelize.BOOLEAN,
-    }, { sequelize });
-  }
+export default class Installation extends Sequelize.Model {
+  clientKey:string;
 
-  static async getForClientKey(clientKey) {
+  static async getForClientKey(clientKey: string): Promise<Installation | null> {
     return Installation.findOne({
       where: {
         clientKey: getHashedKey(clientKey),
@@ -41,7 +24,7 @@ class Installation extends Sequelize.Model {
     });
   }
 
-  static async getForHost(host) {
+  static async getForHost(host: string): Promise<Installation | null> {
     return Installation.findOne({
       where: {
         jiraHost: host,
@@ -50,7 +33,7 @@ class Installation extends Sequelize.Model {
     });
   }
 
-  static async getPendingHost(jiraHost) {
+  static async getPendingHost(jiraHost: string): Promise<Installation | null> {
     return Installation.findOne({
       where: {
         jiraHost,
@@ -59,13 +42,13 @@ class Installation extends Sequelize.Model {
     });
   }
 
-  async enable() {
+  async enable(): Promise<void> {
     await this.update({
       enabled: true,
     });
   }
 
-  async disable() {
+  async disable(): Promise<void> {
     await this.update({
       enabled: false,
     });
@@ -77,7 +60,7 @@ class Installation extends Sequelize.Model {
    * @param {{host: string, clientKey: string, secret: string}} payload
    * @returns {Installation}
    */
-  static async install(payload) {
+  static async install(payload: InstallationPayload): Promise<[Installation, boolean]> {
     const [installation, created] = await Installation.findOrCreate({
       where: {
         clientKey: getHashedKey(payload.clientKey),
@@ -95,7 +78,7 @@ class Installation extends Sequelize.Model {
         jiraHost: payload.host,
       }).then(async (record) => {
         const subscriptions = await Subscription.getAllForClientKey(record.clientKey);
-        await Promise.all(subscriptions.map(subscription => subscription.update({ jiraHost: record.jiraHost })));
+        await Promise.all(subscriptions.map(subscription => subscription.update({jiraHost: record.jiraHost})));
 
         return installation;
       });
@@ -108,14 +91,18 @@ class Installation extends Sequelize.Model {
     return installation;
   }
 
-  async uninstall() {
-    this.destroy();
+  async uninstall(): Promise<void> {
+    await this.destroy();
   }
 
-  async subscriptions() {
+  async subscriptions(): Promise<Subscription[]> {
     return Subscription.getAllForClientKey(this.clientKey);
   }
 }
 
-module.exports = Installation;
-module.exports.getHashedKey = getHashedKey;
+export interface InstallationPayload {
+  host: string;
+  clientKey: string;
+  secret: string;
+  sharedSecret:string;
+}
