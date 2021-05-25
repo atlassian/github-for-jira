@@ -15,8 +15,8 @@
     "start:worker": "ts-node bin/worker",
     "start:production": "node .",
     "clean": "rimraf coverage build tmp",
-    "build": "tsc -p ../tsconfig.release.json",
-    "build:watch": "tsc -w -p ../tsconfig.release.json",
+    "build": "tsc -p ./tsconfig.release.json",
+    "build:watch": "tsc -w -p ./tsconfig.release.json",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --coverage",
     "test:watch": "jest --watch"
