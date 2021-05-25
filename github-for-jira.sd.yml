@@ -23,7 +23,7 @@ cleanup: true
 
 resources:
   - type: redis
-    name: bottleneck
+    name: cache
     attributes:
       snapshotRetention: 0
       config:
