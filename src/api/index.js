@@ -382,7 +382,4 @@ app.post('/:installationId/migrate/:undo?', [
   }
 });
 
-app.get('/boom', (req, res, next) => { 'staff boom'.nopenope(); });
-app.post('/boom', (req, res, next) => { 'staff boom'.nopenope(); });
-
 module.exports = app;

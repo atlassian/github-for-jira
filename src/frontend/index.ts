@@ -1,11 +1,12 @@
-const sslify = require('express-sslify');
-const helmet = require('helmet');
+import sslify from 'express-sslify';
+import helmet from 'helmet';
+import getFrontendApp from './app';
+import {Application} from 'probot';
+import {Express, Router} from 'express';
 
-const getFrontendApp = require('./app');
-
-function secureHeaders(app, frontendApp) {
+function secureHeaders(router: Router, frontendApp: Express) {
   // Content Security Policy
-  app.use(helmet.contentSecurityPolicy({
+  router.use(helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'none'"],
       // Allow <script> tags hosted by ourselves and from atlassian when inserted into an iframe
@@ -19,7 +20,7 @@ function secureHeaders(app, frontendApp) {
     },
   }));
   // Enable HSTS with the value we use for education.github.com
-  app.use(helmet.hsts({
+  router.use(helmet.hsts({
     maxAge: 15552000,
   }));
   // X-Frame / Clickjacking protection
@@ -27,28 +28,28 @@ function secureHeaders(app, frontendApp) {
   // set this based on the referrer URL and match if it's *.atlassian.net or *.jira.com
   // app.use(helmet.frameguard({ action: 'deny' }))
   // MIME-Handling: Force Save in IE
-  app.use(helmet.ieNoOpen());
-  // Disable cachingç
-  app.use(helmet.noCache());
+  router.use(helmet.ieNoOpen());
+  // Disable caching
+  router.use(helmet.noCache());
   // Disable mimetype sniffing
-  app.use(helmet.noSniff());
+  router.use(helmet.noSniff());
   // Basic XSS Protection
-  app.use(helmet.xssFilter());
+  router.use(helmet.xssFilter());
 
   // Remove the X-Powered-By
   // This particular combination of methods works
   frontendApp.disable('x-powered-by');
-  app.use(helmet.hidePoweredBy());
+  router.use(helmet.hidePoweredBy());
 }
 
-module.exports = (robot) => {
-  const app = robot.route();
+export default (app: Application): void => {
+  const router = app.route();
 
   if (process.env.FORCE_HTTPS) {
-    app.use(sslify.HTTPS({ trustProtoHeader: true }));
+    router.use(sslify.HTTPS({trustProtoHeader: true}));
   }
 
-  const frontendApp = getFrontendApp(robot.app);
-  secureHeaders(app, frontendApp);
-  app.use(frontendApp);
+  const frontendApp = getFrontendApp(app.app);
+  secureHeaders(router, frontendApp);
+  router.use(frontendApp);
 };

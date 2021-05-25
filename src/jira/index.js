@@ -43,11 +43,6 @@ module.exports = (robot) => {
   router.post('/events/installed', install); // we can't authenticate since we don't have the secret
   router.post('/events/uninstalled', authenticate, uninstall);
 
-  if (process.env.EXCEPTION_DEBUG_MODE || process.env.NODE_ENV === 'development') {
-    router.get('/boom', (req, res, next) => { 'jira boom'.nopenope(); });
-    router.post('/boom', (req, res, next) => { 'jira boom'.nopenope(); });
-  }
-
   // The error handler must come after controllers and before other error middleware
   router.use(Sentry.Handlers.errorHandler());
 };
