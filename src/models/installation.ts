@@ -14,7 +14,11 @@ export const getHashedKey = (clientKey: string): string => {
 }
 
 export default class Installation extends Sequelize.Model {
-  clientKey:string;
+  jiraHost: string;
+  secrets: string;
+  sharedSecret: string;
+  clientKey: string;
+  enabled: boolean;
 
   static async getForClientKey(clientKey: string): Promise<Installation | null> {
     return Installation.findOne({
@@ -104,5 +108,5 @@ export interface InstallationPayload {
   host: string;
   clientKey: string;
   secret: string;
-  sharedSecret:string;
+  sharedSecret: string;
 }

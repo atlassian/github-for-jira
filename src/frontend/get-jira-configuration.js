@@ -29,7 +29,7 @@ const formatDate = function (date) {
 
 module.exports = async (req, res, next) => {
   try {
-    const jiraHost = req.query.xdm_e;
+    const jiraHost = req.session.jiraHost;
     const { client } = res.locals;
     const subscriptions = await Subscription.getAllForHost(jiraHost);
     const installations = await Promise.all(subscriptions

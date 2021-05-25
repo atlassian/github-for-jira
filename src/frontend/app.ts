@@ -30,6 +30,7 @@ declare global {
       session: {
         jiraHost?: string;
         githubToken?: string;
+        jwt?: string;
         [key: string]: unknown;
       };
     }
@@ -97,6 +98,7 @@ export default (octokitApp: App): Express => {
 
   // Check to see if jira host has been passed to any routes and save it to session
   app.use((req: Request, _: Response, next: NextFunction): void => {
+    req.session.jwt = req.query.jwt as string || req.session.jwt;
     req.session.jiraHost = req.query.xdm_e as string || req.session.jiraHost;
     next();
   });

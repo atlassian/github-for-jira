@@ -2,7 +2,7 @@ import JWT from 'atlassian-jwt';
 import {Installation} from '../models';
 import {NextFunction, Request, Response} from 'express';
 
-export default async (req: Request, res: Response, next: NextFunction) => {
+export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.session.githubToken) {
     return next(new Error('Github Auth token is missing'));
   }
@@ -28,14 +28,13 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     return installationsWithAdmin;
   }
 
-  if (req.query.jwt && req.query.xdm_e) {
-    const {jwt: token, xdm_e: jiraHost} = req.query;
+  if (req.session.jwt && req.session.jiraHost) {
     const {data: {login}} = await github.users.getAuthenticated();
     try {
       // we can get the jira client Key from the JWT's `iss` property
       // so we'll decode the JWT here and verify it's the right key before continuing
-      const installation = await Installation.getForHost(jiraHost);
-      const {iss: clientKey} = JWT.decode(token, installation.sharedSecret);
+      const installation = await Installation.getForHost(req.session.jiraHost);
+      const {iss: clientKey} = JWT.decode(req.session.jwt, installation.sharedSecret);
 
       const {data: {installations}} = (await github.apps.listInstallationsForAuthenticatedUser());
       const installationsWithAdmin = await getInstallationsWithAdmin({installations, login});
@@ -43,8 +42,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       return res.render('github-configuration.hbs', {
         csrfToken: req.csrfToken(),
         installations: installationsWithAdmin,
+        jiraHost: req.session.jiraHost,
         info,
-        jiraHost,
         clientKey,
       });
     } catch (err) {
