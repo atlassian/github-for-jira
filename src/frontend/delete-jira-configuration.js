@@ -15,7 +15,7 @@ const getJiraClient = require('../jira/client');
  * @returns {Promise<void>}
  */
 module.exports = async (req, res) => {
-  const jiraHost = req.query.xdm_e;
+  const jiraHost = req.session.jiraHost;
 
   const jiraClient = await getJiraClient(jiraHost, null, req.log);
   await jiraClient.devinfo.installation.delete(req.body.installationId);

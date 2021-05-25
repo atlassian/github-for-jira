@@ -3,8 +3,8 @@ const jwt = require('atlassian-jwt');
 const { Installation } = require('../models');
 
 module.exports = async function verifyJiraRequest(req, res, next) {
-  const jiraHost = (req.query && req.query.xdm_e) || (req.body && req.body.jiraHost);
-  const token = (req.query && req.query.jwt) || (req.body && req.body.token);
+  const jiraHost = req.session.jiraHost || req.body?.jiraHost;
+  const token = req.session.jwt || req.body?.token;
   const installation = await Installation.getForHost(jiraHost);
 
   if (installation) {
