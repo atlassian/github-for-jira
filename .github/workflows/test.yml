@@ -1,4 +1,4 @@
-name: Test & Build
+name: Test
 
 on: [push]
 
@@ -44,7 +44,6 @@ jobs:
       run: |
         ./node_modules/.bin/sequelize db:create --env test
         ./node_modules/.bin/sequelize db:migrate --env test
-    - run: npm run lint --if-present
     - name: Run tests
       env:
         NODE_ENV: test
@@ -53,4 +52,3 @@ jobs:
         POSTGRES_HOST: localhost
         POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
       run: npm test
-    - run: npm run build --if-present
