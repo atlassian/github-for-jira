@@ -1,8 +1,11 @@
-const { Installation, Subscription } = require('../../models');
-const getAxiosInstance = require('./axios');
-const { getJiraId } = require('../util/id');
-const newrelic = require('newrelic');
-const isProd = require('../util/isProd');
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {Installation, Subscription} from '../../models';
+import getAxiosInstance from './axios';
+import {getJiraId} from '../util/id';
+import newrelic from 'newrelic';
+import isProd from '../util/isProd';
+import {AxiosResponse} from 'axios';
+import Logger from 'bunyan';
 
 // Max number of issue keys we can pass to the Jira API
 const ISSUE_KEY_API_LIMIT = 100;
@@ -14,24 +17,25 @@ const ISSUE_KEY_API_LIMIT = 100;
  * general, the client should match the Octokit rest.js design for clear
  * interoperability.
  */
-async function getJiraClient(jiraHost, gitHubInstallationId, logger) {
+async function getJiraClient(jiraHost: string, gitHubInstallationId: string, logger: Logger): Promise<any> {
   const installation = await Installation.getForHost(jiraHost);
   if (installation == null) {
-    return;
+    return undefined;
   }
   const instance = getAxiosInstance(installation.jiraHost, installation.sharedSecret, logger);
 
+  // TODO: need to create actual class for this
   const client = {
     baseURL: instance.defaults.baseURL,
     issues: {
       // eslint-disable-next-line camelcase
-      get: (issue_id, query = { fields: 'summary' }) => instance.get('/rest/api/latest/issue/:issue_id', {
-        fields: {
+      get: (issue_id, query = {fields: 'summary'}): Promise<AxiosResponse> => instance.get('/rest/api/latest/issue/:issue_id', {
+        urlParams: {
           ...query,
           issue_id,
         },
       }),
-      getAll: async (issueIds, query) => (await Promise.all(issueIds.map(issueId => client.issues.get(issueId, query).catch(error => error))))
+      getAll: async (issueIds, query) => (await Promise.all<AxiosResponse>(issueIds.map(issueId => client.issues.get(issueId, query))))
         .filter(response => response.status === 200)
         .map(response => response.data),
       parse: (text) => {
@@ -42,13 +46,13 @@ async function getJiraClient(jiraHost, gitHubInstallationId, logger) {
       comments: {
         // eslint-disable-next-line camelcase
         getForIssue: (issue_id) => instance.get('/rest/api/latest/issue/:issue_id/comment', {
-          fields: {
+          urlParams: {
             issue_id,
           },
         }),
         // eslint-disable-next-line camelcase
         addForIssue: (issue_id, payload) => instance.post('/rest/api/latest/issue/:issue_id/comment', payload, {
-          fields: {
+          urlParams: {
             issue_id,
           },
         }),
@@ -56,7 +60,7 @@ async function getJiraClient(jiraHost, gitHubInstallationId, logger) {
       transitions: {
         // eslint-disable-next-line camelcase
         getForIssue: (issue_id) => instance.get('/rest/api/latest/issue/:issue_id/transitions', {
-          fields: {
+          urlParams: {
             issue_id,
           },
         }),
@@ -66,7 +70,7 @@ async function getJiraClient(jiraHost, gitHubInstallationId, logger) {
             id: transition_id,
           },
         }, {
-          fields: {
+          urlParams: {
             issue_id,
           },
         }),
@@ -74,13 +78,13 @@ async function getJiraClient(jiraHost, gitHubInstallationId, logger) {
       worklogs: {
         // eslint-disable-next-line camelcase
         getForIssue: (issue_id) => instance.get('/rest/api/latest/issue/:issue_id/worklog', {
-          fields: {
+          urlParams: {
             issue_id,
           },
         }),
         // eslint-disable-next-line camelcase
         addForIssue: (issue_id, payload) => instance.post('/rest/api/latest/issue/:issue_id/worklog', payload, {
-          fields: {
+          urlParams: {
             issue_id,
           },
         }),
@@ -89,8 +93,8 @@ async function getJiraClient(jiraHost, gitHubInstallationId, logger) {
     devinfo: {
       branch: {
         delete: (repositoryId, branchRef) => instance.delete('/rest/devinfo/0.10/repository/:repositoryId/branch/:branchJiraId', {
-          fields: {
-            _updateSequenceId: Date.now(),
+          urlParams: {
+            _updateSequenceId: Date.now().toString(),
             repositoryId,
             branchJiraId: getJiraId(branchRef),
           },
@@ -124,18 +128,18 @@ async function getJiraClient(jiraHost, gitHubInstallationId, logger) {
       },
       pullRequest: {
         delete: (repositoryId, pullRequestId) => instance.delete('/rest/devinfo/0.10/repository/:repositoryId/pull_request/:pullRequestId', {
-          fields: {
-            _updateSequenceId: Date.now(),
+          urlParams: {
+            _updateSequenceId: Date.now().toString(),
             repositoryId,
             pullRequestId,
           },
         }),
       },
       repository: {
-        get: (repositoryId) => instance.get('/rest/devinfo/0.10/repository/:repositoryId', { fields: { repositoryId } }),
+        get: (repositoryId) => instance.get('/rest/devinfo/0.10/repository/:repositoryId', {urlParams: {repositoryId}}),
         delete: (repositoryId) => instance.delete('/rest/devinfo/0.10/repository/:repositoryId', {
-          fields: {
-            _updateSequenceId: Date.now(),
+          urlParams: {
+            _updateSequenceId: Date.now().toString(),
             repositoryId,
           },
         }),
@@ -145,7 +149,7 @@ async function getJiraClient(jiraHost, gitHubInstallationId, logger) {
           if (!withinIssueKeyLimit(data.commits) || !withinIssueKeyLimit(data.branches)) {
             truncateIssueKeys(data);
             const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
-            await subscription.update({ syncWarning: 'Exceeded issue key reference limit. Some issues may not be linked.' });
+            await subscription.update({syncWarning: 'Exceeded issue key reference limit. Some issues may not be linked.'});
           }
 
           await batchedBulkUpdate(data, options, instance, gitHubInstallationId);
@@ -157,7 +161,7 @@ async function getJiraClient(jiraHost, gitHubInstallationId, logger) {
   return client;
 }
 
-module.exports = async (...args) => newrelic.startSegment('lib/jira/client: getJiraClient', true, async () => getJiraClient(...args));
+export default async (jiraHost: string, gitHubInstallationId: string, logger: Logger) => newrelic.startSegment('lib/jira/client: getJiraClient', true, async () => getJiraClient(jiraHost, gitHubInstallationId, logger));
 
 /**
  * Splits commits in data payload into chunks of 400 and makes separate requests

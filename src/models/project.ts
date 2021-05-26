@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
+import Sequelize from 'sequelize';
 
-module.exports = class Project extends Sequelize.Model {
+export default class Project extends Sequelize.Model {
   static async getAllForHost(host) {
     return Project.findAll({
       where: {
@@ -36,11 +36,7 @@ module.exports = class Project extends Sequelize.Model {
     });
 
     for (const project of projects) {
-      project.delete();
+      await project.destroy();
     }
-  }
-
-  async delete() {
-    return this.destroy();
   }
 };

@@ -1,4 +1,5 @@
-const url = require('url');
+/* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
+import url from 'url';
 
 /*
  * Adds request/response metadata to a Sentry event for an Axios error
@@ -6,13 +7,15 @@ const url = require('url');
  *
  * See https://docs.sentry.io/platforms/node/#eventprocessors
  */
-class AxiosErrorEventDecorator {
-  static decorate(event, hint) {
-    const decorator = new AxiosErrorEventDecorator(event, hint);
-    return decorator.decorate();
+export default class AxiosErrorEventDecorator {
+  event: any;
+  hint: any;
+
+  static decorate(event: any, hint: any): any {
+    return new AxiosErrorEventDecorator(event, hint).decorate();
   }
 
-  constructor(event, hint) {
+  constructor(event: unknown, hint: unknown) {
     this.event = event;
     this.hint = hint;
   }
@@ -33,7 +36,7 @@ class AxiosErrorEventDecorator {
     return this.error && this.response && this.request;
   }
 
-  decorate() {
+  decorate(): unknown {
     if (!this.validError()) {
       return this.event;
     }
@@ -46,36 +49,26 @@ class AxiosErrorEventDecorator {
   }
 
   requestMetadata() {
-    const metadata = {
+    const body = this.response.config.data;
+    return {
       method: this.request.method,
       path: this.request.path,
       host: this.request.getHeader('host'),
       headers: this.request.getHeaders(),
+      body: body ? this.parseRequestBody(body) : undefined
     };
-
-    const requestBody = this.response.config.data;
-    if (requestBody) {
-      metadata.body = this.parseRequestBody(requestBody);
-    }
-
-    return metadata;
   }
 
   responseMetadata() {
-    const metadata = {
+    return {
       status: this.response.status,
       headers: this.response.headers,
+      body: this.response.data?.toString().slice(0, 255)
     };
-
-    if (this.response.data) {
-      metadata.body = this.response.data.toString().slice(0, 255);
-    }
-
-    return metadata;
   }
 
   generateFingerprint() {
-    const { pathname } = url.parse(this.request.path);
+    const {pathname} = url.parse(this.request.path);
 
     return [
       '{{ default }}',
@@ -105,5 +98,3 @@ class AxiosErrorEventDecorator {
     return this.request.getHeader('content-type').startsWith('application/json');
   }
 }
-
-module.exports = AxiosErrorEventDecorator;

@@ -15,9 +15,9 @@ export default (connectionName: string): RedisInfo => ({
   redisUrl: REDIS_URL,
   redisOptions: {
     password,
-    port: parseInt(redisUrl.port) || 6379,
+    port: Number(redisUrl.port) || 6379,
     host: redisUrl.hostname,
-    db: db.length >= 2 ? parseInt(db[1]) : 0,
+    db: db.length >= 2 ? Number(db[1]) : 0,
     connectionName,
   },
 });

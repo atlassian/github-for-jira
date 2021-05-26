@@ -11,10 +11,10 @@ const {redisOptions} = getRedisInfo('probot');
 initializeSentry();
 
 const probot = createProbot({
-  id: parseInt(process.env.APP_ID),
+  id: Number(process.env.APP_ID),
   secret: process.env.WEBHOOK_SECRET,
   cert: PrivateKey.findPrivateKey(),
-  port: parseInt(process.env.TUNNEL_PORT) || parseInt(process.env.PORT) || 3000,
+  port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 3000,
   webhookPath: '/github/events',
   webhookProxy: process.env.WEBHOOK_PROXY_URL,
   redisConfig: redisOptions,
@@ -32,6 +32,6 @@ function start() {
 
 // Start clustered server
 throng({
-  workers: parseInt(process.env.WEB_CONCURRENCY) || 1,
+  workers: Number(process.env.WEB_CONCURRENCY) || 1,
   lifetime: Infinity,
 }, start);

@@ -1,9 +1,10 @@
-const { Project } = require('../models');
-const transformBranch = require('../transforms/branch');
-const parseSmartCommit = require('../transforms/smart-commit');
-const reduceProjectKeys = require('../jira/util/reduce-project-keys');
+import { Project } from '../models';
+import transformBranch from '../transforms/branch';
+import parseSmartCommit from '../transforms/smart-commit';
+import reduceProjectKeys from '../jira/util/reduce-project-keys';
+import {Context} from 'probot/lib/context';
 
-module.exports.createBranch = async (context, jiraClient) => {
+export const createBranch = async (context:Context, jiraClient) => {
   const { data: jiraPayload } = await transformBranch(context);
 
   if (!jiraPayload) {
@@ -21,7 +22,7 @@ module.exports.createBranch = async (context, jiraClient) => {
   }
 };
 
-module.exports.deleteBranch = async (context, jiraClient) => {
+export const deleteBranch = async (context, jiraClient) => {
   const { issueKeys } = parseSmartCommit(context.payload.ref);
 
   if (!issueKeys) {

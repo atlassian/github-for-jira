@@ -24,6 +24,7 @@ export default class Subscription extends Sequelize.Model {
   syncWarning: string;
   jiraClientKey: string;
   updatedAt: Date;
+  createdAt: Date;
 
   static async getAllForHost(host: string): Promise<Subscription[]> {
     return Subscription.findAll({

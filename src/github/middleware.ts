@@ -1,12 +1,13 @@
-const Sentry = require('@sentry/node');
+import Sentry from '@sentry/node';
 
-const AxiosErrorEventDecorator = require('../models/axios-error-event-decorator');
-const SentryScopeProxy = require('../models/sentry-scope-proxy');
-const { Subscription } = require('../models');
-const getJiraClient = require('../jira/client');
-const getJiraUtil = require('../jira/util');
-const enhanceOctokit = require('../config/enhance-octokit');
-const newrelic = require('newrelic');
+import AxiosErrorEventDecorator from '../models/axios-error-event-decorator';
+import SentryScopeProxy from '../models/sentry-scope-proxy';
+import {Subscription} from '../models';
+import getJiraClient from '../jira/client';
+import getJiraUtil from '../jira/util';
+import enhanceOctokit from '../config/enhance-octokit';
+import newrelic from 'newrelic';
+import {Context} from 'probot/lib/context';
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
@@ -41,8 +42,13 @@ const isStateChangeAction = (action) => [
   'reopened',
 ].includes(action);
 
-module.exports = function middleware(callback) {
-  return withSentry(async (context) => {
+export class CustomContext extends Context {
+  sentry: Sentry.Hub;
+  timedout: number;
+}
+
+export default (callback) => {
+  return withSentry(async (context: CustomContext) => {
     enhanceOctokit(context.github, context.log);
 
     let webhookEvent = context.name;
@@ -64,43 +70,54 @@ module.exports = function middleware(callback) {
     });
 
     const gitHubInstallationId = context.payload.installation.id;
-    context.log = context.log.child({ gitHubInstallationId });
+    context.log = context.log.child({gitHubInstallationId});
 
     // Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
     // State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
     if (context.payload.sender.type === 'Bot' && !isStateChangeAction(context.payload.action)) {
-      context.log({ noop: 'bot', botId: context.payload.sender.id, botLogin: context.payload.sender.login }, 'Halting further execution since the sender is a bot and action is not a state change');
+      context.log({
+        noop: 'bot',
+        botId: context.payload.sender.id,
+        botLogin: context.payload.sender.login
+      }, 'Halting further execution since the sender is a bot and action is not a state change');
       return;
     }
 
     if (isFromIgnoredRepo(context.payload)) {
-      context.log({ noop: 'ignored_repo', installation_id: context.payload.installation.id, repository_id: context.payload.repository.id }, 'Halting further execution since the repository is explicitly ignored');
+      context.log({
+        noop: 'ignored_repo',
+        installation_id: context.payload.installation.id,
+        repository_id: context.payload.repository.id
+      }, 'Halting further execution since the repository is explicitly ignored');
       return;
     }
 
     const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
     if (!subscriptions.length) {
-      context.log({ noop: 'no_subscriptions' }, 'Halting futher execution since no subscriptions were found');
+      context.log({noop: 'no_subscriptions'}, 'Halting futher execution since no subscriptions were found');
       return;
     }
 
     context.sentry.setTag('transaction', `webhook:${context.name}.${context.payload.action}`);
     for (const subscription of subscriptions) {
-      const { jiraHost } = subscription;
+      const {jiraHost} = subscription;
       context.sentry.setTag('jiraHost', jiraHost);
       context.sentry.setTag('gitHubInstallationId', gitHubInstallationId);
-      context.sentry.setUser({ jiraHost, gitHubInstallationId });
-      context.log = context.log.child({ jiraHost });
+      context.sentry.setUser({jiraHost, gitHubInstallationId});
+      context.log = context.log.child({jiraHost});
       if (context.timedout) {
         Sentry.captureMessage('Timed out jira middleware iterating subscriptions');
-        context.log.error({ timeout: true, timeoutElapsed: context.timedout }, `Timing out at after ${context.timedout}ms`);
+        context.log.error({
+          timeout: true,
+          timeoutElapsed: context.timedout
+        }, `Timing out at after ${context.timedout}ms`);
         return;
       }
 
       const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, context.log);
       if (jiraClient == null) {
         // Don't call callback if we have no jiraClient
-        context.log.error({ noop: 'no_jira_client' }, `No enabled installation found for ${jiraHost}.`);
+        context.log.error({noop: 'no_jira_client'}, `No enabled installation found for ${jiraHost}.`);
         return;
       }
       const util = getJiraUtil(jiraClient);

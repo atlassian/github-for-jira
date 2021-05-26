@@ -1,26 +1,30 @@
-const SentryScopeProxy = require('./sentry-scope-proxy');
+import SentryScopeProxy from './sentry-scope-proxy';
+import {GitHubAPI, Octokit} from 'probot';
 
 /*
  * Wraps an Octokit HttpError and extracts metadata for Sentry.
  *
  * Intended to be used by `octokit.hook.wrap('request')`
  */
-class OctokitError extends Error {
+export default class OctokitError extends Error {
+  sentryScope: SentryScopeProxy;
+  requestOptions: Octokit.HookOptions;
+  httpError: Octokit.HookError;
+
   /*
    * Takes an octokit instance and wraps request errors. Useful when the octokit is instantiated by someone else (i.e., Probot)
    */
-  static wrapRequestErrors(octokit) {
-    octokit.hook.wrap('request', async (request, options) => {
+  static wrapRequestErrors(githubApi: GitHubAPI): void {
+    githubApi.hook.wrap('request', async (request, options) => {
       try {
-        const response = await request(options);
-        return response;
+        return await request(options);
       } catch (error) {
         throw new OctokitError(error, options);
       }
     });
   }
 
-  constructor(httpError, requestOptions) {
+  constructor(httpError:Octokit.HookError, requestOptions:Octokit.HookOptions) {
     super(`${requestOptions.method} ${requestOptions.url} responded with ${httpError.status}`);
 
     this.name = this.constructor.name;
@@ -37,30 +41,25 @@ class OctokitError extends Error {
     return this.httpError.status;
   }
 
-  requestMetadata() {
-    return {
-      method: this.requestOptions.method,
-      path: this.requestOptions.url,
-      headers: this.requestOptions.headers,
-    };
-  }
+  requestMetadata = () => ({
+    method: this.requestOptions.method,
+    path: this.requestOptions.url,
+    headers: this.requestOptions.headers,
+  })
 
-  responseMetadata() {
-    return {
-      code: this.responseCode,
-      body: this.deserializeMessage(this.httpError.message),
-      headers: this.httpError.headers,
-    };
-  }
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  responseMetadata = () => ({
+    code: this.responseCode,
+    body: this.deserializeMessage(this.httpError.message),
+    headers: this.httpError.headers,
+  })
 
-  generateFingerprint() {
-    return [
-      '{{ default }}',
-      this.requestOptions.method,
-      this.requestOptions.url,
-      this.responseCode,
-    ];
-  }
+  generateFingerprint = () => [
+    '{{ default }}',
+    this.requestOptions.method,
+    this.requestOptions.url,
+    this.responseCode,
+  ];
 
   deserializeMessage(message) {
     try {
@@ -74,5 +73,3 @@ class OctokitError extends Error {
     return message;
   }
 }
-
-module.exports = OctokitError;

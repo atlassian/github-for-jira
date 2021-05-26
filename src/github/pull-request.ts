@@ -1,11 +1,13 @@
-const { Project } = require('../models');
-const transformPullRequest = require('../transforms/pull-request');
-const reduceProjectKeys = require('../jira/util/reduce-project-keys');
-const parseSmartCommit = require('../transforms/smart-commit');
+import { Project } from '../models';
+import transformPullRequest from '../transforms/pull-request';
+import reduceProjectKeys from '../jira/util/reduce-project-keys';
+import parseSmartCommit from '../transforms/smart-commit';
+import {Context} from 'probot/lib/context';
 
-module.exports = async (context, jiraClient, util) => {
+export default async (context:Context, jiraClient, util) => {
   const author = await context.github.users.getByUsername({ username: context.payload.pull_request.user.login });
-  let reviews = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let reviews:any = {};
   try {
     reviews = await context.github.pulls.listReviews({
       owner: context.payload.repository.owner.login,

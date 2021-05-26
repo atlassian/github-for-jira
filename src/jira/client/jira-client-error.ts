@@ -1,8 +1,11 @@
 /*
  * An error wrapper that provides a more specific message for failed requests to the Jira API.
  */
-class JiraClientError extends Error {
-  constructor(error) {
+import {AxiosError, AxiosResponse} from 'axios';
+
+export default class JiraClientError extends Error {
+  response: AxiosResponse;
+  constructor(error:AxiosError) {
     const message = 'Error communicating with Jira DevInfo API';
 
     super(message);
@@ -12,5 +15,3 @@ class JiraClientError extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 }
-
-module.exports = JiraClientError;

@@ -6,7 +6,7 @@ import { createProbot } from 'probot';
 import { findPrivateKey } from 'probot/lib/private-key';
 
 const probot = createProbot({
-  id: parseInt(process.env.APP_ID),
+  id: Number(process.env.APP_ID),
   cert: findPrivateKey(),
 
   // These aren't needed by worker process

@@ -1,17 +1,21 @@
-module.exports = async (req, res, next) => {
+// TODO: are we using this?
+import {NextFunction, Request, Response} from 'express';
+
+export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.session.githubToken) {
     return next(new Error('Unauthorized'));
   }
 
-  const { github, client, isAdmin } = res.locals;
+  const {github, client, isAdmin} = res.locals;
 
   try {
-    const { data: { login } } = await github.users.getAuthenticated();
+    const {data: {login}} = await github.users.getAuthenticated();
     const {
-      data: { installations },
+      data: {installations},
     } = await github.apps.listInstallationsForAuthenticatedUser();
 
     const adminInstallations = [];
+    // TODO: make this parallel instead of sequential, then filter out
     for (const installation of installations) {
       // See if we can get the membership for this user
       if (
@@ -25,14 +29,14 @@ module.exports = async (req, res, next) => {
       }
     }
 
-    const { data: info } = await client.apps.getAuthenticated();
+    const {data: info} = await client.apps.getAuthenticated();
     return res.render('github-installations.hbs', {
       csrfToken: req.csrfToken(),
       installations: adminInstallations,
       info,
     });
   } catch (err) {
-    console.log(
+    req.log.error(
       `Unable to show github subscription page. error=${err}, jiraHost=${req.session.jiraHost}`,
     );
     return next(new Error(err));

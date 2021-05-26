@@ -1,7 +1,8 @@
-const { enqueuePush } = require('../transforms/push');
-const parseSmartCommit = require('../transforms/smart-commit');
+import { enqueuePush } from '../transforms/push';
+import parseSmartCommit from '../transforms/smart-commit';
+import {Context} from 'probot/lib/context';
 
-module.exports = async (context, jiraClient) => {
+export default async (context:Context, jiraClient) => {
   // Copy the shape of the context object for processing
   // but filter out any commits that don't have issue keys
   // so we don't have to process them.

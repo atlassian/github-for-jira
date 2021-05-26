@@ -1,4 +1,7 @@
-module.exports = async (context, jiraClient, util) => {
+import {CustomContext} from './middleware';
+import JiraClient from '../models/jira-client';
+
+export default async (context:CustomContext, _:JiraClient, util) => {
   const { issue } = context.payload;
 
   const linkifiedBody = await util.unfurl(issue.body);
