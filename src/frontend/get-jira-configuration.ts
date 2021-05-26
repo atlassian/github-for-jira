@@ -1,6 +1,7 @@
-const format = require('date-fns/format');
-const moment = require('moment');
-const { Subscription } = require('../models');
+import format from 'date-fns/format';
+import moment from 'moment';
+import { Subscription } from '../models';
+import {NextFunction, Request, Response} from 'express';
 
 const syncStatus = (syncStatus) => (syncStatus === 'ACTIVE' ? 'IN PROGRESS' : syncStatus);
 
@@ -27,7 +28,7 @@ const formatDate = function (date) {
   };
 };
 
-module.exports = async (req, res, next) => {
+export default async (req:Request, res:Response, next:NextFunction):Promise<void> => {
   try {
     const jiraHost = req.session.jiraHost;
     const { client } = res.locals;
@@ -56,7 +57,7 @@ module.exports = async (req, res, next) => {
       csrfToken: req.csrfToken(),
     });
 
-    req.log('Jira configuration rendered successfully.');
+    req.log.info('Jira configuration rendered successfully.');
   } catch (error) {
     return next(new Error(`Failed to render Jira configuration: ${error}`));
   }

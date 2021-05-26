@@ -1,4 +1,7 @@
-module.exports = async (context, jiraClient, util) => {
+import {Context} from 'probot/lib/context';
+import JiraClient from '../models/jira-client';
+
+export default async (context:Context, _:JiraClient, util) => {
   const { comment } = context.payload;
 
   const linkifiedBody = await util.unfurl(comment.body);

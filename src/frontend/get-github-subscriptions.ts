@@ -1,6 +1,7 @@
-const { Subscription } = require('../models');
+import { Subscription } from '../models';
+import {NextFunction, Request, Response} from 'express';
 
-module.exports = async (req, res, next) => {
+export default async (req:Request, res:Response, next:NextFunction):Promise<void> => {
   if (!req.session.githubToken) {
     return next(new Error('Unauthorized'));
   }
@@ -32,7 +33,7 @@ module.exports = async (req, res, next) => {
       return next(new Error('Unauthorized'));
     }
   } catch (err) {
-    console.log(`Unable to show subscription page. error=${err}, installation=${req.params.installationId}`);
+    req.log.error(`Unable to show subscription page. error=${err}, installation=${req.params.installationId}`);
     return next(new Error('Not Found'));
   }
 };

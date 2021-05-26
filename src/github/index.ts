@@ -1,19 +1,13 @@
-const newrelic = require('newrelic');
-const issueComment = require('./issue-comment');
-const issue = require('./issue');
-const middleware = require('./middleware');
-const pullRequest = require('./pull-request');
-const push = require('./push');
-const { createBranch, deleteBranch } = require('./branch');
-const webhookTimeout = require('../middleware/webhook-timeout');
+import newrelic from 'newrelic';
+import issueComment from './issue-comment';
+import issue from './issue';
+import middleware from './middleware';
+import pullRequest from './pull-request';
+import push from './push';
+import { createBranch, deleteBranch } from './branch';
+import webhookTimeout from '../middleware/webhook-timeout';
 
-/**
- * @param {import('probot').Application} robot - The probot instance
- */
-module.exports = (robot) => {
-  /**
-   * @param {import('probot').Context} context - The incoming request context.
-   */
+export default (robot) => {
   robot.on('*', (context) => {
     newrelic.setControllerName(`github/events.${context.name}`);
     context.log({ event: context.name, action: context.payload.action }, 'Event received');

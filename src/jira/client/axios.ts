@@ -1,26 +1,32 @@
-const axios = require('axios').default;
-const jwt = require('atlassian-jwt');
-const url = require('url');
-const statsd = require('../../config/statsd');
-
-const JiraClientError = require('./jira-client-error');
+import Logger from 'bunyan';
+import axios from 'axios';
+import jwt from 'atlassian-jwt';
+import url from 'url';
+import statsd from '../../config/statsd';
+import JiraClientError from './jira-client-error';
 
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ''}`;
 
+// TODO: type hack to fix custom implementation of URL templating vars
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    urlParams?: Record<string, string>;
+  }
+}
 /**
  * Middleware to create a custom JWT for a request.
  *
  * @param {string} secret - The key to use to sign the JWT
  */
-function getAuthMiddleware(secret) {
+function getAuthMiddleware(secret:string) {
   return (
     /**
      * @param {import('axios').AxiosRequestConfig} config - The config for the outgoing request.
      * @returns {import('axios').AxiosRequestConfig} Updated axios config with authentication token.
      */
     (config) => {
-      const { query, pathname } = url.parse(config.url, true);
+      const {query, pathname} = url.parse(config.url, true);
 
       const jwtToken = jwt.encode({
         ...getExpirationInSeconds(),
@@ -44,8 +50,6 @@ function getAuthMiddleware(secret) {
 
 /**
  * Mapping of Jira Dev Error Codes to nice strings.
- *
- * See {@link https://developer.atlassian.com/cloud/jira/software/rest/#api-devinfo-0-10-bulk-post} for details on the API errors.
  */
 const JiraErrorCodes = {
   400: 'Request had incorrect format.',
@@ -57,8 +61,6 @@ const JiraErrorCodes = {
 
 /**
  * Middleware to enhance failed requests in Jira.
- *
- * @param {import('probot').Logger} logger - The probot logger instance
  */
 function getErrorMiddleware(logger) {
   return (
@@ -70,9 +72,9 @@ function getErrorMiddleware(logger) {
      */
     (error) => {
       if (error.response) {
-        const { status, statusText } = error.response || {};
+        const {status, statusText} = error.response || {};
         logger.debug({
-          params: error.config.fields,
+          params: error.config.urlParams,
         }, `Jira request: ${error.request.method} ${error.request.path} - ${status} ${statusText}`);
 
         if (status in JiraErrorCodes) {
@@ -101,7 +103,7 @@ function getSuccessMiddleware(logger) {
      */
     (response) => {
       logger.debug({
-        params: response.config.fields,
+        params: response.config.urlParams,
       }, `Jira request: ${response.config.method.toUpperCase()} ${response.config.originalUrl} - ${response.status} ${response.statusText}`);
 
       return response;
@@ -111,6 +113,8 @@ function getSuccessMiddleware(logger) {
 /**
  * Enrich the Axios Request Config with a URL object.
  */
+
+// TODO: non-standard and probably should be done through string interpolation
 function getUrlMiddleware() {
   return (
     /**
@@ -118,18 +122,19 @@ function getUrlMiddleware() {
      * @returns {import('axios').AxiosRequestConfig} The enriched axios request config.
      */
     (config) => {
-      let { query, pathname, ...rest } = url.parse(config.url, true);
-      config.fields = config.fields || {};
+      // eslint-disable-next-line prefer-const
+      let {query, pathname, ...rest} = url.parse(config.url, true);
+      config.urlParams = config.urlParams || {};
 
-      for (const field in config.fields) {
-        if (pathname.includes(`:${field}`)) {
-          pathname = pathname.replace(`:${field}`, config.fields[field]);
+      for (const param in config.urlParams) {
+        if (pathname.includes(`:${param}`)) {
+          pathname = pathname.replace(`:${param}`, config.urlParams[param]);
         } else {
-          query[field] = config.fields[field];
+          query[param] = config.urlParams[param];
         }
       }
 
-      config.fields.baseUrl = config.baseURL;
+      config.urlParams.baseUrl = config.baseURL;
 
       return {
         ...config,
@@ -174,15 +179,8 @@ const setRequestStartTime = (config) => {
 /**
  * Extract the path name from a URL.
  *
- * @param {string} someUrl - The URL to operate on.
- * @returns {string} The path name attribute from the URL.
  */
-const extractPath = (someUrl) => {
-  if (someUrl) {
-    const { pathname } = url.parse(someUrl);
-    return pathname;
-  }
-};
+export const extractPath = (someUrl = ''): string => url.parse(someUrl).pathname;
 
 /**
  * Submit statsd metrics on successful requests.
@@ -191,7 +189,7 @@ const extractPath = (someUrl) => {
  * @returns {import('axios').AxiosResponse} The response object.
  */
 const instrumentRequest = (response) => {
-  const requestDurationMs = Number(new Date() - response.config.requestStartTime);
+  const requestDurationMs = Number(Date.now() - response.config.requestStartTime);
   const tags = {
     method: response.config.method.toUpperCase(),
     path: extractPath(response.config.originalUrl),
@@ -226,13 +224,8 @@ const instrumentFailedRequest = (error) => {
  * it makes sense for us to simply create a new JWT for each request rather than
  * attempt to reuse them. This accomplished using Axios interceptors to
  * just-in-time add the token to a request before sending it.
- *
- * @param {string} baseURL - The base URL for the request.
- * @param {any} secret - TBD
- * @param {import('probot').Logger} logger - The probot logger
- * @returns {import('axios').AxiosInstance} A custom axios instance
  */
-module.exports = (baseURL, secret, logger) => {
+export default (baseURL: string, secret: string, logger: Logger) => {
   const instance = axios.create({
     baseURL,
     timeout: +process.env.JIRA_TIMEOUT || 20000,
@@ -251,5 +244,3 @@ module.exports = (baseURL, secret, logger) => {
 
   return instance;
 };
-
-module.exports.extractPath = extractPath;

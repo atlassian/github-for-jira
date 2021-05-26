@@ -1,4 +1,4 @@
-module.exports = function (jiraClient) {
+export default (jiraClient) => {
   const containsReferenceLink = (line) => {
     // reference text links should have 2 parts only
     if (line.split(' ').length === 2) {
@@ -116,6 +116,7 @@ module.exports = function (jiraClient) {
           return jiraClient.issues.transitions.updateForIssue(issueKey, transitions[0].id);
         }));
       }
+      return Promise.resolve();
     }));
   }
 
