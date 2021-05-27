@@ -1,6 +1,7 @@
 // Original source code:
 // https://bitbucket.org/atlassian/atlassian-connect-express/src/f434e5a9379a41213acf53b9c2689ce5eec55e21/lib/middleware/authentication.js?at=master&fileviewer=file-view-default#authentication.js-227
-const jwt = require('atlassian-jwt');
+// TODO: need some typing for jwt
+import jwt from 'atlassian-jwt';
 
 const TOKEN_KEY_PARAM = 'acpt';
 const TOKEN_KEY_HEADER = `X-${TOKEN_KEY_PARAM}`;
@@ -55,15 +56,16 @@ function sendError(res, code, msg) {
   });
 }
 
-const hasValidJwt = (secret, baseUrl, req, res) => {
+export const hasValidJwt = (secret, baseUrl, req, res) => {
   const token = extractJwtFromRequest(req);
   if (!token) {
     sendError(res, 401, 'Could not find authentication data on request');
     return false;
   }
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let unverifiedClaims:any;
   try {
-    var unverifiedClaims = jwt.decode(token, '', true); // decode without verification;
+    unverifiedClaims = jwt.decode(token, '', true); // decode without verification;
   } catch (e) {
     sendError(res, 401, `Invalid JWT: ${e.message}`);
     return false;
@@ -96,13 +98,13 @@ const hasValidJwt = (secret, baseUrl, req, res) => {
     let expectedHash = jwt.createQueryStringHash(req, false, baseUrl);
     let signatureHashVerified = verifiedClaims.qsh === expectedHash;
     if (!signatureHashVerified) {
-      var canonicalRequest = jwt.createCanonicalRequest(req, false, baseUrl) // eslint-disable-line
+      jwt.createCanonicalRequest(req, false, baseUrl) // eslint-disable-line
 
       // If that didn't verify, it might be a post/put - check the request body too
       expectedHash = jwt.createQueryStringHash(req, true, baseUrl);
       signatureHashVerified = verifiedClaims.qsh === expectedHash;
       if (!signatureHashVerified) {
-        canonicalRequest = jwt.createCanonicalRequest(req, true, baseUrl) // eslint-disable-line
+        jwt.createCanonicalRequest(req, true, baseUrl) // eslint-disable-line
 
         // Send the error message for the first verification - it's 90% more likely to be the one we want.
         sendError(res, 401, 'Authentication failed: query hash does not match.');
@@ -112,8 +114,4 @@ const hasValidJwt = (secret, baseUrl, req, res) => {
   }
 
   return true;
-};
-
-module.exports = {
-  hasValidJwt,
 };
