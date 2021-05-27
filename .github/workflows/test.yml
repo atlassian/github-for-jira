@@ -33,7 +33,7 @@ jobs:
       with:
         path: ./node_modules
         key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
-    - run: npm ci --no-audit
+    - run: npm install
     - name: DB Setup
       env:
         NODE_ENV: test
