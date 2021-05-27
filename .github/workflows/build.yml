@@ -15,6 +15,6 @@ jobs:
         with:
           path: ./node_modules
           key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
-      - run: npm ci
+      - run: npm install
       - run: npm run lint --if-present
       - run: npm run build --if-present
