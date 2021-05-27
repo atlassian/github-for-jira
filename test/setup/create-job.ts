@@ -1,5 +1,5 @@
 // Create a job stub with data
-const createJob = ({ data, opts }) => {
+export default ({ data, opts }) => {
   const defaultOpts = {
     attempts: 3,
     removeOnFail: true,
@@ -9,8 +9,6 @@ const createJob = ({ data, opts }) => {
   return {
     data,
     opts: Object.assign(defaultOpts, opts || {}),
-    sentry: { setUser: () => { } },
+    sentry: { setUser: () => undefined },
   };
 };
-
-module.exports = createJob;

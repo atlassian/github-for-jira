@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 describe('GitHub Actions', () => {
   describe('Create Branch', () => {
     it('should update Jira issue with link to a branch on GitHub', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const payload = require('../fixtures/branch-basic.json');
 
       const jiraApi = td.api('https://test-atlassian-instance.net');

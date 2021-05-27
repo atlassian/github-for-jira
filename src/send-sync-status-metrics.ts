@@ -1,7 +1,7 @@
-#!/usr/bin/env node
-require('dotenv').config()
+import dotenv from 'dotenv';
+dotenv.config();
+import { queues } from './worker/main'
 
-const { queues } = require('../src/worker')
 queues.metrics.add({})
   .then(() => process.exit(0))
   .catch((error) => {

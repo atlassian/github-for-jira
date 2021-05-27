@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 describe('GitHub Actions', () => {
-  describe('issue', () => {
+  describe('issue_comment', () => {
     describe('created', () => {
       it('should update the GitHub issue with a linked Jira ticket', async () => {
-        const payload = require('../fixtures/issue-basic.json');
+        const payload = require('../fixtures/issue-comment-basic.json');
 
         const githubApi = td.api('https://api.github.com');
         const jiraApi = td.api('https://test-atlassian-instance.net');
@@ -17,16 +18,10 @@ describe('GitHub Actions', () => {
 
         await app.receive(payload);
 
-        td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/123456789', {
-          body: 'Test example issue with linked Jira issue: [TEST-123]\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
-          id: 'test-issue-id',
+        td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/comments/5678', {
+          number: 'test-issue-number',
+          body: 'Test example comment with linked Jira issue: [TEST-123]\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
         }));
-      });
-
-      it('should not break if the issue has a null body', async () => {
-        const payload = require('../fixtures/issue-null-body.json');
-        // should not throw
-        await app.receive(payload);
       });
     });
   });

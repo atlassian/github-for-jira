@@ -1,5 +1,5 @@
 import Sequelize from 'sequelize';
-import {queues} from '../worker';
+import {queues} from '../worker/main';
 import {Job} from 'bull';
 
 export enum SyncStatus {

@@ -1,7 +1,13 @@
-const { Application } = require('probot');
-const { findPrivateKey } = require('probot/lib/private-key');
-const cacheManager = require('cache-manager');
-const { App } = require('@octokit/app');
+import {Application} from 'probot';
+import {findPrivateKey} from 'probot/lib/private-key';
+import cacheManager from 'cache-manager';
+import nock from 'nock';
+import {App} from '@octokit/app';
+import configureRobot from '../../src/configure-robot';
+
+declare global {
+  let app: Application;
+}
 
 beforeEach(async () => {
   const models = td.replace('../../lib/models', {
@@ -36,7 +42,7 @@ beforeEach(async () => {
     ]);
 
   td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 1234))
-    .thenReturn({ id: 1, jiraHost: process.env.ATLASSIAN_URL });
+    .thenReturn({id: 1, jiraHost: process.env.ATLASSIAN_URL});
 
   td.when(models.Project.upsert('PROJ-1', process.env.ATLASSIAN_URL))
     .thenReturn({
@@ -55,9 +61,7 @@ beforeEach(async () => {
       content: Buffer.from(`jira: ${process.env.ATLASSIAN_URL}`).toString('base64'),
     });
 
-  const configureRobot = require('../../src/configure-robot');
-
-  global.app = await configureRobot(new Application({
+  app = await configureRobot(new Application({
     app: new App({
       id: 12257,
       privateKey: findPrivateKey(),

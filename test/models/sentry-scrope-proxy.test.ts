@@ -1,6 +1,6 @@
-const SentryScopeProxy = require('../../src/models/sentry-scope-proxy');
+import SentryScopeProxy from '../../src/models/sentry-scope-proxy';
 
-describe(SentryScopeProxy, () => {
+describe('SentryScopeProxy', () => {
   describe('.processEvent', () => {
     it('adds scope proxy to event', () => {
       const scope = new SentryScopeProxy();
