@@ -69,20 +69,21 @@ jobs:
           --request POST \
           --url https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/ \
           --header 'Content-Type: application/json' \
-          --data '{
-        	"target": {
-        		"type": "pipeline_ref_target",
-        		"ref_type": "branch",
-        		"ref_name": "master",
-        		"selector": {
-        			"type": "custom",
-        			"pattern": "deploy-to-ddev"
+          --data "{
+        	\"target\": {
+        		\"type\": \"pipeline_ref_target\",
+        		\"ref_type\": \"branch\",
+        		\"ref_name\": \"master\",
+        		\"selector\": {
+        			\"type\": \"custom\",
+        			\"pattern\": \"deploy-to-ddev\"
         		}
         	},
-        	"variables": [
+        	\"variables\": [
         		{
-        			"key": "COMMIT_SHA",
-        			"value": "${GITHUB_SHA}"
+        			\"key\": \"COMMIT_SHA\",
+        			\"value\": \"${GITHUB_SHA}\"
         		}
         	]
-        }'
+        }"
+
