@@ -7,13 +7,11 @@
  *   { metadata: { foo: 'bar' }, message: 'Hello world' }
  * ])
  */
-class LogDouble {
-  constructor() {
-    this.debugValues = [];
-    this.infoValues = [];
-    this.warnValues = [];
-    this.errorValues = [];
-  }
+export default class LogDouble {
+  debugValues = [];
+  infoValues = [];
+  warnValues = [];
+  errorValues = [];
 
   debug(metadata, message) {
     this.debugValues.push({ metadata, message });
@@ -31,5 +29,3 @@ class LogDouble {
     this.errorValues.push({ metadata, message });
   }
 }
-
-module.exports = LogDouble;

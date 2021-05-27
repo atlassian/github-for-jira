@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 describe('GitHub Actions', () => {
   let jiraApi; let githubApi; let push; let processPush; let
     createJobData;
@@ -5,7 +6,7 @@ describe('GitHub Actions', () => {
   describe('add to push queue', () => {
     beforeEach(() => {
       process.env.REDIS_URL = 'redis://test';
-      const { queues } = require('../../src/worker');
+      const { queues } = require('../../src/worker/main');
       push = td.replace(queues, 'push');
     });
 
@@ -23,10 +24,9 @@ describe('GitHub Actions', () => {
       ));
     });
 
-    it('should not add push event to the queue if there are no Jira issue keys present', async (done) => {
+    it('should not add push event to the queue if there are no Jira issue keys present', async () => {
       const event = require('../fixtures/push-no-issues.json');
       await app.receive(event);
-      done();
     });
 
     it('should handle payloads where only some commits have issue keys', async () => {

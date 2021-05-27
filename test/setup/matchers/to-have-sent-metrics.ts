@@ -45,8 +45,8 @@ it('checks tags too', async () => {
 })
 
 */
-const diff = require('jest-diff').default;
-const statsd = require('../../../src/config/statsd');
+import diff from 'jest-diff';
+import statsd from '../../../src/config/statsd';
 
 const parseStatsdMessage = (stastsdMessage) => {
   const [metric, type, tagsString] = stastsdMessage.split('|');
@@ -77,7 +77,8 @@ expect.extend({
       const matchingName = actualMetric.name === expectedMetric.name;
       const matchingType = actualMetric.type === expectedMetric.type;
 
-      let matchingValue = null;
+      let matchingValue;
+      // eslint-disable-next-line no-prototype-builtins
       if (!expectedMetric.hasOwnProperty('value')) {
         matchingValue = true;
       } else if (typeof expectedMetric.value === 'function') {

@@ -1,12 +1,12 @@
-const nock = require('nock');
-const { logger } = require('probot/lib/logger');
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import nock from 'nock';
+import {logger} from 'probot/lib/logger';
+import JiraClient from '../../src/models/jira-client';
 
-const JiraClient = require('../../src/models/jira-client');
-
-describe(JiraClient, () => {
+describe('JiraClient', () => {
   describe('isAuthorized()', () => {
-    const buildClient = ({ status }) => {
-      const installation = { jiraHost: 'https://example.atlassian.net', sharedSecret: 'secret' };
+    const buildClient = ({status}) => {
+      const installation: any = {jiraHost: 'https://example.atlassian.net', sharedSecret: 'secret'};
       const jiraClient = new JiraClient(installation, logger);
 
       nock('https://example.atlassian.net')
@@ -17,30 +17,32 @@ describe(JiraClient, () => {
     };
 
     it('is true when response is 200', async () => {
-      const jiraClient = buildClient({ status: 200 });
+      const jiraClient = buildClient({status: 200});
 
       const isAuthorized = await jiraClient.isAuthorized();
       expect(isAuthorized).toBe(true);
     });
 
     it('is false when response is 302', async () => {
-      const jiraClient = buildClient({ status: 302 });
+      const jiraClient = buildClient({status: 302});
 
       const isAuthorized = await jiraClient.isAuthorized();
       expect(isAuthorized).toBe(false);
     });
 
     it('is false when response is 403', async () => {
-      const jiraClient = buildClient({ status: 403 });
+      const jiraClient = buildClient({status: 403});
 
       const isAuthorized = await jiraClient.isAuthorized();
       expect(isAuthorized).toBe(false);
     });
 
     it('rethrows non-response errors', async () => {
-      const jiraClient = buildClient({ status: 200 });
+      const jiraClient = buildClient({status: 200});
 
-      jest.spyOn(jiraClient.axios, 'get').mockImplementation(() => { throw new Error('boom'); });
+      jest.spyOn(jiraClient.axios, 'get').mockImplementation(() => {
+        throw new Error('boom');
+      });
 
       await expect(jiraClient.isAuthorized()).rejects.toThrow('boom');
     });

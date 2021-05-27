@@ -1,14 +1,13 @@
-const url = require('url');
-const nock = require('nock');
-
-const { setIsDisabled, BaseURL } = require('../../src/tracking');
+import url from 'url';
+import nock from 'nock';
+import { setIsDisabled, BaseURL } from '../../src/tracking';
 
 /**
  * Test that tracking works by storing a snapshot of the tracking proto sent.
  *
  * @returns {void}
  */
-function testTracking() {
+export default () => {
   // Enable user tracking
   const parsedURL = url.parse(BaseURL);
   const basePath = parsedURL.href.replace(parsedURL.path, '');
@@ -17,7 +16,6 @@ function testTracking() {
   // Check that we send the tracking proto
   nock(basePath)
     .post(parsedURL.path, (body) => {
-      /** @type {{events: Array<{schema: string, value: string}>}} */
       const { events } = body;
       events.forEach((event) => {
         expect(event.schema).toMatchSnapshot();
@@ -28,5 +26,3 @@ function testTracking() {
     })
     .reply(200, 'OK');
 }
-
-module.exports = testTracking;

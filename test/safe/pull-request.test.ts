@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 describe('GitHub Actions', () => {
   describe('pull_request', () => {
     it('should update the Jira issue with the linked GitHub pull_request', async () => {

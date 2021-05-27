@@ -2,7 +2,7 @@ import {Project, Subscription} from '../models';
 import getJiraClient from '../jira/client';
 import parseSmartCommit from './smart-commit';
 import reduceProjectKeys from '../jira/util/reduce-project-keys';
-import {queues} from '../worker';
+import {queues} from '../worker/main';
 import enhanceOctokit from '../config/enhance-octokit';
 import {Application} from 'probot';
 
