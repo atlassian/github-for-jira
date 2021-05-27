@@ -12,7 +12,7 @@ export default class SentryScopeProxy {
   event: any;
   hint: any;
   extra: Record<string, any>;
-  fingerprint: string;
+  fingerprint: (string | number)[];
 
   static processEvent(event: any, hint: any) {
     if (hint.originalException.sentryScope) {
