@@ -60,3 +60,29 @@ jobs:
         POSTGRES_HOST: localhost
         POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
       run: npm test
+    - name: Deploy to Micros
+      env:
+        BITBUCKET_API_USER: ${{ secrets.BITBUCKET_API_USER }}
+        BITBUCKET_API_PASSWORD: ${{ secrets.BITBUCKET_API_PASSWORD }}
+      run: |
+        curl --user ${BITBUCKET_API_USER}:${BITBUCKET_API_PASSWORD} \
+          --request POST \
+          --url https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/ \
+          --header 'Content-Type: application/json' \
+          --data '{
+        	"target": {
+        		"type": "pipeline_ref_target",
+        		"ref_type": "branch",
+        		"ref_name": "master",
+        		"selector": {
+        			"type": "custom",
+        			"pattern": "deploy-to-ddev"
+        		}
+        	},
+        	"variables": [
+        		{
+        			"key": "COMMIT_SHA",
+        			"value": "${GITHUB_SHA}"
+        		}
+        	]
+        }'
