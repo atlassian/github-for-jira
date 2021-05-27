@@ -1,10 +1,12 @@
+import {Request, Response} from 'express';
+
 const instance = process.env.INSTANCE_NAME;
 const isProd = (instance === 'production');
 
-module.exports = async (req, res) => {
+export default (req: Request, res: Response): void => {
   const isHttps = req.secure || req.header('x-forwarded-proto') === 'https';
 
-  return res.status(200)
+  res.status(200)
     .json({
       // Will need to be set to `true` once we verify the app will work with
       // GDPR compliant APIs. Ref: https://github.com/github/ce-extensibility/issues/220
