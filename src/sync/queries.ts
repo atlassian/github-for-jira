@@ -1,5 +1,4 @@
-module.exports = {
-  getPullRequests: `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo){
       pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
         edges {
@@ -30,9 +29,9 @@ module.exports = {
         }
       }
     }
-  }`,
+  }`;
 
-  getCommits: `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
+export const getCommits = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
     repository(owner: $owner, name: $repo){
       ref(qualifiedName: $default_ref) {
         target {
@@ -60,10 +59,9 @@ module.exports = {
         }
       }
     }
-  }
-  `,
+  }`;
 
-  getBranches: `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getBranches = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
         edges {
@@ -108,13 +106,12 @@ module.exports = {
         }
       }
     }
-  }`,
+  }`;
 
-  getDefaultRef: `query ($owner: String!, $repo: String!) {
+export const getDefaultRef = `query ($owner: String!, $repo: String!) {
     repository(owner: $owner, name: $repo) {
         defaultBranchRef {
           name
         }
-    }      
-  }`,
-};
+    }
+  }`;

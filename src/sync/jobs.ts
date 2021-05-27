@@ -1,4 +1,6 @@
-exports.getRepositorySummary = (repo) => ({
+import {Repository} from '../models/subscription';
+
+export const getRepositorySummary = (repo:Repository) => ({
   id: repo.id,
   name: repo.name,
   full_name: repo.full_name,

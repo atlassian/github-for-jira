@@ -1,21 +1,16 @@
-const parseSmartCommit = require('./smart-commit');
-const { getJiraId } = require('../jira/util/id');
-const _ = require('lodash');
+import parseSmartCommit from './smart-commit';
+import {getJiraId} from '../jira/util/id';
+import _ from 'lodash';
 
-function mapStatus({ state, merged }) {
-  if (state === 'merged') {
-    return 'MERGED';
-  } else if (state === 'open') {
-    return 'OPEN';
-  } else if (state === 'closed' && merged) {
-    return 'MERGED';
-  } else if (state === 'closed' && !merged) {
-    return 'DECLINED';
-  } else {
-    return 'UNKNOWN';
-  }
+function mapStatus(state: string, merged: boolean) {
+  if (state === 'merged') return 'MERGED';
+  if (state === 'open') return 'OPEN';
+  if (state === 'closed' && merged) return 'MERGED';
+  if (state === 'closed' && !merged) return 'DECLINED';
+  return 'UNKNOWN';
 }
 
+// TODO: define arguments and return
 function mapReviews(reviews) {
   reviews = reviews || [];
   const sortedReviews = _.orderBy(reviews, 'submitted_at', 'desc');
@@ -40,24 +35,26 @@ function mapReviews(reviews) {
   }, []);
 }
 
-module.exports = (payload, author, reviews) => {
-  // eslint-disable-next-line camelcase
-  const { pull_request, repository } = payload;
+// TODO: define arguments and return
+export default (payload, author, reviews) => {
+  const {pull_request, repository} = payload;
   // This is the same thing we do in sync, concatenating these values
-  const { issueKeys } = parseSmartCommit(`${pull_request.title}\n${pull_request.head.ref}`);
+  const {issueKeys} = parseSmartCommit(`${pull_request.title}\n${pull_request.head.ref}`);
 
   if (!issueKeys || !pull_request.head.repo) {
-    return { data: undefined };
+    return {data: undefined};
   }
 
-  const pullRequestStatus = mapStatus(pull_request);
+  const pullRequestStatus = mapStatus(pull_request.status, pull_request.merged);
 
-  let data = {
+  return {
     data: {
       id: repository.id,
       name: repository.full_name,
       url: repository.html_url,
-      branches: [
+      // Do not send the branch on the payload when the Pull Request Merged event is called.
+      // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
+      branches: pullRequestStatus === 'MERGED' ? [] : [
         {
           createPullRequestUrl: `${pull_request.head.repo.html_url}/pull/new/${pull_request.head.ref}`,
           lastCommit: {
@@ -107,12 +104,4 @@ module.exports = (payload, author, reviews) => {
       updateSequenceId: Date.now(),
     },
   };
-
-  // Do not send the branch on the payload when the Pull Request Merged event is called.
-  // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
-  if (pullRequestStatus === 'MERGED') {
-    data.data.branches = [];
-  }
-
-  return data;
 };

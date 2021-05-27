@@ -1,9 +1,12 @@
-const { Subscription, Project } = require('../models');
-const getJiraClient = require('../jira/client');
-const parseSmartCommit = require('./smart-commit');
-const reduceProjectKeys = require('../jira/util/reduce-project-keys');
-const { queues } = require('../worker');
-const enhanceOctokit = require('../config/enhance-octokit');
+import {Project, Subscription} from '../models';
+import getJiraClient from '../jira/client';
+import parseSmartCommit from './smart-commit';
+import reduceProjectKeys from '../jira/util/reduce-project-keys';
+import {queues} from '../worker';
+import enhanceOctokit from '../config/enhance-octokit';
+import {Application} from 'probot';
+
+// TODO: define better types for this file
 
 function mapFile(githubFile) {
   // changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
@@ -13,23 +16,16 @@ function mapFile(githubFile) {
     removed: 'DELETED',
     modified: 'MODIFIED',
   };
-  const {
-    filename: path,
-    status,
-    additions: linesAdded,
-    deletions: linesRemoved,
-    blob_url: url,
-  } = githubFile;
   return {
-    path,
-    changeType: mapStatus[status] || 'UNKNOWN',
-    linesAdded,
-    linesRemoved,
-    url,
+    path: githubFile.filename,
+    changeType: mapStatus[githubFile.status] || 'UNKNOWN',
+    linesAdded: githubFile.additions,
+    linesRemoved: githubFile.deletions,
+    url: githubFile.blob_url
   };
 }
 
-function createJobData(payload, jiraHost) {
+export function createJobData(payload, jiraHost: string) {
   // Store only necessary repository data in the queue
   const {
     id, name, full_name, html_url, owner,
@@ -45,7 +41,7 @@ function createJobData(payload, jiraHost) {
 
   const shas = [];
   for (const commit of payload.commits) {
-    const { issueKeys } = parseSmartCommit(commit.message);
+    const {issueKeys} = parseSmartCommit(commit.message);
 
     if (!issueKeys) {
       // Don't add this commit to the queue since it doesn't have issue keys
@@ -54,7 +50,7 @@ function createJobData(payload, jiraHost) {
 
     // Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
     // Creates an array of shas for the job processor to work on
-    shas.push({ id: commit.id, issueKeys });
+    shas.push({id: commit.id, issueKeys});
   }
   return {
     repository,
@@ -64,8 +60,8 @@ function createJobData(payload, jiraHost) {
   };
 }
 
-async function enqueuePush(payload, jiraHost) {
-  const jobOpts = { removeOnFail: true, removeOnComplete: true };
+export async function enqueuePush(payload, jiraHost) {
+  const jobOpts = {removeOnFail: true, removeOnComplete: true};
   const jobData = createJobData(payload, jiraHost);
 
   await queues.push.add(
@@ -74,15 +70,12 @@ async function enqueuePush(payload, jiraHost) {
   );
 }
 
-/**
- * @param {import('probot').Application} app - The probot Application
- */
-function processPush(app) {
-  return async function (job) {
+export function processPush(app: Application) {
+  return async (job):Promise<void> => {
     try {
       const {
         repository,
-        repository: { owner, name: repo },
+        repository: {owner, name: repo},
         shas,
         installationId,
         jiraHost,
@@ -93,7 +86,7 @@ function processPush(app) {
         installationId,
       );
 
-      if (!subscription) return {};
+      if (!subscription) return;
 
       const jiraClient = await getJiraClient(subscription.jiraHost, installationId, app.log);
       const github = await app.auth(installationId);
@@ -103,14 +96,14 @@ function processPush(app) {
         shas.map(async sha => {
           const {
             data,
-            data: { commit: githubCommit },
-          } = await github.repos.getCommit({ owner: owner.login, repo, ref: sha.id });
+            data: {commit: githubCommit},
+          } = await github.repos.getCommit({owner: owner.login, repo, ref: sha.id});
 
           const {
             files, author, parents, sha: commitSha, html_url,
           } = data;
 
-          const { author: githubCommitAuthor, message } = githubCommit;
+          const {author: githubCommitAuthor, message} = githubCommit;
 
           // Not all commits have a github author, so create username only if author exists
           const username = author ? author.login : undefined;
@@ -173,5 +166,3 @@ function processPush(app) {
     }
   };
 }
-
-module.exports = { createJobData, processPush, enqueuePush };
