@@ -1,26 +1,20 @@
-const {
-  Action,
+import {
   ActionType,
   ActionSource,
   ActionFromInstallation,
   ActionFromSubscription,
-} = require('../proto/v0/action');
-const { submitProto } = require('../tracking');
-const { Subscription } = require('../models');
+} from '../proto/v0/action';
+import { submitProto } from '../tracking';
+import { Subscription } from '../models';
+import {Request, Response} from 'express';
 
 /**
  * Handle the uninstall webhook from Jira
- *
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @returns {Promise<void>}
  */
-module.exports = async (req, res) => {
-  /** @type {{installation: import('../models/installation')}} */
+export default async (req:Request, res:Response):Promise<void> => {
   const { installation } = res.locals;
   const subscriptions = await Subscription.getAllForHost(installation.jiraHost);
 
-  /** @type {Action[]} */
   const actions = [];
   const action = await ActionFromInstallation(installation);
   action.type = ActionType.DESTROYED;
@@ -40,7 +34,6 @@ module.exports = async (req, res) => {
   await installation.uninstall();
   await submitProto(actions);
 
-  req.log(`App uninstalled on Jira. Uninstalling id=${installation.id}.`);
-
+  req.log.info(`App uninstalled on Jira. Uninstalling id=${installation.id}.`);
   res.sendStatus(204);
 };

@@ -1,15 +1,17 @@
-const Sentry = require('@sentry/node');
-const getAxiosInstance = require('./client/axios');
+import Sentry from '@sentry/node';
+import getAxiosInstance from './client/axios';
+import Installation from '../models/installation';
+import Logger from 'bunyan';
 
-module.exports = function (installation, log) {
-  return async () => {
+export default (installation:Installation, log:Logger) => {
+  return async ():Promise<void> => {
     const instance = getAxiosInstance(installation.jiraHost, installation.sharedSecret, log);
 
     try {
       const result = await instance.get('/rest/devinfo/0.10/existsByProperties?fakeProperty=1');
       if (result.status === 200) {
         log.info(`Installation id=${installation.id} enabled on Jira`);
-        installation.enable();
+        await installation.enable();
       } else {
         const message = `Unable to verify Jira installation: ${installation.jiraHost} responded with ${result.status}`;
         log.warn(message);
@@ -18,7 +20,7 @@ module.exports = function (installation, log) {
     } catch (err) {
       if (err.response && err.response.status === 401) {
         log.warn(`Jira does not recognize installation id=${installation.id}. Deleting it`);
-        installation.destroy();
+        await installation.destroy();
       } else {
         log.error(`Unhandled error while verifying installation id=${installation.id}: ${err}`);
         Sentry.captureException(err);

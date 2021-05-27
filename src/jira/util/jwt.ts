@@ -2,6 +2,7 @@
 // https://bitbucket.org/atlassian/atlassian-connect-express/src/f434e5a9379a41213acf53b9c2689ce5eec55e21/lib/middleware/authentication.js?at=master&fileviewer=file-view-default#authentication.js-227
 // TODO: need some typing for jwt
 import jwt from 'atlassian-jwt';
+import {Request, Response} from 'express';
 
 const TOKEN_KEY_PARAM = 'acpt';
 const TOKEN_KEY_HEADER = `X-${TOKEN_KEY_PARAM}`;
@@ -16,9 +17,9 @@ function extractJwtFromRequest(req) {
   if (!tokenInQuery && !req.body) {
     req.log(
       `${'Cannot find JWT token in query parameters. ' +
-        'Please include body-parser middleware and parse the urlencoded body ' +
-        '(See https://github.com/expressjs/body-parser) if the add-on is rendering in POST mode. ' +
-        'Otherwise please ensure the '}${JWT_PARAM} parameter is presented in query.`,
+      'Please include body-parser middleware and parse the urlencoded body ' +
+      '(See https://github.com/expressjs/body-parser) if the add-on is rendering in POST mode. ' +
+      'Otherwise please ensure the '}${JWT_PARAM} parameter is presented in query.`,
     );
     return;
   }
@@ -56,14 +57,14 @@ function sendError(res, code, msg) {
   });
 }
 
-export const hasValidJwt = (secret, baseUrl, req, res) => {
+export const hasValidJwt = (secret: string, baseUrl: string, req: Request, res: Response) => {
   const token = extractJwtFromRequest(req);
   if (!token) {
     sendError(res, 401, 'Could not find authentication data on request');
     return false;
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let unverifiedClaims:any;
+  let unverifiedClaims: any;
   try {
     unverifiedClaims = jwt.decode(token, '', true); // decode without verification;
   } catch (e) {
