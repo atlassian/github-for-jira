@@ -1,10 +1,11 @@
-const parseSmartCommit = require('./smart-commit');
-const { getJiraId } = require('../jira/util/id');
+import parseSmartCommit from './smart-commit';
+import {getJiraId} from '../jira/util/id';
+import {Context} from 'probot/lib/context';
 
 async function getLastCommit(context, issueKeys) {
-  const { github, payload: { ref } } = context;
-  const { data: { object: { sha } } } = await github.git.getRef(context.repo({ ref: `heads/${ref}` }));
-  const { data: { commit, html_url: url } } = await github.repos.getCommit(context.repo({ sha }));
+  const {github, payload: {ref}} = context;
+  const {data: {object: {sha}}} = await github.git.getRef(context.repo({ref: `heads/${ref}`}));
+  const {data: {commit, html_url: url}} = await github.repos.getCommit(context.repo({sha}));
 
   return {
     author: {
@@ -22,12 +23,13 @@ async function getLastCommit(context, issueKeys) {
   };
 }
 
-module.exports = async (context) => {
+// TODO: type this payload better
+export default async (context: Context) => {
   if (context.payload.ref_type !== 'branch') return {};
 
-  const { ref, repository } = context.payload;
+  const {ref, repository} = context.payload;
 
-  const { issueKeys } = parseSmartCommit(ref);
+  const {issueKeys} = parseSmartCommit(ref);
 
   if (!issueKeys) {
     return {};
@@ -35,6 +37,7 @@ module.exports = async (context) => {
 
   const lastCommit = await getLastCommit(context, issueKeys);
 
+  // TODO: type this return
   return {
     data: {
       id: repository.id,

@@ -1,13 +1,9 @@
-const transformCommit = require('../transforms/commit');
-const { getCommits: getCommitsQuery, getDefaultRef } = require('./queries');
+import transformCommit from '../transforms/commit';
+import { getCommits as getCommitsQuery, getDefaultRef } from './queries';
+import {GitHubAPI} from 'probot';
 
-/**
- * @param {import('probot').GitHubAPI} github - The GitHub client.
- * @param {any} repository - TBD
- * @param {any} cursor - TBD
- * @param {number} perPage - How many results per GraphQL page query
- */
-exports.getCommits = async (github, repository, cursor, perPage) => {
+// TODO: better typings
+export default async (github:GitHubAPI, repository, cursor, perPage:number) => {
   const data = await github.graphql(getDefaultRef, {
     owner: repository.owner.login,
     repo: repository.name,
@@ -40,9 +36,8 @@ exports.getCommits = async (github, repository, cursor, perPage) => {
       url: item.url,
     }));
 
-  const { data: jiraPayload } = transformCommit(
-    { commits, repository },
-    authors,
-  );
-  return { edges, jiraPayload };
+  return {
+    edges,
+    jiraPayload: transformCommit({ commits, repository }, authors)
+  };
 };

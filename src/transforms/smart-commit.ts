@@ -1,6 +1,6 @@
-const SmartCommitTokenizer = require('../smart-commit-tokenizer.js');
+import SmartCommitTokenizer from '../smart-commit-tokenizer';
 
-module.exports = (source) => {
+export default (source) => {
   const tokenizer = SmartCommitTokenizer();
   tokenizer.reset(source);
   const issueKeys = [];
@@ -10,10 +10,5 @@ module.exports = (source) => {
       issueKeys.push(token.value);
     }
   }
-
-  if (issueKeys.length > 0) {
-    return { issueKeys };
-  } else {
-    return {};
-  }
+  return issueKeys.length > 0 ? {issueKeys} : {};
 };

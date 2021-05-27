@@ -1,26 +1,17 @@
-const parseSmartCommit = require('../../transforms/smart-commit');
+import parseSmartCommit from '../../transforms/smart-commit';
+import {GitHubAPI} from 'probot';
 
-/**
- * @param {import('@octokit/rest').Octokit.PullsListResponseItem} payload - The pull request details
- */
-function mapStatus({ state, merged_at }) {
-  if (state === 'merged') {
-    return 'MERGED';
-  } else if (state === 'open') {
-    return 'OPEN';
-  } else if (state === 'closed' && merged_at) {
-    return 'MERGED';
-  } else if (state === 'closed' && !merged_at) {
-    return 'DECLINED';
-  } else {
-    return 'UNKNOWN';
-  }
+// TODO: better typings in file
+function mapStatus({state, merged_at}): string {
+  if (state === 'merged') return 'MERGED';
+  if (state === 'open') return 'OPEN';
+  if (state === 'closed' && merged_at) return 'MERGED';
+  if (state === 'closed' && !merged_at) return 'DECLINED';
+  return 'UNKNOWN';
 }
 
 /**
  * Get the author or a ghost user.
- *
- * @param {import('@octokit/rest').Octokit.PullsListResponseItemUser} author - The pull request author
  */
 function getAuthor(author) {
   // If author is null, return the ghost user
@@ -39,15 +30,10 @@ function getAuthor(author) {
   };
 }
 
-/**
- * @param {{pullRequest: import('@octokit/rest').Octokit.PullsListResponseItem, repository: import('../pull-request').RepositoryObject}} payload - The pull request details
- * @param {import('@octokit/rest').Octokit.PullsListResponseItemUser} author - The pull request author
- * @param {import('probot').GitHubAPI} github - The GitHub API Object
- */
-module.exports = async (payload, author, github) => {
-  const { pullRequest, repository } = payload;
+export default async (payload, author, github: GitHubAPI) => {
+  const {pullRequest, repository} = payload;
   // This is the same thing we do in transforms, concat'ing these values
-  const { issueKeys } = parseSmartCommit(`${pullRequest.title}\n${pullRequest.head.ref}`);
+  const {issueKeys} = parseSmartCommit(`${pullRequest.title}\n${pullRequest.head.ref}`);
 
   if (!issueKeys) {
     return {};

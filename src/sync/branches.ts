@@ -1,7 +1,10 @@
-const transformBranches = require('./transforms/branch');
-const { getBranches: getBranchesQuery } = require('./queries');
+import transformBranches from './transforms/branch';
+import { getBranches as getBranchesQuery } from './queries';
+import {GitHubAPI} from 'probot';
 
-exports.getBranches = async (github, repository, cursor, perPage) => {
+// TODO: better typings
+
+export default async (github:GitHubAPI, repository, cursor, perPage) => {
   const { edges } = (await github.graphql(getBranchesQuery, {
     owner: repository.owner.login,
     repo: repository.name,
@@ -29,6 +32,8 @@ exports.getBranches = async (github, repository, cursor, perPage) => {
     };
   });
 
-  const { data: jiraPayload } = transformBranches({ branches, repository });
-  return { edges, jiraPayload };
+  return {
+    edges,
+    jiraPayload: transformBranches({ branches, repository })
+  };
 };

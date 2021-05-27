@@ -1,6 +1,7 @@
-const parseSmartCommit = require('../../transforms/smart-commit');
-const { getJiraId } = require('../../jira/util/id');
+import parseSmartCommit from '../../transforms/smart-commit';
+import { getJiraId } from '../../jira/util/id';
 
+// TODO: better typing in file
 /**
  * mapBranch takes a branch node from the GraphQL response and
  * attempts to find issueKeys in use anywhere in that object
@@ -9,9 +10,6 @@ const { getJiraId } = require('../../jira/util/id');
  *  - Branch Name (ref)
  *  - Title of the associated Pull Request
  *  - Messages from up to the last 100 commits in that branch
- *
- * @param {object} branch
- * @param {object} repository
  */
 function mapBranch(branch, repository) {
   const { issueKeys: branchKeys } = parseSmartCommit(branch.name);
@@ -26,7 +24,7 @@ function mapBranch(branch, repository) {
 
   if (!allKeys.length) {
     // If we get here, no issue keys were found anywhere they might be found
-    return;
+    return undefined;
   }
 
   return {
@@ -59,14 +57,12 @@ function mapBranch(branch, repository) {
  * mapCommit takes the a single commit object from the array
  * of commits we got from the GraphQL response and maps the data
  * to the structure needed for the DevInfo API
- *
- * @param {object} commit
  */
 function mapCommit(commit) {
   const { issueKeys } = parseSmartCommit(commit.message);
 
   if (!issueKeys) {
-    return;
+    return undefined;
   }
 
   return {
@@ -89,10 +85,11 @@ function mapCommit(commit) {
   };
 }
 
-module.exports = (payload) => {
+export default (payload) => {
   const branches = payload.branches.map(branch => mapBranch(branch, payload.repository))
     .filter(Boolean);
 
+  // TODO: use reduce instead of map/filter
   const commits = payload.branches.flatMap(branch => branch.commits.map(commit => mapCommit(commit)).filter(Boolean));
 
   if ((!commits || !commits.length) && (!branches || !branches.length)) {

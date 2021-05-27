@@ -1,10 +1,10 @@
-const parseSmartCommit = require('./smart-commit');
+import parseSmartCommit from './smart-commit';
 
 function mapCommit(githubCommit, author) {
   const { issueKeys } = parseSmartCommit(githubCommit.message);
 
   if (!issueKeys) {
-    return;
+    return undefined;
   }
 
   return {
@@ -29,7 +29,9 @@ function mapCommit(githubCommit, author) {
   };
 }
 
-module.exports = (payload, authorMap) => {
+// TODO: type payload and return better
+export default (payload, authorMap) => {
+  // TODO: use reduce instead of map/filter combo
   const commits = payload.commits.map((commit, index) => mapCommit(commit, authorMap[index]))
     .filter(commit => commit);
 
