@@ -1,4 +1,4 @@
-name: Node
+name: Test
 
 on: [push]
 
@@ -41,7 +41,7 @@ jobs:
     - name: NPM Install
       env:
         NODE_ENV: test
-      run: npm install --no-audit
+      run: npm install
     - name: DB Setup
       env:
         NODE_ENV: test

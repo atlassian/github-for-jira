@@ -15,6 +15,12 @@ Contributions to this product are [released][releases] to the public under the [
 
 Please note that this project is released with a [Contributor Code of Conduct][code-of-conduct]. By participating in this project you agree to abide by its terms.
 
+## Getting Started
+
+Please ensure that you have [homebrew](https://brew.sh/) installed. Instructions for setting this application up on an OS other than OSX are currently not outlined.
+
+This app is written in [ES6 JavaScript](https://nodejs.org/en/docs/es6/) and runs on [Node.js](https://nodejs.org/). After cloning the repository, install the dependencies by running:
+
 ## Installing a tunneling tool
 
 To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed.
@@ -38,7 +44,7 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 - **GitHub App name**: Anything you want, but it must be unique across GitHub. `E.g. my-test-app`
 - **Homepage URL**: `https://github.com/apps/my-test-app`
 - **Callback URL**: `https://DOMAIN/github/callback`
-- **Setup URL**: `https://DOMAIN/github/configuration`
+- **Setup URL**: `https://DOMAIN/github/setup`
 - **Webhook URL**: `https://DOMAIN/github/events`
 - **Webhook Secret**: `development`
 
@@ -68,9 +74,8 @@ Once you've set up your GitHub app and cloned this repo, copy the content from `
 + `APP_URL`: `https://DOMAIN`
 + `GITHUB_CLIENT_SECRET`: You'll need to generate a new one on your GitHub app page by hitting the `Generate a new client secret` button. Copy and paste the generated secret.
 + `TUNNEL_SUBDOMAIN`: the subdomain you want to use to allow access from the internet to your local machine (just replace &lt;yourname&gt; with your name)
-+  `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
++ `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing it. If you don't have one now, please set the value of this variable after going through the step 1 of "Configuring the Jira instance" section of this document.
-+ `WEBHOOK_PROXY_URL`: https://DOMAIN/github/events
 + `STORAGE_SECRET`: It needs to be set to a 32 char secret (anything else fails). You can generate one by running `openssl rand -hex 32 | pbcopy` in your terminal and paste directly to your .env file.
 + `INSTANCE_NAME`: choose a name for your instance
 + `WEBHOOK_PROXY_URL`: `https://DOMAIN/github/events`
@@ -134,7 +139,7 @@ For production, you should just use `npm run start`.
 
 1. [Fork](https://reflectoring.io/github-fork-and-pull/) and clone the repository.
 1. Configure and install the dependencies: `npm install`
-1. Make sure the tests pass on your machine: `npm test`, note: these tests also apply the linter, so no need to lint seperately
+1. Make sure the tests pass on your machine: `npm test`, note: these tests also apply the linter, so no need to lint separately
 1. Create a new branch: `git checkout -b my-branch-name`
 1. Make your change, add tests, and make sure the tests still pass
 1. Push to your fork and submit a pull request
