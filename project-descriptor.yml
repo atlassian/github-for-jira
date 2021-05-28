@@ -1,3 +1,7 @@
+# Used to start Nebulae sandbox.
+# First, build docker image then update version here if needed. 
+# To start sandbox: `atlas nebulae start --print-build-output` to start sandbox.
+# To stop sandbox: `atlas nebulae stop`
 service:
   # The name of your service
   name: github-for-jira
