@@ -2,7 +2,7 @@ node_modules
 npm-debug.log
 *.pem
 .env
-+*.env
+*.env
 coverage
 .vscodelog/*
 .DS_Store

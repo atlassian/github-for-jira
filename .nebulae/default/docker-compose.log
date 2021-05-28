@@ -1,0 +1,103 @@
+2021-05-28T00:20:33.769946Z [STDERR] Creating network "github-for-jira-default-e43fce26_default" with the default driver
+2021-05-28T00:20:38.094635Z [STDERR] Creating github-for-jira-default-e43fce26_nebulae.redis.cache_1 ... 
+2021-05-28T00:20:38.095195Z [STDERR] Creating github-for-jira-default-e43fce26_nebulae.postgres-db.database_1 ... 
+2021-05-28T00:20:42.088893Z [STDERR] Creating github-for-jira-default-e43fce26_nebulae.redis.cache_1          ... done
+2021-05-28T00:20:43.506397Z [STDERR] Creating github-for-jira-default-e43fce26_nebulae.postgres-db.database_1 ... done
+2021-05-28T00:20:43.528655Z [STDOUT] Docker Compose is now in the Docker CLI, try `docker compose up`
+2021-05-28T00:20:43.528749Z [STDOUT] 
+2021-05-28T00:20:44.253935Z [STDOUT] Attaching to github-for-jira-default-e43fce26_nebulae.redis.cache_1, github-for-jira-default-e43fce26_nebulae.postgres-db.database_1
+2021-05-28T00:20:44.254095Z [STDOUT] [33mnebulae.redis.cache_1           |[0m [1] 28 May 00:20:42.142 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+2021-05-28T00:20:44.255050Z [STDOUT] [33mnebulae.redis.cache_1           |[0m                 _._                                                  
+2021-05-28T00:20:44.255179Z [STDOUT] [33mnebulae.redis.cache_1           |[0m            _.-``__ ''-._                                             
+2021-05-28T00:20:44.255256Z [STDOUT] [33mnebulae.redis.cache_1           |[0m       _.-``    `.  `_.  ''-._           Redis 2.8.23 (00000000/0) 64 bit
+2021-05-28T00:20:44.255304Z [STDOUT] [33mnebulae.redis.cache_1           |[0m   .-`` .-```.  ```\/    _.,_ ''-._                                   
+2021-05-28T00:20:44.255334Z [STDOUT] [33mnebulae.redis.cache_1           |[0m  (    '      ,       .-`  | `,    )     Running in stand alone mode
+2021-05-28T00:20:44.255421Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m The files belonging to this database system will be owned by user "postgres".
+2021-05-28T00:20:44.255486Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m This user must also own the server process.
+2021-05-28T00:20:44.255522Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:44.255593Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m The database cluster will be initialized with locale "en_US.utf8".
+2021-05-28T00:20:44.255662Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m The default database encoding has accordingly been set to "UTF8".
+2021-05-28T00:20:44.255728Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m The default text search configuration will be set to "english".
+2021-05-28T00:20:44.255803Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:44.255871Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m Data page checksums are disabled.
+2021-05-28T00:20:44.255912Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:44.255977Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2021-05-28T00:20:44.256066Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m creating subdirectories ... ok
+2021-05-28T00:20:44.256112Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m selecting default max_connections ... 100
+2021-05-28T00:20:44.256156Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m selecting default shared_buffers ... 128MB
+2021-05-28T00:20:44.256198Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m selecting dynamic shared memory implementation ... posix
+2021-05-28T00:20:44.256262Z [STDOUT] [33mnebulae.redis.cache_1           |[0m  |`-._`-...-` __...-.``-._|'` _.-'|     Port: 6379
+2021-05-28T00:20:44.256343Z [STDOUT] [33mnebulae.redis.cache_1           |[0m  |    `-._   `._    /     _.-'    |     PID: 1
+2021-05-28T00:20:44.256389Z [STDOUT] [33mnebulae.redis.cache_1           |[0m   `-._    `-._  `-./  _.-'    _.-'                                   
+2021-05-28T00:20:44.256419Z [STDOUT] [33mnebulae.redis.cache_1           |[0m  |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+2021-05-28T00:20:44.256509Z [STDOUT] [33mnebulae.redis.cache_1           |[0m  |    `-._`-._        _.-'_.-'    |           http://redis.io        
+2021-05-28T00:20:44.256580Z [STDOUT] [33mnebulae.redis.cache_1           |[0m   `-._    `-._`-.__.-'_.-'    _.-'                                   
+2021-05-28T00:20:44.256638Z [STDOUT] [33mnebulae.redis.cache_1           |[0m  |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+2021-05-28T00:20:44.256691Z [STDOUT] [33mnebulae.redis.cache_1           |[0m  |    `-._`-._        _.-'_.-'    |                                  
+2021-05-28T00:20:44.256750Z [STDOUT] [33mnebulae.redis.cache_1           |[0m   `-._    `-._`-.__.-'_.-'    _.-'                                   
+2021-05-28T00:20:44.256788Z [STDOUT] [33mnebulae.redis.cache_1           |[0m       `-._    `-.__.-'    _.-'                                       
+2021-05-28T00:20:44.256827Z [STDOUT] [33mnebulae.redis.cache_1           |[0m           `-._        _.-'                                           
+2021-05-28T00:20:44.256868Z [STDOUT] [33mnebulae.redis.cache_1           |[0m               `-.__.-'                                               
+2021-05-28T00:20:44.256902Z [STDOUT] [33mnebulae.redis.cache_1           |[0m 
+2021-05-28T00:20:44.256939Z [STDOUT] [33mnebulae.redis.cache_1           |[0m [1] 28 May 00:20:42.145 # Server started, Redis version 2.8.23
+2021-05-28T00:20:44.256974Z [STDOUT] [33mnebulae.redis.cache_1           |[0m [1] 28 May 00:20:42.145 # WARNING you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command 'echo never > /sys/kernel/mm/transparent_hugepage/enabled' as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled.
+2021-05-28T00:20:44.257018Z [STDOUT] [33mnebulae.redis.cache_1           |[0m [1] 28 May 00:20:42.145 * The server is now ready to accept connections on port 6379
+2021-05-28T00:20:44.416465Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m creating configuration files ... ok
+2021-05-28T00:20:44.984671Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m running bootstrap script ... ok
+2021-05-28T00:20:45.470390Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m performing post-bootstrap initialization ... ok
+2021-05-28T00:20:45.811120Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m syncing data to disk ... ok
+2021-05-28T00:20:45.811257Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:45.811336Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:45.811399Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m Success. You can now start the database server using:
+2021-05-28T00:20:45.811441Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:45.811484Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m     pg_ctl -D /var/lib/postgresql/data -l logfile start
+2021-05-28T00:20:45.811614Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:45.811676Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m WARNING: enabling "trust" authentication for local connections
+2021-05-28T00:20:45.811856Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m You can change this by editing pg_hba.conf or using the option -A, or
+2021-05-28T00:20:45.811911Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m --auth-local and --auth-host, the next time you run initdb.
+2021-05-28T00:20:45.877060Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m waiting for server to start....LOG:  database system was shut down at 2021-05-28 00:20:45 UTC
+2021-05-28T00:20:45.882267Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  MultiXact member wraparound protections are now enabled
+2021-05-28T00:20:45.887899Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  autovacuum launcher started
+2021-05-28T00:20:45.888566Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  database system is ready to accept connections
+2021-05-28T00:20:46.844181Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m  done
+2021-05-28T00:20:46.844309Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m server started
+2021-05-28T00:20:47.252182Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m CREATE DATABASE
+2021-05-28T00:20:47.253977Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:47.254134Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:47.254618Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2021-05-28T00:20:47.254840Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:47.261440Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m waiting for server to shut down...LOG:  received fast shutdown request
+2021-05-28T00:20:47.261649Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m .LOG:  aborting any active transactions
+2021-05-28T00:20:47.262162Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  autovacuum launcher shutting down
+2021-05-28T00:20:47.264712Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  shutting down
+2021-05-28T00:20:47.277471Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  database system is shut down
+2021-05-28T00:20:48.267412Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m  done
+2021-05-28T00:20:48.267550Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m server stopped
+2021-05-28T00:20:48.272315Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:48.272456Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m PostgreSQL init process complete; ready for start up.
+2021-05-28T00:20:48.272520Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m 
+2021-05-28T00:20:48.314687Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  database system was shut down at 2021-05-28 00:20:47 UTC
+2021-05-28T00:20:48.316692Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  MultiXact member wraparound protections are now enabled
+2021-05-28T00:20:48.320937Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  autovacuum launcher started
+2021-05-28T00:20:48.321085Z [STDOUT] [36mnebulae.postgres-db.database_1  |[0m LOG:  database system is ready to accept connections
+2021-05-28T00:20:48.943881Z [STDERR] github-for-jira-default-e43fce26_nebulae.postgres-db.database_1 is up-to-date
+2021-05-28T00:20:48.944216Z [STDERR] github-for-jira-default-e43fce26_nebulae.redis.cache_1 is up-to-date
+2021-05-28T00:20:48.960004Z [STDERR] Creating github-for-jira-default-e43fce26_platform-statsd_1 ... 
+2021-05-28T00:20:53.237437Z [STDERR] Creating github-for-jira-default-e43fce26_platform-statsd_1 ... done
+2021-05-28T00:20:53.248613Z [STDERR] Creating github-for-jira-default-e43fce26_microservice_1    ... 
+2021-05-28T00:20:56.495138Z [STDERR] Creating github-for-jira-default-e43fce26_microservice_1    ... done
+2021-05-28T00:20:56.500807Z [STDOUT] Docker Compose is now in the Docker CLI, try `docker compose up`
+2021-05-28T00:20:56.500881Z [STDOUT] 
+2021-05-28T00:20:57.258185Z [STDOUT] Attaching to github-for-jira-default-e43fce26_microservice_1, github-for-jira-default-e43fce26_platform-statsd_1
+2021-05-28T00:20:57.258301Z [STDOUT] [33mplatform-statsd_1               |[0m INFO:__main__:StatsD server listening on ('0.0.0.0', 8125)
+2021-05-28T00:20:57.258343Z [STDOUT] [33mplatform-statsd_1               |[0m INFO:__main__:StatsD buffer size: 4096
+2021-05-28T00:20:57.258387Z [STDOUT] [33mplatform-statsd_1               |[0m INFO:__main__:StatsD API starting on port 8088
+2021-05-28T00:20:57.258418Z [STDOUT] [33mplatform-statsd_1               |[0m DEBUG:asyncio:Using selector: EpollSelector
+2021-05-28T00:20:57.258449Z [STDOUT] [36mmicroservice_1                  |[0m 
+2021-05-28T00:20:57.258542Z [STDOUT] [36mmicroservice_1                  |[0m > jira@ start /
+2021-05-28T00:20:57.258626Z [STDOUT] [36mmicroservice_1                  |[0m > node --no-deprecation ./lib/run.js
+2021-05-28T00:20:57.258712Z [STDOUT] [36mmicroservice_1                  |[0m 
+2021-05-28T00:20:59.309787Z [STDOUT] [36mmicroservice_1                  |[0m 00:20:59.327Z  WARN probot: No Hydro Base URL set, disabling tracking
+2021-05-28T00:20:59.954419Z [STDOUT] [36mmicroservice_1                  |[0m 00:20:59.975Z  INFO probot: Forwarding https://dce86f832092.ngrok.io/github/events to http://localhost:8080/github/events
+2021-05-28T00:20:59.957131Z [STDOUT] [36mmicroservice_1                  |[0m 00:20:59.977Z  INFO probot: Listening on http://localhost:8080
+2021-05-28T00:21:00.234418Z [STDOUT] [36mmicroservice_1                  |[0m 00:21:00.255Z  INFO http: GET /healthcheck 200 - 209.06 ms (id=dfbbf239-f441-4cf7-9825-1bfc185c3094)

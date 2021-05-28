@@ -1,0 +1,26 @@
+deploymentScript: &deploymentScript
+  script:
+    - curl -fL https://statlas.prod.atl-paas.net/atlas-cli/linux/atlas-latest-linux-amd64.tar.gz | tar -xzp atlas
+    - ./atlas plugin install -n micros
+    - DOCKER_IMAGE_TAG=$BITBUCKET_BUILD_NUMBER ./atlas micros service deploy -s github-for-jira -f service-descriptor.yml -e $BITBUCKET_DEPLOYMENT_ENVIRONMENT
+
+pipelines:
+
+  branches:
+    master:
+      - step:
+          name: Build and push Docker image
+          image: node
+          script:
+            - pipe: atlassian/artifactory-sidekick:v1
+              variables:
+                COMPLIANT: "true"
+            - source .artifactory/activate.sh
+            - npm install
+            - npm run build
+            - docker build -t docker.atl-paas.net/sox/atlassian/github-for-jira:$BITBUCKET_BUILD_NUMBER .
+            - docker push docker.atl-paas.net/sox/atlassian/github-for-jira:$BITBUCKET_BUILD_NUMBER
+      - step:
+          name: Deploy to ddev
+          deployment: ddev
+          <<: *deploymentScript
