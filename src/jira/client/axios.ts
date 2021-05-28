@@ -1,7 +1,7 @@
 import Logger from 'bunyan';
 import axios from 'axios';
 import jwt from 'atlassian-jwt';
-import url from 'url';
+import * as url from 'url';
 import statsd from '../../config/statsd';
 import JiraClientError from './jira-client-error';
 
@@ -225,7 +225,8 @@ const instrumentFailedRequest = (error) => {
  * attempt to reuse them. This accomplished using Axios interceptors to
  * just-in-time add the token to a request before sending it.
  */
-export default (baseURL: string, secret: string, logger: Logger) => {
+export default (baseURL: string, secret: string, logger?: Logger) => {
+  logger = logger || new Logger({name:'AxiosClient'});
   const instance = axios.create({
     baseURL,
     timeout: +process.env.JIRA_TIMEOUT || 20000,

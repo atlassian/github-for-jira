@@ -1,22 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testdouble, {TestDouble} from "testdouble";
-import Nock from "nock";
-import {Url} from 'url';
-import tdJest from 'testdouble-jest';
-import tdNock from 'testdouble-nock';
+import * as testdouble from 'testdouble';
+import {TestDouble} from 'testdouble';
+import * as Nock from 'nock';
+import * as tdJest from 'testdouble-jest';
+import * as tdNock from 'testdouble-nock';
+import nock from 'nock';
 
 
 declare global {
-  let nock: (basePath: string | RegExp | Url, options?: Nock.Options) => Nock.Scope;
-  let td: TestDouble<any>;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    interface Global {
+      nock: typeof Nock;
+      td: TestDouble<any>;
+    }
+  }
 }
 
 
 beforeAll(() => {
-  nock = Nock;
-  td = testdouble;
-  tdJest(td, jest);
-  tdNock(td, nock);
+  global.nock = nock;
+  global.td = testdouble;
+  tdJest(global.td, jest);
+  tdNock(global.td, global.nock);
 });
 
-afterEach(() => td.reset());
+afterEach(() => global.td.reset());

@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Create a job stub with data
-export default ({ data, opts }) => {
+// TODO: add better typings
+export default ({ data, opts }:{data:any, opts?:any}) => {
   const defaultOpts = {
     attempts: 3,
     removeOnFail: true,

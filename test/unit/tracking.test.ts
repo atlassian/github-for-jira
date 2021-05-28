@@ -1,32 +1,25 @@
-const url = require('url');
-const nock = require('nock');
-const crypto = require('crypto');
-const statsd = require('../../src/config/statsd');
+import * as url from 'url';
 
-const {
+import crypto from 'crypto';
+import statsd from '../../src/config/statsd';
+import {
   submitProto,
   isDisabled,
   setIsDisabled,
   BaseURL,
-} = require('../../src/tracking');
+} from '../../src/tracking';
 
-const { Action, ActionType } = require('../../src/proto/v0/action');
+import { Action, ActionType } from '../../src/proto/v0/action';
 
 const parsedURL = url.parse(BaseURL);
 const basePath = parsedURL.href.replace(parsedURL.path, '');
 const origDisabledState = isDisabled();
 
-beforeAll(() => {
-  setIsDisabled(false);
-});
+beforeAll(() => setIsDisabled(false));
 
-afterAll(() => {
-  setIsDisabled(origDisabledState);
-});
+afterAll(() => setIsDisabled(origDisabledState));
 
-beforeEach(() => {
-  statsd.mockBuffer = [];
-});
+beforeEach(() => statsd.mockBuffer = []);
 
 describe('Hydro Gateway Protobuf Submissions', () => {
   test.each([
@@ -37,9 +30,9 @@ describe('Hydro Gateway Protobuf Submissions', () => {
   ])('Protobuf submission status=%i expected=%p', async (status, expected, errMsg) => {
     const e = new Action();
     e.type = ActionType.CREATED;
-    nock(basePath)
+    global.nock(basePath)
       .post(parsedURL.path)
-      .reply(status, function (uri, requestBody) {
+      .reply(status, function (_:string, requestBody) {
         expect(this.req.headers['x-hydro-app']).toBe('jira-integration');
         const hmac = crypto.createHmac('sha256', process.env.HYDRO_APP_SECRET);
         hmac.update(JSON.stringify(requestBody));
@@ -60,9 +53,9 @@ describe('Hydro Gateway Protobuf Submissions', () => {
     protos.forEach((proto) => {
       proto.type = ActionType.CREATED;
     });
-    nock(basePath)
+    global.nock(basePath)
       .post(parsedURL.path)
-      .reply(200, function (uri, requestBody) {
+      .reply(200, function (_:string, requestBody) {
         expect(this.req.headers['x-hydro-app']).toBe('jira-integration');
         const hmac = crypto.createHmac('sha256', process.env.HYDRO_APP_SECRET);
         hmac.update(JSON.stringify(requestBody));

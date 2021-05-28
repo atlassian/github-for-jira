@@ -17,7 +17,7 @@ const ISSUE_KEY_API_LIMIT = 100;
  * general, the client should match the Octokit rest.js design for clear
  * interoperability.
  */
-async function getJiraClient(jiraHost: string, gitHubInstallationId: string, logger: Logger): Promise<any> {
+async function getJiraClient(jiraHost: string, gitHubInstallationId: number, logger?: Logger): Promise<any> {
   const installation = await Installation.getForHost(jiraHost);
   if (installation == null) {
     return undefined;
@@ -161,7 +161,7 @@ async function getJiraClient(jiraHost: string, gitHubInstallationId: string, log
   return client;
 }
 
-export default async (jiraHost: string, gitHubInstallationId: string, logger: Logger) => newrelic.startSegment('lib/jira/client: getJiraClient', true, async () => getJiraClient(jiraHost, gitHubInstallationId, logger));
+export default async (jiraHost: string, gitHubInstallationId: number, logger?: Logger) => newrelic.startSegment('lib/jira/client: getJiraClient', true, async () => getJiraClient(jiraHost, gitHubInstallationId, logger));
 
 /**
  * Splits commits in data payload into chunks of 400 and makes separate requests

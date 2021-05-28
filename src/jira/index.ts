@@ -1,5 +1,5 @@
-import bodyParser from 'body-parser';
-import Sentry from '@sentry/node';
+import * as bodyParser from 'body-parser';
+import * as Sentry from '@sentry/node';
 
 import {Installation} from '../models';
 import {hasValidJwt} from './util/jwt';

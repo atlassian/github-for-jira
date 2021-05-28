@@ -1,5 +1,5 @@
 import {Subscription} from '../models';
-import Sentry from '@sentry/node';
+import * as Sentry from '@sentry/node';
 import {NextFunction, Request, Response} from 'express';
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {

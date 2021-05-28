@@ -1,4 +1,4 @@
-const SmartCommitTokenizer = require('../../src/smart-commit-tokenizer.js');
+import SmartCommitTokenizer from '../../src/smart-commit-tokenizer';
 
 const tokenize = function (source) {
   const tokenizer = SmartCommitTokenizer();
@@ -130,7 +130,7 @@ describe('SmartCommitTokenizer', () => {
   });
 
   describe('advanced', () => {
-    it('extracts multiple issues with time, comment, and a transition', () => {
+    it('extracts multiple issues with time (days, hours), comment, and a transition', () => {
       const tokens = tokenize('JRA-123 JRA-234 JRA-345 #resolve #time 2d 5h #comment ahead of schedule');
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123', 'JRA-234', 'JRA-345']);
@@ -140,7 +140,7 @@ describe('SmartCommitTokenizer', () => {
       expect(valuesForType(tokens, 'comment')).toEqual(['ahead', 'of', 'schedule']);
     });
 
-    it('extracts multiple issues with time, comment, and a transition', () => {
+    it('extracts multiple issues with time (minutes), comment, and a transition', () => {
       const tokens = tokenize('JRA-123 #comment This is a comment #start-development #time 4m');
 
       expect(valuesForType(tokens, 'issueKey')).toEqual(['JRA-123']);

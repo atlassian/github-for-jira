@@ -1,5 +1,5 @@
-import Queue from 'bull';
-import Sentry from '@sentry/node';
+import * as Queue from 'bull';
+import * as Sentry from '@sentry/node';
 import Redis from 'ioredis';
 
 import {discovery} from '../sync/discovery';

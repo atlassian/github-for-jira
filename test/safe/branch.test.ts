@@ -5,20 +5,20 @@ describe('GitHub Actions', () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const payload = require('../fixtures/branch-basic.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
-      const githubApi = td.api('https://api.github.com');
+      const jiraApi = global.td.api('https://test-atlassian-instance.net');
+      const githubApi = global.td.api('https://api.github.com');
 
       const ref = 'TES-123-test-ref';
       const sha = 'test-branch-ref-sha';
 
-      td.when(githubApi.get(`/repos/test-repo-owner/test-repo-name/git/refs/heads/${ref}`))
+      global.td.when(githubApi.get(`/repos/test-repo-owner/test-repo-name/git/refs/heads/${ref}`))
         .thenReturn({
           ref: 'refs/heads/test-ref',
           object: {
             sha,
           },
         });
-      td.when(githubApi.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`))
+      global.td.when(githubApi.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`))
         .thenReturn({
           commit: {
             author: {
@@ -34,7 +34,7 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload);
 
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -92,12 +92,12 @@ describe('GitHub Actions', () => {
     it('should call the devinfo delete API when a branch is deleted', async () => {
       const payload = require('../fixtures/branch-delete.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = global.td.api('https://test-atlassian-instance.net');
 
       Date.now = jest.fn(() => 12345678);
       await app.receive(payload);
 
-      td.verify(jiraApi.delete('/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref?_updateSequenceId=12345678'));
+      global.td.verify(jiraApi.delete('/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref?_updateSequenceId=12345678'));
     });
   });
 });

@@ -1,7 +1,7 @@
 import {Application, GitHubAPI} from "probot";
 import Redis from 'ioredis';
-import RateLimit from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
+import * as RateLimit from 'express-rate-limit';
+import * as RedisStore from 'rate-limit-redis';
 import {createAppAuth} from '@octokit/auth-app';
 import {findPrivateKey} from 'probot/lib/private-key';
 import getRedisInfo from './config/redis-info';
@@ -58,7 +58,7 @@ export default async (app: Application): Promise<Application> => {
   if (process.env.USE_RATE_LIMITING === 'true') {
     const GitHubCIDRs = await getGitHubCIDRs(app.log);
     const client = new Redis(getRedisInfo('rate-limiter').redisOptions);
-    const limiter = new RateLimit({
+    const limiter = RateLimit({
       store: new RedisStore({
         client,
       }),
@@ -79,7 +79,6 @@ export default async (app: Application): Promise<Application> => {
         res.status(429).send('Too many requests, please try again later.');
       },
       max: 100, // limit each IP to a number of requests per windowMs
-      delayMs: 0, // disable delaying - full speed until the max limit is reached
     });
 
     app.router.use(limiter);
