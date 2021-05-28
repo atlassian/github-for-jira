@@ -1,4 +1,4 @@
-const smartCommit = require('../../src/transforms/smart-commit');
+import smartCommit from '../../src/transforms/smart-commit';
 
 describe('Smart commit parsing', () => {
   it('should parse a smart commit', () => {

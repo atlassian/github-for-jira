@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import nock from 'nock';
 import {logger} from 'probot/lib/logger';
 import JiraClient from '../../src/models/jira-client';
 
@@ -9,7 +8,7 @@ describe('JiraClient', () => {
       const installation: any = {jiraHost: 'https://example.atlassian.net', sharedSecret: 'secret'};
       const jiraClient = new JiraClient(installation, logger);
 
-      nock('https://example.atlassian.net')
+      global.nock('https://example.atlassian.net')
         .get('/rest/devinfo/0.10/existsByProperties?fakeProperty=1')
         .reply(status);
 

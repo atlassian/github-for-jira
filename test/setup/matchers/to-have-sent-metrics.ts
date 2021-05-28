@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
 
 This matcher makes it easier to write tests against Datadog metrics
@@ -66,10 +67,19 @@ const parseStatsdMessage = (stastsdMessage) => {
   };
 };
 
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace jest {
+    interface Matchers<R> {
+      toHaveSentMetrics(...expectedMetrics:any[]): R;
+    }
+  }
+}
+
+// TODO: add better typing for metric
 expect.extend({
-  async toHaveSentMetrics(testFunction, ...expectedMetrics) {
+  async toHaveSentMetrics(...expectedMetrics:any[]) {
     statsd.mockBuffer = [];
-    await testFunction();
     const actualMetrics = statsd.mockBuffer.map((message) => parseStatsdMessage(message));
     const matchingMetrics = [];
 

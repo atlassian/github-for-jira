@@ -1,8 +1,9 @@
-import bodyParser from 'body-parser';
-import express, {Express, NextFunction, Request, Response} from 'express';
+import * as bodyParser from 'body-parser';
+import * as express from 'express';
+import {Express, NextFunction, Request, Response} from 'express';
 import path from 'path';
 import cookieSession from 'cookie-session';
-import csrf from 'csurf';
+import * as csrf from 'csurf';
 import Sentry, {Scope} from '@sentry/node';
 import hbs from 'hbs';
 import GithubOauth from './github-oauth';

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
-import url from 'url';
+import * as url from 'url';
 
 /*
  * Adds request/response metadata to a Sentry event for an Axios error

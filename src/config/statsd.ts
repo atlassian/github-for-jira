@@ -1,5 +1,4 @@
-import process from 'process';
-import StatsD, {StatsCb, Tags} from 'hot-shots';
+import {StatsD, StatsCb, Tags} from 'hot-shots';
 
 const statsd = new StatsD({
   prefix: 'jira-integration.',

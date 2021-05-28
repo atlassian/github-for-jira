@@ -4,16 +4,16 @@ describe('GitHub Actions', () => {
     it('should update the Jira issue with the linked GitHub pull_request', async () => {
       const payload = require('../fixtures/pull-request-basic.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
-      const githubApi = td.api('https://api.github.com');
+      const jiraApi = global.td.api('https://test-atlassian-instance.net');
+      const githubApi = global.td.api('https://api.github.com');
 
-      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+      global.td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
         login: 'test-pull-request-author-login',
         avatar_url: 'test-pull-request-author-avatar',
         html_url: 'test-pull-request-author-url',
       });
 
-      td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
+      global.td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
         .thenReturn({
           key: 'TEST-123',
           fields: {
@@ -25,12 +25,12 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload);
 
-      td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
+      global.td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
         body: '[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
         id: 'test-pull-request-id',
       }));
 
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -96,9 +96,9 @@ describe('GitHub Actions', () => {
     it('should not update the Jira issue if the source repo of a pull_request was deleted', async () => {
       const payload = require('../fixtures/pull-request-null-repo.json');
 
-      const githubApi = td.api('https://api.github.com');
+      const githubApi = global.td.api('https://api.github.com');
 
-      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+      global.td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
         login: 'test-pull-request-author-login',
         avatar_url: 'test-pull-request-author-avatar',
         html_url: 'test-pull-request-author-url',
@@ -113,10 +113,10 @@ describe('GitHub Actions', () => {
     it('should delete the reference to a pull request when issue keys are removed from the title', async () => {
       const payload = require('../fixtures/pull-request-remove-keys.json');
       const { repository, pull_request: pullRequest } = payload.payload;
-      const githubApi = td.api('https://api.github.com');
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const githubApi = global.td.api('https://api.github.com');
+      const jiraApi = global.td.api('https://test-atlassian-instance.net');
 
-      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+      global.td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
         login: 'test-pull-request-author-login',
         avatar_url: 'test-pull-request-author-avatar',
         html_url: 'test-pull-request-author-url',
@@ -126,16 +126,16 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload);
 
-      td.verify(jiraApi.delete(`/rest/devinfo/0.10/repository/${repository.id}/pull_request/${pullRequest.number}?_updateSequenceId=12345678`));
+      global.td.verify(jiraApi.delete(`/rest/devinfo/0.10/repository/${repository.id}/pull_request/${pullRequest.number}?_updateSequenceId=12345678`));
     });
 
     it('will not delete references if a branch still has an issue key', async () => {
       const payload = require('../fixtures/pull-request-test-changes-with-branch.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
-      const githubApi = td.api('https://api.github.com');
+      const jiraApi = global.td.api('https://test-atlassian-instance.net');
+      const githubApi = global.td.api('https://api.github.com');
 
-      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+      global.td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
         login: 'test-pull-request-author-login',
         avatar_url: 'test-pull-request-author-avatar',
         html_url: 'test-pull-request-author-url',
@@ -145,7 +145,7 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload);
 
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -207,16 +207,16 @@ describe('GitHub Actions', () => {
     it('should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot', async () => {
       const payload = require('../fixtures/pull-request-triggered-by-bot.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
-      const githubApi = td.api('https://api.github.com');
+      const jiraApi = global.td.api('https://test-atlassian-instance.net');
+      const githubApi = global.td.api('https://api.github.com');
 
-      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+      global.td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
         login: 'test-pull-request-author-login',
         avatar_url: 'test-pull-request-author-avatar',
         html_url: 'test-pull-request-author-url',
       });
 
-      td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
+      global.td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
         .thenReturn({
           key: 'TEST-123',
           fields: {
@@ -228,12 +228,12 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload[0]);
 
-      td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
+      global.td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
         body: '[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
         id: 'test-pull-request-id',
       }));
 
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -299,16 +299,16 @@ describe('GitHub Actions', () => {
     it('should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot', async () => {
       const payload = require('../fixtures/pull-request-triggered-by-bot.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
-      const githubApi = td.api('https://api.github.com');
+      const jiraApi = global.td.api('https://test-atlassian-instance.net');
+      const githubApi = global.td.api('https://api.github.com');
 
-      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+      global.td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
         login: 'test-pull-request-author-login',
         avatar_url: 'test-pull-request-author-avatar',
         html_url: 'test-pull-request-author-url',
       });
 
-      td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
+      global.td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
         .thenReturn({
           key: 'TEST-123',
           fields: {
@@ -320,12 +320,12 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload[1]);
 
-      td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
+      global.td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
         body: '[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
         id: 'test-pull-request-id',
       }));
 
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -368,16 +368,16 @@ describe('GitHub Actions', () => {
     it('should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot', async () => {
       const payload = require('../fixtures/pull-request-triggered-by-bot.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
-      const githubApi = td.api('https://api.github.com');
+      const jiraApi = global.td.api('https://test-atlassian-instance.net');
+      const githubApi = global.td.api('https://api.github.com');
 
-      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+      global.td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
         login: 'test-pull-request-author-login',
         avatar_url: 'test-pull-request-author-avatar',
         html_url: 'test-pull-request-author-url',
       });
 
-      td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
+      global.td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
         .thenReturn({
           key: 'TEST-123',
           fields: {
@@ -389,12 +389,12 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload[2]);
 
-      td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
+      global.td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
         body: '[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
         id: 'test-pull-request-id',
       }));
 
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -460,16 +460,16 @@ describe('GitHub Actions', () => {
     it('should have reviewers on pull request action', async () => {
       const payload = require('../fixtures/pull-request-basic.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
-      const githubApi = td.api('https://api.github.com');
+      const jiraApi = global.td.api('https://test-atlassian-instance.net');
+      const githubApi = global.td.api('https://api.github.com');
 
-      td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
+      global.td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
         login: 'test-pull-request-author-login',
         avatar_url: 'test-pull-request-author-avatar',
         html_url: 'test-pull-request-author-url',
       });
 
-      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/pulls/1/reviews')).thenReturn([
+      global.td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/pulls/1/reviews')).thenReturn([
         {
           id: 80,
           node_id: 'MDE3OlB1bGxSZXF1ZXN0UmV2aWV3ODA=',
@@ -511,7 +511,7 @@ describe('GitHub Actions', () => {
         },
       ]);
 
-      td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
+      global.td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
         .thenReturn({
           key: 'TEST-123',
           fields: {
@@ -523,12 +523,12 @@ describe('GitHub Actions', () => {
 
       await app.receive(payload);
 
-      td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
+      global.td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/1', {
         body: '[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
         id: 'test-pull-request-id',
       }));
 
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {

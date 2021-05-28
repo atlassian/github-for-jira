@@ -71,7 +71,7 @@ export default class Subscription extends Sequelize.Model {
 		});
 	}
 
-	static async getSingleInstallation(jiraHost: string, gitHubInstallationId: string): Promise<Subscription> {
+	static async getSingleInstallation(jiraHost: string, gitHubInstallationId: number): Promise<Subscription> {
 		return Subscription.findOne({
 			where: {
 				jiraHost,

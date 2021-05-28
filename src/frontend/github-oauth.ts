@@ -7,7 +7,7 @@
 // TODO: use Axios instead
 import request from 'request';
 import crypto from 'crypto';
-import url from 'url';
+import * as url from 'url';
 import {Express, NextFunction, Request, RequestHandler, Response} from 'express';
 
 const host = process.env.GHE_HOST || 'github.com';

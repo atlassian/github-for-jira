@@ -1,4 +1,4 @@
-import url from 'url';
+import * as url from 'url';
 import transformPullRequest from './transforms/pull-request';
 import statsd from '../config/statsd';
 import {GitHubAPI} from 'probot';

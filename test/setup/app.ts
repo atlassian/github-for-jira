@@ -1,7 +1,6 @@
 import {Application} from 'probot';
 import {findPrivateKey} from 'probot/lib/private-key';
-import cacheManager from 'cache-manager';
-import nock from 'nock';
+import {caching} from 'cache-manager';
 import {App} from '@octokit/app';
 import configureRobot from '../../src/configure-robot';
 
@@ -10,47 +9,47 @@ declare global {
 }
 
 beforeEach(async () => {
-  const models = td.replace('../../lib/models', {
-    Installation: td.object([
+  const models = global.td.replace('../../lib/models', {
+    Installation: global.td.object([
       'getForHost',
       'findByPk',
       'build',
       'getPendingHost',
       'install',
     ]),
-    Subscription: td.object([
+    Subscription: global.td.object([
       'getAllForInstallation',
       'install',
       'getSingleInstallation',
       'findOrStartSync',
       'getAllForHost',
     ]),
-    Project: td.object(['upsert']),
+    Project: global.td.object(['upsert']),
   });
 
-  td.when(models.Installation.getForHost(process.env.ATLASSIAN_URL))
+  global.td.when(models.Installation.getForHost(process.env.ATLASSIAN_URL))
     .thenReturn({
       jiraHost: process.env.ATLASSIAN_URL,
       sharedSecret: process.env.ATLASSIAN_SECRET,
     });
 
-  td.when(models.Subscription.getAllForInstallation(1234))
+  global.td.when(models.Subscription.getAllForInstallation(1234))
     .thenReturn([
       {
         jiraHost: process.env.ATLASSIAN_URL,
       },
     ]);
 
-  td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 1234))
+  global.td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 1234))
     .thenReturn({id: 1, jiraHost: process.env.ATLASSIAN_URL});
 
-  td.when(models.Project.upsert('PROJ-1', process.env.ATLASSIAN_URL))
+  global.td.when(models.Project.upsert('PROJ-1', process.env.ATLASSIAN_URL))
     .thenReturn({
       projectKey: 'PROJ',
       upsert: () => Promise.resolve(),
     });
 
-  nock('https://api.github.com')
+  global.nock('https://api.github.com')
     .post(/\/app\/installations\/[\d\w-]+\/access_tokens/)
     .reply(200, {
       token: 'mocked-token',
@@ -66,7 +65,7 @@ beforeEach(async () => {
       id: 12257,
       privateKey: findPrivateKey(),
     }),
-    cache: cacheManager.caching({
+    cache: caching({
       store: 'memory',
       ttl: 60 * 60, // 1 hour
     }),
@@ -77,6 +76,6 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  nock.cleanAll();
-  td.reset();
+  global.nock.cleanAll();
+  global.td.reset();
 });

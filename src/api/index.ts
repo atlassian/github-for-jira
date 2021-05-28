@@ -1,10 +1,11 @@
-import express, {NextFunction, Request, Response} from 'express';
+import {NextFunction, Request, Response} from 'express';
+import * as express from 'express';
 import {check, oneOf, validationResult} from 'express-validator';
 import format from 'date-fns/format';
-import rateLimit from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
+import * as rateLimit from 'express-rate-limit';
+import * as RedisStore from 'rate-limit-redis';
 import Redis from 'ioredis';
-import BodyParser from 'body-parser';
+import * as BodyParser from 'body-parser';
 import GitHubAPI from '../config/github-api';
 import {Installation, Subscription} from '../models';
 import verifyInstallation from '../jira/verify-installation';
@@ -193,10 +194,10 @@ app.get('/:installationId/repoSyncState.json',
   check('installationId').isInt(),
   returnOnValidationError,
   async (req: Request, res: Response): Promise<void> => {
-    const {installationId} = req.params;
+    const githubInstallationId = Number(req.params.installationId);
 
     try {
-      const subscription = await Subscription.getSingleInstallation(req.session.jiraHost, installationId);
+      const subscription = await Subscription.getSingleInstallation(req.session.jiraHost, githubInstallationId);
       if (!subscription) {
         res.sendStatus(404);
         return;
@@ -213,13 +214,13 @@ app.post('/:installationId/sync',
   check('installationId').isInt(),
   returnOnValidationError,
   async (req: Request, res: Response): Promise<void> => {
-    const {installationId} = req.params;
+    const githubInstallationId = Number(req.params.installationId);
     req.log.info(req.body);
     const {jiraHost} = req.body;
 
     try {
-      req.log.info(jiraHost, installationId);
-      const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
+      req.log.info(jiraHost, githubInstallationId);
+      const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationId);
       if (!subscription) {
         res.sendStatus(404);
         return;
@@ -230,7 +231,7 @@ app.post('/:installationId/sync',
 
       res.status(202)
         .json({
-          message: `Successfully (re)started sync for ${installationId}`,
+          message: `Successfully (re)started sync for ${githubInstallationId}`,
         });
     } catch (err) {
       req.log.info(err);
@@ -328,16 +329,16 @@ app.post('/:installationId/migrate/:undo?',
   check('installationId').isInt(),
   returnOnValidationError,
   async (req: Request, res: Response): Promise<void> => {
-    const {installationId} = req.params;
+    const githubInstallationId = Number(req.params.installationId);
     const {jiraHost} = req.body;
-    const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
+    const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationId);
 
     if (!subscription) {
       res.sendStatus(404);
       return;
     }
 
-    const jiraClient = await getJiraClient(jiraHost, installationId, req.log);
+    const jiraClient = await getJiraClient(jiraHost, githubInstallationId, req.log);
 
     if (req.params.undo) {
       try {

@@ -36,7 +36,7 @@ function mapReviews(reviews) {
 }
 
 // TODO: define arguments and return
-export default (payload, author, reviews) => {
+export default (payload, author, reviews?:unknown[]) => {
   const {pull_request, repository} = payload;
   // This is the same thing we do in sync, concatenating these values
   const {issueKeys} = parseSmartCommit(`${pull_request.title}\n${pull_request.head.ref}`);
