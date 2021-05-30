@@ -1,0 +1,15 @@
+version: "3"
+services:
+  platform-statsd:
+    ports:
+     - "8088"
+     - "8125"
+  nebulae.redis.cache:
+    ports:
+     - "6379"
+  microservice:
+    ports:
+     - "61121:8080"
+  nebulae.postgres-db.database:
+    ports:
+     - "5432"
