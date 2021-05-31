@@ -14,6 +14,11 @@ const logger = bunyan.createLogger(
   },
 );
 
+// Suppress logging in tests
+if (process.env.NODE_ENV === 'test') {
+  logger.level(bunyan.FATAL + 1);
+}
+
 console.debug = logger.debug.bind(logger);
 console.error = logger.error.bind(logger);
 console.log = logger.info.bind(logger);
