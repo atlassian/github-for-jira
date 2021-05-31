@@ -6,7 +6,7 @@ import testTracking from '../../setup/tracking';
 let installation;
 
 describe('Webhook: /events/disabled', () => {
-  test('Existing Installation', async () => {
+  it('Existing Installation', async () => {
     testTracking();
     installation = {
       id: 19,

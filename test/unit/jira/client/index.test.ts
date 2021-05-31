@@ -5,7 +5,7 @@ const BASE_URL = 'https://base-url.atlassian.net';
 
 describe('Test getting a jira client', () => {
   beforeEach(async () => {
-    const [installation] = await Installation.install({
+    const installation = await Installation.install({
       host: BASE_URL,
       sharedSecret: 'shared-secret',
       clientKey: 'client-key',
@@ -13,12 +13,12 @@ describe('Test getting a jira client', () => {
     await installation.enable();
   });
 
-  test('Installation exists', async () => {
+  it('Installation exists', async () => {
     const client = await getJiraClient(BASE_URL, 1);
     expect(client).toMatchSnapshot();
   });
 
-  test('Installation does not exist', async () => {
+  it('Installation does not exist', async () => {
     const installation = await Installation.findOne({
       where: {
         jiraHost: BASE_URL,

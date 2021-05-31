@@ -1,14 +1,11 @@
-
 import testTracking from '../../setup/tracking';
-
-let installation;
-let subscription;
-let deleteJiraConfiguration;
+import deleteJiraConfiguration from '../../../src/frontend/delete-jira-configuration';
 
 describe('DELETE /jira/configuration', () => {
-  beforeEach(() => {
-    td.reset();
+  let installation;
+  let subscription;
 
+  beforeEach(() => {
     subscription = {
       githubInstallationId: 15,
       jiraHost: 'https://test-host.jira.com',
@@ -25,22 +22,16 @@ describe('DELETE /jira/configuration', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    const models = td.replace('../../../lib/models');
+    const models = td.replace('../../../src/models');
     td.when(models.Subscription.getSingleInstallation(subscription.jiraHost, subscription.githubInstallationId))
       // Allows us to modify subscription before it's finally called
       .thenDo(async () => subscription);
     td.when(models.Installation.getForHost(installation.jiraHost))
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
-
-    deleteJiraConfiguration = require('../../../src/frontend/delete-jira-configuration');
   });
 
-  afterEach(() => {
-    td.reset();
-  });
-
-  test('Delete Jira Configuration', async () => {
+  it('Delete Jira Configuration', async () => {
     testTracking();
 
     nock(subscription.jiraHost)
@@ -56,7 +47,7 @@ describe('DELETE /jira/configuration', () => {
       },
     };
     const res = { sendStatus: jest.fn(), locals: { installation } };
-    await deleteJiraConfiguration(req, res);
+    await deleteJiraConfiguration(req as any, res as any);
     expect(subscription.destroy).toHaveBeenCalled();
     expect(res.sendStatus).toHaveBeenCalledWith(204);
   });

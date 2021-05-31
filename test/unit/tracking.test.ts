@@ -44,7 +44,7 @@ describe('Hydro Gateway Protobuf Submissions', () => {
     expect(statsd.mockBuffer.length).toBe(2);
   });
 
-  test('Multiple protobuf submission', async () => {
+  it('Multiple protobuf submission', async () => {
     const protos = [
       new Action(),
       new Action(),
@@ -71,7 +71,7 @@ describe('Hydro Gateway Protobuf Submissions', () => {
   /**
    * This would fail if we didn't have the right secret in place
    */
-  test('Returns true when disabled', async () => {
+  it('Returns true when disabled', async () => {
     setIsDisabled(true);
     const e = new Action();
     e.type = ActionType.CREATED;

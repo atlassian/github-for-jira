@@ -158,7 +158,7 @@ export function processPush(app: Application) {
         jiraPayload.commits.map(commit => reduceProjectKeys(commit, projects));
 
         for (const projectKey of projects) {
-          await Project.upsert(projectKey, jiraClient.baseURL);
+          await Project.incrementOccurence(projectKey, jiraClient.baseURL);
         }
       }
     } catch (error) {

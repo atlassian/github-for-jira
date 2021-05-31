@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Test getting a jira client Installation exists 1`] = `
+Object {
+  "baseURL": "https://base-url.atlassian.net",
+  "devinfo": Object {
+    "branch": Object {
+      "delete": [Function],
+    },
+    "installation": Object {
+      "delete": [Function],
+      "exists": [Function],
+    },
+    "migration": Object {
+      "complete": [Function],
+      "undo": [Function],
+    },
+    "pullRequest": Object {
+      "delete": [Function],
+    },
+    "repository": Object {
+      "delete": [Function],
+      "get": [Function],
+      "update": [Function],
+    },
+  },
+  "issues": Object {
+    "comments": Object {
+      "addForIssue": [Function],
+      "getForIssue": [Function],
+    },
+    "get": [Function],
+    "getAll": [Function],
+    "parse": [Function],
+    "transitions": Object {
+      "getForIssue": [Function],
+      "updateForIssue": [Function],
+    },
+    "worklogs": Object {
+      "addForIssue": [Function],
+      "getForIssue": [Function],
+    },
+  },
+}
+`;

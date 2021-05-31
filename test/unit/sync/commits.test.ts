@@ -17,7 +17,7 @@ describe('sync/commits', () => {
   let delay;
 
   beforeEach(() => {
-    const models = td.replace('../../../lib/models');
+    const models = td.replace('../../../src/models');
     const repoSyncStatus = {
       installationId: 12345678,
       jiraHost: 'tcbyrd.atlassian.net',
@@ -55,11 +55,7 @@ describe('sync/commits', () => {
       });
   });
 
-  afterEach(() => {
-    td.reset();
-  });
-
-  test('should sync to Jira when Commit Nodes have jira references', async () => {
+  it('should sync to Jira when Commit Nodes have jira references', async () => {
 
     const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
 
@@ -111,7 +107,7 @@ describe('sync/commits', () => {
     }));
   });
 
-  test('should send Jira all commits that have Issue Keys', async () => {
+  it('should send Jira all commits that have Issue Keys', async () => {
 
 
     const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
@@ -198,7 +194,7 @@ describe('sync/commits', () => {
     }));
   });
 
-  test('should default to master branch if defaultBranchRef is null', async () => {
+  it('should default to master branch if defaultBranchRef is null', async () => {
 
 
     const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
@@ -251,7 +247,7 @@ describe('sync/commits', () => {
     }));
   });
 
-  test('should not call Jira if no issue keys are present', async () => {
+  it('should not call Jira if no issue keys are present', async () => {
     const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
 
     nock('https://api.github.com').post('/graphql', getDefaultBranch)
@@ -273,7 +269,7 @@ describe('sync/commits', () => {
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
   });
 
-  test('should not call Jira if no data is returned', async () => {
+  it('should not call Jira if no data is returned', async () => {
     const job = createJob({data: {installationId, jiraHost}});
 
     nock('https://api.github.com').post('/graphql', getDefaultBranch)

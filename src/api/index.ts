@@ -156,7 +156,7 @@ app.get('/:installationId',
     const {installationId} = req.params;
     const {client} = res.locals;
     try {
-      const subscriptions = await Subscription.getAllForInstallation(installationId);
+      const subscriptions = await Subscription.getAllForInstallation(Number(installationId));
       if (!subscriptions.length) {
         res.sendStatus(404);
         return;

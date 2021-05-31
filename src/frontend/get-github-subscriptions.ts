@@ -8,7 +8,7 @@ export default async (req:Request, res:Response, next:NextFunction):Promise<void
 
   const { github, client, isAdmin } = res.locals;
 
-  const { installationId } = req.params;
+  const installationId = Number(req.params.installationId);
   try {
     const { data: { login } } = await github.users.getAuthenticated();
     // get the installation to see if the user is an admin of it

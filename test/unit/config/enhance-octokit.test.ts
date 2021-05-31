@@ -1,6 +1,4 @@
 import GitHubAPI from '../../../src/config/github-api';
-
-
 import enhanceOctokit from '../../../src/config/enhance-octokit';
 
 describe('enhanceOctokit', () => {
@@ -18,9 +16,7 @@ describe('enhanceOctokit', () => {
       });
 
       it('sends reqest timing', async () => {
-        await expect(async () => {
-          await octokit.activity.listPublicEvents();
-        }).toHaveSentMetrics({
+        expect(await octokit.activity.listPublicEvents()).toHaveSentMetrics({
           name: 'jira-integration.github-request',
           type: 'h',
           value: (value) => value > 0 && value < 1000, // Value changes depending on how long nock takes
@@ -50,23 +46,22 @@ describe('enhanceOctokit', () => {
       });
 
       it('sends reqest timing', async () => {
-        await expect(async () => {
-          await octokit.activity.listPublicEvents().catch(() => { /* swallow error */ });
-        }).toHaveSentMetrics({
-          name: 'jira-integration.github-request',
-          type: 'h',
-          value: (value) => value > 0 && value < 1000, // Value changes depending on how long nock takes
-          tags: {
-            path: '/events',
-            method: 'GET',
-            status: '500',
-            env: 'test',
-          },
-        });
+        expect(await octokit.activity.listPublicEvents().catch(() => undefined))
+          .toHaveSentMetrics({
+            name: 'jira-integration.github-request',
+            type: 'h',
+            value: (value) => value > 0 && value < 1000, // Value changes depending on how long nock takes
+            tags: {
+              path: '/events',
+              method: 'GET',
+              status: '500',
+              env: 'test',
+            },
+          });
       });
 
       it('logs request timing', async () => {
-        await octokit.activity.listPublicEvents().catch(() => { /* swallow error */ });
+        await octokit.activity.listPublicEvents().catch(() => undefined);
 
         // TODO: fix this test to not rely on logger output...
         /*const debugLog = log.debugValues[0];

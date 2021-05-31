@@ -13,7 +13,7 @@ import AxiosErrorEventDecorator from '../models/axios-error-event-decorator';
 import SentryScopeProxy from '../models/sentry-scope-proxy';
 import newrelic from 'newrelic';
 
-const {CONCURRENT_WORKERS = 1} = process.env;
+const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo('client').redisOptions);
 const subscriber = new Redis(getRedisInfo('subscriber').redisOptions);
 

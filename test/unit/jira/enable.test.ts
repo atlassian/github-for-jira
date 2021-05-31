@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import testTracking from '../../setup/tracking';
+import enable from '../../../src/jira/enable';
 
 let installation;
-let enable;
 
 describe('Webhook: /events/enabled', () => {
   beforeEach(() => {
-    td.reset();
+
 
     installation = {
       id: 19,
@@ -17,32 +18,27 @@ describe('Webhook: /events/enabled', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    const models = td.replace('../../../lib/models');
+    const models = td.replace('../../../src/models');
     td.when(models.Installation.getPendingHost(installation.jiraHost))
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
 
-    enable = require('../../../src/jira/enable');
   });
 
-  afterEach(() => {
-    td.reset();
-  });
-
-  test('Pending Installation', async () => {
+  it('Pending Installation', async () => {
     testTracking();
     const req = { log: jest.fn(), body: { baseUrl: installation.jiraHost } };
     const res = { sendStatus: jest.fn(), on: jest.fn() };
-    await enable(req, res);
+    await enable(req as any, res as any);
     expect(res.on).toHaveBeenCalledWith('finish', expect.any(Function));
     expect(res.sendStatus).toHaveBeenCalledWith(204);
   });
 
-  test('No Pending Installation', async () => {
+  it('No Pending Installation', async () => {
     installation = null;
     const req = { log: jest.fn(), body: { baseUrl: 'https://no-exist.jira.com' } };
     const res = { sendStatus: jest.fn(), on: jest.fn() };
-    await enable(req, res);
+    await enable(req as any, res as any);
     expect(res.sendStatus).toHaveBeenCalledWith(422);
   });
 });

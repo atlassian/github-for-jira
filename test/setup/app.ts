@@ -6,10 +6,16 @@ import configureRobot from '../../src/configure-robot';
 
 declare global {
   let app: Application;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    interface Global {
+      app: Application;
+    }
+  }
 }
 
 beforeEach(async () => {
-  const models = td.replace('../../lib/models', {
+  const models = td.replace('../../src/models', {
     Installation: td.object([
       'getForHost',
       'findByPk',
@@ -24,7 +30,7 @@ beforeEach(async () => {
       'findOrStartSync',
       'getAllForHost',
     ]),
-    Project: td.object(['upsert']),
+    Project: td.object(['incrementOccurence']),
   });
 
   td.when(models.Installation.getForHost(process.env.ATLASSIAN_URL))
@@ -43,10 +49,9 @@ beforeEach(async () => {
   td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 1234))
     .thenReturn({id: 1, jiraHost: process.env.ATLASSIAN_URL});
 
-  td.when(models.Project.upsert('PROJ-1', process.env.ATLASSIAN_URL))
+  td.when(models.Project.incrementOccurence('PROJ-1', process.env.ATLASSIAN_URL))
     .thenReturn({
-      projectKey: 'PROJ',
-      upsert: () => Promise.resolve(),
+      projectKey: 'PROJ'
     });
 
   nock('https://api.github.com')
@@ -60,7 +65,7 @@ beforeEach(async () => {
       content: Buffer.from(`jira: ${process.env.ATLASSIAN_URL}`).toString('base64'),
     });
 
-  app = await configureRobot(new Application({
+  global.app = await configureRobot(new Application({
     app: new App({
       id: 12257,
       privateKey: findPrivateKey(),
@@ -77,5 +82,4 @@ beforeEach(async () => {
 
 afterEach(() => {
   nock.cleanAll();
-  td.reset();
 });

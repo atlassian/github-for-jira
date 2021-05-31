@@ -10,7 +10,7 @@ describe('sync/pull-request', () => {
 
   beforeEach(() => {
     jest.setTimeout(10000);
-    const models = td.replace('../../../lib/models');
+    const models = td.replace('../../../src/models');
     const repoSyncStatus = {
       installationId: 12345678,
       jiraHost: 'tcbyrd.atlassian.net',
@@ -46,15 +46,11 @@ describe('sync/pull-request', () => {
       });
   });
 
-  afterEach(() => {
-    td.reset();
-  });
-
   describe.each([
     ['[TES-15] Evernote Test', 'use-the-force'],
     ['Evernote Test', 'TES-15'],
   ])('PR Title: %p, PR Head Ref: %p', (title, head) => {
-    test('should sync to Jira when Pull Request Nodes have jira references', async () => {
+    it('should sync to Jira when Pull Request Nodes have jira references', async () => {
 
 
       const job = createJob({ data: { installationId, jiraHost }});
@@ -116,7 +112,7 @@ describe('sync/pull-request', () => {
     });
   });
 
-  test('should not sync if nodes are empty', async () => {
+  it('should not sync if nodes are empty', async () => {
 
     const job = createJob({ data: { installationId, jiraHost } });
 
@@ -138,7 +134,7 @@ describe('sync/pull-request', () => {
     expect(queues.pullRequests.add).not.toHaveBeenCalled();
   });
 
-  test('should not sync if nodes do not contain issue keys', async () => {
+  it('should not sync if nodes do not contain issue keys', async () => {
     process.env.LIMITER_PER_INSTALLATION = '2000';
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } });
 

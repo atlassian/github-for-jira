@@ -52,6 +52,6 @@ export default async (context:Context, jiraClient, util) => {
   jiraPayload.branches.map(branch => reduceProjectKeys(branch, projects));
 
   for (const projectKey of projects) {
-    await Project.upsert(projectKey, jiraClient.baseURL);
+    await Project.incrementOccurence(projectKey, jiraClient.baseURL);
   }
 };

@@ -89,7 +89,7 @@ describe('sync/branches', () => {
   let delay;
 
   beforeEach(() => {
-    const models = td.replace('../../../lib/models');
+    const models = td.replace('../../../src/models');
     const repoSyncStatus = {
       installationId: 12345678,
       jiraHost: 'tcbyrd.atlassian.net',
@@ -127,11 +127,7 @@ describe('sync/branches', () => {
     });
   });
 
-  afterEach(() => {
-    td.reset();
-  });
-
-  test('should sync to Jira when branch refs have jira references', async () => {
+  it('should sync to Jira when branch refs have jira references', async () => {
     const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
     nockBranchRequest(branchNodesFixture);
 
@@ -148,7 +144,7 @@ describe('sync/branches', () => {
     );
   });
 
-  test('should send data if issue keys are only present in commits', async () => {
+  it('should send data if issue keys are only present in commits', async () => {
 
     const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
     nockBranchRequest(branchCommitsHaveKeys);
@@ -166,7 +162,7 @@ describe('sync/branches', () => {
     })));
   });
 
-  test('should send data if issue keys are only present in an associatd PR title', async () => {
+  it('should send data if issue keys are only present in an associatd PR title', async () => {
     const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
     nockBranchRequest(associatedPRhasKeys);
 
@@ -220,7 +216,7 @@ describe('sync/branches', () => {
     }));
   });
 
-  test('should not call Jira if no issue keys are found', async () => {
+  it('should not call Jira if no issue keys are found', async () => {
     const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
     nockBranchRequest(branchNoIssueKeys);
 

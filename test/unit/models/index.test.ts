@@ -1,8 +1,6 @@
 import {Installation, sequelize, Subscription} from '../../../src/models';
 import { getHashedKey } from '../../../src/models/installation';
 
-process.env.STORAGE_SECRET = 'test-secret';
-
 describe('test installation model', () => {
   const newInstallPayload = {
     key: 'com.github.integration.production',
@@ -45,8 +43,11 @@ describe('test installation model', () => {
     eventType: 'installed',
   };
 
+  let storageSecret:string;
   beforeEach(async () => {
-    const [installation] = await Installation.install({
+    storageSecret = process.env.STORAGE_SECRET;
+    process.env.STORAGE_SECRET = 'test-secret';
+    const installation = await Installation.install({
       host: existingInstallPayload.baseUrl,
       sharedSecret: existingInstallPayload.sharedSecret,
       clientKey: existingInstallPayload.clientKey,
@@ -67,6 +68,7 @@ describe('test installation model', () => {
   });
 
   afterEach(async () => {
+    process.env.STORAGE_SECRET = storageSecret;
     // Clean up the database
     await Installation.truncate({ cascade: true, restartIdentity: true });
     await Subscription.truncate({ cascade: true, restartIdentity: true });
@@ -76,7 +78,7 @@ describe('test installation model', () => {
   afterAll(async () => sequelize.close());
 
   it('installs app when it receives an install payload from jira', async () => {
-    const [installation] = await Installation.install({
+    const installation = await Installation.install({
       host: newInstallPayload.baseUrl,
       sharedSecret: newInstallPayload.sharedSecret,
       clientKey: newInstallPayload.clientKey,
@@ -92,14 +94,14 @@ describe('test installation model', () => {
   });
 
   it('updates the jiraHost for an installation when a site is renamed', async () => {
-    const [newInstallation] = await Installation.install({
+    const newInstallation = await Installation.install({
       host: newInstallPayload.baseUrl,
       sharedSecret: newInstallPayload.sharedSecret,
       clientKey: newInstallPayload.clientKey,
     });
     expect(newInstallation.jiraHost).toBe(newInstallPayload.baseUrl);
 
-    const [updatedInstallation] = await Installation.install({
+    const updatedInstallation = await Installation.install({
       host: renamedInstallPayload.baseUrl,
       sharedSecret: renamedInstallPayload.sharedSecret,
       clientKey: renamedInstallPayload.clientKey,
@@ -109,7 +111,7 @@ describe('test installation model', () => {
   });
 
   it('updates all Subscriptions for a given jira clientKey when a site is renamed', async () => {
-    const [updatedInstallation] = await Installation.install({
+    const updatedInstallation = await Installation.install({
       host: renamedInstallPayload.baseUrl,
       sharedSecret: renamedInstallPayload.sharedSecret,
       clientKey: renamedInstallPayload.clientKey,
