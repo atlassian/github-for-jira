@@ -16,6 +16,7 @@ class LogDouble {
   }
 
   debug(metadata, message) {
+    console.log('callng debug');
     this.debugValues.push({ metadata, message });
   }
 

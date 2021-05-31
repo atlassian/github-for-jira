@@ -2,6 +2,7 @@ node_modules
 npm-debug.log
 *.pem
 .env
+*.env
 coverage
 .vscodelog/*
 .DS_Store
@@ -10,4 +11,6 @@ log/*
 .tool-versions
 newrelic_agent.log
 .vscode
+.idea
 db/config.json
+.nebulae
