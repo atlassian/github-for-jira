@@ -1,10 +1,10 @@
-import * as bodyParser from 'body-parser';
-import * as express from 'express';
+import bodyParser from 'body-parser';
+import express from 'express';
 import {Express, NextFunction, Request, Response} from 'express';
 import path from 'path';
 import cookieSession from 'cookie-session';
-import * as csrf from 'csurf';
-import Sentry, {Scope} from '@sentry/node';
+import csrf from 'csurf';
+import * as Sentry from '@sentry/node';
 import hbs from 'hbs';
 import GithubOauth from './github-oauth';
 import getGitHubSetup from './get-github-setup';
@@ -130,7 +130,7 @@ export default (octokitApp: App): Express => {
 
   // Add Sentry Context
   app.use((err: Error, req: Request, _: Response, next: NextFunction) => {
-    Sentry.withScope((scope: Scope): void => {
+    Sentry.withScope((scope: Sentry.Scope): void => {
       if (req.session.jiraHost) {
         scope.setTag('jiraHost', req.session.jiraHost);
       }

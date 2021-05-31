@@ -1,11 +1,11 @@
 import {NextFunction, Request, Response} from 'express';
-import * as express from 'express';
+import express from 'express';
 import {check, oneOf, validationResult} from 'express-validator';
 import format from 'date-fns/format';
-import * as rateLimit from 'express-rate-limit';
-import * as RedisStore from 'rate-limit-redis';
+import rateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
 import Redis from 'ioredis';
-import * as BodyParser from 'body-parser';
+import BodyParser from 'body-parser';
 import GitHubAPI from '../config/github-api';
 import {Installation, Subscription} from '../models';
 import verifyInstallation from '../jira/verify-installation';

@@ -8,7 +8,7 @@ describe('JiraClient', () => {
       const installation: any = {jiraHost: 'https://example.atlassian.net', sharedSecret: 'secret'};
       const jiraClient = new JiraClient(installation, logger);
 
-      global.nock('https://example.atlassian.net')
+      nock('https://example.atlassian.net')
         .get('/rest/devinfo/0.10/existsByProperties?fakeProperty=1')
         .reply(status);
 

@@ -3,7 +3,7 @@ import InstallationModel from './installation';
 import SubscriptionModel from './subscription';
 import ProjectModel from './project';
 import Sequelize, {DataTypes} from 'sequelize';
-import * as EncryptedField from 'sequelize-encrypted';
+import EncryptedField from 'sequelize-encrypted';
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 

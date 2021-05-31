@@ -7,14 +7,14 @@ describe('GitHub Actions', () => {
     beforeEach(() => {
       process.env.REDIS_URL = 'redis://test';
       const { queues } = require('../../src/worker/main');
-      push = global.td.replace(queues, 'push');
+      push = td.replace(queues, 'push');
     });
 
     it('should add push event to the queue if Jira issue keys are present', async () => {
       const event = require('../fixtures/push-basic.json');
       await app.receive(event);
 
-      global.td.verify(push.add(
+      td.verify(push.add(
         {
           repository: event.payload.repository,
           shas: [{ id: 'test-commit-id', issueKeys: ['TEST-123'] }],
@@ -32,7 +32,7 @@ describe('GitHub Actions', () => {
     it('should handle payloads where only some commits have issue keys', async () => {
       const event = require('../fixtures/push-mixed.json');
       await app.receive(event);
-      global.td.verify(push.add(
+      td.verify(push.add(
         {
           repository: event.payload.repository,
           shas: [
@@ -48,8 +48,8 @@ describe('GitHub Actions', () => {
 
   describe('process push payloads', () => {
     beforeEach(() => {
-      jiraApi = global.td.api(process.env.ATLASSIAN_URL);
-      githubApi = global.td.api('https://api.github.com');
+      jiraApi = td.api(process.env.ATLASSIAN_URL);
+      githubApi = td.api('https://api.github.com');
       processPush = require('../../src/transforms/push').processPush;
       createJobData = require('../../src/transforms/push').createJobData;
       Date.now = jest.fn(() => 12345678);
@@ -61,12 +61,12 @@ describe('GitHub Actions', () => {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL),
       };
 
-      global.td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
+      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
         .thenReturn(require('../fixtures/api/commit-no-username.json'));
 
       await processPush(app)(job);
 
-      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -128,12 +128,12 @@ describe('GitHub Actions', () => {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL),
       };
 
-      global.td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
+      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
         .thenReturn(require('../fixtures/more-than-10-files.json'));
 
       await processPush(app)(job);
 
-      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -244,7 +244,7 @@ describe('GitHub Actions', () => {
 
     //   await app.receive(payload)
 
-    //   global.td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
     //     body: 'This is a comment'
     //   }))
     // })
@@ -254,8 +254,8 @@ describe('GitHub Actions', () => {
 
     //   await app.receive(payload)
 
-    //   global.td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/worklog', {
-    //     timeSpentSeconds: global.td.matchers.isA(Number),
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/worklog', {
+    //     timeSpentSeconds: td.matchers.isA(Number),
     //     comment: 'This is a worklog'
     //   }))
     // })
@@ -263,7 +263,7 @@ describe('GitHub Actions', () => {
     // it('should run a transition command in the commit message', async () => {
     //   const payload = require('../fixtures/push-transition.json')
 
-    //   global.td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
+    //   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
     //     .thenReturn({
     //       transitions: [
     //         {
@@ -275,7 +275,7 @@ describe('GitHub Actions', () => {
 
     //   await app.receive(payload)
 
-    //   global.td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
     //     transition: {
     //       id: 'test-transition-id'
     //     }
@@ -285,7 +285,7 @@ describe('GitHub Actions', () => {
     // it('should run a transition command in the commit message', async () => {
     //   const payload = require('../fixtures/push-transition-comment.json')
 
-    //   global.td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
+    //   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
     //     .thenReturn({
     //       transitions: [
     //         {
@@ -297,13 +297,13 @@ describe('GitHub Actions', () => {
 
     //   await app.receive(payload)
 
-    //   global.td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
     //     transition: {
     //       id: 'test-transition-id'
     //     }
     //   }))
 
-    //   global.td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
     //     body: 'This is a transition'
     //   }))
     // })
@@ -313,11 +313,11 @@ describe('GitHub Actions', () => {
 
     //   await app.receive(payload)
 
-    //   global.td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
     //     body: 'This is a comment'
     //   }))
 
-    //   global.td.verify(jiraApi.post('/rest/api/latest/issue/TEST-246/comment', {
+    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-246/comment', {
     //     body: 'This is a comment'
     //   }))
     // })
@@ -325,7 +325,7 @@ describe('GitHub Actions', () => {
     it('should not run a command without a Jira issue', async () => {
       const payload = require('../fixtures/push-no-issues.json');
 
-      global.td.when(jiraApi.post(), { ignoreExtraArgs: true })
+      td.when(jiraApi.post(), { ignoreExtraArgs: true })
         .thenThrow(new Error('Should not make any changes to Jira.'));
 
       await app.receive(payload);
@@ -334,10 +334,10 @@ describe('GitHub Actions', () => {
     it('should support commits without smart commands', async () => {
       const payload = require('../fixtures/push-empty.json');
 
-      global.td.when(jiraApi.post(), { ignoreExtraArgs: true })
+      td.when(jiraApi.post(), { ignoreExtraArgs: true })
         .thenThrow(new Error('Should not make any changes to Jira.'));
 
-      global.td.when(githubApi.get(), { ignoreExtraArgs: true })
+      td.when(githubApi.get(), { ignoreExtraArgs: true })
         .thenThrow(new Error('Should not make any API request to GitHub.'));
 
       await app.receive(payload);
@@ -349,12 +349,12 @@ describe('GitHub Actions', () => {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL),
       };
 
-      global.td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
+      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
         .thenReturn(require('../fixtures/push-merge-commit.json'));
 
       await processPush(app)(job);
 
-      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -412,13 +412,13 @@ describe('GitHub Actions', () => {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL),
       };
 
-      global.td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
+      td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
         .thenReturn(require('../fixtures/push-non-merge-commit'));
 
       await processPush(app)(job);
 
       // flag property should not be present
-      global.td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {

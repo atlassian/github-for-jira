@@ -6,13 +6,11 @@
   "engines": {
     "node": ">= 14.16 <15"
   },
-  "main": "src/main.ts",
+  "main": "src/main",
   "scripts": {
-    "dev": "nodemon --exec \\\"node --inspect src/run.js\\\"",
-    "dev:worker": "nodemon --exec \"node --inspect=9230 bin/worker\"",
     "start": "run-p start:main start:worker",
     "start:main": "ts-node .",
-    "start:worker": "ts-node bin/worker",
+    "start:worker": "ts-node src/worker",
     "start:production": "node .",
     "clean": "rimraf coverage build tmp",
     "build": "tsc -p ./tsconfig.json",

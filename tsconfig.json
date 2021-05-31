@@ -17,6 +17,7 @@
     "noImplicitAny": false,
     "noImplicitThis": false,
     "strictNullChecks": false,
+    "esModuleInterop": true,
     "outDir": "build"
   },
   "include": [

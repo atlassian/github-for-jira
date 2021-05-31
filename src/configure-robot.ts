@@ -1,7 +1,7 @@
 import {Application, GitHubAPI} from "probot";
 import Redis from 'ioredis';
-import * as RateLimit from 'express-rate-limit';
-import * as RedisStore from 'rate-limit-redis';
+import RateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
 import {createAppAuth} from '@octokit/auth-app';
 import {findPrivateKey} from 'probot/lib/private-key';
 import getRedisInfo from './config/redis-info';
