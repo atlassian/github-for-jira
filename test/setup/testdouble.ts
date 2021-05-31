@@ -1,28 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as testdouble from 'testdouble';
+import testdouble from 'testdouble';
 import {TestDouble} from 'testdouble';
-import * as Nock from 'nock';
-import * as tdJest from 'testdouble-jest';
-import * as tdNock from 'testdouble-nock';
-import nock from 'nock';
+import Nock from 'nock';
+import tdJest from 'testdouble-jest';
+import tdNock from 'testdouble-nock';
+import nockFn from 'nock';
 
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS {
-    interface Global {
-      nock: typeof Nock;
-      td: TestDouble<any>;
-    }
-  }
+  let nock: typeof Nock;
+  let td: TestDouble<any>;
 }
 
 
 beforeAll(() => {
-  global.nock = nock;
-  global.td = testdouble;
-  tdJest(global.td, jest);
-  tdNock(global.td, global.nock);
+  nock = nockFn;
+  td = testdouble;
+  tdJest(td, jest);
+  tdNock(td, nockFn);
 });
 
-afterEach(() => global.td.reset());
+afterEach(() => {
+  td.reset();
+});

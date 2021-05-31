@@ -1,4 +1,4 @@
-import * as https from 'https';
+import https from 'https';
 import axios from 'axios';
 import crypto from 'crypto';
 import {logger} from 'probot/lib/logger';

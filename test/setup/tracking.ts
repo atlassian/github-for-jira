@@ -1,4 +1,4 @@
-import * as url from 'url';
+import url from 'url';
 
 import { setIsDisabled, BaseURL } from '../../src/tracking';
 
@@ -14,7 +14,7 @@ export default () => {
   setIsDisabled(false);
 
   // Check that we send the tracking proto
-  global.nock(basePath)
+  nock(basePath)
     .post(parsedURL.path, (body) => {
       const { events } = body;
       events.forEach((event) => {

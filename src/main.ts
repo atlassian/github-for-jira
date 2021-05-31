@@ -3,7 +3,7 @@ import './config/env';
 import initializeSentry from './config/sentry';
 import throng from 'throng';
 import getRedisInfo from './config/redis-info';
-import PrivateKey from 'probot/lib/private-key';
+import * as PrivateKey from 'probot/lib/private-key';
 import {createProbot} from 'probot';
 import App from './configure-robot';
 

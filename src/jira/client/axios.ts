@@ -1,7 +1,7 @@
 import Logger from 'bunyan';
 import axios from 'axios';
 import jwt from 'atlassian-jwt';
-import * as url from 'url';
+import url from 'url';
 import statsd from '../../config/statsd';
 import JiraClientError from './jira-client-error';
 

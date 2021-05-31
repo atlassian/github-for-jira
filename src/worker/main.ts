@@ -1,4 +1,4 @@
-import * as Queue from 'bull';
+import Queue from 'bull';
 import * as Sentry from '@sentry/node';
 import Redis from 'ioredis';
 

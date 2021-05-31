@@ -1,4 +1,4 @@
-import * as url from 'url';
+import url from 'url';
 
 import crypto from 'crypto';
 import statsd from '../../src/config/statsd';
@@ -30,7 +30,7 @@ describe('Hydro Gateway Protobuf Submissions', () => {
   ])('Protobuf submission status=%i expected=%p', async (status, expected, errMsg) => {
     const e = new Action();
     e.type = ActionType.CREATED;
-    global.nock(basePath)
+    nock(basePath)
       .post(parsedURL.path)
       .reply(status, function (_:string, requestBody) {
         expect(this.req.headers['x-hydro-app']).toBe('jira-integration');
@@ -53,7 +53,7 @@ describe('Hydro Gateway Protobuf Submissions', () => {
     protos.forEach((proto) => {
       proto.type = ActionType.CREATED;
     });
-    global.nock(basePath)
+    nock(basePath)
       .post(parsedURL.path)
       .reply(200, function (_:string, requestBody) {
         expect(this.req.headers['x-hydro-app']).toBe('jira-integration');

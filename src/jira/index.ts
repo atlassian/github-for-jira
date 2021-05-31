@@ -1,4 +1,4 @@
-import * as bodyParser from 'body-parser';
+import bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
 
 import {Installation} from '../models';
