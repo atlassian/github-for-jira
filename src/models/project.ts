@@ -18,7 +18,7 @@ export default class Project extends Sequelize.Model {
     });
   }
 
-  static async upsert(projectKey, jiraHost) {
+  static async incrementOccurence(projectKey, jiraHost):Promise<Project> {
     const [project] = await Project.findOrCreate({
       where: { projectKey, jiraHost },
     });

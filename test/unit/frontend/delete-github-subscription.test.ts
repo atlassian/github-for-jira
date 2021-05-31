@@ -1,10 +1,9 @@
-
 import testTracking from '../../setup/tracking';
 import {isDisabled, setIsDisabled} from '../../../src/tracking';
+import deleteGitHubSubscription from '../../../src/frontend/delete-github-subscription';
 
 let installation;
 let subscription;
-let deleteGitHubSubscription;
 const origDisabledState = isDisabled();
 
 beforeAll(() => {
@@ -17,7 +16,7 @@ afterAll(() => {
 
 describe('POST /github/subscription', () => {
   beforeEach(() => {
-    td.reset();
+
 
     subscription = {
       githubInstallationId: 15,
@@ -35,22 +34,16 @@ describe('POST /github/subscription', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    const models = td.replace('../../../lib/models');
+    const models = td.replace('../../../src/models');
     td.when(models.Subscription.getSingleInstallation(subscription.jiraHost, subscription.githubInstallationId))
       // Allows us to modify subscription before it's finally called
       .thenDo(async () => subscription);
     td.when(models.Installation.getForHost(installation.jiraHost))
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
-
-    deleteGitHubSubscription = require('../../../src/frontend/delete-github-subscription');
   });
 
-  afterEach(() => {
-    td.reset();
-  });
-
-  test('Delete Jira Configuration', async () => {
+  it('Delete Jira Configuration', async () => {
     testTracking();
 
     nock(subscription.jiraHost)
@@ -92,12 +85,12 @@ describe('POST /github/subscription', () => {
         },
       },
     };
-    await deleteGitHubSubscription(req, res);
+    await deleteGitHubSubscription(req as any, res as any);
     expect(subscription.destroy).toHaveBeenCalled();
     expect(res.sendStatus).toHaveBeenCalledWith(202);
   });
 
-  test('Missing githubToken', async () => {
+  it('Missing githubToken', async () => {
     const req = {
       session: {},
     };
@@ -106,7 +99,7 @@ describe('POST /github/subscription', () => {
       sendStatus: jest.fn(),
     };
 
-    await deleteGitHubSubscription(req, res);
+    await deleteGitHubSubscription(req as any, res as any);
     expect(res.sendStatus).toHaveBeenCalledWith(401);
   });
 
@@ -128,7 +121,7 @@ describe('POST /github/subscription', () => {
       json: jest.fn(),
     };
 
-    await deleteGitHubSubscription(req, res);
+    await deleteGitHubSubscription(req as any, res as any);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json.mock.calls[0]).toMatchSnapshot([{
       err: expect.any(String),

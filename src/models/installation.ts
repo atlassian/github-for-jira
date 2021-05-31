@@ -65,7 +65,7 @@ export default class Installation extends Sequelize.Model {
    * @param {{host: string, clientKey: string, secret: string}} payload
    * @returns {Installation}
    */
-  static async install(payload: InstallationPayload): Promise<[Installation, boolean]> {
+  static async install(payload: InstallationPayload): Promise<Installation> {
     const [installation, created] = await Installation.findOrCreate({
       where: {
         clientKey: getHashedKey(payload.clientKey),

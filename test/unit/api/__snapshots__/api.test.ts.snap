@@ -57,3 +57,11 @@ Object {
 `;
 
 exports[`API Authentication should return 404 if no token is provided 1`] = `Object {}`;
+
+exports[`API Endpoints installation should return 404 if no installation is found 1`] = `Object {}`;
+
+exports[`API Endpoints sync should return 404 if no installation is found 1`] = `"Not Found"`;
+
+exports[`API Endpoints undo and complete - prod should return 404 if no installation is found 1`] = `"Not Found"`;
+
+exports[`API Endpoints verify should return 'Installation already enbled' 1`] = `"Installation already enabled"`;

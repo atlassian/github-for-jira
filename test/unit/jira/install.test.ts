@@ -1,13 +1,11 @@
 import testTracking from '../../setup/tracking';
-
-let installation;
-let install;
-let body;
+import install from '../../../src/jira/install';
 
 describe('Webhook: /events/installed', () => {
-  beforeEach(() => {
-    td.reset();
+  let installation;
+  let body;
 
+  beforeEach(() => {
     body = {
       baseUrl: 'https://test-host.jira.com',
       clientKey: 'abc123',
@@ -24,23 +22,17 @@ describe('Webhook: /events/installed', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    const models = td.replace('../../../lib/models');
+    const models = td.replace('../../../src/models');
     td.when(models.Installation.install(td.matchers.anything()))
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
-
-    install = require('../../../src/jira/install');
   });
 
-  afterEach(() => {
-    td.reset();
-  });
-
-  test('Install', async () => {
+  it('Install', async () => {
     testTracking();
     const req = { log: jest.fn(), body };
     const res = { sendStatus: jest.fn(), on: jest.fn() };
-    await install(req, res);
+    await install(req as any, res as any);
     expect(res.sendStatus).toHaveBeenCalledWith(204);
   });
 });

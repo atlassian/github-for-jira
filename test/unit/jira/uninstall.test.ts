@@ -7,7 +7,7 @@ let uninstall;
 
 describe('Webhook: /events/uninstalled', () => {
   beforeEach(() => {
-    td.reset();
+
 
     subscriptions = [{
       gitHubInstallationId: 10,
@@ -25,7 +25,7 @@ describe('Webhook: /events/uninstalled', () => {
       subscriptions: jest.fn().mockName('subscriptions').mockResolvedValue(subscriptions),
     };
 
-    const models = td.replace('../../../lib/models');
+    const models = td.replace('../../../src/models');
     td.when(models.Subscription.getAllForHost(installation.jiraHost))
       // Allows us to modify subscriptions before it's finally called
       .thenDo(async () => subscriptions);
@@ -33,11 +33,7 @@ describe('Webhook: /events/uninstalled', () => {
     uninstall = require('../../../src/jira/uninstall');
   });
 
-  afterEach(() => {
-    td.reset();
-  });
-
-  test('Existing Installation', async () => {
+  it('Existing Installation', async () => {
     testTracking();
     const req = { log: jest.fn() };
     const res = { locals: { installation }, sendStatus: jest.fn() };
@@ -47,7 +43,7 @@ describe('Webhook: /events/uninstalled', () => {
     expect(subscriptions[0].uninstall).toHaveBeenCalled();
   });
 
-  test('Existing Installation, no Subscriptions', async () => {
+  it('Existing Installation, no Subscriptions', async () => {
     testTracking();
     const req = { log: jest.fn() };
     const res = { locals: { installation }, sendStatus: jest.fn() };

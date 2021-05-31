@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import {queues} from '../../src/worker/main';
+import {processPush, createJobData} from '../../src/transforms/push';
+
 describe('GitHub Actions', () => {
-  let jiraApi; let githubApi; let push; let processPush; let
-    createJobData;
+  let jiraApi;
+  let githubApi;
+  let push;
 
   describe('add to push queue', () => {
     beforeEach(() => {
       process.env.REDIS_URL = 'redis://test';
-      const { queues } = require('../../src/worker/main');
       push = td.replace(queues, 'push');
     });
 
@@ -50,8 +53,6 @@ describe('GitHub Actions', () => {
     beforeEach(() => {
       jiraApi = td.api(process.env.ATLASSIAN_URL);
       githubApi = td.api('https://api.github.com');
-      processPush = require('../../src/transforms/push').processPush;
-      createJobData = require('../../src/transforms/push').createJobData;
       Date.now = jest.fn(() => 12345678);
     });
 
