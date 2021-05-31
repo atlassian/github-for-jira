@@ -1,18 +1,22 @@
 const { GitHubAPI } = require('../../../lib/config/github-api');
 const nock = require('nock');
-const LogDouble = require('../../setup/log-double');
-
 const enhanceOctokit = require('../../../lib/config/enhance-octokit');
 
 describe(enhanceOctokit, () => {
-  describe('request metrics', () => {
-    let log;
+  describe('request metrics - successful', () => {
     let octokit;
+    let spyLogDebug;
+    let value;
 
     beforeEach(() => {
-      log = new LogDouble();
       octokit = GitHubAPI();
-      enhanceOctokit(octokit, log);
+      enhanceOctokit(octokit);
+      spyLogDebug = jest.spyOn(require('bunyan').prototype, 'debug');
+      value = (value) => (value > 0 && value < 1000);
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
     });
 
     describe('when successful', () => {
@@ -20,13 +24,13 @@ describe(enhanceOctokit, () => {
         nock('https://api.github.com').get('/events').reply(200, []);
       });
 
-      it('sends reqest timing', async () => {
+      it('sends request timing', async () => {
         await expect(async () => {
           await octokit.activity.listPublicEvents();
         }).toHaveSentMetrics({
           name: 'jira-integration.github-request',
           type: 'h',
-          value: (value) => value > 0 && value < 1000, // Value changes depending on how long nock takes
+          value, // Value changes depending on how long nock takes
           tags: {
             path: '/events',
             method: 'GET',
@@ -37,12 +41,15 @@ describe(enhanceOctokit, () => {
       });
 
       it('logs request timing', async () => {
+        Date.now = jest.fn(() => 12345678);
+        const requestStart = Date.now();
+
         await octokit.activity.listPublicEvents();
 
-        const debugLog = log.debugValues[0];
-        expect(log.debugValues).toHaveLength(1);
-        expect(debugLog.metadata).toEqual({ path: '/events', method: 'GET', status: 200 });
-        expect(debugLog.message).toMatch(/GitHub request time: \d+ms/);
+        const elapsed = Date.now() - requestStart;
+
+        expect(spyLogDebug).toHaveBeenCalledTimes(1);
+        expect(spyLogDebug).toHaveBeenCalledWith({ method: 'GET', path: '/events', status: 200 }, `GitHub request time: ${elapsed}ms`);
       });
     });
 
@@ -51,13 +58,13 @@ describe(enhanceOctokit, () => {
         nock('https://api.github.com').get('/events').reply(500, []);
       });
 
-      it('sends reqest timing', async () => {
+      it('sends request timing', async () => {
         await expect(async () => {
           await octokit.activity.listPublicEvents().catch(() => { /* swallow error */ });
         }).toHaveSentMetrics({
           name: 'jira-integration.github-request',
           type: 'h',
-          value: (value) => value > 0 && value < 1000, // Value changes depending on how long nock takes
+          value: 0,
           tags: {
             path: '/events',
             method: 'GET',
@@ -68,12 +75,15 @@ describe(enhanceOctokit, () => {
       });
 
       it('logs request timing', async () => {
+        Date.now = jest.fn(() => 12345678);
+        const requestStart = Date.now();
+
         await octokit.activity.listPublicEvents().catch(() => { /* swallow error */ });
 
-        const debugLog = log.debugValues[0];
-        expect(log.debugValues).toHaveLength(1);
-        expect(debugLog.metadata).toEqual({ path: '/events', method: 'GET', status: 500 });
-        expect(debugLog.message).toMatch(/GitHub request time: \d+ms/);
+        expect(spyLogDebug).toHaveBeenCalledTimes(1);
+
+        const elapsed = Date.now() - requestStart;
+        expect(spyLogDebug).toHaveBeenCalledWith({ method: 'GET', path: '/events', status: 500 }, `GitHub request time: ${elapsed}ms`);
       });
     });
   });

@@ -1,7 +1,5 @@
 const nock = require('nock');
-
 const getJiraAxios = require('../../../../lib/jira/client/axios');
-const LogDouble = require('../../../setup/log-double');
 
 describe('Jira axios instance', () => {
   describe('request metrics', () => {
@@ -11,7 +9,7 @@ describe('Jira axios instance', () => {
       it('sends timing metric', async () => {
         nock(jiraHost).get('/foo/bar').reply(200);
 
-        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret', new LogDouble());
+        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret');
 
         await expect(async () => {
           await jiraAxiosInstance.get('/foo/bar');
@@ -31,7 +29,7 @@ describe('Jira axios instance', () => {
       it('removes URL query params from path', async () => {
         nock(jiraHost).get('/foo/bar?baz=true').reply(200);
 
-        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret', new LogDouble());
+        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret');
 
         await expect(async () => {
           await jiraAxiosInstance.get('/foo/bar?baz=true');
@@ -47,7 +45,7 @@ describe('Jira axios instance', () => {
       it('sends timing metric', async () => {
         nock(jiraHost).get('/foo/bar').reply(500);
 
-        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret', new LogDouble());
+        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret');
 
         await expect(async () => {
           try {
