@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-require('dotenv').config()
+require('dotenv').config();
 
-const { queues } = require('../lib/worker')
+const { queues } = require('../lib/worker');
+const logger = require('../config/logger');
+
 queues.metrics.add({})
   .then(() => process.exit(0))
   .catch((error) => {
-    console.log('An error occurred while enqueuing the metrics job:', error)
-    process.exit(1)
-  })
+    logger.error('An error occurred while enqueuing the metrics job:', error);
+    process.exit(1);
+  });

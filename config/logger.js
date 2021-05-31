@@ -8,6 +8,9 @@ const logger = bunyan.createLogger(
     name: 'github-for-jira',
     stream: formatOut,
     level: 'info',
+    serializers: {
+      req: require('bunyan-express-serializer'),
+    },
   },
 );
 
@@ -16,4 +19,4 @@ console.error = logger.error.bind(logger);
 console.log = logger.info.bind(logger);
 console.warn = logger.warn.bind(logger);
 
-module.exports = { logger };
+module.exports = logger;
