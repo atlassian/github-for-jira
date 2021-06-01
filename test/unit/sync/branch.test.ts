@@ -1,30 +1,54 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-
 import parseSmartCommit from '../../../src/transforms/smart-commit';
-import createJob from '../../setup/create-job';
 import {branchesNoLastCursor, branchesWithLastCursor} from '../../fixtures/api/graphql/branch-queries';
-import {processInstallation} from '../../../src/sync/installation';
 
-const branchNodesFixture = require('../../fixtures/api/graphql/branch-ref-nodes.json');
-const emptyNodesFixture = require('../../fixtures/api/graphql/branch-empty-nodes.json');
-const branchCommitsHaveKeys = require('../../fixtures/api/graphql/branch-commits-have-keys.json');
-const associatedPRhasKeys = require('../../fixtures/api/graphql/branch-associated-pr-has-keys.json');
-const branchNoIssueKeys = require('../../fixtures/api/graphql/branch-no-issue-keys.json');
+describe('sync/branches', () => {
+  let jiraHost;
+  let jiraApi;
+  let installationId;
+  let delay;
+  const branchNodesFixture = require('../../fixtures/api/graphql/branch-ref-nodes.json');
+  const emptyNodesFixture = require('../../fixtures/api/graphql/branch-empty-nodes.json');
+  const branchCommitsHaveKeys = require('../../fixtures/api/graphql/branch-commits-have-keys.json');
+  const associatedPRhasKeys = require('../../fixtures/api/graphql/branch-associated-pr-has-keys.json');
+  const branchNoIssueKeys = require('../../fixtures/api/graphql/branch-no-issue-keys.json');
 
-function makeExpectedResponse({branchName}) {
-  const {issueKeys} = parseSmartCommit(branchName);
-  return {
-    preventTransitions: true,
-    repositories: [
-      {
-        branches: [
-          {
-            createPullRequestUrl: `test-repo-url/pull/new/${branchName}`,
-            id: branchName,
-            issueKeys: ['TES-123'].concat(issueKeys).reverse().filter(Boolean),
-            lastCommit: {
+  function makeExpectedResponse({branchName}) {
+    const {issueKeys} = parseSmartCommit(branchName);
+    return {
+      preventTransitions: true,
+      repositories: [
+        {
+          branches: [
+            {
+              createPullRequestUrl: `test-repo-url/pull/new/${branchName}`,
+              id: branchName,
+              issueKeys: ['TES-123'].concat(issueKeys).reverse().filter(Boolean),
+              lastCommit: {
+                author: {
+                  avatar: 'https://camo.githubusercontent.com/test-avatar',
+                  name: 'test-author-name',
+                },
+                authorTimestamp: 'test-authored-date',
+                displayId: 'test-o',
+                fileCount: 0,
+                hash: 'test-oid',
+                id: 'test-oid',
+                issueKeys: ['TES-123'],
+                message: 'TES-123 test-commit-message',
+                url: 'test-repo-url/commit/test-sha',
+                updateSequenceId: 12345678,
+              },
+              name: branchName,
+              url: `test-repo-url/tree/${branchName}`,
+              updateSequenceId: 12345678,
+            },
+          ],
+          commits: [
+            {
               author: {
                 avatar: 'https://camo.githubusercontent.com/test-avatar',
+                email: 'test-author-email@example.com',
                 name: 'test-author-name',
               },
               authorTimestamp: 'test-authored-date',
@@ -34,62 +58,36 @@ function makeExpectedResponse({branchName}) {
               id: 'test-oid',
               issueKeys: ['TES-123'],
               message: 'TES-123 test-commit-message',
+              timestamp: 'test-authored-date',
               url: 'test-repo-url/commit/test-sha',
               updateSequenceId: 12345678,
             },
-            name: branchName,
-            url: `test-repo-url/tree/${branchName}`,
-            updateSequenceId: 12345678,
-          },
-        ],
-        commits: [
-          {
-            author: {
-              avatar: 'https://camo.githubusercontent.com/test-avatar',
-              email: 'test-author-email@example.com',
-              name: 'test-author-name',
-            },
-            authorTimestamp: 'test-authored-date',
-            displayId: 'test-o',
-            fileCount: 0,
-            hash: 'test-oid',
-            id: 'test-oid',
-            issueKeys: ['TES-123'],
-            message: 'TES-123 test-commit-message',
-            timestamp: 'test-authored-date',
-            url: 'test-repo-url/commit/test-sha',
-            updateSequenceId: 12345678,
-          },
-        ],
-        id: 'test-repo-id',
-        name: 'test-repo-name',
-        url: 'test-repo-url',
-        updateSequenceId: 12345678,
+          ],
+          id: 'test-repo-id',
+          name: 'test-repo-name',
+          url: 'test-repo-url',
+          updateSequenceId: 12345678,
+        },
+      ],
+      properties: {
+        installationId: 1234,
       },
-    ],
-    properties: {
-      installationId: 1234,
-    },
-  };
-}
+    };
+  }
 
-function nockBranchRequest(payload) {
-  nock('https://api.github.com')
-    .post('/graphql', branchesNoLastCursor)
-    .reply(200, payload);
-  nock('https://api.github.com')
-    .post('/graphql', branchesWithLastCursor)
-    .reply(200, emptyNodesFixture);
-}
+  function nockBranchRequest(payload) {
+    nock('https://api.github.com')
+      .post('/graphql', branchesNoLastCursor)
+      .reply(200, payload);
+    nock('https://api.github.com')
+      .post('/graphql', branchesWithLastCursor)
+      .reply(200, emptyNodesFixture);
+  }
 
-describe('sync/branches', () => {
-  let jiraHost;
-  let jiraApi;
-  let installationId;
-  let delay;
+  let createJob;
+  let processInstallation;
 
-  beforeEach(() => {
-    const models = td.replace('../../../src/models');
+  beforeEach(async () => {
     const repoSyncStatus = {
       installationId: 12345678,
       jiraHost: 'tcbyrd.atlassian.net',
@@ -125,6 +123,9 @@ describe('sync/branches', () => {
       save: () => Promise.resolve({}),
       update: () => Promise.resolve({}),
     });
+
+    createJob = (await import('../../setup/create-job')).default;
+    processInstallation = (await import('../../../src/sync/installation')).processInstallation;
   });
 
   it('should sync to Jira when branch refs have jira references', async () => {

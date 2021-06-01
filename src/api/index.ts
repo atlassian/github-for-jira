@@ -83,8 +83,8 @@ app.use(logMiddleware);
 app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const token = req.get('Authorization');
   if (!token) {
-    res.sendStatus(404);
-    return next();
+    res.sendStatus(404)
+    return;
   }
   try {
     // Create a separate octokit instance than the one used by the app

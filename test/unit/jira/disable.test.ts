@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getHashedKey } from '../../../src/models/installation';
-import disable from '../../../src/jira/disable';
-import testTracking from '../../setup/tracking';
-
-let installation;
+import testTracking from "../../setup/tracking";
 
 describe('Webhook: /events/disabled', () => {
+  let installation;
+  let getHashedKey;
+  let disable;
+
+  beforeEach(async () => {
+    getHashedKey = (await import('../../../src/models/installation')).getHashedKey;
+    disable = (await import('../../../src/jira/disable')).default;
+  })
+
   it('Existing Installation', async () => {
-    testTracking();
+    await testTracking();
     installation = {
       id: 19,
       jiraHost: 'https://test-host.jira.com',

@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import transformPullRequest from '../../../../src/sync/transforms/pull-request';
-
 describe('pull_request transform', () => {
+  let transformPullRequest;
   const githubMock:any = {
     pulls: {
       get: async () => ({ data: { comments: 1 } }),
     },
   };
+
+  beforeEach(async () => {
+    transformPullRequest = (await import('../../../../src/sync/transforms/pull-request')).default;
+  })
 
   it('should send the ghost user to Jira when GitHub user has been deleted', async () => {
     const pullRequestList = JSON.parse(JSON.stringify(require('../../../fixtures/api/pull-request-list.json')));

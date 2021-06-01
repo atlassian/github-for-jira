@@ -1,19 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jwt from "atlassian-jwt";
-import verifyJiraMiddleware from "../../../src/frontend/verify-jira-middleware";
 
 describe("#verifyJiraMiddleware", () => {
   let res;
   let next;
+  let verifyJiraMiddleware;
 
-  let models;
 
-  beforeEach(() => {
-    models = td.replace("../../../src/models");
-
+  beforeEach(async () => {
     res = td.object(["sendStatus"]);
     res.locals = {};
     next = td.function("next");
+    verifyJiraMiddleware = (await import("../../../src/frontend/verify-jira-middleware")).default;
   });
 
   describe("GET request", () => {

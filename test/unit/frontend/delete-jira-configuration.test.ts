@@ -1,11 +1,13 @@
-import testTracking from '../../setup/tracking';
-import deleteJiraConfiguration from '../../../src/frontend/delete-jira-configuration';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import testTracking from "../../setup/tracking";
 
 describe('DELETE /jira/configuration', () => {
   let installation;
   let subscription;
+  let deleteJiraConfiguration;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+
     subscription = {
       githubInstallationId: 15,
       jiraHost: 'https://test-host.jira.com',
@@ -22,17 +24,18 @@ describe('DELETE /jira/configuration', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    const models = td.replace('../../../src/models');
     td.when(models.Subscription.getSingleInstallation(subscription.jiraHost, subscription.githubInstallationId))
       // Allows us to modify subscription before it's finally called
       .thenDo(async () => subscription);
     td.when(models.Installation.getForHost(installation.jiraHost))
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
+
+    deleteJiraConfiguration = (await import('../../../src/frontend/delete-jira-configuration')).default;
   });
 
   it('Delete Jira Configuration', async () => {
-    testTracking();
+    await testTracking();
 
     nock(subscription.jiraHost)
       .delete('/rest/devinfo/0.10/bulkByProperties')

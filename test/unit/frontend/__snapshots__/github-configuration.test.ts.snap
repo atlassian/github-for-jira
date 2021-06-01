@@ -6,8 +6,7 @@ exports[`Frontend GitHub Configuration #post should return a 200 and install a S
 Object {
   "actionSource": "web_console",
   "association": "subscription",
-  "githubInstallationId": 1,
-  "jiraHostname": "test-jira-host",
+  "installationId": 19,
   "type": "created",
 }
 `;

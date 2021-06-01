@@ -1,13 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import createJob from '../../setup/create-job';
-import {processInstallation} from '../../../src/sync/installation';
 import {commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch} from '../../fixtures/api/graphql/commit-queries';
-
-const defaultBranchFixture = require('../../fixtures/api/graphql/default-branch.json');
-const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json');
-const mixedCommitNodes = require('../../fixtures/api/graphql/commit-nodes-mixed.json');
-const defaultBranchNullFixture = require('../../fixtures/api/graphql/default-branch-null.json');
-const commitsNoKeys = require('../../fixtures/api/graphql/commit-nodes-no-keys.json');
 
 describe('sync/commits', () => {
   let jiraHost;
@@ -15,9 +7,16 @@ describe('sync/commits', () => {
   let installationId;
   let emptyNodesFixture;
   let delay;
+  let createJob;
+  let processInstallation;
 
-  beforeEach(() => {
-    const models = td.replace('../../../src/models');
+  const defaultBranchFixture = require('../../fixtures/api/graphql/default-branch.json');
+  const commitNodesFixture = require('../../fixtures/api/graphql/commit-nodes.json');
+  const mixedCommitNodes = require('../../fixtures/api/graphql/commit-nodes-mixed.json');
+  const defaultBranchNullFixture = require('../../fixtures/api/graphql/default-branch-null.json');
+  const commitsNoKeys = require('../../fixtures/api/graphql/commit-nodes-no-keys.json');
+
+  beforeEach(async () => {
     const repoSyncStatus = {
       installationId: 12345678,
       jiraHost: 'tcbyrd.atlassian.net',
@@ -53,6 +52,8 @@ describe('sync/commits', () => {
         save: () => Promise.resolve({}),
         update: () => Promise.resolve({}),
       });
+    createJob = (await import('../../setup/create-job')).default;
+    processInstallation = (await import('../../../src/sync/installation')).processInstallation;
   });
 
   it('should sync to Jira when Commit Nodes have jira references', async () => {

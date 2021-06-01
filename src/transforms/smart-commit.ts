@@ -4,7 +4,6 @@ export default (source) => {
   const tokenizer = SmartCommitTokenizer();
   tokenizer.reset(source);
   const issueKeys = [];
-
   for (const token of tokenizer) {
     if (token.type === 'issueKey') {
       issueKeys.push(token.value);

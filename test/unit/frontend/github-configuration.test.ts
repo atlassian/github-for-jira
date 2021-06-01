@@ -1,64 +1,53 @@
 import Keygrip from "keygrip";
 import supertest from "supertest";
-
-import { getHashedKey } from "../../../src/models/installation";
 import testTracking from "../../setup/tracking";
-import { setIsDisabled } from "../../../src/tracking";
-import Frontend from "../../../src/frontend/app";
-
-function getCookieHeader(payload): string[] {
-  const cookie = Buffer.from(JSON.stringify(payload)).toString("base64");
-  const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET]);
-
-  return [
-    `session=${cookie};session.sig=${keygrip.sign(`session=${cookie}`)};`
-  ];
-}
-
-const authenticatedUserResponse = {
-  login: "test-user"
-};
-
-const adminUserResponse = {
-  login: "admin-user"
-};
-
-const organizationMembershipResponse = {
-  role: "member"
-};
-
-const organizationAdminResponse = {
-  role: "admin"
-};
-
-const userInstallationsResponse = {
-  total_count: 2,
-  installations: [
-    {
-      account: {
-        login: "test-org"
-      },
-      id: 1,
-      target_type: "Organization"
-    },
-    {
-      id: 3
-    }
-  ]
-};
 
 describe("Frontend", () => {
-  let models;
   let subject;
+  const authenticatedUserResponse = { login: "test-user" };
+  const adminUserResponse = { login: "admin-user" };
+  const organizationMembershipResponse = { role: "member" };
+  const organizationAdminResponse = { role: "admin" };
+  const userInstallationsResponse = {
+    total_count: 2,
+    installations: [
+      {
+        account: {
+          login: "test-org"
+        },
+        id: 1,
+        target_type: "Organization"
+      },
+      {
+        id: 3
+      }
+    ]
+  };
 
-  beforeEach(() => {
-    models = td.replace("../../../src/models");
+  function getCookieHeader(payload): string[] {
+    const cookie = Buffer.from(JSON.stringify(payload)).toString("base64");
+    const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET]);
 
+    return [
+      `session=${cookie};session.sig=${keygrip.sign(`session=${cookie}`)};`
+    ];
+  }
+
+  let getHashedKey;
+  let setIsDisabled;
+  let originalDisabledState;
+
+  beforeEach(async () => {
+    getHashedKey = (await import("../../../src/models/installation")).getHashedKey;
+    const tracking = (await import("../../../src/tracking"));
+    setIsDisabled = tracking.setIsDisabled;
+    originalDisabledState = tracking.isDisabled();
+    const Frontend = (await import("../../../src/frontend/app")).default;
     subject = Frontend(app.app);
   });
-  afterEach(() => {
 
-    setIsDisabled(true);
+  afterEach(() => {
+    setIsDisabled(originalDisabledState);
   });
 
   describe("GitHub Configuration", () => {
@@ -134,7 +123,7 @@ describe("Frontend", () => {
         nock("https://api.github.com").get("/user/installations").reply(200, userInstallationsResponse);
         nock("https://api.github.com").get("/user").reply(200, adminUserResponse);
         nock("https://api.github.com").get("/orgs/test-org/memberships/admin-user").reply(200, organizationAdminResponse);
-        testTracking();
+        await testTracking();
 
         td.when(models.Installation.getForHost(jiraHost))
           // Allows us to modify installation before it's finally called

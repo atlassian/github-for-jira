@@ -1,7 +1,9 @@
 
-import getJiraAxios from '../../../../src/jira/client/axios';
-
 describe('Jira axios instance', () => {
+  let getJiraAxios;
+  beforeEach(async () => {
+    getJiraAxios = (await import('../../../../src/jira/client/axios')).default;
+  })
   describe('request metrics', () => {
     const jiraHost = 'https://example.atlassian.net';
 
