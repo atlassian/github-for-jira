@@ -1,14 +1,12 @@
-import { getHashedKey } from '../../../src/models/installation';
 import testTracking from '../../setup/tracking';
 
-let installation;
-let subscriptions;
-let uninstall;
-
 describe('Webhook: /events/uninstalled', () => {
-  beforeEach(() => {
+  let installation;
+  let subscriptions;
+  let uninstall;
 
-
+  beforeEach(async () => {
+    const { getHashedKey } = await import('../../../src/models/installation');
     subscriptions = [{
       gitHubInstallationId: 10,
       jiraHost: 'https://test-host.jira.com',
@@ -25,16 +23,15 @@ describe('Webhook: /events/uninstalled', () => {
       subscriptions: jest.fn().mockName('subscriptions').mockResolvedValue(subscriptions),
     };
 
-    const models = td.replace('../../../src/models');
     td.when(models.Subscription.getAllForHost(installation.jiraHost))
       // Allows us to modify subscriptions before it's finally called
       .thenDo(async () => subscriptions);
 
-    uninstall = require('../../../src/jira/uninstall');
+    uninstall = (await import('../../../src/jira/uninstall')).default;
   });
 
   it('Existing Installation', async () => {
-    testTracking();
+    await testTracking();
     const req = { log: jest.fn() };
     const res = { locals: { installation }, sendStatus: jest.fn() };
     await uninstall(req, res);
@@ -44,7 +41,7 @@ describe('Webhook: /events/uninstalled', () => {
   });
 
   it('Existing Installation, no Subscriptions', async () => {
-    testTracking();
+    await testTracking();
     const req = { log: jest.fn() };
     const res = { locals: { installation }, sendStatus: jest.fn() };
     subscriptions = [];

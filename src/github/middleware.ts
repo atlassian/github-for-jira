@@ -123,7 +123,9 @@ export default (callback) => {
       const util = getJiraUtil(jiraClient);
 
       try {
-        await newrelic.startSegment('Middleware: webhook handler', true, async () => callback(context, jiraClient, util));
+        await newrelic.startSegment('Middleware: webhook handler', true, async () => {
+          return callback(context, jiraClient, util)
+        });
       } catch (err) {
         context.sentry.captureException(err);
       }

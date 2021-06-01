@@ -1,11 +1,12 @@
 
-import { isAdmin } from '../../../src/frontend/github-client-middleware';
-import GitHubAPI from '../../../src/config/github-api';
-
 describe('GitHub client middleware', () => {
   let adminFunction;
 
-  beforeEach(() => adminFunction = isAdmin(GitHubAPI()));
+  beforeEach(async () => {
+    const { isAdmin } = await import('../../../src/frontend/github-client-middleware');
+    const GitHubAPI = (await import('../../../src/config/github-api')).default;
+    adminFunction = isAdmin(GitHubAPI())
+  });
 
   it('isAdmin returns true if user is admin of a given organization', async () => {
     nock('https://api.github.com')

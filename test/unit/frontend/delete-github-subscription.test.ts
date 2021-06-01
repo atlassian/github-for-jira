@@ -1,23 +1,15 @@
-import testTracking from '../../setup/tracking';
-import {isDisabled, setIsDisabled} from '../../../src/tracking';
-import deleteGitHubSubscription from '../../../src/frontend/delete-github-subscription';
-
-let installation;
-let subscription;
-const origDisabledState = isDisabled();
-
-beforeAll(() => {
-  setIsDisabled(false);
-});
-
-afterAll(() => {
-  setIsDisabled(origDisabledState);
-});
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import testTracking from "../../setup/tracking";
 
 describe('POST /github/subscription', () => {
-  beforeEach(() => {
+  let installation;
+  let subscription;
+  let origDisabledState;
+  let setIsDisabled;
+  let isDisabled;
+  let deleteGitHubSubscription;
 
-
+  beforeEach(async () => {
     subscription = {
       githubInstallationId: 15,
       jiraHost: 'https://test-host.jira.com',
@@ -34,17 +26,28 @@ describe('POST /github/subscription', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    const models = td.replace('../../../src/models');
     td.when(models.Subscription.getSingleInstallation(subscription.jiraHost, subscription.githubInstallationId))
       // Allows us to modify subscription before it's finally called
       .thenDo(async () => subscription);
     td.when(models.Installation.getForHost(installation.jiraHost))
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
+
+    const tracking = (await import('../../../src/tracking'));
+    isDisabled = tracking.isDisabled;
+    setIsDisabled = tracking.setIsDisabled;
+    deleteGitHubSubscription = (await import('../../../src/frontend/delete-github-subscription')).default;
+
+    origDisabledState = isDisabled()
+    setIsDisabled(false);
+  });
+
+  afterEach(() => {
+    setIsDisabled(origDisabledState);
   });
 
   it('Delete Jira Configuration', async () => {
-    testTracking();
+    await testTracking();
 
     nock(subscription.jiraHost)
       .delete('/rest/devinfo/0.10/bulkByProperties')

@@ -4,60 +4,87 @@ import supertest from "supertest";
 import express, { Application } from "express";
 import { NextFunction, Request, Response } from "express";
 
-const successfulAuthResponseWrite = {
-  data: {
-    viewer: {
-      login: "gimenete",
-      isEmployee: true,
-      organization: {
-        repository: {
-          viewerPermission: "WRITE"
-        }
-      }
-    }
-  }
-};
-
-const successfulAuthResponseAdmin = {
-  data: {
-    viewer: {
-      login: "monalisa",
-      isEmployee: true,
-      organization: {
-        repository: {
-          viewerPermission: "ADMIN"
-        }
-      }
-    }
-  }
-};
-
-const createApp = async (locals?: any) => {
-  const app = express();
-  app.use((_: Request, res: Response, next: NextFunction) => {
-    res.locals = locals;
-    next();
-  });
-  app.use("/api", (await import("../../../src/api")).default);
-  return app;
-};
 
 describe("API", () => {
+  let app: Application;
+  let models;
+  let locals;
+  let jiraClient;
+
+  const successfulAuthResponseWrite = {
+    data: {
+      viewer: {
+        login: "gimenete",
+        isEmployee: true,
+        organization: {
+          repository: {
+            viewerPermission: "WRITE"
+          }
+        }
+      }
+    }
+  };
+
+  const successfulAuthResponseAdmin = {
+    data: {
+      viewer: {
+        login: "monalisa",
+        isEmployee: true,
+        organization: {
+          repository: {
+            viewerPermission: "ADMIN"
+          }
+        }
+      }
+    }
+  };
+
+  const createApp = async (locals?: any) => {
+    const app = express();
+    app.use((_: Request, res: Response, next: NextFunction) => {
+      res.locals = locals;
+      next();
+    });
+    app.use("/api", (await import('../../../src/api')).default);
+    return app;
+  };
+
+  beforeEach(async () => {
+    locals = {
+      client: {
+        apps: td.object()
+      }
+    };
+    jiraClient = {
+      devinfo: {
+        migration: {
+          undo: jest.fn(),
+          complete: jest.fn()
+        }
+      }
+    };
+    td.replace("../../../src/jira/client", () => jiraClient);
+    app = await createApp(locals);
+  });
+
   describe("Authentication", () => {
-    let app: Application;
+    it("should return 404 if no token is provided", () =>{
+      nock("https://api.github.com")
+        .post("/graphql")
+        .reply(200, successfulAuthResponseWrite);
 
-    beforeAll(async () => app = await createApp());
-
-    it("should return 404 if no token is provided", () =>
-      supertest(app)
+      return supertest(app)
         .get("/api")
         .expect(404)
         .then(response => {
           expect(response.body).toMatchSnapshot();
-        }));
+        })
+    });
 
     it("should return 200 if a valid token is provided", () => {
-      nock("https://api.github.com").post("/graphql").reply(200, successfulAuthResponseWrite);
+      nock("https://api.github.com")
+        .post("/graphql")
+        .reply(200, successfulAuthResponseWrite);
 
       return supertest(app)
         .get("/api")
@@ -69,7 +96,9 @@ describe("API", () => {
     });
 
     it("should return 200 if token belongs to an admin", () => {
-      nock("https://api.github.com").post("/graphql").reply(200, successfulAuthResponseAdmin);
+      nock("https://api.github.com")
+        .post("/graphql")
+        .reply(200, successfulAuthResponseAdmin);
 
       return supertest(app)
         .get("/api")
@@ -159,35 +188,14 @@ describe("API", () => {
   });
 
   describe("Endpoints", () => {
-    let models;
-    let app: Application;
-    let locals;
-    let jiraClient;
-
-    beforeEach(async () => {
-      nock("https://api.github.com").post("/graphql").reply(200, successfulAuthResponseWrite);
-      models = td.replace("../../../src/models");
-      locals = {
-        client: {
-          apps: td.object()
-        }
-      };
-      jiraClient = {
-        devinfo: {
-          migration: {
-            undo: jest.fn(),
-            complete: jest.fn()
-          }
-        }
-      };
-      td.replace("../../../src/jira/client", () => jiraClient);
-      app = await createApp(locals);
-    });
 
     describe("installation", () => {
       it("should return 404 if no installation is found", async () => {
+        nock("https://api.github.com")
+          .post("/graphql")
+          .reply(200, successfulAuthResponseWrite);
         const invalidId = 99999999;
-        td.when(models.Subscription.getAllForInstallation(invalidId.toString())).thenReturn([]);
+        td.when(models.Subscription.getAllForInstallation(invalidId)).thenResolve([]);
 
         return supertest(app)
           .get(`/api/${invalidId}`)
@@ -199,17 +207,19 @@ describe("API", () => {
       });
 
       it("should return information for an existing installation", async () => {
+        nock("https://api.github.com")
+          .post("/graphql")
+          .reply(200, successfulAuthResponseWrite);
+
         td.when(models.Subscription.getAllForInstallation(1234))
-          .thenReturn(new Promise((resolve)=>{
-            resolve([
-              {
-                dataValues: {
-                  jiraHost: process.env.ATLASSIAN_URL
-                },
-                gitHubInstallationId: 1234
-              }
-            ]);
-          }));
+          .thenResolve([
+            {
+              dataValues: {
+                jiraHost: process.env.ATLASSIAN_URL
+              },
+              gitHubInstallationId: 1234
+            }
+          ]);
 
         td.when(locals.client.apps.getInstallation({ installation_id: 1234 }))
           .thenReturn({ data: {} });
@@ -228,6 +238,9 @@ describe("API", () => {
 
     describe("repoSyncState", () => {
       it("should return 404 if no installation is found", async () => {
+        nock("https://api.github.com")
+          .post("/graphql")
+          .reply(200, successfulAuthResponseWrite);
         const invalidId = 99999999;
         td.when(models.Subscription.getAllForInstallation(invalidId.toString())).thenReturn([]);
 
@@ -241,6 +254,9 @@ describe("API", () => {
       });
 
       it("should return the repoSyncState information for an existing installation", async () => {
+        nock("https://api.github.com")
+          .post("/graphql")
+          .reply(200, successfulAuthResponseWrite);
         td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 1234))
           .thenResolve(
             {

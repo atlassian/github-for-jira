@@ -1,17 +1,16 @@
 import url from 'url';
 
-import { setIsDisabled, BaseURL } from '../../src/tracking';
-
 /**
  * Test that tracking works by storing a snapshot of the tracking proto sent.
  *
  * @returns {void}
  */
-export default () => {
+export default async () => {
+  const tracking = await import('../../src/tracking');
   // Enable user tracking
-  const parsedURL = url.parse(BaseURL);
+  const parsedURL = url.parse(tracking.BaseURL);
   const basePath = parsedURL.href.replace(parsedURL.path, '');
-  setIsDisabled(false);
+  tracking.setIsDisabled(false);
 
   // Check that we send the tracking proto
   nock(basePath)

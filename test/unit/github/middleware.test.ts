@@ -1,40 +1,43 @@
-import { logger } from 'probot/lib/logger';
-import GitHubAPI from '../../../src/config/github-api';
+import { logger } from "probot/lib/logger";
 
-import { Installation, Subscription } from '../../../src/models';
-import middleware from '../../../src/github/middleware';
+describe("Probot event middleware", () => {
+  let GitHubAPI;
+  let middleware;
 
-describe('Probot event middleware', () => {
-  describe('when processing fails for one subscription', () => {
+  beforeEach(async () => {
+    GitHubAPI = (await import("../../../src/config/github-api")).default;
+    middleware = (await import("../../../src/github/middleware")).default;
+  });
+
+  describe("when processing fails for one subscription", () => {
     let context;
     let handlerCalls;
 
     beforeEach(async () => {
       context = {
         payload: {
-          sender: { type: 'not bot' },
-          installation: { id: 1234 },
+          sender: { type: "not bot" },
+          installation: { id: 1234 }
         },
         github: GitHubAPI(),
-        log: logger,
+        log: logger
       };
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      Installation.getForHost = jest.fn(async (jiraHost) => {
+      models.Installation.getForHost = jest.fn(async (jiraHost) => {
         const installations = [
-          { jiraHost: 'https://foo.atlassian.net', sharedSecret: 'secret1' },
-          { jiraHost: 'https://bar.atlassian.net', sharedSecret: 'secret2' },
-          { jiraHost: 'https://baz.atlassian.net', sharedSecret: 'secret3' },
+          { jiraHost: "https://foo.atlassian.net", sharedSecret: "secret1" },
+          { jiraHost: "https://bar.atlassian.net", sharedSecret: "secret2" },
+          { jiraHost: "https://baz.atlassian.net", sharedSecret: "secret3" }
         ];
 
         return installations.find(installation => installation.jiraHost === jiraHost);
       });
 
-      Subscription.getAllForInstallation = jest.fn().mockReturnValue([
-        { jiraHost: 'https://foo.atlassian.net' },
-        { jiraHost: 'https://bar.atlassian.net' },
-        { jiraHost: 'https://baz.atlassian.net' },
+      models.Subscription.getAllForInstallation = jest.fn().mockResolvedValue([
+        { jiraHost: "https://foo.atlassian.net" },
+        { jiraHost: "https://bar.atlassian.net" },
+        { jiraHost: "https://baz.atlassian.net" }
       ]);
 
       handlerCalls = [];
@@ -42,14 +45,14 @@ describe('Probot event middleware', () => {
         handlerCalls.push([context, jiraClient, util]);
 
         if (handlerCalls.length === 1) {
-          throw Error('boom');
+          throw Error("boom");
         }
       });
 
       await handler(context);
     });
 
-    it('calls handler for each subscription', async () => {
+    it("calls handler for each subscription", async () => {
       expect(handlerCalls.length).toEqual(3);
     });
   });

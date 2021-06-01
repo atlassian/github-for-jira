@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import testTracking from '../../setup/tracking';
-import install from '../../../src/jira/install';
 
 describe('Webhook: /events/installed', () => {
   let installation;
   let body;
+  let install;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     body = {
       baseUrl: 'https://test-host.jira.com',
       clientKey: 'abc123',
@@ -22,14 +23,15 @@ describe('Webhook: /events/installed', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    const models = td.replace('../../../src/models');
     td.when(models.Installation.install(td.matchers.anything()))
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
+
+    install = (await import('../../../src/jira/install')).default;
   });
 
   it('Install', async () => {
-    testTracking();
+    await testTracking();
     const req = { log: jest.fn(), body };
     const res = { sendStatus: jest.fn(), on: jest.fn() };
     await install(req as any, res as any);

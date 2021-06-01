@@ -46,16 +46,15 @@ it('checks tags too', async () => {
 })
 
 */
-import diff from 'jest-diff';
-import statsd from '../../../src/config/statsd';
+import diff from "jest-diff";
 
 const parseStatsdMessage = (stastsdMessage) => {
-  const [metric, type, tagsString] = stastsdMessage.split('|');
-  const [name, value] = metric.split(':');
+  const [metric, type, tagsString] = stastsdMessage.split("|");
+  const [name, value] = metric.split(":");
   const tags = {};
 
-  tagsString.substring(1).split(',').map((tagString) => {
-    const [key, value] = tagString.split(':');
+  tagsString.substring(1).split(",").map((tagString) => {
+    const [key, value] = tagString.split(":");
     tags[key] = value;
   });
 
@@ -63,7 +62,7 @@ const parseStatsdMessage = (stastsdMessage) => {
     name,
     value: parseInt(value),
     type,
-    tags,
+    tags
   };
 };
 
@@ -71,14 +70,15 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace jest {
     interface Matchers<R> {
-      toHaveSentMetrics(...expectedMetrics:any[]): R;
+      toHaveSentMetrics(...expectedMetrics: any[]): R;
     }
   }
 }
 
 // TODO: add better typing for metric
 expect.extend({
-  async toHaveSentMetrics(...expectedMetrics:any[]) {
+  async toHaveSentMetrics(...expectedMetrics: any[]) {
+    const statsd = (await import("../../../src/config/statsd")).default;
     statsd.mockBuffer = [];
     const actualMetrics = statsd.mockBuffer.map((message) => parseStatsdMessage(message));
     const matchingMetrics = [];
@@ -89,9 +89,9 @@ expect.extend({
 
       let matchingValue;
       // eslint-disable-next-line no-prototype-builtins
-      if (!expectedMetric.hasOwnProperty('value')) {
+      if (!expectedMetric.hasOwnProperty("value")) {
         matchingValue = true;
-      } else if (typeof expectedMetric.value === 'function') {
+      } else if (typeof expectedMetric.value === "function") {
         matchingValue = expectedMetric.value(actualMetric.value);
       } else {
         matchingValue = actualMetric.value === expectedMetric.value;
@@ -118,9 +118,9 @@ expect.extend({
     return {
       message: () => {
         const diffString = diff(expectedMetrics, actualMetrics, { expand: true });
-        return `${this.utils.matcherHint('toHaveSentMetrics', 'function', 'metrics')}\n\n${diffString}`;
+        return `${this.utils.matcherHint("toHaveSentMetrics", "function", "metrics")}\n\n${diffString}`;
       },
-      pass,
+      pass
     };
-  },
+  }
 });

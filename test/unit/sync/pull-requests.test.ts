@@ -1,16 +1,14 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-import createJob from '../../setup/create-job';
-import { processInstallation } from '../../../src/sync/installation';
-
 describe('sync/pull-request', () => {
   let jiraHost;
   let jiraApi;
   let installationId;
+  let createJob;
+  let processInstallation;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.setTimeout(10000);
-    const models = td.replace('../../../src/models');
     const repoSyncStatus = {
       installationId: 12345678,
       jiraHost: 'tcbyrd.atlassian.net',
@@ -44,6 +42,9 @@ describe('sync/pull-request', () => {
         save: () => Promise.resolve({}),
         update: () => Promise.resolve({}),
       });
+
+    createJob = (await import('../../setup/create-job')).default;
+    processInstallation = (await import('../../../src/sync/installation')).processInstallation;
   });
 
   describe.each([
