@@ -32,8 +32,9 @@ describe('Webhook: /events/installed', () => {
 
   it('Install', async () => {
     await testTracking();
-    const req = { log: jest.fn(), body };
+    const req = { log: { info: jest.fn() }, body };
     const res = { sendStatus: jest.fn(), on: jest.fn() };
+
     await install(req as any, res as any);
     expect(res.sendStatus).toHaveBeenCalledWith(204);
   });
