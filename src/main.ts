@@ -1,5 +1,5 @@
+import './config/env'; // Important to be before other dependencies
 import 'newrelic';
-import './config/env';
 import initializeSentry from './config/sentry';
 import throng from 'throng';
 import getRedisInfo from './config/redis-info';

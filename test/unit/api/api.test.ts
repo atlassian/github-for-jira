@@ -358,16 +358,15 @@ describe("API", () => {
 
     describe("verify", () => {
       const installationId = 1234;
-      const retInstallation = {
-        gitHubInstallationId: installationId,
-        enabled: true,
-        id: installationId,
-        jiraHost: process.env.ATLASSIAN_URL
-      };
 
       beforeEach(() => {
         td.when(models.Installation.findByPk(installationId))
-          .thenResolve(retInstallation);
+          .thenResolve({
+            gitHubInstallationId: installationId,
+            enabled: true,
+            id: installationId,
+            jiraHost: process.env.ATLASSIAN_URL
+          });
       });
 
       it("should return 'Installation already enabled'", () => {
