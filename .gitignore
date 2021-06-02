@@ -10,4 +10,5 @@ log/*
 .tool-versions
 newrelic_agent.log
 .vscode
+.idea
 db/config.json
