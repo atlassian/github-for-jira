@@ -70,6 +70,7 @@ Object {
   ],
   "failedConnections": Array [],
   "hasConnections": true,
+  "host": "https://test-atlassian-instance.net",
   "installationId": "1234",
   "repoSyncState": "http://127.0.0.1/api/1234/repoSyncState.json",
 }
@@ -85,6 +86,16 @@ exports[`API Endpoints sync should return 404 if no installation is found 1`] = 
 
 exports[`API Endpoints sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
 
+exports[`API Endpoints sync should trigger the sync or start function 2`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+
+exports[`API Endpoints undo and complete - nonprod should not migrate an installation 1`] = `"Error trying to complete migration: TypeError: Cannot read property 'devinfo' of undefined"`;
+
+exports[`API Endpoints undo and complete - nonprod should not migrate an installation 2`] = `[MockFunction]`;
+
+exports[`API Endpoints undo and complete - nonprod should not undo a migration 1`] = `"Error trying to undo migration: TypeError: Cannot read property 'devinfo' of undefined"`;
+
+exports[`API Endpoints undo and complete - nonprod should not undo a migration 2`] = `[MockFunction]`;
+
 exports[`API Endpoints undo and complete - prod should return 404 if no installation is found 1`] = `"Not Found"`;
 
-exports[`API Endpoints verify should return 'Installation already enbled' 1`] = `"Installation already enabled"`;
+exports[`API Endpoints verify should return 'Installation already enabled' 1`] = `"Installation already enabled"`;
