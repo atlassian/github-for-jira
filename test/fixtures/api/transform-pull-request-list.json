@@ -8,7 +8,7 @@
     "patch_url": "https://github.com/integrations/test/pull/51.patch",
     "issue_url": "https://api.github.com/repos/integrations/test/issues/51",
     "number": 51,
-    "state": "merged",
+    "status": "merged",
     "locked": false,
     "title": "[TES-123] Branch payload Test",
     "user": {
@@ -38,18 +38,10 @@
     "merged_at": "2018-05-04T14:06:06Z",
     "merge_commit_sha": "db0d491ed7081e02b09b760c5ce9407384ed73d1",
     "assignee": null,
-    "assignees": [
-
-    ],
-    "requested_reviewers": [
-
-    ],
-    "requested_teams": [
-
-    ],
-    "labels": [
-
-    ],
+    "assignees": [],
+    "requested_reviewers": [],
+    "requested_teams": [],
+    "labels": [],
     "milestone": null,
     "commits_url": "https://api.github.com/repos/integrations/test/pulls/51/commits",
     "review_comments_url": "https://api.github.com/repos/integrations/test/pulls/51/comments",
@@ -329,7 +321,7 @@
     "patch_url": "https://github.com/integrations/test/pull/51.patch",
     "issue_url": "https://api.github.com/repos/integrations/test/issues/51",
     "number": 51,
-    "state": "open",
+    "status": "open",
     "locked": false,
     "title": "Testing force pushes",
     "user": {
@@ -360,18 +352,10 @@
     "merged_at": null,
     "merge_commit_sha": "db0d491ed7081e02b09b760c5ce9407384ed73d1",
     "assignee": null,
-    "assignees": [
-
-    ],
-    "requested_reviewers": [
-
-    ],
-    "requested_teams": [
-
-    ],
-    "labels": [
-
-    ],
+    "assignees": [],
+    "requested_reviewers": [],
+    "requested_teams": [],
+    "labels": [],
     "milestone": null,
     "commits_url": "https://api.github.com/repos/integrations/test/pulls/51/commits",
     "review_comments_url": "https://api.github.com/repos/integrations/test/pulls/51/comments",
