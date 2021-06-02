@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import { createApp } from "../utils/probot";
+
 describe('GitHub Actions', () => {
+  let app;
+  beforeEach(async () => app = await createApp())
+
   describe('pull_request', () => {
     it('should update the Jira issue with the linked GitHub pull_request', async () => {
       const payload = require('../fixtures/pull-request-basic.json');
