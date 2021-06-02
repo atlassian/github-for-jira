@@ -1,12 +1,12 @@
 import parseSmartCommit from './smart-commit';
-import {getJiraId} from '../jira/util/id';
+import { getJiraId } from '../jira/util/id';
 import _ from 'lodash';
 
-function mapStatus(state: string, merged: boolean) {
-  if (state === 'merged') return 'MERGED';
-  if (state === 'open') return 'OPEN';
-  if (state === 'closed' && merged) return 'MERGED';
-  if (state === 'closed' && !merged) return 'DECLINED';
+function mapStatus(status: string, merged: boolean) {
+  if (status === 'merged') return 'MERGED';
+  if (status === 'open') return 'OPEN';
+  if (status === 'closed' && merged) return 'MERGED';
+  if (status === 'closed' && !merged) return 'DECLINED';
   return 'UNKNOWN';
 }
 
@@ -27,7 +27,10 @@ function mapReviews(reviews) {
       };
       acc.push(usernames[review.user.login]);
       // If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
-    } else if (usernames[review.user.login].approvalStatus !== 'APPROVED' && review.state === 'APPROVED') {
+    } else if (
+      usernames[review.user.login].approvalStatus !== 'APPROVED' &&
+      review.state === 'APPROVED'
+    ) {
       usernames[review.user.login].approvalStatus = 'APPROVED';
     }
     // Returns the reviews' array with unique users
@@ -36,13 +39,16 @@ function mapReviews(reviews) {
 }
 
 // TODO: define arguments and return
-export default (payload, author, reviews?:unknown[]) => {
-  const {pull_request, repository} = payload;
+export default (payload, author, reviews?: unknown[]) => {
+  const { pull_request, repository } = payload;
+
   // This is the same thing we do in sync, concatenating these values
-  const {issueKeys} = parseSmartCommit(`${pull_request.title}\n${pull_request.head.ref}`);
+  const { issueKeys } = parseSmartCommit(
+    `${pull_request.title}\n${pull_request.head.ref}`,
+  );
 
   if (!issueKeys || !pull_request.head.repo) {
-    return {data: undefined};
+    return { data: undefined };
   }
 
   const pullRequestStatus = mapStatus(pull_request.status, pull_request.merged);
@@ -54,30 +60,33 @@ export default (payload, author, reviews?:unknown[]) => {
       url: repository.html_url,
       // Do not send the branch on the payload when the Pull Request Merged event is called.
       // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
-      branches: pullRequestStatus === 'MERGED' ? [] : [
-        {
-          createPullRequestUrl: `${pull_request.head.repo.html_url}/pull/new/${pull_request.head.ref}`,
-          lastCommit: {
-            author: {
-              name: author.login,
-            },
-            authorTimestamp: pull_request.updated_at,
-            displayId: pull_request.head.sha.substring(0, 6),
-            fileCount: 0,
-            hash: pull_request.head.sha,
-            id: pull_request.head.sha,
-            issueKeys,
-            message: 'n/a',
-            updateSequenceId: Date.now(),
-            url: `${pull_request.head.repo.html_url}/commit/${pull_request.head.sha}`,
-          },
-          id: getJiraId(pull_request.head.ref),
-          issueKeys,
-          name: pull_request.head.ref,
-          url: `${pull_request.head.repo.html_url}/tree/${pull_request.head.ref}`,
-          updateSequenceId: Date.now(),
-        },
-      ],
+      branches:
+        pullRequestStatus === 'MERGED'
+          ? []
+          : [
+              {
+                createPullRequestUrl: `${pull_request.head.repo.html_url}/pull/new/${pull_request.head.ref}`,
+                lastCommit: {
+                  author: {
+                    name: author.login,
+                  },
+                  authorTimestamp: pull_request.updated_at,
+                  displayId: pull_request.head.sha.substring(0, 6),
+                  fileCount: 0,
+                  hash: pull_request.head.sha,
+                  id: pull_request.head.sha,
+                  issueKeys,
+                  message: 'n/a',
+                  updateSequenceId: Date.now(),
+                  url: `${pull_request.head.repo.html_url}/commit/${pull_request.head.sha}`,
+                },
+                id: getJiraId(pull_request.head.ref),
+                issueKeys,
+                name: pull_request.head.ref,
+                url: `${pull_request.head.repo.html_url}/tree/${pull_request.head.ref}`,
+                updateSequenceId: Date.now(),
+              },
+            ],
       pullRequests: [
         {
           author: {

@@ -4,12 +4,20 @@ describe('pull_request transform', () => {
   let transformPullRequest;
 
   beforeEach(async () => {
-    transformPullRequest = (await import('../../../src/sync/transforms/pull-request')).default;
-  })
+    transformPullRequest = (
+      await import('../../../src/transforms/pull-request')
+    ).default;
+  });
 
   it('should not contain branches on the payload if pull request status is closed.', async () => {
-    const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/transform-pull-request-list.json')));
+    const pullRequestList = JSON.parse(
+      JSON.stringify(
+        require('../../fixtures/api/transform-pull-request-list.json'),
+      ),
+    );
+
     pullRequestList[0].title = '[TES-123] Branch payload Test';
+
     const payload = {
       pull_request: pullRequestList[0],
       repository: {
@@ -28,7 +36,13 @@ describe('pull_request transform', () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pull_request.user);
+    const { data } = await transformPullRequest(
+      payload,
+      payload.pull_request.user,
+    );
+
+    const { updated_at, title } = pullRequestList[0];
+
     expect(data).toMatchObject({
       id: 1234568,
       name: 'test-owner/test-repo',
@@ -42,27 +56,32 @@ describe('pull_request transform', () => {
           destinationBranch: 'https://github.com/integrations/test/tree/devel',
           displayId: '#51',
           id: 51,
-          reviewers: [],
           issueKeys: ['TES-123'],
-          lastUpdate: pullRequestList[0].updated_at,
+          lastUpdate: updated_at,
           sourceBranch: 'use-the-force',
-          sourceBranchUrl: 'https://github.com/integrations/test/tree/use-the-force',
+          sourceBranchUrl:
+            'https://github.com/integrations/test/tree/use-the-force',
           status: 'MERGED',
-          timestamp: pullRequestList[0].updated_at,
-          title: pullRequestList[0].title,
+          timestamp: updated_at,
+          title: title,
           url: 'https://github.com/integrations/test/pull/51',
           updateSequenceId: 12345678,
         },
       ],
-      branches: [],
       url: 'https://github.com/test-owner/test-repo',
       updateSequenceId: 12345678,
     });
   });
 
   it('should contain branches on the payload if pull request status is different than closed.', async () => {
-    const pullRequestList = JSON.parse(JSON.stringify(require('../../fixtures/api/transform-pull-request-list.json')));
+    const pullRequestList = JSON.parse(
+      JSON.stringify(
+        require('../../fixtures/api/transform-pull-request-list.json'),
+      ),
+    );
+
     pullRequestList[1].title = '[TES-123] Branch payload Test';
+
     const payload = {
       pull_request: pullRequestList[1],
       repository: {
@@ -81,7 +100,14 @@ describe('pull_request transform', () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pull_request.user, payload.pull_request.reviewers);
+    const { data } = await transformPullRequest(
+      payload,
+      payload.pull_request.user,
+      payload.pull_request.reviewers,
+    );
+
+    const { updated_at, title } = pullRequestList[1];
+
     expect(data).toMatchObject({
       id: 1234568,
       name: 'test-owner/test-repo',
@@ -96,23 +122,23 @@ describe('pull_request transform', () => {
           displayId: '#51',
           id: 51,
           issueKeys: ['TES-123'],
-          lastUpdate: pullRequestList[1].updated_at,
+          lastUpdate: updated_at,
           sourceBranch: 'use-the-force',
-          sourceBranchUrl: 'https://github.com/integrations/test/tree/use-the-force',
+          sourceBranchUrl:
+            'https://github.com/integrations/test/tree/use-the-force',
           status: 'OPEN',
-          timestamp: pullRequestList[1].updated_at,
-          title: pullRequestList[1].title,
+          timestamp: updated_at,
+          title: title,
           url: 'https://github.com/integrations/test/pull/51',
           updateSequenceId: 12345678,
         },
       ],
       branches: [
         {
-          createPullRequestUrl: 'https://github.com/integrations/test/pull/new/use-the-force',
+          createPullRequestUrl:
+            'https://github.com/integrations/test/pull/new/use-the-force',
           id: 'use-the-force',
-          issueKeys: [
-            'TES-123',
-          ],
+          issueKeys: ['TES-123'],
           lastCommit: {
             author: {
               name: 'bkeepers',
@@ -122,9 +148,7 @@ describe('pull_request transform', () => {
             fileCount: 0,
             hash: '09ca669e4b5ff78bfa6a9fee74c384812e1f96dd',
             id: '09ca669e4b5ff78bfa6a9fee74c384812e1f96dd',
-            issueKeys: [
-              'TES-123',
-            ],
+            issueKeys: ['TES-123'],
             message: 'n/a',
             updateSequenceId: 12345678,
             url: 'https://github.com/integrations/test/commit/09ca669e4b5ff78bfa6a9fee74c384812e1f96dd',

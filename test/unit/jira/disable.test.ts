@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
+import testTracking from '../../setup/tracking';
 
 describe('Webhook: /events/disabled', () => {
   let installation;
@@ -7,12 +7,14 @@ describe('Webhook: /events/disabled', () => {
   let disable;
 
   beforeEach(async () => {
-    getHashedKey = (await import('../../../src/models/installation')).getHashedKey;
+    getHashedKey = (await import('../../../src/models/installation'))
+      .getHashedKey;
     disable = (await import('../../../src/jira/disable')).default;
-  })
+  });
 
   it('Existing Installation', async () => {
     await testTracking();
+
     installation = {
       id: 19,
       jiraHost: 'https://test-host.jira.com',
@@ -21,10 +23,14 @@ describe('Webhook: /events/disabled', () => {
       secrets: 'def234',
       sharedSecret: 'ghi345',
       disable: jest.fn().mockResolvedValue(installation),
-      subscriptions: jest.fn().mockResolvedValue([{ gitHubInstallationId: 10 }]),
+      subscriptions: jest
+        .fn()
+        .mockResolvedValue([{ gitHubInstallationId: 10 }]),
     };
-    const req = { log: jest.fn() };
+
+    const req = { log: { info: jest.fn() } };
     const res = { locals: { installation }, sendStatus: jest.fn() };
+
     await disable(req as any, res as any);
     expect(res.sendStatus).toHaveBeenCalledWith(204);
     expect(installation.disable).toHaveBeenCalled();
