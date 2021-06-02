@@ -43,3 +43,14 @@ scaling:
   max: 1
   instanceCount: 1
   instance: t3.small
+
+environmentOverrides:
+  ddev:
+    compose:
+      microservice:
+        ports:
+          - 8080:8080
+          - 9229:9229 # node remote debugging port
+    config:
+      environmentVariables:
+        NODE_OPTIONS: "--no-deprecation --inspect=github-for-jira.ap-southeast-2.dev.atl-paas.net:9229"
