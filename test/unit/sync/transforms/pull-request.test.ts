@@ -1,18 +1,22 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 describe('pull_request transform', () => {
   let transformPullRequest;
-  const githubMock:any = {
+  const githubMock: any = {
     pulls: {
       get: async () => ({ data: { comments: 1 } }),
     },
   };
 
   beforeEach(async () => {
-    transformPullRequest = (await import('../../../../src/sync/transforms/pull-request')).default;
-  })
+    transformPullRequest = (
+      await import('../../../../src/sync/transforms/pull-request')
+    ).default;
+  });
 
   it('should send the ghost user to Jira when GitHub user has been deleted', async () => {
-    const pullRequestList = JSON.parse(JSON.stringify(require('../../../fixtures/api/pull-request-list.json')));
+    const pullRequestList = JSON.parse(
+      JSON.stringify(require('../../../fixtures/api/pull-request-list.json')),
+    );
     pullRequestList[0].title = '[TES-123] Evernote Test';
     const payload = {
       pullRequest: pullRequestList[0],
@@ -28,7 +32,11 @@ describe('pull_request transform', () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pullRequest.user, githubMock);
+    const { data } = await transformPullRequest(
+      payload,
+      payload.pullRequest.user,
+      githubMock,
+    );
     expect(data).toMatchObject({
       id: 1234568,
       name: 'test-owner/test-repo',
@@ -42,13 +50,15 @@ describe('pull_request transform', () => {
             url: 'https://github.com/ghost',
           },
           commentCount: 1,
-          destinationBranch: 'https://github.com/test-owner/test-repo/tree/devel',
+          destinationBranch:
+            'https://github.com/test-owner/test-repo/tree/devel',
           displayId: '#51',
           id: 51,
           issueKeys: ['TES-123'],
           lastUpdate: pullRequestList[0].updated_at,
           sourceBranch: 'use-the-force',
-          sourceBranchUrl: 'https://github.com/test-owner/test-repo/tree/use-the-force',
+          sourceBranchUrl:
+            'https://github.com/test-owner/test-repo/tree/use-the-force',
           status: 'DECLINED',
           timestamp: pullRequestList[0].updated_at,
           title: pullRequestList[0].title,
@@ -63,7 +73,7 @@ describe('pull_request transform', () => {
 
   it('should return no data if there are no issue keys', async () => {
     const payload = {
-      pull_request: {
+      pullRequest: {
         author: null,
         databaseId: 1234568,
         comments: {
@@ -75,8 +85,8 @@ describe('pull_request transform', () => {
         baseRef: {
           name: 'master',
         },
-        headRef: {
-          name: 'test-branch',
+        head: {
+          ref: 'test-branch',
         },
         number: 123,
         state: 'MERGED',
@@ -96,7 +106,11 @@ describe('pull_request transform', () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(payload, payload.pull_request.author, githubMock);
+    const { data } = await transformPullRequest(
+      payload,
+      payload.pullRequest.author,
+      githubMock,
+    );
     expect(data).toBeUndefined();
   });
 });
