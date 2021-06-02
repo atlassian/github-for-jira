@@ -11,7 +11,7 @@ export const getHashedKey = (clientKey: string): string => {
   keyHash.update(clientKey);
 
   return keyHash.digest('hex');
-}
+};
 
 export default class Installation extends Sequelize.Model {
   id: number;
@@ -21,7 +21,9 @@ export default class Installation extends Sequelize.Model {
   clientKey: string;
   enabled: boolean;
 
-  static async getForClientKey(clientKey: string): Promise<Installation | null> {
+  static async getForClientKey(
+    clientKey: string,
+  ): Promise<Installation | null> {
     return Installation.findOne({
       where: {
         clientKey: getHashedKey(clientKey),
@@ -77,16 +79,24 @@ export default class Installation extends Sequelize.Model {
     });
 
     if (!created) {
-      await installation.update({
-        sharedSecret: payload.sharedSecret,
-        enabled: false,
-        jiraHost: payload.host,
-      }).then(async (record) => {
-        const subscriptions = await Subscription.getAllForClientKey(record.clientKey);
-        await Promise.all(subscriptions.map(subscription => subscription.update({jiraHost: record.jiraHost})));
+      await installation
+        .update({
+          sharedSecret: payload.sharedSecret,
+          enabled: false,
+          jiraHost: payload.host,
+        })
+        .then(async (record) => {
+          const subscriptions = await Subscription.getAllForClientKey(
+            record.clientKey,
+          );
+          await Promise.all(
+            subscriptions.map((subscription) =>
+              subscription.update({ jiraHost: record.jiraHost }),
+            ),
+          );
 
-        return installation;
-      });
+          return installation;
+        });
     }
 
     await installation.update({
