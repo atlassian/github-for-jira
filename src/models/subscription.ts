@@ -1,12 +1,12 @@
-import Sequelize from 'sequelize';
-import { queues } from '../worker/main';
-import { Job } from 'bull';
+import Sequelize from "sequelize";
+import { queues } from "../worker/main";
+import { Job } from "bull";
 
 export enum SyncStatus {
-  PENDING = 'PENDING',
-  COMPLETE = 'COMPLETE',
-  ACTIVE = 'ACTIVE',
-  FAILED = 'FAILED',
+  PENDING = "PENDING",
+  COMPLETE = "COMPLETE",
+  ACTIVE = "ACTIVE",
+  FAILED = "FAILED"
 }
 
 export interface RepoSyncState {
@@ -24,19 +24,19 @@ interface SyncStatusCount {
 export interface Repositories {
   [id: string]: {
     repository?: Repository;
-    pullStatus?: string;
-    branchStatus?: string;
-    commitStatus?: string;
+    pullStatus?: string,
+    branchStatus?: string,
+    commitStatus?: string,
     // TODO: need to get concrete typing
-    [key: string]: unknown;
-  };
+    [key: string]: unknown
+  }
 }
 
 export interface Repository {
   id: string;
   name: string;
   full_name: string;
-  owner: { login: string };
+  owner: { login: string },
   html_url: string;
   updated_at: number;
 }
@@ -55,50 +55,42 @@ export default class Subscription extends Sequelize.Model {
   static async getAllForHost(host: string): Promise<Subscription[]> {
     return Subscription.findAll({
       where: {
-        jiraHost: host,
-      },
+        jiraHost: host
+      }
     });
   }
 
-  static getAllForInstallation(
-    installationId: number,
-  ): Promise<Subscription[]> {
+  static getAllForInstallation(installationId: number): Promise<Subscription[]> {
     return Subscription.findAll({
       where: {
-        gitHubInstallationId: installationId,
-      },
+        gitHubInstallationId: installationId
+      }
     });
   }
 
   static getAllForClientKey(clientKey: string): Promise<Subscription[]> {
     return Subscription.findAll({
       where: {
-        jiraClientKey: clientKey,
-      },
+        jiraClientKey: clientKey
+      }
     });
   }
 
-  static getSingleInstallation(
-    jiraHost: string,
-    gitHubInstallationId: number,
-  ): Promise<Subscription> {
+  static getSingleInstallation(jiraHost: string, gitHubInstallationId: number): Promise<Subscription> {
     return Subscription.findOne({
       where: {
         jiraHost,
-        gitHubInstallationId,
-      },
+        gitHubInstallationId
+      }
     });
   }
 
-  static async getInstallationForClientKey(
-    clientKey: string,
-    installationId: string,
-  ): Promise<Subscription> {
+  static async getInstallationForClientKey(clientKey: string, installationId: string): Promise<Subscription> {
     return Subscription.findOne({
       where: {
         jiraClientKey: clientKey,
-        gitHubInstallationId: installationId,
-      },
+        gitHubInstallationId: installationId
+      }
     });
   }
 
@@ -107,8 +99,8 @@ export default class Subscription extends Sequelize.Model {
       where: {
         gitHubInstallationId: payload.installationId,
         jiraHost: payload.host,
-        jiraClientKey: payload.clientKey,
-      },
+        jiraClientKey: payload.clientKey
+      }
     });
 
     await Subscription.findOrStartSync(subscription);
@@ -120,32 +112,29 @@ export default class Subscription extends Sequelize.Model {
     await Subscription.destroy({
       where: {
         gitHubInstallationId: payload.installationId,
-        jiraHost: payload.host,
-      },
+        jiraHost: payload.host
+      }
     });
   }
 
-  static async findOrStartSync(
-    subscription: Subscription,
-    syncType?: string,
-  ): Promise<Job> {
+  static async findOrStartSync(subscription: Subscription, syncType?: string): Promise<Job> {
     const { gitHubInstallationId: installationId, jiraHost } = subscription;
 
-    const repoSyncState = subscription.get('repoSyncState');
+    const repoSyncState = subscription.get("repoSyncState");
 
     // If repo sync state is empty
     // start a sync job from scratch
-    if (!repoSyncState || syncType === 'full') {
+    if (!repoSyncState || (syncType === "full")) {
       await subscription.update({
-        syncStatus: 'PENDING',
-        syncWarning: '',
+        syncStatus: "PENDING",
+        syncWarning: "",
         repoSyncState: {
           installationId,
           jiraHost,
-          repos: {},
-        },
+          repos: {}
+        }
       });
-      console.log('Starting Jira sync');
+      console.log("Starting Jira sync");
       return queues.discovery.add({ installationId, jiraHost });
     }
 
@@ -160,7 +149,7 @@ export default class Subscription extends Sequelize.Model {
    */
   static async syncStatusCounts(): Promise<SyncStatusCount[]> {
     const [results] = await this.sequelize.query(
-      `SELECT "syncStatus", COUNT(*) FROM "Subscriptions" GROUP BY "syncStatus"`,
+      `SELECT "syncStatus", COUNT(*) FROM "Subscriptions" GROUP BY "syncStatus"`
     );
     return results as SyncStatusCount[];
   }
@@ -174,21 +163,21 @@ export default class Subscription extends Sequelize.Model {
   }
 
   async restartSync(): Promise<Job> {
-    return Subscription.findOrStartSync(this, 'full');
+    return Subscription.findOrStartSync(this, "full");
   }
 
   // A stalled in progress sync is one that is ACTIVE but has not seen any updates in the last 15 minutes
   // This may happen when an error causes a sync to die without setting the status to 'FAILED'
   isInProgressSyncStalled(): boolean {
-    if (this.syncStatus === 'ACTIVE') {
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    if (this.syncStatus === "ACTIVE") {
+      const fifteenMinutesAgo = new Date(Date.now() - (15 * 60 * 1000));
 
       return this.updatedAt < fifteenMinutesAgo;
     } else {
       return false;
     }
   }
-}
+};
 
 export interface SubscriptionPayload {
   installationId: string;

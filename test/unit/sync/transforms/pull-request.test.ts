@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 describe('pull_request transform', () => {
   let transformPullRequest;
+
   const githubMock: any = {
     pulls: {
       get: async () => ({ data: { comments: 1 } }),
@@ -17,7 +18,9 @@ describe('pull_request transform', () => {
     const pullRequestList = JSON.parse(
       JSON.stringify(require('../../../fixtures/api/pull-request-list.json')),
     );
+
     pullRequestList[0].title = '[TES-123] Evernote Test';
+
     const payload = {
       pullRequest: pullRequestList[0],
       repository: {
@@ -28,6 +31,7 @@ describe('pull_request transform', () => {
         html_url: 'https://github.com/test-owner/test-repo',
       },
     };
+
     payload.pullRequest.user = null;
 
     Date.now = jest.fn(() => 12345678);
@@ -37,6 +41,7 @@ describe('pull_request transform', () => {
       payload.pullRequest.user,
       githubMock,
     );
+
     expect(data).toMatchObject({
       id: 1234568,
       name: 'test-owner/test-repo',

@@ -41,12 +41,16 @@ export default async (payload, author, github: GitHubAPI) => {
     return {};
   }
 
-  const prGet = await github.pulls.get({
-    owner: repository.owner.login,
-    repo: repository.name,
-    pull_number: pullRequest.number,
-  });
-  const commentCount = prGet.data.comments;
+  const prGet =
+    github &&
+    github.pulls &&
+    (await github.pulls.get({
+      owner: repository.owner.login,
+      repo: repository.name,
+      pull_number: pullRequest.number,
+    }));
+
+  const commentCount = prGet && prGet.data.comments;
 
   return {
     data: {
