@@ -7,7 +7,7 @@ process.env = {
   ...process.env,
   NODE_ENV: 'test',
   APP_URL: 'https://test-github-app-instance.com',
-  ATLASSIAN_URL: 'https://test-atlassian-instance.net',
+  ATLASSIAN_URL: process.env.ATLASSIAN_URL,
   HYDRO_BASE_URL: 'https://hydro-base-url.com/api/v1/events',
   ATLASSIAN_SECRET: 'test-secret',
   // Generated for tests

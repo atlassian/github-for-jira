@@ -69,7 +69,7 @@ export default (callback) => {
       payload: context.payload,
     });
 
-    const gitHubInstallationId = context.payload.installation.id;
+    const gitHubInstallationId = Number(context.payload.installation.id);
     context.log = context.log.child({gitHubInstallationId});
 
     // Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
@@ -102,7 +102,7 @@ export default (callback) => {
     for (const subscription of subscriptions) {
       const {jiraHost} = subscription;
       context.sentry.setTag('jiraHost', jiraHost);
-      context.sentry.setTag('gitHubInstallationId', gitHubInstallationId);
+      context.sentry.setTag('gitHubInstallationId', gitHubInstallationId.toString());
       context.sentry.setUser({jiraHost, gitHubInstallationId});
       context.log = context.log.child({jiraHost});
       if (context.timedout) {

@@ -31,7 +31,7 @@ describe("#verifyJiraMiddleware", () => {
       const req = buildRequest("test-host", "secret");
 
       td.when(models.Installation.getForHost("test-host"))
-        .thenReturn({
+        .thenResolve({
           jiraHost: "test-host",
           sharedSecret: "secret"
         });
@@ -47,7 +47,7 @@ describe("#verifyJiraMiddleware", () => {
       const req = buildRequest("host", "secret");
 
       const installation = { jiraHost: "host", sharedSecret: "secret" };
-      td.when(models.Installation.getForHost("host")).thenReturn(installation);
+      td.when(models.Installation.getForHost("host")).thenResolve(installation);
       td.when(jwt.decode(req.query.jwt, "secret"));
 
       await verifyJiraMiddleware(req, res, next);
@@ -58,7 +58,7 @@ describe("#verifyJiraMiddleware", () => {
     it("should return a 404 for an invalid installation", async () => {
       const req = buildRequest("host");
 
-      td.when(models.Installation.getForHost("host")).thenReturn();
+      td.when(models.Installation.getForHost("host")).thenResolve();
 
       await verifyJiraMiddleware(req, res, next);
 
@@ -69,7 +69,7 @@ describe("#verifyJiraMiddleware", () => {
       const req = buildRequest("good-host", "wrong-secret");
 
       td.when(models.Installation.getForHost("good-host"))
-        .thenReturn({
+        .thenResolve({
           jiraHost: "good-host",
           sharedSecret: "secret"
         });
@@ -84,7 +84,7 @@ describe("#verifyJiraMiddleware", () => {
       const addLogFieldsSpy = jest.spyOn(req, "addLogFields");
 
       const installation = { jiraHost: "host", sharedSecret: "secret", clientKey: "abcdef" };
-      td.when(models.Installation.getForHost("host")).thenReturn(installation);
+      td.when(models.Installation.getForHost("host")).thenResolve(installation);
       td.when(jwt.decode(req.query.jwt, "secret"));
 
       await verifyJiraMiddleware(req, res, next);
@@ -113,7 +113,7 @@ describe("#verifyJiraMiddleware", () => {
       const req = buildRequest("host", "secret");
       const installation = { jiraHost: "host", sharedSecret: "secret" };
 
-      td.when(models.Installation.getForHost("host")).thenReturn(installation);
+      td.when(models.Installation.getForHost("host")).thenResolve(installation);
       td.when(jwt.decode(req.body.token, "secret"));
 
       await verifyJiraMiddleware(req, res, next);
@@ -124,7 +124,7 @@ describe("#verifyJiraMiddleware", () => {
     it("is not found when host is missing", async () => {
       const req = buildRequest("host", "secret");
 
-      td.when(models.Installation.getForHost("host")).thenReturn();
+      td.when(models.Installation.getForHost("host")).thenResolve();
 
       await verifyJiraMiddleware(req, res, next);
 
@@ -135,7 +135,7 @@ describe("#verifyJiraMiddleware", () => {
       const req = buildRequest("host", "secret");
       const installation = { jiraHost: "host", sharedSecret: "secret" };
 
-      td.when(models.Installation.getForHost("host")).thenReturn(installation);
+      td.when(models.Installation.getForHost("host")).thenResolve(installation);
 
       await verifyJiraMiddleware(req, res, next);
 

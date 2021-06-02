@@ -108,14 +108,14 @@ describe('sync/branches', () => {
     delay = process.env.LIMITER_PER_INSTALLATION = '2000';
 
     jiraHost = process.env.ATLASSIAN_URL;
-    jiraApi = td.api('https://test-atlassian-instance.net');
+    jiraApi = td.api(process.env.ATLASSIAN_URL);
 
     installationId = 1234;
     Date.now = jest.fn(() => 12345678);
 
     td.when(
       models.Subscription.getSingleInstallation(jiraHost, installationId),
-    ).thenReturn({
+    ).thenResolve({
       jiraHost,
       id: 1,
       get: () => repoSyncStatus,

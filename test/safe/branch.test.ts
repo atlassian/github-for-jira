@@ -5,7 +5,7 @@ describe('GitHub Actions', () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const payload = require('../fixtures/branch-basic.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = td.api(process.env.ATLASSIAN_URL);
       const githubApi = td.api('https://api.github.com');
 
       const ref = 'TES-123-test-ref';
@@ -92,7 +92,7 @@ describe('GitHub Actions', () => {
     it('should call the devinfo delete API when a branch is deleted', async () => {
       const payload = require('../fixtures/branch-delete.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = td.api(process.env.ATLASSIAN_URL);
 
       Date.now = jest.fn(() => 12345678);
       await app.receive(payload);

@@ -60,7 +60,30 @@ exports[`API Authentication should return 404 if no token is provided 1`] = `Obj
 
 exports[`API Endpoints installation should return 404 if no installation is found 1`] = `Object {}`;
 
+exports[`API Endpoints installation should return information for an existing installation 1`] = `
+Object {
+  "connections": Array [
+    Object {
+      "isGlobalInstall": false,
+      "updated_at": "Invalid Date",
+    },
+  ],
+  "failedConnections": Array [],
+  "hasConnections": true,
+  "installationId": "1234",
+  "repoSyncState": "http://127.0.0.1/api/1234/repoSyncState.json",
+}
+`;
+
+exports[`API Endpoints repoSyncState should return 404 if no installation is found 1`] = `Object {}`;
+
+exports[`API Endpoints repoSyncState should return the repoSyncState information for an existing installation 1`] = `""`;
+
+exports[`API Endpoints sync should reset repoSyncState if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+
 exports[`API Endpoints sync should return 404 if no installation is found 1`] = `"Not Found"`;
+
+exports[`API Endpoints sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
 
 exports[`API Endpoints undo and complete - prod should return 404 if no installation is found 1`] = `"Not Found"`;
 

@@ -6,7 +6,7 @@ describe('GitHub Actions', () => {
         const payload = require('../fixtures/issue-basic.json');
 
         const githubApi = td.api('https://api.github.com');
-        const jiraApi = td.api('https://test-atlassian-instance.net');
+        const jiraApi = td.api(process.env.ATLASSIAN_URL);
 
         td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
           .thenReturn({
