@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Webhook: /events/installed Install 1`] = `"jira.v0.Action"`;
+
+exports[`Webhook: /events/installed Install 2`] = `
+Object {
+  "actionSource": "webhook",
+  "association": "installation",
+  "type": "created",
+}
+`;
