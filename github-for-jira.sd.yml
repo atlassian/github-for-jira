@@ -18,7 +18,6 @@ links:
   source:
     url: git@bitbucket.org:atlassian/github-jira-integration.git
 
-
 cleanup: true
 
 resources:
@@ -36,6 +35,7 @@ resources:
 config:
   environmentVariables:
     NODE_ENV: production
+    NODE_OPTIONS: "--no-deprecation"
     PORT: "8080"
 
 scaling:
@@ -43,3 +43,14 @@ scaling:
   max: 1
   instanceCount: 1
   instance: t3.small
+
+environmentOverrides:
+  ddev:
+    compose:
+      microservice:
+        ports:
+          - 8080:8080
+          - 9229:9229 # expose node remote debugging port
+    config:
+      environmentVariables:
+        NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:9229"
