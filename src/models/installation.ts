@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import Sequelize from 'sequelize';
 import Subscription from './subscription';
 
+// TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
   throw new Error('STORAGE_SECRET is not defined.');
 }
