@@ -1,8 +1,8 @@
 import parseSmartCommit from '../../transforms/smart-commit';
-import {GitHubAPI} from 'probot';
+import { GitHubAPI } from 'probot';
 
 // TODO: better typings in file
-function mapStatus({state, merged_at}): string {
+function mapStatus({ state, merged_at }): string {
   if (state === 'merged') return 'MERGED';
   if (state === 'open') return 'OPEN';
   if (state === 'closed' && merged_at) return 'MERGED';
@@ -31,20 +31,26 @@ function getAuthor(author) {
 }
 
 export default async (payload, author, github: GitHubAPI) => {
-  const {pullRequest, repository} = payload;
+  const { pullRequest, repository } = payload;
   // This is the same thing we do in transforms, concat'ing these values
-  const {issueKeys} = parseSmartCommit(`${pullRequest.title}\n${pullRequest.head.ref}`);
+  const { issueKeys } = parseSmartCommit(
+    `${pullRequest.title}\n${pullRequest.head.ref}`,
+  );
 
   if (!issueKeys) {
     return {};
   }
 
-  const prGet = await github.pulls.get({
-    owner: repository.owner.login,
-    repo: repository.name,
-    pull_number: pullRequest.number,
-  });
-  const commentCount = prGet.data.comments;
+  const prGet =
+    github &&
+    github.pulls &&
+    (await github.pulls.get({
+      owner: repository.owner.login,
+      repo: repository.name,
+      pull_number: pullRequest.number,
+    }));
+
+  const commentCount = prGet && prGet.data.comments;
 
   return {
     data: {
@@ -54,13 +60,17 @@ export default async (payload, author, github: GitHubAPI) => {
         {
           author: getAuthor(author),
           commentCount,
-          destinationBranch: `${repository.html_url}/tree/${pullRequest.base ? pullRequest.base.ref : ''}`,
+          destinationBranch: `${repository.html_url}/tree/${
+            pullRequest.base ? pullRequest.base.ref : ''
+          }`,
           displayId: `#${pullRequest.number}`,
           id: pullRequest.number,
           issueKeys,
           lastUpdate: pullRequest.updated_at,
           sourceBranch: `${pullRequest.head ? pullRequest.head.ref : ''}`,
-          sourceBranchUrl: `${repository.html_url}/tree/${pullRequest.head ? pullRequest.head.ref : ''}`,
+          sourceBranchUrl: `${repository.html_url}/tree/${
+            pullRequest.head ? pullRequest.head.ref : ''
+          }`,
           status: mapStatus(pullRequest),
           timestamp: pullRequest.updated_at,
           title: pullRequest.title,
