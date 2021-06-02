@@ -14,7 +14,7 @@ export const getHashedKey = (clientKey: string): string => {
 }
 
 export default class Installation extends Sequelize.Model {
-  id: string;
+  id: number;
   jiraHost: string;
   secrets: string;
   sharedSecret: string;

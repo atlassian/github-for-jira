@@ -38,7 +38,6 @@ beforeEach(async () => {
     Installation: td.object([
       "getForHost",
       "findByPk",
-      "build",
       "getPendingHost",
       "install"
     ]),
@@ -55,7 +54,33 @@ beforeEach(async () => {
   td.when(models.Installation.getForHost(process.env.ATLASSIAN_URL))
     .thenResolve({
       jiraHost: process.env.ATLASSIAN_URL,
-      sharedSecret: process.env.ATLASSIAN_SECRET
+      sharedSecret: process.env.ATLASSIAN_SECRET,
+      enabled: true
+    });
+
+  td.when(models.Installation.findByPk(1234))
+    .thenResolve({
+      gitHubInstallationId: 1234,
+      enabled: true,
+      id: 1234,
+      jiraHost: process.env.ATLASSIAN_URL
+    });
+
+  td.when(models.Installation.getPendingHost(process.env.ATLASSIAN_URL))
+    .thenResolve({
+      jiraHost: process.env.ATLASSIAN_URL,
+      sharedSecret: process.env.ATLASSIAN_SECRET,
+      enabled: false
+    });
+
+  td.when(models.Installation.install(process.env.ATLASSIAN_URL))
+    .thenResolve({
+      id: 1234,
+      jiraHost: process.env.ATLASSIAN_URL,
+      sharedSecret: process.env.ATLASSIAN_SECRET,
+      enabled: true,
+      secrets: "secrets",
+      clientKey: "client-key",
     });
 
   td.when(models.Subscription.getAllForInstallation(1234))
@@ -66,7 +91,19 @@ beforeEach(async () => {
     ]);
 
   td.when(models.Subscription.getSingleInstallation(process.env.ATLASSIAN_URL, 1234))
-    .thenResolve({ id: 1, jiraHost: process.env.ATLASSIAN_URL });
+    .thenResolve({
+      id: 1,
+      jiraHost: process.env.ATLASSIAN_URL
+    });
+
+  td.when(models.Subscription.findOrStartSync(td.matchers.anything()))
+    .thenResolve({ id: 1, data: { installationId: 1234, jiraHost: process.env.ATLASSIAN_URL }});
+
+  td.when(models.Subscription.getAllForHost(process.env.ATLASSIAN_URL))
+    .thenResolve({
+      id: 1,
+      jiraHost: process.env.ATLASSIAN_URL
+    });
 
   td.when(models.Project.incrementOccurence("PROJ-1", process.env.ATLASSIAN_URL))
     .thenResolve({

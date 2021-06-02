@@ -4,7 +4,7 @@ describe('GitHub Actions', () => {
     it('should update the Jira issue with the linked GitHub pull_request', async () => {
       const payload = require('../fixtures/pull-request-basic.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = td.api(process.env.ATLASSIAN_URL);
       const githubApi = td.api('https://api.github.com');
 
       td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
@@ -114,7 +114,7 @@ describe('GitHub Actions', () => {
       const payload = require('../fixtures/pull-request-remove-keys.json');
       const { repository, pull_request: pullRequest } = payload.payload;
       const githubApi = td.api('https://api.github.com');
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = td.api(process.env.ATLASSIAN_URL);
 
       td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
         login: 'test-pull-request-author-login',
@@ -132,7 +132,7 @@ describe('GitHub Actions', () => {
     it('will not delete references if a branch still has an issue key', async () => {
       const payload = require('../fixtures/pull-request-test-changes-with-branch.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = td.api(process.env.ATLASSIAN_URL);
       const githubApi = td.api('https://api.github.com');
 
       td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
@@ -207,7 +207,7 @@ describe('GitHub Actions', () => {
     it('should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot', async () => {
       const payload = require('../fixtures/pull-request-triggered-by-bot.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = td.api(process.env.ATLASSIAN_URL);
       const githubApi = td.api('https://api.github.com');
 
       td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
@@ -299,7 +299,7 @@ describe('GitHub Actions', () => {
     it('should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot', async () => {
       const payload = require('../fixtures/pull-request-triggered-by-bot.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = td.api(process.env.ATLASSIAN_URL);
       const githubApi = td.api('https://api.github.com');
 
       td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
@@ -368,7 +368,7 @@ describe('GitHub Actions', () => {
     it('should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot', async () => {
       const payload = require('../fixtures/pull-request-triggered-by-bot.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = td.api(process.env.ATLASSIAN_URL);
       const githubApi = td.api('https://api.github.com');
 
       td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
@@ -460,7 +460,7 @@ describe('GitHub Actions', () => {
     it('should have reviewers on pull request action', async () => {
       const payload = require('../fixtures/pull-request-basic.json');
 
-      const jiraApi = td.api('https://test-atlassian-instance.net');
+      const jiraApi = td.api(process.env.ATLASSIAN_URL);
       const githubApi = td.api('https://api.github.com');
 
       td.when(githubApi.get('/users/test-pull-request-user-login')).thenReturn({
