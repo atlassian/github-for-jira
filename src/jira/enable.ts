@@ -1,8 +1,12 @@
-import {ActionFromInstallation, ActionSource, ActionType,} from '../proto/v0/action';
-import {submitProto} from '../tracking';
-import {Installation} from '../models';
+import {
+  ActionFromInstallation,
+  ActionSource,
+  ActionType,
+} from '../proto/v0/action';
+import { submitProto } from '../tracking';
+import { Installation } from '../models';
 import verifyInstallation from './verify-installation';
-import {Request, Response} from 'express';
+import { Request, Response } from 'express';
 
 /**
  * Handle the enable webhook from Jira
