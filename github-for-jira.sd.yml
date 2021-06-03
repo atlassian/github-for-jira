@@ -50,7 +50,9 @@ environmentOverrides:
       microservice:
         ports:
           - 8080:8080
-          - 9229:9229 # node remote debugging port
+          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
+    links:
+      remoteDebug: true
     config:
       environmentVariables:
-        NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:9229"
+        NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:5005"
