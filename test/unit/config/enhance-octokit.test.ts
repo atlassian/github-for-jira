@@ -1,3 +1,5 @@
+import nock from "nock";
+
 describe("enhanceOctokit", () => {
   describe("request metrics", () => {
     let octokit;
