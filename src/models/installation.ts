@@ -4,6 +4,8 @@ import Subscription from './subscription';
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
+  console.log('in here', process.env);
+
   throw new Error('STORAGE_SECRET is not defined.');
 }
 
