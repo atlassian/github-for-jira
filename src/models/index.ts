@@ -5,6 +5,11 @@ import ProjectModel from './project';
 import Sequelize, {DataTypes} from 'sequelize';
 import EncryptedField from 'sequelize-encrypted';
 
+// TODO: need to move this into a function
+if (!process.env.STORAGE_SECRET) {
+  throw new Error('STORAGE_SECRET is not defined.');
+}
+
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
