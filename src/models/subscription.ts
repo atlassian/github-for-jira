@@ -10,7 +10,7 @@ export enum SyncStatus {
 }
 
 export interface RepoSyncState {
-  installationId?: string;
+  installationId?: number;
   jiraHost?: string;
   numberOfSyncedRepos?: number;
   repos?: Repositories;

@@ -75,7 +75,7 @@ describe('sync/branches', () => {
     };
   }
 
-  function nockBranchRequest(payload) {
+  function nockBranchRequest(fixture) {
     nock('https://api.github.com')
       .post('/graphql', branchesNoLastCursor)
       .reply(200, payload);

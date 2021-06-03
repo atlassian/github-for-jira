@@ -10,14 +10,15 @@ declare namespace jest {
 
 expect.extend({
   toResolve: async (promise: Promise<unknown>) => {
-    const pass = promise.then(() => true, () => false);
+    let error;
+    const pass = await promise.then(() => true, (err) => {error = err; return false});
     if (pass) {
       return { pass: true, message: () => "Expected promise to reject, however it resolved.\n" };
     }
-    return { pass: false, message: () => "Expected promise to resolve, however it rejected.\n" };
+    return { pass: false, message: () => `Expected promise to resolve, however it rejected with error: ${error}\n` };
   },
   toReject: async (promise: Promise<unknown>) => {
-    const pass = promise.then(() => false, () => true);
+    const pass = await promise.then(() => false, () => true);
     if (pass) {
       return { pass: true, message: () => "Expected promise to resolve, however it rejected.\n" };
     }

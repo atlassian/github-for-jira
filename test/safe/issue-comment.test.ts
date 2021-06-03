@@ -8,10 +8,10 @@ describe('GitHub Actions', () => {
   describe('issue_comment', () => {
     describe('created', () => {
       it('should update the GitHub issue with a linked Jira ticket', async () => {
-        const payload = require('../fixtures/issue-comment-basic.json');
+        const fixture = require('../fixtures/issue-comment-basic.json');
 
-        const githubApi = td.api('https://api.github.com');
-        const jiraApi = td.api(process.env.ATLASSIAN_URL);
+
+
 
         td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
           .thenReturn({
@@ -21,7 +21,7 @@ describe('GitHub Actions', () => {
             },
           });
 
-        await app.receive(payload);
+        await expect(app.receive(fixture)).toResolve();
 
         td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/comments/5678', {
           number: 'test-issue-number',

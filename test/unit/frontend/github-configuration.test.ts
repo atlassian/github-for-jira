@@ -24,8 +24,8 @@ describe("Frontend", () => {
     ]
   };
 
-  function getCookieHeader(payload): string[] {
-    const cookie = Buffer.from(JSON.stringify(payload)).toString("base64");
+  function getCookieHeader(fixture): string[] {
+    const cookie = Buffer.from(JSON.stringify(fixture)).toString("base64");
     const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET]);
 
     return [

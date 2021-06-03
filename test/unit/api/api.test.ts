@@ -392,9 +392,8 @@ describe("API", () => {
       it("should not migrate an installation", async () => {
         const update = jest.fn();
         mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
-        jiraNock
-          .post("/rest/devinfo/0.10/github/migrationComplete")
-          .reply(200);
+        const interceptor = jiraNock.post("/rest/devinfo/0.10/github/migrationComplete");
+        const scope = interceptor.reply(200);
         return supertest(app)
           .post(`/api/${installationId}/migrate`)
           .set("Authorization", "Bearer xxx")
@@ -404,8 +403,8 @@ describe("API", () => {
           .then(response => {
             expect(response.text).toMatchSnapshot();
             expect(update).toMatchSnapshot();
-            expect(nock).not.toBeDone();
-            nock.cleanAll();
+            expect(scope).not.toBeDone();
+            nock.removeInterceptor(interceptor);
           });
       });
 
@@ -417,9 +416,8 @@ describe("API", () => {
       it("should not undo a migration", async () => {
         const update = jest.fn();
         mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
-        githubNock
-          .post("/rest/devinfo/0.10/github/undoMigration")
-          .reply(200);
+        const interceptor = githubNock.post("/rest/devinfo/0.10/github/undoMigration");
+        const scope = interceptor.reply(200);
         return supertest(app)
           .post(`/api/${installationId}/migrate/undo`)
           .set("Authorization", "Bearer xxx")
@@ -429,8 +427,8 @@ describe("API", () => {
           .then(response => {
             expect(response.text).toMatchSnapshot();
             expect(update).toMatchSnapshot();
-            expect(nock).not.toBeDone();
-            nock.cleanAll();
+            expect(scope).not.toBeDone();
+            nock.removeInterceptor(interceptor);
           });
       });
     });
