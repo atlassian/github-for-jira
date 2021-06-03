@@ -1,8 +1,9 @@
 import nock from "nock";
 import dotenv from "dotenv";
 import "./matchers/to-have-sent-metrics";
+resetEnvVars();
 
-beforeEach(() => {
+function resetEnvVars() {
   dotenv.config();
   // Assign defaults to process.env, but don't override existing values if they
   // are already set in the environment.
@@ -23,6 +24,10 @@ beforeEach(() => {
     SETUP: "yes", // indicates that the setup did run
     TRACKING_DISABLED: "true"
   };
+}
+
+beforeEach(() => {
+  resetEnvVars();
 });
 
 afterEach(() => {
