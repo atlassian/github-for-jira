@@ -36,8 +36,36 @@ resources:
 config:
   environmentVariables:
     NODE_ENV: production
+    NODE_OPTIONS: "--no-deprecation"
     PORT: "8080"
-
+    TUNNEL_PORT: 8080
+    TUNNEL_SUBDOMAIN: github-for-jira
+    LOG_LEVEL: debug
+    
+environmentOverrides:
+  ddev:
+    compose:
+      microservice:
+        ports:
+          - 8080:8080
+          - 9229:9229 # node remote debugging port
+    config:
+      environmentVariables:
+        APP_URL: https://github-for-jira.dev.services.atlassian.com
+        WEBHOOK_SECRET: development
+        WEBHOOK_PROXY_URL: https://github-for-jira.dev.services.atlassian.com/github/event
+        INSTANCE_NAME: github-for-jira-dev
+        NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:9229"
+  staging:
+    config:
+      environmentVariables:
+        APP_URL: INVALID
+        INSTANCE_NAME: github-for-jira-staging
+  prod:
+    config:
+      environmentVariables:
+        APP_URL: INVALID
+        INSTANCE_NAME: github-for-jira-production
 scaling:
   min: 1
   max: 1
