@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import { createApp } from "../utils/probot";
+
 describe('GitHub Actions', () => {
+  let app;
+  beforeEach(async () => app = await createApp())
+
   describe('Create Branch', () => {
     it('should update Jira issue with link to a branch on GitHub', async () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires

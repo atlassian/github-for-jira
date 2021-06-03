@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import { createApp } from "../utils/probot";
+
 describe('GitHub Actions', () => {
+  let app;
+  beforeEach(async () => app = await createApp())
+
   describe('issue_comment', () => {
     describe('created', () => {
       it('should update the GitHub issue with a linked Jira ticket', async () => {

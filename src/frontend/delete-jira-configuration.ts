@@ -22,7 +22,6 @@ export default async (req: Request, res: Response): Promise<void> => {
     jiraHost,
     req.body.installationId,
   );
-
   const action = ActionFromSubscription(subscription, res.locals.installation);
   action.type = ActionType.DESTROYED;
   action.actionSource = ActionSource.WEB_CONSOLE;

@@ -6,6 +6,8 @@ exports[`Webhook: /events/installed Install 2`] = `
 Object {
   "actionSource": "webhook",
   "association": "installation",
+  "installationId": 19,
+  "jiraHostname": "https://test-host.jira.com",
   "type": "created",
 }
 `;

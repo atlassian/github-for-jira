@@ -1,38 +1,31 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import {queues} from "../../src/worker/main";
+import nock from "nock";
+import { createJobData, processPush } from "../../src/transforms/push";
+import { createApp } from "../utils/probot";
+jest.mock("../../src/worker/main");
 
 describe("GitHub Actions", () => {
-  let jiraApi;
-  let githubApi;
-  let push;
-  let queues;
-  let processPush;
-  let createJobData;
-
-  beforeEach(async () => {
-    queues = (await import("../../src/worker/main")).queues;
-    const push = await import("../../src/transforms/push");
-    processPush = push.processPush;
-    createJobData = push.createJobData;
-  });
+  let app;
+  beforeEach(async () => app = await createApp())
 
   describe("add to push queue", () => {
     beforeEach(() => {
       process.env.REDIS_URL = "redis://test";
-      push = td.replace(queues, "push");
     });
 
     it("should add push event to the queue if Jira issue keys are present", async () => {
       const event = require("../fixtures/push-basic.json");
       await app.receive(event);
 
-      td.verify(push.add(
+      expect(queues.push).toBeCalledWith(
         {
           repository: event.payload.repository,
           shas: [{ id: "test-commit-id", issueKeys: ["TEST-123"] }],
           jiraHost: process.env.ATLASSIAN_URL,
           installationId: event.payload.installation.id
         }, { removeOnFail: true, removeOnComplete: true }
-      ));
+      );
     });
 
     it("should not add push event to the queue if there are no Jira issue keys present", async () => {
@@ -43,7 +36,7 @@ describe("GitHub Actions", () => {
     it("should handle payloads where only some commits have issue keys", async () => {
       const event = require("../fixtures/push-mixed.json");
       await app.receive(event);
-      td.verify(push.add(
+      expect(queues.push).toBeCalledWith(
         {
           repository: event.payload.repository,
           shas: [
@@ -53,14 +46,12 @@ describe("GitHub Actions", () => {
           jiraHost: "https://test-atlassian-instance.net",
           installationId: event.payload.installation.id
         }, { removeOnFail: true, removeOnComplete: true }
-      ));
+      )
     });
   });
 
   describe("process push payloads", () => {
     beforeEach(() => {
-      jiraApi = td.api(process.env.ATLASSIAN_URL);
-      githubApi = td.api("https://api.github.com");
       Date.now = jest.fn(() => 12345678);
     });
 
@@ -70,8 +61,13 @@ describe("GitHub Actions", () => {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL)
       };
 
-      td.when(githubApi.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username"))
-        .thenReturn(require("../fixtures/api/commit-no-username.json"));
+      nock("https://api.github.com")
+        .get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+        .replyWithFile(200, "../fixtures/api/commit-no-username.json")
+
+      nock("https://api.github.com")
+        .get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+        .replyWithFile(200, "../fixtures/api/commit-no-username.json")
 
       await processPush(app)(job);
 
