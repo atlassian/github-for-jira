@@ -53,4 +53,6 @@ environmentOverrides:
           - 9229:9229 # node remote debugging port
     config:
       environmentVariables:
+        NODE_ENV: production
         NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:9229"
+        PORT: "8080"
