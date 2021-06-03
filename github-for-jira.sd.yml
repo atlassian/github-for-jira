@@ -46,6 +46,8 @@ scaling:
 
 environmentOverrides:
   ddev:
+    loadBalancer:
+      type: ELB # needed for remote debugging, default is "ALB"
     compose:
       microservice:
         ports:
