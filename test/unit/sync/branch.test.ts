@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import parseSmartCommit from '../../../src/transforms/smart-commit';
-import {branchesNoLastCursor, branchesWithLastCursor} from '../../fixtures/api/graphql/branch-queries';
+import {
+  branchesNoLastCursor,
+  branchesWithLastCursor,
+} from '../../fixtures/api/graphql/branch-queries';
 import nock from 'nock';
 
 describe('sync/branches', () => {
@@ -14,8 +17,8 @@ describe('sync/branches', () => {
   const associatedPRhasKeys = require('../../fixtures/api/graphql/branch-associated-pr-has-keys.json');
   const branchNoIssueKeys = require('../../fixtures/api/graphql/branch-no-issue-keys.json');
 
-  function makeExpectedResponse({branchName}) {
-    const {issueKeys} = parseSmartCommit(branchName);
+  function makeExpectedResponse({ branchName }) {
+    const { issueKeys } = parseSmartCommit(branchName);
     return {
       preventTransitions: true,
       repositories: [
@@ -24,7 +27,10 @@ describe('sync/branches', () => {
             {
               createPullRequestUrl: `test-repo-url/pull/new/${branchName}`,
               id: branchName,
-              issueKeys: ['TES-123'].concat(issueKeys).reverse().filter(Boolean),
+              issueKeys: ['TES-123']
+                .concat(issueKeys)
+                .reverse()
+                .filter(Boolean),
               lastCommit: {
                 author: {
                   avatar: 'https://camo.githubusercontent.com/test-avatar',
@@ -76,7 +82,7 @@ describe('sync/branches', () => {
     };
   }
 
-  function nockBranchRequest(fixture) {
+  function nockBranchRequest(payload) {
     nock('https://api.github.com')
       .post('/graphql', branchesNoLastCursor)
       .reply(200, payload);
@@ -96,7 +102,7 @@ describe('sync/branches', () => {
         'test-repo-id': {
           repository: {
             name: 'test-repo-name',
-            owner: {login: 'integrations'},
+            owner: { login: 'integrations' },
             html_url: 'test-repo-url',
             id: 'test-repo-id',
           },
@@ -126,11 +132,15 @@ describe('sync/branches', () => {
     });
 
     createJob = (await import('../../setup/create-job')).default;
-    processInstallation = (await import('../../../src/sync/installation')).processInstallation;
+    processInstallation = (await import('../../../src/sync/installation'))
+      .processInstallation;
   });
 
   it('should sync to Jira when branch refs have jira references', async () => {
-    const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
+    const job = createJob({
+      data: { installationId, jiraHost },
+      opts: { delay },
+    });
     nockBranchRequest(branchNodesFixture);
 
     const queues = {
@@ -142,13 +152,18 @@ describe('sync/branches', () => {
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(
-      jiraApi.post('/rest/devinfo/0.10/bulk', makeExpectedResponse({branchName: 'TES-321-branch-name'})),
+      jiraApi.post(
+        '/rest/devinfo/0.10/bulk',
+        makeExpectedResponse({ branchName: 'TES-321-branch-name' }),
+      ),
     );
   });
 
   it('should send data if issue keys are only present in commits', async () => {
-
-    const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
+    const job = createJob({
+      data: { installationId, jiraHost },
+      opts: { delay },
+    });
     nockBranchRequest(branchCommitsHaveKeys);
 
     const queues = {
@@ -159,13 +174,21 @@ describe('sync/branches', () => {
     await processInstallation(app, queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
-    td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', makeExpectedResponse({
-      branchName: 'dev',
-    })));
+    td.verify(
+      jiraApi.post(
+        '/rest/devinfo/0.10/bulk',
+        makeExpectedResponse({
+          branchName: 'dev',
+        }),
+      ),
+    );
   });
 
   it('should send data if issue keys are only present in an associatd PR title', async () => {
-    const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
+    const job = createJob({
+      data: { installationId, jiraHost },
+      opts: { delay },
+    });
     nockBranchRequest(associatedPRhasKeys);
 
     const queues = {
@@ -176,50 +199,55 @@ describe('sync/branches', () => {
     await processInstallation(app, queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
-    td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
-      preventTransitions: true,
-      repositories: [
-        {
-          branches: [
-            {
-              createPullRequestUrl: 'test-repo-url/pull/new/dev',
-              id: 'dev',
-              issueKeys: ['PULL-123'],
-              lastCommit: {
-                author: {
-                  avatar: 'https://camo.githubusercontent.com/test-avatar',
-                  name: 'test-author-name',
-                },
-                authorTimestamp: 'test-authored-date',
-                displayId: 'test-o',
-                fileCount: 0,
-                hash: 'test-oid',
+    td.verify(
+      jiraApi.post('/rest/devinfo/0.10/bulk', {
+        preventTransitions: true,
+        repositories: [
+          {
+            branches: [
+              {
+                createPullRequestUrl: 'test-repo-url/pull/new/dev',
+                id: 'dev',
                 issueKeys: ['PULL-123'],
-                id: 'test-oid',
-                message: 'test-commit-message',
-                url: 'test-repo-url/commit/test-sha',
+                lastCommit: {
+                  author: {
+                    avatar: 'https://camo.githubusercontent.com/test-avatar',
+                    name: 'test-author-name',
+                  },
+                  authorTimestamp: 'test-authored-date',
+                  displayId: 'test-o',
+                  fileCount: 0,
+                  hash: 'test-oid',
+                  issueKeys: ['PULL-123'],
+                  id: 'test-oid',
+                  message: 'test-commit-message',
+                  url: 'test-repo-url/commit/test-sha',
+                  updateSequenceId: 12345678,
+                },
+                name: 'dev',
+                url: 'test-repo-url/tree/dev',
                 updateSequenceId: 12345678,
               },
-              name: 'dev',
-              url: 'test-repo-url/tree/dev',
-              updateSequenceId: 12345678,
-            },
-          ],
-          commits: [],
-          id: 'test-repo-id',
-          name: 'test-repo-name',
-          url: 'test-repo-url',
-          updateSequenceId: 12345678,
+            ],
+            commits: [],
+            id: 'test-repo-id',
+            name: 'test-repo-name',
+            url: 'test-repo-url',
+            updateSequenceId: 12345678,
+          },
+        ],
+        properties: {
+          installationId: 1234,
         },
-      ],
-      properties: {
-        installationId: 1234,
-      },
-    }));
+      }),
+    );
   });
 
   it('should not call Jira if no issue keys are found', async () => {
-    const job = createJob({data: {installationId, jiraHost}, opts: {delay}});
+    const job = createJob({
+      data: { installationId, jiraHost },
+      opts: { delay },
+    });
     nockBranchRequest(branchNoIssueKeys);
 
     const queues = {
@@ -228,8 +256,9 @@ describe('sync/branches', () => {
       },
     };
 
-    td.when(jiraApi.post(), {ignoreExtraArgs: true})
-      .thenThrow(new Error('test error'));
+    td.when(jiraApi.post(), { ignoreExtraArgs: true }).thenThrow(
+      new Error('test error'),
+    );
 
     await processInstallation(app, queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
