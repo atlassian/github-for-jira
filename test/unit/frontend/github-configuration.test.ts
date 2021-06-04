@@ -4,13 +4,12 @@ import testTracking from "../../setup/tracking";
 import nock from "nock";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/models";
-import frontendApp from "../../../src/frontend/app";
+import FrontendApp from "../../../src/frontend/app";
 
 jest.mock("../../../src/models");
 
 describe("Frontend", () => {
-  let subject;
-  let locals;
+  let frontendApp;
   let installation;
   let subscription;
 
@@ -43,21 +42,7 @@ describe("Frontend", () => {
     ];
   }
 
-  let setIsDisabled;
-  let originalDisabledState;
-
   beforeEach(async () => {
-    const Frontend = frontendApp;
-    locals = {
-      client: {
-        apps: {
-          getInstallation: jest.fn().mockResolvedValue({ data: {} })
-        }
-      }
-    };
-
-    subject = Frontend(locals.client.apps);
-
     subscription = {
       githubInstallationId: 15,
       jiraHost: "https://test-host.jira.com",
@@ -76,16 +61,17 @@ describe("Frontend", () => {
 
     mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
     mocked(Installation.getForHost).mockResolvedValue(installation);
-  });
 
-  afterEach(() => {
-    setIsDisabled(originalDisabledState);
+    frontendApp = FrontendApp({
+      getSignedJsonWebToken: jest.fn().mockReturnValue("github-token"),
+      getInstallationAccessToken: jest.fn().mockReturnValue("access-token")
+    });
   });
 
   describe("GitHub Configuration", () => {
     describe("#post", () => {
       it("should return a 401 if no GitHub token present in session", () =>
-        supertest(subject)
+        supertest(frontendApp)
           .post("/github/configuration")
           .send({})
           .set(
@@ -97,7 +83,7 @@ describe("Frontend", () => {
           .expect(401));
 
       it("should return a 401 if no Jira host present in session", () =>
-        supertest(subject)
+        supertest(frontendApp)
           .post("/github/configuration")
           .send({})
           .set(
@@ -112,7 +98,7 @@ describe("Frontend", () => {
         nock("https://api.github.com")
           .get("/user/installations")
           .reply(200, userInstallationsResponse);
-        return supertest(subject)
+        return supertest(frontendApp)
           .post("/github/configuration")
           .send({
             installationId: 2
@@ -138,7 +124,7 @@ describe("Frontend", () => {
         nock("https://api.github.com")
           .get("/orgs/test-org/memberships/test-user")
           .reply(200, organizationMembershipResponse);
-        return supertest(subject)
+        return supertest(frontendApp)
           .post("/github/configuration")
           .send({
             installationId: 1
@@ -155,7 +141,7 @@ describe("Frontend", () => {
       });
 
       it("should return a 400 if no installationId is present in the body", () =>
-        supertest(subject)
+        supertest(frontendApp)
           .post("/github/configuration")
           .send({})
           .set(
@@ -184,7 +170,7 @@ describe("Frontend", () => {
 
         const jiraClientKey = "a-unique-client-key";
 
-        await supertest(subject)
+        await supertest(frontendApp)
           .post("/github/configuration")
           .send({
             installationId: 1,
