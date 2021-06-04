@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from '../../setup/tracking';
-import nock from 'nock';
-import { Installation, Subscription } from '../../../src/models';
-import { mocked } from 'ts-jest/utils';
-import deleteConfig from '../../../src/frontend/delete-jira-configuration';
+import testTracking from "../../setup/tracking";
+import nock from "nock";
+import { Installation, Subscription } from "../../../src/models";
+import { mocked } from "ts-jest/utils";
+import deleteConfig from "../../../src/frontend/delete-jira-configuration";
 
-jest.mock('../../../src/models');
+jest.mock("../../../src/models");
 
-describe('DELETE /jira/configuration', () => {
+describe("DELETE /jira/configuration", () => {
   let installation;
   let subscription;
   let deleteJiraConfiguration;
@@ -15,18 +15,18 @@ describe('DELETE /jira/configuration', () => {
   beforeEach(async () => {
     subscription = {
       githubInstallationId: 15,
-      jiraHost: 'https://test-host.jira.com',
-      destroy: jest.fn().mockResolvedValue(undefined),
+      jiraHost: "https://test-host.jira.com",
+      destroy: jest.fn().mockResolvedValue(undefined)
     };
 
     installation = {
       id: 19,
       jiraHost: subscription.jiraHost,
-      clientKey: 'abc123',
+      clientKey: "abc123",
       enabled: true,
-      secrets: 'def234',
-      sharedSecret: 'ghi345',
-      subscriptions: jest.fn().mockResolvedValue([]),
+      secrets: "def234",
+      sharedSecret: "ghi345",
+      subscriptions: jest.fn().mockResolvedValue([])
     };
 
     mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
@@ -35,23 +35,23 @@ describe('DELETE /jira/configuration', () => {
     deleteJiraConfiguration = await deleteConfig;
   });
 
-  it('Delete Jira Configuration', async () => {
+  it("Delete Jira Configuration", async () => {
     await testTracking();
 
     nock(subscription.jiraHost)
-      .delete('/rest/devinfo/0.10/bulkByProperties')
+      .delete("/rest/devinfo/0.10/bulkByProperties")
       .query({ installationId: subscription.githubInstallationId })
-      .reply(200, 'OK');
+      .reply(200, "OK");
 
     const req = {
       log: { debug: jest.fn() },
       body: { installationId: subscription.githubInstallationId },
       query: {
-        xdm_e: subscription.jiraHost,
+        xdm_e: subscription.jiraHost
       },
       session: {
-        jiraHost: subscription.jiraHost,
-      },
+        jiraHost: subscription.jiraHost
+      }
     };
 
     const res = { sendStatus: jest.fn(), locals: { installation } };

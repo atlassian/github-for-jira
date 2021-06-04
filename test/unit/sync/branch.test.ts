@@ -152,7 +152,7 @@ describe("sync/branches", () => {
 
     jiraNock.post("/rest/devinfo/0.10/bulk", makeExpectedResponse({
       branchName: "dev"
-    })).reply(200)
+    })).reply(200);
 
     const queues = {
       installation: {

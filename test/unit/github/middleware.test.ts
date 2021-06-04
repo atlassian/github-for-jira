@@ -1,32 +1,27 @@
-import { logger } from 'probot/lib/logger';
-import { mocked } from 'ts-jest/utils';
-import { Installation, Subscription } from '../../../src/models';
+import { logger } from "probot/lib/logger";
+import { mocked } from "ts-jest/utils";
+import { Installation, Subscription } from "../../../src/models";
+import GitHubAPI from "../../../src/config/github-api";
+import middleware from "../../../src/github/middleware";
 
-jest.mock('../../../src/models');
+jest.mock("../../../src/models");
 
-describe('Probot event middleware', () => {
-  let GitHubAPI;
-  let middleware;
+describe("Probot event middleware", () => {
   let installation;
   let subscription;
 
-  beforeEach(async () => {
-    GitHubAPI = (await import('../../../src/config/github-api')).default;
-    middleware = (await import('../../../src/github/middleware')).default;
-  });
-
-  describe('when processing fails for one subscription', () => {
+  describe("when processing fails for one subscription", () => {
     let context;
     let handlerCalls;
 
     beforeEach(async () => {
       context = {
         payload: {
-          sender: { type: 'not bot' },
-          installation: { id: 1234 },
+          sender: { type: "not bot" },
+          installation: { id: 1234 }
         },
         github: GitHubAPI(),
-        log: logger,
+        log: logger
       };
 
       mocked(Subscription.getAllForInstallation).mockResolvedValue(subscription);
@@ -37,14 +32,14 @@ describe('Probot event middleware', () => {
         handlerCalls.push([context, jiraClient, util]);
 
         if (handlerCalls.length === 1) {
-          throw Error('boom');
+          throw Error("boom");
         }
       });
 
       await handler(context);
     });
 
-    it('calls handler for each subscription', async () => {
+    it("calls handler for each subscription", async () => {
       expect(handlerCalls.length).toEqual(3);
     });
   });

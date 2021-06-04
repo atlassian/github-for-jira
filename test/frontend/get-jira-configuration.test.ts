@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import getJiraConfiguration from "../../src/frontend/get-jira-configuration";
 
 describe("Jira Configuration Suite", () => {
-  let getJiraConfiguration;
-
   let consoleSpy: jest.SpyInstance;
 
   beforeAll(() => {
@@ -53,10 +52,6 @@ describe("Jira Configuration Suite", () => {
     csrfToken: "badvalue"
   });
 
-
-  beforeEach(async () => {
-    getJiraConfiguration = (await import("../../src/frontend/get-jira-configuration")).default;
-  });
 
   it("should return success message after page is rendered", () =>
     expect(getJiraConfiguration(mockRequest(), mockResponse(), () => undefined)).resolves.toBeCalled()

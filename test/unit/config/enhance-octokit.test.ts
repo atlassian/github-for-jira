@@ -1,26 +1,24 @@
-import nock from 'nock';
+import nock from "nock";
+import GitHubAPI from "../../../src/config/github-api";
+import enhanceOctokit from "../../../src/config/enhance-octokit";
 
-describe('enhanceOctokit', () => {
-  describe('request metrics', () => {
+describe("enhanceOctokit", () => {
+  describe("request metrics", () => {
     let octokit;
 
     beforeEach(async () => {
-      const GitHubAPI = (await import('../../../src/config/github-api'))
-        .default;
-      const enhanceOctokit = (
-        await import('../../../src/config/enhance-octokit')
-      ).default;
       octokit = GitHubAPI();
       enhanceOctokit(octokit);
     });
 
-    describe('when successful', () => {
+    describe("when successful", () => {
       beforeEach(() => {
-        nock('https://api.github.com').get('/events').reply(200, []);
+        nock("https://api.github.com").get("/events").reply(200, []);
       });
 
-      it.skip('sends reqest timing', async () => {
-        await expect(await octokit.activity.listPublicEvents()).toHaveBeenCalled();;
+      it.skip("sends reqest timing", async () => {
+        await expect(await octokit.activity.listPublicEvents()).toHaveBeenCalled();
+
         // TODO: reoslve Property 'toHaveSentMetrics' does not exist on type 'JestMatchers<any>'.
         // .toHaveSentMetrics({
         //   name: 'jira-integration.github-request',
@@ -35,7 +33,7 @@ describe('enhanceOctokit', () => {
         // });
       });
 
-      it('logs request timing', async () => {
+      it("logs request timing", async () => {
         await octokit.activity.listPublicEvents();
 
         // TODO: fix this test to not rely on logger output...
@@ -46,14 +44,14 @@ describe('enhanceOctokit', () => {
       });
     });
 
-    describe('when fails', () => {
+    describe("when fails", () => {
       beforeEach(() => {
-        nock('https://api.github.com').get('/events').reply(500, []);
+        nock("https://api.github.com").get("/events").reply(500, []);
       });
 
-      it.skip('sends request timing', async () => {
+      it.skip("sends request timing", async () => {
         await expect(
-          await octokit.activity.listPublicEvents().catch(() => undefined),
+          await octokit.activity.listPublicEvents().catch(() => undefined)
         ).toHaveBeenCalled();
         // TODO: reoslve Property 'toHaveSentMetrics' does not exist on type 'JestMatchers<any>'.
         // .toHaveSentMetrics({
@@ -69,7 +67,7 @@ describe('enhanceOctokit', () => {
         // });
       });
 
-      it('logs request timing', async () => {
+      it("logs request timing", async () => {
         await octokit.activity.listPublicEvents().catch(() => undefined);
 
         // TODO: fix this test to not rely on logger output...

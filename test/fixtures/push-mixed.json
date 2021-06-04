@@ -10,9 +10,15 @@
           "username": "test-commit-author-username"
         },
         "message": "TEST-123 TEST-246 #comment This is a comment",
-        "added": ["test-added"],
-        "modified": ["test-modified"],
-        "removed": ["test-removal"]
+        "added": [
+          "test-added"
+        ],
+        "modified": [
+          "test-modified"
+        ],
+        "removed": [
+          "test-removal"
+        ]
       },
       {
         "id": "test-commit-id-2",
@@ -21,9 +27,15 @@
           "username": "test-commit-author-username"
         },
         "message": "TEST-345 This is a comment",
-        "added": ["test-added"],
-        "modified": ["test-modified"],
-        "removed": ["test-removal"]
+        "added": [
+          "test-added"
+        ],
+        "modified": [
+          "test-modified"
+        ],
+        "removed": [
+          "test-removal"
+        ]
       },
       {
         "id": "test-commit-id-3",
@@ -32,9 +44,15 @@
           "username": "test-commit-author-username"
         },
         "message": "This commit doesn't have issue keys",
-        "added": ["test-added"],
-        "modified": ["test-modified"],
-        "removed": ["test-removal"]
+        "added": [
+          "test-added"
+        ],
+        "modified": [
+          "test-modified"
+        ],
+        "removed": [
+          "test-removal"
+        ]
       }
     ],
     "repository": {

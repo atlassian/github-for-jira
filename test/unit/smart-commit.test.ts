@@ -1,10 +1,6 @@
+import smartCommit from "../../src/transforms/smart-commit";
+
 describe("Smart commit parsing", () => {
-  let smartCommit;
-
-  beforeEach(async () => {
-    smartCommit = (await import("../../src/transforms/smart-commit")).default;
-  });
-
   it("should parse a smart commit", () => {
     const text = "JRA-090 #resolve Finally finished";
 

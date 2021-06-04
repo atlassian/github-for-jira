@@ -1,9 +1,6 @@
-describe("SentryScopeProxy", () => {
-  let SentryScopeProxy;
-  beforeEach(async () => {
-    SentryScopeProxy = (await import("../../src/models/sentry-scope-proxy")).default;
-  });
+import SentryScopeProxy from "../../src/models/sentry-scope-proxy";
 
+describe("SentryScopeProxy", () => {
   describe(".processEvent", () => {
     it("adds scope proxy to event", () => {
       const scope = new SentryScopeProxy();

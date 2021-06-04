@@ -4,6 +4,7 @@ import "./matchers/to-have-sent-metrics";
 import "./matchers/nock";
 import "./matchers/to-promise";
 import { sequelize } from "../../src/models";
+
 resetEnvVars();
 
 function resetEnvVars() {
@@ -55,7 +56,7 @@ beforeEach(() => {
 afterEach(() => {
   // eslint-disable-next-line jest/no-standalone-expect
   expect(nock).toBeDone();
-})
+});
 
 afterEach(async () => {
   nock.cleanAll(); // removes HTTP mocks
@@ -64,5 +65,5 @@ afterEach(async () => {
 
 afterAll(async () => {
   // Close connection when tests are done
-  await sequelize.close()
-})
+  await sequelize.close();
+});

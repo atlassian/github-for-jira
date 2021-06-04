@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import {queues} from "../../src/worker/main";
+import { queues } from "../../src/worker/main";
 import nock from "nock";
 import { createJobData, processPush } from "../../src/transforms/push";
 import { createApp } from "../utils/probot";
+
 jest.mock("../../src/worker/main");
 
 describe("GitHub Actions", () => {
   let app;
-  beforeEach(async () => app = await createApp())
+  beforeEach(async () => app = await createApp());
 
   describe("add to push queue", () => {
     beforeEach(() => {
@@ -46,7 +47,7 @@ describe("GitHub Actions", () => {
           jiraHost: "https://test-atlassian-instance.net",
           installationId: event.payload.installation.id
         }, { removeOnFail: true, removeOnComplete: true }
-      )
+      );
     });
   });
 
@@ -63,11 +64,11 @@ describe("GitHub Actions", () => {
 
       nock("https://api.github.com")
         .get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-        .replyWithFile(200, "../fixtures/api/commit-no-username.json")
+        .replyWithFile(200, "../fixtures/api/commit-no-username.json");
 
       nock("https://api.github.com")
         .get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-        .replyWithFile(200, "../fixtures/api/commit-no-username.json")
+        .replyWithFile(200, "../fixtures/api/commit-no-username.json");
 
       await expect(processPush(app)(job)).toResolve();
 
@@ -341,11 +342,11 @@ describe("GitHub Actions", () => {
     it("should support commits without smart commands", async () => {
       const fixture = require("../fixtures/push-empty.json");
       // match any post calls
-      jiraNock.post(/.*/).reply(200)
+      jiraNock.post(/.*/).reply(200);
 
       // match any post calls
       const interceptor = githubNock.get(/.*/);
-      const scope = interceptor.reply(200)
+      const scope = interceptor.reply(200);
 
       await expect(app.receive(fixture)).toResolve();
       expect(scope).not.toBeDone();

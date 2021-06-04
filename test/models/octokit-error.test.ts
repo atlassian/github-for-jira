@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Octokit } from "probot";
+import OctokitError from "../../src/models/octokit-error";
 
 const buildHttpError = (message: string, code?: number, headers?: any) => {
   const error = new Error(message) as Octokit.HookError;
@@ -11,11 +12,6 @@ const buildHttpError = (message: string, code?: number, headers?: any) => {
 };
 
 describe("OctokitError", () => {
-  let OctokitError;
-  beforeEach(async () => {
-    OctokitError = (await import("../../src/models/octokit-error")).default;
-  });
-
   it("adds request metadata", () => {
     const error = buildHttpError("ServerError", 403);
     const requestOptions: any = {
