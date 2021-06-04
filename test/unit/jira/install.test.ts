@@ -1,16 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from '../../setup/tracking';
+import testTracking from "../../setup/tracking";
+import install from "../../../src/jira/install";
+import { mocked } from "ts-jest";
+import { Installation } from "../../../src/models";
 
-describe('Webhook: /events/installed', () => {
+jest.mock("../../../src/models");
+
+describe("Webhook: /events/installed", () => {
   let installation;
   let body;
-  let install;
 
   beforeEach(async () => {
     body = {
-      baseUrl: 'https://test-host.jira.com',
-      clientKey: 'abc123',
-      sharedSecret: 'ghi345',
+      baseUrl: "https://test-host.jira.com",
+      clientKey: "abc123",
+      sharedSecret: "ghi345"
     };
 
     installation = {
@@ -18,19 +22,16 @@ describe('Webhook: /events/installed', () => {
       jiraHost: body.baseUrl,
       clientKey: body.clientKey,
       enabled: true,
-      secrets: 'def234',
+      secrets: "def234",
       sharedSecret: body.sharedSecret,
-      subscriptions: jest.fn().mockResolvedValue([]),
+      subscriptions: jest.fn().mockResolvedValue([])
     };
 
-    td.when(models.Installation.install(td.matchers.anything()))
-      // Allows us to modify installation before it's finally called
-      .thenDo(async () => installation);
-
-    install = (await import('../../../src/jira/install')).default;
+    // Allows us to modify installation before it's finally called
+    mocked(Installation.install).mockImplementation(() => installation)
   });
 
-  it('Install', async () => {
+  it("Install", async () => {
     await testTracking();
     const req = { log: { info: jest.fn() }, body };
     const res = { sendStatus: jest.fn(), on: jest.fn() };

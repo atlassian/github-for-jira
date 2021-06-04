@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import "./matchers/to-have-sent-metrics";
 import "./matchers/nock";
 import "./matchers/to-promise";
+import { sequelize } from "../../src/models";
 resetEnvVars();
 
 function resetEnvVars() {
@@ -56,7 +57,12 @@ afterEach(() => {
   expect(nock).toBeDone();
 })
 
-afterEach(() => {
+afterEach(async () => {
   nock.cleanAll(); // removes HTTP mocks
   jest.resetAllMocks(); // Removes jest mocks
 });
+
+afterAll(async () => {
+  // Close connection when tests are done
+  await sequelize.close()
+})
