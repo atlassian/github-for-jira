@@ -1,4 +1,5 @@
 import url from 'url';
+import nock from 'nock';
 
 /**
  * Test that tracking works by storing a snapshot of the tracking proto sent.
@@ -24,4 +25,4 @@ export default async () => {
       return true;
     })
     .reply(200, 'OK');
-}
+};
