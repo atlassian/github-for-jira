@@ -1,4 +1,4 @@
-import { Installation, Subscription } from '../../../src/models';
+import { Installation, Subscription } from "../../../src/models";
 
 describe('test installation model', () => {
   const newInstallPayload = {
@@ -84,9 +84,6 @@ describe('test installation model', () => {
       restartIdentity: true,
     });
   });
-
-  // Close connection when tests are done
-  afterAll(async () => models.sequelize.close());
 
   it('installs app when it receives an install payload from jira', async () => {
     const installation = await Installation.install({

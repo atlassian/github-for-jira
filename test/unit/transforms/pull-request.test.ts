@@ -1,24 +1,13 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import transformPullRequest from '../../../src/transforms/pull-request';
 
 describe('pull_request transform', () => {
-  let transformPullRequest;
-
-  beforeEach(async () => {
-    transformPullRequest = (
-      await import('../../../src/transforms/pull-request')
-    ).default;
-  });
-
   it('should not contain branches on the payload if pull request status is closed.', async () => {
-    const pullRequestList = JSON.parse(
-      JSON.stringify(
-        require('../../fixtures/api/transform-pull-request-list.json'),
-      ),
-    );
+    const pullRequestList = require('../../fixtures/api/transform-pull-request-list.json');
 
     pullRequestList[0].title = '[TES-123] Branch payload Test';
 
-    const payload = {
+    const fixture = {
       pull_request: pullRequestList[0],
       repository: {
         id: 1234568,
@@ -82,7 +71,7 @@ describe('pull_request transform', () => {
 
     pullRequestList[1].title = '[TES-123] Branch payload Test';
 
-    const payload = {
+    const fixture = {
       pull_request: pullRequestList[1],
       repository: {
         id: 1234568,

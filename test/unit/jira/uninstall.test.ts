@@ -1,50 +1,51 @@
-import testTracking from '../../setup/tracking';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import testTracking from "../../setup/tracking";
+import { getHashedKey } from "../../../src/models/installation";
+import { mocked } from "ts-jest/utils";
+import { Subscription } from "../../../src/models";
+import uninstall from "../../../src/jira/uninstall";
 
-describe('Webhook: /events/uninstalled', () => {
+jest.mock("../../../src/models");
+
+describe("Webhook: /events/uninstalled", () => {
   let installation;
   let subscriptions;
-  let uninstall;
 
   beforeEach(async () => {
-    const { getHashedKey } = await import('../../../src/models/installation');
-
     subscriptions = [
       {
         gitHubInstallationId: 10,
-        jiraHost: 'https://test-host.jira.com',
-        uninstall: jest.fn().mockName('uninstall').mockResolvedValue(1),
-      },
+        jiraHost: "https://test-host.jira.com",
+        uninstall: jest.fn().mockName("uninstall").mockResolvedValue(1)
+      }
     ];
 
     installation = {
       id: 19,
-      jiraHost: 'https://test-host.jira.com',
-      clientKey: getHashedKey('abc123'),
+      jiraHost: "https://test-host.jira.com",
+      clientKey: getHashedKey("abc123"),
       enabled: true,
-      secrets: 'def234',
-      sharedSecret: 'ghi345',
+      secrets: "def234",
+      sharedSecret: "ghi345",
       uninstall: jest
         .fn()
-        .mockName('uninstall')
+        .mockName("uninstall")
         .mockResolvedValue(installation),
       subscriptions: jest
         .fn()
-        .mockName('subscriptions')
-        .mockResolvedValue(subscriptions),
+        .mockName("subscriptions")
+        .mockResolvedValue(subscriptions)
     };
 
-    td.when(models.Subscription.getAllForHost(installation.jiraHost))
-      // Allows us to modify subscriptions before it's finally called
-      .thenDo(async () => subscriptions);
-
-    uninstall = (await import('../../../src/jira/uninstall')).default;
+    // Allows us to modify subscriptions before it's finally called
+    mocked(Subscription.getAllForHost).mockImplementation(() => subscriptions);
   });
 
-  it('Existing Installation', async () => {
+  it("Existing Installation", async () => {
     await testTracking();
 
-    const req = { log: { info: jest.fn() } };
-    const res = { locals: { installation }, sendStatus: jest.fn() };
+    const req = { log: { info: jest.fn() } } as any;
+    const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
     await uninstall(req, res);
     expect(res.sendStatus).toHaveBeenCalledWith(204);
@@ -52,11 +53,11 @@ describe('Webhook: /events/uninstalled', () => {
     expect(subscriptions[0].uninstall).toHaveBeenCalled();
   });
 
-  it('Existing Installation, no Subscriptions', async () => {
+  it("Existing Installation, no Subscriptions", async () => {
     await testTracking();
 
-    const req = { log: { info: jest.fn() } };
-    const res = { locals: { installation }, sendStatus: jest.fn() };
+    const req = { log: { info: jest.fn() } } as any;
+    const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
     subscriptions = [];
     await uninstall(req, res);
