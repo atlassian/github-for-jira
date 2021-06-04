@@ -1,6 +1,8 @@
 import nock from "nock";
 import dotenv from "dotenv";
 import "./matchers/to-have-sent-metrics";
+import "./matchers/nock";
+import "./matchers/to-promise";
 resetEnvVars();
 
 function resetEnvVars() {
@@ -18,7 +20,7 @@ function resetEnvVars() {
     HYDRO_APP_SECRET: "2dd220c366ec5b86104efd7324c2d405",
     PRIVATE_KEY_PATH: "./test/setup/test-key.pem",
     GITHUB_CLIENT_SECRET: "test-github-secret",
-    LOG_LEVEL: "fatal",
+    LOG_LEVEL: "info",
     // Don't worry about this key. It is just for testing.
     STORAGE_SECRET: "8cad66340bc92edbae2ae3a792d351f48c61d1d8efe7b2d9408b0025c1f7f845",
     SETUP: "yes", // indicates that the setup did run
@@ -26,12 +28,35 @@ function resetEnvVars() {
   };
 }
 
+declare global {
+  let jiraHost: string;
+  let jiraNock: nock.Scope;
+  let githubNock: nock.Scope;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    interface Global {
+      jiraHost: string;
+      jiraNock: nock.Scope;
+      githubNock: nock.Scope;
+    }
+  }
+}
+
 beforeEach(() => {
   resetEnvVars();
+  global.jiraHost = process.env.ATLASSIAN_URL;
+  global.jiraNock = nock(process.env.ATLASSIAN_URL);
+  global.githubNock = nock("https://api.github.com");
 });
 
+// Checks to make sure there's no extra HTTP mocks waiting
+// Needs to be in it's own aftereach so that the expect doesn't stop it from cleaning up afterwards
 afterEach(() => {
-  nock.isDone(); // Checks to make sure there's no extra HTTP mocks waiting
+  // eslint-disable-next-line jest/no-standalone-expect
+  expect(nock).toBeDone();
+})
+
+afterEach(() => {
   nock.cleanAll(); // removes HTTP mocks
   jest.resetAllMocks(); // Removes jest mocks
 });

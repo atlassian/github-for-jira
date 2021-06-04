@@ -1,7 +1,7 @@
-import nock from 'nock';
+import nock from "nock";
 
-describe('enhanceOctokit', () => {
-  describe('request metrics', () => {
+describe("enhanceOctokit", () => {
+  describe("request metrics", () => {
     let octokit;
 
     beforeEach(async () => {

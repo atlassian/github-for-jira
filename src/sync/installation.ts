@@ -257,8 +257,8 @@ export const processInstallation = (app: Application, queues) => async function 
     }
     await updateJobStatus(app, queues, jiraClient, job, edges, task, repositoryId);
   } catch (err) {
-    const reteLimit = +(err.headers && err.headers['x-ratelimit-reset']);
-    const delay = Math.max(Date.now() - reteLimit * 1000, 0);
+    const rateLimit = +(err.headers && err.headers['x-ratelimit-reset']);
+    const delay = Math.max(Date.now() - rateLimit * 1000, 0);
     if (delay) { // if not NaN or 0
       app.log(`Delaying job for ${delay}ms installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
       const {

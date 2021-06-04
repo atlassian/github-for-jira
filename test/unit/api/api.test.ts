@@ -68,23 +68,11 @@ describe('API', () => {
         },
       },
     };
-    /*jiraClient = {
-      devinfo: {
-        migration: {
-          undo: jest.fn(),
-          complete: jest.fn()
-        }
-      }
-    };*/
     app = await createApp();
   });
 
-  describe.skip('Authentication', () => {
-    it('should return 404 if no token is provided', () => {
-      nock('https://api.github.com')
-        .post('/graphql')
-        .reply(200, successfulAuthResponseWrite);
-
+  describe("Authentication", () => {
+    it("should return 404 if no token is provided", () => {
       return supertest(app)
         .get('/api')
         .expect(404)
@@ -93,9 +81,9 @@ describe('API', () => {
         });
     });
 
-    it('should return 200 if a valid token is provided', () => {
-      nock('https://api.github.com')
-        .post('/graphql')
+    it("should return 200 if a valid token is provided", () => {
+      githubNock
+        .post("/graphql")
         .reply(200, successfulAuthResponseWrite);
 
       return supertest(app)
@@ -107,9 +95,9 @@ describe('API', () => {
         });
     });
 
-    it('should return 200 if token belongs to an admin', () => {
-      nock('https://api.github.com')
-        .post('/graphql')
+    it("should return 200 if token belongs to an admin", () => {
+      githubNock
+        .post("/graphql")
         .reply(200, successfulAuthResponseAdmin);
 
       return supertest(app)
@@ -121,9 +109,9 @@ describe('API', () => {
         });
     });
 
-    it('should return 401 if the GraphQL query returns errors', () => {
-      nock('https://api.github.com')
-        .post('/graphql')
+    it("should return 401 if the GraphQL query returns errors", () => {
+      githubNock
+        .post("/graphql")
         .reply(200, {
           errors: [
             {
@@ -153,9 +141,9 @@ describe('API', () => {
         });
     });
 
-    it('should return 401 if the returned organization is null', () => {
-      nock('https://api.github.com')
-        .post('/graphql')
+    it("should return 401 if the returned organization is null", () => {
+      githubNock
+        .post("/graphql")
         .reply(200, {
           data: {
             viewer: {
@@ -175,9 +163,9 @@ describe('API', () => {
         });
     });
 
-    it('should return 401 if the token is invalid', () => {
-      nock('https://api.github.com')
-        .post('/graphql')
+    it("should return 401 if the token is invalid", () => {
+      githubNock
+        .post("/graphql")
         .reply(401, {
           HttpError: {
             message: 'Bad credentials',
@@ -197,8 +185,8 @@ describe('API', () => {
 
   describe.skip('Endpoints', () => {
     beforeEach(() => {
-      nock('https://api.github.com')
-        .post('/graphql')
+      githubNock
+        .post("/graphql")
         .reply(200, successfulAuthResponseWrite);
     });
 
@@ -356,11 +344,9 @@ describe('API', () => {
        */
       it('should migrate an installation', () => {
         const update = jest.fn();
-        mocked(Subscription.getSingleInstallation).mockResolvedValue({
-          update,
-        } as any);
-        nock(process.env.ATLASSIAN_URL)
-          .post('/rest/devinfo/0.10/github/migrationComplete')
+        mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
+        jiraNock
+          .post("/rest/devinfo/0.10/github/migrationComplete")
           .reply(200);
         return supertest(app)
           .post(`/api/${installationId}/migrate`)
@@ -381,11 +367,9 @@ describe('API', () => {
        */
       it('should undo a migration', async () => {
         const update = jest.fn();
-        mocked(Subscription.getSingleInstallation).mockResolvedValue({
-          update,
-        } as any);
-        nock(process.env.ATLASSIAN_URL)
-          .post('/rest/devinfo/0.10/github/undoMigration')
+        mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
+        jiraNock
+          .post("/rest/devinfo/0.10/github/undoMigration")
           .reply(200);
         return supertest(app)
           .post(`/api/${installationId}/migrate/undo`)
@@ -408,12 +392,9 @@ describe('API', () => {
        */
       it('should not migrate an installation', async () => {
         const update = jest.fn();
-        mocked(Subscription.getSingleInstallation).mockResolvedValue({
-          update,
-        } as any);
-        nock(process.env.ATLASSIAN_URL)
-          .post('/rest/devinfo/0.10/github/migrationComplete')
-          .reply(200);
+        mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
+        const interceptor = jiraNock.post("/rest/devinfo/0.10/github/migrationComplete");
+        const scope = interceptor.reply(200);
         return supertest(app)
           .post(`/api/${installationId}/migrate`)
           .set('Authorization', 'Bearer xxx')
@@ -423,6 +404,8 @@ describe('API', () => {
           .then((response) => {
             expect(response.text).toMatchSnapshot();
             expect(update).toMatchSnapshot();
+            expect(scope).not.toBeDone();
+            nock.removeInterceptor(interceptor);
           });
       });
 
@@ -433,12 +416,9 @@ describe('API', () => {
        */
       it('should not undo a migration', async () => {
         const update = jest.fn();
-        mocked(Subscription.getSingleInstallation).mockResolvedValue({
-          update,
-        } as any);
-        nock(process.env.ATLASSIAN_URL)
-          .post('/rest/devinfo/0.10/github/undoMigration')
-          .reply(200);
+        mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
+        const interceptor = githubNock.post("/rest/devinfo/0.10/github/undoMigration");
+        const scope = interceptor.reply(200);
         return supertest(app)
           .post(`/api/${installationId}/migrate/undo`)
           .set('Authorization', 'Bearer xxx')
@@ -448,6 +428,8 @@ describe('API', () => {
           .then((response) => {
             expect(response.text).toMatchSnapshot();
             expect(update).toMatchSnapshot();
+            expect(scope).not.toBeDone();
+            nock.removeInterceptor(interceptor);
           });
       });
     });

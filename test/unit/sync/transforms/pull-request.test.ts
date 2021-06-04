@@ -21,7 +21,7 @@ describe('pull_request transform', () => {
 
     pullRequestList[0].title = '[TES-123] Evernote Test';
 
-    const payload = {
+    const fixture = {
       pullRequest: pullRequestList[0],
       repository: {
         id: 1234568,
@@ -32,13 +32,13 @@ describe('pull_request transform', () => {
       },
     };
 
-    payload.pullRequest.user = null;
+    fixture.pullRequest.user = null;
 
     Date.now = jest.fn(() => 12345678);
 
     const { data } = await transformPullRequest(
-      payload,
-      payload.pullRequest.user,
+      fixture,
+      fixture.pullRequest.user,
       githubMock,
     );
 
@@ -77,7 +77,7 @@ describe('pull_request transform', () => {
   });
 
   it('should return no data if there are no issue keys', async () => {
-    const payload = {
+    const fixture = {
       pullRequest: {
         author: null,
         databaseId: 1234568,
@@ -112,8 +112,8 @@ describe('pull_request transform', () => {
     Date.now = jest.fn(() => 12345678);
 
     const { data } = await transformPullRequest(
-      payload,
-      payload.pullRequest.author,
+      fixture,
+      fixture.pullRequest.author,
       githubMock,
     );
     expect(data).toBeUndefined();

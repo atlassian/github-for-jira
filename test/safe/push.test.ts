@@ -16,7 +16,7 @@ describe("GitHub Actions", () => {
 
     it("should add push event to the queue if Jira issue keys are present", async () => {
       const event = require("../fixtures/push-basic.json");
-      await app.receive(event);
+      await expect(app.receive(event)).toResolve();
 
       expect(queues.push).toBeCalledWith(
         {
@@ -69,9 +69,9 @@ describe("GitHub Actions", () => {
         .get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
         .replyWithFile(200, "../fixtures/api/commit-no-username.json")
 
-      await processPush(app)(job);
+      await expect(processPush(app)(job)).toResolve();
 
-      td.verify(jiraApi.post("/rest/devinfo/0.10/bulk", {
+      jiraNock.post("/rest/devinfo/0.10/bulk", {
         preventTransitions: false,
         repositories: [
           {
@@ -124,7 +124,7 @@ describe("GitHub Actions", () => {
         properties: {
           installationId: 1234
         }
-      }));
+      }).reply(200);
     });
 
     it("should only send 10 files if push contains more than 10 files changed", async () => {
@@ -133,12 +133,11 @@ describe("GitHub Actions", () => {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL)
       };
 
-      td.when(githubApi.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id"))
-        .thenReturn(require("../fixtures/more-than-10-files.json"));
+      githubNock
+        .get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
+        .replyWithFile(200, "../fixtures/more-than-10-files.json");
 
-      await processPush(app)(job);
-
-      td.verify(jiraApi.post("/rest/devinfo/0.10/bulk", {
+      jiraNock.post("/rest/devinfo/0.10/bulk", {
         preventTransitions: false,
         repositories: [
           {
@@ -238,35 +237,37 @@ describe("GitHub Actions", () => {
         properties: {
           installationId: 1234
         }
-      }));
+      }).reply(200);
+
+      await expect(processPush(app)(job)).toResolve();
     });
 
     // Commenting these out for the moment. DevInfo API runs these
     // transitions automatially based on the commit message, but we may
     // use them elsewhere for manual transitions
     // it('should run a #comment command in the commit message', async () => {
-    //   const payload = require('../fixtures/push-comment.json')
+    //   const fixture = require('../fixtures/push-comment.json')
 
-    //   await app.receive(payload)
+    //   await expect(app.receive(fixture)).toResolve()
 
-    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+    //   jiraNock.post('/rest/api/latest/issue/TEST-123/comment', {
     //     body: 'This is a comment'
     //   }))
     // })
 
     // it('should run a #time command in the commit message', async () => {
-    //   const payload = require('../fixtures/push-worklog.json')
+    //   const fixture = require('../fixtures/push-worklog.json')
 
-    //   await app.receive(payload)
+    //   await expect(app.receive(fixture)).toResolve()
 
-    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/worklog', {
+    //   jiraNock.post('/rest/api/latest/issue/TEST-123/worklog', {
     //     timeSpentSeconds: td.matchers.isA(Number),
     //     comment: 'This is a worklog'
     //   }))
     // })
 
     // it('should run a transition command in the commit message', async () => {
-    //   const payload = require('../fixtures/push-transition.json')
+    //   const fixture = require('../fixtures/push-transition.json')
 
     //   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
     //     .thenReturn({
@@ -278,9 +279,9 @@ describe("GitHub Actions", () => {
     //       ]
     //     })
 
-    //   await app.receive(payload)
+    //   await expect(app.receive(fixture)).toResolve()
 
-    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
+    //   jiraNock.post('/rest/api/latest/issue/TEST-123/transitions', {
     //     transition: {
     //       id: 'test-transition-id'
     //     }
@@ -288,7 +289,7 @@ describe("GitHub Actions", () => {
     // })
 
     // it('should run a transition command in the commit message', async () => {
-    //   const payload = require('../fixtures/push-transition-comment.json')
+    //   const fixture = require('../fixtures/push-transition-comment.json')
 
     //   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
     //     .thenReturn({
@@ -300,52 +301,55 @@ describe("GitHub Actions", () => {
     //       ]
     //     })
 
-    //   await app.receive(payload)
+    //   await expect(app.receive(fixture)).toResolve()
 
-    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/transitions', {
+    //   jiraNock.post('/rest/api/latest/issue/TEST-123/transitions', {
     //     transition: {
     //       id: 'test-transition-id'
     //     }
     //   }))
 
-    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+    //   jiraNock.post('/rest/api/latest/issue/TEST-123/comment', {
     //     body: 'This is a transition'
     //   }))
     // })
 
     // it('should run commands on all issues in the commit message', async () => {
-    //   const payload = require('../fixtures/push-multiple.json')
+    //   const fixture = require('../fixtures/push-multiple.json')
 
-    //   await app.receive(payload)
+    //   await expect(app.receive(fixture)).toResolve()
 
-    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-123/comment', {
+    //   jiraNock.post('/rest/api/latest/issue/TEST-123/comment', {
     //     body: 'This is a comment'
     //   }))
 
-    //   td.verify(jiraApi.post('/rest/api/latest/issue/TEST-246/comment', {
+    //   jiraNock.post('/rest/api/latest/issue/TEST-246/comment', {
     //     body: 'This is a comment'
     //   }))
     // })
 
     it("should not run a command without a Jira issue", async () => {
-      const payload = require("../fixtures/push-no-issues.json");
+      const fixture = require("../fixtures/push-no-issues.json");
+      const interceptor = jiraNock.post(/.*/);
+      const scope = interceptor.reply(200);
 
-      td.when(jiraApi.post(), { ignoreExtraArgs: true })
-        .thenThrow(new Error("Should not make any changes to Jira."));
-
-      await app.receive(payload);
+      await expect(app.receive(fixture)).toResolve();
+      expect(scope).not.toBeDone();
+      nock.removeInterceptor(interceptor);
     });
 
     it("should support commits without smart commands", async () => {
-      const payload = require("../fixtures/push-empty.json");
+      const fixture = require("../fixtures/push-empty.json");
+      // match any post calls
+      jiraNock.post(/.*/).reply(200)
 
-      td.when(jiraApi.post(), { ignoreExtraArgs: true })
-        .thenThrow(new Error("Should not make any changes to Jira."));
+      // match any post calls
+      const interceptor = githubNock.get(/.*/);
+      const scope = interceptor.reply(200)
 
-      td.when(githubApi.get(), { ignoreExtraArgs: true })
-        .thenThrow(new Error("Should not make any API request to GitHub."));
-
-      await app.receive(payload);
+      await expect(app.receive(fixture)).toResolve();
+      expect(scope).not.toBeDone();
+      nock.removeInterceptor(interceptor);
     });
 
     it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
@@ -354,12 +358,10 @@ describe("GitHub Actions", () => {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL)
       };
 
-      td.when(githubApi.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username"))
-        .thenReturn(require("../fixtures/push-merge-commit.json"));
+      githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+        .replyWithFile(200, "../fixtures/push-merge-commit.json");
 
-      await processPush(app)(job);
-
-      td.verify(jiraApi.post("/rest/devinfo/0.10/bulk", {
+      jiraNock.post("/rest/devinfo/0.10/bulk", {
         preventTransitions: false,
         repositories: [
           {
@@ -408,7 +410,9 @@ describe("GitHub Actions", () => {
           }
         ],
         properties: { installationId: 1234 }
-      }));
+      }).reply(200);
+
+      await expect(processPush(app)(job)).toResolve();
     });
 
     it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
@@ -417,13 +421,11 @@ describe("GitHub Actions", () => {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL)
       };
 
-      td.when(githubApi.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username"))
-        .thenReturn(require("../fixtures/push-non-merge-commit"));
-
-      await processPush(app)(job);
+      githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+        .replyWithFile(200, "../fixtures/push-non-merge-commit");
 
       // flag property should not be present
-      td.verify(jiraApi.post("/rest/devinfo/0.10/bulk", {
+      jiraNock.post("/rest/devinfo/0.10/bulk", {
         preventTransitions: false,
         repositories: [
           {
@@ -471,7 +473,9 @@ describe("GitHub Actions", () => {
           }
         ],
         properties: { installationId: 1234 }
-      }));
+      }).reply(200);
+
+      await expect(processPush(app)(job)).toResolve();
     });
   });
 });
