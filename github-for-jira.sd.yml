@@ -31,6 +31,12 @@ resources:
     name: database
   - type: globaledge
     name: ingress
+    attributes:
+      routes:
+        - match:
+            prefix: /
+            ip_whitelist:
+              - public
 
 config:
   environmentVariables:
