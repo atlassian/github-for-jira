@@ -1,17 +1,20 @@
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace jest {
   // eslint-disable-next-line @typescript-eslint/no-namespace
-    interface Matchers<R> {
-      toResolve(): Promise<R>;
+  interface Matchers<R> {
+    toResolve(): Promise<R>;
 
-      toReject(): Promise<R>;
-    }
+    toReject(): Promise<R>;
+  }
 }
 
 expect.extend({
   toResolve: async (promise: Promise<unknown>) => {
     let error;
-    const pass = await promise.then(() => true, (err) => {error = err; return false});
+    const pass = await promise.then(() => true, (err) => {
+      error = err;
+      return false;
+    });
     if (pass) {
       return { pass: true, message: () => "Expected promise to reject, however it resolved.\n" };
     }

@@ -11,9 +11,15 @@
           "name": "test-commit-name"
         },
         "message": "[TEST-123] Test commit.",
-        "added": ["test-added"],
-        "modified": ["test-modified"],
-        "removed": ["test-removal"]
+        "added": [
+          "test-added"
+        ],
+        "modified": [
+          "test-modified"
+        ],
+        "removed": [
+          "test-removal"
+        ]
       }
     ],
     "repository": {

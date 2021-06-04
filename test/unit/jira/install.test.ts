@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import testTracking from "../../setup/tracking";
 import install from "../../../src/jira/install";
-import { mocked } from "ts-jest/utils";;
+import { mocked } from "ts-jest/utils";
 import { Installation } from "../../../src/models";
+
+
 
 jest.mock("../../../src/models");
 
@@ -28,7 +30,7 @@ describe("Webhook: /events/installed", () => {
     };
 
     // Allows us to modify installation before it's finally called
-    mocked(Installation.install).mockImplementation(() => installation)
+    mocked(Installation.install).mockImplementation(() => installation);
   });
 
   it("Install", async () => {

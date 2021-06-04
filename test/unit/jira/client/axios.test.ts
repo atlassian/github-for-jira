@@ -1,24 +1,24 @@
-import nock from 'nock';
-import axios from '../../../../src/jira/client/axios';
+import nock from "nock";
+import axios from "../../../../src/jira/client/axios";
 
-describe('Jira axios instance', () => {
+describe("Jira axios instance", () => {
   let getJiraAxios;
 
   beforeEach(async () => {
     getJiraAxios = await axios;
   });
 
-  describe('request metrics', () => {
-    const jiraHost = 'https://example.atlassian.net';
+  describe("request metrics", () => {
+    const jiraHost = "https://example.atlassian.net";
 
-    describe('when request successful', () => {
-      it('sends timing metric', async () => {
-        nock(jiraHost).get('/foo/bar').reply(200);
+    describe("when request successful", () => {
+      it("sends timing metric", async () => {
+        nock(jiraHost).get("/foo/bar").reply(200);
 
-        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret');
+        const jiraAxiosInstance = getJiraAxios(jiraHost, "secret");
 
         await expect(async () => {
-          await jiraAxiosInstance.get('/foo/bar');
+          await jiraAxiosInstance.get("/foo/bar");
         }).toHaveBeenCalled();
         // TODO- fix me
         // .toHaveSentMetrics({
@@ -34,13 +34,13 @@ describe('Jira axios instance', () => {
         // });
       });
 
-      it('removes URL query params from path', async () => {
-        nock(jiraHost).get('/foo/bar?baz=true').reply(200);
+      it("removes URL query params from path", async () => {
+        nock(jiraHost).get("/foo/bar?baz=true").reply(200);
 
-        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret');
+        const jiraAxiosInstance = getJiraAxios(jiraHost, "secret");
 
         await expect(async () => {
-          await jiraAxiosInstance.get('/foo/bar?baz=true');
+          await jiraAxiosInstance.get("/foo/bar?baz=true");
         }).toHaveBeenCalled();
         // TODO- fix me
         // .toHaveSentMetrics({
@@ -51,15 +51,15 @@ describe('Jira axios instance', () => {
       });
     });
 
-    describe('when request fails', () => {
-      it('sends timing metric', async () => {
-        nock(jiraHost).get('/foo/bar').reply(500);
+    describe("when request fails", () => {
+      it("sends timing metric", async () => {
+        nock(jiraHost).get("/foo/bar").reply(500);
 
-        const jiraAxiosInstance = getJiraAxios(jiraHost, 'secret');
+        const jiraAxiosInstance = getJiraAxios(jiraHost, "secret");
 
         await expect(async () => {
           try {
-            await jiraAxiosInstance.get('/foo/bar');
+            await jiraAxiosInstance.get("/foo/bar");
           } catch (error) {
             // Swallow error
           }

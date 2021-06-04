@@ -1,73 +1,71 @@
 import { Installation, Subscription } from "../../../src/models";
+import { getHashedKey } from "../../../src/models/installation";
 
-describe('test installation model', () => {
+describe("test installation model", () => {
   const newInstallPayload = {
-    key: 'com.github.integration.production',
-    clientKey: 'a-totally-unique-client-key',
-    publicKey: 'this-is-a-public-key',
-    sharedSecret: 'shared-secret',
-    serverVersion: '100104',
-    pluginsVersion: '1.415.0',
-    baseUrl: 'https://test-user.atlassian.net',
-    productType: 'jira',
-    description: 'Atlassian JIRA at https://test-user.atlassian.net ',
-    eventType: 'installed',
+    key: "com.github.integration.production",
+    clientKey: "a-totally-unique-client-key",
+    publicKey: "this-is-a-public-key",
+    sharedSecret: "shared-secret",
+    serverVersion: "100104",
+    pluginsVersion: "1.415.0",
+    baseUrl: "https://test-user.atlassian.net",
+    productType: "jira",
+    description: "Atlassian JIRA at https://test-user.atlassian.net ",
+    eventType: "installed"
   };
 
   // this payload is identical to newInstallPayload except for a renamed `baseUrl`
   const renamedInstallPayload = {
-    key: 'com.github.integration.production',
-    clientKey: 'a-totally-unique-client-key', // This is the same clientKey as above
-    publicKey: 'this-is-a-public-key',
-    sharedSecret: 'shared-secret',
-    serverVersion: '100104',
-    pluginsVersion: '1.415.0',
-    baseUrl: 'https://renamed-user.atlassian.net', // This is the only part that's different
-    productType: 'jira',
-    description: 'Atlassian JIRA at https://renamed-user.atlassian.net ',
-    eventType: 'installed',
+    key: "com.github.integration.production",
+    clientKey: "a-totally-unique-client-key", // This is the same clientKey as above
+    publicKey: "this-is-a-public-key",
+    sharedSecret: "shared-secret",
+    serverVersion: "100104",
+    pluginsVersion: "1.415.0",
+    baseUrl: "https://renamed-user.atlassian.net", // This is the only part that's different
+    productType: "jira",
+    description: "Atlassian JIRA at https://renamed-user.atlassian.net ",
+    eventType: "installed"
   };
 
   // Setup an installation
   const existingInstallPayload = {
-    key: 'com.github.integration.production',
-    clientKey: 'a-totally-unique-client-key',
-    publicKey: 'this-is-a-public-key',
-    sharedSecret: 'shared-secret',
-    serverVersion: '100104',
-    pluginsVersion: '1.415.0',
-    baseUrl: 'https://existing-instance.atlassian.net',
-    productType: 'jira',
-    description: 'Atlassian JIRA at https://existing-instance.atlassian.net ',
-    eventType: 'installed',
+    key: "com.github.integration.production",
+    clientKey: "a-totally-unique-client-key",
+    publicKey: "this-is-a-public-key",
+    sharedSecret: "shared-secret",
+    serverVersion: "100104",
+    pluginsVersion: "1.415.0",
+    baseUrl: "https://existing-instance.atlassian.net",
+    productType: "jira",
+    description: "Atlassian JIRA at https://existing-instance.atlassian.net ",
+    eventType: "installed"
   };
 
   let storageSecret: string;
-  let getHashedKey: (clientKey: string) => string;
 
   beforeEach(async () => {
     storageSecret = process.env.STORAGE_SECRET;
-    process.env.STORAGE_SECRET = 'test-secret';
-    getHashedKey = (await import('../../../src/models/installation'))
-      .getHashedKey;
+    process.env.STORAGE_SECRET = "test-secret";
 
     const installation = await Installation.install({
       host: existingInstallPayload.baseUrl,
       sharedSecret: existingInstallPayload.sharedSecret,
-      clientKey: existingInstallPayload.clientKey,
+      clientKey: existingInstallPayload.clientKey
     });
 
     // Setup two subscriptions for this host
     await Subscription.install({
       host: installation.jiraHost,
-      installationId: '1234',
-      clientKey: installation.clientKey,
+      installationId: "1234",
+      clientKey: installation.clientKey
     });
 
     await Subscription.install({
       host: installation.jiraHost,
-      installationId: '2345',
-      clientKey: installation.clientKey,
+      installationId: "2345",
+      clientKey: installation.clientKey
     });
   });
 
@@ -76,20 +74,20 @@ describe('test installation model', () => {
     // Clean up the database
     await Installation.truncate({
       cascade: true,
-      restartIdentity: true,
+      restartIdentity: true
     });
 
     await Subscription.truncate({
       cascade: true,
-      restartIdentity: true,
+      restartIdentity: true
     });
   });
 
-  it('installs app when it receives an install payload from jira', async () => {
+  it("installs app when it receives an install payload from jira", async () => {
     const installation = await Installation.install({
       host: newInstallPayload.baseUrl,
       sharedSecret: newInstallPayload.sharedSecret,
-      clientKey: newInstallPayload.clientKey,
+      clientKey: newInstallPayload.clientKey
     });
 
     expect(installation.jiraHost).toBe(newInstallPayload.baseUrl);
@@ -101,32 +99,32 @@ describe('test installation model', () => {
     expect(installation.clientKey).toBe(hashedKey);
   });
 
-  it('updates the jiraHost for an installation when a site is renamed', async () => {
+  it("updates the jiraHost for an installation when a site is renamed", async () => {
     const newInstallation = await Installation.install({
       host: newInstallPayload.baseUrl,
       sharedSecret: newInstallPayload.sharedSecret,
-      clientKey: newInstallPayload.clientKey,
+      clientKey: newInstallPayload.clientKey
     });
     expect(newInstallation.jiraHost).toBe(newInstallPayload.baseUrl);
 
     const updatedInstallation = await Installation.install({
       host: renamedInstallPayload.baseUrl,
       sharedSecret: renamedInstallPayload.sharedSecret,
-      clientKey: renamedInstallPayload.clientKey,
+      clientKey: renamedInstallPayload.clientKey
     });
 
     expect(updatedInstallation.jiraHost).toBe(renamedInstallPayload.baseUrl);
   });
 
-  it('updates all Subscriptions for a given jira clientKey when a site is renamed', async () => {
+  it("updates all Subscriptions for a given jira clientKey when a site is renamed", async () => {
     const updatedInstallation = await Installation.install({
       host: renamedInstallPayload.baseUrl,
       sharedSecret: renamedInstallPayload.sharedSecret,
-      clientKey: renamedInstallPayload.clientKey,
+      clientKey: renamedInstallPayload.clientKey
     });
 
     const updatedSubscriptions = await Subscription.getAllForClientKey(
-      updatedInstallation.clientKey,
+      updatedInstallation.clientKey
     );
 
     expect(updatedSubscriptions.length).toBe(2);

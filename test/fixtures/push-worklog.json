@@ -10,9 +10,15 @@
           "username": "test-commit-author-username"
         },
         "message": "TEST-123 #time 4h 12m This is a worklog",
-        "added": ["test-added"],
-        "modified": ["test-modified"],
-        "removed": ["test-removal"]
+        "added": [
+          "test-added"
+        ],
+        "modified": [
+          "test-modified"
+        ],
+        "removed": [
+          "test-removal"
+        ]
       }
     ],
     "repository": {

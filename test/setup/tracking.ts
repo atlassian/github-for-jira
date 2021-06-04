@@ -1,5 +1,6 @@
-import url from 'url';
-import nock from 'nock';
+import url from "url";
+import nock from "nock";
+import { BaseURL, setIsDisabled } from "../../src/tracking";
 
 /**
  * Test that tracking works by storing a snapshot of the tracking proto sent.
@@ -7,11 +8,10 @@ import nock from 'nock';
  * @returns {void}
  */
 export default async () => {
-  const tracking = await import('../../src/tracking');
   // Enable user tracking
-  const parsedURL = url.parse(tracking.BaseURL);
-  const basePath = parsedURL.href.replace(parsedURL.path, '');
-  tracking.setIsDisabled(false);
+  const parsedURL = url.parse(BaseURL);
+  const basePath = parsedURL.href.replace(parsedURL.path, "");
+  setIsDisabled(false);
 
   // Check that we send the tracking proto
   nock(basePath)
@@ -24,5 +24,5 @@ export default async () => {
       });
       return true;
     })
-    .reply(200, 'OK');
+    .reply(200, "OK");
 };

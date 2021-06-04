@@ -1,30 +1,29 @@
-import { Installation } from '../../../../src/models';
-const BASE_URL = 'https://base-url.atlassian.net';
+import { Installation } from "../../../../src/models";
+import getJiraClient from "../../../../src/jira/client";
 
-describe('Test getting a jira client', () => {
-  let getJiraClient;
+describe("Test getting a jira client", () => {
+  const BASE_URL = "https://base-url.atlassian.net";
 
   beforeEach(async () => {
     const installation = await Installation.install({
       host: BASE_URL,
-      sharedSecret: 'shared-secret',
-      clientKey: 'client-key',
+      sharedSecret: "shared-secret",
+      clientKey: "client-key"
     });
 
     await installation.enable();
-    getJiraClient = (await import('../../../../src/jira/client')).default;
   });
 
-  it('Installation exists', async () => {
+  it("Installation exists", async () => {
     const client = await getJiraClient(BASE_URL, 1);
     expect(client).toMatchSnapshot();
   });
 
-  it('Installation does not exist', async () => {
+  it("Installation does not exist", async () => {
     const installation = await Installation.findOne({
       where: {
-        jiraHost: BASE_URL,
-      },
+        jiraHost: BASE_URL
+      }
     });
     await installation.disable();
 

@@ -2,7 +2,9 @@
 import testTracking from "../../setup/tracking";
 import enable from "../../../src/jira/enable";
 import { Installation } from "../../../src/models";
-import { mocked } from "ts-jest/utils";;
+import { mocked } from "ts-jest/utils";
+
+
 
 jest.mock("../../../src/models");
 

@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import webhookTimeout from "../../src/middleware/webhook-timeout";
 
 describe("Webhook Timeout", () => {
-  let webhookTimeout;
-  beforeEach(async () => {
-    webhookTimeout = (await import("../../src/middleware/webhook-timeout")).default;
-  });
 
   it("sets timedout context with milliseconds", async () => {
     const context: any = {};

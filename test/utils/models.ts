@@ -23,7 +23,7 @@ export const mockModels = {
       sharedSecret: process.env.ATLASSIAN_SECRET,
       enabled: true,
       secrets: "secrets",
-      clientKey: "client-key",
+      clientKey: "client-key"
     } as any
   },
   Subscription: {
@@ -32,7 +32,7 @@ export const mockModels = {
         jiraHost: process.env.ATLASSIAN_URL
       }
     ] as any,
-    install: {  } as any,
+    install: {} as any,
     getSingleInstallation: {
       id: 1,
       jiraHost: process.env.ATLASSIAN_URL

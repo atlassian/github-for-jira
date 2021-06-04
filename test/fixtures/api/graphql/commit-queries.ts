@@ -31,19 +31,19 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
 export const commitsNoLastCursor = {
   query,
   variables: {
-    owner: 'integrations', repo: 'test-repo-name', per_page: 20, default_ref: 'master',
-  },
+    owner: "integrations", repo: "test-repo-name", per_page: 20, default_ref: "master"
+  }
 };
 
 export const commitsWithLastCursor = {
   query,
   variables: {
-    owner: 'integrations',
-    repo: 'test-repo-name',
+    owner: "integrations",
+    repo: "test-repo-name",
     per_page: 20,
-    cursor: 'Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99',
-    default_ref: 'master',
-  },
+    cursor: "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
+    default_ref: "master"
+  }
 };
 
 const defaultBranchQuery = `query ($owner: String!, $repo: String!) {
@@ -57,7 +57,7 @@ const defaultBranchQuery = `query ($owner: String!, $repo: String!) {
 export const getDefaultBranch = {
   query: defaultBranchQuery,
   variables: {
-    owner: 'integrations',
-    repo: 'test-repo-name',
-  },
+    owner: "integrations",
+    repo: "test-repo-name"
+  }
 };
