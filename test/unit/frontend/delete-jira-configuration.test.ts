@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import testTracking from '../../setup/tracking';
 import nock from 'nock';
+import { Installation, Subscription } from '../../../src/models';
+import { mocked } from 'ts-jest/utils';
+import deleteConfig from '../../../src/frontend/delete-jira-configuration';
+
+jest.mock('../../../src/models');
 
 describe('DELETE /jira/configuration', () => {
   let installation;
@@ -24,21 +29,10 @@ describe('DELETE /jira/configuration', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    td.when(
-      models.Subscription.getSingleInstallation(
-        subscription.jiraHost,
-        subscription.githubInstallationId,
-      ),
-    )
-      // Allows us to modify subscription before it's finally called
-      .thenDo(async () => subscription);
-    td.when(models.Installation.getForHost(installation.jiraHost))
-      // Allows us to modify installation before it's finally called
-      .thenDo(async () => installation);
+    mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
+    mocked(Installation.getForHost).mockResolvedValue(installation);
 
-    deleteJiraConfiguration = (
-      await import('../../../src/frontend/delete-jira-configuration')
-    ).default;
+    deleteJiraConfiguration = await deleteConfig;
   });
 
   it('Delete Jira Configuration', async () => {

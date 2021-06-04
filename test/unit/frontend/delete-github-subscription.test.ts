@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import testTracking from '../../setup/tracking';
 import nock from 'nock';
+import { Installation, Subscription } from '../../../src/models';
+import { mocked } from 'ts-jest/utils';
+import deleteSubscription from '../../../src/frontend/delete-github-subscription';
+
+jest.mock('../../../src/models');
 
 describe('POST /github/subscription', () => {
   let installation;
@@ -27,24 +32,10 @@ describe('POST /github/subscription', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    td.when(
-      models.Subscription.getSingleInstallation(
-        subscription.jiraHost,
-        subscription.githubInstallationId,
-      ),
-    )
-      // Allows us to modify subscription before it's finally called
-      .thenDo(async () => subscription);
-    td.when(models.Installation.getForHost(installation.jiraHost))
-      // Allows us to modify installation before it's finally called
-      .thenDo(async () => installation);
+    mocked(Subscription.install).mockResolvedValue(subscription);
+    mocked(Installation.getForHost).mockResolvedValue(installation);
 
-    const tracking = await import('../../../src/tracking');
-    isDisabled = tracking.isDisabled;
-    setIsDisabled = tracking.setIsDisabled;
-    deleteGitHubSubscription = (
-      await import('../../../src/frontend/delete-github-subscription')
-    ).default;
+    deleteGitHubSubscription = await deleteSubscription;
 
     origDisabledState = isDisabled();
     setIsDisabled(false);

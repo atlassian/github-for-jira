@@ -1,32 +1,32 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { createApp } from "../utils/probot";
+import { createApp } from '../utils/probot';
 
 describe('GitHub Actions', () => {
   let app;
-  beforeEach(async () => app = await createApp())
+  beforeEach(async () => (app = await createApp()));
 
   describe('issue_comment', () => {
     describe('created', () => {
       it('should update the GitHub issue with a linked Jira ticket', async () => {
         const fixture = require('../fixtures/issue-comment-basic.json');
 
-
-
-
-        td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
-          .thenReturn({
+        jiraNock
+          .get('/rest/api/latest/issue/TEST-123?fields=summary')
+          .reply(200, {
             key: 'TEST-123',
             fields: {
               summary: 'Example Issue',
             },
           });
 
-        await expect(app.receive(fixture)).toResolve();
+        githubNock
+          .patch('/repos/test-repo-owner/test-repo-name/issues/comments/5678', {
+            number: 'test-issue-number',
+            body: 'Test example comment with linked Jira issue: [TEST-123]\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
+          })
+          .reply(200);
 
-        td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/comments/5678', {
-          number: 'test-issue-number',
-          body: 'Test example comment with linked Jira issue: [TEST-123]\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
-        }));
+        await expect(app.receive(fixture)).toResolve();
       });
     });
   });

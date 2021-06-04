@@ -2,9 +2,18 @@ import Keygrip from 'keygrip';
 import supertest from 'supertest';
 import testTracking from '../../setup/tracking';
 import nock from 'nock';
+import { mocked } from 'ts-jest/utils';
+import { Installation, Subscription } from '../../../src/models';
+import frontendApp from '../../../src/frontend/app';
+
+jest.mock('../../../src/models');
 
 describe('Frontend', () => {
   let subject;
+  let locals;
+  let installation;
+  let subscription;
+
   const authenticatedUserResponse = { login: 'test-user' };
   const adminUserResponse = { login: 'admin-user' };
   const organizationMembershipResponse = { role: 'member' };
@@ -26,7 +35,7 @@ describe('Frontend', () => {
   };
 
   function getCookieHeader(fixture): string[] {
-    const cookie = Buffer.from(JSON.stringify(fixture)).toString("base64");
+    const cookie = Buffer.from(JSON.stringify(fixture)).toString('base64');
     const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET]);
 
     return [
@@ -34,18 +43,39 @@ describe('Frontend', () => {
     ];
   }
 
-  let getHashedKey;
   let setIsDisabled;
   let originalDisabledState;
 
   beforeEach(async () => {
-    getHashedKey = (await import('../../../src/models/installation'))
-      .getHashedKey;
-    const tracking = await import('../../../src/tracking');
-    setIsDisabled = tracking.setIsDisabled;
-    originalDisabledState = tracking.isDisabled();
-    const Frontend = (await import('../../../src/frontend/app')).default;
-    subject = Frontend(app.app);
+    const Frontend = frontendApp;
+    locals = {
+      client: {
+        apps: {
+          getInstallation: jest.fn().mockResolvedValue({ data: {} }),
+        },
+      },
+    };
+
+    subject = Frontend(locals.client.apps);
+
+    subscription = {
+      githubInstallationId: 15,
+      jiraHost: 'https://test-host.jira.com',
+      destroy: jest.fn().mockResolvedValue(undefined),
+    };
+
+    installation = {
+      id: 19,
+      jiraHost: subscription.jiraHost,
+      clientKey: 'abc123',
+      enabled: true,
+      secrets: 'def234',
+      sharedSecret: 'ghi345',
+      subscriptions: jest.fn().mockResolvedValue([]),
+    };
+
+    mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
+    mocked(Installation.getForHost).mockResolvedValue(installation);
   });
 
   afterEach(() => {
@@ -140,14 +170,6 @@ describe('Frontend', () => {
       it('should return a 200 and install a Subscription', async () => {
         const jiraHost = 'test-jira-host';
 
-        const installation = {
-          id: 19,
-          jiraHost,
-          clientKey: 'abc123',
-          enabled: true,
-          secrets: 'def234',
-          sharedSecret: 'ghi345',
-        };
         nock('https://api.github.com')
           .get('/user/installations')
           .reply(200, userInstallationsResponse);
@@ -157,13 +179,11 @@ describe('Frontend', () => {
         nock('https://api.github.com')
           .get('/orgs/test-org/memberships/admin-user')
           .reply(200, organizationAdminResponse);
+
         await testTracking();
 
-        td.when(models.Installation.getForHost(jiraHost))
-          // Allows us to modify installation before it's finally called
-          .thenResolve(installation);
-
         const jiraClientKey = 'a-unique-client-key';
+
         await supertest(subject)
           .post('/github/configuration')
           .send({
@@ -179,14 +199,6 @@ describe('Frontend', () => {
             }),
           )
           .expect(200);
-
-        td.verify(
-          models.Subscription.install({
-            installationId: '1',
-            host: jiraHost,
-            clientKey: getHashedKey(jiraClientKey),
-          }),
-        );
       });
     });
   });
