@@ -18,7 +18,7 @@
     "build:watch": "tsc -w -p ./tsconfig.json",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --runInBand --detectOpenHandles --coverage",
-    "test:watch": "jest --runInBand --detectOpenHandles --watch",
+    "test:watch": "jest --runInBand --detectOpenHandles --watchAll",
     "prepare": "husky install"
   },
   "dependencies": {
