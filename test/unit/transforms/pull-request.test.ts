@@ -18,7 +18,7 @@ describe('pull_request transform', () => {
 
     pullRequestList[0].title = '[TES-123] Branch payload Test';
 
-    const payload = {
+    const fixture = {
       pull_request: pullRequestList[0],
       repository: {
         id: 1234568,
@@ -82,7 +82,7 @@ describe('pull_request transform', () => {
 
     pullRequestList[1].title = '[TES-123] Branch payload Test';
 
-    const payload = {
+    const fixture = {
       pull_request: pullRequestList[1],
       repository: {
         id: 1234568,

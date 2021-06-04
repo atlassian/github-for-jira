@@ -8,23 +8,21 @@ describe('GitHub Actions', () => {
   describe('Create Branch', () => {
     it('should update Jira issue with link to a branch on GitHub', async () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const payload = require('../fixtures/branch-basic.json');
+      const fixture = require('../fixtures/branch-basic.json');
 
-      const jiraApi = td.api(process.env.ATLASSIAN_URL);
-      const githubApi = td.api('https://api.github.com');
 
       const ref = 'TES-123-test-ref';
       const sha = 'test-branch-ref-sha';
 
-      td.when(githubApi.get(`/repos/test-repo-owner/test-repo-name/git/refs/heads/${ref}`))
-        .thenReturn({
+      githubNock.get(`/repos/test-repo-owner/test-repo-name/git/refs/heads/${ref}`)
+        .reply(200, {
           ref: 'refs/heads/test-ref',
           object: {
             sha,
           },
         });
-      td.when(githubApi.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`))
-        .thenReturn({
+      githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
+        .reply(200, {
           commit: {
             author: {
               name: 'test-branch-author-name',
@@ -35,11 +33,8 @@ describe('GitHub Actions', () => {
           html_url: `test-repo-url/commits/${sha}`,
         });
 
-      Date.now = jest.fn(() => 12345678);
 
-      await app.receive(payload);
-
-      td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+      jiraNock.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
         repositories: [
           {
@@ -74,35 +69,39 @@ describe('GitHub Actions', () => {
         properties: {
           installationId: 1234,
         },
-      }));
+      }).reply(200);
+
+      Date.now = jest.fn(() => 12345678);
+
+      await expect(app.receive(fixture)).toResolve();
     });
+
     it('should not update Jira issue if there are no issue Keys in the branch name', async () => {
-      const payload = require('../fixtures/branch-no-issues.json');
+      const fixture = require('../fixtures/branch-no-issues.json');
       const getLastCommit = jest.fn();
 
-      await app.receive(payload);
+      await expect(app.receive(fixture)).toResolve();
       expect(getLastCommit).not.toBeCalled();
     });
 
     it('should exit early if ref_type is not a branch', async () => {
-      const payload = require('../fixtures/branch-invalid-ref_type.json');
+      const fixture = require('../fixtures/branch-invalid-ref_type.json');
       const parseSmartCommit = jest.fn();
 
-      await app.receive(payload);
+      await expect(app.receive(fixture)).toResolve();
       expect(parseSmartCommit).not.toBeCalled();
     });
   });
 
   describe('delete a branch', () => {
     it('should call the devinfo delete API when a branch is deleted', async () => {
-      const payload = require('../fixtures/branch-delete.json');
-
-      const jiraApi = td.api(process.env.ATLASSIAN_URL);
+      const fixture = require('../fixtures/branch-delete.json');
+      jiraNock
+        .delete('/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref?_updateSequenceId=12345678')
+        .reply(200);
 
       Date.now = jest.fn(() => 12345678);
-      await app.receive(payload);
-
-      td.verify(jiraApi.delete('/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref?_updateSequenceId=12345678'));
+      await expect(app.receive(fixture)).toResolve();
     });
   });
 });
