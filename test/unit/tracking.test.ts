@@ -2,6 +2,7 @@ import url from "url";
 
 import crypto from "crypto";
 import { Action, ActionType } from "../../src/proto/v0/action";
+import nock from "nock";
 
 
 describe("Hydro Gateway Protobuf Submissions", () => {
