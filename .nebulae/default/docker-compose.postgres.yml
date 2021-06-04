@@ -1,0 +1,21 @@
+version: "3"
+services:
+  microservice:
+    environment:
+      PG_DATABASE_HOST: "nebulae.postgres-db.database"
+      PG_DATABASE_PASSWORD: "nebulae.postgres-db.database.password"
+      PG_DATABASE_PORT: "5432"
+      PG_DATABASE_READPASSWORD: "nebulae.postgres-db.database.password"
+      PG_DATABASE_READROLE: "nebulae.postgres-db.database.username"
+      PG_DATABASE_READURL: "postgres://nebulae.postgres-db.database.username:nebulae.postgres-db.database.password@nebulae.postgres-db.database:5432/nebulae.postgres-db.database"
+      PG_DATABASE_ROLE: "nebulae.postgres-db.database.username"
+      PG_DATABASE_SCHEMA: "nebulae.postgres-db.database"
+      PG_DATABASE_URL: "postgres://nebulae.postgres-db.database.username:nebulae.postgres-db.database.password@nebulae.postgres-db.database:5432/nebulae.postgres-db.database"
+    depends_on:
+     - "nebulae.postgres-db.database"
+  nebulae.postgres-db.database:
+    image: "postgres:9.6.12"
+    environment:
+      POSTGRES_DB: "nebulae.postgres-db.database"
+      POSTGRES_PASSWORD: "nebulae.postgres-db.database.password"
+      POSTGRES_USER: "nebulae.postgres-db.database.username"

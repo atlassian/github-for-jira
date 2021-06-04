@@ -1,0 +1,15 @@
+version: "3"
+services:
+  platform-statsd:
+    ports:
+     - "8088"
+     - "8125"
+  microservice:
+    ports:
+     - "64546:8080"
+  nebulae.postgres-db.database:
+    ports:
+     - "5432"
+  nebulae.redis.bottleneck:
+    ports:
+     - "6379"

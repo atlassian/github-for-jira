@@ -1,0 +1,17 @@
+configuration:
+  id: "f5246fc3-3c5e-4306-9ec1-fa3bcddcdbd8"
+  name: "default"
+  entryPoint:
+    hostname: "microservice"
+    port: 8080
+  outputDirectory: "file:///Users/rrathbone/atlassian/jira/.nebulae/default/"
+  projectName: "github-for-jira-default-f5246fc3"
+  networkName: "github-for-jira-default-f5246fc3_default"
+  docker:
+    downTimeout: 0
+dockerComposeFiles:
+ - "file:///Users/rrathbone/atlassian/jira/.nebulae/default/docker-compose.user-containers.yml"
+ - "file:///Users/rrathbone/atlassian/jira/.nebulae/default/docker-compose.postgres.yml"
+ - "file:///Users/rrathbone/atlassian/jira/.nebulae/default/docker-compose.redis.yml"
+ - "file:///Users/rrathbone/atlassian/jira/.nebulae/default/docker-compose.statsd.yml"
+ - "file:///Users/rrathbone/atlassian/jira/.nebulae/default/docker-compose.ports.yml"

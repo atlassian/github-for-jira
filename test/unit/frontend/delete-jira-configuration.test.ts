@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import testTracking from '../../setup/tracking';
+import nock from 'nock';
 
 describe('DELETE /jira/configuration', () => {
   let installation;
