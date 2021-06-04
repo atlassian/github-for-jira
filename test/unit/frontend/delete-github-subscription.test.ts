@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
+import testTracking from '../../setup/tracking';
+import nock from 'nock';
 
 describe('POST /github/subscription', () => {
   let installation;
@@ -13,7 +14,7 @@ describe('POST /github/subscription', () => {
     subscription = {
       githubInstallationId: 15,
       jiraHost: 'https://test-host.jira.com',
-      destroy: jest.fn().mockResolvedValue( undefined),
+      destroy: jest.fn().mockResolvedValue(undefined),
     };
 
     installation = {
@@ -26,19 +27,26 @@ describe('POST /github/subscription', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    td.when(models.Subscription.getSingleInstallation(subscription.jiraHost, subscription.githubInstallationId))
+    td.when(
+      models.Subscription.getSingleInstallation(
+        subscription.jiraHost,
+        subscription.githubInstallationId,
+      ),
+    )
       // Allows us to modify subscription before it's finally called
       .thenDo(async () => subscription);
     td.when(models.Installation.getForHost(installation.jiraHost))
       // Allows us to modify installation before it's finally called
       .thenDo(async () => installation);
 
-    const tracking = (await import('../../../src/tracking'));
+    const tracking = await import('../../../src/tracking');
     isDisabled = tracking.isDisabled;
     setIsDisabled = tracking.setIsDisabled;
-    deleteGitHubSubscription = (await import('../../../src/frontend/delete-github-subscription')).default;
+    deleteGitHubSubscription = (
+      await import('../../../src/frontend/delete-github-subscription')
+    ).default;
 
-    origDisabledState = isDisabled()
+    origDisabledState = isDisabled();
     setIsDisabled(false);
   });
 
@@ -71,11 +79,13 @@ describe('POST /github/subscription', () => {
     const login = 'test-user';
     const listInstallations = jest.fn().mockResolvedValue({
       data: {
-        installations: [{
-          id: subscription.githubInstallationId,
-          target_type: 'User',
-          account: { login },
-        }],
+        installations: [
+          {
+            id: subscription.githubInstallationId,
+            target_type: 'User',
+            account: { login },
+          },
+        ],
       },
     });
     const getAuthenticated = jest.fn().mockResolvedValue({ data: { login } });
@@ -106,28 +116,30 @@ describe('POST /github/subscription', () => {
     expect(res.sendStatus).toHaveBeenCalledWith(401);
   });
 
-  test.each([
-    ['installationId'],
-    ['jiraHost'],
-  ])('missing body.%s', async (property) => {
-    const req = {
-      session: { githubToken: 'example-token' },
-      body: {
-        installationId: 'an installation id',
-        jiraHost: 'https://jira-host',
-      },
-    };
-    delete req.body[property];
+  test.each([['installationId'], ['jiraHost']])(
+    'missing body.%s',
+    async (property) => {
+      const req = {
+        session: { githubToken: 'example-token' },
+        body: {
+          installationId: 'an installation id',
+          jiraHost: 'https://jira-host',
+        },
+      };
+      delete req.body[property];
 
-    const res = {
-      status: jest.fn(),
-      json: jest.fn(),
-    };
+      const res = {
+        status: jest.fn(),
+        json: jest.fn(),
+      };
 
-    await deleteGitHubSubscription(req as any, res as any);
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json.mock.calls[0]).toMatchSnapshot([{
-      err: expect.any(String),
-    }]);
-  });
+      await deleteGitHubSubscription(req as any, res as any);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json.mock.calls[0]).toMatchSnapshot([
+        {
+          err: expect.any(String),
+        },
+      ]);
+    },
+  );
 });

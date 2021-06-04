@@ -4,6 +4,7 @@ import {
   commitsWithLastCursor,
   getDefaultBranch,
 } from '../../fixtures/api/graphql/commit-queries';
+import nock from 'nock';
 
 describe('sync/commits', () => {
   let jiraHost;
