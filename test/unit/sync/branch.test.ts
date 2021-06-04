@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import parseSmartCommit from '../../../src/transforms/smart-commit';
 import {branchesNoLastCursor, branchesWithLastCursor} from '../../fixtures/api/graphql/branch-queries';
+import nock from 'nock';
 
 describe('sync/branches', () => {
   let jiraHost;

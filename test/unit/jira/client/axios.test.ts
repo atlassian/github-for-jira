@@ -1,3 +1,4 @@
+import nock from 'nock';
 
 describe('Jira axios instance', () => {
   let getJiraAxios;
