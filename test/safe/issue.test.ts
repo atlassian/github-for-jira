@@ -1,20 +1,25 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { createApp } from "../utils/probot";
+import { createApp } from '../utils/probot';
 
 describe('GitHub Actions', () => {
   let app;
-  beforeEach(async () => app = await createApp())
+  beforeEach(async () => (app = await createApp()));
 
   describe('issue', () => {
     describe('created', () => {
       it('should update the GitHub issue with a linked Jira ticket', async () => {
         const fixture = require('../fixtures/issue-basic.json');
 
+        jiraNock
+          .get('/rest/api/latest/issue/TEST-123?fields=summary')
+          .reply(200);
 
-
-
-        td.when(jiraApi.get('/rest/api/latest/issue/TEST-123?fields=summary'))
-          .thenReturn({
+        githubNock
+          .patch('/repos/test-repo-owner/test-repo-name/issues/123456789', {
+            body: 'Test example issue with linked Jira issue: [TEST-123]\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
+            id: 'test-issue-id',
+          })
+          .reply(200, {
             key: 'TEST-123',
             fields: {
               summary: 'Example Issue',
@@ -22,11 +27,6 @@ describe('GitHub Actions', () => {
           });
 
         await expect(app.receive(fixture)).toResolve();
-
-        td.verify(githubApi.patch('/repos/test-repo-owner/test-repo-name/issues/123456789', {
-          body: 'Test example issue with linked Jira issue: [TEST-123]\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123',
-          id: 'test-issue-id',
-        }));
       });
 
       it('should not break if the issue has a null body', async () => {
