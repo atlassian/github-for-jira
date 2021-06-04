@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { mocked } from 'ts-jest/utils';
+import { Installation } from '../../../src/models';
 import testTracking from '../../setup/tracking';
+
+jest.mock('../../../src/models');
 
 describe('Webhook: /events/installed', () => {
   let installation;
@@ -23,9 +27,7 @@ describe('Webhook: /events/installed', () => {
       subscriptions: jest.fn().mockResolvedValue([]),
     };
 
-    td.when(models.Installation.install(td.matchers.anything()))
-      // Allows us to modify installation before it's finally called
-      .thenDo(async () => installation);
+    mocked(Installation.install).mockResolvedValue(installation);
 
     install = (await import('../../../src/jira/install')).default;
   });

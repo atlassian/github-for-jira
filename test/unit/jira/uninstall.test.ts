@@ -1,14 +1,18 @@
+import { mocked } from 'ts-jest/utils';
+import { Subscription } from '../../../src/models';
 import testTracking from '../../setup/tracking';
+
+jest.mock('../../../src/models');
 
 describe('Webhook: /events/uninstalled', () => {
   let installation;
-  let subscriptions;
+  let subscription;
   let uninstall;
 
   beforeEach(async () => {
     const { getHashedKey } = await import('../../../src/models/installation');
 
-    subscriptions = [
+    subscription = [
       {
         gitHubInstallationId: 10,
         jiraHost: 'https://test-host.jira.com',
@@ -27,15 +31,13 @@ describe('Webhook: /events/uninstalled', () => {
         .fn()
         .mockName('uninstall')
         .mockResolvedValue(installation),
-      subscriptions: jest
+      subscription: jest
         .fn()
-        .mockName('subscriptions')
-        .mockResolvedValue(subscriptions),
+        .mockName('subscription')
+        .mockResolvedValue(subscription),
     };
 
-    td.when(models.Subscription.getAllForHost(installation.jiraHost))
-      // Allows us to modify subscriptions before it's finally called
-      .thenDo(async () => subscriptions);
+    mocked(Subscription.getAllForHost).mockResolvedValue(subscription);
 
     uninstall = (await import('../../../src/jira/uninstall')).default;
   });
@@ -49,16 +51,16 @@ describe('Webhook: /events/uninstalled', () => {
     await uninstall(req, res);
     expect(res.sendStatus).toHaveBeenCalledWith(204);
     expect(installation.uninstall).toHaveBeenCalled();
-    expect(subscriptions[0].uninstall).toHaveBeenCalled();
+    expect(subscription[0].uninstall).toHaveBeenCalled();
   });
 
-  it('Existing Installation, no Subscriptions', async () => {
+  it('Existing Installation, no Subscription', async () => {
     await testTracking();
 
     const req = { log: { info: jest.fn() } };
     const res = { locals: { installation }, sendStatus: jest.fn() };
 
-    subscriptions = [];
+    subscription = [];
     await uninstall(req, res);
     expect(res.sendStatus).toHaveBeenCalledWith(204);
     expect(installation.uninstall).toHaveBeenCalled();
