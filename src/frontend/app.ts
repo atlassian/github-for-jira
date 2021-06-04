@@ -196,8 +196,9 @@ export default (octokitApp: App): Express => {
   oauth.addRoutes(app);
 
   // Error catcher - Batter up!
-  app.use((err: Error, _: Request, res: Response, next: NextFunction) => {
-    if (process.env.NODE_ENV === 'development') {
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    if (process.env.NODE_ENV !== 'production') {
+      req.log.error(err, `Error in frontend app.`);
       return next(err);
     }
 
