@@ -1,4 +1,3 @@
-import nock from "nock";
 import { isAdmin } from "../../../src/frontend/github-client-middleware";
 import GitHubAPI from "../../../src/config/github-api";
 
@@ -10,7 +9,7 @@ describe("GitHub client middleware", () => {
   });
 
   it("isAdmin returns true if user is admin of a given organization", async () => {
-    nock("https://api.github.com")
+    githubNock
       .get("/orgs/test-org/memberships/test-user")
       .reply(200, { role: "admin" });
 
@@ -24,7 +23,7 @@ describe("GitHub client middleware", () => {
   });
 
   it("isAdmin returns false if user is not an admin of a given organization", async () => {
-    nock("https://api.github.com")
+    githubNock
       .get("/orgs/test-org/memberships/test-user")
       .reply(200, { role: "member" });
 
