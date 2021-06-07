@@ -1,132 +1,140 @@
-import fs from "fs";
-import path from "path";
-import getJiraUtil from "../../../src/jira/util";
-import { getJiraId } from "../../../src/jira/util/id";
+import fs from 'fs';
+import path from 'path';
+import getJiraUtil from '../../../src/jira/util';
+import { getJiraId } from '../../../src/jira/util/id';
 
-describe("Jira util", () => {
+describe('Jira util', () => {
   function loadFixture(name) {
-    const base = path.join(__dirname, "../../fixtures/text", name);
-    const source = fs.readFileSync(`${base}.source.md`).toString("utf-8").trim();
-    const rendered = fs.readFileSync(`${base}.rendered.md`).toString("utf-8").trim();
+    const base = path.join(__dirname, '../../fixtures/text', name);
+    const source = fs
+      .readFileSync(`${base}.source.md`)
+      .toString('utf-8')
+      .trim();
+    const rendered = fs
+      .readFileSync(`${base}.rendered.md`)
+      .toString('utf-8')
+      .trim();
     return { source, rendered };
   }
 
-  describe("#addJiraIssueLinks", () => {
+  describe('#addJiraIssueLinks', () => {
     let util;
     let jiraClient;
 
     beforeEach(() => {
       jiraClient = {
-        baseURL: "http://example.com",
+        baseURL: 'http://example.com',
         issues: {
-          get: jest.fn()
-        }
+          get: jest.fn(),
+        },
       };
 
       util = getJiraUtil(jiraClient);
     });
 
-    it("should handle multiple Jira references appropriately", () => {
-      const { source, rendered } = loadFixture("multiple-links");
+    it('should handle multiple Jira references appropriately', () => {
+      const { source, rendered } = loadFixture('multiple-links');
+
       const issues = [
         {
-          key: "TEST-2019",
+          key: 'TEST-2019',
           fields: {
-            summary: "First Issue"
-          }
+            summary: 'First Issue',
+          },
         },
         {
-          key: "TEST-2020",
+          key: 'TEST-2020',
           fields: {
-            summary: "Second Issue"
-          }
+            summary: 'Second Issue',
+          },
         },
         {
-          key: "TEST-2021",
+          key: 'TEST-2021',
           fields: {
-            summary: "Third Issue"
-          }
-        }
+            summary: 'Third Issue',
+          },
+        },
       ];
 
       const result = util.addJiraIssueLinks(source, issues);
+
       expect(result).toBe(rendered);
     });
 
-    it("should linkify Jira references to valid issues", () => {
-      const { source, rendered } = loadFixture("existing-reference-link");
+    it('should linkify Jira references to valid issues', () => {
+      const { source, rendered } = loadFixture('existing-reference-link');
       const issues = [
         {
-          key: "TEST-2019",
+          key: 'TEST-2019',
           fields: {
-            summary: "Example Issue"
-          }
-        }
+            summary: 'Example Issue',
+          },
+        },
       ];
 
       const result = util.addJiraIssueLinks(source, issues);
       expect(result).toBe(rendered);
     });
 
-    it("should not add reference links if already present", () => {
-      const { source, rendered } = loadFixture("previously-referenced");
+    it('should not add reference links if already present', () => {
+      const { source, rendered } = loadFixture('previously-referenced');
       const issues = [
         {
-          key: "TEST-2019",
+          key: 'TEST-2019',
           fields: {
-            summary: "Example Issue"
-          }
-        }
+            summary: 'Example Issue',
+          },
+        },
       ];
       const result = util.addJiraIssueLinks(source, issues);
       expect(result).toBe(rendered);
     });
 
-    it("should not linkify Jira references to invalid issues", () => {
-      const text = "Should not linkify [TEST-123] as a link";
+    it('should not linkify Jira references to invalid issues', () => {
+      const text = 'Should not linkify [TEST-123] as a link';
       const issues = [];
 
       const result = util.addJiraIssueLinks(text, issues);
 
-      expect(result).toBe("Should not linkify [TEST-123] as a link");
+      expect(result).toBe('Should not linkify [TEST-123] as a link');
     });
 
-    it("should linkify only Jira references to valid issues", () => {
-      const { source, rendered } = loadFixture("valid-and-invalid-issues");
+    it('should linkify only Jira references to valid issues', () => {
+      const { source, rendered } = loadFixture('valid-and-invalid-issues');
       const issues = [
         {
-          key: "TEST-200",
+          key: 'TEST-200',
           fields: {
-            summary: "Another Example Issue"
-          }
-        }
+            summary: 'Another Example Issue',
+          },
+        },
       ];
 
       const result = util.addJiraIssueLinks(source, issues);
       expect(result).toBe(rendered);
     });
 
-    it("should only pull issue keys from reference links", () => {
-      const { source, rendered } = loadFixture("find-existing-references");
+    it('should only pull issue keys from reference links', () => {
+      const { source, rendered } = loadFixture('find-existing-references');
       const issues = [
         {
-          key: "TEST-2019",
+          key: 'TEST-2019',
           fields: {
-            summary: "First Issue"
-          }
+            summary: 'First Issue',
+          },
         },
         {
-          key: "TEST-2020",
+          key: 'TEST-2020',
           fields: {
-            summary: "Second Issue"
-          }
+            summary: 'Second Issue',
+          },
         },
         {
-          key: "TEST-2021",
+          key: 'TEST-2021',
           fields: {
-            summary: "Third Issue"
-          }
-        }
+            summary: 'Third Issue',
+          },
+        },
       ];
 
       const result = util.addJiraIssueLinks(source, issues);
@@ -135,12 +143,18 @@ describe("Jira util", () => {
     });
   });
 
-  describe("#getJiraId", () => {
-    it("should work", () => {
-      expect(getJiraId("AP-3-large_push")).toEqual("AP-3-large_push");
-      expect(getJiraId("AP-3-large_push/foobar")).toEqual("~41502d332d6c617267655f707573682f666f6f626172");
-      expect(getJiraId("feature-something-cool")).toEqual("feature-something-cool");
-      expect(getJiraId("feature/something-cool")).toEqual("~666561747572652f736f6d657468696e672d636f6f6c");
+  describe('#getJiraId', () => {
+    it('should work', () => {
+      expect(getJiraId('AP-3-large_push')).toEqual('AP-3-large_push');
+      expect(getJiraId('AP-3-large_push/foobar')).toEqual(
+        '~41502d332d6c617267655f707573682f666f6f626172',
+      );
+      expect(getJiraId('feature-something-cool')).toEqual(
+        'feature-something-cool',
+      );
+      expect(getJiraId('feature/something-cool')).toEqual(
+        '~666561747572652f736f6d657468696e672d636f6f6c',
+      );
     });
   });
 });
