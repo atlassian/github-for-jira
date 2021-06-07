@@ -3,7 +3,6 @@ module.exports = {
   setupFilesAfterEnv: [
     "<rootDir>/test/setup/setup.ts"
   ],
-  globalTeardown: "<rootDir>/test/setup/teardown.ts",
   transform: {
     "^.+\\.tsx?$": "ts-jest"
   },
