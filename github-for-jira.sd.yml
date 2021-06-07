@@ -15,6 +15,8 @@ compose:
 links:
   healthcheck:
     uri: healthcheck
+  deepcheck:
+    uri: deepcheck
   source:
     url: git@bitbucket.org:atlassian/github-jira-integration.git
 
@@ -47,6 +49,7 @@ config:
     # APP_ID: Id of GitHub app
     # GITHUB_CLIENT_SECRET: GitHub app's client secret
     # PRIVATE_KEY: contents of your (*.pem) generated in the GitHub app
+    # ATLASSIAN_URL: Jira instance url
 
 environmentOverrides:
   ddev:
@@ -69,7 +72,6 @@ environmentOverrides:
         LOG_LEVEL: debug
         # * Commented out env vars are to be saved in secrets
         # WEBHOOK_SECRET: development
-        # ATLASSIAN_URL: Jira instance url
   staging:
     config:
       environmentVariables:
