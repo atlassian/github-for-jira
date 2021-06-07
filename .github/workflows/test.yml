@@ -61,6 +61,7 @@ jobs:
         POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
       run: npm test
     - name: Deploy to Micros
+      if: ${{ github.ref == 'refs/heads/micros' }}
       env:
         BITBUCKET_API_USER: ${{ secrets.BITBUCKET_API_USER }}
         BITBUCKET_API_PASSWORD: ${{ secrets.BITBUCKET_API_PASSWORD }}
