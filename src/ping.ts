@@ -1,13 +1,10 @@
 import Redis from 'ioredis';
 import getRedisInfo from './config/redis-info';
-import {sequelize} from './models';
+import {sequelize} from './models/sequelize';
 import {Application} from 'probot';
-
 
 /**
  * Create a /_ping endpoint
- *
- * @param {import('probot').Application} robot - The probot app
  */
 export default (robot: Application) => {
   const app = robot.route('/');

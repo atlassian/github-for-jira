@@ -1,7 +1,7 @@
 module.exports = {
   testEnvironment: "node",
   setupFilesAfterEnv: [
-    "<rootDir>/test/setup/startup.ts"
+    "<rootDir>/test/setup/setup.ts"
   ],
   globalTeardown: "<rootDir>/test/setup/teardown.ts",
   transform: {
