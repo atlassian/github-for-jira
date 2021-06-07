@@ -67,16 +67,19 @@ const parseStatsdMessage = (stastsdMessage) => {
   };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare namespace jest {
-  // noinspection JSUnusedGlobalSymbols
-  interface Matchers<R> {
-    toHaveSentMetrics(...expectedMetrics: any[]): R;
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace jest {
+    interface Matchers<R> {
+      toHaveSentMetrics(...expectedMetrics: any[]): R;
+    }
   }
 }
 
 // TODO: add better typing for metric
 expect.extend({
+  // TODO: expect needs the first argument to be what's in the `expect(value)`
+  // TODO: this doesn't work, probably something to do with statsd not keeping tabs when testing?
   toHaveSentMetrics(...expectedMetrics: any[]) {
     statsd.mockBuffer = [];
     const actualMetrics = statsd.mockBuffer.map((message) => parseStatsdMessage(message));
