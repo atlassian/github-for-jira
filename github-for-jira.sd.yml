@@ -31,6 +31,12 @@ resources:
     name: database
   - type: globaledge
     name: ingress
+    attributes:
+      routes:
+        - match:
+            prefix: /
+            ip_whitelist:
+              - public
 
 config:
   environmentVariables:
@@ -40,18 +46,22 @@ config:
 
 environmentOverrides:
   ddev:
+    loadBalancer:
+      type: ELB # needed for remote debugging, default is "ALB"
     compose:
       microservice:
         ports:
           - 8080:8080
-          - 9229:9229 # node remote debugging port
+          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
+    links:
+      remoteDebug: true
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
         WEBHOOK_SECRET: development
         WEBHOOK_PROXY_URL: https://github-for-jira.dev.services.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-dev
-        NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:9229"
+        NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:5005"
         TUNNEL_PORT: "8080"
         PORT: "8080"
         TUNNEL_SUBDOMAIN: github-for-jira
@@ -71,5 +81,4 @@ scaling:
   max: 1
   instanceCount: 1
   instance: t3.small
-
 
