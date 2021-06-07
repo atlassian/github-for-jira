@@ -46,7 +46,7 @@ describe("#verifyJiraMiddleware", () => {
         session: {
           jiraHost: subscription.jiraHost
         },
-        addLogFields: () => undefined
+        addLogFields: jest.fn()
       };
     };
 
@@ -121,7 +121,7 @@ describe("#verifyJiraMiddleware", () => {
           xdm_e: jiraHost,
           jwt: encodedJwt
         },
-        addLogFields: () => undefined
+        addLogFields: jest.fn()
       };
     };
 

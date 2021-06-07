@@ -11,6 +11,6 @@ export default ({ data, opts }: { data: any, opts?: any }) => {
   return {
     data,
     opts: Object.assign(defaultOpts, opts || {}),
-    sentry: { setUser: () => undefined }
+    sentry: { setUser: jest.fn() }
   };
 };

@@ -51,7 +51,7 @@ describe("enhanceOctokit", () => {
 
       it.skip("sends request timing", async () => {
         await expect(
-          await octokit.activity.listPublicEvents().catch(() => undefined)
+          await octokit.activity.listPublicEvents().catch(jest.fn())
         ).toHaveBeenCalled();
         // TODO: reoslve Property 'toHaveSentMetrics' does not exist on type 'JestMatchers<any>'.
         // .toHaveSentMetrics({
@@ -68,7 +68,7 @@ describe("enhanceOctokit", () => {
       });
 
       it("logs request timing", async () => {
-        await octokit.activity.listPublicEvents().catch(() => undefined);
+        await octokit.activity.listPublicEvents().catch(jest.fn());
 
         // TODO: fix this test to not rely on logger output...
         /*const debugLog = log.debugValues[0];

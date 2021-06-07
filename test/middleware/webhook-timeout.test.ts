@@ -5,16 +5,15 @@ describe("Webhook Timeout", () => {
 
   it("sets timedout context with milliseconds", async () => {
     const context: any = {};
-    await webhookTimeout(async () => {
-      await sleep(3);
-    }, 1)(context);
-    expect(context.timedout).toBeGreaterThan(0);
-    expect(context.timedout).toBeLessThan(100);
+    const timeout = webhookTimeout(() => sleep(300), 100);
+    await timeout(context);
+    expect(context.timedout).toBeGreaterThanOrEqual(100);
+    expect(context.timedout).toBeLessThan(300);
   });
 
   it("clears timeout if successful", async () => {
     const context: any = {};
-    await webhookTimeout(() => undefined, 1)(context);
+    await webhookTimeout(jest.fn(), 1)(context);
     await sleep(3);
     expect(context.timedout).toBeUndefined();
   });
@@ -31,4 +30,4 @@ describe("Webhook Timeout", () => {
   });
 });
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
