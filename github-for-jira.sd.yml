@@ -16,7 +16,7 @@ links:
   healthcheck:
     uri: healthcheck
   deepcheck:
-    url: deepcheck
+    uri: deepcheck
   source:
     url: git@bitbucket.org:atlassian/github-jira-integration.git
 
