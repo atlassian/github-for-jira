@@ -18,8 +18,8 @@
     "build:release": "tsc -p ./tsconfig.release.json",
     "build:watch": "tsc -w -p ./tsconfig.json",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "jest --runInBand --detectOpenHandles --coverage",
-    "test:watch": "jest --runInBand --detectOpenHandles --watchAll",
+    "test": "jest --runInBand --forceExit --coverage",
+    "test:watch": "jest --runInBand --watchAll",
     "prepare": "husky install"
   },
   "dependencies": {

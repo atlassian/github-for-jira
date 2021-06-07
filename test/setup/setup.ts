@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import "./matchers/to-have-sent-metrics";
 import "./matchers/nock";
 import "./matchers/to-promise";
+import statsd from "../../src/config/statsd";
+import { sequelize } from "../../src/models/sequelize";
 
 resetEnvVars();
 
@@ -57,7 +59,17 @@ afterEach(() => {
   expect(nock).toBeDone();
 });
 
-afterEach(async () => {
+afterEach(() => {
   nock.cleanAll(); // removes HTTP mocks
   jest.resetAllMocks(); // Removes jest mocks
 });
+
+afterAll(async () => {
+  // TODO: probably missing things like redis and other things that need to close down
+  // Close connection when tests are done
+  await sequelize.close();
+  // stop only if setup did run. If using jest --watch and no tests are matched
+  // we need to not execute the require() because it will fail
+  // TODO: fix wrong typing for statsd
+  statsd.close(() => undefined);
+})
