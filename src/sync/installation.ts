@@ -1,19 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, {Repositories, SyncStatus} from "../models/subscription";
-import {Subscription} from '../models';
-import getJiraClient from '../jira/client';
-import {getRepositorySummary} from './jobs';
-import enhanceOctokit from '../config/enhance-octokit';
-import statsd from '../config/statsd';
-import getPullRequests from './pull-request';
-import getBranches from './branches';
-import getCommits from './commits';
-import {Application} from 'probot';
+import SubscriptionClass, { Repositories, SyncStatus } from "../models/subscription";
+import { Subscription } from "../models";
+import getJiraClient from "../jira/client";
+import { getRepositorySummary } from "./jobs";
+import enhanceOctokit from "../config/enhance-octokit";
+import statsd from "../config/statsd";
+import getPullRequests from "./pull-request";
+import getBranches from "./branches";
+import getCommits from "./commits";
+import { Application } from "probot";
 
 const tasks = {
   pull: getPullRequests,
   branch: getBranches,
-  commit: getCommits,
+  commit: getCommits
 };
 const taskTypes = Object.keys(tasks);
 
@@ -27,21 +27,21 @@ const updateNumberOfReposSynced = async (repos: Repositories, subscription: Subs
       branchStatus,
       commitStatus
     } = repos[id];
-    return pullStatus === 'complete' && branchStatus === 'complete' && commitStatus === 'complete';
+    return pullStatus === "complete" && branchStatus === "complete" && commitStatus === "complete";
   });
 
-  await subscription.update({repoSyncState: {numberOfSyncedRepos: syncedRepos.length}});
+  await subscription.update({ repoSyncState: { numberOfSyncedRepos: syncedRepos.length } });
 };
 
-export const sortedRepos = (repos: Repositories) => Object.entries(repos).sort((a, b) => b[1].repository.updated_at - a[1].repository.updated_at);
+export const sortedRepos = (repos: Repositories) => Object.entries(repos).sort((a, b) => new Date(b[1].repository.updated_at).getTime() - new Date(a[1].repository.updated_at).getTime());
 
 // TODO: type Task
 const getNextTask = async (subscription: SubscriptionClass) => {
-  const {repos} = subscription.repoSyncState;
+  const { repos } = subscription.repoSyncState;
   await updateNumberOfReposSynced(repos, subscription);
 
   for (const [repositoryId, repoData] of sortedRepos(repos)) {
-    const task = taskTypes.find(taskType => repoData[`${taskType}Status`] !== 'complete');
+    const task = taskTypes.find(taskType => repoData[`${taskType}Status`] !== "complete");
     if (!task) continue;
     const {
       repository,
@@ -51,7 +51,7 @@ const getNextTask = async (subscription: SubscriptionClass) => {
       task,
       repositoryId,
       repository,
-      cursor,
+      cursor
     };
   }
   return undefined;
@@ -70,11 +70,11 @@ const updateJobStatus = async (app: Application, queues, jiraClient, job, edges,
 
   // handle promise rejection when an org is removed during a sync
   if (subscription == null) {
-    app.log('Organization has been deleted. Other active syncs will continue.');
+    app.log("Organization has been deleted. Other active syncs will continue.");
     return;
   }
 
-  const status = edges.length > 0 ? 'pending' : 'complete';
+  const status = edges.length > 0 ? "pending" : "complete";
   app.log(`Updating job status for installationId=${installationId}, repositoryId=${repositoryId}, task=${task}, status=${status}`);
   subscription.set({
     repoSyncState: {
@@ -107,11 +107,11 @@ const updateJobStatus = async (app: Application, queues, jiraClient, job, edges,
       attempts: 3,
       delay,
       removeOnComplete,
-      removeOnFail,
+      removeOnFail
     });
     // no more data (last page was processed of this job type)
   } else if (!(await getNextTask(subscription))) {
-    subscription.set({syncStatus: SyncStatus.COMPLETE});
+    subscription.set({ syncStatus: SyncStatus.COMPLETE });
     let message = `Sync status for installationId=${installationId} is complete`;
     if (job.data.startTime !== undefined) {
       const endTime = Date.now();
@@ -120,14 +120,14 @@ const updateJobStatus = async (app: Application, queues, jiraClient, job, edges,
 
       // full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
       // startTime will be passed in when this sync job is queued from the discovery
-      statsd.histogram('full_sync', timeDiff);
+      statsd.histogram("full_sync", timeDiff);
     }
     app.log(message);
 
     try {
       await jiraClient.devinfo.migration.complete();
     } catch (err) {
-      app.log.warn(err, 'Error sending the `complete` event to JIRA');
+      app.log.warn(err, "Error sending the `complete` event to JIRA");
     }
   } else {
     app.log(`Sync status for installationId=${installationId} is pending`);
@@ -150,7 +150,8 @@ async function getEnhancedGitHub(app: Application, installationId) {
   return github;
 }
 
-export const processInstallation = (app: Application, queues) => async function (job) {
+// TODO: type queues
+export const processInstallation = (app: Application, queues) => async (job): Promise<void> => {
   const {
     installationId,
     jiraHost
@@ -164,6 +165,7 @@ export const processInstallation = (app: Application, queues) => async function 
   app.log(`Starting job for installationId=${installationId}`);
 
   const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
+  // TODO: should this reject instead? it's just ignoring an error
   if (!subscription) return;
 
   const jiraClient = await getJiraClient(subscription.jiraHost, installationId, app.log);
@@ -171,33 +173,34 @@ export const processInstallation = (app: Application, queues) => async function 
 
   const nextTask = await getNextTask(subscription);
   if (!nextTask) {
-    await subscription.update({syncStatus: 'COMPLETE'});
+    await subscription.update({ syncStatus: "COMPLETE" });
     return;
   }
 
-  await subscription.update({syncStatus: 'ACTIVE'});
+  await subscription.update({ syncStatus: "ACTIVE" });
 
   const {
     task,
     repositoryId,
     cursor
   } = nextTask;
-  let {repository} = nextTask;
+  let { repository } = nextTask;
   if (!repository) {
     // Old records don't have this info. New ones have it
-    const {data: repo} = await github.request('GET /repositories/:id', {id: repositoryId});
+    const { data: repo } = await github.request("GET /repositories/:id", { id: repositoryId });
     repository = getRepositorySummary(repo);
-    await subscription.update({repoSyncState:{repos:{[repository.id]:{repository:repository}}}});
+    await subscription.update({ repoSyncState: { repos: { [repository.id]: { repository: repository } } } });
   }
   app.log(`Starting task for installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
 
   const processor = tasks[task];
 
+  // TODO: fix this function within function mess
   const pagedProcessor = (perPage) => processor(github, repository, cursor, perPage);
 
   const handleGitHubError = (err) => {
     if (err.errors) {
-      const ignoredErrorTypes = ['MAX_NODE_LIMIT_EXCEEDED'];
+      const ignoredErrorTypes = ["MAX_NODE_LIMIT_EXCEEDED"];
       const notIgnoredError = err.errors.filter(error => !ignoredErrorTypes.includes(error.type)).length;
 
       if (notIgnoredError) {
@@ -229,15 +232,15 @@ export const processInstallation = (app: Application, queues) => async function 
     } = await execute();
     if (jiraPayload) {
       try {
-        await jiraClient.devinfo.repository.update(jiraPayload, {preventTransitions: true});
+        await jiraClient.devinfo.repository.update(jiraPayload, { preventTransitions: true });
       } catch (err) {
         if (err.response && err.response.status === 400) {
-          job.sentry.setExtra('Response body', err.response.data.errorMessages);
-          job.sentry.setExtra('Jira payload', err.response.data.jiraPayload);
+          job.sentry.setExtra("Response body", err.response.data.errorMessages);
+          job.sentry.setExtra("Jira payload", err.response.data.jiraPayload);
         }
 
         if (err.request) {
-          job.sentry.setExtra('Request', {
+          job.sentry.setExtra("Request", {
             host: err.request.domain,
             path: err.request.path,
             method: err.request.method
@@ -245,10 +248,10 @@ export const processInstallation = (app: Application, queues) => async function 
         }
 
         if (err.response) {
-          job.sentry.setExtra('Response', {
+          job.sentry.setExtra("Response", {
             status: err.response.status,
             statusText: err.response.statusText,
-            body: err.response.body,
+            body: err.response.body
           });
         }
 
@@ -257,7 +260,7 @@ export const processInstallation = (app: Application, queues) => async function 
     }
     await updateJobStatus(app, queues, jiraClient, job, edges, task, repositoryId);
   } catch (err) {
-    const rateLimit = +(err.headers && err.headers['x-ratelimit-reset']);
+    const rateLimit = +(err.headers && err.headers["x-ratelimit-reset"]);
     const delay = Math.max(Date.now() - rateLimit * 1000, 0);
     if (delay) { // if not NaN or 0
       app.log(`Delaying job for ${delay}ms installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
@@ -272,7 +275,7 @@ export const processInstallation = (app: Application, queues) => async function 
       });
       return;
     }
-    if (String(err).includes('connect ETIMEDOUT')) {
+    if (String(err).includes("connect ETIMEDOUT")) {
       // There was a network connection issue.
       // Add the job back to the queue with a 5 second delay
       app.log(`ETIMEDOUT error, retrying in 5 seconds: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
@@ -287,7 +290,7 @@ export const processInstallation = (app: Application, queues) => async function 
       });
       return;
     }
-    if (String(err.message).includes('You have triggered an abuse detection mechanism')) {
+    if (String(err.message).includes("You have triggered an abuse detection mechanism")) {
       // Too much server processing time, wait 60 seconds and try again
       app.log(`Abuse detection triggered. Retrying in 60 seconds: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
       const {
@@ -302,7 +305,7 @@ export const processInstallation = (app: Application, queues) => async function 
       return;
     }
     // Checks if parsed error type is NOT_FOUND: https://github.com/octokit/graphql.js/tree/master#errors
-    const isNotFoundError = err.errors && err.errors.filter(error => error.type === 'NOT_FOUND').length;
+    const isNotFoundError = err.errors && err.errors.filter(error => error.type === "NOT_FOUND").length;
     if (isNotFoundError) {
       app.log.info(`Repository deleted after discovery, skipping initial sync: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
 
@@ -311,7 +314,7 @@ export const processInstallation = (app: Application, queues) => async function 
       return;
     }
 
-    await subscription.update({syncStatus: 'FAILED'});
+    await subscription.update({ syncStatus: "FAILED" });
     throw err;
   }
 };

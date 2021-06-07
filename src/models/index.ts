@@ -12,6 +12,7 @@ if (!process.env.STORAGE_SECRET) {
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
+// TODO: config misses timezone config to force to UTC, defaults to local timezone of PST
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const config = require('../../db/config.json')[
   process.env.NODE_ENV || 'development'

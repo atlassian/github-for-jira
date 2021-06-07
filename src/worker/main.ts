@@ -55,6 +55,7 @@ export const queues = {
 Object.keys(queues).forEach(name => {
   const queue = queues[name];
 
+  // TODO: need ability to remove these listeners, especially for testing
   queue.on('active', (job) => {
     app.log.info(`Job started name=${name} id=${job.id}`);
     job.meta_time_start = new Date();

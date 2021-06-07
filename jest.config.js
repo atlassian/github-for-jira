@@ -1,8 +1,8 @@
 module.exports = {
-  testEnvironment: 'node',
+  testEnvironment: "node",
   testTimeout: 30000,
   setupFilesAfterEnv: [
-    "<rootDir>/test/setup/index.ts"
+    "<rootDir>/test/setup/startup.ts"
   ],
   globalTeardown: "<rootDir>/test/setup/teardown.ts",
   transform: {
@@ -14,12 +14,14 @@ module.exports = {
     "js",
     "jsx",
     "json",
-    "node",
+    "node"
   ],
-  testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$',
-  coverageDirectory: 'coverage',
+  testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
+  coverageDirectory: "coverage",
   collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
-    '!src/**/*.d.ts',
+    "src/**/*.{ts,tsx}",
+    "!src/**/*.d.ts"
   ],
+  maxConcurrency: 1,
+  maxWorkers: 1
 };

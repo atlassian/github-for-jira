@@ -5,7 +5,7 @@ import { caching } from "cache-manager";
 
 import configureRobot from "../../src/configure-robot";
 
-export const createApp = async (): Promise<Application> => await configureRobot(new Application({
+export const createApplication = () => new Application({
   app: new App({
     id: 12257,
     privateKey: findPrivateKey()
@@ -17,4 +17,5 @@ export const createApp = async (): Promise<Application> => await configureRobot(
   throttleOptions: {
     enabled: false
   }
-}));
+});
+export const createWebhookApp = async (): Promise<Application> => await configureRobot(createApplication());
