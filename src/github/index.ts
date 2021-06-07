@@ -8,6 +8,7 @@ import { createBranch, deleteBranch } from './branch';
 import webhookTimeout from '../middleware/webhook-timeout';
 
 export default (robot) => {
+  // TODO: Need ability to remove these listeners, especially for testing...
   robot.on('*', (context) => {
     // TODO: update newrelic type to latest version to fix this compilation issue: https://github.com/DefinitelyTyped/DefinitelyTyped/pull/53429
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -3,6 +3,7 @@ import jwt from "atlassian-jwt";
 import { mocked } from "ts-jest/utils";
 import { Installation } from "../../../src/models";
 import verifyJiraMiddleware from "../../../src/frontend/verify-jira-middleware";
+jest.mock("../../../src/models")
 
 describe("#verifyJiraMiddleware", () => {
   let res;
@@ -10,8 +11,27 @@ describe("#verifyJiraMiddleware", () => {
   let installation;
   let subscription;
 
+  const buildRequest = (jiraHost, secret = "secret"): any => {
+    const jwtValue = jwt.encode("test-jwt", secret);
+
+    return {
+      session: {
+        jiraHost: jiraHost
+      },
+      query: {
+        xdm_e: jiraHost,
+        jwt: jwtValue
+      },
+      addLogFields: () => undefined
+    };
+  };
+
   beforeEach(async () => {
-    res.locals = {};
+    res = {
+      locals: {}
+    };
+
+    next = jest.fn();
 
     subscription = {
       githubInstallationId: 15,
@@ -33,18 +53,6 @@ describe("#verifyJiraMiddleware", () => {
   });
 
   describe("GET request", () => {
-    const buildRequest = (jiraHost, secret = "secret"): any => {
-      const jwtValue = jwt.encode("test-jwt", secret);
-
-      return {
-        query: {
-          xdm_e: jiraHost,
-          jwt: jwtValue
-        },
-        addLogFields: () => undefined
-      };
-    };
-
     it("should call next with a valid token and secret", async () => {
       const req = buildRequest("test-host", "secret");
 
@@ -53,8 +61,7 @@ describe("#verifyJiraMiddleware", () => {
 
       await verifyJiraMiddleware(req, res, next);
 
-      // TODO: update testdouble call
-      // td.verify(next());
+      expect(next).toHaveBeenCalled();
     });
 
     it("sets res.locals to installation", async () => {

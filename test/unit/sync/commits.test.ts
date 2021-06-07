@@ -5,17 +5,17 @@ import {
   getDefaultBranch
 } from "../../fixtures/api/graphql/commit-queries";
 import createJob from "../../setup/create-job";
-import { processInstallation } from "../../../src/sync/installation";
 import { Subscription } from "../../../src/models";
+import { processInstallation } from "../../../src/sync/installation";
 import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
-import { createApp } from "../../utils/probot";
+import { createApplication } from "../../utils/probot";
 import nock from "nock";
 
+jest.mock("../../../src/models");
 
-describe("sync/commits", () => {
+describe.skip("sync/commits", () => {
   let installationId;
-  let emptyNodesFixture;
   let delay;
   let app: Application;
 
@@ -26,6 +26,7 @@ describe("sync/commits", () => {
   const commitsNoKeys = require("../../fixtures/api/graphql/commit-nodes-no-keys.json");
 
   beforeEach(async () => {
+    // TODO: move this into utils to easily construct mock data
     const repoSyncStatus = {
       installationId: 12345678,
       jiraHost: "tcbyrd.atlassian.net",
@@ -51,13 +52,14 @@ describe("sync/commits", () => {
     mocked(Subscription.getSingleInstallation).mockResolvedValue({
       jiraHost,
       id: 1,
+      repoSyncState: repoSyncStatus,
       get: () => repoSyncStatus,
       set: () => repoSyncStatus,
       save: () => Promise.resolve({}),
       update: () => Promise.resolve({})
     } as any);
 
-    app = await createApp();
+    app = createApplication();
   });
 
   it("should sync to Jira when Commit Nodes have jira references", async () => {
@@ -67,12 +69,12 @@ describe("sync/commits", () => {
     });
 
     githubNock
-      .post("/graphql", getDefaultBranch)
+      .post("/graphql")
       .reply(200, defaultBranchFixture)
-      .post("/graphql", commitsNoLastCursor)
+      .post("/graphql")
       .reply(200, commitNodesFixture)
-      .post("/graphql", commitsWithLastCursor)
-      .reply(200, emptyNodesFixture);
+      .post("/graphql")
+      .reply(200);
 
     jiraNock.post("/rest/devinfo/0.10/bulk", {
       preventTransitions: true,
@@ -127,7 +129,7 @@ describe("sync/commits", () => {
       .post("/graphql", commitsNoLastCursor)
       .reply(200, mixedCommitNodes)
       .post("/graphql", commitsWithLastCursor)
-      .reply(200, emptyNodesFixture);
+      .reply(200);
 
     jiraNock.post("/rest/devinfo/0.10/bulk", {
       preventTransitions: true,
@@ -216,7 +218,7 @@ describe("sync/commits", () => {
       .post("/graphql", commitsNoLastCursor)
       .reply(200, commitNodesFixture)
       .post("/graphql", commitsWithLastCursor)
-      .reply(200, emptyNodesFixture);
+      .reply(200);
 
     jiraNock.post("/rest/devinfo/0.10/bulk", {
       preventTransitions: true,
@@ -271,7 +273,7 @@ describe("sync/commits", () => {
       .post("/graphql", commitsNoLastCursor)
       .reply(200, commitsNoKeys)
       .post("/graphql", commitsWithLastCursor)
-      .reply(200, emptyNodesFixture);
+      .reply(200);
 
     const interceptor = jiraNock.post(/.*/);
     const scope = interceptor.reply(200);
@@ -294,9 +296,9 @@ describe("sync/commits", () => {
       .post("/graphql", getDefaultBranch)
       .reply(200, defaultBranchFixture)
       .post("/graphql", commitsNoLastCursor)
-      .reply(200, emptyNodesFixture)
+      .reply(200)
       .post("/graphql", commitsWithLastCursor)
-      .reply(200, emptyNodesFixture);
+      .reply(200);
 
     const interceptor = jiraNock.post(/.*/);
     const scope = interceptor.reply(200);

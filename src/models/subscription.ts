@@ -38,7 +38,7 @@ export interface Repository {
   full_name: string;
   owner: { login: string };
   html_url: string;
-  updated_at: number;
+  updated_at: number; // TODO: is this a date object or a timestamp?  Different places uses different things
 }
 
 export default class Subscription extends Sequelize.Model {

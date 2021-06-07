@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { createApp } from "../utils/probot";
+import { createWebhookApp } from "../utils/probot";
 
 describe("GitHub Actions", () => {
   let app;
-  beforeEach(async () => app = await createApp());
+  beforeEach(async () => app = await createWebhookApp());
 
   describe("Create Branch", () => {
     it("should update Jira issue with link to a branch on GitHub", async () => {

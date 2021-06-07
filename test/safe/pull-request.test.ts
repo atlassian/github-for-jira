@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { createApp } from "../utils/probot";
+import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 
 describe("GitHub Actions", () => {
   let app: Application;
   beforeEach(async () => {
-    app = await createApp();
+    app = await createWebhookApp();
   });
 
   describe("pull_request", () => {
