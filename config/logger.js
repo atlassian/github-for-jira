@@ -5,6 +5,7 @@ const formatOut = bformat({ outputMode: 'bunyan', levelInString: true });
 
 const logger = bunyan.createLogger(
   {
+    src: true,
     name: 'github-for-jira',
     stream: formatOut,
     level: 'info',
