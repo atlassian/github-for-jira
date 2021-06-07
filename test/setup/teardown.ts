@@ -8,5 +8,5 @@ export default async () => {
   // stop only if setup did run. If using jest --watch and no tests are matched
   // we need to not execute the require() because it will fail
   // TODO: fix wrong typing for statsd
-  statsd.close(() => undefined);
+  statsd.close(jest.fn());
 };
