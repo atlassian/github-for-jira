@@ -12,8 +12,8 @@ async function getInstallation(client, subscription) {
     response.data.syncStatus = subscription.isInProgressSyncStalled() ? 'STALLED' : syncStatus(subscription.syncStatus);
     response.data.syncWarning = subscription.syncWarning;
     response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
-    response.data.totalNumberOfRepos = Object.keys(subscription.repoSyncState.repos).length;
-    response.data.numberOfSyncedRepos = subscription.repoSyncState.numberOfSyncedRepos || 0;
+    response.data.totalNumberOfRepos = Object.keys(subscription.repoSyncState?.repos || {}).length;
+    response.data.numberOfSyncedRepos = subscription.repoSyncState?.numberOfSyncedRepos || 0;
 
     return response.data;
   } catch (err) {

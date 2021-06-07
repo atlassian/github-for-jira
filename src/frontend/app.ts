@@ -6,7 +6,7 @@ import cookieSession from 'cookie-session';
 import csrf from 'csurf';
 import * as Sentry from '@sentry/node';
 import hbs from 'hbs';
-import GithubOauth from './github-oauth';
+import GithubOAuth from './github-oauth';
 import getGitHubSetup from './get-github-setup';
 import postGitHubSetup from './post-github-setup';
 import getGitHubConfiguration from './get-github-configuration';
@@ -40,7 +40,7 @@ declare global {
   }
 }
 
-const oauth = GithubOauth({
+const oauth = GithubOAuth({
   githubClient: process.env.GITHUB_CLIENT_ID,
   githubSecret: process.env.GITHUB_CLIENT_SECRET,
   baseURL: process.env.APP_URL,
@@ -70,6 +70,7 @@ export default (octokitApp: App): Express => {
   app.use(bodyParser.urlencoded({ extended: false }));
 
   // We run behind ngrok.io so we need to trust the proxy always
+  // TODO: look into the security of this.  Maybe should only be done for local dev?
   app.set('trust proxy', true);
 
   app.use(
@@ -127,6 +128,9 @@ export default (octokitApp: App): Express => {
   app.use(githubClientMiddleware);
 
   app.use('/api', api);
+
+  // Add oauth routes
+  app.use('/', oauth.router);
 
   app.get(
     '/github/setup',
@@ -192,8 +196,6 @@ export default (octokitApp: App): Express => {
   });
   // The error handler must come after controllers and before other error middleware
   app.use(Sentry.Handlers.errorHandler());
-
-  oauth.addRoutes(app);
 
   // Error catcher - Batter up!
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

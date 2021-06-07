@@ -15,7 +15,7 @@ import getJiraClient from '../jira/client';
 import uninstall from '../jira/uninstall';
 import {serializeJiraInstallation, serializeSubscription} from './serializers';
 
-const app = express();
+const router = express.Router();
 const bodyParser = BodyParser.urlencoded({extended: false});
 
 async function getInstallation(client, subscription) {
@@ -71,16 +71,14 @@ const limiter = rateLimit({
   max: 60, // limit each IP to 60 requests per windowMs
 });
 
-app.set('trust proxy', true);
-app.use(limiter);
-app.use(logMiddleware);
-
+router.use(limiter);
+router.use(logMiddleware);
 
 // All routes require a PAT to belong to someone on staff
 // This middleware will take the token and make a request to GraphQL
 // to see if it belongs to someone on staff
 
-app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const token = req.get('Authorization');
   if (!token) {
     res.sendStatus(404)
@@ -145,11 +143,11 @@ app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> =
   }
 });
 
-app.get('/', (_: Request, res: Response): void => {
+router.get('/', (_: Request, res: Response): void => {
   res.send({});
 });
 
-app.get('/:installationId',
+router.get('/:installationId',
   check('installationId').isInt(),
   returnOnValidationError,
   async (req: Request, res: Response): Promise<void> => {
@@ -190,7 +188,7 @@ app.get('/:installationId',
     }
   });
 
-app.get('/:installationId/repoSyncState.json',
+router.get('/:installationId/repoSyncState.json',
   check('installationId').isInt(),
   returnOnValidationError,
   async (req: Request, res: Response): Promise<void> => {
@@ -209,7 +207,7 @@ app.get('/:installationId/repoSyncState.json',
     }
   });
 
-app.post('/:installationId/sync',
+router.post('/:installationId/sync',
   bodyParser,
   check('installationId').isInt(),
   returnOnValidationError,
@@ -240,7 +238,7 @@ app.post('/:installationId/sync',
   });
 
 // Grab the last n failed syncs and trigger a sync
-app.post('/resyncFailed', bodyParser, async (request: Request, response: Response): Promise<void> => {
+router.post('/resyncFailed', bodyParser, async (request: Request, response: Response): Promise<void> => {
   const limit = Math.max(Number(request.query.limit) || 10, 100);
   const offset = Number(request.query.offset) || 0;
 
@@ -259,7 +257,7 @@ app.post('/resyncFailed', bodyParser, async (request: Request, response: Respons
   response.json(await Promise.all(data));
 });
 
-app.get('/jira/:clientKeyOrJiraHost', [
+router.get('/jira/:clientKeyOrJiraHost', [
   bodyParser,
   oneOf([
     check('clientKeyOrJiraHost').isURL(),
@@ -277,7 +275,7 @@ app.get('/jira/:clientKeyOrJiraHost', [
   res.json(await Promise.all(data));
 });
 
-app.post('/jira/:clientKey/uninstall',
+router.post('/jira/:clientKey/uninstall',
   bodyParser,
   check('clientKey').isHexadecimal(),
   returnOnValidationError,
@@ -299,7 +297,7 @@ app.post('/jira/:clientKey/uninstall',
     await uninstall(request, response);
   });
 
-app.post('/jira/:installationId/verify',
+router.post('/jira/:installationId/verify',
   bodyParser,
   check('installationId').isInt(),
   returnOnValidationError,
@@ -324,7 +322,7 @@ app.post('/jira/:installationId/verify',
     respondWith(installation.enabled ? 'Verification successful' : 'Verification failed');
   });
 
-app.post('/:installationId/migrate/:undo?',
+router.post('/:installationId/migrate/:undo?',
   bodyParser,
   check('installationId').isInt(),
   returnOnValidationError,
@@ -360,4 +358,4 @@ app.post('/:installationId/migrate/:undo?',
     }
   });
 
-export default app;
+export default router;
