@@ -37,6 +37,8 @@ describe.skip("GitHub Actions", () => {
     it("should handle payloads where only some commits have issue keys", async () => {
       const event = require("../fixtures/push-mixed.json");
       await app.receive(event);
+      // TODO: fix this queues.
+      const queues = [];
       expect(queues.push).toBeCalledWith(
         {
           repository: event.payload.repository,
