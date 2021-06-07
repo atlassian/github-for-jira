@@ -4,7 +4,8 @@
   "description": "Github integration for Atlassian Jira",
   "repository": "https://github.com/integrations/jira.git",
   "engines": {
-    "node": ">= 14.16 <15"
+    "node": ">= 14.16 <15",
+    "npm" : "^6.12.0"
   },
   "main": "src/main",
   "scripts": {

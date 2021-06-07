@@ -1,9 +1,8 @@
-import nock from "nock";
 import GitHubAPI from "../../../src/config/github-api";
 import enhanceOctokit from "../../../src/config/enhance-octokit";
 
 describe("enhanceOctokit", () => {
-  describe("request metrics", () => {
+  describe.skip("request metrics", () => {
     let octokit;
 
     beforeEach(async () => {
@@ -13,10 +12,10 @@ describe("enhanceOctokit", () => {
 
     describe("when successful", () => {
       beforeEach(() => {
-        nock("https://api.github.com").get("/events").reply(200, []);
+        githubNock.get("/events").reply(200, []);
       });
 
-      it.skip("sends reqest timing", async () => {
+      it("sends reqest timing", async () => {
         await expect(await octokit.activity.listPublicEvents()).toHaveBeenCalled();
 
         // TODO: reoslve Property 'toHaveSentMetrics' does not exist on type 'JestMatchers<any>'.
@@ -46,10 +45,10 @@ describe("enhanceOctokit", () => {
 
     describe("when fails", () => {
       beforeEach(() => {
-        nock("https://api.github.com").get("/events").reply(500, []);
+        githubNock.get("/events").reply(500, []);
       });
 
-      it.skip("sends request timing", async () => {
+      it("sends request timing", async () => {
         await expect(
           await octokit.activity.listPublicEvents().catch(jest.fn())
         ).toHaveBeenCalled();

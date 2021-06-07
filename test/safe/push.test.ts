@@ -64,11 +64,11 @@ describe.skip("GitHub Actions", () => {
         data: createJobData(event.payload, process.env.ATLASSIAN_URL)
       };
 
-      nock("https://api.github.com")
+      githubNock
         .get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
         .replyWithFile(200, "../fixtures/api/commit-no-username.json");
 
-      nock("https://api.github.com")
+      githubNock
         .get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
         .replyWithFile(200, "../fixtures/api/commit-no-username.json");
 

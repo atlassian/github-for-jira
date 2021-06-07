@@ -1,7 +1,6 @@
 import Keygrip from "keygrip";
 import supertest from "supertest";
 import testTracking from "../../setup/tracking";
-import nock from "nock";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/models";
 import FrontendApp from "../../../src/frontend/app";
@@ -95,7 +94,7 @@ describe("Frontend", () => {
           .expect(401));
 
       it("should return a 401 if the user doesn't have access to the requested installation ID", () => {
-        nock("https://api.github.com")
+        githubNock
           .get("/user/installations")
           .reply(200, userInstallationsResponse);
         return supertest(frontendApp)
@@ -115,13 +114,13 @@ describe("Frontend", () => {
       });
 
       it("should return a 401 if the user is not an admin of the Org", () => {
-        nock("https://api.github.com")
+        githubNock
           .get("/user/installations")
           .reply(200, userInstallationsResponse);
-        nock("https://api.github.com")
+        githubNock
           .get("/user")
           .reply(200, authenticatedUserResponse);
-        nock("https://api.github.com")
+        githubNock
           .get("/orgs/test-org/memberships/test-user")
           .reply(200, organizationMembershipResponse);
         return supertest(frontendApp)
@@ -156,13 +155,13 @@ describe("Frontend", () => {
       it("should return a 200 and install a Subscription", async () => {
         const jiraHost = "test-jira-host";
 
-        nock("https://api.github.com")
+        githubNock
           .get("/user/installations")
           .reply(200, userInstallationsResponse);
-        nock("https://api.github.com")
+        githubNock
           .get("/user")
           .reply(200, adminUserResponse);
-        nock("https://api.github.com")
+        githubNock
           .get("/orgs/test-org/memberships/admin-user")
           .reply(200, organizationAdminResponse);
 
