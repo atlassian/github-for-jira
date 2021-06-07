@@ -11,8 +11,6 @@ describe("Probot event middleware", () => {
 
   describe("when processing fails for one subscription", () => {
     let context;
-    let handlerCalls;
-
     beforeEach(async () => {
       context = {
         payload: {
@@ -25,20 +23,16 @@ describe("Probot event middleware", () => {
     });
 
     it("calls handler for each subscription", async () => {
-      mocked(Subscription.getAllForInstallation).mockResolvedValue(mockModels.Subscription.getAllForInstallation);
+      const subscriptions = mockModels.Subscription.getAllForInstallation;
+      // Repeat subscription 2 more times (3 total)
+      subscriptions.push(subscriptions[0]);
+      subscriptions.push(subscriptions[0]);
+      mocked(Subscription.getAllForInstallation).mockResolvedValue(subscriptions);
       mocked(Installation.getForHost).mockResolvedValue(mockModels.Installation.getForHost);
 
-      handlerCalls = [];
-      const handler = middleware((context, jiraClient, util) => {
-        handlerCalls.push([context, jiraClient, util]);
-
-        if (handlerCalls.length === 1) {
-          throw Error("boom");
-        }
-      });
-
-      await expect(handler(context)).toResolve();
-      expect(handlerCalls.length).toEqual(3);
+      const spy = jest.fn();
+      await expect(middleware(spy)(context)).toResolve();
+      expect(spy).toHaveBeenCalledTimes(3);
     });
   });
 });
