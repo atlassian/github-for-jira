@@ -75,7 +75,7 @@ environmentOverrides:
   staging:
     config:
       environmentVariables:
-        APP_URL: INVALID
+        APP_URL: https://github-for-jira.staging.services.atlassian.com
         INSTANCE_NAME: github-for-jira-staging
   prod:
     config:
