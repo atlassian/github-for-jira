@@ -1,4 +1,3 @@
-import "./config/env"; // Important to be before other dependencies
 import throng from "throng";
 import { start } from "./worker/main";
 import InitializeSentry from "./config/sentry";
