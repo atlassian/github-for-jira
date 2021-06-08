@@ -3,7 +3,7 @@ name: Deploy
 on:
   workflow_run:
     workflows: [ "Test","Build" ] # Dependent workflow
-    branches: [ master ] # Only do it on master branch
+#    branches: [ master ] # Only do it on master branch
     types: [ completed ] # Only after dependent workflow is done
 
 jobs:
@@ -26,12 +26,11 @@ jobs:
           path: ./node_modules
           key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
       - run: npm install
-      - run: npm run build --if-present
+      - run: npm run build:release
       - name: Upload Build
         uses: actions/upload-artifact@v1
         with:
           name: github-jira
-          path: build/
       - uses: akhileshns/heroku-deploy@v3.12.12
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
