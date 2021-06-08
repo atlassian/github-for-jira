@@ -45,7 +45,6 @@ config:
     NODE_ENV: production
     NODE_OPTIONS: "--no-deprecation"
     LOG_LEVEL: info
-    TUNNEL_PORT: "8080"
     # * Commented out env vars are to be saved in secrets
     # APP_ID: Id of GitHub app
     # GITHUB_CLIENT_ID: GitHub app's client id
@@ -73,6 +72,7 @@ environmentOverrides:
         NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:5005"
         PORT: "8080"
         LOG_LEVEL: debug
+        TUNNEL_PORT: "3000"
         # * Commented out env vars are to be saved in secrets
         # WEBHOOK_SECRET: development
   staging:
@@ -80,6 +80,7 @@ environmentOverrides:
       environmentVariables:
         APP_URL: https://github-for-jira.staging.services.atlassian.com
         INSTANCE_NAME: github-for-jira-staging
+        TUNNEL_PORT: "8080"
   prod:
     config:
       environmentVariables:
