@@ -22,7 +22,8 @@
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --runInBand --forceExit --coverage",
     "test:watch": "jest --runInBand --watchAll",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "precommit": "run-p lint build"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
