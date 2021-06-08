@@ -1,6 +1,5 @@
 import "./config/env"; // Important to be before other dependencies
 import Queue from 'bull';
-import '../config/env';
 import * as Sentry from '@sentry/node';
 import Redis from 'ioredis';
 
