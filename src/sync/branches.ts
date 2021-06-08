@@ -3,14 +3,15 @@ import { getBranches as getBranchesQuery } from './queries';
 import {GitHubAPI} from 'probot';
 
 // TODO: better typings
-
 export default async (github:GitHubAPI, repository, cursor, perPage) => {
-  const { edges } = (await github.graphql(getBranchesQuery, {
+  // TODO: fix typings for graphql
+  const { edges } = ((await github.graphql(getBranchesQuery, {
     owner: repository.owner.login,
     repo: repository.name,
     per_page: perPage,
     cursor,
-  })).repository.refs;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  })) as any).repository.refs;
 
   const branches = edges.map(({ node: item }) => {
     // translating the object into a schema that matches our transforms
