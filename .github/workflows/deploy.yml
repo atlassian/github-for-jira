@@ -1,5 +1,7 @@
 name: Deploy
 
+on: [ push ]
+
 #on:
 #  workflow_run:
 #    workflows: [ "Test","Build" ] # Dependent workflow
