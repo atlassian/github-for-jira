@@ -1,3 +1,0 @@
-tunnel: script/tunnel
-web: npm run dev
-worker: npm run dev:worker

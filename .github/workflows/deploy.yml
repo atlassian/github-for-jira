@@ -17,22 +17,43 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - uses: volta-cli/action@v1
-      - name: Cache node_modules
-        id: cache-primes
-        uses: actions/cache@v1
+#      - uses: volta-cli/action@v1
+#      - name: Cache node_modules
+#        id: cache-primes
+#        uses: actions/cache@v1
+#        with:
+#          path: ./node_modules
+#          key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-production-node_modules
+#      - run: npm install --production
+#      - run: npm run build:release
+#      - name: Upload Build
+#        uses: actions/upload-artifact@v1
+#        with:
+#          name: github-jira
+#          path: .
+#      - uses: akhileshns/heroku-deploy@v3.12.12
+#        with:
+#          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+#          heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
+#          heroku_email: ${{secrets.HEROKU_EMAIL}}
+#          usedocker: true
+      - name: Build & Deploy to Heroku.
+        uses: gonuit/heroku-docker-deploy@v1.3.3
         with:
-          path: ./node_modules
-          key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-production-node_modules
-      - run: npm install --production
-      - run: npm run build:release
-      - name: Upload Build
-        uses: actions/upload-artifact@v1
-        with:
-          name: github-jira
-          path: .
-      - uses: akhileshns/heroku-deploy@v3.12.12
-        with:
-          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
-          heroku_email: ${{secrets.HEROKU_EMAIL}}
+          # Below you must provide variables for your Heroku app.
+
+          # The email address associated with your Heroku account.
+          # If you don't want to use repository secrets (which is recommended) you can do:
+          # email: my.email@example.com
+          email: ${{ secrets.HEROKU_EMAIL }}
+
+          # Heroku API key associated with provided user's email.
+          # Api Key is available under your Heroku account settings.
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+
+          # Name of the heroku application to which the build is to be sent.
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+
+          # (Optional, default: "")
+          # Additional options of docker build command.
+          docker_options: "--no-cache"

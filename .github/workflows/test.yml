@@ -41,9 +41,7 @@ jobs:
         REDIS_PORT: ${{ job.services.redis.ports[6379] }}
         POSTGRES_HOST: localhost
         POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
-      run: |
-        ./node_modules/.bin/sequelize db:create --env test
-        ./node_modules/.bin/sequelize db:migrate --env test
+      run: npm run db:test
     - name: Run tests
       env:
         NODE_ENV: test

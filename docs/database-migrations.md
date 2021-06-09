@@ -15,5 +15,5 @@ You'll want to use the environment appropriate for your migration:
 1.  Login to heroku's cli `heroku login`
 1.  Run a bash shell on a Dyno `heroku run -a ${APP}`
 1.  **DOUBLE CHECK** that `DATABASE_URL` is set correctly to the postgres attached to the app you're trying to migrate!
-1.  Run the migration `./node_modules/.bin/sequelize db:migrate`
+1.  Run the migration `npm run db:migrate`
 1.  :icecream:
