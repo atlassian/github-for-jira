@@ -45,7 +45,6 @@ config:
     NODE_ENV: production
     NODE_OPTIONS: "--no-deprecation"
     LOG_LEVEL: info
-    TUNNEL_PORT: "8080"
     # * Commented out env vars are to be saved in secrets
     # APP_ID: Id of GitHub app
     # GITHUB_CLIENT_ID: GitHub app's client id
