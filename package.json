@@ -22,6 +22,14 @@
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --runInBand --forceExit --coverage",
     "test:watch": "jest --runInBand --watchAll",
+    "db:create": "run-p -c db:create:*",
+    "db:create:dev": "sequelize db:create",
+    "db:create:test": "sequelize db:create --env test",
+    "db:migrate": "run-p db:migrate:*",
+    "db:migrate:dev": "sequelize db:migrate",
+    "db:migrate:test": "sequelize db:migrate --env test",
+    "db:dev": "run-s -c db:create:dev db:migrate:dev",
+    "db:test": "run-s -c db:create:test db:migrate:test",
     "prepare": "husky install",
     "precommit": "run-p lint build"
   },
@@ -101,6 +109,7 @@
     "prettier": "~2.3.0",
     "rimraf": "~3.0.2",
     "sequelize-cli": "^6.2.0",
+    "smee-client": "^1.2.2",
     "supertest": "^4.0.2",
     "ts-jest": "~26.5.6",
     "ts-node": "^10.0.0"

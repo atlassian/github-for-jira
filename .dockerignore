@@ -1,0 +1,42 @@
+# Environment Files
+.env
+.envrc
+
+# DB Secret File
+*.pem
+
+# Transpiled files
+build/
+
+# Node Modules
+node_modules/
+
+# Coverage
+coverage
+
+# log
+log/
+npm-debug.log
+
+# new relic
+newrelic_agent.log
+
+# IDEs
+.idea/
+.vscode/
+.vscodelog/*
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Misc
+.DS_Store
+
+# Typescript Compilation
+src/**/*.js
+src/**/*.js.map
+test/**/*.js
+test/**/*.js.map
