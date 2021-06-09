@@ -30,6 +30,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: github-jira
+          path: .
       - uses: akhileshns/heroku-deploy@v3.12.12
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
