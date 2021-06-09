@@ -11,4 +11,4 @@ RUN npm run build:release
 
 FROM node:14.17-alpine
 
-CMD ['npm', 'run', 'start:production']
+CMD ['npm', 'run', 'start:worker:production']
