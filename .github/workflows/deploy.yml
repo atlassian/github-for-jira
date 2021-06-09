@@ -24,7 +24,7 @@ jobs:
         with:
           path: ./node_modules
           key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
-      - run: npm install
+      - run: npm install --production
       - run: npm run build:release
       - name: Upload Build
         uses: actions/upload-artifact@v1
