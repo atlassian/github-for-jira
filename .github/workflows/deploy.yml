@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ./node_modules
-          key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
+          key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-production-node_modules
       - run: npm install --production
       - run: npm run build:release
       - name: Upload Build
