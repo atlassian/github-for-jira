@@ -2,7 +2,7 @@ import parseSmartCommit from './smart-commit';
 import { getJiraId } from '../jira/util/id';
 import _ from 'lodash';
 
-function mapStatus(status: string, merged: boolean) {
+function  mapStatus(status: string, merged: boolean) {
   if (status === 'merged') return 'MERGED';
   if (status === 'open') return 'OPEN';
   if (status === 'closed' && merged) return 'MERGED';

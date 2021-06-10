@@ -18,7 +18,10 @@ const tasks = {
 const taskTypes = Object.keys(tasks);
 
 const updateNumberOfReposSynced = async (repos: Repositories, subscription: SubscriptionClass): Promise<void> => {
-  const repoIds = Object.keys(repos);
+  const repoIds = Object.keys(repos || {});
+  if (!repoIds.length) {
+    return;
+  }
 
   const syncedRepos = repoIds.filter((id) => {
     // all 3 statuses need to be complete for a repo to be fully synced
@@ -30,14 +33,19 @@ const updateNumberOfReposSynced = async (repos: Repositories, subscription: Subs
     return pullStatus === "complete" && branchStatus === "complete" && commitStatus === "complete";
   });
 
-  await subscription.update({ repoSyncState: { numberOfSyncedRepos: syncedRepos.length } });
+  await subscription.update({
+    repoSyncState: {
+      ...subscription.repoSyncState,
+      numberOfSyncedRepos: syncedRepos.length
+    }
+  });
 };
 
 export const sortedRepos = (repos: Repositories) => Object.entries(repos).sort((a, b) => new Date(b[1].repository.updated_at).getTime() - new Date(a[1].repository.updated_at).getTime());
 
 // TODO: type Task
 const getNextTask = async (subscription: SubscriptionClass) => {
-  const { repos } = subscription.repoSyncState;
+  const repos = subscription?.repoSyncState?.repos || {};
   await updateNumberOfReposSynced(repos, subscription);
 
   for (const [repositoryId, repoData] of sortedRepos(repos)) {
@@ -76,27 +84,22 @@ const updateJobStatus = async (app: Application, queues, jiraClient, job, edges,
 
   const status = edges.length > 0 ? "pending" : "complete";
   app.log(`Updating job status for installationId=${installationId}, repositoryId=${repositoryId}, task=${task}, status=${status}`);
-  subscription.set({
-    repoSyncState: {
-      repos: {
-        [repositoryId]: {
-          [`${task}Status`]: status
-        }
+  await subscription.updateSyncState({
+    repos: {
+      [repositoryId]: {
+        [`${task}Status`]: status
       }
     }
   });
   if (edges.length > 0) {
     // there's more data to get
-    subscription.set({
-      repoSyncState: {
-        repos: {
-          [repositoryId]: {
-            [getCursorKey(task)]: edges[edges.length - 1].cursor
-          }
+    await subscription.updateSyncState({
+      repos: {
+        [repositoryId]: {
+          [getCursorKey(task)]: edges[edges.length - 1].cursor
         }
       }
     });
-    // await subscription.save();
 
     const {
       removeOnComplete,
@@ -111,7 +114,7 @@ const updateJobStatus = async (app: Application, queues, jiraClient, job, edges,
     });
     // no more data (last page was processed of this job type)
   } else if (!(await getNextTask(subscription))) {
-    subscription.set({ syncStatus: SyncStatus.COMPLETE });
+    await subscription.update({ syncStatus: SyncStatus.COMPLETE });
     let message = `Sync status for installationId=${installationId} is complete`;
     if (job.data.startTime !== undefined) {
       const endTime = Date.now();
@@ -141,7 +144,6 @@ const updateJobStatus = async (app: Application, queues, jiraClient, job, edges,
       removeOnFail
     });
   }
-  await subscription.save();
 };
 
 async function getEnhancedGitHub(app: Application, installationId) {
@@ -189,7 +191,13 @@ export const processInstallation = (app: Application, queues) => async (job): Pr
     // Old records don't have this info. New ones have it
     const { data: repo } = await github.request("GET /repositories/:id", { id: repositoryId });
     repository = getRepositorySummary(repo);
-    await subscription.update({ repoSyncState: { repos: { [repository.id]: { repository: repository } } } });
+    await subscription.updateSyncState({
+      repos: {
+        [repository.id]: {
+          repository: repository
+        }
+      }
+    });
   }
   app.log(`Starting task for installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
 
