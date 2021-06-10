@@ -1,48 +1,34 @@
-## Contributing
+# Contributing
 
-[code-of-conduct]: CODE_OF_CONDUCT.md
-[license]: LICENSE
-
-[configure-github-app]: https://probot.github.io/docs/development/#configuring-a-github-app
-[jira-developer-instance]: https://developer.atlassian.com/platform/marketplace/getting-started/#free-developer-instances-to-build-and-test-your-app
-[style]: https://standardjs.com/
-[releases]: https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license
-
-Hi there! We're thrilled that you'd like to contribute to this project. Your help is essential for keeping it great.
+Hi there! We're thrilled that you'd like to contribute to this project. Your ideas are essential for keeping making it better :)
 
 ## Notices
-Contributions to this product are [released][releases] to the public under the [project's open source license][license].
+Contributions to this product are [released](https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license) to the public under the [project's open source license](LICENSE).
 
-Please note that this project is released with a [Contributor Code of Conduct][code-of-conduct]. By participating in this project you agree to abide by its terms.
+Please note that this project releases with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
 ## Getting Started
 
-Please ensure that you have [homebrew](https://brew.sh/) installed. Instructions for setting this application up on an OS other than OSX are currently not outlined.
+This app is written in [Typescript](https://www.typescriptlang.org/) and runs on [Node.js](https://nodejs.org/) **v14.x**. 
 
-This app is written in [ES6 JavaScript](https://nodejs.org/en/docs/es6/) and runs on [Node.js](https://nodejs.org/). After cloning the repository, install the dependencies by running:
+Please install [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) for the external dependencies like the Postgres database and Redis.
 
-## Installing a tunneling tool
+### Installing a tunneling tool
 
-To allow your Jira instance to communicate with your locally running instance of the server, you need to have either ngrok or localtunnel installed.
+To allow your Jira instance to communicate with your locally running server, you need to have either [ngrok](https://ngrok.com/download) or [localtunnel](https://localtunnel.github.io/www/) installed and running.
 
-Install ngrok:
-```
-brew cask install ngrok
-```
+This tunnel will expose a URL through which internet traffic can reach your local machine. This URL will be called `DOMAIN` in the rest of this document.
 
-Or install localtunnel:
-```
-npm install -g localtunnel
-```
+## Create your Jira instance
 
-A tunnel will automatically be created using one of the installed tools when you later start the server (see `tunnel.js`). This tunnel will expose a URL through which internet traffic can reach your local machine. This URL will be called `DOMAIN` in the rest of this document.
+Create a new [free developer instance](https://developer.atlassian.com/platform/marketplace/getting-started/#free-developer-instances-to-build-and-test-your-app) on Jira Cloud.
 
-## Configuring a GitHub App
+### Configuring a GitHub App
 
 Create a new [GitHub App](https://github.com/settings/apps), setting the following config:
 
-- **GitHub App name**: Anything you want, but it must be unique across GitHub. `E.g. my-test-app`
-- **Homepage URL**: `https://github.com/apps/my-test-app`
+- **GitHub App name**: Anything you want, but it must be unique across GitHub.
+- **Homepage URL**: `https://DOMAIN`
 - **Callback URL**: `https://DOMAIN/github/callback`
 - **Setup URL**: `https://DOMAIN/github/setup`
 - **Webhook URL**: `https://DOMAIN/github/events`
@@ -66,96 +52,61 @@ It will also need to subscribe to the following events:
 + Pull request review
 + Push
 
-## Setting up your `.env` file
+### Setting up your `.env` file
 
 Once you've set up your GitHub app and cloned this repo, copy the content from `.env.example` and paste it to a new file called `.env`, with the following configuration:
 
 + `APP_ID` and `GITHUB_CLIENT_ID`: Copy these values over from your new GitHub app page.
 + `APP_URL`: `https://DOMAIN`
 + `GITHUB_CLIENT_SECRET`: You'll need to generate a new one on your GitHub app page by hitting the `Generate a new client secret` button. Copy and paste the generated secret.
-+ `TUNNEL_SUBDOMAIN`: the subdomain you want to use to allow access from the internet to your local machine (just replace &lt;yourname&gt; with your name)
++ `TUNNEL_SUBDOMAIN`: the subdomain you want to use to allow access from the internet to your local machine
 + `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing it. If you don't have one now, please set the value of this variable after going through the step 1 of "Configuring the Jira instance" section of this document.
-+ `STORAGE_SECRET`: It needs to be set to a 32 char secret (anything else fails). You can generate one by running `openssl rand -hex 32 | pbcopy` in your terminal and paste directly to your .env file.
-+ `INSTANCE_NAME`: choose a name for your instance
++ `STORAGE_SECRET`: It needs to be set to a 32 char secret (anything else fails). You can generate one by running `openssl rand -hex 32` in your terminal and paste directly to your .env file.
++ `INSTANCE_NAME`: Your Jira instance name
 + `WEBHOOK_PROXY_URL`: `https://DOMAIN/github/events`
 
-## Running dependencies
+### Running the app
 
-Please ensure that you have [homebrew](https://brew.sh/) installed. Instructions for setting this application up on an OS other than OSX are currently not outlined.
-
-This app is written in [ES6 JavaScript](https://nodejs.org/en/docs/es6/) and runs on [Node.js](https://nodejs.org/).
-
-**Required version of Node**: v12.x
-
-Install the dependencies by running:
+The first time you run the app, simply run:
 
 ```
-$ script/bootstrap
+npm install # installs node modules
+docker-compose up # Spin up docker containers
+npm run db:init # Creates DBs and initializes tables
 ```
 
-This will install all dependencies, including `node` and `postgres`, which are required to run the app. However, we recommend running `postgres` and `redis` in docker instead of doing it locally. You can do so by running: `docker-compose up`.
+From then on, to just run the app locally in development mode, just do `npm start`.
+For tests, run `npm test`.
 
-**Note:** Most certainly, if you are running Postgres in docker, it won’t have any info about your local user, so the superuser will be named postgres instead of having the same name as your Mac user. You can fix this by:
-* Open db/config.json
-* Add "username": "postgres", inside "development" and "test".
-* Be careful to not commit the changes in this file!
+### Installing the App
 
-To set up the databases and keep their schemas up to date, run:
+Go to your Jira instance that you created earlier and do the following steps:
+1. From the header menu, select **Apps** -> **Manage your apps**.
+1. Verify the filter is set to `User-installed`, and select **Settings** beneath the User-installed apps table.
+1. On the Settings pop-up, add **Enable development mode** and click **Apply**. Refresh the page.
+1. On the right side of the header, there should now appear a button **Upload app**. Click it and enter `https://DOMAIN/jira/atlassian-connect.json`
+1. Click **Upload**.
+1. That's it! You're done. :tada:
 
-```
-$ script/db_create
-```
+### Setting up the App
 
-You can verify that your code is set up correctly by running:
+In your Jira instance, in the `Manage Apps` section, click on your App's button, then click on `Get Started`.  This will bring you to the App's dashboard.  Click the `Add an Organization` button and follow the steps to install the App on Github and allow it permission to view your repos.
 
-```
-$ npm test
-```
+After this is done, you should see your repos starting to sync in the App's dashboard.
 
+## Contributing
 
-#### Running the application
+Thank you so much for willing to contribute to this project!  
 
-When you are developing you will prefer to run the app and automatically restart it when you do changes to the source code. In that case you should use:
+Before you spend time working on something, it might be worth [discussing your changes with other contributors](https://github.com/integrations/jira/discussions) before starting for guidance and potentially combining efforts with other members.  Remember to try to keep your changes simple and concise - do not try to fix everything in one Pull Request.  We'd much appreciate multiple smaller PRs over one massive one. We're also here to help, so if you're stuck or blocked, please feel free to reach out.
 
-```
-$ script/server
-```
+That being said, here are the steps needed to create a Pull Request for us to review:
 
-For production, you should just use `npm run start`.
-
-
-## Configuring the Jira instance
-
-1. Create a new [free developer instance][jira-developer-instance] on Jira Cloud.
-2. From the header menu, select **Apps** -> **Manage your apps**.
-3. Verify the filter is set to `User-installed`, and select **Settings** beneath the User-installed apps table.
-4. On the Settings pop-up, add **Enable development mode** and click **Apply**. Refresh the page.
-5. On the right side of the header, there should now appear a button **Upload app**. Click it and enter `https://DOMAIN/jira/atlassian-connect.json`
-6. Click **Upload**.
-7. That's it! You're done. :tada:
-
-## Submitting a pull request
-
-1. [Fork](https://reflectoring.io/github-fork-and-pull/) and clone the repository.
-1. Configure and install the dependencies: `npm install`
-1. Make sure the tests pass on your machine: `npm test`, note: these tests also apply the linter, so no need to lint separately
-1. Create a new branch: `git checkout -b my-branch-name`
-1. Make your change, add tests, and make sure the tests still pass
-1. Push to your fork and submit a pull request
-1. Pat your self on the back and wait for your pull request to be reviewed and merged.
-
-Here are a few things you can do that will increase the likelihood of your pull request being accepted:
-
-- Follow the [style guide][style] which is using standard. Any linting errors should be shown when running `npm test`
-- Write and update tests.
-- Keep your change as focused as possible. If there are multiple changes you would like to make that are not dependent upon each other, consider submitting them as separate pull requests.
-- Write a [good commit message](http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).
-
-Work in Progress pull request are also welcome to get feedback early on, or if there is something blocking you.
-
-## Resources
-
-- [How to Contribute to Open Source](https://opensource.guide/how-to-contribute/)
-- [Using Pull Requests](https://help.github.com/articles/about-pull-requests/)
-- [GitHub Help](https://help.github.com)
+1. Fork the repository.
+1. Do your changes either on the main branch or create a new one.
+1. Make sure the tests pass on your machine with `npm test`.  If you're adding new functionality, please add tests to reflect this.
+1. Commit and Push your changes - verify it passes all checks.
+1. Submit your pull request with a detailed message about what's changed.
+1. Wait for us to review and answer questions/make changes where requested.
+1. Once merged, celebrate with your drink of choice because you've just helped thousands (if not millions) of people get a better experience in both Jira and Github! :beers:

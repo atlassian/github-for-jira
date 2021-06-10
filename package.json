@@ -22,6 +22,7 @@
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --runInBand --forceExit --coverage",
     "test:watch": "jest --runInBand --watchAll",
+    "db:init": "run-s -c db:create db:migrate",
     "db:create": "run-p -c db:create:*",
     "db:create:dev": "sequelize db:create",
     "db:create:test": "sequelize db:create --env test",
