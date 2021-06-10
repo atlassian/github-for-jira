@@ -15,7 +15,7 @@
     "start:production": "run-p start:main:production start:worker:production",
     "start:main:production": "node .",
     "start:worker:production": "node src/worker",
-    "clean": "rimraf coverage build tmp src/**/*.js",
+    "clean": "rimraf coverage build tmp src/*.js src/*.js.map",
     "build": "tsc -p ./tsconfig.json",
     "build:release": "tsc -p ./tsconfig.release.json",
     "build:watch": "tsc -w -p ./tsconfig.json",
