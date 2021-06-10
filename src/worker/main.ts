@@ -1,5 +1,5 @@
 import "../config/env"; // Important to be before other dependencies
-import Queue from 'bull';
+import Queue, { QueueOptions } from "bull";
 import * as Sentry from '@sentry/node';
 import Redis from 'ioredis';
 
@@ -24,7 +24,7 @@ function measureElapsedTime(startTime, tags) {
   statsd.histogram('job_duration', timeDiff, tags);
 }
 
-const queueOpts = {
+const queueOpts:QueueOptions = {
   defaultJobOptions: {
     removeOnComplete: true,
   },
@@ -43,6 +43,13 @@ const queueOpts = {
     }
   },
 };
+
+if(process.env.NODE_ENV === "development") {
+  queueOpts.settings = {
+    lockDuration: 100000,
+    lockRenewTime: 50000 // Interval on which to acquire the job lock
+  }
+}
 
 // Setup queues
 export const queues = {
