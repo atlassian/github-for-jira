@@ -11,8 +11,8 @@ jobs:
         image: postgres:10.12
         env:
           # The username of the actions runner that postgres defaults to
-          POSTGRES_USER: runner
-          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: jira-test
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
         - 5432:5432

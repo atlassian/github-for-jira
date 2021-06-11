@@ -50,33 +50,31 @@ export default async (payload, author, github: GitHubAPI) => {
   const commentCount = prGet?.data.comments;
 
   return {
-    data: {
-      id: repository.id,
-      name: repository.full_name,
-      pullRequests: [
-        {
-          author: getAuthor(author),
-          commentCount,
-          destinationBranch: `${repository.html_url}/tree/${
-            pullRequest.base ? pullRequest.base.ref : ""
-          }`,
-          displayId: `#${pullRequest.number}`,
-          id: pullRequest.number,
-          issueKeys,
-          lastUpdate: pullRequest.updated_at,
-          sourceBranch: `${pullRequest.head ? pullRequest.head.ref : ""}`,
-          sourceBranchUrl: `${repository.html_url}/tree/${
-            pullRequest.head ? pullRequest.head.ref : ""
-          }`,
-          status: mapStatus(pullRequest),
-          timestamp: pullRequest.updated_at,
-          title: pullRequest.title,
-          url: pullRequest.html_url,
-          updateSequenceId: Date.now()
-        }
-      ],
-      url: repository.html_url,
-      updateSequenceId: Date.now()
-    }
+    id: repository.id,
+    name: repository.full_name,
+    pullRequests: [
+      {
+        author: getAuthor(author),
+        commentCount,
+        destinationBranch: `${repository.html_url}/tree/${
+          pullRequest.base ? pullRequest.base.ref : ""
+        }`,
+        displayId: `#${pullRequest.number}`,
+        id: pullRequest.number,
+        issueKeys,
+        lastUpdate: pullRequest.updated_at,
+        sourceBranch: `${pullRequest.head ? pullRequest.head.ref : ""}`,
+        sourceBranchUrl: `${repository.html_url}/tree/${
+          pullRequest.head ? pullRequest.head.ref : ""
+        }`,
+        status: mapStatus(pullRequest),
+        timestamp: pullRequest.updated_at,
+        title: pullRequest.title,
+        url: pullRequest.html_url,
+        updateSequenceId: Date.now()
+      }
+    ],
+    url: repository.html_url,
+    updateSequenceId: Date.now()
   };
 };

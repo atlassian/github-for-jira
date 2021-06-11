@@ -1,5 +1,5 @@
-import parseSmartCommit from '../../transforms/smart-commit';
-import { getJiraId } from '../../jira/util/id';
+import parseSmartCommit from "../../transforms/smart-commit";
+import { getJiraId } from "../../jira/util/id";
 
 // TODO: better typing in file
 /**
@@ -34,7 +34,7 @@ function mapBranch(branch, repository) {
     lastCommit: {
       author: {
         avatar: branch.lastCommit.author.avatarUrl,
-        name: branch.lastCommit.author.name,
+        name: branch.lastCommit.author.name
       },
       authorTimestamp: branch.lastCommit.authorTimestamp,
       displayId: branch.lastCommit.sha.substring(0, 6),
@@ -45,11 +45,11 @@ function mapBranch(branch, repository) {
       issueKeys: commitKeys || branchKeys || pullRequestKeys,
       message: branch.lastCommit.message,
       url: branch.lastCommit.url,
-      updateSequenceId: Date.now(),
+      updateSequenceId: Date.now()
     },
     name: branch.name,
     url: `${repository.html_url}/tree/${branch.name}`,
-    updateSequenceId: Date.now(),
+    updateSequenceId: Date.now()
   };
 }
 
@@ -70,7 +70,7 @@ function mapCommit(commit) {
       avatar: commit.author.avatarUrl,
       email: commit.author.email,
       name: commit.author.name,
-      url: commit.author.user ? commit.author.user.url : undefined,
+      url: commit.author.user ? commit.author.user.url : undefined
     },
     authorTimestamp: commit.authoredDate,
     displayId: commit.oid.substring(0, 6),
@@ -81,10 +81,11 @@ function mapCommit(commit) {
     message: commit.message,
     timestamp: commit.authoredDate,
     url: commit.url,
-    updateSequenceId: Date.now(),
+    updateSequenceId: Date.now()
   };
 }
 
+// TODO: add typings
 export default (payload) => {
   // TODO: use reduce instead of map/filter
   const branches = payload.branches.map(branch => mapBranch(branch, payload.repository))
@@ -100,13 +101,11 @@ export default (payload) => {
   }
 
   return {
-    data: {
-      branches,
-      commits,
-      id: payload.repository.id,
-      name: payload.repository.name,
-      url: payload.repository.html_url,
-      updateSequenceId: Date.now(),
-    },
+    branches,
+    commits,
+    id: payload.repository.id,
+    name: payload.repository.name,
+    url: payload.repository.html_url,
+    updateSequenceId: Date.now()
   };
 };
