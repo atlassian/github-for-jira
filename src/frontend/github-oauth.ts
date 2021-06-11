@@ -55,17 +55,26 @@ export default (opts: OAuthOptions): GithubOAuth => {
     if (!code) return next(new Error("Missing OAuth Code"));
 
     try {
-      const response = await axios.get(`https://${host}/login/oauth/access_token?client_id=${opts.githubClient}&client_secret=${opts.githubSecret}&code=${code}&state=${state}`,
+      const response = await axios.get(`https://${host}/login/oauth/access_token`,
         {
-          responseType: "json",
+          params: {
+            client_id: opts.githubClient,
+            client_secret: opts.githubSecret,
+            code,
+            state
+          },
+          headers: {
+            "accept": "application/json",
+            "content-type": "application/json"
+          },
+          responseType: "json"
         });
 
       req.session.githubToken = response.data.access_token;
-      if(!req.session.githubToken) {
+      if (!req.session.githubToken) {
         return next(new Error("Missing Access Token from Github OAuth Flow."));
       }
-      res.redirect(redirectUrl);
-      next();
+      return res.redirect(redirectUrl);
     } catch (e) {
       return next(new Error("Cannot retrieve access token from Github"));
     }
