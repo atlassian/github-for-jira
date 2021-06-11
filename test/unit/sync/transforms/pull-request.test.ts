@@ -106,11 +106,10 @@ describe("pull_request transform", () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(
+    await expect(transformPullRequest(
       fixture,
       fixture.pullRequest.author,
       githubMock
-    );
-    expect(data).toBeUndefined();
+    )).resolves.toBeUndefined();
   });
 });
