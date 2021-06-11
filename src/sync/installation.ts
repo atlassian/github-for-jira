@@ -41,7 +41,7 @@ const updateNumberOfReposSynced = async (repos: Repositories, subscription: Subs
   });
 };
 
-export const sortedRepos = (repos: Repositories) => Object.entries(repos).sort((a, b) => new Date(b[1].repository.updated_at).getTime() - new Date(a[1].repository.updated_at).getTime());
+export const sortedRepos = (repos: Repositories) => Object.entries(repos).sort((a, b) => new Date(b[1].repository?.updated_at).getTime() - new Date(a[1].repository?.updated_at).getTime());
 
 // TODO: type Task
 const getNextTask = async (subscription: SubscriptionClass) => {

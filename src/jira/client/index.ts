@@ -236,11 +236,13 @@ const truncateIssueKeys = (repositoryObj) => {
  * with issue keys in a Jira Repository object
  */
 const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
-  if ("commits" in repositoryObj) repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, mutatingFunc);
-  if ("branches" in repositoryObj) {
+  if (repositoryObj.commits) {
+    repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, mutatingFunc);
+  }
+  if (repositoryObj.branches) {
     repositoryObj.branches = updateIssueKeysFor(repositoryObj.branches, mutatingFunc);
     repositoryObj.branches.forEach(branch => {
-      if ("lastCommit" in branch) {
+      if (branch.lastCommit) {
         branch.lastCommit = updateIssueKeysFor([branch.lastCommit], mutatingFunc)[0];
       }
     });

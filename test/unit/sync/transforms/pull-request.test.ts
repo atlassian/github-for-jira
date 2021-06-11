@@ -31,7 +31,7 @@ describe("pull_request transform", () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(
+    const data = await transformPullRequest(
       fixture,
       fixture.pullRequest.user,
       githubMock
