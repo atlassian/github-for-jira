@@ -13,7 +13,7 @@ export default async (context:Context, jiraClient) => {
       if (issueKeys) {
         return commit;
       }
-    }).filter(Boolean),
+    }).filter(commit => !!commit),
     installation: context.payload.installation,
   };
 

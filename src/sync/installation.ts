@@ -242,7 +242,7 @@ export const processInstallation = (app: Application, queues) => async (job): Pr
       try {
         await jiraClient.devinfo.repository.update(jiraPayload, { preventTransitions: true });
       } catch (err) {
-        if (err.response && err.response.status === 400) {
+        if (err?.response?.status === 400) {
           job.sentry.setExtra("Response body", err.response.data.errorMessages);
           job.sentry.setExtra("Jira payload", err.response.data.jiraPayload);
         }
@@ -268,7 +268,7 @@ export const processInstallation = (app: Application, queues) => async (job): Pr
     }
     await updateJobStatus(app, queues, jiraClient, job, edges, task, repositoryId);
   } catch (err) {
-    const rateLimit = +(err.headers && err.headers["x-ratelimit-reset"]);
+    const rateLimit = Number(err?.headers?.["x-ratelimit-reset"]);
     const delay = Math.max(Date.now() - rateLimit * 1000, 0);
     if (delay) { // if not NaN or 0
       app.log(`Delaying job for ${delay}ms installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);

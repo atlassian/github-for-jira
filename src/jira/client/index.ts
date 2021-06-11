@@ -4,7 +4,7 @@ import getAxiosInstance from "./axios";
 import { getJiraId } from "../util/id";
 import newrelic from "newrelic";
 import isProd from "../util/isProd";
-import { AxiosResponse } from "axios";
+import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 
 // Max number of issue keys we can pass to the Jira API
@@ -166,7 +166,7 @@ export default async (jiraHost: string, gitHubInstallationId: number, logger?: L
     "lib/jira/client: getJiraClient",
     true,
     async () => {
-      return await getJiraClient(jiraHost, gitHubInstallationId, logger)
+      return await getJiraClient(jiraHost, gitHubInstallationId, logger);
     }
   );
 }
@@ -176,7 +176,7 @@ export default async (jiraHost: string, gitHubInstallationId: number, logger?: L
  * Splits commits in data payload into chunks of 400 and makes separate requests
  * to avoid Jira API limit
  */
-const batchedBulkUpdate = (data, options, instance, installationId) => {
+const batchedBulkUpdate = async (data, options, instance: AxiosInstance, installationId: number) => {
   const dedupedCommits = dedupCommits(data.commits);
 
   // Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
@@ -191,14 +191,14 @@ const batchedBulkUpdate = (data, options, instance, installationId) => {
     }
 
     return instance.post("/rest/devinfo/0.10/bulk", {
-      preventTransitions: (options && options.preventTransitions) || false,
+      preventTransitions: options?.preventTransitions || false,
       repositories: [data],
       properties: {
         installationId
       }
     });
   });
-  Promise.all(batchedUpdates);
+  return Promise.all(batchedUpdates);
 };
 
 /**

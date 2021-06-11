@@ -25,14 +25,14 @@ async function getLastCommit(context, issueKeys) {
 
 // TODO: type this payload better
 export default async (context: Context) => {
-  if (context.payload.ref_type !== 'branch') return {};
+  if (context.payload.ref_type !== 'branch') return undefined;
 
   const {ref, repository} = context.payload;
 
   const {issueKeys} = parseSmartCommit(ref);
 
   if (!issueKeys) {
-    return {};
+    return undefined;
   }
 
   const lastCommit = await getLastCommit(context, issueKeys);

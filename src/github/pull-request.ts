@@ -24,7 +24,7 @@ export default async (context: Context, jiraClient, util) => {
   const { data: jiraPayload } = transformPullRequest(context.payload, author.data, reviews.data);
   const { pull_request: pullRequest } = context.payload;
 
-  if (!jiraPayload && (context.payload.changes && context.payload.changes.title)) {
+  if (!jiraPayload && context.payload?.changes?.title) {
     const hasIssueKeys = !!parseSmartCommit(context.payload.changes.title.from);
     if (hasIssueKeys) {
       return jiraClient.devinfo.pullRequest.delete(context.payload.repository.id, pullRequest.number);

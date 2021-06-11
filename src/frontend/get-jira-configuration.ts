@@ -46,7 +46,7 @@ export default async (req:Request, res:Response, next:NextFunction):Promise<void
         repoSyncState: data.repoSyncState,
       }));
 
-    const failedConnections = installations.filter(response => response.error);
+    const failedConnections = installations.filter(response => !!response.error);
 
     res.render('jira-configuration.hbs', {
       host: jiraHost,

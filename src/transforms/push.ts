@@ -112,7 +112,7 @@ export function processPush(app: Application) {
           const filesToSend = files.slice(0, 10);
 
           // merge commits will have 2 or more parents, depending how many are in the sequence
-          const isMergeCommit = parents && parents.length > 1;
+          const isMergeCommit = parents?.length > 1;
 
           return {
             hash: commitSha,
