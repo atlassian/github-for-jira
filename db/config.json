@@ -17,7 +17,10 @@
     "disable_sql_logging": true,
     "ssl": true,
     "dialectOptions": {
-      "ssl": true
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
     },
     "pool": {
       "max": 15
