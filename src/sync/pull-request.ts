@@ -83,7 +83,7 @@ export default async function (github: GitHubAPI, repository, cursor: string | n
   // TODO: change this to reduce
   const pullRequests = (await Promise.all(edges.map(async (pull) => {
     const {data} = await transformPullRequest({pullRequest: pull, repository}, pull.user, github);
-    return data && data.pullRequests[0];
+    return data?.pullRequests[0];
   }))).filter(value => !!value);
 
   return {

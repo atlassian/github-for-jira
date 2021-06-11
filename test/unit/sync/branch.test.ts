@@ -31,7 +31,7 @@ describe.skip("sync/branches", () => {
             {
               createPullRequestUrl: `test-repo-url/pull/new/${branchName}`,
               id: branchName,
-              issueKeys: ["TES-123"].concat(issueKeys).reverse().filter(Boolean),
+              issueKeys: ["TES-123"].concat(issueKeys).reverse().filter(key => !!key),
               lastCommit: {
                 author: {
                   avatar: "https://camo.githubusercontent.com/test-avatar",

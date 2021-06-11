@@ -33,10 +33,10 @@ function mapCommit(githubCommit, author) {
 export default (payload, authorMap) => {
   // TODO: use reduce instead of map/filter combo
   const commits = payload.commits.map((commit, index) => mapCommit(commit, authorMap[index]))
-    .filter(commit => commit);
+    .filter(commit => !!commit);
 
   if (commits.length === 0) {
-    return {};
+    return undefined;
   }
 
   return {

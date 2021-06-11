@@ -5,7 +5,7 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 const redisUrl = url.parse(REDIS_URL);
 
 let password;
-if (redisUrl.auth && redisUrl.auth.split(':').length === 2) {
+if (redisUrl.auth?.split(':').length === 2) {
   password = redisUrl.auth.split(':')[1];
 }
 

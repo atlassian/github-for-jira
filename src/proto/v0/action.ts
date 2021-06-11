@@ -56,7 +56,7 @@ export async function ActionFromInstallation(installation):Promise<Action> {
     action.installationId = installation.id;
     action.jiraHostname = installation.jiraHost;
     const subs = await installation.subscriptions();
-    if (subs != null && subs.length > 0 && subs[0] != null) {
+    if (subs && subs.length > 0 && subs[0] != null) {
       action.githubInstallationId = subs[0].gitHubInstallationId;
     }
   }

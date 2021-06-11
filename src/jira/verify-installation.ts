@@ -18,7 +18,7 @@ export default (installation:Installation, log:Logger) => {
         Sentry.captureMessage(message);
       }
     } catch (err) {
-      if (err.response && err.response.status === 401) {
+      if (err.response?.status === 401) {
         log.warn(`Jira does not recognize installation id=${installation.id}. Deleting it`);
         await installation.destroy();
       } else {

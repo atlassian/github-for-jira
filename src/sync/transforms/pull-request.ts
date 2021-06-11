@@ -1,13 +1,13 @@
-import parseSmartCommit from '../../transforms/smart-commit';
-import { GitHubAPI } from 'probot';
+import parseSmartCommit from "../../transforms/smart-commit";
+import { GitHubAPI } from "probot";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {
-  if (state === 'merged') return 'MERGED';
-  if (state === 'open') return 'OPEN';
-  if (state === 'closed' && merged_at) return 'MERGED';
-  if (state === 'closed' && !merged_at) return 'DECLINED';
-  return 'UNKNOWN';
+  if (state === "merged") return "MERGED";
+  if (state === "open") return "OPEN";
+  if (state === "closed" && merged_at) return "MERGED";
+  if (state === "closed" && !merged_at) return "DECLINED";
+  return "UNKNOWN";
 }
 
 /**
@@ -17,16 +17,16 @@ function getAuthor(author) {
   // If author is null, return the ghost user
   if (!author) {
     return {
-      avatar: 'https://github.com/ghost.png',
-      name: 'Deleted User',
-      url: 'https://github.com/ghost',
+      avatar: "https://github.com/ghost.png",
+      name: "Deleted User",
+      url: "https://github.com/ghost"
     };
   }
 
   return {
     avatar: author.avatar_url,
     name: author.login,
-    url: author.url,
+    url: author.url
   };
 }
 
@@ -34,23 +34,20 @@ export default async (payload, author, github: GitHubAPI) => {
   const { pullRequest, repository } = payload;
   // This is the same thing we do in transforms, concat'ing these values
   const { issueKeys } = parseSmartCommit(
-    `${pullRequest.title}\n${pullRequest.head.ref}`,
+    `${pullRequest.title}\n${pullRequest.head.ref}`
   );
 
   if (!issueKeys) {
-    return {};
+    return undefined;
   }
 
-  const prGet =
-    github &&
-    github.pulls &&
-    (await github.pulls.get({
-      owner: repository.owner.login,
-      repo: repository.name,
-      pull_number: pullRequest.number,
-    }));
+  const prGet = await github?.pulls?.get({
+    owner: repository.owner.login,
+    repo: repository.name,
+    pull_number: pullRequest.number
+  });
 
-  const commentCount = prGet && prGet.data.comments;
+  const commentCount = prGet?.data.comments;
 
   return {
     data: {
@@ -61,25 +58,25 @@ export default async (payload, author, github: GitHubAPI) => {
           author: getAuthor(author),
           commentCount,
           destinationBranch: `${repository.html_url}/tree/${
-            pullRequest.base ? pullRequest.base.ref : ''
+            pullRequest.base ? pullRequest.base.ref : ""
           }`,
           displayId: `#${pullRequest.number}`,
           id: pullRequest.number,
           issueKeys,
           lastUpdate: pullRequest.updated_at,
-          sourceBranch: `${pullRequest.head ? pullRequest.head.ref : ''}`,
+          sourceBranch: `${pullRequest.head ? pullRequest.head.ref : ""}`,
           sourceBranchUrl: `${repository.html_url}/tree/${
-            pullRequest.head ? pullRequest.head.ref : ''
+            pullRequest.head ? pullRequest.head.ref : ""
           }`,
           status: mapStatus(pullRequest),
           timestamp: pullRequest.updated_at,
           title: pullRequest.title,
           url: pullRequest.html_url,
-          updateSequenceId: Date.now(),
-        },
+          updateSequenceId: Date.now()
+        }
       ],
       url: repository.html_url,
-      updateSequenceId: Date.now(),
-    },
+      updateSequenceId: Date.now()
+    }
   };
 };

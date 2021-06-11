@@ -34,7 +34,7 @@ function extractJwtFromRequest(req) {
 
   // if there was no token in the query-string then fall back to checking the Authorization header
   const authHeader = req.headers[AUTH_HEADER];
-  if (authHeader && authHeader.startsWith('JWT ')) {
+  if (authHeader?.startsWith('JWT ')) {
     if (token) {
       const foundIn = tokenInQuery ? 'query' : 'request body';
       req.log(`JWT token found in ${foundIn} and in header: using ${foundIn} value.`);
@@ -88,8 +88,8 @@ export const hasValidJwt = (secret: string, baseUrl: string, req: Request, res: 
 
   const expiry = verifiedClaims.exp;
 
-  // todo build in leeway?
-  if (expiry && Date.now() / 1000 >= expiry) {
+  // TODO: build in leeway?
+  if (expiry && (Date.now() / 1000 >= expiry)) {
     sendError(res, 401, 'Authentication request has expired. Try reloading the page.');
     return false;
   }

@@ -20,7 +20,7 @@ function mapBranch(branch, repository) {
     .concat(branchKeys)
     .concat(pullRequestKeys)
     .concat(commitKeys)
-    .filter(Boolean);
+    .filter(key => !!key);
 
   if (!allKeys.length) {
     // If we get here, no issue keys were found anywhere they might be found
@@ -86,14 +86,17 @@ function mapCommit(commit) {
 }
 
 export default (payload) => {
+  // TODO: use reduce instead of map/filter
   const branches = payload.branches.map(branch => mapBranch(branch, payload.repository))
-    .filter(Boolean);
+    .filter(branch => !!branch);
 
   // TODO: use reduce instead of map/filter
-  const commits = payload.branches.flatMap(branch => branch.commits.map(commit => mapCommit(commit)).filter(Boolean));
+  const commits = payload.branches
+    .flatMap(branch => branch.commits.map(commit => mapCommit(commit))
+      .filter(branch => !!branch));
 
   if ((!commits || !commits.length) && (!branches || !branches.length)) {
-    return {};
+    return undefined;
   }
 
   return {
