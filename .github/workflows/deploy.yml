@@ -1,19 +1,19 @@
 name: Deploy
 
-on: [ push ]
+#on: [ push ]
 
-#on:
-#  workflow_run:
-#    workflows: [ "Test","Build" ] # Dependent workflow
-#    types: [ completed ] # Only after dependent workflow is done
-#    branches: [ master ] # Only do it on master branch
+on:
+  workflow_run:
+    workflows: [ "Test","Build" ] # Dependent workflow
+    types: [ completed ] # Only after dependent workflow is done
+    branches: [ master ] # Only do it on master branch
 
 jobs:
   deploy-to-heroku:
     runs-on: ubuntu-latest
 
     # Should only deploy if the dependent workflow is successful
-#    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - uses: actions/checkout@v1
