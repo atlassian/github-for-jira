@@ -13,6 +13,7 @@ export default (req: Request, res: Response): void => {
       apiMigrations: {
         gdpr: false,
       },
+      // TODO: allow for more flexibility of naming
       name: `GitHub${isProd ? '' : (instance ? (` (${instance})`) : '')}`,
       description: 'Application for integrating with GitHub',
       key: `com.github.integration${instance ? `.${instance}` : ''}`,
@@ -23,6 +24,7 @@ export default (req: Request, res: Response): void => {
         enabled: '/jira/events/enabled',
         disabled: '/jira/events/disabled',
       },
+      // TODO: change this to Atlassian
       vendor: {
         name: 'GitHub',
         url: 'http://github.com',
