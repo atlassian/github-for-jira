@@ -4,11 +4,10 @@
  * So, instead of making a fork, since it's only one file and the package
  * hasn't been updated in 3 years I thought it was simpler to just copy the source here
  */
-// TODO: use Axios instead
-import request from "request";
 import crypto from "crypto";
 import url from "url";
 import express, { NextFunction, Request, RequestHandler, Response, Router } from "express";
+import axios from "axios";
 
 const host = process.env.GHE_HOST || "github.com";
 
@@ -42,7 +41,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
     next();
   }
 
-  function callback(req, res, next): void {
+  async function callback(req, res, next): Promise<void> {
     const { query } = url.parse(req.url, true);
     const code = query.code as string;
     const state = query.state as string;
@@ -55,17 +54,21 @@ export default (opts: OAuthOptions): GithubOAuth => {
     if (!state || !redirectUrl) return next(new Error("Missing matching Auth state parameter"));
     if (!code) return next(new Error("Missing OAuth Code"));
 
-    request.get({
-      url: `https://${host}/login/oauth/access_token?client_id=${opts.githubClient}&client_secret=${opts.githubSecret}&code=${code}&state=${state}`,
-      json: true
-    }, (err, _, body) => {
-      if (err) {
-        return next(new Error("Cannot retrieve access token from Github"));
+    try {
+      const response = await axios.get(`https://${host}/login/oauth/access_token?client_id=${opts.githubClient}&client_secret=${opts.githubSecret}&code=${code}&state=${state}`,
+        {
+          responseType: "json",
+        });
+
+      req.session.githubToken = response.data.access_token;
+      if(!req.session.githubToken) {
+        return next(new Error("Missing Access Token from Github OAuth Flow."));
       }
-      req.session.githubToken = body.access_token;
       res.redirect(redirectUrl);
       next();
-    });
+    } catch (e) {
+      return next(new Error("Cannot retrieve access token from Github"));
+    }
   }
 
   const router = express.Router();
