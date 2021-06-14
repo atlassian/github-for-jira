@@ -78,6 +78,7 @@ environmentOverrides:
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.stg.services.atlassian.com
+        WEBHOOK_PROXY_URL: https://github-for-jira.stg.services.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-stg
   prod:
     config:
