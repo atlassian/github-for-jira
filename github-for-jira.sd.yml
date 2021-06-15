@@ -72,14 +72,16 @@ environmentOverrides:
         NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:5005"
         PORT: "8080"
         LOG_LEVEL: debug
-         # * Commented out env vars are to be saved in secrets
-        # WEBHOOK_SECRET
+        # * Commented out env vars are to be saved in secrets
+        # WEBHOOK_SECRET: for signed signature when syncing an org
   staging:
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.stg.services.atlassian.com
         WEBHOOK_PROXY_URL: https://github-for-jira.stg.services.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-stg
+        # * Commented out env vars are to be saved in secrets
+        # WEBHOOK_SECRET: for signed signature when syncing an org
   prod:
     config:
       environmentVariables:
