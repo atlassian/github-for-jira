@@ -1,5 +1,7 @@
 import parseSmartCommit from "../../transforms/smart-commit";
 import { getJiraId } from "../../jira/util/id";
+import issueKeyParser from 'jira-issue-key-parser';
+import { isEmpty } from 'lodash';
 
 // TODO: better typing in file
 /**

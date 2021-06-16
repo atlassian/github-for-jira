@@ -182,8 +182,16 @@ export const processInstallation =
     app.log(`Starting job for installationId=${installationId}`);
     const issueKeys1 = issueKeyParser().parse('JRA-456-some-extra-text');
     const issueKeys2 = issueKeyParser().parse('jra-456-some-extra-text');
+    const issueKeys3 = issueKeyParser().parse('JRa-456 some extra text');
+    const issueKeys4 = issueKeyParser().parse(
+      'did some stuff here too for jrA-123 jra-456',
+    );
+    const issueKeys5 = issueKeyParser().parse('made some changes to j2-123');
     app.log(`Testing key parser`, issueKeys1);
     app.log(`Testing key parser`, issueKeys2);
+    app.log(`Testing key parser`, issueKeys3);
+    app.log(`Testing key parser`, issueKeys4);
+    app.log(`Testing key parser`, issueKeys5);
     const subscription = await Subscription.getSingleInstallation(
       jiraHost,
       installationId,
