@@ -16,7 +16,7 @@ FROM node:14.17-alpine
 USER node
 COPY --chown=node:node --from=build /app /app
 WORKDIR /app
-ENV NODE_ENV development
+ENV NODE_ENV production
 EXPOSE 8080
 
 CMD ["npm", "run", "start:production"]
