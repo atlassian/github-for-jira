@@ -2,7 +2,8 @@ import Redis from 'ioredis';
 import getRedisInfo from './config/redis-info';
 import { sequelize } from './models/sequelize';
 import { Application } from 'probot';
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import bunyan from 'bunyan';
 
 /**
  * Create a /deepcheck and /healthcheck endpoints
@@ -19,8 +20,9 @@ export default (robot: Application) => {
    * It's a race between the setTimeout and our ping + authenticate.
    */
   // TODO: is this endpoint even called?
-  app.get('/_ping', async (req: Request, res: Response) => {
+  app.get('/deepcheck', async (_, res: Response) => {
     let connectionsOk = true;
+    const logger = bunyan.createLogger({ name: 'deepcheck' });
 
     try {
       await Promise.race([
@@ -45,14 +47,14 @@ export default (robot: Application) => {
         ),
       ]);
     } catch (err) {
-      req.log.error(`/deepcheck: Connection is not ok: ${err}`);
+      logger.error(`/deepcheck: Connection is not ok: ${err}`);
       connectionsOk = false;
     }
 
     if (connectionsOk) {
       return res.status(200).send('OK');
     } else {
-      req.log.error('Error attempting to ping Redis and Database');
+      logger.error('Error attempting to ping Redis and Database');
       return res.status(500).send('NOT OK');
     }
   });
