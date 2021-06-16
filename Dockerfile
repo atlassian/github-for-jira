@@ -7,7 +7,7 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
-RUN npm ci --only=production
+RUN npm i --only=production
 
 # Building TypeScript files
 RUN npm run build:release
