@@ -8,7 +8,7 @@
     "patch_url": "https://github.com/integrations/test/pull/51.patch",
     "issue_url": "https://api.github.com/repos/integrations/test/issues/51",
     "number": 51,
-    "status": "merged",
+    "state": "merged",
     "locked": false,
     "title": "[TES-123] Branch payload Test",
     "user": {
@@ -321,7 +321,7 @@
     "patch_url": "https://github.com/integrations/test/pull/51.patch",
     "issue_url": "https://api.github.com/repos/integrations/test/issues/51",
     "number": 51,
-    "status": "open",
+    "state": "open",
     "locked": false,
     "title": "Testing force pushes",
     "user": {
