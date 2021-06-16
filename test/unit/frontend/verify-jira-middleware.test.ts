@@ -100,7 +100,7 @@ describe('#verifyJiraMiddleware', () => {
 
       expect(addLogFieldsSpy).toHaveBeenCalledWith({
         jiraHost: installation.jiraHost,
-        jiraClientKey: 'abcde***', // should be the shortened key
+        jiraClientKey: 'abc12***', // should be the shortened key
       });
     });
   });
