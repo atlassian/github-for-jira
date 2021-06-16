@@ -15,6 +15,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
   async function getInstallationsWithAdmin({installations, login}) {
     const installationsWithAdmin = [];
+    // TODO: make this parallel calls
     for (const installation of installations) {
       // See if we can get the membership for this user
       const admin = await isAdmin({

@@ -22,6 +22,20 @@ describe("GitHub client middleware", () => {
     expect(result).toBe(true);
   });
 
+  it("isAdmin returns true if user is owner of a given organization", async () => {
+    githubNock
+      .get("/orgs/test-org/memberships/test-user")
+      .reply(200, { role: "owner" });
+
+    const result = await adminFunction({
+      org: "test-org",
+      username: "test-user",
+      type: "Organization"
+    });
+
+    expect(result).toBe(true);
+  });
+
   it("isAdmin returns false if user is not an admin of a given organization", async () => {
     githubNock
       .get("/orgs/test-org/memberships/test-user")
