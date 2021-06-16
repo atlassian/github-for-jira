@@ -1,0 +1,19 @@
+# Used to start Nebulae sandbox.
+# First, build docker image then update version here if needed.
+# To start sandbox:
+# - `DOCKER_IMAGE_NAME=docker.atl-paas.net/atlassian/github-for-jira DOCKER_IMAGE_TAG=<tag_number> start-nebatlas nebulae start --print-build-output`
+# To stop sandbox:
+# -`atlas nebulae stop`
+service:
+  # The name of your service
+  name: github-for-jira
+
+  descriptor:
+    # Location of your service descriptor
+    path: github-for-jira.sd.yml
+    build:
+      commands:
+        # The steps to build your Docker image. It might be a raw `docker build`
+        # like below, or it might be a script or several scripts if your build
+        # process is more involved.
+        - docker build -t atlassian/github-for-jira:0.0.0 .
