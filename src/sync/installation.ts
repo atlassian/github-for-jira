@@ -9,6 +9,7 @@ import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
 import { Application } from "probot";
+import issueKeyParser from 'jira-issue-key-parser';
 
 const tasks = {
   pull: getPullRequests,
@@ -165,7 +166,9 @@ export const processInstallation = (app: Application, queues) => async (job): Pr
   });
 
   app.log(`Starting job for installationId=${installationId}`);
-
+  const issueKeys1 = issueKeyParser().parse('JRA-456-some-extra-text');
+  const issueKeys2 = issueKeyParser().parse('jra-456-some-extra-text');
+app.log(`Testing key parser`, issueKeys1)
   const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
   // TODO: should this reject instead? it's just ignoring an error
   if (!subscription) return;
