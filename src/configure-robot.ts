@@ -1,17 +1,17 @@
-import {Application, GitHubAPI} from "probot";
+import { Application, GitHubAPI } from 'probot';
 import Redis from 'ioredis';
 import RateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
-import {createAppAuth} from '@octokit/auth-app';
-import {findPrivateKey} from 'probot/lib/private-key';
+import { createAppAuth } from '@octokit/auth-app';
+import { findPrivateKey } from 'probot/lib/private-key';
 import getRedisInfo from './config/redis-info';
 import setupFrontend from './frontend';
 import setupGitHub from './github';
 import setupJira from './jira';
-import setupPing from './ping';
+import setupDeepcheck from './deepcheck';
 import statsd from './config/statsd';
-import {isIp4InCidrs} from './config/cidr-validator';
-import {Logger} from 'probot/lib/github/logging';
+import { isIp4InCidrs } from './config/cidr-validator';
+import { Logger } from 'probot/lib/github/logging';
 
 /**
  * Get the list of GitHub CIDRs from the /meta endpoint
@@ -40,7 +40,7 @@ async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
   });
   // TODO: need to update this.  `api.auth` doesn't exist, must be a deprecated func
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const {token} = await (api as any).auth({
+  const { token } = await (api as any).auth({
     type: 'installation',
     installationId: inst.data[0].id,
   });
@@ -50,7 +50,7 @@ async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
   });
   const metaResp = await api.meta.get();
   const GitHubCIDRs = metaResp.data.hooks;
-  logger.info({GitHubCIDRs}, 'CIDRs that can skip rate limiting');
+  logger.info({ GitHubCIDRs }, 'CIDRs that can skip rate limiting');
   return GitHubCIDRs;
 }
 
@@ -90,8 +90,8 @@ export default async (app: Application): Promise<Application> => {
   setupJira(app);
   // Our FrontEnd Assets are between 1 and 4 RPM
   setupFrontend(app);
-  // Opaque is expected to query us twice per minute
-  setupPing(app);
+  // Deepcheck and Healthchecks endpoints for checking app health
+  setupDeepcheck(app);
 
   return app;
 };

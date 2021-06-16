@@ -1,9 +1,13 @@
 import jwt from 'atlassian-jwt';
 
-import {Installation} from '../models';
-import {NextFunction, Request, Response} from 'express';
+import { Installation } from '../models';
+import { NextFunction, Request, Response } from 'express';
 
-export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export default async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   const jiraHost = req.session.jiraHost || req.body?.jiraHost;
   const token = req.session.jwt || req.body?.token;
   const installation = await Installation.getForHost(jiraHost);
@@ -15,7 +19,8 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
   req.addLogFields({
     jiraHost: installation.jiraHost,
-    jiraClientKey: installation.clientKey,
+    jiraClientKey:
+      installation.clientKey && `${installation.clientKey.substr(0, 5)}***`,
   });
 
   try {
