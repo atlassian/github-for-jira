@@ -1,8 +1,8 @@
 import url from 'url';
 import transformPullRequest from './transforms/pull-request';
 import statsd from '../config/statsd';
-import {GitHubAPI} from 'probot';
-
+import { GitHubAPI } from 'probot';
+import bunyan from 'bunyan';
 /**
  * @typedef {object} RepositoryObject
  * @property {number} id
@@ -17,10 +17,14 @@ import {GitHubAPI} from 'probot';
  * Find the next page number from the response headers.
  */
 export const getNextPage = (headers: Headers = {}): number => {
-  const nextUrl = ((headers.link || '').match(/<([^>]+)>;\s*rel="next"/) || [])[1];
+  const nextUrl = ((headers.link || '').match(/<([^>]+)>;\s*rel="next"/) ||
+    [])[1];
   if (!nextUrl) {
     return undefined;
   }
+  const logger = bunyan.createLogger({ name: 'pr' });
+  logger.info(`pr:`, nextUrl);
+  logger.info(`pr:`, typeof nextUrl);
   const parsed = url.parse(nextUrl).query.split('&');
   let nextPage;
   parsed.forEach((query) => {
@@ -30,13 +34,18 @@ export const getNextPage = (headers: Headers = {}): number => {
     }
   });
   return nextPage;
-}
+};
 
 interface Headers {
   link?: string;
 }
 
-export default async function (github: GitHubAPI, repository, cursor: string | number, perPage: number) {
+export default async function (
+  github: GitHubAPI,
+  repository,
+  cursor: string | number,
+  perPage: number,
+) {
   let status: number;
   let headers: Headers;
   let edges;
@@ -55,7 +64,11 @@ export default async function (github: GitHubAPI, repository, cursor: string | n
   const asyncTags = [];
   await statsd.asyncTimer(
     async () => {
-      ({data: edges, status, headers} = (await github.pulls.list({
+      ({
+        data: edges,
+        status,
+        headers,
+      } = await github.pulls.list({
         ...vars,
         state: 'all',
         sort: 'created',
@@ -65,7 +78,7 @@ export default async function (github: GitHubAPI, repository, cursor: string | n
           retries: 6,
           retryAfter: 10,
         },
-      })));
+      }));
       asyncTags.push(`status:${status}`);
     },
     'rest.sync_pull_request',
@@ -78,22 +91,33 @@ export default async function (github: GitHubAPI, repository, cursor: string | n
 
   // Attach the "cursor" (next page number) to each edge, because the function that uses this data
   // fetches the cursor from one of the edges instead of letting us return it explicitly.
-  edges.forEach((edge) => edge.cursor = nextPage);
+  edges.forEach((edge) => (edge.cursor = nextPage));
 
   // TODO: change this to reduce
-  const pullRequests = (await Promise.all(edges.map(async (pull) => {
-    const data = await transformPullRequest({pullRequest: pull, repository}, pull.user, github);
-    return data?.pullRequests[0];
-  }))).filter(value => !!value);
+  const pullRequests = (
+    await Promise.all(
+      edges.map(async (pull) => {
+        const data = await transformPullRequest(
+          { pullRequest: pull, repository },
+          pull.user,
+          github,
+        );
+        return data?.pullRequests[0];
+      }),
+    )
+  ).filter((value) => !!value);
 
   return {
     edges,
-    jiraPayload: pullRequests.length > 0 ? {
-      id: repository.id,
-      name: repository.full_name,
-      pullRequests,
-      url: repository.html_url,
-      updateSequenceId: Date.now(),
-    } : undefined
+    jiraPayload:
+      pullRequests.length > 0
+        ? {
+            id: repository.id,
+            name: repository.full_name,
+            pullRequests,
+            url: repository.html_url,
+            updateSequenceId: Date.now(),
+          }
+        : undefined,
   };
 }
