@@ -34,7 +34,7 @@ export const isAdmin = (githubClient: GitHubAPI) =>
     try {
       const {
         data: { role }
-      } = await githubClient.orgs.getMembershipForAuthenticatedUser({ org });
+      } = await githubClient.orgs.getMembership({ org, username });
       return role === "admin";
     } catch (err) {
       console.log(err);
