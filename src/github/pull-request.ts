@@ -21,7 +21,7 @@ export default async (context: Context, jiraClient, util) => {
     }, "Can't retrieve reviewers.");
   }
 
-  const { data: jiraPayload } = transformPullRequest(context.payload, author.data, reviews.data);
+  const jiraPayload = transformPullRequest(context.payload, author.data, reviews.data);
   const { pull_request: pullRequest } = context.payload;
 
   if (!jiraPayload && context.payload?.changes?.title) {

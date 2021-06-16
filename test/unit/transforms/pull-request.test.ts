@@ -25,7 +25,7 @@ describe("pull_request transform", () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(
+    const data = await transformPullRequest(
       fixture,
       fixture.pull_request.user
     );
@@ -89,7 +89,7 @@ describe("pull_request transform", () => {
 
     Date.now = jest.fn(() => 12345678);
 
-    const { data } = await transformPullRequest(
+    const data = await transformPullRequest(
       fixture,
       fixture.pull_request.user,
       fixture.pull_request.reviewers
