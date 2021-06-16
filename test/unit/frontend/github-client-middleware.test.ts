@@ -10,7 +10,7 @@ describe("GitHub client middleware", () => {
 
   it("isAdmin returns true if user is admin of a given organization", async () => {
     githubNock
-      .get("/orgs/test-org/memberships/test-user")
+      .get("/user/memberships/orgs/test-org")
       .reply(200, { role: "admin" });
 
     const result = await adminFunction({
@@ -24,7 +24,7 @@ describe("GitHub client middleware", () => {
 
   it("isAdmin returns false if user is not an admin of a given organization", async () => {
     githubNock
-      .get("/orgs/test-org/memberships/test-user")
+      .get("/user/memberships/orgs/test-org")
       .reply(200, { role: "member" });
 
     const result = await adminFunction({
