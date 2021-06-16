@@ -19,7 +19,7 @@ export default (robot: Application) => {
    * It's a race between the setTimeout and our ping + authenticate.
    */
   // TODO: is this endpoint even called?
-  app.get('/_ping', async (req: Request, res: Response) => {
+  app.get('/deepcheck', async (req: Request, res: Response) => {
     let connectionsOk = true;
 
     try {
