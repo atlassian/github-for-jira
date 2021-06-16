@@ -24,6 +24,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
         username: login,
         type: installation.target_type,
       });
+      req.log.info(`Installations: ${JSON.stringify(installationsWithAdmin, null, 2)}`);
       const hasMemberPermission = installation.permissions.members === 'read';
       installationsWithAdmin.push({...installation, admin, hasMemberPermission});
     }
