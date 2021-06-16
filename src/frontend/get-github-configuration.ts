@@ -18,6 +18,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
     // TODO: make this parallel calls
     for (const installation of installations) {
       // See if we can get the membership for this user
+      // TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
       const admin = await isAdmin({
         org: installation.account.login,
         username: login,
