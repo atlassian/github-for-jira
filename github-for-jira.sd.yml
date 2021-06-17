@@ -69,7 +69,7 @@ environmentOverrides:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
         WEBHOOK_PROXY_URL: https://github-for-jira.dev.services.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-dev
-        NODE_OPTIONS: "--no-deprecation --inspect=0.0.0.0:5005"
+        NODE_OPTIONS: "--no-deprecation"
         PORT: "8080"
         LOG_LEVEL: debug
         # * Commented out env vars are to be saved in secrets
