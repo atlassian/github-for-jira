@@ -109,7 +109,7 @@ router.use(async (req: Request, res: Response, next: NextFunction): Promise<void
     }
 
     if (!data.viewer.organization) {
-      req.log.error(`Non Atlassian scoped token attempted to access staff routes: login=${data.viewer.login}, isEmployee=${data.viewer.isEmployee}`);
+      req.log.info(`Non Atlassian scoped token attempted to access staff routes: login=${data.viewer.login}, isEmployee=${data.viewer.isEmployee}`);
       res.status(401)
         .json({
           error: 'Unauthorized',
