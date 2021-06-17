@@ -48,7 +48,7 @@ export default (robot: Application) => {
         }),
       ]);
     } catch (error) {
-      deepcheckLogger.error(`/deepcheck: Connection is not ok: ${err}`);
+      deepcheckLogger.error(`/deepcheck: Connection is not ok: ${error}`);
       connectionsOk = false;
     }
 
