@@ -86,7 +86,7 @@ export default async (app: Application): Promise<Application> => {
 
   // These incoming webhooks should skip rate limiting
   setupGitHub(app);
-  // According to NewRelic, we receive < 1 request per minute from Jira
+  // According to metrics, we receive < 1 request per minute from Jira
   setupJira(app);
   // Our FrontEnd Assets are between 1 and 4 RPM
   setupFrontend(app);
