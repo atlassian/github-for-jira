@@ -24,7 +24,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
         username: login,
         type: installation.target_type,
       });
-      req.log.info(`Installations: ${JSON.stringify(installationsWithAdmin, null, 2)}`);
       installationsWithAdmin.push({...installation, admin});
     }
     return installationsWithAdmin;
