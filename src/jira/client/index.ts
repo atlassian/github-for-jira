@@ -2,7 +2,6 @@
 import { Installation, Subscription } from '../../models';
 import getAxiosInstance from './axios';
 import { getJiraId } from '../util/id';
-import newrelic from 'newrelic';
 import isProd from '../util/isProd';
 import { AxiosInstance, AxiosResponse } from 'axios';
 import Logger from 'bunyan';
@@ -225,13 +224,7 @@ export default async (
   gitHubInstallationId: number,
   logger?: Logger,
 ) => {
-  return await newrelic.startSegment(
-    'lib/jira/client: getJiraClient',
-    true,
-    async () => {
-      return await getJiraClient(jiraHost, gitHubInstallationId, logger);
-    },
-  );
+  return await getJiraClient(jiraHost, gitHubInstallationId, logger);
 };
 
 /**
