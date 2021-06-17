@@ -34,15 +34,18 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 - **Webhook URL**: `https://DOMAIN/github/events`
 - **Webhook Secret**: `development`
 
-Your new GitHub app will need the following repository permissions:
+Your new GitHub app will need the following repository permissions & events:
 
+**Repository Permissions**:
 + Contents: Read & write
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
 
-It will also need to subscribe to the following events:
+**Organization Permissions**:
++ Members: Read-Only
 
+**Subscribe to Events**:
 + Commit comment
 + Create
 + Delete
@@ -63,7 +66,7 @@ Once you've set up your GitHub app and cloned this repo, copy the content from `
 + `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing it. If you don't have one now, please set the value of this variable after going through the step 1 of "Configuring the Jira instance" section of this document.
 + `STORAGE_SECRET`: It needs to be set to a 32 char secret (anything else fails). You can generate one by running `openssl rand -hex 32` in your terminal and paste directly to your .env file.
-+ `INSTANCE_NAME`: Your Jira instance name
++ `INSTANCE_NAME`: Your Jira app name - will show as "Github (instance-name)"
 + `WEBHOOK_PROXY_URL`: `https://DOMAIN/github/events`
 
 ### Running the app
