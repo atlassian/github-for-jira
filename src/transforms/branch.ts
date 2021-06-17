@@ -1,11 +1,21 @@
-import parseSmartCommit from './smart-commit';
-import {getJiraId} from '../jira/util/id';
-import {Context} from 'probot/lib/context';
+import { getJiraId } from '../jira/util/id';
+import { Context } from 'probot/lib/context';
+import issueKeyParser from 'jira-issue-key-parser';
+import { isEmpty } from 'lodash';
 
 async function getLastCommit(context, issueKeys) {
-  const {github, payload: {ref}} = context;
-  const {data: {object: {sha}}} = await github.git.getRef(context.repo({ref: `heads/${ref}`}));
-  const {data: {commit, html_url: url}} = await github.repos.getCommit(context.repo({sha}));
+  const {
+    github,
+    payload: { ref },
+  } = context;
+  const {
+    data: {
+      object: { sha },
+    },
+  } = await github.git.getRef(context.repo({ ref: `heads/${ref}` }));
+  const {
+    data: { commit, html_url: url },
+  } = await github.repos.getCommit(context.repo({ sha }));
 
   return {
     author: {
@@ -27,11 +37,11 @@ async function getLastCommit(context, issueKeys) {
 export default async (context: Context) => {
   if (context.payload.ref_type !== 'branch') return undefined;
 
-  const {ref, repository} = context.payload;
+  const { ref, repository } = context.payload;
 
-  const {issueKeys} = parseSmartCommit(ref);
+  const issueKeys = issueKeyParser().parse(ref);
 
-  if (!issueKeys) {
+  if (isEmpty(issueKeys)) {
     return undefined;
   }
 

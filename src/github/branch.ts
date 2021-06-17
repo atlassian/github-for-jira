@@ -34,7 +34,7 @@ export const deleteBranch = async (context, jiraClient) => {
       { noop: 'no_issue_keys' },
       'Halting futher execution for deleteBranch since issueKeys is empty',
     );
-    return;
+    return undefined;
   }
 
   await jiraClient.devinfo.branch.delete(

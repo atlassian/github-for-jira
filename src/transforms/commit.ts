@@ -1,9 +1,10 @@
-import parseSmartCommit from "./smart-commit";
+import issueKeyParser from 'jira-issue-key-parser';
+import { isEmpty } from 'lodash';
 
 function mapCommit(githubCommit, author): Commit {
-  const { issueKeys } = parseSmartCommit(githubCommit.message);
+  const issueKeys = issueKeyParser().parse(githubCommit.message);
 
-  if (!issueKeys) {
+  if (isEmpty(issueKeys)) {
     return undefined;
   }
 
@@ -12,7 +13,7 @@ function mapCommit(githubCommit, author): Commit {
       avatar: author.avatarUrl || undefined,
       email: author.email,
       name: author.name,
-      url: author.user ? author.user.url : undefined
+      url: author.user ? author.user.url : undefined,
     },
     authorTimestamp: githubCommit.authorTimestamp,
     displayId: githubCommit.sha.substring(0, 6),
@@ -23,7 +24,7 @@ function mapCommit(githubCommit, author): Commit {
     message: githubCommit.message,
     timestamp: githubCommit.authorTimestamp,
     url: githubCommit.url,
-    updateSequenceId: Date.now()
+    updateSequenceId: Date.now(),
   };
 }
 
@@ -57,8 +58,9 @@ interface CommitData {
 // TODO: type payload and return better
 export default (payload, authorMap): CommitData => {
   // TODO: use reduce instead of map/filter combo
-  const commits = payload.commits.map((commit, index) => mapCommit(commit, authorMap[index]))
-    .filter(commit => !!commit);
+  const commits = payload.commits
+    .map((commit, index) => mapCommit(commit, authorMap[index]))
+    .filter((commit) => !!commit);
 
   if (commits.length === 0) {
     return undefined;
@@ -69,6 +71,6 @@ export default (payload, authorMap): CommitData => {
     id: payload.repository.id,
     name: payload.repository.full_name,
     url: payload.repository.html_url,
-    updateSequenceId: Date.now()
+    updateSequenceId: Date.now(),
   };
 };

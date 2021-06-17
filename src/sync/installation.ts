@@ -180,7 +180,7 @@ export const processInstallation =
     });
 
     app.log(`Starting job for installationId=${installationId}`);
-    const issueKeys1 = issueKeyParser().parse('JRA-456-some-extra-text');
+    const issueKeys1 = issueKeyParser().parse('made some changes test-59 and r2-4');
     const issueKeys2 = issueKeyParser().parse('jra-456-some-extra-text');
     const issueKeys3 = issueKeyParser().parse('JRa-456 some extra text');
     const issueKeys4 = issueKeyParser().parse(
