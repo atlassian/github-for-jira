@@ -11,6 +11,8 @@ config.benchmark = true;
 config.logging = config.disable_sql_logging
   ? undefined
   : (query, ms) => logger.debug({ ms }, query);
+console.info(`use_env_variable: ${config.use_env_variable}`);
+console.info(`Env Var Value: ${process.env[config.use_env_variable]}`);
 export const sequelize = config.use_env_variable
   ? new Sequelize.Sequelize(process.env[config.use_env_variable], config)
   : new Sequelize.Sequelize(
