@@ -5,7 +5,7 @@ import bunyan from 'bunyan';
 const REDIS_URL = process.env.REDIS_BOTTLENECK_HOST || '127.0.0.1';
 const redisInfo = url.parse(REDIS_URL);
 const REDIS_PORT = process.env.REDIS_BOTTLENECK_PORT || redisInfo.port || 6379;
-const logger = bunyan.createLogger({ name: 'deepcheck' });
+const logger = bunyan.createLogger({ name: 'redis info' });
 
 logger.info(
   `REDIS_BOTTLENECK_HOST: ${process.env.REDIS_BOTTLENECK_HOST}, REDIS_BOTTLENECK_PORT: ${process.env.REDIS_BOTTLENECK_PORT}, REDIS_URL: ${REDIS_URL}`,
