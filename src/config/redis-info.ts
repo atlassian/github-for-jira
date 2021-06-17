@@ -11,7 +11,7 @@ logger.info(
   `REDIS_BOTTLENECK_HOST: ${process.env.REDIS_BOTTLENECK_HOST}\nREDIS_BOTTLENECK_PORT: ${process.env.REDIS_BOTTLENECK_PORT}\nREDIS_URL: ${REDIS_URL}\nREDIS_PORT: ${REDIS_PORT}`,
 );
 
-logger.info(`redisInfo: ${redisInfo}`);
+logger.info(`redisInfo: ${JSON.stringify(redisInfo)}`);
 
 let password;
 if (redisInfo.auth?.split(':').length === 2) {
