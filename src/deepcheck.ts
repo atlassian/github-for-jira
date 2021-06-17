@@ -19,10 +19,9 @@ export default (robot: Application) => {
    *
    * It's a race between the setTimeout and our ping + authenticate.
    */
-  // TODO: is this endpoint even called?
   app.get('/deepcheck', async (_, res: Response) => {
     let connectionsOk = true;
-    const logger = bunyan.createLogger({ name: 'deepcheck' });
+    const deepcheckLogger = bunyan.createLogger({ name: 'deepcheck' });
 
     try {
       await Promise.race([
@@ -34,27 +33,30 @@ export default (robot: Application) => {
                 new Error(`Error issuing PING to redis: ${error}`),
               ),
             ),
-          sequelize
-            .authenticate()
-            .catch((error) =>
-              Promise.reject(
-                new Error(`Error issuing authenticate to Sequelize: ${error}`),
-              ),
-            ),
+          sequelize.authenticate().catch((error) => {
+            deepcheckLogger.error(
+              `Error issuing authenticate to Sequelize: ${error}`,
+            );
+            Promise.reject(
+              new Error(`Error issuing authenticate to Sequelize: ${error}`),
+            );
+          }),
         ]),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 500),
-        ),
+        new Promise((_, reject) => {
+          deepcheckLogger.error(`Error: timeout`);
+          setTimeout(() => reject(new Error('timeout')), 500);
+        }),
       ]);
-    } catch (err) {
-      logger.error(`/deepcheck: Connection is not ok: ${err}`);
+    } catch (error) {
+      deepcheckLogger.error(`/deepcheck: Connection is not ok: ${err}`);
       connectionsOk = false;
     }
 
     if (connectionsOk) {
+      deepcheckLogger.info('Successfully called /deepcheck');
       return res.status(200).send('OK');
     } else {
-      logger.error('Error attempting to ping Redis and Database');
+      deepcheckLogger.error('Error attempting to ping Redis and Database');
       return res.status(500).send('NOT OK');
     }
   });
@@ -62,7 +64,9 @@ export default (robot: Application) => {
   /**
    * /healtcheck endpoint to check that the app started properly
    */
-  app.get('/healthcheck', async (_, res: Response) =>
-    res.status(200).send('OK'),
-  );
+  const healthcheckLogger = bunyan.createLogger({ name: 'healthcheck' });
+  app.get('/healthcheck', async (_, res: Response) => {
+    res.status(200).send('OK');
+    healthcheckLogger.info('Successfully called /healthcheck.');
+  });
 };
