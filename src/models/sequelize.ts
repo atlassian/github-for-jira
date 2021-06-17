@@ -10,8 +10,10 @@ config.benchmark = true;
 config.logging = config.disable_sql_logging
   ? undefined
   : (query, ms) => logger.debug({ ms }, query);
+
+console.info(`Env Vars: ${JSON.stringify(process.env, null, 2)}`);
 console.info(`Node Env: ${nodeEnv}`);
 console.info(`DATABASE_URL: ${process.env.DATABASE_URL}`);
-export const sequelize = process.env.DATABASE_URL
-  ? new Sequelize.Sequelize(process.env.DATABASE_URL, config)
+export const sequelize = config.use_env_variable
+  ? new Sequelize.Sequelize(process.env[config.use_env_variable], config)
   : new Sequelize.Sequelize(config);
