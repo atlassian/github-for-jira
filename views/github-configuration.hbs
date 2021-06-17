@@ -27,12 +27,8 @@
             height="25px" width="25px">
           <span class="text-bold text-gray-dark"><a href="{{html_url}}">{{ account.login }}</a></span>
           {{#if admin}}
-            <button class="install-link btn btn-info float-right"  data-installation-id="{{ id }}" type="submit">Install</button>
+            <button class="install-link btn btn-info float-right" data-installation-id="{{ id }}" type="submit">Install</button>
             <a href="/github/subscriptions/{{ id }}" class="float-right my-1 px-1">Manage</a>
-          {{else unless hasMemberPermission}}
-            <a href="{{html_url}}/permissions/update" class="tooltipped tooltipped-w float-right" aria-label="Permissions update required to determine org membership." data-installation-id="{{ id }}">
-              Update
-            </a>
           {{else}}
             <button disabled class="tooltipped tooltipped-w install-link btn btn-info float-right" aria-label="Unable to connect this installation. Admin access is required." data-installation-id="{{ id }}" type="submit">
               Install

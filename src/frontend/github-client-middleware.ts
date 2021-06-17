@@ -20,6 +20,8 @@ export default (octokitApp: App): RequestHandler => (req: Request, res: Response
   next();
 };
 
+
+// TODO: change function name as we're not looking for admin, but those that can install app in orga
 export const isAdmin = (githubClient: GitHubAPI) =>
   async (args: { org: string, username: string, type: string }): Promise<boolean> => {
     const { org, username, type } = args;
