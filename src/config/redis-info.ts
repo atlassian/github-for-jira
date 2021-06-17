@@ -8,7 +8,7 @@ const REDIS_PORT = process.env.REDIS_BOTTLENECK_PORT || redisInfo.port || 6379;
 const logger = bunyan.createLogger({ name: 'redis info' });
 
 logger.info(
-  `REDIS_BOTTLENECK_HOST: ${process.env.REDIS_BOTTLENECK_HOST}, REDIS_BOTTLENECK_PORT: ${process.env.REDIS_BOTTLENECK_PORT}, REDIS_URL: ${REDIS_URL}`,
+  `REDIS_BOTTLENECK_HOST: ${process.env.REDIS_BOTTLENECK_HOST}\nREDIS_BOTTLENECK_PORT: ${process.env.REDIS_BOTTLENECK_PORT}\nREDIS_URL: ${REDIS_URL}\nREDIS_PORT: ${REDIS_PORT}`,
 );
 
 let password;
