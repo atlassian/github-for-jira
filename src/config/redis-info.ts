@@ -2,7 +2,7 @@ import url from 'url';
 import Redis from 'ioredis';
 import bunyan from 'bunyan';
 
-const REDIS_URL = process.env.REDIS_BOTTLENECK_HOST || '127.0.0.1';
+const REDIS_URL = process.env.REDIS_URL || '127.0.0.1';
 const redisInfo = url.parse(REDIS_URL);
 const REDIS_PORT = process.env.REDIS_BOTTLENECK_PORT || redisInfo.port || 6379;
 const logger = bunyan.createLogger({ name: 'redis info' });
@@ -14,9 +14,9 @@ logger.info(
 logger.info(`redisInfo: ${JSON.stringify(redisInfo)}`);
 
 let password;
-if (redisInfo.auth?.split(':').length === 2) {
-  password = redisInfo.auth.split(':')[1];
-}
+// if (redisInfo.auth?.split(':').length === 2) {
+//   password = redisInfo.auth.split(':')[1];
+// }
 
 const db = redisInfo.pathname?.split('/') || [];
 

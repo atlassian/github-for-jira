@@ -40,6 +40,7 @@ export default (robot: Application) => {
       deepcheckLogger.info('Successfully called /deepcheck');
       return res.status(200).send('OK');
     } else {
+      deepcheckLogger.error('Error: failed to call /deepcheck');
       // no additional logging, since it's logged in the catch block of the promise above
       return res.status(500).send('NOT OK');
     }
