@@ -13,7 +13,6 @@
   },
   "production": {
     "dialect": "postgres",
-    "use_env_variable": "DATABASE_URL",
     "disable_sql_logging": true,
     "ssl": true,
     "dialectOptions": {

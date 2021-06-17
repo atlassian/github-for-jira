@@ -36,12 +36,6 @@
       "description": "The Postgres connection URL for the backing database"
     }
   },
-  "addons": [
-    {
-      "plan": "heroku-postgresql",
-      "as": "DATABASE"
-    }
-  ],
   "scripts": {
     "postdeploy": "sequelize db:migrate"
   }
