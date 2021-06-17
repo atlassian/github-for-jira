@@ -1,19 +1,20 @@
-import parseSmartCommit from "./smart-commit";
-import { getJiraId } from "../jira/util/id";
-import _ from "lodash";
+import issueKeyParser from 'jira-issue-key-parser';
+import { isEmpty } from '../jira/util/isEmpty';
+import { getJiraId } from '../jira/util/id';
+import _ from 'lodash';
 
 function mapStatus(status: string, merged: boolean) {
-  if (status === "merged") return "MERGED";
-  if (status === "open") return "OPEN";
-  if (status === "closed" && merged) return "MERGED";
-  if (status === "closed" && !merged) return "DECLINED";
-  return "UNKNOWN";
+  if (status === 'merged') return 'MERGED';
+  if (status === 'open') return 'OPEN';
+  if (status === 'closed' && merged) return 'MERGED';
+  if (status === 'closed' && !merged) return 'DECLINED';
+  return 'UNKNOWN';
 }
 
 // TODO: define arguments and return
 function mapReviews(reviews) {
   reviews = reviews || [];
-  const sortedReviews = _.orderBy(reviews, "submitted_at", "desc");
+  const sortedReviews = _.orderBy(reviews, 'submitted_at', 'desc');
   const usernames = {};
   // The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
   return sortedReviews.reduce((acc, review) => {
@@ -21,17 +22,17 @@ function mapReviews(reviews) {
     if (!usernames[review.user.login]) {
       usernames[review.user.login] = {
         name: review.user.login,
-        approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED",
+        approvalStatus: review.state === 'APPROVED' ? 'APPROVED' : 'UNAPPROVED',
         url: review.user.html_url,
-        avatar: review.user.avatar_url
+        avatar: review.user.avatar_url,
       };
       acc.push(usernames[review.user.login]);
       // If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
     } else if (
-      usernames[review.user.login].approvalStatus !== "APPROVED" &&
-      review.state === "APPROVED"
+      usernames[review.user.login].approvalStatus !== 'APPROVED' &&
+      review.state === 'APPROVED'
     ) {
-      usernames[review.user.login].approvalStatus = "APPROVED";
+      usernames[review.user.login].approvalStatus = 'APPROVED';
     }
     // Returns the reviews' array with unique users
     return acc;
@@ -43,11 +44,11 @@ export default (payload, author, reviews?: unknown[]) => {
   const { pull_request, repository } = payload;
 
   // This is the same thing we do in sync, concatenating these values
-  const { issueKeys } = parseSmartCommit(
-    `${pull_request.title}\n${pull_request.head.ref}`
+  const issueKeys = issueKeyParser().parse(
+    `${pull_request.title}\n${pull_request.head.ref}`,
   );
 
-  if (!issueKeys || !pull_request.head.repo) {
+  if (isEmpty(issueKeys) || !pull_request.head.repo) {
     return undefined;
   }
 
@@ -60,38 +61,38 @@ export default (payload, author, reviews?: unknown[]) => {
     // Do not send the branch on the payload when the Pull Request Merged event is called.
     // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
     branches:
-      pullRequestStatus === "MERGED"
+      pullRequestStatus === 'MERGED'
         ? []
         : [
-          {
-            createPullRequestUrl: `${pull_request.head.repo.html_url}/pull/new/${pull_request.head.ref}`,
-            lastCommit: {
-              author: {
-                name: author.login
+            {
+              createPullRequestUrl: `${pull_request.head.repo.html_url}/pull/new/${pull_request.head.ref}`,
+              lastCommit: {
+                author: {
+                  name: author.login,
+                },
+                authorTimestamp: pull_request.updated_at,
+                displayId: pull_request.head.sha.substring(0, 6),
+                fileCount: 0,
+                hash: pull_request.head.sha,
+                id: pull_request.head.sha,
+                issueKeys,
+                message: 'n/a',
+                updateSequenceId: Date.now(),
+                url: `${pull_request.head.repo.html_url}/commit/${pull_request.head.sha}`,
               },
-              authorTimestamp: pull_request.updated_at,
-              displayId: pull_request.head.sha.substring(0, 6),
-              fileCount: 0,
-              hash: pull_request.head.sha,
-              id: pull_request.head.sha,
+              id: getJiraId(pull_request.head.ref),
               issueKeys,
-              message: "n/a",
+              name: pull_request.head.ref,
+              url: `${pull_request.head.repo.html_url}/tree/${pull_request.head.ref}`,
               updateSequenceId: Date.now(),
-              url: `${pull_request.head.repo.html_url}/commit/${pull_request.head.sha}`
             },
-            id: getJiraId(pull_request.head.ref),
-            issueKeys,
-            name: pull_request.head.ref,
-            url: `${pull_request.head.repo.html_url}/tree/${pull_request.head.ref}`,
-            updateSequenceId: Date.now()
-          }
-        ],
+          ],
     pullRequests: [
       {
         author: {
           avatar: author.avatar_url,
           name: author.login,
-          url: author.html_url
+          url: author.html_url,
         },
         commentCount: pull_request.comments,
         destinationBranch: `${pull_request.base.repo.html_url}/tree/${pull_request.base.ref}`,
@@ -106,9 +107,9 @@ export default (payload, author, reviews?: unknown[]) => {
         timestamp: pull_request.updated_at,
         title: pull_request.title,
         url: pull_request.html_url,
-        updateSequenceId: Date.now()
-      }
+        updateSequenceId: Date.now(),
+      },
     ],
-    updateSequenceId: Date.now()
+    updateSequenceId: Date.now(),
   };
 };

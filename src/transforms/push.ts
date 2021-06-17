@@ -1,10 +1,11 @@
-import {Project, Subscription} from '../models';
+import { Project, Subscription } from '../models';
 import getJiraClient from '../jira/client';
-import parseSmartCommit from './smart-commit';
+import issueKeyParser from 'jira-issue-key-parser';
+import { isEmpty } from '../jira/util/isEmpty';
 import reduceProjectKeys from '../jira/util/reduce-project-keys';
-import {queues} from '../worker/main';
+import { queues } from '../worker/main';
 import enhanceOctokit from '../config/enhance-octokit';
-import {Application} from 'probot';
+import { Application } from 'probot';
 
 // TODO: define better types for this file
 
@@ -21,15 +22,13 @@ function mapFile(githubFile) {
     changeType: mapStatus[githubFile.status] || 'UNKNOWN',
     linesAdded: githubFile.additions,
     linesRemoved: githubFile.deletions,
-    url: githubFile.blob_url
+    url: githubFile.blob_url,
   };
 }
 
 export function createJobData(payload, jiraHost: string) {
   // Store only necessary repository data in the queue
-  const {
-    id, name, full_name, html_url, owner,
-  } = payload.repository;
+  const { id, name, full_name, html_url, owner } = payload.repository;
 
   const repository = {
     id,
@@ -41,16 +40,16 @@ export function createJobData(payload, jiraHost: string) {
 
   const shas = [];
   for (const commit of payload.commits) {
-    const {issueKeys} = parseSmartCommit(commit.message);
+    const issueKeys = issueKeyParser().parse(commit.message);
 
-    if (!issueKeys) {
+    if (isEmpty(issueKeys)) {
       // Don't add this commit to the queue since it doesn't have issue keys
       continue;
     }
 
     // Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
     // Creates an array of shas for the job processor to work on
-    shas.push({id: commit.id, issueKeys});
+    shas.push({ id: commit.id, issueKeys });
   }
   return {
     repository,
@@ -61,21 +60,18 @@ export function createJobData(payload, jiraHost: string) {
 }
 
 export async function enqueuePush(payload, jiraHost) {
-  const jobOpts = {removeOnFail: true, removeOnComplete: true};
+  const jobOpts = { removeOnFail: true, removeOnComplete: true };
   const jobData = createJobData(payload, jiraHost);
 
-  await queues.push.add(
-    jobData,
-    jobOpts,
-  );
+  await queues.push.add(jobData, jobOpts);
 }
 
 export function processPush(app: Application) {
-  return async (job):Promise<void> => {
+  return async (job): Promise<void> => {
     try {
       const {
         repository,
-        repository: {owner, name: repo},
+        repository: { owner, name: repo },
         shas,
         installationId,
         jiraHost,
@@ -88,22 +84,28 @@ export function processPush(app: Application) {
 
       if (!subscription) return;
 
-      const jiraClient = await getJiraClient(subscription.jiraHost, installationId, app.log);
+      const jiraClient = await getJiraClient(
+        subscription.jiraHost,
+        installationId,
+        app.log,
+      );
       const github = await app.auth(installationId);
       enhanceOctokit(github, app.log);
 
       const commits = await Promise.all(
-        shas.map(async sha => {
+        shas.map(async (sha) => {
           const {
             data,
-            data: {commit: githubCommit},
-          } = await github.repos.getCommit({owner: owner.login, repo, ref: sha.id});
+            data: { commit: githubCommit },
+          } = await github.repos.getCommit({
+            owner: owner.login,
+            repo,
+            ref: sha.id,
+          });
 
-          const {
-            files, author, parents, sha: commitSha, html_url,
-          } = data;
+          const { files, author, parents, sha: commitSha, html_url } = data;
 
-          const {author: githubCommitAuthor, message} = githubCommit;
+          const { author: githubCommitAuthor, message } = githubCommit;
 
           // Not all commits have a github author, so create username only if author exists
           const username = author ? author.login : undefined;
@@ -118,7 +120,9 @@ export function processPush(app: Application) {
             hash: commitSha,
             message,
             author: {
-              avatar: username ? `https://github.com/${username}.png` : undefined,
+              avatar: username
+                ? `https://github.com/${username}.png`
+                : undefined,
               email: githubCommitAuthor.email,
               name: githubCommitAuthor.name,
               url: username ? `https://github.com/${username}` : undefined,
@@ -155,7 +159,9 @@ export function processPush(app: Application) {
         await jiraClient.devinfo.repository.update(jiraPayload);
 
         const projects = [];
-        jiraPayload.commits.map(commit => reduceProjectKeys(commit, projects));
+        jiraPayload.commits.map((commit) =>
+          reduceProjectKeys(commit, projects),
+        );
 
         for (const projectKey of projects) {
           await Project.incrementOccurence(projectKey, jiraClient.baseURL);
