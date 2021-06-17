@@ -157,6 +157,7 @@ export default (
         context.sentry.captureMessage(
           `Middleware: webhook handler - context: ${context}, jiraClient: ${jiraClient}, util: ${util}`,
         );
+        return callback(context, jiraClient, util);
       } catch (err) {
         context.sentry.captureException(err);
       }
