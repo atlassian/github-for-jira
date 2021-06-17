@@ -7,8 +7,7 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
-# RUN npm ci
-RUN npm install
+RUN npm ci
 
 # Building TypeScript files
 RUN npm run build:release
