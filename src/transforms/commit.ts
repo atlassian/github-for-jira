@@ -2,6 +2,8 @@ import issueKeyParser from 'jira-issue-key-parser';
 import { isEmpty } from '../jira/util/isEmpty';
 
 function mapCommit(githubCommit, author): Commit {
+  console.log('COMMMMMMMMMITS', githubCommit.message);
+
   const issueKeys = issueKeyParser().parse(githubCommit.message);
 
   if (isEmpty(issueKeys)) {

@@ -6,6 +6,7 @@ import newrelic from 'newrelic';
 import isProd from '../util/isProd';
 import { AxiosInstance, AxiosResponse } from 'axios';
 import Logger from 'bunyan';
+import issueKeyParser from 'jira-issue-key-parser';
 
 // Max number of issue keys we can pass to the Jira API
 const ISSUE_KEY_API_LIMIT = 100;
@@ -53,9 +54,8 @@ async function getJiraClient(
           .filter((response) => response.status === 200)
           .map((response) => response.data),
       parse: (text) => {
-        const jiraIssueRegex = /[A-Z]+-[0-9]+/g;
         if (!text) return null;
-        return text.match(jiraIssueRegex);
+        return issueKeyParser().parse(text);
       },
       comments: {
         // eslint-disable-next-line camelcase
