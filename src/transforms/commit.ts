@@ -1,5 +1,5 @@
 import issueKeyParser from 'jira-issue-key-parser';
-import { isEmpty } from 'lodash';
+import { isEmpty } from '../jira/util/isEmpty';
 
 function mapCommit(githubCommit, author): Commit {
   const issueKeys = issueKeyParser().parse(githubCommit.message);

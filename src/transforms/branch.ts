@@ -1,7 +1,7 @@
 import { getJiraId } from '../jira/util/id';
 import { Context } from 'probot/lib/context';
 import issueKeyParser from 'jira-issue-key-parser';
-import { isEmpty } from 'lodash';
+import { isEmpty } from '../jira/util/isEmpty';
 
 async function getLastCommit(context, issueKeys) {
   const {

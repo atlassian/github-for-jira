@@ -1,6 +1,6 @@
 import { getJiraId } from '../../jira/util/id';
 import issueKeyParser from 'jira-issue-key-parser';
-import { isEmpty } from 'lodash';
+import { isEmpty } from '../../jira/util/isEmpty';
 
 // TODO: better typing in file
 /**
