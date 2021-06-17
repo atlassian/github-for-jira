@@ -1,8 +1,8 @@
 import Redis from 'ioredis';
 import getRedisInfo from './config/redis-info';
-import {sequelize} from './models/sequelize';
-import {Application} from 'probot';
-import {Response} from 'express';
+import { sequelize } from './models/sequelize';
+import { Application } from 'probot';
+import { Response } from 'express';
 import bunyan from 'bunyan';
 
 /**
@@ -21,17 +21,21 @@ export default (robot: Application) => {
    */
   app.get('/deepcheck', async (_, res: Response) => {
     let connectionsOk = true;
-    const deepcheckLogger = bunyan.createLogger({name: 'deepcheck'});
+    const deepcheckLogger = bunyan.createLogger({ name: 'deepcheck' });
+    deepcheckLogger.info('Starting call to deepcheck...');
 
     const redisPromise = cache.ping();
     const databasePromise = sequelize.authenticate();
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('deepcheck timed out')), 500));
+      setTimeout(() => reject(new Error('deepcheck timed out')), 500),
+    );
 
+    deepcheckLogger.info('Starting deepcheck race...');
+    
     await Promise.race([
       Promise.all([redisPromise, databasePromise]),
       timeoutPromise,
-    ]).catch(error => {
+    ]).catch((error) => {
       deepcheckLogger.error(`Error during /deepcheck: ${error}`);
       connectionsOk = false;
     });
@@ -49,7 +53,7 @@ export default (robot: Application) => {
   /**
    * /healtcheck endpoint to check that the app started properly
    */
-  const healthcheckLogger = bunyan.createLogger({name: 'healthcheck'});
+  const healthcheckLogger = bunyan.createLogger({ name: 'healthcheck' });
   app.get('/healthcheck', async (_, res: Response) => {
     res.status(200).send('OK');
     healthcheckLogger.info('Successfully called /healthcheck.');
