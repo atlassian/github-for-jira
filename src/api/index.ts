@@ -14,6 +14,7 @@ import JiraClient from '../models/jira-client';
 import getJiraClient from '../jira/client';
 import uninstall from '../jira/uninstall';
 import {serializeJiraInstallation, serializeSubscription} from './serializers';
+import getRedisInfo from "../config/redis-info";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({extended: false});
@@ -65,7 +66,7 @@ const viewerPermissionQuery = `{
 
 const limiter = rateLimit({
   store: new RedisStore({
-    client: new Redis(process.env.REDIS_URL, {connectionName: 'express-rate-limit'}),
+    client: new Redis(getRedisInfo('express-rate-limit').redisOptions)
   }),
   windowMs: 60 * 1000, // 1 minutes
   max: 60, // limit each IP to 60 requests per windowMs
