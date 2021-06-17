@@ -8,9 +8,8 @@ const REDIS_PORT = process.env.REDIS_BOTTLENECK_PORT || redisInfo.port || 6379;
 const logger = bunyan.createLogger({ name: 'deepcheck' });
 
 logger.info(
-  `REDIS_BOTTLENECK_HOST: ${process.env.REDIS_BOTTLENECK_HOST} and REDIS_BOTTLENECK_PORT: ${process.env.REDIS_PORT}`,
+  `REDIS_BOTTLENECK_HOST: ${process.env.REDIS_BOTTLENECK_HOST}, REDIS_BOTTLENECK_PORT: ${process.env.REDIS_BOTTLENECK_PORT}, REDIS_URL: ${REDIS_URL}`,
 );
-logger.info(`REDIS_URL: ${REDIS_URL}`);
 
 let password;
 if (redisInfo.auth?.split(':').length === 2) {
