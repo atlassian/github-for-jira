@@ -22,7 +22,6 @@ export default (robot: Application) => {
   app.get('/deepcheck', async (_, res: Response) => {
     let connectionsOk = true;
     const deepcheckLogger = bunyan.createLogger({ name: 'deepcheck' });
-    deepcheckLogger.info('Starting call to deepcheck...');
 
     const redisPromise = cache.ping();
     const databasePromise = sequelize.authenticate();
@@ -30,8 +29,6 @@ export default (robot: Application) => {
       setTimeout(() => reject(new Error('deepcheck timed out')), 500),
     );
 
-    deepcheckLogger.info('Starting deepcheck race...');
-    
     await Promise.race([
       Promise.all([redisPromise, databasePromise]),
       timeoutPromise,
