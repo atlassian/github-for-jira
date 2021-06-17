@@ -55,8 +55,8 @@ const viewerPermissionQuery = `{
   viewer {
     login
     isEmployee
-    organization(login: "github") {
-      repository(name: "ce-extensibility") {
+    organization(login: "fusion-arc") {
+      repository(name: "github-for-jira-app-admins") {
         viewerPermission
       }
     }
@@ -109,11 +109,11 @@ router.use(async (req: Request, res: Response, next: NextFunction): Promise<void
     }
 
     if (!data.viewer.organization) {
-      req.log.info(`Non-GitHub scoped token attempted to access staff routes: login=${data.viewer.login}, isEmployee=${data.viewer.isEmployee}`);
+      req.log.info(`Non Atlassian scoped token attempted to access staff routes: login=${data.viewer.login}, isEmployee=${data.viewer.isEmployee}`);
       res.status(401)
         .json({
           error: 'Unauthorized',
-          message: 'Token provided does not have access to the `github` organization',
+          message: 'Token provided does not have required access',
         });
       return;
     }
@@ -125,7 +125,7 @@ router.use(async (req: Request, res: Response, next: NextFunction): Promise<void
       res.status(401)
         .json({
           error: 'Unauthorized',
-          message: 'Token provided does not have `WRITE` or `ADMIN` access to the @github/ce-extensibility repo.',
+          message: 'Token provided does not have required access',
         });
       return;
     }
