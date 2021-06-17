@@ -1,5 +1,6 @@
-import parseSmartCommit from "../../transforms/smart-commit";
-import { getJiraId } from "../../jira/util/id";
+import { getJiraId } from '../../jira/util/id';
+import issueKeyParser from 'jira-issue-key-parser';
+import { isEmpty } from '../../jira/util/isEmpty';
 
 // TODO: better typing in file
 /**
@@ -12,15 +13,16 @@ import { getJiraId } from "../../jira/util/id";
  *  - Messages from up to the last 100 commits in that branch
  */
 function mapBranch(branch, repository) {
-  const { issueKeys: branchKeys } = parseSmartCommit(branch.name);
-  const { issueKeys: pullRequestKeys } = parseSmartCommit(branch.associatedPullRequestTitle);
-  const { issueKeys: commitKeys } = parseSmartCommit(branch.lastCommit.message);
+  const branchKeys = issueKeyParser().parse(branch.name);
+  const pullRequestKeys = issueKeyParser().parse(
+    branch.associatedPullRequestTitle,
+  );
+  const commitKeys = issueKeyParser().parse(branch.lastCommit.message);
 
-  const allKeys = []
-    .concat(branchKeys)
+  const allKeys = branchKeys
     .concat(pullRequestKeys)
     .concat(commitKeys)
-    .filter(key => !!key);
+    .filter((key) => !!key);
 
   if (!allKeys.length) {
     // If we get here, no issue keys were found anywhere they might be found
@@ -34,7 +36,7 @@ function mapBranch(branch, repository) {
     lastCommit: {
       author: {
         avatar: branch.lastCommit.author.avatarUrl,
-        name: branch.lastCommit.author.name
+        name: branch.lastCommit.author.name,
       },
       authorTimestamp: branch.lastCommit.authorTimestamp,
       displayId: branch.lastCommit.sha.substring(0, 6),
@@ -45,11 +47,11 @@ function mapBranch(branch, repository) {
       issueKeys: commitKeys || branchKeys || pullRequestKeys,
       message: branch.lastCommit.message,
       url: branch.lastCommit.url,
-      updateSequenceId: Date.now()
+      updateSequenceId: Date.now(),
     },
     name: branch.name,
     url: `${repository.html_url}/tree/${branch.name}`,
-    updateSequenceId: Date.now()
+    updateSequenceId: Date.now(),
   };
 }
 
@@ -59,9 +61,9 @@ function mapBranch(branch, repository) {
  * to the structure needed for the DevInfo API
  */
 function mapCommit(commit) {
-  const { issueKeys } = parseSmartCommit(commit.message);
+  const issueKeys = issueKeyParser().parse(commit.message);
 
-  if (!issueKeys) {
+  if (isEmpty(issueKeys)) {
     return undefined;
   }
 
@@ -70,7 +72,7 @@ function mapCommit(commit) {
       avatar: commit.author.avatarUrl,
       email: commit.author.email,
       name: commit.author.name,
-      url: commit.author.user ? commit.author.user.url : undefined
+      url: commit.author.user ? commit.author.user.url : undefined,
     },
     authorTimestamp: commit.authoredDate,
     displayId: commit.oid.substring(0, 6),
@@ -81,20 +83,23 @@ function mapCommit(commit) {
     message: commit.message,
     timestamp: commit.authoredDate,
     url: commit.url,
-    updateSequenceId: Date.now()
+    updateSequenceId: Date.now(),
   };
 }
 
 // TODO: add typings
 export default (payload) => {
   // TODO: use reduce instead of map/filter
-  const branches = payload.branches.map(branch => mapBranch(branch, payload.repository))
-    .filter(branch => !!branch);
+  const branches = payload.branches
+    .map((branch) => mapBranch(branch, payload.repository))
+    .filter((branch) => !!branch);
 
   // TODO: use reduce instead of map/filter
-  const commits = payload.branches
-    .flatMap(branch => branch.commits.map(commit => mapCommit(commit))
-      .filter(branch => !!branch));
+  const commits = payload.branches.flatMap((branch) =>
+    branch.commits
+      .map((commit) => mapCommit(commit))
+      .filter((branch) => !!branch),
+  );
 
   if ((!commits || !commits.length) && (!branches || !branches.length)) {
     return undefined;
@@ -106,6 +111,6 @@ export default (payload) => {
     id: payload.repository.id,
     name: payload.repository.name,
     url: payload.repository.html_url,
-    updateSequenceId: Date.now()
+    updateSequenceId: Date.now(),
   };
 };
