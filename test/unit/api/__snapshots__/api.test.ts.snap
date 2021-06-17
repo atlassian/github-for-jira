@@ -31,8 +31,8 @@ Object {
   viewer {
     login
     isEmployee
-    organization(login: \\"github\\") {
-      repository(name: \\"ce-extensibility\\") {
+    organization(login: \\"fusion-arc\\") {
+      repository(name: \\"github-for-jira-app-admins\\") {
         viewerPermission
       }
     }
@@ -45,7 +45,7 @@ Object {
 exports[`API Authentication should return 401 if the returned organization is null 1`] = `
 Object {
   "error": "Unauthorized",
-  "message": "Token provided does not have access to the \`github\` organization",
+  "message": "Token provided does not have required access",
 }
 `;
 
