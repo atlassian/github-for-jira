@@ -26,13 +26,11 @@ export default (robot: Application) => {
     try {
       await Promise.race([
         Promise.all([
-          cache
-            .ping()
-            .catch((error) =>
-              Promise.reject(
-                new Error(`Error issuing PING to redis: ${error}`),
-              ),
-            ),
+          cache.ping().catch((error) => {
+            deepcheckLogger.error(`Error issuing PING to redis: ${error}`);
+            Promise.reject(new Error(`Error issuing PING to redis: ${error}`));
+            connectionsOk = false;
+          }),
           sequelize.authenticate().catch((error) => {
             deepcheckLogger.error(
               `Error issuing authenticate to Sequelize: ${error}`,
@@ -40,11 +38,13 @@ export default (robot: Application) => {
             Promise.reject(
               new Error(`Error issuing authenticate to Sequelize: ${error}`),
             );
+            connectionsOk = false;
           }),
         ]),
         new Promise((_, reject) => {
           deepcheckLogger.error(`Error: timeout`);
           setTimeout(() => reject(new Error('timeout')), 500);
+          connectionsOk = false;
         }),
       ]);
     } catch (error) {
