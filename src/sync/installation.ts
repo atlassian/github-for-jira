@@ -12,7 +12,6 @@ import getPullRequests from './pull-request';
 import getBranches from './branches';
 import getCommits from './commits';
 import { Application } from 'probot';
-import issueKeyParser from 'jira-issue-key-parser';
 
 const tasks = {
   pull: getPullRequests,
@@ -180,20 +179,8 @@ export const processInstallation =
     });
 
     app.log(`Starting job for installationId=${installationId}`);
-    const issueKeys1 = issueKeyParser().parse(
-      'made some changes test-59 and r2-4',
-    );
-    const issueKeys2 = issueKeyParser().parse('changes for R2-4 and tEST-59');
-    const issueKeys3 = issueKeyParser().parse('JRa-456 some extra text');
-    const issueKeys4 = issueKeyParser().parse(
-      'did some stuff here too for jrA-123 jra-456',
-    );
-    const issueKeys5 = issueKeyParser().parse('made some changes to j2-123');
-    app.log(`Testing key parser`, issueKeys1);
-    app.log(`Testing key parser`, issueKeys2);
-    app.log(`Testing key parser`, issueKeys3);
-    app.log(`Testing key parser`, issueKeys4);
-    app.log(`Testing key parser`, issueKeys5);
+    statsd.increment('Starting installation job');
+
     const subscription = await Subscription.getSingleInstallation(
       jiraHost,
       installationId,
