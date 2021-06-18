@@ -1,7 +1,9 @@
 import { StatsD, StatsCb, Tags } from 'hot-shots';
 
 const statsd = new StatsD({
-  prefix: 'jira-integration.',
+  prefix: 'github-for-jira',
+  host: 'platform-statsd',
+  port: 8125,
   mock: process.env.NODE_ENV === 'test',
   globalTags: { env: process.env.NODE_ENV || 'unknown' },
 });
