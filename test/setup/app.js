@@ -1,5 +1,5 @@
 const { Application } = require('probot');
-const { findPrivateKey } = require('probot/lib/private-key');
+const { getPrivateKey } = require('@probot/get-private-key');
 const cacheManager = require('cache-manager');
 const { App } = require('@octokit/app');
 
@@ -60,7 +60,7 @@ beforeEach(async () => {
   global.app = await configureRobot(new Application({
     app: new App({
       id: 12257,
-      privateKey: findPrivateKey(),
+      privateKey: getPrivateKey(),
     }),
     cache: cacheManager.caching({
       store: 'memory',

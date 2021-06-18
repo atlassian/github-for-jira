@@ -1,4 +1,4 @@
-const { logger } = require('probot/lib/logger');
+const { getLog } = require('probot/lib/helpers/get-log');
 const { GitHubAPI } = require('../../../lib/config/github-api');
 
 const { Installation, Subscription } = require('../../../lib/models');
@@ -10,6 +10,7 @@ describe('Probot event middleware', () => {
     let handlerCalls;
 
     beforeEach(async () => {
+      let logger = getLog();
       context = {
         payload: {
           sender: { type: 'not bot' },
