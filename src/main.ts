@@ -7,6 +7,7 @@ import { createProbot } from 'probot';
 import App from './configure-robot';
 import bunyan from 'bunyan';
 import { exec } from 'child_process';
+import statsd from './config/statsd';
 
 const { redisOptions } = getRedisInfo('probot');
 initializeSentry();
@@ -51,6 +52,7 @@ async function start() {
   // We are always behind a proxy, but we want the source IP
   probot.server.set('trust proxy', true);
   probot.load(App);
+  statsd.increment('testing.started_app');
   probot.start();
 }
 
