@@ -179,7 +179,6 @@ export const processInstallation =
     });
 
     app.log(`Starting job for installationId=${installationId}`);
-    statsd.increment('installation.started');
 
     const subscription = await Subscription.getSingleInstallation(
       jiraHost,

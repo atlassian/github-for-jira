@@ -1,9 +1,9 @@
 import https from 'https';
 import axios from 'axios';
 import crypto from 'crypto';
-import {logger} from 'probot/lib/logger';
-import statsd, {asyncDistTimer} from '../config/statsd';
-import {Action} from '../proto/v0/action';
+import { logger } from 'probot/lib/logger';
+import statsd, { asyncDistTimer } from '../config/statsd';
+import { Action } from '../proto/v0/action';
 
 export const BaseURL = process.env.HYDRO_BASE_URL;
 
@@ -34,7 +34,7 @@ if (!BaseURL) {
 // TODO: change this to getter/setter
 export const setIsDisabled = (value: boolean): void => {
   disabled = value;
-}
+};
 
 export const isDisabled = (): boolean => disabled;
 
@@ -50,7 +50,9 @@ export const isDisabled = (): boolean => disabled;
  * await submitProto(data);
  * ```
  */
-export const submitProto = async (protos: Action | Action[]): Promise<boolean> => {
+export const submitProto = async (
+  protos: Action | Action[],
+): Promise<boolean> => {
   if (disabled) {
     return true;
   }
@@ -75,16 +77,12 @@ export const submitProto = async (protos: Action | Action[]): Promise<boolean> =
   let status;
   try {
     const axiosPost = async () =>
-      axiosInstance.post(
-        BaseURL,
-        dataStr,
-        {
-          headers: {
-            Authorization: `Hydro ${hmac.digest('hex')}`,
-            'Content-Type': 'application/json',
-          },
+      axiosInstance.post(BaseURL, dataStr, {
+        headers: {
+          Authorization: `Hydro ${hmac.digest('hex')}`,
+          'Content-Type': 'application/json',
         },
-      );
+      });
     resp = await asyncDistTimer(axiosPost, postMetricName)();
     status = resp.status;
     logger.debug('Hydro Protobuf Accepted', data);
@@ -106,9 +104,13 @@ export const submitProto = async (protos: Action | Action[]): Promise<boolean> =
       }
 
       if (status in logErrStatuses) {
-        logger.error(logErrStatuses[status], {status, resp: respData, data});
+        logger.error(logErrStatuses[status], { status, resp: respData, data });
       } else {
-        logger.error('Hydro Submission Issue', {status, resp: respData, data});
+        logger.error('Hydro Submission Issue', {
+          status,
+          resp: respData,
+          data,
+        });
       }
     }
   }
@@ -123,12 +125,11 @@ export const submitProto = async (protos: Action | Action[]): Promise<boolean> =
   }, {});
   Object.entries(protoStats).forEach((stats) => {
     const [name, count] = stats;
-    statsd.increment(
-      submissionMetricName,
-      count as number,
-      [`schema:${name}`, `status:${status}`],
-    );
+    statsd.increment(submissionMetricName, count as number, [
+      `schema:${name}`,
+      `status:${status}`,
+    ]);
   });
 
   return status === 200;
-}
+};

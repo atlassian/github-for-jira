@@ -52,11 +52,14 @@ async function start() {
   // We are always behind a proxy, but we want the source IP
   probot.server.set('trust proxy', true);
   probot.load(App);
+  logger.info('just before statsd...', JSON.stringify(statsd));
   statsd.increment('testing.started_app');
+  logger.info('just after statsd...');
   probot.start();
 }
 
-const workers = Number(process.env.WEB_CONCURRENCY) || 1;
+// const workers = Number(process.env.WEB_CONCURRENCY) || 1;
+const workers = 1;
 
 // TODO: this should work in dev/production and should be `workers = process.env.NODE_ENV === 'production' ? undefined : 1`
 if (workers > 1) {
