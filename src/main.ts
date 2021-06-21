@@ -54,7 +54,8 @@ async function start() {
   probot.start();
 }
 
-const workers = Number(process.env.WEB_CONCURRENCY) || 1;
+// const workers = Number(process.env.WEB_CONCURRENCY) || 1;
+const workers = 1;
 
 // TODO: this should work in dev/production and should be `workers = process.env.NODE_ENV === 'production' ? undefined : 1`
 if (workers > 1) {

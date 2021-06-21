@@ -1,5 +1,6 @@
 {
   "development": {
+<<<<<<< HEAD
     "database": "jira-dev",
     "host": "127.0.0.1",
     "dialect": "postgres"
@@ -8,6 +9,14 @@
     "database": "jira-test",
     "host": "127.0.0.1",
     "dialect": "postgres"
+=======
+    "dialect": "postgres",
+    "use_env_variable": "DATABASE_URL"
+  },
+  "test": {
+    "dialect": "postgres",
+    "use_env_variable": "DATABASE_URL"
+>>>>>>> ARC-30-Typescriptification
   },
   "production": {
     "dialect": "postgres",
