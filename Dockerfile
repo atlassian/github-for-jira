@@ -9,13 +9,6 @@ WORKDIR /app
 # Installing packages
 RUN npm ci
 
-# Building TypeScript files
-RUN npm run build:release
-
-FROM node:14.17-alpine
-USER node
-COPY --chown=node:node --from=build /app /app
-WORKDIR /app
 ENV NODE_ENV development
 
-CMD ["npm", "run", "start:production"]
+CMD ["npm", "start"]
