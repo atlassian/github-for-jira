@@ -8,21 +8,17 @@ jobs:
 
     services:
       postgres:
-        image: postgres:10.12
+        image: postgres
         env:
-          # The username of the actions runner that postgres defaults to
-          POSTGRES_USER: runner
-          POSTGRES_DB: postgres
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
-        - 5432:5432
+        - 5432
         # needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       redis:
         image: redis
         ports:
-        - 6379:6379
-        options: --entrypoint redis-server
+        - 6379
 
     steps:
     - uses: actions/checkout@v1
