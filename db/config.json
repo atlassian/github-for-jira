@@ -1,13 +1,11 @@
 {
   "development": {
-    "database": "jira-dev",
-    "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "use_env_variable": "DATABASE_URL"
   },
   "test": {
-    "database": "jira-test",
-    "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "use_env_variable": "DATABASE_URL"
   },
   "production": {
     "dialect": "postgres",
