@@ -3,13 +3,15 @@ import bunyan from 'bunyan';
 
 const get = (key: string, def?: string): string => {
   const value = process.env[key] || def;
+
   if (typeof value !== 'string') {
     throw new Error(`config value ${key} not found`);
   }
+
   return value;
 };
 
-export const config = {
+const config = {
   micros: {
     // micros env vars are documented here https://hello.atlassian.net/wiki/spaces/MICROS/pages/167212650/Runtime+configuration+environment+variables+and+adding+secrets
     environment: get('MICROS_ENV', ''),
