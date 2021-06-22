@@ -12,7 +12,6 @@ import getPullRequests from './pull-request';
 import getBranches from './branches';
 import getCommits from './commits';
 import { Application } from 'probot';
-import issueKeyParser from 'jira-issue-key-parser';
 
 const tasks = {
   pull: getPullRequests,
