@@ -14,6 +14,7 @@ import JiraClient from '../models/jira-client';
 import getJiraClient from '../jira/client';
 import uninstall from '../jira/uninstall';
 import {serializeJiraInstallation, serializeSubscription} from './serializers';
+import getRedisInfo from "../config/redis-info";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({extended: false});
@@ -54,8 +55,8 @@ const viewerPermissionQuery = `{
   viewer {
     login
     isEmployee
-    organization(login: "github") {
-      repository(name: "ce-extensibility") {
+    organization(login: "fusion-arc") {
+      repository(name: "github-for-jira-app-admins") {
         viewerPermission
       }
     }
@@ -65,7 +66,7 @@ const viewerPermissionQuery = `{
 
 const limiter = rateLimit({
   store: new RedisStore({
-    client: new Redis(process.env.REDIS_URL, {connectionName: 'express-rate-limit'}),
+    client: new Redis(getRedisInfo('express-rate-limit').redisOptions)
   }),
   windowMs: 60 * 1000, // 1 minutes
   max: 60, // limit each IP to 60 requests per windowMs
@@ -108,11 +109,11 @@ router.use(async (req: Request, res: Response, next: NextFunction): Promise<void
     }
 
     if (!data.viewer.organization) {
-      req.log.info(`Non-GitHub scoped token attempted to access staff routes: login=${data.viewer.login}, isEmployee=${data.viewer.isEmployee}`);
+      req.log.info(`Non Atlassian scoped token attempted to access staff routes: login=${data.viewer.login}, isEmployee=${data.viewer.isEmployee}`);
       res.status(401)
         .json({
           error: 'Unauthorized',
-          message: 'Token provided does not have access to the `github` organization',
+          message: 'Token provided does not have required access',
         });
       return;
     }
@@ -124,7 +125,7 @@ router.use(async (req: Request, res: Response, next: NextFunction): Promise<void
       res.status(401)
         .json({
           error: 'Unauthorized',
-          message: 'Token provided does not have `WRITE` or `ADMIN` access to the @github/ce-extensibility repo.',
+          message: 'Token provided does not have required access',
         });
       return;
     }

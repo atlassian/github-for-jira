@@ -9,6 +9,6 @@ WORKDIR /app
 # Installing packages
 RUN npm ci
 
-ENV NODE_ENV development
+EXPOSE 4002
 
 CMD ["npm", "start"]

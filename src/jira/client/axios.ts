@@ -1,10 +1,10 @@
 import Logger from 'bunyan';
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance } from 'axios';
 import jwt from 'atlassian-jwt';
 import url from 'url';
 import statsd from '../../config/statsd';
 import JiraClientError from './jira-client-error';
-
+import bunyan from 'bunyan';
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ''}`;
 
@@ -19,24 +19,30 @@ declare module 'axios' {
  *
  * @param {string} secret - The key to use to sign the JWT
  */
-function getAuthMiddleware(secret:string) {
+function getAuthMiddleware(secret: string) {
+  const logger = bunyan.createLogger({ name: 'AXIOS' });
   return (
     /**
      * @param {import('axios').AxiosRequestConfig} config - The config for the outgoing request.
      * @returns {import('axios').AxiosRequestConfig} Updated axios config with authentication token.
      */
     (config) => {
-      const {query, pathname} = url.parse(config.url, true);
+      logger.info(`AXIOS:`, config.url);
+      logger.info(`AXIOS URL:`, typeof config.url);
+      const { query, pathname } = url.parse(config.url, true);
 
-      const jwtToken = jwt.encode({
-        ...getExpirationInSeconds(),
-        iss,
-        qsh: jwt.createQueryStringHash({
-          method: config.method,
-          originalUrl: pathname,
-          query,
-        }),
-      }, secret);
+      const jwtToken = jwt.encode(
+        {
+          ...getExpirationInSeconds(),
+          iss,
+          qsh: jwt.createQueryStringHash({
+            method: config.method,
+            originalUrl: pathname,
+            query,
+          }),
+        },
+        secret,
+      );
 
       return {
         ...config,
@@ -45,7 +51,8 @@ function getAuthMiddleware(secret:string) {
           Authorization: `JWT ${jwtToken}`,
         },
       };
-    });
+    }
+  );
 }
 
 /**
@@ -54,7 +61,7 @@ function getAuthMiddleware(secret:string) {
 const JiraErrorCodes = {
   400: 'Request had incorrect format.',
   401: 'Missing a JWT token, or token is invalid.',
-  403: 'The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the \'WRITE\' scope',
+  403: "The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope",
   413: 'Data is too large. Submit fewer devinfo entities in each payload.',
   429: 'API rate limit has been exceeded.',
 };
@@ -72,10 +79,13 @@ function getErrorMiddleware(logger) {
      */
     (error) => {
       if (error.response) {
-        const {status, statusText} = error.response || {};
-        logger.debug({
-          params: error.config.urlParams,
-        }, `Jira request: ${error.request.method} ${error.request.path} - ${status} ${statusText}`);
+        const { status, statusText } = error.response || {};
+        logger.debug(
+          {
+            params: error.config.urlParams,
+          },
+          `Jira request: ${error.request.method} ${error.request.path} - ${status} ${statusText}`,
+        );
 
         if (status in JiraErrorCodes) {
           logger.error(error.response.data, JiraErrorCodes[status]);
@@ -85,7 +95,8 @@ function getErrorMiddleware(logger) {
       } else {
         return Promise.reject(error);
       }
-    });
+    }
+  );
 }
 
 /**
@@ -102,12 +113,18 @@ function getSuccessMiddleware(logger) {
      * @returns {import('axios').AxiosResponse} The axios response
      */
     (response) => {
-      logger.debug({
-        params: response.config.urlParams,
-      }, `Jira request: ${response.config.method.toUpperCase()} ${response.config.originalUrl} - ${response.status} ${response.statusText}`);
+      logger.debug(
+        {
+          params: response.config.urlParams,
+        },
+        `Jira request: ${response.config.method.toUpperCase()} ${
+          response.config.originalUrl
+        } - ${response.status} ${response.statusText}`,
+      );
 
       return response;
-    });
+    }
+  );
 }
 
 /**
@@ -123,7 +140,7 @@ function getUrlMiddleware() {
      */
     (config) => {
       // eslint-disable-next-line prefer-const
-      let {query, pathname, ...rest} = url.parse(config.url, true);
+      let { query, pathname, ...rest } = url.parse(config.url, true);
       config.urlParams = config.urlParams || {};
 
       for (const param in config.urlParams) {
@@ -145,7 +162,8 @@ function getUrlMiddleware() {
           query,
         }),
       };
-    });
+    }
+  );
 }
 
 /*
@@ -180,7 +198,8 @@ const setRequestStartTime = (config) => {
  * Extract the path name from a URL.
  *
  */
-export const extractPath = (someUrl = ''): string => url.parse(someUrl).pathname;
+export const extractPath = (someUrl = ''): string =>
+  url.parse(someUrl).pathname;
 
 /**
  * Submit statsd metrics on successful requests.
@@ -189,7 +208,9 @@ export const extractPath = (someUrl = ''): string => url.parse(someUrl).pathname
  * @returns {import('axios').AxiosResponse} The response object.
  */
 const instrumentRequest = (response) => {
-  const requestDurationMs = Number(Date.now() - response.config.requestStartTime);
+  const requestDurationMs = Number(
+    Date.now() - response.config.requestStartTime,
+  );
   const tags = {
     method: response.config.method.toUpperCase(),
     path: extractPath(response.config.originalUrl),
@@ -225,15 +246,22 @@ const instrumentFailedRequest = (error) => {
  * attempt to reuse them. This accomplished using Axios interceptors to
  * just-in-time add the token to a request before sending it.
  */
-export default (baseURL: string, secret: string, logger?: Logger):AxiosInstance => {
-  logger = logger || new Logger({name:'AxiosClient'});
+export default (
+  baseURL: string,
+  secret: string,
+  logger?: Logger,
+): AxiosInstance => {
+  logger = logger || new Logger({ name: 'AxiosClient' });
   const instance = axios.create({
     baseURL,
     timeout: +process.env.JIRA_TIMEOUT || 20000,
   });
 
   instance.interceptors.request.use(setRequestStartTime);
-  instance.interceptors.response.use(instrumentRequest, instrumentFailedRequest);
+  instance.interceptors.response.use(
+    instrumentRequest,
+    instrumentFailedRequest,
+  );
 
   instance.interceptors.request.use(getAuthMiddleware(secret));
   instance.interceptors.request.use(getUrlMiddleware());

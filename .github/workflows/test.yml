@@ -3,26 +3,22 @@ name: Test
 on: [push]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     services:
       postgres:
-        image: postgres:10.12
+        image: postgres
         env:
-          # The username of the actions runner that postgres defaults to
-          POSTGRES_USER: postgres
-          POSTGRES_DB: jira-test
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
-        - 5432:5432
+        - "5432:5432"
         # needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       redis:
         image: redis
         ports:
-        - 6379:6379
-        options: --entrypoint redis-server
+        - "6379:6379"
 
     steps:
     - uses: actions/checkout@v1
@@ -34,14 +30,7 @@ jobs:
         path: ./node_modules
         key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
     - run: npm install
-    - name: DB Setup
-      env:
-        NODE_ENV: test
-        REDIS_HOST: localhost
-        REDIS_PORT: ${{ job.services.redis.ports[6379] }}
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
-      run: npm run db:test
+    - run: npm run db:test
     - name: Run tests
       env:
         NODE_ENV: test
@@ -50,3 +39,30 @@ jobs:
         POSTGRES_HOST: localhost
         POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
       run: npm test
+    - name: Deploy to Micros
+      if: ${{ github.ref == 'refs/heads/micros' }}
+      env:
+        BITBUCKET_API_USER: ${{ secrets.BITBUCKET_API_USER }}
+        BITBUCKET_API_PASSWORD: ${{ secrets.BITBUCKET_API_PASSWORD }}
+      run: |
+        curl --user ${BITBUCKET_API_USER}:${BITBUCKET_API_PASSWORD} \
+          --request POST \
+          --url https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/ \
+          --header 'Content-Type: application/json' \
+          --data "{
+        	\"target\": {
+        		\"type\": \"pipeline_ref_target\",
+        		\"ref_type\": \"branch\",
+        		\"ref_name\": \"master\",
+        		\"selector\": {
+        			\"type\": \"custom\",
+        			\"pattern\": \"deploy\"
+        		}
+        	},
+        	\"variables\": [
+        		{
+        			\"key\": \"COMMIT_SHA\",
+        			\"value\": \"${GITHUB_SHA}\"
+        		}
+        	]
+        }"

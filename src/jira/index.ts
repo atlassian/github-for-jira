@@ -1,8 +1,8 @@
 import bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
 
-import {Installation} from '../models';
-import {hasValidJwt} from './util/jwt';
+import { Installation } from '../models';
+import { hasValidJwt } from './util/jwt';
 import logMiddleware from '../middleware/log-middleware';
 
 import connect from './connect';
@@ -10,19 +10,26 @@ import disable from './disable';
 import enable from './enable';
 import install from './install';
 import uninstall from './uninstall';
-import {Application} from 'probot';
-import {NextFunction, Request, Response} from 'express';
+import { Application } from 'probot';
+import { NextFunction, Request, Response } from 'express';
 
-const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const authenticate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   const installation = await Installation.getForClientKey(req.body.clientKey);
   if (!installation) {
     res.status(404).json({});
     return;
   }
 
-  const {jiraHost, sharedSecret, clientKey} = installation;
+  const { jiraHost, sharedSecret, clientKey } = installation;
 
-  req.addLogFields({jiraHost, jiraClientKey: clientKey});
+  req.addLogFields({
+    jiraHost,
+    jiraClientKey: `${clientKey.substr(0, 5)}***}`,
+  });
   res.locals.installation = installation;
 
   // TODO: Should the express response logic be inside 'hasValidJwt'?

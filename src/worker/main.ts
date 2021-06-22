@@ -1,18 +1,17 @@
-import "../config/env"; // Important to be before other dependencies
-import Queue, { QueueOptions } from "bull";
+import '../config/env'; // Important to be before other dependencies
+import Queue, { QueueOptions } from 'bull';
 import * as Sentry from '@sentry/node';
 import Redis from 'ioredis';
 
-import {discovery} from '../sync/discovery';
-import {processInstallation} from '../sync/installation';
-import {processPush} from '../transforms/push';
+import { discovery } from '../sync/discovery';
+import { processInstallation } from '../sync/installation';
+import { processPush } from '../transforms/push';
 import metricsJob from './metrics-job';
 import statsd from '../config/statsd';
 import getRedisInfo from '../config/redis-info';
 import app from './app';
 import AxiosErrorEventDecorator from '../models/axios-error-event-decorator';
 import SentryScopeProxy from '../models/sentry-scope-proxy';
-import newrelic from 'newrelic';
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo('client').redisOptions);
@@ -24,7 +23,7 @@ function measureElapsedTime(startTime, tags) {
   statsd.histogram('job_duration', timeDiff, tags);
 }
 
-const queueOpts:QueueOptions = {
+const queueOpts: QueueOptions = {
   defaultJobOptions: {
     removeOnComplete: true,
   },
@@ -44,11 +43,11 @@ const queueOpts:QueueOptions = {
   },
 };
 
-if(process.env.NODE_ENV === "development") {
+if (process.env.NODE_ENV === 'development') {
   queueOpts.settings = {
     lockDuration: 100000,
-    lockRenewTime: 50000 // Interval on which to acquire the job lock
-  }
+    lockRenewTime: 50000, // Interval on which to acquire the job lock
+  };
 }
 
 // Setup queues
@@ -60,7 +59,7 @@ export const queues = {
 };
 
 // Setup error handling for queues
-Object.keys(queues).forEach(name => {
+Object.keys(queues).forEach((name) => {
   const queue = queues[name];
 
   // TODO: need ability to remove these listeners, especially for testing
@@ -71,12 +70,17 @@ Object.keys(queues).forEach(name => {
 
   queue.on('completed', (job) => {
     app.log.info(`Job completed name=${name} id=${job.id}`);
-    measureElapsedTime(job.meta_time_start, {queue: name, status: 'completed'});
+    measureElapsedTime(job.meta_time_start, {
+      queue: name,
+      status: 'completed',
+    });
   });
 
   queue.on('failed', async (job) => {
-    app.log.error(`Error occurred while processing job id=${job.id} on queue name=${name}`);
-    measureElapsedTime(job.meta_time_start, {queue: name, status: 'failed'});
+    app.log.error(
+      `Error occurred while processing job id=${job.id} on queue name=${name}`,
+    );
+    measureElapsedTime(job.meta_time_start, { queue: name, status: 'failed' });
   });
 
   queue.on('error', (err) => {
@@ -92,8 +96,12 @@ Object.keys(queues).forEach(name => {
  */
 const sentryMiddleware = (jobHandler) => async (job) => {
   job.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
-  job.sentry.configureScope(scope => scope.addEventProcessor(AxiosErrorEventDecorator.decorate));
-  job.sentry.configureScope(scope => scope.addEventProcessor(SentryScopeProxy.processEvent));
+  job.sentry.configureScope((scope) =>
+    scope.addEventProcessor(AxiosErrorEventDecorator.decorate),
+  );
+  job.sentry.configureScope((scope) =>
+    scope.addEventProcessor(SentryScopeProxy.processEvent),
+  );
 
   try {
     await jobHandler(job);
@@ -113,38 +121,23 @@ const sentryMiddleware = (jobHandler) => async (job) => {
   }
 };
 
-/**
- * Return an async function that sends timing data to NewRelic
- */
-const newrelicMiddleware = (jobHandler) => async (job) => {
-  newrelic.startBackgroundTransaction(`job ${job.queue.name}`, 'worker queue', async () => {
-    const transaction = newrelic.getTransaction();
-    newrelic.addCustomAttributes({
-      Queue: job.queue.name,
-      'Job Id': job.id,
-
-      // NewRelic wants 'primitive' types. Sending a hash will be dropped
-      'Job Arguments': JSON.stringify(job.data),
-      'Job Options': JSON.stringify(job.opts),
-    });
-
-    try {
-      await jobHandler(job);
-    } finally {
-      transaction.end();
-    }
-  });
-};
-
-const commonMiddleware = (jobHandler) => sentryMiddleware(newrelicMiddleware(jobHandler));
+const commonMiddleware = (jobHandler) => sentryMiddleware(jobHandler);
 
 export const start = (): void => {
   queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
-  queues.installation.process(Number(CONCURRENT_WORKERS), commonMiddleware(processInstallation(app, queues)));
-  queues.push.process(Number(CONCURRENT_WORKERS), commonMiddleware(processPush(app)));
+  queues.installation.process(
+    Number(CONCURRENT_WORKERS),
+    commonMiddleware(processInstallation(app, queues)),
+  );
+  queues.push.process(
+    Number(CONCURRENT_WORKERS),
+    commonMiddleware(processPush(app)),
+  );
   queues.metrics.process(1, commonMiddleware(metricsJob));
 
-  app.log(`Worker process started with ${CONCURRENT_WORKERS} CONCURRENT WORKERS`);
+  app.log(
+    `Worker process started with ${CONCURRENT_WORKERS} CONCURRENT WORKERS`,
+  );
 };
 
 export const stop = async (): Promise<void> => {
@@ -154,4 +147,4 @@ export const stop = async (): Promise<void> => {
     queues.push.close(),
     queues.metrics.close(),
   ]);
-}
+};
