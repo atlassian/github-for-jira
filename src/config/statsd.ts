@@ -1,42 +1,22 @@
 import { StatsD, StatsCb, Tags } from 'hot-shots';
 import bunyan from 'bunyan';
 
-const get = (key: string, def?: string): string => {
-  const value = process.env[key] || def;
-
-  if (typeof value !== 'string') {
-    throw new Error(`config value ${key} not found`);
-  }
-
-  return value;
-};
-
-const config = {
-  micros: {
-    // micros env vars are documented here https://hello.atlassian.net/wiki/spaces/MICROS/pages/167212650/Runtime+configuration+environment+variables+and+adding+secrets
-    environment: get('MICROS_ENV', ''),
-    environmentType: get('MICROS_ENVTYPE', ''),
-  },
-
-  statsd: {
-    host: get('STATSD_HOST', 'platform-statsd'),
-    port: get('STATSD_PORT', '8125'),
-  },
-};
-
 const globalTags = {
-  environment: config.micros.environment,
-  environment_type: config.micros.environmentType,
+  environment:
+    process.env.NODE_ENV === 'test' ? 'test' : process.env.MICROS_ENV,
+  environment_type:
+    process.env.NODE_ENV === 'test' ? 'testenv' : process.env.MICROS_ENVTYPE,
 };
 
 const logger = bunyan.createLogger({ name: 'statsd' });
 
 const statsd = new StatsD({
   prefix: 'github-for-jira.',
-  host: config.statsd.host,
-  port: parseInt(config.statsd.port),
+  host: 'platform-statsd',
+  port: 8125,
   globalTags,
   errorHandler: (err) => logger.warn({ err }, 'error writing metrics'),
+  mock: process.env.NODE_ENV === 'test',
 });
 
 /**
