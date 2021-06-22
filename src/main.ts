@@ -44,7 +44,7 @@ async function createDBTables(logger: bunyan) {
  * Start the probot worker.
  */
 async function start() {
-  const logger = bunyan.createLogger({ name: 'App start: table creation' });
+  const logger = bunyan.createLogger({ name: 'App start' });
 
   // Create tables for micros environments
   if (process.env.NODE_ENV === 'production') await createDBTables(logger);
