@@ -8,6 +8,7 @@ import App from './configure-robot';
 import bunyan from 'bunyan';
 import { exec } from 'child_process';
 import statsd from './config/statsd';
+import { logger } from 'probot/lib/logger';
 
 const { redisOptions } = getRedisInfo('probot');
 initializeSentry();
@@ -40,6 +41,7 @@ async function createDBTables(logger: bunyan) {
   }
 }
 
+logger.info('ENV VARS: ', process.env);
 /**
  * Start the probot worker.
  */

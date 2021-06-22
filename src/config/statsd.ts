@@ -1,14 +1,12 @@
 import { StatsD, StatsCb, Tags } from 'hot-shots';
 
-const statsdConfig = {
+const statsd = new StatsD({
   prefix: 'github-for-jira',
-  hostname: 'platform-statsd',
+  host: 'platform-statsd',
   port: 8125,
   mock: process.env.NODE_ENV === 'test',
   globalTags: { env: process.env.NODE_ENV || 'unknown' },
-};
-
-const statsd = new StatsD(statsdConfig);
+});
 
 /**
  * High-resolution timer
