@@ -18,7 +18,7 @@ services:
     image: wernight/ngrok
     container_name: ngrok
     network_mode: host
-    command: ngrok http 4002
+    command: ngrok http 8080
 
   app:
     depends_on:

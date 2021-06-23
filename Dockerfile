@@ -9,6 +9,6 @@ WORKDIR /app
 # Installing packages
 RUN npm ci
 
-EXPOSE 4002
+EXPOSE 8080
 
 CMD ["npm", "start"]
