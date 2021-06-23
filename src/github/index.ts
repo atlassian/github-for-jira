@@ -20,8 +20,6 @@ export default (robot) => {
       `name: webhooks`,
       `event: ${name}`,
       `action: ${payload.action}`,
-      `environment: ${process.env.NODE_ENV}`,
-      `environment_type: ${process.env.MICROS_ENVTYPE}`,
     ];
 
     statsd.increment('jira_configuration_error', tags);

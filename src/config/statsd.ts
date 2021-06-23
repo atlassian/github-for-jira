@@ -1,11 +1,11 @@
 import { StatsD, StatsCb, Tags } from 'hot-shots';
 import bunyan from 'bunyan';
 
-const isTest = process.env.NODE_ENV === 'test'
-
-const globalTags = {
-  environment: isTest ? 'test' : process.env.MICROS_ENV,
-  environment_type: isTest ? 'testenv' : process.env.MICROS_ENVTYPE,
+export const globalTags = {
+  environment:
+    process.env.NODE_ENV === 'test' ? 'test' : process.env.MICROS_ENV,
+  environment_type:
+    process.env.NODE_ENV === 'test' ? 'testenv' : process.env.MICROS_ENVTYPE,
 };
 
 const logger = bunyan.createLogger({ name: 'statsd' });
@@ -16,7 +16,7 @@ const statsd = new StatsD({
   port: 8125,
   globalTags,
   errorHandler: (err) => logger.warn({ err }, 'error writing metrics'),
-  mock: isTest,
+  mock: process.env.NODE_ENV === 'test',
 });
 
 /**

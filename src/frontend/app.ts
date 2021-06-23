@@ -216,8 +216,6 @@ export default (octokitApp: App): Express => {
     const tags = [
       `error: ${req.log.error}`,
       `status: ${errorCodes[err.message]}`,
-      `environment: ${process.env.NODE_ENV}`,
-      `environment_type: ${process.env.MICROS_ENVTYPE}`,
     ];
 
     statsd.increment('github_error_rendered', tags);

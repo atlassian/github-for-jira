@@ -38,10 +38,7 @@ export default async (req: Request, res: Response): Promise<void> => {
     throw new Error(`unknown "target_type" on installation id ${req.body.installationId}.`);
   }
 
-  const tags = [
-    `environment: ${process.env.NODE_ENV}`,
-    `environment_type: ${process.env.MICROS_ENVTYPE}`,
-  ];
+  const tags = [];
 
   // Check if the user that posted this has access to the installation ID they're requesting
   try {

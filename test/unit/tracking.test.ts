@@ -5,7 +5,7 @@ import { Action, ActionType } from "../../src/proto/v0/action";
 import nock from "nock";
 
 import { BaseURL, isDisabled, setIsDisabled, submitProto } from "../../src/tracking";
-import statsd from "../../src/config/statsd";
+import statsd, { globalTags } from "../../src/config/statsd";
 
 describe("Hydro Gateway Protobuf Submissions", () => {
   let parsedURL;
@@ -59,22 +59,25 @@ describe("Hydro Gateway Protobuf Submissions", () => {
     protos.forEach((proto) => {
       proto.type = ActionType.CREATED;
     });
+
     nock(basePath)
-      .post(parsedURL.path)
-      .reply(200, function(_: string, requestBody) {
-        expect(this.req.headers["x-hydro-app"]).toBe("github-for-jira");
-        const hmac = crypto.createHmac("sha256", process.env.HYDRO_APP_SECRET);
-        hmac.update(JSON.stringify(requestBody));
-        expect(this.req.headers.authorization).toBe(
-          `Hydro ${hmac.digest("hex")}`
+    .post(parsedURL.path)
+    .reply(200, function(_: string, requestBody) {
+      expect(this.req.headers["x-hydro-app"]).toBe("github-for-jira");
+      const hmac = crypto.createHmac("sha256", process.env.HYDRO_APP_SECRET);
+      hmac.update(JSON.stringify(requestBody));
+      expect(this.req.headers.authorization).toBe(
+        `Hydro ${hmac.digest("hex")}`
         );
         return "OK";
       });
-    expect(await submitProto(protos)).toBe(true);
+      expect(await submitProto(protos)).toBe(true);
+      console.log("PROTOS", statsd.mockBuffer);
     // There will be a .dist.post and a .submission metric
+    const mockBUffer = `github-for-jira.hydro.submission:3|c|#environment:${globalTags.environment},environment_type:${globalTags.environment_type},schema:jira.v0.Action,status:200`
     expect(statsd.mockBuffer.length).toBe(2);
     expect(statsd.mockBuffer[1]).toBe(
-      "github-for-jira.hydro.submission:3|c|#environment:test,environment_type:testenv,schema:jira.v0.Action,status:200",
+      mockBUffer
     );
   });
 

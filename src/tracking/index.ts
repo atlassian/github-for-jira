@@ -75,6 +75,7 @@ export const submitProto = async (
   let resp;
   /** @type {number|string} */
   let status;
+
   try {
     const axiosPost = async () =>
       axiosInstance.post(BaseURL, dataStr, {
@@ -129,8 +130,6 @@ export const submitProto = async (
     const tags = [
       `schema:${name}`,
       `status:${status}`,
-      `environment: ${process.env.NODE_ENV}`,
-      `environment_type: ${process.env.MICROS_ENVTYPE}`,
     ];
 
     statsd.increment(submissionMetricName, count as number, tags);

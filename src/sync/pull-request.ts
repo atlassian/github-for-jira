@@ -80,9 +80,7 @@ export default async function (
         },
       }));
       asyncTags.push(
-        `status:${status}`,
-        `environment: ${process.env.NODE_ENV}`,
-        `environment_type: ${process.env.MICROS_ENVTYPE}`,
+        `status:${status}`
       );
     },
     'rest.sync_pull_request',

@@ -32,12 +32,7 @@ export default async (req:Request, res:Response):Promise<void> => {
     }));
   }
 
-  const tags = [
-    `environment: ${process.env.NODE_ENV}`,
-    `environment_type: ${process.env.MICROS_ENVTYPE}`,
-  ];
-
-  statsd.increment('uninstall.request', tags);
+  statsd.increment('uninstall.request');
 
   await installation.uninstall();
   await submitProto(actions);

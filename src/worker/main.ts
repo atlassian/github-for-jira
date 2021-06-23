@@ -99,9 +99,7 @@ Object.keys(queues).forEach((name) => {
     Sentry.captureException(err);
 
     const tags = [
-      `name:${name}`,
-      `environment: ${process.env.NODE_ENV}`,
-      `environment_type: ${process.env.MICROS_ENVTYPE}`,
+      `name:${name}`
     ];
 
     statsd.increment('queue_error', tags);
