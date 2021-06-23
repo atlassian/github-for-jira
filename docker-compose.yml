@@ -1,14 +1,32 @@
+version: '3'
+
 services:
 
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379"
+    container_name: redis
+    network_mode: host
 
   postgres:
     image: postgres
     container_name: postgres
-    ports:
-      - "5432:5432"
+    network_mode: host
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
+
+  ngrok:
+    image: wernight/ngrok
+    container_name: ngrok
+    network_mode: host
+    command: ngrok http 8080
+
+  app:
+    depends_on:
+      - redis
+      - postgres
+      - ngrok
+    network_mode: host
+    volumes:
+      - .:/app
+    build:
+      context: .
