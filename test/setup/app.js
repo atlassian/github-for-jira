@@ -60,7 +60,6 @@ beforeEach(async () => {
   global.app = await configureRobot(new Probot({
     appId: 12257,
     privateKey: getPrivateKey(),
-    octokit: octokit,
     cache: new LRUCache({
       // cache max. 15000 tokens, that will use less than 10mb memory
       max: 15000,
