@@ -31,6 +31,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
   if (req.session.jwt && req.session.jiraHost) {
     const {data: {login}} = await github.users.getAuthenticated();
+
     try {
       // we can get the jira client Key from the JWT's `iss` property
       // so we'll decode the JWT here and verify it's the right key before continuing

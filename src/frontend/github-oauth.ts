@@ -14,7 +14,8 @@ import express, {
   Router,
 } from 'express';
 import axios from 'axios';
-import bunyan from 'bunyan';
+import statsd from '../config/statsd';
+
 const host = process.env.GHE_HOST || 'github.com';
 
 export interface OAuthOptions {
@@ -37,15 +38,11 @@ export default (opts: OAuthOptions): GithubOAuth => {
   opts.scopes = opts.scopes || ['user', 'repo'];
   const redirectURI = new URL(opts.callbackURI, opts.baseURL).toString();
 
-  const logger = bunyan.createLogger({ name: 'GITHUB OAUTH' });
-
-
   function login(req: Request, res: Response, next: NextFunction): void {
     // TODO: We really should be using an Auth library for this, like @octokit/github-auth
     // Create unique state for each oauth request
     const state = crypto.randomBytes(8).toString('hex');
-    logger.info(`GITHUB OAUTH:`, req.originalUrl);
-    logger.info(`GITHUB OAUTH URL:`, typeof req.originalUrl);
+
     // Save the redirect that may have been specified earlier into session to be retrieved later
     req.session[state] =
       res.locals.redirect ||
@@ -58,13 +55,14 @@ export default (opts: OAuthOptions): GithubOAuth => {
     next();
   }
 
-  async function callback(req, res, next): Promise<void> {
+  async function callback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const requestStart = Date.now();
     const { query } = url.parse(req.url, true);
     const code = query.code as string;
     const state = query.state as string;
 
     // Take save redirect url and delete it from session
-    const redirectUrl = req.session[state];
+    const redirectUrl = req.session[state] || '';
     delete req.session[state];
 
     // Check if state is available and matches a previous request
@@ -91,12 +89,25 @@ export default (opts: OAuthOptions): GithubOAuth => {
       );
 
       req.session.githubToken = response.data.access_token;
+
       if (!req.session.githubToken) {
         return next(new Error('Missing Access Token from Github OAuth Flow.'));
       }
-      return res.redirect(redirectUrl);
+
+      return res.redirect(redirectUrl.toString());
     } catch (e) {
       return next(new Error('Cannot retrieve access token from Github'));
+    } finally {
+      const elapsed = Date.now() - requestStart;
+      const tags = {
+        path: `https://${host}/login/oauth/access_token`,
+        method: 'GET',
+        status: res.status.toString(),
+        environment: process.env.NODE_ENV,
+        environment_type: process.env.MICROS_ENVTYPE,
+      };
+
+      statsd.histogram('github-request', elapsed, tags);
     }
   }
 

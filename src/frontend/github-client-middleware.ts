@@ -37,9 +37,7 @@ export const isAdmin = (githubClient: GitHubAPI) =>
       } = await githubClient.orgs.getMembership({ org, username });
       return role === "admin";
     } catch (err) {
-      console.log(err);
-      console.log(`${org} has not accepted new permission for getOrgMembership`);
-      console.log(`error=${err} org=${org}`);
+      console.log(`${org} has not accepted new permission for getOrgMembership - error: ${err}`);
       return false;
     }
   };

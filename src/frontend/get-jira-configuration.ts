@@ -2,7 +2,6 @@ import format from 'date-fns/format';
 import moment from 'moment';
 import { Subscription } from '../models';
 import {NextFunction, Request, Response} from 'express';
-import statsd from '../config/statsd';
 
 const syncStatus = (syncStatus) => (syncStatus === 'ACTIVE' ? 'IN PROGRESS' : syncStatus);
 
@@ -60,12 +59,6 @@ export default async (req:Request, res:Response, next:NextFunction):Promise<void
 
     req.log.info('Jira configuration rendered successfully.');
   } catch (error) {
-    const tags = [
-      `environment: ${process.env.NODE_ENV}`,
-      `environment_type: ${process.env.MICROS_ENVTYPE}`,
-    ];
-
-    statsd.increment('jira_configuration_error', tags);
     return next(new Error(`Failed to render Jira configuration: ${error}`));
   }
 };
