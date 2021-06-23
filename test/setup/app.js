@@ -1,7 +1,6 @@
-const { Application } = require('probot');
+const { Probot } = require('probot');
 const { getPrivateKey } = require('@probot/get-private-key');
-const cacheManager = require('cache-manager');
-const { App } = require('@octokit/app');
+const LRUCache = require('lru-cache');
 
 beforeEach(async () => {
   const models = td.replace('../../lib/models', {
@@ -56,20 +55,19 @@ beforeEach(async () => {
     });
 
   const configureRobot = require('../../lib/configure-robot');
+  const { Router } = require('express');
 
-  global.app = await configureRobot(new Application({
-    app: new App({
-      id: 12257,
-      privateKey: getPrivateKey(),
-    }),
-    cache: cacheManager.caching({
-      store: 'memory',
-      ttl: 60 * 60, // 1 hour
-    }),
-    throttleOptions: {
-      enabled: false,
-    },
-  }));
+  global.app = await configureRobot(new Probot({
+    appId: 12257,
+    privateKey: getPrivateKey(),
+    octokit: octokit,
+    cache: new LRUCache({
+      // cache max. 15000 tokens, that will use less than 10mb memory
+      max: 15000,
+      // Cache for 1 minute less than GitHub expiry
+      maxAge: 60 * 60
+    })
+  }), { getRouter: Router });
 });
 
 afterEach(() => {
