@@ -5,6 +5,21 @@ const isProd = (instance === 'production');
 
 export default (req: Request, res: Response): void => {
   const isHttps = req.secure || req.header('x-forwarded-proto') === 'https';
+  const appKey = `com.github.integration${instance ? `.${instance}` : ''}`;
+
+  const adminPageDisplayConditions = [
+    {
+      condition: 'addon_property_exists',
+      invert: true,
+      params: {
+        propertyKey: 'configuration',
+        objectKey: 'has-repos',
+      },
+    },
+    {
+      condition: 'user_is_admin',
+    },
+  ];
 
   res.status(200)
     .json({
@@ -16,7 +31,7 @@ export default (req: Request, res: Response): void => {
       // TODO: allow for more flexibility of naming
       name: `GitHub${isProd ? '' : (instance ? (` (${instance})`) : '')}`,
       description: 'Application for integrating with GitHub',
-      key: `com.github.integration${instance ? `.${instance}` : ''}`,
+      key: appKey,
       baseUrl: `${isHttps ? 'https' : 'http'}://${req.get('host')}`,
       lifecycle: {
         installed: '/jira/events/installed',
@@ -61,20 +76,28 @@ export default (req: Request, res: Response): void => {
             value: 'GitHub Configuration',
           },
           url: '/jira/configuration',
-          conditions: [
-            {
-              condition: 'addon_property_exists',
-              invert: true,
-              params: {
-                propertyKey: 'configuration',
-                objectKey: 'has-repos',
-              },
-            },
-            {
-              condition: 'user_is_admin',
-            },
-          ],
+          conditions: adminPageDisplayConditions,
         },
+        webSections: [
+          {
+            key: 'gh-addon-admin-section',
+            location: 'admin_plugins_menu',
+            name: {
+              value: 'GitHub',
+            },
+          },
+        ],
+        adminPages: [
+          {
+            url: '/jira/configuration',
+            conditions: adminPageDisplayConditions,
+            name: {
+              value: 'Configure integration',
+            },
+            key: 'gh-addon-admin',
+            location: 'admin_plugins_menu/gh-addon-admin-section',
+          },
+        ],
       },
     });
 };
