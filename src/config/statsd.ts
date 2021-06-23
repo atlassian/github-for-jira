@@ -1,9 +1,22 @@
-import {StatsD, StatsCb, Tags} from 'hot-shots';
+import { StatsD, StatsCb, Tags } from 'hot-shots';
+import bunyan from 'bunyan';
+
+const isTest = process.env.NODE_ENV === 'test'
+
+const globalTags = {
+  environment: isTest ? 'test' : process.env.MICROS_ENV,
+  environment_type: isTest ? 'testenv' : process.env.MICROS_ENVTYPE,
+};
+
+const logger = bunyan.createLogger({ name: 'statsd' });
 
 const statsd = new StatsD({
-  prefix: 'jira-integration.',
-  mock: process.env.NODE_ENV === 'test',
-  globalTags: {env: process.env.NODE_ENV || 'unknown'},
+  prefix: 'github-for-jira.',
+  host: 'platform-statsd',
+  port: 8125,
+  globalTags,
+  errorHandler: (err) => logger.warn({ err }, 'error writing metrics'),
+  mock: isTest,
 });
 
 /**
@@ -18,18 +31,25 @@ function hrtimer() {
     const durationComponents = process.hrtime(start);
     const seconds = durationComponents[0];
     const nanoseconds = durationComponents[1];
-    return (seconds * 1000) + (nanoseconds / 1E6);
+    return seconds * 1000 + nanoseconds / 1e6;
   };
 }
 
 /**
  * Async Function Timer using Distributions
  */
-export function asyncDistTimer(func: (...args:never[]) => Promise<unknown>, stat: string | string[], sampleRate?: number, tags?: Tags, callback?: StatsCb) {
+export function asyncDistTimer(
+  func: (...args: never[]) => Promise<unknown>,
+  stat: string | string[],
+  sampleRate?: number,
+  tags?: Tags,
+  callback?: StatsCb,
+) {
   return (...args: never[]): Promise<unknown> => {
     const end = hrtimer();
     const p = func(...args);
-    const recordStat = () => statsd.distribution(stat, end(), sampleRate, tags, callback);
+    const recordStat = () =>
+      statsd.distribution(stat, end(), sampleRate, tags, callback);
     p.then(recordStat, recordStat);
     return p;
   };

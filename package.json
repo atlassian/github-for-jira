@@ -72,7 +72,7 @@
     "express-validator": "^6.4.1",
     "hbs": "^4.1.2",
     "helmet": "^3.21.2",
-    "hot-shots": "^7.4.1",
+    "hot-shots": "^8.3.2",
     "ioredis": "^4.16.3",
     "jira-issue-key-parser": "0.0.10",
     "lodash": "^4.17.21",
