@@ -62,6 +62,3 @@ export default async (req:Request, res:Response, next:NextFunction):Promise<void
     return next(new Error(`Failed to render Jira configuration: ${error}`));
   }
 };
-
-
-
