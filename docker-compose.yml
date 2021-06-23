@@ -5,19 +5,21 @@ services:
   redis:
     image: redis:alpine
     container_name: redis
-    network_mode: host
+    # network_mode: host
+    ports: ["6379:6379"]
 
   postgres:
     image: postgres
     container_name: postgres
-    network_mode: host
+    # network_mode: host
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
+    ports: ["5432:5432"]
 
   ngrok:
     image: wernight/ngrok
     container_name: ngrok
-    network_mode: host
+    # network_mode: host
     command: ngrok http 8080
 
   app:
