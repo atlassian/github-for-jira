@@ -22,6 +22,7 @@ import retrySync from './retry-sync';
 import api from '../api';
 import logMiddleware from '../middleware/log-middleware';
 import { App } from '@octokit/app';
+import statsd from '../config/statsd';
 
 // Adding session information to request
 declare global {
@@ -200,6 +201,7 @@ export default (octokitApp: App): Express => {
   // Error catcher - Batter up!
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     req.log.error(err, `Error in frontend app.`);
+
     if (process.env.NODE_ENV !== 'production') {
       return next(err);
     }
@@ -210,6 +212,15 @@ export default (octokitApp: App): Express => {
       Forbidden: 403,
       'Not Found': 404,
     };
+
+    const tags = [
+      `error: ${req.log.error}`,
+      `status: ${errorCodes[err.message]}`,
+      `environment: ${process.env.NODE_ENV}`,
+      `environment_type: ${process.env.MICROS_ENVTYPE}`,
+    ];
+
+    statsd.increment('github_error_rendered', tags);
 
     return res
       .status(errorCodes[err.message] || 400)
