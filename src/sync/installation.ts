@@ -400,7 +400,7 @@ export const processInstallation =
         `environment_type: ${process.env.MICROS_ENVTYPE}`,
       ];
 
-      statsd.increment('installation_sync_failed', tags);
+      statsd.increment('installation-sync.failed', tags);
 
       throw err;
     }

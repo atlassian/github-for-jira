@@ -7,6 +7,7 @@ import {
 import { submitProto } from '../tracking';
 import { Subscription } from '../models';
 import {Request, Response} from 'express';
+import statsd from '../config/statsd';
 
 /**
  * Handle the uninstall webhook from Jira
@@ -30,6 +31,13 @@ export default async (req:Request, res:Response):Promise<void> => {
       actions.push(subAction);
     }));
   }
+
+  const tags = [
+    `environment: ${process.env.NODE_ENV}`,
+    `environment_type: ${process.env.MICROS_ENVTYPE}`,
+  ];
+
+  statsd.increment('uninstall.request', tags);
 
   await installation.uninstall();
   await submitProto(actions);

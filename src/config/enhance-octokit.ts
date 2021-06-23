@@ -1,8 +1,8 @@
 import OctokitError from '../models/octokit-error';
 import statsd from './statsd';
-import { extractPath } from '../jira/client/axios';
-import { GitHubAPI } from 'probot';
-import { LoggerWithTarget, wrapLogger } from 'probot/lib/wrap-logger';
+import {extractPath} from '../jira/client/axios';
+import {GitHubAPI} from 'probot';
+import {LoggerWithTarget, wrapLogger} from 'probot/lib/wrap-logger';
 import Logger from 'bunyan';
 
 const instrumentRequests = (octokit: GitHubAPI, log: Logger) => {
@@ -44,7 +44,7 @@ const instrumentRequests = (octokit: GitHubAPI, log: Logger) => {
  * (Because Probot instantiates the Octokit client for us, we can't use plugins.)
  */
 export default (octokit: GitHubAPI, logger?: LoggerWithTarget): GitHubAPI => {
-  logger = logger || wrapLogger(new Logger({ name: 'Octokit' }));
+  logger = logger || wrapLogger(new Logger({name:'Octokit'}));
   OctokitError.wrapRequestErrors(octokit);
   instrumentRequests(octokit, logger);
   return octokit;
