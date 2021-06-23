@@ -14,7 +14,7 @@ const axiosInstance = axios.create({
     keepAlive: true,
   }),
 });
-axiosInstance.defaults.headers.common['X-Hydro-App'] = 'jira-integration';
+axiosInstance.defaults.headers.common['X-Hydro-App'] = 'github-for-jira';
 
 const submissionMetricName = 'hydro.submission';
 const postMetricName = 'hydro.dist.post';
