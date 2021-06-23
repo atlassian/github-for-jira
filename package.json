@@ -9,9 +9,10 @@
   },
   "main": "src/main",
   "scripts": {
+    "prestart": "ts-node env.ts",
     "start": "run-p start:main start:worker",
-    "start:main": "ts-node .",
-    "start:worker": "ts-node src/worker",
+    "start:main": "ts-node-dev --rs src/main",
+    "start:worker": "ts-node-dev --rs src/worker",
     "start:production": "run-p start:main:production start:worker:production",
     "start:main:production": "node .",
     "start:worker:production": "node src/worker",
@@ -112,7 +113,8 @@
     "smee-client": "^1.2.2",
     "supertest": "^4.0.2",
     "ts-jest": "~26.5.6",
-    "ts-node": "^10.0.0"
+    "ts-node": "^10.0.0",
+    "ts-node-dev": "^1.1.6"
   },
   "volta": {
     "node": "14.17.0"
