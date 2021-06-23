@@ -11,8 +11,8 @@
   "scripts": {
     "prestart": "ts-node env.ts",
     "start": "run-p start:main start:worker",
-    "start:main": "ts-node-dev --rs src/main",
-    "start:worker": "ts-node-dev --rs src/worker",
+    "start:main": "ts-node-dev --inspect=0.0.0.0:9229 --respawn --transpile-only --rs src/main",
+    "start:worker": "ts-node-dev --inspect=0.0.0.0:9230 --respawn --transpile-only --rs src/worker",
     "start:production": "run-p start:main:production start:worker:production",
     "start:main:production": "node .",
     "start:worker:production": "node src/worker",

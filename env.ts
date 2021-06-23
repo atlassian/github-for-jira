@@ -1,12 +1,20 @@
 import fs from "fs";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 
 const filepath = ".env";
 
 // Check to see if ngrok is up and running
-axios.get("http://localhost:4040/api/tunnels", { responseType: "json" })
-  .then(response => {
-    const tunnel = response.data.tunnels.find(tunnel => tunnel.public_url.startsWith('https'));
+(async function main() {
+  try {
+    const results = await Promise.all([
+      axios.get("http://localhost:4040/api/tunnels", { responseType: "json" }).catch(() => ({})),
+      axios.get("http://ngrok:4040/api/tunnels", { responseType: "json" }).catch(() => ({}))
+    ]);
+    const response = results.find((value: AxiosResponse) => value.status === 200) as AxiosResponse;
+    if (!response) {
+      console.log("Ngrok not running, skipping updating .env file.");
+    }
+    const tunnel = response.data.tunnels.find(tunnel => tunnel.public_url.startsWith("https"));
     const ngrokDomain = tunnel.public_url;
     console.log(`ngrok forwarding ${ngrokDomain} to ${tunnel.config.addr}`);
 
@@ -18,5 +26,8 @@ axios.get("http://localhost:4040/api/tunnels", { responseType: "json" })
       fs.writeFileSync(filepath, contents);
     }
     console.log(`Updated .env file to use ngrok domain ${ngrokDomain}`);
-  }, () => console.log('Ngrok not running, skipping updating .env file.'))
-  .finally(() => process.exit());
+  } catch (e) {
+    console.log(e);
+  }
+  process.exit();
+})();
