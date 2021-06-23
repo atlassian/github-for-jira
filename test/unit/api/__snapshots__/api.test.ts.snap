@@ -10,7 +10,7 @@ Object {
     Object {
       "extensions": Object {
         "code": "undefinedField",
-        "fieldName": "isEmployeex",
+        "fieldName": "foo",
         "typeName": "User",
       },
       "locations": Array [
@@ -19,22 +19,19 @@ Object {
           "line": 4,
         },
       ],
-      "message": "Field 'isEmployeex' doesn't exist on type 'User'",
+      "message": "Field 'foo' doesn't exist on type 'User'",
       "path": Array [
         "query",
         "viewer",
-        "isEmployeex",
+        "foo",
       ],
     },
   ],
   "viewerPermissionQuery": "{
   viewer {
     login
-    isEmployee
     organization(login: \\"fusion-arc\\") {
-      repository(name: \\"github-for-jira-app-admins\\") {
-        viewerPermission
-      }
+      viewerCanAdminister
     }
   }
 }
