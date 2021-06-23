@@ -31,14 +31,8 @@ async function getInstallation(client, subscription) {
   }
 }
 
-function validViewerPermission(viewer) {
-  switch (viewer.organization.repository.viewerPermission) {
-    case 'WRITE':
-    case 'ADMIN':
-      return true;
-    default:
-      return false;
-  }
+function validAdminPermission(viewer) {
+  return viewer.organization?.viewerCanAdminister || false;
 }
 
 /**
@@ -55,11 +49,8 @@ function returnOnValidationError(req: Request, res: Response, next: NextFunction
 const viewerPermissionQuery = `{
   viewer {
     login
-    isEmployee
     organization(login: "fusion-arc") {
-      repository(name: "github-for-jira-app-admins") {
-        viewerPermission
-      }
+      viewerCanAdminister
     }
   }
 }
@@ -109,19 +100,9 @@ router.use(async (req: Request, res: Response, next: NextFunction): Promise<void
       return;
     }
 
-    if (!data.viewer.organization) {
-      req.log.info(`Non Atlassian scoped token attempted to access staff routes: login=${data.viewer.login}, isEmployee=${data.viewer.isEmployee}`);
-      res.status(401)
-        .json({
-          error: 'Unauthorized',
-          message: 'Token provided does not have required access',
-        });
-      return;
-    }
-
-    if (!validViewerPermission(data.viewer)) {
+    if (!validAdminPermission(data.viewer)) {
       req.log.info(
-        `User attempted to access staff routes: login=${data.viewer.login}, isEmployee=${data.viewer.isEmployee}, viewerPermission=${data.viewer.organization.repository.viewerPermission}`,
+        `User attempted to access staff routes: login=${data.viewer.login}, viewerCanAdminister=${data.viewer.organization?.viewerCanAdminister}`,
       );
       res.status(401)
         .json({
@@ -131,7 +112,7 @@ router.use(async (req: Request, res: Response, next: NextFunction): Promise<void
       return;
     }
 
-    req.log.info(`Staff routes accessed: login=${data.viewer.login}, isEmployee=${data.viewer.isEmployee}, viewerPermission=${data.viewer.organization.repository.viewerPermission}`);
+    req.log.info(`Staff routes accessed: login=${data.viewer.login}, viewerCanAdminister=${data.viewer.organization?.viewerCanAdminister}`);
 
     next();
   } catch (err) {
