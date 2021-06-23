@@ -70,9 +70,12 @@ Object.keys(queues).forEach((name) => {
 
   queue.on('completed', (job) => {
     app.log.info(`Job completed name=${name} id=${job.id}`);
+
     measureElapsedTime(job.meta_time_start, {
       queue: name,
       status: 'completed',
+      environment: process.env.NODE_ENV,
+      environment_type: process.env.MICROS_ENVTYPE,
     });
   });
 
@@ -80,7 +83,13 @@ Object.keys(queues).forEach((name) => {
     app.log.error(
       `Error occurred while processing job id=${job.id} on queue name=${name}`,
     );
-    measureElapsedTime(job.meta_time_start, { queue: name, status: 'failed' });
+
+    measureElapsedTime(job.meta_time_start, {
+      queue: name,
+      status: 'failed',
+      environment: process.env.NODE_ENV,
+      environment_type: process.env.MICROS_ENVTYPE,
+    });
   });
 
   queue.on('error', (err) => {
@@ -88,6 +97,14 @@ Object.keys(queues).forEach((name) => {
 
     Sentry.setTag('queue', name);
     Sentry.captureException(err);
+
+    const tags = [
+      `name:${name}`,
+      `environment: ${process.env.NODE_ENV}`,
+      `environment_type: ${process.env.MICROS_ENVTYPE}`,
+    ];
+
+    statsd.increment('queue_error', tags);
   });
 });
 

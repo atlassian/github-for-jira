@@ -1,19 +1,26 @@
 import format from 'date-fns/format';
 import moment from 'moment';
 import { Subscription } from '../models';
-import {NextFunction, Request, Response} from 'express';
+import { NextFunction, Request, Response } from 'express';
+import statsd from '../config/statsd';
 
-const syncStatus = (syncStatus) => (syncStatus === 'ACTIVE' ? 'IN PROGRESS' : syncStatus);
+const syncStatus = (syncStatus) =>
+  syncStatus === 'ACTIVE' ? 'IN PROGRESS' : syncStatus;
 
 async function getInstallation(client, subscription) {
   const id = subscription.gitHubInstallationId;
   try {
     const response = await client.apps.getInstallation({ installation_id: id });
-    response.data.syncStatus = subscription.isInProgressSyncStalled() ? 'STALLED' : syncStatus(subscription.syncStatus);
+    response.data.syncStatus = subscription.isInProgressSyncStalled()
+      ? 'STALLED'
+      : syncStatus(subscription.syncStatus);
     response.data.syncWarning = subscription.syncWarning;
     response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
-    response.data.totalNumberOfRepos = Object.keys(subscription.repoSyncState?.repos || {}).length;
-    response.data.numberOfSyncedRepos = subscription.repoSyncState?.numberOfSyncedRepos || 0;
+    response.data.totalNumberOfRepos = Object.keys(
+      subscription.repoSyncState?.repos || {},
+    ).length;
+    response.data.numberOfSyncedRepos =
+      subscription.repoSyncState?.numberOfSyncedRepos || 0;
 
     return response.data;
   } catch (err) {
@@ -28,25 +35,34 @@ const formatDate = function (date) {
   };
 };
 
-export default async (req:Request, res:Response, next:NextFunction):Promise<void> => {
+export default async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const jiraHost = req.session.jiraHost;
     const { client } = res.locals;
     const subscriptions = await Subscription.getAllForHost(jiraHost);
-    const installations = await Promise.all(subscriptions
-      .map(subscription => getInstallation(client, subscription)));
+    const installations = await Promise.all(
+      subscriptions.map((subscription) =>
+        getInstallation(client, subscription),
+      ),
+    );
 
     const connections = installations
-      .filter(response => !response.error)
-      .map(data => ({
+      .filter((response) => !response.error)
+      .map((data) => ({
         ...data,
         isGlobalInstall: data.repository_selection === 'all',
         installedAt: formatDate(data.updated_at),
-        syncState: data.syncState,
+        syncStatus: data.syncStatus,
         repoSyncState: data.repoSyncState,
       }));
 
-    const failedConnections = installations.filter(response => !!response.error);
+    const failedConnections = installations.filter(
+      (response) => !!response.error,
+    );
 
     res.render('jira-configuration.hbs', {
       host: jiraHost,
@@ -59,6 +75,13 @@ export default async (req:Request, res:Response, next:NextFunction):Promise<void
 
     req.log.info('Jira configuration rendered successfully.');
   } catch (error) {
+    const tags = [
+      `environment: ${process.env.NODE_ENV}`,
+      `environment_type: ${process.env.MICROS_ENVTYPE}`,
+    ];
+
+    statsd.increment('jira_configuration_error', tags);
+
     return next(new Error(`Failed to render Jira configuration: ${error}`));
   }
 };

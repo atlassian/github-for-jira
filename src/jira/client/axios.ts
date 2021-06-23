@@ -211,10 +211,13 @@ const instrumentRequest = (response) => {
   const requestDurationMs = Number(
     Date.now() - response.config.requestStartTime,
   );
+
   const tags = {
     method: response.config.method.toUpperCase(),
     path: extractPath(response.config.originalUrl),
     status: response.status,
+    environment: process.env.NODE_ENV,
+    environment_type: process.env.MICROS_ENVTYPE,
   };
 
   statsd.histogram('jira_request', requestDurationMs, tags);

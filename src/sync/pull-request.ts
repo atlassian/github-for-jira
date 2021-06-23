@@ -79,7 +79,11 @@ export default async function (
           retryAfter: 10,
         },
       }));
-      asyncTags.push(`status:${status}`);
+      asyncTags.push(
+        `status:${status}`,
+        `environment: ${process.env.NODE_ENV}`,
+        `environment_type: ${process.env.MICROS_ENVTYPE}`,
+      );
     },
     'rest.sync_pull_request',
     1,

@@ -14,7 +14,7 @@ const axiosInstance = axios.create({
     keepAlive: true,
   }),
 });
-axiosInstance.defaults.headers.common['X-Hydro-App'] = 'github-for-jira';
+axiosInstance.defaults.headers.common['X-Hydro-App'] = 'jira-integration';
 
 const submissionMetricName = 'hydro.submission';
 const postMetricName = 'hydro.dist.post';
@@ -125,10 +125,15 @@ export const submitProto = async (
   }, {});
   Object.entries(protoStats).forEach((stats) => {
     const [name, count] = stats;
-    statsd.increment(submissionMetricName, count as number, [
+
+    const tags = [
       `schema:${name}`,
       `status:${status}`,
-    ]);
+      `environment: ${process.env.NODE_ENV}`,
+      `environment_type: ${process.env.MICROS_ENVTYPE}`,
+    ];
+
+    statsd.increment(submissionMetricName, count as number, tags);
   });
 
   return status === 200;

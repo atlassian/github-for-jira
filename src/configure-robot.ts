@@ -74,8 +74,13 @@ export default async (app: Application): Promise<Application> => {
        * Handle when a users hits the rate limit
        */
       handler(_, res) {
+        const tags = [
+          `environment: ${process.env.NODE_ENV}`,
+          `environment_type: ${process.env.MICROS_ENVTYPE}`,
+        ];
+
         // We don't include path in this metric as the bots scanning us generate many of them
-        statsd.increment('express.rate_limited');
+        statsd.increment('express.rate_limited', tags);
         res.status(429).send('Too many requests, please try again later.');
       },
       max: 100, // limit each IP to a number of requests per windowMs
