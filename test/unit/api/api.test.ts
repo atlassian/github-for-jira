@@ -20,11 +20,8 @@ describe("API", () => {
     data: {
       viewer: {
         login: "gimenete",
-        isEmployee: true,
         organization: {
-          repository: {
-            viewerPermission: "WRITE"
-          }
+          viewerCanAdminister: true
         }
       }
     }
@@ -34,11 +31,8 @@ describe("API", () => {
     data: {
       viewer: {
         login: "monalisa",
-        isEmployee: true,
         organization: {
-          repository: {
-            viewerPermission: "ADMIN"
-          }
+          viewerCanAdminister: true
         }
       }
     }
@@ -115,11 +109,11 @@ describe("API", () => {
         .reply(200, {
           errors: [
             {
-              path: ["query", "viewer", "isEmployeex"],
+              path: ["query", "viewer", "foo"],
               extensions: {
                 code: "undefinedField",
                 typeName: "User",
-                fieldName: "isEmployeex"
+                fieldName: "foo"
               },
               locations: [
                 {
@@ -127,7 +121,7 @@ describe("API", () => {
                   column: 5
                 }
               ],
-              message: "Field 'isEmployeex' doesn't exist on type 'User'"
+              message: "Field 'foo' doesn't exist on type 'User'"
             }
           ]
         });
@@ -148,7 +142,6 @@ describe("API", () => {
           data: {
             viewer: {
               login: "gimenete",
-              isEmployee: true,
               organization: null
             }
           }
