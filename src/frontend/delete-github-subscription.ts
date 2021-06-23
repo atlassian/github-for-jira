@@ -2,6 +2,7 @@ import {ActionFromSubscription, ActionSource, ActionType,} from '../proto/v0/act
 import {submitProto} from '../tracking';
 import {Installation, Subscription} from '../models';
 import {Request, Response} from 'express';
+import statsd from '../config/statsd';
 
 /**
  * Handle the when a user adds a repo to this installation
@@ -37,10 +38,16 @@ export default async (req: Request, res: Response): Promise<void> => {
     throw new Error(`unknown "target_type" on installation id ${req.body.installationId}.`);
   }
 
+  const tags = [
+    `environment: ${process.env.NODE_ENV}`,
+    `environment_type: ${process.env.MICROS_ENVTYPE}`,
+  ];
+
+  statsd.increment('delete-github-subscription', tags);
+
   // Check if the user that posted this has access to the installation ID they're requesting
   try {
     const {data: {installations}} = await res.locals.github.apps.listInstallationsForAuthenticatedUser();
-
     const userInstallation = installations.find(installation => installation.id === Number(req.body.installationId));
 
     if (!userInstallation) {
@@ -50,11 +57,13 @@ export default async (req: Request, res: Response): Promise<void> => {
         });
       return;
     }
+
     const {data: {login}} = await res.locals.github.users.getAuthenticated();
 
     // If the installation is an Org, the user needs to be an admin for that Org
     try {
       const role = await getRole({login, installation: userInstallation});
+
       if (role !== 'admin') {
         res.status(401)
           .json({

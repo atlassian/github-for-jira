@@ -153,14 +153,18 @@ router.get('/:installationId',
   check('installationId').isInt(),
   returnOnValidationError,
   async (req: Request, res: Response): Promise<void> => {
+    const requestStart = Date.now();
     const {installationId} = req.params;
     const {client} = res.locals;
+
     try {
       const subscriptions = await Subscription.getAllForInstallation(Number(installationId));
+
       if (!subscriptions.length) {
         res.sendStatus(404);
         return;
       }
+
       const {jiraHost} = subscriptions[0];
       const installations = await Promise.all(subscriptions.map(subscription => getInstallation(client, subscription)));
       const connections = installations
@@ -176,6 +180,7 @@ router.get('/:installationId',
         req.log.error(response.error);
         return response.error;
       });
+
       res.json({
         host: jiraHost,
         installationId,
@@ -187,6 +192,17 @@ router.get('/:installationId',
     } catch (err) {
       req.log.error(err);
       res.status(500).json(err);
+    } finally {
+      const elapsed = Date.now() - requestStart;
+      const tags = {
+        path:'/:installationId',
+        method: 'GET',
+        status: res.status.toString(),
+        environment: process.env.NODE_ENV,
+        environment_type: process.env.MICROS_ENVTYPE,
+      };
+
+      statsd.histogram('get.installationId', elapsed, tags);
     }
   });
 
@@ -194,18 +210,32 @@ router.get('/:installationId/repoSyncState.json',
   check('installationId').isInt(),
   returnOnValidationError,
   async (req: Request, res: Response): Promise<void> => {
+    const requestStart = Date.now();
     const githubInstallationId = Number(req.params.installationId);
 
     try {
       const subscription = await Subscription.getSingleInstallation(req.session.jiraHost, githubInstallationId);
+
       if (!subscription) {
         res.sendStatus(404);
         return;
       }
+
       const data = subscription.repoSyncState;
       res.json(data);
     } catch (err) {
       res.status(500).json(err);
+    } finally {
+      const elapsed = Date.now() - requestStart;
+      const tags = {
+        path:'/:installationId/repoSyncState.json',
+        method: 'GET',
+        status: res.status.toString(),
+        environment: process.env.NODE_ENV,
+        environment_type: process.env.MICROS_ENVTYPE,
+      };
+
+      statsd.histogram('get.installationId-repoSyncState', elapsed, tags);
     }
   });
 
@@ -248,7 +278,7 @@ router.post('/:installationId/sync',
         environment_type: process.env.MICROS_ENVTYPE,
       };
 
-      statsd.histogram('resync_failed', elapsed, tags);
+      statsd.histogram('post.installationId-sync', elapsed, tags);
     }
   });
 

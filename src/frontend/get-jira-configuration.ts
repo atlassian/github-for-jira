@@ -63,7 +63,6 @@ export default async (req:Request, res:Response, next:NextFunction):Promise<void
     const tags = [
       `environment: ${process.env.NODE_ENV}`,
       `environment_type: ${process.env.MICROS_ENVTYPE}`,
-      `error: ${JSON.stringify(error)}`,
     ];
 
     statsd.increment('jira_configuration_error', tags);
