@@ -16,6 +16,6 @@ FROM node:14.17-alpine
 USER node
 COPY --chown=node:node --from=build /app /app
 WORKDIR /app
-ENV NODE_ENV development
+ENV NODE_ENV production
 
-CMD ["npm", "run", "start:production"]
+CMD ["sh", "-c", "npm run start:${MICROS_GROUP}:production"]
