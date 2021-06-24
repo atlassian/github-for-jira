@@ -37,7 +37,7 @@ describe("Hydro Gateway Protobuf Submissions", () => {
       nock(basePath)
         .post(parsedURL.path)
         .reply(status, function(_: string, requestBody) {
-          expect(this.req.headers["x-hydro-app"]).toBe("jira-integration");
+          expect(this.req.headers["x-hydro-app"]).toBe("github-for-jira");
           const hmac = crypto.createHmac(
             "sha256",
             process.env.HYDRO_APP_SECRET
@@ -62,7 +62,7 @@ describe("Hydro Gateway Protobuf Submissions", () => {
     nock(basePath)
       .post(parsedURL.path)
       .reply(200, function(_: string, requestBody) {
-        expect(this.req.headers["x-hydro-app"]).toBe("jira-integration");
+        expect(this.req.headers["x-hydro-app"]).toBe("github-for-jira");
         const hmac = crypto.createHmac("sha256", process.env.HYDRO_APP_SECRET);
         hmac.update(JSON.stringify(requestBody));
         expect(this.req.headers.authorization).toBe(
@@ -74,7 +74,7 @@ describe("Hydro Gateway Protobuf Submissions", () => {
     // There will be a .dist.post and a .submission metric
     expect(statsd.mockBuffer.length).toBe(2);
     expect(statsd.mockBuffer[1]).toBe(
-      "jira-integration.hydro.submission:3|c|#env:test,schema:jira.v0.Action,status:200"
+      "github-for-jira.hydro.submission:3|c|#environment:test,environment_type:testenv,schema:jira.v0.Action,status:200",
     );
   });
 

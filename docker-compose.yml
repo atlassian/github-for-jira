@@ -1,15 +1,36 @@
+version: '3'
+
 services:
 
   redis:
     image: redis:alpine
     container_name: redis
-    ports:
-      - "6379:6379"
+    ports: [ "6379:6379" ]
 
   postgres:
     image: postgres
     container_name: postgres
-    ports:
-      - "5432:5432"
+    ports: [ "5432:5432" ]
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
+
+  ngrok:
+    image: wernight/ngrok
+    container_name: ngrok
+    ports: [ "4040:4040" ]
+    command: ngrok http app:8080
+
+  app:
+    depends_on:
+      - redis
+      - postgres
+      - ngrok
+    volumes:
+      - .:/app
+    build:
+      context: .
+    ports: [ "8080:8080", "9229:9229", "9230:9230" ]
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/jira-dev
+      REDIS_HOST: redis
+      REDIS_BOTTLENECK_HOST: redis
