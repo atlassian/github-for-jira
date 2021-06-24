@@ -72,13 +72,11 @@ describe("Hydro Gateway Protobuf Submissions", () => {
         return "OK";
       });
       expect(await submitProto(protos)).toBe(true);
-      console.log("PROTOS", statsd.mockBuffer);
-    // There will be a .dist.post and a .submission metric
-    const mockBUffer = `github-for-jira.hydro.submission:3|c|#environment:${globalTags.environment},environment_type:${globalTags.environment_type},schema:jira.v0.Action,status:200`
-    expect(statsd.mockBuffer.length).toBe(2);
-    expect(statsd.mockBuffer[1]).toBe(
-      mockBUffer
-    );
+      // There will be a .dist.post and a .submission metric
+      expect(statsd.mockBuffer.length).toBe(2);
+
+      const { environment, environment_type } = globalTags;
+      expect(statsd.mockBuffer[1]).toBe(`github-for-jira.hydro.submission:3|c|#environment:${environment},environment_type:${environment_type},schema:jira.v0.Action,status:200`);
   });
 
   /**

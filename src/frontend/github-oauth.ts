@@ -103,8 +103,6 @@ export default (opts: OAuthOptions): GithubOAuth => {
         path: `https://${host}/login/oauth/access_token`,
         method: 'GET',
         status: res.status.toString(),
-        environment: process.env.NODE_ENV,
-        environment_type: process.env.MICROS_ENVTYPE,
       };
 
       statsd.histogram('github-request', elapsed, tags);

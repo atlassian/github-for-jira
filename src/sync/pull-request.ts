@@ -79,9 +79,7 @@ export default async function (
           retryAfter: 10,
         },
       }));
-      asyncTags.push(
-        `status:${status}`
-      );
+      asyncTags.push(`status:${status}`);
     },
     'rest.sync_pull_request',
     1,

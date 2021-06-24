@@ -179,8 +179,6 @@ router.get('/:installationId',
         path:'/:installationId',
         method: 'GET',
         status: res.status.toString(),
-        environment: process.env.NODE_ENV,
-        environment_type: process.env.MICROS_ENVTYPE,
       };
 
       statsd.histogram('get.installationId', elapsed, tags);
@@ -212,8 +210,6 @@ router.get('/:installationId/repoSyncState.json',
         path:'/:installationId/repoSyncState.json',
         method: 'GET',
         status: res.status.toString(),
-        environment: process.env.NODE_ENV,
-        environment_type: process.env.MICROS_ENVTYPE,
       };
 
       statsd.histogram('get.installationId-repoSyncState', elapsed, tags);
@@ -255,8 +251,6 @@ router.post('/:installationId/sync',
         path:'/:installationId/sync',
         method: 'POST',
         status: res.status.toString(),
-        environment: process.env.NODE_ENV,
-        environment_type: process.env.MICROS_ENVTYPE,
       };
 
       statsd.histogram('post.installationId-sync', elapsed, tags);
