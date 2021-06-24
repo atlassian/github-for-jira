@@ -102,11 +102,9 @@ const updateJobStatus = async (
   }
 
   const status = edges.length > 0 ? 'pending' : 'complete';
-
   app.log(
     `Updating job status for installationId=${installationId}, repositoryId=${repositoryId}, task=${task}, status=${status}`,
   );
-
   await subscription.updateSyncState({
     repos: {
       [repositoryId]: {
@@ -114,7 +112,6 @@ const updateJobStatus = async (
       },
     },
   });
-
   if (edges.length > 0) {
     // there's more data to get
     await subscription.updateSyncState({
@@ -127,7 +124,6 @@ const updateJobStatus = async (
 
     const { removeOnComplete, removeOnFail } = job.opts;
     const delay = Number(process.env.LIMITER_PER_INSTALLATION) || 1000;
-
     queues.installation.add(job.data, {
       attempts: 3,
       delay,
@@ -138,7 +134,6 @@ const updateJobStatus = async (
   } else if (!(await getNextTask(subscription))) {
     await subscription.update({ syncStatus: SyncStatus.COMPLETE });
     let message = `Sync status for installationId=${installationId} is complete`;
-
     if (job.data.startTime !== undefined) {
       const endTime = Date.now();
       const timeDiff = endTime - Date.parse(job.data.startTime);
@@ -148,7 +143,6 @@ const updateJobStatus = async (
       // startTime will be passed in when this sync job is queued from the discovery
       statsd.histogram('full_sync', timeDiff);
     }
-
     app.log(message);
 
     try {
@@ -190,7 +184,6 @@ export const processInstallation =
       jiraHost,
       installationId,
     );
-
     // TODO: should this reject instead? it's just ignoring an error
     if (!subscription) return;
 
@@ -199,7 +192,6 @@ export const processInstallation =
       installationId,
       app.log,
     );
-
     const github = await getEnhancedGitHub(app, installationId);
 
     const nextTask = await getNextTask(subscription);
@@ -212,15 +204,12 @@ export const processInstallation =
 
     const { task, repositoryId, cursor } = nextTask;
     let { repository } = nextTask;
-
     if (!repository) {
       // Old records don't have this info. New ones have it
       const { data: repo } = await github.request('GET /repositories/:id', {
         id: repositoryId,
       });
-
       repository = getRepositorySummary(repo);
-
       await subscription.updateSyncState({
         repos: {
           [repository.id]: {
@@ -229,7 +218,6 @@ export const processInstallation =
         },
       });
     }
-
     app.log(
       `Starting task for installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`,
     );
@@ -270,7 +258,6 @@ export const processInstallation =
 
     try {
       const { edges, jiraPayload } = await execute();
-
       if (jiraPayload) {
         try {
           await jiraClient.devinfo.repository.update(jiraPayload, {
@@ -304,7 +291,6 @@ export const processInstallation =
           throw err;
         }
       }
-
       await updateJobStatus(
         app,
         queues,
@@ -317,7 +303,6 @@ export const processInstallation =
     } catch (err) {
       const rateLimit = Number(err?.headers?.['x-ratelimit-reset']);
       const delay = Math.max(Date.now() - rateLimit * 1000, 0);
-
       if (delay) {
         // if not NaN or 0
         app.log(
@@ -331,7 +316,6 @@ export const processInstallation =
         });
         return;
       }
-
       if (String(err).includes('connect ETIMEDOUT')) {
         // There was a network connection issue.
         // Add the job back to the queue with a 5 second delay
@@ -346,7 +330,6 @@ export const processInstallation =
         });
         return;
       }
-
       if (
         String(err.message).includes(
           'You have triggered an abuse detection mechanism',
@@ -364,7 +347,6 @@ export const processInstallation =
         });
         return;
       }
-
       // Checks if parsed error type is NOT_FOUND: https://github.com/octokit/graphql.js/tree/master#errors
       const isNotFoundError =
         err.errors &&

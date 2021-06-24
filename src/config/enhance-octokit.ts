@@ -27,8 +27,6 @@ const instrumentRequests = (octokit: GitHubAPI, log: Logger) => {
         path: extractPath(options.url),
         method: options.method,
         status: responseStatus,
-        environment: process.env.NODE_ENV,
-        environment_type: process.env.MICROS_ENVTYPE,
       };
 
       statsd.histogram('github-request', elapsed, tags);
