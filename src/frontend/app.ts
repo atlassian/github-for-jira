@@ -22,7 +22,8 @@ import retrySync from './retry-sync';
 import api from '../api';
 import logMiddleware from '../middleware/log-middleware';
 import { App } from '@octokit/app';
-import statsd from '../config/statsd';
+import statsd, { expressStatsdMetrics } from '../config/statsd';
+import  expressStatsd from 'express-hot-shots';
 
 // Adding session information to request
 declare global {
@@ -133,47 +134,61 @@ export default (octokitApp: App): Express => {
   // Add oauth routes
   app.use('/', oauth.router);
 
+  app.use(expressStatsd());
+
   app.get(
     '/github/setup',
     csrfProtection,
     oauth.checkGithubAuth,
     getGitHubSetup,
+    expressStatsdMetrics('/github/setup')
   );
-  app.post('/github/setup', csrfProtection, postGitHubSetup);
+
+  app.post('/github/setup', csrfProtection, postGitHubSetup,  expressStatsdMetrics('/github/setup'));
 
   app.get(
     '/github/configuration',
     csrfProtection,
     oauth.checkGithubAuth,
     getGitHubConfiguration,
+    expressStatsdMetrics('/github/configuration')
   );
-  app.post('/github/configuration', csrfProtection, postGitHubConfiguration);
+
+  app.post('/github/configuration', csrfProtection, postGitHubConfiguration,  expressStatsdMetrics('/github/configuration'));
 
   app.get(
     '/github/installations',
     csrfProtection,
     oauth.checkGithubAuth,
     listGitHubInstallations,
+    expressStatsdMetrics('/github/installations')
   );
+
   app.get(
     '/github/subscriptions/:installationId',
     csrfProtection,
     getGitHubSubscriptions,
+    expressStatsdMetrics('/github/subscriptions/:installationId')
   );
-  app.post('/github/subscription', csrfProtection, deleteGitHubSubscription);
+
+  app.post('/github/subscription', csrfProtection, deleteGitHubSubscription,  expressStatsdMetrics('/github/subscription'));
 
   app.get(
     '/jira/configuration',
     csrfProtection,
     verifyJiraMiddleware,
     getJiraConfiguration,
+    expressStatsdMetrics('/jira/configuration')
   );
+
   app.delete(
     '/jira/configuration',
     verifyJiraMiddleware,
     deleteJiraConfiguration,
+    expressStatsdMetrics('/jira/configuration')
   );
-  app.post('/jira/sync', verifyJiraMiddleware, retrySync);
+
+  app.post('/jira/sync', verifyJiraMiddleware, retrySync, expressStatsdMetrics('/jira/sync'));
 
   app.get('/', async (_: Request, res: Response, next: NextFunction) => {
     const { data: info } = await res.locals.client.apps.getAuthenticated({});

@@ -76,7 +76,9 @@ describe("Hydro Gateway Protobuf Submissions", () => {
       expect(statsd.mockBuffer.length).toBe(2);
 
       const { environment, environment_type } = globalTags;
-      expect(statsd.mockBuffer[1]).toBe(`github-for-jira.hydro.submission:3|c|#environment:${environment},environment_type:${environment_type},schema:jira.v0.Action,status:200`);
+      expect(statsd.mockBuffer[1]).toBe(
+        `github-for-jira.hydro.submission:3|c|#environment:${environment},environment_type:${environment_type},deployment_id:1,region:localhost,schema:jira.v0.Action,status:200`
+      );
   });
 
   /**

@@ -2,7 +2,6 @@ import {ActionFromSubscription, ActionSource, ActionType,} from '../proto/v0/act
 import {submitProto} from '../tracking';
 import {Installation, Subscription} from '../models';
 import {Request, Response} from 'express';
-import statsd from '../config/statsd';
 
 /**
  * Handle the when a user adds a repo to this installation
@@ -37,8 +36,6 @@ export default async (req: Request, res: Response): Promise<void> => {
     }
     throw new Error(`unknown "target_type" on installation id ${req.body.installationId}.`);
   }
-
-  const tags = [];
 
   // Check if the user that posted this has access to the installation ID they're requesting
   try {
@@ -76,23 +73,14 @@ export default async (req: Request, res: Response): Promise<void> => {
       await subscription.destroy();
       await submitProto(action);
 
-      tags.push(`status:202`)
-      statsd.increment('delete-github-subscription.success', tags);
-
       res.sendStatus(202);
     } catch (err) {
-      tags.push(`status:403`)
-      statsd.increment('delete-github-subscription.failure', tags);
-
       res.status(403)
         .json({
           err: `Failed to delete subscription to ${req.body.installationId}. ${err}`,
         });
     }
   } catch (err) {
-    tags.push(`status:400`)
-    statsd.increment('delete-github-subscription.failure', tags);
-
     req.log.error(err);
     res.sendStatus(400);
   }
