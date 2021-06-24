@@ -24,7 +24,6 @@ import logMiddleware from '../middleware/log-middleware';
 import { App } from '@octokit/app';
 import statsd, { expressStatsdMetrics } from '../config/statsd';
 import  expressStatsd from 'express-hot-shots';
-import { logResponseTime } from '../config/logResponseTime';
 
 // Adding session information to request
 declare global {
@@ -86,7 +85,6 @@ export default (octokitApp: App): Express => {
     }),
   );
 
-  app.use(logResponseTime);
   app.use(logMiddleware);
 
   // TODO: move all view/static/public/handlebars helper things in it's own folder

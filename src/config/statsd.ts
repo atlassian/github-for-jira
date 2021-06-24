@@ -1,14 +1,14 @@
-import {StatsD, StatsCb, Tags} from 'hot-shots';
+import { StatsD, StatsCb, Tags } from 'hot-shots';
 import bunyan from 'bunyan';
-import {Request, NextFunction} from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-const isTest = process.env.NODE_ENV === 'test'
+const isTest = process.env.NODE_ENV === 'test';
 
 export const globalTags = {
   environment: isTest ? 'test' : process.env.MICROS_ENV,
   environment_type: isTest ? 'testenv' : process.env.MICROS_ENVTYPE,
   deployment_id: process.env.MICROS_DEPLOYMENT_ID || '1',
-  region: process.env.MICROS_AWS_REGION || 'localhost'
+  region: process.env.MICROS_AWS_REGION || 'localhost',
 };
 
 const logger = bunyan.createLogger({ name: 'statsd' });
@@ -21,18 +21,6 @@ const statsd = new StatsD({
   errorHandler: (err) => logger.warn({ err }, 'error writing metrics'),
   mock: isTest,
 });
-
-interface StatsdRequest extends Request {
-  statsdKey: string;
-}
-
-export const expressStatsdMetrics = (path) =>  {
-  return function (req: StatsdRequest, _, next: NextFunction) {
-    const method = req.method || 'unknown_method';
-    req.statsdKey = ['http', method.toLowerCase(), path].join('.');
-    next();
-  };
-}
 
 /**
  * High-resolution timer
@@ -49,6 +37,47 @@ function hrtimer() {
     return seconds * 1000 + nanoseconds / 1e6;
   };
 }
+
+interface StatsdRequest extends Request {
+  statsdKey: string;
+  statsdTags: string[];
+}
+
+export const expressStatsdMetrics = (path: string) => {
+  const expressStatsdLogger = bunyan.createLogger({ name: 'elapsedTimeInMs' });
+  expressStatsdLogger.info('before finishing');
+  const elapsedTimeInMs = hrtimer();
+
+  return function (req: StatsdRequest, res: Response, next: NextFunction) {
+    const method = req.method || 'unknown_method';
+    req.statsdKey = ['http', method.toLowerCase(), path].join('.');
+
+    res.on('finish', () => {
+      expressStatsdLogger.info('%s : %fms', req.path, elapsedTimeInMs);
+
+      req.statsdTags = [`elapsedTimeInMs: ${elapsedTimeInMs}`];
+    });
+
+    expressStatsdLogger.info('after finishing');
+    next();
+  };
+};
+
+// import {Request, Response, NextFunction} from 'express';
+// import bunyan from 'bunyan';
+
+// export const logResponseTime = (req: Request, res: Response, next: NextFunction) => {
+//   const logger = bunyan.createLogger({ name: 'Log response time' });
+//   const startHrTime = process.hrtime();
+
+//   res.on("finish", () => {
+//     const elapsedHrTime = process.hrtime(startHrTime);
+//     const elapsedTimeInMs = elapsedHrTime[0] * 1000 + elapsedHrTime[1] / 1e6;
+//     logger.info("%s : %fms", req.path, elapsedTimeInMs);
+//   });
+
+//   next();
+// }
 
 /**
  * Async Function Timer using Distributions
