@@ -40,6 +40,7 @@ export default async (req: Request, res: Response): Promise<void> => {
   // Check if the user that posted this has access to the installation ID they're requesting
   try {
     const {data: {installations}} = await res.locals.github.apps.listInstallationsForAuthenticatedUser();
+
     const userInstallation = installations.find(installation => installation.id === Number(req.body.installationId));
 
     if (!userInstallation) {
@@ -49,13 +50,11 @@ export default async (req: Request, res: Response): Promise<void> => {
         });
       return;
     }
-
     const {data: {login}} = await res.locals.github.users.getAuthenticated();
 
     // If the installation is an Org, the user needs to be an admin for that Org
     try {
       const role = await getRole({login, installation: userInstallation});
-
       if (role !== 'admin') {
         res.status(401)
           .json({
@@ -72,7 +71,6 @@ export default async (req: Request, res: Response): Promise<void> => {
 
       await subscription.destroy();
       await submitProto(action);
-
       res.sendStatus(202);
     } catch (err) {
       res.status(403)

@@ -152,7 +152,6 @@ router.get(
   returnOnValidationError,
   expressStatsdMetrics('/:installationId'),
   async (req: Request, res: Response): Promise<void> => {
-    // const requestStart = Date.now();
     const { installationId } = req.params;
     const { client } = res.locals;
 
@@ -200,16 +199,6 @@ router.get(
       req.log.error(err);
       res.status(500).json(err);
     }
-    // finally {
-    //   const elapsed = Date.now() - requestStart;
-    //   const tags = {
-    //     path:'/:installationId',
-    //     method: 'GET',
-    //     status: res.status.toString(),
-    //   };
-
-    //   statsd.histogram('get.installationId', elapsed, tags);
-    // }
   },
 );
 
@@ -219,7 +208,6 @@ router.get(
   returnOnValidationError,
   expressStatsdMetrics('/:installationId/repoSyncState.json'),
   async (req: Request, res: Response): Promise<void> => {
-    // const requestStart = Date.now();
     const githubInstallationId = Number(req.params.installationId);
 
     try {
@@ -238,16 +226,6 @@ router.get(
     } catch (err) {
       res.status(500).json(err);
     }
-    // finally {
-    //   const elapsed = Date.now() - requestStart;
-    //   const tags = {
-    //     path:'/:installationId/repoSyncState.json',
-    //     method: 'GET',
-    //     status: res.status.toString(),
-    //   };
-
-    //   statsd.histogram('get.installationId-repoSyncState', elapsed, tags);
-    // }
   },
 );
 
@@ -258,7 +236,6 @@ router.post(
   returnOnValidationError,
   expressStatsdMetrics('/:installationId/sync'),
   async (req: Request, res: Response): Promise<void> => {
-    // const requestStart = Date.now();
     const githubInstallationId = Number(req.params.installationId);
     req.log.info(req.body);
     const { jiraHost } = req.body;
@@ -285,16 +262,6 @@ router.post(
       req.log.info(err);
       res.sendStatus(401);
     }
-    // finally {
-    //   const elapsed = Date.now() - requestStart;
-    //   const tags = {
-    //     path:'/:installationId/sync',
-    //     method: 'POST',
-    //     status: res.status.toString(),
-    //   };
-
-    //   statsd.histogram('post.installationId-sync', elapsed, tags);
-    // }
   },
 );
 

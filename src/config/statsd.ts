@@ -1,4 +1,4 @@
-import { StatsD, StatsCb, Tags } from 'hot-shots';
+import {StatsD, StatsCb, Tags} from 'hot-shots';
 import bunyan from 'bunyan';
 import {Request, NextFunction} from 'express';
 
