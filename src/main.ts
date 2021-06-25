@@ -8,6 +8,7 @@ import App from './configure-robot';
 import bunyan from 'bunyan';
 import { exec } from 'child_process';
 
+const isProd = process.env.NODE_ENV === 'production';
 const { redisOptions } = getRedisInfo('probot');
 initializeSentry();
 
@@ -46,7 +47,7 @@ async function start() {
   const logger = bunyan.createLogger({ name: 'App start' });
 
   // Create tables for micros environments
-  if (process.env.NODE_ENV === 'production') await createDBTables(logger);
+  if (isProd) await createDBTables(logger);
 
   // We are always behind a proxy, but we want the source IP
   probot.server.set('trust proxy', true);
@@ -55,15 +56,11 @@ async function start() {
   probot.start();
 }
 
-// const workers = Number(process.env.WEB_CONCURRENCY) || 1;
-const workers = 1;
-
 // TODO: this should work in dev/production and should be `workers = process.env.NODE_ENV === 'production' ? undefined : 1`
-if (workers > 1) {
+if (isProd) {
   // Start clustered server
   throng(
     {
-      workers,
       lifetime: Infinity,
     },
     start,
