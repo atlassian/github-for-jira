@@ -18,5 +18,4 @@ COPY --chown=node:node --from=build /app /app
 WORKDIR /app
 ENV NODE_ENV production
 
-RUN chmod +x ./bin/start-server-micros.sh
 CMD ["./bin/start-server-micros.sh"]
