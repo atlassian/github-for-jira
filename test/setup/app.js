@@ -1,6 +1,5 @@
-const { Probot } = require('probot');
+const { Probot, ProbotOctokit } = require('probot');
 const { getPrivateKey } = require('@probot/get-private-key');
-const LRUCache = require('lru-cache');
 
 beforeEach(async () => {
   const models = td.replace('../../lib/models', {
@@ -59,12 +58,11 @@ beforeEach(async () => {
 
   global.app = await configureRobot(new Probot({
     appId: 12257,
+    githubToken: 'test',
     privateKey: getPrivateKey(),
-    cache: new LRUCache({
-      // cache max. 15000 tokens, that will use less than 10mb memory
-      max: 15000,
-      // Cache for 1 minute less than GitHub expiry
-      maxAge: 60 * 60
+    Octokit: ProbotOctokit.defaults({
+      retry: { enabled: false },
+      throttle: { enabled: false },
     })
   }), { getRouter: Router });
 });
