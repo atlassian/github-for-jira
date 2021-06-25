@@ -16,7 +16,7 @@ describe('Probot event middleware', () => {
       const probot = new Probot({
         appId: 12257,
         privateKey: getPrivateKey(),
-        secret: "development",
+        secret: 'development',
       });
       context = {
         payload: {
