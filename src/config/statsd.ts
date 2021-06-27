@@ -38,46 +38,21 @@ function hrtimer() {
   };
 }
 
-interface StatsdRequest extends Request {
-  statsdKey: string;
-  statsdTags: string[];
-}
-
 export const expressStatsdMetrics = (path: string) => {
   const expressStatsdLogger = bunyan.createLogger({ name: 'elapsedTimeInMs' });
-  expressStatsdLogger.info('before finishing');
   const elapsedTimeInMs = hrtimer();
 
-  return function (req: StatsdRequest, res: Response, next: NextFunction) {
-    const method = req.method || 'unknown_method';
-    req.statsdKey = ['http', method.toLowerCase(), path].join('.');
+  return function (req: Request, res: Response, next: NextFunction) {
+    const tags = { path, method: req.method };
 
     res.on('finish', () => {
-      expressStatsdLogger.info('%s : %fms', req.path, elapsedTimeInMs);
-
-      req.statsdTags = [`elapsedTimeInMs: ${elapsedTimeInMs}`];
+      expressStatsdLogger.info(`${path} : ${elapsedTimeInMs()}`);
+      statsd.histogram('elapsedTimeInMs', elapsedTimeInMs(), tags);
     });
 
-    expressStatsdLogger.info('after finishing');
     next();
   };
 };
-
-// import {Request, Response, NextFunction} from 'express';
-// import bunyan from 'bunyan';
-
-// export const logResponseTime = (req: Request, res: Response, next: NextFunction) => {
-//   const logger = bunyan.createLogger({ name: 'Log response time' });
-//   const startHrTime = process.hrtime();
-
-//   res.on("finish", () => {
-//     const elapsedHrTime = process.hrtime(startHrTime);
-//     const elapsedTimeInMs = elapsedHrTime[0] * 1000 + elapsedHrTime[1] / 1e6;
-//     logger.info("%s : %fms", req.path, elapsedTimeInMs);
-//   });
-
-//   next();
-// }
 
 /**
  * Async Function Timer using Distributions
