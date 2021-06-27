@@ -39,41 +39,6 @@ Object {
 }
 `;
 
-exports[`API Authentication should return 401 if the GraphQL query returns errors 2`] = `
-Object {
-  "errors": Array [
-    Object {
-      "extensions": Object {
-        "code": "undefinedField",
-        "fieldName": "foo",
-        "typeName": "User",
-      },
-      "locations": Array [
-        Object {
-          "column": 5,
-          "line": 4,
-        },
-      ],
-      "message": "Field 'foo' doesn't exist on type 'User'",
-      "path": Array [
-        "query",
-        "viewer",
-        "foo",
-      ],
-    },
-  ],
-  "viewerPermissionQuery": "{
-  viewer {
-    login
-    organization(login: \\"fusion-arc\\") {
-      viewerCanAdminister
-    }
-  }
-}
-",
-}
-`;
-
 exports[`API Authentication should return 401 if the returned organization is null 1`] = `
 Object {
   "error": "Unauthorized",
