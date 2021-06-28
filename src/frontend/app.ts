@@ -137,74 +137,74 @@ export default (octokitApp: App): Express => {
     '/github/setup',
     csrfProtection,
     oauth.checkGithubAuth,
+    elapsedTimeMetrics,
     getGitHubSetup,
-    elapsedTimeMetrics(),
   );
 
   app.post(
     '/github/setup',
     csrfProtection,
+    elapsedTimeMetrics,
     postGitHubSetup,
-    elapsedTimeMetrics(),
   );
 
   app.get(
     '/github/configuration',
     csrfProtection,
     oauth.checkGithubAuth,
+    elapsedTimeMetrics,
     getGitHubConfiguration,
-    elapsedTimeMetrics(),
   );
 
   app.post(
     '/github/configuration',
     csrfProtection,
+    elapsedTimeMetrics,
     postGitHubConfiguration,
-    elapsedTimeMetrics(),
   );
 
   app.get(
     '/github/installations',
     csrfProtection,
     oauth.checkGithubAuth,
+    elapsedTimeMetrics,
     listGitHubInstallations,
-    elapsedTimeMetrics(),
   );
 
   app.get(
     '/github/subscriptions/:installationId',
     csrfProtection,
+    elapsedTimeMetrics,
     getGitHubSubscriptions,
-    elapsedTimeMetrics(),
   );
 
   app.post(
     '/github/subscription',
     csrfProtection,
+    elapsedTimeMetrics,
     deleteGitHubSubscription,
-    elapsedTimeMetrics(),
   );
 
   app.get(
     '/jira/configuration',
     csrfProtection,
     verifyJiraMiddleware,
+    elapsedTimeMetrics,
     getJiraConfiguration,
-    elapsedTimeMetrics(),
   );
 
   app.delete(
     '/jira/configuration',
     verifyJiraMiddleware,
+    elapsedTimeMetrics,
     deleteJiraConfiguration,
-    elapsedTimeMetrics(),
   );
 
   app.post(
     '/jira/sync',
     verifyJiraMiddleware,
+    elapsedTimeMetrics,
     retrySync,
-    elapsedTimeMetrics(),
   );
 
   app.get('/', async (_: Request, res: Response, next: NextFunction) => {

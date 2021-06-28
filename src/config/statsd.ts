@@ -38,21 +38,22 @@ function hrtimer() {
   };
 }
 
-export const elapsedTimeMetrics = () => {
-  const expressStatsdLogger = bunyan.createLogger({ name: 'elapsedTimeInMs' });
+const expressStatsdLogger = bunyan.createLogger({ name: 'elapsedTimeInMs' });
+export const elapsedTimeMetrics = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   const elapsedTimeInMs = hrtimer();
+  const path = req.path;
+  const tags = { path, method: req.method };
 
-  return function (req: Request, res: Response, next: NextFunction) {
-    const path = req.path;
-    const tags = { path, method: req.method };
+  res.once('finish', () => {
+    expressStatsdLogger.info(`${path} : ${elapsedTimeInMs()}`);
+    statsd.histogram('elapsedTimeInMs', elapsedTimeInMs(), tags);
+  });
 
-    res.on('finish', () => {
-      expressStatsdLogger.info(`${path} : ${elapsedTimeInMs()}`);
-      statsd.histogram('elapsedTimeInMs', elapsedTimeInMs(), tags);
-    });
-
-    next();
-  };
+  next();
 };
 
 /**
