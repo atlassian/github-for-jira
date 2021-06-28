@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import './config/env'; // Important to be before other dependencies
-import { initializeSentry } from './config/sentry';
+// import { initializeSentry } from './config/sentry';
 import throng from 'throng';
 import getRedisInfo from './config/redis-info';
 import * as PrivateKey from 'probot/lib/private-key';
@@ -48,9 +48,9 @@ async function start() {
 
   logger.info('STARTING APP', process.env.SENTRY_DSN.slice(0, 20));
   logger.info('STARTING APP', process.env.MICROS_ENV);
-  logger.info('Calling SENTRY: ', initializeSentry());
+  // logger.info('Calling SENTRY: ', initializeSentry());
 
-  initializeSentry();
+  // initializeSentry();
 
   // Create tables for micros environments
   if (isProd) await createDBTables(logger);

@@ -1,6 +1,6 @@
 import bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-
+import express from "express";
 import { Installation } from '../models';
 import { hasValidJwt } from './util/jwt';
 import logMiddleware from '../middleware/log-middleware';
@@ -42,7 +42,7 @@ export default (robot: Application): void => {
   const router = robot.route('/jira');
 
   // The request handler must be the first middleware on the app
-  router.use(Sentry.Handlers.requestHandler());
+  router.use(Sentry.Handlers.requestHandler() as express.RequestHandler);
   router.use(bodyParser.json());
   router.use(logMiddleware);
 
