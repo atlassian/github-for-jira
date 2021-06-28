@@ -38,7 +38,6 @@ resources:
     attributes:
       domain:
         - github.atlassian.com
-        - github-for-jira-proxy.dev.services.atlassian.com
       upstream_address:
         - address: jira.github.com
       default_vanity_dns: false
@@ -83,7 +82,6 @@ environmentOverrides:
         attributes:
           domain:
             - github.dev.atlassian.com
-            - github-for-jira-proxy.dev.services.atlassian.com
           upstream_address:
             - address: jira-staging.github.com
   staging:
@@ -100,7 +98,6 @@ environmentOverrides:
         attributes:
           domain:
             - github.stg.atlassian.com
-            - github-for-jira-proxy.stg.services.atlassian.com
           upstream_address:
             - address: jira-staging.github.com
   prod:
