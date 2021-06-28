@@ -51,8 +51,6 @@ describe('GitHub Actions', () => {
             name: 'example/test-repo-name',
             url: 'test-repo-url',
             id: 'test-repo-id',
-            branches: [],
-            pull_request: [],
             workflows: [
               {
                 id: 977675483,
