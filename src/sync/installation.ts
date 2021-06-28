@@ -375,6 +375,9 @@ export const processInstallation =
 
       statsd.increment('app.server.sync-status.failed');
 
+      job.sentry.setExtra('Installation FAILED', JSON.stringify(err, null, 2));
+      job.sentry.captureException(err);
+
       throw err;
     }
   };
