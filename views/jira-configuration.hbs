@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/public/atlassian-ui-kit/bundle.css" media="all" />
     <link rel="stylesheet" href="/public/css/styles.css" media="all" />
     <link rel="stylesheet" href="/public/css/jira-configuration.css" media="all" />
-    <script src="/public/js/jquery.min.js"></script>
+    <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
   <body class="aui-page-hybrid">
     <div class="ac-content">
@@ -165,9 +165,9 @@
            <p>To view your Organization’s updated sync status, <span class="jiraConfigurationTable__refresh">please refresh</span> this page.</p>
         {{/if}}
       </div>
-      <script src="/public/js/jira-configuration.js"></script>
+      <script src="/public/js/jira-configuration.js" nonce="{{nonce}}"></script>
     </div>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
-    <script src="https://connect-cdn.atl-paas.net/all.js"></script>
+    <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
   </body>
 </html>

@@ -55,6 +55,7 @@ export default async (req:Request, res:Response, next:NextFunction):Promise<void
       hasConnections: connections.length > 0 || failedConnections.length > 0,
       APP_URL: process.env.APP_URL,
       csrfToken: req.csrfToken(),
+      nonce: res.locals.nonce
     });
 
     req.log.info('Jira configuration rendered successfully.');
