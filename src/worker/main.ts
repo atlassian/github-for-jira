@@ -9,7 +9,7 @@ import { processPush } from '../transforms/push';
 import metricsJob from './metrics-job';
 import statsd from '../config/statsd';
 import getRedisInfo from '../config/redis-info';
-import app from './app';
+import app, { probot } from './app';
 import AxiosErrorEventDecorator from '../models/axios-error-event-decorator';
 import SentryScopeProxy from '../models/sentry-scope-proxy';
 
@@ -138,6 +138,7 @@ export const start = (): void => {
   );
   queues.metrics.process(1, commonMiddleware(metricsJob));
 
+  probot.start();
   app.log(
     `Worker process started with ${CONCURRENT_WORKERS} CONCURRENT WORKERS`,
   );

@@ -14,7 +14,6 @@ import express, {
   Router,
 } from 'express';
 import axios from 'axios';
-import { elapsedTimeMetrics } from '../config/statsd';
 
 const host = process.env.GHE_HOST || 'github.com';
 
@@ -100,8 +99,6 @@ export default (opts: OAuthOptions): GithubOAuth => {
       return res.redirect(redirectUrl);
     } catch (e) {
       return next(new Error('Cannot retrieve access token from Github'));
-    } finally {
-      elapsedTimeMetrics();
     }
   }
 

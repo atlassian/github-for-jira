@@ -18,4 +18,4 @@ COPY --chown=node:node --from=build /app /app
 WORKDIR /app
 ENV NODE_ENV production
 
-CMD ["npm", "run", "start:production"]
+CMD ["./bin/start-server-micros.sh"]
