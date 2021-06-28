@@ -5,6 +5,7 @@ import url from 'url';
 import statsd from '../../config/statsd';
 import JiraClientError from './jira-client-error';
 import bunyan from 'bunyan';
+import { metricHttpRequest } from '../../config/metric-names';
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ''}`;
 
@@ -217,7 +218,7 @@ const instrumentRequest = (response) => {
     status: response.status,
   };
 
-  statsd.histogram('app.server.http.request.jira', requestDurationMs, tags);
+  statsd.histogram(metricHttpRequest().jira, requestDurationMs, tags);
 
   return response;
 };

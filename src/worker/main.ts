@@ -12,6 +12,7 @@ import getRedisInfo from '../config/redis-info';
 import app, { probot } from './app';
 import AxiosErrorEventDecorator from '../models/axios-error-event-decorator';
 import SentryScopeProxy from '../models/sentry-scope-proxy';
+import { metricHttpRequest } from '../config/metric-names';
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo('client').redisOptions);
@@ -20,7 +21,7 @@ const subscriber = new Redis(getRedisInfo('subscriber').redisOptions);
 function measureElapsedTime(startTime, tags) {
   const endTime = Date.now();
   const timeDiff = endTime - startTime;
-  statsd.histogram('app.server.http.request.job-duration', timeDiff, tags);
+  statsd.histogram(metricHttpRequest().jobDuration, timeDiff, tags);
 }
 
 const queueOpts: QueueOptions = {
@@ -71,7 +72,10 @@ Object.keys(queues).forEach((name) => {
   queue.on('completed', (job) => {
     app.log.info(`Job completed name=${name} id=${job.id}`);
 
-    measureElapsedTime(job.meta_time_start, { queue: name, status: 'completed' });
+    measureElapsedTime(job.meta_time_start, {
+      queue: name,
+      status: 'completed',
+    });
   });
 
   queue.on('failed', async (job) => {

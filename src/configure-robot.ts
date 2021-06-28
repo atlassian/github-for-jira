@@ -12,6 +12,7 @@ import setupDeepcheck from './deepcheck';
 import statsd from './config/statsd';
 import { isIp4InCidrs } from './config/cidr-validator';
 import { Logger } from 'probot/lib/github/logging';
+import { metricError } from './config/metric-names';
 
 /**
  * Get the list of GitHub CIDRs from the /meta endpoint
@@ -75,7 +76,7 @@ export default async (app: Application): Promise<Application> => {
        */
       handler(_, res) {
         // We don't include path in this metric as the bots scanning us generate many of them
-        statsd.increment('app.server.error.express-rate-limited');
+        statsd.increment(metricError.expressRateLimited);
         res.status(429).send('Too many requests, please try again later.');
       },
       max: 100, // limit each IP to a number of requests per windowMs
