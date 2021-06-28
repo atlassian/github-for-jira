@@ -81,7 +81,7 @@ export default async function (
       }));
       asyncTags.push(`status:${status}`);
     },
-    'rest.sync_pull_request',
+    'app.server.http.request.sync',
     1,
     asyncTags,
   )();

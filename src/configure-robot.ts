@@ -75,7 +75,7 @@ export default async (app: Application): Promise<Application> => {
        */
       handler(_, res) {
         // We don't include path in this metric as the bots scanning us generate many of them
-        statsd.increment('express.rate_limited');
+        statsd.increment('app.server.error.express-rate-limited');
         res.status(429).send('Too many requests, please try again later.');
       },
       max: 100, // limit each IP to a number of requests per windowMs

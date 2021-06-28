@@ -20,7 +20,7 @@ const subscriber = new Redis(getRedisInfo('subscriber').redisOptions);
 function measureElapsedTime(startTime, tags) {
   const endTime = Date.now();
   const timeDiff = endTime - startTime;
-  statsd.histogram('job_duration', timeDiff, tags);
+  statsd.histogram('app.server.http.request.job-duration', timeDiff, tags);
 }
 
 const queueOpts: QueueOptions = {

@@ -250,7 +250,7 @@ export default (octokitApp: App): Express => {
       `status: ${errorCodes[err.message]}`,
     ];
 
-    statsd.increment('github_error_rendered', tags);
+    statsd.increment('app.frontend.error.github-error-rendered', tags);
 
     return res
       .status(errorCodes[err.message] || 400)

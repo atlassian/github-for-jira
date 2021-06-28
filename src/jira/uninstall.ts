@@ -32,7 +32,7 @@ export default async (req:Request, res:Response):Promise<void> => {
     }));
   }
 
-  statsd.increment('uninstall.request');
+  statsd.increment('app.server.http.request.uninstall');
 
   await installation.uninstall();
   await submitProto(actions);

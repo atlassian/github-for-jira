@@ -141,7 +141,7 @@ const updateJobStatus = async (
 
       // full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
       // startTime will be passed in when this sync job is queued from the discovery
-      statsd.histogram('full_sync', timeDiff);
+      statsd.histogram('app.server.http.request.full-sync', timeDiff);
     }
     app.log(message);
 
@@ -373,7 +373,7 @@ export const processInstallation =
 
       await subscription.update({ syncStatus: 'FAILED' });
 
-      statsd.increment('installation-sync.failed');
+      statsd.increment('app.server.sync-status.failed');
 
       throw err;
     }

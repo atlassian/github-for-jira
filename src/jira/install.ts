@@ -27,7 +27,7 @@ export default async (req: Request, res: Response): Promise<void> => {
   action.type = ActionType.CREATED;
   action.actionSource = ActionSource.WEBHOOK;
 
-  statsd.increment('install.request');
+  statsd.increment('app.server.http.request.install');
 
   res.sendStatus(204);
   await submitProto(action);

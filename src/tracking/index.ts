@@ -132,7 +132,7 @@ export const submitProto = async (
       `status:${status}`,
     ];
 
-    statsd.increment(submissionMetricName, count as number, tags);
+    statsd.increment(`app.server.http.request.${submissionMetricName}`, count as number, tags);
   });
 
   return status === 200;

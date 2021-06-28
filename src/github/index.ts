@@ -22,7 +22,7 @@ export default (robot) => {
       `action: ${payload.action}`,
     ];
 
-    statsd.increment('jira_configuration_error', tags);
+    statsd.increment('app.server.error.jira-configuration', tags);
   });
 
   robot.on(
