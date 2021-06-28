@@ -12,7 +12,7 @@ export const probot = createProbot({
 
   // These aren't needed by worker process
   secret: undefined,
-  port: Number(process.env.WORKER_PORT) || 8080,
+  port: Number(process.env.WORKER_PORT) || Number(process.env.PORT) || 8081,
   webhookPath: undefined,
   webhookProxy: undefined,
 });
