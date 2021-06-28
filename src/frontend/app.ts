@@ -22,6 +22,7 @@ import retrySync from './retry-sync';
 import api from '../api';
 import logMiddleware from '../middleware/log-middleware';
 import { App } from '@octokit/app';
+import statsd, { elapsedTimeMetrics } from '../config/statsd';
 
 // Adding session information to request
 declare global {
@@ -136,43 +137,75 @@ export default (octokitApp: App): Express => {
     '/github/setup',
     csrfProtection,
     oauth.checkGithubAuth,
+    elapsedTimeMetrics,
     getGitHubSetup,
   );
-  app.post('/github/setup', csrfProtection, postGitHubSetup);
+
+  app.post(
+    '/github/setup',
+    csrfProtection,
+    elapsedTimeMetrics,
+    postGitHubSetup,
+  );
 
   app.get(
     '/github/configuration',
     csrfProtection,
     oauth.checkGithubAuth,
+    elapsedTimeMetrics,
     getGitHubConfiguration,
   );
-  app.post('/github/configuration', csrfProtection, postGitHubConfiguration);
+
+  app.post(
+    '/github/configuration',
+    csrfProtection,
+    elapsedTimeMetrics,
+    postGitHubConfiguration,
+  );
 
   app.get(
     '/github/installations',
     csrfProtection,
     oauth.checkGithubAuth,
+    elapsedTimeMetrics,
     listGitHubInstallations,
   );
+
   app.get(
     '/github/subscriptions/:installationId',
     csrfProtection,
+    elapsedTimeMetrics,
     getGitHubSubscriptions,
   );
-  app.post('/github/subscription', csrfProtection, deleteGitHubSubscription);
+
+  app.post(
+    '/github/subscription',
+    csrfProtection,
+    elapsedTimeMetrics,
+    deleteGitHubSubscription,
+  );
 
   app.get(
     '/jira/configuration',
     csrfProtection,
     verifyJiraMiddleware,
+    elapsedTimeMetrics,
     getJiraConfiguration,
   );
+
   app.delete(
     '/jira/configuration',
     verifyJiraMiddleware,
+    elapsedTimeMetrics,
     deleteJiraConfiguration,
   );
-  app.post('/jira/sync', verifyJiraMiddleware, retrySync);
+
+  app.post(
+    '/jira/sync',
+    verifyJiraMiddleware,
+    elapsedTimeMetrics,
+    retrySync,
+  );
 
   app.get('/', async (_: Request, res: Response, next: NextFunction) => {
     const { data: info } = await res.locals.client.apps.getAuthenticated({});
@@ -200,6 +233,7 @@ export default (octokitApp: App): Express => {
   // Error catcher - Batter up!
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     req.log.error(err, `Error in frontend app.`);
+
     if (process.env.NODE_ENV !== 'production') {
       return next(err);
     }
@@ -210,6 +244,13 @@ export default (octokitApp: App): Express => {
       Forbidden: 403,
       'Not Found': 404,
     };
+
+    const tags = [
+      `error: ${req.log.error}`,
+      `status: ${errorCodes[err.message]}`,
+    ];
+
+    statsd.increment('app.frontend.error.github-error-rendered', tags);
 
     return res
       .status(errorCodes[err.message] || 400)

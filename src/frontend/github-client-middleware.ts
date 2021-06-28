@@ -2,6 +2,7 @@ import GithubAPI from "../config/github-api";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import { App } from "@octokit/app";
 import { GitHubAPI } from "probot";
+import bunyan from 'bunyan';
 
 export default (octokitApp: App): RequestHandler => (req: Request, res: Response, next: NextFunction): void => {
   if (req.session.githubToken) {
@@ -25,6 +26,8 @@ export default (octokitApp: App): RequestHandler => (req: Request, res: Response
 export const isAdmin = (githubClient: GitHubAPI) =>
   async (args: { org: string, username: string, type: string }): Promise<boolean> => {
     const { org, username, type } = args;
+    const logger = bunyan.createLogger({ name: 'GitHub Client Middleware' });
+
     // If this is a user installation, the "admin" is the user that owns the repo
     if (type === "User") {
       return org === username;
@@ -37,9 +40,7 @@ export const isAdmin = (githubClient: GitHubAPI) =>
       } = await githubClient.orgs.getMembership({ org, username });
       return role === "admin";
     } catch (err) {
-      console.log(err);
-      console.log(`${org} has not accepted new permission for getOrgMembership`);
-      console.log(`error=${err} org=${org}`);
+      logger.error(`${org} has not accepted new permission for getOrgMembership - error: ${err}`);
       return false;
     }
   };
