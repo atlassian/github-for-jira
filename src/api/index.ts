@@ -18,7 +18,7 @@ import {
   serializeSubscription,
 } from './serializers';
 import getRedisInfo from '../config/redis-info';
-import {elapsedTimeMetrics} from '../config/statsd';
+import statsd, {elapsedTimeMetrics} from '../config/statsd';
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -427,6 +427,8 @@ router.post(
       await jiraClient.devinfo.migration.complete();
       res.send('Successfully called migrationComplete');
       await subscription.update({ syncStatus: 'COMPLETE' });
+
+      statsd.increment('app.server.sync-status.complete');
     } catch (err) {
       res.send(`Error trying to complete migration: ${err}`).status(500);
     }

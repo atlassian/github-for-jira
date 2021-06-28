@@ -197,6 +197,7 @@ export const processInstallation =
     const nextTask = await getNextTask(subscription);
     if (!nextTask) {
       await subscription.update({ syncStatus: 'COMPLETE' });
+      statsd.increment('app.server.sync-status.complete');
       return;
     }
 
