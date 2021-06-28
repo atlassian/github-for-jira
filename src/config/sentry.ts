@@ -21,9 +21,11 @@ export const beforeSendToSentry = (event: Event) => {
   return event;
 };
 
-Sentry.init({
-  dsn: sentryServerDSN,
-  environment: microsEnv || 'development',
-  release: microsServiceVersion,
-  beforeSend: beforeSendToSentry,
-});
+export default (): void => {
+  Sentry.init({
+    dsn: sentryServerDSN,
+    environment: microsEnv || 'development',
+    release: microsServiceVersion,
+    beforeSend: beforeSendToSentry,
+  });
+};

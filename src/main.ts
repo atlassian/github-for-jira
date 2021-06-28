@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import './config/env'; // Important to be before other dependencies
-// import initializeSentry from './config/sentry';
+import initializeSentry from './config/sentry';
 import throng from 'throng';
 import getRedisInfo from './config/redis-info';
 import * as PrivateKey from 'probot/lib/private-key';
@@ -10,7 +11,6 @@ import { exec } from 'child_process';
 
 const isProd = process.env.NODE_ENV === 'production';
 const { redisOptions } = getRedisInfo('probot');
-// initializeSentry();
 
 const probot = createProbot({
   id: Number(process.env.APP_ID),
@@ -45,6 +45,10 @@ async function createDBTables(logger: bunyan) {
  */
 async function start() {
   const logger = bunyan.createLogger({ name: 'App start' });
+
+  logger.info('Calling SENTRY: ', initializeSentry());
+
+  initializeSentry();
 
   // Create tables for micros environments
   if (isProd) await createDBTables(logger);
