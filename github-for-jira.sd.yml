@@ -33,12 +33,14 @@ resources:
     name: database
   - type: globaledge
     name: ingress
-    attributes:
-      routes:
-        - match:
-            prefix: /
-            ip_whitelist:
-              - public
+  - type: globaledge
+      name: proxy
+      attributes:
+        domain:
+          - github.atlassian.com
+        upstream_address:
+          - address: jira.github.com
+        default_vanity_dns: false
 
 config:
   environmentVariables:
@@ -74,6 +76,14 @@ environmentOverrides:
         LOG_LEVEL: debug
         # * Commented out env vars are to be saved in secrets
         # WEBHOOK_SECRET: for signed signature when syncing an org
+    resources:
+      - type: globaledge
+          name: proxy
+          attributes:
+            domain:
+              - github.dev.atlassian.com
+            upstream_address:
+              - address: jira-staging.github.com
   staging:
     config:
       environmentVariables:
@@ -82,6 +92,14 @@ environmentOverrides:
         INSTANCE_NAME: github-for-jira-stg
         # * Commented out env vars are to be saved in secrets
         # WEBHOOK_SECRET: for signed signature when syncing an org
+    resources:
+      - type: globaledge
+          name: proxy
+          attributes:
+            domain:
+              - github.stg.atlassian.com
+            upstream_address:
+              - address: jira-staging.github.com
   prod:
     config:
       environmentVariables:
