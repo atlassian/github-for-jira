@@ -65,7 +65,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
     const state = query.state as string;
 
     // Take save redirect url and delete it from session
-    const redirectUrl = req.session[state];
+    const redirectUrl = req.session[state] as string;
     delete req.session[state];
 
     // Check if state is available and matches a previous request
@@ -97,11 +97,11 @@ export default (opts: OAuthOptions): GithubOAuth => {
         return next(new Error('Missing Access Token from Github OAuth Flow.'));
       }
 
-      return res.redirect(redirectUrl.toString());
+      return res.redirect(redirectUrl);
     } catch (e) {
       return next(new Error('Cannot retrieve access token from Github'));
     } finally {
-      elapsedTimeMetrics(`https://${host}/login/oauth/access_token`);
+      elapsedTimeMetrics();
     }
   }
 

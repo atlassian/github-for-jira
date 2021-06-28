@@ -138,14 +138,14 @@ export default (octokitApp: App): Express => {
     csrfProtection,
     oauth.checkGithubAuth,
     getGitHubSetup,
-    elapsedTimeMetrics('/github/setup'),
+    elapsedTimeMetrics(),
   );
 
   app.post(
     '/github/setup',
     csrfProtection,
     postGitHubSetup,
-    elapsedTimeMetrics('/github/setup'),
+    elapsedTimeMetrics(),
   );
 
   app.get(
@@ -153,14 +153,14 @@ export default (octokitApp: App): Express => {
     csrfProtection,
     oauth.checkGithubAuth,
     getGitHubConfiguration,
-    elapsedTimeMetrics('/github/configuration'),
+    elapsedTimeMetrics(),
   );
 
   app.post(
     '/github/configuration',
     csrfProtection,
     postGitHubConfiguration,
-    elapsedTimeMetrics('/github/configuration'),
+    elapsedTimeMetrics(),
   );
 
   app.get(
@@ -168,21 +168,21 @@ export default (octokitApp: App): Express => {
     csrfProtection,
     oauth.checkGithubAuth,
     listGitHubInstallations,
-    elapsedTimeMetrics('/github/installations'),
+    elapsedTimeMetrics(),
   );
 
   app.get(
     '/github/subscriptions/:installationId',
     csrfProtection,
     getGitHubSubscriptions,
-    elapsedTimeMetrics('/github/subscriptions/:installationId'),
+    elapsedTimeMetrics(),
   );
 
   app.post(
     '/github/subscription',
     csrfProtection,
     deleteGitHubSubscription,
-    elapsedTimeMetrics('/github/subscription'),
+    elapsedTimeMetrics(),
   );
 
   app.get(
@@ -190,21 +190,21 @@ export default (octokitApp: App): Express => {
     csrfProtection,
     verifyJiraMiddleware,
     getJiraConfiguration,
-    elapsedTimeMetrics('/jira/configuration'),
+    elapsedTimeMetrics(),
   );
 
   app.delete(
     '/jira/configuration',
     verifyJiraMiddleware,
     deleteJiraConfiguration,
-    elapsedTimeMetrics('/jira/configuration'),
+    elapsedTimeMetrics(),
   );
 
   app.post(
     '/jira/sync',
     verifyJiraMiddleware,
     retrySync,
-    elapsedTimeMetrics('/jira/sync'),
+    elapsedTimeMetrics(),
   );
 
   app.get('/', async (_: Request, res: Response, next: NextFunction) => {
