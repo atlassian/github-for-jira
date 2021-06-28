@@ -144,9 +144,9 @@
                         <option value="full">Full</option>
                       </select>
                       {{#if maintenanceMode}}
-                      <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">Submit</button>
-                      {{else}}
                       <span class="disabled-link">Submit</span>
+                      {{else}}
+                      <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">Submit</button>
                       {{/if}}
                     </td>
                   </tr>
