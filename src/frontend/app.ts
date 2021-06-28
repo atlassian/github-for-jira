@@ -200,12 +200,7 @@ export default (octokitApp: App): Express => {
     deleteJiraConfiguration,
   );
 
-  app.post(
-    '/jira/sync',
-    verifyJiraMiddleware,
-    elapsedTimeMetrics,
-    retrySync,
-  );
+  app.post('/jira/sync', verifyJiraMiddleware, elapsedTimeMetrics, retrySync);
 
   app.get('/', async (_: Request, res: Response, next: NextFunction) => {
     const { data: info } = await res.locals.client.apps.getAuthenticated({});
@@ -227,6 +222,7 @@ export default (octokitApp: App): Express => {
       next(err);
     });
   });
+
   // The error handler must come after controllers and before other error middleware
   app.use(Sentry.Handlers.errorHandler());
 
