@@ -8,6 +8,7 @@ import { submitProto } from '../tracking';
 import { Subscription } from '../models';
 import {Request, Response} from 'express';
 import statsd from '../config/statsd';
+import { metricHttpRequest } from '../config/metric-names';
 
 /**
  * Handle the uninstall webhook from Jira
@@ -32,7 +33,7 @@ export default async (req:Request, res:Response):Promise<void> => {
     }));
   }
 
-  statsd.increment('app.server.http.request.uninstall');
+  statsd.increment(metricHttpRequest().uninstall);
 
   await installation.uninstall();
   await submitProto(actions);

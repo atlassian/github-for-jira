@@ -3,6 +3,7 @@ import moment from 'moment';
 import { Subscription } from '../models';
 import { NextFunction, Request, Response } from 'express';
 import statsd from '../config/statsd';
+import { metricSyncStatus } from '../config/metric-names';
 
 const syncStatus = (syncStatus) =>
   syncStatus === 'ACTIVE' ? 'IN PROGRESS' : syncStatus;
@@ -23,8 +24,8 @@ async function getInstallation(client, subscription) {
       subscription.repoSyncState?.numberOfSyncedRepos || 0;
 
     response.data.syncStatus === 'STALLED' &&
-      statsd.increment('app.server.sync-status.stalled');
-      
+      statsd.increment(metricSyncStatus.stalled);
+
     return response.data;
   } catch (err) {
     return { error: err, id, deleted: err.code === 404 };
