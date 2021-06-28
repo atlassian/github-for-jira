@@ -34,13 +34,13 @@ resources:
   - type: globaledge
     name: ingress
   - type: globaledge
-      name: proxy
-      attributes:
-        domain:
-          - github.atlassian.com
-        upstream_address:
-          - address: jira.github.com
-        default_vanity_dns: false
+    name: proxy
+    attributes:
+      domain:
+        - github.atlassian.com
+      upstream_address:
+        - address: jira.github.com
+      default_vanity_dns: false
 
 config:
   environmentVariables:
@@ -78,12 +78,12 @@ environmentOverrides:
         # WEBHOOK_SECRET: for signed signature when syncing an org
     resources:
       - type: globaledge
-          name: proxy
-          attributes:
-            domain:
-              - github.dev.atlassian.com
-            upstream_address:
-              - address: jira-staging.github.com
+        name: proxy
+        attributes:
+          domain:
+            - github.dev.atlassian.com
+          upstream_address:
+            - address: jira-staging.github.com
   staging:
     config:
       environmentVariables:
