@@ -22,7 +22,7 @@ import retrySync from './retry-sync';
 import api from '../api';
 import logMiddleware from '../middleware/log-middleware';
 import { App } from '@octokit/app';
-import statsd, { expressStatsdMetrics } from '../config/statsd';
+import statsd, { elapsedTimeMetrics } from '../config/statsd';
 
 // Adding session information to request
 declare global {
@@ -138,14 +138,14 @@ export default (octokitApp: App): Express => {
     csrfProtection,
     oauth.checkGithubAuth,
     getGitHubSetup,
-    expressStatsdMetrics('/github/setup'),
+    elapsedTimeMetrics('/github/setup'),
   );
 
   app.post(
     '/github/setup',
     csrfProtection,
     postGitHubSetup,
-    expressStatsdMetrics('/github/setup'),
+    elapsedTimeMetrics('/github/setup'),
   );
 
   app.get(
@@ -153,14 +153,14 @@ export default (octokitApp: App): Express => {
     csrfProtection,
     oauth.checkGithubAuth,
     getGitHubConfiguration,
-    expressStatsdMetrics('/github/configuration'),
+    elapsedTimeMetrics('/github/configuration'),
   );
 
   app.post(
     '/github/configuration',
     csrfProtection,
     postGitHubConfiguration,
-    expressStatsdMetrics('/github/configuration'),
+    elapsedTimeMetrics('/github/configuration'),
   );
 
   app.get(
@@ -168,21 +168,21 @@ export default (octokitApp: App): Express => {
     csrfProtection,
     oauth.checkGithubAuth,
     listGitHubInstallations,
-    expressStatsdMetrics('/github/installations'),
+    elapsedTimeMetrics('/github/installations'),
   );
 
   app.get(
     '/github/subscriptions/:installationId',
     csrfProtection,
     getGitHubSubscriptions,
-    expressStatsdMetrics('/github/subscriptions/:installationId'),
+    elapsedTimeMetrics('/github/subscriptions/:installationId'),
   );
 
   app.post(
     '/github/subscription',
     csrfProtection,
     deleteGitHubSubscription,
-    expressStatsdMetrics('/github/subscription'),
+    elapsedTimeMetrics('/github/subscription'),
   );
 
   app.get(
@@ -190,21 +190,21 @@ export default (octokitApp: App): Express => {
     csrfProtection,
     verifyJiraMiddleware,
     getJiraConfiguration,
-    expressStatsdMetrics('/jira/configuration'),
+    elapsedTimeMetrics('/jira/configuration'),
   );
 
   app.delete(
     '/jira/configuration',
     verifyJiraMiddleware,
     deleteJiraConfiguration,
-    expressStatsdMetrics('/jira/configuration'),
+    elapsedTimeMetrics('/jira/configuration'),
   );
 
   app.post(
     '/jira/sync',
     verifyJiraMiddleware,
     retrySync,
-    expressStatsdMetrics('/jira/sync'),
+    elapsedTimeMetrics('/jira/sync'),
   );
 
   app.get('/', async (_: Request, res: Response, next: NextFunction) => {

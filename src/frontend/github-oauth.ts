@@ -14,7 +14,7 @@ import express, {
   Router,
 } from 'express';
 import axios from 'axios';
-import statsd from '../config/statsd';
+import { elapsedTimeMetrics } from '../config/statsd';
 
 const host = process.env.GHE_HOST || 'github.com';
 
@@ -55,8 +55,11 @@ export default (opts: OAuthOptions): GithubOAuth => {
     next();
   }
 
-  async function callback(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const requestStart = Date.now();
+  async function callback(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     const { query } = url.parse(req.url, true);
     const code = query.code as string;
     const state = query.state as string;
@@ -98,14 +101,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
     } catch (e) {
       return next(new Error('Cannot retrieve access token from Github'));
     } finally {
-      const elapsed = Date.now() - requestStart;
-      const tags = {
-        path: `https://${host}/login/oauth/access_token`,
-        method: 'GET',
-        status: res.status.toString(),
-      };
-
-      statsd.histogram('github-request', elapsed, tags);
+      elapsedTimeMetrics(`https://${host}/login/oauth/access_token`);
     }
   }
 

@@ -38,7 +38,7 @@ function hrtimer() {
   };
 }
 
-export const expressStatsdMetrics = (path: string) => {
+export const elapsedTimeMetrics = (path: string) => {
   const expressStatsdLogger = bunyan.createLogger({ name: 'elapsedTimeInMs' });
   const elapsedTimeInMs = hrtimer();
 

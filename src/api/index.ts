@@ -18,7 +18,7 @@ import {
   serializeSubscription,
 } from './serializers';
 import getRedisInfo from '../config/redis-info';
-import {expressStatsdMetrics} from '../config/statsd';
+import {elapsedTimeMetrics} from '../config/statsd';
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -140,7 +140,7 @@ router.use(
 
 router.get(
   '/',
-  expressStatsdMetrics('home'),
+  elapsedTimeMetrics('home'),
   (_: Request, res: Response): void => {
     res.send({});
   },
@@ -150,7 +150,7 @@ router.get(
   '/:installationId',
   check('installationId').isInt(),
   returnOnValidationError,
-  expressStatsdMetrics('/:installationId'),
+  elapsedTimeMetrics('/:installationId'),
   async (req: Request, res: Response): Promise<void> => {
     const { installationId } = req.params;
     const { client } = res.locals;
@@ -206,7 +206,7 @@ router.get(
   '/:installationId/repoSyncState.json',
   check('installationId').isInt(),
   returnOnValidationError,
-  expressStatsdMetrics('/:installationId/repoSyncState.json'),
+  elapsedTimeMetrics('/:installationId/repoSyncState.json'),
   async (req: Request, res: Response): Promise<void> => {
     const githubInstallationId = Number(req.params.installationId);
 
@@ -234,7 +234,7 @@ router.post(
   bodyParser,
   check('installationId').isInt(),
   returnOnValidationError,
-  expressStatsdMetrics('/:installationId/sync'),
+  elapsedTimeMetrics('/:installationId/sync'),
   async (req: Request, res: Response): Promise<void> => {
     const githubInstallationId = Number(req.params.installationId);
     req.log.info(req.body);
@@ -269,7 +269,7 @@ router.post(
 router.post(
   '/resyncFailed',
   bodyParser,
-  expressStatsdMetrics('/resyncFailed'),
+  elapsedTimeMetrics('/resyncFailed'),
   async (request: Request, response: Response): Promise<void> => {
     const limit = Math.max(Number(request.query.limit) || 10, 100);
     const offset = Number(request.query.offset) || 0;
@@ -302,7 +302,7 @@ router.get(
       check('clientKeyOrJiraHost').isHexadecimal(),
     ]),
     returnOnValidationError,
-    expressStatsdMetrics('/jira/:clientKeyOrJiraHost'),
+    elapsedTimeMetrics('/jira/:clientKeyOrJiraHost'),
   ],
   async (req: Request, res: Response): Promise<void> => {
     const where = req.params.clientKeyOrJiraHost.startsWith('http')
@@ -325,7 +325,7 @@ router.post(
   bodyParser,
   check('clientKey').isHexadecimal(),
   returnOnValidationError,
-  expressStatsdMetrics('/jira/:clientKey/uninstall'),
+  elapsedTimeMetrics('/jira/:clientKey/uninstall'),
   async (request: Request, response: Response): Promise<void> => {
     response.locals.installation = await Installation.findOne({
       where: { clientKey: request.params.clientKey },
@@ -361,7 +361,7 @@ router.post(
   bodyParser,
   check('installationId').isInt(),
   returnOnValidationError,
-  expressStatsdMetrics('/jira/:installationId/verify'),
+  elapsedTimeMetrics('/jira/:installationId/verify'),
   async (req: Request, response: Response): Promise<void> => {
     const { installationId } = req.params;
     const installation = await Installation.findByPk(installationId);
@@ -392,7 +392,7 @@ router.post(
   bodyParser,
   check('installationId').isInt(),
   returnOnValidationError,
-  expressStatsdMetrics('/:installationId/migrate/:undo?'),
+  elapsedTimeMetrics('/:installationId/migrate/:undo?'),
   async (req: Request, res: Response): Promise<void> => {
     const githubInstallationId = Number(req.params.installationId);
     const { jiraHost } = req.body;
