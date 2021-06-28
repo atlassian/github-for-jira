@@ -26,7 +26,7 @@ function secureHeaders(router: Router, frontendApp: Express) {
         }],
       // Allow XMLHttpRequest/fetch requests
       connectSrc: ["'self'", process.env.APP_URL],
-      // Allow <style> tags hosted by ourselves as well as syle="" attributes
+      // Allow <style> tags hosted by ourselves as well as style="" attributes
       styleSrc: ["'self'", "'unsafe-inline'"],
       // Allow using github-for-jira pages as iframes only in jira
       frameAncestors: ['https://*.atlassian.net', 'https://*.jira-dev.com'],
