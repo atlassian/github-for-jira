@@ -12,6 +12,7 @@ import getPullRequests from './pull-request';
 import getBranches from './branches';
 import getCommits from './commits';
 import { Application } from 'probot';
+import { metricHttpRequest, metricSyncStatus } from '../config/metric-names';
 
 const tasks = {
   pull: getPullRequests,
@@ -141,7 +142,7 @@ const updateJobStatus = async (
 
       // full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
       // startTime will be passed in when this sync job is queued from the discovery
-      statsd.histogram('app.server.http.request.full-sync', timeDiff);
+      statsd.histogram(metricHttpRequest().fullSync, timeDiff);
     }
     app.log(message);
 
@@ -197,7 +198,7 @@ export const processInstallation =
     const nextTask = await getNextTask(subscription);
     if (!nextTask) {
       await subscription.update({ syncStatus: 'COMPLETE' });
-      statsd.increment('app.server.sync-status.complete');
+      statsd.increment(metricSyncStatus.complete);
       return;
     }
 
@@ -373,7 +374,7 @@ export const processInstallation =
 
       await subscription.update({ syncStatus: 'FAILED' });
 
-      statsd.increment('app.server.sync-status.failed');
+      statsd.increment(metricSyncStatus.failed);
 
       throw err;
     }
