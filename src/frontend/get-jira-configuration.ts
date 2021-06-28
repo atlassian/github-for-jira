@@ -45,8 +45,7 @@ export default async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const jiraHost = 'myfakehost';
-    // const jiraHost = req.session.jiraHost;
+    const jiraHost = req.session.jiraHost;
     const { client } = res.locals;
     const subscriptions = await Subscription.getAllForHost(jiraHost);
     const installations = await Promise.all(

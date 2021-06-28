@@ -6,6 +6,7 @@ const { sentryServerDSN, microsEnv, microsServiceVersion } = envVars;
 
 export const beforeSendToSentry = (event: Event) => {
   const logger = bunyan.createLogger({ name: 'sentry' });
+
   if (event.request?.data && typeof event.request.data === 'string') {
     try {
       logger.info('have request data');
@@ -21,7 +22,7 @@ export const beforeSendToSentry = (event: Event) => {
   return event;
 };
 
-export default (): void => {
+export const initializeSentry = (): void => {
   Sentry.init({
     dsn: sentryServerDSN,
     environment: microsEnv || 'development',
