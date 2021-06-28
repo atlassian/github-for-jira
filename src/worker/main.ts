@@ -20,7 +20,7 @@ const subscriber = new Redis(getRedisInfo('subscriber').redisOptions);
 function measureElapsedTime(startTime, tags) {
   const endTime = Date.now();
   const timeDiff = endTime - startTime;
-  statsd.histogram('job_duration', timeDiff, tags);
+  statsd.histogram('app.server.http.request.job-duration', timeDiff, tags);
 }
 
 const queueOpts: QueueOptions = {
@@ -70,16 +70,15 @@ Object.keys(queues).forEach((name) => {
 
   queue.on('completed', (job) => {
     app.log.info(`Job completed name=${name} id=${job.id}`);
-    measureElapsedTime(job.meta_time_start, {
-      queue: name,
-      status: 'completed',
-    });
+
+    measureElapsedTime(job.meta_time_start, { queue: name, status: 'completed' });
   });
 
   queue.on('failed', async (job) => {
     app.log.error(
       `Error occurred while processing job id=${job.id} on queue name=${name}`,
     );
+
     measureElapsedTime(job.meta_time_start, { queue: name, status: 'failed' });
   });
 
@@ -88,6 +87,10 @@ Object.keys(queues).forEach((name) => {
 
     Sentry.setTag('queue', name);
     Sentry.captureException(err);
+
+    const tags = [`name:${name}`];
+
+    statsd.increment('queue_error', tags);
   });
 });
 

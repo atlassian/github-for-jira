@@ -1,11 +1,14 @@
 import { StatsD, StatsCb, Tags } from 'hot-shots';
 import bunyan from 'bunyan';
+import { Request, Response, NextFunction } from 'express';
 
-const isTest = process.env.NODE_ENV === 'test'
+const isTest = process.env.NODE_ENV === 'test';
 
-const globalTags = {
+export const globalTags = {
   environment: isTest ? 'test' : process.env.MICROS_ENV,
   environment_type: isTest ? 'testenv' : process.env.MICROS_ENVTYPE,
+  deployment_id: process.env.MICROS_DEPLOYMENT_ID || '1',
+  region: process.env.MICROS_AWS_REGION || 'localhost',
 };
 
 const logger = bunyan.createLogger({ name: 'statsd' });
@@ -34,6 +37,24 @@ function hrtimer() {
     return seconds * 1000 + nanoseconds / 1e6;
   };
 }
+
+const expressStatsdLogger = bunyan.createLogger({ name: 'elapsedTimeInMs' });
+export const elapsedTimeMetrics = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const elapsedTimeInMs = hrtimer();
+  const path = req.path;
+  const tags = { path, method: req.method };
+
+  res.once('finish', () => {
+    expressStatsdLogger.info(`${path} : ${elapsedTimeInMs()}`);
+    statsd.histogram('elapsedTimeInMs', elapsedTimeInMs(), tags);
+  });
+
+  next();
+};
 
 /**
  * Async Function Timer using Distributions

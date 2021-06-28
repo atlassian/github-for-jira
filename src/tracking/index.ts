@@ -75,6 +75,7 @@ export const submitProto = async (
   let resp;
   /** @type {number|string} */
   let status;
+
   try {
     const axiosPost = async () =>
       axiosInstance.post(BaseURL, dataStr, {
@@ -125,10 +126,13 @@ export const submitProto = async (
   }, {});
   Object.entries(protoStats).forEach((stats) => {
     const [name, count] = stats;
-    statsd.increment(submissionMetricName, count as number, [
+
+    const tags = [
       `schema:${name}`,
       `status:${status}`,
-    ]);
+    ];
+
+    statsd.increment(`app.server.http.request.${submissionMetricName}`, count as number, tags);
   });
 
   return status === 200;

@@ -29,7 +29,7 @@ const instrumentRequests = (octokit: GitHubAPI, log: Logger) => {
         status: responseStatus,
       };
 
-      statsd.histogram('github-request', elapsed, tags);
+      statsd.histogram('app.server.http.request.github', elapsed, tags);
       log.debug(tags, `GitHub request time: ${elapsed}ms`);
     }
   });
