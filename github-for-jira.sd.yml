@@ -102,7 +102,6 @@ environmentOverrides:
         WEBHOOK_PROXY_URL: https://github-for-jira.dev.services.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-dev
         NODE_OPTIONS: "--no-deprecation"
-        PORT: "8080"
         LOG_LEVEL: debug
         # * Commented out env vars are to be saved in secrets
         # WEBHOOK_SECRET: for signed signature when syncing an org
