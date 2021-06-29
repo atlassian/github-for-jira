@@ -20,7 +20,7 @@ export default (installation: Installation, log: Logger) => {
       try {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        foo();
+        bar();
       } catch (e) {
         Sentry.captureException(e);
       } finally {
