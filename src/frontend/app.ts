@@ -24,6 +24,7 @@ import logMiddleware from '../middleware/log-middleware';
 import { App } from '@octokit/app';
 import statsd, { elapsedTimeMetrics } from '../config/statsd';
 import { initializeSentry } from '../config/sentry';
+import { metricError } from '../config/metric-names';
 
 // Adding session information to request
 declare global {
@@ -248,7 +249,7 @@ export default (octokitApp: App): Express => {
       `status: ${errorCodes[err.message]}`,
     ];
 
-    statsd.increment('app.frontend.error.github-error-rendered', tags);
+    statsd.increment(metricError.githubErrorRendered, tags);
 
     return res
       .status(errorCodes[err.message] || 400)

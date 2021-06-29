@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { logger } from 'probot/lib/logger';
 import statsd, { asyncDistTimer } from '../config/statsd';
 import { Action } from '../proto/v0/action';
+import { metricHttpRequest } from '../config/metric-names';
 
 export const BaseURL = process.env.HYDRO_BASE_URL;
 
@@ -132,7 +133,7 @@ export const submitProto = async (
       `status:${status}`,
     ];
 
-    statsd.increment(`app.server.http.request.${submissionMetricName}`, count as number, tags);
+    statsd.increment(metricHttpRequest(submissionMetricName).hydroSubmission, count as number, tags);
   });
 
   return status === 200;
