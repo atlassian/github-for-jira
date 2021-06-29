@@ -23,6 +23,7 @@ import api from '../api';
 import logMiddleware from '../middleware/log-middleware';
 import { App } from '@octokit/app';
 import statsd, { elapsedTimeMetrics } from '../config/statsd';
+import { initializeSentry } from '../config/sentry';
 // import { Event } from '@sentry/node';
 // import { envVars } from '../config/environment-variables';
 // import bunyan from 'bunyan';
@@ -91,6 +92,7 @@ export default (octokitApp: App): Express => {
   //   release: microsServiceVersion,
   //   beforeSend: beforeSendToSentry,
   // });
+  initializeSentry();
   // The request handler must be the first middleware on the app
   app.use(Sentry.Handlers.requestHandler() as express.RequestHandler);
 

@@ -22,11 +22,11 @@ export const beforeSendToSentry = (event: Event) => {
   return event;
 };
 
-// export const initializeSentry = (): void => {
-Sentry.init({
-  dsn: sentryServerDSN,
-  environment: microsEnv || 'development',
-  release: microsServiceVersion,
-  beforeSend: beforeSendToSentry,
-});
-// };
+export const initializeSentry = (): void => {
+  return Sentry.init({
+    dsn: sentryServerDSN,
+    environment: microsEnv || 'development',
+    release: microsServiceVersion,
+    beforeSend: beforeSendToSentry,
+  });
+};
