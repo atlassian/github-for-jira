@@ -6,6 +6,7 @@ import { createProbot } from 'probot';
 import App from './configure-robot';
 import bunyan from 'bunyan';
 import { exec } from 'child_process';
+import { initializeSentry } from './config/sentry';
 
 const isProd = process.env.NODE_ENV === 'production';
 const { redisOptions } = getRedisInfo('probot');
@@ -42,6 +43,8 @@ async function createDBTables(logger: bunyan) {
  * Start the probot worker.
  */
 async function start() {
+  initializeSentry();
+
   const logger = bunyan.createLogger({ name: 'App start' });
 
   // Create tables for micros environments

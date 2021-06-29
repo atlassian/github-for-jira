@@ -1,6 +1,6 @@
 import bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-import express from 'express';
+
 import { Installation } from '../models';
 import { hasValidJwt } from './util/jwt';
 import logMiddleware from '../middleware/log-middleware';
@@ -12,7 +12,6 @@ import install from './install';
 import uninstall from './uninstall';
 import { Application } from 'probot';
 import { NextFunction, Request, Response } from 'express';
-import { initializeSentry } from '../config/sentry';
 
 const authenticate = async (
   req: Request,
@@ -42,9 +41,8 @@ const authenticate = async (
 export default (robot: Application): void => {
   const router = robot.route('/jira');
 
-  initializeSentry();
   // The request handler must be the first middleware on the app
-  router.use(Sentry.Handlers.requestHandler() as express.RequestHandler);
+  router.use(Sentry.Handlers.requestHandler());
   router.use(bodyParser.json());
   router.use(logMiddleware);
 

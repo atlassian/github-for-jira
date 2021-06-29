@@ -23,7 +23,6 @@ import api from '../api';
 import logMiddleware from '../middleware/log-middleware';
 import { App } from '@octokit/app';
 import statsd, { elapsedTimeMetrics } from '../config/statsd';
-import { initializeSentry } from '../config/sentry';
 import { metricError } from '../config/metric-names';
 
 // Adding session information to request
@@ -66,9 +65,8 @@ export default (octokitApp: App): Express => {
   const app = express();
   const rootPath = path.resolve(__dirname, '..', '..');
 
-  initializeSentry();
   // The request handler must be the first middleware on the app
-  app.use(Sentry.Handlers.requestHandler() as express.RequestHandler);
+  app.use(Sentry.Handlers.requestHandler());
 
   // Parse URL-encoded bodies for Jira configuration requests
   app.use(bodyParser.urlencoded({ extended: false }));
@@ -225,7 +223,6 @@ export default (octokitApp: App): Express => {
       next(err);
     });
   });
-
   // The error handler must come after controllers and before other error middleware
   app.use(Sentry.Handlers.errorHandler());
 
