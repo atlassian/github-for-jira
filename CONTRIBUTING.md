@@ -50,9 +50,9 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 
 Your new GitHub app will need the following repository permissions:
 
++ Actions: Read-only
 + Contents: Read & write
-+ Actions: Read & write
-+ Deployments: Read & write
++ Deployments: Read-only
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
