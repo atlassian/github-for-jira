@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import './config/env'; // Important to be before other dependencies
 import throng from 'throng';
 import getRedisInfo from './config/redis-info';
