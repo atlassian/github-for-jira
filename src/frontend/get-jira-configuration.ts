@@ -3,7 +3,6 @@ import moment from 'moment';
 import { Subscription } from '../models';
 import { NextFunction, Request, Response } from 'express';
 import statsd from '../config/statsd';
-import * as Sentry from '@sentry/node';
 
 const syncStatus = (syncStatus) =>
   syncStatus === 'ACTIVE' ? 'IN PROGRESS' : syncStatus;
@@ -25,7 +24,6 @@ async function getInstallation(client, subscription) {
 
     response.data.syncStatus === 'STALLED' &&
       statsd.increment('app.server.sync-status.stalled');
-
     return response.data;
   } catch (err) {
     return { error: err, id, deleted: err.code === 404 };
@@ -79,8 +77,6 @@ export default async (
 
     req.log.info('Jira configuration rendered successfully.');
   } catch (error) {
-    Sentry.setTag('jiraHost', req.session.jiraHost);
-    Sentry.captureException(error);
     return next(new Error(`Failed to render Jira configuration: ${error}`));
   }
 };
