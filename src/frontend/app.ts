@@ -92,7 +92,7 @@ export default (octokitApp: App): Express => {
   //   beforeSend: beforeSendToSentry,
   // });
   // The request handler must be the first middleware on the app
-  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.requestHandler() as express.RequestHandler);
 
   // Parse URL-encoded bodies for Jira configuration requests
   app.use(bodyParser.urlencoded({ extended: false }));
