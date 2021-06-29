@@ -1,12 +1,11 @@
 import * as Sentry from '@sentry/node';
 import { envVars } from './environment-variables';
-const { sentryServerDSN, microsEnv, microsServiceVersion, microsEnvDefault } =
-  envVars;
+const { SENTRY_DSN, MICROS_ENV, MICROS_SERVICE_VERSION } = envVars;
 
 export const initializeSentry = (): void => {
   return Sentry.init({
-    dsn: sentryServerDSN,
-    environment: microsEnv || microsEnvDefault,
-    release: microsServiceVersion,
+    dsn: SENTRY_DSN,
+    environment: MICROS_ENV,
+    release: MICROS_SERVICE_VERSION,
   });
 };
