@@ -91,7 +91,7 @@
 
                     {{!-- No header --}}
                     <td class="jiraConfigurationTable__connectionLinks">
-                    {{#if maintenanceMode}}
+                    {{#if ../maintenanceMode}}
                       <span class="disabled-link">Remove</span>
                       <span class="disabled-link">Configure</span>
                     {{else}}
@@ -143,7 +143,7 @@
                         <option value="normal">Normal</option>
                         <option value="full">Full</option>
                       </select>
-                      {{#if maintenanceMode}}
+                      {{#if ../maintenanceMode}}
                       <span class="disabled-link">Submit</span>
                       {{else}}
                       <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">Submit</button>
@@ -167,7 +167,7 @@
                       </span>
                     </td>
                     <td>
-                    {{#if maintenanceMode}}
+                    {{#if ../maintenanceMode}}
                       <span class="disabled-link">Remove</span>
                       {{else}}
                       <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
