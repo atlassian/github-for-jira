@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node';
-import { envVars } from './environment-variables';
+import { envVars } from './env';
 const { SENTRY_DSN, MICROS_ENV, MICROS_SERVICE_VERSION } = envVars;
 
 export const initializeSentry = (): void => {
