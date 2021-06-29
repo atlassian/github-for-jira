@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { logger } from 'probot/lib/logger';
 import statsd, { asyncDistTimer } from '../config/statsd';
 import { Action } from '../proto/v0/action';
+import { metricHttpRequest } from '../config/metric-names';
 
 export const BaseURL = process.env.HYDRO_BASE_URL;
 
@@ -75,6 +76,7 @@ export const submitProto = async (
   let resp;
   /** @type {number|string} */
   let status;
+
   try {
     const axiosPost = async () =>
       axiosInstance.post(BaseURL, dataStr, {
@@ -125,10 +127,13 @@ export const submitProto = async (
   }, {});
   Object.entries(protoStats).forEach((stats) => {
     const [name, count] = stats;
-    statsd.increment(submissionMetricName, count as number, [
+
+    const tags = [
       `schema:${name}`,
       `status:${status}`,
-    ]);
+    ];
+
+    statsd.increment(metricHttpRequest(submissionMetricName).hydroSubmission, count as number, tags);
   });
 
   return status === 200;

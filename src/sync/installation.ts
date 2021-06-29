@@ -12,6 +12,7 @@ import getPullRequests from './pull-request';
 import getBranches from './branches';
 import getCommits from './commits';
 import { Application } from 'probot';
+import { metricHttpRequest, metricSyncStatus } from '../config/metric-names';
 
 const tasks = {
   pull: getPullRequests,
@@ -141,7 +142,7 @@ const updateJobStatus = async (
 
       // full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
       // startTime will be passed in when this sync job is queued from the discovery
-      statsd.histogram('full_sync', timeDiff);
+      statsd.histogram(metricHttpRequest().fullSync, timeDiff);
     }
     app.log(message);
 
@@ -197,6 +198,7 @@ export const processInstallation =
     const nextTask = await getNextTask(subscription);
     if (!nextTask) {
       await subscription.update({ syncStatus: 'COMPLETE' });
+      statsd.increment(metricSyncStatus.complete);
       return;
     }
 
@@ -351,6 +353,7 @@ export const processInstallation =
       const isNotFoundError =
         err.errors &&
         err.errors.filter((error) => error.type === 'NOT_FOUND').length;
+
       if (isNotFoundError) {
         app.log.info(
           `Repository deleted after discovery, skipping initial sync: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`,
@@ -370,6 +373,9 @@ export const processInstallation =
       }
 
       await subscription.update({ syncStatus: 'FAILED' });
+
+      statsd.increment(metricSyncStatus.failed);
+
       throw err;
     }
   };

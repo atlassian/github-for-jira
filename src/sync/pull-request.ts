@@ -3,6 +3,7 @@ import transformPullRequest from './transforms/pull-request';
 import statsd from '../config/statsd';
 import { GitHubAPI } from 'probot';
 import bunyan from 'bunyan';
+import { metricHttpRequest } from '../config/metric-names';
 /**
  * @typedef {object} RepositoryObject
  * @property {number} id
@@ -81,7 +82,7 @@ export default async function (
       }));
       asyncTags.push(`status:${status}`);
     },
-    'rest.sync_pull_request',
+    metricHttpRequest().sync,
     1,
     asyncTags,
   )();

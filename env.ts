@@ -6,7 +6,7 @@ const filepath = ".env";
 // Check to see if ngrok is up and running
 (async function main() {
 
-  // Does .env exists?
+  // Does .env exist?
   if (!fs.existsSync(filepath)) {
     console.error(`.env file doesn't exist. Please create it following the steps in the CONTRIBUTING.md file.`);
     process.exit(1);

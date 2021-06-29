@@ -2,15 +2,12 @@ import throng from "throng";
 import { start } from "./worker/main";
 import InitializeSentry from "./config/sentry";
 
+const isProd = process.env.NODE_ENV === 'production';
 InitializeSentry();
 
-// const workers = Number(process.env.WEB_CONCURRENCY) || 1;
-const workers = 1;
-
 // TODO: this should work in dev/production and should be `workers = process.env.NODE_ENV === 'production' ? undefined : 1`
-if (workers > 1) {
+if (isProd) {
   throng({
-    workers: workers,
     lifetime: Infinity
   }, start);
 } else {

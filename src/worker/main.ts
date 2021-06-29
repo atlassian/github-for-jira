@@ -9,9 +9,10 @@ import { processPush } from '../transforms/push';
 import metricsJob from './metrics-job';
 import statsd from '../config/statsd';
 import getRedisInfo from '../config/redis-info';
-import app from './app';
+import app, { probot } from './app';
 import AxiosErrorEventDecorator from '../models/axios-error-event-decorator';
 import SentryScopeProxy from '../models/sentry-scope-proxy';
+import { metricHttpRequest } from '../config/metric-names';
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo('client').redisOptions);
@@ -20,7 +21,7 @@ const subscriber = new Redis(getRedisInfo('subscriber').redisOptions);
 function measureElapsedTime(startTime, tags) {
   const endTime = Date.now();
   const timeDiff = endTime - startTime;
-  statsd.histogram('job_duration', timeDiff, tags);
+  statsd.histogram(metricHttpRequest().jobDuration, timeDiff, tags);
 }
 
 const queueOpts: QueueOptions = {
@@ -70,6 +71,7 @@ Object.keys(queues).forEach((name) => {
 
   queue.on('completed', (job) => {
     app.log.info(`Job completed name=${name} id=${job.id}`);
+
     measureElapsedTime(job.meta_time_start, {
       queue: name,
       status: 'completed',
@@ -80,6 +82,7 @@ Object.keys(queues).forEach((name) => {
     app.log.error(
       `Error occurred while processing job id=${job.id} on queue name=${name}`,
     );
+
     measureElapsedTime(job.meta_time_start, { queue: name, status: 'failed' });
   });
 
@@ -88,6 +91,10 @@ Object.keys(queues).forEach((name) => {
 
     Sentry.setTag('queue', name);
     Sentry.captureException(err);
+
+    const tags = [`name:${name}`];
+
+    statsd.increment('queue_error', tags);
   });
 });
 
@@ -135,6 +142,7 @@ export const start = (): void => {
   );
   queues.metrics.process(1, commonMiddleware(metricsJob));
 
+  probot.start();
   app.log(
     `Worker process started with ${CONCURRENT_WORKERS} CONCURRENT WORKERS`,
   );

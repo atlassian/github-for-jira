@@ -4,6 +4,7 @@ import {extractPath} from '../jira/client/axios';
 import {GitHubAPI} from 'probot';
 import {LoggerWithTarget, wrapLogger} from 'probot/lib/wrap-logger';
 import Logger from 'bunyan';
+import {metricHttpRequest} from './metric-names';
 
 const instrumentRequests = (octokit: GitHubAPI, log: Logger) => {
   octokit.hook.wrap('request', async (request, options) => {
@@ -29,7 +30,7 @@ const instrumentRequests = (octokit: GitHubAPI, log: Logger) => {
         status: responseStatus,
       };
 
-      statsd.histogram('github-request', elapsed, tags);
+      statsd.histogram(metricHttpRequest().github, elapsed, tags);
       log.debug(tags, `GitHub request time: ${elapsed}ms`);
     }
   });

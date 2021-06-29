@@ -5,14 +5,25 @@ import pullRequest from './pull-request';
 import push from './push';
 import { createBranch, deleteBranch } from './branch';
 import webhookTimeout from '../middleware/webhook-timeout';
+import bunyan from 'bunyan';
+import statsd from '../config/statsd';
+import { metricError } from '../config/metric-names';
 
 export default (robot) => {
+  const logger = bunyan.createLogger({ name: 'github' });
+
   // TODO: Need ability to remove these listeners, especially for testing...
   robot.on('*', (context) => {
-    context.log(
-      { event: context.name, action: context.payload.action },
-      'Event received',
-    );
+    const { name, payload } = context;
+    logger.info({ event: name, action: payload.action }, 'Event received');
+
+    const tags = [
+      `name: webhooks`,
+      `event: ${name}`,
+      `action: ${payload.action}`,
+    ];
+
+    statsd.increment(metricError.jiraConfiguration, tags);
   });
 
   robot.on(
