@@ -15,21 +15,18 @@ function secureHeaders(router: Router, frontendApp: Express) {
 
   // Content Security Policy
   router.use(helmet.contentSecurityPolicy({
+    useDefaults: true,
     directives: {
       defaultSrc: ["'none'"],
-      //Doesn't allow embeddable objects
-      objectSrc: ["'none'"],
       // Allow <script> tags hosted by ourselves and from atlassian when inserted into an iframe
       scriptSrc: ["'self'", process.env.APP_URL, 'https://*.atlassian.net', 'https://*.jira.com', 'https://connect-cdn.atl-paas.net/',
-        "'unsafe-inline'", "'strict-dynamic'", (_: Request, res: Response): string => {
-          return `'nonce-${res.locals.nonce}'`
-        }],
+        "'unsafe-inline'", "'strict-dynamic'", (_: Request, res: Response): string => `'nonce-${res.locals.nonce}'`],
       // Allow XMLHttpRequest/fetch requests
       connectSrc: ["'self'", process.env.APP_URL],
       // Allow <style> tags hosted by ourselves as well as style="" attributes
       styleSrc: ["'self'", "'unsafe-inline'"],
       // Allow using github-for-jira pages as iframes only in jira
-      frameAncestors: ['https://*.atlassian.net', 'https://*.jira-dev.com'],
+      frameAncestors: ['https://*.atlassian.net', 'https://*.jira-dev.com', 'https://*.jira.com'],
       //Doesn't allow usage of <base> element
       baseUri: ["'none'"],
       //Send SCP reports to Atlassian security monitoring
