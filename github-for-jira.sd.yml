@@ -10,7 +10,7 @@ compose:
     image: ${DOCKER_IMAGE_NAME}
     tag: ${DOCKER_IMAGE_TAG}
     ports:
-    - 8080:8080
+      - 8080:8080
 
 links:
   healthcheck:
@@ -33,12 +33,6 @@ resources:
     name: database
   - type: globaledge
     name: ingress
-    attributes:
-      routes:
-        - match:
-            prefix: /
-            ip_whitelist:
-              - public
 
 scaling:
   instance: t2.small
@@ -118,8 +112,28 @@ environmentOverrides:
         # WEBHOOK_SECRET: for signed signature when syncing an org
         # MICROS_ENV: micros environment for deployment
         # MICROS_ENVTYPE: the type of micros environment for deployment
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          default_vanity_dns: false
+          domain:
+            - github.stg.atlassian.com
+          upstream_address:
+            - address: jira-staging.githubapp.com
+
   prod:
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.prod.services.atlassian.com
         INSTANCE_NAME: github-for-jira-production
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          default_vanity_dns: false
+          domain:
+            - github.atlassian.com
+          upstream_address:
+            - address: jira.github.com
+
