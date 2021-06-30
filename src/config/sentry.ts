@@ -1,8 +1,11 @@
 import * as Sentry from '@sentry/node';
+import envVars from './env';
+const { SENTRY_DSN, MICROS_ENV, MICROS_SERVICE_VERSION } = envVars;
 
-export default (): void => {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    release: process.env.HEROKU_SLUG_COMMIT,
+export const initializeSentry = (): void => {
+  return Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: MICROS_ENV,
+    release: MICROS_SERVICE_VERSION,
   });
-}
+};

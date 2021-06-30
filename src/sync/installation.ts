@@ -376,6 +376,9 @@ export const processInstallation =
 
       statsd.increment(metricSyncStatus.failed);
 
+      job.sentry.setExtra('Installation FAILED', JSON.stringify(err, null, 2));
+      job.sentry.captureException(err);
+
       throw err;
     }
   };

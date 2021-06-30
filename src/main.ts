@@ -1,5 +1,4 @@
 import './config/env'; // Important to be before other dependencies
-import initializeSentry from './config/sentry';
 import throng from 'throng';
 import getRedisInfo from './config/redis-info';
 import * as PrivateKey from 'probot/lib/private-key';
@@ -7,10 +6,10 @@ import { createProbot } from 'probot';
 import App from './configure-robot';
 import bunyan from 'bunyan';
 import { exec } from 'child_process';
+import { initializeSentry } from './config/sentry';
 
 const isProd = process.env.NODE_ENV === 'production';
 const { redisOptions } = getRedisInfo('probot');
-initializeSentry();
 
 const probot = createProbot({
   id: Number(process.env.APP_ID),
@@ -44,6 +43,8 @@ async function createDBTables(logger: bunyan) {
  * Start the probot worker.
  */
 async function start() {
+  initializeSentry();
+
   const logger = bunyan.createLogger({ name: 'App start' });
 
   // Create tables for micros environments
