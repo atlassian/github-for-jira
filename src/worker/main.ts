@@ -13,6 +13,7 @@ import app, { probot } from './app';
 import AxiosErrorEventDecorator from '../models/axios-error-event-decorator';
 import SentryScopeProxy from '../models/sentry-scope-proxy';
 import { metricHttpRequest } from '../config/metric-names';
+import { initializeSentry } from '../config/sentry';
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo('client').redisOptions);
@@ -131,6 +132,8 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 const commonMiddleware = (jobHandler) => sentryMiddleware(jobHandler);
 
 export const start = (): void => {
+  initializeSentry();
+
   queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
   queues.installation.process(
     Number(CONCURRENT_WORKERS),
