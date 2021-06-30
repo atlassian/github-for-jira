@@ -22,11 +22,11 @@ const filepath = ".env";
     const ngrokDomain = tunnel.public_url;
     console.info(`ngrok forwarding ${ngrokDomain} to ${tunnel.config.addr}`);
 
-    const contents = fs.readFileSync(filepath, { encoding: "utf-8" });
-    contents.replace(/APP_URL=.*/, `APP_URL=${ngrokDomain}`);
-    contents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/events`);
+    let contents = fs.readFileSync(filepath, { encoding: "utf-8" });
+    contents = contents.replace(/APP_URL=.*/, `APP_URL=${ngrokDomain}`);
+    contents = contents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/events`);
     fs.writeFileSync(filepath, contents);
-    console.info(`Updated .env file to use ngrok domain ${ngrokDomain}`);
+    console.info(`Updated .env file to use ngrok domain ${ngrokDomain}. Full content of .env: \n${contents}`);
   } else {
     console.info("Ngrok not running, skipping updating .env file.");
   }
