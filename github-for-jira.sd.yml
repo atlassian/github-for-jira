@@ -33,6 +33,9 @@ resources:
     name: database
   - type: globaledge
     name: ingress
+    attributes:
+      ip_whitelist:
+        - public
 
 scaling:
   instance: t2.small
