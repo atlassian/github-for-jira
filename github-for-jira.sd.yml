@@ -124,6 +124,7 @@ environmentOverrides:
             - github.stg.atlassian.com
           upstream_address:
             - address: jira-staging.githubapp.com
+          upstream_sni: jira-staging.githubapp.com
 
   prod:
     config:
@@ -139,4 +140,5 @@ environmentOverrides:
             - github.atlassian.com
           upstream_address:
             - address: jira.github.com
+          upstream_sni: jira.github.com
 
