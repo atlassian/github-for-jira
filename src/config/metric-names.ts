@@ -4,7 +4,6 @@ const server = 'app.server';
 export const metricError = {
   expressRateLimited: `${server}.error.express-rate-limited`,
   githubErrorRendered: `${frontend}.error.github-error-rendered`,
-  jiraConfiguration: `${server}.error.jira-configuration`,
 };
 
 export const metricHttpRequest = (metricName?: string) => {
@@ -26,3 +25,7 @@ export const metricSyncStatus = {
   stalled: `${server}.sync-status.stalled`,
   failed: `${server}.sync-status.failed`,
 };
+
+export const metricWebhooks = {
+  webhookEvent: `${server}.webhooks.webhook-events`,
+}
