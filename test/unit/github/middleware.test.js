@@ -1,4 +1,4 @@
-const { getLog } = require('probot/lib/helpers/get-log');
+const { getLog } = require('../../../lib/config/logger');
 const { GitHubAPI } = require('../../../lib/config/github-api');
 const { Probot } = require('probot');
 const { getPrivateKey } = require('@probot/get-private-key');
