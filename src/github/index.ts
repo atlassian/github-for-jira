@@ -7,7 +7,7 @@ import { createBranch, deleteBranch } from './branch';
 import webhookTimeout from '../middleware/webhook-timeout';
 import bunyan from 'bunyan';
 import statsd from '../config/statsd';
-import { metricError } from '../config/metric-names';
+import { metricWebhooks } from '../config/metric-names';
 
 export default (robot) => {
   const logger = bunyan.createLogger({ name: 'github' });
@@ -23,7 +23,7 @@ export default (robot) => {
       `action: ${payload.action}`,
     ];
 
-    statsd.increment(metricError.jiraConfiguration, tags);
+    statsd.increment(metricWebhooks.webhookEvent, tags);
   });
 
   robot.on(
