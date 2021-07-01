@@ -124,7 +124,7 @@ environmentOverrides:
             - github.stg.atlassian.com
           upstream_address:
             - address: jira-integration-staging.herokuapp.com
-#          upstream_sni: jira-integration-staging.herokuapp.com
+          upstream_sni: jira-integration-staging.herokuapp.com
 
   prod:
     config:
@@ -140,5 +140,4 @@ environmentOverrides:
             - github.atlassian.com
           upstream_address:
             - address: jira-integration-production.herokuapp.com
-#          upstream_sni: jira-integration-production.herokuapp.com
-
+          upstream_sni: jira-integration-production.herokuapp.com
