@@ -21,8 +21,24 @@
 
         {{#if hasConnections}}
         <nav class="actions">
+            {{#if maintenanceMode}}
+            <button class="ak-button ak-button__appearance-primary add-organization-link" disabled>Manage Organizations</button>
+            {{else}}
             <button class="ak-button ak-button__appearance-primary add-organization-link">Manage Organizations</button>
+            {{/if}}
         </nav>
+        {{/if}}
+
+        {{#if maintenanceMode}}
+        <section class="warning">
+          <div class="icon">
+            <img width="18" height="17" src="/public/warning-icon.svg" alt="Warning!"/>
+          </div>
+          <div>
+          <h2>Github integration is temporarily under maintenance</h2>
+          <p>Adding, configuring and removing Github organizations is disabled during this time. The integration will be functional shortly after maintenance is complete.</p>
+          </div>
+        </section>
         {{/if}}
 
         <section class="content">
@@ -75,8 +91,13 @@
 
                     {{!-- No header --}}
                     <td class="jiraConfigurationTable__connectionLinks">
+                    {{#if ../maintenanceMode}}
+                      <span class="disabled-link">Remove</span>
+                      <span class="disabled-link">Configure</span>
+                    {{else}}
                       <button class="ak-button ak-button__appearance-link delete-connection-link bob" data-installation-id="{{ id }}">Remove</button>
                       <a class="ak-button ak-button__appearance-link configure-connection-link" href="{{ html_url }}" data-installation-link="{{ html_url }}" target="_blank">Configure</a>
+                    {{/if}}
                     </td>
 
                     {{!-- Added --}}
@@ -122,7 +143,11 @@
                         <option value="normal">Normal</option>
                         <option value="full">Full</option>
                       </select>
+                      {{#if ../maintenanceMode}}
+                      <span class="disabled-link">Submit</span>
+                      {{else}}
                       <button class="ak-button ak-button__appearance-link sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">Submit</button>
+                      {{/if}}
                     </td>
                   </tr>
                 {{/each}}
@@ -142,7 +167,11 @@
                       </span>
                     </td>
                     <td>
+                    {{#if ../maintenanceMode}}
+                      <span class="disabled-link">Remove</span>
+                      {{else}}
                       <button class="ak-button ak-button__appearance-link delete-connection-link" data-installation-id="{{ id }}">Remove</button>
+                    {{/if}}
                     </td>
                   </tr>
                 {{/each}}
@@ -152,7 +181,11 @@
             <div class="empty-message">
               <h4>You don't have any connected GitHub organizations. Let's fix that!</h4>
               <p>You'll be redirected to GitHub to select the organizations and repositories you'd like to connect with Jira.</p>
-              <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+              {{#if maintenanceMode}}
+                <button class="ak-button ak-button__appearance-primary add-organization-link" disabled>Add an Organization</button>
+              {{else}}
+                <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+              {{/if}}
             </div>
           {{/if}}
         </section>
