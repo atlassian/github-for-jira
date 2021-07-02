@@ -8,6 +8,7 @@ export default (req: Request, res: Response): void => {
     return res.render('github-setup.hbs', {
       error: 'The entered Jira Cloud Site is not valid',
       jiraSubdomain,
+      nonce: res.locals.nonce,
       jiraDomainOptions: jiraDomainOptions(jiraDomain),
       csrfToken: req.csrfToken(),
     });

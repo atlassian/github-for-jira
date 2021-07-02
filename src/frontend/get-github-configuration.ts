@@ -44,6 +44,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
         csrfToken: req.csrfToken(),
         installations: installationsWithAdmin,
         jiraHost: req.session.jiraHost,
+        nonce: res.locals.nonce,
         info,
         clientKey,
       });
