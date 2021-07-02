@@ -25,7 +25,7 @@ export default {
   NODE_ENV: process.env.NODE_ENV,
   SENTRY_DSN: process.env.SENTRY_DSN,
   // The proxy to use for outbound calls to GitHub. Leave empty to not use a proxy.
-  GITHUB_PROXY: getProxyFromEnvironment(),
+  GITHUB_API_PROXY: getProxyFromEnvironment(),
   ...env.parsed,
 };
 

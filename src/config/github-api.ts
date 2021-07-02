@@ -7,7 +7,7 @@ import {Options} from 'probot/lib/github';
 import {HttpsProxyAgent} from 'https-proxy-agent';
 import envVars from './env';
 
-const { GITHUB_PROXY } = envVars;
+const { GITHUB_API_PROXY } = envVars;
 
 const logger = bunyan.createLogger({ name: 'github-api' });
 
@@ -29,8 +29,8 @@ export default (options: Partial<GithubAPIOptions> = {}): GitHubAPI => {
   options.bottleneck = options.bottleneck || Bottleneck;
   options.connection = options.connection || connection;
 
-  if(GITHUB_PROXY) {
-    options.agent = new HttpsProxyAgent(GITHUB_PROXY)
+  if(GITHUB_API_PROXY) {
+    options.agent = new HttpsProxyAgent(GITHUB_API_PROXY)
   }
 
   return GitHubAPI(options as Options);
