@@ -23,7 +23,7 @@ export const metricHttpRequest = (metricName?: string) => {
 export const metricSyncStatus = {
   complete: `${server}.sync-status.complete`,
   stalled: `${server}.sync-status.stalled`,
-  failed: `${server}.sync-status.failed`,
+  failed: `${server}.sync-status.failed`
 };
 
 export const metricWebhooks = {
