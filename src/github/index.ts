@@ -24,8 +24,6 @@ export default (robot) => {
     ];
 
     statsd.increment(metricWebhooks.webhookEvent, tags);
-
-    logger.info(`Sent statsd metrics to ${metricWebhooks.webhookEvent} with tags: ${tags}`)
   });
 
   robot.on(

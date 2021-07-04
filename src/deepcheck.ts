@@ -4,6 +4,7 @@ import { sequelize } from './models/sequelize';
 import { Application } from 'probot';
 import { Response } from 'express';
 import bunyan from 'bunyan';
+import { elapsedTimeMetrics } from './config/statsd';
 
 /**
  * Create a /deepcheck and /healthcheck endpoints
@@ -19,7 +20,7 @@ export default (robot: Application) => {
    *
    * It's a race between the setTimeout and our ping + authenticate.
    */
-  app.get('/deepcheck', async (_, res: Response) => {
+  app.get('/deepcheck', elapsedTimeMetrics, async (_, res: Response) => {
     let connectionsOk = true;
     const deepcheckLogger = bunyan.createLogger({ name: 'deepcheck' });
 
@@ -51,7 +52,7 @@ export default (robot: Application) => {
    * /healtcheck endpoint to check that the app started properly
    */
   const healthcheckLogger = bunyan.createLogger({ name: 'healthcheck' });
-  app.get('/healthcheck', async (_, res: Response) => {
+  app.get('/healthcheck', elapsedTimeMetrics, async (_, res: Response) => {
     res.status(200).send('OK');
     healthcheckLogger.info('Successfully called /healthcheck.');
   });
