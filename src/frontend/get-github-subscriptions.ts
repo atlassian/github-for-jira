@@ -24,6 +24,7 @@ export default async (req:Request, res:Response, next:NextFunction):Promise<void
       const { data: info } = await client.apps.getAuthenticated();
       return res.render('github-subscriptions.hbs', {
         csrfToken: req.csrfToken(),
+        nonce: res.locals.nonce,
         installation,
         info,
         subscriptions,

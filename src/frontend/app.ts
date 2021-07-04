@@ -254,6 +254,7 @@ export default (octokitApp: App): Express => {
       .status(errorStatusCode)
       .render('github-error.hbs', {
         title: 'GitHub + Jira integration',
+        nonce: res.locals.nonce,
       });
   });
 
