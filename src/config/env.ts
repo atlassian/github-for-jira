@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import envVars from './env';
+import bunyan from 'bunyan';
+
+const logger = bunyan.createLogger({ name: 'github-api' });
 
 const filename = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
 const env = dotenv.config({
@@ -19,7 +22,7 @@ function getProxyFromEnvironment(): string{
   return proxyAddress;
 }
 
-export default {
+const environmentVariables = {
   MICROS_ENV: process.env.MICROS_ENV || 'development',
   MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
   NODE_ENV: process.env.NODE_ENV,
@@ -29,7 +32,13 @@ export default {
   ...env.parsed,
 };
 
+logger.info(`Initializing GITHUB_API_PROXY to '${environmentVariables.GITHUB_API_PROXY}'`);
+
+export default environmentVariables;
+
 // TODO: add checks for environment variables here and error out if missing any
 if (env.error && envVars.NODE_ENV !== 'production') {
   throw env.error;
 }
+
+
