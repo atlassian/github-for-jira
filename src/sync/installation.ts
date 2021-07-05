@@ -199,12 +199,16 @@ export const processInstallation =
       installationId,
       app.log,
     );
-    const github = await getEnhancedGitHub(app, installationId);
 
+    const github = await getEnhancedGitHub(app, installationId);
     const nextTask = await getNextTask(subscription);
+    const tags = {
+      installationId
+    };
+
     if (!nextTask) {
       await subscription.update({ syncStatus: 'COMPLETE' });
-      statsd.increment(metricSyncStatus.complete);
+      statsd.increment(metricSyncStatus.complete, tags);
       return;
     }
 
@@ -380,7 +384,7 @@ export const processInstallation =
 
       await subscription.update({ syncStatus: 'FAILED' });
 
-      statsd.increment(metricSyncStatus.failed);
+      statsd.increment(metricSyncStatus.failed, tags);
 
       job.sentry.setExtra('Installation FAILED', JSON.stringify(err, null, 2));
       job.sentry.captureException(err);

@@ -429,7 +429,11 @@ router.post(
       res.send('Successfully called migrationComplete');
       await subscription.update({ syncStatus: 'COMPLETE' });
 
-      statsd.increment(metricSyncStatus.complete);
+      const tags = {
+        installationId: githubInstallationId.toString()
+      };
+
+      statsd.increment(metricSyncStatus.complete, tags);
     } catch (err) {
       res.send(`Error trying to complete migration: ${err}`).status(500);
     }
