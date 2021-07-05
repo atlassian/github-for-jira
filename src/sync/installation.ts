@@ -13,6 +13,7 @@ import getBranches from './branches';
 import getCommits from './commits';
 import { Application } from 'probot';
 import { metricHttpRequest, metricSyncStatus } from '../config/metric-names';
+import { logger } from 'probot/lib/logger';
 
 const tasks = {
   pull: getPullRequests,
@@ -139,7 +140,7 @@ const updateJobStatus = async (
       const endTime = Date.now();
       const timeDiff = endTime - Date.parse(job.data.startTime);
       message = `${message} startTime=${job.data.startTime} endTime=${endTime} diff=${timeDiff}`;
-
+      logger.info(`Sync time: startTime=${job.data.startTime} endTime=${endTime} diff=${timeDiff}`)
       // full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
       // startTime will be passed in when this sync job is queued from the discovery
       statsd.histogram(metricHttpRequest().fullSync, timeDiff);
