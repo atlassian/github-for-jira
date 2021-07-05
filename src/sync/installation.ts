@@ -13,6 +13,7 @@ import getBranches from './branches';
 import getCommits from './commits';
 import { Application } from 'probot';
 import { metricHttpRequest, metricSyncStatus } from '../config/metric-names';
+import { logger } from 'probot/lib/logger';
 
 const tasks = {
   pull: getPullRequests,
@@ -139,6 +140,7 @@ const updateJobStatus = async (
       const endTime = Date.now();
       const timeDiff = endTime - Date.parse(job.data.startTime);
       message = `${message} startTime=${job.data.startTime} endTime=${endTime} diff=${timeDiff}`;
+      logger.info(`Sync time: startTime=${job.data.startTime} endTime=${endTime} diff=${timeDiff}`);
 
       // full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
       // startTime will be passed in when this sync job is queued from the discovery
@@ -199,6 +201,7 @@ export const processInstallation =
     if (!nextTask) {
       await subscription.update({ syncStatus: 'COMPLETE' });
       statsd.increment(metricSyncStatus.complete);
+      logger.info(`Sync complete: installationId=${installationId}`);
       return;
     }
 
@@ -375,6 +378,7 @@ export const processInstallation =
       await subscription.update({ syncStatus: 'FAILED' });
 
       statsd.increment(metricSyncStatus.failed);
+      logger.info(`Sync failed: installationId=${installationId}`);
 
       job.sentry.setExtra('Installation FAILED', JSON.stringify(err, null, 2));
       job.sentry.captureException(err);

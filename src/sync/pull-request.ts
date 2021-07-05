@@ -82,7 +82,7 @@ export default async function (
       }));
       asyncTags.push(`status:${status}`);
     },
-    metricHttpRequest().sync,
+    metricHttpRequest().syncPullRequest,
     1,
     asyncTags,
   )();

@@ -45,8 +45,8 @@ export const elapsedTimeMetrics = (
   next: NextFunction,
 ) => {
   const elapsedTimeInMs = hrtimer();
-  const path = req.path;
-  const tags = { path, method: req.method };
+  const { path, method } = req;
+  const tags = { path, method };
 
   res.once('finish', () => {
     expressStatsdLogger.info(`${path} : ${elapsedTimeInMs()}`);
