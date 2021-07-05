@@ -10,7 +10,6 @@ const syncStatus = (syncStatus) =>
 
 async function getInstallation(client, subscription) {
   const id = subscription.gitHubInstallationId;
-
   try {
     const response = await client.apps.getInstallation({ installation_id: id });
     response.data.syncStatus = subscription.isInProgressSyncStalled()
@@ -24,10 +23,8 @@ async function getInstallation(client, subscription) {
     response.data.numberOfSyncedRepos =
       subscription.repoSyncState?.numberOfSyncedRepos || 0;
 
-    const tags = { installationId: id };
-
     response.data.syncStatus === 'STALLED' &&
-      statsd.increment(metricSyncStatus.stalled, tags);
+      statsd.increment(metricSyncStatus.stalled);
 
     return response.data;
   } catch (err) {

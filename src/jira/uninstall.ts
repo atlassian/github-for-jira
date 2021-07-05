@@ -33,14 +33,11 @@ export default async (req:Request, res:Response):Promise<void> => {
     }));
   }
 
-  const installationId = installation.id.toString();
-  const tags = { installationId }
-
-  statsd.increment(metricHttpRequest().uninstall, tags);
+  statsd.increment(metricHttpRequest().uninstall);
 
   await installation.uninstall();
   await submitProto(actions);
 
-  req.log.info(`App uninstalled on Jira. Uninstalling id=${installationId}.`);
+  req.log.info(`App uninstalled on Jira. Uninstalling id=${installation.id}.`);
   res.sendStatus(204);
 };

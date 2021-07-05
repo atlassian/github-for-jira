@@ -20,6 +20,7 @@ import {
 import getRedisInfo from '../config/redis-info';
 import statsd, {elapsedTimeMetrics} from '../config/statsd';
 import {metricSyncStatus} from '../config/metric-names';
+import { logger } from 'probot/lib/logger';
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -429,11 +430,9 @@ router.post(
       res.send('Successfully called migrationComplete');
       await subscription.update({ syncStatus: 'COMPLETE' });
 
-      const tags = {
-        installationId: githubInstallationId.toString()
-      };
+      statsd.increment(metricSyncStatus.complete);
+      logger.info(`Sync failed: installationId=${githubInstallationId}`);
 
-      statsd.increment(metricSyncStatus.complete, tags);
     } catch (err) {
       res.send(`Error trying to complete migration: ${err}`).status(500);
     }
