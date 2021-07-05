@@ -24,9 +24,7 @@ async function getInstallation(client, subscription) {
     response.data.numberOfSyncedRepos =
       subscription.repoSyncState?.numberOfSyncedRepos || 0;
 
-    const tags = {
-      installationId: id
-    };
+    const tags = { installationId: id };
 
     response.data.syncStatus === 'STALLED' &&
       statsd.increment(metricSyncStatus.stalled, tags);
