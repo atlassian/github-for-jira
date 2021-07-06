@@ -5,8 +5,8 @@
 ## (Discovery) Documentation on how to connect Jira Cloud to GitHub
 
 See
-- (Atlassian docs) https://confluence.atlassian.com/adminjiracloud/connect-jira-cloud-to-github-814188429.html
-- (Github docs) https://help.github.com/articles/integrating-jira-with-your-organization-s-projects/
+- (Atlassian docs)[https://confluence.atlassian.com/adminjiracloud/connect-jira-cloud-to-github-814188429.html]
+- (Github docs)[https://help.github.com/articles/integrating-jira-with-your-organization-s-projects/]
 
 ## Installation
 
@@ -26,7 +26,7 @@ Note: The same method is used for Github & Github Enterprise, but an additional 
 
 ## Configuration - Manage Repo connections
 
-Once the customer has installed Jira Software <> GitHub together they can manage that integration with several different options. They are:
+Once the customer has installed Jira and GitHub together they can manage that integration with several different options. They are:
 - Link a GitHub account (link one or more accounts)
 - Delete a GitHub account
 - Add or remove repos from the connected GitHub account

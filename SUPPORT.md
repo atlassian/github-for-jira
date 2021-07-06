@@ -1,6 +1,6 @@
 # Questions? Need help? You've come to the right place
 
-This file will help you troubleshoot the common issues that can occur with the  GitHub.com + Jira Software integration. 
+This file will help you troubleshoot the common issues that can occur with the GitHub for Jira integration. 
 
 ## Table of Contents
 
@@ -8,7 +8,6 @@ This file will help you troubleshoot the common issues that can occur with the  
 - [Sync status not reaching complete](#sync-status-not-reaching-complete)
 - [Nothing showing up in Jira](#nothing-showing-up-in-jira)
 - [Workflow transitions are not running](#workflow-transitions-are-not-running)
-- [Getting additional help](#getting-additional-help)
 
 ## App is not responding
 
@@ -19,7 +18,7 @@ Uninstalling and reinstalling the integration is the most common fix for this.
 1. Click **Uninstall** from the Manage Apps page of your Jira settings.
 2. Visit the Atlassian Marketplace and install the [GitHub for Jira app](https://marketplace.atlassian.com/apps/1219592/github-for-jira?hosting=cloud&tab=overview).
 
-Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
+Still having trouble? Look up your problem in [Issues](https://github.com/atlassian/jira/issues) or [Create a new Issue](https://github.com/integrations/jira/issues/new) if it doesn't already exist.
 
 ## Sync status not reaching complete
 
@@ -58,7 +57,7 @@ This will rediscover all repositories in your installation and start a new sync.
 
 This warning is shown when a branch or commit includes more than 100 issue keys. When a branch or commit exceeds this limit, we only send the first 100. This is enforced by Jira. This doesn't impact branches or commits that are under the limit or impact the sync status.
 
-Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
+Still having trouble? Look up your problem in [Issues](https://github.com/atlassian/jira/issues) or [Create a new Issue](https://github.com/integrations/jira/issues/new) if it doesn't already exist.
 
 ## Sync is STALLED
 
@@ -69,7 +68,7 @@ To resolve, follow these steps to resume the sync:
 1. Open the integration settings: **Jira Settings** -> **Add-ons** -> **Manage Add-ons** -> **GitHub** -> **Get started**
 2. Under **Retry**, click the dropdown and select "Normal", then click **Submit**
 
-If the sync returns to the STALLED status, [contact GitHub Support for additional help](#getting-additional-help).
+If the sync returns to the STALLED status, Look up your problem in [Issues](https://github.com/atlassian/jira/issues) or [Create a new Issue](https://github.com/integrations/jira/issues/new) if it doesn't already exist.
 
 ## Nothing showing up in Jira
 
@@ -79,7 +78,7 @@ Next check that you're adding your Jira issue keys in your commits, branches, or
 
 For more information, check out [Using the integration](https://github.com/integrations/jira#using-the-integration).
 
-Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
+Still having trouble? Look up your problem in [Issues](https://github.com/atlassian/jira/issues) or [Create a new Issue](https://github.com/integrations/jira/issues/new) if it doesn't already exist.
 
 ## Workflow transitions are not running
 
@@ -91,10 +90,4 @@ You can check the email address on GitHub by adding `.patch` to the end of a com
 
 `https://github.com/atom/atom/commit/834f8f3d73d84e98a423fe0720abd833d5ca7a87.patch`
 
-Still having trouble? [Contact GitHub Support for additional help](#getting-additional-help).
-
-## Getting additional help
-
-Please fill out GitHub's [Support form](https://github.com/contact?form%5Bsubject%5D=Re:+GitHub%2BJira+Integration) and your request will be routed to the right team at GitHub.
-
-Be sure to include the details of any troubleshooting steps you've tried so far.
+Still having trouble? Look up your problem in [Issues](https://github.com/atlassian/jira/issues) or [Create a new Issue](https://github.com/integrations/jira/issues/new) if it doesn't already exist.

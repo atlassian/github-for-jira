@@ -2,20 +2,27 @@
 
 Hi there! We're thrilled that you'd like to contribute to this project. Your ideas are essential for keeping making it better :)
 
-## Notices
-Contributions to this product are [released](https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license) to the public under the [project's open source license](LICENSE).
+## Contributor License Agreement
 
-Please note that this project releases with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+Atlassian must have a [Contributor License Agreement (CLA)](https://opensource.atlassian.com/cla) on file from each individual or corporation contributing to our open-source projects. The CLA allows contributors to maintain ownership in the IP of their contributions while granting Atlassian the rights to control and maintain our projects.
+
+Submit an [individual CLA](https://opensource.atlassian.com/individual) or a [corporate CLA](https://opensource.atlassian.com/corporate).
+
+## License & Code of Conduct
+
+Contributions to this project releases to the public under [our open source license](LICENSE).
+
+Please note that this project has a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
 ## Getting Started
 
 This app is written in [Typescript](https://www.typescriptlang.org/) and runs on [Node.js](https://nodejs.org/) **v14.x**. 
 
-Please install [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) for the external dependencies like the Postgres database and Redis.
+Please install [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) to easily run the project locally.
 
 ### Installing a tunneling tool
 
-To allow your Jira instance to communicate with your locally running server, you need to have either [ngrok](https://ngrok.com/download) or [localtunnel](https://localtunnel.github.io/www/) installed and running.
+To allow Jira/Github to communicate with your locally running server, you need to have either [ngrok](https://ngrok.com/download) or [localtunnel](https://localtunnel.github.io/www/) installed and running.
 
 This tunnel will expose a URL through which internet traffic can reach your local machine. This URL will be called `DOMAIN` in the rest of this document.
 
@@ -106,6 +113,7 @@ Before you spend time working on something, it might be worth [discussing your c
 
 That being said, here are the steps needed to create a Pull Request for us to review:
 
+1. [Sign the CLA first!](#contributor-license-agreement)
 1. Fork the repository.
 1. Do your changes either on the main branch or create a new one.
 1. Make sure the tests pass on your machine with `npm test` and the build works with `npm run build`.  If you're adding new functionality, please add tests to reflect this.
