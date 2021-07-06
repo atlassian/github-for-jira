@@ -38,17 +38,18 @@ resources:
       snapshotRetention: 0
       config:
         maxmemory-policy: allkeys-lru
-    dataType:
-      - UGC/Label                # name of GitHub org / Jira site
-      - PII/IndirectConfidential # name of GitHub org
-      - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+      dataType:
+        - UGC/Label                # name of GitHub org / Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
   - type: postgres-db
     name: database
-    dataType:
-      - UGC/Label                # name of GitHub org / Jira site
-      - PII/IndirectConfidential # name of GitHub org
-      - UGC/Configuration        # data about the installation of the GitHub app into Jira sites
-      - Security/Secret          # shared Connect secret
+    attributes:
+      dataType:
+        - UGC/Label                # name of GitHub org / Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/Configuration        # data about the installation of the GitHub app into Jira sites
+        - Security/Secret          # shared Connect secret
   - type: globaledge
     name: ingress
     attributes:
