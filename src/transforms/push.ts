@@ -1,8 +1,7 @@
-import { Project, Subscription } from '../models';
+import { Subscription } from '../models';
 import getJiraClient from '../jira/client';
 import issueKeyParser from 'jira-issue-key-parser';
 import { isEmpty } from '../jira/util/isEmpty';
-import reduceProjectKeys from '../jira/util/reduce-project-keys';
 import { queues } from '../worker/main';
 import enhanceOctokit from '../config/enhance-octokit';
 import { Application } from 'probot';
@@ -157,15 +156,6 @@ export function processPush(app: Application) {
         };
 
         await jiraClient.devinfo.repository.update(jiraPayload);
-
-        const projects = [];
-        jiraPayload.commits.map((commit) =>
-          reduceProjectKeys(commit, projects),
-        );
-
-        for (const projectKey of projects) {
-          await Project.incrementOccurence(projectKey, jiraClient.baseURL);
-        }
       }
     } catch (error) {
       app.log.error(`Failed to process push: ${error}`);
