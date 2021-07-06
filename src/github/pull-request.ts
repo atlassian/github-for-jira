@@ -1,6 +1,4 @@
-import { Project } from '../models';
 import transformPullRequest from '../transforms/pull-request';
-import reduceProjectKeys from '../jira/util/reduce-project-keys';
 import issueKeyParser from 'jira-issue-key-parser';
 import { isEmpty } from '../jira/util/isEmpty';
 
@@ -67,11 +65,4 @@ export default async (context: Context, jiraClient, util) => {
 
   await jiraClient.devinfo.repository.update(jiraPayload);
 
-  const projects = [];
-  jiraPayload.pullRequests.map((pull) => reduceProjectKeys(pull, projects));
-  jiraPayload.branches.map((branch) => reduceProjectKeys(branch, projects));
-
-  for (const projectKey of projects) {
-    await Project.incrementOccurence(projectKey, jiraClient.baseURL);
-  }
 };
