@@ -119,7 +119,7 @@ environmentOverrides:
         NODE_OPTIONS: "--no-deprecation"
         LOG_LEVEL: debug
         SENTRY_ENVIRONMENT: ddev
-        APP_ID: 124403
+        APP_ID: '124403'
         GITHUB_CLIENT_ID: Iv1.600bf90a20f1ab18
   staging:
     config:
@@ -128,7 +128,7 @@ environmentOverrides:
         WEBHOOK_PROXY_URL: https://github-for-jira.stg.services.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-stg
         SENTRY_ENVIRONMENT: stg-west
-        APP_ID: 119363
+        APP_ID: '119363'
         GITHUB_CLIENT_ID: Iv1.86f9d277ffccd384
     resources:
       - type: globaledge
@@ -148,8 +148,8 @@ environmentOverrides:
         WEBHOOK_PROXY_URL: https://github-for-jira.services.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-production
         SENTRY_ENVIRONMENT: production
-          APP_ID: 125082
-          GITHUB_CLIENT_ID: Iv1.234a3f06f2b64fbe
+        APP_ID: '125082'
+        GITHUB_CLIENT_ID: Iv1.234a3f06f2b64fbe
     resources:
       - type: globaledge
         name: proxy
