@@ -42,14 +42,30 @@ resources:
         - UGC/Label                # name of GitHub org / Jira site
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
-  - type: postgres-db
-    name: database
+
+  - name: github-for-jira-rds
+    type: dedicated-rds
+    attributes:
+      dataType:
+        - UGC/Label                # name of GitHub org / Jira site
+        - PII/IndirectConfidential # name of GitHub org
+      parameters:
+        DBType: postgres125
+
+  - name: db
+    type: postgres-db
     attributes:
       dataType:
         - UGC/Label                # name of GitHub org / Jira site
         - PII/IndirectConfidential # name of GitHub org
         - UGC/Configuration        # data about the installation of the GitHub app into Jira sites
         - Security/Secret          # shared Connect secret
+      dedicatedRds:
+        # Name of the service that owns the RDS
+        service: github-for-jira
+        # Name of the RDS resource from above
+        resource: github-for-jira-rds
+
   - type: globaledge
     name: ingress
     attributes:
