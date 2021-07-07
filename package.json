@@ -1,8 +1,8 @@
 {
-  "name": "github-for-jira",
+  "name": "@atlassian/github-for-jira",
   "version": "0.0.0",
   "description": "Github integration for Atlassian Jira",
-  "repository": "https://github.com/integrations/jira.git",
+  "repository": "https://github.com/atlassian/github-for-jira.git",
   "engines": {
     "node": ">= 14.16 <15",
     "npm": "^6.12.0"
@@ -116,5 +116,30 @@
   },
   "volta": {
     "node": "14.17.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/setup/setup.ts"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ],
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/*.d.ts"
+    ],
+    "maxConcurrency": 1,
+    "maxWorkers": 1
   }
 }
