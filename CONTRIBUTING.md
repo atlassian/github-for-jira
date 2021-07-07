@@ -109,7 +109,7 @@ After this is done, you should see your repos starting to sync in the App's dash
 
 Thank you so much for willing to contribute to this project!  
 
-Before you spend time working on something, it might be worth [discussing your changes with other contributors](https://github.com/integrations/jira/discussions) before starting for guidance and potentially combining efforts with other members.  Remember to try to keep your changes simple and concise - do not try to fix everything in one Pull Request.  We'd much appreciate multiple smaller PRs over one massive one. We're also here to help, so if you're stuck or blocked, please feel free to reach out.
+Before you spend time working on something, it might be worth [discussing your changes with other contributors](https://github.com/atlassian/github-for-jira/discussions) before starting for guidance and potentially combining efforts with other members.  Remember to try to keep your changes simple and concise - do not try to fix everything in one Pull Request.  We'd much appreciate multiple smaller PRs over one massive one. We're also here to help, so if you're stuck or blocked, please feel free to reach out.
 
 That being said, here are the steps needed to create a Pull Request for us to review:
 
