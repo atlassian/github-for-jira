@@ -144,10 +144,8 @@ environmentOverrides:
   prod:
     config:
       environmentVariables:
-        # The vanity DNS isn't working for whatever reason, so we're using the not-so-nice default domain name.
-        # TODO: replace this "https://github-for-jira.services.atlassian.com" once the vanity DNS works.
-        APP_URL:  https://github-for-jira.us-west-1.prod.atl-paas.net
-        WEBHOOK_PROXY_URL:  https://github-for-jira.us-west-1.prod.atl-paas.net/github/events
+        APP_URL:  https://github-for-jira.services.atlassian.com
+        WEBHOOK_PROXY_URL:  https://https://github-for-jira.services.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-production
         SENTRY_ENVIRONMENT: production
         APP_ID: '125082'
