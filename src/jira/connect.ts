@@ -29,8 +29,8 @@ export default (req: Request, res: Response): void => {
         gdpr: false,
       },
       // TODO: allow for more flexibility of naming
-      name: `GitHub${isProd ? '' : (instance ? (` (${instance})`) : '')}`,
-      description: 'Application for integrating with GitHub',
+      name: `GitHub for Jira${isProd ? '' : (instance ? (` (${instance})`) : '')}`,
+      description: 'Connect your code and your project with ease.',
       key: appKey,
       baseUrl: `${isHttps ? 'https' : 'http'}://${req.get('host')}`,
       lifecycle: {
@@ -39,10 +39,9 @@ export default (req: Request, res: Response): void => {
         enabled: '/jira/events/enabled',
         disabled: '/jira/events/disabled',
       },
-      // TODO: change this to Atlassian
       vendor: {
-        name: 'GitHub',
-        url: 'http://github.com',
+        name: 'Atlassian',
+        url: 'https://atlassian.com',
       },
       authentication: {
         type: 'jwt',
