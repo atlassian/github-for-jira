@@ -1,6 +1,4 @@
-import { Project } from '../models';
 import transformBranch from '../transforms/branch';
-import reduceProjectKeys from '../jira/util/reduce-project-keys';
 import { Context } from 'probot/lib/context';
 import issueKeyParser from 'jira-issue-key-parser';
 import { isEmpty } from '../jira/util/isEmpty';
@@ -17,13 +15,6 @@ export const createBranch = async (context: Context, jiraClient) => {
   }
 
   await jiraClient.devinfo.repository.update(jiraPayload);
-
-  const projects = [];
-  jiraPayload.branches.map((branch) => reduceProjectKeys(branch, projects));
-
-  for (const projectKey of projects) {
-    await Project.incrementOccurence(projectKey, jiraClient.baseURL);
-  }
 };
 
 export const deleteBranch = async (context, jiraClient) => {
