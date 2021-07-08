@@ -52,7 +52,7 @@ resources:
       parameters:
         DBType: postgres125
 
-  - name: db
+  - name: database
     type: postgres-db
     attributes:
       dataType:
