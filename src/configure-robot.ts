@@ -11,7 +11,7 @@ import setupJira from './jira';
 import setupDeepcheck from './deepcheck';
 import statsd from './config/statsd';
 import { isIp4InCidrs } from './config/cidr-validator';
-import { Logger } from 'probot/lib/github/logging';
+import Logger from 'bunyan';
 import { metricError } from './config/metric-names';
 
 /**

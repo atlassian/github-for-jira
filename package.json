@@ -61,6 +61,7 @@
     "bottleneck": "^2.19.5",
     "bull": "^3.12.1",
     "bunyan": "^1.8.15",
+    "bunyan-format": "^0.2.1",
     "cookie-session": "^2.0.0-rc.1",
     "csurf": "^1.11.0",
     "date-fns": "^1.29.0",
@@ -84,7 +85,8 @@
     "sequelize-encrypted": "^1.0.0",
     "throng": "^4.0.0",
     "tslib": "~2.2.0",
-    "typescript": "~4.2.4"
+    "typescript": "~4.2.4",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "~4.23.0",

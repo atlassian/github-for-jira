@@ -2,7 +2,7 @@ import url from 'url';
 import transformPullRequest from './transforms/pull-request';
 import statsd from '../config/statsd';
 import { GitHubAPI } from 'probot';
-import bunyan from 'bunyan';
+import { getLogger } from '../config/logger';
 import { metricHttpRequest } from '../config/metric-names';
 /**
  * @typedef {object} RepositoryObject
@@ -14,6 +14,8 @@ import { metricHttpRequest } from '../config/metric-names';
  * @property {string} full_name
  */
 
+const logger = getLogger('sync.pull-request');
+
 /**
  * Find the next page number from the response headers.
  */
@@ -23,7 +25,6 @@ export const getNextPage = (headers: Headers = {}): number => {
   if (!nextUrl) {
     return undefined;
   }
-  const logger = bunyan.createLogger({ name: 'pr' });
   logger.info(`pr:`, nextUrl);
   logger.info(`pr:`, typeof nextUrl);
   const parsed = url.parse(nextUrl).query.split('&');

@@ -20,7 +20,7 @@ import {
 import getRedisInfo from '../config/redis-info';
 import statsd, {elapsedTimeMetrics} from '../config/statsd';
 import {metricSyncStatus} from '../config/metric-names';
-import { logger } from 'probot/lib/logger';
+import logger from '../config/logger';
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
