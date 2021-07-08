@@ -5,12 +5,12 @@ import pullRequest from './pull-request';
 import push from './push';
 import { createBranch, deleteBranch } from './branch';
 import webhookTimeout from '../middleware/webhook-timeout';
-import bunyan from 'bunyan';
 import statsd from '../config/statsd';
+import { getLogger } from '../config/logger'
 import { metricWebhooks } from '../config/metric-names';
 
 export default (robot) => {
-  const logger = bunyan.createLogger({ name: 'github' });
+  const logger = getLogger('github');
 
   // TODO: Need ability to remove these listeners, especially for testing...
   robot.on('*', (context) => {

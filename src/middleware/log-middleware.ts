@@ -1,6 +1,7 @@
-import {logger} from 'probot/lib/logger';
+import { getLogger } from '../config/logger';
 import {NextFunction, Request, Response} from 'express';
 import Logger from 'bunyan';
+import { v4 as uuidv4 } from 'uuid';
 
 /*
 
@@ -47,8 +48,9 @@ export default (req: Request, _: Response, next: NextFunction): void => {
     }
   };
 
-  req.log = req.log || logger;
-  req.addLogFields({requestId: req.header('X-Request-Id')});
+  req.log = req.log || getLogger('log-middleware');
+  const reqId = req.header('X-Request-Id') || uuidv4()
+  req.addLogFields({requestId: reqId });
 
   next();
 };

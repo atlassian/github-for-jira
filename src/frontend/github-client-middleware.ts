@@ -2,7 +2,7 @@ import GithubAPI from "../config/github-api";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import { App } from "@octokit/app";
 import { GitHubAPI } from "probot";
-import bunyan from 'bunyan';
+import { getLogger } from '../config/logger';
 
 export default (octokitApp: App): RequestHandler => (req: Request, res: Response, next: NextFunction): void => {
   if (req.session.githubToken) {
@@ -26,7 +26,7 @@ export default (octokitApp: App): RequestHandler => (req: Request, res: Response
 export const isAdmin = (githubClient: GitHubAPI) =>
   async (args: { org: string, username: string, type: string }): Promise<boolean> => {
     const { org, username, type } = args;
-    const logger = bunyan.createLogger({ name: 'GitHub Client Middleware' });
+    const logger = getLogger('github-client-middleware');
 
     // If this is a user installation, the "admin" is the user that owns the repo
     if (type === "User") {

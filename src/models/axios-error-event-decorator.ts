@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
 import url from 'url';
-import bunyan from 'bunyan';
 /*
  * Adds request/response metadata to a Sentry event for an Axios error
  * To use, pass AxiosErrorEventDecorator.decorate to scope.addEventProcessor
@@ -68,9 +67,6 @@ export default class AxiosErrorEventDecorator {
   }
 
   generateFingerprint() {
-    const logger = bunyan.createLogger({ name: 'AXIOS ERROR' });
-    logger.info(`AXIOS ERROR:`, this.request.path);
-    logger.info(`AXIOS ERROR:`, typeof this.request.path);
     const { pathname } = url.parse(this.request.path);
 
     return [
