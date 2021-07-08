@@ -10,6 +10,7 @@ export default (req: Request, res: Response, next: NextFunction):void => {
   res.render('github-setup.hbs', {
     jiraDomainOptions: jiraDomainOptions(),
     csrfToken: req.csrfToken(),
+    nonce: res.locals.nonce,
   });
   next();
 };

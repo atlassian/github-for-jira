@@ -4,7 +4,6 @@ const server = 'app.server';
 export const metricError = {
   expressRateLimited: `${server}.error.express-rate-limited`,
   githubErrorRendered: `${frontend}.error.github-error-rendered`,
-  jiraConfiguration: `${server}.error.jira-configuration`,
 };
 
 export const metricHttpRequest = (metricName?: string) => {
@@ -14,7 +13,7 @@ export const metricHttpRequest = (metricName?: string) => {
     install: `${server}.http.request.install`,
     uninstall: `${server}.http.request.uninstall`,
     fullSync: `${server}.http.request.full-sync`,
-    sync: `${server}.http.request.sync`,
+    syncPullRequest: `${server}.http.request.sync-pull-request`,
     hydroSubmission: `${server}.http.request.${metricName}`,
     jobDuration: `${server}.http.request.job-duration`,
     requestStatusSync: `${server}.http.request.request-status-syncs`,
@@ -24,5 +23,9 @@ export const metricHttpRequest = (metricName?: string) => {
 export const metricSyncStatus = {
   complete: `${server}.sync-status.complete`,
   stalled: `${server}.sync-status.stalled`,
-  failed: `${server}.sync-status.failed`,
+  failed: `${server}.sync-status.failed`
 };
+
+export const metricWebhooks = {
+  webhookEvent: `${server}.webhooks.webhook-events`,
+}

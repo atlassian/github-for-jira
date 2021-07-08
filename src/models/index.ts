@@ -1,6 +1,5 @@
 import InstallationModel from "./installation";
 import SubscriptionModel from "./subscription";
-import ProjectModel from "./project";
 import Sequelize, { DataTypes } from "sequelize";
 import EncryptedField from "sequelize-encrypted";
 import { sequelize } from "./sequelize";
@@ -44,15 +43,5 @@ SubscriptionModel.init(
   { sequelize }
 );
 
-ProjectModel.init(
-  {
-    projectKey: DataTypes.STRING,
-    occurrences: DataTypes.INTEGER,
-    jiraHost: DataTypes.STRING
-  },
-  { sequelize }
-);
-
 export const Installation = InstallationModel;
 export const Subscription = SubscriptionModel;
-export const Project = ProjectModel;

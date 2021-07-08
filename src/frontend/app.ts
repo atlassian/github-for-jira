@@ -241,17 +241,20 @@ export default (octokitApp: App): Express => {
       'Not Found': 404,
     };
 
+    const errorStatusCode = errorCodes[err.message] || 400
+
     const tags = [
       `error: ${req.log.error}`,
-      `status: ${errorCodes[err.message]}`,
+      `status: ${errorStatusCode}`,
     ];
 
     statsd.increment(metricError.githubErrorRendered, tags);
 
     return res
-      .status(errorCodes[err.message] || 400)
+      .status(errorStatusCode)
       .render('github-error.hbs', {
         title: 'GitHub + Jira integration',
+        nonce: res.locals.nonce,
       });
   });
 

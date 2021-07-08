@@ -129,10 +129,10 @@ default_permissions:
 # name: Jira Dev Environment
 
 # The homepage of your GitHub App.
-# url: https://github.com/integrations/jira
+# url: https://github.com/atlassian/github-for-jira
 
 # A description of the GitHub App.
-# description: An app to do local development for the official Jira GitHub App - https://github.com/integrations/jira
+# description: An app to do local development for the official Jira GitHub App - https://github.com/atlassian/github-for-jira
 
 # Set to true when your GitHub App is available to the public or false when it is only accessible to the owner of the app.
 # Default: true

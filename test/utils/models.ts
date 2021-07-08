@@ -48,10 +48,5 @@ export const mockModels = {
       id: 1,
       jiraHost: process.env.ATLASSIAN_URL
     } as any
-  },
-  Project: {
-    incrementOccurence: {
-      projectKey: "PROJ"
-    } as any
   }
 };
