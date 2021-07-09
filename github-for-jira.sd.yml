@@ -167,6 +167,12 @@ environmentOverrides:
         APP_ID: '125082'
         GITHUB_CLIENT_ID: Iv1.234a3f06f2b64fbe
     resources:
+      - name: rds
+        type: dedicated-rds
+        attributes:
+          parameters:
+            DBInstanceClass: db.t3.large
+
       - type: globaledge
         name: proxy
         attributes:
