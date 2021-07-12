@@ -13,6 +13,7 @@ import statsd from './config/statsd';
 import { isIp4InCidrs } from './config/cidr-validator';
 import Logger from 'bunyan';
 import { metricError } from './config/metric-names';
+import logMiddleware from "./middleware/log-middleware";
 
 /**
  * Get the list of GitHub CIDRs from the /meta endpoint
@@ -84,6 +85,8 @@ export default async (app: Application): Promise<Application> => {
 
     app.router.use(limiter);
   }
+
+  app.router.use(logMiddleware)
 
   // These incoming webhooks should skip rate limiting
   setupGitHub(app);

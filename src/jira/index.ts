@@ -3,7 +3,6 @@ import * as Sentry from '@sentry/node';
 
 import { Installation } from '../models';
 import { hasValidJwt } from './util/jwt';
-import logMiddleware from '../middleware/log-middleware';
 
 import connect from './connect';
 import disable from './disable';
@@ -44,7 +43,6 @@ export default (robot: Application): void => {
   // The request handler must be the first middleware on the app
   router.use(Sentry.Handlers.requestHandler());
   router.use(bodyParser.json());
-  router.use(logMiddleware);
 
   // Set up event handlers
   router.get('/atlassian-connect.json', connect);

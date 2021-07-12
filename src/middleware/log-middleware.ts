@@ -39,6 +39,7 @@ declare global {
   }
 }
 
+
 export default (req: Request, _: Response, next: NextFunction): void => {
   req.addLogFields = (fields: Record<string, unknown>):void => {
     if (req.log) {
@@ -48,7 +49,8 @@ export default (req: Request, _: Response, next: NextFunction): void => {
     }
   };
 
-  req.log = req.log || getLogger('log-middleware');
+  // Replaces req.log with default bunyan logger. So we can override Probot logger
+  req.log = getLogger('log-middleware');
   const reqId = req.header('X-Request-Id') || uuidv4()
   req.addLogFields({requestId: reqId });
 
