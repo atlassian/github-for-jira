@@ -14,6 +14,7 @@ import AxiosErrorEventDecorator from '../models/axios-error-event-decorator';
 import SentryScopeProxy from '../models/sentry-scope-proxy';
 import { metricHttpRequest } from '../config/metric-names';
 import { initializeSentry } from '../config/sentry';
+import '../config/proxy';
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo('client').redisOptions);
