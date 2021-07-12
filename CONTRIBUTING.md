@@ -83,7 +83,7 @@ The first time you run the app, simply run:
 ```
 npm install # installs node modules
 docker-compose up # Spin up docker containers
-npm run db:init # Creates DBs and initializes tables
+npm run db # Creates DBs and initializes tables
 ```
 
 From then on, to just run the app locally in development mode, just do `npm start`.

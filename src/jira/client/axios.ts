@@ -223,14 +223,16 @@ const instrumentRequest = (response) => {
  * @param {import('axios').AxiosError} error - The Axios error response object.
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-const instrumentFailedRequest = (error) => {
-  if (error.response) {
-    instrumentRequest(error.response);
-  } else {
-    console.log('Error during Axios request has no response property:', error);
-  }
+const instrumentFailedRequest = (logger) => {
+  return (error) => {
+    if (error.response) {
+      instrumentRequest(error.response);
+    } else {
+      logger.error(error, 'Error during Axios request has no response property.');
+    }
 
-  return Promise.reject(error);
+    return Promise.reject(error);
+  };
 };
 
 /**
@@ -255,7 +257,7 @@ export default (
   instance.interceptors.request.use(setRequestStartTime);
   instance.interceptors.response.use(
     instrumentRequest,
-    instrumentFailedRequest,
+    instrumentFailedRequest(logger),
   );
 
   instance.interceptors.request.use(getAuthMiddleware(secret));
