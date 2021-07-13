@@ -8,7 +8,7 @@ const formatOut = filteringStream(bformat({outputMode: 'bunyan', levelInString: 
 const logger = Logger.createLogger(
   {
     name: 'github-for-jira',
-    loggerName: 'config.logger',
+    logger: 'config.logger',
     stream: formatOut,
   },
 );
@@ -30,9 +30,8 @@ console.log = logger.info.bind(logger);
 // eslint-disable-next-line no-console
 console.warn = logger.warn.bind(logger);
 
-export const getLogger = (name: string, params?: Record<string, any>): Logger => {
-  params = params || {};
-  return logger.child({...params, loggerName: name});
+export const getLogger = (name: string): Logger => {
+  return logger.child({logger: name});
 }
 
 export default logger
