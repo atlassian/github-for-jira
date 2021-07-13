@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+## COLORS
 BOLD=$(tput bold)
 RED=$(tput setaf 1)
 GREEN=$(tput setaf 2)
@@ -7,16 +8,24 @@ YELLOW=$(tput setaf 3)
 RESET=$(tput sgr0)
 
 ## VARS
-OUTPUT=/tmp/github-for-jira.dir
+OUTPUT="/tmp/db-migration-$(date +"%s").dir" # where we save the dump, we use timestamp for uniqueness
 JOBS=$(($(nproc --all)-2)) # Number of cpu cores minus 2 to do parallel restore jobs
 SOURCE_URL="$1"
 TARGET_URL="$2"
 
-if ! [ -x "$(command -v pg_dump)" ]; then
-  echo "${RED}postgresql-client is not installed, please install it first.${RESET}"
-  exit 1
-fi
+function show_help {
+    echo "${BOLD}Atlassian DB Migration Script${RESET}"
+    echo ""
+    echo "You must have postgresql-client and curl installed first."
+    echo ""
+    echo "Basic usage: ./$(basename $0) [source-db-url] [target-db-url]"
+    echo "Example: ./$(basename $0) postgres://postgres:postgres@localhost:5432/source-db postgres://postgres:postgres@localhost:5432/target-db"
+    echo ""
+    echo "${BOLD}Options${RESET}:"
+    echo " ${BOLD}-h${RESET}: Help - Show me this helpful message."
+}
 
+# Check if we can connect to DB
 function check_db {
   if [ -z "$1" ]
   then
@@ -34,14 +43,48 @@ function check_db {
   fi
 }
 
-read -p "Check that you are connected to the Atlassian VPN (Press any key to continue)" PROMPT
+# Gather options from flags.
+while getopts "h:help:?" opt; do
+    case "$opt" in
+    h)
+        show_help
+        exit 0
+        ;;
+    help)
+        show_help
+        exit 0
+        ;;
+    \?)
+        show_help
+        exit 0
+        ;;
+    esac
+done
 
+# Check to see if postgresql-client is installed on the system
+if ! [ -x "$(command -v pg_isready)" ]; then
+  echo "${RED}postgresql-client is not installed, please install it first.${RESET}"
+  exit 1
+fi
+
+# VPN Connection check - URL is only accessible internally in VPN
+echo "${YELLOW}Checking VPN connection...${RESET}"
+curl -s -m 5 https://statlas.prod.atl-paas.net/ > /dev/null
+if ! [ "$?" == "0" ]
+then
+  echo "${RED}Not connected to Atlassian VPN.  Please connect to it first before continuing.${RESET}"
+  exit 1
+fi
+echo "${GREEN}Connected to Atlassian VPN.${RESET}"
+
+# Enter source url if it wasn't added as a parameter
 if [ -z "$SOURCE_URL" ]
 then
   read -p "Enter the Source Database URL: " SOURCE_URL
 fi
 check_db $SOURCE_URL "Source"
 
+# Enter target url if it wasn't added as a parameter
 if [ -z "$TARGET_URL" ]
 then
   read -p "Enter the Target Database URL: " TARGET_URL
@@ -49,14 +92,16 @@ fi
 check_db $TARGET_URL "Target"
 
 echo "Databases ready for migration from '$SOURCE_URL' to '$TARGET_URL'."
-read -p "${YELLOW}${BOLD}This will overwrite Target Database, are you sure you want to continue? [y/N] ${RESET}" PROMPT
 
+# Confirm that the user wants to continue
+read -p "${YELLOW}${BOLD}This will overwrite Target Database, are you sure you want to continue? [y/N] ${RESET}" PROMPT
 if ! [ "${PROMPT^^}" == "Y" ]
 then
   echo "${YELLOW}Aborting database migration... Goodbye.${RESET}"
   exit 0
 fi
 
+# Clears the output directory in case it already exists, just in case
 if [[ -d "$OUTPUT" ]]
 then
   echo "${YELLOW}Output directory already exists, deleting before continuing...${RESET}"
