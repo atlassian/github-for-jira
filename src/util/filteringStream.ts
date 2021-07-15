@@ -1,4 +1,5 @@
-import stream from 'stream';
+import { Writable } from 'stream';
+import {middlewareLoggerName} from "../middleware/log-middleware";
 
 /**
  * Creates a writable stream that prevents HTTP logs from being logged
@@ -12,7 +13,7 @@ import stream from 'stream';
  * @return {WritableStream} that you can pipe bunyan output into
  */
 const filteringStream = (out) => {
-  const writable = new stream.Writable({
+  const writable = new Writable({
     write: function(chunk, encoding, next) {
       if (!shouldBeFiltered(chunk)) {
         out.write(chunk, encoding)
@@ -23,10 +24,12 @@ const filteringStream = (out) => {
   return writable
 }
 
-
+//TODO Remove this code when there will be convenient way to do it in Probot.
+//See https://github.com/probot/probot/issues/1577
 const shouldBeFiltered = (chunk: any) : boolean => {
   return chunk.includes && (chunk.includes("GET /")
-    || chunk.includes("POST /") || chunk.includes("DELETE /"))
+    || chunk.includes("POST /") || chunk.includes("DELETE /")) &&
+    chunk.includes(middlewareLoggerName)
 }
 
 

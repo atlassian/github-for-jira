@@ -39,6 +39,7 @@ declare global {
   }
 }
 
+export const middlewareLoggerName = 'log-middleware';
 
 export default (req: Request, _: Response, next: NextFunction): void => {
   req.addLogFields = (fields: Record<string, unknown>):void => {
@@ -50,8 +51,12 @@ export default (req: Request, _: Response, next: NextFunction): void => {
   };
 
   // Replaces req.log with default bunyan logger. So we can override Probot logger
-  req.log = getLogger('log-middleware');
-  const reqId = req.header('X-Request-Id') || uuidv4()
+  req.log = getLogger(middlewareLoggerName);
+
+  const reqId = req.headers['x-request-id'] ||
+    req.headers['x-github-delivery'] ||
+    uuidv4();
+
   req.addLogFields({requestId: reqId });
 
   next();
