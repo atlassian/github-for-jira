@@ -13,7 +13,9 @@ import getBranches from './branches';
 import getCommits from './commits';
 import { Application } from 'probot';
 import { metricHttpRequest, metricSyncStatus } from '../config/metric-names';
-import { logger } from 'probot/lib/logger';
+import { getLogger } from '../config/logger';
+
+const logger = getLogger('sync.installation');
 
 const tasks = {
   pull: getPullRequests,

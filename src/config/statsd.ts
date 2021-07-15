@@ -1,5 +1,5 @@
 import { StatsD, StatsCb, Tags } from 'hot-shots';
-import bunyan from 'bunyan';
+import { getLogger } from './logger'
 import { Request, Response, NextFunction } from 'express';
 
 const isTest = process.env.NODE_ENV === 'test';
@@ -11,7 +11,7 @@ export const globalTags = {
   region: process.env.MICROS_AWS_REGION || 'localhost',
 };
 
-const logger = bunyan.createLogger({ name: 'statsd' });
+const logger = getLogger('statsd');
 
 const statsd = new StatsD({
   prefix: 'github-for-jira.',
@@ -38,7 +38,6 @@ function hrtimer() {
   };
 }
 
-const expressStatsdLogger = bunyan.createLogger({ name: 'elapsedTimeInMs' });
 export const elapsedTimeMetrics = (
   req: Request,
   res: Response,
@@ -49,7 +48,7 @@ export const elapsedTimeMetrics = (
   const tags = { path, method };
 
   res.once('finish', () => {
-    expressStatsdLogger.info(`${path} : ${elapsedTimeInMs()}`);
+    logger.info(`${path} : ${elapsedTimeInMs()}`);
     statsd.histogram('elapsedTimeInMs', elapsedTimeInMs(), tags);
   });
 

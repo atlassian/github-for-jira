@@ -1,6 +1,7 @@
-import {logger} from 'probot/lib/logger';
+import { getLogger } from '../config/logger';
 import {NextFunction, Request, Response} from 'express';
 import Logger from 'bunyan';
+import { v4 as uuidv4 } from 'uuid';
 
 /*
 
@@ -38,6 +39,8 @@ declare global {
   }
 }
 
+export const middlewareLoggerName = 'log-middleware';
+
 export default (req: Request, _: Response, next: NextFunction): void => {
   req.addLogFields = (fields: Record<string, unknown>):void => {
     if (req.log) {
@@ -47,8 +50,14 @@ export default (req: Request, _: Response, next: NextFunction): void => {
     }
   };
 
-  req.log = req.log || logger;
-  req.addLogFields({requestId: req.header('X-Request-Id')});
+  // Replaces req.log with default bunyan logger. So we can override Probot logger
+  req.log = getLogger(middlewareLoggerName);
+
+  const reqId = req.headers['x-request-id'] ||
+    req.headers['x-github-delivery'] ||
+    uuidv4();
+
+  req.addLogFields({requestId: reqId });
 
   next();
 };
