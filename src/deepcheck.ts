@@ -1,10 +1,10 @@
 import Redis from 'ioredis';
 import getRedisInfo from './config/redis-info';
-import { sequelize } from './models/sequelize';
-import { Application } from 'probot';
-import { Response } from 'express';
-import bunyan from 'bunyan';
-import { elapsedTimeMetrics } from './config/statsd';
+import {sequelize} from './models/sequelize';
+import {Application} from 'probot';
+import {Response} from 'express';
+import {elapsedTimeMetrics} from './config/statsd';
+import {getLogger} from './config/logger';
 
 /**
  * Create a /deepcheck and /healthcheck endpoints
@@ -22,7 +22,7 @@ export default (robot: Application) => {
    */
   app.get('/deepcheck', elapsedTimeMetrics, async (_, res: Response) => {
     let connectionsOk = true;
-    const deepcheckLogger = bunyan.createLogger({ name: 'deepcheck' });
+    const deepcheckLogger = getLogger('deepcheck');
 
     const redisPromise = cache.ping();
     const databasePromise = sequelize.authenticate();
@@ -51,7 +51,7 @@ export default (robot: Application) => {
   /**
    * /healtcheck endpoint to check that the app started properly
    */
-  const healthcheckLogger = bunyan.createLogger({ name: 'healthcheck' });
+  const healthcheckLogger = getLogger('healthcheck');
   app.get('/healthcheck', elapsedTimeMetrics, async (_, res: Response) => {
     res.status(200).send('OK');
     healthcheckLogger.info('Successfully called /healthcheck.');

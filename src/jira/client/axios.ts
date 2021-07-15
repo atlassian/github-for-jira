@@ -1,11 +1,12 @@
 import Logger from 'bunyan';
-import axios, { AxiosInstance } from 'axios';
+import axios, {AxiosInstance} from 'axios';
 import jwt from 'atlassian-jwt';
 import url from 'url';
 import statsd from '../../config/statsd';
 import JiraClientError from './jira-client-error';
-import bunyan from 'bunyan';
-import { metricHttpRequest } from '../../config/metric-names';
+import {getLogger} from '../../config/logger'
+import {metricHttpRequest} from '../../config/metric-names';
+
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ''}`;
 
@@ -15,22 +16,20 @@ declare module 'axios' {
     urlParams?: Record<string, string>;
   }
 }
+
 /**
  * Middleware to create a custom JWT for a request.
  *
  * @param {string} secret - The key to use to sign the JWT
  */
 function getAuthMiddleware(secret: string) {
-  const logger = bunyan.createLogger({ name: 'AXIOS' });
   return (
     /**
      * @param {import('axios').AxiosRequestConfig} config - The config for the outgoing request.
      * @returns {import('axios').AxiosRequestConfig} Updated axios config with authentication token.
      */
     (config) => {
-      logger.info(`AXIOS:`, config.url);
-      logger.info(`AXIOS URL:`, typeof config.url);
-      const { query, pathname } = url.parse(config.url, true);
+      const {query, pathname} = url.parse(config.url, true);
 
       const jwtToken = jwt.encode(
         {
@@ -80,17 +79,12 @@ function getErrorMiddleware(logger) {
      */
     (error) => {
       if (error.response) {
-        const { status, statusText } = error.response || {};
-        logger.debug(
-          {
-            params: error.config.urlParams,
-          },
-          `Jira request: ${error.request.method} ${error.request.path} - ${status} ${statusText}`,
-        );
+        const {status, statusText} = error.response || {};
 
-        if (status in JiraErrorCodes) {
-          logger.error(error.response.data, JiraErrorCodes[status]);
-        }
+        const errorMessage = status in JiraErrorCodes ? `Error calling Jira API. ${JiraErrorCodes[status]}` :
+          `Error calling Jira API. Response Code: ${status} ${statusText}`
+
+        logger.warn(error, {message: errorMessage, response_data: error.response.data});
 
         return Promise.reject(new JiraClientError(error));
       } else {
@@ -141,7 +135,7 @@ function getUrlMiddleware() {
      */
     (config) => {
       // eslint-disable-next-line prefer-const
-      let { query, pathname, ...rest } = url.parse(config.url, true);
+      let {query, pathname, ...rest} = url.parse(config.url, true);
       config.urlParams = config.urlParams || {};
 
       for (const param in config.urlParams) {
@@ -229,14 +223,16 @@ const instrumentRequest = (response) => {
  * @param {import('axios').AxiosError} error - The Axios error response object.
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-const instrumentFailedRequest = (error) => {
-  if (error.response) {
-    instrumentRequest(error.response);
-  } else {
-    console.log('Error during Axios request has no response property:', error);
-  }
+const instrumentFailedRequest = (logger) => {
+  return (error) => {
+    if (error.response) {
+      instrumentRequest(error.response);
+    } else {
+      logger.error(error, 'Error during Axios request has no response property.');
+    }
 
-  return Promise.reject(error);
+    return Promise.reject(error);
+  };
 };
 
 /**
@@ -252,7 +248,7 @@ export default (
   secret: string,
   logger?: Logger,
 ): AxiosInstance => {
-  logger = logger || new Logger({ name: 'AxiosClient' });
+  logger = logger || getLogger('AxiosClient');
   const instance = axios.create({
     baseURL,
     timeout: +process.env.JIRA_TIMEOUT || 20000,
@@ -261,7 +257,7 @@ export default (
   instance.interceptors.request.use(setRequestStartTime);
   instance.interceptors.response.use(
     instrumentRequest,
-    instrumentFailedRequest,
+    instrumentFailedRequest(logger),
   );
 
   instance.interceptors.request.use(getAuthMiddleware(secret));

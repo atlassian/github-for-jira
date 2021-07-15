@@ -3,10 +3,10 @@ import statsd from './statsd';
 import {extractPath} from '../jira/client/axios';
 import {GitHubAPI} from 'probot';
 import {LoggerWithTarget, wrapLogger} from 'probot/lib/wrap-logger';
-import Logger from 'bunyan';
+import defaultLogger from './logger';
 import {metricHttpRequest} from './metric-names';
 
-const instrumentRequests = (octokit: GitHubAPI, log: Logger) => {
+const instrumentRequests = (octokit: GitHubAPI, log: LoggerWithTarget) => {
   octokit.hook.wrap('request', async (request, options) => {
     const requestStart = Date.now();
     let responseStatus = null;
@@ -42,8 +42,8 @@ const instrumentRequests = (octokit: GitHubAPI, log: Logger) => {
  * This acts like an Octokit plugin but works on Octokit instances.
  * (Because Probot instantiates the Octokit client for us, we can't use plugins.)
  */
-export default (octokit: GitHubAPI, logger?: LoggerWithTarget): GitHubAPI => {
-  logger = logger || wrapLogger(new Logger({name:'Octokit'}));
+export default (octokit: GitHubAPI, originalLogger?: LoggerWithTarget): GitHubAPI => {
+  const logger = originalLogger || wrapLogger(defaultLogger);
   OctokitError.wrapRequestErrors(octokit);
   instrumentRequests(octokit, logger);
   return octokit;
