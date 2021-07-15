@@ -13,12 +13,27 @@ const logger = Logger.createLogger(
   },
 );
 
-
-
 const logLevel = process.env.LOG_LEVEL || 'info';
-export const globalLoggingLevel = levelFromName[logLevel]
-
+const globalLoggingLevel = levelFromName[logLevel] || Logger.INFO
 logger.level(globalLoggingLevel);
+
+
+// TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
+export const overrideProbotLoggingMethods = (probotLogger:Logger) => {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+
+  // Remove  Default Probot Logging Stream
+  probotLogger.streams.pop();
+
+  // Replace with formatOut stream
+  probotLogger.addStream({
+    type: 'stream',
+    stream: formatOut,
+    closeOnExit: false,
+    level: globalLoggingLevel
+  });
+}
 
 export const getLogger = (name: string): Logger => {
   return logger.child({logger: name});

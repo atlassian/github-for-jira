@@ -5,7 +5,7 @@
 import {Application, createProbot} from 'probot';
 import { findPrivateKey } from 'probot/lib/private-key';
 import setupDeepcheck from "../deepcheck";
-import {globalLoggingLevel} from "../config/logger";
+import {overrideProbotLoggingMethods} from "../config/logger";
 
 export const probot = createProbot({
   id: Number(process.env.APP_ID),
@@ -27,7 +27,7 @@ const App = async (app: Application): Promise<Application> => {
 // We are always behind a proxy, but we want the source IP
 probot.server.set('trust proxy', true);
 
-probot.logger.level(globalLoggingLevel)
+overrideProbotLoggingMethods(probot.logger)
 
 // Load an empty app so we can get access to probot's auth handling
 // eslint-disable-next-line @typescript-eslint/no-empty-function

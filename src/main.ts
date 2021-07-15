@@ -7,7 +7,7 @@ import App from './configure-robot';
 import bunyan from 'bunyan';
 import { exec } from 'child_process';
 import { initializeSentry } from './config/sentry';
-import {getLogger, globalLoggingLevel} from './config/logger'
+import {getLogger, overrideProbotLoggingMethods} from './config/logger'
 
 const isProd = process.env.NODE_ENV === 'production';
 const { redisOptions } = getRedisInfo('probot');
@@ -23,7 +23,7 @@ const probot = createProbot({
   redisConfig: redisOptions,
 });
 
-probot.logger.level(globalLoggingLevel)
+overrideProbotLoggingMethods(probot.logger)
 
 async function createDBTables(logger: bunyan) {
   try {
