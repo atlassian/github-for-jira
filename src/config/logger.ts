@@ -1,4 +1,4 @@
-import Logger  from 'bunyan';
+import Logger, {levelFromName} from 'bunyan';
 import bformat from 'bunyan-format';
 import filteringStream from '../util/filteringStream'
 
@@ -13,26 +13,31 @@ const logger = Logger.createLogger(
   },
 );
 
-// Suppress logging in tests
-if (process.env.NODE_ENV === 'test') {
-  logger.level(Logger.FATAL + 1);
+
+
+const logLevel = process.env.LOG_LEVEL || 'info';
+export const globalLoggingLevel = levelFromName[logLevel]
+
+logger.level(globalLoggingLevel);
+
+export const getLogger = (name: string): Logger => {
+  return logger.child({logger: name});
 }
 
 //Override console.log with bunyan logger.
 //we shouldn't use console.log in our code, but it is done to catch
 //possible logs from third party libraries
+const consoleLogger = getLogger('Console')
 // eslint-disable-next-line no-console
-console.debug = logger.debug.bind(logger);
+console.debug = consoleLogger.debug.bind(consoleLogger);
 // eslint-disable-next-line no-console
-console.error = logger.error.bind(logger);
+console.error = consoleLogger.error.bind(consoleLogger);
 // eslint-disable-next-line no-console
-console.log = logger.info.bind(logger);
+console.log = consoleLogger.info.bind(consoleLogger);
 // eslint-disable-next-line no-console
-console.warn = logger.warn.bind(logger);
+console.warn = consoleLogger.warn.bind(consoleLogger);
 
-export const getLogger = (name: string): Logger => {
-  return logger.child({logger: name});
-}
+
 
 export default logger
 

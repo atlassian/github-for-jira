@@ -2,26 +2,28 @@ import './config/env'; // Important to be before other dependencies
 import throng from 'throng';
 import getRedisInfo from './config/redis-info';
 import * as PrivateKey from 'probot/lib/private-key';
-import { Probot } from 'probot';
+import { createProbot } from 'probot';
 import App from './configure-robot';
 import bunyan from 'bunyan';
 import { exec } from 'child_process';
 import { initializeSentry } from './config/sentry';
-import { getLogger } from './config/logger'
+import {getLogger, globalLoggingLevel} from './config/logger'
 
 const isProd = process.env.NODE_ENV === 'production';
 const { redisOptions } = getRedisInfo('probot');
 
 
-const probot = new Probot({
+const probot = createProbot({
   id: Number(process.env.APP_ID),
   secret: process.env.WEBHOOK_SECRET,
   cert: PrivateKey.findPrivateKey(),
   port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080,
   webhookPath: '/github/events',
   webhookProxy: process.env.WEBHOOK_PROXY_URL,
-  redisConfig: redisOptions
+  redisConfig: redisOptions,
 });
+
+probot.logger.level(globalLoggingLevel)
 
 async function createDBTables(logger: bunyan) {
   try {
