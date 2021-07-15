@@ -177,14 +177,6 @@ export default class Subscription extends Sequelize.Model {
     await this.destroy();
   }
 
-  async resumeSync(): Promise<Job> {
-    return Subscription.findOrStartSync(this);
-  }
-
-  async restartSync(): Promise<Job> {
-    return Subscription.findOrStartSync(this, "full");
-  }
-
   // A stalled in progress sync is one that is ACTIVE but has not seen any updates in the last 15 minutes
   // This may happen when an error causes a sync to die without setting the status to 'FAILED'
   isInProgressSyncStalled(): boolean {
