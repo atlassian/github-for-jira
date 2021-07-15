@@ -27,9 +27,9 @@ const filteringStream = (out) => {
 //TODO Remove this code when there will be convenient way to do it in Probot.
 //See https://github.com/probot/probot/issues/1577
 const shouldBeFiltered = (chunk: any) : boolean => {
-  return chunk.includes && (chunk.includes("GET /")
-    || chunk.includes("POST /") || chunk.includes("DELETE /")) &&
-    chunk.includes(middlewareLoggerName)
+  return chunk.includes && chunk.includes(middlewareLoggerName) &&
+    (chunk.includes("GET /") || chunk.includes("POST /") || chunk.includes("DELETE /"))
+
 }
 
 
