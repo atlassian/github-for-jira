@@ -10,13 +10,10 @@ import { Installation, Subscription } from "../models";
 import verifyInstallation from "../jira/verify-installation";
 import logMiddleware from "../middleware/log-middleware";
 import JiraClient from "../models/jira-client";
-import getJiraClient from "../jira/client";
 import uninstall from "../jira/uninstall";
 import { serializeJiraInstallation, serializeSubscription } from "./serializers";
 import getRedisInfo from "../config/redis-info";
-import statsd, { elapsedTimeMetrics } from "../config/statsd";
-import { metricSyncStatus } from "../config/metric-names";
-import { logger } from "probot/lib/logger";
+import { elapsedTimeMetrics } from "../config/statsd";
 import { Op } from "sequelize";
 import SubscriptionModel from "../models/subscription";
 
