@@ -14,11 +14,13 @@ import AxiosErrorEventDecorator from '../models/axios-error-event-decorator';
 import SentryScopeProxy from '../models/sentry-scope-proxy';
 import { metricHttpRequest } from '../config/metric-names';
 import { initializeSentry } from '../config/sentry';
+import { getLogger } from '../config/logger';
 import '../config/proxy';
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo('client').redisOptions);
 const subscriber = new Redis(getRedisInfo('subscriber').redisOptions);
+const logger = getLogger('Worker')
 
 function measureElapsedTime(startTime, tags) {
   const endTime = Date.now();
@@ -67,12 +69,12 @@ Object.keys(queues).forEach((name) => {
 
   // TODO: need ability to remove these listeners, especially for testing
   queue.on('active', (job) => {
-    app.log.info(`Job started name=${name} id=${job.id}`);
+    logger.info(`Job started name=${name} id=${job.id}`);
     job.meta_time_start = new Date();
   });
 
   queue.on('completed', (job) => {
-    app.log.info(`Job completed name=${name} id=${job.id}`);
+    logger.info(`Job completed name=${name} id=${job.id}`);
 
     measureElapsedTime(job.meta_time_start, {
       queue: name,
@@ -81,7 +83,7 @@ Object.keys(queues).forEach((name) => {
   });
 
   queue.on('failed', async (job) => {
-    app.log.error(
+    logger.error(
       `Error occurred while processing job id=${job.id} on queue name=${name}`,
     );
 
@@ -89,7 +91,7 @@ Object.keys(queues).forEach((name) => {
   });
 
   queue.on('error', (err) => {
-    app.log.error(`Error occurred while processing queue ${name}: ${err}`);
+    logger.error(err, `Error occurred while processing queue ${name}`);
 
     Sentry.setTag('queue', name);
     Sentry.captureException(err);
@@ -147,7 +149,7 @@ export const start = (): void => {
   queues.metrics.process(1, commonMiddleware(metricsJob));
 
   probot.start();
-  app.log(
+  logger.info(
     `Worker process started with ${CONCURRENT_WORKERS} CONCURRENT WORKERS`,
   );
 };

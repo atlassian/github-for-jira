@@ -84,7 +84,6 @@ const upperFirst = (str) =>
 const getCursorKey = (jobType) => `last${upperFirst(jobType)}Cursor`;
 
 const updateJobStatus = async (
-  app: Application,
   queues,
   jiraClient,
   job,
@@ -101,12 +100,12 @@ const updateJobStatus = async (
 
   // handle promise rejection when an org is removed during a sync
   if (subscription == null) {
-    app.log('Organization has been deleted. Other active syncs will continue.');
+    logger.info('Organization has been deleted. Other active syncs will continue.');
     return;
   }
 
   const status = edges.length > 0 ? 'pending' : 'complete';
-  app.log(
+  logger.info(
     `Updating job status for installationId=${installationId}, repositoryId=${repositoryId}, task=${task}, status=${status}`,
   );
   await subscription.updateSyncState({
@@ -142,21 +141,20 @@ const updateJobStatus = async (
       const endTime = Date.now();
       const timeDiff = endTime - Date.parse(job.data.startTime);
       message = `${message} startTime=${job.data.startTime} endTime=${endTime} diff=${timeDiff}`;
-      logger.info(`Sync time: startTime=${job.data.startTime} endTime=${endTime} diff=${timeDiff}`);
 
       // full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
       // startTime will be passed in when this sync job is queued from the discovery
       statsd.histogram(metricHttpRequest().fullSync, timeDiff);
     }
-    app.log(message);
+    logger.info(message);
 
     try {
       await jiraClient.devinfo.migration.complete();
     } catch (err) {
-      app.log.warn(err, 'Error sending the `complete` event to JIRA');
+      logger.warn(err, 'Error sending the `complete` event to JIRA');
     }
   } else {
-    app.log(`Sync status for installationId=${installationId} is pending`);
+    logger.info('Sync status for installationId=%d is pending', installationId);
     const { removeOnComplete, removeOnFail } = job.opts;
     queues.installation.add(job.data, {
       attempts: 3,
@@ -168,7 +166,7 @@ const updateJobStatus = async (
 
 async function getEnhancedGitHub(app: Application, installationId) {
   const github = await app.auth(installationId);
-  enhanceOctokit(github, app.log);
+  enhanceOctokit(github);
   return github;
 }
 
@@ -183,7 +181,7 @@ export const processInstallation =
       jiraHost,
     });
 
-    app.log(`Starting job for installationId=${installationId}`);
+    logger.info('Starting job for installationId=%d', installationId);
 
     const subscription = await Subscription.getSingleInstallation(
       jiraHost,
@@ -195,7 +193,7 @@ export const processInstallation =
     const jiraClient = await getJiraClient(
       subscription.jiraHost,
       installationId,
-      app.log,
+      logger,
     );
     const github = await getEnhancedGitHub(app, installationId);
 
@@ -203,7 +201,7 @@ export const processInstallation =
     if (!nextTask) {
       await subscription.update({ syncStatus: 'COMPLETE' });
       statsd.increment(metricSyncStatus.complete);
-      logger.info(`Sync complete: installationId=${installationId}`);
+      logger.info('Sync complete: installationId=%d', installationId);
       return;
     }
 
@@ -225,7 +223,7 @@ export const processInstallation =
         },
       });
     }
-    app.log(
+    logger.info(
       `Starting task for installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`,
     );
 
@@ -299,7 +297,6 @@ export const processInstallation =
         }
       }
       await updateJobStatus(
-        app,
         queues,
         jiraClient,
         job,
@@ -312,7 +309,7 @@ export const processInstallation =
       const delay = Math.max(Date.now() - rateLimit * 1000, 0);
       if (delay) {
         // if not NaN or 0
-        app.log(
+        logger.info(
           `Delaying job for ${delay}ms installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`,
         );
         const { removeOnComplete, removeOnFail } = job.opts;
@@ -326,7 +323,7 @@ export const processInstallation =
       if (String(err).includes('connect ETIMEDOUT')) {
         // There was a network connection issue.
         // Add the job back to the queue with a 5 second delay
-        app.log(
+        logger.warn(
           `ETIMEDOUT error, retrying in 5 seconds: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`,
         );
         const { removeOnComplete, removeOnFail } = job.opts;
@@ -343,7 +340,7 @@ export const processInstallation =
         )
       ) {
         // Too much server processing time, wait 60 seconds and try again
-        app.log(
+        logger.warn(
           `Abuse detection triggered. Retrying in 60 seconds: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`,
         );
         const { removeOnComplete, removeOnFail } = job.opts;
@@ -360,13 +357,12 @@ export const processInstallation =
         err.errors.filter((error) => error.type === 'NOT_FOUND').length;
 
       if (isNotFoundError) {
-        app.log.info(
+        logger.info(
           `Repository deleted after discovery, skipping initial sync: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`,
         );
 
         const edgesLeft = []; // No edges left to process since the repository doesn't exist
         await updateJobStatus(
-          app,
           queues,
           jiraClient,
           job,
@@ -380,7 +376,7 @@ export const processInstallation =
       await subscription.update({ syncStatus: 'FAILED' });
 
       statsd.increment(metricSyncStatus.failed);
-      logger.info(`Sync failed: installationId=${installationId}`);
+      logger.warn(err, `Sync failed: installationId=${installationId}`);
 
       job.sentry.setExtra('Installation FAILED', JSON.stringify(err, null, 2));
       job.sentry.captureException(err);

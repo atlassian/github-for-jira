@@ -53,7 +53,7 @@ export default (
   callback: (context: any, jiraClient: any, util: any) => void,
 ) => {
   return withSentry(async (context: CustomContext) => {
-    enhanceOctokit(context.github, context.log);
+    enhanceOctokit(context.github);
 
     let webhookEvent = context.name;
     if (context.payload.action) {

@@ -5,8 +5,11 @@ import { isEmpty } from '../jira/util/isEmpty';
 import { queues } from '../worker/main';
 import enhanceOctokit from '../config/enhance-octokit';
 import { Application } from 'probot';
+import { getLogger } from '../config/logger';
 
 // TODO: define better types for this file
+
+const logger = getLogger('transforms.push')
 
 function mapFile(githubFile) {
   // changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
@@ -75,6 +78,7 @@ export function processPush(app: Application) {
         installationId,
         jiraHost,
       } = job.data;
+      logger.info('Processing push for installation id %d', installationId)
 
       const subscription = await Subscription.getSingleInstallation(
         jiraHost,
@@ -86,10 +90,10 @@ export function processPush(app: Application) {
       const jiraClient = await getJiraClient(
         subscription.jiraHost,
         installationId,
-        app.log,
+        logger,
       );
       const github = await app.auth(installationId);
-      enhanceOctokit(github, app.log);
+      enhanceOctokit(github);
 
       const commits = await Promise.all(
         shas.map(async (sha) => {
@@ -158,7 +162,7 @@ export function processPush(app: Application) {
         await jiraClient.devinfo.repository.update(jiraPayload);
       }
     } catch (error) {
-      app.log.error(`Failed to process push: ${error}`);
+      logger.error(error, 'Failed to process push');
     }
   };
 }

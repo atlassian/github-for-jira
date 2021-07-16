@@ -1,6 +1,6 @@
-import { StatsD, StatsCb, Tags } from 'hot-shots';
-import { getLogger } from './logger'
-import { Request, Response, NextFunction } from 'express';
+import {StatsCb, StatsD, Tags} from 'hot-shots';
+import {getLogger} from './logger';
+import {NextFunction, Request, Response} from 'express';
 
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -11,14 +11,19 @@ export const globalTags = {
   region: process.env.MICROS_AWS_REGION || 'localhost',
 };
 
-const logger = getLogger('statsd');
+const logger = getLogger('config.statsd');
 
 const statsd = new StatsD({
   prefix: 'github-for-jira.',
   host: 'platform-statsd',
   port: 8125,
   globalTags,
-  errorHandler: (err) => logger.warn({ err }, 'error writing metrics'),
+  errorHandler: (err) => {
+    if (process.env.NODE_ENV !== 'development') {
+      logger.warn(err, 'error writing metrics')
+    }
+  },
+
   mock: isTest,
 });
 
@@ -44,11 +49,10 @@ export const elapsedTimeMetrics = (
   next: NextFunction,
 ) => {
   const elapsedTimeInMs = hrtimer();
-  const { path, method } = req;
-  const tags = { path, method };
+  const {path, method} = req;
+  const tags = {path, method};
 
   res.once('finish', () => {
-    logger.info(`${path} : ${elapsedTimeInMs()}`);
     statsd.histogram('elapsedTimeInMs', elapsedTimeInMs(), tags);
   });
 

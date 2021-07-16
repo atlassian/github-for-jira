@@ -21,6 +21,9 @@ export default async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
+  req.log.info("Received add subscription request for Installation ID %s and Jira Host %s",
+    req.body.installationId, req.session.jiraHost);
+
   // Check if the user that posted this has access to the installation ID they're requesting
   try {
     const {data: {installations}} = await res.locals.github.apps.listInstallationsForAuthenticatedUser();
@@ -66,7 +69,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 
     res.sendStatus(200);
   } catch (err) {
-    req.log.error(err);
-    res.sendStatus(400);
+    req.log.error(err, "Error processing subscription add request");
+    res.sendStatus(500);
   }
 };
