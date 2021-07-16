@@ -10,12 +10,15 @@ import { getLogger } from '../config/logger'
 import { metricWebhooks } from '../config/metric-names';
 
 export default (robot) => {
-  const logger = getLogger('github');
+  const logger = getLogger('github.webhooks');
 
   // TODO: Need ability to remove these listeners, especially for testing...
   robot.on('*', (context) => {
     const { name, payload } = context;
-    logger.info({ event: name, action: payload.action }, 'Event received');
+
+    context.log = logger.child({id: context.id})
+
+    context.log.info({ event: name, action: payload.action }, 'Event received');
 
     const tags = [
       `name: webhooks`,

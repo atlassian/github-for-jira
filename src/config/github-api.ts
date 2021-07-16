@@ -11,7 +11,7 @@ const client = new Redis(redisOptions);
 const connection = new Bottleneck.IORedisConnection({client});
 
 export default (options: Partial<GithubAPIOptions> = {}): GitHubAPI => {
-  options.logger = options.logger || getLogger('Github API');
+  options.logger = options.logger || getLogger('config.github-api');
   if (process.env.NODE_ENV === 'test') {
     // Don't throttle at all
     options.throttle = {

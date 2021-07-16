@@ -2,11 +2,9 @@ import OctokitError from '../models/octokit-error';
 import statsd from './statsd';
 import {extractPath} from '../jira/client/axios';
 import {GitHubAPI} from 'probot';
-import {LoggerWithTarget, wrapLogger} from 'probot/lib/wrap-logger';
-import defaultLogger from './logger';
 import {metricHttpRequest} from './metric-names';
 
-const instrumentRequests = (octokit: GitHubAPI, log: LoggerWithTarget) => {
+const instrumentRequests = (octokit: GitHubAPI) => {
   octokit.hook.wrap('request', async (request, options) => {
     const requestStart = Date.now();
     let responseStatus = null;
@@ -31,7 +29,6 @@ const instrumentRequests = (octokit: GitHubAPI, log: LoggerWithTarget) => {
       };
 
       statsd.histogram(metricHttpRequest().github, elapsed, tags);
-      log.debug(tags, `GitHub request time: ${elapsed}ms`);
     }
   });
 };
@@ -42,9 +39,9 @@ const instrumentRequests = (octokit: GitHubAPI, log: LoggerWithTarget) => {
  * This acts like an Octokit plugin but works on Octokit instances.
  * (Because Probot instantiates the Octokit client for us, we can't use plugins.)
  */
-export default (octokit: GitHubAPI, originalLogger?: LoggerWithTarget): GitHubAPI => {
-  const logger = originalLogger || wrapLogger(defaultLogger);
+export default (octokit: GitHubAPI): GitHubAPI => {
+
   OctokitError.wrapRequestErrors(octokit);
-  instrumentRequests(octokit, logger);
+  instrumentRequests(octokit);
   return octokit;
 };
