@@ -7,10 +7,12 @@ import App from './configure-robot';
 import bunyan from 'bunyan';
 import { exec } from 'child_process';
 import { initializeSentry } from './config/sentry';
+import {getLogger, overrideProbotLoggingMethods} from './config/logger'
 import './config/proxy';
 
 const isProd = process.env.NODE_ENV === 'production';
 const { redisOptions } = getRedisInfo('probot');
+
 
 const probot = createProbot({
   id: Number(process.env.APP_ID),
@@ -21,6 +23,8 @@ const probot = createProbot({
   webhookProxy: process.env.WEBHOOK_PROXY_URL,
   redisConfig: redisOptions,
 });
+
+overrideProbotLoggingMethods(probot.logger)
 
 async function createDBTables(logger: bunyan) {
   try {
@@ -46,7 +50,7 @@ async function createDBTables(logger: bunyan) {
 async function start() {
   initializeSentry();
 
-  const logger = bunyan.createLogger({ name: 'App start' });
+  const logger = getLogger( 'startup' );
 
   // Create tables for micros environments
   if (isProd) await createDBTables(logger);

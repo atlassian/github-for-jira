@@ -59,9 +59,8 @@ export default (opts: OAuthOptions): GithubOAuth => {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    const { query } = url.parse(req.url, true);
-    const code = query.code as string;
-    const state = query.state as string;
+    const code = req.query.code as string;
+    const state = req.query.state as string;
 
     // Take save redirect url and delete it from session
     const redirectUrl = req.session[state] as string;
