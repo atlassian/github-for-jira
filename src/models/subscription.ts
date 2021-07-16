@@ -2,6 +2,7 @@ import Sequelize from "sequelize";
 import { queues } from "../worker/main";
 import { Job } from "bull";
 import _ from "lodash";
+import logger from '../config/logger';
 
 export enum SyncStatus {
   PENDING = "PENDING",
@@ -145,7 +146,7 @@ export default class Subscription extends Sequelize.Model {
           repos: {}
         }
       });
-      console.log("Starting Jira sync");
+      logger.info("Starting Jira sync");
       return queues.discovery.add({ installationId, jiraHost });
     }
 

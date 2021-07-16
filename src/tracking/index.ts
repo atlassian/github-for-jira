@@ -1,7 +1,7 @@
 import https from 'https';
 import axios from 'axios';
 import crypto from 'crypto';
-import { logger } from 'probot/lib/logger';
+import logger from '../config/logger';
 import statsd, { asyncDistTimer } from '../config/statsd';
 import { Action } from '../proto/v0/action';
 import { metricHttpRequest } from '../config/metric-names';

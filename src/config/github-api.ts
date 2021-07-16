@@ -1,5 +1,5 @@
 import {GitHubAPI} from 'probot';
-import bunyan from 'bunyan';
+import {getLogger} from './logger';
 import Redis from 'ioredis';
 import Bottleneck from 'bottleneck';
 import getRedisInfo from './redis-info';
@@ -11,7 +11,7 @@ const client = new Redis(redisOptions);
 const connection = new Bottleneck.IORedisConnection({client});
 
 export default (options: Partial<GithubAPIOptions> = {}): GitHubAPI => {
-  options.logger = options.logger || bunyan.createLogger({name: 'Github API'});
+  options.logger = options.logger || getLogger('Github API');
   if (process.env.NODE_ENV === 'test') {
     // Don't throttle at all
     options.throttle = {
