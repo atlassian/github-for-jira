@@ -1,26 +1,21 @@
-import {NextFunction, Request, Response} from 'express';
-import express from 'express';
-import {check, oneOf, validationResult} from 'express-validator';
-import format from 'date-fns/format';
-import rateLimit from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
-import Redis from 'ioredis';
-import BodyParser from 'body-parser';
-import GitHubAPI from '../config/github-api';
-import {Installation, Subscription} from '../models';
-import verifyInstallation from '../jira/verify-installation';
-import logMiddleware from '../middleware/log-middleware';
-import JiraClient from '../models/jira-client';
-import getJiraClient from '../jira/client';
-import uninstall from '../jira/uninstall';
-import {
-  serializeJiraInstallation,
-  serializeSubscription,
-} from './serializers';
-import getRedisInfo from '../config/redis-info';
-import statsd, {elapsedTimeMetrics} from '../config/statsd';
-import {metricSyncStatus} from '../config/metric-names';
-import logger from '../config/logger';
+import express, { NextFunction, Request, Response } from "express";
+import { check, oneOf, validationResult } from "express-validator";
+import format from "date-fns/format";
+import rateLimit from "express-rate-limit";
+import RedisStore from "rate-limit-redis";
+import Redis from "ioredis";
+import BodyParser from "body-parser";
+import GitHubAPI from "../config/github-api";
+import { Installation, Subscription } from "../models";
+import verifyInstallation from "../jira/verify-installation";
+import logMiddleware from "../middleware/log-middleware";
+import JiraClient from "../models/jira-client";
+import uninstall from "../jira/uninstall";
+import { serializeJiraInstallation, serializeSubscription } from "./serializers";
+import getRedisInfo from "../config/redis-info";
+import { elapsedTimeMetrics } from "../config/statsd";
+import { Op } from "sequelize";
+import SubscriptionModel from "../models/subscription";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -46,7 +41,7 @@ function validAdminPermission(viewer) {
 function returnOnValidationError(
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -67,10 +62,10 @@ const viewerPermissionQuery = `{
 
 const limiter = rateLimit({
   store: new RedisStore({
-    client: new Redis(getRedisInfo('express-rate-limit').redisOptions),
+    client: new Redis(getRedisInfo("express-rate-limit").redisOptions)
   }),
   windowMs: 60 * 1000, // 1 minutes
-  max: 60, // limit each IP to 60 requests per windowMs
+  max: 60 // limit each IP to 60 requests per windowMs
 });
 
 router.use(limiter);
@@ -82,7 +77,7 @@ router.use(logMiddleware);
 
 router.use(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const token = req.get('Authorization');
+    const token = req.get("Authorization");
     if (!token) {
       res.sendStatus(404);
       return;
@@ -90,18 +85,18 @@ router.use(
     try {
       // Create a separate octokit instance than the one used by the app
       const octokit = GitHubAPI({
-        auth: token.split(' ')[1],
+        auth: token.split(" ")[1]
       });
       const { data, errors } = (
         await octokit.request({
           headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
+            Accept: "application/json",
+            "Content-Type": "application/json"
           },
-          method: 'POST',
+          method: "POST",
           // 'viewer' will be the person that owns the token
           query: viewerPermissionQuery,
-          url: '/graphql',
+          url: "/graphql"
         })
       ).data;
 
@@ -114,17 +109,17 @@ router.use(
 
       if (!validAdminPermission(data.viewer)) {
         req.log.info(
-          `User attempted to access staff routes: login=${data.viewer.login}, viewerCanAdminister=${data.viewer.organization?.viewerCanAdminister}`,
+          `User attempted to access staff routes: login=${data.viewer.login}, viewerCanAdminister=${data.viewer.organization?.viewerCanAdminister}`
         );
         res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Token provided does not have required access',
+          error: "Unauthorized",
+          message: "Token provided does not have required access"
         });
         return;
       }
 
       req.log.info(
-        `Staff routes accessed: login=${data.viewer.login}, viewerCanAdminister=${data.viewer.organization?.viewerCanAdminister}`,
+        `Staff routes accessed: login=${data.viewer.login}, viewerCanAdminister=${data.viewer.organization?.viewerCanAdminister}`
       );
 
       next();
@@ -137,20 +132,20 @@ router.use(
       }
       res.sendStatus(500);
     }
-  },
+  }
 );
 
 router.get(
-  '/',
+  "/",
   elapsedTimeMetrics,
   (_: Request, res: Response): void => {
     res.send({});
-  },
+  }
 );
 
 router.get(
-  '/:installationId',
-  check('installationId').isInt(),
+  "/:installationId",
+  check("installationId").isInt(),
   returnOnValidationError,
   elapsedTimeMetrics,
   async (req: Request, res: Response): Promise<void> => {
@@ -159,7 +154,7 @@ router.get(
 
     try {
       const subscriptions = await Subscription.getAllForInstallation(
-        Number(installationId),
+        Number(installationId)
       );
 
       if (!subscriptions.length) {
@@ -170,16 +165,16 @@ router.get(
       const { jiraHost } = subscriptions[0];
       const installations = await Promise.all(
         subscriptions.map((subscription) =>
-          getInstallation(client, subscription),
-        ),
+          getInstallation(client, subscription)
+        )
       );
       const connections = installations
         .filter((response) => !response.error)
         .map((data) => ({
           ...data,
-          isGlobalInstall: data.repository_selection === 'all',
-          updated_at: format(data.updated_at, 'MMMM D, YYYY h:mm a'),
-          syncState: data.syncState,
+          isGlobalInstall: data.repository_selection === "all",
+          updated_at: format(data.updated_at, "MMMM D, YYYY h:mm a"),
+          syncState: data.syncState
         }));
 
       const failedConnections = installations.filter((response) => {
@@ -194,19 +189,19 @@ router.get(
         failedConnections,
         hasConnections: connections.length > 0 || failedConnections.length > 0,
         repoSyncState: `${req.protocol}://${req.get(
-          'host',
-        )}/api/${installationId}/repoSyncState.json`,
+          "host"
+        )}/api/${installationId}/repoSyncState.json`
       });
     } catch (err) {
       req.log.error(err);
       res.status(500).json(err);
     }
-  },
+  }
 );
 
 router.get(
-  '/:installationId/repoSyncState.json',
-  check('installationId').isInt(),
+  "/:installationId/repoSyncState.json",
+  check("installationId").isInt(),
   returnOnValidationError,
   elapsedTimeMetrics,
   async (req: Request, res: Response): Promise<void> => {
@@ -215,7 +210,7 @@ router.get(
     try {
       const subscription = await Subscription.getSingleInstallation(
         req.session.jiraHost,
-        githubInstallationId,
+        githubInstallationId
       );
 
       if (!subscription) {
@@ -228,25 +223,25 @@ router.get(
     } catch (err) {
       res.status(500).json(err);
     }
-  },
+  }
 );
 
 router.post(
-  '/:installationId/sync',
+  "/:installationId/sync",
   bodyParser,
-  check('installationId').isInt(),
+  check("installationId").isInt(),
   returnOnValidationError,
   elapsedTimeMetrics,
   async (req: Request, res: Response): Promise<void> => {
     const githubInstallationId = Number(req.params.installationId);
     req.log.info(req.body);
-    const { jiraHost } = req.body;
+    const { jiraHost, resetType } = req.body;
 
     try {
       req.log.info(jiraHost, githubInstallationId);
       const subscription = await Subscription.getSingleInstallation(
         jiraHost,
-        githubInstallationId,
+        githubInstallationId
       );
 
       if (!subscription) {
@@ -254,60 +249,65 @@ router.post(
         return;
       }
 
-      const type = req.body.resetType || null;
-      await Subscription.findOrStartSync(subscription, type);
+      await Subscription.findOrStartSync(subscription, resetType);
 
       res.status(202).json({
-        message: `Successfully (re)started sync for ${githubInstallationId}`,
+        message: `Successfully (re)started sync for ${githubInstallationId}`
       });
     } catch (err) {
       req.log.info(err);
       res.sendStatus(401);
     }
-  },
+  }
 );
 
-// Grab the last n failed syncs and trigger a sync
+// RESYNC ALL INSTANCES
 router.post(
-  '/resyncFailed',
+  "/resync",
   bodyParser,
   elapsedTimeMetrics,
-  async (request: Request, response: Response): Promise<void> => {
-    const limit = Math.max(Number(request.query.limit) || 10, 100);
-    const offset = Number(request.query.offset) || 0;
+  async (req: Request, res: Response): Promise<void> => {
+    // Partial by default, can be made full
+    const syncType = req.body.syncType || "partial";
+    // Defaults to anything not completed
+    const statusTypes = req.body.statusTypes as string[] || ["FAILED", "PENDING", "ACTIVE"];
+    // Can be limited to a certain amount if needed to not overload system
+    const limit = Number(req.body.limit) || undefined;
+    // Needed for 'pagination'
+    const offset = Number(req.body.offset) || 0;
 
-    const failedSubscriptions = await Subscription.findAll({
-      where: { syncStatus: 'FAILED' },
+    // Find all subscriptions that has a status type of X, sorted by last updated
+    const subscriptions: SubscriptionModel[] = await Subscription.findAll({
+      where: {
+        // Does a OR check on status types
+        [Op.or]: statusTypes.map(status => ({ syncStatus: status }))
+      },
       limit,
       offset,
-      order: [['updatedAt', 'DESC']],
+      order: [["updatedAt", "DESC"]]
     });
 
-    await Promise.all(
-      failedSubscriptions.map((subscription) => subscription.resumeSync()),
-    );
+    await Promise.all(subscriptions.map((subscription) =>
+      Subscription.findOrStartSync(subscription, syncType)
+    ));
 
-    const data = failedSubscriptions.map((subscription) =>
-      serializeSubscription(subscription),
-    );
-
-    response.json(await Promise.all(data));
-  },
+    res.json(subscriptions.map(serializeSubscription));
+  }
 );
 
 router.get(
-  '/jira/:clientKeyOrJiraHost',
+  "/jira/:clientKeyOrJiraHost",
   [
     bodyParser,
     oneOf([
-      check('clientKeyOrJiraHost').isURL(),
-      check('clientKeyOrJiraHost').isHexadecimal(),
+      check("clientKeyOrJiraHost").isURL(),
+      check("clientKeyOrJiraHost").isHexadecimal()
     ]),
     returnOnValidationError,
-    elapsedTimeMetrics,
+    elapsedTimeMetrics
   ],
   async (req: Request, res: Response): Promise<void> => {
-    const where = req.params.clientKeyOrJiraHost.startsWith('http')
+    const where = req.params.clientKeyOrJiraHost.startsWith("http")
       ? { jiraHost: req.params.clientKeyOrJiraHost }
       : { clientKey: req.params.clientKeyOrJiraHost };
     const jiraInstallations = await Installation.findAll({ where });
@@ -315,22 +315,21 @@ router.get(
       res.sendStatus(404);
       return;
     }
-    const data = jiraInstallations.map((jiraInstallation) =>
-      serializeJiraInstallation(jiraInstallation, req.log),
-    );
-    res.json(await Promise.all(data));
-  },
+    res.json(jiraInstallations.map((jiraInstallation) =>
+      serializeJiraInstallation(jiraInstallation, req.log)
+    ));
+  }
 );
 
 router.post(
-  '/jira/:clientKey/uninstall',
+  "/jira/:clientKey/uninstall",
   bodyParser,
-  check('clientKey').isHexadecimal(),
+  check("clientKey").isHexadecimal(),
   returnOnValidationError,
   elapsedTimeMetrics,
   async (request: Request, response: Response): Promise<void> => {
     response.locals.installation = await Installation.findOne({
-      where: { clientKey: request.params.clientKey },
+      where: { clientKey: request.params.clientKey }
     });
 
     if (!response.locals.installation) {
@@ -339,29 +338,29 @@ router.post(
     }
     const jiraClient = new JiraClient(
       response.locals.installation,
-      request.log,
+      request.log
     );
-    const checkAuthorization = request.body.force !== 'true';
+    const checkAuthorization = request.body.force !== "true";
 
     if (checkAuthorization && (await jiraClient.isAuthorized())) {
       response
         .status(400)
         .json({
-          message: 'Refusing to uninstall authorized Jira installation',
+          message: "Refusing to uninstall authorized Jira installation"
         });
       return;
     }
     request.log.info(
-      `Forcing uninstall for ${response.locals.installation.clientKey}`,
+      `Forcing uninstall for ${response.locals.installation.clientKey}`
     );
     await uninstall(request, response);
-  },
+  }
 );
 
 router.post(
-  '/jira/:installationId/verify',
+  "/jira/:installationId/verify",
   bodyParser,
-  check('installationId').isInt(),
+  check("installationId").isInt(),
   returnOnValidationError,
   elapsedTimeMetrics,
   async (req: Request, response: Response): Promise<void> => {
@@ -374,69 +373,19 @@ router.post(
         installation: {
           enabled: installation.enabled,
           id: installation.id,
-          jiraHost: installation.jiraHost,
-        },
+          jiraHost: installation.jiraHost
+        }
       });
 
     if (installation.enabled) {
-      respondWith('Installation already enabled');
+      respondWith("Installation already enabled");
       return;
     }
     await verifyInstallation(installation, req.log)();
     respondWith(
-      installation.enabled ? 'Verification successful' : 'Verification failed',
+      installation.enabled ? "Verification successful" : "Verification failed"
     );
-  },
-);
-
-router.post(
-  '/:installationId/migrate/:undo?',
-  bodyParser,
-  check('installationId').isInt(),
-  returnOnValidationError,
-  elapsedTimeMetrics,
-  async (req: Request, res: Response): Promise<void> => {
-    const githubInstallationId = Number(req.params.installationId);
-    const { jiraHost } = req.body;
-    const subscription = await Subscription.getSingleInstallation(
-      jiraHost,
-      githubInstallationId,
-    );
-
-    if (!subscription) {
-      res.sendStatus(404);
-      return;
-    }
-
-    const jiraClient = await getJiraClient(
-      jiraHost,
-      githubInstallationId,
-      req.log,
-    );
-
-    if (req.params.undo) {
-      try {
-        await jiraClient.devinfo.migration.undo();
-        res.send('Successfully called migrationUndo');
-        await subscription.update({ syncStatus: 'FAILED' });
-      } catch (err) {
-        res.send(`Error trying to undo migration: ${err}`).status(500);
-      }
-      return;
-    }
-
-    try {
-      await jiraClient.devinfo.migration.complete();
-      res.send('Successfully called migrationComplete');
-      await subscription.update({ syncStatus: 'COMPLETE' });
-
-      statsd.increment(metricSyncStatus.complete);
-      logger.info(`Sync failed: installationId=${githubInstallationId}`);
-
-    } catch (err) {
-      res.send(`Error trying to complete migration: ${err}`).status(500);
-    }
-  },
+  }
 );
 
 export default router;
