@@ -81,7 +81,6 @@ export default (
         {
           noop: 'bot',
           botId: context.payload.sender.id,
-          botLogin: context.payload.sender.login,
         },
         'Halting further execution since the sender is a bot and action is not a state change',
       );
