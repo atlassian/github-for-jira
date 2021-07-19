@@ -54,7 +54,7 @@ describe('POST /github/subscription', () => {
       .reply(200, 'OK');
 
     const req = {
-      log: { error: jest.fn() },
+      log: { error: jest.fn(), info: jest.fn() },
       body: {
         installationId: subscription.githubInstallationId,
         jiraHost: subscription.jiraHost,
