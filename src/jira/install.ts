@@ -24,6 +24,8 @@ export default async (req: Request, res: Response): Promise<void> => {
       sharedSecret,
     }));
 
+  req.log.info('Installed installtion with ID %d for host %s', installation.id, host)
+
   const action = await ActionFromInstallation(installation);
   action.type = ActionType.CREATED;
   action.actionSource = ActionSource.WEBHOOK;

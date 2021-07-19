@@ -6,6 +6,8 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
     return next(new Error('Unauthorized'));
   }
 
+  req.log.info('Received list github installations request for Jira Host: %s', req.session.jiraHost);
+
   const {github, client, isAdmin} = res.locals;
 
   try {
@@ -37,8 +39,8 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
       info,
     });
   } catch (err) {
-    req.log.error(
-      `Unable to show github subscription page. error=${err}, jiraHost=${req.session.jiraHost}`,
+    req.log.error(err,
+      'Unable to show github subscription page. Jira Host=%s', req.session.jiraHost
     );
     return next(new Error(err));
   }

@@ -248,7 +248,7 @@ export default (
   secret: string,
   logger?: Logger,
 ): AxiosInstance => {
-  logger = logger || getLogger('AxiosClient');
+  logger = logger || getLogger('jira.client.axios');
   const instance = axios.create({
     baseURL,
     timeout: +process.env.JIRA_TIMEOUT || 20000,

@@ -1,8 +1,8 @@
 import envVars from './env';
 import {bootstrap} from 'global-agent';
-import Logger from 'bunyan';
+import { getLogger } from './logger';
 
-const logger = new Logger({name:'proxy'});
+const logger = getLogger('config.proxy');
 
 if(envVars.PROXY){
   logger.info(`configuring proxy: ${envVars.PROXY} for outbound calls`);

@@ -6,6 +6,9 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
   const {installationId: gitHubInstallationId, syncType} = req.body;
   Sentry.setExtra('Body', req.body);
 
+  req.log.info("Received sync request for gitHubInstallationID=%s jiraHost=%s syncType=%s", gitHubInstallationId,
+    res.locals.installation.jiraHost, syncType);
+
   try {
     const subscription = await Subscription.getSingleInstallation(res.locals.installation.jiraHost, gitHubInstallationId);
 

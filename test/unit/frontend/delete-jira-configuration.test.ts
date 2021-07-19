@@ -44,7 +44,7 @@ describe("DELETE /jira/configuration", () => {
       .reply(200, "OK");
 
     const req = {
-      log: { debug: jest.fn() },
+      log: { debug: jest.fn(), error: jest.fn(), info: jest.fn()  },
       body: { installationId: subscription.githubInstallationId },
       query: {
         xdm_e: subscription.jiraHost

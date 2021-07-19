@@ -53,7 +53,7 @@ export default (
   callback: (context: any, jiraClient: any, util: any) => void,
 ) => {
   return withSentry(async (context: CustomContext) => {
-    enhanceOctokit(context.github, context.log);
+    enhanceOctokit(context.github);
 
     let webhookEvent = context.name;
     if (context.payload.action) {
@@ -81,7 +81,6 @@ export default (
         {
           noop: 'bot',
           botId: context.payload.sender.id,
-          botLogin: context.payload.sender.login,
         },
         'Halting further execution since the sender is a bot and action is not a state change',
       );

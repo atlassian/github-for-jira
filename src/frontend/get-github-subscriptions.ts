@@ -34,7 +34,7 @@ export default async (req:Request, res:Response, next:NextFunction):Promise<void
       return next(new Error('Unauthorized'));
     }
   } catch (err) {
-    req.log.error(`Unable to show subscription page. error=${err}, installation=${req.params.installationId}`);
+    req.log.error(err, 'Unable to show subscription page. installation=%d', installationId);
     return next(new Error('Not Found'));
   }
 };

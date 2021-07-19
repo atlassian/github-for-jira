@@ -228,7 +228,7 @@ export default (octokitApp: App): Express => {
 
   // Error catcher - Batter up!
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    req.log.error(err, `Error in frontend app.`);
+    req.log.error(err, 'Error in frontend app.');
 
     if (process.env.NODE_ENV !== 'production') {
       return next(err);
@@ -241,10 +241,9 @@ export default (octokitApp: App): Express => {
       'Not Found': 404,
     };
 
-    const errorStatusCode = errorCodes[err.message] || 400
+    const errorStatusCode = errorCodes[err.message] || 500
 
     const tags = [
-      `error: ${req.log.error}`,
       `status: ${errorStatusCode}`,
     ];
 
