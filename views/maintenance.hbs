@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="ap-local-base-url" content="{{localBaseUrl}}">
+    <meta name="public-url" content="{{APP_URL}}">
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+    <link rel="stylesheet" href="/public/atlassian-ui-kit/bundle.css" media="all" />
+    <link rel="stylesheet" href="/public/css/styles.css" media="all" />
+    <link rel="stylesheet" href="/public/css/jira-configuration.css" media="all" />
+    <script src="/public/js/jquery.min.js"></script>
+  </head>
+  <body class="aui-page-hybrid">
+    <div class="ac-content">
+      <div class="page-content">
+        <section class="warning">
+          <div class="icon">
+            <img width="18" height="17" src="/public/warning-icon.svg" alt="Warning!"/>
+          </div>
+          <div>
+          <h2>Github integration is temporarily under maintenance</h2>
+          <p>Adding, configuring and removing Github organizations is disabled during this time. The integration will be functional shortly after maintenance is complete.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+    <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+    <script src="https://connect-cdn.atl-paas.net/all.js"></script>
+  </body>
+</html>
