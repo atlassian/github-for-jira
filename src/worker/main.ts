@@ -20,7 +20,7 @@ import '../config/proxy';
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo('client').redisOptions);
 const subscriber = new Redis(getRedisInfo('subscriber').redisOptions);
-const logger = getLogger('Worker')
+const logger = getLogger('worker.main')
 
 function measureElapsedTime(startTime, tags) {
   const endTime = Date.now();
