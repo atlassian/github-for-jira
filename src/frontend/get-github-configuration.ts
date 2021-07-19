@@ -12,7 +12,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
   }
 
   req.log.info('Received delete jira configuration request for jira host %s and installation ID %s',
-    jiraHost, req.body.installationId)
+    req.session.jiraHost, req.body.installationId)
 
   const {github, client, isAdmin} = res.locals;
 
