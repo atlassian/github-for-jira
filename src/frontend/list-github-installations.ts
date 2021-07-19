@@ -6,7 +6,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
     return next(new Error('Unauthorized'));
   }
 
-  req.log.info('Received list github installations request for Jira Host: %s', jiraHost);
+  req.log.info('Received list github installations request for Jira Host: %s', req.session.jiraHost);
 
   const {github, client, isAdmin} = res.locals;
 
