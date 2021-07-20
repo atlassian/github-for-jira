@@ -28,7 +28,7 @@ Connect your code with your project management in Jira. A separate Jira subscrip
 ## Installation and setup
 
 ### Requirements
-This app officially supports GitHub.com and Jira Cloud. Support for GitHub Enterprise and/or Jira server may be considered in the future.
+This app officially supports GitHub.com and Jira Cloud. Support for integration of GitHub Enterprise Server with Jira Server, Jira Data Center and/or Jira Cloud as well as of GitHub.com with with Jira Server and/or Jira Data Center may be considered in the future.
 
 ### Installation from Atlassian
 1. Sign into your Jira Cloud account
@@ -37,7 +37,7 @@ This app officially supports GitHub.com and Jira Cloud. Support for GitHub Enter
 ![image](https://user-images.githubusercontent.com/13207348/46588299-08550800-ca68-11e8-8ed4-290533320ef4.png)
 7. Click the **Get Started** button to connect your GitHub account.
 
-Next you will need to connect your GitHub organization to Jira, see the following steps.
+Next you will need to connect your GitHub organization to Jira, see the following steps. 
 
 ### Installation from GitHub Marketplace
 1. Go to https://github.com/marketplace/jira-software-github
