@@ -10,32 +10,35 @@
   <style>
 
     body {
-      background-color: #FFFAE6;
+      background-color: #ffffff;
     }
 
-    section.warning {
-      padding: 16px;
+    section {
+      padding: 0 16px;
       margin-top: 50px;
+      margin-bottom: 50px;
+      margin-left: auto;
+      margin-right: auto;
       clear: both;
+      text-align: center;
+      font-size: 14px;
+      max-width: 573px;
     }
 
-    section.warning .icon {
-      float: left;
-      height: 75px;
-      padding-right: 16px;
-      padding-top: 5px;
+    section h2 {
+      margin: 24px 0 !important;
+      font-size: 24px;
     }
   </style>
 </head>
 <body>
-  <section class="warning">
-    <div class="icon">
-      <img width="18" height="17" src="/public/warning-icon.svg" alt="Warning!" />
-    </div>
-    <div>
-      <h2>Github For Jira is temporarily under maintenance</h2>
-      <p>Adding, configuring and removing Github organizations is disabled during this time. The integration will be functional shortly after maintenance is complete.</p>
-    </div>
-  </section>
+<section>
+  <img height="224" src="/public/maintenance.svg" alt="Under Maintenance" />
+  <div>
+    <h2>Github For Jira is temporarily under maintenance</h2>
+    <p>Adding, configuring and removing Github organizations is disabled during this time. The integration will be
+      functional shortly after maintenance is complete.</p>
+  </div>
+</section>
 </body>
 </html>
