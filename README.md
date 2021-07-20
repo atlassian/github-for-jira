@@ -33,7 +33,7 @@ This app officially supports GitHub.com and Jira Cloud. Support for GitHub Enter
 
 ### Installations
 
-You can install this app from the Atlassian Marketplace, from your Jira instance and from the GitHub Marketplace. The instructions are below, you can choose whichever you prefer.
+You can install this app from the Atlassian Marketplace, from your Jira instance or from the GitHub Marketplace. The instructions are below, you can choose whichever you prefer.
 
 ### Installation from Atlassian Marketplace
 1. Go to https://marketplace.atlassian.com/apps/1219592/github-for-jira?hosting=cloud
