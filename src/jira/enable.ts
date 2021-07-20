@@ -12,10 +12,13 @@ export default async (req: Request, res: Response): Promise<void> => {
 
   const installation = await Installation.getPendingHost(jiraHost);
   if (!installation) {
-    req.log.info(`No pending installation found for jiraHost=${jiraHost}`);
+    req.log.info('No pending installation found for jiraHost %s', jiraHost);
     res.sendStatus(422);
     return;
   }
+
+  req.log.info('Received installation enabled request for installation id: %d and Jira Host %s',
+    installation.id, jiraHost);
 
   const action = await ActionFromInstallation(installation);
   action.type = ActionType.ENABLED;

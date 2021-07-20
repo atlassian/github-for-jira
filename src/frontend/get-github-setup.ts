@@ -7,16 +7,18 @@ When this request is made: Installing from Jira Marketplace - GitHub org does no
 Redirects users back to github/configuration to install their Jira instance in GitHub org/s.
 If the installation was done from Jira Marketplace, the app is already installed.
 */
-export default (req: Request, res: Response, next: NextFunction): void => {
+export default (req: Request, res: Response, next: NextFunction):void => {
+
+  req.log.info('Received get github setup page request for Jira Host %s',
+    req.session.jiraHost)
+
   if (req.session.jiraHost) {
     const { host: githubHost, session } = req;
     const { jwt, jiraHost } = session;
 
-    const urlParams = { githubHost, jwt, jiraHost };
+    const urlArgs = { githubHost, jwt, jiraHost };
 
-    /* We don't need to redirect to the marketplace here. If a user has installed from Jira, the
-    GitHub app is already installed. */
-    return res.redirect(getGitHubConfigurationUrl(urlParams));
+    return res.redirect(getGitHubConfigurationUrl(urlArgs));
   }
 
   res.render('github-setup.hbs', {

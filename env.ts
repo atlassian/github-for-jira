@@ -3,6 +3,16 @@ import * as fs from "fs";
 
 const filepath = ".env";
 
+const call = async () => {
+  const results = await Promise.all([
+    axios.get("http://localhost:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => ({})),
+    axios.get("http://ngrok:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => ({}))
+  ]);
+
+  const response = results.find((value: AxiosResponse) => value.status === 200) as AxiosResponse;
+  return response ? response : Promise.reject();
+};
+
 // Check to see if ngrok is up and running
 (async function main() {
 
@@ -12,11 +22,11 @@ const filepath = ".env";
     process.exit(1);
   }
 
-  const results = await Promise.all([
-    axios.get("http://localhost:4040/api/tunnels", { responseType: "json" }).catch(() => ({})),
-    axios.get("http://ngrok:4040/api/tunnels", { responseType: "json" }).catch(() => ({}))
-  ]);
-  const response = results.find((value: AxiosResponse) => value.status === 200) as AxiosResponse;
+  // Call the service 3 times until ready
+  const response = await call()
+    .catch(call)
+    .catch(call)
+    .catch(() => undefined);
   if (response) {
     const tunnel = response.data.tunnels.find(tunnel => tunnel.public_url.startsWith("https"));
     const ngrokDomain = tunnel.public_url;

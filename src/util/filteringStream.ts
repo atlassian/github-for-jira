@@ -28,8 +28,6 @@ const filteringStream = (out) => {
 //See https://github.com/probot/probot/issues/1577
 const shouldBeFiltered = (chunk: any) : boolean => {
   return !!chunk.toString().match(`${middlewareLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`)
-
 }
-
 
 export default filteringStream

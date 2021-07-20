@@ -20,12 +20,6 @@ This app is written in [Typescript](https://www.typescriptlang.org/) and runs on
 
 Please install [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) to easily run the project locally.
 
-### Installing a tunneling tool
-
-To allow Jira/Github to communicate with your locally running server, you need to have either [ngrok](https://ngrok.com/download) or [localtunnel](https://localtunnel.github.io/www/) installed and running.
-
-This tunnel will expose a URL through which internet traffic can reach your local machine. This URL will be called `DOMAIN` in the rest of this document.
-
 ## Create your Jira instance
 
 Create a new [free developer instance](https://developer.atlassian.com/platform/marketplace/getting-started/#free-developer-instances-to-build-and-test-your-app) on Jira Cloud.
@@ -86,8 +80,10 @@ docker-compose up # Spin up docker containers
 npm run db # Creates DBs and initializes tables
 ```
 
-From then on, to just run the app locally in development mode, just do `npm start`.
+That's it.  Everything is ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread).
+If you want to debug, you can connect to the remote port of 9229 for the main thread and 9230 for the worker thread in docker.  Any changes to the code will restart the node server automatically.
 For tests, run `npm test`.
+If you want to run a different tunneling tool, run `docker-compose up app` instead as it will only bring up the app and its dependencies (redis & postgres).  You can then run you tunnelling tool to point to `http://app:8080`.
 
 ### Installing the App
 

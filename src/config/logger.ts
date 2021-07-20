@@ -42,7 +42,7 @@ export const getLogger = (name: string): Logger => {
 //Override console.log with bunyan logger.
 //we shouldn't use console.log in our code, but it is done to catch
 //possible logs from third party libraries
-const consoleLogger = getLogger('Console')
+const consoleLogger = getLogger('console')
 // eslint-disable-next-line no-console
 console.debug = consoleLogger.debug.bind(consoleLogger);
 // eslint-disable-next-line no-console

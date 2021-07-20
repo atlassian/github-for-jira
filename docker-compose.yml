@@ -24,7 +24,6 @@ services:
     depends_on:
       - redis
       - postgres
-      - ngrok
     volumes:
       - .:/app
     build:

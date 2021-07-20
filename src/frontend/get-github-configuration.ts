@@ -12,6 +12,9 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
     return next(new Error('Jira Host url is missing'));
   }
 
+  req.log.info('Received delete jira configuration request for jira host %s and installation ID %s',
+    req.session.jiraHost, req.body.installationId)
+
   const {github, client, isAdmin} = res.locals;
 
   async function getInstallationsWithAdmin({installations, login}) {
@@ -52,7 +55,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
     } catch (err) {
       // If we get here, there was either a problem decoding the JWT
       // or getting the data we need from GitHub, so we'll show the user an error.
-      req.log.error(err);
+      req.log.error(err, 'Error while getting github configuration page');
       return next(err);
     }
   }

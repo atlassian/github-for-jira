@@ -25,8 +25,7 @@ export const getNextPage = (headers: Headers = {}): number => {
   if (!nextUrl) {
     return undefined;
   }
-  logger.info(`pr:`, nextUrl);
-  logger.info(`pr:`, typeof nextUrl);
+  logger.debug('Extracting next PRs page url');
   const parsed = url.parse(nextUrl).query.split('&');
   let nextPage;
   parsed.forEach((query) => {

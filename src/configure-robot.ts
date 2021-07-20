@@ -15,6 +15,10 @@ import Logger from 'bunyan';
 import { metricError } from './config/metric-names';
 import logMiddleware from "./middleware/log-middleware";
 
+
+import { getLogger } from './config/logger';
+
+
 /**
  * Get the list of GitHub CIDRs from the /meta endpoint
  *
@@ -58,7 +62,7 @@ async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
 
 export default async (app: Application): Promise<Application> => {
   if (process.env.USE_RATE_LIMITING === 'true') {
-    const GitHubCIDRs = await getGitHubCIDRs(app.log);
+    const GitHubCIDRs = await getGitHubCIDRs(getLogger('rate-limiting'));
     const client = new Redis(getRedisInfo('rate-limiter').redisOptions);
     const limiter = RateLimit({
       store: new RedisStore({

@@ -16,6 +16,6 @@ export default async (req:Request, res:Response):Promise<void> => {
   action.actionSource = ActionSource.WEBHOOK;
   await installation.disable();
   await submitProto(action);
-  req.log.info(`Installation id=${installation.id} disabled on Jira`);
+  req.log.info('Installation id=%d disabled on Jira', installation.id);
   res.sendStatus(204);
 };
