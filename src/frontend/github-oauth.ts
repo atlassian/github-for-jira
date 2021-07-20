@@ -4,18 +4,12 @@
  * So, instead of making a fork, since it's only one file and the package
  * hasn't been updated in 3 years I thought it was simpler to just copy the source here
  */
-import crypto from 'crypto';
-import url from 'url';
-import express, {
-  NextFunction,
-  Request,
-  RequestHandler,
-  Response,
-  Router,
-} from 'express';
-import axios from 'axios';
+import crypto from "crypto";
+import url from "url";
+import express, { NextFunction, Request, RequestHandler, Response, Router } from "express";
+import axios from "axios";
 
-const host = process.env.GHE_HOST || 'github.com';
+const host = process.env.GHE_HOST || "github.com";
 
 export interface OAuthOptions {
   baseURL: string;
@@ -32,24 +26,24 @@ export interface GithubOAuth {
 }
 
 export default (opts: OAuthOptions): GithubOAuth => {
-  opts.callbackURI = opts.callbackURI || '/github/callback';
-  opts.loginURI = opts.loginURI || '/github/login';
-  opts.scopes = opts.scopes || ['user', 'repo'];
+  opts.callbackURI = opts.callbackURI || "/github/callback";
+  opts.loginURI = opts.loginURI || "/github/login";
+  opts.scopes = opts.scopes || ["user", "repo"];
   const redirectURI = new URL(opts.callbackURI, opts.baseURL).toString();
 
   function login(req: Request, res: Response, next: NextFunction): void {
     // TODO: We really should be using an Auth library for this, like @octokit/github-auth
     // Create unique state for each oauth request
-    const state = crypto.randomBytes(8).toString('hex');
+    const state = crypto.randomBytes(8).toString("hex");
 
     // Save the redirect that may have been specified earlier into session to be retrieved later
     req.session[state] =
       res.locals.redirect ||
-      `/github/configuration${url.parse(req.originalUrl).search || ''}`;
+      `/github/configuration${url.parse(req.originalUrl).search || ""}`;
     res.redirect(
       `https://${host}/login/oauth/authorize?client_id=${opts.githubClient}${
-        opts.scopes.length ? `&scope=${opts.scopes.join(' ')}` : ''
-      }&redirect_uri=${redirectURI}&state=${state}`,
+        opts.scopes.length ? `&scope=${opts.scopes.join(" ")}` : ""
+      }&redirect_uri=${redirectURI}&state=${state}`
     );
     next();
   }
@@ -57,19 +51,30 @@ export default (opts: OAuthOptions): GithubOAuth => {
   async function callback(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
-    const code = req.query.code as string;
-    const state = req.query.state as string;
+    const {
+      error,
+      error_description,
+      error_uri,
+      code,
+      state
+    } = req.query as Record<string, string>;
+
+    // Show the oauth error if there is one
+    if (error) {
+      return next(`OAuth Error: ${error}
+      URL: ${error_uri}
+      ${error_description}`);
+    }
 
     // Take save redirect url and delete it from session
     const redirectUrl = req.session[state] as string;
     delete req.session[state];
 
     // Check if state is available and matches a previous request
-    if (!state || !redirectUrl)
-      return next(new Error('Missing matching Auth state parameter'));
-    if (!code) return next(new Error('Missing OAuth Code'));
+    if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
+    if (!code) return next("Missing OAuth Code");
 
     try {
       const response = await axios.get(
@@ -79,25 +84,25 @@ export default (opts: OAuthOptions): GithubOAuth => {
             client_id: opts.githubClient,
             client_secret: opts.githubSecret,
             code,
-            state,
+            state
           },
           headers: {
-            accept: 'application/json',
-            'content-type': 'application/json',
+            accept: "application/json",
+            "content-type": "application/json"
           },
-          responseType: 'json',
-        },
+          responseType: "json"
+        }
       );
 
       req.session.githubToken = response.data.access_token;
 
       if (!req.session.githubToken) {
-        return next(new Error('Missing Access Token from Github OAuth Flow.'));
+        return next(new Error("Missing Access Token from Github OAuth Flow."));
       }
 
       return res.redirect(redirectUrl);
     } catch (e) {
-      return next(new Error('Cannot retrieve access token from Github'));
+      return next(new Error("Cannot retrieve access token from Github"));
     }
   }
 
@@ -114,6 +119,6 @@ export default (opts: OAuthOptions): GithubOAuth => {
         return login(req, res, next);
       }
       return next();
-    },
+    }
   };
 };
