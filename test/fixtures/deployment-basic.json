@@ -1,0 +1,49 @@
+{
+  "name": "deployment_status",
+  "payload": {
+    "deployment_status": {
+      "url": "test-repo-url/deployments/1234/statuses/1",
+      "id": 123456,
+      "state": "pending",
+      "creator": {
+        "login": "TestUser[bot]",
+        "type": "Bot"
+      },
+      "description": "",
+      "environment": "Production",
+      "target_url": "test-repo-url/commit/885bee1-commit-id-1c458/checks",
+      "created_at": "2021-06-28T12:15:18Z",
+      "updated_at": "2021-06-28T12:15:18Z"
+    },
+    "deployment": {
+      "id": 1234,
+      "task": "deploy",
+      "original_environment": "Production",
+      "environment": "Production",
+      "description": "",
+      "created_at": "2021-06-28T12:15:18Z",
+      "updated_at": "2021-06-28T12:15:18Z",
+      "creator": {
+        "login": "test-user[bot]",
+        "type": "Bot"
+      }
+    },
+    "action": "created",
+    "repository": {
+      "id": "test-repo-id",
+      "name": "test-repo-name",
+      "full_name": "example/test-repo-name",
+      "html_url": "test-repo-url",
+      "owner": {
+        "login": "test-repo-owner"
+      }
+    },
+    "sender": {
+      "login": "TestUser[bot]",
+      "type": "Bot"
+    },
+    "installation": {
+      "id": 1234
+    }
+  }
+}
