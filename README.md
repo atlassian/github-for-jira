@@ -37,7 +37,7 @@ This app officially supports GitHub.com and Jira Cloud. Support for integration 
 ![image](https://user-images.githubusercontent.com/13207348/46588299-08550800-ca68-11e8-8ed4-290533320ef4.png)
 7. Click the **Get Started** button to connect your GitHub account.
 
-Next you will need to connect your GitHub organization to Jira, see the following steps.
+Next you will need to connect your GitHub organization to Jira, see the following steps. 
 
 ### Installation from GitHub Marketplace
 1. Go to https://github.com/marketplace/jira-software-github
