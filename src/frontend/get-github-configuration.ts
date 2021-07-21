@@ -1,6 +1,7 @@
 import JWT from 'atlassian-jwt';
 import {Installation} from '../models';
 import {NextFunction, Request, Response} from 'express';
+import { getJiraMarketplaceUrl } from '../util/getUrl';
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.session.githubToken) {
@@ -59,6 +60,5 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
     }
   }
 
-  // TODO: Triplicate code.  Need to centralize.
-  res.redirect(`${req.session.jiraHost}/plugins/servlet/upm/marketplace/plugins/com.github.integration.production`);
+  res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
 };
