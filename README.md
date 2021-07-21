@@ -18,6 +18,7 @@ Connect your code with your project management in Jira. A separate Jira subscrip
   - [Take action using Smart Commits](#take-action-using-smart-commits)
   - [Link issues in GitHub](#link-issues-in-github)
   - [Manage Jira Subscriptions](#manage-jira-subscriptions)
+  - [NEW! - GitHub Actions for Jira](#support-to-github-actions---new)
 - [Migrating from the DVCS connector](#migrating-from-the-dvcs-connector)
 - [Need help?](#questions-need-help)
 - [Contributing](#contributing)
@@ -116,6 +117,7 @@ This is useful if your installation is setup to send Development information to 
 ### Support to GitHub Actions - New!
 
 We have just added support to GitHub Actions in Jira! You'll now be able to see your builds and deployments from GitHub Actions in the dev panel.
+
 ![image](docs/images/github-actions-for-jira.png)
 
 ## Migrating from the DVCS connector
