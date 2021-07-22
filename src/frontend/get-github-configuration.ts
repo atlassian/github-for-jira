@@ -5,6 +5,7 @@ import GitHubAPI from '../config/github-api';
 import enhanceOctokit from '../config/enhance-octokit';
 import app from '../worker/app';
 import logger from '../config/logger';
+import { getJiraMarketplaceUrl } from '../util/getUrl';
 
 export default async (
   req: Request,
@@ -69,36 +70,39 @@ export default async (
       const {
         data: { installations },
       } = await github.apps.listInstallationsForAuthenticatedUser();
-      const authedUser = GitHubAPI({
+      const authedUser = await GitHubAPI({
         // auth: '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', // private
-        // auth: 'ghu_ou2Ir1cqVYL84rngEoKKONzG9XJFOO2Okoq7', // from github-oauth response
         auth: req.session.githubToken,
       });
-      // ghu_D9TkgI2ki7F7SRG6lIuycfoLES5gZK2ne33J
-      // logger.info("MY TOKEN: ", req.session.githubToken)
 
+      // TODO - map this - I only need the login, avatar, repositories_selected
       const orgs = await authedUser.paginate(
-        authedUser.orgs.listMemberships.endpoint.merge({
+        authedUser.orgs.listMembershipsForAuthenticatedUser.endpoint.merge({
           per_page: 100,
         }),
-        (res) => res,
+        (res) => res.data,
       );
 
-      // authedUser.orgs.li
-
-      for (const org of orgs) {
-        logger.info('MY ORGS', org);
-      }
+      // TODO - use this to cross reference to see if Jira is installed - push any that don't exist in org
       const installationsWithAdmin = await getInstallationsWithAdmin({
         installations,
         login,
       });
+
+      // TODO - check if this exists in orgs. If not. push it in with jiraInstalled = false
+      const { data: primaryAccount } = await github.users.getByUsername({
+        username: login,
+      });
+
+      logger.info('authedUser', orgs);
+      // logger.info('github', github);
+
       const { data: info } = await client.apps.getAuthenticated();
 
       return res.render('github-configuration.hbs', {
         csrfToken: req.csrfToken(),
-        // installations: orgs,
-        installations: installationsWithAdmin,
+        installations: orgs,
+        // installations: installationsWithAdmin,
         jiraHost: req.session.jiraHost,
         nonce: res.locals.nonce,
         info,
@@ -112,8 +116,5 @@ export default async (
     }
   }
 
-  // TODO: Triplicate code.  Need to centralize.
-  res.redirect(
-    `${req.session.jiraHost}/plugins/servlet/upm/marketplace/plugins/com.github.integration.production`,
-  );
+  res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
 };
