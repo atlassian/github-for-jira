@@ -50,7 +50,9 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 
 Your new GitHub app will need the following repository permissions:
 
++ Actions: Read & write
 + Contents: Read & write
++ Deployments: Read & write
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
@@ -60,11 +62,13 @@ It will also need to subscribe to the following events:
 + Commit comment
 + Create
 + Delete
++ Deployment status
 + Issue comment
 + Issues
 + Pull request
 + Pull request review
 + Push
++ Workflow run
 
 ## Setting up your `.env` file
 

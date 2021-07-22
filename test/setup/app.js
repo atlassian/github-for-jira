@@ -54,9 +54,10 @@ beforeEach(async () => {
     });
 
   const configureRobot = require('../../lib/configure-robot');
+  const setupGithub = require('../../lib/github');
   const { Router } = require('express');
 
-  global.app = await configureRobot(new Probot({
+  const probot = new Probot({
     appId: 12257,
     githubToken: 'test',
     privateKey: getPrivateKey(),
@@ -64,7 +65,11 @@ beforeEach(async () => {
       retry: { enabled: false },
       throttle: { enabled: false },
     }),
-  }), { getRouter: Router });
+  });
+
+  global.app = await configureRobot(probot, { getRouter: Router });
+
+  global.webhookApp = await setupGithub(probot);
 });
 
 afterEach(() => {

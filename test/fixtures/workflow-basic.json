@@ -1,0 +1,46 @@
+{
+  "name": "workflow_run",
+  "payload": {
+    "action": "requested",
+    "workflow_run": {
+      "id": 977675483,
+      "name": "My Deployment flow",
+      "head_branch": "TES-123-test-ref",
+      "run_number": 84,
+      "event": "push",
+      "status": "queued",
+      "conclusion": null,
+      "workflow_id": 9751894,
+      "check_suite_id": 3099253651,
+      "html_url": "test-repo-url",
+      "created_at": "2021-06-28T03:53:34Z",
+      "updated_at": "2021-06-28T03:53:34Z"
+      },
+    "workflow": {
+      "id": 9751894,
+      "node_id": "MDg6V29ya2Zsb3c5NzUxODk0",
+      "name": "My Deployment flow",
+      "path": ".github/workflows/deploy.yml",
+      "state": "active",
+      "created_at": "2021-06-01T06:56:28.000Z",
+      "updated_at": "2021-06-01T06:56:28.000Z",
+      "html_url": "test-repo-url"
+    },
+    "repository": {
+      "id": "test-repo-id",
+      "name": "test-repo-name",
+      "full_name": "example/test-repo-name",
+      "html_url": "test-repo-url",
+      "owner": {
+        "login": "test-repo-owner"
+      }
+    },
+    "sender": {
+      "type": "User",
+      "login": "TestUser"
+    },
+    "installation": {
+      "id": 1234
+    }
+  }
+}

@@ -17,6 +17,7 @@
     "@atlaskit/css-reset": "^2.0.5",
     "@atlaskit/reduced-ui-pack": "^8.19.0",
     "@octokit/auth-app": "^2.6.0",
+    "@octokit/webhooks": "^9.8.4",
     "@sentry/integrations": "^5.15.5",
     "@sentry/node": "^5.15.5",
     "atlassian-jwt": "^0.1.5",
@@ -62,6 +63,7 @@
     "eslint-plugin-promise": "^4.0.1",
     "jest": "^26.6.3",
     "jest-diff": "^25.4.0",
+    "jest-extended": "^0.11.5",
     "keygrip": "^1.0.2",
     "nock": "^9.6.1",
     "nodemon": "^2.0.3",
@@ -78,7 +80,8 @@
   "jest": {
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "<rootDir>/test/setup"
+      "<rootDir>/test/setup",
+      "jest-extended"
     ],
     "globalTeardown": "<rootDir>/test/teardown"
   }
