@@ -100,7 +100,10 @@ describe('Maintenance', () => {
         return supertest(app.router)
           .get('/jira/atlassian-connect.json')
           .expect(200).then(response => {
-            delete response.body.baseUrl; // removing baseurl as it changes for every text run
+            // removing keys that changes for every test run
+            delete response.body.baseUrl;
+            delete response.body.name;
+            delete response.body.key;
             expect(response.body).toMatchSnapshot();
           });
       });

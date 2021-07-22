@@ -12,7 +12,6 @@ Object {
     "type": "jwt",
   },
   "description": "Application for integrating with GitHub",
-  "key": "com.github.integration.mboudreau",
   "lifecycle": Object {
     "disabled": "/jira/events/disabled",
     "enabled": "/jira/events/enabled",
@@ -73,7 +72,6 @@ Object {
       "url": "/jira/configuration",
     },
   },
-  "name": "GitHub (mboudreau)",
   "scopes": Array [
     "READ",
     "WRITE",
