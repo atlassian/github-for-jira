@@ -17,7 +17,7 @@ module.exports = {
     },
     clientSecret: {
       allowNull: false,
-      type: Sequelize.STRING,
+      type: Sequelize.BLOB,
     },
     privateKey: {
       allowNull: false,
@@ -29,7 +29,7 @@ module.exports = {
     },
     webhookSecret: {
       allowNull: false,
-      type: Sequelize.STRING,
+      type: Sequelize.BLOB,
     },
     createdAt: {
       allowNull: false,
