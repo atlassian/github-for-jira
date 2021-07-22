@@ -75,9 +75,11 @@ export default async (
         auth: req.session.githubToken,
       });
 
+      logger.info('TOKEN', req.session.githubToken);
+
       // TODO - map this - I only need the login, avatar, repositories_selected
       const orgs = await authedUser.paginate(
-        authedUser.orgs.listMembershipsForAuthenticatedUser.endpoint.merge({
+        authedUser.orgs.listMemberships.endpoint.merge({
           per_page: 100,
         }),
         (res) => res.data,
@@ -93,9 +95,6 @@ export default async (
       const { data: primaryAccount } = await github.users.getByUsername({
         username: login,
       });
-
-      logger.info('authedUser', orgs);
-      // logger.info('github', github);
 
       const { data: info } = await client.apps.getAuthenticated();
 
