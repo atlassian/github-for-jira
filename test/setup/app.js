@@ -20,6 +20,9 @@ beforeEach(async () => {
       'getAllForHost',
     ]),
     Project: td.object(['upsert']),
+    sequelize: {
+      authenticate: () => Promise.resolve(),
+    },
   });
 
   td.when(models.Installation.getForHost(process.env.ATLASSIAN_URL))
