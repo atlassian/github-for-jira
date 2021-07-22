@@ -1,17 +1,11 @@
 import JWT from 'atlassian-jwt';
-import { Installation } from '../models';
-import { NextFunction, Request, Response } from 'express';
-import GitHubAPI from '../config/github-api';
+import {Installation} from '../models';
+import {NextFunction, Request, Response} from 'express';
+import { getJiraMarketplaceUrl } from '../util/getUrl';
 import enhanceOctokit from '../config/enhance-octokit';
 import app from '../worker/app';
-import logger from '../config/logger';
-import { getJiraMarketplaceUrl } from '../util/getUrl';
 
-export default async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.session.githubToken) {
     return next(new Error('Github Auth token is missing'));
   }
@@ -20,15 +14,12 @@ export default async (
     return next(new Error('Jira Host url is missing'));
   }
 
-  req.log.info(
-    'Received delete jira configuration request for jira host %s and installation ID %s',
-    req.session.jiraHost,
-    req.body.installationId,
-  );
+  req.log.info('Received delete jira configuration request for jira host %s and installation ID %s',
+    req.session.jiraHost, req.body.installationId)
 
-  const { github, client, isAdmin } = res.locals;
+  const {github, client, isAdmin} = res.locals;
 
-  async function getInstallationsWithAdmin({ installations, login }) {
+  async function getInstallationsWithAdmin({installations, login}) {
     const installationsWithAdmin = [];
     // TODO: make this parallel calls
     for (const installation of installations) {
@@ -49,59 +40,25 @@ export default async (
       );
 
       installation.numberOfRepos = repositories.length;
-      installationsWithAdmin.push({ ...installation, admin });
+      installationsWithAdmin.push({...installation, admin});
     }
     return installationsWithAdmin;
   }
 
   if (req.session.jwt && req.session.jiraHost) {
-    const {
-      data: { login },
-    } = await github.users.getAuthenticated();
+    const {data: {login}} = await github.users.getAuthenticated();
     try {
       // we can get the jira client Key from the JWT's `iss` property
       // so we'll decode the JWT here and verify it's the right key before continuing
       const installation = await Installation.getForHost(req.session.jiraHost);
-      const { iss: clientKey } = JWT.decode(
-        req.session.jwt,
-        installation.sharedSecret,
-      );
+      const {iss: clientKey} = JWT.decode(req.session.jwt, installation.sharedSecret);
 
-      const {
-        data: { installations },
-      } = await github.apps.listInstallationsForAuthenticatedUser();
-      const authedUser = await GitHubAPI({
-        // auth: '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', // private
-        auth: req.session.githubToken,
-      });
-
-      logger.info('TOKEN', req.session.githubToken);
-
-      // TODO - map this - I only need the login, avatar, repositories_selected
-      const orgs = await authedUser.paginate(
-        authedUser.orgs.listMemberships.endpoint.merge({
-          per_page: 100,
-        }),
-        (res) => res.data,
-      );
-
-      // TODO - use this to cross reference to see if Jira is installed - push any that don't exist in org
-      const installationsWithAdmin = await getInstallationsWithAdmin({
-        installations,
-        login,
-      });
-
-      // TODO - check if this exists in orgs. If not. push it in with jiraInstalled = false
-      const { data: primaryAccount } = await github.users.getByUsername({
-        username: login,
-      });
-
-      const { data: info } = await client.apps.getAuthenticated();
-
+      const {data: {installations}} = (await github.apps.listInstallationsForAuthenticatedUser());
+      const installationsWithAdmin = await getInstallationsWithAdmin({installations, login});
+      const {data: info} = (await client.apps.getAuthenticated());
       return res.render('github-configuration.hbs', {
         csrfToken: req.csrfToken(),
-        installations: orgs,
-        // installations: installationsWithAdmin,
+        installations: installationsWithAdmin,
         jiraHost: req.session.jiraHost,
         nonce: res.locals.nonce,
         info,

@@ -1,0 +1,70 @@
+.getConfiguration__wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  line-height: 1;
+  margin: 3em auto;
+}
+
+.getConfiguration__header {
+  color: #6b778c;
+  display: flex;
+  flex-direction: row;
+  font-size: 1rem;
+  padding: 1em 0em 0em;
+}
+
+.getConfiguration__header__label {
+  margin-bottom: 0;
+}
+
+.org__cell {
+  flex: 1;
+}
+
+.Box {
+  border: 0;
+}
+
+.Box-row {
+  padding: 1em 0em;
+}
+
+.Box-row,
+.getConfiguration__orgContent:nth-child(2) {
+  display: flex;
+  flex-direction: row;
+}
+
+.getConfiguration__orgContent {
+  align-items: center;
+  color: #213658;
+  display: flex;
+}
+
+.getConfiguration__orgContent:last-child {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.getConfiguration__orgContent__repoSelection {
+  margin: 0;
+}
+
+.getConfiguration__orgContent__numberOfRepos {
+  background-color: #DFE1E6;
+  border-radius: 7px;
+  margin: auto .5em;
+  padding: 0.1em 0.5em;
+}
+
+.getConfiguration__orgContent_edit {
+  transform: scale(0.6);
+}
+
+.getConfiguration__orgContent__connectBtn {
+  border: 0;
+  border-radius: 3px;
+  color: #42526e;
+  padding: 0.5em 0.8em;
+}
