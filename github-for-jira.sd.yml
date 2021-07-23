@@ -77,7 +77,7 @@ scaling:
   min: 1
   max: 5
   metrics: &CpuMemScalingRules
-    combinedCpuRam:
+    complexScalingRule:
       EvaluationPeriods: 3
       Threshold:
         Lower: 30
@@ -191,7 +191,7 @@ environmentOverrides:
       min: 1
       max: 5
       metrics: &CpuMemAlbScalingRules
-        combinedCpuRamAndLatency: # Identifier for the metric
+        complexScalingRule:
           EvaluationPeriods: 3
           Threshold:
             Lower: 30
