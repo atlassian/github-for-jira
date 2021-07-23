@@ -3,6 +3,10 @@
   text-align: center;
 }
 
+.getConfiguration__header {
+  font-weight: 500 !important;
+}
+
 .getConfiguration__atlassianInstance {
   color: #586069;
   margin-bottom: 0;
@@ -17,7 +21,7 @@
   margin: 2em auto;
 }
 
-.getConfiguration__header {
+.getConfiguration__tableHeader {
   color: #6b778c;
   display: flex;
   flex-direction: row;
@@ -25,7 +29,7 @@
   padding: 1em 0;
 }
 
-.getConfiguration__header__label {
+.getConfiguration__tableHeader__label {
   margin-bottom: 0;
 }
 
@@ -33,11 +37,11 @@
   flex: 1;
 }
 
-.getConfiguration__header__label:first-child {
+.getConfiguration__tableHeader__label:first-child {
   flex: 1;
 }
 
-.getConfiguration__header__label:last-child {
+.getConfiguration__tableHeader__label:last-child {
   flex: 2;
 }
 
@@ -115,7 +119,7 @@
     font-size: 12px;
   }
 
-  .getConfiguration__header {
+  .getConfiguration__tableHeader {
     padding-bottom: 0;
   }
 }

@@ -4,7 +4,6 @@ import {NextFunction, Request, Response} from 'express';
 import { getJiraMarketplaceUrl } from '../util/getUrl';
 import enhanceOctokit from '../config/enhance-octokit';
 import app from '../worker/app';
-import logger from '../config/logger';
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.session.githubToken) {
@@ -40,7 +39,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
         (res) => res.data,
       );
 
-      logger.info("REPOS: ", repositories.length);
       installation.numberOfRepos = repositories.length || 0;
       installationsWithAdmin.push({...installation, admin});
     }
