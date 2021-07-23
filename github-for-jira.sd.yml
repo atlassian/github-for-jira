@@ -197,7 +197,7 @@ environmentOverrides:
             Lower: 30
             Upper: 85
           Metrics:
-            - Expression: "MAX([(responseTime/3000), cpuUsage, memoryUsage])"
+            - Expression: "MAX([(responseTime/3)*100, cpuUsage, memoryUsage])"
               Id: "combinedCpuRamAndLatency"
               Label: "Scaling based on CPU and Memory consumption or response time"
             - MetricStat:
@@ -240,7 +240,7 @@ environmentOverrides:
               Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
             - Name: TargetGroup
               Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-          Threshold: 3000
+          Threshold: 3
           Priority: Low
           EvaluationPeriods: 3
           Period: 60
@@ -285,6 +285,23 @@ environmentOverrides:
           min: 3
           max: 10
           metrics: *CpuMemScalingRules
+    alarms:
+      overrides:
+        ElbResponseTimeAlert:
+          Namespace: AWS/ApplicationELB
+          MetricName: TargetResponseTime
+          Description: "Response latency is too high"
+          Dimensions:
+            - Name: LoadBalancer
+              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+            - Name: TargetGroup
+              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+          Threshold: 3
+          Priority: Low
+          EvaluationPeriods: 3
+          Period: 60
+          ComparisonOperator: GreaterThanThreshold
+          Statistic: Average
     resources:
       - name: rds
         type: dedicated-rds
