@@ -77,7 +77,7 @@ scaling:
   min: 1
   max: 5
   metrics:
-    combinedCupRamAndLatency: # Identifier for the metric
+    combinedCpuRamAndLatency: # Identifier for the metric
       EvaluationPeriods: 3
       Threshold:
         Lower: 30
@@ -137,14 +137,14 @@ workers:
       max: 5
       #TODO Replace with queue size metrics when we switch to SQS
       metrics: &CpuMemScalingRules
-        combinedCupRam:
+        combinedCpuRam:
           EvaluationPeriods: 3
           Threshold:
             Lower: 30
             Upper: 85
           Metrics:
             - Expression: "MAX(cpuUsage, memoryUsage)"
-              Id: "combinedCpuRamAndLatency"
+              Id: "combinedCpuRam"
               Label: "Scaling based on CPU and Memory consumption"
             - MetricStat:
                 Metric:
@@ -162,8 +162,8 @@ workers:
                   Namespace: System/Linux
                 Period: 60
                 Stat: Average
-                Id: memoryUsage
-                ReturnData: false
+              Id: memoryUsage
+              ReturnData: false
 
 
 environmentOverrides:
