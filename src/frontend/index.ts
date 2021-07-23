@@ -6,12 +6,10 @@ import {Express, NextFunction, Request, Response, Router} from 'express';
 import crypto from 'crypto';
 
 function secureHeaders(router: Router, frontendApp: Express) {
-
   router.use((_: Request, res: Response, next: NextFunction): void => {
     res.locals.nonce = crypto.randomBytes(16).toString('hex');
     next();
   });
-
 
   // Content Security Policy
   router.use(helmet.contentSecurityPolicy({
