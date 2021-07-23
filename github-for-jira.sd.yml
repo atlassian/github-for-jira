@@ -77,14 +77,44 @@ scaling:
   min: 1
   max: 5
   metrics:
-    CPUUtilization:
+    combinedCupRamAndLatency: # Identifier for the metric
+      EvaluationPeriods: 3
       Threshold:
-        Lower: 10
-        Upper: 90
-      Period:
-        Lower: 300
-        Upper: 120
-      EvaluationPeriods: 2
+        Lower: 30
+        Upper: 85
+      Metrics: &CpuMemAlbScalingRules
+        - Expression: "MAX(MAX([(responseTime/3000), cpuUsage]), memoryUsage)"
+          Id: "combinedCpuRamAndLatency"
+          Label: "Scaling based on CPU and Memory consumption or response time"
+        - MetricStat:
+            Metric:
+              MetricName: CPUUtilization
+              Namespace: AWS/EC2
+            Period: 60
+            Stat: Average
+          Id: cpuUsage
+          ReturnData: false
+        - MetricStat:
+            Metric:
+              MetricName: MemoryUtilization
+              Namespace: System/Linux
+            Period: 60
+            Stat: Average
+          Id: memoryUsage
+          ReturnData: false
+        - MetricStat:
+            Metric:
+              Dimensions:
+                - Name: LoadBalancer
+                  Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+                - Name: TargetGroup
+                  Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+              MetricName: TargetResponseTime
+              Namespace: AWS/ApplicationELB
+            Period: 60
+            Stat: Average
+          Id: responseTime
+          ReturnData: false
 
 config:
   environmentVariables:
@@ -105,15 +135,35 @@ workers:
       instance: t2.small
       min: 1
       max: 5
-      metrics:
-        CPUUtilization:
+      #TODO Replace with queue size metrics when we switch to SQS
+      metrics: &CpuMemScalingRules
+        combinedCupRam:
+          EvaluationPeriods: 3
           Threshold:
-            Lower: 10
-            Upper: 90
-          Period:
-            Lower: 300
-            Upper: 120
-          EvaluationPeriods: 2
+            Lower: 30
+            Upper: 85
+          Metrics:
+            - Expression: "MAX(cpuUsage, memoryUsage)"
+              Id: "combinedCpuRamAndLatency"
+              Label: "Scaling based on CPU and Memory consumption"
+            - MetricStat:
+                Metric:
+                  # Dimensions can be ignored here due to defaulting
+                  MetricName: CPUUtilization
+                  Namespace: AWS/EC2
+                Period: 60
+                Stat: Average
+              Id: cpuUsage
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  # Dimensions can be ignored here due to defaulting
+                  MetricName: MemoryUtilization
+                  Namespace: System/Linux
+                Period: 60
+                Stat: Average
+                Id: memoryUsage
+                ReturnData: false
 
 
 environmentOverrides:
@@ -137,6 +187,19 @@ environmentOverrides:
         SENTRY_ENVIRONMENT: ddev
         APP_ID: '124403'
         GITHUB_CLIENT_ID: Iv1.600bf90a20f1ab18
+    scaling:
+      instance: t2.small
+      min: 1
+      max: 5
+      metrics: *CpuMemScalingRules
+    workers:
+      - name: Worker
+        scaling:
+          instance: t2.small
+          min: 1
+          max: 5
+          metrics: *CpuMemScalingRules
+
   staging:
     config:
       environmentVariables:
@@ -146,6 +209,18 @@ environmentOverrides:
         SENTRY_ENVIRONMENT: stg-west
         APP_ID: '119363'
         GITHUB_CLIENT_ID: Iv1.86f9d277ffccd384
+    scaling:
+      instance: t3.medium
+      min: 1
+      max: 5
+      metrics: *CpuMemAlbScalingRules
+    workers:
+      - name: Worker
+        scaling:
+          instance: t3.medium
+          min: 1
+          max: 5
+          metrics: *CpuMemScalingRules
     resources:
       - type: globaledge
         name: proxy
@@ -166,6 +241,18 @@ environmentOverrides:
         SENTRY_ENVIRONMENT: production
         APP_ID: '125082'
         GITHUB_CLIENT_ID: Iv1.234a3f06f2b64fbe
+    scaling:
+      instance: t3.medium #bump to c5.2xlarge before the migration
+      min: 5
+      max: 10
+      metrics: *CpuMemAlbScalingRules
+    workers:
+      - name: Worker
+        scaling:
+          instance: t3.medium #bump to c5.2xlarge before the migration
+          min: 3
+          max: 10
+          metrics: *CpuMemScalingRules
     resources:
       - name: rds
         type: dedicated-rds
