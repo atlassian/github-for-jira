@@ -76,18 +76,19 @@ scaling:
   instance: t2.small
   min: 1
   max: 5
-  metrics:
-    combinedCpuRamAndLatency: # Identifier for the metric
+  metrics: &CpuMemScalingRules
+    combinedCpuRam:
       EvaluationPeriods: 3
       Threshold:
         Lower: 30
         Upper: 85
-      Metrics: &CpuMemAlbScalingRules
-        - Expression: "MAX(MAX([(responseTime/3000), cpuUsage]), memoryUsage)"
-          Id: "combinedCpuRamAndLatency"
-          Label: "Scaling based on CPU and Memory consumption or response time"
+      Metrics:
+        - Expression: "MAX(cpuUsage, memoryUsage)"
+          Id: "combinedCpuRam"
+          Label: "Scaling based on CPU and Memory consumption"
         - MetricStat:
             Metric:
+              # Dimensions can be ignored here due to defaulting
               MetricName: CPUUtilization
               Namespace: AWS/EC2
             Period: 60
@@ -96,24 +97,12 @@ scaling:
           ReturnData: false
         - MetricStat:
             Metric:
+              # Dimensions can be ignored here due to defaulting
               MetricName: MemoryUtilization
               Namespace: System/Linux
             Period: 60
             Stat: Average
           Id: memoryUsage
-          ReturnData: false
-        - MetricStat:
-            Metric:
-              Dimensions:
-                - Name: LoadBalancer
-                  Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
-                - Name: TargetGroup
-                  Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-              MetricName: TargetResponseTime
-              Namespace: AWS/ApplicationELB
-            Period: 60
-            Stat: Average
-          Id: responseTime
           ReturnData: false
 
 config:
@@ -136,34 +125,8 @@ workers:
       min: 1
       max: 5
       #TODO Replace with queue size metrics when we switch to SQS
-      metrics: &CpuMemScalingRules
-        combinedCpuRam:
-          EvaluationPeriods: 3
-          Threshold:
-            Lower: 30
-            Upper: 85
-          Metrics:
-            - Expression: "MAX(cpuUsage, memoryUsage)"
-              Id: "combinedCpuRam"
-              Label: "Scaling based on CPU and Memory consumption"
-            - MetricStat:
-                Metric:
-                  # Dimensions can be ignored here due to defaulting
-                  MetricName: CPUUtilization
-                  Namespace: AWS/EC2
-                Period: 60
-                Stat: Average
-              Id: cpuUsage
-              ReturnData: false
-            - MetricStat:
-                Metric:
-                  # Dimensions can be ignored here due to defaulting
-                  MetricName: MemoryUtilization
-                  Namespace: System/Linux
-                Period: 60
-                Stat: Average
-              Id: memoryUsage
-              ReturnData: false
+      metrics: *CpuMemScalingRules
+
 
 
 environmentOverrides:
@@ -213,7 +176,45 @@ environmentOverrides:
       instance: t3.medium
       min: 1
       max: 5
-      metrics: *CpuMemAlbScalingRules
+      metrics: &CpuMemAlbScalingRules
+        combinedCpuRamAndLatency: # Identifier for the metric
+          EvaluationPeriods: 3
+          Threshold:
+            Lower: 30
+            Upper: 85
+          Metrics:
+            - Expression: "MAX(MAX([(responseTime/3000), cpuUsage]), memoryUsage)"
+              Id: "combinedCpuRamAndLatency"
+              Label: "Scaling based on CPU and Memory consumption or response time"
+            - MetricStat:
+                Metric:
+                  MetricName: CPUUtilization
+                  Namespace: AWS/EC2
+                Period: 60
+                Stat: Average
+              Id: cpuUsage
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: MemoryUtilization
+                  Namespace: System/Linux
+                Period: 60
+                Stat: Average
+              Id: memoryUsage
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  Dimensions:
+                    - Name: LoadBalancer
+                      Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+                    - Name: TargetGroup
+                      Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+                  MetricName: TargetResponseTime
+                  Namespace: AWS/ApplicationELB
+                Period: 60
+                Stat: Average
+              Id: responseTime
+              ReturnData: false
     workers:
       - name: Worker
         scaling:
