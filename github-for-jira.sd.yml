@@ -83,7 +83,7 @@ scaling:
         Lower: 30
         Upper: 85
       Metrics:
-        - Expression: "MAX(cpuUsage, memoryUsage)"
+        - Expression: "MAX([cpuUsage, memoryUsage])"
           Id: "combinedCpuRam"
           Label: "Scaling based on CPU and Memory consumption"
         - MetricStat:
@@ -104,6 +104,20 @@ scaling:
             Stat: Average
           Id: memoryUsage
           ReturnData: false
+
+alarms:
+  overrides:
+    MemoryConsumptionAlert:
+      Namespace: System/Linux
+      MetricName: MemoryUtilization
+      Description: "Memory utilization is more than 90%"
+      Threshold: 90
+      Priority: Low
+      EvaluationPeriods: 3
+      Period: 60
+      ComparisonOperator: GreaterThanThreshold
+      Statistic: Average
+
 
 config:
   environmentVariables:
@@ -183,7 +197,7 @@ environmentOverrides:
             Lower: 30
             Upper: 85
           Metrics:
-            - Expression: "MAX(MAX([(responseTime/3000), cpuUsage]), memoryUsage)"
+            - Expression: "MAX([(responseTime/3000), cpuUsage, memoryUsage])"
               Id: "combinedCpuRamAndLatency"
               Label: "Scaling based on CPU and Memory consumption or response time"
             - MetricStat:
@@ -215,6 +229,23 @@ environmentOverrides:
                 Stat: Average
               Id: responseTime
               ReturnData: false
+    alarms:
+      overrides:
+        ElbResponseTimeAlert:
+          Namespace: AWS/ApplicationELB
+          MetricName: TargetResponseTime
+          Description: "Response latency is too high"
+          Dimensions:
+            - Name: LoadBalancer
+              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+            - Name: TargetGroup
+              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+          Threshold: 3000
+          Priority: Low
+          EvaluationPeriods: 3
+          Period: 60
+          ComparisonOperator: GreaterThanThreshold
+          Statistic: Average
     workers:
       - name: Worker
         scaling:
