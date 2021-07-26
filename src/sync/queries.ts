@@ -115,24 +115,3 @@ export const getDefaultRef = `query ($owner: String!, $repo: String!) {
         }
     }
   }`;
-
-export const getRepositoriesQuery = `query ($login: String!) {
-  organization(login:$login) {
-    repositories {
-      totalCount
-    }
-  }
-}`;
-
-export const getRepositoriesUserQuery = `query ($login: String!) {
-  user(login:$login) {
-    repositories {
-      totalCount
-    }
-    repositories {
-      nodes  {
-        name
-      }
-    }
-  }
-}`;

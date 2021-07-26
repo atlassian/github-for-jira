@@ -37,7 +37,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
       const repositories = authedApp.paginate(
         authedApp.apps.listRepos.endpoint.merge({ per_page: 100 }),
         (res) => res.data,
-        );
+      );
 
       const [admin, numberOfRepos] = await Promise.all([checkAdmin, repositories])
 
