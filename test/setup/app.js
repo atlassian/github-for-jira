@@ -18,6 +18,15 @@ beforeEach(async () => {
       'getAllForHost',
     ]),
     Project: td.object(['upsert']),
+    AppSecrets: td.object([
+      'insert',
+      'getForHost',
+    ]),
+    Registration: td.object([
+      'insert',
+      'getRegistration',
+      'remove',
+    ]),
   });
 
   td.when(models.Installation.getForHost(process.env.ATLASSIAN_URL))
@@ -42,6 +51,9 @@ beforeEach(async () => {
       upsert: () => Promise.resolve(),
     });
 
+  td.when(models.Registration.getRegistration('abc123'))
+    .thenReturn({ githubHost: process.env.GHAE_URL, state: 'abc123', remove: () => Promise.resolve() });
+
   nock('https://api.github.com')
     .post(/\/app\/installations\/[\d\w-]+\/access_tokens/)
     .reply(200, {
@@ -51,6 +63,22 @@ beforeEach(async () => {
     .get('/repos/test-repo-owner/test-repo-name/contents/.github/jira.yml')
     .reply(200, {
       content: Buffer.from(`jira: ${process.env.ATLASSIAN_URL}`).toString('base64'),
+    });
+
+  nock('https://ghaebuild4123test.ghaekube.net')
+    .post('/api/v3/app-manifests/1234567/conversions')
+    .reply(404, {
+      message: 'Not Found',
+      documentation_url: 'https://docs.github.com/github-ae@latest/rest/reference/apps#create-a-github-app-from-a-manifest',
+    })
+    .post('/api/v3/app-manifests/12345/conversions')
+    .reply(200, {
+      client_id: 'client-id',
+      client_secret: 'client-secret',
+      private_key: 'private-key',
+      id: 1,
+      html_url: 'https://ghaebuild4123test.ghaekube.net/github-apps/jira-app-testing',
+      webhook_secret: 'webhook-secret',
     });
 
   const configureRobot = require('../../lib/configure-robot');
