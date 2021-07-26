@@ -129,5 +129,10 @@ export const getRepositoriesUserQuery = `query ($login: String!) {
     repositories {
       totalCount
     }
+    repositories {
+      nodes  {
+        name
+      }
+    }
   }
 }`;
