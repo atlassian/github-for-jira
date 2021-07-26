@@ -113,8 +113,8 @@ alarms:
       Description: "Memory utilization is more than 90%"
       Threshold: 90
       Priority: Low
-      EvaluationPeriods: 3
-      Period: 60
+      EvaluationPeriods: 5
+      Period: 120
       ComparisonOperator: GreaterThanThreshold
       Statistic: Average
 
@@ -298,8 +298,8 @@ environmentOverrides:
               Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
           Threshold: 3
           Priority: Low
-          EvaluationPeriods: 3
-          Period: 60
+          EvaluationPeriods: 5
+          Period: 120
           ComparisonOperator: GreaterThanThreshold
           Statistic: Average
     resources:
