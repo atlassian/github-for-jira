@@ -2,8 +2,12 @@ import Logger, {levelFromName} from 'bunyan';
 import bformat from 'bunyan-format';
 import filteringStream from '../util/filteringStream'
 
+// For any Micros env we want the logs to be in JSON format.
+// Otherwise, if local development, we want human readable logs.
+const outputMode = process.env.MICROS_ENV ? 'json' : 'short';
+
 // add levelInString to include DEBUG | ERROR | INFO | WARN
-const formatOut = filteringStream(bformat({outputMode: 'bunyan', levelInString: true}));
+const formatOut = filteringStream(bformat({ outputMode, levelInString: true }));
 
 const logger = Logger.createLogger(
   {
