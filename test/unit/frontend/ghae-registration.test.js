@@ -27,10 +27,26 @@ describe('Frontend', () => {
         .send({})
         .expect(200));
 
-      it('should return 400 for register if ghaeHost params missing', () => supertest(subject)
+
+      /*
+        Test cases for Register flow, passed ghaeHost parameter.
+        Generate state & manifest then call to ghae to register app via manifest flow
+      */
+      it('should return 400 for register if ghaeHost parameter missing', () => supertest(subject)
         .post('/register')
         .send({})
-        .expect(400));
+        .expect(400)
+        .then(response => {
+          expect(response.body.err).toBe('Invalid GHAE instance url');
+        }));
+
+      it('should return 400 for register if invalid ghaeHost parameter', () => supertest(subject)
+        .post('/register?ghaeHost=ghaebuild4123test.ghaekube.com')
+        .send({})
+        .expect(400)
+        .then(response => {
+          expect(response.body.err).toBe('Invalid GHAE instance url');
+        }));
 
       it('should return 200 for register', () => supertest(subject)
         .post('/register?ghaeHost=ghaebuild4123test.ghaekube.net')
@@ -42,7 +58,12 @@ describe('Frontend', () => {
           });
         }));
 
-      it('should return 400 for register complete if refer missing in request', () => supertest(subject)
+
+      /*
+        Test cases for Register Complete flow, we get callback from ghae with code & state params.
+        Validate state, referer & github host then make post call to get app secrets & store in db
+      */
+      it('should return 400 for register complete if referer missing in request', () => supertest(subject)
         .get('/ghaeRegisterComplete/?code=12345')
         .send({})
         .expect(400)
@@ -50,7 +71,7 @@ describe('Frontend', () => {
           expect(response.body.err).toBe('Request not coming from valid referer');
         }));
 
-      it('should return 400 for register complete if code params missing', () => supertest(subject)
+      it('should return 400 for register complete if state params missing', () => supertest(subject)
         .get('/ghaeRegisterComplete/?code=12345')
         .send({})
         .set('referer', 'ghaebuild4123test.ghaekube.net')
@@ -59,7 +80,7 @@ describe('Frontend', () => {
           expect(response.body.err).toBe('Missing Auth state parameter');
         }));
 
-      it('should return 400 for register complete if state params missing', () => supertest(subject)
+      it('should return 400 for register complete if code params missing', () => supertest(subject)
         .get('/ghaeRegisterComplete/?state=abc123')
         .send({})
         .set('referer', 'ghaebuild4123test.ghaekube.net')
@@ -77,6 +98,15 @@ describe('Frontend', () => {
           expect(response.body.err).toBe('Invalid Auth state parameter');
         }));
 
+      it('should return 401 for register complete if state params older than 1 hour', () => supertest(subject)
+        .get('/ghaeRegisterComplete/?code=12345&state=abc12345')
+        .send({})
+        .set('referer', 'ghaebuild4123test.ghaekube.net')
+        .expect(401)
+        .then(response => {
+          expect(response.body.err).toBe('Invalid Auth state parameter');
+        }));
+
       it('should return 401 for register complete if invalid github host', () => supertest(subject)
         .get('/ghaeRegisterComplete/?code=12345&state=abc123')
         .send({})
@@ -84,6 +114,15 @@ describe('Frontend', () => {
         .expect(401)
         .then(response => {
           expect(response.body.err).toBe('Request coming from invalid host');
+        }));
+
+      it('should return 409 for register complete if app already installed on given host', () => supertest(subject)
+        .get('/ghaeRegisterComplete/?code=12345&state=abc1234')
+        .send({})
+        .set('referer', 'appinstalled.ghaekube.net')
+        .expect(409)
+        .then(response => {
+          expect(response.body.err).toBe('App already exist for the given host');
         }));
 
       it('should return 400 for register complete if invalid auth code', () => supertest(subject)

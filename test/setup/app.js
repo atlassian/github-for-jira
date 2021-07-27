@@ -52,7 +52,26 @@ beforeEach(async () => {
     });
 
   td.when(models.Registration.getRegistration('abc123'))
-    .thenReturn({ githubHost: process.env.GHAE_URL, state: 'abc123', remove: () => Promise.resolve() });
+    .thenReturn({
+      githubHost: process.env.GHAE_URL, state: 'abc123', createdAt: new Date(), remove: () => Promise.resolve(),
+    });
+
+  var dt = new Date();
+  dt.setHours(dt.getHours() - 2);
+  td.when(models.Registration.getRegistration('abc12345'))
+    .thenReturn({
+      githubHost: process.env.GHAE_URL, state: 'abc12345', createdAt: dt, remove: () => Promise.resolve(),
+    });
+
+  td.when(models.Registration.getRegistration('abc1234'))
+    .thenReturn({
+      githubHost: 'appinstalled.ghaekube.net', state: 'abc1234', createdAt: new Date(), remove: () => Promise.resolve(),
+    });
+
+  td.when(models.AppSecrets.getForHost('appinstalled.ghaekube.net'))
+    .thenReturn({
+      clientId: '12213',
+    });
 
   nock('https://api.github.com')
     .post(/\/app\/installations\/[\d\w-]+\/access_tokens/)
