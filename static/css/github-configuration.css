@@ -1,0 +1,125 @@
+.getConfiguration__imageHeaderContainer {
+  margin-bottom: 1em;
+  text-align: center;
+}
+
+.getConfiguration__header {
+  font-weight: 500 !important;
+}
+
+.getConfiguration__atlassianInstance {
+  color: #586069;
+  margin-bottom: 0;
+  text-align: center;
+}
+
+.getConfiguration__wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  line-height: 1;
+  margin: 2em auto;
+}
+
+.getConfiguration__tableHeader {
+  color: #6b778c;
+  display: flex;
+  flex-direction: row;
+  font-size: 0.8rem;
+  padding: 1em 0;
+}
+
+.getConfiguration__tableHeader__label {
+  margin-bottom: 0;
+}
+
+.org__cell {
+  flex: 1;
+}
+
+.getConfiguration__tableHeader__label:first-child {
+  flex: 1;
+}
+
+.getConfiguration__tableHeader__label:last-child {
+  flex: 2;
+}
+
+.Box {
+  border: 0;
+  border-radius: 0;
+}
+
+.Box-row {
+  border-top: 0;
+  padding: 0.8em 0 0.4em;
+}
+
+.Box-row:last-child {
+  padding-bottom: 0;
+}
+
+.getConfiguration__orgs {
+  border-top: 2px solid #e0e2e7;
+  border-bottom: 2px solid #e0e2e7;
+}
+
+.Box-row,
+.getConfiguration__orgContent:nth-child(2) {
+  display: flex;
+  flex-direction: row;
+}
+
+.getConfiguration__orgContent {
+  align-items: center;
+  color: #213658;
+  display: flex;
+}
+
+.getConfiguration__orgContent:last-child {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.getConfiguration__orgContent__repoSelection {
+  margin: 0;
+}
+
+.getConfiguration__orgContent__numberOfRepos {
+  background-color: #f4f5f7;
+  border-radius: 7px;
+  margin: auto 0.2em auto 0.5em;
+  padding: 0.1em 0.5em;
+}
+
+.getConfiguration__orgContent_edit {
+  transform: scale(0.6);
+}
+
+.getConfiguration__orgContent__connectBtn {
+  background-color: #f4f5f7;
+  border: 0;
+  border-radius: 3px;
+  color: #42526e;
+  padding: 0.5em 0.8em;
+}
+
+.getConfiguration__orgContent__connectBtn:hover,
+.getConfiguration__orgContent__connectBtn:focus,
+.getConfiguration__orgContent__connectBtn:active,
+.getConfiguration__orgContent__connectBtn:focus:active,
+.getConfiguration__orgContent__connectBtn:hover:active {
+  background-color: #ebecf0;
+}
+
+@media (max-width: 540px) {
+  .getConfiguration__wrapper,
+  .getConfiguration__accountLink,
+  .getConfiguration__disclaimer {
+    font-size: 12px;
+  }
+
+  .getConfiguration__tableHeader {
+    padding-bottom: 0;
+  }
+}
