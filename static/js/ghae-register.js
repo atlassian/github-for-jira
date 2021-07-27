@@ -1,6 +1,12 @@
 $('.ghae-register-link').click((event) => {
   event.preventDefault();
-  let ghaeInstanceHost = new URL(document.getElementById('ghae_url_id').value).hostname;
+  let ghaeUrl = document.getElementById('ghae_url_id').value;
+  if(ghaeUrl == '' || !validateGhaeUrl(ghaeUrl)){
+    document.getElementById("errormessage").innerHTML = 'Please enter valid url !!!';
+    return false;
+  }
+
+  let ghaeInstanceHost = new URL(ghaeUrl).hostname;
   $.ajax({
     type: 'POST',
     url: `/register?ghaeHost=${encodeURIComponent(ghaeInstanceHost)}`,
@@ -10,5 +16,16 @@ $('.ghae-register-link').click((event) => {
       document.getElementById('manifest').value = data.manifest;
       document.getElementById('ghae_form_id').submit();
     },
+    error(error) {
+      document.getElementById("errormessage").innerHTML = error.responseJSON.err;
+      console.log(error)
+    }
   });
 });
+
+function validateGhaeUrl(url) {
+  if(url.indexOf("http://") == 0 || url.indexOf("https://") == 0){
+      return true;
+  }
+  return false; 
+}
