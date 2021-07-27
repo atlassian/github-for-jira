@@ -2,6 +2,8 @@ import JWT from 'atlassian-jwt';
 import {Installation} from '../models';
 import {NextFunction, Request, Response} from 'express';
 import { getJiraMarketplaceUrl } from '../util/getUrl';
+import enhanceOctokit from '../config/enhance-octokit';
+import app from '../worker/app';
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.session.githubToken) {
@@ -19,15 +21,27 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
   async function getInstallationsWithAdmin({installations, login}) {
     const installationsWithAdmin = [];
-    // TODO: make this parallel calls
+
     for (const installation of installations) {
       // See if we can get the membership for this user
       // TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
-      const admin = await isAdmin({
+      const checkAdmin = isAdmin({
         org: installation.account.login,
         username: login,
         type: installation.target_type,
       });
+
+      const authedApp = await app.auth(installation.id);
+      enhanceOctokit(authedApp);
+
+      const repositories = authedApp.paginate(
+        authedApp.apps.listRepos.endpoint.merge({ per_page: 100 }),
+        (res) => res.data,
+      );
+
+      const [admin, numberOfRepos] = await Promise.all([checkAdmin, repositories])
+
+      installation.numberOfRepos = numberOfRepos.length || 0;
       installationsWithAdmin.push({...installation, admin});
     }
     return installationsWithAdmin;
@@ -62,3 +76,4 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
   res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
 };
+
