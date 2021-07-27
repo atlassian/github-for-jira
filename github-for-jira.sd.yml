@@ -263,6 +263,8 @@ environmentOverrides:
           upstream_address:
             - address: jira-integration-staging.herokuapp.com
           rewrite: jira-integration-staging.herokuapp.com
+          ip_whitelist:
+            - public
 
   prod:
     config:
@@ -318,3 +320,5 @@ environmentOverrides:
           upstream_address:
             - address: jira-integration-production.herokuapp.com
           rewrite: jira-integration-production.herokuapp.com
+          ip_whitelist:
+            - public
