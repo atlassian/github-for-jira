@@ -57,6 +57,10 @@ Your new GitHub app will need the following repository permissions:
 + Metadata: Read-only
 + Pull requests: Read & write
 
+The app will also need the following organization permission:
+
++ Members: Read-only
+
 It will also need to subscribe to the following events:
 
 + Commit comment
