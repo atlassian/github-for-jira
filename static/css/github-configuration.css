@@ -96,11 +96,25 @@
   transform: scale(0.6);
 }
 
-.getConfiguration__orgContent__connectBtn {
-  background-color: #f4f5f7;
+.getConfiguration__orgContent__connectBtn,
+.getConfiguration__orgContent__connectBtn--disabled {
   border: 0;
   border-radius: 3px;
   color: #42526e;
+}
+
+.getConfiguration__orgContent__connectBtn {
+  background-color: #f4f5f7;
+  padding: 0.5em 0.8em;
+}
+
+.getConfiguration__orgContent__connectedMsg {
+  font-style: italic;
+  margin: 0;
+}
+
+.getConfiguration__orgContent__connectBtn--disabled {
+  background-color: #cdd1db;
   padding: 0.5em 0.8em;
 }
 

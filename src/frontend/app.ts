@@ -93,7 +93,9 @@ export default (octokitApp: App): Express => {
 
   // Handlebars helpers
   hbs.registerHelper('toLowerCase', (str) => str.toLowerCase());
+
   hbs.registerHelper('replaceSpaceWithHyphen', (str) => str.replace(/ /g, '-'));
+
   hbs.registerHelper(
     'ifAllReposSynced',
     (numberOfSyncedRepos, totalNumberOfRepos) =>
@@ -101,13 +103,34 @@ export default (octokitApp: App): Express => {
         ? totalNumberOfRepos
         : `${numberOfSyncedRepos} / ${totalNumberOfRepos}`,
   );
-  hbs.registerHelper(
-    'repoAccessType',
-    (repository_selection) =>
-    repository_selection === 'all'
-        ? 'All repos'
-        : 'Only select repos',
+
+  hbs.registerHelper('repoAccessType', (repository_selection) =>
+    repository_selection === 'all' ? 'All repos' : 'Only select repos',
   );
+
+  hbs.registerHelper('isNotConnected', (syncStatus) => syncStatus == null);
+
+  hbs.registerHelper('setAriaLabelConnectBtn', (admin) =>
+    admin
+      ? 'Connection already present between organization and Jira'
+      : 'Unable to connect this installation. Admin access is required.',
+  );
+
+  hbs.registerHelper('connectedStatus', (syncStatus) => {
+    let btnLabel = '';
+    switch (syncStatus) {
+      case 'COMPLETE':
+        btnLabel = 'Connected';
+        break;
+      case 'IN PROGRESS':
+        btnLabel = 'Connecting';
+        break;
+      default:
+        btnLabel = 'Connect';
+    }
+
+    return btnLabel;
+  });
 
   app.use('/public', express.static(path.join(rootPath, 'static')));
   app.use(
@@ -248,20 +271,16 @@ export default (octokitApp: App): Express => {
       'Not Found': 404,
     };
 
-    const errorStatusCode = errorCodes[err.message] || 500
+    const errorStatusCode = errorCodes[err.message] || 500;
 
-    const tags = [
-      `status: ${errorStatusCode}`,
-    ];
+    const tags = [`status: ${errorStatusCode}`];
 
     statsd.increment(metricError.githubErrorRendered, tags);
 
-    return res
-      .status(errorStatusCode)
-      .render('github-error.hbs', {
-        title: 'GitHub + Jira integration',
-        nonce: res.locals.nonce,
-      });
+    return res.status(errorStatusCode).render('github-error.hbs', {
+      title: 'GitHub + Jira integration',
+      nonce: res.locals.nonce,
+    });
   });
 
   return app;

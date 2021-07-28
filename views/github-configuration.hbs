@@ -79,21 +79,28 @@
                 {{!-- Connect --}}
                 <div class='getConfiguration__orgContent org__cell'>
                   {{#if admin}}
-                    <button
-                      class='install-link btn-info getConfiguration__orgContent__connectBtn'
-                      data-installation-id='{{id}}'
-                      type='submit'
-                    >Connect</button>
-                  {{else}}
-                    <button
-                      disabled
-                      class='tooltipped tooltipped-w install-link btn-info getConfiguration__orgContent__connectBtn'
-                      aria-label='Unable to connect this installation. Admin access is required.'
-                      data-installation-id='{{id}}'
-                      type='submit'
-                    >
-                      Connect
-                    </button>
+                    {{#if (isNotConnected syncStatus)}}
+                      <button
+                        class='install-link btn-info getConfiguration__orgContent__connectBtn'
+                        data-installation-id='{{id}}'
+                        type='submit'
+                      >
+                        {{connectedStatus syncStatus}}
+                      </button>
+                    {{else}}
+                      <p class="getConfiguration__orgContent__connectedMsg">
+                        {{connectedStatus syncStatus}}
+                      </p>
+                      {{!-- <button
+                        disabled
+                        class='getConfiguration__orgContent__connectBtn--disabled'
+                        aria-label='{{setAriaLabelConnectBtn admin}}'
+                        data-installation-id='{{id}}'
+                        type='submit'
+                      >
+                        {{connectedStatus syncStatus}}
+                      </button> --}}
+                    {{/if}}
                   {{/if}}
                 </div>
               </div>
