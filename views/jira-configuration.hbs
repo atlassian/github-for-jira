@@ -184,7 +184,9 @@
               {{#if maintenanceMode}}
                 <button class="ak-button ak-button__appearance-primary add-organization-link" disabled>Add an Organization</button>
               {{else}}
-                <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+                <!--<button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>-->
+                <p>Enter github host url</p><input type="text" id="githubHost" name="githubHost">
+                <button class="ak-button ak-button__appearance-primary add-ghae-organization-link">Add an GHAE Organization</button>
               {{/if}}
             </div>
           {{/if}}
