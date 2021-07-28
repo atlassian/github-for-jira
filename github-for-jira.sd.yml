@@ -184,8 +184,8 @@ environmentOverrides:
         WEBHOOK_PROXY_URL: https://github-for-jira.stg.services.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-stg
         SENTRY_ENVIRONMENT: stg-west
-        APP_ID: '119363'
-        GITHUB_CLIENT_ID: Iv1.86f9d277ffccd384
+        APP_ID: '12645'
+        GITHUB_CLIENT_ID: Iv1.2d8e2a184a746aec
     scaling:
       instance: t3.medium
       min: 1
