@@ -7,8 +7,6 @@ import { findPrivateKey } from 'probot/lib/private-key';
 import getRedisInfo from './config/redis-info';
 import setupFrontend from './frontend';
 import setupGitHub from './github';
-import setupJira from './jira';
-import setupDeepcheck from './deepcheck';
 import statsd from './config/statsd';
 import { isIp4InCidrs } from './config/cidr-validator';
 import Logger from 'bunyan';
@@ -94,12 +92,8 @@ export default async (app: Application): Promise<Application> => {
 
   // These incoming webhooks should skip rate limiting
   setupGitHub(app);
-  // According to metrics, we receive < 1 request per minute from Jira
-  setupJira(app);
   // Our FrontEnd Assets are between 1 and 4 RPM
   setupFrontend(app);
-  // Deepcheck and Healthchecks endpoints for checking app health
-  setupDeepcheck(app);
 
   return app;
 };

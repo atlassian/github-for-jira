@@ -1,6 +1,7 @@
 import {StatsCb, StatsD, Tags} from 'hot-shots';
 import {getLogger} from './logger';
 import {NextFunction, Request, Response} from 'express';
+import { EnvironmentEnum } from "./env";
 
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -19,7 +20,7 @@ const statsd = new StatsD({
   port: 8125,
   globalTags,
   errorHandler: (err) => {
-    if (process.env.NODE_ENV !== 'development') {
+    if (process.env.NODE_ENV !== EnvironmentEnum.development) {
       logger.warn(err, 'error writing metrics')
     }
   },

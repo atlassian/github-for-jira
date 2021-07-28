@@ -16,6 +16,7 @@ import { metricHttpRequest } from '../config/metric-names';
 import { initializeSentry } from '../config/sentry';
 import { getLogger } from '../config/logger';
 import '../config/proxy';
+import { EnvironmentEnum } from "../config/env";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo('client').redisOptions);
@@ -48,7 +49,7 @@ const queueOpts: QueueOptions = {
   },
 };
 
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === EnvironmentEnum.development) {
   queueOpts.settings = {
     lockDuration: 100000,
     lockRenewTime: 50000, // Interval on which to acquire the job lock
