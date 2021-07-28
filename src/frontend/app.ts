@@ -110,6 +110,13 @@ export default (octokitApp: App): Express => {
         ? totalNumberOfRepos
         : `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
   );
+  hbs.registerHelper(
+    'repoAccessType',
+    (repository_selection) =>
+    repository_selection === 'all'
+        ? 'All repos'
+        : 'Only select repos',
+  );
 
   app.use("/public", express.static(path.join(rootPath, "static")));
   app.use(
