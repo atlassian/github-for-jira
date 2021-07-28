@@ -1,7 +1,8 @@
 import {Request, Response} from 'express';
+import { EnvironmentEnum } from "../config/env";
 
 const instance = process.env.INSTANCE_NAME;
-const isProd = (instance === 'production');
+const isProd = (instance === EnvironmentEnum.production);
 
 export default (req: Request, res: Response): void => {
   const isHttps = req.secure || req.header('x-forwarded-proto') === 'https';

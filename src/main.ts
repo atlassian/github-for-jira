@@ -9,8 +9,9 @@ import { exec } from 'child_process';
 import { initializeSentry } from './config/sentry';
 import {getLogger, overrideProbotLoggingMethods} from './config/logger'
 import './config/proxy';
+import { EnvironmentEnum } from "./config/env";
 
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = process.env.NODE_ENV === EnvironmentEnum.production;
 const { redisOptions } = getRedisInfo('probot');
 
 
