@@ -42,20 +42,6 @@
     font-weight: bold;
 }
 
-section.warning {
-  background-color: #FFFAE6;
-  padding: 16px;
-  margin-top: 50px;
-  clear: both;
-}
-
-section.warning .icon {
-  float: left;
-  height: 75px;
-  padding-right: 16px;
-  padding-top: 5px;
-}
-
 .disabled-link {
   color: #A5ADBA;
   padding: 6px 12px;
