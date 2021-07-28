@@ -7,6 +7,7 @@ import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
 import { mockModels } from "../../utils/models";
 import api from "../../../src/api";
+import { EnvironmentEnum } from "../../../src/config/env";
 
 jest.mock("../../../src/models");
 
@@ -312,11 +313,11 @@ describe("API", () => {
 
     describe.skip("undo and complete - prod", () => {
       beforeEach(() => {
-        process.env.NODE_ENV = "production";
+        process.env.NODE_ENV = EnvironmentEnum.production;
       });
 
       afterEach(() => {
-        process.env.NODE_ENV = "test";
+        process.env.NODE_ENV = EnvironmentEnum.test;
       });
 
       it("should return 404 if no installation is found", async () => {

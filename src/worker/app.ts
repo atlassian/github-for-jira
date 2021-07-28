@@ -4,7 +4,7 @@
 
 import {Application, createProbot} from 'probot';
 import { findPrivateKey } from 'probot/lib/private-key';
-import setupDeepcheck from "../deepcheck";
+import healthcheck from "../frontend/healthcheck";
 import {overrideProbotLoggingMethods} from "../config/logger";
 
 export const probot = createProbot({
@@ -19,8 +19,8 @@ export const probot = createProbot({
 });
 
 const App = async (app: Application): Promise<Application> => {
-  // Deepcheck and Healthchecks endpoints for checking app health
-  setupDeepcheck(app);
+  const router = app.route();
+  router.use('/', healthcheck);
   return app;
 };
 
