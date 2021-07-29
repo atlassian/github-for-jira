@@ -9,37 +9,37 @@
  * Learn more at https://docs.sentry.io/platforms/node/#eventprocessors
  */
 export default class SentryScopeProxy {
-  event: any;
-  hint: any;
-  extra: Record<string, any>;
-  fingerprint: (string | number)[];
+	event: any;
+	hint: any;
+	extra: Record<string, any>;
+	fingerprint: (string | number)[];
 
-  static processEvent(event: any, hint: any) {
-    if (hint.originalException.sentryScope) {
-      hint.originalException.sentryScope.addTo(event);
-    }
+	constructor() {
+		this.extra = {};
+		this.fingerprint = null;
+	}
 
-    return event;
-  }
+	static processEvent(event: any, hint: any) {
+		if (hint.originalException.sentryScope) {
+			hint.originalException.sentryScope.addTo(event);
+		}
 
-  constructor() {
-    this.extra = {};
-    this.fingerprint = null;
-  }
+		return event;
+	}
 
-  setExtra(key, value) {
-    this.extra[key] = value;
-  }
+	setExtra(key, value) {
+		this.extra[key] = value;
+	}
 
-  setFingerprint(fingerprint) {
-    this.fingerprint = fingerprint;
-  }
+	setFingerprint(fingerprint) {
+		this.fingerprint = fingerprint;
+	}
 
-  addTo(event) {
-    Object.assign(event.extra, this.extra);
+	addTo(event) {
+		Object.assign(event.extra, this.extra);
 
-    if (this.fingerprint) {
-      event.fingerprint = this.fingerprint;
-    }
-  }
+		if (this.fingerprint) {
+			event.fingerprint = this.fingerprint;
+		}
+	}
 }
