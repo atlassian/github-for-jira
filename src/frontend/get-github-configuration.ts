@@ -1,10 +1,52 @@
 import JWT from 'atlassian-jwt';
-import { Installation, Subscription } from '../models';
-import { NextFunction, Request, Response } from 'express';
-import { getJiraMarketplaceUrl } from '../util/getUrl';
+import {Installation, Subscription} from '../models';
+import {NextFunction, Request, Response} from 'express';
+import {getJiraMarketplaceUrl} from '../util/getUrl';
 import enhanceOctokit from '../config/enhance-octokit';
 import app from '../worker/app';
-import { getInstallation } from './get-jira-configuration';
+import {getInstallation} from './get-jira-configuration';
+import logger from "../config/logger";
+
+const getConnectedStatus = (installationsWithSubscriptions: any, sessionJiraHost: string) => {
+  return installationsWithSubscriptions.length > 0 &&
+    installationsWithSubscriptions
+    // An org may have multiple subscriptions to Jira instances. Confirm a match.
+    .filter(
+      (subscription) => sessionJiraHost === subscription.jiraHost,
+    )
+    .map((subscription) =>
+      (({ syncStatus, account }) => ({ syncStatus, account }))(
+        subscription,
+      ),
+    );
+}
+
+const mergeByLogin = (installationsWithAdmin, connectedStatuses) =>
+  installationsWithAdmin.map((installation) => ({
+      ...connectedStatuses.find(
+        (connection) => connection.account.login === installation.account.login && connection,
+      ),
+      ...installation,
+  }));
+
+const installationConnectedStatus = async (sessionJiraHost: string, client: any, installationsWithAdmin: any)  => {
+  const subscriptions = await Subscription.getAllForHost(
+    sessionJiraHost,
+  );
+
+  const installationsWithSubscriptions = await Promise.all(
+    subscriptions.map((subscription) =>
+      getInstallation(client, subscription),
+    ),
+  );
+
+  const connectedStatuses = getConnectedStatus(installationsWithSubscriptions, sessionJiraHost);
+
+  return mergeByLogin(
+    installationsWithAdmin,
+    connectedStatuses,
+  );
+}
 
 export default async (
   req: Request,
@@ -25,7 +67,7 @@ export default async (
     req.body.installationId,
   );
 
-  const { github, client, isAdmin } = res.locals;
+  const {github, client, isAdmin} = res.locals;
 
   async function getInstallationsWithAdmin({ installations, login }) {
     const installationsWithAdmin = [];
@@ -53,15 +95,14 @@ export default async (
       ]);
 
       installation.numberOfRepos = numberOfRepos.length || 0;
-      installationsWithAdmin.push({ ...installation, admin });
+      installationsWithAdmin.push({...installation, admin});
     }
     return installationsWithAdmin;
   }
 
   if (req.session.jwt && req.session.jiraHost) {
-    const {
-      data: { login },
-    } = await github.users.getAuthenticated();
+    const {data: {login}} = await github.users.getAuthenticated();
+
     try {
       // we can get the jira client Key from the JWT's `iss` property
       // so we'll decode the JWT here and verify it's the right key before continuing
@@ -71,51 +112,12 @@ export default async (
         installation.sharedSecret,
       );
 
-      const {
-        data: { installations },
-      } = await github.apps.listInstallationsForAuthenticatedUser();
-      const installationsWithAdmin = await getInstallationsWithAdmin({
-        installations,
-        login,
-      });
-      const { data: info } = await client.apps.getAuthenticated();
+      const {data: {installations}} = (await github.apps.listInstallationsForAuthenticatedUser());
+      const installationsWithAdmin = await getInstallationsWithAdmin({installations, login});
+      const {data: info} = (await client.apps.getAuthenticated());
+      const connectedInstallations = await installationConnectedStatus(req.session.jiraHost, client, installationsWithAdmin)
 
-      // TODO - clean this up before opening PR
-      const subscriptions = await Subscription.getAllForHost(
-        req.session.jiraHost,
-      );
-
-      const installationsWithSubscriptions = await Promise.all(
-        subscriptions.map((subscription) =>
-          getInstallation(client, subscription),
-        ),
-      );
-
-      // An org may have multiple subscriptions to Jira instances. Confirm a match.
-      const connectedStatuses =
-        installationsWithSubscriptions.length > 0 &&
-        installationsWithSubscriptions
-          .filter(
-            (subscription) => req.session.jiraHost === subscription.jiraHost,
-          )
-          .map((subscription) =>
-            (({ syncStatus, account }) => ({ syncStatus, account }))(
-              subscription,
-            ),
-          );
-
-      const mergeByLogin = (installation, connection) =>
-        installation.map((itm) => ({
-          ...connection.find(
-            (item) => item.account.login === itm.account.login && item,
-          ),
-          ...itm,
-        }));
-
-      const connectedInstallations = mergeByLogin(
-        installationsWithAdmin,
-        connectedStatuses,
-      );
+      logger.info("HERE: ", connectedInstallations)
 
       return res.render('github-configuration.hbs', {
         csrfToken: req.csrfToken(),
