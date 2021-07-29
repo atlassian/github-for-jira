@@ -12,7 +12,7 @@
  * @returns {number} Integer representation of the IP Address
  */
 const ip4ToInt = (ip) =>
-  ip.split('.').reduce((int, oct) => (int << 8) + parseInt(oct, 10), 0) >>> 0;
+	ip.split(".").reduce((int, oct) => (int << 8) + parseInt(oct, 10), 0) >>> 0;
 
 /**
  * Wrapper function to keep the IP in scope while we test the CIDRs
@@ -21,9 +21,9 @@ const ip4ToInt = (ip) =>
  * @returns {Function} A function to compare an IP to the CIDR
  */
 const isIp4InCidr = (ip) => (cidr) => {
-  const [range, bits = 32] = cidr.split('/');
-  const mask = ~(2 ** (32 - bits) - 1);
-  return (ip4ToInt(ip) & mask) === (ip4ToInt(range) & mask);
+	const [range, bits = 32] = cidr.split("/");
+	const mask = ~(2 ** (32 - bits) - 1);
+	return (ip4ToInt(ip) & mask) === (ip4ToInt(range) & mask);
 };
 
 /**
@@ -37,4 +37,4 @@ const isIp4InCidr = (ip) => (cidr) => {
  * true
  */
 export const isIp4InCidrs = (ip: string, cidrs: string[]): boolean =>
-  cidrs.some(isIp4InCidr(ip));
+	cidrs.some(isIp4InCidr(ip));

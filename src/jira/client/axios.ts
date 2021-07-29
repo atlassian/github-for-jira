@@ -1,20 +1,20 @@
-import Logger from 'bunyan';
-import axios, {AxiosInstance} from 'axios';
-import jwt from 'atlassian-jwt';
-import url from 'url';
-import statsd from '../../config/statsd';
-import JiraClientError from './jira-client-error';
-import {getLogger} from '../../config/logger'
-import {metricHttpRequest} from '../../config/metric-names';
+import Logger from "bunyan";
+import axios, { AxiosInstance } from "axios";
+import jwt from "atlassian-jwt";
+import url from "url";
+import statsd from "../../config/statsd";
+import JiraClientError from "./jira-client-error";
+import { getLogger } from "../../config/logger";
+import { metricHttpRequest } from "../../config/metric-names";
 
 const instance = process.env.INSTANCE_NAME;
-const iss = `com.github.integration${instance ? `.${instance}` : ''}`;
+const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 // TODO: type hack to fix custom implementation of URL templating vars
-declare module 'axios' {
-  interface AxiosRequestConfig {
-    urlParams?: Record<string, string>;
-  }
+declare module "axios" {
+	interface AxiosRequestConfig {
+		urlParams?: Record<string, string>;
+	}
 }
 
 /**
@@ -23,103 +23,103 @@ declare module 'axios' {
  * @param {string} secret - The key to use to sign the JWT
  */
 function getAuthMiddleware(secret: string) {
-  return (
-    /**
-     * @param {import('axios').AxiosRequestConfig} config - The config for the outgoing request.
-     * @returns {import('axios').AxiosRequestConfig} Updated axios config with authentication token.
-     */
-    (config) => {
-      const {query, pathname} = url.parse(config.url, true);
+	return (
+		/**
+		 * @param {import("axios").AxiosRequestConfig} config - The config for the outgoing request.
+		 * @returns {import("axios").AxiosRequestConfig} Updated axios config with authentication token.
+		 */
+		(config) => {
+			const { query, pathname } = url.parse(config.url, true);
 
-      const jwtToken = jwt.encode(
-        {
-          ...getExpirationInSeconds(),
-          iss,
-          qsh: jwt.createQueryStringHash({
-            method: config.method,
-            originalUrl: pathname,
-            query,
-          }),
-        },
-        secret,
-      );
+			const jwtToken = jwt.encode(
+				{
+					...getExpirationInSeconds(),
+					iss,
+					qsh: jwt.createQueryStringHash({
+						method: config.method,
+						originalUrl: pathname,
+						query
+					})
+				},
+				secret
+			);
 
-      return {
-        ...config,
-        headers: {
-          ...config.headers,
-          Authorization: `JWT ${jwtToken}`,
-        },
-      };
-    }
-  );
+			return {
+				...config,
+				headers: {
+					...config.headers,
+					Authorization: `JWT ${jwtToken}`
+				}
+			};
+		}
+	);
 }
 
 /**
  * Mapping of Jira Dev Error Codes to nice strings.
  */
 const JiraErrorCodes = {
-  400: 'Request had incorrect format.',
-  401: 'Missing a JWT token, or token is invalid.',
-  403: "The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope",
-  413: 'Data is too large. Submit fewer devinfo entities in each payload.',
-  429: 'API rate limit has been exceeded.',
+	400: "Request had incorrect format.",
+	401: "Missing a JWT token, or token is invalid.",
+	403: "The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope",
+	413: "Data is too large. Submit fewer devinfo entities in each payload.",
+	429: "API rate limit has been exceeded."
 };
 
 /**
  * Middleware to enhance failed requests in Jira.
  */
 function getErrorMiddleware(logger) {
-  return (
-    /**
-     * Potentially enrich the promise's rejection.
-     *
-     * @param {import('axios').AxiosError} error - The error response from Axios
-     * @returns {Promise<Error>} The rejected promise
-     */
-    (error) => {
-      if (error.response) {
-        const {status, statusText} = error.response || {};
+	return (
+		/**
+		 * Potentially enrich the promise's rejection.
+		 *
+		 * @param {import("axios").AxiosError} error - The error response from Axios
+		 * @returns {Promise<Error>} The rejected promise
+		 */
+		(error) => {
+			if (error.response) {
+				const { status, statusText } = error.response || {};
 
-        const errorMessage = status in JiraErrorCodes ? `Error calling Jira API. ${JiraErrorCodes[status]}` :
-          `Error calling Jira API. Response Code: ${status} ${statusText}`
+				const errorMessage = status in JiraErrorCodes ? `Error calling Jira API. ${JiraErrorCodes[status]}` :
+					`Error calling Jira API. Response Code: ${status} ${statusText}`;
 
-        logger.warn(error, {message: errorMessage, response_data: error.response.data});
+				logger.warn(error, { message: errorMessage, response_data: error.response.data });
 
-        return Promise.reject(new JiraClientError(error));
-      } else {
-        return Promise.reject(error);
-      }
-    }
-  );
+				return Promise.reject(new JiraClientError(error));
+			} else {
+				return Promise.reject(error);
+			}
+		}
+	);
 }
 
 /**
  * Middleware to enhance successful requests in Jira.
  *
- * @param {import('probot').Logger} logger - The probot logger instance
+ * @param {import("probot").Logger} logger - The probot logger instance
  */
 function getSuccessMiddleware(logger) {
-  return (
-    /**
-     * DEBUG log the response info from Jira
-     *
-     * @param {import('axios').AxiosResponse} response - The response from axios
-     * @returns {import('axios').AxiosResponse} The axios response
-     */
-    (response) => {
-      logger.debug(
-        {
-          params: response.config.urlParams,
-        },
-        `Jira request: ${response.config.method.toUpperCase()} ${
-          response.config.originalUrl
-        } - ${response.status} ${response.statusText}`,
-      );
+	return (
+		/**
+		 * DEBUG log the response info from Jira
+		 *
+		 * @param {import("axios").AxiosResponse} response - The response from axios
+		 * @returns {import("axios").AxiosResponse} The axios response
+		 */
+		(response) => {
+			logger.debug(
+				{
+					params: response.config.urlParams
+				},
+				`Jira request: ${response.config.method.toUpperCase()} ${
+					response.config.originalUrl
+				} - ${response.status} ${response.statusText}`
+			);
 
-      return response;
-    }
-  );
+			return response;
+		}
+	);
 }
 
 /**
@@ -128,37 +128,37 @@ function getSuccessMiddleware(logger) {
 
 // TODO: non-standard and probably should be done through string interpolation
 function getUrlMiddleware() {
-  return (
-    /**
-     * @param {import('axios').AxiosRequestConfig} config - The outgoing request configuration.
-     * @returns {import('axios').AxiosRequestConfig} The enriched axios request config.
-     */
-    (config) => {
-      // eslint-disable-next-line prefer-const
-      let {query, pathname, ...rest} = url.parse(config.url, true);
-      config.urlParams = config.urlParams || {};
+	return (
+		/**
+		 * @param {import("axios").AxiosRequestConfig} config - The outgoing request configuration.
+		 * @returns {import("axios").AxiosRequestConfig} The enriched axios request config.
+		 */
+		(config) => {
+			// eslint-disable-next-line prefer-const
+			let { query, pathname, ...rest } = url.parse(config.url, true);
+			config.urlParams = config.urlParams || {};
 
-      for (const param in config.urlParams) {
-        if (pathname.includes(`:${param}`)) {
-          pathname = pathname.replace(`:${param}`, config.urlParams[param]);
-        } else {
-          query[param] = config.urlParams[param];
-        }
-      }
+			for (const param in config.urlParams) {
+				if (pathname.includes(`:${param}`)) {
+					pathname = pathname.replace(`:${param}`, config.urlParams[param]);
+				} else {
+					query[param] = config.urlParams[param];
+				}
+			}
 
-      config.urlParams.baseUrl = config.baseURL;
+			config.urlParams.baseUrl = config.baseURL;
 
-      return {
-        ...config,
-        originalUrl: config.url,
-        url: url.format({
-          ...rest,
-          pathname,
-          query,
-        }),
-      };
-    }
-  );
+			return {
+				...config,
+				originalUrl: config.url,
+				url: url.format({
+					...rest,
+					pathname,
+					query
+				})
+			};
+		}
+	);
 }
 
 /*
@@ -170,69 +170,69 @@ function getUrlMiddleware() {
  * short-lived, we use a timeout of 30 seconds.
  */
 function getExpirationInSeconds() {
-  const nowInSeconds = Math.floor(Date.now() / 1000);
+	const nowInSeconds = Math.floor(Date.now() / 1000);
 
-  return {
-    iat: nowInSeconds,
-    exp: nowInSeconds + 30,
-  };
+	return {
+		iat: nowInSeconds,
+		exp: nowInSeconds + 30
+	};
 }
 
 /**
  * Enrich the config object to include the time that the request started.
  *
- * @param {import('axios').AxiosRequestConfig} config - The Axios request configuration object.
- * @returns {import('axios').AxiosRequestConfig} The enriched config object.
+ * @param {import("axios").AxiosRequestConfig} config - The Axios request configuration object.
+ * @returns {import("axios").AxiosRequestConfig} The enriched config object.
  */
 const setRequestStartTime = (config) => {
-  config.requestStartTime = new Date();
-  return config;
+	config.requestStartTime = new Date();
+	return config;
 };
 
 /**
  * Extract the path name from a URL.
  *
  */
-export const extractPath = (someUrl = ''): string =>
-  url.parse(someUrl).pathname;
+export const extractPath = (someUrl = ""): string =>
+	url.parse(someUrl).pathname;
 
 /**
  * Submit statsd metrics on successful requests.
  *
- * @param {import('axios').AxiosResponse} response - The successful axios response object.
- * @returns {import('axios').AxiosResponse} The response object.
+ * @param {import("axios").AxiosResponse} response - The successful axios response object.
+ * @returns {import("axios").AxiosResponse} The response object.
  */
 const instrumentRequest = (response) => {
-  const requestDurationMs = Number(
-    Date.now() - response.config.requestStartTime,
-  );
-  const tags = {
-    method: response.config.method.toUpperCase(),
-    path: extractPath(response.config.originalUrl),
-    status: response.status,
-  };
+	const requestDurationMs = Number(
+		Date.now() - response.config.requestStartTime
+	);
+	const tags = {
+		method: response.config.method.toUpperCase(),
+		path: extractPath(response.config.originalUrl),
+		status: response.status
+	};
 
-  statsd.histogram(metricHttpRequest().jira, requestDurationMs, tags);
+	statsd.histogram(metricHttpRequest().jira, requestDurationMs, tags);
 
-  return response;
+	return response;
 };
 
 /**
  * Submit statsd metrics on failed requests.
  *
- * @param {import('axios').AxiosError} error - The Axios error response object.
+ * @param {import("axios").AxiosError} error - The Axios error response object.
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
 const instrumentFailedRequest = (logger) => {
-  return (error) => {
-    if (error.response) {
-      instrumentRequest(error.response);
-    } else {
-      logger.error(error, 'Error during Axios request has no response property.');
-    }
+	return (error) => {
+		if (error.response) {
+			instrumentRequest(error.response);
+		} else {
+			logger.error(error, "Error during Axios request has no response property.");
+		}
 
-    return Promise.reject(error);
-  };
+		return Promise.reject(error);
+	};
 };
 
 /**
@@ -244,29 +244,29 @@ const instrumentFailedRequest = (logger) => {
  * just-in-time add the token to a request before sending it.
  */
 export default (
-  baseURL: string,
-  secret: string,
-  logger?: Logger,
+	baseURL: string,
+	secret: string,
+	logger?: Logger
 ): AxiosInstance => {
-  logger = logger || getLogger('jira.client.axios');
-  const instance = axios.create({
-    baseURL,
-    timeout: +process.env.JIRA_TIMEOUT || 20000,
-  });
+	logger = logger || getLogger("jira.client.axios");
+	const instance = axios.create({
+		baseURL,
+		timeout: +process.env.JIRA_TIMEOUT || 20000
+	});
 
-  instance.interceptors.request.use(setRequestStartTime);
-  instance.interceptors.response.use(
-    instrumentRequest,
-    instrumentFailedRequest(logger),
-  );
+	instance.interceptors.request.use(setRequestStartTime);
+	instance.interceptors.response.use(
+		instrumentRequest,
+		instrumentFailedRequest(logger)
+	);
 
-  instance.interceptors.request.use(getAuthMiddleware(secret));
-  instance.interceptors.request.use(getUrlMiddleware());
+	instance.interceptors.request.use(getAuthMiddleware(secret));
+	instance.interceptors.request.use(getUrlMiddleware());
 
-  instance.interceptors.response.use(
-    getSuccessMiddleware(logger),
-    getErrorMiddleware(logger),
-  );
+	instance.interceptors.response.use(
+		getSuccessMiddleware(logger),
+		getErrorMiddleware(logger)
+	);
 
-  return instance;
+	return instance;
 };
