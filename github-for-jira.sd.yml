@@ -180,8 +180,8 @@ environmentOverrides:
   staging:
     config:
       environmentVariables:
-        APP_URL: https://github-for-jira.stg.services.atlassian.com
-        WEBHOOK_PROXY_URL: https://github-for-jira.stg.services.atlassian.com/github/events
+        APP_URL: https://github.stg.atlassian.com
+        WEBHOOK_PROXY_URL: https://github.stg.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-stg
         SENTRY_ENVIRONMENT: stg-west
         APP_ID: '12645'
@@ -269,8 +269,8 @@ environmentOverrides:
   prod:
     config:
       environmentVariables:
-        APP_URL:  https://github-for-jira.services.atlassian.com
-        WEBHOOK_PROXY_URL:  https://https://github-for-jira.services.atlassian.com/github/events
+        APP_URL:  https://github.atlassian.com
+        WEBHOOK_PROXY_URL:  https://github.atlassian.com/github/events
         INSTANCE_NAME: github-for-jira-production
         SENTRY_ENVIRONMENT: production
         APP_ID: '125082'
