@@ -137,8 +137,8 @@
   border: 2px solid #f3f3f3;
   border-radius: 50%;
   border-top: 2px solid #42526e;
-  height: 2.2em;
-  width: 2.2em;
+  height: 1.8em;
+  width: 1.8em;
 }
 
 @keyframes spin {
@@ -155,7 +155,7 @@
   .getConfiguration__wrapper,
   .getConfiguration__accountLink,
   .getConfiguration__disclaimer {
-    font-size: 12px;
+    font-size: 0.8rem;
   }
 
   .getConfiguration__tableHeader {
