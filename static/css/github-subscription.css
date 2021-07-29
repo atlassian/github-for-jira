@@ -35,3 +35,8 @@
 .getSubscription__installation__instance {
     font-weight: bold;
 }
+
+.getSubscription__installation__instance--empty {
+    font-weight: bold;
+    margin: 0;
+}

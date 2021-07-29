@@ -58,7 +58,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
 			const installationsWithAdmin = await getInstallationsWithAdmin({ installations, login });
 			const { data: info } = (await client.apps.getAuthenticated());
-
 			return res.render("github-configuration.hbs", {
 				csrfToken: req.csrfToken(),
 				installations: installationsWithAdmin,

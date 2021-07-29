@@ -60,7 +60,6 @@
     border-bottom: 2px solid #e0e2e7;
 }
 
-
 @media (max-width: 540px) {
     .getConfiguration__tableHeader {
         padding-bottom: 0;
