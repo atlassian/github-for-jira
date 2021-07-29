@@ -1,5 +1,5 @@
-import { Writable } from 'stream';
-import {middlewareLoggerName} from "../middleware/log-middleware";
+import { Writable } from "stream";
+import { middlewareLoggerName } from "../middleware/log-middleware";
 
 /**
  * Creates a writable stream that prevents HTTP logs from being logged
@@ -13,21 +13,21 @@ import {middlewareLoggerName} from "../middleware/log-middleware";
  * @return {WritableStream} that you can pipe bunyan output into
  */
 const filteringStream = (out) => {
-  const writable = new Writable({
-    write: function(chunk, encoding, next) {
-      if (!shouldBeFiltered(chunk)) {
-        out.write(chunk, encoding)
-      }
-      next();
-    }
-  });
-  return writable
-}
+	const writable = new Writable({
+		write: function(chunk, encoding, next) {
+			if (!shouldBeFiltered(chunk)) {
+				out.write(chunk, encoding);
+			}
+			next();
+		}
+	});
+	return writable;
+};
 
 //TODO Remove this code when there will be convenient way to do it in Probot.
 //See https://github.com/probot/probot/issues/1577
-const shouldBeFiltered = (chunk: any) : boolean => {
-  return !!chunk.toString().match(`${middlewareLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`)
-}
+const shouldBeFiltered = (chunk: any): boolean => {
+	return !!chunk.toString().match(`${middlewareLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`);
+};
 
-export default filteringStream
+export default filteringStream;

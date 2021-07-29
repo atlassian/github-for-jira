@@ -1,124 +1,124 @@
-import crypto from 'crypto';
-import Sequelize from 'sequelize';
-import Subscription from './subscription';
+import crypto from "crypto";
+import Sequelize from "sequelize";
+import Subscription from "./subscription";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
-  throw new Error('STORAGE_SECRET is not defined.');
+	throw new Error("STORAGE_SECRET is not defined.");
 }
 
 export const getHashedKey = (clientKey: string): string => {
-  const keyHash = crypto.createHmac('sha256', process.env.STORAGE_SECRET);
-  keyHash.update(clientKey);
+	const keyHash = crypto.createHmac("sha256", process.env.STORAGE_SECRET);
+	keyHash.update(clientKey);
 
-  return keyHash.digest('hex');
+	return keyHash.digest("hex");
 };
 
 export default class Installation extends Sequelize.Model {
-  id: number;
-  jiraHost: string;
-  secrets: string;
-  sharedSecret: string;
-  clientKey: string;
-  enabled: boolean;
+	id: number;
+	jiraHost: string;
+	secrets: string;
+	sharedSecret: string;
+	clientKey: string;
+	enabled: boolean;
 
-  static async getForClientKey(
-    clientKey: string,
-  ): Promise<Installation | null> {
-    return Installation.findOne({
-      where: {
-        clientKey: getHashedKey(clientKey),
-      },
-    });
-  }
+	static async getForClientKey(
+		clientKey: string
+	): Promise<Installation | null> {
+		return Installation.findOne({
+			where: {
+				clientKey: getHashedKey(clientKey)
+			}
+		});
+	}
 
-  static async getForHost(host: string): Promise<Installation | null> {
-    return Installation.findOne({
-      where: {
-        jiraHost: host,
-        enabled: true,
-      },
-    });
-  }
+	static async getForHost(host: string): Promise<Installation | null> {
+		return Installation.findOne({
+			where: {
+				jiraHost: host,
+				enabled: true
+			}
+		});
+	}
 
-  static async getPendingHost(jiraHost: string): Promise<Installation | null> {
-    return Installation.findOne({
-      where: {
-        jiraHost,
-        enabled: false,
-      },
-    });
-  }
+	static async getPendingHost(jiraHost: string): Promise<Installation | null> {
+		return Installation.findOne({
+			where: {
+				jiraHost,
+				enabled: false
+			}
+		});
+	}
 
-  async enable(): Promise<void> {
-    await this.update({
-      enabled: true,
-    });
-  }
+	/**
+	 * Create a new Installation object from a Jira Webhook
+	 *
+	 * @param {{host: string, clientKey: string, secret: string}} payload
+	 * @returns {Installation}
+	 */
+	static async install(payload: InstallationPayload): Promise<Installation> {
+		const [installation, created] = await Installation.findOrCreate({
+			where: {
+				clientKey: getHashedKey(payload.clientKey)
+			},
+			defaults: {
+				jiraHost: payload.host,
+				sharedSecret: payload.sharedSecret
+			}
+		});
 
-  async disable(): Promise<void> {
-    await this.update({
-      enabled: false,
-    });
-  }
+		if (!created) {
+			await installation
+				.update({
+					sharedSecret: payload.sharedSecret,
+					enabled: false,
+					jiraHost: payload.host
+				})
+				.then(async (record) => {
+					const subscriptions = await Subscription.getAllForClientKey(
+						record.clientKey
+					);
+					await Promise.all(
+						subscriptions.map((subscription) =>
+							subscription.update({ jiraHost: record.jiraHost })
+						)
+					);
 
-  /**
-   * Create a new Installation object from a Jira Webhook
-   *
-   * @param {{host: string, clientKey: string, secret: string}} payload
-   * @returns {Installation}
-   */
-  static async install(payload: InstallationPayload): Promise<Installation> {
-    const [installation, created] = await Installation.findOrCreate({
-      where: {
-        clientKey: getHashedKey(payload.clientKey),
-      },
-      defaults: {
-        jiraHost: payload.host,
-        sharedSecret: payload.sharedSecret,
-      },
-    });
+					return installation;
+				});
+		}
 
-    if (!created) {
-      await installation
-        .update({
-          sharedSecret: payload.sharedSecret,
-          enabled: false,
-          jiraHost: payload.host,
-        })
-        .then(async (record) => {
-          const subscriptions = await Subscription.getAllForClientKey(
-            record.clientKey,
-          );
-          await Promise.all(
-            subscriptions.map((subscription) =>
-              subscription.update({ jiraHost: record.jiraHost }),
-            ),
-          );
+		await installation.update({
+			enabled: false
+		});
 
-          return installation;
-        });
-    }
+		return installation;
+	}
 
-    await installation.update({
-      enabled: false,
-    });
+	async enable(): Promise<void> {
+		await this.update({
+			enabled: true
+		});
+	}
 
-    return installation;
-  }
+	async disable(): Promise<void> {
+		await this.update({
+			enabled: false
+		});
+	}
 
-  async uninstall(): Promise<void> {
-    await this.destroy();
-  }
+	async uninstall(): Promise<void> {
+		await this.destroy();
+	}
 
-  async subscriptions(): Promise<Subscription[]> {
-    return Subscription.getAllForClientKey(this.clientKey);
-  }
+	async subscriptions(): Promise<Subscription[]> {
+		return Subscription.getAllForClientKey(this.clientKey);
+	}
 }
 
 export interface InstallationPayload {
-  host: string;
-  clientKey: string;
-  // secret: string;
-  sharedSecret: string;
+	host: string;
+	clientKey: string;
+	// secret: string;
+	sharedSecret: string;
 }
