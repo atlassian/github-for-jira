@@ -1,0 +1,37 @@
+.getSubscription__info__container {
+    background-color: #DEEBFF;
+    border-radius: 3px;
+    display: flex;
+    margin: 2em auto;
+    padding: 1em;
+}
+
+.getSubscription__info__icon {
+    background-color: #0847A7;
+    border-radius: 50%;
+    color: #fff;
+    height: 20px;
+    margin: 0.5em 1.5em 1.2em 0.8em;
+    padding: 0 8.5px;
+    text-align: center;
+    width: 20px;
+}
+
+.getSubscription__info__message {
+    margin: 0;
+}
+
+.getSubscription__installation {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    padding: 1em 0;
+}
+
+.connectedInstances {
+    margin-bottom: 0.7em;
+}
+
+.getSubscription__installation__instance {
+    font-weight: bold;
+}

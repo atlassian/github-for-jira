@@ -4,42 +4,12 @@
   font-weight: 500 !important;
 }
 
-.getConfiguration__atlassianInstance {
-  color: #586069;
-  margin-bottom: 0;
-  text-align: center;
-}
-
 .getConfiguration__wrapper {
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
   line-height: 1;
   margin: 2em auto;
-}
-
-.getConfiguration__tableHeader {
-  color: #6b778c;
-  display: flex;
-  flex-direction: row;
-  font-size: 0.8rem;
-  padding: 1em 0;
-}
-
-.getConfiguration__tableHeader__label {
-  margin-bottom: 0;
-}
-
-.org__cell {
-  flex: 1;
-}
-
-.getConfiguration__tableHeader__label:first-child {
-  flex: 1;
-}
-
-.getConfiguration__tableHeader__label:last-child {
-  flex: 2;
 }
 
 .Box {
@@ -56,10 +26,6 @@
   padding-bottom: 0;
 }
 
-.getConfiguration__orgs {
-  border-top: 2px solid #e0e2e7;
-  border-bottom: 2px solid #e0e2e7;
-}
 
 .Box-row,
 .getConfiguration__orgContent:nth-child(2) {
@@ -114,9 +80,5 @@
   .getConfiguration__accountLink,
   .getConfiguration__disclaimer {
     font-size: 12px;
-  }
-
-  .getConfiguration__tableHeader {
-    padding-bottom: 0;
   }
 }
