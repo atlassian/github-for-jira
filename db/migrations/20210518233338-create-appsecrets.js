@@ -21,7 +21,7 @@ module.exports = {
     },
     privateKey: {
       allowNull: false,
-      type: Sequelize.TEXT,
+      type: Sequelize.BLOB,
     },
     appId: {
       allowNull: false,
