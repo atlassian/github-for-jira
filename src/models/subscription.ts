@@ -178,9 +178,9 @@ export default class Subscription extends Sequelize.Model {
 		await this.destroy();
 	}
 
-	// A stalled in progress sync is one that is ACTIVE but has not seen any updates in the last 15 minutes
+	// A IN PROGRESS sync is one that is ACTIVE but has not seen any updates in the last 15 minutes.
 	// This may happen when an error causes a sync to die without setting the status to 'FAILED'
-	isInProgressSyncStalled(): boolean {
+	hasInProgressSyncFailed(): boolean {
 		if (this.syncStatus === "ACTIVE") {
 			const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
