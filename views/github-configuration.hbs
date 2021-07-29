@@ -11,8 +11,14 @@
       href='/public/css/github-configuration.css'
       media='all'
     />
+    <link
+      rel='stylesheet'
+      href='/public/css/global.css'
+      media='all'
+    />
     <script src='/public/js/jquery.min.js' nonce='{{nonce}}'></script>
   </head>
+  
   <body class='px-3 py-6'>
     <input type='hidden' id='_csrf' name='_csrf' value='{{csrfToken}}' />
     <input type='hidden' id='jiraHost' name='jiraHost' value='{{jiraHost}}' />
@@ -23,7 +29,7 @@
       value='{{clientKey}}'
     />
     <section class='mx-auto' style='max-width: 570px'>
-      <div class="getConfiguration__imageHeaderContainer">
+      <div class="headerImage">
         <img src='/public/assets/jira-and-github.png' />
       </div>
       </p>
