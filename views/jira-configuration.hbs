@@ -16,7 +16,7 @@
     <div class="ac-content">
       <div class="page-content">
         <header class="title">
-          <h1>GitHub configuration</h1>
+          <h1>{{ appName }} configuration</h1>
         </header>
 
         {{#if hasConnections}}
@@ -179,14 +179,17 @@
             </table>
           {{else}}
             <div class="empty-message">
-              <h4>You don't have any connected GitHub organizations. Let's fix that!</h4>
-              <p>You'll be redirected to GitHub to select the organizations and repositories you'd like to connect with Jira.</p>
+              <h4>You don't have any connected {{ appName }} organizations. Let's fix that!</h4>
+              <p>You'll be redirected to {{ appName }} to select the organizations and repositories you'd like to connect with Jira.</p>
               {{#if maintenanceMode}}
                 <button class="ak-button ak-button__appearance-primary add-organization-link" disabled>Add an Organization</button>
               {{else}}
-                <!--<button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>-->
-                <p>Enter github host url</p><input type="text" id="githubHost" name="githubHost">
-                <button class="ak-button ak-button__appearance-primary add-ghae-organization-link">Add an GHAE Organization</button>
+                {{#if ghaeInstance}}
+                  <p>Enter Github AE host url</p><input type="text" id="githubHost" name="githubHost">
+                  <button class="ak-button ak-button__appearance-primary add-ghae-organization-link">Add an GHAE Organization</button>
+                {{else}}
+                  <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+                {{/if}}
               {{/if}}
             </div>
           {{/if}}
