@@ -26,7 +26,7 @@
   display: flex;
   flex-direction: row;
   font-size: 0.8rem;
-  padding: 1em 0;
+  padding: 1em 0 0;
 }
 
 .getConfiguration__tableHeader__label {
@@ -126,6 +126,31 @@
   background-color: #ebecf0;
 }
 
+.getConfiguration__loaderContainer {
+  display: flex;
+  justify-content: center;
+  width: 5.5em;
+}
+
+.getConfiguration__loader {
+  animation: spin 2s linear infinite;
+  border: 2px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 2px solid #42526e;
+  height: 2.2em;
+  width: 2.2em;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Media Queries */
 @media (max-width: 540px) {
   .getConfiguration__wrapper,
   .getConfiguration__accountLink,
@@ -135,5 +160,10 @@
 
   .getConfiguration__tableHeader {
     padding-bottom: 0;
+  }
+
+  .getConfiguration__loader {
+    height: 1.8em;
+    width: 1.8em;
   }
 }

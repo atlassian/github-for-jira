@@ -87,19 +87,14 @@
                       >
                         {{connectedStatus syncStatus}}
                       </button>
+                    {{else if (inProgressSync syncStatus)}}
+                      <div class="getConfiguration__loaderContainer">
+                        <div class="getConfiguration__loader"></div>
+                      </div>
                     {{else}}
                       <p class="getConfiguration__orgContent__connectedMsg">
                         {{connectedStatus syncStatus}}
                       </p>
-                      {{!-- <button
-                        disabled
-                        class='getConfiguration__orgContent__connectBtn--disabled'
-                        aria-label='{{setAriaLabelConnectBtn admin}}'
-                        data-installation-id='{{id}}'
-                        type='submit'
-                      >
-                        {{connectedStatus syncStatus}}
-                      </button> --}}
                     {{/if}}
                   {{/if}}
                 </div>
