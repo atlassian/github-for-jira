@@ -22,9 +22,9 @@ export async function getInstallation(client, subscription) {
 		).length;
 		response.data.numberOfSyncedRepos =
 			subscription.repoSyncState?.numberOfSyncedRepos || 0;
-
 		response.data.syncStatus === "STALLED" &&
 		statsd.increment(metricSyncStatus.stalled);
+		response.data.jiraHost = subscription.jiraHost;
 
 		return response.data;
 	} catch (err) {

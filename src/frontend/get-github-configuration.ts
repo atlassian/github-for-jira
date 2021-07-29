@@ -14,6 +14,7 @@ const getConnectedStatus = (
 		installationsWithSubscriptions.length > 0 &&
 		installationsWithSubscriptions
 			// An org may have multiple subscriptions to Jira instances. Confirm a match.
+			// .filter((subscription) => sessionJiraHost === 'fake')
 			.filter((subscription) => sessionJiraHost === subscription.jiraHost)
 			.map((subscription) =>
 				(({ syncStatus, account }) => ({ syncStatus, account }))(subscription)
@@ -21,14 +22,14 @@ const getConnectedStatus = (
 	);
 };
 
-const mergeByLogin = (installationsWithAdmin, connectedStatuses) =>
-	installationsWithAdmin.map((installation) => ({
+const mergeByLogin = (installationsWithAdmin: any, connectedStatuses: any) =>
+	connectedStatuses ? installationsWithAdmin.map((installation) => ({
 		...connectedStatuses.find(
 			(connection) =>
 				connection.account.login === installation.account.login && connection
 		),
 		...installation,
-	}));
+	})) : installationsWithAdmin
 
 const installationConnectedStatus = async (
 	sessionJiraHost: string,
