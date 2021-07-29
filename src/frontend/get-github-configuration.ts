@@ -14,7 +14,6 @@ const getConnectedStatus = (
 		installationsWithSubscriptions.length > 0 &&
 		installationsWithSubscriptions
 			// An org may have multiple subscriptions to Jira instances. Confirm a match.
-			// .filter((subscription) => sessionJiraHost === 'fake')
 			.filter((subscription) => sessionJiraHost === subscription.jiraHost)
 			.map((subscription) =>
 				(({ syncStatus, account }) => ({ syncStatus, account }))(subscription)
@@ -50,11 +49,7 @@ const installationConnectedStatus = async (
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
-export default async (
-	req: Request,
-	res: Response,
-	next: NextFunction
-): Promise<void> => {
+export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	if (!req.session.githubToken) {
 		return next(new Error("Github Auth token is missing"));
 	}
