@@ -1,36 +1,36 @@
-import OctokitError from '../models/octokit-error';
-import statsd from './statsd';
-import {extractPath} from '../jira/client/axios';
-import {GitHubAPI} from 'probot';
-import {metricHttpRequest} from './metric-names';
+import OctokitError from "../models/octokit-error";
+import statsd from "./statsd";
+import { extractPath } from "../jira/client/axios";
+import { GitHubAPI } from "probot";
+import { metricHttpRequest } from "./metric-names";
 
 const instrumentRequests = (octokit: GitHubAPI) => {
-  octokit.hook.wrap('request', async (request, options) => {
-    const requestStart = Date.now();
-    let responseStatus = null;
+	octokit.hook.wrap("request", async (request, options) => {
+		const requestStart = Date.now();
+		let responseStatus = null;
 
-    try {
-      const response = await request(options);
-      responseStatus = response.status;
+		try {
+			const response = await request(options);
+			responseStatus = response.status;
 
-      return response;
-    } catch (error) {
-      if (error.responseCode) {
-        responseStatus = error.responseCode;
-      }
+			return response;
+		} catch (error) {
+			if (error.responseCode) {
+				responseStatus = error.responseCode;
+			}
 
-      throw error;
-    } finally {
-      const elapsed = Date.now() - requestStart;
-      const tags = {
-        path: extractPath(options.url),
-        method: options.method,
-        status: responseStatus,
-      };
+			throw error;
+		} finally {
+			const elapsed = Date.now() - requestStart;
+			const tags = {
+				path: extractPath(options.url),
+				method: options.method,
+				status: responseStatus
+			};
 
-      statsd.histogram(metricHttpRequest().github, elapsed, tags);
-    }
-  });
+			statsd.histogram(metricHttpRequest().github, elapsed, tags);
+		}
+	});
 };
 
 /*
@@ -41,7 +41,7 @@ const instrumentRequests = (octokit: GitHubAPI) => {
  */
 export default (octokit: GitHubAPI): GitHubAPI => {
 
-  OctokitError.wrapRequestErrors(octokit);
-  instrumentRequests(octokit);
-  return octokit;
+	OctokitError.wrapRequestErrors(octokit);
+	instrumentRequests(octokit);
+	return octokit;
 };

@@ -50,79 +50,79 @@ it('checks tags too', async () => {
 import diff from "jest-diff";
 
 const parseStatsdMessage = (stastsdMessage) => {
-  const [metric, type, tagsString] = stastsdMessage.split("|");
-  const [name, value] = metric.split(":");
-  const tags = {};
+	const [metric, type, tagsString] = stastsdMessage.split("|");
+	const [name, value] = metric.split(":");
+	const tags = {};
 
-  tagsString.substring(1).split(",").map((tagString) => {
-    const [key, value] = tagString.split(":");
-    tags[key] = value;
-  });
+	tagsString.substring(1).split(",").map((tagString) => {
+		const [key, value] = tagString.split(":");
+		tags[key] = value;
+	});
 
-  return {
-    name,
-    value: parseInt(value),
-    type,
-    tags
-  };
+	return {
+		name,
+		value: parseInt(value),
+		type,
+		tags
+	};
 };
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace jest {
-    interface Matchers<R> {
-      toHaveSentMetrics(...expectedMetrics: any[]): R;
-    }
-  }
+	// eslint-disable-next-line @typescript-eslint/no-namespace
+	namespace jest {
+		interface Matchers<R> {
+			toHaveSentMetrics(...expectedMetrics: any[]): R;
+		}
+	}
 }
 
 // TODO: add better typing for metric
 expect.extend({
-  // TODO: expect needs the first argument to be what's in the `expect(value)`
-  // TODO: this doesn't work, probably something to do with statsd not keeping tabs when testing?
-  toHaveSentMetrics(...expectedMetrics: any[]) {
-    statsd.mockBuffer = [];
-    const actualMetrics = statsd.mockBuffer.map((message) => parseStatsdMessage(message));
-    const matchingMetrics = [];
+	// TODO: expect needs the first argument to be what's in the `expect(value)`
+	// TODO: this doesn't work, probably something to do with statsd not keeping tabs when testing?
+	toHaveSentMetrics(...expectedMetrics: any[]) {
+		statsd.mockBuffer = [];
+		const actualMetrics = statsd.mockBuffer.map((message) => parseStatsdMessage(message));
+		const matchingMetrics = [];
 
-    expectedMetrics.forEach((expectedMetric) => actualMetrics.find((actualMetric) => {
-      const matchingName = actualMetric.name === expectedMetric.name;
-      const matchingType = actualMetric.type === expectedMetric.type;
+		expectedMetrics.forEach((expectedMetric) => actualMetrics.find((actualMetric) => {
+			const matchingName = actualMetric.name === expectedMetric.name;
+			const matchingType = actualMetric.type === expectedMetric.type;
 
-      let matchingValue;
-      // eslint-disable-next-line no-prototype-builtins
-      if (!expectedMetric.hasOwnProperty("value")) {
-        matchingValue = true;
-      } else if (typeof expectedMetric.value === "function") {
-        matchingValue = expectedMetric.value(actualMetric.value);
-      } else {
-        matchingValue = actualMetric.value === expectedMetric.value;
-      }
+			let matchingValue;
+			// eslint-disable-next-line no-prototype-builtins
+			if (!expectedMetric.hasOwnProperty("value")) {
+				matchingValue = true;
+			} else if (typeof expectedMetric.value === "function") {
+				matchingValue = expectedMetric.value(actualMetric.value);
+			} else {
+				matchingValue = actualMetric.value === expectedMetric.value;
+			}
 
-      if (matchingName && matchingType && matchingValue) {
-        let matchingTags = true;
-        if (expectedMetric.tags) {
-          Object.entries(expectedMetric.tags).forEach(([name, expectedValue]) => {
-            if (actualMetric.tags[name] !== expectedValue) {
-              matchingTags = false;
-            }
-          });
-        }
+			if (matchingName && matchingType && matchingValue) {
+				let matchingTags = true;
+				if (expectedMetric.tags) {
+					Object.entries(expectedMetric.tags).forEach(([name, expectedValue]) => {
+						if (actualMetric.tags[name] !== expectedValue) {
+							matchingTags = false;
+						}
+					});
+				}
 
-        if (matchingTags) {
-          matchingMetrics.push(actualMetric);
-        }
-      }
-    }));
+				if (matchingTags) {
+					matchingMetrics.push(actualMetric);
+				}
+			}
+		}));
 
-    const pass = matchingMetrics.length === expectedMetrics.length;
+		const pass = matchingMetrics.length === expectedMetrics.length;
 
-    return {
-      message: () => {
-        const diffString = diff(expectedMetrics, actualMetrics, { expand: true });
-        return `${this.utils.matcherHint("toHaveSentMetrics", "function", "metrics")}\n\n${diffString}`;
-      },
-      pass
-    };
-  }
+		return {
+			message: () => {
+				const diffString = diff(expectedMetrics, actualMetrics, { expand: true });
+				return `${this.utils.matcherHint("toHaveSentMetrics", "function", "metrics")}\n\n${diffString}`;
+			},
+			pass
+		};
+	}
 });
