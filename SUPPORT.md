@@ -1,6 +1,6 @@
 # Questions? Need help? You've come to the right place
 
-This file will help you troubleshoot the common issues that can occur with the GitHub for Jira integration. 
+This file will help you troubleshoot the common issues that can occur with the GitHub for Jira integration.
 
 ## Table of Contents
 
@@ -22,7 +22,7 @@ Still having trouble? Look up your problem in [Issues](https://github.com/atlass
 
 ## Sync status not reaching complete
 
-After installing the integration, your sync status should move from `PENDING` to `IN PROGRESS` to `COMPLETE`. 
+After installing the integration, your sync status should move from `PENDING` to `IN PROGRESS` to `COMPLETE`.
 
 You can check your sync status in the integration settings:
 
@@ -35,7 +35,6 @@ You can check your sync status in the integration settings:
 | PENDING  | The sync has not started.  |
 | IN PROGRESS   | The sync has started and is still in progress. No information will be displayed in Jira. |
 | COMPLETE | The sync has finished. Information will be displayed in Jira. |
-| STALLED  | The sync has not finished but has stopped being updated. Partial information may appear in Jira. |
 | FAILED   | The sync hit an error and stopped without completing. Partial information may appear in Jira. |
 
 The time it takes to complete the sync will depend on the size of your installation. Since the sync scans commits for every repository in your installation, be mindful that selecting "All Repositories" will perform a scan of every repository in your account, including forks. If you have repositories with hundreds of thousands of forks (e.g. a fork of the Linux repo), the scan might take several hours to complete.
