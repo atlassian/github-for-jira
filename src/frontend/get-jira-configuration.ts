@@ -13,7 +13,7 @@ async function getInstallation(client, subscription) {
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
 		response.data.syncStatus = subscription.isInProgressSyncStalled()
-			? "STALLED"
+			? "FAILED"
 			: syncStatus(subscription.syncStatus);
 		response.data.syncWarning = subscription.syncWarning;
 		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
@@ -23,7 +23,7 @@ async function getInstallation(client, subscription) {
 		response.data.numberOfSyncedRepos =
 			subscription.repoSyncState?.numberOfSyncedRepos || 0;
 
-		response.data.syncStatus === "STALLED" &&
+		response.data.syncStatus === "FAILED" &&
 		statsd.increment(metricSyncStatus.stalled);
 
 		return response.data;
