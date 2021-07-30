@@ -23,11 +23,6 @@
     color: #0747A6;
 }
 
-.jiraConfigurationTable__stalled {
-    background-color: #FFF0B3;
-    color: #172B4D;
-}
-
 .jiraConfigurationTable__complete {
     background-color: #E3FCEF;
     color: #006644;
