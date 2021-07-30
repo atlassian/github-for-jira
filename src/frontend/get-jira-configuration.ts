@@ -8,7 +8,7 @@ import { metricSyncStatus } from "../config/metric-names";
 const syncStatus = (syncStatus) =>
 	syncStatus === "ACTIVE" ? "IN PROGRESS" : syncStatus;
 
-async function getInstallation(client, subscription) {
+export async function getInstallation(client, subscription) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
@@ -22,9 +22,9 @@ async function getInstallation(client, subscription) {
 		).length;
 		response.data.numberOfSyncedRepos =
 			subscription.repoSyncState?.numberOfSyncedRepos || 0;
-
 		response.data.syncStatus === "FAILED" &&
-			statsd.increment(metricSyncStatus.failed);
+		statsd.increment(metricSyncStatus.failed);
+		response.data.jiraHost = subscription.jiraHost;
 
 		return response.data;
 	} catch (err) {
