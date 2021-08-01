@@ -8,12 +8,12 @@ import { metricSyncStatus } from "../config/metric-names";
 const syncStatus = (syncStatus) =>
 	syncStatus === "ACTIVE" ? "IN PROGRESS" : syncStatus;
 
-async function getInstallation(client, subscription) {
+export async function getInstallation(client, subscription) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
-		response.data.syncStatus = subscription.isInProgressSyncStalled()
-			? "STALLED"
+		response.data.syncStatus = subscription.hasInProgressSyncFailed()
+			? "FAILED"
 			: syncStatus(subscription.syncStatus);
 		response.data.syncWarning = subscription.syncWarning;
 		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
@@ -22,9 +22,9 @@ async function getInstallation(client, subscription) {
 		).length;
 		response.data.numberOfSyncedRepos =
 			subscription.repoSyncState?.numberOfSyncedRepos || 0;
-
-		response.data.syncStatus === "STALLED" &&
-		statsd.increment(metricSyncStatus.stalled);
+		response.data.syncStatus === "FAILED" &&
+		statsd.increment(metricSyncStatus.failed);
+		response.data.jiraHost = subscription.jiraHost;
 
 		return response.data;
 	} catch (err) {
@@ -39,11 +39,7 @@ const formatDate = function(date) {
 	};
 };
 
-export default async (
-	req: Request,
-	res: Response,
-	next: NextFunction
-): Promise<void> => {
+export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const jiraHost = req.session.jiraHost;
 

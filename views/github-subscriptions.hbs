@@ -29,7 +29,7 @@
     <p class="jiraInstance">{{host}}</p>
 
     <div class="getSubscription__info__container">
-      <p class="getSubscription__info__icon">i</p>
+      <img src="/public/assets/icon.png" alt="Information icon" class="getSubscription__info__icon" />
       <p class="getSubscription__info__message">From here you can review and delete subscriptions to the Jira instances connected to this GitHub organization.</p>
     </div>
 
@@ -47,7 +47,8 @@
               <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
               <input type="hidden" id="installationId" name="installationId" value="{{gitHubInstallationId}}">
               <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}">
-              <span class="">{{jiraHost}}</span>
+              <img src="/public/assets/jira-software-logo.png" alt="Jira Software Logo" class="getSubscription__installation__jiraLogo" />
+              <span>{{jiraHost}}</span>
             </div>
             <button class="actionBtn" data-jira-host="{{jiraHost}}" data-installation-id="{{gitHubInstallationId}}">Delete</button>
           </div>

@@ -7,14 +7,8 @@
 }
 
 .getSubscription__info__icon {
-    background-color: #0847A7;
-    border-radius: 50%;
-    color: #fff;
-    height: 20px;
-    margin: 0.5em 1.5em 1.2em 0.8em;
-    padding: 0 8.5px;
-    text-align: center;
-    width: 20px;
+    height: 24px;
+    margin: 0 1.3em 0 0.1em;
 }
 
 .getSubscription__info__message {
@@ -28,12 +22,24 @@
     padding: 1em 0;
 }
 
+.getSubscription__installation__jiraLogo {
+    height: 24px;
+    width: 24px;
+}
+
 .connectedInstances {
     margin-bottom: 0.7em;
 }
 
 .getSubscription__installation__instance {
+    display: flex;
     font-weight: bold;
+}
+
+.getSubscription__installation__jiraLogo {
+    height: 24px;
+    margin-right: 0.5em;
+    width: 24px;
 }
 
 .getSubscription__installation__instance--empty {
