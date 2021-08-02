@@ -4,6 +4,9 @@ import { Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricSyncStatus } from "../config/metric-names";
+import { getLogger } from "../config/logger";
+
+const logger = getLogger("get.jira.configuration");
 
 const syncStatus = (syncStatus) =>
 	syncStatus === "ACTIVE" ? "IN PROGRESS" : syncStatus;
@@ -22,9 +25,12 @@ export async function getInstallation(client, subscription) {
 		).length;
 		response.data.numberOfSyncedRepos =
 			subscription.repoSyncState?.numberOfSyncedRepos || 0;
-		response.data.syncStatus === "FAILED" &&
-		statsd.increment(metricSyncStatus.failed);
 		response.data.jiraHost = subscription.jiraHost;
+
+		if (response.data.syncStatus === "FAILED") {
+			statsd.increment(metricSyncStatus.failed);
+			logger.warn(`Sync failed: installationId=${id}`);
+		}
 
 		return response.data;
 	} catch (err) {
