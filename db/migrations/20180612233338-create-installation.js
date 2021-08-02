@@ -8,9 +8,6 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      githubHost: {
-        type: Sequelize.STRING
-      },
       jiraHost: {
         type: Sequelize.STRING
       },
