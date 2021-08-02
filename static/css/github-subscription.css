@@ -1,0 +1,48 @@
+.getSubscription__info__container {
+    background-color: #DEEBFF;
+    border-radius: 3px;
+    display: flex;
+    margin: 2em auto;
+    padding: 1em;
+}
+
+.getSubscription__info__icon {
+    height: 24px;
+    margin: 0 1.1em 0 0.2em;
+}
+
+.getSubscription__info__message {
+    margin: 0;
+}
+
+.getSubscription__installation {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4em 0;
+}
+
+.getSubscription__installation__jiraLogo {
+    height: 24px;
+    width: 24px;
+}
+
+.connectedInstances {
+    margin-bottom: 0.7em;
+}
+
+.getSubscription__installation__instance {
+    display: flex;
+    font-weight: bold;
+}
+
+.getSubscription__installation__jiraLogo {
+    height: 24px;
+    margin-right: 0.5em;
+    width: 24px;
+}
+
+.getSubscription__installation__instance--empty {
+    font-weight: bold;
+    margin: 0;
+}
