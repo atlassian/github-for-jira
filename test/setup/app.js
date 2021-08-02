@@ -1,7 +1,5 @@
-const { Application } = require('probot');
-const { findPrivateKey } = require('probot/lib/private-key');
-const cacheManager = require('cache-manager');
-const { App } = require('@octokit/app');
+const { Probot, ProbotOctokit } = require('probot');
+const { getPrivateKey } = require('@probot/get-private-key');
 
 beforeEach(async () => {
   const models = td.replace('../../lib/models', {
@@ -20,6 +18,15 @@ beforeEach(async () => {
       'getAllForHost',
     ]),
     Project: td.object(['upsert']),
+    AppSecrets: td.object([
+      'insert',
+      'getForHost',
+    ]),
+    Registration: td.object([
+      'insert',
+      'getRegistration',
+      'remove',
+    ]),
   });
 
   td.when(models.Installation.getForHost(process.env.ATLASSIAN_URL))
@@ -44,6 +51,28 @@ beforeEach(async () => {
       upsert: () => Promise.resolve(),
     });
 
+  td.when(models.Registration.getRegistration('abc123'))
+    .thenReturn({
+      githubHost: process.env.GHAE_URL, state: 'abc123', createdAt: new Date(), remove: () => Promise.resolve(),
+    });
+
+  var dt = new Date();
+  dt.setHours(dt.getHours() - 2);
+  td.when(models.Registration.getRegistration('abc12345'))
+    .thenReturn({
+      githubHost: process.env.GHAE_URL, state: 'abc12345', createdAt: dt, remove: () => Promise.resolve(),
+    });
+
+  td.when(models.Registration.getRegistration('abc1234'))
+    .thenReturn({
+      githubHost: 'appinstalled.ghaekube.net', state: 'abc1234', createdAt: new Date(), remove: () => Promise.resolve(),
+    });
+
+  td.when(models.AppSecrets.getForHost('appinstalled.ghaekube.net'))
+    .thenReturn({
+      clientId: '12213',
+    });
+
   nock('https://api.github.com')
     .post(/\/app\/installations\/[\d\w-]+\/access_tokens/)
     .reply(200, {
@@ -55,21 +84,39 @@ beforeEach(async () => {
       content: Buffer.from(`jira: ${process.env.ATLASSIAN_URL}`).toString('base64'),
     });
 
-  const configureRobot = require('../../lib/configure-robot');
+  nock('https://ghaebuild4123test.ghaekube.net')
+    .post('/api/v3/app-manifests/1234567/conversions')
+    .reply(404, {
+      message: 'Not Found',
+      documentation_url: 'https://docs.github.com/github-ae@latest/rest/reference/apps#create-a-github-app-from-a-manifest',
+    })
+    .post('/api/v3/app-manifests/12345/conversions')
+    .reply(200, {
+      client_id: 'client-id',
+      client_secret: 'client-secret',
+      private_key: 'private-key',
+      id: 1,
+      html_url: 'https://ghaebuild4123test.ghaekube.net/github-apps/jira-app-testing',
+      webhook_secret: 'webhook-secret',
+    });
 
-  global.app = await configureRobot(new Application({
-    app: new App({
-      id: 12257,
-      privateKey: findPrivateKey(),
+  const configureRobot = require('../../lib/configure-robot');
+  const setupGithub = require('../../lib/github');
+  const { Router } = require('express');
+
+  const probot = new Probot({
+    appId: 12257,
+    githubToken: 'test',
+    privateKey: getPrivateKey(),
+    Octokit: ProbotOctokit.defaults({
+      retry: { enabled: false },
+      throttle: { enabled: false },
     }),
-    cache: cacheManager.caching({
-      store: 'memory',
-      ttl: 60 * 60, // 1 hour
-    }),
-    throttleOptions: {
-      enabled: false,
-    },
-  }));
+  });
+
+  global.app = await configureRobot(probot, { getRouter: Router });
+
+  global.webhookApp = await setupGithub(probot);
 });
 
 afterEach(() => {

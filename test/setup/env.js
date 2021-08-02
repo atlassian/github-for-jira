@@ -2,6 +2,7 @@
 // are already set in the environment.
 const defaults = Object.assign({
   NODE_ENV: 'test',
+  APP_ID: 12257,
   APP_URL: 'https://test-github-app-instance.com',
   ATLASSIAN_URL: 'https://test-atlassian-instance.net',
   HYDRO_BASE_URL: 'https://hydro-base-url.com/api/v1/events',
@@ -16,6 +17,7 @@ const defaults = Object.assign({
   STORAGE_SECRET: '8cad66340bc92edbae2ae3a792d351f48c61d1d8efe7b2d9408b0025c1f7f845',
   SETUP: 'yes', // indicates that the setup did run
   TRACKING_DISABLED: 'true',
+  GHAE_URL: 'ghaebuild4123test.ghaekube.net',
 }, process.env);
 
 Object.assign(process.env, defaults);
