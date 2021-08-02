@@ -11,8 +11,14 @@
       href='/public/css/github-configuration.css'
       media='all'
     />
+     <link
+      rel="stylesheet"
+      href="/public/css/global.css"
+      media="all"
+    />
     <script src='/public/js/jquery.min.js' nonce='{{nonce}}'></script>
   </head>
+
   <body class='px-3 py-6'>
     <input type='hidden' id='_csrf' name='_csrf' value='{{csrfToken}}' />
     <input type='hidden' id='jiraHost' name='jiraHost' value='{{jiraHost}}' />
@@ -23,24 +29,24 @@
       value='{{clientKey}}'
     />
     <section class='mx-auto' style='max-width: 570px'>
-      <div class="getConfiguration__imageHeaderContainer">
-        <img src='/public/assets/jira-and-github.png' />
+      <div class="headerImage">
+        <img src='/public/assets/jira-and-github.png' alt="Jira and GitHub logos" />
       </div>
       </p>
       <h2 class='f2 text-center text-normal getConfiguration__header'>Connect a GitHub organization to your Jira site</h2>
-      <p class='getConfiguration__atlassianInstance'>{{jiraHost}}</p>
+      <p class='jiraInstance'>{{jiraHost}}</p>
 
       <div class='Box'>
         <div class='getConfiguration__wrapper'>
-          <div class='getConfiguration__tableHeader'>
+          <div class='tableHeader'>
             <p
-              class='getConfiguration__tableHeader__label org__cell'
+              class='tableHeader__label org__cell'
             >GitHub Organization</p>
-            <p class='getConfiguration__tableHeader__label org__cell'>Repository
+            <p class='tableHeader__label org__cell'>Repository
               access</p>
           </div>
 
-          <div class="getConfiguration__orgs">
+          <div class="githubOrgs__table">
             {{#each installations}}
               <div class='Box-row clearfix '>
                 {{!-- Organizations --}}
@@ -48,7 +54,7 @@
                   <img
                     class='avatar float-left mr-2'
                     src='{{account.avatar_url}}'
-                    alt=''
+                    alt='Github organization avatar'
                     height='25px'
                     width='25px'
                   />
@@ -68,7 +74,7 @@
                       <img
                         class="getConfiguration__orgContent_edit"
                         src='/public/assets/edit-icon.png'
-                        alt=''
+                        alt='Editing icon'
                         height='25px'
                         width='25px'
                       />

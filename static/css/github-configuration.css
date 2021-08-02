@@ -1,16 +1,7 @@
-.getConfiguration__imageHeaderContainer {
-  margin-bottom: 1em;
-  text-align: center;
-}
+
 
 .getConfiguration__header {
   font-weight: 500 !important;
-}
-
-.getConfiguration__atlassianInstance {
-  color: #586069;
-  margin-bottom: 0;
-  text-align: center;
 }
 
 .getConfiguration__wrapper {
@@ -59,10 +50,6 @@
   padding-bottom: 0;
 }
 
-.getConfiguration__orgs {
-  border-top: 2px solid #e0e2e7;
-  border-bottom: 2px solid #e0e2e7;
-}
 
 .Box-row,
 .getConfiguration__orgContent:nth-child(2) {
