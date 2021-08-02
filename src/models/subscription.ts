@@ -183,6 +183,7 @@ export default class Subscription extends Sequelize.Model {
 	hasInProgressSyncFailed(): boolean {
 		if (this.syncStatus === "ACTIVE") {
 			const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
 			return this.updatedAt < fifteenMinutesAgo;
 		} else {
 			return false;

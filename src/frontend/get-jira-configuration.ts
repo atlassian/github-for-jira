@@ -12,6 +12,17 @@ const logger = getLogger("get.jira.configuration");
 const syncStatus = (syncStatus) =>
 	syncStatus === "ACTIVE" ? "IN PROGRESS" : syncStatus;
 
+const sendFailedStatusMetrics = (installationId: string): void => {
+	const syncError = "No updates in the last 15 minutes"
+	logger.warn(syncError, `Sync failed: installationId=${installationId}`);
+
+	Sentry.setExtra("Installation FAILED", syncError);
+	Sentry.captureException(syncError);
+
+	const tags = { errorMsg: syncError };
+	statsd.increment(metricSyncStatus.failed, tags);
+}
+
 export async function getInstallation(client, subscription) {
 	const id = subscription.gitHubInstallationId;
 	try {
@@ -28,16 +39,7 @@ export async function getInstallation(client, subscription) {
 			subscription.repoSyncState?.numberOfSyncedRepos || 0;
 		response.data.jiraHost = subscription.jiraHost;
 
-		if (response.data.syncStatus === "FAILED") {
-			const syncError = "No updates in the last 15 minutes"
-			logger.warn(syncError, `Sync failed: installationId=${id}`);
-
-			Sentry.setExtra("Installation FAILED", syncError);
-			Sentry.captureException(syncError);
-
-			const tags = { errorMsg: syncError };
-			statsd.increment(metricSyncStatus.failed, tags);
-		}
+		response.data.syncStatus === "FAILED" && sendFailedStatusMetrics(id);
 
 		return response.data;
 	} catch (err) {
