@@ -8,7 +8,7 @@
 
 .getSubscription__info__icon {
     height: 24px;
-    margin: 0 1.3em 0 0.1em;
+    margin: 0 1.1em 0 0.2em;
 }
 
 .getSubscription__info__message {
@@ -19,7 +19,7 @@
     align-items: center;
     display: flex;
     justify-content: space-between;
-    padding: 1em 0;
+    padding: 0.4em 0;
 }
 
 .getSubscription__installation__jiraLogo {
