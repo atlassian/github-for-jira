@@ -5,6 +5,7 @@ import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricSyncStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
+import * as Sentry from "@sentry/node";
 
 const logger = getLogger("get.jira.configuration");
 
@@ -28,8 +29,14 @@ export async function getInstallation(client, subscription) {
 		response.data.jiraHost = subscription.jiraHost;
 
 		if (response.data.syncStatus === "FAILED") {
-			statsd.increment(metricSyncStatus.failed);
-			logger.warn(`Sync failed: installationId=${id}`);
+			const syncError = "No updates in the last 15 minutes"
+			logger.warn(syncError, `Sync failed: installationId=${id}`);
+
+			Sentry.setExtra("Installation FAILED", syncError);
+			Sentry.captureException(syncError);
+
+			const tags = { errorMsg: syncError };
+			statsd.increment(metricSyncStatus.failed, tags);
 		}
 
 		return response.data;
