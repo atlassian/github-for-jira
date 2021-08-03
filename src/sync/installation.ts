@@ -392,8 +392,7 @@ export const processInstallation =
 				job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
 				job.sentry.captureException(err);
 
-				const tags = { errorMsg: JSON.stringify(err, null, 2) };
-				statsd.increment(metricSyncStatus.failed, tags);
+				statsd.increment(metricSyncStatus.failed);
 
 				throw err;
 			}

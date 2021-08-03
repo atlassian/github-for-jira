@@ -19,8 +19,7 @@ const sendFailedStatusMetrics = (installationId: string): void => {
 	Sentry.setExtra("Installation FAILED", syncError);
 	Sentry.captureException(syncError);
 
-	const tags = { errorMsg: syncError };
-	statsd.increment(metricSyncStatus.failed, tags);
+	statsd.increment(metricSyncStatus.failed);
 }
 
 export async function getInstallation(client, subscription) {
