@@ -228,17 +228,15 @@ export default (octokitApp: App): Express => {
 
   app.post("/jira/sync", verifyJiraMiddleware, elapsedTimeMetrics, retrySync);
 
-
   // Set up event handlers
   app.post("/jira/events/disabled", jiraAuthenticate, postJiraDisable);
   app.post("/jira/events/enabled", jiraAuthenticate, postJiraEnable);
   app.post("/jira/events/installed", postJiraInstall); // we can't authenticate since we don't have the secret
   app.post("/jira/events/uninstalled", jiraAuthenticate, postJiraUninstall);
 
-  app.get("/", async (_: Request, res: Response, next: NextFunction) => {
+  app.get("/", async (_: Request, res: Response) => {
     const { data: info } = await res.locals.client.apps.getAuthenticated({});
-    res.redirect(info.external_url);
-    next();
+    return res.redirect(info.external_url);
   });
 
   // Add Sentry Context
