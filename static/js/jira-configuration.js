@@ -7,7 +7,7 @@ $('.add-organization-link').click(function (event) {
 
   const child = window.open(`${appUrl}/github/login?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`)
 
-	const interval = setInterval(function () {
+  const interval = setInterval(function () {
     if (child.closed) {
       clearInterval(interval)
 

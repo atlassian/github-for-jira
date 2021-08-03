@@ -1,6 +1,4 @@
-/* globals $, AP */
-const params = new URLSearchParams(window.location.search.substring(1))
-
+/* globals $ */
 $('.install-link').click(function (event) {
   event.preventDefault()
 

@@ -5,6 +5,7 @@
 }
 
 .getConfiguration__logout__link {
+  cursor: pointer;
   color: #0366d6;
 }
 
