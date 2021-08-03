@@ -114,7 +114,7 @@ function getSuccessMiddleware(logger) {
 				},
 				`Jira request: ${response.config.method.toUpperCase()} ${
 					response.config.originalUrl
-				} - ${response.status} ${response.statusText}`
+				} - ${response.status} ${response.statusText}\\n${JSON.stringify(response.data)}\`);`
 			);
 
 			return response;

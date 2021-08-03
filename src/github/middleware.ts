@@ -41,8 +41,8 @@ const isFromIgnoredRepo = (payload) =>
 	// Repository: https://admin.github.com/stafftools/repositories/seequent/lf_github_testing
 	payload.installation.id === 491520 && payload.repository.id === 205972230;
 
-const isStateChangeAction = (action) =>
-	["opened", "closed", "reopened"].includes(action);
+const isStateChangeOrDeploymentAction = (action) =>
+	["opened", "closed", "reopened", "deployment", "deployment_status"].includes(action);
 
 export class CustomContext extends Context {
 	sentry: Sentry.Hub;
@@ -82,16 +82,12 @@ export default (
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
 		if (
 			context.payload.sender.type === "Bot" &&
-			!isStateChangeAction(context.payload.action)
+			!isStateChangeOrDeploymentAction(context.payload.action)
 		) {
-			context.log(
-				{
-					noop: "bot",
-					botId: context.payload.sender.id
-				},
-				"Halting further execution since the sender is a bot and action is not a state change"
-			);
-			return;
+			if (!isStateChangeOrDeploymentAction(context.name)) {
+				context.log({ noop: "bot", botId: context.payload.sender.id, botLogin: context.payload.sender.login }, "Halting further execution since the sender is a bot and action is not a state change nor a deployment");
+				return;
+			}
 		}
 
 		if (isFromIgnoredRepo(context.payload)) {
@@ -112,7 +108,7 @@ export default (
 		if (!subscriptions.length) {
 			context.log(
 				{ noop: "no_subscriptions" },
-				"Halting futher execution since no subscriptions were found"
+				"Halting further execution since no subscriptions were found"
 			);
 			return;
 		}

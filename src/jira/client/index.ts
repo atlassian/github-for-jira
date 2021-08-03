@@ -213,7 +213,46 @@ async function getJiraClient(
 					);
 				}
 			}
-		}
+		},
+		workflow: {
+			submit: async (data) => {
+				updateIssueKeysFor(data.builds, dedup);
+				if (!withinIssueKeyLimit(data.builds)) {
+					updateIssueKeysFor(data.builds, truncate);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					await subscription.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
+				}
+				const payload = {
+					builds: data.builds,
+					properties: {
+						gitHubInstallationId,
+					},
+					providerMetadata: {
+						product: data.product,
+					},
+				};
+				logger.info(`Sending builds payload to jira. Payload: ${payload}`);
+				await instance.post("/rest/builds/0.1/bulk", payload);
+			},
+		},
+		deployment: {
+			submit: async (data) => {
+				updateIssueKeysFor(data.deployments, dedup);
+				if (!withinIssueKeyLimit(data.deployments)) {
+					updateIssueKeysFor(data.deployments, truncate);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					await subscription.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
+				}
+				const payload = {
+					deployments: data.deployments,
+					properties: {
+						gitHubInstallationId,
+					},
+				};
+				logger.info(`Sending deployments payload to jira. Payload: ${payload}`);
+				await instance.post("/rest/deployments/0.1/bulk", payload);
+			},
+		},
 	};
 
 	return client;

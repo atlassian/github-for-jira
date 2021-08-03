@@ -64,11 +64,27 @@ export default (req: Request, res: Response): void => {
 						"pull_request"
 					],
 					key: "github-development-tool",
-					logoUrl: "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png",
+					logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
 					name: {
 						value: "GitHub"
 					},
 					url: "https://github.com"
+				},
+				jiraDeploymentInfoProvider: {
+					key: "github-deployments",
+					name: {
+						value: "GitHub Actions",
+					},
+					logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+					homeUrl: "https://github.com/features/actions",
+				},
+				jiraBuildInfoProvider: {
+					key: "github-actions",
+					logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+					name: {
+						value: "GitHub Actions",
+					},
+					homeUrl: "https://github.com/features/actions",
 				},
 				postInstallPage: {
 					key: "github-post-install-page",
