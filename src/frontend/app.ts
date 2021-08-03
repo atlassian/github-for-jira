@@ -152,6 +152,9 @@ export default (octokitApp: App): Express => {
   // Add oauth routes
   app.use("/", oauth.router);
 
+  // Atlassian Marketplace Connect
+  app.get("/jira/atlassian-connect.json", getJiraConnect);
+
   // Maintenance mode view
   app.use((req, res, next) => (isMaintenanceMode() ? getMaintenance(req, res) : next()));
   app.get('/maintenance', csrfProtection, getMaintenance);
@@ -227,7 +230,6 @@ export default (octokitApp: App): Express => {
 
 
   // Set up event handlers
-  app.get("/jira/atlassian-connect.json", getJiraConnect);
   app.post("/jira/events/disabled", jiraAuthenticate, postJiraDisable);
   app.post("/jira/events/enabled", jiraAuthenticate, postJiraEnable);
   app.post("/jira/events/installed", postJiraInstall); // we can't authenticate since we don't have the secret
