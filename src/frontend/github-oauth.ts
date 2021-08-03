@@ -31,7 +31,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 	opts.scopes = opts.scopes || ["user", "repo"];
 	const redirectURI = new URL(opts.callbackURI, opts.baseURL).toString();
 
-	function login(req: Request, res: Response, next: NextFunction): void {
+	function login(req: Request, res: Response): void {
 		// TODO: We really should be using an Auth library for this, like @octokit/github-auth
 		// Create unique state for each oauth request
 		const state = crypto.randomBytes(8).toString("hex");
@@ -45,7 +45,6 @@ export default (opts: OAuthOptions): GithubOAuth => {
 				opts.scopes.length ? `&scope=${opts.scopes.join(" ")}` : ""
 			}&redirect_uri=${redirectURI}&state=${state}`
 		);
-		next();
 	}
 
 	async function callback(
@@ -116,7 +115,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		checkGithubAuth: (req: Request, res: Response, next: NextFunction) => {
 			if (!req.session.githubToken) {
 				res.locals.redirect = req.originalUrl;
-				return login(req, res, next);
+				return login(req, res);
 			}
 			return next();
 		}
