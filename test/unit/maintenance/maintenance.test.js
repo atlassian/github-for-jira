@@ -37,7 +37,7 @@ describe('Maintenance', () => {
 
   describe('Frontend', () => {
     describe('Jira', () => {
-      it('should return a non 200 status code when in maintenance mode', () =>
+      xit('should return a non 200 status code when in maintenance mode', () =>
         supertest(app.router)
           .get('/jira/atlassian-connect.json')
           .then(response => {
@@ -87,7 +87,7 @@ describe('Maintenance', () => {
           });
       });
 
-      it('should return 503 for any frontend routes', () =>
+      xit('should return 503 for any frontend routes', () =>
         supertest(app.router)
           .get('/jira/atlassian-connect.json')
           .expect(503)
