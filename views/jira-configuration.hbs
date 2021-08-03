@@ -21,7 +21,7 @@
 
         {{#if hasConnections}}
         <nav class="actions">
-            <button class="ak-button ak-button__appearance-primary add-organization-link">Add a GitHub Organization</button>
+            <button class="ak-button ak-button__appearance-primary add-organization-link">Connect a GitHub rganization</button>
         </nav>
         {{/if}}
 
@@ -46,7 +46,7 @@
                       <p><strong>FAILED</strong> - There was a problem syncing data from your account. If there were temporary technical issues, a normal resync will pick up from where it left off and continue with the sync.
                       If it continues to return to FAILED state after re-trying, a full resync may be necessary.</p>
                       <p><strong>PENDING</strong> - The sync has been queued, but is not actively syncing data from GitHub.</p>
-                      <p><strong>COMPLETE</strong> - The sync has finished. Information from selected repositories will be shown in Jira's development information panel.</p>
+                      <p><strong>COMPLETE</strong> - The sync has finished. Information from selected repositories will be shown in Jira"s development information panel.</p>
                     </div>
                   </div>
 
@@ -56,10 +56,10 @@
                   <div id="sync-retry-modal" class="sync-retry-modal">
                     <div class="sync-retry-modal-content">
                       <span id="retry-close" class="close">&times;</span>
-                      <p><strong>Normal</strong> - Retry if the sync failed and you haven't changed the configuration on GitHub.
+                      <p><strong>Normal</strong> - Retry if the sync failed and you haven"t changed the configuration on GitHub.
                       This will not attempt to rediscover the GitHub repositories in your installation.</p>
                       <p><strong>Full</strong> - Rediscover your GitHub repositories and perform another full sync.
-                      Use this is you've changed the configuration on GitHub or would otherwise like to rescan all repositories.</p>
+                      Use this is you"ve changed the configuration on GitHub or would otherwise like to rescan all repositories.</p>
                     </div>
                   </div>
 
@@ -147,10 +147,11 @@
               </tbody>
             </table>
           {{else}}
-            <div class="empty-message">
-              <h4>You don't have any connected GitHub organizations. Let's fix that!</h4>
-              <p>You'll be redirected to GitHub to select the organizations and repositories you'd like to connect with Jira.</p>
-              <button class="ak-button ak-button__appearance-primary add-organization-link">Add a GitHub Organization</button>
+            <div class="jiraConfiguration__empty">
+              <img class="jiraConfiguration__empty__image" src="/public/assets/jira-and-github.png" alt="Connecting GitHub and Jira"/>
+              <h3 class="jiraConfiguration__empty__header">Connect GitHub to Jira Software</h3>
+              <p class="jiraConfiguration__empty__message">Choose a GitHub organization to connect and start including issue keys in branches, commit messages or pull requests to see development insights in Jira.</p>
+              <button class="ak-button ak-button__appearance-primary add-organization-link">Connect a GitHub rganization</button>
             </div>
           {{/if}}
         </section>
