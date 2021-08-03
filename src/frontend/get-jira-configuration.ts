@@ -4,9 +4,23 @@ import { Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricSyncStatus } from "../config/metric-names";
+import { getLogger } from "../config/logger";
+import * as Sentry from "@sentry/node";
+
+const logger = getLogger("get.jira.configuration");
 
 const syncStatus = (syncStatus) =>
 	syncStatus === "ACTIVE" ? "IN PROGRESS" : syncStatus;
+
+const sendFailedStatusMetrics = (installationId: string): void => {
+	const syncError = "No updates in the last 15 minutes"
+	logger.warn(syncError, `Sync failed: installationId=${installationId}`);
+
+	Sentry.setExtra("Installation FAILED", syncError);
+	Sentry.captureException(syncError);
+
+	statsd.increment(metricSyncStatus.failed);
+}
 
 export async function getInstallation(client, subscription) {
 	const id = subscription.gitHubInstallationId;
@@ -22,9 +36,9 @@ export async function getInstallation(client, subscription) {
 		).length;
 		response.data.numberOfSyncedRepos =
 			subscription.repoSyncState?.numberOfSyncedRepos || 0;
-		response.data.syncStatus === "FAILED" &&
-		statsd.increment(metricSyncStatus.failed);
 		response.data.jiraHost = subscription.jiraHost;
+
+		response.data.syncStatus === "FAILED" && sendFailedStatusMetrics(id);
 
 		return response.data;
 	} catch (err) {
