@@ -261,7 +261,7 @@ router.post(
 	}
 );
 
-// RESYNC ALL INSTANCES
+// backfillCommitsCommand ALL INSTANCES
 router.post(
 	"/resync",
 	bodyParser,

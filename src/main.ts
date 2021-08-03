@@ -9,7 +9,8 @@ import { exec } from "child_process";
 import { initializeSentry } from "./config/sentry";
 import { getLogger, overrideProbotLoggingMethods } from "./config/logger";
 import "./config/proxy";
-import { EnvironmentEnum } from "./config/env";
+import envVars, { EnvironmentEnum } from "./config/env";
+import {initFeatureFlags} from "./config/feature-flags";
 
 const isProd = process.env.NODE_ENV === EnvironmentEnum.production;
 const { redisOptions } = getRedisInfo("probot");
@@ -50,6 +51,7 @@ async function createDBTables(logger: bunyan) {
  */
 async function start() {
 	initializeSentry();
+	await initFeatureFlags(envVars.LAUNCHDARKLY_KEY);
 
 	const logger = getLogger("startup");
 

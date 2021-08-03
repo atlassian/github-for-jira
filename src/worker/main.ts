@@ -16,7 +16,8 @@ import { metricHttpRequest } from "../config/metric-names";
 import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
 import "../config/proxy";
-import { EnvironmentEnum } from "../config/env";
+import envVars, { EnvironmentEnum } from "../config/env";
+import {initFeatureFlags} from "../config/feature-flags";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client").redisOptions);
@@ -135,8 +136,9 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 
 const commonMiddleware = (jobHandler) => sentryMiddleware(jobHandler);
 
-export const start = (): void => {
+export const start = async () => {
 	initializeSentry();
+	await initFeatureFlags(envVars.LAUNCHDARKLY_KEY);
 
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
 	queues.installation.process(
@@ -160,6 +162,6 @@ export const stop = async (): Promise<void> => {
 		queues.discovery.close(),
 		queues.installation.close(),
 		queues.push.close(),
-		queues.metrics.close()
+		queues.metrics.close(),
 	]);
 };

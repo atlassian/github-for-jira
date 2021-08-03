@@ -31,7 +31,8 @@ import logMiddleware from "../middleware/log-middleware";
 import { App } from "@octokit/app";
 import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { EnvironmentEnum, isMaintenanceMode } from "../config/env";
+import { EnvironmentEnum } from "../config/env";
+import { featureFlags } from "../config/feature-flags";
 
 // Adding session information to request
 declare global {
@@ -77,7 +78,7 @@ export default (octokitApp: App): Express => {
 	app.use(Sentry.Handlers.requestHandler());
 
 	// Parse URL-encoded bodies for Jira configuration requests
-	app.use(bodyParser.urlencoded({ extended: false }));
+	app.use(bodyParser.urlencoded({extended: false}));
 	app.use(bodyParser.json());
 
 	// We run behind ngrok.io so we need to trust the proxy always
@@ -172,7 +173,15 @@ export default (octokitApp: App): Express => {
 	app.get("/jira/atlassian-connect.json", getJiraConnect);
 
 	// Maintenance mode view
-	app.use((req, res, next) => (isMaintenanceMode() ? getMaintenance(req, res) : next()));
+	app.use(async (req, res, next) => {
+		if (!req.session.jiraHost) {
+			// we only activate the maintenance mode for requests that are bound to a jira host
+			next();
+		} else {
+			await featureFlags.isMaintenanceMode(req.session.jiraHost) ? getMaintenance(req, res) : next();
+		}
+	});
+
 	app.get("/maintenance", csrfProtection, getMaintenance);
 
 	app.get(
