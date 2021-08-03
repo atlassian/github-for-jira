@@ -1,4 +1,6 @@
-/* globals $ */
+/* globals $, AP */
+const params = new URLSearchParams(window.location.search.substring(1))
+
 $('.install-link').click(function (event) {
   event.preventDefault()
 
@@ -27,4 +29,14 @@ $('.delete-link').click(function (event) {
     }
     window.close()
   })
+})
+
+$('.logout-link').click(function (event) {
+  event.preventDefault();
+
+	window.open('https://github.com/logout','_blank');
+
+	window.setTimeout(function() {
+		this.close()
+	}, 100)
 })

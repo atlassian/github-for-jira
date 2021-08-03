@@ -1,4 +1,16 @@
+.getConfiguration__logout__container {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+}
 
+.getConfiguration__logout__link {
+  color: #0366d6;
+}
+
+.getConfiguration__logout__name {
+  font-weight: bold;
+}
 
 .getConfiguration__header {
   font-weight: 500 !important;
@@ -43,11 +55,11 @@
 
 .Box-row {
   border-top: 0;
-  padding: 0.8em 0 0.4em;
+  padding: 0.6em 0;
 }
 
-.Box-row:last-child {
-  padding-bottom: 0;
+.Box-row:not(:last-child) {
+  padding-bottom: 0.4em;
 }
 
 
@@ -66,10 +78,6 @@
 .getConfiguration__orgContent:last-child {
   display: flex;
   justify-content: flex-end;
-}
-
-.getConfiguration__orgContent__repoSelection {
-  margin: 0;
 }
 
 .getConfiguration__orgContent__numberOfRepos {
@@ -97,7 +105,6 @@
 
 .getConfiguration__orgContent__connectedMsg {
   font-style: italic;
-  margin: 0;
 }
 
 .getConfiguration__orgContent__connectBtn--disabled {
