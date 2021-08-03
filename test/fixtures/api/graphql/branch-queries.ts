@@ -45,16 +45,16 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
   }`;
 
 export const branchesNoLastCursor = {
-  query,
-  variables: { owner: "integrations", repo: "test-repo-name", per_page: 50 }
+	query,
+	variables: { owner: "integrations", repo: "test-repo-name", per_page: 50 }
 };
 
 export const branchesWithLastCursor = {
-  query,
-  variables: {
-    owner: "integrations",
-    repo: "test-repo-name",
-    per_page: 50,
-    cursor: "MQ"
-  }
+	query,
+	variables: {
+		owner: "integrations",
+		repo: "test-repo-name",
+		per_page: 50,
+		cursor: "MQ"
+	}
 };

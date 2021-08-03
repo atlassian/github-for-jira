@@ -1,0 +1,67 @@
+.headerImage {
+    margin: 2em auto 1em;
+    text-align: center;
+}
+
+.headerText {
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.jiraInstance {
+  color: #586069;
+  margin-bottom: 0;
+  text-align: center;
+}
+
+.actionBtn {
+    background-color: #f4f5f7;
+    border: 0;
+    border-radius: 3px;
+    color: #42526e;
+    min-width: 5em;
+    padding: 0.5em 0.8em;
+}
+
+.actionBtn:hover,
+.actionBtn:focus,
+.actionBtn:active,
+.actionBtn:focus:active,
+.actionBtn:hover:active {
+    background-color: #ebecf0;
+}
+
+.tableHeader {
+    color: #6b778c;
+    display: flex;
+    flex-direction: row;
+    font-size: 0.8rem;
+    padding: 1em 0 0;
+}
+
+.tableHeader__label {
+    margin-bottom: 0;
+}
+
+.org__cell {
+    flex: 1;
+}
+
+.tableHeader__label:first-child {
+    flex: 1;
+}
+
+.tableHeader__label:last-child {
+    flex: 2;
+}
+
+.githubOrgs__table {
+    border-top: 2px solid #e0e2e7;
+    border-bottom: 2px solid #e0e2e7;
+}
+
+@media (max-width: 540px) {
+    .getConfiguration__tableHeader {
+        padding-bottom: 0;
+    }
+}

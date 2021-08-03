@@ -1,7 +1,7 @@
-import { getLogger } from '../config/logger';
-import {NextFunction, Request, Response} from 'express';
-import Logger from 'bunyan';
-import { v4 as uuidv4 } from 'uuid';
+import { getLogger } from "../config/logger";
+import { NextFunction, Request, Response } from "express";
+import Logger from "bunyan";
+import { v4 as uuidv4 } from "uuid";
 
 /*
 
@@ -28,36 +28,36 @@ app.get('/foo', async (req, res) => {
 */
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    // These open interfaces may be extended in an application-specific manner via declaration merging.
-    // See for example method-override.d.ts (https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/method-override/index.d.ts)
-    interface Request {
-      addLogFields: (fields) => void;
-      log: Logger;
-    }
-  }
+	// eslint-disable-next-line @typescript-eslint/no-namespace
+	namespace Express {
+		// These open interfaces may be extended in an application-specific manner via declaration merging.
+		// See for example method-override.d.ts (https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/method-override/index.d.ts)
+		interface Request {
+			addLogFields: (fields) => void;
+			log: Logger;
+		}
+	}
 }
 
-export const middlewareLoggerName = 'log-middleware';
+export const middlewareLoggerName = "log-middleware";
 
 export default (req: Request, _: Response, next: NextFunction): void => {
-  req.addLogFields = (fields: Record<string, unknown>):void => {
-    if (req.log) {
-      req.log = req.log.child(fields);
-    } else {
-      throw new Error(`No log found during request: ${req.method} ${req.path}`);
-    }
-  };
+	req.addLogFields = (fields: Record<string, unknown>): void => {
+		if (req.log) {
+			req.log = req.log.child(fields);
+		} else {
+			throw new Error(`No log found during request: ${req.method} ${req.path}`);
+		}
+	};
 
-  // Replaces req.log with default bunyan logger. So we can override Probot logger
-  req.log = getLogger(middlewareLoggerName);
+	// Replaces req.log with default bunyan logger. So we can override Probot logger
+	req.log = getLogger(middlewareLoggerName);
 
-  const reqId = req.headers['x-request-id'] ||
-    req.headers['x-github-delivery'] ||
-    uuidv4();
+	const reqId = req.headers["x-request-id"] ||
+		req.headers["x-github-delivery"] ||
+		uuidv4();
 
-  req.addLogFields({requestId: reqId });
+	req.addLogFields({ requestId: reqId });
 
-  next();
+	next();
 };
