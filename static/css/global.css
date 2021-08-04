@@ -1,3 +1,7 @@
+body {
+   overflow: hidden;
+}
+
 .headerImage {
     margin: 2em auto 1em;
     text-align: center;
