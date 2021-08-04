@@ -1,4 +1,5 @@
 const getJiraConfiguration = require('../../lib/frontend/get-jira-configuration');
+
 let next;
 beforeAll(() => {
   // Create a spy on console (console.error in this case) and provide some mocked implementation
