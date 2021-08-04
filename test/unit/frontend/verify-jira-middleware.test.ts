@@ -2,7 +2,8 @@
 import jwt from "atlassian-jwt";
 import { mocked } from "ts-jest/utils";
 import { Installation } from "../../../src/models";
-import verifyJiraMiddleware from "../../../src/frontend/verify-jira-middleware";
+import verifyJiraMiddleware from "../../../src/frontend/verify-jira-jwt-middleware";
+import {TokenType} from "../../../src/jira/util/jwt";
 
 jest.mock("../../../src/models");
 
@@ -36,7 +37,10 @@ describe("#verifyJiraMiddleware", () => {
 
 	describe("GET request", () => {
 		const buildRequest = (jiraHost, secret = "secret"): any => {
-			const jwtValue = jwt.encode("test-jwt", secret);
+			const jwtValue = jwt.encode(`{
+  			"qsh": "context-qsh",
+  			"iss": "jira",
+			}`, secret);
 
 			return {
 				query: {
@@ -55,7 +59,7 @@ describe("#verifyJiraMiddleware", () => {
 			const req = buildRequest("test-host", "secret");
 			jwt.decode(req.query.jwt, "secret");
 
-			await verifyJiraMiddleware(req, res, next);
+			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
 			expect(next).toHaveBeenCalled();
 		});
@@ -65,7 +69,7 @@ describe("#verifyJiraMiddleware", () => {
 			const req = buildRequest("host", "secret");
 			jwt.decode(req.query.jwt, "secret");
 
-			await verifyJiraMiddleware(req, res, next);
+			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
 			expect(res.locals.installation).toEqual(installation);
 		});
@@ -73,7 +77,7 @@ describe("#verifyJiraMiddleware", () => {
 		it("should return a 404 for an invalid installation", async () => {
 			const req = buildRequest("host");
 
-			await verifyJiraMiddleware(req, res, next);
+			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
 			expect(next).toHaveBeenCalled();
 			expect(next).toHaveBeenCalledWith(new Error("Not Found"));
@@ -83,7 +87,7 @@ describe("#verifyJiraMiddleware", () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("good-host", "wrong-secret");
 
-			await verifyJiraMiddleware(req, res, next);
+			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
 			expect(next).toHaveBeenCalled();
 			expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
@@ -96,7 +100,7 @@ describe("#verifyJiraMiddleware", () => {
 
 			jwt.decode(req.query.jwt, "secret");
 
-			await verifyJiraMiddleware(req, res, next);
+			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
 			expect(addLogFieldsSpy).toHaveBeenCalledWith({
 				jiraHost: installation.jiraHost,
@@ -107,7 +111,10 @@ describe("#verifyJiraMiddleware", () => {
 
 	describe("POST request", () => {
 		const buildRequest = (jiraHost, secret): any => {
-			const encodedJwt = secret && jwt.encode("test-jwt", secret);
+			const encodedJwt = secret && jwt.encode(`{
+  			"qsh": "context-qsh",
+  			"iss": "jira",
+			}`, secret);
 
 			return {
 				body: {
@@ -130,7 +137,7 @@ describe("#verifyJiraMiddleware", () => {
 			const req = buildRequest("host", "secret");
 			jwt.decode(req.query.jwt, "secret");
 
-			await verifyJiraMiddleware(req, res, next);
+			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
 			expect(next).toHaveBeenCalled();
 		});
@@ -138,7 +145,7 @@ describe("#verifyJiraMiddleware", () => {
 		it("is not found when host is missing", async () => {
 			const req = buildRequest("host", "secret");
 
-			await verifyJiraMiddleware(req, res, next);
+			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
 			expect(next).toHaveBeenCalled();
 			expect(next).toHaveBeenCalledWith(new Error("Not Found"));
@@ -148,7 +155,7 @@ describe("#verifyJiraMiddleware", () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("host", "secret");
 
-			await verifyJiraMiddleware(req, res, next);
+			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
 			expect(next).toHaveBeenCalled();
 			expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));

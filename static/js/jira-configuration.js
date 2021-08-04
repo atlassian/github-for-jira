@@ -34,39 +34,47 @@ $('.configure-connection-link').click(function (event) {
 $('.delete-connection-link').click(function (event) {
   event.preventDefault()
 
-  $.ajax({
-    type: 'DELETE',
-    url: `/jira/configuration?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`,
-    data: {
-      installationId: $(event.target).data('installation-id')
-    },
-    success: function (data) {
-      AP.navigator.reload()
-    }
-  })
+	window.AP.context.getToken(function(token){
+		$.ajax({
+			type: 'DELETE',
+			url: `/jira/configuration?xdm_e=${encodeURIComponent(params.get('xdm_e'))}`,
+			data: {
+				installationId: $(event.target).data('installation-id'),
+				jwt: token
+			},
+			success: function (data) {
+				AP.navigator.reload()
+			}
+		});
+	});
+
+
 })
 
 $('.sync-connection-link').click(function (event) {
   event.preventDefault()
   const installationId = $(event.target).data('installation-id')
 
-  $.ajax({
-    type: 'POST',
-    url: `/jira/sync`,
-    data: {
-      installationId: installationId,
-      jiraHost: $(event.target).data('jira-host'),
-      syncType: document.getElementById(`${installationId}-sync-type`).value,
-      token: params.get('jwt'),
-      _csrf: document.getElementById('_csrf').value
-    },
-    success: function (data) {
-      AP.navigator.reload()
-    },
-    error: function (error) {
-      console.log(error)
-    }
-  })
+	window.AP.context.getToken(function(token){
+		$.ajax({
+			type: 'POST',
+			url: `/jira/sync`,
+			data: {
+				installationId: installationId,
+				jiraHost: $(event.target).data('jira-host'),
+				syncType: document.getElementById(`${installationId}-sync-type`).value,
+				jwt: token,
+				_csrf: document.getElementById('_csrf').value
+			},
+			success: function (data) {
+				AP.navigator.reload()
+			},
+			error: function (error) {
+				console.log(error)
+			}
+		});
+	});
+
 })
 
 const retryModal = document.getElementById('sync-retry-modal')

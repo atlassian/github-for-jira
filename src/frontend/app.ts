@@ -1,5 +1,5 @@
 import bodyParser from "body-parser";
-import express, { Express, NextFunction, Request, Response } from "express";
+import express, {Express, NextFunction, Request, Response} from "express";
 import path from "path";
 import cookieSession from "cookie-session";
 import csrf from "csurf";
@@ -16,7 +16,7 @@ import deleteGitHubSubscription from "./delete-github-subscription";
 import getJiraConfiguration from "./get-jira-configuration";
 import deleteJiraConfiguration from "./delete-jira-configuration";
 import getGithubClientMiddleware from "./github-client-middleware";
-import verifyJiraMiddleware from "./verify-jira-middleware";
+import verifyJiraMiddleware from "./verify-jira-jwt-middleware";
 import getJiraConnect from "../jira/connect";
 import postJiraDisable from "../jira/disable";
 import postJiraEnable from "../jira/enable";
@@ -28,10 +28,11 @@ import getMaintenance from "./get-maintenance";
 import api from "../api";
 import healthcheck from "./healthcheck";
 import logMiddleware from "../middleware/log-middleware";
-import { App } from "@octokit/app";
-import statsd, { elapsedTimeMetrics } from "../config/statsd";
-import { metricError } from "../config/metric-names";
-import { EnvironmentEnum, isMaintenanceMode } from "../config/env";
+import {App} from "@octokit/app";
+import statsd, {elapsedTimeMetrics} from "../config/statsd";
+import {metricError} from "../config/metric-names";
+import {EnvironmentEnum, isMaintenanceMode} from "../config/env";
+import {TokenType} from "../jira/util/jwt";
 
 // Adding session information to request
 declare global {
@@ -230,19 +231,19 @@ export default (octokitApp: App): Express => {
 	app.get(
 		"/jira/configuration",
 		csrfProtection,
-		verifyJiraMiddleware,
+		verifyJiraMiddleware(TokenType.normal),
 		elapsedTimeMetrics,
 		getJiraConfiguration
 	);
 
 	app.delete(
 		"/jira/configuration",
-		verifyJiraMiddleware,
+		verifyJiraMiddleware(TokenType.context),
 		elapsedTimeMetrics,
 		deleteJiraConfiguration
 	);
 
-	app.post("/jira/sync", verifyJiraMiddleware, elapsedTimeMetrics, retrySync);
+	app.post("/jira/sync", verifyJiraMiddleware(TokenType.context), elapsedTimeMetrics, retrySync);
 	// Set up event handlers
 	app.post("/jira/events/disabled", jiraAuthenticate, postJiraDisable);
 	app.post("/jira/events/enabled", jiraAuthenticate, postJiraEnable);

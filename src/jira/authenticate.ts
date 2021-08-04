@@ -1,6 +1,6 @@
-import { Installation } from "../models";
-import { hasValidJwt } from "./util/jwt";
-import { NextFunction, Request, Response } from "express";
+import {Installation} from "../models";
+import {hasValidJwt, TokenType} from "./util/jwt";
+import {NextFunction, Request, Response} from "express";
 
 export default async (
 	req: Request,
@@ -22,7 +22,7 @@ export default async (
 	res.locals.installation = installation;
 
 	// TODO: Should the express response logic be inside 'hasValidJwt'?
-	if (hasValidJwt(sharedSecret, jiraHost, req, res)) {
+	if (hasValidJwt(sharedSecret, jiraHost, req, res, TokenType.normal)) {
 		next();
 	}
 };
