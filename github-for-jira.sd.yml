@@ -158,7 +158,7 @@ environmentOverrides:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
         WEBHOOK_PROXY_URL: https://github-for-jira.dev.services.atlassian.com/github/events
-        INSTANCE_NAME: staging
+        INSTANCE_NAME: development
         NODE_OPTIONS: "--no-deprecation"
         LOG_LEVEL: debug
         SENTRY_ENVIRONMENT: ddev
@@ -182,7 +182,7 @@ environmentOverrides:
       environmentVariables:
         APP_URL: https://github.stg.atlassian.com
         WEBHOOK_PROXY_URL: https://github.stg.atlassian.com/github/events
-        INSTANCE_NAME: github-for-jira-stg
+        INSTANCE_NAME: staging
         SENTRY_ENVIRONMENT: stg-west
         APP_ID: '12645'
         GITHUB_CLIENT_ID: Iv1.2d8e2a184a746aec
