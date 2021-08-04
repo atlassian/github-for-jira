@@ -28,7 +28,7 @@
       name='clientKey'
       value='{{clientKey}}'
     />
-    <section class='mx-auto' style='max-width: 570px'>
+    <section class='getConfiguration'>
       <div class="headerImage">
         <img src='/public/assets/jira-and-github.png' alt="Jira and GitHub logos" />
       </div>
@@ -110,18 +110,15 @@
         </div>
       </div>
 
-      <p class='text-gray text-center my-4 getConfiguration__accountLink'>
-        Don't see your account?
-        <a href='{{info.html_url}}/installations/new'>Install {{info.name}}</a>
-        on your user account or an Organization you own.
-      </p>
-
-      <p class='text-gray text-left my-4 getConfiguration__disclaimer'>
-        <strong> Please note</strong>: We currently sync data from all
-        repositories you've selected in the installation's settings. If there a
-        large number of repositories in the installation, initial data sync will
-        take some time to complete.
-      </p>
+      <section class="getConfiguration__newJiraOrg__container">
+        <p class='getConfiguration__newJiraOrg__message'>
+          Don't see your GitHub account? Install Jira on your GitHub organizations
+          to connect them to your Atlassian site.
+        </p>
+        <button class="actionBtn">
+          <a class="getConfiguration__newJiraOrg__link" href='{{info.html_url}}/installations/new'>Install Jira on a new organization</a>
+        </button>
+      </section>
 
       </div>
 
