@@ -1,8 +1,12 @@
 $('.ghae-register-link').click((event) => {
   event.preventDefault();
   let ghaeUrl = document.getElementById('ghae_url_id').value;
-  if(ghaeUrl == '' || !validateGhaeUrl(ghaeUrl)){
-    document.getElementById("errormessage").innerHTML = 'Please enter valid url !!!';
+  if(ghaeUrl == ''){
+    document.getElementById("errormessage").innerHTML = `please enter a valid url.`;
+    return false;
+  }
+  if(!validateGhaeUrl(ghaeUrl)){
+    document.getElementById("errormessage").innerHTML = `"${ghaeUrl}" is not a valid GitHuB AE account url, please enter a valid url.`;
     return false;
   }
 

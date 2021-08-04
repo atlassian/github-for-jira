@@ -2,9 +2,7 @@
 
 exports[`Frontend GHAE Registration #api should return 200 for register 1`] = `
 Object {
-  "manifest": "{\\"name\\":\\"Jira-App\\",\\"url\\":\\"https://github.com/apps/Jira-App\\",\\"hook_attributes\\":{\\"url\\":\\"https://test-github-app-instance.com/github/events\\"},\\"redirect_url\\":\\"https://test-github-app-instance.com/ghaeRegisterComplete/\\",\\"callback_urls\\":[\\"https://test-github-app-instance.com/github/callback\\"],\\"setup_url\\":\\"https://test-github-app-instance.com/github/setup\\",\\"default_permissions\\":{\\"issues\\":\\"write\\",\\"contents\\":\\"read\\",\\"metadata\\":\\"read\\",\\"pull_requests\\":\\"write\\"},\\"default_events\\":[\\"create\\",\\"commit_comment\\",\\"delete\\",\\"issue_comment\\",\\"issues\\",\\"pull_request\\",\\"pull_request_review\\",\\"pull_request_review_comment\\",\\"push\\",\\"workflow_run\\",\\"meta\\"],\\"public\\":false}",
+  "manifest": "{\\"name\\":\\"Jira-App\\",\\"url\\":\\"https://github.com/apps/Jira-App\\",\\"hook_attributes\\":{\\"url\\":\\"https://test-github-app-instance.com/github/events\\"},\\"redirect_url\\":\\"https://test-github-app-instance.com/githubAERegisterComplete/\\",\\"callback_urls\\":[\\"https://test-github-app-instance.com/github/callback\\"],\\"setup_url\\":\\"https://test-github-app-instance.com/github/setup\\",\\"default_permissions\\":{\\"issues\\":\\"write\\",\\"contents\\":\\"read\\",\\"metadata\\":\\"read\\",\\"pull_requests\\":\\"write\\"},\\"default_events\\":[\\"create\\",\\"commit_comment\\",\\"delete\\",\\"issue_comment\\",\\"issues\\",\\"pull_request\\",\\"pull_request_review\\",\\"pull_request_review_comment\\",\\"push\\",\\"workflow_run\\",\\"meta\\"],\\"public\\":false}",
   "state": Any<String>,
 }
 `;
-
-exports[`Frontend GHAE Registration #api should return 200 for register complete 1`] = `Object {}`;
