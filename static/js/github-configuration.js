@@ -4,6 +4,7 @@ $('.install-link').click(function (event) {
 
   $.post('/github/configuration', {
     installationId: $(event.target).data('installation-id'),
+    jiraHost: document.getElementById('jiraHost').value,
     _csrf: document.getElementById('_csrf').value,
     clientKey: document.getElementById('clientKey').value
   }, function (data) {

@@ -1,10 +1,12 @@
 const getJiraConfiguration = require('../../lib/frontend/get-jira-configuration');
 
+let next;
 beforeAll(() => {
   // Create a spy on console (console.error in this case) and provide some mocked implementation
   // In mocking global objects it's usually better than simple `jest.fn()`
   // because you can `unmock` it in clean way doing `mockRestore`
   jest.spyOn(console, 'error').mockImplementation(() => {});
+  next = td.function('next');
 });
 
 afterAll(() => {
@@ -64,7 +66,7 @@ const mockRequestMissingToken = () => {
 
 describe('Jira Configuration Suite', () => {
   it('should return success message after page is rendered', async () => {
-    await expect(getJiraConfiguration(mockRequest(), mockResponse())).resolves;
+    await expect(getJiraConfiguration(mockRequest(), mockResponse(), next)).resolves;
   });
 
   it('should throw an error', async () => {
