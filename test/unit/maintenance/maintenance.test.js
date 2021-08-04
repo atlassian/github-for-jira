@@ -32,24 +32,19 @@ describe('Maintenance', () => {
         .expect(200));
   });
 
-  describe('Github', () => {
-  });
-
   describe('Frontend', () => {
-    describe('Jira', () => {
-      it('should return a non 200 status code when in maintenance mode', () =>
+    describe('Atlassian Connect', () => {
+      it('should return Atlassian Connect JSON in maintenance mode', () =>
         supertest(app.router)
           .get('/jira/atlassian-connect.json')
+          .expect(200)
           .then(response => {
-            expect(response.status).not.toBe(200);
+            // removing keys that changes for every test run
+            delete response.body.baseUrl;
+            delete response.body.name;
+            delete response.body.key;
+            expect(response.body).toMatchSnapshot();
           }));
-
-      it('should return a 200 status code when not in maintenance mode', () => {
-        delete process.env.MAINTENANCE_MODE;
-        return supertest(app.router)
-          .get('/jira/atlassian-connect.json')
-          .expect(200);
-      });
     });
 
     describe('Admin API', () => {
@@ -89,7 +84,7 @@ describe('Maintenance', () => {
 
       it('should return 503 for any frontend routes', () =>
         supertest(app.router)
-          .get('/jira/atlassian-connect.json')
+          .get('/github/setup')
           .expect(503)
           .then(response => {
             expect(response.body).toMatchSnapshot();
@@ -98,13 +93,10 @@ describe('Maintenance', () => {
       it('should return expected page when maintenance mode is off', () => {
         delete process.env.MAINTENANCE_MODE;
         return supertest(app.router)
-          .get('/jira/atlassian-connect.json')
-          .expect(200).then(response => {
-            // removing keys that changes for every test run
-            delete response.body.baseUrl;
-            delete response.body.name;
-            delete response.body.key;
-            expect(response.body).toMatchSnapshot();
+          .get('/github/setup')
+          .then(response => {
+            expect(response.status).toBeGreaterThanOrEqual(200);
+            expect(response.status).toBeLessThan(400);
           });
       });
 
