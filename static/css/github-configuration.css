@@ -1,4 +1,8 @@
-
+.getConfiguration {
+  margin: auto;
+  max-width: 570px;
+  height: 100vh;
+}
 
 .getConfiguration__header {
   font-weight: 500 !important;
@@ -126,6 +130,26 @@
   border-top: 2px solid #42526e;
   height: 1.8em;
   width: 1.8em;
+}
+
+.getConfiguration__newJiraOrg__container {
+  bottom: 6em;
+  padding: 0 1em;
+  position: absolute;
+  text-align: center;
+  max-width: 570px;
+}
+
+.getConfiguration__newJiraOrg__message {
+  margin: auto auto 1em;
+}
+
+.getConfiguration__newJiraOrg__link {
+  color: #42526e;
+}
+
+.getConfiguration__newJiraOrg__link:hover {
+  text-decoration: none;
 }
 
 @keyframes spin {
