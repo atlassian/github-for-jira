@@ -10,23 +10,27 @@
   <script src="/public/js/jquery.min.js"></script>
 </head>
 
-<body class="bg-gray px-3 py-6">
+<body class="bg-white px-3 py-6">
   <section class="mx-auto" style="max-width: 510px">
-    <h2 class="f2 text-center text-normal">GHAE App Registration</h2>
-    <p class="text-gray text-center mb-4">you can create a jira app in your GHAE instance and link it with JIRA , using manifest flow.</p>
-    <p class="text-gray text-center mb-4">All you have to do is provide us your instance URL, App manifest flow will create a jira app in your instance and link your instance with JIRA app </p>
-    <p class="text-gray text-center mb-4">What is your GHAE instance url ?</p>
+    <img class="centered small mb-6" src="/public/jira-github-logo-compress.png" height="150"/>
+    <h2 class="f2 text-center text-normal">Jira Software + GitHub AE App Registration</h2>
+    </br>
+    <p class="text-gray text-center mb-4">We are using <a href="https://docs.github.com/en/developers/apps/building-github-apps/creating-a-github-app-from-a-manifest">manifest flow</a> to create Jira Software + GitHub AE App in your GitHub AE instance.</p>
+    <p class="text-gray text-center mb-4">All you have to do is provide us your GitHub AE account URL, we will create the Jira Software + GitHub AE app and link your account with it.</p>
+    <hr />
+    <h4 class="text-center text-normal"><b>GitHub AE Account Url</b></h4>
+    </br>
 
 </div>
-    <form method="post" id="ghae_form_id">
+    <form method="post" id="ghae_form_id" class="text-center text-normal">
       <div class="input-group">
           <input type="hidden" name="manifest" id="manifest" >
-          <input class="form-control input-lg" type="text" name="ghaeInstance" id="ghae_url_id" placeholder="GHAE instance url"
-        aria-label="GHAE Instance URL" value="" autofocus>
+          <input class="form-control input-lg" type="text" name="ghaeInstance" id="ghae_url_id" placeholder={{ghaeInstanceUrl}}
+        aria-label="GHAE Instance URL" value="" style="width: 500px;" autofocus>
         </span>
       </div>
       <p class="pt-2">
-        <button class="btn btn-primary ghae-register-link" type="submit">Register Jira App</button>
+        <button class="btn btn-primary ghae-register-link" type="submit">Register Application</button>
       </p>
       <div id="errormessage"></div>
       {{#if error}}
