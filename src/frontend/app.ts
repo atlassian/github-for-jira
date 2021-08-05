@@ -102,7 +102,9 @@ export default (octokitApp: App): Express => {
 
 	// Handlebars helpers
 	hbs.registerHelper("toLowerCase", (str) => str.toLowerCase());
+
 	hbs.registerHelper("replaceSpaceWithHyphen", (str) => str.replace(/ /g, "-"));
+
 	hbs.registerHelper(
 		"ifAllReposSynced",
 		(numberOfSyncedRepos, totalNumberOfRepos) =>
@@ -110,12 +112,26 @@ export default (octokitApp: App): Express => {
 				? totalNumberOfRepos
 				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
 	);
+
+	hbs.registerHelper("repoAccessType", (repository_selection) =>
+		repository_selection === "all" ? "All repos" : "Only select repos"
+	);
+
+	hbs.registerHelper("isNotConnected", (syncStatus) => syncStatus == null);
+
 	hbs.registerHelper(
-		"repoAccessType",
-		(repository_selection) =>
-			repository_selection === "all"
-				? "All repos"
-				: "Only select repos"
+		"inProgressSync",
+		(syncStatus) => syncStatus === "IN PROGRESS"
+	);
+
+	hbs.registerHelper("setAriaLabelConnectBtn", (admin) =>
+		admin
+			? "Connection already present between organization and Jira"
+			: "Unable to connect this installation. Admin access is required."
+	);
+
+	hbs.registerHelper("connectedStatus", (syncStatus) =>
+		syncStatus === "COMPLETE" ? "Connected" : "Connect"
 	);
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
@@ -151,6 +167,9 @@ export default (octokitApp: App): Express => {
 
 	// Add oauth routes
 	app.use("/", oauth.router);
+
+	// Atlassian Marketplace Connect
+	app.get("/jira/atlassian-connect.json", getJiraConnect);
 
 	// Maintenance mode view
 	app.use((req, res, next) => (isMaintenanceMode() ? getMaintenance(req, res) : next()));
@@ -224,19 +243,15 @@ export default (octokitApp: App): Express => {
 	);
 
 	app.post("/jira/sync", verifyJiraMiddleware, elapsedTimeMetrics, retrySync);
-
-
 	// Set up event handlers
-	app.get("/jira/atlassian-connect.json", getJiraConnect);
 	app.post("/jira/events/disabled", jiraAuthenticate, postJiraDisable);
 	app.post("/jira/events/enabled", jiraAuthenticate, postJiraEnable);
 	app.post("/jira/events/installed", postJiraInstall); // we can't authenticate since we don't have the secret
 	app.post("/jira/events/uninstalled", jiraAuthenticate, postJiraUninstall);
 
-	app.get("/", async (_: Request, res: Response, next: NextFunction) => {
+	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
-		res.redirect(info.external_url);
-		next();
+		return res.redirect(info.external_url);
 	});
 
 	// Add Sentry Context
@@ -273,18 +288,14 @@ export default (octokitApp: App): Express => {
 
 		const errorStatusCode = errorCodes[err.message] || 500;
 
-		const tags = [
-			`status: ${errorStatusCode}`
-		];
+		const tags = [`status: ${errorStatusCode}`];
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		return res
-			.status(errorStatusCode)
-			.render("github-error.hbs", {
-				title: "GitHub + Jira integration",
-				nonce: res.locals.nonce
-			});
+		return res.status(errorStatusCode).render("github-error.hbs", {
+			title: "GitHub + Jira integration",
+			nonce: res.locals.nonce
+		});
 	});
 
 	return app;

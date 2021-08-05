@@ -158,7 +158,7 @@ environmentOverrides:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
         WEBHOOK_PROXY_URL: https://github-for-jira.dev.services.atlassian.com/github/events
-        INSTANCE_NAME: github-for-jira-dev
+        INSTANCE_NAME: development
         NODE_OPTIONS: "--no-deprecation"
         LOG_LEVEL: debug
         SENTRY_ENVIRONMENT: ddev
@@ -182,7 +182,7 @@ environmentOverrides:
       environmentVariables:
         APP_URL: https://github.stg.atlassian.com
         WEBHOOK_PROXY_URL: https://github.stg.atlassian.com/github/events
-        INSTANCE_NAME: github-for-jira-stg
+        INSTANCE_NAME: staging
         SENTRY_ENVIRONMENT: stg-west
         APP_ID: '12645'
         GITHUB_CLIENT_ID: Iv1.2d8e2a184a746aec
@@ -261,8 +261,8 @@ environmentOverrides:
           domain:
             - github.stg.atlassian.com
           upstream_address:
-            - address: jira-integration-staging.herokuapp.com
-          rewrite: jira-integration-staging.herokuapp.com
+            - address: github-for-jira.stg.services.atlassian.com
+          rewrite: github-for-jira.stg.services.atlassian.com
           ip_whitelist:
             - public
 
@@ -271,7 +271,7 @@ environmentOverrides:
       environmentVariables:
         APP_URL:  https://github.atlassian.com
         WEBHOOK_PROXY_URL:  https://github.atlassian.com/github/events
-        INSTANCE_NAME: github-for-jira-production
+        INSTANCE_NAME: production
         SENTRY_ENVIRONMENT: production
         APP_ID: '125082'
         GITHUB_CLIENT_ID: Iv1.234a3f06f2b64fbe

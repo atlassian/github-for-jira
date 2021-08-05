@@ -1,9 +1,53 @@
 import JWT from "atlassian-jwt";
-import { Installation } from "../models";
+import { Installation, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import { getJiraMarketplaceUrl } from "../util/getUrl";
 import enhanceOctokit from "../config/enhance-octokit";
 import app from "../worker/app";
+import { getInstallation } from "./get-jira-configuration";
+
+const getConnectedStatus = (
+	installationsWithSubscriptions: any,
+	sessionJiraHost: string
+) => {
+	return (
+		installationsWithSubscriptions.length > 0 &&
+		installationsWithSubscriptions
+			// An org may have multiple subscriptions to Jira instances. Confirm a match.
+			.filter((subscription) => sessionJiraHost === subscription.jiraHost)
+			.map((subscription) =>
+				(({ syncStatus, account }) => ({ syncStatus, account }))(subscription)
+			)
+	);
+};
+
+const mergeByLogin = (installationsWithAdmin: any, connectedStatuses: any) =>
+	connectedStatuses ? installationsWithAdmin.map((installation) => ({
+		...connectedStatuses.find(
+			(connection) =>
+				connection.account.login === installation.account.login && connection
+		),
+		...installation,
+	})) : installationsWithAdmin
+
+const installationConnectedStatus = async (
+	sessionJiraHost: string,
+	client: any,
+	installationsWithAdmin: any
+) => {
+	const subscriptions = await Subscription.getAllForHost(sessionJiraHost);
+
+	const installationsWithSubscriptions = await Promise.all(
+		subscriptions.map((subscription) => getInstallation(client, subscription))
+	);
+
+	const connectedStatuses = getConnectedStatus(
+		installationsWithSubscriptions,
+		sessionJiraHost
+	);
+
+	return mergeByLogin(installationsWithAdmin, connectedStatuses);
+};
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	if (!req.session.githubToken) {
@@ -14,8 +58,11 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		return next(new Error("Jira Host url is missing"));
 	}
 
-	req.log.info("Received delete jira configuration request for jira host %s and installation ID %s",
-		req.session.jiraHost, req.body.installationId);
+	req.log.info(
+		"Received delete jira configuration request for jira host %s and installation ID %s",
+		req.session.jiraHost,
+		req.body.installationId
+	);
 
 	const { github, client, isAdmin } = res.locals;
 
@@ -49,6 +96,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 	if (req.session.jwt && req.session.jiraHost) {
 		const { data: { login } } = await github.users.getAuthenticated();
+
 		try {
 			// we can get the jira client Key from the JWT's `iss` property
 			// so we'll decode the JWT here and verify it's the right key before continuing
@@ -58,13 +106,19 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
 			const installationsWithAdmin = await getInstallationsWithAdmin({ installations, login });
 			const { data: info } = (await client.apps.getAuthenticated());
+			const connectedInstallations = await installationConnectedStatus(
+				req.session.jiraHost,
+				client,
+				installationsWithAdmin
+			);
+
 			return res.render("github-configuration.hbs", {
 				csrfToken: req.csrfToken(),
-				installations: installationsWithAdmin,
+				installations: connectedInstallations,
 				jiraHost: req.session.jiraHost,
 				nonce: res.locals.nonce,
 				info,
-				clientKey
+				clientKey,
 			});
 		} catch (err) {
 			// If we get here, there was either a problem decoding the JWT
@@ -76,4 +130,3 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 	res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
 };
-
