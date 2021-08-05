@@ -1,33 +1,32 @@
-import express, { NextFunction, Request, Response } from "express";
-import { check, oneOf, validationResult } from "express-validator";
+import express, {NextFunction, Request, Response} from "express";
+import {check, oneOf, validationResult} from "express-validator";
 import format from "date-fns/format";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import Redis from "ioredis";
 import BodyParser from "body-parser";
 import GitHubAPI from "../config/github-api";
-import { Installation, Subscription } from "../models";
+import {Installation, Subscription} from "../models";
 import verifyInstallation from "../jira/verify-installation";
 import logMiddleware from "../middleware/log-middleware";
 import JiraClient from "../models/jira-client";
 import uninstall from "../jira/uninstall";
-import { serializeJiraInstallation, serializeSubscription } from "./serializers";
+import {serializeJiraInstallation, serializeSubscription} from "./serializers";
 import getRedisInfo from "../config/redis-info";
-import { elapsedTimeMetrics } from "../config/statsd";
-import { Op } from "sequelize";
+import {elapsedTimeMetrics} from "../config/statsd";
 import SubscriptionModel from "../models/subscription";
 
 const router = express.Router();
-const bodyParser = BodyParser.urlencoded({ extended: false });
+const bodyParser = BodyParser.urlencoded({extended: false});
 
 async function getInstallation(client, subscription) {
 	const id = subscription.gitHubInstallationId;
 	try {
-		const response = await client.apps.getInstallation({ installation_id: id });
+		const response = await client.apps.getInstallation({installation_id: id});
 		response.data.syncStatus = subscription.syncStatus;
 		return response.data;
 	} catch (err) {
-		return { error: err, id, deleted: err.status === 404 };
+		return {error: err, id, deleted: err.status === 404};
 	}
 }
 
@@ -45,7 +44,7 @@ function returnOnValidationError(
 ): void {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		res.status(422).json({ errors: errors.array() });
+		res.status(422).json({errors: errors.array()});
 	}
 	next();
 }
@@ -87,7 +86,7 @@ router.use(
 			const octokit = GitHubAPI({
 				auth: token.split(" ")[1]
 			});
-			const { data, errors } = (
+			const {data, errors} = (
 				await octokit.request({
 					headers: {
 						Accept: "application/json",
@@ -100,10 +99,10 @@ router.use(
 				})
 			).data;
 
-			req.addLogFields({ login: data && data.viewer && data.viewer.login });
+			req.addLogFields({login: data && data.viewer && data.viewer.login});
 
 			if (errors) {
-				res.status(401).json({ errors, viewerPermissionQuery });
+				res.status(401).json({errors, viewerPermissionQuery});
 				return;
 			}
 
@@ -124,7 +123,7 @@ router.use(
 
 			next();
 		} catch (err) {
-			req.log.info({ err });
+			req.log.info({err});
 
 			if (err.status === 401) {
 				res.status(401).send(err.HttpError);
@@ -149,8 +148,8 @@ router.get(
 	returnOnValidationError,
 	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
-		const { installationId } = req.params;
-		const { client } = res.locals;
+		const {installationId} = req.params;
+		const {client} = res.locals;
 
 		try {
 			const subscriptions = await Subscription.getAllForInstallation(
@@ -162,7 +161,7 @@ router.get(
 				return;
 			}
 
-			const { jiraHost } = subscriptions[0];
+			const {jiraHost} = subscriptions[0];
 			const installations = await Promise.all(
 				subscriptions.map((subscription) =>
 					getInstallation(client, subscription)
@@ -235,7 +234,7 @@ router.post(
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
 		req.log.info(req.body);
-		const { jiraHost, resetType } = req.body;
+		const {jiraHost, resetType} = req.body;
 
 		try {
 			req.log.info(jiraHost, githubInstallationId);
@@ -271,21 +270,22 @@ router.post(
 		const syncType = req.body.syncType || "partial";
 		// Defaults to anything not completed
 		const statusTypes = req.body.statusTypes as string[] || ["FAILED", "PENDING", "ACTIVE"];
+		// Only trigger a sync for the given installation IDs
+		const installationIds = req.body.installationIds as number[] || [];
 		// Can be limited to a certain amount if needed to not overload system
 		const limit = Number(req.body.limit) || undefined;
 		// Needed for 'pagination'
 		const offset = Number(req.body.offset) || 0;
 
-		// Find all subscriptions that has a status type of X, sorted by last updated
-		const subscriptions: SubscriptionModel[] = await Subscription.findAll({
-			where: {
-				// Does a OR check on status types
-				[Op.or]: statusTypes.map(status => ({ syncStatus: status }))
-			},
-			limit,
-			offset,
-			order: [["updatedAt", "DESC"]]
-		});
+		let subscriptions: SubscriptionModel[];
+
+		if (installationIds.length > 0) {
+			// we want to trigger a sync for the given installation IDs only
+			subscriptions = await Subscription.getAllForInstallations(installationIds, limit, offset);
+		} else {
+			// we want to trigger a sync for all installations with one of the given status types
+			subscriptions = await Subscription.getAllForStatusTypes(statusTypes, limit, offset);
+		}
 
 		await Promise.all(subscriptions.map((subscription) =>
 			Subscription.findOrStartSync(subscription, syncType)
@@ -308,9 +308,9 @@ router.get(
 	],
 	async (req: Request, res: Response): Promise<void> => {
 		const where = req.params.clientKeyOrJiraHost.startsWith("http")
-			? { jiraHost: req.params.clientKeyOrJiraHost }
-			: { clientKey: req.params.clientKeyOrJiraHost };
-		const jiraInstallations = await Installation.findAll({ where });
+			? {jiraHost: req.params.clientKeyOrJiraHost}
+			: {clientKey: req.params.clientKeyOrJiraHost};
+		const jiraInstallations = await Installation.findAll({where});
 		if (!jiraInstallations.length) {
 			res.sendStatus(404);
 			return;
@@ -329,7 +329,7 @@ router.post(
 	elapsedTimeMetrics,
 	async (request: Request, response: Response): Promise<void> => {
 		response.locals.installation = await Installation.findOne({
-			where: { clientKey: request.params.clientKey }
+			where: {clientKey: request.params.clientKey}
 		});
 
 		if (!response.locals.installation) {
@@ -364,7 +364,7 @@ router.post(
 	returnOnValidationError,
 	elapsedTimeMetrics,
 	async (req: Request, response: Response): Promise<void> => {
-		const { installationId } = req.params;
+		const {installationId} = req.params;
 		const installation = await Installation.findByPk(installationId);
 
 		const respondWith = (message) =>

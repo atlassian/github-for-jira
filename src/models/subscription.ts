@@ -1,4 +1,4 @@
-import Sequelize from "sequelize";
+import Sequelize, {Op} from "sequelize";
 import { queues } from "../worker/main";
 import { Job } from "bull";
 import _ from "lodash";
@@ -69,6 +69,39 @@ export default class Subscription extends Sequelize.Model {
 			where: {
 				gitHubInstallationId: installationId
 			}
+		});
+	}
+
+	static getAllForInstallations(
+		installationIds: number[],
+		limit: number,
+		offset: number
+	): Promise<Subscription[]> {
+		return Subscription.findAll({
+			where: {
+				gitHubInstallationId: {
+					[Op.in]: installationIds
+				}
+			},
+			limit,
+			offset,
+			order: [["updatedAt", "DESC"]]
+		});
+	}
+
+	static getAllForStatusTypes(
+		statusTypes: string[],
+		limit: number,
+		offset: number
+	): Promise<Subscription[]> {
+		return Subscription.findAll({
+			where: {
+				// Does a OR check on status types
+				[Op.or]: statusTypes.map(status => ({syncStatus: status}))
+			},
+			limit,
+			offset,
+			order: [["updatedAt", "DESC"]]
 		});
 	}
 
