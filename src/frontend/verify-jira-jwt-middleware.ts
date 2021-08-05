@@ -22,11 +22,12 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	});
 
 	try {
-		if (!hasValidJwt(installation.sharedSecret, installation.jiraHost, req, res, tokenType)) {
+		if (!hasValidJwt(installation.sharedSecret, req, res, tokenType)) {
 			return
 		}
 		next();
 	} catch (error) {
+		req.log.error(error, "Error happened when validating JWT token")
 		next(new Error("Unauthorized"));
 	}
 };

@@ -3,12 +3,14 @@
 // TODO: need some typing for jwt
 import jwt from "atlassian-jwt";
 import { Request, Response } from "express";
+import envVars from "../../config/env";
 
 const TOKEN_KEY_PARAM = "acpt";
 const TOKEN_KEY_HEADER = `X-${TOKEN_KEY_PARAM}`;
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
+const BASE_URL = envVars.APP_URL
 
 /**
  * Atlassian Connect has 2 different types of JWT tokens.
@@ -28,7 +30,7 @@ export enum TokenType {
 }
 
 function extractJwtFromRequest(req) {
-	const tokenInQuery = req.query[JWT_PARAM];
+	const tokenInQuery = req.query ? req.query[JWT_PARAM] : undefined;
 
 	// JWT is missing in query and we don't have a valid body.
 	if (!tokenInQuery && !req.body) {
@@ -42,7 +44,7 @@ function extractJwtFromRequest(req) {
 	}
 
 	// JWT appears in both parameter and body will result query hash being invalid.
-	const tokenInBody = req.body[JWT_PARAM];
+	const tokenInBody = req.body ? req.body[JWT_PARAM] : undefined;
 	if (tokenInQuery && tokenInBody) {
 		req.log("JWT token can only appear in either query parameter or request body.");
 		return;
@@ -50,7 +52,7 @@ function extractJwtFromRequest(req) {
 	let token = tokenInQuery || tokenInBody;
 
 	// if there was no token in the query-string then fall back to checking the Authorization header
-	const authHeader = req.headers[AUTH_HEADER];
+	const authHeader = req.headers ? req.headers[AUTH_HEADER] : undefined;
 	if (authHeader?.startsWith("JWT ")) {
 		if (token) {
 			const foundIn = tokenInQuery ? "query" : "request body";
@@ -74,17 +76,17 @@ function sendError(res, code, msg) {
 	});
 }
 
-function verifyQsh(qsh: string, baseUrl: string, req: Request, res: Response) {
-	let expectedHash = jwt.createQueryStringHash(req, false, baseUrl);
+function verifyQsh(qsh: string, req: Request, res: Response) {
+	let expectedHash = jwt.createQueryStringHash(req, false, BASE_URL);
 	let signatureHashVerified = qsh === expectedHash;
 	if (!signatureHashVerified) {
-		jwt.createCanonicalRequest(req, false, baseUrl); // eslint-disable-line
+		jwt.createCanonicalRequest(req, false, BASE_URL); // eslint-disable-line
 
 		// If that didn't verify, it might be a post/put - check the request body too
-		expectedHash = jwt.createQueryStringHash(req, true, baseUrl);
+		expectedHash = jwt.createQueryStringHash(req, true, BASE_URL);
 		signatureHashVerified = qsh === expectedHash;
 		if (!signatureHashVerified) {
-			jwt.createCanonicalRequest(req, true, baseUrl); // eslint-disable-line
+			jwt.createCanonicalRequest(req, true, BASE_URL); // eslint-disable-line
 
 			// Send the error message for the first verification - it's 90% more likely to be the one we want.
 			sendError(res, 401, "Authentication failed: query hash does not match.");
@@ -94,7 +96,7 @@ function verifyQsh(qsh: string, baseUrl: string, req: Request, res: Response) {
 	return true
 }
 
-export const hasValidJwt = (secret: string, baseUrl: string, req: Request, res: Response, tokenType: TokenType) => {
+export const hasValidJwt = (secret: string, req: Request, res: Response, tokenType: TokenType) => {
 	const token = extractJwtFromRequest(req);
 	if (!token) {
 		sendError(res, 401, "Could not find authentication data on request");
@@ -137,7 +139,7 @@ export const hasValidJwt = (secret: string, baseUrl: string, req: Request, res: 
 			return verifiedClaims.qsh === "context-qsh"
 		} else {
 			//validate query string hash
-			return verifyQsh(verifiedClaims.qsh, baseUrl, req, res);
+			return verifyQsh(verifiedClaims.qsh, req, res);
 		}
 	} else {
 		sendError(res, 401, "JWT tokens without qsh are not allowed");

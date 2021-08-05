@@ -22,7 +22,7 @@ export default async (
 	res.locals.installation = installation;
 
 	// TODO: Should the express response logic be inside 'hasValidJwt'?
-	if (hasValidJwt(sharedSecret, jiraHost, req, res, TokenType.normal)) {
+	if (hasValidJwt(sharedSecret, req, res, TokenType.normal)) {
 		next();
 	}
 };

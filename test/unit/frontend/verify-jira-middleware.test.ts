@@ -4,6 +4,7 @@ import { mocked } from "ts-jest/utils";
 import { Installation } from "../../../src/models";
 import verifyJiraMiddleware from "../../../src/frontend/verify-jira-jwt-middleware";
 import {TokenType} from "../../../src/jira/util/jwt";
+import logger from "../../../src/config/logger"
 
 jest.mock("../../../src/models");
 
@@ -50,7 +51,8 @@ describe("#verifyJiraMiddleware", () => {
 				session: {
 					jiraHost: subscription.jiraHost
 				},
-				addLogFields: jest.fn()
+				addLogFields: jest.fn(),
+				log: logger
 			};
 		};
 
@@ -61,7 +63,7 @@ describe("#verifyJiraMiddleware", () => {
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
-			expect(next).toHaveBeenCalled();
+			expect(next).toHaveBeenCalledWith();
 		});
 
 		it("sets res.locals to installation", async () => {
@@ -128,7 +130,8 @@ describe("#verifyJiraMiddleware", () => {
 					xdm_e: jiraHost,
 					jwt: encodedJwt
 				},
-				addLogFields: jest.fn()
+				addLogFields: jest.fn(),
+				log: logger
 			};
 		};
 
@@ -139,7 +142,7 @@ describe("#verifyJiraMiddleware", () => {
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
-			expect(next).toHaveBeenCalled();
+			expect(next).toHaveBeenCalledWith();
 		});
 
 		it("is not found when host is missing", async () => {
