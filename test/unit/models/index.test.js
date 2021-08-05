@@ -57,12 +57,14 @@ describe('test installation model', () => {
       host: installation.jiraHost,
       installationId: '1234',
       clientKey: installation.clientKey,
+      githubHost: 'test-host',
     });
 
     await Subscription.install({
       host: installation.jiraHost,
       installationId: '2345',
       clientKey: installation.clientKey,
+      githubHost: 'test-host',
     });
   });
 
