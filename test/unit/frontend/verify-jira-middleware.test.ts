@@ -13,6 +13,7 @@ describe("#verifyJiraMiddleware", () => {
 	const next = jest.fn();
 	let installation;
 	let subscription;
+	const testSharedSecret = "test-secret";
 
 	beforeEach(async () => {
 		res = {
@@ -31,17 +32,17 @@ describe("#verifyJiraMiddleware", () => {
 			clientKey: "abc123",
 			enabled: true,
 			secrets: "def234",
-			sharedSecret: "ghi345",
+			sharedSecret: testSharedSecret,
 			subscriptions: jest.fn().mockResolvedValue([])
 		};
 	});
 
 	describe("GET request", () => {
 		const buildRequest = (jiraHost, secret = "secret"): any => {
-			const jwtValue = jwt.encode(`{
-  			"qsh": "context-qsh",
-  			"iss": "jira",
-			}`, secret);
+			const jwtValue = jwt.encode({
+				qsh: "context-qsh",
+				iss: "jira"
+			}, secret);
 
 			return {
 				query: {
@@ -58,8 +59,7 @@ describe("#verifyJiraMiddleware", () => {
 
 		it("should call next with a valid token and secret", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
-			const req = buildRequest("test-host", "secret");
-			jwt.decode(req.query.jwt, "secret");
+			const req = buildRequest("test-host", testSharedSecret);
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
@@ -68,8 +68,7 @@ describe("#verifyJiraMiddleware", () => {
 
 		it("sets res.locals to installation", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
-			const req = buildRequest("host", "secret");
-			jwt.decode(req.query.jwt, "secret");
+			const req = buildRequest("host", testSharedSecret);
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
@@ -97,10 +96,8 @@ describe("#verifyJiraMiddleware", () => {
 
 		it("adds installation details to log", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
-			const req = buildRequest("host", "secret");
+			const req = buildRequest("host", testSharedSecret);
 			const addLogFieldsSpy = jest.spyOn(req, "addLogFields");
-
-			jwt.decode(req.query.jwt, "secret");
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
@@ -113,15 +110,14 @@ describe("#verifyJiraMiddleware", () => {
 
 	describe("POST request", () => {
 		const buildRequest = (jiraHost, secret): any => {
-			const encodedJwt = secret && jwt.encode(`{
-  			"qsh": "context-qsh",
-  			"iss": "jira",
-			}`, secret);
+			const encodedJwt = secret && jwt.encode({
+				qsh: "context-qsh",
+				iss: "jira"
+			}, secret);
 
 			return {
 				body: {
 					jiraHost,
-					token: encodedJwt
 				},
 				session: {
 					jiraHost: subscription.jiraHost
@@ -137,8 +133,7 @@ describe("#verifyJiraMiddleware", () => {
 
 		it("pulls jiraHost and token from body", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
-			const req = buildRequest("host", "secret");
-			jwt.decode(req.query.jwt, "secret");
+			const req = buildRequest("host", testSharedSecret);
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
@@ -146,7 +141,7 @@ describe("#verifyJiraMiddleware", () => {
 		});
 
 		it("is not found when host is missing", async () => {
-			const req = buildRequest("host", "secret");
+			const req = buildRequest("host", testSharedSecret);
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
@@ -155,12 +150,28 @@ describe("#verifyJiraMiddleware", () => {
 		});
 
 		it("is unauthorized when token missing", async () => {
+			const buildRequestWithNoToken = (jiraHost): any => {
+				return {
+					body: {
+						jiraHost,
+					},
+					session: {
+						jiraHost: subscription.jiraHost
+					},
+					query: {
+						xdm_e: jiraHost,
+					},
+					addLogFields: jest.fn(),
+					log: logger
+				};
+			};
+
 			mocked(Installation.getForHost).mockResolvedValue(installation);
-			const req = buildRequest("host", "secret");
+
+			const req = buildRequestWithNoToken("host");
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
-			expect(next).toHaveBeenCalled();
 			expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
 		});
 	});

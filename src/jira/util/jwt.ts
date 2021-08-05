@@ -2,11 +2,8 @@
 // https://bitbucket.org/atlassian/atlassian-connect-express/src/f434e5a9379a41213acf53b9c2689ce5eec55e21/lib/middleware/authentication.js?at=master&fileviewer=file-view-default#authentication.js-227
 // TODO: need some typing for jwt
 import jwt from "atlassian-jwt";
-import { Request, Response } from "express";
+import {Request, Response} from "express";
 import envVars from "../../config/env";
-
-const TOKEN_KEY_PARAM = "acpt";
-const TOKEN_KEY_HEADER = `X-${TOKEN_KEY_PARAM}`;
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
@@ -32,17 +29,6 @@ export enum TokenType {
 function extractJwtFromRequest(req) {
 	const tokenInQuery = req.query ? req.query[JWT_PARAM] : undefined;
 
-	// JWT is missing in query and we don't have a valid body.
-	if (!tokenInQuery && !req.body) {
-		req.log(
-			`${"Cannot find JWT token in query parameters. " +
-			"Please include body-parser middleware and parse the urlencoded body " +
-			"(See https://github.com/expressjs/body-parser) if the add-on is rendering in POST mode. " +
-			"Otherwise please ensure the "}${JWT_PARAM} parameter is presented in query.`
-		);
-		return;
-	}
-
 	// JWT appears in both parameter and body will result query hash being invalid.
 	const tokenInBody = req.body ? req.body[JWT_PARAM] : undefined;
 	if (tokenInQuery && tokenInBody) {
@@ -56,15 +42,16 @@ function extractJwtFromRequest(req) {
 	if (authHeader?.startsWith("JWT ")) {
 		if (token) {
 			const foundIn = tokenInQuery ? "query" : "request body";
-			req.log(`JWT token found in ${foundIn} and in header: using ${foundIn} value.`);
+			req.log.info(`JWT token found in ${foundIn} and in header: using ${foundIn} value.`);
 		} else {
 			token = authHeader.substring(4);
 		}
 	}
 
-	// TODO: Remove when we discontinue the old token middleware
+	// JWT is missing in query and we don't have a valid body.
 	if (!token) {
-		token = req.query[TOKEN_KEY_PARAM] || req.header(TOKEN_KEY_HEADER);
+		req.log.info("JWT token is missing in the request");
+		return;
 	}
 
 	return token;
@@ -76,7 +63,7 @@ function sendError(res, code, msg) {
 	});
 }
 
-function verifyQsh(qsh: string, req: Request, res: Response) {
+function verifyQsh(qsh: string, req: Request) {
 	let expectedHash = jwt.createQueryStringHash(req, false, BASE_URL);
 	let signatureHashVerified = qsh === expectedHash;
 	if (!signatureHashVerified) {
@@ -86,10 +73,6 @@ function verifyQsh(qsh: string, req: Request, res: Response) {
 		expectedHash = jwt.createQueryStringHash(req, true, BASE_URL);
 		signatureHashVerified = qsh === expectedHash;
 		if (!signatureHashVerified) {
-			jwt.createCanonicalRequest(req, true, BASE_URL); // eslint-disable-line
-
-			// Send the error message for the first verification - it's 90% more likely to be the one we want.
-			sendError(res, 401, "Authentication failed: query hash does not match.");
 			return false;
 		}
 	}
@@ -134,13 +117,20 @@ export const hasValidJwt = (secret: string, req: Request, res: Response, tokenTy
 	}
 
 	if (verifiedClaims.qsh) {
+		let qshVerified = false
 		if (tokenType === TokenType.context) {
 			//If we use context jsw tokens, their qsh will be constant
-			return verifiedClaims.qsh === "context-qsh"
+			qshVerified = verifiedClaims.qsh === "context-qsh"
 		} else {
 			//validate query string hash
-			return verifyQsh(verifiedClaims.qsh, req, res);
+			qshVerified = verifyQsh(verifiedClaims.qsh, req);
 		}
+
+		if (!qshVerified) {
+			sendError(res, 401, "Invalid jwt token");
+		}
+		return qshVerified
+
 	} else {
 		sendError(res, 401, "JWT tokens without qsh are not allowed");
 		return false
