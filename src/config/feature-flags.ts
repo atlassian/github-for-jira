@@ -59,7 +59,6 @@ class LaunchdarklyFeatureFlagResolver implements FeatureFlagResolver {
 
 	booleanValue(flag: string, jiraHost: string, defaultValue: boolean): Promise<boolean> {
 		const user = this.createLaunchDarklyUser(jiraHost);
-		logger.info(`resolving feature flag "${flag}" for jiraHost "${jiraHost}" (hash: "${user.key}")`);
 		return this.launchdarklyClient.variation(flag, user, defaultValue);
 	}
 
