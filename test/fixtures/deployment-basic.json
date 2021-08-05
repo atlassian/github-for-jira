@@ -40,7 +40,8 @@
     },
     "sender": {
       "login": "TestUser[bot]",
-      "type": "Bot"
+      "type": "Bot",
+      "html_url": "https://test.ghaekube.net/organizations/test-org/settings/installations/1"
     },
     "installation": {
       "id": 1234

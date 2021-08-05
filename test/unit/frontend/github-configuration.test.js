@@ -39,6 +39,7 @@ const userInstallationsResponse = {
       },
       id: 1,
       target_type: 'Organization',
+      html_url: 'https://test.ghaekube.net/organizations/test-org/settings/installations/1',
     },
     {
       id: 3,
@@ -157,6 +158,7 @@ describe('Frontend', () => {
           installationId: '1',
           host: jiraHost,
           clientKey: getHashedKey(jiraClientKey),
+          githubHost: 'test.ghaekube.net',
         }));
       });
     });
