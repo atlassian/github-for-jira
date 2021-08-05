@@ -76,7 +76,7 @@ describe('sync/pull-request', () => {
           add: jest.fn(),
         },
       };
-      await processInstallation(app, queues)(job);
+      await processInstallation(queues)(job);
 
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: true,
@@ -133,7 +133,7 @@ describe('sync/pull-request', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.pullRequests.add).not.toHaveBeenCalled();
   });
 
@@ -156,7 +156,7 @@ describe('sync/pull-request', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
   });
 });

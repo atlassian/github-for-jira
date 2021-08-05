@@ -73,7 +73,7 @@ describe('sync/commits', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
@@ -130,7 +130,7 @@ describe('sync/commits', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
@@ -222,7 +222,7 @@ describe('sync/commits', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
@@ -282,7 +282,7 @@ describe('sync/commits', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
   });
 
@@ -308,7 +308,7 @@ describe('sync/commits', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
   });
 });

@@ -137,7 +137,7 @@ describe('sync/branches', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(
@@ -158,7 +158,7 @@ describe('sync/branches', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', makeExpectedResponse({
@@ -179,7 +179,7 @@ describe('sync/branches', () => {
         add: jest.fn(),
       },
     };
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
     td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
@@ -241,7 +241,7 @@ describe('sync/branches', () => {
     td.when(jiraApi.post(), { ignoreExtraArgs: true })
       .thenThrow(new Error('test error'));
 
-    await processInstallation(app, queues)(job);
+    await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
   });
 });
