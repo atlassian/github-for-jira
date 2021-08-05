@@ -64,7 +64,7 @@ describe('GitHub Actions', () => {
       td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
         .thenReturn(require('../fixtures/api/commit-no-username.json'));
 
-      await processPush(app)(job);
+      await processPush()(job);
 
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
@@ -131,7 +131,7 @@ describe('GitHub Actions', () => {
       td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/test-commit-id'))
         .thenReturn(require('../fixtures/more-than-10-files.json'));
 
-      await processPush(app)(job);
+      await processPush()(job);
 
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
@@ -352,7 +352,7 @@ describe('GitHub Actions', () => {
       td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
         .thenReturn(require('../fixtures/push-merge-commit.json'));
 
-      await processPush(app)(job);
+      await processPush()(job);
 
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
         preventTransitions: false,
@@ -415,7 +415,7 @@ describe('GitHub Actions', () => {
       td.when(githubApi.get('/repos/test-repo-owner/test-repo-name/commits/commit-no-username'))
         .thenReturn(require('../fixtures/push-non-merge-commit'));
 
-      await processPush(app)(job);
+      await processPush()(job);
 
       // flag property should not be present
       td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
