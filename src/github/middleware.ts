@@ -8,12 +8,12 @@ import getJiraClient from "../jira/client";
 import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
-import {featureFlags} from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function(callback) {
+const withSentry = function (callback) {
 	return async (context) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry.configureScope((scope) =>
@@ -70,7 +70,7 @@ export default (
 		});
 
 		const gitHubInstallationId = Number(context.payload.installation.id);
-		context.log = context.log.child({ gitHubInstallationId });
+		context.log = context.log.child({gitHubInstallationId});
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
@@ -105,7 +105,7 @@ export default (
 		);
 		if (!subscriptions.length) {
 			context.log(
-				{ noop: "no_subscriptions" },
+				{noop: "no_subscriptions"},
 				"Halting futher execution since no subscriptions were found"
 			);
 			return;
@@ -116,9 +116,9 @@ export default (
 			`webhook:${context.name}.${context.payload.action}`
 		);
 		for (const subscription of subscriptions) {
-			const { jiraHost } = subscription;
+			const {jiraHost} = subscription;
 
-			if(await featureFlags.isMaintenanceMode(jiraHost)){
+			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
 				continue;
 			}
@@ -128,8 +128,8 @@ export default (
 				"gitHubInstallationId",
 				gitHubInstallationId.toString()
 			);
-			context.sentry.setUser({ jiraHost, gitHubInstallationId });
-			context.log = context.log.child({ jiraHost });
+			context.sentry.setUser({jiraHost, gitHubInstallationId});
+			context.log = context.log.child({jiraHost});
 			if (context.timedout) {
 				Sentry.captureMessage(
 					"Timed out jira middleware iterating subscriptions"
@@ -152,7 +152,7 @@ export default (
 			if (jiraClient == null) {
 				// Don't call callback if we have no jiraClient
 				context.log.error(
-					{ noop: "no_jira_client" },
+					{noop: "no_jira_client"},
 					`No enabled installation found for ${jiraHost}.`
 				);
 				return;

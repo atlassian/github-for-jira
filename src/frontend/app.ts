@@ -32,7 +32,7 @@ import { App } from "@octokit/app";
 import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { EnvironmentEnum } from "../config/env";
-import { featureFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // Adding session information to request
 declare global {
@@ -178,7 +178,7 @@ export default (octokitApp: App): Express => {
 			// we only activate the maintenance mode for requests that are bound to a jira host
 			next();
 		} else {
-			await featureFlags.isMaintenanceMode(req.session.jiraHost) ? getMaintenance(req, res) : next();
+			await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost) ? getMaintenance(req, res) : next();
 		}
 	});
 
@@ -259,7 +259,7 @@ export default (octokitApp: App): Express => {
 	app.post("/jira/events/uninstalled", jiraAuthenticate, postJiraUninstall);
 
 	app.get("/", async (_: Request, res: Response) => {
-		const { data: info } = await res.locals.client.apps.getAuthenticated({});
+		const {data: info} = await res.locals.client.apps.getAuthenticated({});
 		return res.redirect(info.external_url);
 	});
 

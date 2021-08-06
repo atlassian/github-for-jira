@@ -40,7 +40,6 @@ const envVars: EnvVars = {
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	PROXY: getProxyFromEnvironment(),
-	LAUNCHDARKLY_KEY: process.env.LAUNCHDARKLY_KEY,
 } as EnvVars;
 
 export default envVars;
@@ -70,5 +69,5 @@ export interface EnvVars {
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
 	PROXY?: string,
-	LAUNCHDARKLY_KEY: string;
+	LAUNCHDARKLY_KEY?: string;
 }

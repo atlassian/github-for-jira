@@ -4,20 +4,17 @@ import { Installation, Subscription } from "../../../src/models";
 import GitHubAPI from "../../../src/config/github-api";
 import middleware from "../../../src/github/middleware";
 import { mockModels } from "../../utils/models";
-import {MockFeatureFlags} from "../config/feature-flags-mock";
 
 jest.mock("../../../src/models");
-jest.mock("launchdarkly-node-server-sdk");
 
 describe("Probot event middleware", () => {
 	describe("when processing fails for one subscription", () => {
 		let context;
 		beforeEach(async () => {
-			await new MockFeatureFlags().init();
 			context = {
 				payload: {
-					sender: { type: "not bot" },
-					installation: { id: 1234 }
+					sender: {type: "not bot"},
+					installation: {id: 1234}
 				},
 				github: GitHubAPI(),
 				log: logger

@@ -16,8 +16,7 @@ import { metricHttpRequest } from "../config/metric-names";
 import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
 import "../config/proxy";
-import envVars, { EnvironmentEnum } from "../config/env";
-import {initFeatureFlags} from "../config/feature-flags";
+import { EnvironmentEnum } from "../config/env";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client").redisOptions);
@@ -89,7 +88,7 @@ Object.keys(queues).forEach((name) => {
 			`Error occurred while processing job id=${job.id} on queue name=${name}`
 		);
 
-		measureElapsedTime(job.meta_time_start, { queue: name, status: "failed" });
+		measureElapsedTime(job.meta_time_start, {queue: name, status: "failed"});
 	});
 
 	queue.on("error", (err) => {
@@ -138,7 +137,6 @@ const commonMiddleware = (jobHandler) => sentryMiddleware(jobHandler);
 
 export const start = async () => {
 	initializeSentry();
-	await initFeatureFlags(envVars.LAUNCHDARKLY_KEY);
 
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
 	queues.installation.process(

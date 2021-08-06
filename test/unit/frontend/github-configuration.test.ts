@@ -4,20 +4,18 @@ import testTracking from "../../setup/tracking";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/models";
 import FrontendApp from "../../../src/frontend/app";
-import {MockFeatureFlags} from "../config/feature-flags-mock";
 
 jest.mock("../../../src/models");
-jest.mock("launchdarkly-node-server-sdk");
 
 describe("Frontend", () => {
 	let frontendApp;
 	let installation;
 	let subscription;
 
-	const authenticatedUserResponse = { login: "test-user" };
-	const adminUserResponse = { login: "admin-user" };
-	const organizationMembershipResponse = { role: "member" };
-	const organizationAdminResponse = { role: "admin" };
+	const authenticatedUserResponse = {login: "test-user"};
+	const adminUserResponse = {login: "admin-user"};
+	const organizationMembershipResponse = {role: "member"};
+	const organizationAdminResponse = {role: "admin"};
 	const userInstallationsResponse = {
 		total_count: 2,
 		installations: [
@@ -44,8 +42,6 @@ describe("Frontend", () => {
 	}
 
 	beforeEach(async () => {
-		await new MockFeatureFlags().init();
-
 		subscription = {
 			githubInstallationId: 15,
 			jiraHost: "https://test-host.jira.com",

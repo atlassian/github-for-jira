@@ -1,38 +1,31 @@
-import {featureFlags} from "../../../src/config/feature-flags";
-import {MockFeatureFlags} from "./feature-flags-mock";
+import LaunchDarkly, { LDClient } from "launchdarkly-node-server-sdk";
+import { mocked } from "ts-jest";
 
 jest.mock("launchdarkly-node-server-sdk");
 
-describe("Feature Flags", () => {
+describe("Feature Flag", () => {
 
-	describe("Maintenance Mode", () => {
+	let featureFlags;
 
-		it("is disabled by default", async () => {
-			await new MockFeatureFlags().init();
-			expect(await featureFlags.isMaintenanceMode("https://myjira.atlassian.net")).toBeFalsy();
-		});
+	const mockFeatureFlagValue = async (flagValue: boolean) => {
+		mocked(LaunchDarkly.init).mockReturnValue(({
+			variation: jest.fn().mockResolvedValue(flagValue),
+			waitForInitialization: jest.fn().mockResolvedValue({})
+		} as unknown) as LDClient);
 
-		it("is enabled for a given Jira host", async () => {
-			await new MockFeatureFlags()
-				.withFlag("maintenance-mode", "https://myjira.atlassian.net", true)
-				.init();
-			expect(await featureFlags.isMaintenanceMode("https://myjira.atlassian.net")).toBeTruthy();
-		});
+		// We're importing featureFlags only after mocking LaunchDarkly.init(), so
+		// that LaunchDarkly.init() is called on the mock and not on the real thing.
+		featureFlags = await import("../../../src/config/feature-flags")
+	}
 
-		it("is disabled for a given Jira host", async () => {
-			await new MockFeatureFlags()
-				.withFlag("maintenance-mode", "https://myjira.atlassian.net", false)
-				.init();
-			expect(await featureFlags.isMaintenanceMode("https://myjira.atlassian.net")).toBeFalsy();
-		});
+	it("returns true when LaunchDarkly returns true", async () => {
+		await mockFeatureFlagValue(true)
+		expect(await featureFlags.booleanFlag(featureFlags.BooleanFlags.MAINTENANCE_MODE, true, "https://myjira.atlassian.net")).toBeTruthy();
+	});
 
-		it("is disabled for an unknown Jira host", async () => {
-			await new MockFeatureFlags()
-				.withFlag("maintenance-mode", "https://myjira.atlassian.net", true)
-				.init();
-			expect(await featureFlags.isMaintenanceMode("https://foo.atlassian.net")).toBeFalsy();
-		});
-
+	it("returns false when LaunchDarkly returns false", async () => {
+		await mockFeatureFlagValue(false)
+		expect(await featureFlags.booleanFlag(featureFlags.BooleanFlags.MAINTENANCE_MODE, true, "https://myjira.atlassian.net")).toBeFalsy();
 	});
 
 });
