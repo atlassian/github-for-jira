@@ -12,7 +12,7 @@ import "./config/proxy";
 import { EnvironmentEnum } from "./config/env";
 
 const isProd = process.env.NODE_ENV === EnvironmentEnum.production;
-const {redisOptions} = getRedisInfo("probot");
+const { redisOptions } = getRedisInfo("probot");
 
 
 const probot = createProbot({
@@ -32,7 +32,7 @@ async function createDBTables(logger: bunyan) {
 		await new Promise<void>((resolve, reject) => {
 			const migrate = exec(
 				"node_modules/.bin/sequelize db:migrate",
-				{env: process.env},
+				{ env: process.env },
 				(err) => (err ? reject(err) : resolve())
 			);
 

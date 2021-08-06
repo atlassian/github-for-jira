@@ -78,7 +78,7 @@ export default (octokitApp: App): Express => {
 	app.use(Sentry.Handlers.requestHandler());
 
 	// Parse URL-encoded bodies for Jira configuration requests
-	app.use(bodyParser.urlencoded({extended: false}));
+	app.use(bodyParser.urlencoded({ extended: false }));
 	app.use(bodyParser.json());
 
 	// We run behind ngrok.io so we need to trust the proxy always
@@ -259,7 +259,7 @@ export default (octokitApp: App): Express => {
 	app.post("/jira/events/uninstalled", jiraAuthenticate, postJiraUninstall);
 
 	app.get("/", async (_: Request, res: Response) => {
-		const {data: info} = await res.locals.client.apps.getAuthenticated({});
+		const { data: info } = await res.locals.client.apps.getAuthenticated({});
 		return res.redirect(info.external_url);
 	});
 

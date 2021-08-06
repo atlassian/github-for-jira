@@ -88,7 +88,7 @@ Object.keys(queues).forEach((name) => {
 			`Error occurred while processing job id=${job.id} on queue name=${name}`
 		);
 
-		measureElapsedTime(job.meta_time_start, {queue: name, status: "failed"});
+		measureElapsedTime(job.meta_time_start, { queue: name, status: "failed" });
 	});
 
 	queue.on("error", (err) => {

@@ -12,10 +12,10 @@ describe("Frontend", () => {
 	let installation;
 	let subscription;
 
-	const authenticatedUserResponse = {login: "test-user"};
-	const adminUserResponse = {login: "admin-user"};
-	const organizationMembershipResponse = {role: "member"};
-	const organizationAdminResponse = {role: "admin"};
+	const authenticatedUserResponse = { login: "test-user" };
+	const adminUserResponse = { login: "admin-user" };
+	const organizationMembershipResponse = { role: "member" };
+	const organizationAdminResponse = { role: "admin" };
 	const userInstallationsResponse = {
 		total_count: 2,
 		installations: [

@@ -13,8 +13,8 @@ describe("Probot event middleware", () => {
 		beforeEach(async () => {
 			context = {
 				payload: {
-					sender: {type: "not bot"},
-					installation: {id: 1234}
+					sender: { type: "not bot" },
+					installation: { id: 1234 }
 				},
 				github: GitHubAPI(),
 				log: logger
