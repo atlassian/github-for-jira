@@ -262,7 +262,7 @@ environmentOverrides:
             - github.stg.atlassian.com
           upstream_address:
             - address: github-for-jira.stg.services.atlassian.com
-#          rewrite: github-for-jira.stg.services.atlassian.com
+          rewrite: github-for-jira.stg.services.atlassian.com
 #          upstream_address:
 #            - address: jira-integration-staging.herokuapp.com
 #          rewrite: jira-integration-staging.herokuapp.com
