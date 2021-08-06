@@ -27,10 +27,10 @@ export enum TokenType {
 }
 
 function extractJwtFromRequest(req) {
-	const tokenInQuery = req.query ? req.query[JWT_PARAM] : undefined;
+	const tokenInQuery = req.query?.[JWT_PARAM];
 
 	// JWT appears in both parameter and body will result query hash being invalid.
-	const tokenInBody = req.body ? req.body[JWT_PARAM] : undefined;
+	const tokenInBody = req.body?.[JWT_PARAM];
 	if (tokenInQuery && tokenInBody) {
 		req.log("JWT token can only appear in either query parameter or request body.");
 		return;
@@ -38,7 +38,7 @@ function extractJwtFromRequest(req) {
 	let token = tokenInQuery || tokenInBody;
 
 	// if there was no token in the query-string then fall back to checking the Authorization header
-	const authHeader = req.headers ? req.headers[AUTH_HEADER] : undefined;
+	const authHeader =req.headers?.[AUTH_HEADER];
 	if (authHeader?.startsWith("JWT ")) {
 		if (token) {
 			const foundIn = tokenInQuery ? "query" : "request body";
