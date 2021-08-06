@@ -211,8 +211,8 @@ router.post(
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
-		// Defaults to any status
-		const statusTypes = req.body.statusTypes as string[] || [];
+		// Defaults to anything not completed
+		const statusTypes = req.body.statusTypes as string[] || ["FAILED", "PENDING", "ACTIVE"];
 		// Defaults to any installation
 		const installationIds = req.body.installationIds as number[] || [];
 		// Can be limited to a certain amount if needed to not overload system
