@@ -142,62 +142,6 @@ router.get(
 );
 
 router.get(
-	"/:installationId",
-	check("installationId").isInt(),
-	returnOnValidationError,
-	elapsedTimeMetrics,
-	async (req: Request, res: Response): Promise<void> => {
-		const { installationId } = req.params;
-		const { client } = res.locals;
-
-		try {
-			const subscriptions = await Subscription.getAllForInstallation(
-				Number(installationId)
-			);
-
-			if (!subscriptions.length) {
-				res.sendStatus(404);
-				return;
-			}
-
-			const { jiraHost } = subscriptions[0];
-			const installations = await Promise.all(
-				subscriptions.map((subscription) =>
-					getInstallation(client, subscription)
-				)
-			);
-			const connections = installations
-				.filter((response) => !response.error)
-				.map((data) => ({
-					...data,
-					isGlobalInstall: data.repository_selection === "all",
-					updated_at: format(data.updated_at, "MMMM D, YYYY h:mm a"),
-					syncState: data.syncState
-				}));
-
-			const failedConnections = installations.filter((response) => {
-				req.log.error(response.error);
-				return response.error;
-			});
-
-			res.json({
-				host: jiraHost,
-				installationId,
-				connections,
-				failedConnections,
-				hasConnections: connections.length > 0 || failedConnections.length > 0,
-				repoSyncState: `${req.protocol}://${req.get(
-					"host"
-				)}/api/${installationId}/repoSyncState.json`
-			});
-		} catch (err) {
-			req.log.error(err);
-			res.status(500).json(err);
-		}
-	}
-);
-
-router.get(
 	"/:installationId/repoSyncState.json",
 	check("installationId").isInt(),
 	returnOnValidationError,
@@ -376,6 +320,62 @@ router.post(
 		respondWith(
 			installation.enabled ? "Verification successful" : "Verification failed"
 		);
+	}
+);
+
+router.get(
+	"/:installationId",
+	check("installationId").isInt(),
+	returnOnValidationError,
+	elapsedTimeMetrics,
+	async (req: Request, res: Response): Promise<void> => {
+		const { installationId } = req.params;
+		const { client } = res.locals;
+
+		try {
+			const subscriptions = await Subscription.getAllForInstallation(
+				Number(installationId)
+			);
+
+			if (!subscriptions.length) {
+				res.sendStatus(404);
+				return;
+			}
+
+			const { jiraHost } = subscriptions[0];
+			const installations = await Promise.all(
+				subscriptions.map((subscription) =>
+					getInstallation(client, subscription)
+				)
+			);
+			const connections = installations
+				.filter((response) => !response.error)
+				.map((data) => ({
+					...data,
+					isGlobalInstall: data.repository_selection === "all",
+					updated_at: format(data.updated_at, "MMMM D, YYYY h:mm a"),
+					syncState: data.syncState
+				}));
+
+			const failedConnections = installations.filter((response) => {
+				req.log.error(response.error);
+				return response.error;
+			});
+
+			res.json({
+				host: jiraHost,
+				installationId,
+				connections,
+				failedConnections,
+				hasConnections: connections.length > 0 || failedConnections.length > 0,
+				repoSyncState: `${req.protocol}://${req.get(
+					"host"
+				)}/api/${installationId}/repoSyncState.json`
+			});
+		} catch (err) {
+			req.log.error(err);
+			res.status(500).json(err);
+		}
 	}
 );
 
