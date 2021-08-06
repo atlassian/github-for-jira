@@ -2,7 +2,7 @@
 // https://bitbucket.org/atlassian/atlassian-connect-express/src/f434e5a9379a41213acf53b9c2689ce5eec55e21/lib/middleware/authentication.js?at=master&fileviewer=file-view-default#authentication.js-227
 // TODO: need some typing for jwt
 import jwt from "atlassian-jwt";
-import {Request, Response} from "express";
+import {NextFunction, Request, Response} from "express";
 import envVars from "../../config/env";
 
 const JWT_PARAM = "jwt";
@@ -79,7 +79,7 @@ function verifyQsh(qsh: string, req: Request) {
 	return true
 }
 
-export const hasValidJwt = (secret: string, req: Request, res: Response, tokenType: TokenType) => {
+const verifyJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: Response, tokenType: TokenType) => {
 	const token = extractJwtFromRequest(req);
 	if (!token) {
 		sendError(res, 401, "Could not find authentication data on request");
@@ -127,7 +127,7 @@ export const hasValidJwt = (secret: string, req: Request, res: Response, tokenTy
 		}
 
 		if (!qshVerified) {
-			sendError(res, 401, "Invalid jwt token");
+			sendError(res, 401, "Unauthorized");
 		}
 		return qshVerified
 
@@ -136,3 +136,16 @@ export const hasValidJwt = (secret: string, req: Request, res: Response, tokenTy
 		return false
 	}
 };
+
+export const verifyJwtTokenMiddleware = (secret: string, tokenType: TokenType, req: Request, res: Response, next: NextFunction) => {
+	try {
+		if (!verifyJwtAndSetResponseCodeOnError(secret, req, res, tokenType)) {
+			return
+		}
+		next();
+	} catch (error) {
+		req.log.error(error, "Error happened when validating JWT token")
+		sendError(res, 401, "Unauthorized")
+		return
+	}
+}

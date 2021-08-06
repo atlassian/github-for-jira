@@ -1,6 +1,6 @@
 import { Installation } from "../models";
 import { NextFunction, Request, Response } from "express";
-import {hasValidJwt, TokenType} from "../jira/util/jwt";
+import {verifyJwtTokenMiddleware, TokenType} from "../jira/util/jwt";
 
 const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	req: Request,
@@ -21,15 +21,7 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 			installation.clientKey && `${installation.clientKey.substr(0, 5)}***`
 	});
 
-	try {
-		if (!hasValidJwt(installation.sharedSecret, req, res, tokenType)) {
-			return
-		}
-		next();
-	} catch (error) {
-		req.log.error(error, "Error happened when validating JWT token")
-		next(new Error("Unauthorized"));
-	}
+	verifyJwtTokenMiddleware(installation.sharedSecret, tokenType, req, res, next);
 };
 
 export default verifyJiraJwtMiddleware

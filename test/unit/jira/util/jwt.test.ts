@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jwt from "atlassian-jwt";
-import {hasValidJwt, TokenType} from "../../../../src/jira/util/jwt";
+import {TokenType, verifyJwtTokenMiddleware} from "../../../../src/jira/util/jwt";
 import logger from "../../../../src/config/logger"
 
 jest.mock("../../../../src/models");
 
-describe("#hasValidJwt", () => {
+describe("#verifyJwtTokenMiddleware", () => {
 
 	let res;
+
+	const next = jest.fn()
 
 	const testSecret = "testSecret"
 
@@ -48,12 +50,115 @@ describe("#hasValidJwt", () => {
 		res.json.mockReturnValue(res)
 	});
 
-	describe("Jwt Verification", () => {
-		const buildRequest = (secret = "secret", qsh: string): any => {
+	const buildRequest = (secret = "secret", qsh: string): any => {
+		const jwtValue = jwt.encode({
+			qsh: qsh,
+			iss: "jira",
+		}, secret);
+
+		return {
+			...baseRequest,
+			query: {
+				...testQueryParams,
+				jwt: jwtValue
+			},
+			method: testRequestMethod,
+			path: testRequestPath,
+		};
+	};
+
+	describe("Normal Token", () => {
+		it("should pass when token is valid", async () => {
+
+			const req = buildRequest(testSecret, testQsh);
+
+			verifyJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
+
+			expect(res.status).toHaveBeenCalledTimes(0)
+			expect(next).toBeCalledTimes(1)
+
+		});
+
+
+		it("should fail if qsh don't match", async () => {
+
+			const req = buildRequest(testSecret, "q123123124");
+
+			verifyJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
+
+			expect(res.status).toHaveBeenCalledWith(401)
+			expect(next).toBeCalledTimes(0)
+
+		});
+
+		it("should fail if secret is wrong", async () => {
+
+			const req = buildRequest("wrongSecret", testQsh);
+
+			verifyJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
+
+			expect(res.status).toHaveBeenCalledWith(400)
+			expect(next).toBeCalledTimes(0)
+
+		});
+	});
+
+	describe("Context Token", () => {
+
+		it("should pass if qsh is 'context-qsh'", async () => {
+
+			const req = buildRequest(testSecret, "context-qsh");
+
+			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+
+			expect(res.status).toHaveBeenCalledTimes(0)
+			expect(next).toBeCalledTimes(1)
+
+		});
+
+		it("should fail if there is a proper qsh", async () => {
+
+			const req = buildRequest(testSecret, testQsh);
+
+			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+
+			expect(res.status).toHaveBeenCalledWith(401)
+			expect(next).toBeCalledTimes(0)
+
+		});
+
+
+		it("should fail if qsh is not valid", async () => {
+
+			const req = buildRequest(testSecret, "q123123124");
+
+			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+
+			expect(res.status).toHaveBeenCalledWith(401)
+			expect(next).toBeCalledTimes(0)
+
+		});
+
+		it("should fail if secret is wrong", async () => {
+
+			const req = buildRequest("wrongSecret", testQsh);
+
+			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+
+			expect(res.status).toHaveBeenCalledWith(400)
+			expect(next).toBeCalledTimes(0)
+
+		});
+	});
+
+	describe("Expiry date", () => {
+
+		const buildRequest = (expiryDate: number): any => {
 			const jwtValue = jwt.encode({
-				qsh: qsh,
+				qsh: "context-qsh",
 				iss: "jira",
-			}, secret);
+				exp: expiryDate
+			}, testSecret);
 
 			return {
 				...baseRequest,
@@ -61,203 +166,99 @@ describe("#hasValidJwt", () => {
 					...testQueryParams,
 					jwt: jwtValue
 				},
-				method: testRequestMethod,
-				path: testRequestPath,
 			};
 		};
 
-		describe("Normal Token", () => {
-			it("should pass when token is valid", async () => {
+		it("should pass if expiry date after current date", async () => {
 
-				const req = buildRequest(testSecret, testQsh);
+			const req = buildRequest(Date.now() / 1000 + 100000);
 
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.normal)
+			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
-				expect(res.status).toHaveBeenCalledTimes(0)
-				expect(tokenValid).toBe(true)
+			expect(res.status).toHaveBeenCalledTimes(0)
+			expect(next).toBeCalledTimes(1)
 
-			});
-
-
-			it("should fail if qsh don't match", async () => {
-
-				const req = buildRequest(testSecret, "q123123124");
-
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.normal)
-
-				expect(res.status).toHaveBeenCalledWith(401)
-				expect(tokenValid).toBe(false)
-
-			});
-
-			it("should fail if secret is wrong", async () => {
-
-				const req = buildRequest("wrongSecret", testQsh);
-
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.normal)
-
-				expect(res.status).toHaveBeenCalledWith(400)
-				expect(tokenValid).toBe(false)
-
-			});
 		});
 
-		describe("Context Token", () => {
+		it("should fail if expiry date before current date", async () => {
 
-			it("should pass if qsh is 'context-qsh'", async () => {
+			const req = buildRequest(Date.now() / 1000 - 100000);
 
-				const req = buildRequest(testSecret, "context-qsh");
+			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.context)
+			expect(res.status).toHaveBeenCalledWith(401)
+			expect(next).toBeCalledTimes(0)
+		});
+	})
 
-				expect(res.status).toHaveBeenCalledTimes(0)
-				expect(tokenValid).toBe(true)
+	describe("Token in different places", () => {
+		const buildRequestWithTokenInBody = (): any => {
+			const jwtValue = jwt.encode({
+				qsh: "context-qsh",
+				iss: "jira",
+			}, testSecret);
 
-			});
+			return {
+				...baseRequest,
+				method: "POST",
+				body: {
+					jwt: jwtValue
+				},
+			};
+		};
 
-			it("should fail if there is a proper qsh", async () => {
+		it("Passes if token is in body", async () => {
 
-				const req = buildRequest(testSecret, testQsh);
+			const req = buildRequestWithTokenInBody();
 
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.context)
+			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
-				expect(res.status).toHaveBeenCalledWith(401)
-				expect(tokenValid).toBe(false)
-
-			});
-
-
-			it("should fail if qsh is not valid", async () => {
-
-				const req = buildRequest(testSecret, "q123123124");
-
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.context)
-
-				expect(res.status).toHaveBeenCalledWith(401)
-				expect(tokenValid).toBe(false)
-
-			});
-
-			it("should fail if secret is wrong", async () => {
-
-				const req = buildRequest("wrongSecret", testQsh);
-
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.context)
-
-				expect(res.status).toHaveBeenCalledWith(400)
-				expect(tokenValid).toBe(false)
-
-			});
+			expect(res.status).toHaveBeenCalledTimes(0)
+			expect(next).toBeCalledTimes(1)
 		});
 
-		describe("Expiry date", () => {
+		const buildRequestWithTokenInHeader = (): any => {
+			const jwtValue = jwt.encode({
+				qsh: "context-qsh",
+				iss: "jira",
+			}, testSecret);
 
-			const buildRequest = (expiryDate: number): any => {
-				const jwtValue = jwt.encode({
-					qsh: "context-qsh",
-					iss: "jira",
-					exp: expiryDate
-				}, testSecret);
-
-				return {
-					...baseRequest,
-					query: {
-						...testQueryParams,
-						jwt: jwtValue
-					},
-				};
+			return {
+				...baseRequest,
+				query: testQueryParams,
+				method: "POST",
+				headers: {
+					authorization: `JWT ${jwtValue}`
+				},
 			};
+		};
 
-			it("should pass if expiry date after current date", async () => {
+		it("Passes if token is in header", async () => {
 
-				const req = buildRequest(Date.now() / 1000 + 100000);
+			const req = buildRequestWithTokenInHeader();
 
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.context)
+			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
-				expect(res.status).toHaveBeenCalledTimes(0)
-				expect(tokenValid).toBe(true)
-
-			});
-
-			it("should fail if expiry date before current date", async () => {
-
-				const req = buildRequest(Date.now() / 1000 - 100000);
-
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.context)
-
-				expect(res.status).toHaveBeenCalledWith(401)
-				expect(tokenValid).toBe(false)
-			});
-		})
-
-		describe("Token in different places", () => {
-			const buildRequestWithTokenInBody = (): any => {
-				const jwtValue = jwt.encode({
-					qsh: "context-qsh",
-					iss: "jira",
-				}, testSecret);
-
-				return {
-					...baseRequest,
-					method: "POST",
-					body: {
-						jwt: jwtValue
-					},
-				};
-			};
-
-			it("Passes if token is in body", async () => {
-
-				const req = buildRequestWithTokenInBody();
-
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.context)
-
-				expect(res.status).toHaveBeenCalledTimes(0)
-				expect(tokenValid).toBe(true)
-			});
-
-			const buildRequestWithTokenInHeader = (): any => {
-				const jwtValue = jwt.encode({
-					qsh: "context-qsh",
-					iss: "jira",
-				}, testSecret);
-
-				return {
-					...baseRequest,
-					query: testQueryParams,
-					method: "POST",
-					headers: {
-						authorization: `JWT ${jwtValue}`
-					},
-				};
-			};
-
-			it("Passes if token is in header", async () => {
-
-				const req = buildRequestWithTokenInHeader();
-
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.context)
-
-				expect(res.status).toHaveBeenCalledTimes(0)
-				expect(tokenValid).toBe(true)
-			});
-
-			const buildRequestWithNoToken = (): any => {
-				return {
-					...baseRequest,
-				};
-			};
-
-			it("Fails if there is no token", async () => {
-
-				const req = buildRequestWithNoToken();
-
-				const tokenValid = hasValidJwt(testSecret, req, res, TokenType.context)
-
-				expect(res.status).toHaveBeenCalledWith(401)
-				expect(tokenValid).toBe(false)
-			});
-
+			expect(res.status).toHaveBeenCalledTimes(0)
+			expect(next).toBeCalledTimes(1)
 		});
+
+		const buildRequestWithNoToken = (): any => {
+			return {
+				...baseRequest,
+			};
+		};
+
+		it("Fails if there is no token", async () => {
+
+			const req = buildRequestWithNoToken();
+
+			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+
+			expect(res.status).toHaveBeenCalledWith(401)
+			expect(next).toBeCalledTimes(0)
+		});
+
 	});
+
 });

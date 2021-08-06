@@ -17,8 +17,13 @@ describe("#verifyJiraMiddleware", () => {
 
 	beforeEach(async () => {
 		res = {
-			locals: {}
+			locals: {},
+			status: jest.fn(),
+			json: jest.fn()
 		};
+
+		res.status.mockReturnValue(res)
+		res.json.mockReturnValue(res)
 
 		subscription = {
 			githubInstallationId: 15,
@@ -80,7 +85,6 @@ describe("#verifyJiraMiddleware", () => {
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
-			expect(next).toHaveBeenCalled();
 			expect(next).toHaveBeenCalledWith(new Error("Not Found"));
 		});
 
@@ -90,8 +94,7 @@ describe("#verifyJiraMiddleware", () => {
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
-			expect(next).toHaveBeenCalled();
-			expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
+			expect(next).toBeCalledTimes(0)
 		});
 
 		it("adds installation details to log", async () => {
@@ -145,7 +148,6 @@ describe("#verifyJiraMiddleware", () => {
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
-			expect(next).toHaveBeenCalled();
 			expect(next).toHaveBeenCalledWith(new Error("Not Found"));
 		});
 
@@ -172,7 +174,8 @@ describe("#verifyJiraMiddleware", () => {
 
 			await verifyJiraMiddleware(TokenType.context)(req, res, next);
 
-			expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
+			expect(res.status).toHaveBeenCalledWith(401)
+			expect(next).toHaveBeenCalledTimes(0);
 		});
 	});
 });

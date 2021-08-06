@@ -1,5 +1,5 @@
 import {Installation} from "../models";
-import {hasValidJwt, TokenType} from "./util/jwt";
+import {verifyJwtTokenMiddleware, TokenType} from "./util/jwt";
 import {NextFunction, Request, Response} from "express";
 
 export default async (
@@ -21,8 +21,5 @@ export default async (
 	});
 	res.locals.installation = installation;
 
-	// TODO: Should the express response logic be inside 'hasValidJwt'?
-	if (hasValidJwt(sharedSecret, req, res, TokenType.normal)) {
-		next();
-	}
+	verifyJwtTokenMiddleware(sharedSecret, TokenType.normal, req, res, next)
 };
