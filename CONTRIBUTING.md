@@ -103,7 +103,7 @@ After this is done, you should see your repos starting to sync in the App's dash
 
 ### Accessing Admin Endpoints
 
-There are some admin endpoints (see [/src/api/index.ts](/src/api/index.ts)) that require special permissions.
+There are some admin endpoints that require special permissions (see `viewerPermissionQuery` in [/src/api/index.ts](/src/api/index.ts)).
 
 To call these endpoints, you must:
 
