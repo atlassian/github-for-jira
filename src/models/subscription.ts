@@ -1,4 +1,4 @@
-import Sequelize, {Op} from "sequelize";
+import Sequelize, { Op } from "sequelize";
 import { queues } from "../worker/main";
 import { Job } from "bull";
 import _ from "lodash";
@@ -72,32 +72,34 @@ export default class Subscription extends Sequelize.Model {
 		});
 	}
 
-	static getAllForInstallations(
+	static getAllFiltered(
 		installationIds: number[],
-		limit: number,
-		offset: number
-	): Promise<Subscription[]> {
-		return Subscription.findAll({
-			where: {
-				gitHubInstallationId: {
-					[Op.in]: installationIds
-				}
-			},
-			limit,
-			offset,
-			order: [["updatedAt", "DESC"]]
-		});
-	}
-
-	static getAllForStatusTypes(
 		statusTypes: string[],
 		limit: number,
 		offset: number
 	): Promise<Subscription[]> {
+
+		const andFilter = [];
+
+		if (statusTypes && statusTypes.length > 0) {
+			andFilter.push({
+				syncStatus: {
+					[Op.in]: statusTypes
+				}
+			});
+		}
+
+		if (installationIds && installationIds.length > 0) {
+			andFilter.push({
+				gitHubInstallationId: {
+					[Op.in]: installationIds
+				}
+			});
+		}
+
 		return Subscription.findAll({
 			where: {
-				// Does a OR check on status types
-				[Op.or]: statusTypes.map(status => ({syncStatus: status}))
+				[Op.and]: andFilter
 			},
 			limit,
 			offset,
@@ -194,7 +196,9 @@ export default class Subscription extends Sequelize.Model {
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
 		const [results] = await this.sequelize.query(
-			`SELECT "syncStatus", COUNT(*) FROM "Subscriptions" GROUP BY "syncStatus"`
+			`SELECT "syncStatus", COUNT(*)
+			 FROM "Subscriptions"
+			 GROUP BY "syncStatus"`
 		);
 		return results as SyncStatusCount[];
 	}
