@@ -51,10 +51,6 @@
   padding: 0.8em 0;
 }
 
-/* .githubOrgs__table__row--multiple {
-  padding-bottom: 0;
-} */
-
 .githubOrgs__table__row,
 .getConfiguration__orgContent:nth-child(2) {
   display: flex;
@@ -127,6 +123,11 @@
   width: 1.8em;
 }
 
+.getConfiguration__noOrganizations {
+  color: #172B4D;
+  margin: 1.2em auto;
+}
+
 .getConfiguration__newJiraOrg__container,
 .getConfiguration__newJiraOrg__container--empty {
   max-width: 570px;
@@ -139,7 +140,7 @@
 }
 
 .getConfiguration__newJiraOrg__container--empty {
-  margin-top: 11em;
+  margin-top: 3em;
 }
 
 .getConfiguration__newJiraOrg__message {

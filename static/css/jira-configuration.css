@@ -37,11 +37,10 @@
     font-weight: bold;
 }
 
-
 .jiraConfiguration__empty {
     margin: auto;
     max-width: 570px;
-    padding: 120px 0;
+    padding: 8.5em 0;
     text-align: center;
 }
 

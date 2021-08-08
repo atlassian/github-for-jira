@@ -2,6 +2,10 @@ body {
    overflow: hidden;
 }
 
+p {
+    margin-bottom: 0;
+}
+
 .headerImage {
     margin: 2em auto 1em;
     text-align: center;
