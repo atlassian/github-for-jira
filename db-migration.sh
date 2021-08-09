@@ -117,8 +117,8 @@ fi
 
 echo "${YELLOW}Dumping source database data from '$SOURCE_URL' to '$OUTPUT'...${RESET}"
 # clean (drop) database objects before creation but only if exists
-# no owner, no grant privileges, includes blobs, use directory format, jobs for parallel tasks
-pg_dump -v --clean --if-exists --no-owner --no-privileges --blobs --format d --jobs "$JOBS" -f "$OUTPUT" "$SOURCE_URL"
+# no owner, no grant privileges, no comment extensions, includes blobs, use directory format, jobs for parallel tasks
+pg_dump -v --clean --if-exists --no-owner --no-privileges --no-comments --blobs --format d --jobs "$JOBS" -f "$OUTPUT" "$SOURCE_URL"
 
 if ! [ "$?" == "0" ]
 then
@@ -129,14 +129,19 @@ fi
 echo "${GREEN}Source database dump to '$OUTPUT' successful.${RESET}"
 echo "${YELLOW}Restoring target database with data from '$OUTPUT' to '$TARGET_URL'...${RESET}"
 
-# creates database before restore, no ownership, use directory format, jobs for parallel tasks
-pg_restore -v --clean --if-exists --no-owner --no-privileges --jobs "$JOBS" --dbname "$TARGET_URL" "$OUTPUT"
+# creates database before restore, no ownership, no privileges, only restore public schema and analytics, use directory format, jobs for parallel tasks
+pg_restore -v --clean --if-exists --no-owner --no-privileges -n public -n analytics --jobs "$JOBS" --dbname "$TARGET_URL" "$OUTPUT"
 
-if ! [ "$?" == "0" ]
+EXIT_CODE=$?
+if [ "$EXIT_CODE" == "0" ]
 then
+  echo "${GREEN}Target database restore from '$OUTPUT' successful.${RESET}"
+  echo "${GREEN}Database migration complete!${RESET}"
+else
   echo "${RED}Database restore failure, stopping migration.${RESET}"
-  exit 1
 fi
 
-echo "${GREEN}Target database restore from '$OUTPUT' successful.${RESET}"
-echo "${GREEN}Database migration complete!${RESET}"
+echo "${YELLOW}Deleting temporary data folder '$OUTPUT'.${RESET}"
+rm -R "$OUTPUT"
+echo "${GREEN}Temporary data folder '$OUTPUT' deleted.${RESET}"
+exit $EXIT_CODE

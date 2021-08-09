@@ -6,7 +6,7 @@ export default async (context: CustomContext, _: JiraClient, util) => {
 
 	const linkifiedBody = await util.unfurl(issue.body);
 	if (!linkifiedBody) {
-		context.log({ noop: "no_linkified_body_issue" }, "Halting futher execution for issue since linkifiedBody is empty");
+		context.log({ noop: "no_linkified_body_issue" }, "Halting further execution for issue since linkifiedBody is empty");
 		return;
 	}
 
