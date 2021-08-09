@@ -1,5 +1,5 @@
 import {Installation} from "../models";
-import {verifyJwtTokenMiddleware, TokenType} from "./util/jwt";
+import {verifySymmetricJwtTokenMiddleware, TokenType} from "./util/jwt";
 import {NextFunction, Request, Response} from "express";
 
 export default async (
@@ -21,5 +21,5 @@ export default async (
 	});
 	res.locals.installation = installation;
 
-	verifyJwtTokenMiddleware(sharedSecret, TokenType.normal, req, res, next)
+	verifySymmetricJwtTokenMiddleware(sharedSecret, TokenType.normal, req, res, next)
 };

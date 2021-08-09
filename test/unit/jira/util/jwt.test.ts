@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import jwt from "atlassian-jwt";
-import {TokenType, verifyJwtTokenMiddleware} from "../../../../src/jira/util/jwt";
+import {TokenType, verifySymmetricJwtTokenMiddleware} from "../../../../src/jira/util/jwt";
 import logger from "../../../../src/config/logger"
+import {encodeSymmetric} from "atlassian-jwt";
 
 jest.mock("../../../../src/models");
 
-describe("#verifyJwtTokenMiddleware", () => {
+describe("#verifySymmetricJwtTokenMiddleware", () => {
 
 	let res;
 
@@ -27,7 +27,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 	const baseRequest = {
 		query: testQueryParams,
 		method: testRequestMethod,
-		path: testRequestPath,
+		pathname: testRequestPath,
 		session: {
 			jiraHost: "https://test.atlassian.net"
 		},
@@ -51,7 +51,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 	});
 
 	const buildRequest = (secret = "secret", qsh: string): any => {
-		const jwtValue = jwt.encode({
+		const jwtValue = encodeSymmetric({
 			qsh: qsh,
 			iss: "jira",
 		}, secret);
@@ -63,7 +63,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 				jwt: jwtValue
 			},
 			method: testRequestMethod,
-			path: testRequestPath,
+			pathname: testRequestPath,
 		};
 	};
 
@@ -72,7 +72,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequest(testSecret, testQsh);
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
 
 			expect(res.status).toHaveBeenCalledTimes(0)
 			expect(next).toBeCalledTimes(1)
@@ -84,7 +84,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequest(testSecret, "q123123124");
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
 
 			expect(res.status).toHaveBeenCalledWith(401)
 			expect(next).toBeCalledTimes(0)
@@ -95,7 +95,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequest("wrongSecret", testQsh);
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
 
 			expect(res.status).toHaveBeenCalledWith(400)
 			expect(next).toBeCalledTimes(0)
@@ -109,7 +109,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequest(testSecret, "context-qsh");
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
 			expect(res.status).toHaveBeenCalledTimes(0)
 			expect(next).toBeCalledTimes(1)
@@ -120,7 +120,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequest(testSecret, testQsh);
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
 			expect(res.status).toHaveBeenCalledWith(401)
 			expect(next).toBeCalledTimes(0)
@@ -132,7 +132,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequest(testSecret, "q123123124");
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
 			expect(res.status).toHaveBeenCalledWith(401)
 			expect(next).toBeCalledTimes(0)
@@ -143,7 +143,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequest("wrongSecret", testQsh);
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
 			expect(res.status).toHaveBeenCalledWith(400)
 			expect(next).toBeCalledTimes(0)
@@ -154,7 +154,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 	describe("Expiry date", () => {
 
 		const buildRequest = (expiryDate: number): any => {
-			const jwtValue = jwt.encode({
+			const jwtValue = encodeSymmetric({
 				qsh: "context-qsh",
 				iss: "jira",
 				exp: expiryDate
@@ -173,7 +173,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequest(Date.now() / 1000 + 100000);
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
 			expect(res.status).toHaveBeenCalledTimes(0)
 			expect(next).toBeCalledTimes(1)
@@ -184,7 +184,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequest(Date.now() / 1000 - 100000);
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
 			expect(res.status).toHaveBeenCalledWith(401)
 			expect(next).toBeCalledTimes(0)
@@ -193,7 +193,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 	describe("Token in different places", () => {
 		const buildRequestWithTokenInBody = (): any => {
-			const jwtValue = jwt.encode({
+			const jwtValue = encodeSymmetric({
 				qsh: "context-qsh",
 				iss: "jira",
 			}, testSecret);
@@ -211,14 +211,14 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequestWithTokenInBody();
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
 			expect(res.status).toHaveBeenCalledTimes(0)
 			expect(next).toBeCalledTimes(1)
 		});
 
 		const buildRequestWithTokenInHeader = (): any => {
-			const jwtValue = jwt.encode({
+			const jwtValue = encodeSymmetric({
 				qsh: "context-qsh",
 				iss: "jira",
 			}, testSecret);
@@ -237,7 +237,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequestWithTokenInHeader();
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
 			expect(res.status).toHaveBeenCalledTimes(0)
 			expect(next).toBeCalledTimes(1)
@@ -253,7 +253,7 @@ describe("#verifyJwtTokenMiddleware", () => {
 
 			const req = buildRequestWithNoToken();
 
-			verifyJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
+			verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
 			expect(res.status).toHaveBeenCalledWith(401)
 			expect(next).toBeCalledTimes(0)

@@ -33,6 +33,7 @@ import statsd, {elapsedTimeMetrics} from "../config/statsd";
 import {metricError} from "../config/metric-names";
 import {EnvironmentEnum, isMaintenanceMode} from "../config/env";
 import {TokenType} from "../jira/util/jwt";
+import verifyAsymmetricJwtToken from "../jira/util/installJwt";
 
 // Adding session information to request
 declare global {
@@ -247,7 +248,7 @@ export default (octokitApp: App): Express => {
 	// Set up event handlers
 	app.post("/jira/events/disabled", jiraAuthenticate, postJiraDisable);
 	app.post("/jira/events/enabled", jiraAuthenticate, postJiraEnable);
-	app.post("/jira/events/installed", postJiraInstall); // we can't authenticate since we don't have the secret
+	app.post("/jira/events/installed", verifyAsymmetricJwtToken, postJiraInstall); // we can't authenticate since we don't have the secret
 	app.post("/jira/events/uninstalled", jiraAuthenticate, postJiraUninstall);
 
 	app.get("/", async (_: Request, res: Response) => {

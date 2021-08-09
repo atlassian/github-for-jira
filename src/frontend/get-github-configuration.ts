@@ -1,10 +1,11 @@
-import JWT from "atlassian-jwt";
+
 import { Installation, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import { getJiraMarketplaceUrl } from "../util/getUrl";
 import enhanceOctokit from "../config/enhance-octokit";
 import app from "../worker/app";
 import { getInstallation } from "./get-jira-configuration";
+import {decodeSymmetric, getAlgorithm} from "atlassian-jwt";
 
 const getConnectedStatus = (
 	installationsWithSubscriptions: any,
@@ -101,7 +102,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			// we can get the jira client Key from the JWT's `iss` property
 			// so we'll decode the JWT here and verify it's the right key before continuing
 			const installation = await Installation.getForHost(req.session.jiraHost);
-			const { iss: clientKey } = JWT.decode(req.session.jwt, installation.sharedSecret);
+			const { iss: clientKey } = decodeSymmetric(req.session.jwt, installation.sharedSecret, getAlgorithm(req.session.jwt));
 
 			const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
 			const installationsWithAdmin = await getInstallationsWithAdmin({ installations, login });

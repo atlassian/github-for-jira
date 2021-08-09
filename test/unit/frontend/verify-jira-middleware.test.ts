@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import jwt from "atlassian-jwt";
+import {encodeSymmetric} from "atlassian-jwt";
 import { mocked } from "ts-jest/utils";
 import { Installation } from "../../../src/models";
 import verifyJiraMiddleware from "../../../src/frontend/verify-jira-jwt-middleware";
@@ -44,7 +44,7 @@ describe("#verifyJiraMiddleware", () => {
 
 	describe("GET request", () => {
 		const buildRequest = (jiraHost, secret = "secret"): any => {
-			const jwtValue = jwt.encode({
+			const jwtValue = encodeSymmetric({
 				qsh: "context-qsh",
 				iss: "jira"
 			}, secret);
@@ -113,7 +113,7 @@ describe("#verifyJiraMiddleware", () => {
 
 	describe("POST request", () => {
 		const buildRequest = (jiraHost, secret): any => {
-			const encodedJwt = secret && jwt.encode({
+			const encodedJwt = secret && encodeSymmetric({
 				qsh: "context-qsh",
 				iss: "jira"
 			}, secret);

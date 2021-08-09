@@ -1,6 +1,6 @@
 import { Installation } from "../models";
 import { NextFunction, Request, Response } from "express";
-import {verifyJwtTokenMiddleware, TokenType} from "../jira/util/jwt";
+import {verifySymmetricJwtTokenMiddleware, TokenType} from "../jira/util/jwt";
 
 const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	req: Request,
@@ -21,7 +21,7 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 			installation.clientKey && `${installation.clientKey.substr(0, 5)}***`
 	});
 
-	verifyJwtTokenMiddleware(installation.sharedSecret, tokenType, req, res, next);
+	verifySymmetricJwtTokenMiddleware(installation.sharedSecret, tokenType, req, res, next);
 };
 
 export default verifyJiraJwtMiddleware

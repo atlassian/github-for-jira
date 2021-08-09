@@ -1,7 +1,12 @@
 // Original source code:
 // https://bitbucket.org/atlassian/atlassian-connect-express/src/f434e5a9379a41213acf53b9c2689ce5eec55e21/lib/middleware/authentication.js?at=master&fileviewer=file-view-default#authentication.js-227
 // TODO: need some typing for jwt
-import jwt from "atlassian-jwt";
+import {
+	createCanonicalRequest,
+	createQueryStringHash,
+	decodeSymmetric,
+	getAlgorithm
+} from "atlassian-jwt";
 import {NextFunction, Request, Response} from "express";
 import envVars from "../../config/env";
 
@@ -26,7 +31,7 @@ export enum TokenType {
 	context = "context"
 }
 
-function extractJwtFromRequest(req: Request) {
+export function extractJwtFromRequest(req: Request) {
 	const tokenInQuery = req.query?.[JWT_PARAM];
 
 	// JWT appears in both parameter and body will result query hash being invalid.
@@ -64,13 +69,13 @@ function sendError(res: Response, code: number, msg: string) {
 }
 
 function verifyQsh(qsh: string, req: Request) {
-	let expectedHash = jwt.createQueryStringHash(req, false, BASE_URL);
+	let expectedHash = createQueryStringHash(req, false, BASE_URL);
 	let signatureHashVerified = qsh === expectedHash;
 	if (!signatureHashVerified) {
-		jwt.createCanonicalRequest(req, false, BASE_URL); // eslint-disable-line
+		createCanonicalRequest(req, false, BASE_URL); // eslint-disable-line
 
 		// If that didn't verify, it might be a post/put - check the request body too
-		expectedHash = jwt.createQueryStringHash(req, true, BASE_URL);
+		expectedHash = createQueryStringHash(req, true, BASE_URL);
 		signatureHashVerified = qsh === expectedHash;
 		if (!signatureHashVerified) {
 			return false;
@@ -79,35 +84,7 @@ function verifyQsh(qsh: string, req: Request) {
 	return true
 }
 
-const verifyJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: Response, tokenType: TokenType) => {
-	const token = extractJwtFromRequest(req);
-	if (!token) {
-		sendError(res, 401, "Could not find authentication data on request");
-		return false;
-	}
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let unverifiedClaims: any;
-	try {
-		unverifiedClaims = jwt.decode(token, "", true); // decode without verification;
-	} catch (e) {
-		sendError(res, 401, `Invalid JWT: ${e.message}`);
-		return false;
-	}
-
-	const issuer = unverifiedClaims.iss;
-	if (!issuer) {
-		sendError(res, 401, "JWT claim did not contain the issuer (iss) claim");
-		return false;
-	}
-
-	let verifiedClaims;
-	try {
-		verifiedClaims = jwt.decode(token, secret, false);
-	} catch (error) {
-		sendError(res, 400, `Unable to decode JWT token: ${error}`);
-		return false;
-	}
-
+export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenType: TokenType, req: Request, res: Response) {
 	const expiry = verifiedClaims.exp;
 
 	// TODO: build in leeway?
@@ -135,11 +112,55 @@ const verifyJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: R
 		sendError(res, 401, "JWT tokens without qsh are not allowed");
 		return false
 	}
+}
+
+const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: Response, tokenType: TokenType) => {
+	const token = extractJwtFromRequest(req);
+	if (!token) {
+		sendError(res, 401, "Could not find authentication data on request");
+		return false;
+	}
+
+	const algorithm = getAlgorithm(token)
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let unverifiedClaims: any;
+	try {
+		unverifiedClaims = decodeSymmetric(token, "", algorithm, true); // decode without verification;
+	} catch (e) {
+		sendError(res, 401, `Invalid JWT: ${e.message}`);
+		return false;
+	}
+
+	const issuer = unverifiedClaims.iss;
+	if (!issuer) {
+		sendError(res, 401, "JWT claim did not contain the issuer (iss) claim");
+		return false;
+	}
+
+	let verifiedClaims;
+	try {
+		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
+	} catch (error) {
+		sendError(res, 400, `Unable to decode JWT token: ${error}`);
+		return false;
+	}
+
+	return verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenType, req, res);
 };
 
-export const verifyJwtTokenMiddleware = (secret: string, tokenType: TokenType, req: Request, res: Response, next: NextFunction) => {
+/**
+ * Middleware function which verifies JWT token signed by symmetric shared key
+ *
+ * @param secret Shared key
+ * @param tokenType Type of the token normal or context. Context tokens have different qsh verification behaviour
+ * @param req Request
+ * @param res Response
+ * @param next Next function
+ */
+export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: TokenType, req: Request, res: Response, next: NextFunction) => {
 	try {
-		if (!verifyJwtAndSetResponseCodeOnError(secret, req, res, tokenType)) {
+		if (!verifySymmetricJwtAndSetResponseCodeOnError(secret, req, res, tokenType)) {
 			return
 		}
 		next();

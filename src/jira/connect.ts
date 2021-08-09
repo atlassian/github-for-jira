@@ -26,7 +26,9 @@ export default (_: Request, res: Response): void => {
 			// Will need to be set to `true` once we verify the app will work with
 			// GDPR compliant APIs. Ref: https://github.com/github/ce-extensibility/issues/220
 			apiMigrations: {
-				gdpr: false
+				gdpr: false,
+				//TODO Feature flag it before merging the PR!
+				"signed-install": true,
 			},
 			// TODO: allow for more flexibility of naming
 			name: `GitHub for Jira${isProd ? "" : (instance ? (` (${instance})`) : "")}`,
