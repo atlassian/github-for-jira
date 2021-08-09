@@ -1,7 +1,7 @@
 import transformDeployment from "../transforms/deployment";
 import { Context } from "probot/lib/context";
 
-export default async (context: Context, jiraClient) => {
+export default async (context: Context, jiraClient): Promise<void> => {
 	const jiraPayload = await transformDeployment(context);
 
 	if (!jiraPayload) {

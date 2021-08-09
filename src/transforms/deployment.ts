@@ -1,6 +1,6 @@
 import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
-import { DeploymentData } from "../interfaces/jira";
+import { JiraDeploymentData } from "../interfaces/jira";
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
 // https://docs.github.com/en/rest/reference/repos#list-deployments
@@ -48,7 +48,7 @@ function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (context: Context): Promise<DeploymentData> => {
+export default async (context: Context): Promise<JiraDeploymentData> => {
 	const { github, payload: { deployment_status, deployment } } = context;
 	const { data: { commit: { message } } } = await github.repos.getCommit(context.repo({ ref: deployment.sha }));
 	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`);

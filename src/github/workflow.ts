@@ -1,7 +1,7 @@
 import transformWorkflow from "../transforms/workflow";
 import { Context } from "probot/lib/context";
 
-export default async (context: Context, jiraClient) => {
+export default async (context: Context, jiraClient): Promise<void> => {
 	const jiraPayload = await transformWorkflow(context);
 
 	if (!jiraPayload) {

@@ -1,7 +1,7 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { Context } from "probot/lib/context";
 import { GitHubPullRequest } from "../interfaces/github";
-import { BuildData, JiraPullRequest } from "../interfaces/jira";
+import { JiraBuildData, JiraPullRequest } from "../interfaces/jira";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
@@ -48,7 +48,7 @@ function mapPullRequests(pull_requests: GitHubPullRequest[]): JiraPullRequest[] 
 	));
 }
 
-export default (context: Context): BuildData => {
+export default (context: Context): JiraBuildData => {
 	const { workflow_run, workflow } = context.payload;
 	const issueKeys = issueKeyParser().parse(`${workflow_run.head_branch}\n${workflow_run.head_commit.message}`);
 

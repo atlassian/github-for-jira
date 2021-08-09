@@ -9,7 +9,7 @@ export interface JiraPullRequest {
 	}
 }
 
-export interface Build {
+export interface JiraBuild {
 	schemaVersion: string;
 	pipelineId: string;
 	buildNumber: number;
@@ -22,12 +22,12 @@ export interface Build {
 	references?: JiraPullRequest[];
 }
 
-export interface BuildData {
+export interface JiraBuildData {
 	product: string;
-	builds: Build[];
+	builds: JiraBuild[];
 }
 
-export interface Commit {
+export interface JiraCommit {
 	author: {
 		avatar?: string;
 		email: string;
@@ -46,15 +46,15 @@ export interface Commit {
 	updateSequenceId: number;
 }
 
-export interface CommitData {
-	commits: Commit[];
+export interface JiraCommitData {
+	commits: JiraCommit[];
 	id: string;
 	name: string;
 	url: string;
 	updateSequenceId: number;
 }
 
-export interface Deployment {
+export interface JiraDeployment {
 	schemaVersion: string;
 	deploymentSequenceNumber: number;
 	updateSequenceNumber: number;
@@ -76,6 +76,6 @@ export interface Deployment {
 	},
 }
 
-export interface DeploymentData {
-	deployments: Deployment[];
+export interface JiraDeploymentData {
+	deployments: JiraDeployment[];
 }
