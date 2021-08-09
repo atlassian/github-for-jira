@@ -53,3 +53,29 @@ export interface CommitData {
 	url: string;
 	updateSequenceId: number;
 }
+
+export interface Deployment {
+	schemaVersion: string;
+	deploymentSequenceNumber: number;
+	updateSequenceNumber: number;
+	issueKeys: string[],
+	displayName: string;
+	url: string;
+	description: string;
+	lastUpdated: number;
+	state: string;
+	pipeline: {
+		id: string;
+		displayName: string;
+		url: string;
+	},
+	environment: {
+		id: string;
+		displayName: string;
+		type: string;
+	},
+}
+
+export interface DeploymentData {
+	deployments: Deployment[];
+}
