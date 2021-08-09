@@ -73,15 +73,15 @@ export default class Subscription extends Sequelize.Model {
 	}
 
 	static getAllFiltered(
-		installationIds: number[],
-		statusTypes: string[],
-		limit: number,
-		offset: number
+		installationIds: number[] = [],
+		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
+		offset = 0,
+		limit?: number,
 	): Promise<Subscription[]> {
 
 		const andFilter = [];
 
-		if (statusTypes && statusTypes.length > 0) {
+		if (statusTypes?.length > 0) {
 			andFilter.push({
 				syncStatus: {
 					[Op.in]: statusTypes
@@ -89,7 +89,7 @@ export default class Subscription extends Sequelize.Model {
 			});
 		}
 
-		if (installationIds && installationIds.length > 0) {
+		if (installationIds?.length > 0) {
 			andFilter.push({
 				gitHubInstallationId: {
 					[Op.in]: installationIds

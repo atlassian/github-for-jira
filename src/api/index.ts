@@ -212,15 +212,15 @@ router.post(
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
 		// Defaults to anything not completed
-		const statusTypes = req.body.statusTypes as string[] || ["FAILED", "PENDING", "ACTIVE"];
+		const statusTypes = req.body.statusTypes as string[];
 		// Defaults to any installation
-		const installationIds = req.body.installationIds as number[] || [];
+		const installationIds = req.body.installationIds as number[];
 		// Can be limited to a certain amount if needed to not overload system
 		const limit = Number(req.body.limit) || undefined;
 		// Needed for 'pagination'
 		const offset = Number(req.body.offset) || 0;
 
-		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, limit, offset);
+		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit);
 
 		await Promise.all(subscriptions.map((subscription) =>
 			Subscription.findOrStartSync(subscription, syncType)
