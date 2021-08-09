@@ -21,7 +21,7 @@
 
         {{#if hasConnections}}
         <nav class="actions">
-            <button class="ak-button ak-button__appearance-primary add-organization-link">Manage Organizations</button>
+            <button class="ak-button ak-button__appearance-primary add-organization-link">Connect GitHub organization</button>
         </nav>
         {{/if}}
 
@@ -43,8 +43,6 @@
                     <div class="sync-retry-modal-content">
                       <span id="status-close" class="close">&times;</span>
                       <p><strong>IN PROGRESS</strong> - The sync has started and is still in progress for this account. New data may not immediately be displayed in Jira.</p>
-                      <p><strong>STALLED</strong> - The sync has not made any progress for at least 15 minutes. If there were temporary technical issues, a normal resync will pick up from where it left off and continue with the
-                      sync.</p>
                       <p><strong>FAILED</strong> - There was a problem syncing data from your account. If there were temporary technical issues, a normal resync will pick up from where it left off and continue with the sync.
                       If it continues to return to FAILED state after re-trying, a full resync may be necessary.</p>
                       <p><strong>PENDING</strong> - The sync has been queued, but is not actively syncing data from GitHub.</p>
@@ -149,10 +147,11 @@
               </tbody>
             </table>
           {{else}}
-            <div class="empty-message">
-              <h4>You don't have any connected GitHub organizations. Let's fix that!</h4>
-              <p>You'll be redirected to GitHub to select the organizations and repositories you'd like to connect with Jira.</p>
-              <button class="ak-button ak-button__appearance-primary add-organization-link">Add an Organization</button>
+            <div class="jiraConfiguration__empty">
+              <img class="jiraConfiguration__empty__image" src="/public/assets/github-integration.png" alt="Connecting GitHub and Jira"/>
+              <h3 class="jiraConfiguration__empty__header">Connect GitHub to Jira Software</h3>
+              <p class="jiraConfiguration__empty__message">Choose a GitHub organization to connect and start including issue keys in branches, commit messages or pull requests to see development insights in Jira.</p>
+              <button class="ak-button ak-button__appearance-primary add-organization-link">Connect GitHub organization</button>
             </div>
           {{/if}}
         </section>

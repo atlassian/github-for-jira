@@ -23,11 +23,6 @@
     color: #0747A6;
 }
 
-.jiraConfigurationTable__stalled {
-    background-color: #FFF0B3;
-    color: #172B4D;
-}
-
 .jiraConfigurationTable__complete {
     background-color: #E3FCEF;
     color: #006644;
@@ -40,4 +35,20 @@
 
 .jiraConfigurationTable__refresh {
     font-weight: bold;
+}
+
+.jiraConfiguration__empty {
+    margin: auto;
+    max-width: 570px;
+    padding: 8.5em 0;
+    text-align: center;
+}
+
+.jiraConfiguration__empty__header {
+    font-size: 1.6rem;
+}
+
+.jiraConfiguration__empty__message {
+    font-size: 0.9rem;
+    margin: 2em auto;
 }

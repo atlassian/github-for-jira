@@ -1,11 +1,10 @@
 import { Request, Response } from "express";
-import { EnvironmentEnum } from "../config/env";
+import envVars, { EnvironmentEnum } from "../config/env";
 
 const instance = process.env.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 
-export default (req: Request, res: Response): void => {
-	const isHttps = req.secure || req.header("x-forwarded-proto") === "https";
+export default (_: Request, res: Response): void => {
 	const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 	const adminPageDisplayConditions = [
@@ -33,7 +32,7 @@ export default (req: Request, res: Response): void => {
 			name: `GitHub for Jira${isProd ? "" : (instance ? (` (${instance})`) : "")}`,
 			description: "Connect your code and your project with ease.",
 			key: appKey,
-			baseUrl: `${isHttps ? "https" : "http"}://${req.get("host")}`,
+			baseUrl: envVars.APP_URL,
 			lifecycle: {
 				installed: "/jira/events/installed",
 				uninstalled: "/jira/events/uninstalled",

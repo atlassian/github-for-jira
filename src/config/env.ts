@@ -33,13 +33,14 @@ const getProxyFromEnvironment = (): string => {
 
 // TODO: Make envvars dynamic
 const envVars: EnvVars = {
+	...process.env,
+	...env.parsed,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	PROXY: getProxyFromEnvironment(),
 	MAINTENANCE_MODE: BooleanEnum[process.env.MAINTENANCE_MODE] || BooleanEnum.false,
-	...env.parsed
 } as EnvVars;
 
 export const isMaintenanceMode = () => process.env.MAINTENANCE_MODE === BooleanEnum.true;
