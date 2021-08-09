@@ -26,13 +26,13 @@ export enum TokenType {
 	context = "context"
 }
 
-function extractJwtFromRequest(req) {
+function extractJwtFromRequest(req: Request) {
 	const tokenInQuery = req.query?.[JWT_PARAM];
 
 	// JWT appears in both parameter and body will result query hash being invalid.
 	const tokenInBody = req.body?.[JWT_PARAM];
 	if (tokenInQuery && tokenInBody) {
-		req.log("JWT token can only appear in either query parameter or request body.");
+		req.log.info("JWT token can only appear in either query parameter or request body.");
 		return;
 	}
 	let token = tokenInQuery || tokenInBody;
@@ -57,7 +57,7 @@ function extractJwtFromRequest(req) {
 	return token;
 }
 
-function sendError(res, code, msg) {
+function sendError(res: Response, code: number, msg: string) {
 	res.status(code).json({
 		message: msg
 	});
