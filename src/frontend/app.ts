@@ -174,12 +174,8 @@ export default (octokitApp: App): Express => {
 
 	// Maintenance mode view
 	app.use(async (req, res, next) => {
-		if (!req.session.jiraHost) {
-			// we only activate the maintenance mode for requests that are bound to a jira host
-			next();
-		} else {
-			await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost) ? getMaintenance(req, res) : next();
-		}
+		const maintenanceMode = await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost);
+		maintenanceMode ? getMaintenance(req, res) : next();
 	});
 
 	app.get("/maintenance", csrfProtection, getMaintenance);

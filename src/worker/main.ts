@@ -135,7 +135,7 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 
 const commonMiddleware = (jobHandler) => sentryMiddleware(jobHandler);
 
-export const start = async () => {
+export const start = (): void => {
 	initializeSentry();
 
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
