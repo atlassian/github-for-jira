@@ -4,10 +4,8 @@ import getRedisInfo from "./config/redis-info";
 import * as PrivateKey from "probot/lib/private-key";
 import { createProbot } from "probot";
 import App from "./configure-robot";
-import bunyan from "bunyan";
-import { exec } from "child_process";
 import { initializeSentry } from "./config/sentry";
-import { getLogger, overrideProbotLoggingMethods } from "./config/logger";
+import { overrideProbotLoggingMethods } from "./config/logger";
 import "./config/proxy";
 import { EnvironmentEnum } from "./config/env";
 
@@ -27,34 +25,11 @@ const probot = createProbot({
 
 overrideProbotLoggingMethods(probot.logger);
 
-async function createDBTables(logger: bunyan) {
-	try {
-		await new Promise<void>((resolve, reject) => {
-			const migrate = exec(
-				"node_modules/.bin/sequelize db:migrate",
-				{ env: process.env },
-				(err) => (err ? reject(err) : resolve())
-			);
-
-			// Forward stdout+stderr to this process
-			migrate.stdout.pipe(process.stdout);
-			migrate.stderr.pipe(process.stderr);
-		});
-	} catch (e) {
-		logger.error(`Error creating tables: ${e}`);
-	}
-}
-
 /**
  * Start the probot worker.
  */
 async function start() {
 	initializeSentry();
-
-	const logger = getLogger("startup");
-
-	// Create tables for micros environments
-	if (isProd) await createDBTables(logger);
 
 	// We are always behind a proxy, but we want the source IP
 	probot.server.set("trust proxy", true);

@@ -125,10 +125,8 @@ export default (octokitApp: App): Express => {
 		(syncStatus) => syncStatus === "IN PROGRESS"
 	);
 
-	hbs.registerHelper("setAriaLabelConnectBtn", (admin) =>
-		admin
-			? "Connection already present between organization and Jira"
-			: "Unable to connect this installation. Admin access is required."
+	hbs.registerHelper("hasInstallations", (installations) =>
+		installations.length > 0 ? "" : "--empty"
 	);
 
 	hbs.registerHelper("connectedStatus", (syncStatus) =>
