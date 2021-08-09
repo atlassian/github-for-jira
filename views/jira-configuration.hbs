@@ -21,7 +21,7 @@
 
         {{#if hasConnections}}
         <nav class="actions">
-            <button class="ak-button ak-button__appearance-primary add-organization-link">Add a GitHub Organization</button>
+            <button class="ak-button ak-button__appearance-primary add-organization-link">Connect GitHub organization</button>
         </nav>
         {{/if}}
 
@@ -147,10 +147,11 @@
               </tbody>
             </table>
           {{else}}
-            <div class="empty-message">
-              <h4>You don't have any connected GitHub organizations. Let's fix that!</h4>
-              <p>You'll be redirected to GitHub to select the organizations and repositories you'd like to connect with Jira.</p>
-              <button class="ak-button ak-button__appearance-primary add-organization-link">Add a GitHub Organization</button>
+            <div class="jiraConfiguration__empty">
+              <img class="jiraConfiguration__empty__image" src="/public/assets/github-integration.png" alt="Connecting GitHub and Jira"/>
+              <h3 class="jiraConfiguration__empty__header">Connect GitHub to Jira Software</h3>
+              <p class="jiraConfiguration__empty__message">Choose a GitHub organization to connect and start including issue keys in branches, commit messages or pull requests to see development insights in Jira.</p>
+              <button class="ak-button ak-button__appearance-primary add-organization-link">Connect GitHub organization</button>
             </div>
           {{/if}}
         </section>
