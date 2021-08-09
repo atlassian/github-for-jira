@@ -36,3 +36,19 @@
 .jiraConfigurationTable__refresh {
     font-weight: bold;
 }
+
+.jiraConfiguration__empty {
+    margin: auto;
+    max-width: 570px;
+    padding: 8.5em 0;
+    text-align: center;
+}
+
+.jiraConfiguration__empty__header {
+    font-size: 1.6rem;
+}
+
+.jiraConfiguration__empty__message {
+    font-size: 0.9rem;
+    margin: 2em auto;
+}
