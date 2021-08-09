@@ -6,7 +6,7 @@ import issueKeyParser from "jira-issue-key-parser";
 // Deployment state - GitHub: Can be one of error, failure, pending, in_progress, queued, or success
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-deployments-0-1-bulk-post
 // Deployment state - Jira: Can be one of unknown, pending, in_progress, cancelled, failed, rolled_back, successful
-function mapState(state: string) {
+function mapState(state: string): string {
 	switch (state) {
 		case "queued":
 		case "pending":
@@ -23,7 +23,7 @@ function mapState(state: string) {
 	}
 }
 
-function mapEnvironment(environment: string) {
+function mapEnvironment(environment: string): string {
 	// We need to map the environment of a GitHub deployment back to a valid deployment environment in Jira.
 	// https://docs.github.com/en/actions/reference/environments
 	// GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
@@ -47,13 +47,39 @@ function mapEnvironment(environment: string) {
 	return jiraEnv;
 }
 
-export default async (context: Context) => {
+interface Deployment {
+	schemaVersion: string;
+	deploymentSequenceNumber: number;
+	updateSequenceNumber: number;
+	issueKeys: string[],
+	displayName: string;
+	url: string;
+	description: string;
+	lastUpdated: number;
+	state: string;
+	pipeline: {
+		id: string;
+		displayName: string;
+		url: string;
+	},
+	environment: {
+		id: string;
+		displayName: string;
+		type: string;
+	},
+}
+
+interface DeploymentData {
+	deployments: Deployment[];
+}
+
+export default async (context: Context): Promise<DeploymentData> => {
 	const { github, payload: { deployment_status, deployment } } = context;
 	const { data: { commit: { message } } } = await github.repos.getCommit(context.repo({ ref: deployment.sha }));
 	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`);
 
 	if (!issueKeys) {
-		return { data: undefined };
+		return undefined;
 	}
 
 	const environment = mapEnvironment(deployment_status.environment);
@@ -62,28 +88,26 @@ export default async (context: Context) => {
 	}
 
 	return {
-		data: {
-			deployments: [{
-				schemaVersion: "1.0",
-				deploymentSequenceNumber: deployment.id,
-				updateSequenceNumber: deployment_status.id,
-				issueKeys,
+		deployments: [{
+			schemaVersion: "1.0",
+			deploymentSequenceNumber: deployment.id,
+			updateSequenceNumber: deployment_status.id,
+			issueKeys,
+			displayName: deployment.task,
+			url: deployment_status.log_url || deployment_status.target_url,
+			description: deployment.description || deployment_status.description || deployment.task,
+			lastUpdated: deployment_status.updated_at,
+			state: mapState(deployment_status.state),
+			pipeline: {
+				id: deployment.task,
 				displayName: deployment.task,
 				url: deployment_status.log_url || deployment_status.target_url,
-				description: deployment.description || deployment_status.description || deployment.task,
-				lastUpdated: deployment_status.updated_at,
-				state: mapState(deployment_status.state),
-				pipeline: {
-					id: deployment.task,
-					displayName: deployment.task,
-					url: deployment_status.log_url || deployment_status.target_url,
-				},
-				environment: {
-					id: deployment_status.environment,
-					displayName: deployment_status.environment,
-					type: environment,
-				},
-			}],
-		},
+			},
+			environment: {
+				id: deployment_status.environment,
+				displayName: deployment_status.environment,
+				type: environment,
+			},
+		}],
 	};
 };

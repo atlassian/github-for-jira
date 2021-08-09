@@ -231,7 +231,8 @@ async function getJiraClient(
 						product: data.product,
 					},
 				};
-				logger.info(`Sending builds payload to jira. Payload: ${payload}`);
+				logger.debug(`Sending builds payload to jira. Payload: ${payload}`);
+				logger.info("Sending builds payload to jira.");
 				await instance.post("/rest/builds/0.1/bulk", payload);
 			},
 		},
@@ -249,7 +250,8 @@ async function getJiraClient(
 						gitHubInstallationId,
 					},
 				};
-				logger.info(`Sending deployments payload to jira. Payload: ${payload}`);
+				logger.debug(`Sending deployments payload to jira. Payload: ${payload}`);
+				logger.info("Sending deployments payload to jira.");
 				await instance.post("/rest/deployments/0.1/bulk", payload);
 			},
 		},

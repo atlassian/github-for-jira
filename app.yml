@@ -18,7 +18,7 @@ default_events:
 - commit_comment
 - create
 - delete
-- deployment
+# - deployment
 - deployment_status
 # - fork
 # - gollum

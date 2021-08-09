@@ -80,14 +80,9 @@ export default (
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
-		if (
-			context.payload.sender.type === "Bot" &&
-			!isStateChangeOrDeploymentAction(context.payload.action)
-		) {
-			if (!isStateChangeOrDeploymentAction(context.name)) {
-				context.log({ noop: "bot", botId: context.payload.sender.id, botLogin: context.payload.sender.login }, "Halting further execution since the sender is a bot and action is not a state change nor a deployment");
-				return;
-			}
+		if ((context.payload.sender.type === "Bot" && !isStateChangeOrDeploymentAction(context.payload.action)) && !isStateChangeOrDeploymentAction(context.name)) {
+			context.log({ noop: "bot", botId: context.payload.sender.id, botLogin: context.payload.sender.login }, "Halting further execution since the sender is a bot and action is not a state change nor a deployment");
+			return;
 		}
 
 		if (isFromIgnoredRepo(context.payload)) {

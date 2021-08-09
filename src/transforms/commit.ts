@@ -1,5 +1,6 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
+import { Commit, CommitData } from "../interfaces/jira";
 
 function mapCommit(githubCommit, author): Commit {
 
@@ -27,33 +28,6 @@ function mapCommit(githubCommit, author): Commit {
 		url: githubCommit.url,
 		updateSequenceId: Date.now()
 	};
-}
-
-interface Commit {
-	author: {
-		avatar?: string;
-		email: string;
-		name: string;
-		url?: string;
-	};
-	authorTimestamp: number;
-	displayId: string;
-	fileCount: number;
-	hash: string;
-	id: string;
-	issueKeys: string[];
-	message: string;
-	timestamp: number;
-	url: string;
-	updateSequenceId: number;
-}
-
-interface CommitData {
-	commits: Commit[];
-	id: string;
-	name: string;
-	url: string;
-	updateSequenceId: number;
 }
 
 // TODO: type payload and return better
