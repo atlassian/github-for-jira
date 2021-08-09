@@ -45,70 +45,58 @@
             </div>
 
             <div class="githubOrgs__table">
-              {{#if installations}}
-                {{#each installations}}
-                  <div class='githubOrgs__table__row clearfix'>
-                    {{!-- Organizations --}}
-                    <div class='getConfiguration__orgContent org__cell'>
-                      <img
-                        class='avatar float-left mr-2'
-                        src='{{account.avatar_url}}'
-                        alt='Github organization avatar'
-                        height='25px'
-                        width='25px'
-                      />
-                      <span class='text-bold text-gray-dark'><a
-                          href='{{html_url}}'
-                        >{{account.login}}</a></span>
-                    </div>
-
-                    {{!-- Repository access --}}
-                    <div class='getConfiguration__orgContent org__cell'>
-                      <p class="getConfiguration__orgContent__repoSelection">{{repoAccessType repository_selection}}</p>
-                      <p class="getConfiguration__orgContent__numberOfRepos">{{numberOfRepos}}</p>
-                      {{#if admin}}
-                        <a
-                          href='/github/subscriptions/{{id}}'
-                        >
-                          <img
-                            class="getConfiguration__orgContent_edit"
-                            src='/public/assets/edit-icon.png'
-                            alt='Editing icon'
-                            height='25px'
-                            width='25px'
-                          />
-                        </a>
-                      {{/if}}
-                    </div>
-
-                    {{!-- Connect --}}
-                    <div class='getConfiguration__orgContent org__cell'>
-                      {{#if admin}}
-                        {{#if (isNotConnected syncStatus)}}
-                          <button
-                            class='install-link btn-info getConfiguration__orgContent__connectBtn'
-                            data-installation-id='{{id}}'
-                            type='submit'
-                          >
-                            {{connectedStatus syncStatus}}
-                          </button>
-                        {{else if (inProgressSync syncStatus)}}
-                          <div class="getConfiguration__loaderContainer">
-                            <div class="getConfiguration__loader"></div>
-                          </div>
-                        {{else}}
-                          <p class="getConfiguration__orgContent__connectedMsg">
-                            {{connectedStatus syncStatus}}
-                          </p>
-                        {{/if}}
-                      {{/if}}
-                    </div>
-
+              {{#each installations}}
+                <div class='githubOrgs__table__row clearfix'>
+                  {{!-- Organizations --}}
+                  <div class='getConfiguration__orgContent org__cell'>
+                    <img class='getConfiguration__orgContent__avatar' src='{{account.avatar_url}}' alt='Github organization avatar' />
+                    <span class='text-bold text-gray-dark'><a
+                        href='{{html_url}}'
+                      >{{account.login}}</a></span>
                   </div>
-                {{/each}}
-              {{else}}
+
+                  {{!-- Repository access --}}
+                  <div class='getConfiguration__orgContent org__cell'>
+                    <p class="getConfiguration__orgContent__repoSelection">{{repoAccessType repository_selection}}</p>
+                    <p class="getConfiguration__orgContent__numberOfRepos">{{numberOfRepos}}</p>
+                    {{#if admin}}
+                      <a
+                        href='/github/subscriptions/{{id}}'
+                      >
+                        <img class="getConfiguration__orgContent_edit" src='/public/assets/edit-icon.png' alt='Edit' />
+                      </a>
+                    {{/if}}
+                  </div>
+
+                  {{!-- Connect --}}
+                  <div class='getConfiguration__orgContent org__cell'>
+                    {{#if admin}}
+                      {{#if (isNotConnected syncStatus)}}
+                        <button
+                          class='install-link btn-info getConfiguration__orgContent__connectBtn'
+                          data-installation-id='{{id}}'
+                          type='submit'
+                        >
+                          {{connectedStatus syncStatus}}
+                        </button>
+                      {{else if (inProgressSync syncStatus)}}
+                        <div class="getConfiguration__loaderContainer">
+                          <div class="getConfiguration__loader"></div>
+                        </div>
+                      {{else}}
+                        <p class="getConfiguration__orgContent__connectedMsg">
+                          {{connectedStatus syncStatus}}
+                        </p>
+                      {{/if}}
+                    {{/if}}
+                  </div>
+
+                </div>
+              {{/each}}
+
+              {{#unless installations}}
                 <p class="getConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
-              {{/if}}
+              {{/unless}}
             </div>
 
           </div>

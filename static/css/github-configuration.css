@@ -68,6 +68,11 @@
   justify-content: flex-end;
 }
 
+.getConfiguration__orgContent__avatar {
+  margin-right: 0.5em;
+  width: 25px;
+}
+
 .getConfiguration__orgContent__repoSelection {
   margin: 0;
 }
@@ -75,12 +80,8 @@
 .getConfiguration__orgContent__numberOfRepos {
   background-color: #f4f5f7;
   border-radius: 12px;
-  margin: auto 0.2em auto 0.5em;
+  margin: auto 0.5em;
   padding: 0.7em 0.6em;
-}
-
-.getConfiguration__orgContent_edit {
-  transform: scale(0.6);
 }
 
 .getConfiguration__orgContent__connectBtn,
