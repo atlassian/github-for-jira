@@ -40,6 +40,22 @@ Object {
         "url": "/jira/configuration",
       },
     ],
+    "jiraBuildInfoProvider": Object {
+      "homeUrl": "https://github.com/features/actions",
+      "key": "github-actions",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub Actions",
+      },
+    },
+    "jiraDeploymentInfoProvider": Object {
+      "homeUrl": "https://github.com/features/actions",
+      "key": "github-deployments",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub Actions",
+      },
+    },
     "jiraDevelopmentTool": Object {
       "application": Object {
         "value": "GitHub",
@@ -50,7 +66,7 @@ Object {
         "pull_request",
       ],
       "key": "github-development-tool",
-      "logoUrl": "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
       "name": Object {
         "value": "GitHub",
       },
