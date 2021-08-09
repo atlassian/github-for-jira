@@ -4,11 +4,13 @@ import webhookTimeout from "../../src/middleware/webhook-timeout";
 describe("Webhook Timeout", () => {
 
 	it("sets timedout context with milliseconds", async () => {
+		const timeoutMs = 100;
 		const context: any = {};
-		const timeout = webhookTimeout(() => sleep(300), 100);
+		const timeout = webhookTimeout(() => sleep(300), timeoutMs);
 		await timeout(context);
-		expect(context.timedout).toBeGreaterThanOrEqual(100);
-		expect(context.timedout).toBeLessThan(300);
+		// Adding 10% failure range for setTimeout because it's not that accurate
+		expect(context.timedout).toBeGreaterThanOrEqual(timeoutMs * 0.9);
+		expect(context.timedout).toBeLessThan(300 * 1.1);
 	});
 
 	it("clears timeout if successful", async () => {
