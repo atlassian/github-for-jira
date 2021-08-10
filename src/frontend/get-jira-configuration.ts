@@ -55,6 +55,7 @@ const formatDate = function(date) {
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
+		req.log.info(JSON.stringify(req.headers));
 		const jiraHost = req.session.jiraHost;
 
 		req.log.info("Received jira configuration page request for Jira Host %s", jiraHost);
