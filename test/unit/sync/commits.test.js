@@ -73,10 +73,10 @@ describe('sync/commits', () => {
         add: jest.fn(),
       },
     };
-   // await processInstallation(queues)(job);
-    //expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+    // await processInstallation(queues)(job);
+    // expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 
-   /* td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
+    /* td.verify(jiraApi.post('/rest/devinfo/0.10/bulk', {
       preventTransitions: true,
       repositories: [
         {
@@ -109,7 +109,7 @@ describe('sync/commits', () => {
     })); */
   });
 
-  /*test('should send Jira all commits that have Issue Keys', async () => {
+  /* test('should send Jira all commits that have Issue Keys', async () => {
     const { processInstallation } = require('../../../lib/sync/installation');
 
     const job = createJob({ data: { installationId, jiraHost }, opts: { delay } });
@@ -311,4 +311,4 @@ describe('sync/commits', () => {
     await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
   }); */
-}); 
+});
