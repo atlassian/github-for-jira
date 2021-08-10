@@ -38,7 +38,9 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 Your new GitHub app will need the following repository permissions & events:
 
 **Repository Permissions**:
++ Actions: Read & write
 + Contents: Read & write
++ Deployments: Read & write
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
@@ -50,11 +52,13 @@ Your new GitHub app will need the following repository permissions & events:
 + Commit comment
 + Create
 + Delete
++ Deployment status
 + Issue comment
 + Issues
 + Pull request
 + Pull request review
 + Push
++ Workflow run
 
 ### Setting up your `.env` file
 
@@ -100,6 +104,15 @@ Go to your Jira instance that you created earlier and do the following steps:
 In your Jira instance, in the `Manage Apps` section, click on your App's button, then click on `Get Started`.  This will bring you to the App's dashboard.  Click the `Add an Organization` button and follow the steps to install the App on Github and allow it permission to view your repos.
 
 After this is done, you should see your repos starting to sync in the App's dashboard.
+
+### Accessing Admin Endpoints
+
+There are some admin endpoints that require special permissions (see `viewerPermissionQuery` in [/src/api/index.ts](/src/api/index.ts)).
+
+To call these endpoints, you must:
+
+* be an admin in a special GitHub org
+* create a personal access token in your GitHub settings and pass it in the `Authorization` header as `Bearer <token>`.
 
 ## Contributing
 

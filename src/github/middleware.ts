@@ -8,12 +8,12 @@ import getJiraClient from "../jira/client";
 import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
-import { isMaintenanceMode } from "../config/env";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function(callback) {
+const withSentry = function (callback) {
 	return async (context) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry.configureScope((scope) =>
@@ -41,8 +41,8 @@ const isFromIgnoredRepo = (payload) =>
 	// Repository: https://admin.github.com/stafftools/repositories/seequent/lf_github_testing
 	payload.installation.id === 491520 && payload.repository.id === 205972230;
 
-const isStateChangeAction = (action) =>
-	["opened", "closed", "reopened"].includes(action);
+const isStateChangeOrDeploymentAction = (action) =>
+	["opened", "closed", "reopened", "deployment", "deployment_status"].includes(action);
 
 export class CustomContext extends Context {
 	sentry: Sentry.Hub;
@@ -54,12 +54,6 @@ export default (
 	callback: (context: any, jiraClient: any, util: any) => void
 ) => {
 	return withSentry(async (context: CustomContext) => {
-		// Ignore all incoming webhooks if maintenance mode is enabled
-		if (isMaintenanceMode()) {
-			context.log("Maintenance mode ENABLED - Ignoring event");
-			return;
-		}
-
 		enhanceOctokit(context.github);
 
 		let webhookEvent = context.name;
@@ -80,17 +74,8 @@ export default (
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
-		if (
-			context.payload.sender.type === "Bot" &&
-			!isStateChangeAction(context.payload.action)
-		) {
-			context.log(
-				{
-					noop: "bot",
-					botId: context.payload.sender.id
-				},
-				"Halting further execution since the sender is a bot and action is not a state change"
-			);
+		if ((context.payload.sender.type === "Bot" && !isStateChangeOrDeploymentAction(context.payload.action)) && !isStateChangeOrDeploymentAction(context.name)) {
+			context.log({ noop: "bot", botId: context.payload.sender.id, botLogin: context.payload.sender.login }, "Halting further execution since the sender is a bot and action is not a state change nor a deployment");
 			return;
 		}
 
@@ -112,7 +97,7 @@ export default (
 		if (!subscriptions.length) {
 			context.log(
 				{ noop: "no_subscriptions" },
-				"Halting futher execution since no subscriptions were found"
+				"Halting further execution since no subscriptions were found"
 			);
 			return;
 		}
@@ -123,6 +108,12 @@ export default (
 		);
 		for (const subscription of subscriptions) {
 			const { jiraHost } = subscription;
+
+			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
+				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
+				continue;
+			}
+
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
 				"gitHubInstallationId",

@@ -45,17 +45,13 @@
   border-radius: 0;
 }
 
-.Box-row {
+.githubOrgs__table__row {
   border-top: 0;
-  padding: 0.8em 0 0.4em;
+  line-height: 0;
+  padding: 0.8em 0;
 }
 
-.Box-row:last-child {
-  padding-bottom: 0;
-}
-
-
-.Box-row,
+.githubOrgs__table__row,
 .getConfiguration__orgContent:nth-child(2) {
   display: flex;
   flex-direction: row;
@@ -72,19 +68,20 @@
   justify-content: flex-end;
 }
 
+.getConfiguration__orgContent__avatar {
+  margin-right: 0.5em;
+  width: 25px;
+}
+
 .getConfiguration__orgContent__repoSelection {
   margin: 0;
 }
 
 .getConfiguration__orgContent__numberOfRepos {
   background-color: #f4f5f7;
-  border-radius: 7px;
-  margin: auto 0.2em auto 0.5em;
-  padding: 0.1em 0.5em;
-}
-
-.getConfiguration__orgContent_edit {
-  transform: scale(0.6);
+  border-radius: 12px;
+  margin: auto 0.5em;
+  padding: 0.7em 0.6em;
 }
 
 .getConfiguration__orgContent__connectBtn,
@@ -96,17 +93,12 @@
 
 .getConfiguration__orgContent__connectBtn {
   background-color: #f4f5f7;
-  padding: 0.5em 0.8em;
+  padding: 1em 0.8em;
 }
 
 .getConfiguration__orgContent__connectedMsg {
   font-style: italic;
   margin: 0;
-}
-
-.getConfiguration__orgContent__connectBtn--disabled {
-  background-color: #cdd1db;
-  padding: 0.5em 0.8em;
 }
 
 .getConfiguration__orgContent__connectBtn:hover,
@@ -132,12 +124,24 @@
   width: 1.8em;
 }
 
-.getConfiguration__newJiraOrg__container {
-  bottom: 6em;
-  padding: 0 1em;
-  position: absolute;
-  text-align: center;
+.getConfiguration__noOrganizations {
+  color: #172B4D;
+  margin: 1.2em auto;
+}
+
+.getConfiguration__newJiraOrg__container,
+.getConfiguration__newJiraOrg__container--empty {
   max-width: 570px;
+  padding: 0 1em;
+  text-align: center;
+}
+
+.getConfiguration__newJiraOrg__container {
+  margin-top: 1.2em;
+}
+
+.getConfiguration__newJiraOrg__container--empty {
+  margin-top: 3em;
 }
 
 .getConfiguration__newJiraOrg__message {
@@ -148,7 +152,12 @@
   color: #42526e;
 }
 
-.getConfiguration__newJiraOrg__link:hover {
+.getConfiguration__newJiraOrg__link--empty {
+  color: #fff;
+}
+
+.getConfiguration__newJiraOrg__link:hover,
+.getConfiguration__newJiraOrg__link--empty:hover {
   text-decoration: none;
 }
 

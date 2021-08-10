@@ -16,14 +16,7 @@
   padding-top: 16px;
 }
 
-.empty-message {
-  padding: 120px 0;
-  text-align: center;
-}
 
-.empty-message p {
-  margin: 12px 0 16px;
-}
 
 .connection-avatar {
   border-radius: 4px;
