@@ -1,4 +1,4 @@
-import Sequelize from "sequelize";
+import Sequelize, { Op } from "sequelize";
 import { queues } from "../worker/main";
 import { Job } from "bull";
 import _ from "lodash";
@@ -69,6 +69,41 @@ export default class Subscription extends Sequelize.Model {
 			where: {
 				gitHubInstallationId: installationId
 			}
+		});
+	}
+
+	static getAllFiltered(
+		installationIds: number[] = [],
+		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
+		offset = 0,
+		limit?: number,
+	): Promise<Subscription[]> {
+
+		const andFilter = [];
+
+		if (statusTypes?.length > 0) {
+			andFilter.push({
+				syncStatus: {
+					[Op.in]: statusTypes
+				}
+			});
+		}
+
+		if (installationIds?.length > 0) {
+			andFilter.push({
+				gitHubInstallationId: {
+					[Op.in]: installationIds
+				}
+			});
+		}
+
+		return Subscription.findAll({
+			where: {
+				[Op.and]: andFilter
+			},
+			limit,
+			offset,
+			order: [["updatedAt", "DESC"]]
 		});
 	}
 
@@ -161,7 +196,9 @@ export default class Subscription extends Sequelize.Model {
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
 		const [results] = await this.sequelize.query(
-			`SELECT "syncStatus", COUNT(*) FROM "Subscriptions" GROUP BY "syncStatus"`
+			`SELECT "syncStatus", COUNT(*)
+			 FROM "Subscriptions"
+			 GROUP BY "syncStatus"`
 		);
 		return results as SyncStatusCount[];
 	}
