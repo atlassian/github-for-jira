@@ -134,6 +134,18 @@ describe("Maintenance", () => {
 					})
 			});
 
+			it("should return expected page when maintenance mode is off", () => {
+				return supertest(app)
+					.get("/jira/atlassian-connect.json")
+					.expect(200).then(response => {
+						// removing keys that changes for every test run
+						delete response.body.baseUrl;
+						delete response.body.name;
+						delete response.body.key;
+						expect(response.body).toMatchSnapshot();
+					});
+			});
+
 		});
 	});
 });
