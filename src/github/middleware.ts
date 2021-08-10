@@ -8,12 +8,12 @@ import getJiraClient from "../jira/client";
 import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
-import { isMaintenanceMode } from "../config/env";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function(callback) {
+const withSentry = function (callback) {
 	return async (context) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry.configureScope((scope) =>
@@ -54,12 +54,6 @@ export default (
 	callback: (context: any, jiraClient: any, util: any) => void
 ) => {
 	return withSentry(async (context: CustomContext) => {
-		// Ignore all incoming webhooks if maintenance mode is enabled
-		if (isMaintenanceMode()) {
-			context.log("Maintenance mode ENABLED - Ignoring event");
-			return;
-		}
-
 		enhanceOctokit(context.github);
 
 		let webhookEvent = context.name;
@@ -114,6 +108,12 @@ export default (
 		);
 		for (const subscription of subscriptions) {
 			const { jiraHost } = subscription;
+
+			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
+				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
+				continue;
+			}
+
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
 				"gitHubInstallationId",

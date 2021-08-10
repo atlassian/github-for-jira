@@ -1,33 +1,24 @@
 import supertest from "supertest";
-import { BooleanEnum, isMaintenanceMode } from "../../../src/config/env";
 import express from "express";
 import healthcheck from "../../../src/frontend/healthcheck";
 import setupFrontend from "../../../src/frontend/app";
+import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
+import { when } from "jest-when"
+
+jest.mock("../../../src/config/feature-flags");
 
 describe("Maintenance", () => {
 	let app;
-	beforeEach(() => {
-		process.env.MAINTENANCE_MODE = BooleanEnum.true;
+
+	const whenMaintenanceMode = (value: boolean, jiraHost?: string) =>
+		when(booleanFlag).calledWith(
+			BooleanFlags.MAINTENANCE_MODE,
+			expect.anything(),
+			jiraHost
+		).mockResolvedValue(value);
+
+	beforeEach(async () => {
 		app = express();
-	});
-
-	describe("Environment", () => {
-		it("should return `true` if Maintenance Mode is \"true\"", () => {
-			expect(isMaintenanceMode()).toBeTruthy();
-		});
-
-		it("should return `false` if Maintenance Mode is \"false\", not set, undefined, or any other string", () => {
-			process.env.MAINTENANCE_MODE = "false";
-			expect(isMaintenanceMode()).toBeFalsy();
-			delete process.env.MAINTENANCE_MODE;
-			expect(isMaintenanceMode()).toBeFalsy();
-			process.env.MAINTENANCE_MODE = undefined;
-			expect(isMaintenanceMode()).toBeFalsy();
-			process.env.MAINTENANCE_MODE = "";
-			expect(isMaintenanceMode()).toBeFalsy();
-			process.env.MAINTENANCE_MODE = "foobar";
-			expect(isMaintenanceMode()).toBeFalsy();
-		});
 	});
 
 	describe("Healthcheck", () => {
@@ -39,10 +30,13 @@ describe("Maintenance", () => {
 				.get("/healthcheck")
 				.expect(200));
 
-		it("deepcheck should still work in maintenance mode", () =>
-			supertest(app)
+		it("deepcheck should still work in maintenance mode", () => {
+			whenMaintenanceMode(true);
+
+			return supertest(app)
 				.get("/deepcheck")
-				.expect(200));
+				.expect(200);
+		});
 	});
 
 	describe("Frontend", () => {
@@ -52,19 +46,25 @@ describe("Maintenance", () => {
 				getInstallationAccessToken: () => undefined
 			}));
 		});
+		describe("Jira", () => {
+			it("should return a 200 status code when in maintenance mode", () => {
+				whenMaintenanceMode(true);
 
-		describe("Atlassian Connect", () => {
-			it("should return Atlassian Connect JSON in maintenance mode", () =>
-				supertest(app)
+				return supertest(app)
 					.get("/jira/atlassian-connect.json")
 					.expect(200)
 					.then(response => {
-						// removing keys that changes for every test run
-						delete response.body.baseUrl;
-						delete response.body.name;
-						delete response.body.key;
-						expect(response.body).toMatchSnapshot();
-					}));
+						expect(response.status).toBe(200);
+					});
+			});
+
+			it("should return a 200 status code when not in maintenance mode", () => {
+				whenMaintenanceMode(false);
+
+				return supertest(app)
+					.get("/jira/atlassian-connect.json")
+					.expect(200);
+			});
 		});
 
 		describe("Admin API", () => {
@@ -83,16 +83,20 @@ describe("Maintenance", () => {
 					});
 			});
 
-			it("should still work in maintenance mode", () =>
-				supertest(app)
+			it("should still work in maintenance mode", () => {
+				whenMaintenanceMode(true);
+
+				return supertest(app)
 					.get("/api")
 					.set("Authorization", "Bearer xxx")
-					.expect(200));
+					.expect(200)
+			});
 		});
 
 		describe("Maintenance", () => {
 			it("should return maintenance page on '/maintenance' even if maintenance mode is off", () => {
-				delete process.env.MAINTENANCE_MODE;
+				whenMaintenanceMode(false);
+
 				return supertest(app)
 					.get("/maintenance")
 					.expect(503)
@@ -101,33 +105,47 @@ describe("Maintenance", () => {
 					});
 			});
 
-			it("should return 503 for any frontend routes", () =>
-				supertest(app)
-					.get("/github/setup")
-					.expect(503)
-					.then(response => {
-						expect(response.body).toMatchSnapshot();
-					}));
+			it("should return 503 for any frontend routes to a jira host in maintenance mode", () => {
+				whenMaintenanceMode(true, "https://maintenance.atlassian.net");
 
-			it("should return expected page when maintenance mode is off", () => {
-				delete process.env.MAINTENANCE_MODE;
 				return supertest(app)
-					.get("/github/setup")
-					.then(response => {
-						expect(response.status).toBeGreaterThanOrEqual(200);
-						expect(response.status).toBeLessThan(400);
-					});
+					.get("/github/configuration?xdm_e=https://maintenance.atlassian.net")
+					.expect(503);
 			});
 
-			it("should still be able to get static assets in maintenance mode", () =>
-				supertest(app)
-					.get("/public/maintenance.svg")
+			it("should return 302 for any frontend routes to a jira host NOT in maintenance mode", () => {
+				whenMaintenanceMode(false, "https://nomaintenance.atlassian.net");
+
+				return supertest(app)
+					.get("/github/configuration?xdm_e=https://nomaintenance.atlassian.net")
+					.expect(302)
+			});
+
+			it("should still be able to get static assets in maintenance mode", () => {
+				whenMaintenanceMode(true, "https://maintenance.atlassian.net");
+
+				return supertest(app)
+					.get("/public/maintenance.svg?xdm_e=https://maintenance.atlassian.net")
 					.set("Accept", "image/svg+xml")
 					.expect("Content-Type", "image/svg+xml")
 					.expect(200)
 					.then(response => {
 						expect(response.body).toMatchSnapshot();
-					}));
+					})
+			});
+
+			it("should return expected page when maintenance mode is off", () => {
+				return supertest(app)
+					.get("/jira/atlassian-connect.json")
+					.expect(200).then(response => {
+						// removing keys that changes for every test run
+						delete response.body.baseUrl;
+						delete response.body.name;
+						delete response.body.key;
+						expect(response.body).toMatchSnapshot();
+					});
+			});
+
 		});
 	});
 });

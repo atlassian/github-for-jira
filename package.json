@@ -72,11 +72,13 @@
     "express-rate-limit": "^5.1.3",
     "express-sslify": "^1.2.0",
     "express-validator": "^6.4.1",
+    "global-agent": "^1.8.1",
     "hbs": "^4.1.2",
     "helmet": "^3.21.2",
     "hot-shots": "^8.3.2",
     "ioredis": "^4.16.3",
     "jira-issue-key-parser": "0.0.11",
+    "launchdarkly-node-server-sdk": "^6.2.0",
     "lodash": "^4.17.21",
     "moment": "^2.24.0",
     "moo": "^0.5.0",
@@ -90,8 +92,7 @@
     "throng": "^4.0.0",
     "tslib": "~2.2.0",
     "typescript": "~4.2.4",
-    "uuid": "^8.3.2",
-    "global-agent": "^1.8.1"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "~4.23.0",
@@ -109,6 +110,7 @@
     "husky": "^6.0.0",
     "jest": "^26.6.3",
     "jest-diff": "^25.4.0",
+    "jest-when": "^3.3.1",
     "keygrip": "^1.0.2",
     "nock": "^13.0.11",
     "npm-run-all": "^4.1.5",
