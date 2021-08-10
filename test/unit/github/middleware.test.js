@@ -20,7 +20,10 @@ describe('Probot event middleware', () => {
       });
       context = {
         payload: {
-          sender: { type: 'not bot' },
+          sender: {
+            type: 'not bot',
+            html_url: 'https://test.ghaekube.net/organizations/test-org/settings/installations/1',
+          },
           installation: { id: 1234 },
         },
         github: GitHubAPI(),

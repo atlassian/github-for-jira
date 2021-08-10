@@ -15,6 +15,23 @@ $('.install-link').click(function (event) {
   })
 })
 
+$('.manage-link').click(function (event) {
+  event.preventDefault()
+  const appUrl = document.querySelector('meta[name=public-url]').getAttribute('content');
+  const installationId = $(event.target).data('installation-id');
+  const jiraHost = document.getElementById('jiraHost').value;
+  const child = window.open(`${appUrl}/github/subscriptions/?installationId=${encodeURIComponent(installationId)}&xdm_e=${encodeURIComponent(jiraHost)}`,'_self')
+
+  const interval = setInterval(function () {
+    if (child.closed) {
+      clearInterval(interval)
+
+      AP.navigator.reload()
+    }
+  }, 100)
+})
+
+
 $('.delete-link').click(function (event) {
   event.preventDefault()
 

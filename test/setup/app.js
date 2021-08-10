@@ -35,7 +35,7 @@ beforeEach(async () => {
       sharedSecret: process.env.ATLASSIAN_SECRET,
     });
 
-  td.when(models.Subscription.getAllForInstallation(1234))
+  td.when(models.Subscription.getAllForInstallation(1234, 'test.ghaekube.net'))
     .thenReturn([
       {
         jiraHost: process.env.ATLASSIAN_URL,
