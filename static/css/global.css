@@ -1,3 +1,11 @@
+body {
+   overflow: hidden;
+}
+
+p {
+    margin-bottom: 0;
+}
+
 .headerImage {
     margin: 2em auto 1em;
     text-align: center;
@@ -14,13 +22,22 @@
   text-align: center;
 }
 
-.actionBtn {
-    background-color: #f4f5f7;
+.actionBtn,
+.actionBtn--empty {
     border: 0;
     border-radius: 3px;
-    color: #42526e;
     min-width: 5em;
     padding: 0.5em 0.8em;
+}
+
+.actionBtn {
+    background-color: #f4f5f7;
+    color: #42526e;
+}
+
+.actionBtn--empty {
+    background-color: #0052CC;
+    color: #fff;
 }
 
 .actionBtn:hover,

@@ -1,8 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Maintenance Frontend Maintenance should return 503 for any frontend routes 1`] = `Object {}`;
-
-exports[`Maintenance Frontend Maintenance should return expected page when maintenance mode is off 1`] = `
+exports[`Maintenance Frontend Atlassian Connect should return Atlassian Connect JSON in maintenance mode 1`] = `
 Object {
   "apiMigrations": Object {
     "gdpr": false,
@@ -42,6 +40,22 @@ Object {
         "url": "/jira/configuration",
       },
     ],
+    "jiraBuildInfoProvider": Object {
+      "homeUrl": "https://github.com/features/actions",
+      "key": "github-actions",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub Actions",
+      },
+    },
+    "jiraDeploymentInfoProvider": Object {
+      "homeUrl": "https://github.com/features/actions",
+      "key": "github-deployments",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub Actions",
+      },
+    },
     "jiraDevelopmentTool": Object {
       "application": Object {
         "value": "GitHub",
@@ -52,7 +66,7 @@ Object {
         "pull_request",
       ],
       "key": "github-development-tool",
-      "logoUrl": "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
       "name": Object {
         "value": "GitHub",
       },
@@ -100,7 +114,9 @@ Object {
 }
 `;
 
-exports[`Maintenance Frontend Maintenance should return maintenance page on "/maintenance" even if maintenance mode is off 1`] = `Object {}`;
+exports[`Maintenance Frontend Maintenance should return 503 for any frontend routes 1`] = `Object {}`;
+
+exports[`Maintenance Frontend Maintenance should return maintenance page on '/maintenance' even if maintenance mode is off 1`] = `Object {}`;
 
 exports[`Maintenance Frontend Maintenance should still be able to get static assets in maintenance mode 1`] = `
 Object {

@@ -1,11 +1,10 @@
 import { Request, Response } from "express";
-import { EnvironmentEnum } from "../config/env";
+import envVars, { EnvironmentEnum } from "../config/env";
 
 const instance = process.env.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 
-export default (req: Request, res: Response): void => {
-	const isHttps = req.secure || req.header("x-forwarded-proto") === "https";
+export default (_: Request, res: Response): void => {
 	const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 	const adminPageDisplayConditions = [
@@ -33,7 +32,7 @@ export default (req: Request, res: Response): void => {
 			name: `GitHub for Jira${isProd ? "" : (instance ? (` (${instance})`) : "")}`,
 			description: "Connect your code and your project with ease.",
 			key: appKey,
-			baseUrl: `${isHttps ? "https" : "http"}://${req.get("host")}`,
+			baseUrl: envVars.APP_URL,
 			lifecycle: {
 				installed: "/jira/events/installed",
 				uninstalled: "/jira/events/uninstalled",
@@ -64,11 +63,27 @@ export default (req: Request, res: Response): void => {
 						"pull_request"
 					],
 					key: "github-development-tool",
-					logoUrl: "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png",
+					logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
 					name: {
 						value: "GitHub"
 					},
 					url: "https://github.com"
+				},
+				jiraDeploymentInfoProvider: {
+					key: "github-deployments",
+					name: {
+						value: "GitHub Actions",
+					},
+					logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+					homeUrl: "https://github.com/features/actions",
+				},
+				jiraBuildInfoProvider: {
+					key: "github-actions",
+					logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+					name: {
+						value: "GitHub Actions",
+					},
+					homeUrl: "https://github.com/features/actions",
 				},
 				postInstallPage: {
 					key: "github-post-install-page",

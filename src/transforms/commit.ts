@@ -1,7 +1,8 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
+import { JiraCommit, JiraCommitData } from "../interfaces/jira";
 
-function mapCommit(githubCommit, author): Commit {
+function mapCommit(githubCommit, author): JiraCommit {
 
 	const issueKeys = issueKeyParser().parse(githubCommit.message);
 
@@ -29,35 +30,8 @@ function mapCommit(githubCommit, author): Commit {
 	};
 }
 
-interface Commit {
-	author: {
-		avatar?: string;
-		email: string;
-		name: string;
-		url?: string;
-	};
-	authorTimestamp: number;
-	displayId: string;
-	fileCount: number;
-	hash: string;
-	id: string;
-	issueKeys: string[];
-	message: string;
-	timestamp: number;
-	url: string;
-	updateSequenceId: number;
-}
-
-interface CommitData {
-	commits: Commit[];
-	id: string;
-	name: string;
-	url: string;
-	updateSequenceId: number;
-}
-
 // TODO: type payload and return better
-export default (payload, authorMap): CommitData => {
+export default (payload, authorMap): JiraCommitData => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
 		.map((commit, index) => mapCommit(commit, authorMap[index]))

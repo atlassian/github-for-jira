@@ -9,7 +9,7 @@ export const createBranch = async (context: Context, jiraClient) => {
 	if (!jiraPayload) {
 		context.log(
 			{ noop: "no_jira_payload_create_branch" },
-			"Halting futher execution for createBranch since jiraPayload is empty"
+			"Halting further execution for createBranch since jiraPayload is empty"
 		);
 		return;
 	}
@@ -23,7 +23,7 @@ export const deleteBranch = async (context, jiraClient) => {
 	if (isEmpty(issueKeys)) {
 		context.log(
 			{ noop: "no_issue_keys" },
-			"Halting futher execution for deleteBranch since issueKeys is empty"
+			"Halting further execution for deleteBranch since issueKeys is empty"
 		);
 		return undefined;
 	}
