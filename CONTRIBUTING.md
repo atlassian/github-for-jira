@@ -105,6 +105,15 @@ In your Jira instance, in the `Manage Apps` section, click on your App's button,
 
 After this is done, you should see your repos starting to sync in the App's dashboard.
 
+### Accessing Admin Endpoints
+
+There are some admin endpoints that require special permissions (see `viewerPermissionQuery` in [/src/api/index.ts](/src/api/index.ts)).
+
+To call these endpoints, you must:
+
+* be an admin in a special GitHub org
+* create a personal access token in your GitHub settings and pass it in the `Authorization` header as `Bearer <token>`.
+
 ## Contributing
 
 Thank you so much for willing to contribute to this project!  
