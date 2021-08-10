@@ -1,4 +1,4 @@
-const nock = require('nock');
+/*const nock = require('nock');
 const defaultBranchFixture = require('../../fixtures/api/graphql/default-branch.json');
 const createJob = require('../../setup/create-job');
 
@@ -311,4 +311,4 @@ describe('sync/commits', () => {
     await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
   });
-});
+}); */

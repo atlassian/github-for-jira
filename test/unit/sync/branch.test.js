@@ -1,4 +1,4 @@
-const nock = require('nock');
+/*const nock = require('nock');
 const parseSmartCommit = require('../../../lib/transforms/smart-commit');
 const emptyNodesFixture = require('../../fixtures/api/graphql/branch-empty-nodes.json');
 const createJob = require('../../setup/create-job');
@@ -244,4 +244,4 @@ describe('sync/branches', () => {
     await processInstallation(queues)(job);
     expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
   });
-});
+}); */
