@@ -40,10 +40,7 @@ const envVars: EnvVars = {
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	PROXY: getProxyFromEnvironment(),
-	MAINTENANCE_MODE: BooleanEnum[process.env.MAINTENANCE_MODE] || BooleanEnum.false,
 } as EnvVars;
-
-export const isMaintenanceMode = () => process.env.MAINTENANCE_MODE === BooleanEnum.true;
 
 export default envVars;
 
@@ -72,5 +69,5 @@ export interface EnvVars {
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
 	PROXY?: string,
-	MAINTENANCE_MODE?: BooleanEnum,
+	LAUNCHDARKLY_KEY?: string;
 }

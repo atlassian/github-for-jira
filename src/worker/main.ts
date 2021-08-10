@@ -160,6 +160,6 @@ export const stop = async (): Promise<void> => {
 		queues.discovery.close(),
 		queues.installation.close(),
 		queues.push.close(),
-		queues.metrics.close()
+		queues.metrics.close(),
 	]);
 };
