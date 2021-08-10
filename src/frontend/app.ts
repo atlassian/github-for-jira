@@ -16,13 +16,12 @@ import deleteGitHubSubscription from "./delete-github-subscription";
 import getJiraConfiguration from "./get-jira-configuration";
 import deleteJiraConfiguration from "./delete-jira-configuration";
 import getGithubClientMiddleware from "./github-client-middleware";
-import verifyJiraMiddleware from "./verify-jira-jwt-middleware";
 import getJiraConnect from "../jira/connect";
 import postJiraDisable from "../jira/disable";
 import postJiraEnable from "../jira/enable";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
-import jiraAuthenticate from "../jira/authenticate";
+import {authenticateJiraEvent, authenticateInstallCallback, authenticateUninstallCallback} from "../jira/authenticate";
 import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
 import api from "../api";
@@ -32,8 +31,7 @@ import {App} from "@octokit/app";
 import statsd, {elapsedTimeMetrics} from "../config/statsd";
 import {metricError} from "../config/metric-names";
 import {EnvironmentEnum, isMaintenanceMode} from "../config/env";
-import {TokenType} from "../jira/util/jwt";
-import verifyAsymmetricJwtToken from "../jira/util/installJwt";
+import {verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware} from "./verify-jira-jwt-middleware";
 
 // Adding session information to request
 declare global {
@@ -232,24 +230,24 @@ export default (octokitApp: App): Express => {
 	app.get(
 		"/jira/configuration",
 		csrfProtection,
-		verifyJiraMiddleware(TokenType.normal),
+		verifyJiraJwtTokenMiddleware,
 		elapsedTimeMetrics,
 		getJiraConfiguration
 	);
 
 	app.delete(
 		"/jira/configuration",
-		verifyJiraMiddleware(TokenType.context),
+		verifyJiraContextJwtTokenMiddleware,
 		elapsedTimeMetrics,
 		deleteJiraConfiguration
 	);
 
-	app.post("/jira/sync", verifyJiraMiddleware(TokenType.context), elapsedTimeMetrics, retrySync);
+	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, elapsedTimeMetrics, retrySync);
 	// Set up event handlers
-	app.post("/jira/events/disabled", jiraAuthenticate, postJiraDisable);
-	app.post("/jira/events/enabled", jiraAuthenticate, postJiraEnable);
-	app.post("/jira/events/installed", verifyAsymmetricJwtToken, postJiraInstall); // we can't authenticate since we don't have the secret
-	app.post("/jira/events/uninstalled", jiraAuthenticate, postJiraUninstall);
+	app.post("/jira/events/disabled", authenticateJiraEvent, postJiraDisable);
+	app.post("/jira/events/enabled", authenticateJiraEvent, postJiraEnable);
+	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall); // we can't authenticate since we don't have the secret
+	app.post("/jira/events/uninstalled", authenticateUninstallCallback, postJiraUninstall);
 
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});

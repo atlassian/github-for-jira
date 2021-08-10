@@ -27,7 +27,7 @@ describe("#verifySymmetricJwtTokenMiddleware", () => {
 	const baseRequest = {
 		query: testQueryParams,
 		method: testRequestMethod,
-		pathname: testRequestPath,
+		path: testRequestPath,
 		session: {
 			jiraHost: "https://test.atlassian.net"
 		},
@@ -63,7 +63,7 @@ describe("#verifySymmetricJwtTokenMiddleware", () => {
 				jwt: jwtValue
 			},
 			method: testRequestMethod,
-			pathname: testRequestPath,
+			path: testRequestPath,
 		};
 	};
 

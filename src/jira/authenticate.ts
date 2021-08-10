@@ -1,11 +1,12 @@
 import {Installation} from "../models";
-import {verifySymmetricJwtTokenMiddleware, TokenType} from "./util/jwt";
+import {verifySymmetricJwtTokenMiddleware, TokenType, verifyAsymmetricJwtTokenMiddleware} from "./util/jwt";
 import {NextFunction, Request, Response} from "express";
 
-export default async (
+const instrumentRequestAndAuthenticateJiraEvent = async (
 	req: Request,
 	res: Response,
-	next: NextFunction
+	next: NextFunction,
+	asymmetric: boolean
 ): Promise<void> => {
 	const installation = await Installation.getForClientKey(req.body.clientKey);
 	if (!installation) {
@@ -21,5 +22,40 @@ export default async (
 	});
 	res.locals.installation = installation;
 
-	verifySymmetricJwtTokenMiddleware(sharedSecret, TokenType.normal, req, res, next)
+	if( asymmetric ) {
+		await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+	} else {
+		verifySymmetricJwtTokenMiddleware(sharedSecret, TokenType.normal, req, res, next)
+	}
+
 };
+
+export const authenticateJiraEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	await instrumentRequestAndAuthenticateJiraEvent(req, res, next, false)
+}
+
+export const authenticateUninstallCallback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+
+	//TODO Add feature flags
+	//if ( enable-signed-install-for-jira ) {
+
+	await instrumentRequestAndAuthenticateJiraEvent(req, res, next, true)
+
+	// } else {
+	// instrumentRequestAndAuthenticateJiraEvent(req, res, next, false)
+	// }
+
+}
+
+
+export const authenticateInstallCallback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+
+	//TODO Add feature flags
+	//if ( enable-signed-install-for-jira ) {
+
+	await instrumentRequestAndAuthenticateJiraEvent(req, res, next, true)
+
+	// } else {
+	// next();
+	// }
+}
