@@ -23,7 +23,7 @@ describe('GitHub Actions', () => {
       ));
     });
 
-    /*    it('should not add push event to the queue if there are no Jira issue keys present', async (done) => {
+    /* it('should not add push event to the queue if there are no Jira issue keys present', async (done) => {
       const event = require('../fixtures/push-no-issues.json');
       await app.receive(event);
       done();
@@ -467,6 +467,6 @@ describe('GitHub Actions', () => {
         ],
         properties: { installationId: 1234 },
       }));
-    });*/
+    }); */
   });
 });
