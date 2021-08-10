@@ -1,4 +1,4 @@
-/*describe('GitHub Actions', () => {
+describe('GitHub Actions', () => {
   let jiraApi; let githubApi; let push; let processPush; let
     createJobData;
 
@@ -9,7 +9,7 @@
       push = td.replace(queues, 'push');
     });
 
-    it('should add push event to the queue if Jira issue keys are present', async () => {
+  it('should add push event to the queue if Jira issue keys are present', async () => {
       const event = require('../fixtures/push-basic.json');
       await app.receive(event);
 
@@ -23,13 +23,13 @@
       ));
     });
 
-    it('should not add push event to the queue if there are no Jira issue keys present', async (done) => {
+   /*it('should not add push event to the queue if there are no Jira issue keys present', async (done) => {
       const event = require('../fixtures/push-no-issues.json');
       await app.receive(event);
       done();
-    });
+    }); */
 
-    it('should handle payloads where only some commits have issue keys', async () => {
+    /*it('should handle payloads where only some commits have issue keys', async () => {
       const event = require('../fixtures/push-mixed.json');
       await app.receive(event);
       td.verify(push.add(
@@ -44,9 +44,9 @@
         }, { removeOnFail: true, removeOnComplete: true },
       ));
     });
-  });
+  });*/
 
-  describe('process push payloads', () => {
+  /*describe('process push payloads', () => {
     beforeEach(() => {
       jiraApi = td.api(process.env.ATLASSIAN_URL);
       githubApi = td.api('https://api.github.com');
@@ -234,7 +234,7 @@
           installationId: 1234,
         },
       }));
-    });
+    }); */
 
     // Commenting these out for the moment. DevInfo API runs these
     // transitions automatially based on the commit message, but we may
@@ -322,7 +322,7 @@
     //   }))
     // })
 
-    it('should not run a command without a Jira issue', async () => {
+   /* it('should not run a command without a Jira issue', async () => {
       const payload = require('../fixtures/push-no-issues.json');
 
       td.when(jiraApi.post(), { ignoreExtraArgs: true })
@@ -467,6 +467,8 @@
         ],
         properties: { installationId: 1234 },
       }));
-    });
-  });
-}); */
+    });*/
+  }); 
+}); 
+  
+
