@@ -62,7 +62,11 @@
 
 .githubOrgs__table__row {
   border-top: 0;
-  padding: 0.6em 0;
+  line-height: 0;
+}
+
+.githubOrgs__table__row:not(:last-child) {
+  padding-bottom: 0.8em;
 }
 
 .githubOrgs__table__row,
@@ -139,7 +143,6 @@
 
 .getConfiguration__noOrganizations {
   color: #172B4D;
-  margin: 1.2em auto;
 }
 
 .getConfiguration__newJiraOrg__container,
