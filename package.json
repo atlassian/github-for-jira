@@ -20,6 +20,7 @@
     "@octokit/webhooks": "^9.8.4",
     "@sentry/integrations": "^5.15.5",
     "@sentry/node": "^5.15.5",
+    "applicationinsights": "^2.1.4",
     "atlassian-jwt": "^0.1.5",
     "axios": "^0.21.1",
     "body-parser": "^1.18.3",
