@@ -1,39 +1,31 @@
 import supertest from "supertest";
-import { BooleanEnum, isMaintenanceMode } from "../../../src/config/env";
-import express from "express";
+import express, { Express } from "express";
 import healthcheck from "../../../src/frontend/healthcheck";
 import setupFrontend from "../../../src/frontend/app";
+import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
+import { when } from "jest-when";
+
+jest.mock("../../../src/config/feature-flags");
 
 describe("Maintenance", () => {
-	let app;
+	let app: Express;
+
+	const whenMaintenanceMode = (value: boolean, jiraHost?: string) =>
+		when(booleanFlag).calledWith(
+			BooleanFlags.MAINTENANCE_MODE,
+			expect.anything(),
+			jiraHost
+		).mockResolvedValue(value);
+
 	beforeEach(() => {
-		process.env.MAINTENANCE_MODE = BooleanEnum.true;
+		// Defaults maintenance mode to true
+		whenMaintenanceMode(true);
 		app = express();
 	});
 
-	describe("Environment", () => {
-		it("should return `true` if Maintenance Mode is \"true\"", () => {
-			expect(isMaintenanceMode()).toBeTruthy();
-		});
-
-		it("should return `false` if Maintenance Mode is \"false\", not set, undefined, or any other string", () => {
-			process.env.MAINTENANCE_MODE = "false";
-			expect(isMaintenanceMode()).toBeFalsy();
-			delete process.env.MAINTENANCE_MODE;
-			expect(isMaintenanceMode()).toBeFalsy();
-			process.env.MAINTENANCE_MODE = undefined;
-			expect(isMaintenanceMode()).toBeFalsy();
-			process.env.MAINTENANCE_MODE = "";
-			expect(isMaintenanceMode()).toBeFalsy();
-			process.env.MAINTENANCE_MODE = "foobar";
-			expect(isMaintenanceMode()).toBeFalsy();
-		});
-	});
-
 	describe("Healthcheck", () => {
-		beforeEach(() => {
-			app.use("/", healthcheck);
-		});
+		beforeEach(() => app.use("/", healthcheck));
+
 		it("should still work in maintenance mode", () =>
 			supertest(app)
 				.get("/healthcheck")
@@ -42,7 +34,8 @@ describe("Maintenance", () => {
 		it("deepcheck should still work in maintenance mode", () =>
 			supertest(app)
 				.get("/deepcheck")
-				.expect(200));
+				.expect(200)
+		);
 	});
 
 	describe("Frontend", () => {
@@ -68,7 +61,7 @@ describe("Maintenance", () => {
 		});
 
 		describe("Admin API", () => {
-			beforeEach(() => {
+			beforeEach(() =>
 				githubNock
 					.post("/graphql")
 					.reply(200, {
@@ -80,19 +73,21 @@ describe("Maintenance", () => {
 								}
 							}
 						}
-					});
-			});
+					})
+			);
 
 			it("should still work in maintenance mode", () =>
 				supertest(app)
 					.get("/api")
 					.set("Authorization", "Bearer xxx")
-					.expect(200));
+					.expect(200)
+			);
 		});
 
 		describe("Maintenance", () => {
 			it("should return maintenance page on '/maintenance' even if maintenance mode is off", () => {
-				delete process.env.MAINTENANCE_MODE;
+				whenMaintenanceMode(false);
+
 				return supertest(app)
 					.get("/maintenance")
 					.expect(503)
@@ -101,16 +96,14 @@ describe("Maintenance", () => {
 					});
 			});
 
-			it("should return 503 for any frontend routes", () =>
+			it("should return 503 for any frontend routes to a jira host in maintenance mode", () =>
 				supertest(app)
 					.get("/github/setup")
 					.expect(503)
-					.then(response => {
-						expect(response.body).toMatchSnapshot();
-					}));
+			);
 
 			it("should return expected page when maintenance mode is off", () => {
-				delete process.env.MAINTENANCE_MODE;
+				whenMaintenanceMode(false);
 				return supertest(app)
 					.get("/github/setup")
 					.then(response => {
@@ -127,7 +120,8 @@ describe("Maintenance", () => {
 					.expect(200)
 					.then(response => {
 						expect(response.body).toMatchSnapshot();
-					}));
+					})
+			);
 		});
 	});
 });

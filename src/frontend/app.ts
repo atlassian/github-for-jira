@@ -31,7 +31,8 @@ import logMiddleware from "../middleware/log-middleware";
 import { App } from "@octokit/app";
 import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { EnvironmentEnum, isMaintenanceMode } from "../config/env";
+import { EnvironmentEnum } from "../config/env";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // Adding session information to request
 declare global {
@@ -170,7 +171,11 @@ export default (octokitApp: App): Express => {
 	app.get("/jira/atlassian-connect.json", getJiraConnect);
 
 	// Maintenance mode view
-	app.use((req, res, next) => (isMaintenanceMode() ? getMaintenance(req, res) : next()));
+	app.use(async (req, res, next) => {
+		const maintenanceMode = await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost);
+		maintenanceMode ? getMaintenance(req, res) : next();
+	});
+
 	app.get("/maintenance", csrfProtection, getMaintenance);
 
 	app.get(

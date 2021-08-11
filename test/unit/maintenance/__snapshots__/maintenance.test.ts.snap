@@ -114,8 +114,6 @@ Object {
 }
 `;
 
-exports[`Maintenance Frontend Maintenance should return 503 for any frontend routes 1`] = `Object {}`;
-
 exports[`Maintenance Frontend Maintenance should return maintenance page on '/maintenance' even if maintenance mode is off 1`] = `Object {}`;
 
 exports[`Maintenance Frontend Maintenance should still be able to get static assets in maintenance mode 1`] = `
