@@ -4,10 +4,11 @@ const nock = require('nock');
 const { getHashedKey } = require('../../../lib/models/installation');
 const testTracking = require('../../setup/tracking');
 const { setIsDisabled } = require('../../../lib/tracking');
+const configConst = require('../../../lib/config-constants');
 
 function getCookieHeader(payload) {
   const cookie = Buffer.from(JSON.stringify(payload)).toString('base64');
-  const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET]);
+  const keygrip = Keygrip([configConst.DUMMY_GITHUB_CLIENT_SECRET]);
 
   return [
     `session=${cookie};session.sig=${keygrip.sign(`session=${cookie}`)};`,
