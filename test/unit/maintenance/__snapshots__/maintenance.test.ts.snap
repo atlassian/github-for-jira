@@ -4,7 +4,6 @@ exports[`Maintenance Frontend Atlassian Connect should return Atlassian Connect 
 Object {
   "apiMigrations": Object {
     "gdpr": false,
-    "signed-install": true,
   },
   "apiVersion": 1,
   "authentication": Object {

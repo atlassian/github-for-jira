@@ -1,61 +1,41 @@
-import {Installation} from "../models";
-import {verifySymmetricJwtTokenMiddleware, TokenType, verifyAsymmetricJwtTokenMiddleware} from "./util/jwt";
+import {TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware} from "./util/jwt";
 import {NextFunction, Request, Response} from "express";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 
-const instrumentRequestAndAuthenticateJiraEvent = async (
+const authenticateJiraEventMiddleware = async (
 	req: Request,
 	res: Response,
 	next: NextFunction,
 	asymmetric: boolean
 ): Promise<void> => {
-	const installation = await Installation.getForClientKey(req.body.clientKey);
-	if (!installation) {
-		res.status(404).json({});
-		return;
-	}
-
-	const { jiraHost, sharedSecret, clientKey } = installation;
-
-	req.addLogFields({
-		jiraHost,
-		jiraClientKey: `${clientKey.substr(0, 5)}***}`
-	});
-	res.locals.installation = installation;
 
 	if( asymmetric ) {
 		await verifyAsymmetricJwtTokenMiddleware(req, res, next);
 	} else {
-		verifySymmetricJwtTokenMiddleware(sharedSecret, TokenType.normal, req, res, next)
+		verifySymmetricJwtTokenMiddleware(res.locals.installation.sharedSecret, TokenType.normal, req, res, next)
 	}
 
 };
 
 export const authenticateJiraEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	await instrumentRequestAndAuthenticateJiraEvent(req, res, next, false)
+	await authenticateJiraEventMiddleware(req, res, next, false)
 }
 
 export const authenticateUninstallCallback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	//TODO Add feature flags
-	//if ( enable-signed-install-for-jira ) {
-
-	await instrumentRequestAndAuthenticateJiraEvent(req, res, next, true)
-
-	// } else {
-	// instrumentRequestAndAuthenticateJiraEvent(req, res, next, false)
-	// }
-
+	if (await booleanFlag(BooleanFlags.USE_JWT_SIGNED_INSTALL_CALLBACKS, false) ) {
+		await authenticateJiraEventMiddleware(req, res, next, true)
+	} else {
+		await authenticateJiraEventMiddleware(req, res, next, false)
+	}
 }
 
 
 export const authenticateInstallCallback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	//TODO Add feature flags
-	//if ( enable-signed-install-for-jira ) {
-
-	await instrumentRequestAndAuthenticateJiraEvent(req, res, next, true)
-
-	// } else {
-	// next();
-	// }
+	if (await booleanFlag(BooleanFlags.USE_JWT_SIGNED_INSTALL_CALLBACKS, false) ) {
+		await authenticateJiraEventMiddleware(req, res, next, true)
+	} else {
+		next();
+	}
 }

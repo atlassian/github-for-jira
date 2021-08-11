@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import envVars, { EnvironmentEnum } from "../config/env";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 
 const instance = process.env.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 
-export default (_: Request, res: Response): void => {
+export default async (_: Request, res: Response): Promise<void> => {
 	const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 	const adminPageDisplayConditions = [
@@ -21,15 +22,17 @@ export default (_: Request, res: Response): void => {
 		}
 	];
 
+	let apiMigrations: any = {gdpr: false}
+
+	if (await booleanFlag(BooleanFlags.USE_JWT_SIGNED_INSTALL_CALLBACKS, false)) {
+		apiMigrations = {gdpr: false, "signed-install": true}
+	}
+
 	res.status(200)
 		.json({
 			// Will need to be set to `true` once we verify the app will work with
 			// GDPR compliant APIs. Ref: https://github.com/github/ce-extensibility/issues/220
-			apiMigrations: {
-				gdpr: false,
-				//TODO Feature flag it before merging the PR!
-				"signed-install": true,
-			},
+			apiMigrations: apiMigrations,
 			// TODO: allow for more flexibility of naming
 			name: `GitHub for Jira${isProd ? "" : (instance ? (` (${instance})`) : "")}`,
 			description: "Connect your code and your project with ease.",

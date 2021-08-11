@@ -22,6 +22,7 @@ import postJiraEnable from "../jira/enable";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
 import {authenticateJiraEvent, authenticateInstallCallback, authenticateUninstallCallback} from "../jira/authenticate";
+import extractInstallation from "../jira/extract-installation";
 import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
 import api from "../api";
@@ -247,10 +248,10 @@ export default (octokitApp: App): Express => {
 
 	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, elapsedTimeMetrics, retrySync);
 	// Set up event handlers
-	app.post("/jira/events/disabled", authenticateJiraEvent, postJiraDisable);
-	app.post("/jira/events/enabled", authenticateJiraEvent, postJiraEnable);
+	app.post("/jira/events/disabled",  extractInstallation, authenticateJiraEvent, postJiraDisable);
+	app.post("/jira/events/enabled",  extractInstallation, authenticateJiraEvent, postJiraEnable);
 	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall); // we can't authenticate since we don't have the secret
-	app.post("/jira/events/uninstalled", authenticateUninstallCallback, postJiraUninstall);
+	app.post("/jira/events/uninstalled",  extractInstallation, authenticateUninstallCallback, postJiraUninstall);
 
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
