@@ -58,15 +58,14 @@ const viewerPermissionQuery = `{
 }
 `;
 
-const limiter = rateLimit({
+router.use(rateLimit({
 	store: new RedisStore({
 		client: new Redis(getRedisInfo("express-rate-limit").redisOptions)
 	}),
 	windowMs: 60 * 1000, // 1 minutes
 	max: 60 // limit each IP to 60 requests per windowMs
-});
+}));
 
-router.use(limiter);
 router.use(logMiddleware);
 
 // All routes require a PAT to belong to someone on staff
