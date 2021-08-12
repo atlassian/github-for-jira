@@ -1,10 +1,10 @@
 import nock from "nock";
-import env from "../../src/config/env";
+import env from "../../../config/env";
 import "./matchers/to-have-sent-metrics";
 import "./matchers/nock";
 import "./matchers/to-promise";
-import statsd from "../../src/config/statsd";
-import { sequelize } from "../../src/backend/models/sequelize";
+import statsd from "../../../config/statsd";
+import { sequelize } from "../../../backend/models/sequelize";
 
 resetEnvVars();
 

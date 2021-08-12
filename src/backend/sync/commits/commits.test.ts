@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../../../test/fixtures/api/graphql/commit-queries";
-import createJob from "../../../../test/setup/create-job";
+import createJob from "../../../common/test-utils/setup/create-job";
 import { Subscription } from "../../models";
 import { processInstallation } from "../installation";
 import { mocked } from "ts-jest/utils";

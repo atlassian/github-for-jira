@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import statsd from "../../../src/config/statsd";
+import statsd from "../../../../config/statsd";
 /*
 
 This matcher makes it easier to write tests against Datadog metrics

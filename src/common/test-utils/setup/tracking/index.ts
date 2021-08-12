@@ -1,6 +1,6 @@
 import url from "url";
 import nock from "nock";
-import { BaseURL, setIsDisabled } from "../../src/backend/tracking";
+import { BaseURL, setIsDisabled } from "../../../../backend/tracking";
 
 /**
  * Test that tracking works by storing a snapshot of the tracking proto sent.

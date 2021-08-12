@@ -5,7 +5,7 @@ import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../models";
 import { Application } from "probot";
 import { createWebhookApp } from "../../../common/test-utils/probot";
-import createJob from "../../../../test/setup/create-job";
+import createJob from "../../../common/test-utils/setup/create-job";
 import { processInstallation } from "../installation";
 import nock from "nock";
 
