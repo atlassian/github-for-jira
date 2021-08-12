@@ -1,4 +1,4 @@
-import transformBranch from "../transforms/branch";
+import transformBranch from "../backend/transforms/branch";
 import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../common/isEmpty";

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import transformPullRequest from "../../../src/transforms/pull-request";
+import transformPullRequest from "../../../src/backend/transforms/pull-request";
 
 describe("pull_request transform", () => {
 	it("should not contain branches on the payload if pull request status is closed.", async () => {

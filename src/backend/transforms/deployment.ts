@@ -1,6 +1,6 @@
 import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
-import { JiraDeploymentData } from "../interfaces/jira";
+import { JiraDeploymentData } from "../../interfaces/jira";
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
 // https://docs.github.com/en/rest/reference/repos#list-deployments

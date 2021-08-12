@@ -1,4 +1,4 @@
-import { enqueuePush } from "../transforms/push";
+import { enqueuePush } from "../backend/transforms/push";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../common/isEmpty";
 import { Context } from "probot/lib/context";

@@ -1,6 +1,6 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../common/isEmpty";
-import { JiraCommit, JiraCommitData } from "../interfaces/jira";
+import { isEmpty } from "../../common/isEmpty";
+import { JiraCommit, JiraCommitData } from "../../interfaces/jira";
 
 function mapCommit(githubCommit, author): JiraCommit {
 

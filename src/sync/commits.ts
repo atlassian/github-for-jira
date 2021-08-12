@@ -1,4 +1,4 @@
-import transformCommit from "../transforms/commit";
+import transformCommit from "../backend/transforms/commit";
 import { getCommits as getCommitsQuery, getDefaultRef } from "./queries";
 import { GitHubAPI } from "probot";
 

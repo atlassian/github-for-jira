@@ -1,5 +1,5 @@
 import Sequelize, { Op } from "sequelize";
-import { queues } from "../../worker/main";
+import { queues } from "../worker/main";
 import { Job } from "bull";
 import _ from "lodash";
 import logger from "../../config/logger";

@@ -3,7 +3,7 @@ import { Installation, Subscription } from "../backend/models";
 import { NextFunction, Request, Response } from "express";
 import { getJiraMarketplaceUrl } from "../common/getUrl";
 import enhanceOctokit from "../config/enhance-octokit";
-import app from "../worker/app";
+import app from "../backend/worker/app";
 import { getInstallation } from "./get-jira-configuration";
 
 const getConnectedStatus = (

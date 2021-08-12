@@ -1,22 +1,22 @@
-import "../config/env"; // Important to be before other dependencies
+import "../../config/env"; // Important to be before other dependencies
 import Queue, { QueueOptions } from "bull";
 import * as Sentry from "@sentry/node";
 import Redis from "ioredis";
 
-import { discovery } from "../sync/discovery";
-import { processInstallation } from "../sync/installation";
+import { discovery } from "../../sync/discovery";
+import { processInstallation } from "../../sync/installation";
 import { processPush } from "../transforms/push";
 import metricsJob from "./metrics-job";
-import statsd from "../config/statsd";
-import getRedisInfo from "../config/redis-info";
+import statsd from "../../config/statsd";
+import getRedisInfo from "../../config/redis-info";
 import app, { probot } from "./app";
-import AxiosErrorEventDecorator from "../backend/models/axios-error-event-decorator";
-import SentryScopeProxy from "../backend/models/sentry-scope-proxy";
-import { metricHttpRequest } from "../config/metric-names";
-import { initializeSentry } from "../config/sentry";
-import { getLogger } from "../config/logger";
-import "../config/proxy";
-import { EnvironmentEnum } from "../config/env";
+import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
+import SentryScopeProxy from "../models/sentry-scope-proxy";
+import { metricHttpRequest } from "../../config/metric-names";
+import { initializeSentry } from "../../config/sentry";
+import { getLogger } from "../../config/logger";
+import "../../config/proxy";
+import { EnvironmentEnum } from "../../config/env";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client").redisOptions);

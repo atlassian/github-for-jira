@@ -1,4 +1,4 @@
-import transformWorkflow from "../transforms/workflow";
+import transformWorkflow from "../backend/transforms/workflow";
 import { Context } from "probot/lib/context";
 
 export default async (context: Context, jiraClient): Promise<void> => {

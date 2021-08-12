@@ -1,7 +1,7 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { Context } from "probot/lib/context";
-import { GitHubPullRequest } from "../interfaces/github";
-import { JiraBuildData, JiraPullRequest } from "../interfaces/jira";
+import { GitHubPullRequest } from "../../interfaces/github";
+import { JiraBuildData, JiraPullRequest } from "../../interfaces/jira";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
