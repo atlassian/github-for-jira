@@ -5,7 +5,7 @@ import setupFrontend from "../../app";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 import { when } from "jest-when";
 
-jest.mock("../../config/feature-flags");
+jest.mock("../../../config/feature-flags");
 
 describe("Maintenance", () => {
 	let app: Express;

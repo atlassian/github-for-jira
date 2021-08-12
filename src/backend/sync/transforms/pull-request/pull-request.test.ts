@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import transformPullRequest from "../../../../src/backend/sync/transforms/pull-request";
+import transformPullRequest from ".";
 
 describe("pull_request transform", () => {
 
@@ -11,7 +11,7 @@ describe("pull_request transform", () => {
 
 	it("should send the ghost user to Jira when GitHub user has been deleted", async () => {
 		const pullRequestList = JSON.parse(
-			JSON.stringify(require("../../../fixtures/api/pull-request-list.json"))
+			JSON.stringify(require("../../../../../test/fixtures/api/pull-request-list.json"))
 		);
 
 		pullRequestList[0].title = "[TES-123] Evernote Test";

@@ -1,6 +1,6 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../../common/isEmpty";
-import { getJiraId } from "../../common/id";
+import { isEmpty } from "../../../common/isEmpty";
+import { getJiraId } from "../../../common/id";
 import _ from "lodash";
 
 function mapStatus(status: string, merged: boolean) {

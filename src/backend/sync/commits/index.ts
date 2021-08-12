@@ -1,5 +1,5 @@
-import transformCommit from "../transforms/commit";
-import { getCommits as getCommitsQuery, getDefaultRef } from "./queries";
+import transformCommit from "../../transforms/commit";
+import { getCommits as getCommitsQuery, getDefaultRef } from "../queries";
 import { GitHubAPI } from "probot";
 
 // TODO: better typings

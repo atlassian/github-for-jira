@@ -5,7 +5,7 @@ import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../../config/enhance-octokit";
 import statsd from "../../config/statsd";
-import getPullRequests from "./pull-request";
+import getPullRequests from "./pull-requests";
 import getBranches from "./branches";
 import getCommits from "./commits";
 import { Application } from "probot";

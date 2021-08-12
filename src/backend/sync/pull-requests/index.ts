@@ -1,9 +1,9 @@
 import url from "url";
-import transformPullRequest from "./transforms/pull-request";
-import statsd from "../../config/statsd";
+import transformPullRequest from "../transforms/pull-request";
+import statsd from "../../../config/statsd";
 import { GitHubAPI } from "probot";
-import { getLogger } from "../../config/logger";
-import { metricHttpRequest } from "../../config/metric-names";
+import { getLogger } from "../../../config/logger";
+import { metricHttpRequest } from "../../../config/metric-names";
 
 /**
  * @typedef {object} RepositoryObject

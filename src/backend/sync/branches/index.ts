@@ -1,5 +1,5 @@
-import transformBranches from "./transforms/branch";
-import { getBranches as getBranchesQuery } from "./queries";
+import transformBranches from "../transforms/branch";
+import { getBranches as getBranchesQuery } from "../queries";
 import { GitHubAPI } from "probot";
 
 // TODO: better typings

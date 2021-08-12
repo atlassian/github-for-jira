@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import issueKeyParser from "jira-issue-key-parser";
-import { branchesNoLastCursor, branchesWithLastCursor } from "../../fixtures/api/graphql/branch-queries";
+import { branchesNoLastCursor, branchesWithLastCursor } from "../../../../test/fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
-import { Subscription } from "../../../src/backend/models";
+import { Subscription } from "../../models";
 import { Application } from "probot";
-import { createWebhookApp } from "../../../src/common/test-utils/probot";
-import createJob from "../../setup/create-job";
-import { processInstallation } from "../../../src/backend/sync/installation";
+import { createWebhookApp } from "../../../common/test-utils/probot";
+import createJob from "../../../../test/setup/create-job";
+import { processInstallation } from "../installation";
 import nock from "nock";
 
-jest.mock("../../../src/backend/models");
+jest.mock("../../models");
 
 describe.skip("sync/branches", () => {
 	const installationId = 1234;

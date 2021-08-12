@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../fixtures/api/graphql/commit-queries";
-import createJob from "../../setup/create-job";
-import { Subscription } from "../../../src/backend/models";
-import { processInstallation } from "../../../src/backend/sync/installation";
+import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../../../test/fixtures/api/graphql/commit-queries";
+import createJob from "../../../../test/setup/create-job";
+import { Subscription } from "../../models";
+import { processInstallation } from "../installation";
 import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
-import { createApplication } from "../../../src/common/test-utils/probot";
+import { createApplication } from "../../../common/test-utils/probot";
 import nock from "nock";
 
-jest.mock("../../../src/backend/models");
+jest.mock("../../models");
 
 describe.skip("sync/commits", () => {
 	let installationId;
