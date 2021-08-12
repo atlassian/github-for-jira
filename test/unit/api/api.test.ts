@@ -6,7 +6,7 @@ import nock from "nock";
 import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
 import { mockModels } from "../../utils/models";
-import api from "../../../src/api";
+import api from "../../../src/backend/api";
 import { EnvironmentEnum } from "../../../src/config/env";
 
 jest.mock("../../../src/models");

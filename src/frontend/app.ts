@@ -25,7 +25,7 @@ import postJiraUninstall from "../jira/uninstall";
 import jiraAuthenticate from "../jira/authenticate";
 import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
-import api from "../api";
+import api from "../backend/api";
 import healthcheck from "./healthcheck";
 import logMiddleware from "../middleware/log-middleware";
 import { App } from "@octokit/app";
