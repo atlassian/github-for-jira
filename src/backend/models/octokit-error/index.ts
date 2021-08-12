@@ -1,4 +1,4 @@
-import SentryScopeProxy from "./sentry-scope-proxy";
+import SentryScopeProxy from "../sentry-scope-proxy";
 import { GitHubAPI, Octokit } from "probot";
 
 /*

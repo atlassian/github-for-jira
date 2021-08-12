@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Octokit } from "probot";
-import OctokitError from "../../src/backend/models/octokit-error";
+import OctokitError from ".";
 
 const buildHttpError = (message: string, code?: number, headers?: any) => {
 	const error = new Error(message) as Octokit.HookError;
