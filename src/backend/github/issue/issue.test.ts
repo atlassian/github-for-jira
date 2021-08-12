@@ -8,7 +8,7 @@ describe("GitHub Actions", () => {
 	describe("issue", () => {
 		describe("created", () => {
 			it("should update the GitHub issue with a linked Jira ticket", async () => {
-				const fixture = require("../../../../test/fixtures/issue-basic.json");
+				const fixture = require("../../../common/test-utils/fixtures/issue-basic.json");
 
 				jiraNock
 					.get("/rest/api/latest/issue/TEST-123?fields=summary")
@@ -30,7 +30,7 @@ describe("GitHub Actions", () => {
 			});
 
 			it("should not break if the issue has a null body", async () => {
-				const fixture = require("../../../../test/fixtures/issue-null-body.json");
+				const fixture = require("../../../common/test-utils/fixtures/issue-null-body.json");
 				// should not throw
 				await expect(app.receive(fixture)).toResolve();
 			});

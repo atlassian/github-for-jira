@@ -13,7 +13,7 @@ describe.skip("GitHub Actions", () => {
 		});
 
 		it("should add push event to the queue if Jira issue keys are present", async () => {
-			const event = require("../../../../test/fixtures/push-basic.json");
+			const event = require("../../../common/test-utils/fixtures/push-basic.json");
 
 			await expect(app.receive(event)).toResolve();
 
@@ -138,7 +138,7 @@ describe.skip("GitHub Actions", () => {
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
-				.replyWithFile(200, "../../../../test/fixtures/more-than-10-files.json");
+				.replyWithFile(200, "../../../common/test-utils/fixtures/more-than-10-files.json");
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -249,7 +249,7 @@ describe.skip("GitHub Actions", () => {
 		// transitions automatially based on the commit message, but we may
 		// use them elsewhere for manual transitions
 		// it('should run a #comment command in the commit message', async () => {
-		//   const fixture = require('../../../../test/fixtures/push-comment.json')
+		//   const fixture = require('../../../common/test-utils/fixtures/push-comment.json')
 
 		//   await expect(app.receive(fixture)).toResolve()
 
@@ -342,7 +342,7 @@ describe.skip("GitHub Actions", () => {
 		});
 
 		it("should support commits without smart commands", async () => {
-			const fixture = require("../../../../test/fixtures/push-empty.json");
+			const fixture = require("../../../common/test-utils/fixtures/push-empty.json");
 			// match any post calls
 			jiraNock.post(/.*/).reply(200);
 
