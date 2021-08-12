@@ -21,14 +21,6 @@ Object {
       Object {
         "conditions": Array [
           Object {
-            "condition": "addon_property_exists",
-            "invert": true,
-            "params": Object {
-              "objectKey": "has-repos",
-              "propertyKey": "configuration",
-            },
-          },
-          Object {
             "condition": "user_is_admin",
           },
         ],
@@ -75,14 +67,6 @@ Object {
     "postInstallPage": Object {
       "conditions": Array [
         Object {
-          "condition": "addon_property_exists",
-          "invert": true,
-          "params": Object {
-            "objectKey": "has-repos",
-            "propertyKey": "configuration",
-          },
-        },
-        Object {
           "condition": "user_is_admin",
         },
       ],
@@ -113,8 +97,6 @@ Object {
   },
 }
 `;
-
-exports[`Maintenance Frontend Maintenance should return 503 for any frontend routes 1`] = `Object {}`;
 
 exports[`Maintenance Frontend Maintenance should return maintenance page on '/maintenance' even if maintenance mode is off 1`] = `Object {}`;
 
