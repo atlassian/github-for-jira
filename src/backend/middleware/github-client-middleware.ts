@@ -1,4 +1,4 @@
-import GithubAPI from "../config/github-api";
+import GithubAPI from "../../config/github-api";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import { App } from "@octokit/app";
 import { GitHubAPI } from "probot";

@@ -1,6 +1,6 @@
 import { jiraDomainOptions } from "./validations";
 import { NextFunction, Request, Response } from "express";
-import { getGitHubConfigurationUrl } from "../common/getUrl";
+import { getGitHubConfigurationUrl } from "../../common/getUrl";
 
 /*
 When this request is made: Installing from Jira Marketplace - GitHub org does not have Jira installed.

@@ -2,7 +2,7 @@
 import jwt from "atlassian-jwt";
 import { mocked } from "ts-jest/utils";
 import { Installation } from "../../../src/backend/models";
-import verifyJiraMiddleware from "../../../src/frontend/verify-jira-middleware";
+import verifyJiraMiddleware from "../../../src/backend/middleware/verify-jira-middleware";
 
 jest.mock("../../../src/backend/models");
 

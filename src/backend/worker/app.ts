@@ -4,7 +4,7 @@
 
 import { Application, createProbot } from "probot";
 import { findPrivateKey } from "probot/lib/private-key";
-import healthcheck from "../../frontend/healthcheck";
+import healthcheck from "../middleware/healthcheck";
 import { overrideProbotLoggingMethods } from "../../config/logger";
 
 export const probot = createProbot({

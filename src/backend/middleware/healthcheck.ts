@@ -1,9 +1,9 @@
 import Redis from "ioredis";
-import getRedisInfo from "../config/redis-info";
-import { elapsedTimeMetrics } from "../config/statsd";
+import getRedisInfo from "../../config/redis-info";
+import { elapsedTimeMetrics } from "../../config/statsd";
 import express, { Response } from "express";
-import { getLogger } from "../config/logger";
-import { sequelize } from "../backend/models/sequelize";
+import { getLogger } from "../../config/logger";
+import { sequelize } from "../models/sequelize";
 
 const router = express.Router();
 const cache = new Redis(getRedisInfo("ping").redisOptions);

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import webhookTimeout from "../../src/middleware/webhook-timeout";
+import webhookTimeout from "../../src/backend/middleware/webhook-timeout";
 
 describe("Webhook Timeout", () => {
 

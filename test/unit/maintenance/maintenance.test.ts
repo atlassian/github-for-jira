@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import express, { Express } from "express";
-import healthcheck from "../../../src/frontend/healthcheck";
-import setupFrontend from "../../../src/frontend/app";
+import healthcheck from "../../../src/backend/middleware/healthcheck";
+import setupFrontend from "../../../src/backend/app";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { when } from "jest-when";
 

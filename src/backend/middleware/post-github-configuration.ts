@@ -1,7 +1,7 @@
-import { ActionFromSubscription, ActionSource, ActionType } from "../backend/proto/v0/action";
-import { submitProto } from "../backend/tracking";
-import { Installation, Subscription } from "../backend/models";
-import { getHashedKey } from "../backend/models/installation";
+import { ActionFromSubscription, ActionSource, ActionType } from "../proto/v0/action";
+import { submitProto } from "../tracking";
+import { Installation, Subscription } from "../models";
+import { getHashedKey } from "../models/installation";
 import { Request, Response } from "express";
 
 /**

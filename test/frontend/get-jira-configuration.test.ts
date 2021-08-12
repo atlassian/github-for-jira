@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { mocked } from "ts-jest/utils";
-import getJiraConfiguration from "../../src/frontend/get-jira-configuration";
+import getJiraConfiguration from "../../src/backend/middleware/get-jira-configuration";
 import { Installation, Subscription } from "../../src/backend/models";
 
 jest.mock("../../src/backend/models");

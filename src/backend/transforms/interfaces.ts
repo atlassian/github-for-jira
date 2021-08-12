@@ -1,3 +1,13 @@
+export interface GitHubPullRequest {
+	head: {
+		sha: string;
+		repo: {
+			url: string;
+		};
+		ref: string;
+	};
+}
+
 export interface JiraPullRequest {
 	commit: {
 		id: string;
@@ -9,7 +19,7 @@ export interface JiraPullRequest {
 	}
 }
 
-export interface JiraBuild {
+interface JiraBuild {
 	schemaVersion: string;
 	pipelineId: string;
 	buildNumber: number;
@@ -54,7 +64,7 @@ export interface JiraCommitData {
 	updateSequenceId: number;
 }
 
-export interface JiraDeployment {
+interface JiraDeployment {
 	schemaVersion: string;
 	deploymentSequenceNumber: number;
 	updateSequenceNumber: number;

@@ -1,4 +1,4 @@
-import { getLogger } from "../config/logger";
+import { getLogger } from "../../config/logger";
 import { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import { v4 as uuidv4 } from "uuid";

@@ -5,13 +5,13 @@ import RedisStore from "rate-limit-redis";
 import { createAppAuth } from "@octokit/auth-app";
 import { findPrivateKey } from "probot/lib/private-key";
 import getRedisInfo from "../config/redis-info";
-import setupFrontend from "../frontend";
+import setupFrontend from "./middleware";
 import setupGitHub from "./github";
 import statsd from "../config/statsd";
 import { isIp4InCidrs } from "../config/cidr-validator";
 import Logger from "bunyan";
 import { metricError } from "../config/metric-names";
-import logMiddleware from "../middleware/log-middleware";
+import logMiddleware from "./middleware/log-middleware";
 
 
 import { getLogger } from "../config/logger";

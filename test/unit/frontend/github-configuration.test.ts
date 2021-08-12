@@ -3,7 +3,7 @@ import supertest from "supertest";
 import testTracking from "../../setup/tracking";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/backend/models";
-import FrontendApp from "../../../src/frontend/app";
+import FrontendApp from "../../../src/backend/app";
 
 jest.mock("../../../src/backend/models");
 

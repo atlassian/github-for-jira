@@ -1,4 +1,4 @@
-import { Subscription } from "../backend/models";
+import { Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {

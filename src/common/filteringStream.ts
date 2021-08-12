@@ -1,5 +1,5 @@
 import { Writable } from "stream";
-import { middlewareLoggerName } from "../middleware/log-middleware";
+import { middlewareLoggerName } from "../backend/middleware/log-middleware";
 
 /**
  * Creates a writable stream that prevents HTTP logs from being logged

@@ -1,4 +1,4 @@
-import { isAdmin } from "../../../src/frontend/github-client-middleware";
+import { isAdmin } from "../../../src/backend/middleware/github-client-middleware";
 import GitHubAPI from "../../../src/config/github-api";
 import logger from "../../../src/config/logger";
 

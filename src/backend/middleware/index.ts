@@ -1,6 +1,6 @@
 import sslify from "express-sslify";
 import helmet from "helmet";
-import getFrontendApp from "./app";
+import getFrontendApp from "../app";
 import { Application } from "probot";
 import { Express, NextFunction, Request, Response, Router } from "express";
 import crypto from "crypto";

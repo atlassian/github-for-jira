@@ -1,4 +1,4 @@
-import { CustomContext } from "../backend/github/middleware";
+import { CustomContext } from "../github/middleware";
 
 const DEFAULT_TIMEOUT = Number(process.env.REQUEST_TIMEOUT_MS) || 25000;
 
