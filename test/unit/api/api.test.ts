@@ -5,7 +5,7 @@ import Logger from "bunyan";
 import nock from "nock";
 import { Installation, Subscription } from "../../../src/backend/models";
 import { mocked } from "ts-jest/utils";
-import { mockModels } from "../../utils/models";
+import { mockModels } from "../../../src/common/mocks/models";
 import api from "../../../src/backend/api";
 import { EnvironmentEnum } from "../../../src/config/env";
 

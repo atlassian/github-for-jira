@@ -4,7 +4,7 @@ import { branchesNoLastCursor, branchesWithLastCursor } from "../../fixtures/api
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../../src/backend/models";
 import { Application } from "probot";
-import { createWebhookApp } from "../../utils/probot";
+import { createWebhookApp } from "../../../src/common/test-utils/probot";
 import createJob from "../../setup/create-job";
 import { processInstallation } from "../../../src/backend/sync/installation";
 import nock from "nock";

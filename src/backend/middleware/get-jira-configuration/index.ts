@@ -1,10 +1,10 @@
 import format from "date-fns/format";
 import moment from "moment";
-import { Subscription } from "../models";
+import { Subscription } from "../../models";
 import { NextFunction, Request, Response } from "express";
-import statsd from "../../config/statsd";
-import { metricSyncStatus } from "../../config/metric-names";
-import { getLogger } from "../../config/logger";
+import statsd from "../../../config/statsd";
+import { metricSyncStatus } from "../../../config/metric-names";
+import { getLogger } from "../../../config/logger";
 import * as Sentry from "@sentry/node";
 
 const logger = getLogger("get.jira.configuration");

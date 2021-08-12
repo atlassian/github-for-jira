@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { createWebhookApp } from "../utils/probot";
+import { createWebhookApp } from "../../src/common/test-utils/probot";
 
 describe("GitHub Actions", () => {
 	let app;

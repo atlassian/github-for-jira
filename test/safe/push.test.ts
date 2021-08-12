@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import nock from "nock";
 import { createJobData, processPush } from "../../src/backend/transforms/push";
-import { createWebhookApp } from "../utils/probot";
+import { createWebhookApp } from "../../src/common/test-utils/probot";
 
 describe.skip("GitHub Actions", () => {
 	let app;

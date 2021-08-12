@@ -2,7 +2,7 @@
 
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../../src/backend/models";
-import { createWebhookApp } from "../../utils/probot";
+import { createWebhookApp } from "../../../src/common/test-utils/probot";
 import { Application } from "probot";
 import createJob from "../../setup/create-job";
 import { processInstallation } from "../../../src/backend/sync/installation";

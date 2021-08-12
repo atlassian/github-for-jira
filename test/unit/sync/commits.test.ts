@@ -5,7 +5,7 @@ import { Subscription } from "../../../src/backend/models";
 import { processInstallation } from "../../../src/backend/sync/installation";
 import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
-import { createApplication } from "../../utils/probot";
+import { createApplication } from "../../../src/common/test-utils/probot";
 import nock from "nock";
 
 jest.mock("../../../src/backend/models");
