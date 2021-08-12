@@ -11,7 +11,7 @@ describe("pull_request transform", () => {
 
 	it("should send the ghost user to Jira when GitHub user has been deleted", async () => {
 		const pullRequestList = JSON.parse(
-			JSON.stringify(require("../../../../../test/fixtures/api/pull-request-list.json"))
+			JSON.stringify(require("../../../../common/test-utils/fixtures/api/pull-request-list.json"))
 		);
 
 		pullRequestList[0].title = "[TES-123] Evernote Test";

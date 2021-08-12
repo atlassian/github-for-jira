@@ -5,7 +5,7 @@ import { getJiraId } from ".";
 
 describe("Jira util", () => {
 	function loadFixture(name) {
-		const base = path.join(__dirname, "../../../test/fixtures/text", name);
+		const base = path.join(__dirname, "../../common/test-utils/fixtures/text", name);
 		const source = fs
 			.readFileSync(`${base}.source.md`)
 			.toString("utf-8")

@@ -3,7 +3,7 @@ import transformPullRequest from ".";
 
 describe("pull_request transform", () => {
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
-		const pullRequestList = require("../../../../test/fixtures/api/transform-pull-request-list.json");
+		const pullRequestList = require("../../../common/test-utils/fixtures/api/transform-pull-request-list.json");
 
 		pullRequestList[0].title = "[TES-123] Branch payload Test";
 
@@ -65,7 +65,7 @@ describe("pull_request transform", () => {
 	it("should contain branches on the payload if pull request status is different than closed.", async () => {
 		const pullRequestList = JSON.parse(
 			JSON.stringify(
-				require("../../../../test/fixtures/api/transform-pull-request-list.json")
+				require("../../../common/test-utils/fixtures/api/transform-pull-request-list.json")
 			)
 		);
 

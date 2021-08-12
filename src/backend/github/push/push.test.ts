@@ -66,11 +66,11 @@ describe.skip("GitHub Actions", () => {
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../../../../test/fixtures/api/commit-no-username.json");
+				.replyWithFile(200, "../../../commont/test-utils/fixtures/api/commit-no-username.json");
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../../../../test/fixtures/api/commit-no-username.json");
+				.replyWithFile(200, "../../../commont/test-utils/fixtures/api/commit-no-username.json");
 
 			await expect(processPush(app)(job)).toResolve();
 
