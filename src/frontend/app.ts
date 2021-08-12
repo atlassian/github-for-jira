@@ -172,8 +172,10 @@ export default (octokitApp: App): Express => {
 
 	// Maintenance mode view
 	app.use(async (req, res, next) => {
-		const maintenanceMode = await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost);
-		maintenanceMode ? getMaintenance(req, res) : next();
+		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost)) {
+			return getMaintenance(req, res);
+		}
+		next();
 	});
 
 	app.get("/maintenance", csrfProtection, getMaintenance);
