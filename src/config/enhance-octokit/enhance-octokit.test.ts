@@ -1,5 +1,5 @@
-import GitHubAPI from "../../../src/config/github-api";
-import enhanceOctokit from "../../../src/config/enhance-octokit";
+import GitHubAPI from "../github-api";
+import enhanceOctokit from ".";
 
 describe("enhanceOctokit", () => {
 	describe.skip("request metrics", () => {

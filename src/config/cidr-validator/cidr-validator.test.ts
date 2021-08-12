@@ -1,4 +1,4 @@
-import { isIp4InCidrs } from "../../../src/config/cidr-validator";
+import { isIp4InCidrs } from ".";
 
 describe("cidr-validator", () => {
 	test.each([

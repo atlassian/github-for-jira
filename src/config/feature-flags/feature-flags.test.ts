@@ -15,7 +15,7 @@ describe("Feature Flag", () => {
 
 		// We're importing featureFlags only after mocking LaunchDarkly.init(), so
 		// that LaunchDarkly.init() is called on the mock and not on the real thing.
-		featureFlags = await import("../../../src/config/feature-flags")
+		featureFlags = await import(".")
 	}
 
 	it("returns true when LaunchDarkly returns true", async () => {

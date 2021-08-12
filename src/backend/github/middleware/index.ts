@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as Sentry from "@sentry/node";
 
-import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
-import SentryScopeProxy from "../models/sentry-scope-proxy";
-import { Subscription } from "../models";
-import getJiraClient from "../jira/client";
-import getJiraUtil from "../../common";
-import enhanceOctokit from "../../config/enhance-octokit";
+import AxiosErrorEventDecorator from "../../models/axios-error-event-decorator";
+import SentryScopeProxy from "../../models/sentry-scope-proxy";
+import { Subscription } from "../../models";
+import getJiraClient from "../../jira/client";
+import getJiraUtil from "../../../common";
+import enhanceOctokit from "../../../config/enhance-octokit";
 import { Context } from "probot/lib/context";
-import { booleanFlag, BooleanFlags } from "../../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.

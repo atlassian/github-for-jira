@@ -1,8 +1,8 @@
-import OctokitError from "../backend/models/octokit-error";
-import statsd from "./statsd";
-import { extractPath } from "../backend/jira/client/axios";
+import OctokitError from "../../backend/models/octokit-error";
+import statsd from "../statsd";
+import { extractPath } from "../../backend/jira/client/axios";
 import { GitHubAPI } from "probot";
-import { metricHttpRequest } from "./metric-names";
+import { metricHttpRequest } from "../metric-names";
 
 const instrumentRequests = (octokit: GitHubAPI) => {
 	octokit.hook.wrap("request", async (request, options) => {

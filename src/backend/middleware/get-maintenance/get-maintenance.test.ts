@@ -1,11 +1,11 @@
 import supertest from "supertest";
 import express, { Express } from "express";
-import healthcheck from "../../../src/backend/middleware/healthcheck";
-import setupFrontend from "../../../src/backend/app";
-import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
+import healthcheck from "../healthcheck";
+import setupFrontend from "../../app";
+import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 import { when } from "jest-when";
 
-jest.mock("../../../src/config/feature-flags");
+jest.mock("../../config/feature-flags");
 
 describe("Maintenance", () => {
 	let app: Express;
