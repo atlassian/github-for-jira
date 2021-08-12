@@ -133,7 +133,7 @@ export default (octokitApp: App): Express => {
 		syncStatus === "COMPLETE" ? "Connected" : "Connect"
 	);
 
-	app.use("/public", express.static(path.join(rootPath, "static")));
+	app.use("/public", express.static(path.join(rootPath, "public")));
 	app.use(
 		"/public/css-reset",
 		express.static(
