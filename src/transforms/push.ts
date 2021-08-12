@@ -1,7 +1,7 @@
 import { Subscription } from "../backend/models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
+import { isEmpty } from "../common/isEmpty";
 import { queues } from "../worker/main";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";

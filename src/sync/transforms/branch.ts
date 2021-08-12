@@ -1,6 +1,6 @@
-import { getJiraId } from "../../jira/util/id";
+import { getJiraId } from "../../common/id";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../../jira/util/isEmpty";
+import { isEmpty } from "../../common/isEmpty";
 
 // TODO: better typing in file
 /**

@@ -1,6 +1,6 @@
 import Logger, { levelFromName } from "bunyan";
 import bformat from "bunyan-format";
-import filteringStream from "../util/filteringStream";
+import filteringStream from "../common/filteringStream";
 
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.

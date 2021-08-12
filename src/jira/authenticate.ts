@@ -1,5 +1,5 @@
 import { Installation } from "../backend/models";
-import { hasValidJwt } from "./util/jwt";
+import { hasValidJwt } from "../common/jwt";
 import { NextFunction, Request, Response } from "express";
 
 export default async (

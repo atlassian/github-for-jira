@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import getJiraUtil from "../../../src/jira/util";
-import { getJiraId } from "../../../src/jira/util/id";
+import getJiraUtil from "../../../src/common";
+import { getJiraId } from "../../../src/common/id";
 
 describe("Jira util", () => {
 	function loadFixture(name) {

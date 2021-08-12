@@ -1,6 +1,6 @@
 import transformPullRequest from "../transforms/pull-request";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
+import { isEmpty } from "../common/isEmpty";
 
 import { Context } from "probot/lib/context";
 

@@ -1,6 +1,6 @@
 import { GitHubAPI } from "probot";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../../jira/util/isEmpty";
+import { isEmpty } from "../../common/isEmpty";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {

@@ -1,6 +1,6 @@
 import { jiraDomainOptions, validJiraDomains } from "./validations";
 import { Request, Response } from "express";
-import { getJiraMarketplaceUrl } from "../util/getUrl";
+import { getJiraMarketplaceUrl } from "../common/getUrl";
 
 /*
 When this request is made: Installing from GitHub marketplace.

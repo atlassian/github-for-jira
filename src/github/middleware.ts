@@ -5,7 +5,7 @@ import AxiosErrorEventDecorator from "../backend/models/axios-error-event-decora
 import SentryScopeProxy from "../backend/models/sentry-scope-proxy";
 import { Subscription } from "../backend/models";
 import getJiraClient from "../jira/client";
-import getJiraUtil from "../jira/util";
+import getJiraUtil from "../common";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";

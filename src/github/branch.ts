@@ -1,7 +1,7 @@
 import transformBranch from "../transforms/branch";
 import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
+import { isEmpty } from "../common/isEmpty";
 
 export const createBranch = async (context: Context, jiraClient) => {
 	const { data: jiraPayload } = await transformBranch(context);
