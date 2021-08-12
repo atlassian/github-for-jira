@@ -1,5 +1,5 @@
-import { ActionFromInstallation, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
+import { ActionFromInstallation, ActionSource, ActionType } from "../../proto/v0/action";
+import { submitProto } from "../../tracking";
 import { Request, Response } from "express";
 
 /**

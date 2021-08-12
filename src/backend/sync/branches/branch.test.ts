@@ -15,11 +15,11 @@ describe.skip("sync/branches", () => {
 	const installationId = 1234;
 	let delay;
 	let app: Application;
-	const branchNodesFixture = require("../../fixtures/api/graphql/branch-ref-nodes.json");
-	const emptyNodesFixture = require("../../fixtures/api/graphql/branch-empty-nodes.json");
-	const branchCommitsHaveKeys = require("../../fixtures/api/graphql/branch-commits-have-keys.json");
-	const associatedPRhasKeys = require("../../fixtures/api/graphql/branch-associated-pr-has-keys.json");
-	const branchNoIssueKeys = require("../../fixtures/api/graphql/branch-no-issue-keys.json");
+	const branchNodesFixture = require("../../test/fixtures/api/graphql/branch-ref-nodes.json");
+	const emptyNodesFixture = require("../../test/fixtures/api/graphql/branch-empty-nodes.json");
+	const branchCommitsHaveKeys = require("../../test/fixtures/api/graphql/branch-commits-have-keys.json");
+	const associatedPRhasKeys = require("../../test/fixtures/api/graphql/branch-associated-pr-has-keys.json");
+	const branchNoIssueKeys = require("../../test/fixtures/api/graphql/branch-no-issue-keys.json");
 
 	function makeExpectedResponse({ branchName }) {
 		const issueKeys = issueKeyParser().parse(branchName);

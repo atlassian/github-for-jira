@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { Repositories, SyncStatus } from "../models/subscription";
-import { Subscription } from "../models";
-import getJiraClient from "../jira/client";
-import { getRepositorySummary } from "./jobs";
-import enhanceOctokit from "../../config/enhance-octokit";
-import statsd from "../../config/statsd";
-import getPullRequests from "./pull-requests";
-import getBranches from "./branches";
-import getCommits from "./commits";
+import SubscriptionClass, { Repositories, SyncStatus } from "../../models/subscription";
+import { Subscription } from "../../models";
+import getJiraClient from "../../jira/client";
+import { getRepositorySummary } from "../jobs";
+import enhanceOctokit from "../../../config/enhance-octokit";
+import statsd from "../../../config/statsd";
+import getPullRequests from "../pull-requests";
+import getBranches from "../branches";
+import getCommits from "../commits";
 import { Application } from "probot";
-import { metricHttpRequest, metricSyncStatus } from "../../config/metric-names";
-import { getLogger } from "../../config/logger";
+import { metricHttpRequest, metricSyncStatus } from "../../../config/metric-names";
+import { getLogger } from "../../../config/logger";
 
 const logger = getLogger("sync.installation");
 

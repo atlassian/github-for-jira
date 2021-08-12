@@ -1,4 +1,4 @@
-import getJiraAxios from "../../../../src/backend/jira/client/axios";
+import getJiraAxios from "../../../jira/client/axios";
 
 describe("Jira axios instance", () => {
 

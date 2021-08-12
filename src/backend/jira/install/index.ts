@@ -1,9 +1,9 @@
-import { ActionFromInstallation, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
-import { Installation } from "../models";
+import { ActionFromInstallation, ActionSource, ActionType } from "../../proto/v0/action";
+import { submitProto } from "../../tracking";
+import { Installation } from "../../models";
 import { Request, Response } from "express";
-import statsd from "../../config/statsd";
-import { metricHttpRequest } from "../../config/metric-names";
+import statsd from "../../../config/statsd";
+import { metricHttpRequest } from "../../../config/metric-names";
 
 /**
  * Handle the install webhook from Jira

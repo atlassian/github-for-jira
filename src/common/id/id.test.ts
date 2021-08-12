@@ -1,11 +1,11 @@
 import fs from "fs";
 import path from "path";
-import getJiraUtil from "../../../src/common";
-import { getJiraId } from "../../../src/common/id";
+import getJiraUtil from "..";
+import { getJiraId } from ".";
 
 describe("Jira util", () => {
 	function loadFixture(name) {
-		const base = path.join(__dirname, "../../fixtures/text", name);
+		const base = path.join(__dirname, "../../../test/fixtures/text", name);
 		const source = fs
 			.readFileSync(`${base}.source.md`)
 			.toString("utf-8")

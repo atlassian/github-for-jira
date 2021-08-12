@@ -1,9 +1,9 @@
-import { ActionFromInstallation, ActionFromSubscription, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
-import { Subscription } from "../models";
+import { ActionFromInstallation, ActionFromSubscription, ActionSource, ActionType } from "../../proto/v0/action";
+import { submitProto } from "../../tracking";
+import { Subscription } from "../../models";
 import { Request, Response } from "express";
-import statsd from "../../config/statsd";
-import { metricHttpRequest } from "../../config/metric-names";
+import statsd from "../../../config/statsd";
+import { metricHttpRequest } from "../../../config/metric-names";
 
 /**
  * Handle the uninstall webhook from Jira

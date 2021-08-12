@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
-import { getHashedKey } from "../../../src/backend/models/installation";
+import testTracking from "../../../../test/setup/tracking";
+import { getHashedKey } from "../../models/installation";
 import { mocked } from "ts-jest/utils";
-import { Subscription } from "../../../src/backend/models";
-import uninstall from "../../../src/backend/jira/uninstall";
+import { Subscription } from "../../models";
+import uninstall from ".";
 
-jest.mock("../../../src/backend/models");
+jest.mock("../../models");
 
 describe("Webhook: /events/uninstalled", () => {
 	let installation;

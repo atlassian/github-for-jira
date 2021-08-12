@@ -1,7 +1,7 @@
-import { ActionFromInstallation, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
-import { Installation } from "../models";
-import verifyInstallation from "./verify-installation";
+import { ActionFromInstallation, ActionSource, ActionType } from "../../proto/v0/action";
+import { submitProto } from "../../tracking";
+import { Installation } from "../../models";
+import verifyInstallation from "../verify-installation";
 import { Request, Response } from "express";
 
 /**

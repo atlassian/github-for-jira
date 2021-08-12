@@ -15,11 +15,11 @@ describe.skip("sync/commits", () => {
 	let delay;
 	let app: Application;
 
-	const defaultBranchFixture = require("../../fixtures/api/graphql/default-branch.json");
-	const commitNodesFixture = require("../../fixtures/api/graphql/commit-nodes.json");
-	const mixedCommitNodes = require("../../fixtures/api/graphql/commit-nodes-mixed.json");
-	const defaultBranchNullFixture = require("../../fixtures/api/graphql/default-branch-null.json");
-	const commitsNoKeys = require("../../fixtures/api/graphql/commit-nodes-no-keys.json");
+	const defaultBranchFixture = require("../../test/fixtures/api/graphql/default-branch.json");
+	const commitNodesFixture = require("../../test/fixtures/api/graphql/commit-nodes.json");
+	const mixedCommitNodes = require("../../test/fixtures/api/graphql/commit-nodes-mixed.json");
+	const defaultBranchNullFixture = require("../../test/fixtures/api/graphql/default-branch-null.json");
+	const commitsNoKeys = require("../../test/fixtures/api/graphql/commit-nodes-no-keys.json");
 
 	beforeEach(async () => {
 		// TODO: move this into utils to easily construct mock data

@@ -70,7 +70,7 @@ describe.skip("sync/pull-request", () => {
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 			const job = createJob({ data: { installationId, jiraHost } });
 
-			const pullRequestList = require("../../fixtures/api/pull-request-list.json");
+			const pullRequestList = require("../../test/fixtures/api/pull-request-list.json");
 			pullRequestList[0].title = title;
 			pullRequestList[0].head.ref = head;
 
@@ -138,7 +138,7 @@ describe.skip("sync/pull-request", () => {
 		process.env.LIMITER_PER_INSTALLATION = "2000";
 		const job = createJob({ data: { installationId, jiraHost }, opts: { delay: 2000 } });
 
-		const data = require("../../fixtures/api/pull-request-list.json");
+		const data = require("../../test/fixtures/api/pull-request-list.json");
 		githubNock.get("/repos/integrations/test-repo-name/pulls")
 			.query(true)
 			.reply(200, data);

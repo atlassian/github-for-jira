@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
-import install from "../../../src/backend/jira/install";
+import testTracking from "../../../../test/setup/tracking";
+import install from ".";
 import { mocked } from "ts-jest/utils";
-import { Installation } from "../../../src/backend/models";
+import { Installation } from "../../models";
 
-jest.mock("../../../src/backend/models");
+jest.mock("../../models");
 
 describe("Webhook: /events/installed", () => {
 	let installation;
