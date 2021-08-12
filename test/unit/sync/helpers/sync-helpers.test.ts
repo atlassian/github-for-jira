@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { sortedRepos } from "../../../../src/sync/installation";
+import { sortedRepos } from "../../../../src/backend/sync/installation";
 
 describe("Sync helpers suite", () => {
 	const repoSyncState = require("../../../fixtures/repo-sync-state.json");

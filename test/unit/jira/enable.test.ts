@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import testTracking from "../../setup/tracking";
-import enable from "../../../src/jira/enable";
+import enable from "../../../src/backend/jira/enable";
 import { Installation } from "../../../src/backend/models";
 import { mocked } from "ts-jest/utils";
 

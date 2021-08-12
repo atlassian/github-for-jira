@@ -6,7 +6,7 @@ import { Subscription } from "../../../src/backend/models";
 import { Application } from "probot";
 import { createWebhookApp } from "../../utils/probot";
 import createJob from "../../setup/create-job";
-import { processInstallation } from "../../../src/sync/installation";
+import { processInstallation } from "../../../src/backend/sync/installation";
 import nock from "nock";
 
 jest.mock("../../../src/backend/models");

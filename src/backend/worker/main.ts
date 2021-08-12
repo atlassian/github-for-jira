@@ -3,8 +3,8 @@ import Queue, { QueueOptions } from "bull";
 import * as Sentry from "@sentry/node";
 import Redis from "ioredis";
 
-import { discovery } from "../../sync/discovery";
-import { processInstallation } from "../../sync/installation";
+import { discovery } from "../sync/discovery";
+import { processInstallation } from "../sync/installation";
 import { processPush } from "../transforms/push";
 import metricsJob from "./metrics-job";
 import statsd from "../../config/statsd";

@@ -1,5 +1,5 @@
 import { Subscription } from "../models";
-import getJiraClient from "../../jira/client";
+import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../../common/isEmpty";
 import { queues } from "../worker/main";

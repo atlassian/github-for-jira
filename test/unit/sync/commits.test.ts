@@ -2,7 +2,7 @@
 import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../fixtures/api/graphql/commit-queries";
 import createJob from "../../setup/create-job";
 import { Subscription } from "../../../src/backend/models";
-import { processInstallation } from "../../../src/sync/installation";
+import { processInstallation } from "../../../src/backend/sync/installation";
 import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
 import { createApplication } from "../../utils/probot";

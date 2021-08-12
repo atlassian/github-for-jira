@@ -2,7 +2,7 @@ import { logger } from "probot/lib/logger";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/backend/models";
 import GitHubAPI from "../../../src/config/github-api";
-import middleware from "../../../src/github/middleware";
+import middleware from "../../../src/backend/github/middleware";
 import { mockModels } from "../../utils/models";
 
 jest.mock("../../../src/backend/models");

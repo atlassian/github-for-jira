@@ -1,7 +1,7 @@
 import { ActionFromSubscription, ActionSource, ActionType } from "../backend/proto/v0/action";
-import { submitProto } from "../tracking";
+import { submitProto } from "../backend/tracking";
 import { Subscription } from "../backend/models";
-import getJiraClient from "../jira/client";
+import getJiraClient from "../backend/jira/client";
 import { Request, Response } from "express";
 
 /**

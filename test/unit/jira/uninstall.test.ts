@@ -3,7 +3,7 @@ import testTracking from "../../setup/tracking";
 import { getHashedKey } from "../../../src/backend/models/installation";
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../../src/backend/models";
-import uninstall from "../../../src/jira/uninstall";
+import uninstall from "../../../src/backend/jira/uninstall";
 
 jest.mock("../../../src/backend/models");
 

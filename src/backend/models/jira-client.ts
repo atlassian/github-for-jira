@@ -1,4 +1,4 @@
-import getAxiosInstance from "../../jira/client/axios";
+import getAxiosInstance from "../jira/client/axios";
 import { AxiosInstance } from "axios";
 import Installation from "./installation";
 import Logger from "bunyan";

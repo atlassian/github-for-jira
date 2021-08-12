@@ -6,7 +6,7 @@ import { createAppAuth } from "@octokit/auth-app";
 import { findPrivateKey } from "probot/lib/private-key";
 import getRedisInfo from "../config/redis-info";
 import setupFrontend from "../frontend";
-import setupGitHub from "../github";
+import setupGitHub from "./github";
 import statsd from "../config/statsd";
 import { isIp4InCidrs } from "../config/cidr-validator";
 import Logger from "bunyan";

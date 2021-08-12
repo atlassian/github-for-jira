@@ -1,5 +1,5 @@
 import { ActionFromSubscription, ActionSource, ActionType } from "../backend/proto/v0/action";
-import { submitProto } from "../tracking";
+import { submitProto } from "../backend/tracking";
 import { Installation, Subscription } from "../backend/models";
 import { Request, Response } from "express";
 

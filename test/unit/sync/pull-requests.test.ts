@@ -5,7 +5,7 @@ import { Subscription } from "../../../src/backend/models";
 import { createWebhookApp } from "../../utils/probot";
 import { Application } from "probot";
 import createJob from "../../setup/create-job";
-import { processInstallation } from "../../../src/sync/installation";
+import { processInstallation } from "../../../src/backend/sync/installation";
 import nock from "nock";
 import { RepoSyncState } from "../../../src/backend/models/subscription";
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import transformPullRequest from "../../../../src/sync/transforms/pull-request";
+import transformPullRequest from "../../../../src/backend/sync/transforms/pull-request";
 
 describe("pull_request transform", () => {
 

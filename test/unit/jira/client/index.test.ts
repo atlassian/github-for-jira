@@ -1,5 +1,5 @@
 import { Installation } from "../../../../src/backend/models";
-import getJiraClient from "../../../../src/jira/client";
+import getJiraClient from "../../../../src/backend/jira/client";
 
 describe("Test getting a jira client", () => {
 	const BASE_URL = "https://base-url.atlassian.net";

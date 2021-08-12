@@ -4,7 +4,7 @@ import nock from "nock";
 import { Installation, Subscription } from "../../../src/backend/models";
 import { mocked } from "ts-jest/utils";
 import deleteSubscription from "../../../src/frontend/delete-github-subscription";
-import { isDisabled, setIsDisabled } from "../../../src/tracking";
+import { isDisabled, setIsDisabled } from "../../../src/backend/tracking";
 
 jest.mock("../../../src/backend/models");
 
