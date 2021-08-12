@@ -1,5 +1,5 @@
 import { Context } from "probot/lib/context";
-import JiraClient from "../models/jira-client";
+import JiraClient from "../../models/jira-client";
 
 export default async (context: Context, _: JiraClient, util) => {
 	const { comment } = context.payload;

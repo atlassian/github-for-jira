@@ -1,5 +1,5 @@
-import { CustomContext } from "./middleware";
-import JiraClient from "../models/jira-client";
+import { CustomContext } from "../middleware";
+import JiraClient from "../../models/jira-client";
 
 export default async (context: CustomContext, _: JiraClient, util) => {
 	const { issue } = context.payload;

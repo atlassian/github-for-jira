@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { createWebhookApp } from "../../src/common/test-utils/probot";
+import { createWebhookApp } from "../../../common/test-utils/probot";
 
 describe("GitHub Actions", () => {
 	let app;
@@ -7,7 +7,7 @@ describe("GitHub Actions", () => {
 
 	describe("deployment_status", () => {
 		it("should update the Jira issue with the linked GitHub deployment", async () => {
-			const fixture = require("../fixtures/deployment-basic.json");
+			const fixture = require("../../../../test/fixtures/deployment-basic.json");
 
 			githubNock
 				.get("/users/test-workflow-run-user-login")

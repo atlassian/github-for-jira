@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import nock from "nock";
-import { createJobData, processPush } from "../../src/backend/transforms/push";
-import { createWebhookApp } from "../../src/common/test-utils/probot";
+import { createJobData, processPush } from "../../transforms/push";
+import { createWebhookApp } from "../../../common/test-utils/probot";
 
 describe.skip("GitHub Actions", () => {
 	let app;
@@ -13,7 +13,7 @@ describe.skip("GitHub Actions", () => {
 		});
 
 		it("should add push event to the queue if Jira issue keys are present", async () => {
-			const event = require("../fixtures/push-basic.json");
+			const event = require("../../../../test/fixtures/push-basic.json");
 
 			await expect(app.receive(event)).toResolve();
 
@@ -30,12 +30,12 @@ describe.skip("GitHub Actions", () => {
 		});
 
 		it("should not add push event to the queue if there are no Jira issue keys present", async () => {
-			const event = require("../fixtures/push-no-issues.json");
+			const event = require("../../../../test/fixtures/push-no-issues.json");
 			await app.receive(event);
 		});
 
 		it("should handle payloads where only some commits have issue keys", async () => {
-			const event = require("../fixtures/push-mixed.json");
+			const event = require("../../../../test/fixtures/push-mixed.json");
 			await app.receive(event);
 			// TODO: fix this queues.
 			const queues = [];
@@ -59,18 +59,18 @@ describe.skip("GitHub Actions", () => {
 		});
 
 		it("should update the Jira issue when no username is present", async () => {
-			const event = require("../fixtures/push-no-username.json");
+			const event = require("../../../../test/fixtures/push-no-username.json");
 			const job = {
 				data: createJobData(event.payload, process.env.ATLASSIAN_URL)
 			};
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../fixtures/api/commit-no-username.json");
+				.replyWithFile(200, "../../../../test/fixtures/api/commit-no-username.json");
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../fixtures/api/commit-no-username.json");
+				.replyWithFile(200, "../../../../test/fixtures/api/commit-no-username.json");
 
 			await expect(processPush(app)(job)).toResolve();
 
@@ -131,14 +131,14 @@ describe.skip("GitHub Actions", () => {
 		});
 
 		it("should only send 10 files if push contains more than 10 files changed", async () => {
-			const event = require("../fixtures/push-multiple.json");
+			const event = require("../../../../test/fixtures/push-multiple.json");
 			const job = {
 				data: createJobData(event.payload, process.env.ATLASSIAN_URL)
 			};
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
-				.replyWithFile(200, "../fixtures/more-than-10-files.json");
+				.replyWithFile(200, "../../../../test/fixtures/more-than-10-files.json");
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -249,7 +249,7 @@ describe.skip("GitHub Actions", () => {
 		// transitions automatially based on the commit message, but we may
 		// use them elsewhere for manual transitions
 		// it('should run a #comment command in the commit message', async () => {
-		//   const fixture = require('../fixtures/push-comment.json')
+		//   const fixture = require('../../../../test/fixtures/push-comment.json')
 
 		//   await expect(app.receive(fixture)).toResolve()
 
@@ -259,7 +259,7 @@ describe.skip("GitHub Actions", () => {
 		// })
 
 		// it('should run a #time command in the commit message', async () => {
-		//   const fixture = require('../fixtures/push-worklog.json')
+		//   const fixture = require('../../../../test/fixtures/push-worklog.json')
 
 		//   await expect(app.receive(fixture)).toResolve()
 
@@ -270,7 +270,7 @@ describe.skip("GitHub Actions", () => {
 		// })
 
 		// it('should run a transition command in the commit message', async () => {
-		//   const fixture = require('../fixtures/push-transition.json')
+		//   const fixture = require('../../../../test/fixtures/push-transition.json')
 
 		//   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
 		//     .thenReturn({
@@ -292,7 +292,7 @@ describe.skip("GitHub Actions", () => {
 		// })
 
 		// it('should run a transition command in the commit message', async () => {
-		//   const fixture = require('../fixtures/push-transition-comment.json')
+		//   const fixture = require('../../../../test/fixtures/push-transition-comment.json')
 
 		//   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
 		//     .thenReturn({
@@ -318,7 +318,7 @@ describe.skip("GitHub Actions", () => {
 		// })
 
 		// it('should run commands on all issues in the commit message', async () => {
-		//   const fixture = require('../fixtures/push-multiple.json')
+		//   const fixture = require('../../../../test/fixtures/push-multiple.json')
 
 		//   await expect(app.receive(fixture)).toResolve()
 
@@ -332,7 +332,7 @@ describe.skip("GitHub Actions", () => {
 		// })
 
 		it("should not run a command without a Jira issue", async () => {
-			const fixture = require("../fixtures/push-no-issues.json");
+			const fixture = require("../../../../test/fixtures/push-no-issues.json");
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
@@ -342,7 +342,7 @@ describe.skip("GitHub Actions", () => {
 		});
 
 		it("should support commits without smart commands", async () => {
-			const fixture = require("../fixtures/push-empty.json");
+			const fixture = require("../../../../test/fixtures/push-empty.json");
 			// match any post calls
 			jiraNock.post(/.*/).reply(200);
 
@@ -356,13 +356,13 @@ describe.skip("GitHub Actions", () => {
 		});
 
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
-			const event = require("../fixtures/push-no-username.json");
+			const event = require("../../../../test/fixtures/push-no-username.json");
 			const job = {
 				data: createJobData(event.payload, process.env.ATLASSIAN_URL)
 			};
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../fixtures/push-merge-commit.json");
+				.replyWithFile(200, "../../../../test/fixtures/push-merge-commit.json");
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -419,13 +419,13 @@ describe.skip("GitHub Actions", () => {
 		});
 
 		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
-			const event = require("../fixtures/push-no-username.json");
+			const event = require("../../../../test/fixtures/push-no-username.json");
 			const job = {
 				data: createJobData(event.payload, process.env.ATLASSIAN_URL)
 			};
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../fixtures/push-non-merge-commit");
+				.replyWithFile(200, "../../../../test/fixtures/push-non-merge-commit");
 
 			// flag property should not be present
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
