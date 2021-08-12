@@ -1,5 +1,5 @@
 import throng from "throng";
-import { start } from "./worker/main";
+import { start } from "../worker/main";
 
 const isProd = process.env.NODE_ENV === "production";
 

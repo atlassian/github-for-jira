@@ -1,13 +1,13 @@
-import "./config/env"; // Important to be before other dependencies
+import "../config/env"; // Important to be before other dependencies
 import throng from "throng";
-import getRedisInfo from "./config/redis-info";
+import getRedisInfo from "../config/redis-info";
 import * as PrivateKey from "probot/lib/private-key";
 import { createProbot } from "probot";
 import App from "./configure-robot";
-import { initializeSentry } from "./config/sentry";
-import { overrideProbotLoggingMethods } from "./config/logger";
-import "./config/proxy";
-import { EnvironmentEnum } from "./config/env";
+import { initializeSentry } from "../config/sentry";
+import { overrideProbotLoggingMethods } from "../config/logger";
+import "../config/proxy";
+import { EnvironmentEnum } from "../config/env";
 
 const isProd = process.env.NODE_ENV === EnvironmentEnum.production;
 const { redisOptions } = getRedisInfo("probot");
