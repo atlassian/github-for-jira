@@ -3,13 +3,13 @@ import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import nock from "nock";
-import { Installation, Subscription } from "../../../src/backend/models";
+import { Installation, Subscription } from "../models";
 import { mocked } from "ts-jest/utils";
-import { mockModels } from "../../../src/common/mocks/models";
-import api from "../../../src/backend/api";
-import { EnvironmentEnum } from "../../../src/config/env";
+import { mockModels } from "../../common/mocks/models";
+import api from ".";
+import { EnvironmentEnum } from "../../config/env";
 
-jest.mock("../../../src/backend/models");
+jest.mock("../models");
 
 describe("API", () => {
 	let app: Application;

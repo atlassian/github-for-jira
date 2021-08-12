@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
+import testTracking from "../../../../test/setup/tracking";
 import nock from "nock";
-import { Installation, Subscription } from "../../../src/backend/models";
+import { Installation, Subscription } from "../../models";
 import { mocked } from "ts-jest/utils";
-import deleteSubscription from "../../../src/backend/middleware/delete-github-subscription";
-import { isDisabled, setIsDisabled } from "../../../src/backend/tracking";
+import deleteSubscription from ".";
+import { isDisabled, setIsDisabled } from "../../tracking";
 
-jest.mock("../../../src/backend/models");
+jest.mock("../../models");
 
 describe("POST /github/subscription", () => {
 	let installation;

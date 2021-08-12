@@ -1,6 +1,6 @@
-import { ActionFromSubscription, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
-import { Installation, Subscription } from "../models";
+import { ActionFromSubscription, ActionSource, ActionType } from "../../proto/v0/action";
+import { submitProto } from "../../tracking";
+import { Installation, Subscription } from "../../models";
 import { Request, Response } from "express";
 
 /**

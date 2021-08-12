@@ -1,6 +1,6 @@
-import { isAdmin } from "../../../src/backend/middleware/github-client-middleware";
-import GitHubAPI from "../../../src/config/github-api";
-import logger from "../../../src/config/logger";
+import { isAdmin } from ".";
+import GitHubAPI from "../../../config/github-api";
+import logger from "../../../config/logger";
 
 describe("GitHub client middleware", () => {
 	let adminFunction;

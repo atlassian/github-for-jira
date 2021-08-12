@@ -1,6 +1,6 @@
 import jwt from "atlassian-jwt";
 
-import { Installation } from "../models";
+import { Installation } from "../../models";
 import { NextFunction, Request, Response } from "express";
 
 export default async (

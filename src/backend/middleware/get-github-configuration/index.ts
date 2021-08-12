@@ -1,10 +1,10 @@
 import JWT from "atlassian-jwt";
-import { Installation, Subscription } from "../models";
+import { Installation, Subscription } from "../../models";
 import { NextFunction, Request, Response } from "express";
-import { getJiraMarketplaceUrl } from "../../common/getUrl";
-import enhanceOctokit from "../../config/enhance-octokit";
-import app from "../worker/app";
-import { getInstallation } from "./get-jira-configuration";
+import { getJiraMarketplaceUrl } from "../../../common/getUrl";
+import enhanceOctokit from "../../../config/enhance-octokit";
+import app from "../../worker/app";
+import { getInstallation } from "../get-jira-configuration";
 
 const getConnectedStatus = (
 	installationsWithSubscriptions: any,

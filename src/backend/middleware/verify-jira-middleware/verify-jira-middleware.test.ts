@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jwt from "atlassian-jwt";
 import { mocked } from "ts-jest/utils";
-import { Installation } from "../../../src/backend/models";
-import verifyJiraMiddleware from "../../../src/backend/middleware/verify-jira-middleware";
+import { Installation } from "../../models";
+import verifyJiraMiddleware from ".";
 
-jest.mock("../../../src/backend/models");
+jest.mock("../../models");
 
 describe("#verifyJiraMiddleware", () => {
 	let res;

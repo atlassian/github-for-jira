@@ -1,11 +1,11 @@
 import Keygrip from "keygrip";
 import supertest from "supertest";
-import testTracking from "../../setup/tracking";
+import testTracking from "../../../../test/setup/tracking";
 import { mocked } from "ts-jest/utils";
-import { Installation, Subscription } from "../../../src/backend/models";
-import FrontendApp from "../../../src/backend/app";
+import { Installation, Subscription } from "../../models";
+import FrontendApp from "../../app";
 
-jest.mock("../../../src/backend/models");
+jest.mock("../../models");
 
 describe("Frontend", () => {
 	let frontendApp;
