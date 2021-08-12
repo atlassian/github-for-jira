@@ -1,5 +1,5 @@
-import { Installation, Subscription } from "../../../src/models";
-import { getHashedKey } from "../../../src/models/installation";
+import { Installation, Subscription } from "../../../src/backend/models";
+import { getHashedKey } from "../../../src/backend/models/installation";
 
 describe("test installation model", () => {
 	const newInstallPayload = {

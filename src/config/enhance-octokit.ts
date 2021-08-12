@@ -1,4 +1,4 @@
-import OctokitError from "../models/octokit-error";
+import OctokitError from "../backend/models/octokit-error";
 import statsd from "./statsd";
 import { extractPath } from "../jira/client/axios";
 import { GitHubAPI } from "probot";

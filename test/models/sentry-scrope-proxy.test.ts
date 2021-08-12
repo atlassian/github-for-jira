@@ -1,4 +1,4 @@
-import SentryScopeProxy from "../../src/models/sentry-scope-proxy";
+import SentryScopeProxy from "../../src/backend/models/sentry-scope-proxy";
 
 describe("SentryScopeProxy", () => {
 	describe(".processEvent", () => {

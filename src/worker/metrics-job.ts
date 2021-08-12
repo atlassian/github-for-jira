@@ -1,6 +1,6 @@
 import { metricHttpRequest } from "../config/metric-names";
 import statsd from "../config/statsd";
-import { Subscription } from "../models";
+import { Subscription } from "../backend/models";
 import { getLogger } from "../config/logger";
 
 const logger = getLogger("metrics-job");

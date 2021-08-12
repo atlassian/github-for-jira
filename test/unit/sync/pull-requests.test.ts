@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 
 import { mocked } from "ts-jest/utils";
-import { Subscription } from "../../../src/models";
+import { Subscription } from "../../../src/backend/models";
 import { createWebhookApp } from "../../utils/probot";
 import { Application } from "probot";
 import createJob from "../../setup/create-job";
 import { processInstallation } from "../../../src/sync/installation";
 import nock from "nock";
-import { RepoSyncState } from "../../../src/models/subscription";
+import { RepoSyncState } from "../../../src/backend/models/subscription";
 
-jest.mock("../../../src/models");
+jest.mock("../../../src/backend/models");
 
 describe.skip("sync/pull-request", () => {
 	const installationId = 1234;

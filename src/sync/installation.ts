@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { Repositories, SyncStatus } from "../models/subscription";
-import { Subscription } from "../models";
+import SubscriptionClass, { Repositories, SyncStatus } from "../backend/models/subscription";
+import { Subscription } from "../backend/models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";

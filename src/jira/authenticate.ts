@@ -1,4 +1,4 @@
-import { Installation } from "../models";
+import { Installation } from "../backend/models";
 import { hasValidJwt } from "./util/jwt";
 import { NextFunction, Request, Response } from "express";
 

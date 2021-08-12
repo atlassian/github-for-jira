@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/node";
 import getAxiosInstance from "./client/axios";
-import Installation from "../models/installation";
+import Installation from "../backend/models/installation";
 import Logger from "bunyan";
 
 export default (installation: Installation, log: Logger) => {

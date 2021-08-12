@@ -1,8 +1,8 @@
-import { Subscription } from "../models";
+import { Subscription } from "../backend/models";
 import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
-import { SyncStatus } from "../models/subscription";
+import { SyncStatus } from "../backend/models/subscription";
 import { getLogger } from "../config/logger";
 
 const jobOpts = {

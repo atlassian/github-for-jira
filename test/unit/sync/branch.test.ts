@@ -2,14 +2,14 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { branchesNoLastCursor, branchesWithLastCursor } from "../../fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
-import { Subscription } from "../../../src/models";
+import { Subscription } from "../../../src/backend/models";
 import { Application } from "probot";
 import { createWebhookApp } from "../../utils/probot";
 import createJob from "../../setup/create-job";
 import { processInstallation } from "../../../src/sync/installation";
 import nock from "nock";
 
-jest.mock("../../../src/models");
+jest.mock("../../../src/backend/models");
 
 describe.skip("sync/branches", () => {
 	const installationId = 1234;

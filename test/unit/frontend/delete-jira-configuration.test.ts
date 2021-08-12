@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import testTracking from "../../setup/tracking";
 import nock from "nock";
-import { Installation, Subscription } from "../../../src/models";
+import { Installation, Subscription } from "../../../src/backend/models";
 import { mocked } from "ts-jest/utils";
 import deleteConfig from "../../../src/frontend/delete-jira-configuration";
 
-jest.mock("../../../src/models");
+jest.mock("../../../src/backend/models");
 
 describe("DELETE /jira/configuration", () => {
 	let installation;

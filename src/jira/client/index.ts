@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation, Subscription } from "../../models";
+import { Installation, Subscription } from "../../backend/models";
 import getAxiosInstance from "./axios";
 import { getJiraId } from "../util/id";
 import isProd from "../util/isProd";

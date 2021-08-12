@@ -1,4 +1,4 @@
-import { Subscription } from "../models";
+import { Subscription } from "../backend/models";
 import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
 

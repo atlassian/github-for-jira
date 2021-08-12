@@ -1,5 +1,5 @@
 import JWT from "atlassian-jwt";
-import { Installation, Subscription } from "../models";
+import { Installation, Subscription } from "../backend/models";
 import { NextFunction, Request, Response } from "express";
 import { getJiraMarketplaceUrl } from "../util/getUrl";
 import enhanceOctokit from "../config/enhance-octokit";

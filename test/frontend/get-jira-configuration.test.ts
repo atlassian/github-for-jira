@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { mocked } from "ts-jest/utils";
 import getJiraConfiguration from "../../src/frontend/get-jira-configuration";
-import { Installation, Subscription } from "../../src/models";
+import { Installation, Subscription } from "../../src/backend/models";
 
-jest.mock("../../src/models");
+jest.mock("../../src/backend/models");
 
 describe("Jira Configuration Suite", () => {
 	let consoleSpy: jest.SpyInstance;

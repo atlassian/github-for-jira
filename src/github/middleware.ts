@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as Sentry from "@sentry/node";
 
-import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
-import SentryScopeProxy from "../models/sentry-scope-proxy";
-import { Subscription } from "../models";
+import AxiosErrorEventDecorator from "../backend/models/axios-error-event-decorator";
+import SentryScopeProxy from "../backend/models/sentry-scope-proxy";
+import { Subscription } from "../backend/models";
 import getJiraClient from "../jira/client";
 import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";

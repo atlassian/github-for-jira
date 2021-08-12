@@ -1,6 +1,6 @@
-import { ActionFromInstallation, ActionFromSubscription, ActionSource, ActionType } from "../proto/v0/action";
+import { ActionFromInstallation, ActionFromSubscription, ActionSource, ActionType } from "../backend/proto/v0/action";
 import { submitProto } from "../tracking";
-import { Subscription } from "../models";
+import { Subscription } from "../backend/models";
 import { Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricHttpRequest } from "../config/metric-names";

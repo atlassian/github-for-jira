@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../fixtures/api/graphql/commit-queries";
 import createJob from "../../setup/create-job";
-import { Subscription } from "../../../src/models";
+import { Subscription } from "../../../src/backend/models";
 import { processInstallation } from "../../../src/sync/installation";
 import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
 import { createApplication } from "../../utils/probot";
 import nock from "nock";
 
-jest.mock("../../../src/models");
+jest.mock("../../../src/backend/models");
 
 describe.skip("sync/commits", () => {
 	let installationId;

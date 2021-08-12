@@ -4,7 +4,7 @@ import "./matchers/to-have-sent-metrics";
 import "./matchers/nock";
 import "./matchers/to-promise";
 import statsd from "../../src/config/statsd";
-import { sequelize } from "../../src/models/sequelize";
+import { sequelize } from "../../src/backend/models/sequelize";
 
 resetEnvVars();
 

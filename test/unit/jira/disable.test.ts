@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import testTracking from "../../setup/tracking";
-import { getHashedKey } from "../../../src/models/installation";
+import { getHashedKey } from "../../../src/backend/models/installation";
 import disable from "../../../src/jira/disable";
 
 describe("Webhook: /events/disabled", () => {

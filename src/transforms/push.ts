@@ -1,4 +1,4 @@
-import { Subscription } from "../models";
+import { Subscription } from "../backend/models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";

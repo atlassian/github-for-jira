@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from "probot/lib/logger";
-import JiraClient from "../../src/models/jira-client";
+import JiraClient from "../../src/backend/models/jira-client";
 import nock from "nock";
 
 describe("JiraClient", () => {

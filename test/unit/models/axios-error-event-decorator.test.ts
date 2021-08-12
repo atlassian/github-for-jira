@@ -1,6 +1,6 @@
 import axios from "axios";
 import nock from "nock";
-import AxiosErrorDecorator from "../../../src/models/axios-error-event-decorator";
+import AxiosErrorDecorator from "../../../src/backend/models/axios-error-event-decorator";
 
 describe("AxiosErrorDecorator", () => {
 	const buildEvent = () => ({ extra: {}, tags: {} });

@@ -1,4 +1,4 @@
-import { Installation } from "../../../../src/models";
+import { Installation } from "../../../../src/backend/models";
 import getJiraClient from "../../../../src/jira/client";
 
 describe("Test getting a jira client", () => {

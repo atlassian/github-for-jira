@@ -2,7 +2,7 @@ import https from "https";
 import axios from "axios";
 import crypto from "crypto";
 import statsd, { asyncDistTimer } from "../config/statsd";
-import { Action } from "../proto/v0/action";
+import { Action } from "../backend/proto/v0/action";
 import { metricHttpRequest } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 

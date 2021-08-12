@@ -1,7 +1,7 @@
 import url from "url";
 
 import crypto from "crypto";
-import { Action, ActionType } from "../../src/proto/v0/action";
+import { Action, ActionType } from "../../src/backend/proto/v0/action";
 import nock from "nock";
 
 import { BaseURL, isDisabled, setIsDisabled, submitProto } from "../../src/tracking";

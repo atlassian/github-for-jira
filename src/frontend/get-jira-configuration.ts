@@ -1,6 +1,6 @@
 import format from "date-fns/format";
 import moment from "moment";
-import { Subscription } from "../models";
+import { Subscription } from "../backend/models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricSyncStatus } from "../config/metric-names";

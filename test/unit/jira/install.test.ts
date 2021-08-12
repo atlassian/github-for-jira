@@ -2,10 +2,9 @@
 import testTracking from "../../setup/tracking";
 import install from "../../../src/jira/install";
 import { mocked } from "ts-jest/utils";
-import { Installation } from "../../../src/models";
+import { Installation } from "../../../src/backend/models";
 
-
-jest.mock("../../../src/models");
+jest.mock("../../../src/backend/models");
 
 describe("Webhook: /events/installed", () => {
 	let installation;
