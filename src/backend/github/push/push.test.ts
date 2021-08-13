@@ -259,7 +259,7 @@ describe.skip("GitHub Actions", () => {
 		// })
 
 		// it('should run a #time command in the commit message', async () => {
-		//   const fixture = require('../../../../test/fixtures/push-worklog.json')
+		//   const fixture = require('../../../common/test-utils/fixtures/push-worklog.json')
 
 		//   await expect(app.receive(fixture)).toResolve()
 
@@ -270,7 +270,7 @@ describe.skip("GitHub Actions", () => {
 		// })
 
 		// it('should run a transition command in the commit message', async () => {
-		//   const fixture = require('../../../../test/fixtures/push-transition.json')
+		//   const fixture = require('../../../common/test-utils/fixtures/push-transition.json')
 
 		//   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
 		//     .thenReturn({
@@ -292,7 +292,7 @@ describe.skip("GitHub Actions", () => {
 		// })
 
 		// it('should run a transition command in the commit message', async () => {
-		//   const fixture = require('../../../../test/fixtures/push-transition-comment.json')
+		//   const fixture = require('../../../common/test-utils/fixtures/push-transition-comment.json')
 
 		//   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
 		//     .thenReturn({
