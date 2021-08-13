@@ -134,7 +134,7 @@ export default (octokitApp: App): Express => {
 	);
 
 	app.use("/public", express.static(path.join(rootPath, "public")));
-	app.use("/", express.static("./public"));
+
 	app.use(
 		"/public/css-reset",
 		express.static(

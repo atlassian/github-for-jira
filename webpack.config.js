@@ -39,14 +39,14 @@ module.exports = {
   // and where it should be palced.
   output: {
     filename: "bundle.js",
-    path: path.resolve(__dirname, "dist"),
+    path: path.resolve(__dirname, "public"),
   },
 
   // Use the html plugin.
   plugins: [htmlPlugin],
 
   devServer: {
-    contentBase: path.join(__dirname, 'dist'),
+    contentBase: path.join(__dirname, 'public'),
     compress: true,
     port: 3000
   }

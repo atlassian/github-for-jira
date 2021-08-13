@@ -20,6 +20,15 @@ services:
     ports: [ "4040:4040" ]
     command: ngrok http app:8080
 
+  client:
+    build: ./src/client
+    volumes:
+      - ./src/client:/client
+    ports:
+      - "3000:3000"
+    links:
+      - app
+
   app:
     depends_on:
       - redis
