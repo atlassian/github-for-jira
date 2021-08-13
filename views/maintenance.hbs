@@ -7,6 +7,8 @@
   <meta name="public-url" content="{{APP_URL}}">
   <title>{{title}}</title>
   <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+  <link rel="stylesheet" href="/public/atlassian-ui-kit/bundle.css" media="all" />
+  <link rel="stylesheet" href="/public/css/styles.css" media="all" />
   <style>
     section {
       padding: 0 16px;
@@ -19,20 +21,28 @@
       font-size: 14px;
       max-width: 573px;
     }
+
     section h2 {
       margin: 24px 0 !important;
       font-size: 24px;
     }
   </style>
 </head>
-<body>
-<section>
-  <img height="224" src="/public/maintenance.svg" alt="Under Maintenance" />
-  <div>
-    <h2>Github For Jira is temporarily under maintenance</h2>
-    <p>Adding, configuring and removing Github organizations is disabled during this time. The integration will be
-      functional shortly after maintenance is complete.</p>
+<body class="aui-page-hybrid">
+<div class="ac-content">
+  <div class="page-content">
+    <section>
+      <img height="224" src="/public/maintenance.svg" alt="Under Maintenance" />
+      <div>
+        <h2>Github For Jira is temporarily under maintenance</h2>
+        <p>Adding, configuring and removing Github organizations is disabled during this time. The integration will be
+          functional shortly after maintenance is complete.</p>
+      </div>
+    </section>
   </div>
-</section>
+</div>
+
+<!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+<script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
 </body>
 </html>
