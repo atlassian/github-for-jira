@@ -36,7 +36,8 @@
     "db:dev": "run-s db:create:dev db:migrate:dev",
     "db:test": "run-s db:create:test db:migrate:test",
     "prepare": "husky install",
-    "precommit": "run-p lint build"
+    "precommit": "run-p lint build",
+		"start-client": "webpack serve"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
@@ -58,6 +59,9 @@
     "@types/newrelic": "^6.2.0",
     "@types/node": "~14.14.44",
     "@types/rate-limit-redis": "^1.7.1",
+    "@types/react": "^17.0.17",
+    "@types/react-dom": "^17.0.9",
+    "@types/react-router-dom": "^5.1.8",
     "@types/supertest": "^2.0.11",
     "atlassian-jwt": "^0.1.5",
     "axios": "^0.21.1",
@@ -87,6 +91,9 @@
     "primer": "^10.6.0",
     "probot": "^9.11.3",
     "rate-limit-redis": "^1.7.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^5.2.0",
     "sequelize": "^5.21.7",
     "sequelize-cli": "^6.2.0",
     "sequelize-encrypted": "^1.0.0",
@@ -108,6 +115,7 @@
     "eslint-plugin-no-only-tests": "^2.3.1",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-promise": "^4.0.1",
+    "html-webpack-plugin": "^5.3.2",
     "husky": "^6.0.0",
     "jest": "^26.6.3",
     "jest-diff": "^25.4.0",
@@ -120,8 +128,12 @@
     "smee-client": "^1.2.2",
     "supertest": "^4.0.2",
     "ts-jest": "~26.5.6",
+    "ts-loader": "^9.2.5",
     "ts-node": "^10.0.0",
-    "ts-node-dev": "^1.1.6"
+    "ts-node-dev": "^1.1.6",
+    "webpack": "^5.50.0",
+    "webpack-cli": "^4.7.2",
+    "webpack-dev-server": "^3.11.2"
   },
   "volta": {
     "node": "14.17.0"
