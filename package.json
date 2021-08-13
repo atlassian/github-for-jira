@@ -10,7 +10,7 @@
   "main": "src/backend/main",
   "scripts": {
     "prestart": "run-p env clean db:dev",
-    "start": "run-p start:main start:worker start:client",
+    "start": "npm run start:client && run-p start:main start:worker",
     "start:main": "ts-node-dev --inspect=0.0.0.0:9229 --respawn --transpile-only --rs src/backend/main",
     "start:worker": "ts-node-dev --inspect=0.0.0.0:9230 --respawn --transpile-only --rs src/backend/worker",
     "start:production": "run-p start:main:production start:worker:production",
