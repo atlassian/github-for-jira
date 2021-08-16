@@ -3,11 +3,11 @@ import { isEmpty } from "../jira/util/isEmpty";
 import { getJiraId } from "../jira/util/id";
 import _ from "lodash";
 
-function mapStatus(status: string, merged: boolean) {
+function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
 	if (status === "open") return "OPEN";
-	if (status === "closed" && merged) return "MERGED";
-	if (status === "closed" && !merged) return "DECLINED";
+	if (status === "closed" && merged_at) return "MERGED";
+	if (status === "closed" && !merged_at) return "DECLINED";
 	return "UNKNOWN";
 }
 
@@ -52,7 +52,7 @@ export default (payload, author, reviews?: unknown[]) => {
 		return undefined;
 	}
 
-	const pullRequestStatus = mapStatus(pull_request.state, pull_request.merged);
+	const pullRequestStatus = mapStatus(pull_request.state, pull_request.merged_at);
 
 	return {
 		id: repository.id,
