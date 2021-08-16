@@ -36,7 +36,7 @@ services:
     volumes:
       - .:/app
     build:
-      context: ./src/backend
+      context: .
     ports:
       - "8080:8080" # main port
       - "9229:9229" # main debug port

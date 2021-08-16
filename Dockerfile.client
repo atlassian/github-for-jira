@@ -2,8 +2,8 @@ FROM node:14.17-alpine as build
 
 WORKDIR ./src/client
 
-COPY . /app/src/client
-WORKDIR /app/src/client
+COPY . /src/client
+WORKDIR /src/client
 
 # Installing packages
 RUN npm ci
