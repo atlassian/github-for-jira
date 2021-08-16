@@ -10,7 +10,7 @@
   "main": "src/backend/main",
   "scripts": {
     "prestart": "run-p env clean db:dev",
-    "start": "npm run start:client && run-p start:main start:worker",
+    "start": "run-s start:main start:worker",
     "start:main": "ts-node-dev --inspect=0.0.0.0:9229 --respawn --transpile-only --rs src/backend/main",
     "start:worker": "ts-node-dev --inspect=0.0.0.0:9230 --respawn --transpile-only --rs src/backend/worker",
     "start:production": "run-p start:main:production start:worker:production",
@@ -34,7 +34,7 @@
     "db:migrate:dev": "dotenv -- sequelize db:migrate",
     "db:migrate:test": "dotenv -e .env.test -- sequelize db:migrate --env test",
     "db:migrate:prod": "sequelize db:migrate --env production",
-    "db:dev": "run-s db:create:dev db:migrate:dev",
+    "db:dev": "webpack serve --mode development",
     "db:test": "run-s db:create:test db:migrate:test",
     "prepare": "husky install",
     "precommit": "run-p lint build",

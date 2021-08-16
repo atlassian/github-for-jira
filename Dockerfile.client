@@ -1,0 +1,11 @@
+FROM node:14.17-alpine as build
+
+WORKDIR ./src/client
+
+COPY . /app/src/client
+WORKDIR /app/src/client
+
+# Installing packages
+RUN npm ci
+
+CMD ["npm", "run", "start:client"]

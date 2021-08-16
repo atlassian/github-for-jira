@@ -1,6 +1,6 @@
 import React from "react";
 import { Route, Link } from "react-router-dom";
-import { TestPage } from "./client/ui/Test";
+import { TestPage } from "./ui/Test";
 
 export const App = (): JSX.Element => {
 	return (

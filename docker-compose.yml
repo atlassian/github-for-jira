@@ -20,6 +20,15 @@ services:
     ports: [ "4040:4040" ]
     command: ngrok http app:8080
 
+  client:
+    volumes:
+      - ./src/client:/client
+    build:
+      context: ./src/client
+      dockerfile: Dockerfile.client
+    ports:
+      - "3000:3000"
+
   app:
     depends_on:
       - redis
@@ -27,7 +36,7 @@ services:
     volumes:
       - .:/app
     build:
-      context: .
+      context: ./src/backend
     ports:
       - "8080:8080" # main port
       - "9229:9229" # main debug port
