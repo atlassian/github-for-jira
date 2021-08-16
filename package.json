@@ -17,6 +17,7 @@
     "start:main:production": "run-s db:migrate:prod && node .",
     "start:worker:production": "run-s db:migrate:prod && node src/backend/worker",
     "clean": "rimraf coverage build tmp src/*.js src/*.js.map",
+		"env": "ts-node env.ts",
     "build": "tsc -p ./tsconfig.json",
     "build:release": "tsc -p ./tsconfig.release.json",
     "build:watch": "tsc -w -p ./tsconfig.json",
