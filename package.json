@@ -83,5 +83,9 @@
       "jest-extended"
     ],
     "globalTeardown": "<rootDir>/test/teardown"
+  },
+  "volta": {
+    "node": "12.22.5",
+    "npm": "6.14.14"
   }
 }
