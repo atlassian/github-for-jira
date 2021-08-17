@@ -1,6 +1,6 @@
 .getConfiguration {
   margin: auto;
-  max-width: 570px;
+  max-width: 740px;
   height: 100vh;
 }
 
@@ -28,18 +28,6 @@
   margin-bottom: 0;
 }
 
-.org__cell {
-  flex: 1;
-}
-
-.getConfiguration__tableHeader__label:first-child {
-  flex: 1;
-}
-
-.getConfiguration__tableHeader__label:last-child {
-  flex: 2;
-}
-
 .Box {
   border: 0;
   border-radius: 0;
@@ -57,7 +45,8 @@
   flex-direction: row;
 }
 
-.getConfiguration__orgContent {
+.getConfiguration__orgContent,
+ .getConfiguration__orgContent__account {
   align-items: center;
   color: #213658;
   display: flex;
@@ -66,6 +55,10 @@
 .getConfiguration__orgContent:last-child {
   display: flex;
   justify-content: flex-end;
+}
+
+.getConfiguration__orgContent__account {
+    flex: 2;
 }
 
 .getConfiguration__orgContent__avatar {
@@ -129,36 +122,8 @@
   margin: 1.2em auto;
 }
 
-.getConfiguration__newJiraOrg__container,
-.getConfiguration__newJiraOrg__container--empty {
-  max-width: 570px;
-  padding: 0 1em;
-  text-align: center;
-}
-
-.getConfiguration__newJiraOrg__container {
-  margin-top: 1.2em;
-}
-
-.getConfiguration__newJiraOrg__container--empty {
-  margin-top: 3em;
-}
-
-.getConfiguration__newJiraOrg__message {
-  margin: auto auto 1em;
-}
-
-.getConfiguration__newJiraOrg__link {
-  color: #42526e;
-}
-
-.getConfiguration__newJiraOrg__link--empty {
-  color: #fff;
-}
-
-.getConfiguration__newJiraOrg__link:hover,
-.getConfiguration__newJiraOrg__link--empty:hover {
-  text-decoration: none;
+.getConfiguration__connectNewOrg {
+    padding: 1em 0;
 }
 
 @keyframes spin {
