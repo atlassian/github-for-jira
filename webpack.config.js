@@ -17,7 +17,7 @@ module.exports = {
   // with files with given extensions.
   // For example, .tsx files
   // will be compiled with ts-loader,
-  // a spcific loader for webpack
+  // a specific loader for webpack
   // that knows how to work with TypeScript files.
   module: {
     rules: [

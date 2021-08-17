@@ -29,6 +29,7 @@ services:
     build:
       context: .
     ports:
+      - "3000:3000" # client
       - "8080:8080" # main port
       - "9229:9229" # main debug port
       - "8081:8081" # worker port

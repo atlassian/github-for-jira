@@ -38,7 +38,7 @@
     "db:test": "run-s db:create:test db:migrate:test",
     "prepare": "husky install",
     "precommit": "run-p lint build",
-		"start:client": "webpack serve --mode development"
+		"start:client": "webpack serve --mode development --host 0.0.0.0"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
