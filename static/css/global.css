@@ -60,15 +60,11 @@ p {
     margin-bottom: 0;
 }
 
-.org__cell {
+.org__cell:not(.getConfiguration__orgContent__account) {
     flex: 1;
 }
 
-.tableHeader__label:first-child {
-    flex: 1;
-}
-
-.tableHeader__label:last-child {
+.tableHeader__label {
     flex: 2;
 }
 
