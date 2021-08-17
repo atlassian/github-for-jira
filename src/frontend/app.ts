@@ -125,10 +125,6 @@ export default (octokitApp: App): Express => {
 		(syncStatus) => syncStatus === "IN PROGRESS"
 	);
 
-	hbs.registerHelper("hasInstallations", (installations) =>
-		installations.length > 0 ? "" : "--empty"
-	);
-
 	hbs.registerHelper("connectedStatus", (syncStatus) =>
 		syncStatus === "COMPLETE" ? "Connected" : "Connect"
 	);
