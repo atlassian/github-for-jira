@@ -11,10 +11,6 @@
     margin: 0 1.1em 0 0.2em;
 }
 
-.getSubscription__info__message {
-    margin: 0;
-}
-
 .getSubscription__installation {
     align-items: center;
     display: flex;
@@ -44,5 +40,4 @@
 
 .getSubscription__installation__instance--empty {
     font-weight: bold;
-    margin: 0;
 }

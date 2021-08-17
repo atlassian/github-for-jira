@@ -1,3 +1,18 @@
+.getConfiguration__logout__container {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+}
+
+.getConfiguration__logout__link {
+  cursor: pointer;
+  color: #0366d6;
+}
+
+.getConfiguration__logout__name {
+  font-weight: bold;
+}
+
 .getConfiguration {
     margin: auto;
     max-width: 740px;
@@ -36,7 +51,10 @@
 .githubOrgs__table__row {
     border-top: 0;
     line-height: 0;
-    padding: 0.8em 0;
+}
+
+.githubOrgs__table__row:not(:last-child) {
+    padding-bottom: 0.8em;
 }
 
 .githubOrgs__table__row,
@@ -119,7 +137,6 @@
 
 .getConfiguration__noOrganizations {
     color: #172B4D;
-    margin: 1.2em auto;
 }
 
 .getConfiguration__connectNewOrg {
