@@ -29,6 +29,11 @@
       value='{{clientKey}}'
     />
 
+    <section class="getConfiguration__logout__container">
+      <p class="getConfiguration__logout__account">GitHub Account: <span class="getConfiguration__logout__name">{{login}}</span></p>
+      <p class="getConfiguration__logout__link logout-link"  target="_blank" >Logout</p>
+    </section>
+
     <section class='getConfiguration'>
       <div class="headerImage">
         <img src='/public/assets/jira-and-github.png' alt="Jira and GitHub logos" />
@@ -40,7 +45,7 @@
         <div class='Box'>
           <div class='getConfiguration__wrapper'>
             <div class='tableHeader'>
-              <p class='tableHeader__label org__cell'>GitHub Organization</p>
+              <p class='tableHeader__label org__cell'>Unconnected organizations with Jira app</p>
               <p class='tableHeader__label org__cell'>Repository access</p>
             </div>
 
@@ -48,7 +53,7 @@
               {{#each installations}}
                 <div class='githubOrgs__table__row clearfix'>
                   {{!-- Organizations --}}
-                  <div class='getConfiguration__orgContent org__cell'>
+                  <div class='getConfiguration__orgContent__account org__cell'>
                     <img class='getConfiguration__orgContent__avatar' src='{{account.avatar_url}}' alt='Github organization avatar' />
                     <span class='text-bold text-gray-dark'><a
                         href='{{html_url}}'
@@ -98,19 +103,11 @@
                 <p class="getConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
               {{/unless}}
             </div>
-
+              <a class="getConfiguration__connectNewOrg" href='{{info.html_url}}/installations/new'>
+                <span class="getConfiguration__connectNewOrg__plus">+</span> Install Jira on a new organization
+              </a>
           </div>
         </div>
-
-      <div class="getConfiguration__newJiraOrg__container{{ hasInstallations installations }}">
-        <p class='getConfiguration__newJiraOrg__message'>
-          Don't see your GitHub account? Install Jira on your GitHub organizations
-          to connect them to your Atlassian site.
-        </p>
-        <button class="actionBtn{{ hasInstallations installations }}">
-          <a class="getConfiguration__newJiraOrg__link{{ hasInstallations installations }}" href='{{info.html_url}}/installations/new'>Install Jira on a new organization</a>
-        </button>
-      </div>
 
     </section>
     <script src='/public/js/github-configuration.js' nonce='{{nonce}}'></script>

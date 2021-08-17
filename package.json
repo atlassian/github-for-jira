@@ -10,9 +10,9 @@
   "main": "src/backend/main",
   "scripts": {
     "prestart": "run-p env clean db:dev",
-    "start": "run-p start:main start:worker start:client",
-    "start:main": "ts-node-dev --inspect=0.0.0.0:9229 --respawn --transpile-only --rs src/backend/main",
-    "start:worker": "ts-node-dev --inspect=0.0.0.0:9230 --respawn --transpile-only --rs src/backend/worker",
+    "start": "run-p start:main start:worker",
+		"start:main": "tsnd --watch=.env,db/config.json --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/backend/main.ts",
+		"start:worker": "tsnd --watch=.env,db/config.json --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/backend/worker.ts",
     "start:production": "run-p start:main:production start:worker:production",
     "start:main:production": "run-s db:migrate:prod && node .",
     "start:worker:production": "run-s db:migrate:prod && node src/backend/worker",

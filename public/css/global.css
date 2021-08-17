@@ -60,21 +60,22 @@ p {
     margin-bottom: 0;
 }
 
-.org__cell {
+.org__cell:not(.getConfiguration__orgContent__account) {
     flex: 1;
 }
 
-.tableHeader__label:first-child {
-    flex: 1;
-}
-
-.tableHeader__label:last-child {
+.tableHeader__label {
     flex: 2;
 }
 
 .githubOrgs__table {
     border-top: 2px solid #e0e2e7;
     border-bottom: 2px solid #e0e2e7;
+    padding: 0.8em 0;
+}
+
+p {
+    margin: 0;
 }
 
 @media (max-width: 540px) {
