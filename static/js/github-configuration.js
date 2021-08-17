@@ -28,3 +28,13 @@ $('.delete-link').click(function (event) {
     window.close()
   })
 })
+
+$('.logout-link').click(function (event) {
+  event.preventDefault();
+
+	window.open('https://github.com/logout','_blank');
+
+	window.setTimeout(function() {
+		this.close()
+	}, 100)
+})
