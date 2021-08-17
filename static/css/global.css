@@ -75,6 +75,11 @@ p {
 .githubOrgs__table {
     border-top: 2px solid #e0e2e7;
     border-bottom: 2px solid #e0e2e7;
+    padding: 0.8em 0;
+}
+
+p {
+    margin: 0;
 }
 
 @media (max-width: 540px) {
