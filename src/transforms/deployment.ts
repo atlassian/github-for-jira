@@ -10,8 +10,10 @@ import { JiraDeploymentData } from "../interfaces/jira";
 function mapState(state: string): string {
 	switch (state) {
 		case "queued":
-		case "pending":
 			return "pending";
+		// We send "pending" as "in progress" because the GitHub API goes Pending -> Success (there's no in progress update).
+		// For users, it's a better UI experience if they see In progress instead of Pending, because the deployment might be running already.
+		case "pending":
 		case "in_progress":
 			return "in_progress";
 		case "success":
