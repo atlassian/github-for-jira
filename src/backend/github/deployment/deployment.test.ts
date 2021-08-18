@@ -7,7 +7,7 @@ describe("GitHub Actions", () => {
 
 	describe("deployment_status", () => {
 		it("should update the Jira issue with the linked GitHub deployment", async () => {
-			const fixture = require("../../../common/test-utils/fixtures/deployment-basic.json");
+			const fixture = require("../../../../test-utils/fixtures/deployment-basic.json");
 
 			githubNock
 				.get("/users/test-workflow-run-user-login")

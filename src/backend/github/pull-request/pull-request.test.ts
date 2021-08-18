@@ -10,7 +10,7 @@ describe("GitHub Actions", () => {
 
 	describe("pull_request", () => {
 		it("should update the Jira issue with the linked GitHub pull_request", async () => {
-			const fixture = require("../../../common/test-utils/fixtures/pull-request-basic.json");
+			const fixture = require("../../../../test-utils/fixtures/pull-request-basic.json");
 
 			githubNock
 				.get("/users/test-pull-request-user-login")
@@ -103,7 +103,7 @@ describe("GitHub Actions", () => {
 		});
 
 		it("should not update the Jira issue if the source repo of a pull_request was deleted", async () => {
-			const fixture = require("../../../common/test-utils/fixtures/pull-request-null-repo.json");
+			const fixture = require("../../../../test-utils/fixtures/pull-request-null-repo.json");
 
 			githubNock.get("/users/test-pull-request-user-login").reply(200, {
 				login: "test-pull-request-author-login",
@@ -117,7 +117,7 @@ describe("GitHub Actions", () => {
 		});
 
 		it("should delete the reference to a pull request when issue keys are removed from the title", async () => {
-			const fixture = require("../../../common/test-utils/fixtures/pull-request-remove-keys.json");
+			const fixture = require("../../../../test-utils/fixtures/pull-request-remove-keys.json");
 			const { repository, pull_request: pullRequest } = fixture.payload;
 
 			githubNock
@@ -138,7 +138,7 @@ describe("GitHub Actions", () => {
 		});
 
 		it("will not delete references if a branch still has an issue key", async () => {
-			const fixture = require("../../../common/test-utils/fixtures/pull-request-test-changes-with-branch.json");
+			const fixture = require("../../../../test-utils/fixtures/pull-request-test-changes-with-branch.json");
 
 			githubNock
 				.get("/users/test-pull-request-user-login")
@@ -213,7 +213,7 @@ describe("GitHub Actions", () => {
 
 		describe("Trigged by Bot", () => {
 			let fixture;
-			beforeEach(() => fixture = require("../../../common/test-utils/fixtures/pull-request-triggered-by-bot.json"));
+			beforeEach(() => fixture = require("../../../../test-utils/fixtures/pull-request-triggered-by-bot.json"));
 
 			it("should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot", async () => {
 				githubNock
@@ -468,7 +468,7 @@ describe("GitHub Actions", () => {
 		});
 
 		it("should have reviewers on pull request action", async () => {
-			const fixture = require("../../../common/test-utils/fixtures/pull-request-basic.json");
+			const fixture = require("../../../../test-utils/fixtures/pull-request-basic.json");
 
 			githubNock
 				.get("/users/test-pull-request-user-login")
