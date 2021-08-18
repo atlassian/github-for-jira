@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { createWebhookApp } from "../../../common/test-utils/probot";
+import { createWebhookApp } from "../../../../test-utils/probot";
 
 describe("GitHub Actions", () => {
 	let app;
@@ -8,7 +8,7 @@ describe("GitHub Actions", () => {
 	describe("issue_comment", () => {
 		describe("created", () => {
 			it("should update the GitHub issue with a linked Jira ticket", async () => {
-				const fixture = require("../../../common/test-utils/fixtures/issue-comment-basic.json");
+				const fixture = require("../../../../test-utils/fixtures/issue-comment-basic.json");
 
 				jiraNock
 					.get("/rest/api/latest/issue/TEST-123?fields=summary")

@@ -1,6 +1,6 @@
 import Keygrip from "keygrip";
 import supertest from "supertest";
-import testTracking from "../../../common/test-utils/setup/tracking";
+import testTracking from "../../../../test-utils/setup/tracking";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../models";
 import FrontendApp from "../../app";

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../../common/test-utils/setup/tracking";
+import testTracking from "../../../../test-utils/setup/tracking";
 import { getHashedKey } from "../../models/installation";
 import disable from ".";
 

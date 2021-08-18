@@ -2,10 +2,10 @@ import Logger from "bunyan";
 import axios, { AxiosInstance } from "axios";
 import jwt from "atlassian-jwt";
 import url from "url";
-import statsd from "../../../../config/statsd";
 import JiraClientError from "../jira-client-error";
 import { getLogger } from "../../../../config/logger";
 import { metricHttpRequest } from "../../../../config/metric-names";
+import statsd from "../../../../config/statsd";
 
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;

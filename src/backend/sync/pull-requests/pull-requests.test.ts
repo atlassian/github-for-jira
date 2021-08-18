@@ -2,9 +2,9 @@
 
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../models";
-import { createWebhookApp } from "../../../common/test-utils/probot";
+import { createWebhookApp } from "../../../../test-utils/probot";
 import { Application } from "probot";
-import createJob from "../../../common/test-utils/setup/create-job";
+import createJob from "../../../../test-utils/setup/create-job";
 import { processInstallation } from "../installation";
 import nock from "nock";
 import { RepoSyncState } from "../../models/subscription";
@@ -70,7 +70,7 @@ describe.skip("sync/pull-request", () => {
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 			const job = createJob({ data: { installationId, jiraHost } });
 
-			const pullRequestList = require("../../test/fixtures/api/pull-request-list.json");
+			const pullRequestList = require("../../../../test-utils/fixtures/api/pull-request-list.json");
 			pullRequestList[0].title = title;
 			pullRequestList[0].head.ref = head;
 

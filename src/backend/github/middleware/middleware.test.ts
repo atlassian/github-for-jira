@@ -3,7 +3,7 @@ import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../models";
 import GitHubAPI from "../../../config/github-api";
 import middleware from ".";
-import { mockModels } from "../../../common/mocks/models";
+import { mockModels } from "../../../../test-utils/mocks/models";
 
 jest.mock("../../models");
 

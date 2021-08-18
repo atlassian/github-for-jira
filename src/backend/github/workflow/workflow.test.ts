@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { createWebhookApp } from "../../../common/test-utils/probot";
+import { createWebhookApp } from "../../../../test-utils/probot";
 
 describe("GitHub Actions", () => {
 	let app;
@@ -10,7 +10,7 @@ describe("GitHub Actions", () => {
 			jest.setTimeout(20000);
 		});
 		it("should update the Jira issue with the linked GitHub workflow_run", async () => {
-			const fixture = require("../../../common/test-utils/fixtures/workflow-basic.json");
+			const fixture = require("../../../../test-utils/fixtures/workflow-basic.json");
 
 			githubNock
 				.get("/users/test-workflow-run-user-login")
