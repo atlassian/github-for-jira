@@ -70,7 +70,7 @@ describe.skip("sync/pull-request", () => {
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 			const job = createJob({ data: { installationId, jiraHost } });
 
-			const pullRequestList = require("../../test/fixtures/api/pull-request-list.json");
+			const pullRequestList = require("../../../../test-utils/fixtures/api/pull-request-list.json");
 			pullRequestList[0].title = title;
 			pullRequestList[0].head.ref = head;
 

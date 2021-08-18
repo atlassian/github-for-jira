@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../../common/test-utils/fixtures/api/graphql/commit-queries";
+import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../../../test-utils/fixtures/api/graphql/commit-queries";
 import createJob from "../../../../test-utils/setup/create-job";
 import { Subscription } from "../../models";
 import { processInstallation } from "../installation";
@@ -15,11 +15,11 @@ describe.skip("sync/commits", () => {
 	let delay;
 	let app: Application;
 
-	const defaultBranchFixture = require("../../../common/test-utils/fixtures/api/graphql/default-branch.json");
-	const commitNodesFixture = require("../../../common/test-utils/fixtures/api/graphql/commit-nodes.json");
-	const mixedCommitNodes = require("../../../common/test-utils/fixtures/api/graphql/commit-nodes-mixed.json");
-	const defaultBranchNullFixture = require("../../../common/test-utils/fixtures/api/graphql/default-branch-null.json");
-	const commitsNoKeys = require("../../../common/test-utils/fixtures/api/graphql/commit-nodes-no-keys.json");
+	const defaultBranchFixture = require("../../../../test-utils/fixtures/api/graphql/default-branch.json");
+	const commitNodesFixture = require("../../../../test-utils/fixtures/api/graphql/commit-nodes.json");
+	const mixedCommitNodes = require("../../../../test-utils/fixtures/api/graphql/commit-nodes-mixed.json");
+	const defaultBranchNullFixture = require("../../../../test-utils/fixtures/api/graphql/default-branch-null.json");
+	const commitsNoKeys = require("../../../../test-utils/fixtures/api/graphql/commit-nodes-no-keys.json");
 
 	beforeEach(async () => {
 		// TODO: move this into utils to easily construct mock data

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import issueKeyParser from "jira-issue-key-parser";
-import { branchesNoLastCursor, branchesWithLastCursor } from "../../../common/test-utils/fixtures/api/graphql/branch-queries";
+import { branchesNoLastCursor, branchesWithLastCursor } from "../../../../test-utils/fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../models";
 import { Application } from "probot";
@@ -15,11 +15,11 @@ describe.skip("sync/branches", () => {
 	const installationId = 1234;
 	let delay;
 	let app: Application;
-	const branchNodesFixture = require("../../../common/test-utils/fixtures/api/graphql/branch-ref-nodes.json");
-	const emptyNodesFixture = require("../../../common/test-utils/fixtures/api/graphql/branch-empty-nodes.json");
-	const branchCommitsHaveKeys = require("../../../common/test-utils/fixtures/api/graphql/branch-commits-have-keys.json");
-	const associatedPRhasKeys = require("../../../common/test-utils/fixtures/api/graphql/branch-associated-pr-has-keys.json");
-	const branchNoIssueKeys = require("../../common/test-utils/fixtures/api/graphql/branch-no-issue-keys.json");
+	const branchNodesFixture = require("../../../../test-utils/fixtures/api/graphql/branch-ref-nodes.json");
+	const emptyNodesFixture = require("../../../../test-utils/fixtures/api/graphql/branch-empty-nodes.json");
+	const branchCommitsHaveKeys = require("../../../../test-utils/fixtures/api/graphql/branch-commits-have-keys.json");
+	const associatedPRhasKeys = require("../../../../test-utils/fixtures/api/graphql/branch-associated-pr-has-keys.json");
+	const branchNoIssueKeys = require("../../../../test-utils/fixtures/api/graphql/branch-no-issue-keys.json");
 
 	function makeExpectedResponse({ branchName }) {
 		const issueKeys = issueKeyParser().parse(branchName);
