@@ -92,7 +92,7 @@ export default class Subscription extends Sequelize.Model {
 		if (installationIds?.length > 0) {
 			andFilter.push({
 				gitHubInstallationId: {
-					[Op.in]: installationIds
+					[Op.in]: _.uniq(installationIds)
 				}
 			});
 		}
