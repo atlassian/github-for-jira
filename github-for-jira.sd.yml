@@ -313,6 +313,7 @@ environmentOverrides:
         attributes:
           parameters:
             DBInstanceClass: db.t3.large
+            AllocatedStorage: 10 # 10 GB
 
       - type: globaledge
         name: proxy
