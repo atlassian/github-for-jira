@@ -7,6 +7,7 @@ db/config.json
 
 # DB Secret File
 *.pem
+!test-utils/setup/*.pem
 
 # Transpiled files
 build/
