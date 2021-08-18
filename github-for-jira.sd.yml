@@ -78,10 +78,10 @@ scaling:
   max: 5
   metrics: &CpuMemScalingRules
     complexScalingRule:
-      EvaluationPeriods: 3
+      EvaluationPeriods: 1
       Threshold:
         Lower: 30
-        Upper: 85
+        Upper: 80
       Metrics:
         - Expression: "MAX([cpuUsage, memoryUsage])"
           Id: "combinedCpuRam"
@@ -91,8 +91,8 @@ scaling:
               # Dimensions can be ignored here due to defaulting
               MetricName: CPUUtilization
               Namespace: AWS/EC2
-            Period: 60
-            Stat: Average
+            Period: 300
+            Stat: Maximum
           Id: cpuUsage
           ReturnData: false
         - MetricStat:
@@ -100,8 +100,8 @@ scaling:
               # Dimensions can be ignored here due to defaulting
               MetricName: MemoryUtilization
               Namespace: System/Linux
-            Period: 60
-            Stat: Average
+            Period: 300
+            Stat: Maximum
           Id: memoryUsage
           ReturnData: false
 
@@ -192,28 +192,28 @@ environmentOverrides:
       max: 5
       metrics: &CpuMemAlbScalingRules
         complexScalingRule:
-          EvaluationPeriods: 3
+          EvaluationPeriods: 1
           Threshold:
             Lower: 30
-            Upper: 85
+            Upper: 80
           Metrics:
-            - Expression: "MAX([(responseTime/3)*100, cpuUsage, memoryUsage])"
+            - Expression: "MAX([(responseTime/2)*100, cpuUsage, memoryUsage])"
               Id: "combinedCpuRamAndLatency"
               Label: "Scaling based on CPU and Memory consumption or response time"
             - MetricStat:
                 Metric:
                   MetricName: CPUUtilization
                   Namespace: AWS/EC2
-                Period: 60
-                Stat: Average
+                Period: 300
+                Stat: Maximum
               Id: cpuUsage
               ReturnData: false
             - MetricStat:
                 Metric:
                   MetricName: MemoryUtilization
                   Namespace: System/Linux
-                Period: 60
-                Stat: Average
+                Period: 300
+                Stat: Maximum
               Id: memoryUsage
               ReturnData: false
             - MetricStat:
@@ -225,8 +225,8 @@ environmentOverrides:
                       Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
                   MetricName: TargetResponseTime
                   Namespace: AWS/ApplicationELB
-                Period: 60
-                Stat: Average
+                Period: 300
+                Stat: Maximum
               Id: responseTime
               ReturnData: false
     alarms:
@@ -234,7 +234,7 @@ environmentOverrides:
         ElbResponseTimeAlert:
           Namespace: AWS/ApplicationELB
           MetricName: TargetResponseTime
-          Description: "Response latency is too high"
+          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
           Dimensions:
             - Name: LoadBalancer
               Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
@@ -245,7 +245,7 @@ environmentOverrides:
           EvaluationPeriods: 3
           Period: 60
           ComparisonOperator: GreaterThanThreshold
-          Statistic: Average
+          Statistic: Maximum
     workers:
       - name: Worker
         scaling:
@@ -260,12 +260,12 @@ environmentOverrides:
           default_vanity_dns: false
           domain:
             - github.stg.atlassian.com
-          upstream_address:
-            - address: github-for-jira.stg.services.atlassian.com
-          rewrite: github-for-jira.stg.services.atlassian.com
 #          upstream_address:
-#            - address: jira-integration-staging.herokuapp.com
-#          rewrite: jira-integration-staging.herokuapp.com
+#            - address: github-for-jira.stg.services.atlassian.com
+#          rewrite: github-for-jira.stg.services.atlassian.com
+          upstream_address:
+            - address: jira-integration-staging.herokuapp.com
+          rewrite: jira-integration-staging.herokuapp.com
           ip_whitelist:
             - public
 
@@ -295,7 +295,7 @@ environmentOverrides:
         ElbResponseTimeAlert:
           Namespace: AWS/ApplicationELB
           MetricName: TargetResponseTime
-          Description: "Response latency is too high"
+          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
           Dimensions:
             - Name: LoadBalancer
               Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
@@ -303,10 +303,10 @@ environmentOverrides:
               Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
           Threshold: 3
           Priority: Low
-          EvaluationPeriods: 5
-          Period: 120
+          EvaluationPeriods: 3
+          Period: 60
           ComparisonOperator: GreaterThanThreshold
-          Statistic: Average
+          Statistic: Maximum
     resources:
       - name: rds
         type: dedicated-rds
