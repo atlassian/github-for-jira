@@ -276,8 +276,8 @@ environmentOverrides:
         WEBHOOK_PROXY_URL:  https://github.atlassian.com/github/events
         INSTANCE_NAME: production
         SENTRY_ENVIRONMENT: production
-        APP_ID: '125082'
-        GITHUB_CLIENT_ID: Iv1.234a3f06f2b64fbe
+        APP_ID: '14320'
+        GITHUB_CLIENT_ID: Iv1.45aafbb099e1c1d7
     scaling:
       instance: c5.2xlarge
       min: 5
