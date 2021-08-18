@@ -279,14 +279,14 @@ environmentOverrides:
         APP_ID: '125082'
         GITHUB_CLIENT_ID: Iv1.234a3f06f2b64fbe
     scaling:
-      instance: t3.medium #bump to c5.2xlarge before the migration
+      instance: c5.2xlarge
       min: 5
       max: 10
       metrics: *CpuMemAlbScalingRules
     workers:
       - name: Worker
         scaling:
-          instance: t3.medium #bump to c5.2xlarge before the migration
+          instance: c5.2xlarge
           min: 3
           max: 10
           metrics: *CpuMemScalingRules
