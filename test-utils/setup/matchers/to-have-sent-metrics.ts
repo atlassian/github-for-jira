@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import statsd from "../../../../config/statsd";
 /*
 
 This matcher makes it easier to write tests against Datadog metrics
@@ -48,6 +47,7 @@ it('checks tags too', async () => {
 
 */
 import diff from "jest-diff";
+import statsd from "../../../src/config/statsd";
 
 const parseStatsdMessage = (stastsdMessage) => {
 	const [metric, type, tagsString] = stastsdMessage.split("|");

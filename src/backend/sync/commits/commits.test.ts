@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../../common/test-utils/fixtures/api/graphql/commit-queries";
-import createJob from "../../../common/test-utils/setup/create-job";
+import createJob from "../../../../test-utils/setup/create-job";
 import { Subscription } from "../../models";
 import { processInstallation } from "../installation";
 import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
-import { createApplication } from "../../../common/test-utils/probot";
+import { createApplication } from "../../../../test-utils/probot";
 import nock from "nock";
 
 jest.mock("../../models");

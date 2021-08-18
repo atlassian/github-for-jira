@@ -22,6 +22,6 @@
   },
   "include": [
     "src/**/*",
-    "test/**/*"
-  ]
+    "test-utils/**/*"
+, "test-utils/setup/create-job.ts", "util/mocks", "test-utils/setup/setup.ts", "test-utils/probot.ts", "test-utils/setup/tracking/index.ts", "test-utils/setup/matchers/nock.ts"  ]
 }

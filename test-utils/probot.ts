@@ -3,7 +3,7 @@ import { App } from "@octokit/app";
 import { findPrivateKey } from "probot/lib/private-key";
 import { caching } from "cache-manager";
 
-import configureRobot from "../../backend/configure-robot";
+import configureRobot from "../src/backend/configure-robot";
 
 export const createApplication = () => new Application({
 	app: new App({

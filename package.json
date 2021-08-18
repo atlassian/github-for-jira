@@ -130,7 +130,7 @@
   "jest": {
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "<rootDir>/src/common/test-utils/setup/setup.ts"
+      "<rootDir>/test-utils/setup/setup.ts"
     ],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"

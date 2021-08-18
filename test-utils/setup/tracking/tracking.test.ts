@@ -1,11 +1,10 @@
 import url from "url";
-
 import crypto from "crypto";
-import { Action, ActionType } from "../../../../backend/proto/v0/action";
+import { Action, ActionType } from "../../../src/backend/proto/v0/action";
 import nock from "nock";
 
-import { BaseURL, isDisabled, setIsDisabled, submitProto } from "../../../../backend/tracking";
-import statsd, { globalTags } from "../../../../config/statsd";
+import { BaseURL, isDisabled, setIsDisabled, submitProto } from "../../../src/backend/tracking";
+import statsd, { globalTags } from "../../../src/config/statsd";
 
 describe("Hydro Gateway Protobuf Submissions", () => {
 	let parsedURL;
