@@ -109,11 +109,6 @@ export default (
 		for (const subscription of subscriptions) {
 			const { jiraHost } = subscription;
 
-			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
-				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
-				continue;
-			}
-
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
 				"gitHubInstallationId",
@@ -121,6 +116,12 @@ export default (
 			);
 			context.sentry.setUser({ jiraHost, gitHubInstallationId });
 			context.log = context.log.child({ jiraHost });
+
+			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
+				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
+				continue;
+			}
+
 			if (context.timedout) {
 				Sentry.captureMessage(
 					"Timed out jira middleware iterating subscriptions"
