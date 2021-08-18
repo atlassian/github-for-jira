@@ -1,0 +1,1804 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-gb" xml:lang="en-gb" >
+    <head>
+        <title>View Tag - edge-outbound-proxy-stg | Device42</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+
+
+
+
+
+
+        <style>
+            #jswarning { color: red; font-weight: bold; padding: 18px 0 0 20px; }
+            .nojs-banner {
+            background: #fff6bf  center no-repeat;
+            background-position: 15px 50%;
+            text-align: left;
+            padding: 5px 20px 5px 45px;
+            border-top: 2px solid #ffd324;
+            border-bottom: 2px solid #ffd324;
+            }
+            .ui-helper-hidden-accessible { display:none; }
+            #go-to-bottom{position:fixed;bottom:20px;right:20px;display:none; z-index:999999;}#go-to-bottom a{display:block;width:40px;height:40px;background:#999 url('/static/media/img/admin/backtobottom.png') no-repeat center center;text-indent:-9999px;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;-webkit-transition:.4s all ease;-moz-transition:.4s all ease;-o-transition:.4s all ease;transition:.4s all ease}#go-to-bottom a:hover{background-color:#2da0ce;}
+        </style>
+        <link href="/static/styles/webfonts/fontawesome-all.css" rel="stylesheet">
+        <link rel="stylesheet"  id="basecss" type="text/css" href="/static/admin/css/base.css?v=1.1" />
+        <link rel="stylesheet" type="text/css" href="/static/admin/css/print.css"  media="print" />
+        <link type="text/css" href="/static/js/jqueryui/jquery-ui-smoothness.min.css" rel="stylesheet"/>
+        <!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="/static/admin/css/ie.css" /><![endif]-->
+
+        <link rel="stylesheet" type="text/css" media="screen" href="/static/admin_tools/css/theming.css" />
+
+
+
+
+<link rel="stylesheet" href="/static/admin_tools/css/menu.css" type="text/css" media="screen, projection"/>
+<!--[if lt IE 8]>
+<link rel="stylesheet" href="/static/admin_tools/css/menu-ie.css" type="text/css" media="screen, projection"/>
+<![endif]-->
+
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/static/admin/css/forms.css" />
+<link rel="stylesheet" type="text/css" href="/static/admin/css/view-forms.css" />
+<style>
+.inline-group .tabular tr.has_original td {
+  padding-top: 0;
+}
+</style>
+
+        <script type="text/javascript">window.__admin_media_prefix__ = "/static/admin/";</script>
+        <script type="text/javascript" src="/static/admin/js/jquery.js"></script>
+        <script type="text/javascript" src="/static/admin/js/jquery-migrate-1.4.1.min.js"></script>
+        <script type="text/javascript" src="/static/admin/js/jquery.init.js"></script>
+        <script src="/static/js/jqueryui/jquery-ui-smoothness.min.js" type="text/javascript"></script>
+        <script type="text/javascript" src="/static/js/custom/header_interaction.js"></script>
+
+
+        <script type="text/javascript" src="/jsi18n/?language=en-gb"></script>
+        <script type="text/javascript" src="/static/js/custom/d42_localize.js"></script>
+
+
+
+<script type="text/javascript" src="/static/admin/js/core.js"></script>
+<script type="text/javascript" src="/static/admin/js/admin/RelatedObjectLookups.js"></script>
+<script type="text/javascript" src="/static/admin/js/actions.min.js"></script>
+<script type="text/javascript" src="/static/admin/js/urlify.js"></script>
+<script type="text/javascript" src="/static/admin/js/prepopulate.min.js"></script>
+<script type="text/javascript" src="/static/admin/js/inlines.min.js"></script>
+
+        <meta name="robots" content="NONE,NOARCHIVE" />
+        <noscript>
+            <div id="jswarning" class="nojs-banner"> <p>JavaScript seems to be Disabled! Some of the features are unavailable unless JavaScript is enabled.</p> </div>
+        </noscript>
+
+
+
+    </head>
+
+    <body class="taggit-tag view-form">
+    <div style='display:none'><input type='hidden' name='csrfmiddlewaretoken' value='6T30zTxfQZQvEJsN327OaKzRduFvI5xu' /></div>
+    <div class="popup-fade"></div>
+    <!-- Container -->
+    <div id="container">
+
+        <!-- Header -->
+        <div id="header">
+            <div id="branding">
+
+<!--
+<h1 id="site-name">Device<span>42</span></h1>
+
+-->
+
+            <img id="app-logo" alt="Device42" src="/static/graphics/base_images/nav_logo.png"/>
+
+            </div>
+
+			<div id="header-search">
+                <span id="header-searchicon"><i class="fab fa-sistrix"></i></span>
+                <input id="search" class="header-item" placeholder="Search...">
+                <div class="dropdown" style="left: 0; display: none;">
+                    <ul>
+                        <li>Result 1</li>
+                        <li>Result 2</li>
+                        <li>Result 3</li>
+                        <li>Result 4</li>
+                    </ul>
+                </div>
+            </div>
+
+
+
+
+
+<script type="text/javascript" src="/static/admin_tools/js/utils.js"></script>
+<script type="text/javascript" charset="utf-8">
+
+    // Load js files syncronously and conditionally
+    var js_files = [
+        {
+            src : '/static/admin_tools/js/jquery/jquery.min.js',
+            test: function() { return typeof(jQuery) == 'undefined'; }
+        },
+        {
+            src : '/static/admin_tools/js/json.min.js',
+            test: function() { return typeof(JSON.stringify) == 'undefined'; }
+        },
+        {
+            src : '/static/admin_tools/js/menu.js',
+            test: function() { return true; }
+        }
+    ];
+
+    loadScripts(js_files, function(){
+        jQuery(function($) {
+
+                process_bookmarks(
+                   "/admin/taggit/tag/217/",
+                   "View Tag - edge-outbound-proxy-stg",
+                   "Please enter a name for the bookmark"
+                );
+
+        });
+    });
+
+</script>
+<script type="text/javascript">
+$(function() {
+  $(".instantsrch").autocomplete({
+    source: "/internal/ajax/search/",
+    minLength: 3,
+    select: function( event, ui ) {
+        window.location.href = ui.item.link;
+    }
+  });
+   function split( val ) {
+      return val.split( /,\s*/ );
+    }
+    $('#id_tags').autocomplete({
+        source: "/internal/ajax/taglist/",
+        focus: function() {
+          return false;
+        },
+        select: function( event, ui ) {
+          var terms = split( this.value );
+          terms.pop();
+          terms.push( ui.item.value );
+          terms.push( "" );
+          this.value = terms.join( ", " );
+          return false;
+        }
+    });
+});
+</script>
+
+
+
+
+
+
+<script type="text/javascript">
+function submit_bookmark_form() {
+    $("#bookmark-button").click();
+}
+</script>
+
+<form id="bookmark-form" action="/admin_tools/menu/add_bookmark/" method="POST">
+    <input type="hidden" name="next" value="/admin/taggit/tag/217/" />
+    <input type="hidden" name="url" value="/admin/taggit/tag/217/" />
+    <input type="hidden" name="title" value="View Tag - edge-outbound-proxy-stg" />
+    <button id="bookmark-button" type="submit"><i class="far fa-star"></i></button>
+</form>
+
+
+
+
+
+<ul id="navigation-menu">
+
+<div class="navigation-leftmenu"><li  class="menu-item first"><a href="/admin/rackraj/tools/dashboard/"><i class="fas fa-home"></i></a></li>
+
+<li  class="menu-item"><a href="#"><span>DataCenter</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/building/"><span>Buildings</span></a></li><li  class="menu-item"><a href="/admin/rackraj/room/"><span>Rooms</span></a></li><li  class="menu-item"><a href="/admin/rackraj/rack/"><span>Racks</span></a></li><li  class="menu-item"><a href="#"><span>Power Units</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/pdu/"><span>Power Units</span></a></li><li  class="menu-item"><a href="/admin/rackraj/pdu_model/"><span>Power Unit Models</span></a></li></ul></li><li  class="menu-item"><a href="/admin/rackraj/organisation/"><span>Vendors</span></a></li><li  class="menu-item"><a href="/admin/rackraj/hardware/"><span>Hardware Models</span></a></li><li  class="menu-item"><a href="#"><span>Parts</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/partmodel/"><span>Model List</span></a></li><li  class="menu-item"><a href="/admin/rackraj/part/"><span>Parts List</span></a></li></ul></li><li  class="menu-item"><a href="/admin/rackraj/customer/"><span>Customers/Departments</span></a></li><li  class="menu-item"><a href="/admin/rackraj/endusers/"><span>End Users</span></a></li><li  class="menu-item"><a href="/admin/rackraj/purchase/"><span>Purchases</span></a></li><li  class="menu-item"><a href="/admin/rackraj/cable/"><span>Cables</span></a></li><li  class="menu-item"><a href="/admin/rackraj/circuit/"><span>Telco Circuits</span></a></li><li  class="menu-item"><a href="/admin/rackraj/powercircuit/"><span>Power Circuits</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device_service_profile/"><span>UCS Service Profiles</span></a></li><li  class="menu-item"><a href="/admin/rackraj/devicecategory/"><span>Object Categories</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/devicetree/"><span>Building Hierarchy</span></a></li><li  class="menu-item"><a href="/admin/taggit/tag/"><span>Tags</span></a></li></ul></li>
+
+<li  class="menu-item"><a href="#"><span>Devices</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/device/"><span>All Devices</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device_physical/"><span>Physical Devices</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device_virtual/"><span>Virtual Devices</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device_blade/"><span>Blade Devices</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device_cluster/"><span>Cluster Devices</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device_unknown/"><span>Unknown Devices</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device_other/"><span>Other Devices</span></a></li><li  class="menu-item"><a href="#"><span>Assets</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/asset/"><span>Assets</span></a></li><li  class="menu-item"><a href="/admin/rackraj/rackassettemplate/"><span>Racked Asset Templates</span></a></li><li  class="menu-item"><a href="/admin/rackraj/patch_panel_model/"><span>Patch Panel Models</span></a></li><li  class="menu-item"><a href="/admin/rackraj/patch_panel_module_model/"><span>Patch Panel Module Models</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tap_module_model/"><span>TAP Module Models</span></a></li></ul></li><li  class="menu-item"><a href="#"><span>Mobile View</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/asset_mobile_view/"><span>Asset</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device_mobile_view/"><span>Device</span></a></li><li  class="menu-item"><a href="/admin/rackraj/part_mobile_view/"><span>Part</span></a></li><li  class="menu-item"><a href="/admin/rackraj/rack_mobile_view/"><span>Rack</span></a></li></ul></li></ul></li>
+
+<li  class="menu-item"><a href="#"><span>Network</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/ip_address/"><span>IP Addresses</span></a></li><li  class="menu-item"><a href="/admin/rackraj/switch_vlan/"><span>VLAN</span></a></li><li  class="menu-item"><a href="/admin/rackraj/vrfgroup/"><span>VRF Group</span></a></li><li  class="menu-item"><a href="/admin/rackraj/subnetcategory/"><span>Subnet Categories</span></a></li><li  class="menu-item"><a href="/admin/rackraj/vlan/"><span>Subnet</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/subnettree/"><span>Subnet Tree</span></a></li><li  class="menu-item"><a href="/admin/rackraj/netport/"><span>Ports</span></a></li><li  class="menu-item"><a href="/admin/rackraj/dns_zone/"><span>DNS Zones</span></a></li><li  class="menu-item"><a href="/admin/rackraj/dns_records/"><span>DNS Records</span></a></li><li  class="menu-item"><a href="/admin/rackraj/natip/"><span>IP NAT</span></a></li></ul></li>
+
+<li  class="menu-item"><a href="#"><span>Apps</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="#"><span>Services</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/theservice/"><span>Services</span></a></li><li  class="menu-item"><a href="/admin/rackraj/servicedetail/"><span>Service Instances</span></a></li><li  class="menu-item"><a href="/admin/rackraj/serviceschedule/"><span>Scheduled Tasks</span></a></li><li  class="menu-item"><a href="/admin/rackraj/serviceportip/"><span>Service Listener Ports</span></a></li><li  class="menu-item"><a href="/admin/rackraj/serviceportremoteip/"><span>Service Communications</span></a></li><li  class="menu-item"><a href="/admin/rackraj/ignoredservice/?active=2"><span>Ignored Services</span></a></li><li  class="menu-item"><a href="/admin/rackraj/networkshare/"><span>Network Shares</span></a></li></ul></li><li  class="menu-item"><a href="/admin/rackraj/appcomp/"><span>Application Components</span></a></li><li  class="menu-item"><a href="/admin/rackraj/configurationresource/"><span>Configuration Resources</span></a></li><li  class="menu-item"><a href="/admin/rackraj/affinitygroup/"><span>Affinity Groups</span></a></li><li  class="menu-item"><a href="/admin/rackraj/businessapp/"><span>Business Applications</span></a></li><li  class="menu-item"><a href="#"><span>Operating Systems</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/os_licensing_model/"><span>OS License Models</span></a></li><li  class="menu-item"><a href="/admin/rackraj/os/"><span>Operating Systems</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device_os/"><span>Operating Systems In Use</span></a></li><li  class="menu-item"><a href="/admin/rackraj/oseol/"><span>EOL/EOS</span></a></li></ul></li><li  class="menu-item"><a href="#"><span>Certificates</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/certificate/"><span>Certificates</span></a></li><li  class="menu-item"><a href="/admin/rackraj/devicecertificate/"><span>Certificate Instances</span></a></li></ul></li></ul></li>
+
+<li  class="menu-item"><a href="/admin/rowmgmt/password/"><span>Secrets</span></a></li>
+
+<li  class="menu-item"><a href="#"><span>Discovery</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/autodiscover/remotecollector/"><span>Remote Collectors</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/netmap/wizard/"><span>Simple Discovery Wizard</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/netmap/"><span>TCP Port Scan</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/switch/"><span>SNMP</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/pingsweep/"><span>Ping Sweep</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/vserver/"><span>HyperVisors / *nix / Windows</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/ucsmanager/"><span>UCS/ACI/Load Balancers</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/dcm/"><span>IPMI / Redfish</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/cloudaccount/"><span>Cloud</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/dnszone/"><span>DNS Zone Sync (One way)</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/sslcertificates/"><span>Certificates</span></a></li><li  class="menu-item"><a href="/admin/autodiscover/nmap/"><span>Nmap</span></a></li><li><a href="http://www.device42.com/autodiscovery/" target="_blank">External discovery tools</a></li></ul></li>
+
+<li  class="menu-item"><a href="#"><span>Reports</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/tools/advanced_reports/"><span>Advanced Reporting</span></a></li><li  class="menu-item"><a href="/admin/reporting/reports/"><span>Classic Reports</span></a></li><li  class="menu-item"><a href="/admin/d42webhooks/auditlog/"><span>History (Audit Logs)</span></a></li><li  class="menu-item"><a href="/admin/rackraj/alertnotification"><span>Notifications</span></a></li><li  class="menu-item"><a href="/admin/rackraj/sensorrule"><span>Setup Alerts</span></a></li><li  class="menu-item"><a href="/admin/reporting/delayed_report_tracker"><span>Excel Reports Status</span></a></li></ul></li>
+
+<li  class="menu-item"><a href="#"><span>Tools</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/tools/import_api_xls/"><span>Imports/Exports (xls)</span></a></li><li  class="menu-item"><a href="#"><span>Templates & Bulk Operations</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/transferlocation/"><span>Transfer Between Locations</span></a></li><li  class="menu-item"><a href="/admin/rackraj/qr_profiles/"><span>QR Profiles</span></a></li><li  class="menu-item"><a href="/admin/rackraj/asset_number_profile/"><span>Asset Number Profile</span></a></li><li  class="menu-item"><a href="/admin/rackraj/imgfile/"><span>Image Files</span></a></li><li  class="menu-item"><a href="/admin/rackraj/asset_action/"><span>Lifecycle Event Actions</span></a></li><li  class="menu-item"><a href="/admin/rackraj/device/whatif/"><span>What if</span></a></li></ul></li><li  class="menu-item"><a href="/admin/rackraj/tools/custom_fields/"><span>Custom Fields</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/license/"><span>Licensing</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/update/"><span>Update</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/export/"><span>Exports (CSV)</span></a></li><li  class="menu-item"><a href="#"><span>Settings</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/autodiscover/deviceignorerule/"><span>Device Ignore Rules</span></a></li></ul></li></ul></li></div>
+
+<li  class="menu-item show-search menu-right"><a href="#"><i class="fab fa-sistrix"></i></a></li>
+
+<li  class="menu-item disabled bookmark menu-right"><a href="javascript:submit_bookmark_form();"><i class="far fa-star"></i></a></li>
+
+<li  class="menu-item menu-right"><a href="#"><i class="far fa-life-ring"></i><span class="icon"></span></a><ul><li><a href="http://www.device42.com/new_ticket/" target="_blank">Open Support Ticket</a></li><li><a href="/admin/rackraj/tools/helpsearch/" target="_blank">Search Documentation/KB</a></li><li><a href="http://docs.device42.com/" target="_blank">Go to Online Documentation</a></li><li><a href="http://www.device42.com/new_feature/" target="_blank">Submit Feature Request</a></li><li><a href="http://www.device42.com/new_feedback/" target="_blank">Leave Feedback</a></li><li  class="menu-item"><a href="#"><span>Viewer Schema</span><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/tools/d42viewer/erd/"><span>Entity Relationship Diagram</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/d42viewer/dd/"><span>Data Dictionary</span></a></li></ul></li></ul></li>
+
+<li  class="menu-item menu-right"><a href="#"><i class="fas fa-globe"></i><span class="icon"></span></a><ul><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/nl/?current_path=/admin/taggit/tag/217/"><span>Dutch</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/en/?current_path=/admin/taggit/tag/217/"><span>English</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/fr/?current_path=/admin/taggit/tag/217/"><span>French</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/de/?current_path=/admin/taggit/tag/217/"><span>German</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/ja/?current_path=/admin/taggit/tag/217/"><span>Japanese</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/ko/?current_path=/admin/taggit/tag/217/"><span>Korean</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/pl/?current_path=/admin/taggit/tag/217/"><span>Polish</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/pt/?current_path=/admin/taggit/tag/217/"><span>Portuguese</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/ru/?current_path=/admin/taggit/tag/217/"><span>Russian</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/zh-cn/?current_path=/admin/taggit/tag/217/"><span>Simplified Chinese</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/es/?current_path=/admin/taggit/tag/217/"><span>Spanish</span></a></li><li  class="menu-item"><a href="/admin/rackraj/tools/set_language/en-gb/?current_path=/admin/taggit/tag/217/"><span>United Kingdom English</span></a></li></ul></li>
+
+</ul>
+
+
+
+
+
+			   <div id="user-tools" style="">
+			   <div class='user-logo'>
+
+                <div id="company_logo">&nbsp;</div>
+
+			   </div>
+                    <!-- Welcome, -->
+					<!--
+                    <strong id="user-tools-trigger" class="header-item" style="cursor: pointer;"  trigger-dropdown="true"><i class="fas fa-user-circle"></i>  <!--  </strong> -->
+					<h5>Tom</h5>
+          <a class="show-usernav"><i class="fas fa-chevron-down"></i></a>
+
+                    <div class="dropdown" style="">
+
+
+
+
+                            <ul>
+
+
+                                    <li href="/admin/password_change/">
+
+                                <i class="fas fa-lock"></i> Password
+                                </li>
+
+                                    <li href="/admin/logout/">
+
+                                <i class="fas fa-key"></i> Log out
+                                </li>
+                            </ul>
+
+                    </div>
+
+                </div>
+        </div>
+        <!-- END Header -->
+
+<div class="breadcrumbs">
+<a href='/admin/rackraj/tools/dashboard/'>Home</a>
+&rsaquo; <a href="/admin/taggit/tag/">Tags</a>
+&rsaquo; edge-outbound-proxy-stg
+</div>
+
+
+
+        <!-- Content -->
+        <div id="content" class="colM">
+
+            <h1>View Tag - edge-outbound-proxy-stg</h1>
+            <div id="content-main">
+
+
+  <ul class="object-tools">
+
+
+    <li>
+
+        <a href="/admin/taggit/tag/217/auditlog/" class="historylink">History (Audit Logs)</a>
+    </li>
+
+  </ul>
+
+
+<form enctype="multipart/form-data" action="" method="post" id="tag_form">
+<div>
+
+
+
+
+
+  <fieldset class="module aligned ">
+
+
+
+        <div class="form-row field-name">
+
+
+                <div>
+
+
+
+ 	                        <label>Name:</label>
+
+
+                                <p>edge-outbound-proxy-stg</p>
+
+
+
+                </div>
+
+        </div>
+
+        <div class="form-row field-slug">
+
+
+                <div>
+
+
+
+ 	                        <label>Slug:</label>
+
+
+                                <p>edge-outbound-proxy-stg</p>
+
+
+
+                </div>
+
+        </div>
+
+</fieldset>
+
+
+
+
+
+
+
+
+
+<div class="inline-group" id="taggit_taggeditem_items-group">
+  <div class="tabular inline-related last-related">
+<input type="hidden" name="taggit_taggeditem_items-TOTAL_FORMS" value="34" id="id_taggit_taggeditem_items-TOTAL_FORMS" /><input type="hidden" name="taggit_taggeditem_items-INITIAL_FORMS" value="34" id="id_taggit_taggeditem_items-INITIAL_FORMS" /><input type="hidden" name="taggit_taggeditem_items-MAX_NUM_FORMS" value="0" id="id_taggit_taggeditem_items-MAX_NUM_FORMS" />
+<fieldset class="module">
+   <h2>Tagged Items</h2>
+
+   <table>
+     <thead><tr>
+
+
+         <th colspan="2">Content type
+
+         </th>
+
+
+
+         <th>Object
+
+         </th>
+
+
+
+     </tr></thead>
+
+     <tbody>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-0">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg us-west-1-13.52.4.48/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-0-id" value="4601" id="id_taggit_taggeditem_items-0-id" />
+          <input type="hidden" name="taggit_taggeditem_items-0-tag" value="217" id="id_taggit_taggeditem_items-0-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11587">edge outbound-proxy stg us-west-1-13.52.4.48/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-1">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg ap-southeast-2-13.236.82.48/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-1-id" value="4602" id="id_taggit_taggeditem_items-1-id" />
+          <input type="hidden" name="taggit_taggeditem_items-1-tag" value="217" id="id_taggit_taggeditem_items-1-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11590">edge outbound-proxy stg ap-southeast-2-13.236.82.48/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-2">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg eu-central-1-18.184.138.48/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-2-id" value="4603" id="id_taggit_taggeditem_items-2-id" />
+          <input type="hidden" name="taggit_taggeditem_items-2-tag" value="217" id="id_taggit_taggeditem_items-2-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11585">edge outbound-proxy stg eu-central-1-18.184.138.48/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-3">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg us-east-1-18.204.64.112/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-3-id" value="4604" id="id_taggit_taggeditem_items-3-id" />
+          <input type="hidden" name="taggit_taggeditem_items-3-tag" value="217" id="id_taggit_taggeditem_items-3-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11591">edge outbound-proxy stg us-east-1-18.204.64.112/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-4">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg us-west-2-18.236.229.48/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-4-id" value="4605" id="id_taggit_taggeditem_items-4-id" />
+          <input type="hidden" name="taggit_taggeditem_items-4-tag" value="217" id="id_taggit_taggeditem_items-4-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11589">edge outbound-proxy stg us-west-2-18.236.229.48/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-5">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg eu-west-1-34.246.231.48/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-5-id" value="4606" id="id_taggit_taggeditem_items-5-id" />
+          <input type="hidden" name="taggit_taggeditem_items-5-tag" value="217" id="id_taggit_taggeditem_items-5-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11586">edge outbound-proxy stg eu-west-1-34.246.231.48/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-6">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-2c-2600:1f14:746:4e06::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-6-id" value="4728" id="id_taggit_taggeditem_items-6-id" />
+          <input type="hidden" name="taggit_taggeditem_items-6-tag" value="217" id="id_taggit_taggeditem_items-6-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11936">edge-vpc-stg-public-outbound-2c-2600:1f14:746:4e06::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-7">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-2b-2600:1f14:746:4e05::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-7-id" value="4729" id="id_taggit_taggeditem_items-7-id" />
+          <input type="hidden" name="taggit_taggeditem_items-7-tag" value="217" id="id_taggit_taggeditem_items-7-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11935">edge-vpc-stg-public-outbound-2b-2600:1f14:746:4e05::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-8">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-2a-2600:1f14:746:4e04::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-8-id" value="4730" id="id_taggit_taggeditem_items-8-id" />
+          <input type="hidden" name="taggit_taggeditem_items-8-tag" value="217" id="id_taggit_taggeditem_items-8-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11934">edge-vpc-stg-public-outbound-2a-2600:1f14:746:4e04::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-9">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1c-2600:1f1c:c2f:6c05::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-9-id" value="4731" id="id_taggit_taggeditem_items-9-id" />
+          <input type="hidden" name="taggit_taggeditem_items-9-tag" value="217" id="id_taggit_taggeditem_items-9-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11927">edge-vpc-stg-public-outbound-1c-2600:1f1c:c2f:6c05::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-10">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1b-2600:1f1c:c2f:6c04::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-10-id" value="4732" id="id_taggit_taggeditem_items-10-id" />
+          <input type="hidden" name="taggit_taggeditem_items-10-tag" value="217" id="id_taggit_taggeditem_items-10-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11926">edge-vpc-stg-public-outbound-1b-2600:1f1c:c2f:6c04::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-11">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1c-2600:1f18:6774:6506::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-11-id" value="4733" id="id_taggit_taggeditem_items-11-id" />
+          <input type="hidden" name="taggit_taggeditem_items-11-tag" value="217" id="id_taggit_taggeditem_items-11-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11919">edge-vpc-stg-public-outbound-1c-2600:1f18:6774:6506::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-12">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1b-2600:1f18:6774:6505::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-12-id" value="4734" id="id_taggit_taggeditem_items-12-id" />
+          <input type="hidden" name="taggit_taggeditem_items-12-tag" value="217" id="id_taggit_taggeditem_items-12-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11918">edge-vpc-stg-public-outbound-1b-2600:1f18:6774:6505::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-13">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1a-2600:1f18:6774:6504::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-13-id" value="4735" id="id_taggit_taggeditem_items-13-id" />
+          <input type="hidden" name="taggit_taggeditem_items-13-tag" value="217" id="id_taggit_taggeditem_items-13-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11917">edge-vpc-stg-public-outbound-1a-2600:1f18:6774:6504::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-14">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1c-2a05:d014:bbe:5a06::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-14-id" value="4736" id="id_taggit_taggeditem_items-14-id" />
+          <input type="hidden" name="taggit_taggeditem_items-14-tag" value="217" id="id_taggit_taggeditem_items-14-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11909">edge-vpc-stg-public-outbound-1c-2a05:d014:bbe:5a06::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-15">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1b-2a05:d014:bbe:5a05::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-15-id" value="4737" id="id_taggit_taggeditem_items-15-id" />
+          <input type="hidden" name="taggit_taggeditem_items-15-tag" value="217" id="id_taggit_taggeditem_items-15-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11908">edge-vpc-stg-public-outbound-1b-2a05:d014:bbe:5a05::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-16">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1a-2a05:d014:bbe:5a04::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-16-id" value="4738" id="id_taggit_taggeditem_items-16-id" />
+          <input type="hidden" name="taggit_taggeditem_items-16-tag" value="217" id="id_taggit_taggeditem_items-16-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11907">edge-vpc-stg-public-outbound-1a-2a05:d014:bbe:5a04::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-17">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-2c-2406:da1c:c4a:c206::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-17-id" value="4739" id="id_taggit_taggeditem_items-17-id" />
+          <input type="hidden" name="taggit_taggeditem_items-17-tag" value="217" id="id_taggit_taggeditem_items-17-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11899">edge-vpc-stg-public-outbound-2c-2406:da1c:c4a:c206::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-18">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-2b-2406:da1c:c4a:c205::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-18-id" value="4740" id="id_taggit_taggeditem_items-18-id" />
+          <input type="hidden" name="taggit_taggeditem_items-18-tag" value="217" id="id_taggit_taggeditem_items-18-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11898">edge-vpc-stg-public-outbound-2b-2406:da1c:c4a:c205::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-19">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-2a-2406:da1c:c4a:c204::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-19-id" value="4741" id="id_taggit_taggeditem_items-19-id" />
+          <input type="hidden" name="taggit_taggeditem_items-19-tag" value="217" id="id_taggit_taggeditem_items-19-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11897">edge-vpc-stg-public-outbound-2a-2406:da1c:c4a:c204::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-20">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1c-2a05:d018:f31:c106::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-20-id" value="4742" id="id_taggit_taggeditem_items-20-id" />
+          <input type="hidden" name="taggit_taggeditem_items-20-tag" value="217" id="id_taggit_taggeditem_items-20-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11889">edge-vpc-stg-public-outbound-1c-2a05:d018:f31:c106::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-21">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1b-2a05:d018:f31:c105::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-21-id" value="4743" id="id_taggit_taggeditem_items-21-id" />
+          <input type="hidden" name="taggit_taggeditem_items-21-tag" value="217" id="id_taggit_taggeditem_items-21-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11888">edge-vpc-stg-public-outbound-1b-2a05:d018:f31:c105::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-22">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1a-2a05:d018:f31:c104::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-22-id" value="4744" id="id_taggit_taggeditem_items-22-id" />
+          <input type="hidden" name="taggit_taggeditem_items-22-tag" value="217" id="id_taggit_taggeditem_items-22-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/11887">edge-vpc-stg-public-outbound-1a-2a05:d018:f31:c104::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-23">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1a-2406:da18:6aa:8604::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-23-id" value="4870" id="id_taggit_taggeditem_items-23-id" />
+          <input type="hidden" name="taggit_taggeditem_items-23-tag" value="217" id="id_taggit_taggeditem_items-23-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/12109">edge-vpc-stg-public-outbound-1a-2406:da18:6aa:8604::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-24">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1b-2406:da18:6aa:8605::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-24-id" value="4871" id="id_taggit_taggeditem_items-24-id" />
+          <input type="hidden" name="taggit_taggeditem_items-24-tag" value="217" id="id_taggit_taggeditem_items-24-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/12110">edge-vpc-stg-public-outbound-1b-2406:da18:6aa:8605::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-25">
+        <td class="original">
+          <p>
+           edge-vpc-stg-public-outbound-1c-2406:da18:6aa:8606::/64(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-25-id" value="4872" id="id_taggit_taggeditem_items-25-id" />
+          <input type="hidden" name="taggit_taggeditem_items-25-tag" value="217" id="id_taggit_taggeditem_items-25-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/12111">edge-vpc-stg-public-outbound-1c-2406:da18:6aa:8606::/64(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-26">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg ap-southeast-1-18.136.214.176/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-26-id" value="4886" id="id_taggit_taggeditem_items-26-id" />
+          <input type="hidden" name="taggit_taggeditem_items-26-tag" value="217" id="id_taggit_taggeditem_items-26-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/12132">edge outbound-proxy stg ap-southeast-1-18.136.214.176/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-27">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg ap-southeast-1 (shared VPC)-18.136.214.168/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-27-id" value="24078" id="id_taggit_taggeditem_items-27-id" />
+          <input type="hidden" name="taggit_taggeditem_items-27-tag" value="217" id="id_taggit_taggeditem_items-27-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/15672">edge outbound-proxy stg ap-southeast-1 (shared VPC)-18.136.214.168/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-28">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg us-west-1 (shared VPC)-13.52.4.32/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-28-id" value="24079" id="id_taggit_taggeditem_items-28-id" />
+          <input type="hidden" name="taggit_taggeditem_items-28-tag" value="217" id="id_taggit_taggeditem_items-28-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/15670">edge outbound-proxy stg us-west-1 (shared VPC)-13.52.4.32/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-29">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg ap-southeast-2 (shared VPC)-13.236.82.40/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-29-id" value="24080" id="id_taggit_taggeditem_items-29-id" />
+          <input type="hidden" name="taggit_taggeditem_items-29-tag" value="217" id="id_taggit_taggeditem_items-29-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/15671">edge outbound-proxy stg ap-southeast-2 (shared VPC)-13.236.82.40/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-30">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg eu-central-1 (shared VPC)-18.184.138.40/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-30-id" value="24081" id="id_taggit_taggeditem_items-30-id" />
+          <input type="hidden" name="taggit_taggeditem_items-30-tag" value="217" id="id_taggit_taggeditem_items-30-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/15673">edge outbound-proxy stg eu-central-1 (shared VPC)-18.184.138.40/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-31">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg us-east-1 (shared VPC)-18.204.64.104/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-31-id" value="24082" id="id_taggit_taggeditem_items-31-id" />
+          <input type="hidden" name="taggit_taggeditem_items-31-tag" value="217" id="id_taggit_taggeditem_items-31-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/15674">edge outbound-proxy stg us-east-1 (shared VPC)-18.204.64.104/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1 has_original"
+             id="taggit_taggeditem_items-32">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg us-west-2 (shared VPC)-18.236.229.32/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-32-id" value="24083" id="id_taggit_taggeditem_items-32-id" />
+          <input type="hidden" name="taggit_taggeditem_items-32-tag" value="217" id="id_taggit_taggeditem_items-32-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/15675">edge outbound-proxy stg us-west-2 (shared VPC)-18.236.229.32/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row2 has_original"
+             id="taggit_taggeditem_items-33">
+        <td class="original">
+          <p>
+           edge outbound-proxy stg eu-west-1 (shared VPC)-34.246.231.32/29(edge) tagged with edge-outbound-proxy-stg
+            </p>
+          <input type="hidden" name="taggit_taggeditem_items-33-id" value="24084" id="id_taggit_taggeditem_items-33-id" />
+          <input type="hidden" name="taggit_taggeditem_items-33-tag" value="217" id="id_taggit_taggeditem_items-33-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>Subnet</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p><a href="/admin/rackraj/vlan/15676">edge outbound-proxy stg eu-west-1 (shared VPC)-34.246.231.32/29(edge)</a></p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+
+        <tr class="row1  empty-form"
+             id="taggit_taggeditem_items-empty">
+        <td class="original">
+
+          <input type="hidden" name="taggit_taggeditem_items-__prefix__-id" id="id_taggit_taggeditem_items-__prefix__-id" />
+          <input type="hidden" name="taggit_taggeditem_items-__prefix__-tag" value="217" id="id_taggit_taggeditem_items-__prefix__-tag" />
+
+        </td>
+
+
+
+              <td class="field-content_type">
+
+
+                 <p>(None)</p>
+
+
+              </td>
+
+
+
+              <td class="field-object_name">
+
+
+                 <p>None</p>
+
+
+              </td>
+
+
+
+
+        </tr>
+
+     </tbody>
+   </table>
+</fieldset>
+  </div>
+</div>
+
+<script type="text/javascript">
+(function($) {
+    $(document).ready(function($) {
+        var rows = "#taggit_taggeditem_items-group .tabular.inline-related tbody tr";
+        var alternatingRows = function(row) {
+            $(rows).not(".add-row").removeClass("row1 row2")
+                .filter(":even").addClass("row1").end()
+                .filter(rows + ":odd").addClass("row2");
+        }
+        var reinitDateTimeShortCuts = function() {
+            // Reinitialize the calendar and clock widgets by force
+            if (typeof DateTimeShortcuts != "undefined") {
+                $(".datetimeshortcuts").remove();
+                DateTimeShortcuts.init();
+            }
+        }
+        var updateSelectFilter = function() {
+            // If any SelectFilter widgets are a part of the new form,
+            // instantiate a new SelectFilter instance for it.
+            if (typeof SelectFilter != "undefined"){
+                $(".selectfilter").each(function(index, value){
+                  var namearr = value.name.split('-');
+                  SelectFilter.init(value.id, namearr[namearr.length-1], false, "/static/admin/");
+                });
+                $(".selectfilterstacked").each(function(index, value){
+                  var namearr = value.name.split('-');
+                  SelectFilter.init(value.id, namearr[namearr.length-1], true, "/static/admin/");
+                });
+            }
+        }
+        var initPrepopulatedFields = function(row) {
+            row.find('.prepopulated_field').each(function() {
+                var field = $(this);
+                var input = field.find('input, select, textarea');
+                var dependency_list = input.data('dependency_list') || [];
+                var dependencies = [];
+                $.each(dependency_list, function(i, field_name) {
+                  dependencies.push('#' + row.find(field_name).find('input, select, textarea').attr('id'));
+                });
+                if (dependencies.length) {
+                    input.prepopulate(dependencies, input.attr('maxlength'));
+                }
+            });
+        }
+        $(rows).formset({
+            prefix: "taggit_taggeditem_items",
+            addText: "Add another Tagged Item ",
+            formCssClass: "dynamic-taggit_taggeditem_items",
+            deleteCssClass: "inline-deletelink",
+            deleteText: "Remove",
+            emptyCssClass: "empty-form",
+            removed: alternatingRows,
+            added: (function(row) {
+                initPrepopulatedFields(row);
+                reinitDateTimeShortCuts();
+                updateSelectFilter();
+                alternatingRows(row);
+            })
+        });
+    });
+})(jQuery);
+</script>
+
+
+
+
+
+
+
+</div>
+</form></div>
+
+
+
+<script type="text/javascript">
+(function($) {
+    $(document).ready(function($) {
+
+$('.add-row').hide();$('.help').hide();$('.showip').hide();$('.showrack').hide();$('.original').empty();$('.field-asset_profile').hide();
+			$("[id$='_custom_fields_set-group']"+" a").each(function () {
+				$(this).replaceWith($(this).text());
+			});
+
+ });
+})(jQuery);
+ </script>
+
+
+
+
+
+
+
+            <br class="clear" />
+        </div>
+
+        <!-- END Content -->
+        <div id="footer"></div>
+        <div style="display: none;" id="go-to-bottom"><a style="cursor:pointer;">Back to Top</a></div>
+
+    </div>
+    <!-- END Container -->
+    <script type="text/javascript" src="/static/js/custom/d42custom.js"></script>
+
+
+
+
+    <div class="site-popup">
+        <div class="popup-head">
+            <h3></h3>
+            <a title="Close" id="close-sitepopup"><i class="far fa-times-circle"></i></a>
+        </div>
+        <div class="popup-content"></div>
+    </div>
+    <script>
+    // setTimeout(function() {
+           // $("#basecss").attr("disabled", "disabled");
+    // }, 6000);
+    </script>
+
+    </body>
+</html>
