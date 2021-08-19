@@ -120,6 +120,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 				nonce: res.locals.nonce,
 				info,
 				clientKey,
+				login
 			});
 		} catch (err) {
 			// If we get here, there was either a problem decoding the JWT

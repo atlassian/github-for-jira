@@ -10,14 +10,6 @@ export default async (_: Request, res: Response): Promise<void> => {
 
 	const adminPageDisplayConditions = [
 		{
-			condition: "addon_property_exists",
-			invert: true,
-			params: {
-				propertyKey: "configuration",
-				objectKey: "has-repos"
-			}
-		},
-		{
 			condition: "user_is_admin"
 		}
 	];
