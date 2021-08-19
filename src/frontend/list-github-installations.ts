@@ -1,15 +1,11 @@
 // TODO: are we using this?
 import { NextFunction, Request, Response } from "express";
 import { getLogger } from "../config/logger";
+import { pageRendered } from "../config/metric-names";
 import statsd from "../config/statsd";
 
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const logger = getLogger("list-github-installations");
-
-	logger.info("Rendering github-installations.hbs");
-	statsd.increment("Rendering GitHub installations page");
-
 	if (!req.session.githubToken) {
 		return next(new Error("Unauthorized"));
 	}
@@ -40,6 +36,11 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		}
 
 		const { data: info } = await client.apps.getAuthenticated();
+
+		const logger = getLogger("list-github-installations");
+
+		logger.info("Rendering github-installations.hbs");
+		statsd.increment(pageRendered.gitHubInstallations);
 
 		return res.render("github-installations.hbs", {
 			csrfToken: req.csrfToken(),
