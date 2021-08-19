@@ -16,7 +16,10 @@
       href="/public/css/global.css"
       media="all"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aui/9.4.0/aui/aui-prototyping.css" integrity="sha512-DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="icon" src='https://cdnjs.cloudflare.com/ajax/libs/aui/9.4.0/aui/images/adgs-icons.svg'></link>
     <script src='/public/js/jquery.min.js' nonce='{{nonce}}'></script>
+
   </head>
 
   <body class='px-3 py-6'>
@@ -68,7 +71,8 @@
                       <a
                         href='/github/subscriptions/{{id}}'
                       >
-                        <img class="getConfiguration__orgContent_edit" src='/public/assets/edit-icon.png' alt='Edit' />
+                        {{!-- <img class="getConfiguration__orgContent_edit" src='/public/assets/edit-icon.png' alt='Edit' /> --}}
+                        <span class="aui-icon aui-icon-large aui-iconfont-edit-filled">Edit</span>
                       </a>
                     {{/if}}
                   </div>
