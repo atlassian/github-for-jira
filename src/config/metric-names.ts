@@ -28,3 +28,7 @@ export const metricSyncStatus = {
 export const metricWebhooks = {
 	webhookEvent: `${server}.webhooks.webhook-events`
 };
+
+export const pageRendered = {
+	gitHubInstallations: `${server}.rendering-github-installations-page`
+};
