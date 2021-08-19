@@ -1,5 +1,9 @@
 // TODO: are we using this?
 import { NextFunction, Request, Response } from "express";
+import { getLogger } from "../config/logger";
+import { pageRendered } from "../config/metric-names";
+import statsd from "../config/statsd";
+
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	if (!req.session.githubToken) {
@@ -32,6 +36,12 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		}
 
 		const { data: info } = await client.apps.getAuthenticated();
+
+		const logger = getLogger("list-github-installations");
+
+		logger.info("Rendering github-installations.hbs");
+		statsd.increment(pageRendered.gitHubInstallations);
+
 		return res.render("github-installations.hbs", {
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,
@@ -40,7 +50,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		});
 	} catch (err) {
 		req.log.error(err,
-			"Unable to show github subscription page. Jira Host=%s", req.session.jiraHost
+			"Unable list github installations page. Jira Host=%s", req.session.jiraHost
 		);
 		return next(new Error(err));
 	}
