@@ -22,14 +22,6 @@ Object {
       Object {
         "conditions": Array [
           Object {
-            "condition": "addon_property_exists",
-            "invert": true,
-            "params": Object {
-              "objectKey": "has-repos",
-              "propertyKey": "configuration",
-            },
-          },
-          Object {
             "condition": "user_is_admin",
           },
         ],
@@ -75,14 +67,6 @@ Object {
     },
     "postInstallPage": Object {
       "conditions": Array [
-        Object {
-          "condition": "addon_property_exists",
-          "invert": true,
-          "params": Object {
-            "objectKey": "has-repos",
-            "propertyKey": "configuration",
-          },
-        },
         Object {
           "condition": "user_is_admin",
         },
@@ -136,14 +120,6 @@ Object {
       Object {
         "conditions": Array [
           Object {
-            "condition": "addon_property_exists",
-            "invert": true,
-            "params": Object {
-              "objectKey": "has-repos",
-              "propertyKey": "configuration",
-            },
-          },
-          Object {
             "condition": "user_is_admin",
           },
         ],
@@ -189,14 +165,6 @@ Object {
     },
     "postInstallPage": Object {
       "conditions": Array [
-        Object {
-          "condition": "addon_property_exists",
-          "invert": true,
-          "params": Object {
-            "objectKey": "has-repos",
-            "propertyKey": "configuration",
-          },
-        },
         Object {
           "condition": "user_is_admin",
         },

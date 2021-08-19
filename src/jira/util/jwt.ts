@@ -1,11 +1,7 @@
 // Original source code:
 // https://bitbucket.org/atlassian/atlassian-connect-express/src/f434e5a9379a41213acf53b9c2689ce5eec55e21/lib/middleware/authentication.js?at=master&fileviewer=file-view-default#authentication.js-227
 // TODO: need some typing for jwt
-import {
-	createQueryStringHash, decodeAsymmetric,
-	decodeSymmetric,
-	getAlgorithm, getKeyId
-} from "atlassian-jwt";
+import {createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId} from "atlassian-jwt";
 import {NextFunction, Request, Response} from "express";
 import envVars from "../../config/env";
 import _ from "lodash";
@@ -32,7 +28,7 @@ export enum TokenType {
 	context = "context"
 }
 
-export function extractJwtFromRequest(req: Request) {
+export function extractJwtFromRequest(req: Request): string | void {
 	const tokenInQuery = req.query?.[JWT_PARAM];
 
 	// JWT appears in both parameter and body will result query hash being invalid.
@@ -44,7 +40,7 @@ export function extractJwtFromRequest(req: Request) {
 	let token = tokenInQuery || tokenInBody;
 
 	// if there was no token in the query-string then fall back to checking the Authorization header
-	const authHeader =req.headers?.[AUTH_HEADER];
+	const authHeader = req.headers?.[AUTH_HEADER];
 	if (authHeader?.startsWith("JWT ")) {
 		if (token) {
 			const foundIn = tokenInQuery ? "query" : "request body";
@@ -63,13 +59,13 @@ export function extractJwtFromRequest(req: Request) {
 	return token;
 }
 
-function sendError(res: Response, code: number, msg: string) {
+function sendError(res: Response, code: number, msg: string): void {
 	res.status(code).json({
 		message: msg
 	});
 }
 
-function decodeAsymmetricToken(token, publicKey, noVerify) {
+function decodeAsymmetricToken(token: string, publicKey: string, noVerify: boolean): any {
 	return decodeAsymmetric(
 		token,
 		publicKey,
@@ -79,7 +75,7 @@ function decodeAsymmetricToken(token, publicKey, noVerify) {
 }
 
 
-function verifyQsh(qsh: string, req: Request) {
+function verifyQsh(qsh: string, req: Request): boolean {
 	const requestInAtlassianJwtFormat = {...req, pathname: req.path}
 	let expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, false, BASE_URL);
 	let signatureHashVerified = qsh === expectedHash;
@@ -95,7 +91,7 @@ function verifyQsh(qsh: string, req: Request) {
 	return true
 }
 
-export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenType: TokenType, req: Request, res: Response) {
+export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenType: TokenType, req: Request, res: Response): boolean {
 	const expiry = verifiedClaims.exp;
 
 	// TODO: build in leeway?
@@ -128,7 +124,7 @@ export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenTy
 	}
 }
 
-const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: Response, tokenType: TokenType) => {
+const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: Response, tokenType: TokenType): boolean => {
 	const token = extractJwtFromRequest(req);
 	if (!token) {
 		sendError(res, 401, "Could not find authentication data on request");
@@ -172,7 +168,7 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
  * @param res Response
  * @param next Next function
  */
-export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: TokenType, req: Request, res: Response, next: NextFunction) => {
+export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: TokenType, req: Request, res: Response, next: NextFunction): void => {
 	try {
 		if (!verifySymmetricJwtAndSetResponseCodeOnError(secret, req, res, tokenType)) {
 			return
@@ -188,7 +184,7 @@ export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: Tok
 
 const ALLOWED_BASE_URLS = [BASE_URL]
 
-export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const token = extractJwtFromRequest(req);
 		if (!token) {
