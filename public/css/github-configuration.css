@@ -35,7 +35,7 @@
     color: #6b778c;
     display: flex;
     flex-direction: row;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     padding: 1em 0 0;
 }
 
@@ -54,7 +54,7 @@
 }
 
 .githubOrgs__table__row:not(:last-child) {
-    padding-bottom: 0.8em;
+    padding-bottom: 1.5em;
 }
 
 .githubOrgs__table__row,
@@ -93,6 +93,10 @@
     border-radius: 12px;
     margin: auto 0.5em;
     padding: 0.7em 0.6em;
+}
+
+.getConfiguration__orgContent_edit {
+    color: #43526E;
 }
 
 .getConfiguration__orgContent__connectBtn,
