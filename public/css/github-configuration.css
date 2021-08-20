@@ -117,7 +117,8 @@
 
 .getConfiguration__orgContent__connectBtn,
 .getConfiguration__orgContent__connectBtn--disabled,
-.getConfiguration__orgContent__connectedMsg {
+.getConfiguration__orgContent__connectedMsg,
+.getConfiguration__loaderContainer {
     border: 0;
     border-radius: 3px;
     color: #42526e;
