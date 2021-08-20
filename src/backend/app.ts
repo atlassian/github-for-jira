@@ -99,7 +99,7 @@ export default (octokitApp: App): Express => {
 
 	// TODO: move all view/static/public/handlebars helper things in it's own folder
 	app.set("view engine", "hbs");
-	app.set("views", path.join(rootPath, "views"));
+	app.set("views", path.join(rootPath, "src/client/ui"));
 
 	// Handlebars helpers
 	hbs.registerHelper("toLowerCase", (str) => str.toLowerCase());
