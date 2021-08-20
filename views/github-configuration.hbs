@@ -47,8 +47,8 @@
         <div class='Box'>
           <div class='getConfiguration__wrapper'>
             <div class='getConfiguration__tableHeader'>
-              <p class='getConfiguration__tableHeader__label org__cell'>Unconnected organizations with Jira app</p>
-              <p class='getConfiguration__tableHeader__label org__cell'>Repository access</p>
+              <p class='getConfiguration__tableHeader__label'>Unconnected organizations with Jira app</p>
+              <p class='getConfiguration__tableHeader__label'>Repository access</p>
             </div>
 
             <div class="githubOrgs__table">
@@ -63,7 +63,7 @@
                   </div>
 
                   {{!-- Repository access --}}
-                  <div class='getConfiguration__orgContent org__cell'>
+                  <div class='getConfiguration__orgContent__repoAccess org__cell'>
                     <p class="getConfiguration__orgContent__repoSelection">{{repoAccessType repository_selection}}</p>
                     <p class="getConfiguration__orgContent__numberOfRepos">{{numberOfRepos}}</p>
                     {{#if admin}}
@@ -76,7 +76,7 @@
                   </div>
 
                   {{!-- Connect --}}
-                  <div class='getConfiguration__orgContent org__cell'>
+                  <div class='getConfiguration__orgContent__connect org__cell'>
                     {{#if admin}}
                       {{#if (isNotConnected syncStatus)}}
                         <button
@@ -113,6 +113,7 @@
 
     </section>
     <script src='/public/js/github-configuration.js' nonce='{{nonce}}'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aui/9.4.0/aui/aui-prototyping.min.js" integrity="sha512-iUshpSgJ26ryfeS5STpopGIsONtcP9nlIgLU24C8jwGPjsSTO5vqepMFU/KWc3fTIbNhbSTS/arJAGSnMPqQeA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   </body>
 
 </html>
