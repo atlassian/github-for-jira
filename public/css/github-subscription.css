@@ -6,9 +6,21 @@
     padding: 1em;
 }
 
+.getSubscription__info__icon__container {
+    position: relative;
+    width: 5em;
+}
+
 .getSubscription__info__icon {
-    height: 24px;
-    margin: 0 1.1em 0 0.2em;
+    color: #0747A6;
+    position: absolute;
+    transform: scale(1.5);
+}
+
+ .aui-icon::before {
+    left: 0.3em;
+    position: absolute;
+    top: 0.3em;
 }
 
 .getSubscription__installation {
