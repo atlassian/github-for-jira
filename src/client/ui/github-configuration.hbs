@@ -88,7 +88,7 @@
                         </button>
                       {{else if (inProgressSync syncStatus)}}
                         <div class="getConfiguration__loaderContainer">
-                          <div class="getConfiguration__loader"></div>
+                          <aui-spinner size="small"></aui-spinner>
                         </div>
                       {{else}}
                         <p class="getConfiguration__orgContent__connectedMsg">
@@ -113,7 +113,7 @@
 
     </section>
     <script src='/public/js/github-configuration.js' nonce='{{nonce}}'></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aui/9.4.0/aui/aui-prototyping.min.js" integrity="sha512-iUshpSgJ26ryfeS5STpopGIsONtcP9nlIgLU24C8jwGPjsSTO5vqepMFU/KWc3fTIbNhbSTS/arJAGSnMPqQeA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aui/9.4.0/aui/aui-prototyping.min.js" integrity="sha512-iUshpSgJ26ryfeS5STpopGIsONtcP9nlIgLU24C8jwGPjsSTO5vqepMFU/KWc3fTIbNhbSTS/arJAGSnMPqQeA==" crossorigin="anonymous" referrerpolicy="no-referrer" nonce='{{nonce}}'></script>
   </body>
 
 </html>

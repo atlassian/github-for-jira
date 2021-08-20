@@ -120,7 +120,7 @@
     border: 0;
     border-radius: 3px;
     color: #42526e;
-    maring-right: 0.5em;
+    margin-right: 0.5em;
 }
 
 .getConfiguration__orgContent__connectBtn {
@@ -145,15 +145,6 @@
     display: flex;
     justify-content: center;
     width: 5.5em;
-}
-
-.getConfiguration__loader {
-    animation: spin 2s linear infinite;
-    border: 2px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 2px solid #42526e;
-    height: 1.8em;
-    width: 1.8em;
 }
 
 .getConfiguration__noOrganizations {
@@ -199,10 +190,5 @@
 
   .getConfiguration__tableHeader {
     padding-bottom: 0;
-  }
-
-  .getConfiguration__loader {
-    height: 1.8em;
-    width: 1.8em;
   }
 }
