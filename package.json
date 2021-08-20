@@ -42,6 +42,7 @@
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
     "@atlaskit/reduced-ui-pack": "^8.19.0",
+    "@atlassian/aui": "^9.4.0",
     "@octokit/auth-app": "^2.6.0",
     "@sentry/node": "^6.8.0",
     "@types/bull": "^3.12.2",

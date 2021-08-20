@@ -147,6 +147,13 @@ export default (octokitApp: App): Express => {
 		)
 	);
 
+	app.use(
+		"/public/aui",
+		express.static(
+			path.join(rootPath, "node_modules/@atlassian/aui/dist/aui")
+		)
+	);
+
 	// Check to see if jira host has been passed to any routes and save it to session
 	app.use((req: Request, _: Response, next: NextFunction): void => {
 		req.session.jwt = (req.query.jwt as string) || req.session.jwt;
