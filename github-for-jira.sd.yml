@@ -308,12 +308,18 @@ environmentOverrides:
           ComparisonOperator: GreaterThanThreshold
           Statistic: Maximum
     resources:
+      - name: database
+        type: postgres-db
+        attributes:
+          connectionLimit: 200
+
       - name: rds
         type: dedicated-rds
         attributes:
           parameters:
             DBInstanceClass: db.t3.large
             AllocatedStorage: 10 # 10 GB
+            ConnectionAlarm: 180
 
       - type: globaledge
         name: proxy
