@@ -197,7 +197,7 @@ environmentOverrides:
             Lower: 30
             Upper: 80
           Metrics:
-            - Expression: "MAX([(responseTime/2)*100, cpuUsage, memoryUsage])"
+            - Expression: "MAX([(responseTime/5)*100, cpuUsage, memoryUsage])"
               Id: "combinedCpuRamAndLatency"
               Label: "Scaling based on CPU and Memory consumption or response time"
             - MetricStat:
@@ -226,7 +226,7 @@ environmentOverrides:
                   MetricName: TargetResponseTime
                   Namespace: AWS/ApplicationELB
                 Period: 300
-                Stat: Maximum
+                Stat: Average
               Id: responseTime
               ReturnData: false
     alarms:
@@ -263,9 +263,6 @@ environmentOverrides:
           upstream_address:
             - address: github-for-jira.stg.services.atlassian.com
           rewrite: github-for-jira.stg.services.atlassian.com
-#          upstream_address:
-#            - address: jira-integration-staging.herokuapp.com
-#          rewrite: jira-integration-staging.herokuapp.com
           ip_whitelist:
             - public
 
@@ -308,12 +305,18 @@ environmentOverrides:
           ComparisonOperator: GreaterThanThreshold
           Statistic: Maximum
     resources:
+      - name: database
+        type: postgres-db
+        attributes:
+          connectionLimit: 300
+
       - name: rds
         type: dedicated-rds
         attributes:
           parameters:
             DBInstanceClass: db.t3.large
             AllocatedStorage: 10 # 10 GB
+            ConnectionAlarm: 250
 
       - type: globaledge
         name: proxy
@@ -321,11 +324,8 @@ environmentOverrides:
           default_vanity_dns: false
           domain:
             - github.atlassian.com
-#          upstream_address:
-#            - address: github-for-jira.services.atlassian.com
-#          rewrite: github-for-jira.services.atlassian.com
           upstream_address:
-            - address: jira-integration-production.herokuapp.com
-          rewrite: jira-integration-production.herokuapp.com
+            - address: github-for-jira.services.atlassian.com
+          rewrite: github-for-jira.services.atlassian.com
           ip_whitelist:
             - public
