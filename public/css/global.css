@@ -60,10 +60,6 @@ p {
     margin-bottom: 0;
 }
 
-.org__cell:not(.getConfiguration__orgContent__account) {
-    flex: 1;
-}
-
 .tableHeader__label {
     flex: 2;
 }

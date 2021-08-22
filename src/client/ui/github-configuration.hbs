@@ -5,6 +5,7 @@
     <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <meta name='ap-local-base-url' content='{{localBaseUrl}}' />
     <title>{{title}}</title>
+    <link rel="stylesheet" href="/public/aui/aui-prototyping.css" integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel='stylesheet' href='/public/primer/build.css' media='all' />
     <link
       rel='stylesheet'
@@ -17,6 +18,7 @@
       media="all"
     />
     <script src='/public/js/jquery.min.js' nonce='{{nonce}}'></script>
+
   </head>
 
   <body class='px-3 py-6'>
@@ -44,9 +46,9 @@
 
         <div class='Box'>
           <div class='getConfiguration__wrapper'>
-            <div class='tableHeader'>
-              <p class='tableHeader__label org__cell'>Unconnected organizations with Jira app</p>
-              <p class='tableHeader__label org__cell'>Repository access</p>
+            <div class='getConfiguration__tableHeader'>
+              <p class='getConfiguration__tableHeader__label'>Unconnected organizations with Jira app</p>
+              <p class='getConfiguration__tableHeader__label'>Repository access</p>
             </div>
 
             <div class="githubOrgs__table">
@@ -61,20 +63,20 @@
                   </div>
 
                   {{!-- Repository access --}}
-                  <div class='getConfiguration__orgContent org__cell'>
+                  <div class='getConfiguration__orgContent__repoAccess org__cell'>
                     <p class="getConfiguration__orgContent__repoSelection">{{repoAccessType repository_selection}}</p>
                     <p class="getConfiguration__orgContent__numberOfRepos">{{numberOfRepos}}</p>
                     {{#if admin}}
                       <a
                         href='/github/subscriptions/{{id}}'
                       >
-                        <img class="getConfiguration__orgContent_edit" src='/public/assets/edit-icon.png' alt='Edit' />
+                        <span class="getConfiguration__orgContent_edit aui-icon aui-icon-small aui-iconfont-new-edit">Edit</span>
                       </a>
                     {{/if}}
                   </div>
 
                   {{!-- Connect --}}
-                  <div class='getConfiguration__orgContent org__cell'>
+                  <div class='getConfiguration__orgContent__connect org__cell'>
                     {{#if admin}}
                       {{#if (isNotConnected syncStatus)}}
                         <button
@@ -86,7 +88,7 @@
                         </button>
                       {{else if (inProgressSync syncStatus)}}
                         <div class="getConfiguration__loaderContainer">
-                          <div class="getConfiguration__loader"></div>
+                          <aui-spinner size="small"></aui-spinner>
                         </div>
                       {{else}}
                         <p class="getConfiguration__orgContent__connectedMsg">
@@ -111,6 +113,7 @@
 
     </section>
     <script src='/public/js/github-configuration.js' nonce='{{nonce}}'></script>
+    <script src="/public/aui/aui-prototyping.js" integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw==" crossorigin="anonymous" referrerpolicy="no-referrer" nonce='{{nonce}}'></script>
   </body>
 
 </html>

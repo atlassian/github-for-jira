@@ -23,6 +23,8 @@ function secureHeaders(router: Router, frontendApp: Express) {
 			connectSrc: ["'self'", process.env.APP_URL],
 			// Allow <style> tags hosted by ourselves as well as style="" attributes
 			styleSrc: ["'self'", "'unsafe-inline'"],
+			// Allow fonts hosted by ourselves
+			fontSrc: ["'self'"],
 			// Allow using github-for-jira pages as iframes only in jira
 			frameAncestors: ["https://*.atlassian.net", "https://*.jira-dev.com", "https://*.jira.com"],
 			//Doesn't allow usage of <base> element
@@ -33,6 +35,7 @@ function secureHeaders(router: Router, frontendApp: Express) {
 			imgSrc: ["'self'", "data:", "https://*.githubusercontent.com", "https://octodex.github.com"]
 		}
 	}));
+
 	// Enable HSTS with the value we use for education.github.com
 	router.use(helmet.hsts({
 		maxAge: 15552000

@@ -1,10 +1,14 @@
-.page-content {
+.jiraConfiguration__pageContent {
   padding: 20px;
   min-height: 600px;
 }
 
-.title {
-  float: left;
+.jiraConfiguration__pageContent__title {
+  margin: 1em;
+}
+
+.jiraConfiguration__pageContent__title__h1 {
+  font-weight: 500;
 }
 
 .actions {
@@ -81,6 +85,7 @@
 .muted-link {
   color: #586069 !important;
 }
+
 .muted-link:hover {
   color: #0366d6 !important;
   text-decoration: none;

@@ -1,8 +1,8 @@
 // TODO: are we using this?
 import { NextFunction, Request, Response } from "express";
-import { getLogger } from "../config/logger";
-import { pageRendered } from "../config/metric-names";
-import statsd from "../config/statsd";
+import { getLogger } from "../../config/logger";
+import { pageRendered } from "../../config/metric-names";
+import statsd from "../../config/statsd";
 
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {

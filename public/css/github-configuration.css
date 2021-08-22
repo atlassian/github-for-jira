@@ -35,12 +35,20 @@
     color: #6b778c;
     display: flex;
     flex-direction: row;
-    font-size: 0.8rem;
-    padding: 1em 0 0;
+    font-size: 0.9rem;
 }
 
 .getConfiguration__tableHeader__label {
-    margin-bottom: 0;
+    align-self: flex-end;
+    margin-bottom: 0.7em;
+}
+
+.getConfiguration__tableHeader__label:first-child {
+    flex: 3;
+}
+
+.getConfiguration__tableHeader__label:last-child {
+    flex: 4;
 }
 
 .Box {
@@ -54,7 +62,7 @@
 }
 
 .githubOrgs__table__row:not(:last-child) {
-    padding-bottom: 0.8em;
+    padding-bottom: 1.5em;
 }
 
 .githubOrgs__table__row,
@@ -63,8 +71,9 @@
     flex-direction: row;
 }
 
-.getConfiguration__orgContent,
- .getConfiguration__orgContent__account {
+.getConfiguration__orgContent__account,
+.getConfiguration__orgContent__repoAccess,
+.getConfiguration__orgContent__connect {
     align-items: center;
     color: #213658;
     display: flex;
@@ -75,8 +84,15 @@
     justify-content: flex-end;
 }
 
-.getConfiguration__orgContent__account {
-    flex: 2;
+.getConfiguration__orgContent__account,
+.getConfiguration__orgContent__repoAccess {
+    flex: 3;
+}
+
+.getConfiguration__orgContent__connect {
+    display: flex;
+    flex: 1;
+    justify-content: flex-end;
 }
 
 .getConfiguration__orgContent__avatar {
@@ -95,11 +111,18 @@
     padding: 0.7em 0.6em;
 }
 
+.getConfiguration__orgContent_edit {
+    color: #43526E;
+}
+
 .getConfiguration__orgContent__connectBtn,
-.getConfiguration__orgContent__connectBtn--disabled {
+.getConfiguration__orgContent__connectBtn--disabled,
+.getConfiguration__orgContent__connectedMsg,
+.getConfiguration__loaderContainer {
     border: 0;
     border-radius: 3px;
     color: #42526e;
+    margin-right: 0.5em;
 }
 
 .getConfiguration__orgContent__connectBtn {
@@ -109,7 +132,6 @@
 
 .getConfiguration__orgContent__connectedMsg {
     font-style: italic;
-    margin: 0;
 }
 
 .getConfiguration__orgContent__connectBtn:hover,
@@ -124,15 +146,6 @@
     display: flex;
     justify-content: center;
     width: 5.5em;
-}
-
-.getConfiguration__loader {
-    animation: spin 2s linear infinite;
-    border: 2px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 2px solid #42526e;
-    height: 1.8em;
-    width: 1.8em;
 }
 
 .getConfiguration__noOrganizations {
@@ -155,6 +168,7 @@
 .getConfiguration__connectNewOrg:focus,
 .getConfiguration__connectNewOrg:active {
     background-color: #F5F6F7;
+    color: #172B4D;
     text-decoration: none;
 }
 
@@ -177,10 +191,5 @@
 
   .getConfiguration__tableHeader {
     padding-bottom: 0;
-  }
-
-  .getConfiguration__loader {
-    height: 1.8em;
-    width: 1.8em;
   }
 }
