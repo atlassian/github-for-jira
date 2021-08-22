@@ -263,9 +263,6 @@ environmentOverrides:
           upstream_address:
             - address: github-for-jira.stg.services.atlassian.com
           rewrite: github-for-jira.stg.services.atlassian.com
-#          upstream_address:
-#            - address: jira-integration-staging.herokuapp.com
-#          rewrite: jira-integration-staging.herokuapp.com
           ip_whitelist:
             - public
 
@@ -327,11 +324,8 @@ environmentOverrides:
           default_vanity_dns: false
           domain:
             - github.atlassian.com
-#          upstream_address:
-#            - address: github-for-jira.services.atlassian.com
-#          rewrite: github-for-jira.services.atlassian.com
           upstream_address:
-            - address: jira-integration-production.herokuapp.com
-          rewrite: jira-integration-production.herokuapp.com
+            - address: github-for-jira.services.atlassian.com
+          rewrite: github-for-jira.services.atlassian.com
           ip_whitelist:
             - public
