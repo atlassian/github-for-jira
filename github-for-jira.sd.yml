@@ -304,6 +304,15 @@ environmentOverrides:
           Period: 60
           ComparisonOperator: GreaterThanThreshold
           Statistic: Maximum
+        HighSeverityAlarmWhenTooManyBackend5xxErrors:
+          MetricName: HTTPCode_Target_5XX_Count
+          Namespace: AWS/ApplicationELB
+          Priority: High
+          Threshold: 200
+          EvaluationPeriods: 1
+          Period: 300
+          ComparisonOperator: GreaterThanOrEqualToThreshold
+          Statistic: Sum
     resources:
       - name: database
         type: postgres-db
