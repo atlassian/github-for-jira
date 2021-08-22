@@ -69,7 +69,7 @@ const JiraErrorCodes = {
 /**
  * Middleware to enhance failed requests in Jira.
  */
-function getErrorMiddleware(logger) {
+function getErrorMiddleware() {
 	return (
 		/**
 		 * Potentially enrich the promise's rejection.
@@ -83,8 +83,6 @@ function getErrorMiddleware(logger) {
 
 				const errorMessage = status in JiraErrorCodes ? `Error calling Jira API. ${JiraErrorCodes[status]}` :
 					`Error calling Jira API. Response Code: ${status} ${statusText}`;
-
-				logger.warn(error, { message: errorMessage, response_data: error.response.data });
 
 				return Promise.reject(new JiraClientError(error, errorMessage));
 			} else {
@@ -266,7 +264,7 @@ export default (
 
 	instance.interceptors.response.use(
 		getSuccessMiddleware(logger),
-		getErrorMiddleware(logger)
+		getErrorMiddleware()
 	);
 
 	return instance;
