@@ -1,39 +1,42 @@
 name: Deploy
 
 on:
-  push:
-    branches:
-      - micros
-
-#on:
-#  workflow_run:
-#    workflows: [ "Test","Build" ] # Dependent workflow
-#    types: [ completed ] # Only after dependent workflow is done
-#    branches: [ master ] # Only do it on master branch
+  workflow_run:
+    workflows: [ Test, Build ] # Dependent workflow
+    types: [ completed ] # Only after dependent workflow is done
+    branches: [ main ] # Only do it on main branch
 
 jobs:
-  deploy-to-heroku:
+  build:
     runs-on: ubuntu-latest
 
-    # Should only deploy if the dependent workflow is successful
-#    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Should only deploy if the dependent workflows is successful
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - uses: actions/checkout@v1
-      - name: Set login details for Heroku
-        env:
-          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_email: ${{secrets.HEROKU_EMAIL}}
-        run: |
-          cat >~/.netrc <<EOF
-          machine api.heroku.com
-              login $heroku_email
-              password $heroku_api_key
-          EOF
-      - name: Deploy to Heroku.
-        env:
-          heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
-        run: |
-          heroku container:login
-          heroku container:push --app=$heroku_app_name web worker --recursive
-          heroku container:release --app=$heroku_app_name web worker
+    - name: Deploy to Micros
+      env:
+        BITBUCKET_API_USER: ${{ secrets.BITBUCKET_API_USER }}
+        BITBUCKET_API_PASSWORD: ${{ secrets.BITBUCKET_API_PASSWORD }}
+      run: |
+        curl --user ${BITBUCKET_API_USER}:${BITBUCKET_API_PASSWORD} \
+          --request POST \
+          --url https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/ \
+          --header 'Content-Type: application/json' \
+          --data "{
+        	\"target\": {
+        		\"type\": \"pipeline_ref_target\",
+        		\"ref_type\": \"branch\",
+        		\"ref_name\": \"master\",
+        		\"selector\": {
+        			\"type\": \"custom\",
+        			\"pattern\": \"deploy\"
+        		}
+        	},
+        	\"variables\": [
+        		{
+        			\"key\": \"COMMIT_SHA\",
+        			\"value\": \"${GITHUB_SHA}\"
+        		}
+        	]
+        }"
