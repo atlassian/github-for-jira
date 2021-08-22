@@ -4,7 +4,7 @@ import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 
 export const createBranch = async (context: Context, jiraClient) => {
-	const { data: jiraPayload } = await transformBranch(context);
+	const jiraPayload = await transformBranch(context);
 
 	if (!jiraPayload) {
 		context.log(
