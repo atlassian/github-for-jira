@@ -86,7 +86,7 @@ function getErrorMiddleware(logger) {
 
 				logger.warn(error, { message: errorMessage, response_data: error.response.data });
 
-				return Promise.reject(new JiraClientError(error));
+				return Promise.reject(new JiraClientError(error, errorMessage));
 			} else {
 				return Promise.reject(error);
 			}
