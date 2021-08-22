@@ -197,7 +197,7 @@ environmentOverrides:
             Lower: 30
             Upper: 80
           Metrics:
-            - Expression: "MAX([(responseTime/2)*100, cpuUsage, memoryUsage])"
+            - Expression: "MAX([(responseTime/5)*100, cpuUsage, memoryUsage])"
               Id: "combinedCpuRamAndLatency"
               Label: "Scaling based on CPU and Memory consumption or response time"
             - MetricStat:
@@ -226,7 +226,7 @@ environmentOverrides:
                   MetricName: TargetResponseTime
                   Namespace: AWS/ApplicationELB
                 Period: 300
-                Stat: Maximum
+                Stat: Average
               Id: responseTime
               ReturnData: false
     alarms:
