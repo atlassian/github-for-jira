@@ -54,15 +54,15 @@ function getAuthMiddleware(secret: string) {
 	);
 }
 
-/**
- * Mapping of Jira Dev Error Codes to nice strings.
- */
-const JiraErrorCodes = {
-	400: "Request had incorrect format.",
-	401: "Missing a JWT token, or token is invalid.",
-	403: "The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope",
-	413: "Data is too large. Submit fewer devinfo entities in each payload.",
-	429: "API rate limit has been exceeded."
+export const getJiraErrorMessages = (status:number, message?:string) => {
+	switch(status) {
+		case 400: return `HTTP 400 - Request had incorrect format. Details: ${message}`;
+		case 401: return "HTTP 401 - Missing a JWT token, or token is invalid.";
+		case 403: return "HTTP 403 - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope";
+		case 413: return "HTTP 413 - Data is too large. Submit fewer devinfo entities in each payload.";
+		case 429: return "HTTP 429 - API rate limit has been exceeded.";
+		default: return `HTTP ${status} - ${message}`;
+	}
 };
 
 /**
@@ -76,18 +76,18 @@ function getErrorMiddleware(logger: Logger) {
 		 * @param {import("axios").AxiosError} error - The error response from Axios
 		 * @returns {Promise<Error>} The rejected promise
 		 */
-		(error: AxiosError): Error => {
+		(error: AxiosError): Promise<Error> => {
 			if (error?.response) {
 				const status = error.response.status;
 
-				const detailMessage = status in JiraErrorCodes
-					? JiraErrorCodes[status]
-					: JSON.stringify(error.response.data);
+				// truncating the detail message returned from Jira to 200 characters
+				const detailMessage = JSON.stringify(error?.response?.data)?.substring(0, 200);
+				const errorMessage = getJiraErrorMessages(status, detailMessage);
 
-				error.message = `HTTP Status ${status} - ${detailMessage}`;
+				error.message = `Jira Client Error: ${errorMessage}`;
 			}
 			logger.error(error);
-			return error;
+			return Promise.reject(error);
 		});
 }
 
