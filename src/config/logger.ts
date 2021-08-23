@@ -1,6 +1,7 @@
 import Logger, { levelFromName } from "bunyan";
 import bformat from "bunyan-format";
 import filteringStream from "../util/filteringStream";
+import { LoggerWithTarget, wrapLogger } from "probot/lib/wrap-logger";
 
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
@@ -39,8 +40,8 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	});
 };
 
-export const getLogger = (name: string): Logger => {
-	return logger.child({ logger: name });
+export const getLogger = (name: string): LoggerWithTarget => {
+	return wrapLogger(logger.child({ logger: name }));
 };
 
 //Override console.log with bunyan logger.
