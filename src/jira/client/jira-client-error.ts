@@ -6,8 +6,8 @@ import { AxiosError, AxiosResponse } from "axios";
 export default class JiraClientError extends Error {
 	response: AxiosResponse;
 
-	constructor(error: AxiosError) {
-		const message = "Error communicating with Jira DevInfo API";
+	constructor(error: AxiosError, errorMessage: string) {
+		const message = `Jira client error: ${errorMessage}`;
 
 		super(message);
 
