@@ -55,15 +55,13 @@ function getAuthMiddleware(secret: string) {
 	);
 }
 
-/**
- * Mapping of Jira Dev Error Codes to nice strings.
- */
-const JiraErrorCodes = {
-	400: "Request had incorrect format.",
-	401: "Missing a JWT token, or token is invalid.",
-	403: "The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope",
-	413: "Data is too large. Submit fewer devinfo entities in each payload.",
-	429: "API rate limit has been exceeded."
+export const JiraErrorMessages = {
+	400: (detailMessage) => `HTTP 400 - Request had incorrect format. Details: ${detailMessage}`,
+	401: () => "HTTP 401 - Missing a JWT token, or token is invalid.",
+	403: () => "HTTP 403 - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope",
+	413: () => "HTTP 413 - Data is too large. Submit fewer devinfo entities in each payload.",
+	429: () => "HTTP 429 - API rate limit has been exceeded.",
+	"default": (status, detailMessage) => `HTTP ${status} - ${detailMessage}`
 };
 
 /**
@@ -81,11 +79,12 @@ function getErrorMiddleware() {
 			if (error.response) {
 				const { status } = error.response || {};
 
-				const detailMessage = status in JiraErrorCodes
-					? JiraErrorCodes[status]
-					: JSON.stringify(error?.response?.data);
+				// truncating the detail message returned from Jira to 200 characters
+				const detailMessage = JSON.stringify(error?.response?.data)?.substring(0, 200);
 
-				const errorMessage = `HTTP Status ${status} - ${detailMessage}`;
+				const errorMessage = status in JiraErrorMessages
+					? JiraErrorMessages[status](detailMessage)
+					: JiraErrorMessages["default"](status, detailMessage)
 
 				return Promise.reject(new JiraClientError(error, errorMessage));
 			} else {
