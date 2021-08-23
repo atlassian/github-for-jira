@@ -1,9 +1,8 @@
 import Logger from "bunyan";
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosError, AxiosInstance } from "axios";
 import jwt from "atlassian-jwt";
 import url from "url";
 import statsd from "../../config/statsd";
-import JiraClientError from "./jira-client-error";
 import { getLogger } from "../../config/logger";
 import { metricHttpRequest } from "../../config/metric-names";
 
@@ -69,7 +68,7 @@ const JiraErrorCodes = {
 /**
  * Middleware to enhance failed requests in Jira.
  */
-function getErrorMiddleware() {
+function getErrorMiddleware(logger: Logger) {
 	return (
 		/**
 		 * Potentially enrich the promise's rejection.
@@ -77,22 +76,19 @@ function getErrorMiddleware() {
 		 * @param {import("axios").AxiosError} error - The error response from Axios
 		 * @returns {Promise<Error>} The rejected promise
 		 */
-		(error) => {
-			if (error.response) {
-				const { status } = error.response || {};
+		(error: AxiosError): Error => {
+			if (error?.response) {
+				const status = error.response.status;
 
 				const detailMessage = status in JiraErrorCodes
 					? JiraErrorCodes[status]
-					: JSON.stringify(error?.response?.data);
+					: JSON.stringify(error.response.data);
 
-				const errorMessage = `HTTP Status ${status} - ${detailMessage}`;
-
-				return Promise.reject(new JiraClientError(error, errorMessage));
-			} else {
-				return Promise.reject(error);
+				error.message = `HTTP Status ${status} - ${detailMessage}`;
 			}
-		}
-	);
+			logger.error(error);
+			return error;
+		});
 }
 
 /**
@@ -100,7 +96,7 @@ function getErrorMiddleware() {
  *
  * @param {import("probot").Logger} logger - The probot logger instance
  */
-function getSuccessMiddleware(logger) {
+function getSuccessMiddleware(logger: Logger) {
 	return (
 		/**
 		 * DEBUG log the response info from Jira
@@ -267,7 +263,7 @@ export default (
 
 	instance.interceptors.response.use(
 		getSuccessMiddleware(logger),
-		getErrorMiddleware()
+		getErrorMiddleware(logger)
 	);
 
 	return instance;
