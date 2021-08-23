@@ -253,7 +253,7 @@ export default (
 	logger = logger || getLogger("jira.client.axios");
 	const instance = axios.create({
 		baseURL,
-		timeout: +process.env.JIRA_TIMEOUT || 20000
+		timeout: +process.env.JIRA_TIMEOUT || 30000
 	});
 
 	instance.interceptors.request.use(setRequestStartTime);

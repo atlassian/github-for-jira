@@ -12,7 +12,6 @@ import { EnvironmentEnum } from "./config/env";
 const isProd = process.env.NODE_ENV === EnvironmentEnum.production;
 const { redisOptions } = getRedisInfo("probot");
 
-
 const probot = createProbot({
 	id: Number(process.env.APP_ID),
 	secret: process.env.WEBHOOK_SECRET,
