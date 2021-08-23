@@ -245,7 +245,7 @@ environmentOverrides:
           EvaluationPeriods: 3
           Period: 60
           ComparisonOperator: GreaterThanThreshold
-          Statistic: Maximum
+          Statistic: Average
     workers:
       - name: Worker
         scaling:
