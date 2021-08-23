@@ -59,11 +59,11 @@ function getAuthMiddleware(secret: string) {
  * Mapping of Jira Dev Error Codes to nice strings.
  */
 const JiraErrorCodes = {
-	400: "Request had incorrect format.",
-	401: "Missing a JWT token, or token is invalid.",
-	403: "The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope",
-	413: "Data is too large. Submit fewer devinfo entities in each payload.",
-	429: "API rate limit has been exceeded."
+	400: "HTTP Status 400 - Request had incorrect format.",
+	401: "HTTP Status 401 - Missing a JWT token, or token is invalid.",
+	403: "HTTP Status 403 - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope",
+	413: "HTTP Status 413 - Data is too large. Submit fewer devinfo entities in each payload.",
+	429: "HTTP Status 429 - API rate limit has been exceeded."
 };
 
 /**
@@ -79,10 +79,11 @@ function getErrorMiddleware() {
 		 */
 		(error) => {
 			if (error.response) {
-				const { status, statusText } = error.response || {};
+				const { status } = error.response || {};
 
-				const errorMessage = status in JiraErrorCodes ? `Error calling Jira API. ${JiraErrorCodes[status]}` :
-					`Error calling Jira API. Response Code: ${status} ${statusText}`;
+				const errorMessage = status in JiraErrorCodes
+					? JiraErrorCodes[status]
+					:	`HTTP Status ${status} - ${JSON.stringify(error?.response?.data)}`;
 
 				return Promise.reject(new JiraClientError(error, errorMessage));
 			} else {
