@@ -83,10 +83,11 @@ function getErrorMiddleware(logger: Logger) {
 				// truncating the detail message returned from Jira to 200 characters
 				const detailMessage = JSON.stringify(error?.response?.data)?.substring(0, 200);
 				const errorMessage = getJiraErrorMessages(status, detailMessage);
-
 				error.message = `Jira Client Error: ${errorMessage}`;
+
+				// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
+				status >= 300 && status < 500 ? logger.warn(error) : logger.error(error);
 			}
-			logger.error(error);
 			return Promise.reject(error);
 		});
 }
