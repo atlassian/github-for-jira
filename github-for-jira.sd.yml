@@ -288,7 +288,7 @@ environmentOverrides:
         APP_URL:  https://github.atlassian.com
         WEBHOOK_PROXY_URL:  https://github.atlassian.com
         INSTANCE_NAME: production
-        SENTRY_ENVIRONMENT: production
+        SENTRY_ENVIRONMENT: prod-west
         APP_ID: '14320'
         GITHUB_CLIENT_ID: Iv1.45aafbb099e1c1d7
     scaling:
