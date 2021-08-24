@@ -51,7 +51,7 @@ export class CustomContext extends Context {
 
 // TODO: fix typings
 export default (
-	callback: (context: any, jiraClient: any, util: any) => void
+	callback: (context: any, jiraClient: any, util: any) => Promise<void>
 ) => {
 	return withSentry(async (context: CustomContext) => {
 		enhanceOctokit(context.github);
@@ -155,7 +155,7 @@ export default (
 				context.sentry.captureMessage(
 					`Middleware: webhook handler - context: ${context}, jiraClient: ${jiraClient}, util: ${util}`
 				);
-				return callback(context, jiraClient, util);
+				return await callback(context, jiraClient, util);
 			} catch (err) {
 				context.sentry.captureException(err);
 			}
