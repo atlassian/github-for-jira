@@ -158,6 +158,7 @@ export default (
 				return await callback(context, jiraClient, util);
 			} catch (err) {
 				context.sentry.captureException(err);
+				throw err;
 			}
 		}
 	});
