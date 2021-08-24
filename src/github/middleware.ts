@@ -30,7 +30,7 @@ const withSentry = function (callback) {
 		try {
 			await callback(context);
 		} catch (err) {
-			logger.error(err, "Webhook Error");
+			logger.error({...err}, "Webhook Error");
 			context.sentry.captureException(err);
 			throw err;
 		}
