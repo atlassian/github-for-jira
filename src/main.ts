@@ -33,7 +33,7 @@ async function start() {
 	// We are always behind a proxy, but we want the source IP
 	probot.server.set("trust proxy", true);
 	probot.load(App);
-
+	probot.webhook.on("error", (err:Error) => probot.logger.error(err, "Webhook Error"));
 	probot.start();
 }
 
