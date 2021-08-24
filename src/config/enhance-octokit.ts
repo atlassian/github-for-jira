@@ -1,4 +1,3 @@
-import OctokitError from "../models/octokit-error";
 import statsd from "./statsd";
 import { extractPath } from "../jira/client/axios";
 import { GitHubAPI } from "probot";
@@ -46,7 +45,7 @@ const instrumentRequests = (octokit: GitHubAPI) => {
  * (Because Probot instantiates the Octokit client for us, we can't use plugins.)
  */
 export default (octokit: GitHubAPI): GitHubAPI => {
-	OctokitError.wrapRequestErrors(octokit);
+	// OctokitError.wrapRequestErrors(octokit);
 	instrumentRequests(octokit);
 	return octokit;
 };
