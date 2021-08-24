@@ -45,7 +45,6 @@ const instrumentRequests = (octokit: GitHubAPI) => {
  * (Because Probot instantiates the Octokit client for us, we can't use plugins.)
  */
 export default (octokit: GitHubAPI): GitHubAPI => {
-	// OctokitError.wrapRequestErrors(octokit);
 	instrumentRequests(octokit);
 	return octokit;
 };
