@@ -3,6 +3,7 @@ import { getLogger } from "./logger";
 import Redis from "ioredis";
 import Bottleneck from "bottleneck";
 import getRedisInfo from "./redis-info";
+import ehanceOctokit from "./enhance-octokit";
 import { Options } from "probot/lib/github";
 
 // Just create one connection and share it
@@ -23,7 +24,7 @@ export default (options: Partial<GithubAPIOptions> = {}): GitHubAPI => {
 	options.bottleneck = options.bottleneck || Bottleneck;
 	options.connection = options.connection || connection;
 
-	return GitHubAPI(options as Options);
+	return ehanceOctokit(GitHubAPI(options as Options));
 }
 
 interface GithubAPIOptions extends Options {

@@ -4,7 +4,7 @@ import { isEmpty } from "../jira/util/isEmpty";
 
 import { Context } from "probot/lib/context";
 
-export default async (context: Context, jiraClient, util) => {
+export default async (context: Context, jiraClient, util): Promise<void> => {
 	const author = await context.github.users.getByUsername({
 		username: context.payload.pull_request.user.login
 	});
@@ -64,5 +64,4 @@ export default async (context: Context, jiraClient, util) => {
 	}
 
 	await jiraClient.devinfo.repository.update(jiraPayload);
-
 };

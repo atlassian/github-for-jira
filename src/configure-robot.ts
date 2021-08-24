@@ -1,4 +1,5 @@
-import { Application, GitHubAPI } from "probot";
+import { Application } from "probot";
+import GithubAPI from "./config/github-api";
 import Redis from "ioredis";
 import RateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
@@ -29,7 +30,7 @@ import { getLogger } from "./config/logger";
  * @returns {string[]} A list of CIDRs for GitHub webhooks
  */
 async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
-	let api = GitHubAPI({
+	let api = GithubAPI({
 		authStrategy: createAppAuth,
 		auth: {
 			clientId: process.env.GITHUB_CLIENT_ID,
@@ -48,7 +49,7 @@ async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
 		type: "installation",
 		installationId: inst.data[0].id
 	});
-	api = GitHubAPI({
+	api = GithubAPI({
 		auth: token,
 		logger
 	});

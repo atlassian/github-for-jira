@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import Redis from "ioredis";
 import BodyParser from "body-parser";
-import GitHubAPI from "../config/github-api";
+import GithubAPI from "../config/github-api";
 import { Installation, Subscription } from "../models";
 import verifyInstallation from "../jira/verify-installation";
 import logMiddleware from "../middleware/log-middleware";
@@ -81,7 +81,7 @@ router.use(
 		}
 		try {
 			// Create a separate octokit instance than the one used by the app
-			const octokit = GitHubAPI({
+			const octokit = GithubAPI({
 				auth: token.split(" ")[1]
 			});
 			const { data, errors } = (
