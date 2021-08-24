@@ -9,12 +9,17 @@ import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { getLogger } from "../config/logger";
+
+
+const logger = getLogger("webhook.middleware");
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
 const withSentry = function (callback) {
 	return async (context) => {
+
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
@@ -26,6 +31,7 @@ const withSentry = function (callback) {
 		try {
 			await callback(context);
 		} catch (err) {
+			logger.error({...err}, "Webhook Error");
 			context.sentry.captureException(err);
 			throw err;
 		}
@@ -75,7 +81,11 @@ export default (
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
 		if ((context.payload.sender.type === "Bot" && !isStateChangeOrDeploymentAction(context.payload.action)) && !isStateChangeOrDeploymentAction(context.name)) {
-			context.log({ noop: "bot", botId: context.payload.sender.id, botLogin: context.payload.sender.login }, "Halting further execution since the sender is a bot and action is not a state change nor a deployment");
+			context.log({
+				noop: "bot",
+				botId: context.payload.sender.id,
+				botLogin: context.payload.sender.login
+			}, "Halting further execution since the sender is a bot and action is not a state change nor a deployment");
 			return;
 		}
 
@@ -151,15 +161,7 @@ export default (
 			}
 			const util = getJiraUtil(jiraClient);
 
-			try {
-				context.sentry.captureMessage(
-					`Middleware: webhook handler - context: ${context}, jiraClient: ${jiraClient}, util: ${util}`
-				);
-				return await callback(context, jiraClient, util);
-			} catch (err) {
-				context.sentry.captureException(err);
-				throw err;
-			}
+			return await callback(context, jiraClient, util);
 		}
 	});
 };
