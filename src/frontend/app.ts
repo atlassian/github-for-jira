@@ -33,6 +33,7 @@ import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { EnvironmentEnum } from "../config/env";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { logExpressErrorResponse } from "../util/log-express-error-response";
 
 // Adding session information to request
 declare global {
@@ -98,15 +99,7 @@ export default (octokitApp: App): Express => {
 	app.use(logMiddleware);
 
 	// Catch non successful responses
-	app.use((req, res, next) => {
-		res.once("finish", () => {
-			// if status is under 200 or higher/equal to 400, but not 503 in maintenance mode, log it to figure out issues
-			if ((res.statusCode < 200 || res.statusCode >= 400) && !(res.statusCode === 503 && booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {
-				req.log.warn({ res, req }, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
-			}
-		});
-		next();
-	});
+	app.use(logExpressErrorResponse());
 
 	// TODO: move all view/static/public/handlebars helper things in it's own folder
 	app.set("view engine", "hbs");

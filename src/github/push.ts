@@ -3,7 +3,7 @@ import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 import { Context } from "probot/lib/context";
 
-export default async (context: Context, jiraClient) => {
+export default async (context: Context, jiraClient): Promise<void> => {
 	// Copy the shape of the context object for processing
 	// but filter out any commits that don't have issue keys
 	// so we don't have to process them.
