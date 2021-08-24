@@ -9,12 +9,16 @@ import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { getLogger } from "../config/logger";
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
 const withSentry = function (callback) {
 	return async (context) => {
+
+		const logger = getLogger("webhook.middleware");
+
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
@@ -26,6 +30,7 @@ const withSentry = function (callback) {
 		try {
 			await callback(context);
 		} catch (err) {
+			logger.error(err, "Webhook Error");
 			context.sentry.captureException(err);
 			throw err;
 		}
@@ -155,7 +160,7 @@ export default (
 			}
 			const util = getJiraUtil(jiraClient);
 
-			return callback(context, jiraClient, util);
+			return await callback(context, jiraClient, util);
 		}
 	});
 };
