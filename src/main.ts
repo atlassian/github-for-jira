@@ -19,7 +19,7 @@ const probot = createProbot({
 	port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080,
 	webhookPath: "/github/events",
 	webhookProxy: process.env.WEBHOOK_PROXY_URL,
-	redisConfig: redisOptions
+	redisConfig: redisOptions,
 });
 
 overrideProbotLoggingMethods(probot.logger);
