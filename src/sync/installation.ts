@@ -168,11 +168,8 @@ const updateJobStatus = async (
 	}
 };
 
-async function getEnhancedGitHub(app: Application, installationId) {
-	const github = await app.auth(installationId);
-	enhanceOctokit(github);
-	return github;
-}
+const getEnhancedGitHub = async (app: Application, installationId) =>
+	enhanceOctokit(await app.auth(installationId));
 
 // TODO: type queues
 export const processInstallation =
