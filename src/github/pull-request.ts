@@ -5,9 +5,6 @@ import { isEmpty } from "../jira/util/isEmpty";
 import { Context } from "probot/lib/context";
 
 export default async (context: Context, jiraClient, util): Promise<void> => {
-	const author = await context.github.users.getByUsername({
-		username: context.payload.pull_request.user.login
-	});
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: any = {};
 	try {
@@ -28,7 +25,7 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 
 	const jiraPayload = transformPullRequest(
 		context.payload,
-		author.data,
+		context.payload.pull_request?.user,
 		reviews.data
 	);
 	const { pull_request: pullRequest } = context.payload;
