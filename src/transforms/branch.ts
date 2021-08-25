@@ -8,6 +8,7 @@ async function getLastCommit(context: Context, issueKeys: string[]) {
 		github,
 		payload: { ref }
 	} = context;
+
 	const {
 		data: {
 			object: { sha }
