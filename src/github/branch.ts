@@ -14,6 +14,8 @@ export const createBranch = async (context: Context, jiraClient): Promise<void> 
 		return;
 	}
 
+	context.log(`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`)
+
 	await jiraClient.devinfo.repository.update(jiraPayload);
 };
 
@@ -27,6 +29,8 @@ export const deleteBranch = async (context, jiraClient): Promise<void> => {
 		);
 		return undefined;
 	}
+
+	context.log(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`)
 
 	await jiraClient.devinfo.branch.delete(
 		context.payload.repository?.id,

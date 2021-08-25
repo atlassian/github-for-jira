@@ -31,7 +31,7 @@ const withSentry = function (callback) {
 		try {
 			await callback(context);
 		} catch (err) {
-			logger.error({...err}, "Webhook Error");
+			logger.error(err, "Error while processing webhook");
 			context.sentry.captureException(err);
 			throw err;
 		}
@@ -105,7 +105,8 @@ export default (
 		const subscriptions = await Subscription.getAllForInstallation(
 			gitHubInstallationId
 		);
-		if (!subscriptions.length) {
+		const jiraSubscriptionsCount = subscriptions.length
+		if (!jiraSubscriptionsCount) {
 			context.log(
 				{ noop: "no_subscriptions" },
 				"Halting further execution since no subscriptions were found"
@@ -113,13 +114,16 @@ export default (
 			return;
 		}
 
+		context.log("Processing event for %d jira%s", jiraSubscriptionsCount,
+			jiraSubscriptionsCount > 1 ? "s" : "")
+
 		context.sentry.setTag(
 			"transaction",
 			`webhook:${context.name}.${context.payload.action}`
 		);
 		for (const subscription of subscriptions) {
 			const { jiraHost } = subscription;
-
+			context.log("Processing event for Jira Host: %s", jiraHost)
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
 				"gitHubInstallationId",
