@@ -4,6 +4,7 @@ import { Installation, Subscription } from "../../../src/models";
 import GitHubAPI from "../../../src/config/github-api";
 import middleware from "../../../src/github/middleware";
 import { mockModels } from "../../utils/models";
+import {wrapLogger} from "probot/lib/wrap-logger";
 
 jest.mock("../../../src/models");
 
@@ -17,7 +18,7 @@ describe("Probot event middleware", () => {
 					installation: { id: 1234 }
 				},
 				github: GitHubAPI(),
-				log: logger
+				log: wrapLogger(logger)
 			};
 		});
 
