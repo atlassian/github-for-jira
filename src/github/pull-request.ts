@@ -63,5 +63,6 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 		return;
 	}
 
+	context.log(`Sending pullrequest update to Jira ${jiraClient.baseURL}`)
 	await jiraClient.devinfo.repository.update(jiraPayload);
 };

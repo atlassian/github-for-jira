@@ -15,5 +15,6 @@ export default async (context: CustomContext, _: JiraClient, util): Promise<void
 		id: issue.id
 	});
 
+	context.log(`Updating issue in GitHub with issueId: ${issue.id}`)
 	await context.github.issues.update(editedIssue);
 };
