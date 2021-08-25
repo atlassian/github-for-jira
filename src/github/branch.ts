@@ -29,7 +29,7 @@ export const deleteBranch = async (context, jiraClient): Promise<void> => {
 	}
 
 	await jiraClient.devinfo.branch.delete(
-		context.payload.repository.id,
+		context.payload.repository?.id,
 		context.payload.ref
 	);
 };

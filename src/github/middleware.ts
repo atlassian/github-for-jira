@@ -38,6 +38,7 @@ const withSentry = function (callback) {
 	};
 };
 
+// TODO: We really should fix this...
 const isFromIgnoredRepo = (payload) =>
 	// These point back to a repository for an installation that
 	// is generating an unusually high number of push events. This
@@ -45,7 +46,7 @@ const isFromIgnoredRepo = (payload) =>
 	//
 	// GitHub Apps install: https://admin.github.com/stafftools/users/seequent/installations/491520
 	// Repository: https://admin.github.com/stafftools/repositories/seequent/lf_github_testing
-	payload.installation.id === 491520 && payload.repository.id === 205972230;
+	payload.installation?.id === 491520 && payload.repository?.id === 205972230;
 
 const isStateChangeOrDeploymentAction = (action) =>
 	["opened", "closed", "reopened", "deployment", "deployment_status"].includes(action);
@@ -69,22 +70,22 @@ export default (
 
 		context.sentry.setExtra("GitHub Payload", {
 			event: webhookEvent,
-			action: context.payload.action,
+			action: context.payload?.action,
 			id: context.id,
-			repo: context.payload.repository ? context.repo() : undefined,
+			repo: context.payload?.repository ? context.repo() : undefined,
 			payload: context.payload
 		});
 
-		const gitHubInstallationId = Number(context.payload.installation.id);
+		const gitHubInstallationId = Number(context.payload?.installation?.id);
 		context.log = context.log.child({ gitHubInstallationId });
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
-		if ((context.payload.sender.type === "Bot" && !isStateChangeOrDeploymentAction(context.payload.action)) && !isStateChangeOrDeploymentAction(context.name)) {
+		if ((context.payload?.sender?.type === "Bot" && !isStateChangeOrDeploymentAction(context.payload.action)) && !isStateChangeOrDeploymentAction(context.name)) {
 			context.log({
 				noop: "bot",
-				botId: context.payload.sender.id,
-				botLogin: context.payload.sender.login
+				botId: context.payload?.sender?.id,
+				botLogin: context.payload?.sender?.login
 			}, "Halting further execution since the sender is a bot and action is not a state change nor a deployment");
 			return;
 		}
@@ -93,8 +94,8 @@ export default (
 			context.log(
 				{
 					noop: "ignored_repo",
-					installation_id: context.payload.installation.id,
-					repository_id: context.payload.repository.id
+					installation_id: context.payload?.installation?.id,
+					repository_id: context.payload?.repository?.id
 				},
 				"Halting further execution since the repository is explicitly ignored"
 			);
