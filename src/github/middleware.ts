@@ -162,7 +162,12 @@ export default (
 			}
 			const util = getJiraUtil(jiraClient);
 
-			return await callback(context, jiraClient, util);
+			try {
+				await callback(context, jiraClient, util);
+			} catch (err) {
+				context.log.error(err,"Error processing the event for Jira hostname %s", jiraHost)
+				context.sentry.captureException(err);
+			}
 		}
 	});
 };
