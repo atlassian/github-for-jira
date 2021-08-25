@@ -3,7 +3,7 @@ import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 
-async function getLastCommit(context, issueKeys) {
+async function getLastCommit(context: Context, issueKeys: string[]) {
 	const {
 		github,
 		payload: { ref }
