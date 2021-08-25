@@ -10,12 +10,13 @@ import webhookTimeout from "../middleware/webhook-timeout";
 import statsd from "../config/statsd";
 import { getLogger } from "../config/logger";
 import { metricWebhooks } from "../config/metric-names";
+import { Application } from "probot";
 
-export default (robot) => {
+export default (robot: Application) => {
 	const logger = getLogger("github.webhooks");
 
 	// TODO: Need ability to remove these listeners, especially for testing...
-	robot.on("*", (context) => {
+	robot.on("*", async (context) => {
 		const { name, payload } = context;
 
 		context.log = logger.child({ id: context.id });

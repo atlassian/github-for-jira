@@ -176,6 +176,18 @@ environmentOverrides:
           min: 1
           max: 5
           metrics: *CpuMemScalingRules
+    alarms:
+      overrides:
+        LatencyHigh: null
+        HealthyHostCount: null
+        UnHealthyHostCount: null
+        LowSeverityAlarmWhenTooManyELB5xxErrors: null
+        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
+        WebServerAlarmWhenLowCPUCredits: null
+        WebServerDiskSpaceUtilizationAlarmHigh: null
+        WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
+        WebServerMemoryAlarmHigh: null
+        WebServerServiceRespawnAlarm: null
 
   staging:
     config:
@@ -197,7 +209,7 @@ environmentOverrides:
             Lower: 30
             Upper: 80
           Metrics:
-            - Expression: "MAX([(responseTime/2)*100, cpuUsage, memoryUsage])"
+            - Expression: "MAX([(responseTime/5)*100, cpuUsage, memoryUsage])"
               Id: "combinedCpuRamAndLatency"
               Label: "Scaling based on CPU and Memory consumption or response time"
             - MetricStat:
@@ -226,11 +238,15 @@ environmentOverrides:
                   MetricName: TargetResponseTime
                   Namespace: AWS/ApplicationELB
                 Period: 300
-                Stat: Maximum
+                Stat: Average
               Id: responseTime
               ReturnData: false
     alarms:
       overrides:
+        LowSeverityAlarmWhenTooManyELB5xxErrors: null
+        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
+        HighSeverityAlarmWhenTooManyELB5xxErrors: null
+        HighSeverityAlarmWhenTooManyBackend5xxErrors: null
         ElbResponseTimeAlert:
           Namespace: AWS/ApplicationELB
           MetricName: TargetResponseTime
@@ -240,12 +256,12 @@ environmentOverrides:
               Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
             - Name: TargetGroup
               Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-          Threshold: 3
+          Threshold: 5
           Priority: Low
           EvaluationPeriods: 3
           Period: 60
           ComparisonOperator: GreaterThanThreshold
-          Statistic: Maximum
+          Statistic: Average
     workers:
       - name: Worker
         scaling:
@@ -263,21 +279,16 @@ environmentOverrides:
           upstream_address:
             - address: github-for-jira.stg.services.atlassian.com
           rewrite: github-for-jira.stg.services.atlassian.com
-#          upstream_address:
-#            - address: jira-integration-staging.herokuapp.com
-#          rewrite: jira-integration-staging.herokuapp.com
           ip_whitelist:
             - public
 
   prod:
     config:
       environmentVariables:
-#        APP_URL:  https://github.atlassian.com
-        APP_URL:  https://github-for-jira.services.atlassian.com
-        WEBHOOK_PROXY_URL:  https://github-for-jira.services.atlassian.com
-#        WEBHOOK_PROXY_URL:  https://github.atlassian.com
+        APP_URL:  https://github.atlassian.com
+        WEBHOOK_PROXY_URL:  https://github.atlassian.com
         INSTANCE_NAME: production
-        SENTRY_ENVIRONMENT: production
+        SENTRY_ENVIRONMENT: prod-west
         APP_ID: '14320'
         GITHUB_CLIENT_ID: Iv1.45aafbb099e1c1d7
     scaling:
@@ -303,19 +314,37 @@ environmentOverrides:
               Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
             - Name: TargetGroup
               Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-          Threshold: 3
+          Threshold: 5
           Priority: Low
           EvaluationPeriods: 3
           Period: 60
           ComparisonOperator: GreaterThanThreshold
-          Statistic: Maximum
+          Statistic: Average
+        LowSeverityAlarmWhenTooManyELB5xxErrors: null
+        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
+        HighSeverityAlarmWhenTooManyELB5xxErrors: null
+        HighSeverityAlarmWhenTooManyBackend5xxErrors:
+          MetricName: HTTPCode_Target_5XX_Count
+          Namespace: AWS/ApplicationELB
+          Priority: Low
+          Threshold: 500
+          EvaluationPeriods: 1
+          Period: 300
+          ComparisonOperator: GreaterThanOrEqualToThreshold
+          Statistic: Sum
     resources:
+      - name: database
+        type: postgres-db
+        attributes:
+          connectionLimit: 300
+
       - name: rds
         type: dedicated-rds
         attributes:
           parameters:
             DBInstanceClass: db.t3.large
             AllocatedStorage: 10 # 10 GB
+            ConnectionAlarm: 250
 
       - type: globaledge
         name: proxy
@@ -323,11 +352,8 @@ environmentOverrides:
           default_vanity_dns: false
           domain:
             - github.atlassian.com
-#          upstream_address:
-#            - address: github-for-jira.services.atlassian.com
-#          rewrite: github-for-jira.services.atlassian.com
           upstream_address:
-            - address: jira-integration-production.herokuapp.com
-          rewrite: jira-integration-production.herokuapp.com
+            - address: github-for-jira.services.atlassian.com
+          rewrite: github-for-jira.services.atlassian.com
           ip_whitelist:
             - public

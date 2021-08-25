@@ -5,13 +5,12 @@ import * as PrivateKey from "probot/lib/private-key";
 import { createProbot } from "probot";
 import App from "./configure-robot";
 import { initializeSentry } from "./config/sentry";
-import { overrideProbotLoggingMethods } from "./config/logger";
+import { getLogger, overrideProbotLoggingMethods } from "./config/logger";
 import "./config/proxy";
 import { EnvironmentEnum } from "./config/env";
 
 const isProd = process.env.NODE_ENV === EnvironmentEnum.production;
 const { redisOptions } = getRedisInfo("probot");
-
 
 const probot = createProbot({
 	id: Number(process.env.APP_ID),
@@ -20,10 +19,12 @@ const probot = createProbot({
 	port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080,
 	webhookPath: "/github/events",
 	webhookProxy: process.env.WEBHOOK_PROXY_URL,
-	redisConfig: redisOptions
+	redisConfig: redisOptions,
 });
 
 overrideProbotLoggingMethods(probot.logger);
+
+const logger = getLogger("probot");
 
 /**
  * Start the probot worker.
@@ -34,7 +35,9 @@ async function start() {
 	// We are always behind a proxy, but we want the source IP
 	probot.server.set("trust proxy", true);
 	probot.load(App);
-
+	probot.webhook.on("error", (err: Error) => {
+		logger.error(err, `Webhook Error: ${JSON.stringify(err)}`)
+	});
 	probot.start();
 }
 

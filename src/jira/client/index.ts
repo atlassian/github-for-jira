@@ -187,7 +187,7 @@ async function getJiraClient(
 							repositoryId
 						}
 					}),
-				update: async (data, options) => {
+				update: async (data, options?: { preventTransitions: boolean }) => {
 					dedupIssueKeys(data);
 
 					if (
@@ -207,9 +207,9 @@ async function getJiraClient(
 
 					await batchedBulkUpdate(
 						data,
-						options,
 						instance,
-						gitHubInstallationId
+						gitHubInstallationId,
+						options
 					);
 				}
 			}
@@ -225,16 +225,16 @@ async function getJiraClient(
 				const payload = {
 					builds: data.builds,
 					properties: {
-						gitHubInstallationId,
+						gitHubInstallationId
 					},
 					providerMetadata: {
-						product: data.product,
-					},
+						product: data.product
+					}
 				};
 				logger.debug(`Sending builds payload to jira. Payload: ${payload}`);
 				logger.info("Sending builds payload to jira.");
 				await instance.post("/rest/builds/0.1/bulk", payload);
-			},
+			}
 		},
 		deployment: {
 			submit: async (data) => {
@@ -247,14 +247,14 @@ async function getJiraClient(
 				const payload = {
 					deployments: data.deployments,
 					properties: {
-						gitHubInstallationId,
-					},
+						gitHubInstallationId
+					}
 				};
 				logger.debug(`Sending deployments payload to jira. Payload: ${payload}`);
 				logger.info("Sending deployments payload to jira.");
 				await instance.post("/rest/deployments/0.1/bulk", payload);
-			},
-		},
+			}
+		}
 	};
 
 	return client;
@@ -274,9 +274,9 @@ export default async (
  */
 const batchedBulkUpdate = async (
 	data,
-	options,
 	instance: AxiosInstance,
-	installationId: number
+	installationId: number,
+	options?: { preventTransitions: boolean }
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
 

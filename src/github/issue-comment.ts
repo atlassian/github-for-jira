@@ -1,7 +1,7 @@
 import { Context } from "probot/lib/context";
 import JiraClient from "../models/jira-client";
 
-export default async (context: Context, _: JiraClient, util) => {
+export default async (context: Context, _: JiraClient, util): Promise<void> => {
 	const { comment } = context.payload;
 
 	const linkifiedBody = await util.unfurl(comment.body);
@@ -15,5 +15,6 @@ export default async (context: Context, _: JiraClient, util) => {
 		comment_id: comment.id
 	});
 
+	context.log(`Updating comment in GitHub with ID ${comment.id}`)
 	await context.github.issues.updateComment(editedComment);
 };
