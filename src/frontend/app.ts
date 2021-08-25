@@ -33,7 +33,6 @@ import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { EnvironmentEnum } from "../config/env";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { logExpressErrorResponse } from "../util/log-express-error-response";
 
 // Adding session information to request
 declare global {
@@ -97,9 +96,6 @@ export default (octokitApp: App): Express => {
 	);
 
 	app.use(logMiddleware);
-
-	// Catch non successful responses
-	app.use(logExpressErrorResponse());
 
 	// TODO: move all view/static/public/handlebars helper things in it's own folder
 	app.set("view engine", "hbs");
