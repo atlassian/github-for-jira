@@ -8,20 +8,19 @@ export default async (context: Context, jiraClient): Promise<void> => {
 	// but filter out any commits that don't have issue keys
 	// so we don't have to process them.
 	const payload = {
-		repository: context.payload.repository,
-		commits: context.payload.commits
-			.map((commit) => {
-				const issueKeys = issueKeyParser().parse(commit.message);
+		repository: context.payload?.repository,
+		commits: context.payload?.commits?.map((commit) => {
+			const issueKeys = issueKeyParser().parse(commit.message);
 
-				if (!isEmpty(issueKeys)) {
-					return commit;
-				}
-			})
+			if (!isEmpty(issueKeys)) {
+				return commit;
+			}
+		})
 			.filter((commit) => !!commit),
-		installation: context.payload.installation
+		installation: context.payload?.installation
 	};
 
-	if (payload.commits.length === 0) {
+	if (payload.commits?.length === 0) {
 		context.log(
 			{ noop: "no_commits" },
 			"Halting further execution for push since no commits were found for the payload"

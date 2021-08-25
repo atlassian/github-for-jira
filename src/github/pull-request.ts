@@ -12,9 +12,9 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 	let reviews: any = {};
 	try {
 		reviews = await context.github.pulls.listReviews({
-			owner: context.payload.repository.owner.login,
-			repo: context.payload.repository.name,
-			pull_number: context.payload.pull_request.number
+			owner: context.payload.repository?.owner?.login,
+			repo: context.payload.repository?.name,
+			pull_number: context.payload.pull_request?.number
 		});
 	} catch (e) {
 		context.log.warn(
@@ -35,12 +35,12 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 
 	if (!jiraPayload && context.payload?.changes?.title) {
 		const issueKeys = issueKeyParser().parse(
-			context.payload.changes.title.from
+			context.payload.changes?.title?.from
 		);
 
 		if (!isEmpty(issueKeys)) {
 			return jiraClient.devinfo.pullRequest.delete(
-				context.payload.repository.id,
+				context.payload.repository?.id,
 				pullRequest.number
 			);
 		}
