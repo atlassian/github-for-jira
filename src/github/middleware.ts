@@ -9,10 +9,6 @@ import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { getLogger } from "../config/logger";
-
-
-const logger = getLogger("webhook.middleware");
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
@@ -31,7 +27,7 @@ const withSentry = function (callback) {
 		try {
 			await callback(context);
 		} catch (err) {
-			logger.error(err, "Error while processing webhook");
+			context.log.error(err, "Error while processing webhook");
 			context.sentry.captureException(err);
 			throw err;
 		}
