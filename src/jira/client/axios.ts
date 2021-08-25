@@ -54,20 +54,20 @@ function getAuthMiddleware(secret: string) {
 	);
 }
 
-export const getJiraErrorMessages = (status: number, message?: string) => {
+export const getJiraErrorMessages = (status: number, path: string, message?: string) => {
 	switch (status) {
 		case 400:
-			return `HTTP 400 - Request had incorrect format. Details:\n ${message}`;
+			return `HTTP 400 (${path}) - Request had incorrect format. Details:\n ${message}`;
 		case 401:
-			return "HTTP 401 - Missing a JWT token, or token is invalid.";
+			return `HTTP 401 (${path}) - Missing a JWT token, or token is invalid.`;
 		case 403:
-			return "HTTP 403 - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope";
+			return `HTTP 403 (${path}) - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope`;
 		case 413:
-			return "HTTP 413 - Data is too large. Submit fewer devinfo entities in each payload.";
+			return `HTTP 413 (${path}) - Data is too large. Submit fewer devinfo entities in each payload.`;
 		case 429:
-			return "HTTP 429 - API rate limit has been exceeded.";
+			return `HTTP 429 (${path}) - API rate limit has been exceeded.`;
 		default:
-			return `HTTP ${status}:\n${message}`;
+			return `HTTP ${status} (${path}):\n${message}`;
 	}
 };
 
@@ -88,7 +88,7 @@ function getErrorMiddleware(logger: Logger) {
 
 				// truncating the detail message returned from Jira to 200 characters
 				const detailMessage = error?.response?.data?.errorMessages?.join("\n");
-				const errorMessage = getJiraErrorMessages(status, detailMessage);
+				const errorMessage = getJiraErrorMessages(status, error?.request?.path, detailMessage);
 				// Creating an object that isn't of type Error as bunyan handles it differently
 				// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
 				(status >= 300 && status < 500 ? logger.warn : logger.error)({ ...error }, errorMessage);
