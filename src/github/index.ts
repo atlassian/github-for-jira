@@ -11,12 +11,9 @@ import statsd from "../config/statsd";
 import { getLogger } from "../config/logger";
 import { metricWebhooks } from "../config/metric-names";
 import { Application } from "probot";
-import { logExpressErrorResponse } from "../util/log-express-error-response";
 
 export default (robot: Application) => {
 	const logger = getLogger("github.webhooks");
-	// Catch non successful responses
-	robot.router.use(logExpressErrorResponse(logger));
 
 	// TODO: Need ability to remove these listeners, especially for testing...
 	robot.on("*", async (context) => {
