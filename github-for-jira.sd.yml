@@ -66,12 +66,6 @@ resources:
         # Name of the RDS resource from above
         resource: rds
 
-  - type: globaledge
-    name: ingress
-    attributes:
-      ip_whitelist:
-        - public
-
 scaling:
   instance: t2.small
   min: 1
@@ -188,6 +182,12 @@ environmentOverrides:
         WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
         WebServerMemoryAlarmHigh: null
         WebServerServiceRespawnAlarm: null
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          ip_whitelist:
+            - public
 
   staging:
     config:
@@ -276,9 +276,6 @@ environmentOverrides:
           default_vanity_dns: false
           domain:
             - github.stg.atlassian.com
-          upstream_address:
-            - address: github-for-jira.stg.services.atlassian.com
-          rewrite: github-for-jira.stg.services.atlassian.com
           ip_whitelist:
             - public
 
@@ -352,8 +349,5 @@ environmentOverrides:
           default_vanity_dns: false
           domain:
             - github.atlassian.com
-          upstream_address:
-            - address: github-for-jira.services.atlassian.com
-          rewrite: github-for-jira.services.atlassian.com
           ip_whitelist:
             - public
