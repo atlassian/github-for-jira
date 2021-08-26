@@ -13,7 +13,7 @@ import {NextFunction, Request, Response} from "express";
 export default async (req: Request, res: Response, next: NextFunction) => {
 	const installation = await Installation.getForClientKey(req.body.clientKey);
 	if (!installation) {
-		res.status(404).json({});
+		res.status(404);
 		return;
 	}
 
