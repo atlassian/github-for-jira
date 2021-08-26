@@ -1,10 +1,11 @@
 import Logger from "bunyan";
 import axios, { AxiosError, AxiosInstance } from "axios";
-import jwt from "atlassian-jwt";
+
 import url from "url";
 import statsd from "../../config/statsd";
 import { getLogger } from "../../config/logger";
 import { metricHttpRequest } from "../../config/metric-names";
+import {createQueryStringHash, encodeSymmetric} from "atlassian-jwt";
 
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
@@ -30,13 +31,13 @@ function getAuthMiddleware(secret: string) {
 		(config) => {
 			const { query, pathname } = url.parse(config.url, true);
 
-			const jwtToken = jwt.encode(
+			const jwtToken = encodeSymmetric(
 				{
 					...getExpirationInSeconds(),
 					iss,
-					qsh: jwt.createQueryStringHash({
+					qsh: createQueryStringHash({
 						method: config.method,
-						originalUrl: pathname,
+						pathname,
 						query
 					})
 				},

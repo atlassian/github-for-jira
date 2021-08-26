@@ -199,7 +199,7 @@ environmentOverrides:
         APP_ID: '12645'
         GITHUB_CLIENT_ID: Iv1.2d8e2a184a746aec
     scaling:
-      instance: t3.medium
+      instance: c5.large
       min: 1
       max: 5
       metrics: &CpuMemAlbScalingRules
