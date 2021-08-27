@@ -160,7 +160,7 @@
 
 .getConfiguration__connectNewOrg__plus {
     font-size: 1.1rem;
-    padding: 0 0.7em 0 0.3em;
+    padding: 0 0.7em 0 0.5em;
     transform: scale(1.5);
 }
 
@@ -168,6 +168,7 @@
 .getConfiguration__connectNewOrg:focus,
 .getConfiguration__connectNewOrg:active {
     background-color: #F5F6F7;
+    border-radius: 3px;
     color: #172B4D;
     text-decoration: none;
 }
