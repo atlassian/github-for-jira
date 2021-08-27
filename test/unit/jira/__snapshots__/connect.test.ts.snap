@@ -99,10 +99,11 @@ Object {
 }
 `;
 
-exports[`Connect Frontend Atlassian Connect should return Atlassian Connect without signed-install:true when feature flag is off 1`] = `
+exports[`Connect Frontend Atlassian Connect should return Atlassian Connect with signed-install:true when feature flag is off 1`] = `
 Object {
   "apiMigrations": Object {
     "gdpr": false,
+    "signed-install": true,
   },
   "apiVersion": 1,
   "authentication": Object {

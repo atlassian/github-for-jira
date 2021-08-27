@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import envVars, { EnvironmentEnum } from "../config/env";
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 
 const instance = process.env.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
@@ -14,11 +13,8 @@ export default async (_: Request, res: Response): Promise<void> => {
 		}
 	];
 
-	let apiMigrations: any = {gdpr: false}
+	const apiMigrations = {gdpr: false, "signed-install": true}
 
-	if (await booleanFlag(BooleanFlags.USE_JWT_SIGNED_INSTALL_CALLBACKS, false)) {
-		apiMigrations = {gdpr: false, "signed-install": true}
-	}
 
 	res.status(200)
 		.json({
