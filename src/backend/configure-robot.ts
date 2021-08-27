@@ -1,4 +1,5 @@
-import { Application, GitHubAPI } from "probot";
+import { Application } from "probot";
+import GithubAPI from "../config/github-api";
 import Redis from "ioredis";
 import RateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
@@ -12,9 +13,9 @@ import { isIp4InCidrs } from "../config/cidr-validator";
 import Logger from "bunyan";
 import { metricError } from "../config/metric-names";
 import logMiddleware from "./middleware/log-middleware";
-
-
 import { getLogger } from "../config/logger";
+import { NextFunction, Request, Response } from "express";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 
 /**
@@ -29,7 +30,7 @@ import { getLogger } from "../config/logger";
  * @returns {string[]} A list of CIDRs for GitHub webhooks
  */
 async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
-	let api = GitHubAPI({
+	let api = GithubAPI({
 		authStrategy: createAppAuth,
 		auth: {
 			clientId: process.env.GITHUB_CLIENT_ID,
@@ -48,7 +49,7 @@ async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
 		type: "installation",
 		installationId: inst.data[0].id
 	});
-	api = GitHubAPI({
+	api = GithubAPI({
 		auth: token,
 		logger
 	});
@@ -89,6 +90,17 @@ export default async (app: Application): Promise<Application> => {
 	}
 
 	app.router.use(logMiddleware);
+
+	// Catch non successful responses
+	app.router.use((req: Request, res: Response, next: NextFunction) => {
+		res.once("finish", async () => {
+			// if status is under 200 or higher/equal to 400, but not 503 in maintenance mode, log it to figure out issues
+			if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {
+				req.log.warn({ res, req }, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
+			}
+		});
+		next();
+	});
 
 	// These incoming webhooks should skip rate limiting
 	setupGitHub(app);

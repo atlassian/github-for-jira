@@ -1,11 +1,12 @@
 import Logger from "bunyan";
-import axios, { AxiosInstance } from "axios";
-import jwt from "atlassian-jwt";
+import axios, { AxiosError, AxiosInstance } from "axios";
+
 import url from "url";
-import JiraClientError from "../jira-client-error";
+
+import statsd from "../../../../config/statsd";
 import { getLogger } from "../../../../config/logger";
 import { metricHttpRequest } from "../../../../config/metric-names";
-import statsd from "../../../../config/statsd";
+import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
@@ -31,15 +32,15 @@ function getAuthMiddleware(secret: string) {
 		(config) => {
 			const { query, pathname } = url.parse(config.url, true);
 
-			const jwtToken = jwt.encode(
+			const jwtToken = encodeSymmetric(
 				{
 					...getExpirationInSeconds(),
 					iss,
-					qsh: jwt.createQueryStringHash({
+					qsh: createQueryStringHash({
 						method: config.method,
-						originalUrl: pathname,
-						query
-					})
+						pathname,
+						query,
+					}),
 				},
 				secret
 			);
@@ -48,28 +49,34 @@ function getAuthMiddleware(secret: string) {
 				...config,
 				headers: {
 					...config.headers,
-					Authorization: `JWT ${jwtToken}`
-				}
+					Authorization: `JWT ${jwtToken}`,
+				},
 			};
 		}
 	);
 }
 
-/**
- * Mapping of Jira Dev Error Codes to nice strings.
- */
-const JiraErrorCodes = {
-	400: "Request had incorrect format.",
-	401: "Missing a JWT token, or token is invalid.",
-	403: "The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope",
-	413: "Data is too large. Submit fewer devinfo entities in each payload.",
-	429: "API rate limit has been exceeded."
+export const getJiraErrorMessages = (status: number) => {
+	switch (status) {
+		case 400:
+			return "HTTP 400 - Request had incorrect format.";
+		case 401:
+			return "HTTP 401 - Missing a JWT token, or token is invalid.";
+		case 403:
+			return "HTTP 403 - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope";
+		case 413:
+			return "HTTP 413 - Data is too large. Submit fewer devinfo entities in each payload.";
+		case 429:
+			return "HTTP 429 - API rate limit has been exceeded.";
+		default:
+			return `HTTP ${status}`;
+	}
 };
 
 /**
  * Middleware to enhance failed requests in Jira.
  */
-function getErrorMiddleware(logger) {
+function getErrorMiddleware(logger: Logger) {
 	return (
 		/**
 		 * Potentially enrich the promise's rejection.
@@ -77,19 +84,20 @@ function getErrorMiddleware(logger) {
 		 * @param {import("axios").AxiosError} error - The error response from Axios
 		 * @returns {Promise<Error>} The rejected promise
 		 */
-		(error) => {
-			if (error.response) {
-				const { status, statusText } = error.response || {};
+		(error: AxiosError): Promise<Error> => {
+			if (error?.response) {
+				const status = error.response.status;
 
-				const errorMessage = status in JiraErrorCodes ? `Error calling Jira API. ${JiraErrorCodes[status]}` :
-					`Error calling Jira API. Response Code: ${status} ${statusText}`;
-
-				logger.warn(error, { message: errorMessage, response_data: error.response.data });
-
-				return Promise.reject(new JiraClientError(error));
-			} else {
-				return Promise.reject(error);
+				// truncating the detail message returned from Jira to 200 characters
+				const errorMessage = getJiraErrorMessages(status);
+				// Creating an object that isn't of type Error as bunyan handles it differently
+				// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
+				(status >= 300 && status < 500 ? logger.warn : logger.error)(
+					{ ...error, response: error.response, resquest: error.request },
+					errorMessage
+				);
 			}
+			return Promise.reject(error);
 		}
 	);
 }
@@ -99,7 +107,7 @@ function getErrorMiddleware(logger) {
  *
  * @param {import("probot").Logger} logger - The probot logger instance
  */
-function getSuccessMiddleware(logger) {
+function getSuccessMiddleware(logger: Logger) {
 	return (
 		/**
 		 * DEBUG log the response info from Jira
@@ -110,7 +118,7 @@ function getSuccessMiddleware(logger) {
 		(response) => {
 			logger.debug(
 				{
-					params: response.config.urlParams
+					params: response.config.urlParams,
 				},
 				`Jira request: ${response.config.method.toUpperCase()} ${
 					response.config.originalUrl
@@ -155,8 +163,8 @@ function getUrlMiddleware() {
 				url: url.format({
 					...rest,
 					pathname,
-					query
-				})
+					query,
+				}),
 			};
 		}
 	);
@@ -175,7 +183,7 @@ function getExpirationInSeconds() {
 
 	return {
 		iat: nowInSeconds,
-		exp: nowInSeconds + 30
+		exp: nowInSeconds + 30,
 	};
 }
 
@@ -210,7 +218,7 @@ const instrumentRequest = (response) => {
 	const tags = {
 		method: response.config.method.toUpperCase(),
 		path: extractPath(response.config.originalUrl),
-		status: response.status
+		status: response.status,
 	};
 
 	statsd.histogram(metricHttpRequest().jira, requestDurationMs, tags);
@@ -229,7 +237,10 @@ const instrumentFailedRequest = (logger) => {
 		if (error.response) {
 			instrumentRequest(error.response);
 		} else {
-			logger.error(error, "Error during Axios request has no response property.");
+			logger.error(
+				error,
+				"Error during Axios request has no response property."
+			);
 		}
 
 		return Promise.reject(error);
@@ -252,7 +263,7 @@ export default (
 	logger = logger || getLogger("jira.client.axios");
 	const instance = axios.create({
 		baseURL,
-		timeout: +process.env.JIRA_TIMEOUT || 20000
+		timeout: +process.env.JIRA_TIMEOUT || 30000,
 	});
 
 	instance.interceptors.request.use(setRequestStartTime);

@@ -3,11 +3,12 @@ import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../../common/isEmpty";
 
-async function getLastCommit(context, issueKeys) {
+async function getLastCommit(context: Context, issueKeys: string[]) {
 	const {
 		github,
 		payload: { ref }
 	} = context;
+
 	const {
 		data: {
 			object: { sha }
@@ -49,22 +50,20 @@ export default async (context: Context) => {
 
 	// TODO: type this return
 	return {
-		data: {
-			id: repository.id,
-			name: repository.full_name,
-			url: repository.html_url,
-			branches: [
-				{
-					createPullRequestUrl: `${repository.html_url}/pull/new/${ref}`,
-					lastCommit,
-					id: getJiraId(ref),
-					issueKeys,
-					name: ref,
-					url: `${repository.html_url}/tree/${ref}`,
-					updateSequenceId: Date.now()
-				}
-			],
-			updateSequenceId: Date.now()
-		}
+		id: repository.id,
+		name: repository.full_name,
+		url: repository.html_url,
+		branches: [
+			{
+				createPullRequestUrl: `${repository.html_url}/pull/new/${ref}`,
+				lastCommit,
+				id: getJiraId(ref),
+				issueKeys,
+				name: ref,
+				url: `${repository.html_url}/tree/${ref}`,
+				updateSequenceId: Date.now()
+			}
+		],
+		updateSequenceId: Date.now()
 	};
 };

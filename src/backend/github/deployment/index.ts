@@ -9,5 +9,6 @@ export default async (context: Context, jiraClient): Promise<void> => {
 		return;
 	}
 
+	context.log(`Sending deployment info to Jira: ${jiraClient.baseURL}`)
 	await jiraClient.deployment.submit(jiraPayload);
 };

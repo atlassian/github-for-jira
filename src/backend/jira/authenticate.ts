@@ -1,28 +1,51 @@
-import { Installation } from "../models";
-import { hasValidJwt } from "../../common/jwt";
+import {
+	TokenType,
+	verifyAsymmetricJwtTokenMiddleware,
+	verifySymmetricJwtTokenMiddleware,
+} from "../../common/jwt";
 import { NextFunction, Request, Response } from "express";
+import { booleanFlag, BooleanFlags } from "../../config/feature-flags";
 
-export default async (
+export const authenticateJiraEvent = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
-	const installation = await Installation.getForClientKey(req.body.clientKey);
-	if (!installation) {
-		res.status(404).json({});
-		return;
+	verifySymmetricJwtTokenMiddleware(
+		res.locals.installation.sharedSecret,
+		TokenType.normal,
+		req,
+		res,
+		next
+	);
+};
+
+export const authenticateUninstallCallback = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> => {
+	if (await booleanFlag(BooleanFlags.USE_JWT_SIGNED_INSTALL_CALLBACKS, false)) {
+		await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+	} else {
+		verifySymmetricJwtTokenMiddleware(
+			res.locals.installation.sharedSecret,
+			TokenType.normal,
+			req,
+			res,
+			next
+		);
 	}
+};
 
-	const { jiraHost, sharedSecret, clientKey } = installation;
-
-	req.addLogFields({
-		jiraHost,
-		jiraClientKey: `${clientKey.substr(0, 5)}***}`
-	});
-	res.locals.installation = installation;
-
-	// TODO: Should the express response logic be inside 'hasValidJwt'?
-	if (hasValidJwt(sharedSecret, jiraHost, req, res)) {
+export const authenticateInstallCallback = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> => {
+	if (await booleanFlag(BooleanFlags.USE_JWT_SIGNED_INSTALL_CALLBACKS, false)) {
+		await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+	} else {
 		next();
 	}
 };

@@ -9,5 +9,6 @@ export default async (context: Context, jiraClient): Promise<void> => {
 		return;
 	}
 
+	context.log(`Sending workflow event to Jira: ${jiraClient.baseURL}`)
 	await jiraClient.workflow.submit(jiraPayload);
 };

@@ -1,5 +1,5 @@
 import bodyParser from "body-parser";
-import express, { Express, NextFunction, Request, Response } from "express";
+import express, {Express, NextFunction, Request, Response} from "express";
 import path from "path";
 import cookieSession from "cookie-session";
 import csrf from "csurf";
@@ -16,13 +16,13 @@ import deleteGitHubSubscription from "./middleware/delete-github-subscription";
 import getJiraConfiguration from "./middleware/get-jira-configuration";
 import deleteJiraConfiguration from "./middleware/delete-jira-configuration";
 import getGithubClientMiddleware from "./middleware/github-client-middleware";
-import verifyJiraMiddleware from "./middleware/verify-jira-middleware";
 import getJiraConnect from "./jira/connect";
 import postJiraDisable from "./jira/disable";
 import postJiraEnable from "./jira/enable";
 import postJiraInstall from "./jira/install";
 import postJiraUninstall from "./jira/uninstall";
-import jiraAuthenticate from "./jira/authenticate";
+import {authenticateJiraEvent, authenticateInstallCallback, authenticateUninstallCallback} from "./jira/authenticate";
+import extractInstallationFromJiraCallback from "./jira/extract-installation-from-jira-callback";
 import retrySync from "./middleware/retry-sync";
 import getMaintenance from "./middleware/get-maintenance";
 import api from "./api";
@@ -32,6 +32,9 @@ import { App } from "@octokit/app";
 import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { EnvironmentEnum } from "../config/env";
+import {verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware} from "./middleware/verify-jira-jwt-middleware";
+
+
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // Adding session information to request
@@ -238,24 +241,24 @@ export default (octokitApp: App): Express => {
 	app.get(
 		"/jira/configuration",
 		csrfProtection,
-		verifyJiraMiddleware,
+		verifyJiraJwtTokenMiddleware,
 		elapsedTimeMetrics,
 		getJiraConfiguration
 	);
 
 	app.delete(
 		"/jira/configuration",
-		verifyJiraMiddleware,
+		verifyJiraContextJwtTokenMiddleware,
 		elapsedTimeMetrics,
 		deleteJiraConfiguration
 	);
 
-	app.post("/jira/sync", verifyJiraMiddleware, elapsedTimeMetrics, retrySync);
+	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, elapsedTimeMetrics, retrySync);
 	// Set up event handlers
-	app.post("/jira/events/disabled", jiraAuthenticate, postJiraDisable);
-	app.post("/jira/events/enabled", jiraAuthenticate, postJiraEnable);
-	app.post("/jira/events/installed", postJiraInstall); // we can't authenticate since we don't have the secret
-	app.post("/jira/events/uninstalled", jiraAuthenticate, postJiraUninstall);
+	app.post("/jira/events/disabled",  extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
+	app.post("/jira/events/enabled",  extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
+	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
+	app.post("/jira/events/uninstalled",  extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
 
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
