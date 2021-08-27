@@ -30,7 +30,7 @@ describe("Connect", () => {
 		});
 
 		describe("Atlassian Connect", () => {
-			it("should return Atlassian Connect without signed-install:true when feature flag is off", () => {
+			it("should return Atlassian Connect with signed-install:true when feature flag is off", () => {
 				whenSignedInstallCallbacks(false);
 
 				return supertest(app)
