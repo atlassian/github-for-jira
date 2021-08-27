@@ -1,10 +1,10 @@
 import supertest from "supertest";
 import express, { Express } from "express";
-import setupFrontend from "../../../src/frontend/app";
+import setupFrontend from "../../app";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 import { when } from "jest-when";
 
-jest.mock("../../../src/config/feature-flags");
+jest.mock("../../../config/feature-flags");
 
 describe("Connect", () => {
 	let app: Express;

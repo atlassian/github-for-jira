@@ -69,7 +69,7 @@ describe("#verifyJiraMiddleware", () => {
 				jwt: jwtValue
 			},
 			addLogFields: jest.fn(),
-			log: getLogger
+			log: logger
 		};
 	};
 

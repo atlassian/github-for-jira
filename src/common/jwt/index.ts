@@ -3,9 +3,9 @@
 // TODO: need some typing for jwt
 import {createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId} from "atlassian-jwt";
 import {NextFunction, Request, Response} from "express";
-import envVars from "../config/env";
+import envVars from "../../config/env";
 import _ from "lodash";
-import queryAtlassianConnectPublicKey from "./queryAtlassianConnectPublicKey";
+import queryAtlassianConnectPublicKey from "../queryAtlassianConnectPublicKey";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
