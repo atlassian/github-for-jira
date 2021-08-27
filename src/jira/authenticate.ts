@@ -19,7 +19,7 @@ export const authenticateUninstallCallback = async (req: Request, res: Response,
 	} else {
 		const token = extractJwtFromRequest(req);
 		if(!token) {
-			res.status(401)
+			res.sendStatus(401)
 			return;
 		}
 		//When we migrate from symmetric to asymmetric tokens we can have a situation when part of the Jira instances use
