@@ -339,7 +339,7 @@ environmentOverrides:
         type: dedicated-rds
         attributes:
           parameters:
-            DBInstanceClass: db.t3.large
+            DBInstanceClass: db.m5.large
             AllocatedStorage: 10 # 10 GB
             ConnectionAlarm: 250
 
