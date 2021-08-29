@@ -5,8 +5,8 @@
 ## (Discovery) Documentation on how to connect Jira Cloud to GitHub
 
 See
-- (Atlassian docs)[https://confluence.atlassian.com/adminjiracloud/connect-jira-cloud-to-github-814188429.html]
-- (Github docs)[https://help.github.com/articles/integrating-jira-with-your-organization-s-projects/]
+- [Atlassian docs](https://confluence.atlassian.com/adminjiracloud/connect-jira-cloud-to-github-814188429.html)
+- [Github docs](https://help.github.com/articles/integrating-jira-with-your-organization-s-projects/)
 
 ## Installation
 
