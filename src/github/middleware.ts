@@ -13,7 +13,7 @@ import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function (callback) {
+const withSentry = function(callback) {
 	return async (context) => {
 
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
@@ -98,10 +98,8 @@ export default (
 			return;
 		}
 
-		const subscriptions = await Subscription.getAllForInstallation(
-			gitHubInstallationId
-		);
-		const jiraSubscriptionsCount = subscriptions.length
+		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
+		const jiraSubscriptionsCount = subscriptions.length;
 		if (!jiraSubscriptionsCount) {
 			context.log(
 				{ noop: "no_subscriptions" },
@@ -111,15 +109,16 @@ export default (
 		}
 
 		context.log("Processing event for %d jira%s", jiraSubscriptionsCount,
-			jiraSubscriptionsCount > 1 ? "s" : "")
+			jiraSubscriptionsCount > 1 ? "s" : "");
 
 		context.sentry.setTag(
 			"transaction",
 			`webhook:${context.name}.${context.payload.action}`
 		);
-		for (const subscription of subscriptions) {
+
+		await Promise.all(subscriptions.map(async (subscription) => {
 			const { jiraHost } = subscription;
-			context.log("Processing event for Jira Host: %s", jiraHost)
+			context.log("Processing event for Jira Host: %s", jiraHost);
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
 				"gitHubInstallationId",
@@ -130,7 +129,7 @@ export default (
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
-				continue;
+				return;
 			}
 
 			if (context.timedout) {
@@ -152,7 +151,7 @@ export default (
 				gitHubInstallationId,
 				context.log
 			);
-			if (jiraClient == null) {
+			if (!jiraClient) {
 				// Don't call callback if we have no jiraClient
 				context.log.error(
 					{ noop: "no_jira_client" },
@@ -165,9 +164,9 @@ export default (
 			try {
 				await callback(context, jiraClient, util);
 			} catch (err) {
-				context.log.error(err,"Error processing the event for Jira hostname %s", jiraHost)
+				context.log.error({...err}, `Error processing the event for Jira hostname '${jiraHost}'`);
 				context.sentry.captureException(err);
 			}
-		}
+		}));
 	});
 };
