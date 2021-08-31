@@ -1,24 +1,24 @@
 export enum ActionType {
-  CREATED = 'created',
-  ENABLED = 'enabled',
-  DISABLED = 'disabled',
-  DESTROYED = 'destroyed',
+	CREATED = "created",
+	ENABLED = "enabled",
+	DISABLED = "disabled",
+	DESTROYED = "destroyed",
 }
 
 export enum Association {
-  SUBSCRIPTION = 'subscription',
-  INSTALLATION = 'installation',
+	SUBSCRIPTION = "subscription",
+	INSTALLATION = "installation",
 }
 
 export enum ActionSource {
-  /** An action that came from the Web UI Console in Jira */
-  WEB_CONSOLE = 'web_console',
+	/** An action that came from the Web UI Console in Jira */
+	WEB_CONSOLE = "web_console",
 
-  /** An action from the Stafftools Script */
-  STAFFTOOLS = 'stafftools',
+	/** An action from the Stafftools Script */
+	STAFFTOOLS = "stafftools",
 
-  /** An action from a Jira Webhook */
-  WEBHOOK = 'webhook',
+	/** An action from a Jira Webhook */
+	WEBHOOK = "webhook",
 }
 
 /**
@@ -30,55 +30,55 @@ export enum ActionSource {
  *
  */
 export class Action {
-  public type: ActionType;
-  public association: Association;
-  public installationId: number;
-  public githubInstallationId: number;
-  public jiraHostname: string;
-  public actionSource: ActionSource;
-  public githubActorId: number;
+	public type: ActionType;
+	public association: Association;
+	public installationId: number;
+	public githubInstallationId: number;
+	public jiraHostname: string;
+	public actionSource: ActionSource;
+	public githubActorId: number;
 
-  get schema(): string {
-    return 'jira.v0.Action';
-  }
+	get schema(): string {
+		return "jira.v0.Action";
+	}
 }
 
 /**
  * Create an action based on info from an installation object
  *
- * @param {import('../../models/installation')} [installation]
+ * @param {import("../../models/installation")} [installation]
  * @returns {Promise<Action>}
  */
-export async function ActionFromInstallation(installation):Promise<Action> {
-  const action = new Action();
-  action.association = Association.INSTALLATION;
-  if (installation != null) {
-    action.installationId = installation.id;
-    action.jiraHostname = installation.jiraHost;
-    const subs = await installation.subscriptions();
-    if (subs && subs.length > 0 && subs[0] != null) {
-      action.githubInstallationId = subs[0].gitHubInstallationId;
-    }
-  }
-  return action;
+export async function ActionFromInstallation(installation): Promise<Action> {
+	const action = new Action();
+	action.association = Association.INSTALLATION;
+	if (installation != null) {
+		action.installationId = installation.id;
+		action.jiraHostname = installation.jiraHost;
+		const subs = await installation.subscriptions();
+		if (subs && subs.length > 0 && subs[0] != null) {
+			action.githubInstallationId = subs[0].gitHubInstallationId;
+		}
+	}
+	return action;
 }
 
 /**
  * Create an action based on info from a subscription object
  *
- * @param {import('../../models/subscription')} [subscription]
- * @param {import('../../models/installation')} [installation]
+ * @param {import("../../models/subscription")} [subscription]
+ * @param {import("../../models/installation")} [installation]
  * @returns {Action}
  */
 export function ActionFromSubscription(subscription, installation) {
-  const action = new Action();
-  action.association = Association.SUBSCRIPTION;
-  if (subscription != null) {
-    action.githubInstallationId = subscription.gitHubInstallationId;
-    action.jiraHostname = subscription.jiraHost;
-  }
-  if (installation != null) {
-    action.installationId = installation.id;
-  }
-  return action;
+	const action = new Action();
+	action.association = Association.SUBSCRIPTION;
+	if (subscription != null) {
+		action.githubInstallationId = subscription.gitHubInstallationId;
+		action.jiraHostname = subscription.jiraHost;
+	}
+	if (installation != null) {
+		action.installationId = installation.id;
+	}
+	return action;
 }

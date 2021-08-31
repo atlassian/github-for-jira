@@ -1,45 +1,57 @@
 // TODO: are we using this?
-import {NextFunction, Request, Response} from 'express';
+import { NextFunction, Request, Response } from "express";
+import { getLogger } from "../config/logger";
+import { pageRendered } from "../config/metric-names";
+import statsd from "../config/statsd";
+
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  if (!req.session.githubToken) {
-    return next(new Error('Unauthorized'));
-  }
+	if (!req.session.githubToken) {
+		return next(new Error("Unauthorized"));
+	}
 
-  const {github, client, isAdmin} = res.locals;
+	req.log.info("Received list github installations request for Jira Host: %s", req.session.jiraHost);
 
-  try {
-    const {data: {login}} = await github.users.getAuthenticated();
-    const {
-      data: {installations},
-    } = await github.apps.listInstallationsForAuthenticatedUser();
+	const { github, client, isAdmin } = res.locals;
 
-    const adminInstallations = [];
-    // TODO: make this parallel instead of sequential, then filter out
-    for (const installation of installations) {
-      // See if we can get the membership for this user
-      if (
-        await isAdmin({
-          org: installation.account.login,
-          username: login,
-          type: installation.target_type,
-        })
-      ) {
-        adminInstallations.push(installation);
-      }
-    }
+	try {
+		const { data: { login } } = await github.users.getAuthenticated();
+		const {
+			data: { installations }
+		} = await github.apps.listInstallationsForAuthenticatedUser();
 
-    const {data: info} = await client.apps.getAuthenticated();
-    return res.render('github-installations.hbs', {
-      csrfToken: req.csrfToken(),
-      nonce: res.locals.nonce,
-      installations: adminInstallations,
-      info,
-    });
-  } catch (err) {
-    req.log.error(
-      `Unable to show github subscription page. error=${err}, jiraHost=${req.session.jiraHost}`,
-    );
-    return next(new Error(err));
-  }
+		const adminInstallations = [];
+		// TODO: make this parallel instead of sequential, then filter out
+		for (const installation of installations) {
+			// See if we can get the membership for this user
+			if (
+				await isAdmin({
+					org: installation.account.login,
+					username: login,
+					type: installation.target_type
+				})
+			) {
+				adminInstallations.push(installation);
+			}
+		}
+
+		const { data: info } = await client.apps.getAuthenticated();
+
+		const logger = getLogger("list-github-installations");
+
+		logger.info("Rendering github-installations.hbs");
+		statsd.increment(pageRendered.gitHubInstallations);
+
+		return res.render("github-installations.hbs", {
+			csrfToken: req.csrfToken(),
+			nonce: res.locals.nonce,
+			installations: adminInstallations,
+			info
+		});
+	} catch (err) {
+		req.log.error(err,
+			"Unable list github installations page. Jira Host=%s", req.session.jiraHost
+		);
+		return next(new Error(err));
+	}
 };

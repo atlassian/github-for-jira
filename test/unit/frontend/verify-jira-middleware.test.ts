@@ -1,157 +1,281 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import jwt from 'atlassian-jwt';
-import { mocked } from 'ts-jest/utils';
-import { Installation } from '../../../src/models';
-import verifyJiraMiddleware from '../../../src/frontend/verify-jira-middleware';
+import {encodeSymmetric} from "atlassian-jwt";
+import {mocked} from "ts-jest/utils";
+import {Installation} from "../../../src/models";
+import {verifyJiraContextJwtTokenMiddleware} from "../../../src/frontend/verify-jira-jwt-middleware";
+import logger from "../../../src/config/logger"
+import {booleanFlag, BooleanFlags} from "../../../src/config/feature-flags";
+import {when} from "jest-when";
 
-jest.mock('../../../src/models');
+jest.mock("../../../src/models");
+jest.mock("../../../src/config/feature-flags");
 
-describe('#verifyJiraMiddleware', () => {
-  let res;
-  const next = jest.fn();
-  let installation;
-  let subscription;
 
-  beforeEach(async () => {
-    res = {
-      locals: {},
-    };
+describe("#verifyJiraMiddleware", () => {
+	let res;
+	const next = jest.fn();
+	let installation;
+	let subscription;
+	const testSharedSecret = "test-secret";
 
-    subscription = {
-      githubInstallationId: 15,
-      jiraHost: 'https://test-host.jira.com',
-      destroy: jest.fn().mockResolvedValue(undefined),
-    };
+	const whenJwtFixApplied = (value: boolean) =>
+		when(booleanFlag).calledWith(
+			BooleanFlags.FIX_IFRAME_ENDPOINTS_JWT,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(value);
 
-    installation = {
-      id: 19,
-      jiraHost: subscription.jiraHost,
-      clientKey: 'abc123',
-      enabled: true,
-      secrets: 'def234',
-      sharedSecret: 'ghi345',
-      subscriptions: jest.fn().mockResolvedValue([]),
-    };
-  });
+	beforeEach(async () => {
+		res = {
+			locals: {},
+			status: jest.fn(),
+			json: jest.fn()
+		};
 
-  describe('GET request', () => {
-    const buildRequest = (jiraHost, secret = 'secret'): any => {
-      const jwtValue = jwt.encode('test-jwt', secret);
+		res.status.mockReturnValue(res)
+		res.json.mockReturnValue(res)
 
-      return {
-        query: {
-          xdm_e: jiraHost,
-          jwt: jwtValue,
-        },
-        session: {
-          jiraHost: subscription.jiraHost,
-        },
-        addLogFields: jest.fn(),
-      };
-    };
+		subscription = {
+			githubInstallationId: 15,
+			jiraHost: "https://test-host.jira.com",
+			destroy: jest.fn().mockResolvedValue(undefined)
+		};
 
-    it('should call next with a valid token and secret', async () => {
-      mocked(Installation.getForHost).mockResolvedValue(installation);
-      const req = buildRequest('test-host', 'secret');
-      jwt.decode(req.query.jwt, 'secret');
+		installation = {
+			id: 19,
+			jiraHost: subscription.jiraHost,
+			clientKey: "abc123",
+			enabled: true,
+			secrets: "def234",
+			sharedSecret: testSharedSecret,
+			subscriptions: jest.fn().mockResolvedValue([])
+		};
+	});
 
-      await verifyJiraMiddleware(req, res, next);
+	const buildRequest = (jiraHost, secret = "secret"): any => {
+		const jwtValue = encodeSymmetric({
+			qsh: "context-qsh",
+			iss: "jira"
+		}, secret);
 
-      expect(next).toHaveBeenCalled();
-    });
+		return {
+			query: {
+				xdm_e: jiraHost,
+				jwt: jwtValue
+			},
+			session: {
+				jiraHost: subscription.jiraHost,
+				jwt: jwtValue
+			},
+			addLogFields: jest.fn(),
+			log: logger
+		};
+	};
 
-    it('sets res.locals to installation', async () => {
-      mocked(Installation.getForHost).mockResolvedValue(installation);
-      const req = buildRequest('host', 'secret');
-      jwt.decode(req.query.jwt, 'secret');
+	//Tests which should pass regardless if USE_JWT_SIGNED_INSTALL_CALLBACKS feature flag is on or off
+	const commonTests = () => {
+		describe("GET request", () => {
 
-      await verifyJiraMiddleware(req, res, next);
+			it("should call next with a valid token and secret", async () => {
+				mocked(Installation.getForHost).mockResolvedValue(installation);
+				const req = buildRequest("test-host", testSharedSecret);
 
-      expect(res.locals.installation).toEqual(installation);
-    });
+				await verifyJiraContextJwtTokenMiddleware(req, res, next);
 
-    it('should return a 404 for an invalid installation', async () => {
-      const req = buildRequest('host');
+				expect(next).toHaveBeenCalledWith();
+			});
 
-      await verifyJiraMiddleware(req, res, next);
+			it("sets res.locals to installation", async () => {
+				mocked(Installation.getForHost).mockResolvedValue(installation);
+				const req = buildRequest("host", testSharedSecret);
 
-      expect(next).toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(new Error('Not Found'));
-    });
+				await verifyJiraContextJwtTokenMiddleware(req, res, next);
 
-    it('should return a 401 for an invalid jwt', async () => {
-      mocked(Installation.getForHost).mockResolvedValue(installation);
-      const req = buildRequest('good-host', 'wrong-secret');
+				expect(res.locals.installation).toEqual(installation);
+			});
 
-      await verifyJiraMiddleware(req, res, next);
+			it("should return a 404 for an invalid installation", async () => {
+				const req = buildRequest("host");
 
-      expect(next).toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(new Error('Unauthorized'));
-    });
+				await verifyJiraContextJwtTokenMiddleware(req, res, next);
 
-    it('adds installation details to log', async () => {
-      mocked(Installation.getForHost).mockResolvedValue(installation);
-      const req = buildRequest('host', 'secret');
-      const addLogFieldsSpy = jest.spyOn(req, 'addLogFields');
+				expect(next).toHaveBeenCalledWith(new Error("Not Found"));
+			});
 
-      jwt.decode(req.query.jwt, 'secret');
+			it("adds installation details to log", async () => {
+				mocked(Installation.getForHost).mockResolvedValue(installation);
+				const req = buildRequest("host", testSharedSecret);
+				const addLogFieldsSpy = jest.spyOn(req, "addLogFields");
 
-      await verifyJiraMiddleware(req, res, next);
+				await verifyJiraContextJwtTokenMiddleware(req, res, next);
 
-      expect(addLogFieldsSpy).toHaveBeenCalledWith({
-        jiraHost: installation.jiraHost,
-        jiraClientKey: 'abc12***', // should be the shortened key
-      });
-    });
-  });
+				expect(addLogFieldsSpy).toHaveBeenCalledWith({
+					jiraHost: installation.jiraHost,
+					jiraClientKey: "abc12***" // should be the shortened key
+				});
+			});
+		});
 
-  describe('POST request', () => {
-    const buildRequest = (jiraHost, secret): any => {
-      const encodedJwt = secret && jwt.encode('test-jwt', secret);
+		describe("POST request", () => {
+			const buildRequest = (jiraHost, secret): any => {
+				const encodedJwt = secret && encodeSymmetric({
+					qsh: "context-qsh",
+					iss: "jira"
+				}, secret);
 
-      return {
-        body: {
-          jiraHost,
-          token: encodedJwt,
-        },
-        session: {
-          jiraHost: subscription.jiraHost,
-        },
-        query: {
-          xdm_e: jiraHost,
-          jwt: encodedJwt,
-        },
-        addLogFields: jest.fn(),
-      };
-    };
+				return {
+					body: {
+						jiraHost,
+					},
+					session: {
+						jiraHost: subscription.jiraHost
+					},
+					query: {
+						xdm_e: jiraHost,
+						jwt: encodedJwt
+					},
+					addLogFields: jest.fn(),
+					log: logger
+				};
+			};
 
-    it('pulls jiraHost and token from body', async () => {
-      mocked(Installation.getForHost).mockResolvedValue(installation);
-      const req = buildRequest('host', 'secret');
-      jwt.decode(req.query.jwt, 'secret');
+			it("pulls jiraHost and token from body", async () => {
+				mocked(Installation.getForHost).mockResolvedValue(installation);
+				const req = buildRequest("host", testSharedSecret);
 
-      await verifyJiraMiddleware(req, res, next);
+				await verifyJiraContextJwtTokenMiddleware(req, res, next);
 
-      expect(next).toHaveBeenCalled();
-    });
+				expect(next).toHaveBeenCalledWith();
+			});
 
-    it('is not found when host is missing', async () => {
-      const req = buildRequest('host', 'secret');
+			it("is not found when host is missing", async () => {
+				const req = buildRequest("host", testSharedSecret);
 
-      await verifyJiraMiddleware(req, res, next);
+				await verifyJiraContextJwtTokenMiddleware(req, res, next);
 
-      expect(next).toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(new Error('Not Found'));
-    });
+				expect(next).toHaveBeenCalledWith(new Error("Not Found"));
+			});
 
-    it('is unauthorized when token missing', async () => {
-      mocked(Installation.getForHost).mockResolvedValue(installation);
-      const req = buildRequest('host', 'secret');
+		});
+	};
 
-      await verifyJiraMiddleware(req, res, next);
+	const buildRequestWithNoToken = (jiraHost): any => {
+		return {
+			body: {
+				jiraHost,
+			},
+			session: {
+				jiraHost: subscription.jiraHost
+			},
+			query: {
+				xdm_e: jiraHost,
+			},
+			addLogFields: jest.fn(),
+			log: logger
+		};
+	};
 
-      expect(next).toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(new Error('Unauthorized'));
-    });
-  });
+	const buildRequestWrongJwt = (jiraHost, secret = "secret"): any => {
+		const jwtValue = encodeSymmetric({
+			qsh: "12435-wrong-qsh",
+			exp: 0,
+			iss: "jira"
+		}, secret);
+
+		return {
+			query: {
+				xdm_e: jiraHost,
+				jwt: jwtValue
+			},
+			session: {
+				jiraHost: subscription.jiraHost,
+				jwt: jwtValue
+			},
+			addLogFields: jest.fn(),
+			log: logger
+		};
+	};
+
+
+	describe("When Fix Applied", () => {
+		beforeEach(async () => {
+			whenJwtFixApplied(true)
+		});
+
+		it("should return a 401 for an undecodable jwt", async () => {
+			mocked(Installation.getForHost).mockResolvedValue(installation);
+			const req = buildRequest("good-host", "wrong-secret");
+
+			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+
+			expect(next).toBeCalledTimes(0)
+		});
+
+		it("is unauthorized when token missing", async () => {
+
+			mocked(Installation.getForHost).mockResolvedValue(installation);
+
+			const req = buildRequestWithNoToken("host");
+
+			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+
+			expect(res.status).toHaveBeenCalledWith(401)
+			expect(next).toHaveBeenCalledTimes(0);
+		});
+
+		it("is unauthorized when token is wrong", async () => {
+
+			mocked(Installation.getForHost).mockResolvedValue(installation);
+
+			const req = buildRequestWrongJwt("host", testSharedSecret);
+
+			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+
+			expect(res.status).toHaveBeenCalledWith(401)
+			expect(next).toHaveBeenCalledTimes(0);
+		});
+
+		commonTests()
+	});
+
+	describe("When Fix Not Applied", () => {
+		beforeEach(async () => {
+			whenJwtFixApplied(false)
+		});
+
+		it("should throw an error for an undecodable jwt", async () => {
+			mocked(Installation.getForHost).mockResolvedValue(installation);
+			const req = buildRequest("good-host", "wrong-secret");
+
+			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+
+			expect(next).toHaveBeenCalledWith(new Error("Unauthorized"))
+		});
+
+		it("is unauthorized when token missing", async () => {
+			mocked(Installation.getForHost).mockResolvedValue(installation);
+
+			const req = buildRequestWithNoToken("host");
+
+			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+
+			expect(next).toHaveBeenCalledWith(new Error("Unauthorized"))
+		});
+
+		//This test is here to make sure that if feature flag is OFF then the behaviour will remain as it is right now
+		it("authorisation passed when token is wrong but decodable", async () => {
+
+			mocked(Installation.getForHost).mockResolvedValue(installation);
+
+			const req = buildRequestWrongJwt("host", testSharedSecret);
+
+			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+
+			expect(res.status).toHaveBeenCalledTimes(0)
+			expect(next).toHaveBeenCalledWith();
+		});
+
+		commonTests()
+	});
+
 });

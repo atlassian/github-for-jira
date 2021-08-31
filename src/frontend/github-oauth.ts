@@ -4,117 +4,120 @@
  * So, instead of making a fork, since it's only one file and the package
  * hasn't been updated in 3 years I thought it was simpler to just copy the source here
  */
-import crypto from 'crypto';
-import url from 'url';
-import express, {
-  NextFunction,
-  Request,
-  RequestHandler,
-  Response,
-  Router,
-} from 'express';
-import axios from 'axios';
+import crypto from "crypto";
+import url from "url";
+import express, { NextFunction, Request, RequestHandler, Response, Router } from "express";
+import axios from "axios";
 
-const host = process.env.GHE_HOST || 'github.com';
+const host = process.env.GHE_HOST || "github.com";
 
 export interface OAuthOptions {
-  baseURL: string;
-  githubClient: string;
-  githubSecret: string;
-  loginURI?: string;
-  callbackURI?: string;
-  scopes?: string[];
+	baseURL: string;
+	githubClient: string;
+	githubSecret: string;
+	loginURI?: string;
+	callbackURI?: string;
+	scopes?: string[];
 }
 
 export interface GithubOAuth {
-  router: Router;
-  checkGithubAuth: RequestHandler;
+	router: Router;
+	checkGithubAuth: RequestHandler;
 }
 
 export default (opts: OAuthOptions): GithubOAuth => {
-  opts.callbackURI = opts.callbackURI || '/github/callback';
-  opts.loginURI = opts.loginURI || '/github/login';
-  opts.scopes = opts.scopes || ['user', 'repo'];
-  const redirectURI = new URL(opts.callbackURI, opts.baseURL).toString();
+	opts.callbackURI = opts.callbackURI || "/github/callback";
+	opts.loginURI = opts.loginURI || "/github/login";
+	opts.scopes = opts.scopes || ["user", "repo"];
+	const redirectURI = new URL(opts.callbackURI, opts.baseURL).toString();
 
-  function login(req: Request, res: Response, next: NextFunction): void {
-    // TODO: We really should be using an Auth library for this, like @octokit/github-auth
-    // Create unique state for each oauth request
-    const state = crypto.randomBytes(8).toString('hex');
+	function login(req: Request, res: Response): void {
+		// TODO: We really should be using an Auth library for this, like @octokit/github-auth
+		// Create unique state for each oauth request
+		const state = crypto.randomBytes(8).toString("hex");
 
-    // Save the redirect that may have been specified earlier into session to be retrieved later
-    req.session[state] =
-      res.locals.redirect ||
-      `/github/configuration${url.parse(req.originalUrl).search || ''}`;
-    res.redirect(
-      `https://${host}/login/oauth/authorize?client_id=${opts.githubClient}${
-        opts.scopes.length ? `&scope=${opts.scopes.join(' ')}` : ''
-      }&redirect_uri=${redirectURI}&state=${state}`,
-    );
-    next();
-  }
+		// Save the redirect that may have been specified earlier into session to be retrieved later
+		req.session[state] =
+			res.locals.redirect ||
+			`/github/configuration${url.parse(req.originalUrl).search || ""}`;
+		res.redirect(
+			`https://${host}/login/oauth/authorize?client_id=${opts.githubClient}${
+				opts.scopes.length ? `&scope=${opts.scopes.join(" ")}` : ""
+			}&redirect_uri=${redirectURI}&state=${state}`
+		);
+	}
 
-  async function callback(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
-    const { query } = url.parse(req.url, true);
-    const code = query.code as string;
-    const state = query.state as string;
+	async function callback(
+		req: Request,
+		res: Response,
+		next: NextFunction
+	): Promise<void> {
+		const {
+			error,
+			error_description,
+			error_uri,
+			code,
+			state
+		} = req.query as Record<string, string>;
 
-    // Take save redirect url and delete it from session
-    const redirectUrl = req.session[state] as string;
-    delete req.session[state];
+		// Show the oauth error if there is one
+		if (error) {
+			return next(`OAuth Error: ${error}
+      URL: ${error_uri}
+      ${error_description}`);
+		}
 
-    // Check if state is available and matches a previous request
-    if (!state || !redirectUrl)
-      return next(new Error('Missing matching Auth state parameter'));
-    if (!code) return next(new Error('Missing OAuth Code'));
+		// Take save redirect url and delete it from session
+		const redirectUrl = req.session[state] as string;
+		delete req.session[state];
 
-    try {
-      const response = await axios.get(
-        `https://${host}/login/oauth/access_token`,
-        {
-          params: {
-            client_id: opts.githubClient,
-            client_secret: opts.githubSecret,
-            code,
-            state,
-          },
-          headers: {
-            accept: 'application/json',
-            'content-type': 'application/json',
-          },
-          responseType: 'json',
-        },
-      );
+		// Check if state is available and matches a previous request
+		if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
+		if (!code) return next("Missing OAuth Code");
 
-      req.session.githubToken = response.data.access_token;
+		try {
+			const response = await axios.get(
+				`https://${host}/login/oauth/access_token`,
+				{
+					params: {
+						client_id: opts.githubClient,
+						client_secret: opts.githubSecret,
+						code,
+						state
+					},
+					headers: {
+						accept: "application/json",
+						"content-type": "application/json"
+					},
+					responseType: "json"
+				}
+			);
 
-      if (!req.session.githubToken) {
-        return next(new Error('Missing Access Token from Github OAuth Flow.'));
-      }
+			req.session.githubToken = response.data.access_token;
 
-      return res.redirect(redirectUrl);
-    } catch (e) {
-      return next(new Error('Cannot retrieve access token from Github'));
-    }
-  }
+			if (!req.session.githubToken) {
+				return next(new Error("Missing Access Token from Github OAuth Flow."));
+			}
 
-  const router = express.Router();
-  // compatible with flatiron/director
-  router.get(opts.loginURI, login);
-  router.get(opts.callbackURI, callback);
+			return res.redirect(redirectUrl);
+		} catch (e) {
+			return next(new Error("Cannot retrieve access token from Github"));
+		}
+	}
 
-  return {
-    router: router,
-    checkGithubAuth: (req: Request, res: Response, next: NextFunction) => {
-      if (!req.session.githubToken) {
-        res.locals.redirect = req.originalUrl;
-        return login(req, res, next);
-      }
-      return next();
-    },
-  };
+	const router = express.Router();
+	// compatible with flatiron/director
+	router.get(opts.loginURI, login);
+	router.get(opts.callbackURI, callback);
+
+	return {
+		router: router,
+		checkGithubAuth: (req: Request, res: Response, next: NextFunction) => {
+			if (!req.session.githubToken) {
+				res.locals.redirect = req.originalUrl;
+				return login(req, res);
+			}
+			return next();
+		}
+	};
 };

@@ -1,51 +1,61 @@
-import issueComment from './issue-comment';
-import issue from './issue';
-import middleware from './middleware';
-import pullRequest from './pull-request';
-import push from './push';
-import { createBranch, deleteBranch } from './branch';
-import webhookTimeout from '../middleware/webhook-timeout';
-import bunyan from 'bunyan';
-import statsd from '../config/statsd';
-import { metricWebhooks } from '../config/metric-names';
+import issueComment from "./issue-comment";
+import issue from "./issue";
+import middleware from "./middleware";
+import pullRequest from "./pull-request";
+import workflow from "./workflow";
+import deployment from "./deployment";
+import push from "./push";
+import { createBranch, deleteBranch } from "./branch";
+import webhookTimeout from "../middleware/webhook-timeout";
+import statsd from "../config/statsd";
+import { getLogger } from "../config/logger";
+import { metricWebhooks } from "../config/metric-names";
+import { Application } from "probot";
 
-export default (robot) => {
-  const logger = bunyan.createLogger({ name: 'github' });
+export default (robot: Application) => {
+	const logger = getLogger("github.webhooks");
 
-  // TODO: Need ability to remove these listeners, especially for testing...
-  robot.on('*', (context) => {
-    const { name, payload } = context;
-    logger.info({ event: name, action: payload.action }, 'Event received');
+	// TODO: Need ability to remove these listeners, especially for testing...
+	robot.on("*", async (context) => {
+		const { name, payload } = context;
 
-    const tags = [
-      `name: webhooks`,
-      `event: ${name}`,
-      `action: ${payload.action}`,
-    ];
+		context.log = logger.child({ id: context.id });
 
-    statsd.increment(metricWebhooks.webhookEvent, tags);
-  });
+		context.log.info({ event: name, action: payload.action }, "Event received");
 
-  robot.on(
-    ['issue_comment.created', 'issue_comment.edited'],
-    webhookTimeout(middleware(issueComment)),
-  );
+		const tags = [
+			"name: webhooks",
+			`event: ${name}`,
+			`action: ${payload.action}`
+		];
 
-  robot.on(['issues.opened', 'issues.edited'], middleware(issue));
+		statsd.increment(metricWebhooks.webhookEvent, tags);
+	});
 
-  robot.on('push', middleware(push));
+	robot.on(
+		["issue_comment.created", "issue_comment.edited"],
+		webhookTimeout(middleware(issueComment))
+	);
 
-  robot.on(
-    [
-      'pull_request.opened',
-      'pull_request.closed',
-      'pull_request.reopened',
-      'pull_request.edited',
-      'pull_request_review',
-    ],
-    middleware(pullRequest),
-  );
+	robot.on(["issues.opened", "issues.edited"], middleware(issue));
 
-  robot.on('create', middleware(createBranch));
-  robot.on('delete', middleware(deleteBranch));
+	robot.on("push", middleware(push));
+
+	robot.on(
+		[
+			"pull_request.opened",
+			"pull_request.closed",
+			"pull_request.reopened",
+			"pull_request.edited",
+			"pull_request_review"
+		],
+		middleware(pullRequest)
+	);
+
+	robot.on("workflow_run", middleware(workflow));
+
+	robot.on("deployment_status", middleware(deployment));
+
+	robot.on("create", middleware(createBranch));
+	robot.on("delete", middleware(deleteBranch));
 };

@@ -19,7 +19,7 @@ default_events:
 - create
 - delete
 # - deployment
-# - deployment_status
+- deployment_status
 # - fork
 # - gollum
 - issue_comment
@@ -46,6 +46,7 @@ default_events:
 # - team
 # - team_add
 # - watch
+- workflow_run
 
 # The set of permissions needed by the GitHub App. The format of the object uses
 # the permission name for the key (for example, issues) and the access type for
@@ -66,7 +67,7 @@ default_permissions:
 
   # Deployments and deployment statuses.
   # https://developer.github.com/v3/apps/permissions/#permission-on-deployments
-  # deployments: write
+  deployments: write
 
   # Issues and related comments, assignees, labels, and milestones.
   # https://developer.github.com/v3/apps/permissions/#permission-on-issues
@@ -100,6 +101,10 @@ default_permissions:
   # https://developer.github.com/v3/apps/permissions/#permission-on-statuses
   # statuses: read
 
+  # GitHub Actions
+  # https://docs.github.com/en/rest/reference/permissions-required-for-github-apps#permission-on-actions
+  actions: write
+
   # Organization members and teams.
   # https://developer.github.com/v3/apps/permissions/#permission-on-members
   # members: read
@@ -129,10 +134,10 @@ default_permissions:
 # name: Jira Dev Environment
 
 # The homepage of your GitHub App.
-# url: https://github.com/integrations/jira
+# url: https://github.com/atlassian/github-for-jira
 
 # A description of the GitHub App.
-# description: An app to do local development for the official Jira GitHub App - https://github.com/integrations/jira
+# description: An app to do local development for the official Jira GitHub App - https://github.com/atlassian/github-for-jira
 
 # Set to true when your GitHub App is available to the public or false when it is only accessible to the owner of the app.
 # Default: true

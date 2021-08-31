@@ -2,22 +2,23 @@
 
 Hi there! We're thrilled that you'd like to contribute to this project. Your ideas are essential for keeping making it better :)
 
-## Notices
-Contributions to this product are [released](https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license) to the public under the [project's open source license](LICENSE).
+## Contributor License Agreement
 
-Please note that this project releases with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+Atlassian must have a [Contributor License Agreement (CLA)](https://opensource.atlassian.com/cla) on file from each individual or corporation contributing to our open-source projects. The CLA allows contributors to maintain ownership in the IP of their contributions while granting Atlassian the rights to control and maintain our projects.
+
+Submit an [individual CLA](https://opensource.atlassian.com/individual) or a [corporate CLA](https://opensource.atlassian.com/corporate).
+
+## License & Code of Conduct
+
+Contributions to this project releases to the public under [our open source license](LICENSE).
+
+Please note that this project has a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
 ## Getting Started
 
 This app is written in [Typescript](https://www.typescriptlang.org/) and runs on [Node.js](https://nodejs.org/) **v14.x**. 
 
-Please install [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) for the external dependencies like the Postgres database and Redis.
-
-### Installing a tunneling tool
-
-To allow your Jira instance to communicate with your locally running server, you need to have either [ngrok](https://ngrok.com/download) or [localtunnel](https://localtunnel.github.io/www/) installed and running.
-
-This tunnel will expose a URL through which internet traffic can reach your local machine. This URL will be called `DOMAIN` in the rest of this document.
+Please install [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) to easily run the project locally.
 
 ## Create your Jira instance
 
@@ -37,7 +38,9 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 Your new GitHub app will need the following repository permissions & events:
 
 **Repository Permissions**:
++ Actions: Read & write
 + Contents: Read & write
++ Deployments: Read & write
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
@@ -49,11 +52,13 @@ Your new GitHub app will need the following repository permissions & events:
 + Commit comment
 + Create
 + Delete
++ Deployment status
 + Issue comment
 + Issues
 + Pull request
 + Pull request review
 + Push
++ Workflow run
 
 ### Setting up your `.env` file
 
@@ -76,11 +81,13 @@ The first time you run the app, simply run:
 ```
 npm install # installs node modules
 docker-compose up # Spin up docker containers
-npm run db:init # Creates DBs and initializes tables
+npm run db # Creates DBs and initializes tables
 ```
 
-From then on, to just run the app locally in development mode, just do `npm start`.
+That's it.  Everything is ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread).
+If you want to debug, you can connect to the remote port of 9229 for the main thread and 9230 for the worker thread in docker.  Any changes to the code will restart the node server automatically.
 For tests, run `npm test`.
+If you want to run a different tunneling tool, run `docker-compose up app` instead as it will only bring up the app and its dependencies (redis & postgres).  You can then run you tunnelling tool to point to `http://app:8080`.
 
 ### Installing the App
 
@@ -98,14 +105,24 @@ In your Jira instance, in the `Manage Apps` section, click on your App's button,
 
 After this is done, you should see your repos starting to sync in the App's dashboard.
 
+### Accessing Admin Endpoints
+
+There are some admin endpoints that require special permissions (see `viewerPermissionQuery` in [/src/api/index.ts](/src/api/index.ts)).
+
+To call these endpoints, you must:
+
+* be an admin in a special GitHub org
+* create a personal access token in your GitHub settings and pass it in the `Authorization` header as `Bearer <token>`.
+
 ## Contributing
 
 Thank you so much for willing to contribute to this project!  
 
-Before you spend time working on something, it might be worth [discussing your changes with other contributors](https://github.com/integrations/jira/discussions) before starting for guidance and potentially combining efforts with other members.  Remember to try to keep your changes simple and concise - do not try to fix everything in one Pull Request.  We'd much appreciate multiple smaller PRs over one massive one. We're also here to help, so if you're stuck or blocked, please feel free to reach out.
+Before you spend time working on something, it might be worth [discussing your changes with other contributors](https://github.com/atlassian/github-for-jira/discussions) before starting for guidance and potentially combining efforts with other members.  Remember to try to keep your changes simple and concise - do not try to fix everything in one Pull Request.  We'd much appreciate multiple smaller PRs over one massive one. We're also here to help, so if you're stuck or blocked, please feel free to reach out.
 
 That being said, here are the steps needed to create a Pull Request for us to review:
 
+1. [Sign the CLA first!](#contributor-license-agreement)
 1. Fork the repository.
 1. Do your changes either on the main branch or create a new one.
 1. Make sure the tests pass on your machine with `npm test` and the build works with `npm run build`.  If you're adding new functionality, please add tests to reflect this.

@@ -1,16 +1,30 @@
-import {jiraDomainOptions} from './validations';
-import {NextFunction, Request, Response} from 'express';
+import { jiraDomainOptions } from "./validations";
+import { NextFunction, Request, Response } from "express";
+import { getGitHubConfigurationUrl } from "../util/getUrl";
 
-export default (req: Request, res: Response, next: NextFunction):void => {
-  if (req.session.jiraHost) {
-    // TODO: Make URL an environment variable?  Change it to point it to plugin directly instead of search
-    return res.redirect(`${req.session.jiraHost}/plugins/servlet/upm/marketplace/plugins/com.github.integration.production`);
-  }
+/*
+When this request is made: Installing from Jira Marketplace - GitHub org does not have Jira installed.
+Redirects users back to github/configuration to install their Jira instance in GitHub org/s.
+If the installation was done from Jira Marketplace, the app is already installed.
+*/
+export default (req: Request, res: Response, next: NextFunction): void => {
 
-  res.render('github-setup.hbs', {
-    jiraDomainOptions: jiraDomainOptions(),
-    csrfToken: req.csrfToken(),
-    nonce: res.locals.nonce,
-  });
-  next();
+	req.log.info("Received get github setup page request for Jira Host %s",
+		req.session.jiraHost);
+
+	if (req.session.jiraHost) {
+		const { host: githubHost, session } = req;
+		const { jwt, jiraHost } = session;
+
+		const urlArgs = { githubHost, jwt, jiraHost };
+
+		return res.redirect(getGitHubConfigurationUrl(urlArgs));
+	}
+
+	res.render("github-setup.hbs", {
+		jiraDomainOptions: jiraDomainOptions(),
+		csrfToken: req.csrfToken(),
+		nonce: res.locals.nonce
+	});
+	next();
 };
