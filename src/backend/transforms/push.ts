@@ -6,6 +6,7 @@ import { queues } from "../worker/main";
 import enhanceOctokit from "../../config/enhance-octokit";
 import { Application } from "probot";
 import { getLogger } from "../../config/logger";
+import { JobOptions } from "bull";
 
 // TODO: define better types for this file
 
@@ -61,11 +62,14 @@ export function createJobData(payload, jiraHost: string) {
 	};
 }
 
-export async function enqueuePush(payload, jiraHost) {
-	const jobOpts = { removeOnFail: true, removeOnComplete: true };
-	const jobData = createJobData(payload, jiraHost);
-
-	await queues.push.add(jobData, jobOpts);
+export async function enqueuePush(payload: unknown, jiraHost: string, options?: JobOptions) {
+	await queues.push.add(
+		createJobData(payload, jiraHost),
+		{
+			removeOnFail: true,
+			removeOnComplete: true,
+			...options
+		});
 }
 
 export function processPush(app: Application) {

@@ -135,8 +135,6 @@ workers:
       #TODO Replace with queue size metrics when we switch to SQS
       metrics: *CpuMemScalingRules
 
-
-
 environmentOverrides:
   ddev:
     loadBalancer:
@@ -182,12 +180,6 @@ environmentOverrides:
         WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
         WebServerMemoryAlarmHigh: null
         WebServerServiceRespawnAlarm: null
-    resources:
-      - type: globaledge
-        name: proxy
-        attributes:
-          ip_whitelist:
-            - public
 
   staging:
     config:
@@ -278,6 +270,13 @@ environmentOverrides:
             - github.stg.atlassian.com
           ip_whitelist:
             - public
+          routes:
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
 
   prod:
     config:
@@ -339,7 +338,7 @@ environmentOverrides:
         type: dedicated-rds
         attributes:
           parameters:
-            DBInstanceClass: db.t3.large
+            DBInstanceClass: db.m5.large
             AllocatedStorage: 10 # 10 GB
             ConnectionAlarm: 250
 
@@ -351,3 +350,10 @@ environmentOverrides:
             - github.atlassian.com
           ip_whitelist:
             - public
+          routes:
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
