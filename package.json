@@ -16,7 +16,7 @@
     "start:production": "run-p start:main:production start:worker:production",
     "start:main:production": "run-s db:migrate:prod && node .",
     "start:worker:production": "run-s db:migrate:prod && node src/backend/worker",
-    "clean": "rimraf coverage build tmp src/*.js src/*.js.map",
+    "clean": "rimraf coverage build tmp src/**/*.js src/**/*.js.map",
     "env": "ts-node env.ts",
     "build": "tsc -p ./tsconfig.json",
     "build:release": "tsc -p ./tsconfig.release.json",
@@ -131,7 +131,7 @@
   "jest": {
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "<rootDir>/test-utils/setup/setup.ts"
+      "<rootDir>/test/setup/setup.ts"
     ],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../../../test-utils/setup/tracking";
+import testTracking from "../../../../test/setup/tracking";
 import enable from ".";
 import { Installation } from "../../models";
 import { mocked } from "ts-jest/utils";

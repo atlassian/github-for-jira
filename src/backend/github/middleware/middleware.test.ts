@@ -3,7 +3,7 @@ import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../models";
 import GitHubAPI from "../../../config/github-api";
 import middleware from ".";
-import { mockModels } from "../../../../test-utils/mocks/models";
+import { mockModels } from "../../../../test/mocks/models";
 import { wrapLogger } from "probot/lib/wrap-logger";
 
 jest.mock("../../models");

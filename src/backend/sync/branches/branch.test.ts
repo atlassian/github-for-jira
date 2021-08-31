@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import issueKeyParser from "jira-issue-key-parser";
-import { branchesNoLastCursor, branchesWithLastCursor } from "../../../../test-utils/fixtures/api/graphql/branch-queries";
+import { branchesNoLastCursor, branchesWithLastCursor } from "../../../../test/fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../models";
 import { Application } from "probot";
-import { createWebhookApp } from "../../../../test-utils/probot";
-import createJob from "../../../../test-utils/setup/create-job";
+import { createWebhookApp } from "../../../../test/probot";
+import createJob from "../../../../test/setup/create-job";
 import { processInstallation } from "../installation";
 import nock from "nock";
 
@@ -15,11 +15,11 @@ describe.skip("sync/branches", () => {
 	const installationId = 1234;
 	let delay;
 	let app: Application;
-	const branchNodesFixture = require("../../../../test-utils/fixtures/api/graphql/branch-ref-nodes.json");
-	const emptyNodesFixture = require("../../../../test-utils/fixtures/api/graphql/branch-empty-nodes.json");
-	const branchCommitsHaveKeys = require("../../../../test-utils/fixtures/api/graphql/branch-commits-have-keys.json");
-	const associatedPRhasKeys = require("../../../../test-utils/fixtures/api/graphql/branch-associated-pr-has-keys.json");
-	const branchNoIssueKeys = require("../../../../test-utils/fixtures/api/graphql/branch-no-issue-keys.json");
+	const branchNodesFixture = require("../../../../test/fixtures/api/graphql/branch-ref-nodes.json");
+	const emptyNodesFixture = require("../../../../test/fixtures/api/graphql/branch-empty-nodes.json");
+	const branchCommitsHaveKeys = require("../../../../test/fixtures/api/graphql/branch-commits-have-keys.json");
+	const associatedPRhasKeys = require("../../../../test/fixtures/api/graphql/branch-associated-pr-has-keys.json");
+	const branchNoIssueKeys = require("../../../../test/fixtures/api/graphql/branch-no-issue-keys.json");
 
 	function makeExpectedResponse({ branchName }) {
 		const issueKeys = issueKeyParser().parse(branchName);
