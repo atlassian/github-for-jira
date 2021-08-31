@@ -6,6 +6,7 @@
     "outDir": null
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+		"test-utils/**/*"
   ]
 }
