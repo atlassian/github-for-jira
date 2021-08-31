@@ -32,7 +32,7 @@ import { App } from "@octokit/app";
 import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { EnvironmentEnum } from "../config/env";
-import {verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware} from "./middleware/verify-jira-jwt-middleware";
+import {verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware} from "./middleware/verify-jira-middleware";
 
 
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";

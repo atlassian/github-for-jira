@@ -2,7 +2,7 @@
 import {encodeSymmetric} from "atlassian-jwt";
 import {mocked} from "ts-jest/utils";
 import {Installation} from "../../models";
-import {verifyJiraContextJwtTokenMiddleware} from "../../../backend/middleware/verify-jira-jwt-middleware";
+import {verifyJiraContextJwtTokenMiddleware} from ".";
 import logger from "../../../config/logger";
 import {booleanFlag, BooleanFlags} from "../../../config/feature-flags";
 import {when} from "jest-when";
