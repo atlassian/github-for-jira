@@ -27,7 +27,7 @@ const withSentry = function(callback) {
 		try {
 			await callback(context);
 		} catch (err) {
-			context.log.error({...err, context}, "Error while processing webhook");
+			context.log.error({ ...err, context }, "Error while processing webhook");
 			context.sentry.captureException(err);
 			throw err;
 		}
@@ -98,7 +98,9 @@ export default (
 			return;
 		}
 
-		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
+		const subscriptions = await Subscription.getAllForInstallation(
+			gitHubInstallationId
+		);
 		const jiraSubscriptionsCount = subscriptions.length;
 		if (!jiraSubscriptionsCount) {
 			context.log(
@@ -115,8 +117,7 @@ export default (
 			"transaction",
 			`webhook:${context.name}.${context.payload.action}`
 		);
-
-		await Promise.all(subscriptions.map(async (subscription) => {
+		for (const subscription of subscriptions) {
 			const { jiraHost } = subscription;
 			context.log("Processing event for Jira Host: %s", jiraHost);
 			context.sentry.setTag("jiraHost", jiraHost);
@@ -129,7 +130,7 @@ export default (
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
-				return;
+				continue;
 			}
 
 			if (context.timedout) {
@@ -151,7 +152,7 @@ export default (
 				gitHubInstallationId,
 				context.log
 			);
-			if (!jiraClient) {
+			if (jiraClient == null) {
 				// Don't call callback if we have no jiraClient
 				context.log.error(
 					{ noop: "no_jira_client" },
@@ -164,9 +165,9 @@ export default (
 			try {
 				await callback(context, jiraClient, util);
 			} catch (err) {
-				context.log.error({...err}, `Error processing the event for Jira hostname '${jiraHost}'`);
+				context.log.error(err, "Error processing the event for Jira hostname %s", jiraHost);
 				context.sentry.captureException(err);
 			}
-		}));
+		}
 	});
 };
