@@ -1,5 +1,5 @@
 import bodyParser from "body-parser";
-import express, {Express, NextFunction, Request, Response} from "express";
+import express, { Express, NextFunction, Request, Response } from "express";
 import path from "path";
 import cookieSession from "cookie-session";
 import csrf from "csurf";
@@ -21,18 +21,18 @@ import postJiraDisable from "../jira/disable";
 import postJiraEnable from "../jira/enable";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
-import {authenticateJiraEvent, authenticateInstallCallback, authenticateUninstallCallback} from "../jira/authenticate";
+import { authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback } from "../jira/authenticate";
 import extractInstallationFromJiraCallback from "../jira/extract-installation-from-jira-callback";
 import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
 import api from "../api";
 import healthcheck from "./healthcheck";
 import logMiddleware from "../middleware/log-middleware";
-import {App} from "@octokit/app";
-import statsd, {elapsedTimeMetrics} from "../config/statsd";
-import {metricError} from "../config/metric-names";
-import {EnvironmentEnum} from "../config/env";
-import {verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware} from "./verify-jira-jwt-middleware";
+import { App } from "@octokit/app";
+import statsd, { elapsedTimeMetrics } from "../config/statsd";
+import { metricError } from "../config/metric-names";
+import { EnvironmentEnum } from "../config/env";
+import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // Adding session information to request
@@ -246,10 +246,10 @@ export default (octokitApp: App): Express => {
 
 	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, elapsedTimeMetrics, retrySync);
 	// Set up event handlers
-	app.post("/jira/events/disabled",  extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
-	app.post("/jira/events/enabled",  extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
+	app.post("/jira/events/disabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
+	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
 	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
-	app.post("/jira/events/uninstalled",  extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
+	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
 
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
@@ -275,7 +275,7 @@ export default (octokitApp: App): Express => {
 
 	// Error catcher - Batter up!
 	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-		req.log.error(err, "Error in frontend app.");
+		req.log.error({ ...err, request: req, response: res }, "Error in frontend app.");
 
 		if (process.env.NODE_ENV !== EnvironmentEnum.production) {
 			return next(err);

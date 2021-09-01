@@ -357,7 +357,7 @@ router.get(
 				}));
 
 			const failedConnections = installations.filter((response) => {
-				req.log.error(response.error);
+				req.log.error({...response}, "Failed installation");
 				return response.error;
 			});
 
@@ -372,7 +372,7 @@ router.get(
 				)}/api/${installationId}/repoSyncState.json`
 			});
 		} catch (err) {
-			req.log.error(err);
+			req.log.error({installationId, ...err}, "Error getting installation");
 			res.status(500).json(err);
 		}
 	}

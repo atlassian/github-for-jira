@@ -14,7 +14,7 @@ const syncStatus = (syncStatus) =>
 
 const sendFailedStatusMetrics = (installationId: string): void => {
 	const syncError = "No updates in the last 15 minutes"
-	logger.warn(syncError, `Sync failed: installationId=${installationId}`);
+	logger.warn({installationId, error: syncError}, "Sync failed");
 
 	Sentry.setExtra("Installation FAILED", syncError);
 	Sentry.captureException(syncError);

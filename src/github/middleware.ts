@@ -27,7 +27,7 @@ const withSentry = function(callback) {
 		try {
 			await callback(context);
 		} catch (err) {
-			context.log.error(err, "Error while processing webhook");
+			context.log.error({...err, context}, "Error while processing webhook");
 			context.sentry.captureException(err);
 			throw err;
 		}

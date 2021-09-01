@@ -16,10 +16,10 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 	} catch (e) {
 		context.log.warn(
 			{
-				error: e,
+				...e,
 				payload: context.payload
 			},
-			"Can't retrieve reviewers."
+			"Missing Github Permissions: Can't retrieve reviewers"
 		);
 	}
 
