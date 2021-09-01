@@ -22,6 +22,6 @@
   },
   "include": [
     "src/**/*",
-    "test-utils/**/*"
+		"test/**/*"
 	]
 }

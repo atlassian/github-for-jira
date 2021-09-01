@@ -6,7 +6,9 @@
     "outDir": null
   },
   "include": [
-    "src/**/*",
-		"test-utils/**/*"
-  ]
+    "src/**/*"
+  ],
+	"exclude": [
+		"**/*.test.ts"
+	]
 }

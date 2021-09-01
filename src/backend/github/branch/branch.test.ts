@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { createWebhookApp } from "../../../../test-utils/probot";
+import { createWebhookApp } from "../../../../test/probot";
 
 describe("GitHub Actions", () => {
 	let app;
@@ -8,7 +8,7 @@ describe("GitHub Actions", () => {
 	describe("Create Branch", () => {
 		it("should update Jira issue with link to a branch on GitHub", async () => {
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
-			const fixture = require("../../../../test-utils/fixtures/branch-basic.json");
+			const fixture = require("../../../../test/fixtures/branch-basic.json");
 
 
 			const ref = "TES-123-test-ref";
@@ -77,7 +77,7 @@ describe("GitHub Actions", () => {
 		});
 
 		it("should not update Jira issue if there are no issue Keys in the branch name", async () => {
-			const fixture = require("../../../../test-utils/fixtures/branch-no-issues.json");
+			const fixture = require("../../../../test/fixtures/branch-no-issues.json");
 			const getLastCommit = jest.fn();
 
 			await expect(app.receive(fixture)).toResolve();
@@ -85,7 +85,7 @@ describe("GitHub Actions", () => {
 		});
 
 		it("should exit early if ref_type is not a branch", async () => {
-			const fixture = require("../../../../test-utils/fixtures/branch-invalid-ref_type.json");
+			const fixture = require("../../../../test/fixtures/branch-invalid-ref_type.json");
 			const parseSmartCommit = jest.fn();
 
 			await expect(app.receive(fixture)).toResolve();
@@ -95,7 +95,7 @@ describe("GitHub Actions", () => {
 
 	describe("delete a branch", () => {
 		it("should call the devinfo delete API when a branch is deleted", async () => {
-			const fixture = require("../../../../test-utils/fixtures/branch-delete.json");
+			const fixture = require("../../../../test/fixtures/branch-delete.json");
 			jiraNock
 				.delete("/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref?_updateSequenceId=12345678")
 				.reply(200);
