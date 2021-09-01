@@ -166,7 +166,7 @@ export function processPush(app: Application) {
 				await jiraClient.devinfo.repository.update(jiraPayload);
 			}
 		} catch (error) {
-			logger.error(error, "Failed to process push");
+			logger.error({...error}, "Failed to process push");
 		}
 	};
 }

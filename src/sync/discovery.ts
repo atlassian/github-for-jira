@@ -54,6 +54,6 @@ export const discovery = (app: Application, queues) => async (job) => {
 		// Create job
 		queues.installation.add({ installationId, jiraHost, startTime }, jobOpts);
 	} catch (err) {
-		logger.error(err, "discovery error");
+		logger.error({...err}, "Discovery error");
 	}
 };

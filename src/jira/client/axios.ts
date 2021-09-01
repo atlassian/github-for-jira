@@ -5,7 +5,7 @@ import url from "url";
 import statsd from "../../config/statsd";
 import { getLogger } from "../../config/logger";
 import { metricHttpRequest } from "../../config/metric-names";
-import {createQueryStringHash, encodeSymmetric} from "atlassian-jwt";
+import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
@@ -91,7 +91,7 @@ function getErrorMiddleware(logger: Logger) {
 				const errorMessage = getJiraErrorMessages(status);
 				// Creating an object that isn't of type Error as bunyan handles it differently
 				// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
-				(status >= 300 && status < 500 ? logger.warn : logger.error)({ ...error, response: error.response, resquest: error.request }, errorMessage);
+				(status >= 300 && status < 500 ? logger.warn : logger.error)({ ...error }, errorMessage);
 			}
 			return Promise.reject(error);
 		});
@@ -207,12 +207,15 @@ export const extractPath = (someUrl = ""): string =>
  * @returns {import("axios").AxiosResponse} The response object.
  */
 const instrumentRequest = (response) => {
+	if(!response) {
+		return;
+	}
 	const requestDurationMs = Number(
-		Date.now() - response.config.requestStartTime
+		Date.now() - (response.config?.requestStartTime || 0)
 	);
 	const tags = {
-		method: response.config.method.toUpperCase(),
-		path: extractPath(response.config.originalUrl),
+		method: response.config?.method?.toUpperCase(),
+		path: extractPath(response.config?.originalUrl),
 		status: response.status
 	};
 
@@ -229,12 +232,8 @@ const instrumentRequest = (response) => {
  */
 const instrumentFailedRequest = (logger) => {
 	return (error) => {
-		if (error.response) {
-			instrumentRequest(error.response);
-		} else {
-			logger.error(error, "Error during Axios request has no response property.");
-		}
-
+		instrumentRequest(error?.response);
+		logger.error({...error}, "Error during Axios request");
 		return Promise.reject(error);
 	};
 };

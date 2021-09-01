@@ -92,7 +92,7 @@ Object.keys(queues).forEach((name) => {
 	});
 
 	queue.on("error", (err) => {
-		logger.error(err, `Error occurred while processing queue ${name}`);
+		logger.error({...err}, `Error occurred while processing queue ${name}`);
 
 		Sentry.setTag("queue", name);
 		Sentry.captureException(err);
