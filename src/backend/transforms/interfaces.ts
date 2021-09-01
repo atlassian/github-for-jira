@@ -19,7 +19,7 @@ export interface JiraPullRequest {
 	}
 }
 
-interface JiraBuild {
+export interface JiraBuild {
 	schemaVersion: string;
 	pipelineId: string;
 	buildNumber: number;
