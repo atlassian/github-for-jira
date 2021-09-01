@@ -108,8 +108,7 @@ export default (
 			return;
 		}
 
-		context.log("Processing event for %d jira%s", jiraSubscriptionsCount,
-			jiraSubscriptionsCount > 1 ? "s" : "");
+		context.log(`Processing event for ${jiraSubscriptionsCount} jira instances`);
 
 		context.sentry.setTag(
 			"transaction",
@@ -118,7 +117,6 @@ export default (
 
 		await Promise.all(subscriptions.map(async (subscription) => {
 			const { jiraHost } = subscription;
-			context.log("Processing event for Jira Host: %s", jiraHost);
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
 				"gitHubInstallationId",
@@ -126,6 +124,7 @@ export default (
 			);
 			context.sentry.setUser({ jiraHost, gitHubInstallationId });
 			context.log = context.log.child({ jiraHost, gitHubInstallationId });
+			context.log("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
