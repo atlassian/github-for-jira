@@ -275,7 +275,7 @@ export default (octokitApp: App): Express => {
 
 	// Error catcher - Batter up!
 	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-		req.log.error({ ...err, request: req, response: res }, "Error in frontend app.");
+		req.log.error({ err, req, res }, "Error in frontend app.");
 
 		if (process.env.NODE_ENV !== EnvironmentEnum.production) {
 			return next(err);

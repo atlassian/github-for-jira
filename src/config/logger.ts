@@ -2,6 +2,7 @@ import Logger, { levelFromName } from "bunyan";
 import bformat from "bunyan-format";
 import filteringStream from "../util/filteringStream";
 import { LoggerWithTarget, wrapLogger } from "probot/lib/wrap-logger";
+import { Request } from "express";
 
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
@@ -13,15 +14,41 @@ const formatOut = filteringStream(bformat({ outputMode, levelInString: true }));
 const logger = Logger.createLogger(
 	{
 		name: "github-for-jira",
-		logger: "config.logger",
-		stream: formatOut
+		logger: "root-logger",
+		stream: formatOut,
+		serializers: {
+			err: (err) => (!err || !err.stack) ? err : {
+				...err,
+				stack: getFullErrorStack(err)
+			},
+			res: Logger.stdSerializers.res,
+			req: (req:Request) => (!req || !req.connection) ? req : {
+				method: req.method,
+				url: req.originalUrl || req.url,
+				path: req.path,
+				headers: req.headers,
+				remoteAddress: req.connection.remoteAddress,
+				remotePort: req.connection.remotePort,
+				body: req.body
+			}
+		}
 	}
 );
+
+const getFullErrorStack = (ex) => {
+	let ret = ex.stack || ex.toString();
+	if (ex.cause && typeof (ex.cause) === "function") {
+		const cex = ex.cause();
+		if (cex) {
+			ret += "\nCaused by: " + getFullErrorStack(cex);
+		}
+	}
+	return ret;
+};
 
 const logLevel = process.env.LOG_LEVEL || "info";
 const globalLoggingLevel = levelFromName[logLevel] || Logger.INFO;
 logger.level(globalLoggingLevel);
-
 
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
 export const overrideProbotLoggingMethods = (probotLogger: Logger) => {

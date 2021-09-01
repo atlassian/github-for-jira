@@ -124,7 +124,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		} catch (err) {
 			// If we get here, there was either a problem decoding the JWT
 			// or getting the data we need from GitHub, so we'll show the user an error.
-			req.log.error({ ...err, request: req, response: res }, "Error while getting github configuration page");
+			req.log.error({ err, req, res }, "Error while getting github configuration page");
 			return next(err);
 		}
 	}

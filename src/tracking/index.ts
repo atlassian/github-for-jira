@@ -94,7 +94,7 @@ export const submitProto = async (
 	} catch (err) {
 		if (!err.response) {
 			// This is not an AxiosError
-			logger.error({...err}, "Hydro Protobuf Error");
+			logger.error(err, "Hydro Protobuf Error");
 			status = "exception";
 		} else {
 			const axError = err;

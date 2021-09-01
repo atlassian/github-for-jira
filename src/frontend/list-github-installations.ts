@@ -49,9 +49,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			info
 		});
 	} catch (err) {
-		req.log.error({jiraHost: req.session.jiraHost, ...err},
-			"Unable list github installations page",
-		);
+		req.log.error(err, "Unable list github installations page",);
 		return next(err);
 	}
 };

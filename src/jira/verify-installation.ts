@@ -19,10 +19,10 @@ export default (installation: Installation, log: Logger) => {
 			}
 		} catch (err) {
 			if (err.response?.status === 401) {
-				log.warn({...err}, "Jira does not recognize installation. Deleting it");
+				log.warn(err, "Jira does not recognize installation. Deleting it");
 				await installation.destroy();
 			} else {
-				log.error({...err}, "Unhandled error while verifying installation");
+				log.error(err, "Unhandled error while verifying installation");
 				Sentry.captureException(err);
 			}
 		}

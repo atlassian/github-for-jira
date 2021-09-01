@@ -36,7 +36,7 @@ async function start() {
 	probot.server.set("trust proxy", true);
 	probot.load(App);
 	probot.webhook.on("error", (err: Error) => {
-		logger.error({ ...err }, "Webhook Error");
+		logger.error(err, "Webhook Error");
 	});
 	probot.start();
 }

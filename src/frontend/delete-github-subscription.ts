@@ -82,7 +82,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 				});
 		}
 	} catch (err) {
-		req.log.error({ ...err, request: req, response: res }, "Error while processing delete subscription request");
+		req.log.error({ err, req, res }, "Error while processing delete subscription request");
 		res.sendStatus(500);
 	}
 };

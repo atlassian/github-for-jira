@@ -372,7 +372,7 @@ router.get(
 				)}/api/${installationId}/repoSyncState.json`
 			});
 		} catch (err) {
-			req.log.error({installationId, ...err}, "Error getting installation");
+			req.log.error({installationId, err}, "Error getting installation");
 			res.status(500).json(err);
 		}
 	}

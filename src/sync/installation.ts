@@ -154,7 +154,7 @@ const updateJobStatus = async (
 		try {
 			await jiraClient.devinfo.migration.complete();
 		} catch (err) {
-			logger.warn({ ...err }, "Error sending the `complete` event to JIRA");
+			logger.warn(err, "Error sending the `complete` event to JIRA");
 		}
 	} else {
 		logger.info({ installationId }, "Sync status for installationId=%d is pending");
@@ -384,7 +384,7 @@ export const processInstallation =
 
 				await subscription.update({ syncStatus: "FAILED" });
 
-				logger.warn({installationId, ...err}, "Sync failed");
+				logger.warn({installationId, err}, "Sync failed");
 
 				job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
 				job.sentry.captureException(err);

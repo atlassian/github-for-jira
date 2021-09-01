@@ -27,7 +27,7 @@ router.get("/deepcheck", elapsedTimeMetrics, async (_, res: Response) => {
 		Promise.all([redisPromise, databasePromise]),
 		timeoutPromise
 	]).catch((error) => {
-		deepcheckLogger.error({...error}, "Error during /deepcheck");
+		deepcheckLogger.error(error, "Error during /deepcheck");
 		connectionsOk = false;
 	});
 

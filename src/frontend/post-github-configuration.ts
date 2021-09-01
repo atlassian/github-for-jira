@@ -69,7 +69,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 		res.sendStatus(200);
 	} catch (err) {
-		req.log.error({...err}, "Error processing subscription add request");
+		req.log.error(err, "Error processing subscription add request");
 		res.sendStatus(500);
 	}
 };

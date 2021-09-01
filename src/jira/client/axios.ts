@@ -91,7 +91,7 @@ function getErrorMiddleware(logger: Logger) {
 				const errorMessage = getJiraErrorMessages(status);
 				// Creating an object that isn't of type Error as bunyan handles it differently
 				// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
-				(status >= 300 && status < 500 ? logger.warn : logger.error)({ ...error }, errorMessage);
+				(status >= 300 && status < 500 ? logger.warn : logger.error)(error, errorMessage);
 			}
 			return Promise.reject(error);
 		});
@@ -233,7 +233,7 @@ const instrumentRequest = (response) => {
 const instrumentFailedRequest = (logger) => {
 	return (error) => {
 		instrumentRequest(error?.response);
-		logger.error({...error}, "Error during Axios request");
+		logger.error(error, "Error during Axios request");
 		return Promise.reject(error);
 	};
 };

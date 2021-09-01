@@ -176,7 +176,7 @@ export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: Tok
 		req.log.info("JWT Token Verified Successfully!")
 		next();
 	} catch (error) {
-		req.log.error({...error}, "Error happened when validating JWT token")
+		req.log.error(error, "Error happened when validating JWT token")
 		sendError(res, 401, "Unauthorized")
 		return
 	}

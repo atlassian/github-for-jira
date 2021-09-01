@@ -42,7 +42,7 @@ const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags, defaultVal
 		const user = createLaunchdarklyUser(jiraHost);
 		return launchdarklyClient.variation(flag, user, defaultValue);
 	} catch (err) {
-		logger.error({flag, ...err}, "Error resolving value for feature flag");
+		logger.error({flag, err}, "Error resolving value for feature flag");
 		return defaultValue;
 	}
 }
