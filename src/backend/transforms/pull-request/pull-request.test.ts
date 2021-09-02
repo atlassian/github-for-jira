@@ -5,36 +5,18 @@ describe("pull_request transform", () => {
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
 		const pullRequestList = require("../../../../test/fixtures/api/transform-pull-request-list.json");
 
-		pullRequestList[0].title = "[TES-123] Branch payload Test";
-
-		const fixture = {
-			pull_request: pullRequestList[0],
-			repository: {
-				id: 1234568,
-				name: "test-repo",
-				full_name: "test-owner/test-repo",
-				owner: { login: "test-login" },
-				html_url: "https://github.com/test-owner/test-repo"
-			},
-			author: {
-				avatar: "https://avatars0.githubusercontent.com/u/173?v=4",
-				name: "bkeepers",
-				url: "https://api.github.com/users/bkeepers"
-			}
-		};
+		const fixture = pullRequestList[0];
+		fixture.title = "[TES-123] Branch payload Test";
 
 		Date.now = jest.fn(() => 12345678);
 
-		const data = await transformPullRequest(
-			fixture,
-			fixture.pull_request.user
-		);
+		const data = transformPullRequest(fixture);
 
-		const { updated_at, title } = pullRequestList[0];
+		const { updated_at, title } = fixture;
 
 		expect(data).toMatchObject({
-			id: 1234568,
-			name: "test-owner/test-repo",
+			id: 100403908,
+			name: "integrations/test",
 			pullRequests: [
 				{
 					author: {
@@ -57,7 +39,7 @@ describe("pull_request transform", () => {
 					updateSequenceId: 12345678
 				}
 			],
-			url: "https://github.com/test-owner/test-repo",
+			url: "https://github.com/integrations/test",
 			updateSequenceId: 12345678
 		});
 	});
@@ -69,37 +51,18 @@ describe("pull_request transform", () => {
 			)
 		);
 
-		pullRequestList[1].title = "[TES-123] Branch payload Test";
-
-		const fixture = {
-			pull_request: pullRequestList[1],
-			repository: {
-				id: 1234568,
-				name: "test-repo",
-				full_name: "test-owner/test-repo",
-				owner: { login: "test-login" },
-				html_url: "https://github.com/test-owner/test-repo"
-			},
-			author: {
-				avatar: "https://avatars0.githubusercontent.com/u/173?v=4",
-				name: "bkeepers",
-				url: "https://api.github.com/users/bkeepers"
-			}
-		};
+		const fixture = pullRequestList[1];
+		fixture.title = "[TES-123] Branch payload Test";
 
 		Date.now = jest.fn(() => 12345678);
 
-		const data = await transformPullRequest(
-			fixture,
-			fixture.pull_request.user,
-			fixture.pull_request.reviewers
-		);
+		const data = transformPullRequest(fixture);
 
-		const { updated_at, title } = pullRequestList[1];
+		const { updated_at, title } = fixture;
 
 		expect(data).toMatchObject({
-			id: 1234568,
-			name: "test-owner/test-repo",
+			id: 100403908,
+			name: "integrations/test",
 			pullRequests: [
 				{
 					author: {
@@ -130,7 +93,7 @@ describe("pull_request transform", () => {
 					issueKeys: ["TES-123"],
 					lastCommit: {
 						author: {
-							name: "bkeepers"
+							name: "integrations"
 						},
 						authorTimestamp: "2018-05-04T14:06:56Z",
 						displayId: "09ca66",
@@ -147,7 +110,7 @@ describe("pull_request transform", () => {
 					url: "https://github.com/integrations/test/tree/use-the-force"
 				}
 			],
-			url: "https://github.com/test-owner/test-repo",
+			url: "https://github.com/integrations/test",
 			updateSequenceId: 12345678
 		});
 	});

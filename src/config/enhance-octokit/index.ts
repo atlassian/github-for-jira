@@ -25,7 +25,7 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 			throw error;
 		} finally {
 			if(error || responseStatus < 200 || responseStatus >= 400) {
-				logger.warn({request, response, error}, `Octokit error: '${responseStatus}' for request '${options.method} ${options.url}'`);
+				logger.warn({request, response, error}, `Octokit error: failed request '${options.method} ${options.url}'`);
 			}
 			const elapsed = Date.now() - requestStart;
 			const tags = {

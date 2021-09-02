@@ -25,7 +25,7 @@ function mapFile(githubFile) {
 		changeType: mapStatus[githubFile.status] || "UNKNOWN",
 		linesAdded: githubFile.additions,
 		linesRemoved: githubFile.deletions,
-		url: githubFile.blob_url
+		url: githubFile.blob_url || undefined
 	};
 }
 
@@ -82,7 +82,7 @@ export function processPush(app: Application) {
 				installationId,
 				jiraHost
 			} = job.data;
-			logger.info("Processing push for installation id %d", installationId);
+			logger.info({ installationId }, "Processing push");
 
 			const subscription = await Subscription.getSingleInstallation(
 				jiraHost,

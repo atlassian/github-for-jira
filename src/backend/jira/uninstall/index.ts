@@ -33,7 +33,6 @@ export default async (req: Request, res: Response): Promise<void> => {
 	await installation.uninstall();
 	await submitProto(actions);
 
-	req.log.info("App uninstalled on Jira. Uninstalling id=%d, Jira Host: %s",
-		installation.id, installation.jiraHost);
+	req.log.info("App uninstalled on Jira. Uninstalling...");
 	res.sendStatus(204);
 };

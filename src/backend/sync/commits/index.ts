@@ -37,7 +37,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 			fileCount: 0,
 			sha: item.oid,
 			message: item.message,
-			url: item.url
+			url: item.url || undefined
 		}));
 
 	return {

@@ -10,8 +10,7 @@ import { Request, Response } from "express";
 export default async (req: Request, res: Response): Promise<void> => {
 	const jiraHost = req.session.jiraHost;
 
-	req.log.info("Received delete jira configuration request for jira host %s and installation ID %s",
-		jiraHost, req.body.installationId);
+	req.log.info({ installationId: req.body.installationId }, "Received delete jira configuration request");
 
 	const jiraClient = await getJiraClient(jiraHost, null, req.log);
 	(await jiraClient) &&

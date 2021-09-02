@@ -1,5 +1,5 @@
 import bodyParser from "body-parser";
-import express, {Express, NextFunction, Request, Response} from "express";
+import express, { Express, NextFunction, Request, Response } from "express";
 import path from "path";
 import cookieSession from "cookie-session";
 import csrf from "csurf";
@@ -255,10 +255,10 @@ export default (octokitApp: App): Express => {
 
 	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, elapsedTimeMetrics, retrySync);
 	// Set up event handlers
-	app.post("/jira/events/disabled",  extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
-	app.post("/jira/events/enabled",  extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
+	app.post("/jira/events/disabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
+	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
 	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
-	app.post("/jira/events/uninstalled",  extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
+	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
 
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
@@ -284,7 +284,7 @@ export default (octokitApp: App): Express => {
 
 	// Error catcher - Batter up!
 	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-		req.log.error(err, "Error in frontend app.");
+		req.log.error({ err, req, res }, "Error in frontend app.");
 
 		if (process.env.NODE_ENV !== EnvironmentEnum.production) {
 			return next(err);

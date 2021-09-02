@@ -20,7 +20,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 			sharedSecret
 		}));
 
-	req.log.info("Installed installtion with ID %d for host %s", installation.id, host);
+	req.log.info("Installed installation");
 
 	const action = await ActionFromInstallation(installation);
 	action.type = ActionType.CREATED;

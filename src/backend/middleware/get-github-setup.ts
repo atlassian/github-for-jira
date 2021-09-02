@@ -9,8 +9,7 @@ If the installation was done from Jira Marketplace, the app is already installed
 */
 export default (req: Request, res: Response, next: NextFunction): void => {
 
-	req.log.info("Received get github setup page request for Jira Host %s",
-		req.session.jiraHost);
+	req.log.info("Received get github setup page request");
 
 	if (req.session.jiraHost) {
 		const { host: githubHost, session } = req;

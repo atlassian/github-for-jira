@@ -21,7 +21,7 @@ const statsd = new StatsD({
 	globalTags,
 	errorHandler: (err) => {
 		if (process.env.NODE_ENV !== EnvironmentEnum.development) {
-			logger.warn(err, "error writing metrics");
+			logger.warn(err, "Error writing metrics");
 		}
 	},
 

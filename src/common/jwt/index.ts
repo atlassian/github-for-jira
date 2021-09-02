@@ -220,7 +220,7 @@ export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Resp
 			next()
 		}
 	} catch (e) {
-		req.log.warn(e, "Error while validating JWT token")
+		req.log.warn({...e}, "Error while validating JWT token")
 		sendError(res, 401, "Unauthorized")
 	}
 }

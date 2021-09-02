@@ -2,6 +2,7 @@ import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../../../common/isEmpty";
 import { getJiraId } from "../../../common/id";
 import _ from "lodash";
+import { Octokit } from "@octokit/rest";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -22,10 +23,10 @@ function mapReviews(reviews) {
 		const user = review?.user;
 		if (!usernames[user?.login]) {
 			usernames[user?.login] = {
-				name: user?.login,
+				name: user?.login || undefined,
 				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED",
-				url: user?.html_url,
-				avatar: user?.avatar_url
+				url: user?.html_url || undefined,
+				avatar: user?.avatar_url || undefined
 			};
 			acc.push(usernames[user?.login]);
 			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
@@ -41,24 +42,23 @@ function mapReviews(reviews) {
 }
 
 // TODO: define arguments and return
-export default (payload, author, reviews?: unknown[]) => {
-	const { pull_request, repository } = payload;
+export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse) => {
 
 	// This is the same thing we do in sync, concatenating these values
 	const issueKeys = issueKeyParser().parse(
-		`${pull_request.title}\n${pull_request.head.ref}`
+		`${pullRequest.title}\n${pullRequest.head.ref}`
 	);
 
-	if (isEmpty(issueKeys) || !pull_request?.head?.repo) {
+	if (isEmpty(issueKeys) || !pullRequest?.head?.repo) {
 		return undefined;
 	}
 
-	const pullRequestStatus = mapStatus(pull_request.state, pull_request.merged_at);
+	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
 
 	return {
-		id: repository.id,
-		name: repository.full_name,
-		url: repository.html_url,
+		id: pullRequest.base.repo.id,
+		name: pullRequest.base.repo.full_name,
+		url: pullRequest.base.repo.html_url,
 		// Do not send the branch on the payload when the Pull Request Merged event is called.
 		// Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
 		branches:
@@ -66,48 +66,48 @@ export default (payload, author, reviews?: unknown[]) => {
 				? []
 				: [
 					{
-						createPullRequestUrl: `${pull_request.head.repo.html_url}/pull/new/${pull_request.head.ref}`,
+						createPullRequestUrl: `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
 							author: {
-								name: author.login
+								name: pullRequest.head?.user?.login || undefined
 							},
-							authorTimestamp: pull_request.updated_at,
-							displayId: pull_request?.head?.sha?.substring(0, 6),
+							authorTimestamp: pullRequest.updated_at,
+							displayId: pullRequest?.head?.sha?.substring(0, 6),
 							fileCount: 0,
-							hash: pull_request.head.sha,
-							id: pull_request.head.sha,
+							hash: pullRequest.head.sha,
+							id: pullRequest.head.sha,
 							issueKeys,
 							message: "n/a",
 							updateSequenceId: Date.now(),
-							url: `${pull_request.head.repo.html_url}/commit/${pull_request.head.sha}`
+							url: `${pullRequest.head.repo.html_url}/commit/${pullRequest.head.sha}`
 						},
-						id: getJiraId(pull_request.head.ref),
+						id: getJiraId(pullRequest.head.ref),
 						issueKeys,
-						name: pull_request.head.ref,
-						url: `${pull_request.head.repo.html_url}/tree/${pull_request.head.ref}`,
+						name: pullRequest.head.ref,
+						url: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 						updateSequenceId: Date.now()
 					}
 				],
 		pullRequests: [
 			{
 				author: {
-					avatar: author.avatar_url,
-					name: author.login,
-					url: author.html_url
+					avatar: pullRequest.user?.avatar_url || undefined,
+					name: pullRequest.user?.login || undefined,
+					url: pullRequest.user?.html_url || undefined
 				},
-				commentCount: pull_request.comments,
-				destinationBranch: `${pull_request.base.repo.html_url}/tree/${pull_request.base.ref}`,
-				displayId: `#${pull_request.number}`,
-				id: pull_request.number,
+				commentCount: pullRequest.comments,
+				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
+				displayId: `#${pullRequest.number}`,
+				id: pullRequest.number,
 				issueKeys,
-				lastUpdate: pull_request.updated_at,
+				lastUpdate: pullRequest.updated_at,
 				reviewers: mapReviews(reviews),
-				sourceBranch: pull_request.head.ref,
-				sourceBranchUrl: `${pull_request.head.repo.html_url}/tree/${pull_request.head.ref}`,
+				sourceBranch: pullRequest.head.ref,
+				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: pullRequestStatus,
-				timestamp: pull_request.updated_at,
-				title: pull_request.title,
-				url: pull_request.html_url,
+				timestamp: pullRequest.updated_at,
+				title: pullRequest.title,
+				url: pullRequest.html_url,
 				updateSequenceId: Date.now()
 			}
 		],
