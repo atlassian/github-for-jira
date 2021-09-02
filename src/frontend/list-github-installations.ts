@@ -10,7 +10,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		return next(new Error("Unauthorized"));
 	}
 
-	req.log.info("Received list github installations request for Jira Host: %s", req.session.jiraHost);
+	req.log.info("Received list github installations request");
 
 	const { github, client, isAdmin } = res.locals;
 
@@ -49,9 +49,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			info
 		});
 	} catch (err) {
-		req.log.error(err,
-			"Unable list github installations page. Jira Host=%s", req.session.jiraHost
-		);
-		return next(new Error(err));
+		req.log.error(err, "Unable list github installations page",);
+		return next(err);
 	}
 };

@@ -27,18 +27,18 @@ router.get("/deepcheck", elapsedTimeMetrics, async (_, res: Response) => {
 		Promise.all([redisPromise, databasePromise]),
 		timeoutPromise
 	]).catch((error) => {
-		deepcheckLogger.error(`Error during /deepcheck: ${error}`);
+		deepcheckLogger.error(error, "Error during /deepcheck");
 		connectionsOk = false;
 	});
 
-	if (connectionsOk) {
-		deepcheckLogger.info("Successfully called /deepcheck");
-		return res.status(200).send("OK");
-	} else {
+	if (!connectionsOk) {
 		deepcheckLogger.error("Error: failed to call /deepcheck");
 		// no additional logging, since it's logged in the catch block of the promise above
 		return res.status(500).send("NOT OK");
 	}
+
+	deepcheckLogger.info("Successfully called /deepcheck");
+	return res.status(200).send("OK");
 });
 
 /**

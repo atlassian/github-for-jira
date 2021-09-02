@@ -21,8 +21,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 		return;
 	}
 
-	req.log.info("Received add subscription request for Installation ID %s and Jira Host %s",
-		req.body.installationId, req.session.jiraHost);
+	req.log.info({ installationId: req.body.installationId }, "Received add subscription request");
 
 	// Check if the user that posted this has access to the installation ID they're requesting
 	try {
