@@ -12,11 +12,11 @@ describe("pull_request transform", () => {
 
 		const data = transformPullRequest(fixture);
 
-		const { updated_at, title } = pullRequestList[0];
+		const { updated_at, title } = fixture;
 
 		expect(data).toMatchObject({
-			id: 1234568,
-			name: "test-owner/test-repo",
+			id: 100403908,
+			name: "integrations/test",
 			pullRequests: [
 				{
 					author: {
@@ -39,7 +39,7 @@ describe("pull_request transform", () => {
 					updateSequenceId: 12345678
 				}
 			],
-			url: "https://github.com/test-owner/test-repo",
+			url: "https://github.com/integrations/test",
 			updateSequenceId: 12345678
 		});
 	});
@@ -58,11 +58,11 @@ describe("pull_request transform", () => {
 
 		const data = transformPullRequest(fixture);
 
-		const { updated_at, title } = pullRequestList[1];
+		const { updated_at, title } = fixture;
 
 		expect(data).toMatchObject({
-			id: 1234568,
-			name: "test-owner/test-repo",
+			id: 100403908,
+			name: "integrations/test",
 			pullRequests: [
 				{
 					author: {
@@ -93,7 +93,7 @@ describe("pull_request transform", () => {
 					issueKeys: ["TES-123"],
 					lastCommit: {
 						author: {
-							name: "bkeepers"
+							name: "integrations"
 						},
 						authorTimestamp: "2018-05-04T14:06:56Z",
 						displayId: "09ca66",
@@ -110,7 +110,7 @@ describe("pull_request transform", () => {
 					url: "https://github.com/integrations/test/tree/use-the-force"
 				}
 			],
-			url: "https://github.com/test-owner/test-repo",
+			url: "https://github.com/integrations/test",
 			updateSequenceId: 12345678
 		});
 	});
