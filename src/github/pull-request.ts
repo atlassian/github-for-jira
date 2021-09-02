@@ -1,6 +1,5 @@
 import transformPullRequest from "../transforms/pull-request";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
 
 import { Context } from "probot/lib/context";
 import { Octokit } from "@octokit/rest";
@@ -46,18 +45,21 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 		reviews.data
 	);
 
-	if (!jiraPayload && context.payload?.changes?.title) {
-		const issueKeys = issueKeyParser().parse(
-			context.payload.changes?.title?.from
+	const issueKeys = issueKeyParser().parse(`${pullRequest.data.title}\n${pullRequest.data.head.ref}`);
+	/*if (isEmpty(issueKeys)) {
+		context.log.info(
+			{
+				issueKeys,
+				payload: context.payload,
+				pullRequest: pullRequest.data
+			},
+			"Deleting pull request association"
 		);
-
-		if (!isEmpty(issueKeys)) {
-			return jiraClient.devinfo.pullRequest.delete(
-				context.payload.repository?.id,
-				pullRequest.data.number
-			);
-		}
-	}
+		return jiraClient.devinfo.pullRequest.delete(
+			pullRequest.data.base.repo.id,
+			pullRequest.data.number
+		);
+	}*/
 
 	const linkifiedBody = await util.unfurl(pullRequest.data.body);
 	if (linkifiedBody) {
@@ -76,6 +78,6 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 		return;
 	}
 
-	context.log({pullRequestNumber: pullRequest.data.number}, `Sending pull request update to Jira ${jiraClient.baseURL}`);
+	context.log({ issueKeys, pullRequestNumber: pullRequest.data.number }, `Sending pull request update to Jira ${jiraClient.baseURL}`);
 	await jiraClient.devinfo.repository.update(jiraPayload);
 };
