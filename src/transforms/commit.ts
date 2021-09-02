@@ -13,8 +13,8 @@ function mapCommit(githubCommit, author): JiraCommit {
 	return {
 		author: {
 			avatar: author.avatarUrl || undefined,
-			email: author.email,
-			name: author.name,
+			email: author.email || undefined,
+			name: author.name || undefined,
 			url: author.user?.url || undefined
 		},
 		authorTimestamp: githubCommit.authorTimestamp,

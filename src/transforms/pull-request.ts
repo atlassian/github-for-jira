@@ -69,7 +69,7 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 						createPullRequestUrl: `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
 							author: {
-								name: pullRequest.head.user.login
+								name: pullRequest.head?.user?.login || undefined
 							},
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
@@ -91,9 +91,9 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 		pullRequests: [
 			{
 				author: {
-					avatar: pullRequest.user.avatar_url || undefined,
-					name: pullRequest.user.login,
-					url: pullRequest.user.html_url || undefined
+					avatar: pullRequest.user?.avatar_url || undefined,
+					name: pullRequest.user?.login || undefined,
+					url: pullRequest.user?.html_url || undefined
 				},
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
