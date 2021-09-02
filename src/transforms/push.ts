@@ -58,7 +58,8 @@ export function createJobData(payload, jiraHost: string) {
 		repository,
 		shas,
 		jiraHost,
-		installationId: payload.installation.id
+		installationId: payload.installation.id,
+		webhookId: payload.webhookId || "none"
 	};
 }
 
@@ -74,6 +75,7 @@ export async function enqueuePush(payload: unknown, jiraHost: string, options?: 
 
 export function processPush(app: Application) {
 	return async (job): Promise<void> => {
+		let log = logger;
 		try {
 			const {
 				repository,
@@ -82,7 +84,14 @@ export function processPush(app: Application) {
 				installationId,
 				jiraHost
 			} = job.data;
-			logger.info({ installationId }, "Processing push");
+
+			const webhookId = job.data.webhookId || "none";
+
+			log = logger.child({webhookId: webhookId,
+				repoName: repo.name,
+				orgName: owner.name })
+
+			log.info({ installationId }, "Processing push");
 
 			const subscription = await Subscription.getSingleInstallation(
 				jiraHost,
@@ -94,7 +103,7 @@ export function processPush(app: Application) {
 			const jiraClient = await getJiraClient(
 				subscription.jiraHost,
 				installationId,
-				logger
+				log
 			);
 			const github = await app.auth(installationId);
 			enhanceOctokit(github);
@@ -166,7 +175,7 @@ export function processPush(app: Application) {
 				await jiraClient.devinfo.repository.update(jiraPayload);
 			}
 		} catch (error) {
-			logger.error(error, "Failed to process push");
+			log.error(error, "Failed to process push");
 		}
 	};
 }
