@@ -28,7 +28,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage) => {
 				fileCount: 0,
 				sha: item.target.oid,
 				message: item.target.message,
-				url: item.target.url
+				url: item.target.url || undefined
 			}
 		};
 	});
