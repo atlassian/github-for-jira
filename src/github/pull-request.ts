@@ -72,7 +72,7 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 
 	if (!jiraPayload) {
 		context.log(
-			{ noop: "no_jira_payload_pull_request" },
+			{ noop: "no_jira_payload_pull_request", pullRequestNumber: pullRequest.data.number },
 			"Halting futher execution for pull request since jiraPayload is empty"
 		);
 		return;
