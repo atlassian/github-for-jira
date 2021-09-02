@@ -23,9 +23,9 @@ function mapReviews(reviews) {
 		const user = review?.user;
 		if (!usernames[user?.login]) {
 			usernames[user?.login] = {
-				name: user?.login,
+				name: user?.login || undefined,
 				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED",
-				url: user?.html_url,
+				url: user?.html_url || undefined,
 				avatar: user?.avatar_url || undefined
 			};
 			acc.push(usernames[user?.login]);
