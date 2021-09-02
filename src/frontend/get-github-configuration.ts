@@ -58,11 +58,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		return next(new Error("Jira Host url is missing"));
 	}
 
-	req.log.info(
-		"Received delete jira configuration request for jira host %s and installation ID %s",
-		req.session.jiraHost,
-		req.body.installationId
-	);
+	req.log.info({ installationId: req.body.installationId }, "Received delete jira configuration request");
 
 	const { github, client, isAdmin } = res.locals;
 

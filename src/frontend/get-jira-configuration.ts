@@ -57,7 +57,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 	try {
 		const jiraHost = req.session.jiraHost;
 
-		req.log.info("Received jira configuration page request for Jira Host %s", jiraHost);
+		req.log.info("Received jira configuration page request");
 
 		const { client } = res.locals;
 		const subscriptions = await Subscription.getAllForHost(jiraHost);

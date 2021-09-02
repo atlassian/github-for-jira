@@ -20,8 +20,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 		return;
 	}
 
-	req.log.info("Received delete-subscription request for jira host %s and installation ID %s",
-		req.body.jiraHost, req.body.installationId);
+	req.log.info("Received delete-subscription request");
 
 	/**
 	 * Returns the role of the user for an Org or 'admin' if the

@@ -157,7 +157,7 @@ const updateJobStatus = async (
 			logger.warn(err, "Error sending the `complete` event to JIRA");
 		}
 	} else {
-		logger.info({ installationId }, "Sync status for installationId=%d is pending");
+		logger.info({ installationId }, "Sync status is pending");
 		const { removeOnComplete, removeOnFail } = job.opts;
 
 		queues.installation.add(job.data, {
@@ -182,7 +182,7 @@ export const processInstallation =
 				jiraHost
 			});
 
-			logger.info("Starting job for installationId=%d", installationId);
+			logger.info({ installationId }, "Starting job");
 
 			const subscription = await Subscription.getSingleInstallation(
 				jiraHost,
@@ -202,7 +202,7 @@ export const processInstallation =
 			if (!nextTask) {
 				await subscription.update({ syncStatus: "COMPLETE" });
 				statsd.increment(metricSyncStatus.complete);
-				logger.info("Sync complete: installationId=%d", installationId);
+				logger.info({ installationId }, "Sync complete");
 				return;
 			}
 
@@ -384,7 +384,7 @@ export const processInstallation =
 
 				await subscription.update({ syncStatus: "FAILED" });
 
-				logger.warn({installationId, err}, "Sync failed");
+				logger.warn({ installationId, err }, "Sync failed");
 
 				job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
 				job.sentry.captureException(err);

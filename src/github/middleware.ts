@@ -73,7 +73,7 @@ export default (
 		});
 
 		const gitHubInstallationId = Number(context.payload?.installation?.id);
-		context.log = context.log.child({ gitHubInstallationId });
+		const logger = context.log = context.log.child({ gitHubInstallationId });
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
@@ -123,7 +123,7 @@ export default (
 				gitHubInstallationId.toString()
 			);
 			context.sentry.setUser({ jiraHost, gitHubInstallationId });
-			context.log = context.log.child({ jiraHost, gitHubInstallationId });
+			context.log = logger.child({ jiraHost });
 			context.log("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {

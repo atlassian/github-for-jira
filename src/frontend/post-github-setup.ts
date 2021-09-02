@@ -10,7 +10,7 @@ User is either prompted to login into GitHub, or if already logged in, is redire
 export default (req: Request, res: Response): void => {
 	const { jiraSubdomain, jiraDomain } = req.body;
 
-	req.log.info("Received github setup page request for jira %s.%s ", jiraSubdomain, jiraDomain);
+	req.log.info(`Received github setup page request for jira ${jiraSubdomain}.${jiraDomain}`);
 
 	if (!validJiraDomains(jiraSubdomain, jiraDomain)) {
 		res.status(400);
