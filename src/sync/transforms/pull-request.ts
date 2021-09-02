@@ -25,7 +25,7 @@ function getAuthor(author) {
 	}
 
 	return {
-		avatar: author.avatar_url,
+		avatar: author.avatar_url || undefined,
 		name: author.login,
 		url: author.url
 	};

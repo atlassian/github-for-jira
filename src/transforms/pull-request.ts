@@ -26,7 +26,7 @@ function mapReviews(reviews) {
 				name: user?.login,
 				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED",
 				url: user?.html_url,
-				avatar: user?.avatar_url
+				avatar: user?.avatar_url || undefined
 			};
 			acc.push(usernames[user?.login]);
 			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
@@ -91,9 +91,9 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 		pullRequests: [
 			{
 				author: {
-					avatar: pullRequest.user.avatar_url,
+					avatar: pullRequest.user.avatar_url || undefined,
 					name: pullRequest.user.login,
-					url: pullRequest.user.html_url
+					url: pullRequest.user.html_url || undefined
 				},
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,

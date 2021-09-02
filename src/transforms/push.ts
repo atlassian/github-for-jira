@@ -25,7 +25,7 @@ function mapFile(githubFile) {
 		changeType: mapStatus[githubFile.status] || "UNKNOWN",
 		linesAdded: githubFile.additions,
 		linesRemoved: githubFile.deletions,
-		url: githubFile.blob_url
+		url: githubFile.blob_url || undefined
 	};
 }
 
