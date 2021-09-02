@@ -35,8 +35,8 @@ function mapBranch(branch, repository) {
 		issueKeys: allKeys,
 		lastCommit: {
 			author: {
-				avatar: branch.lastCommit.author.avatarUrl,
-				name: branch.lastCommit.author.name
+				avatar: branch?.lastCommit?.author?.avatarUrl || undefined,
+				name: branch?.lastCommit?.author?.name || undefined
 			},
 			authorTimestamp: branch.lastCommit.authorTimestamp,
 			displayId: branch.lastCommit.sha.substring(0, 6),
@@ -69,10 +69,10 @@ function mapCommit(commit) {
 
 	return {
 		author: {
-			avatar: commit.author.avatarUrl,
-			email: commit.author.email,
-			name: commit.author.name,
-			url: commit.author.user ? commit.author.user.url : undefined
+			avatar: commit.author?.avatarUrl || undefined,
+			email: commit.author?.email || undefined,
+			name: commit.author?.name || undefined,
+			url: commit.author?.user?.url || undefined
 		},
 		authorTimestamp: commit.authoredDate,
 		displayId: commit.oid.substring(0, 6),
