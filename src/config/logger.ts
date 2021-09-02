@@ -11,29 +11,22 @@ const outputMode = process.env.MICROS_ENV ? "json" : "short";
 // add levelInString to include DEBUG | ERROR | INFO | WARN
 const formatOut = filteringStream(bformat({ outputMode, levelInString: true }));
 
-const logger = Logger.createLogger(
-	{
-		name: "github-for-jira",
-		logger: "root-logger",
-		stream: formatOut,
-		serializers: {
-			err: (err) => (!err || !err.stack) ? err : {
-				...err,
-				stack: getFullErrorStack(err)
-			},
-			res: Logger.stdSerializers.res,
-			req: (req:Request) => (!req || !req.connection) ? req : {
-				method: req.method,
-				url: req.originalUrl || req.url,
-				path: req.path,
-				headers: req.headers,
-				remoteAddress: req.connection.remoteAddress,
-				remotePort: req.connection.remotePort,
-				body: req.body
-			}
-		}
-	}
-);
+const requestSerializer = (req: Request) => (!req || !req.connection) ? req : {
+	method: req.method,
+	url: req.originalUrl || req.url,
+	path: req.path,
+	headers: req.headers,
+	remoteAddress: req.connection.remoteAddress,
+	remotePort: req.connection.remotePort,
+	body: req.body
+};
+
+const errorSerializer = (err) => (!err || !err.stack) ? err : {
+	...err,
+	response: Logger.stdSerializers.res(err.response),
+	request: requestSerializer(err.request),
+	stack: getFullErrorStack(err)
+};
 
 const getFullErrorStack = (ex) => {
 	let ret = ex.stack || ex.toString();
@@ -45,6 +38,19 @@ const getFullErrorStack = (ex) => {
 	}
 	return ret;
 };
+
+const logger = Logger.createLogger(
+	{
+		name: "github-for-jira",
+		logger: "root-logger",
+		stream: formatOut,
+		serializers: {
+			err: errorSerializer,
+			res: Logger.stdSerializers.res,
+			req: requestSerializer
+		}
+	}
+);
 
 const logLevel = process.env.LOG_LEVEL || "info";
 const globalLoggingLevel = levelFromName[logLevel] || Logger.INFO;

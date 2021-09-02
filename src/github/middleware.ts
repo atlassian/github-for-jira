@@ -73,7 +73,7 @@ export default (
 		});
 
 		const gitHubInstallationId = Number(context.payload?.installation?.id);
-		const logger = context.log = context.log.child({ gitHubInstallationId });
+		const logger = context.log = context.log.child({ gitHubInstallationId, event: webhookEvent, payload: context.payload });
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
