@@ -12,7 +12,7 @@ import { JobOptions } from "bull";
 
 const logger = getLogger("transforms.push");
 
-function mapFile(githubFile) {
+const mapFile = (repoName: string, repoOwner: string, commitHash: string) => (githubFile) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
 	const mapStatus = {
@@ -20,12 +20,15 @@ function mapFile(githubFile) {
 		removed: "DELETED",
 		modified: "MODIFIED"
 	};
+
+	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`
+
 	return {
 		path: githubFile.filename,
 		changeType: mapStatus[githubFile.status] || "UNKNOWN",
 		linesAdded: githubFile.additions,
 		linesRemoved: githubFile.deletions,
-		url: githubFile.blob_url
+		url: githubFile.blob_url || fallbackUrl
 	};
 }
 
@@ -88,7 +91,7 @@ export function processPush(app: Application) {
 			const webhookId = job.data.webhookId || "none";
 
 			log = logger.child({webhookId: webhookId,
-				repoName: repo.name,
+				repoName: repo,
 				orgName: owner.name })
 
 			log.info({ installationId }, "Processing push");
@@ -146,7 +149,7 @@ export function processPush(app: Application) {
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
-						files: filesToSend.map(mapFile),
+						files: filesToSend.map(mapFile(repo, owner.name, sha.id)),
 						id: commitSha,
 						issueKeys: sha.issueKeys,
 						url: html_url,
