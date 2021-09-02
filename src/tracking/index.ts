@@ -92,9 +92,9 @@ export const submitProto = async (
 		status = resp.status;
 		logger.debug("Hydro Protobuf Accepted", data);
 	} catch (err) {
-		if (err.response == null) {
+		if (!err.response) {
 			// This is not an AxiosError
-			logger.error(err);
+			logger.error(err, "Hydro Protobuf Error");
 			status = "exception";
 		} else {
 			const axError = err;

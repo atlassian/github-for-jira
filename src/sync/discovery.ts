@@ -25,8 +25,8 @@ export const discovery = (app: Application, queues) => async (job) => {
 			(res) => res.data.repositories
 		);
 		logger.info(
-			"%d Repositories found for installationId=%d",
-			repositories.length, installationId
+			{installationId},
+			`${repositories.length} Repositories found for installationId=${installationId}`
 		);
 
 		const subscription = await Subscription.getSingleInstallation(
@@ -54,6 +54,6 @@ export const discovery = (app: Application, queues) => async (job) => {
 		// Create job
 		queues.installation.add({ installationId, jiraHost, startTime }, jobOpts);
 	} catch (err) {
-		logger.error(err, "discovery error");
+		logger.error(err, "Discovery error");
 	}
 };

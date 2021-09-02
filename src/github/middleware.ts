@@ -27,7 +27,7 @@ const withSentry = function(callback) {
 		try {
 			await callback(context);
 		} catch (err) {
-			context.log.error(err, "Error while processing webhook");
+			context.log.error({ err, context }, "Error while processing webhook");
 			context.sentry.captureException(err);
 			throw err;
 		}
@@ -73,7 +73,7 @@ export default (
 		});
 
 		const gitHubInstallationId = Number(context.payload?.installation?.id);
-		context.log = context.log.child({ gitHubInstallationId });
+		const logger = context.log = context.log.child({ gitHubInstallationId, event: webhookEvent, payload: context.payload });
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
@@ -108,8 +108,7 @@ export default (
 			return;
 		}
 
-		context.log("Processing event for %d jira%s", jiraSubscriptionsCount,
-			jiraSubscriptionsCount > 1 ? "s" : "");
+		context.log(`Processing event for ${jiraSubscriptionsCount} jira instances`);
 
 		context.sentry.setTag(
 			"transaction",
@@ -118,14 +117,14 @@ export default (
 
 		await Promise.all(subscriptions.map(async (subscription) => {
 			const { jiraHost } = subscription;
-			context.log("Processing event for Jira Host: %s", jiraHost);
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
 				"gitHubInstallationId",
 				gitHubInstallationId.toString()
 			);
 			context.sentry.setUser({ jiraHost, gitHubInstallationId });
-			context.log = context.log.child({ jiraHost });
+			context.log = logger.child({ jiraHost });
+			context.log("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
@@ -164,7 +163,7 @@ export default (
 			try {
 				await callback(context, jiraClient, util);
 			} catch (err) {
-				context.log.error({...err}, `Error processing the event for Jira hostname '${jiraHost}'`);
+				context.log.error(err, `Error processing the event for Jira hostname '${jiraHost}'`);
 				context.sentry.captureException(err);
 			}
 		}));
