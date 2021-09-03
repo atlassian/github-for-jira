@@ -12,7 +12,7 @@ import { JobOptions } from "bull";
 
 const logger = getLogger("transforms.push");
 
-const mapFile = (repoName: string, repoOwner: string, commitHash: string) => (githubFile) => {
+const mapFile = (githubFile:any, repoName: string, repoOwner: string, commitHash: string) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
 	const mapStatus = {
@@ -149,7 +149,7 @@ export function processPush(app: Application) {
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
-						files: filesToSend.map(mapFile(repo, owner.name, sha.id)),
+						files: filesToSend.map(file => mapFile(file, repo, owner.name, sha.id)),
 						id: commitSha,
 						issueKeys: sha.issueKeys,
 						url: html_url,
