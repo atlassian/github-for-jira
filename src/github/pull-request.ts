@@ -3,16 +3,20 @@ import issueKeyParser from "jira-issue-key-parser";
 
 import { Context } from "probot/lib/context";
 import { Octokit } from "@octokit/rest";
+import { isEmpty } from "../jira/util/isEmpty";
 
 export default async (context: Context, jiraClient, util): Promise<void> => {
 
 	const {
 		pull_request: {
 			number: pullRequestNumber
-		}, repository: {
+		},
+		repository: {
+			id: repositoryId,
 			name: repo,
 			owner: { login: owner }
-		}
+		},
+		changes
 	} = context.payload;
 
 	const pullRequest: Octokit.Response<Octokit.PullsGetResponse> = await context.github.pulls.get({
@@ -45,22 +49,14 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 		reviews.data
 	);
 
-	const issueKeys = issueKeyParser().parse(`${pullRequest.data.title}\n${pullRequest.data.head.ref}`);
-	/*if (isEmpty(issueKeys)) {
-		context.log.info(
-			{
-				issueKeys,
-				payload: context.payload,
-				pullRequest: pullRequest.data
-			},
-			"Deleting pull request association"
-		);
-		return jiraClient.devinfo.pullRequest.delete(
-			pullRequest.data.base.repo.id,
-			pullRequest.data.number
-		);
-	}*/
+	// Deletes PR link to jira if ticket id is removed from PR title
+	if (!jiraPayload && changes?.title) {
+		const issueKeys = issueKeyParser().parse(changes?.title?.from);
 
+		if (!isEmpty(issueKeys)) {
+			return jiraClient.devinfo.pullRequest.delete(repositoryId, pullRequestNumber);
+		}
+	}
 
 	try {
 		const linkifiedBody = await util.unfurl(pullRequest.data.body);
@@ -77,12 +73,12 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 
 	if (!jiraPayload) {
 		context.log.debug(
-			{ issueKeys, pullRequestNumber: pullRequest.data.number },
+			{ pullRequestNumber: pullRequest.data.number },
 			"Halting futher execution for pull request since jiraPayload is empty"
 		);
 		return;
 	}
 
-	context.log({ issueKeys, pullRequestNumber: pullRequest.data.number }, `Sending pull request update to Jira ${jiraClient.baseURL}`);
+	context.log({ pullRequestNumber: pullRequest.data.number }, `Sending pull request update to Jira ${jiraClient.baseURL}`);
 	await jiraClient.devinfo.repository.update(jiraPayload);
 };
