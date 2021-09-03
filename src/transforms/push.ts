@@ -12,7 +12,7 @@ import { JobOptions } from "bull";
 
 const logger = getLogger("transforms.push");
 
-function mapFile(githubFile) {
+const mapFile = (githubFile:any, repoName: string, repoOwner: string, commitHash: string) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
 	const mapStatus = {
@@ -20,12 +20,15 @@ function mapFile(githubFile) {
 		removed: "DELETED",
 		modified: "MODIFIED"
 	};
+
+	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`
+
 	return {
 		path: githubFile.filename,
 		changeType: mapStatus[githubFile.status] || "UNKNOWN",
 		linesAdded: githubFile.additions,
 		linesRemoved: githubFile.deletions,
-		url: githubFile.blob_url || undefined
+		url: githubFile.blob_url || fallbackUrl
 	};
 }
 
@@ -58,7 +61,8 @@ export function createJobData(payload, jiraHost: string) {
 		repository,
 		shas,
 		jiraHost,
-		installationId: payload.installation.id
+		installationId: payload.installation.id,
+		webhookId: payload.webhookId || "none"
 	};
 }
 
@@ -74,6 +78,7 @@ export async function enqueuePush(payload: unknown, jiraHost: string, options?: 
 
 export function processPush(app: Application) {
 	return async (job): Promise<void> => {
+		let log = logger;
 		try {
 			const {
 				repository,
@@ -82,7 +87,14 @@ export function processPush(app: Application) {
 				installationId,
 				jiraHost
 			} = job.data;
-			logger.info({ installationId }, "Processing push");
+
+			const webhookId = job.data.webhookId || "none";
+
+			log = logger.child({webhookId: webhookId,
+				repoName: repo,
+				orgName: owner.name })
+
+			log.info({ installationId }, "Processing push");
 
 			const subscription = await Subscription.getSingleInstallation(
 				jiraHost,
@@ -94,7 +106,7 @@ export function processPush(app: Application) {
 			const jiraClient = await getJiraClient(
 				subscription.jiraHost,
 				installationId,
-				logger
+				log
 			);
 			const github = await app.auth(installationId);
 			enhanceOctokit(github);
@@ -137,7 +149,7 @@ export function processPush(app: Application) {
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
-						files: filesToSend.map(mapFile),
+						files: filesToSend.map(file => mapFile(file, repo, owner.name, sha.id)),
 						id: commitSha,
 						issueKeys: sha.issueKeys,
 						url: html_url,
@@ -166,7 +178,7 @@ export function processPush(app: Application) {
 				await jiraClient.devinfo.repository.update(jiraPayload);
 			}
 		} catch (error) {
-			logger.error(error, "Failed to process push");
+			log.error(error, "Failed to process push");
 		}
 	};
 }
