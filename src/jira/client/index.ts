@@ -52,7 +52,7 @@ async function getJiraClient(
 							.catch(() => undefined))
 					)
 				)
-					.filter((response) => response?.status === 200 && response.data)
+					.filter((response) => response?.status === 200 && response?.data)
 					.map((response) => response.data),
 			parse: (text) => {
 				if (!text) return null;
