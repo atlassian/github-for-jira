@@ -1,3 +1,7 @@
+import { getLogger } from "../../config/logger";
+
+const logger = getLogger("jira.util");
+
 export default (jiraClient) => {
 	const containsReferenceLink = (line) => {
 		// reference text links should have 2 parts only
@@ -25,7 +29,7 @@ export default (jiraClient) => {
 			.map((referenceLink) => referenceLink.slice(1, referenceLink.indexOf("]")));
 	};
 
-	function addJiraIssueLinks(text, issues) {
+	function addJiraIssueLinks(text:string, issues):string {
 		const referenceRegex = /\[([A-Z]+-[0-9]+)\](?!\()/g;
 		const issueMap = issues.reduce((issueMap, issue) => ({
 			...issueMap,
@@ -62,17 +66,22 @@ export default (jiraClient) => {
 		return links.length ? [text, links.join("\n")].join("\n\n") : text;
 	}
 
-	async function unfurl(text) {
-		const issues = jiraClient.issues.parse(text);
-		if (!issues) return;
+	async function unfurl(text: string):Promise<string> {
+		try {
+			const issues = jiraClient.issues.parse(text);
+			if (!issues) return undefined;
 
-		const validIssues = await jiraClient.issues.getAll(issues);
-		if (!validIssues.length) return;
+			const validIssues = await jiraClient.issues.getAll(issues);
+			if (!validIssues.length) return undefined;
 
-		const linkifiedBody = await addJiraIssueLinks(text, validIssues);
-		if (linkifiedBody === text) return;
+			const linkifiedBody = addJiraIssueLinks(text, validIssues);
+			if (linkifiedBody === text) return undefined;
 
-		return linkifiedBody;
+			return linkifiedBody;
+		} catch (err) {
+			logger.warn({err, issueText:text}, "Error getting all JIRA issues");
+			return undefined;
+		}
 	}
 
 	async function runJiraCommands(commands) {

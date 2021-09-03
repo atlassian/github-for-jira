@@ -61,17 +61,22 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 		);
 	}*/
 
-	const linkifiedBody = await util.unfurl(pullRequest.data.body);
-	if (linkifiedBody) {
-		const editedPullRequest = context.issue({
-			body: linkifiedBody,
-			id: pullRequest.data.id
-		});
-		await context.github.issues.update(editedPullRequest);
+
+	try {
+		const linkifiedBody = await util.unfurl(pullRequest.data.body);
+		if (linkifiedBody) {
+			const editedPullRequest = context.issue({
+				body: linkifiedBody,
+				id: pullRequest.data.id
+			});
+			await context.github.issues.update(editedPullRequest);
+		}
+	} catch (err) {
+		context.log.warn({ err, body: pullRequest.data.body, pullRequestNumber: pullRequest.data.number }, "Error while trying to update PR body with links to Jira ticket");
 	}
 
 	if (!jiraPayload) {
-		context.log(
+		context.log.debug(
 			{ issueKeys, pullRequestNumber: pullRequest.data.number },
 			"Halting futher execution for pull request since jiraPayload is empty"
 		);
