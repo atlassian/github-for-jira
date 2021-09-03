@@ -126,7 +126,7 @@ export default (
 			`webhook:${context.name}.${context.payload.action}`
 		);
 
-		await Promise.all(subscriptions.map(async (subscription) => {
+		for(const subscription of subscriptions) {
 			const { jiraHost } = subscription;
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
@@ -139,7 +139,7 @@ export default (
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
-				return;
+				continue;
 			}
 
 			if (context.timedout) {
@@ -153,7 +153,7 @@ export default (
 					},
 					`Timing out at after ${context.timedout}ms`
 				);
-				return;
+				continue;
 			}
 
 			const jiraClient = await getJiraClient(
@@ -167,7 +167,7 @@ export default (
 					{ noop: "no_jira_client" },
 					`No enabled installation found for ${jiraHost}.`
 				);
-				return;
+				continue;
 			}
 			const util = getJiraUtil(jiraClient);
 
@@ -177,6 +177,6 @@ export default (
 				context.log.error(err, `Error processing the event for Jira hostname '${jiraHost}'`);
 				context.sentry.captureException(err);
 			}
-		}));
+		}
 	});
 };
