@@ -26,13 +26,15 @@ function mapState(state: string): string {
 	}
 }
 
-function mapEnvironment(environment: string): string {
+export function mapEnvironment(environment: string): string {
 	// We need to map the environment of a GitHub deployment back to a valid deployment environment in Jira.
 	// https://docs.github.com/en/actions/reference/environments
 	// GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
 	// Jira: Can be one of unmapped, development, testing, staging, production
-	const isEnvironment = (envNames) =>
-		envNames.some(envName => environment.localeCompare(envName, undefined, { sensitivity: "base", ignorePunctuation: true }) === 0);
+	const isEnvironment = (envNames) => {
+		const envNamesPattern = RegExp(`^(.*[^a-z0-9])?(${envNames.join("|")})([^a-z0-9].*)?$`, "i");
+		return environment.match(envNamesPattern);
+	}
 
 	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
