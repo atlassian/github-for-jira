@@ -8,6 +8,7 @@ export default async (context: Context, jiraClient): Promise<void> => {
 	// but filter out any commits that don't have issue keys
 	// so we don't have to process them.
 	const payload = {
+		webhookId: context.id,
 		repository: context.payload?.repository,
 		commits: context.payload?.commits?.map((commit) => {
 			const issueKeys = issueKeyParser().parse(commit.message);

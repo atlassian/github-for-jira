@@ -3,11 +3,11 @@ import nock from "nock";
 import { createJobData, processPush } from "../../transforms/push";
 import { createWebhookApp } from "../../../../test/probot";
 
-describe.skip("GitHub Actions", () => {
+describe("GitHub Actions", () => {
 	let app;
 	beforeEach(async () => app = await createWebhookApp());
 
-	describe("add to push queue", () => {
+	describe.skip("add to push queue", () => {
 		beforeEach(() => {
 			process.env.REDIS_URL = "redis://test";
 		});
@@ -66,7 +66,7 @@ describe.skip("GitHub Actions", () => {
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../../../../test/fixtures/api/commit-no-username.json");
+				.reply(200, "../../../../test/fixtures/api/commit-no-username.json");
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
@@ -138,7 +138,7 @@ describe.skip("GitHub Actions", () => {
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
-				.replyWithFile(200, "../../../../test/fixtures/more-than-10-files.json");
+				.reply(200, "../../../../test/fixtures/more-than-10-files.json");
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -245,92 +245,6 @@ describe.skip("GitHub Actions", () => {
 			await expect(processPush(app)(job)).toResolve();
 		});
 
-		// Commenting these out for the moment. DevInfo API runs these
-		// transitions automatially based on the commit message, but we may
-		// use them elsewhere for manual transitions
-		// it('should run a #comment command in the commit message', async () => {
-		//   const fixture = require('../../../../test/fixtures/push-comment.json')
-
-		//   await expect(app.receive(fixture)).toResolve()
-
-		//   jiraNock.post('/rest/api/latest/issue/TEST-123/comment', {
-		//     body: 'This is a comment'
-		//   }))
-		// })
-
-		// it('should run a #time command in the commit message', async () => {
-		//   const fixture = require('../../../../test/fixtures/push-worklog.json')
-
-		//   await expect(app.receive(fixture)).toResolve()
-
-		//   jiraNock.post('/rest/api/latest/issue/TEST-123/worklog', {
-		//     timeSpentSeconds: td.matchers.isA(Number),
-		//     comment: 'This is a worklog'
-		//   }))
-		// })
-
-		// it('should run a transition command in the commit message', async () => {
-		//   const fixture = require('../../../../test/fixtures/push-transition.json')
-
-		//   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
-		//     .thenReturn({
-		//       transitions: [
-		//         {
-		//           id: 'test-transition-id',
-		//           name: 'Resolve'
-		//         }
-		//       ]
-		//     })
-
-		//   await expect(app.receive(fixture)).toResolve()
-
-		//   jiraNock.post('/rest/api/latest/issue/TEST-123/transitions', {
-		//     transition: {
-		//       id: 'test-transition-id'
-		//     }
-		//   }))
-		// })
-
-		// it('should run a transition command in the commit message', async () => {
-		//   const fixture = require('../../../../test/fixtures/push-transition-comment.json')
-
-		//   td.when(jiraApi.get(`/rest/api/latest/issue/TEST-123/transitions`))
-		//     .thenReturn({
-		//       transitions: [
-		//         {
-		//           id: 'test-transition-id',
-		//           name: 'Resolve'
-		//         }
-		//       ]
-		//     })
-
-		//   await expect(app.receive(fixture)).toResolve()
-
-		//   jiraNock.post('/rest/api/latest/issue/TEST-123/transitions', {
-		//     transition: {
-		//       id: 'test-transition-id'
-		//     }
-		//   }))
-
-		//   jiraNock.post('/rest/api/latest/issue/TEST-123/comment', {
-		//     body: 'This is a transition'
-		//   }))
-		// })
-
-		// it('should run commands on all issues in the commit message', async () => {
-		//   const fixture = require('../../../../test/fixtures/push-multiple.json')
-
-		//   await expect(app.receive(fixture)).toResolve()
-
-		//   jiraNock.post('/rest/api/latest/issue/TEST-123/comment', {
-		//     body: 'This is a comment'
-		//   }))
-
-		//   jiraNock.post('/rest/api/latest/issue/TEST-246/comment', {
-		//     body: 'This is a comment'
-		//   }))
-		// })
-
 		it("should not run a command without a Jira issue", async () => {
 			const fixture = require("../../../..//test/fixtures/push-no-issues.json");
 			const interceptor = jiraNock.post(/.*/);
@@ -362,7 +276,7 @@ describe.skip("GitHub Actions", () => {
 			};
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../../../../test/fixtures/push-merge-commit.json");
+				.reply(200, "../../../../test/fixtures/push-merge-commit.json");
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -425,7 +339,7 @@ describe.skip("GitHub Actions", () => {
 			};
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../../../../test/fixtures/push-non-merge-commit");
+				.reply(200, "../../../../test/fixtures/push-non-merge-commit");
 
 			// flag property should not be present
 			jiraNock.post("/rest/devinfo/0.10/bulk", {

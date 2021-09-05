@@ -9,7 +9,11 @@ import getJiraUtil from "../../../common";
 import enhanceOctokit from "../../../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
+import {getLogger} from "../config/logger";
 
+
+const logger = getLogger("github.webhooks")
+>>>>>>> main:src/github/middleware.ts
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
@@ -72,8 +76,15 @@ export default (
 			payload: context.payload
 		});
 
+		const repoName = context.payload?.repository?.name || "none"
+		const orgName = context.payload?.repository?.owner?.name || "none"
+
 		const gitHubInstallationId = Number(context.payload?.installation?.id);
-		const logger = context.log = context.log.child({ gitHubInstallationId, event: webhookEvent, payload: context.payload });
+
+		//TODO Remove this line and uncomment the next one to get rid of payloads in logs
+		const loggerWithWebhookParams = logger.child({ webhookId: context.id, repoName, orgName, gitHubInstallationId, event: webhookEvent, payload: context.payload });
+		//const loggerWithWebhookParams = logger.child({ webhookId: context.id, repoName, orgName, gitHubInstallationId });
+		context.log = loggerWithWebhookParams;
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
@@ -115,7 +126,7 @@ export default (
 			`webhook:${context.name}.${context.payload.action}`
 		);
 
-		await Promise.all(subscriptions.map(async (subscription) => {
+		for(const subscription of subscriptions) {
 			const { jiraHost } = subscription;
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
@@ -123,12 +134,12 @@ export default (
 				gitHubInstallationId.toString()
 			);
 			context.sentry.setUser({ jiraHost, gitHubInstallationId });
-			context.log = logger.child({ jiraHost });
+			context.log = loggerWithWebhookParams.child({ jiraHost });
 			context.log("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
-				return;
+				continue;
 			}
 
 			if (context.timedout) {
@@ -142,7 +153,7 @@ export default (
 					},
 					`Timing out at after ${context.timedout}ms`
 				);
-				return;
+				continue;
 			}
 
 			const jiraClient = await getJiraClient(
@@ -156,7 +167,7 @@ export default (
 					{ noop: "no_jira_client" },
 					`No enabled installation found for ${jiraHost}.`
 				);
-				return;
+				continue;
 			}
 			const util = getJiraUtil(jiraClient);
 
@@ -166,6 +177,6 @@ export default (
 				context.log.error(err, `Error processing the event for Jira hostname '${jiraHost}'`);
 				context.sentry.captureException(err);
 			}
-		}));
+		}
 	});
 };

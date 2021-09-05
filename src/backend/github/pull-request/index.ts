@@ -2,24 +2,19 @@ import transformPullRequest from "../../transforms/pull-request";
 import issueKeyParser from "jira-issue-key-parser";
 
 import { Context } from "probot/lib/context";
-import { Octokit } from "@octokit/rest";
+import { isEmpty } from "../../../common/isEmpty";
 
 export default async (context: Context, jiraClient, util): Promise<void> => {
 
 	const {
-		pull_request: {
-			number: pullRequestNumber
-		}, repository: {
+		pull_request,
+		repository: {
+			id: repositoryId,
 			name: repo,
 			owner: { login: owner }
-		}
+		},
+		changes
 	} = context.payload;
-
-	const pullRequest: Octokit.Response<Octokit.PullsGetResponse> = await context.github.pulls.get({
-		owner: owner,
-		repo: repo,
-		pull_number: pullRequestNumber
-	});
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: any = {};
@@ -27,57 +22,54 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 		reviews = await context.github.pulls.listReviews({
 			owner: owner,
 			repo: repo,
-			pull_number: pullRequestNumber
+			pull_number: pull_request.number
 		});
 	} catch (e) {
 		context.log.warn(
 			{
 				err: e,
 				payload: context.payload,
-				pullRequest: pullRequest.data
+				pull_request
 			},
 			"Missing Github Permissions: Can't retrieve reviewers"
 		);
 	}
 
 	const jiraPayload = transformPullRequest(
-		pullRequest.data,
+		pull_request,
 		reviews.data
 	);
 
-	const issueKeys = issueKeyParser().parse(`${pullRequest.data.title}\n${pullRequest.data.head.ref}`);
-	/*if (isEmpty(issueKeys)) {
-		context.log.info(
-			{
-				issueKeys,
-				payload: context.payload,
-				pullRequest: pullRequest.data
-			},
-			"Deleting pull request association"
-		);
-		return jiraClient.devinfo.pullRequest.delete(
-			pullRequest.data.base.repo.id,
-			pullRequest.data.number
-		);
-	}*/
+	// Deletes PR link to jira if ticket id is removed from PR title
+	if (!jiraPayload && changes?.title) {
+		const issueKeys = issueKeyParser().parse(changes?.title?.from);
 
-	const linkifiedBody = await util.unfurl(pullRequest.data.body);
-	if (linkifiedBody) {
-		const editedPullRequest = context.issue({
-			body: linkifiedBody,
-			id: pullRequest.data.id
-		});
-		await context.github.issues.update(editedPullRequest);
+		if (!isEmpty(issueKeys)) {
+			return jiraClient.devinfo.pullRequest.delete(repositoryId, pull_request.number);
+		}
+	}
+
+	try {
+		const linkifiedBody = await util.unfurl(pull_request.body);
+		if (linkifiedBody) {
+			const editedPullRequest = context.issue({
+				body: linkifiedBody,
+				id: pull_request.id
+			});
+			await context.github.issues.update(editedPullRequest);
+		}
+	} catch (err) {
+		context.log.warn({ err, body: pull_request.body, pullRequestNumber: pull_request.number }, "Error while trying to update PR body with links to Jira ticket");
 	}
 
 	if (!jiraPayload) {
-		context.log(
-			{ issueKeys, pullRequestNumber: pullRequest.data.number },
+		context.log.debug(
+			{ pullRequestNumber: pull_request.number },
 			"Halting futher execution for pull request since jiraPayload is empty"
 		);
 		return;
 	}
 
-	context.log({ issueKeys, pullRequestNumber: pullRequest.data.number }, `Sending pull request update to Jira ${jiraClient.baseURL}`);
+	context.log({ pullRequestNumber: pull_request.number }, `Sending pull request update to Jira ${jiraClient.baseURL}`);
 	await jiraClient.devinfo.repository.update(jiraPayload);
 };

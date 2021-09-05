@@ -47,10 +47,12 @@ async function getJiraClient(
 			getAll: async (issueIds, query) =>
 				(
 					await Promise.all<AxiosResponse>(
-						issueIds.map((issueId) => client.issues.get(issueId, query))
+						issueIds.map((issueId) => client.issues.get(issueId, query)
+							// Ignore any errors
+							.catch(() => undefined))
 					)
 				)
-					.filter((response) => response.status === 200)
+					.filter((response) => response?.status === 200 && response?.data)
 					.map((response) => response.data),
 			parse: (text) => {
 				if (!text) return null;
