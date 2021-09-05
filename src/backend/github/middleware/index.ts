@@ -9,11 +9,10 @@ import getJiraUtil from "../../../common";
 import enhanceOctokit from "../../../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
-import {getLogger} from "../config/logger";
+import {getLogger} from "../../../config/logger";
 
 
 const logger = getLogger("github.webhooks")
->>>>>>> main:src/github/middleware.ts
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.

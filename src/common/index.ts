@@ -1,4 +1,4 @@
-import { getLogger } from "../../config/logger";
+import { getLogger } from "../config/logger";
 
 const logger = getLogger("jira.util");
 
