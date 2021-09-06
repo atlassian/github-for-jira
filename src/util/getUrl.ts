@@ -12,3 +12,10 @@ export const getGitHubConfigurationUrl = (urlParams: IUrlParams): string => {
 
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
 	`https://${jiraHost}/plugins/servlet/upm/marketplace/plugins/com.github.integration.production`;
+
+export const getJiraHostFromRedirectUrl = (url: string): string => {
+	const urlIndex = url.indexOf("https%");
+	return urlIndex
+		? url.substring(urlIndex, url.length)
+		: "unknown Jira instance";
+};

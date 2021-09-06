@@ -114,7 +114,7 @@ export default (
 		if (!jiraSubscriptionsCount) {
 			context.log(
 				{ noop: "no_subscriptions" },
-				"Halting further execution since no subscriptions were found"
+				`Halting further execution since no subscriptions were found. \n orgName: ${orgName}`
 			);
 			return;
 		}
