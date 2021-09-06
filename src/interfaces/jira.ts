@@ -79,3 +79,18 @@ export interface JiraDeployment {
 export interface JiraDeploymentData {
 	deployments: JiraDeployment[];
 }
+
+export interface JiraRemoteLinkData {
+	product: string;
+	remoteLinks: JiraRemoteLink[];
+}
+
+export interface JiraRemoteLink {
+	id: string;
+	schemaVersion: string;
+	updateSequenceNumber: number;
+	displayName: string;
+	url: string;
+	type: string;
+	lastUpdated: number;
+}

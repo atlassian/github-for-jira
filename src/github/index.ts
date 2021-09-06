@@ -4,6 +4,7 @@ import middleware from "./middleware";
 import pullRequest from "./pull-request";
 import workflow from "./workflow";
 import deployment from "./deployment";
+import codeScanningAlert from "./code-scanning-alert";
 import push from "./push";
 import { createBranch, deleteBranch } from "./branch";
 import webhookTimeout from "../middleware/webhook-timeout";
@@ -51,6 +52,8 @@ export default (robot: Application) => {
 	robot.on("workflow_run", middleware(workflow));
 
 	robot.on("deployment_status", middleware(deployment));
+
+	robot.on("code_scanning_alert", middleware(codeScanningAlert)); //todo confirm name of event/webhook
 
 	robot.on("create", middleware(createBranch));
 	robot.on("delete", middleware(deleteBranch));
