@@ -301,6 +301,16 @@ Object {
     "some-random-name_east",
     "some-random-name/east",
     "some-random-name east",
+    "internet",
+    "INTERNET",
+    "internet-east",
+    "internet-eu-west",
+    "east-internet",
+    "jane-internet-local",
+    "internet:east",
+    "internet_east",
+    "internet/east",
+    "internet east",
   ],
 }
 `;

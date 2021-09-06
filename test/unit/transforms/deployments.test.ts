@@ -32,6 +32,7 @@ describe("deployment environment mapping", () => {
 		"prod",
 		"live",
 		"some-random-name",
+		"internet"
 	]
 	// Variations of the example names, e.g. "prod-east" is considered a variation of "prod"
 	const exampleEnvironmentNameVariations = _.flatMap(exampleEnvironmentNames, environmentName => [
