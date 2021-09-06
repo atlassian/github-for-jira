@@ -66,11 +66,11 @@ describe("GitHub Actions", () => {
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.reply(200, "../../../../test/fixtures/api/commit-no-username.json");
+				.reply(200, require("../../../../test/fixtures/api/commit-no-username.json"));
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.replyWithFile(200, "../../../../test/fixtures/api/commit-no-username.json");
+				.reply(200, require("../../../../test/fixtures/api/commit-no-username.json"));
 
 			await expect(processPush(app)(job)).toResolve();
 
@@ -138,7 +138,7 @@ describe("GitHub Actions", () => {
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
-				.reply(200, "../../../../test/fixtures/more-than-10-files.json");
+				.reply(200, require("../../../../test/fixtures/more-than-10-files.json"));
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -246,7 +246,7 @@ describe("GitHub Actions", () => {
 		});
 
 		it("should not run a command without a Jira issue", async () => {
-			const fixture = require("../../../..//test/fixtures/push-no-issues.json");
+			const fixture = require("../../../../test/fixtures/push-no-issues.json");
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
@@ -270,13 +270,13 @@ describe("GitHub Actions", () => {
 		});
 
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
-			const event = require("../../../../te/../test/fixtures/push-no-username.json");
+			const event = require("../../../../test/fixtures/push-no-username.json");
 			const job = {
 				data: createJobData(event.payload, process.env.ATLASSIAN_URL)
 			};
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.reply(200, "../../../../test/fixtures/push-merge-commit.json");
+				.reply(200, require("../../../../test/fixtures/push-merge-commit.json"));
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -339,7 +339,7 @@ describe("GitHub Actions", () => {
 			};
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.reply(200, "../../../../test/fixtures/push-non-merge-commit");
+				.reply(200, require("../../../../test/fixtures/push-non-merge-commit"));
 
 			// flag property should not be present
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
