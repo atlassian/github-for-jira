@@ -63,5 +63,6 @@ describe("deployment environment mapping", () => {
 	test("classifies unknown environment names as 'unmapped'", () => {
 		expect(mapEnvironment("banana-east")).toBe("unmapped");
 		expect(mapEnvironment("internet")).toBe("unmapped");
+		expect(mapEnvironment("製造")).toBe("unmapped");
 	});
 });
