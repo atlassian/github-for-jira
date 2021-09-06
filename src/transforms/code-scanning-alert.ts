@@ -19,6 +19,7 @@ export default (context: Context): JiraRemoteLinkData => {
 	}
 
 	return {
+		//todo mapping
 		product: 'GitHub - Code Scanning Alert',
 		remoteLinks: [{
 			schemaVersion: '1.0',

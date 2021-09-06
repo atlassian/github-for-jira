@@ -53,7 +53,7 @@ export default (robot: Application) => {
 
 	robot.on("deployment_status", middleware(deployment));
 
-	robot.on("code_scanning_alert", middleware(codeScanningAlert)); //todo confirm name of event/webhook
+	robot.on("code_scanning_alert", middleware(codeScanningAlert));
 
 	robot.on("create", middleware(createBranch));
 	robot.on("delete", middleware(deleteBranch));
