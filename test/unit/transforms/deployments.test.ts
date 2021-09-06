@@ -46,6 +46,7 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("east-staging")).toBe("staging");
 		expect(mapEnvironment("qa:1")).toBe("testing");
 		expect(mapEnvironment("mary-dev:1")).toBe("development");
+		expect(mapEnvironment("スパイク・スピーゲル-dev:1")).toBe("development");
 		expect(mapEnvironment("trunk alpha")).toBe("development");
 		expect(mapEnvironment("production(us-east)")).toBe("production");
 		expect(mapEnvironment("prd (eu-central)")).toBe("production");
