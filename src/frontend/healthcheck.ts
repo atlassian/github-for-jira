@@ -20,7 +20,7 @@ router.get("/deepcheck", elapsedTimeMetrics, async (_, res: Response) => {
 	const redisPromise = cache.ping();
 	const databasePromise = sequelize.authenticate();
 	const timeoutPromise = new Promise((_, reject) =>
-		setTimeout(() => reject(new Error("deepcheck timed out")), 500)
+		setTimeout(() => reject(new Error("deepcheck timed out")), 2000)
 	);
 
 	await Promise.race([
