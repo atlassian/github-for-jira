@@ -13,6 +13,8 @@ export const getJiraAuthor = (author?: Author): JiraAuthor => author ? {
 };
 
 interface Author {
+	// Github REST API always returns `avatar_url` while the GraphQL API returns `avatarUrl`
+	// We're including both just in case
 	avatar_url?: string;
 	avatarUrl?: string;
 	name?: string;
