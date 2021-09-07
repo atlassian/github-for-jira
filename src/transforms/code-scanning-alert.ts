@@ -1,6 +1,6 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { Context } from "probot/lib/context";
-import {JiraRemoteLinkData, JiraRemoteLinkStatus} from "../interfaces/jira";
+import { JiraRemoteLinkData } from "../interfaces/jira";
 
 const getPullRequestTitle = (id: number): string => {
 	return id.toString()
