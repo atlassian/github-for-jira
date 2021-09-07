@@ -44,11 +44,14 @@ Your new GitHub app will need the following repository permissions & events:
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
++ Security events: Read-only
 
 **Organization Permissions**:
 + Members: Read-Only
 
 **Subscribe to Events**:
++ Security advisory
++ Code scanning alert
 + Commit comment
 + Create
 + Delete
@@ -101,7 +104,7 @@ Go to your Jira instance that you created earlier and do the following steps:
 
 ### Setting up the App
 
-In your Jira instance, in the `Manage Apps` section, click on your App's button, then click on `Get Started`.  This will bring you to the App's dashboard.  Click the `Add an Organization` button and follow the steps to install the App on Github and allow it permission to view your repos.
+In your Jira instance, in the `Manage Apps` section, click on your App's button, then click on `Get Started`.  This will bring you to the App's dashboard.  Click the `Connect GitHub organisation` button and follow the steps to install the App on GitHub and allow it permission to view your repos.
 
 After this is done, you should see your repos starting to sync in the App's dashboard.
 
