@@ -8,6 +8,7 @@ import crypto from "crypto";
 import url from "url";
 import express, { NextFunction, Request, RequestHandler, Response, Router } from "express";
 import axios from "axios";
+import { getJiraHostFromRedirectUrl } from "../util/getUrl";
 
 const host = process.env.GHE_HOST || "github.com";
 
@@ -74,6 +75,8 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		// Check if state is available and matches a previous request
 		if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 		if (!code) return next("Missing OAuth Code");
+
+		req.log.info({jiraHost: getJiraHostFromRedirectUrl(redirectUrl)}, "Jira Host attempting to auth with GitHub");
 
 		try {
 			const response = await axios.get(
