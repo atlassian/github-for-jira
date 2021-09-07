@@ -113,8 +113,8 @@ export default (
 		const jiraSubscriptionsCount = subscriptions.length;
 		if (!jiraSubscriptionsCount) {
 			context.log(
-				{ noop: "no_subscriptions" },
-				"Halting further execution since no subscriptions were found"
+				{ noop: "no_subscriptions", orgName: orgName },
+				"Halting further execution since no subscriptions were found."
 			);
 			return;
 		}
