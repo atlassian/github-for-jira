@@ -81,8 +81,12 @@ export interface JiraDeploymentData {
 }
 
 export interface JiraRemoteLinkData {
-	product: string;
 	remoteLinks: JiraRemoteLink[];
+}
+
+interface IssueKeysAssociation {
+	associationType: string;
+	values: string[];
 }
 
 export interface JiraRemoteLink {
@@ -93,4 +97,5 @@ export interface JiraRemoteLink {
 	url: string;
 	type: string;
 	lastUpdated: number;
+	associations: IssueKeysAssociation;
 }
