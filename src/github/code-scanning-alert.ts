@@ -10,6 +10,6 @@ export default async (context: Context, jiraClient): Promise<void> => {
 	}
 
 	context.log(`Sending code scanning alert event as Remote Link to Jira: ${jiraClient.baseURL}`)
-	//todo add jira module
-	//await jiraClient.workflow.submit(jiraPayload);
+
+	await jiraClient.remoteLink.submit(jiraPayload);
 };
