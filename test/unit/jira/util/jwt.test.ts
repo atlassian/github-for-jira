@@ -293,7 +293,8 @@ describe("jwt", () => {
 
 		beforeEach(async () => {
 			when(queryAtlassianConnectPublicKey).calledWith(
-				testKid
+				testKid,
+				expect.anything()
 			).mockResolvedValue(testPublicKey);
 		});
 
@@ -326,6 +327,20 @@ describe("jwt", () => {
 
 			expect(res.status).toHaveBeenCalledTimes(0)
 			expect(next).toBeCalledTimes(1)
+			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, false)
+		});
+
+
+		it("should pass when token is valid for Staging Jira Instance", async () => {
+
+			const req = buildRequestWithJwt(testQsh);
+			req.body = { baseUrl: "https://kabakumov2.jira-dev.com/jira/your-work"}
+
+			await verifyAsymmetricJwtTokenMiddleware(req, res, next)
+
+			expect(res.status).toHaveBeenCalledTimes(0)
+			expect(next).toBeCalledTimes(1)
+			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, true)
 		});
 
 
@@ -344,7 +359,8 @@ describe("jwt", () => {
 			const req = buildRequestWithJwt(testQsh);
 
 			when(queryAtlassianConnectPublicKey).calledWith(
-				testKid
+				testKid,
+				false
 			).mockRejectedValueOnce(new Error("404"));
 
 			await verifyAsymmetricJwtTokenMiddleware(req, res, next)
@@ -357,10 +373,6 @@ describe("jwt", () => {
 
 			const req = buildRequestWithJwt(testQsh, Date.now() / 1000 - 100);
 
-			when(queryAtlassianConnectPublicKey).calledWith(
-				testKid
-			).mockRejectedValueOnce(new Error("404"));
-
 			await verifyAsymmetricJwtTokenMiddleware(req, res, next)
 
 			expect(res.status).toHaveBeenCalledWith(401)
@@ -370,10 +382,6 @@ describe("jwt", () => {
 		it("should return 401 when qsh is wrong", async () => {
 
 			const req = buildRequestWithJwt("13113wrong13123");
-
-			when(queryAtlassianConnectPublicKey).calledWith(
-				testKid
-			).mockRejectedValueOnce(new Error("404"));
 
 			await verifyAsymmetricJwtTokenMiddleware(req, res, next)
 
@@ -388,10 +396,6 @@ describe("jwt", () => {
 				iss: "jira",
 			});
 
-			when(queryAtlassianConnectPublicKey).calledWith(
-				testKid
-			).mockRejectedValueOnce(new Error("404"));
-
 			await verifyAsymmetricJwtTokenMiddleware(req, res, next)
 
 			expect(res.status).toHaveBeenCalledWith(401)
@@ -405,10 +409,6 @@ describe("jwt", () => {
 				iss: "jira",
 				aud: "https://wrong-addon.example.com"
 			});
-
-			when(queryAtlassianConnectPublicKey).calledWith(
-				testKid
-			).mockRejectedValueOnce(new Error("404"));
 
 			await verifyAsymmetricJwtTokenMiddleware(req, res, next)
 
