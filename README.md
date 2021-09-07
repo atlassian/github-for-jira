@@ -68,6 +68,8 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 |---|---|
 |**Read** access to code & metadata | To sync development information to Jira|
 |**Read** and **write** access to issues and pull requests| To power Smart Commit actions and unfurl Jira URLs|
+|**Read** and **write** access to workflows and deployments| To sync CI/CD information to Jira|
+|**Read** access to Security events| To sync GitHub code scanning alerts as Remote Links in Jira|
 
 ## Using the integration
 
