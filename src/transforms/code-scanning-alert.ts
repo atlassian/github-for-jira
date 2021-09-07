@@ -19,12 +19,13 @@ export default (context: Context): JiraRemoteLinkData => {
 	}
 
 	return {
-		//todo mapping
+		//todo mapping + add issueKeys into associations
 		product: 'GitHub - Code Scanning Alert',
 		remoteLinks: [{
 			schemaVersion: '1.0',
 			id: code_scanning_alert.external_id,
 			updateSequenceNumber: Date.now(),
+			associations: [],
 			displayName: code_scanning_alert.name,
 			url: code_scanning_alert.html_url,
 			type: 'security',
