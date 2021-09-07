@@ -70,7 +70,7 @@ Object {
       "key": "github-remotelinks-integration",
       "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
       "name": Object {
-        "value": "GitHub Security Reports",
+        "value": "GitHub",
       },
     },
     "postInstallPage": Object {

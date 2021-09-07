@@ -81,7 +81,7 @@ export default async (_: Request, res: Response): Promise<void> => {
 				jiraRemoteLinkInfoProvider: {
 					key: "github-remotelinks-integration",
 					name: {
-						value: "GitHub Security Reports"
+						value: "GitHub"
 					},
 					logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
 					homeUrl: "https://github.com/features/security"
