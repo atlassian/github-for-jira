@@ -1,6 +1,7 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 import { JiraCommit, JiraCommitData } from "../interfaces/jira";
+import { getJiraAuthor } from "../util/jira";
 
 function mapCommit(githubCommit, author): JiraCommit {
 
@@ -11,12 +12,7 @@ function mapCommit(githubCommit, author): JiraCommit {
 	}
 
 	return {
-		author: {
-			avatar: author.avatarUrl || undefined,
-			email: author.email || undefined,
-			name: author.name || undefined,
-			url: author.user?.url || undefined
-		},
+		author: getJiraAuthor(author),
 		authorTimestamp: githubCommit.authorTimestamp,
 		displayId: githubCommit.sha.substring(0, 6),
 		fileCount: githubCommit.fileCount,

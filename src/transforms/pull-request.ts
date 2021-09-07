@@ -3,6 +3,7 @@ import { isEmpty } from "../jira/util/isEmpty";
 import { getJiraId } from "../jira/util/id";
 import _ from "lodash";
 import { Octokit } from "@octokit/rest";
+import { getJiraAuthor } from "../util/jira";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -68,9 +69,7 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 					{
 						createPullRequestUrl: `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
-							author: {
-								name: pullRequest.head?.user?.login || undefined
-							},
+							author: getJiraAuthor(pullRequest.head?.user),
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
 							fileCount: 0,
@@ -90,11 +89,7 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 				],
 		pullRequests: [
 			{
-				author: {
-					avatar: pullRequest.user?.avatar_url || undefined,
-					name: pullRequest.user?.login || undefined,
-					url: pullRequest.user?.html_url || undefined
-				},
+				author: getJiraAuthor(pullRequest.user),
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
 				displayId: `#${pullRequest.number}`,
