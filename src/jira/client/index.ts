@@ -262,7 +262,7 @@ async function getJiraClient(
 			submit: async (data) => {
 				// Note: RemoteLinks doesn't have a issueKey field and takes in associations instead
 				updateIssueAssociationValuesFor(data.remoteLinks, dedup);
-				if (!withinIssueKeyLimit(data.remoteLinks)) {
+				if (!withinIssueKeyLimitForRemoteLinks(data.remoteLinks)) {
 					updateIssueAssociationValuesFor(data.remoteLinks, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
@@ -275,7 +275,7 @@ async function getJiraClient(
 				};
 				logger.debug(`Sending remoteLinks payload to jira. Payload: ${payload}`);
 				logger.info("Sending remoteLinks payload to jira.");
-				await instance.post("/rest/remotelinks/0.1/bulk", payload);
+				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
 		}
 	};
@@ -337,6 +337,13 @@ const withinIssueKeyLimit = (resources) => {
 	if (resources == null) return [];
 
 	const issueKeyCounts = resources.map((resource) => resource.issueKeys.length);
+	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
+};
+
+const withinIssueKeyLimitForRemoteLinks = (resources) => {
+	if (resources == null) return [];
+
+	const issueKeyCounts = resources.map((resource) => resource.associations.values.length);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
 
@@ -407,7 +414,7 @@ const updateIssueKeysFor = (resources, mutatingFunc) => {
  */
 const updateIssueAssociationValuesFor = (resources, mutatingFunc) => {
 	resources.forEach((resource) => {
-		resource.associations[0] = mutatingFunc(resource.associations[0].values)
+		resource.associations[0].values = mutatingFunc(resource.associations[0].values)
 	});
 	return resources;
 };

@@ -1,6 +1,6 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { Context } from "probot/lib/context";
-import { JiraRemoteLinkData } from "../interfaces/jira";
+import {JiraRemoteLinkData, JiraRemoteLinkStatus} from "../interfaces/jira";
 
 const getPullRequestTitle = (id: number): string => {
 	return id.toString()
@@ -19,6 +19,19 @@ const getEntityTitle = (ref: string): string => {
 		default:
 			// log something here
 			return "";
+	}
+}
+
+const transformStatusToAppearance = (status: string): string => {
+	switch (status) {
+		case 'open':
+			return 'removed'; // red
+		case 'fixed':
+			return 'success'; // green
+		case 'dismissed':
+			return 'moved'; // yellow
+		default:
+			return 'default';
 	}
 }
 
@@ -52,13 +65,18 @@ export default (context: Context): JiraRemoteLinkData => {
 			id: repository.id.toString() + alert.number,
 			updateSequenceNumber: Date.now(),
 			displayName: alert.rule.description,
+			description: alert.rule.full_description,
 			url: alert.html_url,
 			type: 'security',
+			status: {
+				appearance: transformStatusToAppearance(alert.most_recent_instance.state),
+				label: alert.most_recent_instance.state
+			},
 			lastUpdated: alert.created_at,
-			associations: {
+			associations: [{
 				associationType: 'issueKeys',
 				values: issueKeys
-			}
+			}]
 		}]
 	};
 

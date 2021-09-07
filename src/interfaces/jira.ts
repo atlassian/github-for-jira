@@ -94,8 +94,15 @@ export interface JiraRemoteLink {
 	schemaVersion: string;
 	updateSequenceNumber: number;
 	displayName: string;
+	description: string;
 	url: string;
 	type: string;
+	status: JiraRemoteLinkStatus;
 	lastUpdated: number;
-	associations: IssueKeysAssociation;
+	associations: IssueKeysAssociation[];
+}
+
+export interface JiraRemoteLinkStatus {
+	appearance: string;
+	label: string;
 }
