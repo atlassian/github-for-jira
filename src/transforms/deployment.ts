@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
 import { JiraDeploymentData } from "../interfaces/jira";
@@ -27,30 +26,19 @@ function mapState(state: string): string {
 	}
 }
 
-// We need to map the environment of a GitHub deployment back to a valid deployment environment in Jira.
-// https://docs.github.com/en/actions/reference/environments
-// GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
-// Jira: Can be one of unmapped, development, testing, staging, production
-export function mapEnvironment(environment: string): string {
-	const isEnvironment = (envNames: string[]): boolean => {
-		// Matches any of the input names exactly
-		const exactMatch = envNames.join("|");
-		// Matches separators within environment names, e.g. "-" in "prod-east" or ":" in "test:mary"
-		const separator = "[^a-z0-9]";
-		// Matches an optional prefix, followed by one of the input names, followed by an optional suffix.
-		// This lets us match variants, e.g. "prod-east" and "prod-west" are considered variants of "prod".
-		const envNamesPattern = RegExp(
-			`^(.*${separator})?(${exactMatch})(${separator}.*)?$`,
-			"i"
-		);
-		return envNamesPattern.test(_.deburr(environment));
-	};
+function mapEnvironment(environment: string): string {
+	// We need to map the environment of a GitHub deployment back to a valid deployment environment in Jira.
+	// https://docs.github.com/en/actions/reference/environments
+	// GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
+	// Jira: Can be one of unmapped, development, testing, staging, production
+	const isEnvironment = (envNames) =>
+		envNames.some(envName => environment.localeCompare(envName, undefined, { sensitivity: "base", ignorePunctuation: true }) === 0);
 
 	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
-		production: ["production", "prod", "prd", "live"],
+		production: ["production", "prod", "live"],
 	};
 
 	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key]));
