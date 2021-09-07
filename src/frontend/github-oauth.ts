@@ -76,7 +76,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 		if (!code) return next("Missing OAuth Code");
 
-		req.log.info(`Jira Host attempting to auth with GitHub: ${getJiraHostFromRedirectUrl(redirectUrl)}`);
+		req.log.info({jiraHost: getJiraHostFromRedirectUrl(redirectUrl)}, "Jira Host attempting to auth with GitHub");
 
 		try {
 			const response = await axios.get(
