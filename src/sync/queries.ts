@@ -7,7 +7,6 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
             author {
               avatarUrl
               login
-              name
               url
             }
             databaseId
@@ -80,9 +79,6 @@ export const getBranches = `query ($owner: String!, $repo: String!, $per_page: I
                   avatarUrl
                   email
                   name
-                  user {
-                    url
-                  }
                 }
                 authoredDate
                 history(first: 50) {
