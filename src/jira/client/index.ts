@@ -257,6 +257,26 @@ async function getJiraClient(
 				logger.info("Sending deployments payload to jira.");
 				await instance.post("/rest/deployments/0.1/bulk", payload);
 			}
+		},
+		remoteLink: {
+			submit: async (data) => {
+				// Note: RemoteLinks doesn't have a issueKey field and takes in associations instead
+				updateIssueAssociationValuesFor(data.remoteLinks, dedup);
+				if (!withinIssueKeyLimit(data.remoteLinks)) {
+					updateIssueAssociationValuesFor(data.remoteLinks, truncate);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					await subscription.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
+				}
+				const payload = {
+					remoteLinks: data.remoteLinks,
+					properties: {
+						gitHubInstallationId
+					}
+				};
+				logger.debug(`Sending remoteLinks payload to jira. Payload: ${payload}`);
+				logger.info("Sending remoteLinks payload to jira.");
+				await instance.post("/rest/remotelinks/0.1/bulk", payload);
+			}
 		}
 	};
 
@@ -376,6 +396,18 @@ const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
 const updateIssueKeysFor = (resources, mutatingFunc) => {
 	resources.forEach((resource) => {
 		resource.issueKeys = mutatingFunc(resource.issueKeys);
+	});
+	return resources;
+};
+
+/**
+ * Runs the mutatingFunc on the association values field for each entity resource
+ * Assumption is that the transformed resource only has one association which is for
+ * "issueIdOrKeys" association.
+ */
+const updateIssueAssociationValuesFor = (resources, mutatingFunc) => {
+	resources.forEach((resource) => {
+		resource.associations[0] = mutatingFunc(resource.associations[0].values)
 	});
 	return resources;
 };
