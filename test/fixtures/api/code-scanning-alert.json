@@ -65,6 +65,46 @@
 				"classifications": [
 
 				]
+			},
+			{
+				"ref": "refs/heads/GH-10-branch-with-vuln-no-pr",
+				"analysis_key": ".github/workflows/codeql-analysis.yml:analyze",
+				"environment": "{\"language\":\"javascript\"}",
+				"state": "open",
+				"commit_sha": "901e04ee87f0cbf42928df5c424de506033ee995",
+				"message": {
+					"text": "Cross-site scripting vulnerability due to user-provided value."
+				},
+				"location": {
+					"path": "bad_js.js",
+					"start_line": 6,
+					"end_line": 6,
+					"start_column": 14,
+					"end_column": 46
+				},
+				"classifications": [
+
+				]
+			},
+			{
+				"ref": "refs/heads/GH-11-branch-with-vuln-no-pr",
+				"analysis_key": ".github/workflows/codeql-analysis.yml:analyze",
+				"environment": "{\"language\":\"javascript\"}",
+				"state": "open",
+				"commit_sha": "901e04ee87f0cbf42928df5c424de506033ee995",
+				"message": {
+					"text": "Cross-site scripting vulnerability due to user-provided value."
+				},
+				"location": {
+					"path": "bad_js.js",
+					"start_line": 6,
+					"end_line": 6,
+					"start_column": 14,
+					"end_column": 46
+				},
+				"classifications": [
+
+				]
 			}
 		]
 	},
