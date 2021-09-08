@@ -19,8 +19,7 @@ const getPullRequestTitle = (repoName: string, prId: number, repoOwner: string, 
 	}).then((pullRequest) => {
 		return pullRequest.title;
 	}).catch((err) => {
-		logger.warn(`Received error when querying for Pull Request information: ${err}`);
-		return "";
+		return Promise.reject(`Received error when querying for Pull Request information: ${err}`)
 	})
 }
 
@@ -93,5 +92,8 @@ export default (context: Context): Promise<JiraRemoteLinkData> => {
 				}]
 			}]
 		};
+	}).catch((err) => {
+		logger.warn(err);
+		return undefined;
 	})
 };
