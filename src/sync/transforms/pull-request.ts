@@ -2,6 +2,7 @@ import { GitHubAPI } from "probot";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../../jira/util/isEmpty";
 import { getJiraAuthor } from "../../util/jira";
+import { getGithubUser } from "../../services/github/getGithubUser";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {
@@ -12,7 +13,7 @@ function mapStatus({ state, merged_at }): string {
 	return "UNKNOWN";
 }
 
-export default async (payload, author, github: GitHubAPI) => {
+export default async (payload, github: GitHubAPI) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
 	const issueKeys = issueKeyParser().parse(
@@ -36,7 +37,7 @@ export default async (payload, author, github: GitHubAPI) => {
 		name: repository.full_name,
 		pullRequests: [
 			{
-				author: getJiraAuthor(author),
+				author: getJiraAuthor(pullRequest.author, await getGithubUser(github, pullRequest.author?.login)),
 				commentCount,
 				destinationBranch: `${repository.html_url}/tree/${
 					pullRequest.base ? pullRequest.base.ref : ""

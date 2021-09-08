@@ -142,7 +142,7 @@ export function processPush(app: Application) {
 					return {
 						hash: commitSha,
 						message,
-						author: getJiraAuthor(author),
+						author: getJiraAuthor(author, githubCommitAuthor),
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files

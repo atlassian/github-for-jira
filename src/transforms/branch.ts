@@ -20,7 +20,7 @@ async function getLastCommit(context: Context, issueKeys: string[]) {
 	} = await github.repos.getCommit(context.repo({ sha }));
 
 	return {
-		author: getJiraAuthor(author),
+		author: getJiraAuthor(author, commit.author),
 		authorTimestamp: commit.author.date,
 		displayId: sha.substring(0, 6),
 		fileCount: 0,

@@ -64,6 +64,7 @@ export default async function(
 	};
 
 	const asyncTags = [];
+	// TODO: use graphql here instead of rest API
 	await statsd.asyncTimer(
 		async () => {
 			({
@@ -101,7 +102,6 @@ export default async function(
 			edges.map(async (pull) => {
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
-					pull.user,
 					github
 				);
 				return data?.pullRequests[0];

@@ -29,7 +29,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 		? commitsData.repository.ref.target.history
 		: { edges: [] };
 
-	const authors = edges.map(({ node: item }) => item.author);
+	// const authors = edges.map(({ node: item }) => item.author);
 	const commits = edges.map(({ node: item }) =>
 		// translating the object into a schema that matches our transforms
 		({
@@ -43,6 +43,6 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 
 	return {
 		edges,
-		jiraPayload: transformCommit({ commits, repository }, authors)
+		jiraPayload: transformCommit({ commits, repository })
 	};
 };

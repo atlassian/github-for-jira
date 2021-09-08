@@ -10,9 +10,7 @@ describe("pull_request transform", () => {
 	};
 
 	it("should send the ghost user to Jira when GitHub user has been deleted", async () => {
-		const pullRequestList = JSON.parse(
-			JSON.stringify(require("../../../fixtures/api/pull-request-list.json"))
-		);
+		const pullRequestList = Object.assign({}, require("../../../fixtures/api/pull-request-list.json"));
 
 		pullRequestList[0].title = "[TES-123] Evernote Test";
 
@@ -33,7 +31,6 @@ describe("pull_request transform", () => {
 
 		const data = await transformPullRequest(
 			fixture,
-			fixture.pullRequest.user,
 			githubMock
 		);
 
@@ -108,7 +105,6 @@ describe("pull_request transform", () => {
 
 		await expect(transformPullRequest(
 			fixture,
-			fixture.pullRequest.author,
 			githubMock
 		)).resolves.toBeUndefined();
 	});
