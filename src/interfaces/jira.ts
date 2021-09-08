@@ -103,6 +103,10 @@ export interface JiraRemoteLink {
 }
 
 export interface JiraRemoteLinkStatus {
-	appearance: string;
+	appearance: JiraRemoteLinkStatusAppearance;
 	label: string;
 }
+
+// These align with Atlaskit's lozenge values:
+// https://atlassian.design/components/lozenge/examples
+export type JiraRemoteLinkStatusAppearance = "default" | "inprogress" | "moved" | "new" | "removed" | "prototype" | "success";

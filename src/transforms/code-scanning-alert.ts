@@ -1,6 +1,8 @@
 import issueKeyParser from "jira-issue-key-parser";
 import {Context} from "probot/lib/context";
-import {JiraRemoteLinkData} from "../interfaces/jira";
+import {JiraRemoteLinkData, JiraRemoteLinkStatusAppearance} from "../interfaces/jira";
+
+const MAX_STRING_LENGTH = 255;
 
 // TODO ARC-618
 const getPullRequestTitle = (id: number): string => {
@@ -22,7 +24,9 @@ const getEntityTitle = (ref: string): string => {
 	}
 }
 
-const transformStatusToAppearance = (status: string): string => {
+// Status can be one of three things from the code_scanning_alert webhook: open, fixed, or dismissed
+//
+const transformStatusToAppearance = (status: string): JiraRemoteLinkStatusAppearance => {
 	switch (status) {
 		case "open":
 			return "removed"; // red
@@ -62,8 +66,8 @@ export default (context: Context): JiraRemoteLinkData => {
 			schemaVersion: "1.0",
 			id: `${repository.id.toString()}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
-			displayName: alert.rule.description,
-			description: alert.rule.full_description,
+			displayName: `Alert #${alert.number}`,
+			description: alert.rule.description.substring(0, MAX_STRING_LENGTH),
 			url: alert.html_url,
 			type: "security",
 			status: {
