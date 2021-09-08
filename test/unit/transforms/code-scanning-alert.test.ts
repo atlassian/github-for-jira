@@ -1,8 +1,8 @@
 import transformCodeScanningAlert from "../../../src/transforms/code-scanning-alert";
 import codeScanningPayload from "../../fixtures/api/code-scanning-alert.json";
 import {Context} from "probot/lib/context";
-import {GitHubAPI} from "probot";
 import {getLogger} from "../../../src/config/logger";
+import {GitHubAPI} from "probot";
 
 const buildContext = (payload): Context => {
 	return new Context({
@@ -16,7 +16,7 @@ describe("code_scanning_alert transform", () => {
 	Date.now = jest.fn(() => 12345678);
 
 	it("code_scanning_alert is transformed into a remote link", async () => {
-		const remoteLinks = transformCodeScanningAlert(buildContext(codeScanningPayload));
+		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload));
 		expect(remoteLinks).toMatchObject({
 			remoteLinks: [{
 				schemaVersion: "1.0",
@@ -41,7 +41,7 @@ describe("code_scanning_alert transform", () => {
 
 	it("manual code_scanning_alert maps to multiple Jira issue keys", async () => {
 		const payload = {...codeScanningPayload, action: "closed_by_user"};
-		const remoteLinks = transformCodeScanningAlert(buildContext(payload));
+		const remoteLinks = await transformCodeScanningAlert(buildContext(payload));
 		expect(remoteLinks.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"])
 	})
 
@@ -50,14 +50,22 @@ describe("code_scanning_alert transform", () => {
 			...codeScanningPayload,
 			alert: {...codeScanningPayload.alert, rule: {...codeScanningPayload.alert.rule, description: "A".repeat(300)}}
 		};
-		const remoteLinks = transformCodeScanningAlert(buildContext(payload));
+		const remoteLinks = await transformCodeScanningAlert(buildContext(payload));
 		expect(remoteLinks.remoteLinks[0].description).toHaveLength(255);
 	})
 
-	// TODO ARC-618
 	it("code_scanning_alert with pr reference queries Pull Request title", async () => {
 		const payload = {...codeScanningPayload, ref: "refs/pull/8/merge"};
-		const remoteLinks = transformCodeScanningAlert(buildContext(payload));
-		expect(remoteLinks.remoteLinks[0].associations[0].values[0]).toEqual("GH-8");
+		const context = buildContext(payload);
+		const mySpy = jest.spyOn(context.github.pulls, "get");
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(mySpy as jest.MockInstance<any, any>).mockResolvedValue({
+			data: {
+				title: "GH-10"
+			},
+			status: 200
+		});
+		const remoteLinks = await transformCodeScanningAlert(context);
+		expect(remoteLinks.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
 	})
 })
