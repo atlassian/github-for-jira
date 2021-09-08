@@ -12,17 +12,17 @@ const outputMode = process.env.MICROS_ENV ? "json" : "short";
 // add levelInString to include DEBUG | ERROR | INFO | WARN
 const formatOut = filteringStream(bformat({ outputMode, levelInString: true }));
 
-const requestSerializer = (req: Request) => (!req || !req.connection) ? req : {
+const requestSerializer = (req: Request) => req && {
 	method: req.method,
 	url: req.originalUrl || req.url,
 	path: req.path,
 	headers: req.headers,
-	remoteAddress: req.connection.remoteAddress,
-	remotePort: req.connection.remotePort,
+	remoteAddress: req.connection?.remoteAddress,
+	remotePort: req.connection?.remotePort,
 	body: req.body
 };
 
-const errorSerializer = (err) => (!err || !err.stack) ? err : {
+const errorSerializer = (err) => err && {
 	...err,
 	response: Logger.stdSerializers.res(err.response),
 	request: requestSerializer(err.request),
@@ -48,7 +48,9 @@ const logger = Logger.createLogger(
 		serializers: {
 			err: errorSerializer,
 			res: Logger.stdSerializers.res,
-			req: requestSerializer
+			response: Logger.stdSerializers.res,
+			req: requestSerializer,
+			request: requestSerializer
 		}
 	}
 );

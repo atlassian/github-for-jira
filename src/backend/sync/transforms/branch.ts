@@ -1,6 +1,7 @@
 import { getJiraId } from "../../../common/id";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../../../common/isEmpty";
+import { getJiraAuthor } from "../../../common/jira";
 
 // TODO: better typing in file
 /**
@@ -34,10 +35,7 @@ function mapBranch(branch, repository) {
 		id: getJiraId(branch.name),
 		issueKeys: allKeys,
 		lastCommit: {
-			author: {
-				avatar: branch?.lastCommit?.author?.avatarUrl || undefined,
-				name: branch?.lastCommit?.author?.name || undefined
-			},
+			author: getJiraAuthor(branch?.lastCommit?.author),
 			authorTimestamp: branch.lastCommit.authorTimestamp,
 			displayId: branch.lastCommit.sha.substring(0, 6),
 			fileCount: branch.lastCommit.fileCount,
@@ -68,12 +66,7 @@ function mapCommit(commit) {
 	}
 
 	return {
-		author: {
-			avatar: commit.author?.avatarUrl || undefined,
-			email: commit.author?.email || undefined,
-			name: commit.author?.name || undefined,
-			url: commit.author?.user?.url || undefined
-		},
+		author: getJiraAuthor(commit.author),
 		authorTimestamp: commit.authoredDate,
 		displayId: commit.oid.substring(0, 6),
 		fileCount: 0,

@@ -7,12 +7,13 @@ import enhanceOctokit from "../../config/enhance-octokit";
 import { Application } from "probot";
 import { getLogger } from "../../config/logger";
 import { JobOptions } from "bull";
+import { getJiraAuthor } from "../../common/jira";
 
 // TODO: define better types for this file
 
 const logger = getLogger("transforms.push");
 
-const mapFile = (githubFile:any, repoName: string, repoOwner: string, commitHash: string) => {
+const mapFile = (githubFile: any, repoName: string, repoOwner: string, commitHash: string) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
 	const mapStatus = {
@@ -21,7 +22,7 @@ const mapFile = (githubFile:any, repoName: string, repoOwner: string, commitHash
 		modified: "MODIFIED"
 	};
 
-	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`
+	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
 
 	return {
 		path: githubFile.filename,
@@ -30,7 +31,7 @@ const mapFile = (githubFile:any, repoName: string, repoOwner: string, commitHash
 		linesRemoved: githubFile.deletions,
 		url: githubFile.blob_url || fallbackUrl
 	};
-}
+};
 
 export function createJobData(payload, jiraHost: string) {
 	// Store only necessary repository data in the queue
@@ -90,9 +91,11 @@ export function processPush(app: Application) {
 
 			const webhookId = job.data.webhookId || "none";
 
-			log = logger.child({webhookId: webhookId,
+			log = logger.child({
+				webhookId: webhookId,
 				repoName: repo,
-				orgName: owner.name })
+				orgName: owner.name
+			});
 
 			log.info({ installationId }, "Processing push");
 
@@ -114,20 +117,21 @@ export function processPush(app: Application) {
 			const commits = await Promise.all(
 				shas.map(async (sha) => {
 					const {
-						data,
-						data: { commit: githubCommit }
+						data: {
+							commit: githubCommit,
+							files,
+							author,
+							parents,
+							sha: commitSha,
+							html_url
+						}
 					} = await github.repos.getCommit({
 						owner: owner.login,
 						repo,
 						ref: sha.id
 					});
 
-					const { files, author, parents, sha: commitSha, html_url } = data;
-
 					const { author: githubCommitAuthor, message } = githubCommit;
-
-					// Not all commits have a github author, so create username only if author exists
-					const username = author ? author.login : undefined;
 
 					// Jira only accepts a max of 10 files for each commit, so don't send all of them
 					const filesToSend = files.slice(0, 10);
@@ -138,14 +142,7 @@ export function processPush(app: Application) {
 					return {
 						hash: commitSha,
 						message,
-						author: {
-							avatar: username
-								? `https://github.com/${username}.png`
-								: undefined,
-							email: githubCommitAuthor.email,
-							name: githubCommitAuthor.name,
-							url: username ? `https://github.com/${username}` : undefined
-						},
+						author: getJiraAuthor(author),
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
