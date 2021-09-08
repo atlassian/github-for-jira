@@ -22,8 +22,8 @@ describe("code_scanning_alert transform", () => {
 				schemaVersion: "1.0",
 				id: "403470608-272",
 				updateSequenceNumber: 12345678,
-				displayName: "Reflected cross-site scripting",
-				description: "Writing user input directly to an HTTP response allows for a cross-site scripting vulnerability.",
+				displayName: "Alert #272",
+				description: "Reflected cross-site scripting",
 				url: "https://github.com/TerryAg/github-jira-test/security/code-scanning/272",
 				type: "security",
 				status: {
@@ -40,21 +40,21 @@ describe("code_scanning_alert transform", () => {
 	})
 
 	it("manual code_scanning_alert maps to multiple Jira issue keys", async () => {
-		codeScanningPayload.action = "closed_by_user";
-		const remoteLinks = transformCodeScanningAlert(buildContext(codeScanningPayload));
+		const payload = {...codeScanningPayload, action : "closed_by_user"};
+		const remoteLinks = transformCodeScanningAlert(buildContext(payload));
 		expect(remoteLinks.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"])
 	})
 
 	it("code_scanning_alert truncates to a shorter description if too long", async () => {
-		codeScanningPayload.alert.rule.description = "A".repeat(300);
-		const remoteLinks = transformCodeScanningAlert(buildContext(codeScanningPayload));
+		const payload = {...codeScanningPayload, alert: {...codeScanningPayload.alert, rule: {...codeScanningPayload.alert.rule, description: "A".repeat(300)}}};
+		const remoteLinks = transformCodeScanningAlert(buildContext(payload));
 		expect(remoteLinks.remoteLinks[0].description).toHaveLength(255);
 	})
 
 	// TODO ARC-618
 	it("code_scanning_alert with pr reference queries Pull Request title", async () => {
-		codeScanningPayload.ref = "refs/pull/8/merge";
-		const remoteLinks = transformCodeScanningAlert(buildContext(codeScanningPayload));
+		const payload = {...codeScanningPayload, ref : "refs/pull/8/merge"};
+		const remoteLinks = transformCodeScanningAlert(buildContext(payload));
 		expect(remoteLinks.remoteLinks[0].associations[0].values[0]).toEqual("GH-8");
 	})
 })
