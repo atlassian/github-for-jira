@@ -44,12 +44,12 @@ Your new GitHub app will need the following repository permissions & events:
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
++ Security events: Read-only
 
 **Organization Permissions**:
 + Members: Read-Only
 
 **Subscribe to Events**:
-+ Security advisory
 + Code scanning alert
 + Commit comment
 + Create
