@@ -340,6 +340,11 @@ const withinIssueKeyLimit = (resources) => {
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
 
+/**
+ * Returns if the max length of the issue key field is within the limit
+ * Assumption is that the transformed resource only has one association which is for
+ * "issueIdOrKeys" association.
+ */
 const withinIssueKeyAssociationsLimit = (resources) => {
 	if (resources == null) return [];
 
