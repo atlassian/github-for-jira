@@ -2,7 +2,7 @@ import { JiraAuthor } from "../interfaces/jira";
 
 export const getJiraAuthor = (...authors: Author[]): JiraAuthor => {
 	const author = Object.assign({}, ...authors);
-	return author.login ? {
+	return author.login || author.name ? {
 		avatar: author.avatar_url || author.avatarUrl || `https://github.com/users/${author.login}.png`,
 		name: author.name || author.login || author.email?.match(/^(.*)@/)?.pop() || "unknown",
 		email: author.email || `${author.login}@noreply.user.github.com`,
