@@ -1,6 +1,7 @@
 import transformCommit from "../transforms/commit";
 import { getCommits as getCommitsQuery, getDefaultRef } from "./queries";
 import { GitHubAPI } from "probot";
+import { getJiraAuthor } from "../util/jira";
 
 // TODO: better typings
 export default async (github: GitHubAPI, repository, cursor, perPage: number) => {
@@ -32,7 +33,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 	const commits = edges.map(({ node: item }) =>
 		// translating the object into a schema that matches our transforms
 		({
-			author: item.author,
+			author: getJiraAuthor(item.author),
 			authorTimestamp: item.authoredDate,
 			fileCount: 0,
 			sha: item.oid,
