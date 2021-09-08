@@ -86,7 +86,6 @@ export interface JiraAssociation {
 }
 
 export interface JiraRemoteLinkData {
-	product: string;
 	remoteLinks: JiraRemoteLink[];
 }
 
@@ -96,7 +95,18 @@ export interface JiraRemoteLink {
 	updateSequenceNumber: number;
 	associations: JiraAssociation[];
 	displayName: string;
+	description: string;
 	url: string;
 	type: string;
+	status: JiraRemoteLinkStatus;
 	lastUpdated: number;
 }
+
+export interface JiraRemoteLinkStatus {
+	appearance: JiraRemoteLinkStatusAppearance;
+	label: string;
+}
+
+// These align with Atlaskit's lozenge values:
+// https://atlassian.design/components/lozenge/examples
+export type JiraRemoteLinkStatusAppearance = "default" | "inprogress" | "moved" | "new" | "removed" | "prototype" | "success";

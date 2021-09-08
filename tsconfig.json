@@ -18,6 +18,7 @@
     "noImplicitThis": false,
     "strictNullChecks": false,
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "outDir": "build"
   },
   "include": [
