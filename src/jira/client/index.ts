@@ -279,7 +279,7 @@ const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
 	installationId: number,
-	logger:Logger,
+	logger: Logger,
 	options?: { preventTransitions: boolean }
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
@@ -302,7 +302,7 @@ const batchedBulkUpdate = async (
 			}
 		};
 		return instance.post("/rest/devinfo/0.10/bulk", body).catch((err) => {
-			logger.error({err, body, data}, "Jira Client Error: Cannot update Pull Request")
+			logger.error({ err, res: err.response, req: err.request, body, data }, "Jira Client Error: Cannot update Repository");
 			return Promise.reject(err);
 		});
 	});
