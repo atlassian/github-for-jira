@@ -40,20 +40,23 @@ describe("code_scanning_alert transform", () => {
 	})
 
 	it("manual code_scanning_alert maps to multiple Jira issue keys", async () => {
-		const payload = {...codeScanningPayload, action : "closed_by_user"};
+		const payload = {...codeScanningPayload, action: "closed_by_user"};
 		const remoteLinks = transformCodeScanningAlert(buildContext(payload));
 		expect(remoteLinks.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"])
 	})
 
 	it("code_scanning_alert truncates to a shorter description if too long", async () => {
-		const payload = {...codeScanningPayload, alert: {...codeScanningPayload.alert, rule: {...codeScanningPayload.alert.rule, description: "A".repeat(300)}}};
+		const payload = {
+			...codeScanningPayload,
+			alert: {...codeScanningPayload.alert, rule: {...codeScanningPayload.alert.rule, description: "A".repeat(300)}}
+		};
 		const remoteLinks = transformCodeScanningAlert(buildContext(payload));
 		expect(remoteLinks.remoteLinks[0].description).toHaveLength(255);
 	})
 
 	// TODO ARC-618
 	it("code_scanning_alert with pr reference queries Pull Request title", async () => {
-		const payload = {...codeScanningPayload, ref : "refs/pull/8/merge"};
+		const payload = {...codeScanningPayload, ref: "refs/pull/8/merge"};
 		const remoteLinks = transformCodeScanningAlert(buildContext(payload));
 		expect(remoteLinks.remoteLinks[0].associations[0].values[0]).toEqual("GH-8");
 	})
