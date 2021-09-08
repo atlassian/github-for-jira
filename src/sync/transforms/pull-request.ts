@@ -37,6 +37,7 @@ export default async (payload, github: GitHubAPI) => {
 		name: repository.full_name,
 		pullRequests: [
 			{
+				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
 				author: getJiraAuthor(pullRequest.author, await getGithubUser(github, pullRequest.author?.login)),
 				commentCount,
 				destinationBranch: `${repository.html_url}/tree/${

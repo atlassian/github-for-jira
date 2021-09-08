@@ -71,6 +71,7 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 					{
 						createPullRequestUrl: `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
+							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
 							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
@@ -91,6 +92,7 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 				],
 		pullRequests: [
 			{
+				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
 				author: getJiraAuthor(pullRequest.user, await getGithubUser(github, pullRequest.user?.login)),
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
