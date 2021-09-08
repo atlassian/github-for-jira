@@ -260,10 +260,10 @@ async function getJiraClient(
 		},
 		remoteLink: {
 			submit: async (data) => {
-				// Note: RemoteLinks doesn't have a issueKey field and takes in associations instead
-				updateIssueAssociationValuesFor(data.remoteLinks, dedup);
-				if (!withinIssueKeyLimitForRemoteLinks(data.remoteLinks)) {
-					updateIssueAssociationValuesFor(data.remoteLinks, truncate);
+				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
+				updateIssueKeyAssociationValuesFor(data.remoteLinks, dedup);
+				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
+					updateIssueKeyAssociationValuesFor(data.remoteLinks, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
 				}
@@ -340,12 +340,12 @@ const withinIssueKeyLimit = (resources) => {
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
 
-const withinIssueKeyLimitForRemoteLinks = (resources) => {
+const withinIssueKeyAssociationsLimit = (resources) => {
 	if (resources == null) return [];
 
-	const issueKeyCounts = resources.map((resource) => resource.associations.values.length);
+	const issueKeyCounts = resources.map((resource) => resource.associations[0].values.length);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
-};
+}
 
 /**
  * Deduplicates commits by ID field for a repository payload
@@ -412,7 +412,7 @@ const updateIssueKeysFor = (resources, mutatingFunc) => {
  * Assumption is that the transformed resource only has one association which is for
  * "issueIdOrKeys" association.
  */
-const updateIssueAssociationValuesFor = (resources, mutatingFunc) => {
+const updateIssueKeyAssociationValuesFor = (resources, mutatingFunc) => {
 	resources.forEach((resource) => {
 		resource.associations[0].values = mutatingFunc(resource.associations[0].values)
 	});
