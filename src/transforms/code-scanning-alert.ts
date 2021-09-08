@@ -2,8 +2,9 @@ import issueKeyParser from "jira-issue-key-parser";
 import {Context} from "probot/lib/context";
 import {JiraRemoteLinkData} from "../interfaces/jira";
 
+// TODO ARC-618
 const getPullRequestTitle = (id: number): string => {
-	return id.toString()
+	return `GH-${id}`;
 }
 
 const getEntityTitle = (ref: string): string => {
@@ -59,7 +60,7 @@ export default (context: Context): JiraRemoteLinkData => {
 	return {
 		remoteLinks: [{
 			schemaVersion: "1.0",
-			id: repository.id.toString() + alert.number,
+			id: `${repository.id.toString()}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			displayName: alert.rule.description,
 			description: alert.rule.full_description,
