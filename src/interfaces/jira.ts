@@ -89,11 +89,6 @@ export interface JiraRemoteLinkData {
 	remoteLinks: JiraRemoteLink[];
 }
 
-interface IssueKeysAssociation {
-	associationType: string;
-	values: string[];
-}
-
 export interface JiraRemoteLink {
 	id: string;
 	schemaVersion: string;
@@ -105,7 +100,6 @@ export interface JiraRemoteLink {
 	type: string;
 	status: JiraRemoteLinkStatus;
 	lastUpdated: number;
-	associations: IssueKeysAssociation[];
 }
 
 export interface JiraRemoteLinkStatus {
