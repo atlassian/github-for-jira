@@ -260,7 +260,7 @@ async function getJiraClient(
 		},
 		remoteLink: {
 			submit: async (data) => {
-				// Note: RemoteLinks doesn't have a issueKey field and takes in associations instead
+				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
 				updateIssueKeyAssociationValuesFor(data.remoteLinks, dedup);
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
 					updateIssueKeyAssociationValuesFor(data.remoteLinks, truncate);
