@@ -24,7 +24,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage) => {
 			associatedPullRequestTitle,
 			commits: item.target.history.nodes,
 			lastCommit: {
-				author: getJiraAuthor(item.target.author),
+				author: getJiraAuthor(item.target.author, item.target.history.nodes?.[0]?.author),
 				authorTimestamp: item.target.authoredDate,
 				fileCount: 0,
 				sha: item.target.oid,
