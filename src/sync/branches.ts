@@ -1,7 +1,6 @@
 import transformBranches from "./transforms/branch";
 import { getBranches as getBranchesQuery } from "./queries";
 import { GitHubAPI } from "probot";
-import { getJiraAuthor } from "../util/jira";
 
 // TODO: better typings
 export default async (github: GitHubAPI, repository, cursor, perPage) => {
@@ -24,7 +23,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage) => {
 			associatedPullRequestTitle,
 			commits: item.target.history.nodes,
 			lastCommit: {
-				author: getJiraAuthor(item.target.author),
+				author: item.target.author,
 				authorTimestamp: item.target.authoredDate,
 				fileCount: 0,
 				sha: item.target.oid,
