@@ -34,7 +34,8 @@ const getEntityTitle = (ref: string, repoName: string, repoOwner: string, contex
 		case "pull": // pull request
 			return getPullRequestTitle(repoName, parseInt(components[2]), repoOwner, context);
 		default:
-			return Promise.reject(`Could not interpret reference from code_scanning_alert: ${ref}`);
+			logger.error(`Could not interpret reference from code_scanning_alert: ${ref}`);
+			return Promise.resolve("");
 	}
 }
 
@@ -48,6 +49,7 @@ const transformStatusToAppearance = (status: string): JiraRemoteLinkStatusAppear
 		case "dismissed":
 			return "moved"; // yellow
 		default:
+			logger.info(`Received unknown status from code_scanning_alert webhook: ${status}`);
 			return "default";
 	}
 }
