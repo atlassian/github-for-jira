@@ -343,6 +343,18 @@ describe("jwt", () => {
 			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, true)
 		});
 
+		it("should pass when token is valid for Prod Jira Instance", async () => {
+
+			const req = buildRequestWithJwt(testQsh);
+			req.body = { baseUrl: "https://kabakumov.atlassian.net"}
+
+			await verifyAsymmetricJwtTokenMiddleware(req, res, next)
+
+			expect(res.status).toHaveBeenCalledTimes(0)
+			expect(next).toBeCalledTimes(1)
+			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, false)
+		});
+
 
 		it("should return 401 when was encrypted with wrong key", async () => {
 

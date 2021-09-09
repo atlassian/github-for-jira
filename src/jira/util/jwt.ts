@@ -185,16 +185,12 @@ export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: Tok
 const ALLOWED_BASE_URLS = [BASE_URL]
 
 const isStagingTenant = (req: Request): boolean => {
-	let isStagingTenant = false;
-	const hostBaseUrl = _.get(req.body, "baseUrl");
+	const hostBaseUrl = req.body?.baseUrl;
 	if (hostBaseUrl) {
 		const host = new URL(hostBaseUrl).hostname;
-		const hostEnvironment = host.substring(host.indexOf(".") + 1);
-		if (hostEnvironment === "jira-dev.com") {
-			isStagingTenant = true;
-		}
+		return /\.jira-dev\.com$/.test(host)
 	}
-	return isStagingTenant
+	return false
 }
 
 export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
