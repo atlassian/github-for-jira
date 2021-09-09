@@ -28,7 +28,12 @@ export interface JiraBuildData {
 }
 
 export interface JiraCommit {
-	author: JiraAuthor;
+	author: {
+		avatar?: string;
+		email: string;
+		name: string;
+		url?: string;
+	};
 	authorTimestamp: number;
 	displayId: string;
 	fileCount: number;
@@ -39,13 +44,6 @@ export interface JiraCommit {
 	timestamp: number;
 	url: string;
 	updateSequenceId: number;
-}
-
-export interface JiraAuthor {
-	avatar?: string;
-	email: string;
-	name: string;
-	url?: string;
 }
 
 export interface JiraCommitData {

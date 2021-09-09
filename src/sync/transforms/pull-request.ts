@@ -1,7 +1,6 @@
 import { GitHubAPI } from "probot";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../../jira/util/isEmpty";
-import { getJiraAuthor } from "../../util/jira";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {
@@ -10,6 +9,26 @@ function mapStatus({ state, merged_at }): string {
 	if (state === "closed" && merged_at) return "MERGED";
 	if (state === "closed" && !merged_at) return "DECLINED";
 	return "UNKNOWN";
+}
+
+/**
+ * Get the author or a ghost user.
+ */
+function getAuthor(author) {
+	// If author is null, return the ghost user
+	if (!author) {
+		return {
+			avatar: "https://github.com/ghost.png",
+			name: "Deleted User",
+			url: "https://github.com/ghost"
+		};
+	}
+
+	return {
+		avatar: author.avatar_url || undefined,
+		name: author.login || undefined,
+		url: author.url || undefined
+	};
 }
 
 export default async (payload, author, github: GitHubAPI) => {
@@ -36,7 +55,7 @@ export default async (payload, author, github: GitHubAPI) => {
 		name: repository.full_name,
 		pullRequests: [
 			{
-				author: getJiraAuthor(author),
+				author: getAuthor(author),
 				commentCount,
 				destinationBranch: `${repository.html_url}/tree/${
 					pullRequest.base ? pullRequest.base.ref : ""
