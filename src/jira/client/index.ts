@@ -273,7 +273,6 @@ async function getJiraClient(
 						gitHubInstallationId
 					}
 				};
-				logger.debug(`Sending remoteLinks payload to jira. Payload: ${payload}`);
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}

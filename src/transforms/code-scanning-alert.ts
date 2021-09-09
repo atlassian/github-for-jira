@@ -19,7 +19,8 @@ const getPullRequestTitle = (repoName: string, prId: number, repoOwner: string, 
 	}).then((pullRequest) => {
 		return pullRequest.title;
 	}).catch((err) => {
-		return Promise.reject(`Received error when querying for Pull Request information: ${err}`)
+		logger.warn(`Received error when querying for Pull Request information: ${err}`);
+		return Promise.resolve("");
 	})
 }
 
@@ -59,10 +60,10 @@ export default (context: Context): Promise<JiraRemoteLinkData> => {
 	if (action === "closed_by_user" || action === "reopened_by_user") {
 		// These are manual operations done by users and are not associated to a specific Issue.
 		// The webhook contains ALL instances of this alert, so we need to grab the ref from each instance.
-		entityTitlesPromises.push(...alert.instances.map((instance) => getEntityTitle(instance.ref, repository.owner.login, repository.name, context)));
+		entityTitlesPromises.push(...alert.instances.map((instance) => getEntityTitle(instance.ref, repository.name, repository.owner.login, context)));
 	} else {
 		// The action is associated with a single branch/PR
-		entityTitlesPromises.push(getEntityTitle(ref, repository.owner.login, repository.name, context));
+		entityTitlesPromises.push(getEntityTitle(ref, repository.name, repository.owner.login, context));
 	}
 
 	return Promise.all(entityTitlesPromises).then(entityTitles => {
