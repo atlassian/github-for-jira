@@ -83,7 +83,6 @@ const getCursorKey = (jobType) => `last${upperFirst(jobType)}Cursor`;
 
 const updateJobStatus = async (
 	queues,
-	jiraClient,
 	job: Queue.Job,
 	edges,
 	task,
@@ -140,12 +139,6 @@ const updateJobStatus = async (
 		}
 
 		logger.info({ job, task, startTime, endTime, timeDiff }, "Sync status is complete");
-
-		try {
-			await jiraClient.devinfo.migration.complete();
-		} catch (err) {
-			logger.warn({ job, task, err }, "Error sending the `complete` event to JIRA");
-		}
 	} else {
 		logger.info({ job, task }, "Sync status is pending");
 		queues.installation.add(job.data);
@@ -281,7 +274,6 @@ export const processInstallation =
 
 				await updateJobStatus(
 					queues,
-					jiraClient,
 					job,
 					edges,
 					task,
@@ -327,7 +319,6 @@ export const processInstallation =
 					const edgesLeft = []; // No edges left to process since the repository doesn't exist
 					await updateJobStatus(
 						queues,
-						jiraClient,
 						job,
 						edgesLeft,
 						task,
