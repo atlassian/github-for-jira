@@ -14,10 +14,6 @@ Object {
       "delete": [Function],
       "exists": [Function],
     },
-    "migration": Object {
-      "complete": [Function],
-      "undo": [Function],
-    },
     "pullRequest": Object {
       "delete": [Function],
     },

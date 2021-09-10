@@ -68,13 +68,7 @@ export function createJobData(payload, jiraHost: string) {
 }
 
 export async function enqueuePush(payload: unknown, jiraHost: string, options?: JobOptions) {
-	await queues.push.add(
-		createJobData(payload, jiraHost),
-		{
-			removeOnFail: true,
-			removeOnComplete: true,
-			...options
-		});
+	await queues.push.add(createJobData(payload, jiraHost), options);
 }
 
 export function processPush(app: Application) {
@@ -117,19 +111,15 @@ export function processPush(app: Application) {
 			const commits = await Promise.all(
 				shas.map(async (sha) => {
 					const {
-						data: {
-							commit: githubCommit,
-							files,
-							author,
-							parents,
-							sha: commitSha,
-							html_url
-						}
+						data,
+						data: { commit: githubCommit }
 					} = await github.repos.getCommit({
 						owner: owner.login,
 						repo,
 						ref: sha.id
 					});
+
+					const { files, author, parents, sha: commitSha, html_url } = data;
 
 					const { author: githubCommitAuthor, message } = githubCommit;
 

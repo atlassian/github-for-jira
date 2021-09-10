@@ -2,7 +2,6 @@
 import { Installation, Subscription } from "../../models";
 import getAxiosInstance from "./axios";
 import { getJiraId } from "../util/id";
-import isProd from "../util/isProd";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 import issueKeyParser from "jira-issue-key-parser";
@@ -140,30 +139,6 @@ async function getJiraClient(
 						`/rest/devinfo/0.10/bulkByProperties?installationId=${gitHubInstallationId}`
 					)
 			},
-			// Migration endpoints do not take any parameters,
-			// but return 500 errors if the body is empty or null.
-			// Passing an empty object gets around this issue.
-			migration: {
-				complete: async () => {
-					/**
-					 * Only call github/migrationComplete in prod. Complete will only be called in Jira if
-					 * GITHUB_CONNECT_APP_IDENTIFIER is equal to com.github.integration.production
-					 */
-					if (!isProd()) return;
-					await instance.post(
-						"/rest/devinfo/0.10/github/migrationComplete",
-						{}
-					);
-				},
-				undo: async () => {
-					/**
-					 * Only call github/migrationUndo in prod. Undo will only be called in Jira if
-					 * GITHUB_CONNECT_APP_IDENTIFIER is equal to com.github.integration.production
-					 */
-					if (!isProd()) return;
-					await instance.post("/rest/devinfo/0.10/github/undoMigration", {});
-				}
-			},
 			pullRequest: {
 				delete: (repositoryId, pullRequestId) =>
 					instance.delete(
@@ -279,7 +254,7 @@ const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
 	installationId: number,
-	logger: Logger,
+	logger:Logger,
 	options?: { preventTransitions: boolean }
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
@@ -302,7 +277,7 @@ const batchedBulkUpdate = async (
 			}
 		};
 		return instance.post("/rest/devinfo/0.10/bulk", body).catch((err) => {
-			logger.error({ err, res: err.response, req: err.request, body, data }, "Jira Client Error: Cannot update Repository");
+			logger.error({err, body, data}, "Jira Client Error: Cannot update Pull Request")
 			return Promise.reject(err);
 		});
 	});
