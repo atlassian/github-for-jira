@@ -6,8 +6,6 @@ import { SyncStatus } from "../models/subscription";
 import { getLogger } from "../config/logger";
 
 const jobOpts = {
-	removeOnComplete: true,
-	removeOnFail: true,
 	attempts: 3
 };
 
@@ -25,8 +23,8 @@ export const discovery = (app: Application, queues) => async (job) => {
 			(res) => res.data.repositories
 		);
 		logger.info(
-			{installationId},
-			`${repositories.length} Repositories found for installationId=${installationId}`
+			{ job },
+			`${repositories.length} Repositories found`
 		);
 
 		const subscription = await Subscription.getSingleInstallation(
@@ -54,6 +52,6 @@ export const discovery = (app: Application, queues) => async (job) => {
 		// Create job
 		queues.installation.add({ installationId, jiraHost, startTime }, jobOpts);
 	} catch (err) {
-		logger.error(err, "Discovery error");
+		logger.error({job, err}, "Discovery error");
 	}
 };
