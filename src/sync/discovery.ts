@@ -5,10 +5,6 @@ import { Application } from "probot";
 import { SyncStatus } from "../models/subscription";
 import { getLogger } from "../config/logger";
 
-const jobOpts = {
-	attempts: 3
-};
-
 const logger = getLogger("sync.discovery");
 
 export const discovery = (app: Application, queues) => async (job) => {
@@ -50,7 +46,7 @@ export const discovery = (app: Application, queues) => async (job) => {
 		});
 
 		// Create job
-		queues.installation.add({ installationId, jiraHost, startTime }, jobOpts);
+		queues.installation.add({ installationId, jiraHost, startTime });
 	} catch (err) {
 		logger.error({job, err}, "Discovery error");
 	}

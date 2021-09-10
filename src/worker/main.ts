@@ -29,7 +29,7 @@ function measureElapsedTime(job: Queue.Job, tags) {
 
 const queueOpts: QueueOptions = {
 	defaultJobOptions: {
-		attempts: 1,
+		attempts: 3,
 		removeOnComplete: true,
 		removeOnFail: true
 	},
