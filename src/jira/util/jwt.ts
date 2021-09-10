@@ -184,6 +184,19 @@ export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: Tok
 
 const ALLOWED_BASE_URLS = [BASE_URL]
 
+const isStagingTenant = (req: Request): boolean => {
+	try {
+		const hostBaseUrl = req.body?.baseUrl;
+		if (hostBaseUrl) {
+			const host = new URL(hostBaseUrl).hostname;
+			return /\.jira-dev\.com$/.test(host)
+		}
+	} catch (err) {
+		req.log.error(err, "Error determining Jira instance environment")
+	}
+	return false
+}
+
 export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const token = extractJwtFromRequest(req);
@@ -193,7 +206,7 @@ export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Resp
 			return;
 		}
 
-		const publicKey = await queryAtlassianConnectPublicKey(getKeyId(token));
+		const publicKey = await queryAtlassianConnectPublicKey(getKeyId(token), isStagingTenant(req));
 
 		let unverifiedClaims: any = undefined
 		unverifiedClaims = decodeAsymmetricToken(token, publicKey, true)
