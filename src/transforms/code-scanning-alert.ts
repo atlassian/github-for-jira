@@ -11,15 +11,13 @@ const getPullRequestTitle = (repoName: string, prId: number, repoOwner: string, 
 		repo: repoName,
 		pull_number: prId
 	}).then((response) => {
-		if (response.status != 200) {
+		if (response.status !== 200) {
 			throw response.data;
 		} else {
-			return response.data
+			return response.data.title;
 		}
-	}).then((pullRequest) => {
-		return pullRequest.title;
 	}).catch((err) => {
-		logger.warn(`Received error when querying for Pull Request information: ${err}`);
+		logger.warn(`Received error when querying for Pull Request information: ${JSON.stringify(err)}`);
 		return Promise.resolve("");
 	})
 }
