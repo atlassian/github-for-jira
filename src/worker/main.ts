@@ -23,15 +23,15 @@ const client = new Redis(getRedisInfo("client").redisOptions);
 const subscriber = new Redis(getRedisInfo("subscriber").redisOptions);
 const logger = getLogger("worker.main");
 
-function measureElapsedTime(startTime, tags) {
-	const endTime = Date.now();
-	const timeDiff = endTime - startTime;
-	statsd.histogram(metricHttpRequest().jobDuration, timeDiff, tags);
+function measureElapsedTime(job: Queue.Job, tags) {
+	statsd.histogram(metricHttpRequest().jobDuration, job.finishedOn - job.processedOn, tags);
 }
 
 const queueOpts: QueueOptions = {
 	defaultJobOptions: {
-		removeOnComplete: true
+		attempts: 3,
+		removeOnComplete: true,
+		removeOnFail: true
 	},
 	redis: getRedisInfo("bull").redisOptions,
 	createClient: (type, redisOpts = {}) => {
@@ -57,7 +57,7 @@ if (process.env.NODE_ENV === EnvironmentEnum.development) {
 }
 
 // Setup queues
-export const queues = {
+export const queues: { [key: string]: Queue.Queue } = {
 	discovery: new Queue("Content discovery", queueOpts),
 	installation: new Queue("Initial sync", queueOpts),
 	push: new Queue("Push transformation", queueOpts),
@@ -67,32 +67,26 @@ export const queues = {
 // Setup error handling for queues
 Object.keys(queues).forEach((name) => {
 	const queue = queues[name];
+	// On startup, clean any failed jobs older than 10s
+	queue.clean(10000, "failed");
 
 	// TODO: need ability to remove these listeners, especially for testing
-	queue.on("active", (job) => {
-		logger.info(`Job started name=${name} id=${job.id}`);
-		job.meta_time_start = new Date();
+	queue.on("active", (job: Queue.Job) => {
+		logger.info({ job, queue: name }, "Job started");
 	});
 
 	queue.on("completed", (job) => {
-		logger.info(`Job completed name=${name} id=${job.id}`);
-
-		measureElapsedTime(job.meta_time_start, {
-			queue: name,
-			status: "completed"
-		});
+		logger.info({ job, queue: name }, "Job completed");
+		measureElapsedTime(job, { queue: name, status: "completed" });
 	});
 
 	queue.on("failed", async (job) => {
-		logger.error(
-			`Error occurred while processing job id=${job.id} on queue name=${name}`
-		);
-
-		measureElapsedTime(job.meta_time_start, { queue: name, status: "failed" });
+		logger.error({ job, queue: name }, "Job failed");
+		measureElapsedTime(job, { queue: name, status: "failed" });
 	});
 
 	queue.on("error", (err) => {
-		logger.error(err, `Error occurred while processing queue ${name}`);
+		logger.error({ queue: name, err }, "Job Errored");
 
 		Sentry.setTag("queue", name);
 		Sentry.captureException(err);
@@ -160,6 +154,6 @@ export const stop = async (): Promise<void> => {
 		queues.discovery.close(),
 		queues.installation.close(),
 		queues.push.close(),
-		queues.metrics.close(),
+		queues.metrics.close()
 	]);
 };

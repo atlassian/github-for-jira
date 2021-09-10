@@ -67,13 +67,7 @@ export function createJobData(payload, jiraHost: string) {
 }
 
 export async function enqueuePush(payload: unknown, jiraHost: string, options?: JobOptions) {
-	await queues.push.add(
-		createJobData(payload, jiraHost),
-		{
-			removeOnFail: true,
-			removeOnComplete: true,
-			...options
-		});
+	await queues.push.add(createJobData(payload, jiraHost), options);
 }
 
 export function processPush(app: Application) {
