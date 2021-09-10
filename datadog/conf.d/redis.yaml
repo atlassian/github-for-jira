@@ -1,6 +1,0 @@
-init_config:
-
-instances:
-  - host: <REDIS HOSTNAME>
-    port: <REDIS PORT>
-    password: <REDIS PASSWORD>
