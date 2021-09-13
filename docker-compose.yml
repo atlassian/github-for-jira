@@ -35,5 +35,4 @@ services:
       - "9230:9230" # worker debug port
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/jira-dev
-      REDIS_HOST: redis
-      REDIS_BOTTLENECK_HOST: redis
+      REDIS_CACHE_HOST: redis
