@@ -52,6 +52,7 @@ export const getCommits = `query ($owner: String!, $repo: String!, $per_page: In
                   message
                   oid
                   url
+                  changedFiles
                 }
               }
             }

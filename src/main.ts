@@ -7,9 +7,8 @@ import App from "./configure-robot";
 import { initializeSentry } from "./config/sentry";
 import { getLogger, overrideProbotLoggingMethods } from "./config/logger";
 import "./config/proxy";
-import { EnvironmentEnum } from "./config/env";
+import { isProd } from "./util/isEnv";
 
-const isProd = process.env.NODE_ENV === EnvironmentEnum.production;
 const { redisOptions } = getRedisInfo("probot");
 
 const probot = createProbot({
@@ -42,7 +41,7 @@ async function start() {
 }
 
 // TODO: this should work in dev/production and should be `workers = process.env.NODE_ENV === 'production' ? undefined : 1`
-if (isProd) {
+if (isProd()) {
 	// Start clustered server
 	throng(
 		{

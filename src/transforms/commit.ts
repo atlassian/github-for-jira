@@ -3,7 +3,7 @@ import { isEmpty } from "../jira/util/isEmpty";
 import { JiraCommit, JiraCommitData } from "../interfaces/jira";
 import { getJiraAuthor } from "../util/jira";
 
-export const mapCommit = (commit, author): JiraCommit => {
+export const mapCommit = (commit): JiraCommit => {
 
 	const issueKeys = issueKeyParser().parse(commit.message);
 
@@ -12,16 +12,16 @@ export const mapCommit = (commit, author): JiraCommit => {
 	}
 
 	return {
-		author: getJiraAuthor(author, commit.author),
-		authorTimestamp: commit.authorTimestamp,
-		displayId: commit.sha.substring(0, 6),
-		fileCount: commit.fileCount,
-		hash: commit.sha,
-		id: commit.sha,
+		author: getJiraAuthor(commit.author),
+		authorTimestamp: commit.authoredDate,
+		displayId: commit.oid.substring(0, 6),
+		fileCount: commit.changedFiles || 0,
+		hash: commit.oid,
+		id: commit.oid,
 		issueKeys,
 		message: commit.message,
-		timestamp: commit.authorTimestamp,
-		url: commit.url,
+		timestamp: commit.authoredDate,
+		url: commit.url || undefined, // If blank string, don't send url
 		updateSequenceId: Date.now()
 	};
 }
@@ -30,7 +30,7 @@ export const mapCommit = (commit, author): JiraCommit => {
 export default (payload): JiraCommitData => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
-		.map((commit) => mapCommit(commit, payload.author))
+		.map((commit) => mapCommit(commit))
 		.filter((commit) => !!commit);
 
 	if (commits.length === 0) {

@@ -36,4 +36,6 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/jira-dev
       REDIS_HOST: redis
+      REDIS_PORT: 6379
       REDIS_BOTTLENECK_HOST: redis
+      REDIS_BOTTLENECK_PORT: 6379
