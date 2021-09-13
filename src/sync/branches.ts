@@ -1,7 +1,6 @@
 import transformBranches from "./transforms/branch";
 import { getBranches as getBranchesQuery } from "./queries";
 import { GitHubAPI } from "probot";
-import { getJiraAuthor } from "../util/jira";
 
 // TODO: better typings
 export default async (github: GitHubAPI, repository, cursor, perPage) => {
@@ -14,28 +13,10 @@ export default async (github: GitHubAPI, repository, cursor, perPage) => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	})) as any).repository.refs;
 
-	const branches = edges.map(({ node: item }) => {
-		// translating the object into a schema that matches our transforms
-		const associatedPullRequestTitle = (item.associatedPullRequests.nodes.length > 0)
-			? item.associatedPullRequests.nodes[0].title
-			: "";
-		return {
-			name: item.name,
-			associatedPullRequestTitle,
-			commits: item.target.history.nodes,
-			lastCommit: {
-				author: getJiraAuthor(item.target.author, item.target.history.nodes?.[0]?.author),
-				authorTimestamp: item.target.authoredDate,
-				fileCount: 0,
-				sha: item.target.oid,
-				message: item.target.message,
-				url: item.target.url || undefined
-			}
-		};
-	});
+	const branches = edges.map(({ node: item }) => item);
 
 	return {
-		edges,
+		edges: branches,
 		jiraPayload: transformBranches({ branches, repository })
 	};
 };

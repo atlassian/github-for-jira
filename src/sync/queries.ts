@@ -82,6 +82,7 @@ export const getBranches = `query ($owner: String!, $repo: String!, $per_page: I
                   name
                 }
                 authoredDate
+                changedFiles
                 history(first: 50) {
                   nodes {
                     message

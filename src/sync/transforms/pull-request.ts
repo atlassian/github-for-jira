@@ -24,13 +24,13 @@ export default async (payload, github: GitHubAPI) => {
 		return undefined;
 	}
 
-	const prGet = await github?.pulls?.get({
+	const prGet = (await github?.pulls?.get({
 		owner: repository.owner.login,
 		repo: repository.name,
 		pull_number: pullRequest.number
-	});
+	})).data;
 
-	const commentCount = prGet?.data.comments;
+	const commentCount = prGet?.comments;
 
 	return {
 		id: repository.id,
@@ -38,23 +38,19 @@ export default async (payload, github: GitHubAPI) => {
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
-				author: getJiraAuthor(prGet.data.user, await getGithubUser(github, prGet.data.user?.login)),
+				author: getJiraAuthor(await getGithubUser(github, prGet.user?.login)),
 				commentCount,
-				destinationBranch: `${repository.html_url}/tree/${
-					pullRequest.base ? pullRequest.base.ref : ""
-				}`,
-				displayId: `#${pullRequest.number}`,
-				id: pullRequest.number,
+				destinationBranch: `${repository.html_url}/tree/${prGet.base?.ref || ""}`,
+				displayId: `#${prGet.number}`,
+				id: prGet.number,
 				issueKeys,
-				lastUpdate: pullRequest.updated_at,
-				sourceBranch: `${pullRequest.head ? pullRequest.head.ref : ""}`,
-				sourceBranchUrl: `${repository.html_url}/tree/${
-					pullRequest.head ? pullRequest.head.ref : ""
-				}`,
-				status: mapStatus(pullRequest),
-				timestamp: pullRequest.updated_at,
-				title: pullRequest.title,
-				url: pullRequest.html_url,
+				lastUpdate: prGet.updated_at,
+				sourceBranch: `${prGet.head?.ref || ""}`,
+				sourceBranchUrl: `${repository.html_url}/tree/${prGet.head?.ref || ""}`,
+				status: mapStatus(prGet),
+				timestamp: prGet.updated_at,
+				title: prGet.title,
+				url: prGet.html_url,
 				updateSequenceId: Date.now()
 			}
 		],

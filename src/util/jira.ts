@@ -6,7 +6,7 @@ export const getJiraAuthor = (...authors: Author[]): JiraAuthor => {
 		avatar: author.avatar_url || author.avatarUrl || `https://github.com/users/${author.login}.png`,
 		name: author.name || author.login || author.email?.match(/^(.*)@/)?.pop() || "unknown",
 		email: author.email || `${author.login}@noreply.user.github.com`,
-		url: author.url || author.html_url || author.user?.url || `https://github.com/users/${author.login}`
+		url: author.html_url || author.url || author.user?.url || `https://github.com/users/${author.login}`
 	} : {
 		avatar: "https://github.com/ghost.png",
 		name: "Deleted User",
