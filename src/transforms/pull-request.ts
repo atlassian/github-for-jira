@@ -3,6 +3,7 @@ import { isEmpty } from "../jira/util/isEmpty";
 import { getJiraId } from "../jira/util/id";
 import _ from "lodash";
 import { Octokit } from "@octokit/rest";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -42,7 +43,7 @@ function mapReviews(reviews) {
 }
 
 // TODO: define arguments and return
-export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse) => {
+export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 
 	// This is the same thing we do in sync, concatenating these values
 	const issueKeys = issueKeyParser().parse(
@@ -50,10 +51,13 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 	);
 
 	if (isEmpty(issueKeys) || !pullRequest?.head?.repo) {
+		log?.info("Ignoring pullrequest hence it has no issues or repo")
 		return undefined;
 	}
 
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
+
+	log?.info(`Pull request status mapped to ${pullRequestStatus}`)
 
 	return {
 		id: pullRequest.base.repo.id,
