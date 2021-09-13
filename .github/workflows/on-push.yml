@@ -50,8 +50,8 @@ jobs:
       - name: Run tests
         env:
           NODE_ENV: test
-          REDIS_CACHE_HOST: localhost
-          REDIS_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
+          REDISX_CACHE_HOST: localhost
+          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
           DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
         run: npm test
 
