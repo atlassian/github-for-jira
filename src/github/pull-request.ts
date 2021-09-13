@@ -41,7 +41,7 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 		context.log
 	);
 
-	context.log.info({jiraPayload}, "Pullreqeust mapped to Jira Payload")
+	context.log.info({jiraPayload}, "Pullrequest mapped to Jira Payload")
 
 	// Deletes PR link to jira if ticket id is removed from PR title
 	if (!jiraPayload && changes?.title) {
