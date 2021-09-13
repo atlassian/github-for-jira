@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 import path from "path";
 import { LogLevelString } from "bunyan";
-import { getLogger } from "./logger";
 
 export enum EnvironmentEnum {
 	test = "test",
@@ -13,9 +12,6 @@ export enum BooleanEnum {
 	true = "true",
 	false = "false",
 }
-
-const logger = getLogger("env");
-logger.info(Object.keys(process.env), "Available Environment Variables");
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[process.env.NODE_ENV];
 

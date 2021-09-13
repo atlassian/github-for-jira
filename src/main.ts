@@ -10,7 +10,7 @@ import "./config/proxy";
 import { EnvironmentEnum } from "./config/env";
 
 const isProd = process.env.NODE_ENV === EnvironmentEnum.production;
-const { redisOptions } = getRedisInfo("probot");
+const redisOptions = getRedisInfo("probot");
 
 const probot = createProbot({
 	id: Number(process.env.APP_ID),
@@ -19,7 +19,7 @@ const probot = createProbot({
 	port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080,
 	webhookPath: "/github/events",
 	webhookProxy: process.env.WEBHOOK_PROXY_URL,
-	redisConfig: redisOptions,
+	redisConfig: redisOptions
 });
 
 overrideProbotLoggingMethods(probot.logger);
