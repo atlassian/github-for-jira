@@ -4,19 +4,14 @@ import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 
 async function getLastCommit(context: Context, issueKeys: string[]) {
-	const {
-		github,
-		payload: { ref }
-	} = context;
+	const { github, payload: { ref } } = context;
 
 	const {
-		data: {
-			object: { sha }
-		}
+		data: { object: { sha } }
 	} = await github.git.getRef(context.repo({ ref: `heads/${ref}` }));
 	const {
 		data: { commit, html_url: url }
-	} = await github.repos.getCommit(context.repo({ sha }));
+	} = await github.repos.getCommit(context.repo({ ref: sha }));
 
 	return {
 		author: {
