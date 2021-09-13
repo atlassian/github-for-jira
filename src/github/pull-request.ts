@@ -37,14 +37,18 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 
 	const jiraPayload = transformPullRequest(
 		pull_request,
-		reviews.data
+		reviews.data,
+		context.log
 	);
+
+	context.log.info({jiraPayload}, "Pullrequest mapped to Jira Payload")
 
 	// Deletes PR link to jira if ticket id is removed from PR title
 	if (!jiraPayload && changes?.title) {
 		const issueKeys = issueKeyParser().parse(changes?.title?.from);
 
 		if (!isEmpty(issueKeys)) {
+			context.log.info({issueKeys}, "Sending pullrequest delete event for issue keys")
 			return jiraClient.devinfo.pullRequest.delete(repositoryId, pull_request.number);
 		}
 	}
@@ -63,13 +67,13 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 	}
 
 	if (!jiraPayload) {
-		context.log.debug(
+		context.log.info(
 			{ pullRequestNumber: pull_request.number },
 			"Halting futher execution for pull request since jiraPayload is empty"
 		);
 		return;
 	}
 
-	context.log({ pullRequestNumber: pull_request.number }, `Sending pull request update to Jira ${jiraClient.baseURL}`);
+	context.log({ pullRequestNumber: pull_request.number, jiraPayload }, `Sending pull request update to Jira ${jiraClient.baseURL}`);
 	await jiraClient.devinfo.repository.update(jiraPayload);
 };
