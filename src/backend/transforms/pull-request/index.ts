@@ -3,7 +3,7 @@ import { isEmpty } from "../../../common/isEmpty";
 import { getJiraId } from "../../../common/id";
 import _ from "lodash";
 import { Octokit } from "@octokit/rest";
-import { getJiraAuthor } from "../../../common/jira";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -43,7 +43,7 @@ function mapReviews(reviews) {
 }
 
 // TODO: define arguments and return
-export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse) => {
+export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 
 	// This is the same thing we do in sync, concatenating these values
 	const issueKeys = issueKeyParser().parse(
@@ -51,10 +51,13 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 	);
 
 	if (isEmpty(issueKeys) || !pullRequest?.head?.repo) {
+		log?.info("Ignoring pullrequest hence it has no issues or repo")
 		return undefined;
 	}
 
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
+
+	log?.info(`Pull request status mapped to ${pullRequestStatus}`)
 
 	return {
 		id: pullRequest.base.repo.id,
@@ -69,7 +72,9 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 					{
 						createPullRequestUrl: `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
-							author: getJiraAuthor(pullRequest.head?.user),
+							author: {
+								name: pullRequest.head?.user?.login || undefined
+							},
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
 							fileCount: 0,
@@ -89,7 +94,11 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 				],
 		pullRequests: [
 			{
-				author: getJiraAuthor(pullRequest.user),
+				author: {
+					avatar: pullRequest.user?.avatar_url || undefined,
+					name: pullRequest.user?.login || undefined,
+					url: pullRequest.user?.html_url || undefined
+				},
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
 				displayId: `#${pullRequest.number}`,
