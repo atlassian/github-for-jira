@@ -277,7 +277,7 @@ const batchedBulkUpdate = async (
 			}
 		};
 		return instance.post("/rest/devinfo/0.10/bulk", body).catch((err) => {
-			logger.error({err, body, data}, "Jira Client Error: Cannot update Repository")
+			logger.error({err, req: err.request, res: err.response, body, data}, "Jira Client Error: Cannot update Repository")
 			return Promise.reject(err);
 		});
 	});
