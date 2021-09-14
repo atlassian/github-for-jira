@@ -60,7 +60,7 @@ const viewerPermissionQuery = `{
 
 router.use(rateLimit({
 	store: new RedisStore({
-		client: new Redis(getRedisInfo("express-rate-limit").redisOptions)
+		client: new Redis(getRedisInfo("express-rate-limit"))
 	}),
 	windowMs: 60 * 1000, // 1 minutes
 	max: 60 // limit each IP to 60 requests per windowMs

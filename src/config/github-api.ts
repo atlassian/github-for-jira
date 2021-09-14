@@ -7,7 +7,7 @@ import ehanceOctokit from "./enhance-octokit";
 import { Options } from "probot/lib/github";
 
 // Just create one connection and share it
-const { redisOptions } = getRedisInfo("octokit");
+const redisOptions = getRedisInfo("octokit");
 const client = new Redis(redisOptions);
 const connection = new Bottleneck.IORedisConnection({ client });
 
