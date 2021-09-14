@@ -3,7 +3,8 @@ const server = "app.server";
 
 export const metricError = {
 	expressRateLimited: `${server}.error.express-rate-limited`,
-	githubErrorRendered: `${frontend}.error.github-error-rendered`
+	githubErrorRendered: `${frontend}.error.github-error-rendered`,
+	failedConnection: `${server}.error.failed-connection`
 };
 
 export const metricHttpRequest = (metricName?: string) => {
