@@ -62,7 +62,7 @@ async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
 export default async (app: Application): Promise<Application> => {
 	if (process.env.USE_RATE_LIMITING === "true") {
 		const GitHubCIDRs = await getGitHubCIDRs(getLogger("rate-limiting"));
-		const client = new Redis(getRedisInfo("rate-limiter").redisOptions);
+		const client = new Redis(getRedisInfo("rate-limiter"));
 		const limiter = RateLimit({
 			store: new RedisStore({
 				client

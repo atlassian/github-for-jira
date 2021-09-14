@@ -19,8 +19,8 @@ import "../../config/proxy";
 import { EnvironmentEnum } from "../../config/env";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
-const client = new Redis(getRedisInfo("client").redisOptions);
-const subscriber = new Redis(getRedisInfo("subscriber").redisOptions);
+const client = new Redis(getRedisInfo("client"));
+const subscriber = new Redis(getRedisInfo("subscriber"));
 const logger = getLogger("worker.main");
 
 function measureElapsedTime(job: Queue.Job, tags) {
@@ -33,7 +33,7 @@ const queueOpts: QueueOptions = {
 		removeOnComplete: true,
 		removeOnFail: true
 	},
-	redis: getRedisInfo("bull").redisOptions,
+	redis: getRedisInfo("bull"),
 	createClient: (type, redisOpts = {}) => {
 		let redisInfo;
 		switch (type) {

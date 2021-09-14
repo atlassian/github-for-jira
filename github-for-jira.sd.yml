@@ -32,12 +32,13 @@ links:
 cleanup: true
 
 resources:
-  - type: redis
-    name: bottleneck
+  - type: redisx
+    name: cache
     attributes:
-      snapshotRetention: 0
-      config:
-        maxmemory-policy: allkeys-lru
+      version: 6.x
+      size: 500
+      clusterModeEnabled: false
+      transitEncryptionEnabled: true
       dataType:
         - UGC/Label                # name of GitHub org / Jira site
         - PII/IndirectConfidential # name of GitHub org
@@ -329,6 +330,11 @@ environmentOverrides:
           ComparisonOperator: GreaterThanOrEqualToThreshold
           Statistic: Sum
     resources:
+      - type: redisx
+        name: cache
+        attributes:
+          size: 5000
+
       - name: database
         type: postgres-db
         attributes:
