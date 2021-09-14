@@ -4,6 +4,7 @@ import statsd from "../config/statsd";
 import { GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { metricHttpRequest } from "../config/metric-names";
+import { Repository } from "../models/subscription";
 
 const logger = getLogger("sync.pull-request");
 
@@ -34,7 +35,7 @@ interface Headers {
 
 export default async function(
 	github: GitHubAPI,
-	repository,
+	repository: Repository,
 	cursor: string | number,
 	perPage: number
 ) {

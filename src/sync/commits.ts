@@ -24,10 +24,11 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 	})) as any;
 
 	// if the repository is empty, commitsData.repository.ref is null
-	const commits = commitsData.repository.ref?.target?.history?.edges?.map(({ node: item }) => item) || [];
+	const edges = commitsData.repository.ref?.target?.history?.edges;
+	const commits = edges?.map(({ node: item }) => item) || [];
 
 	return {
-		edges: commits,
+		edges,
 		jiraPayload: transformCommit({ commits, repository })
 	};
 };

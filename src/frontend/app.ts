@@ -33,7 +33,7 @@ import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { isProd, isTest } from "../util/isEnv";
+import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
 
 // Adding session information to request
 declare global {
@@ -62,7 +62,7 @@ const oauth = GithubOAuth({
 
 // setup route middlewares
 const csrfProtection = csrf(
-	isTest()
+	isNodeTest()
 		? {
 			ignoreMethods: ["GET", "HEAD", "OPTIONS", "POST", "PUT"]
 		}
@@ -277,7 +277,7 @@ export default (octokitApp: App): Express => {
 	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 		req.log.error({ err, req, res }, "Error in frontend app.");
 
-		if (!isProd()) {
+		if (!isNodeProd()) {
 			return next(err);
 		}
 

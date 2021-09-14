@@ -13,7 +13,7 @@ import { getJiraAuthor } from "../util/jira";
 
 const logger = getLogger("transforms.push");
 
-const mapFile = (githubFile: any, repoName: string, repoOwner: string, commitHash: string) => {
+const mapFile = (githubFile, repoName: string, repoOwner: string, commitHash: string) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
 	const mapStatus = {

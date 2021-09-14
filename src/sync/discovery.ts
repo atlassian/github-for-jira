@@ -2,7 +2,7 @@ import { Subscription } from "../models";
 import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
-import { SyncStatus } from "../models/subscription";
+import { Repositories, SyncStatus } from "../models/subscription";
 import { getLogger } from "../config/logger";
 
 const logger = getLogger("sync.discovery");
@@ -36,7 +36,7 @@ export const discovery = (app: Application, queues) => async (job) => {
 
 		// Store the repository object to prevent doing an additional query in each job
 		// Also, with an object per repository we can calculate which repos are synched or not
-		const repos = repositories.reduce((obj, repo) => {
+		const repos: Repositories = repositories.reduce((obj, repo) => {
 			obj[repo.id] = { repository: getRepositorySummary(repo) };
 			return obj;
 		}, {});
@@ -48,6 +48,6 @@ export const discovery = (app: Application, queues) => async (job) => {
 		// Create job
 		queues.installation.add({ installationId, jiraHost, startTime });
 	} catch (err) {
-		logger.error({job, err}, "Discovery error");
+		logger.error({ job, err }, "Discovery error");
 	}
 };

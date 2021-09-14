@@ -16,7 +16,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage) => {
 	const branches = edges.map(({ node: item }) => item);
 
 	return {
-		edges: branches,
+		edges,
 		jiraPayload: transformBranches({ branches, repository })
 	};
 };
