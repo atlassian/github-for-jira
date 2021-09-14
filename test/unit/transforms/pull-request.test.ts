@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import transformPullRequest from "../../../src/transforms/pull-request";
-import { GitHubAPI } from "probot";
 
 describe("pull_request transform", () => {
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
@@ -11,19 +10,7 @@ describe("pull_request transform", () => {
 
 		Date.now = jest.fn(() => 12345678);
 
-		githubNock.get(`/users/${fixture.user.login}`)
-			.reply(200, {
-				...fixture.user,
-				name: "Some User Name"
-			});
-
-		githubNock.get(`/users/${fixture.head.user.login}`)
-			.reply(200, {
-				...fixture.head.user,
-				name: "Last Commit User Name"
-			});
-
-		const data = await transformPullRequest(GitHubAPI(), fixture);
+		const data = transformPullRequest(fixture);
 
 		const { updated_at, title } = fixture;
 
@@ -34,7 +21,7 @@ describe("pull_request transform", () => {
 				{
 					author: {
 						avatar: "https://avatars0.githubusercontent.com/u/173?v=4",
-						name: "Some User Name",
+						name: "bkeepers",
 						url: "https://api.github.com/users/bkeepers"
 					},
 					destinationBranch: "https://github.com/integrations/test/tree/devel",
@@ -58,8 +45,10 @@ describe("pull_request transform", () => {
 	});
 
 	it("should contain branches on the payload if pull request status is different than closed.", async () => {
-		const pullRequestList = Object.assign({},
-			require("../../fixtures/api/transform-pull-request-list.json")
+		const pullRequestList = JSON.parse(
+			JSON.stringify(
+				require("../../fixtures/api/transform-pull-request-list.json")
+			)
 		);
 
 		const fixture = pullRequestList[1];
@@ -67,19 +56,7 @@ describe("pull_request transform", () => {
 
 		Date.now = jest.fn(() => 12345678);
 
-		githubNock.get(`/users/${fixture.user.login}`)
-			.reply(200, {
-				...fixture.user,
-				name: "Some User Name"
-			});
-
-		githubNock.get(`/users/${fixture.head.user.login}`)
-			.reply(200, {
-				...fixture.head.user,
-				name: "Last Commit User Name"
-			});
-
-		const data = await transformPullRequest(GitHubAPI(), fixture);
+		const data = transformPullRequest(fixture);
 
 		const { updated_at, title } = fixture;
 
@@ -90,7 +67,7 @@ describe("pull_request transform", () => {
 				{
 					author: {
 						avatar: "https://avatars0.githubusercontent.com/u/173?v=4",
-						name: "Some User Name",
+						name: "bkeepers",
 						url: "https://api.github.com/users/bkeepers"
 					},
 					destinationBranch: "https://github.com/integrations/test/tree/devel",
@@ -116,9 +93,7 @@ describe("pull_request transform", () => {
 					issueKeys: ["TES-123"],
 					lastCommit: {
 						author: {
-							avatar: "https://avatars3.githubusercontent.com/u/31044959?v=4",
-							name: "Last Commit User Name",
-							url: "https://github.com/integrations",
+							name: "integrations"
 						},
 						authorTimestamp: "2018-05-04T14:06:56Z",
 						displayId: "09ca66",

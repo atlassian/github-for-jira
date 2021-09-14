@@ -1,8 +1,6 @@
 import { GitHubAPI } from "probot";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../../jira/util/isEmpty";
-import { getJiraAuthor } from "../../util/jira";
-import { getGithubUser } from "../../services/github/getGithubUser";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {
@@ -13,7 +11,27 @@ function mapStatus({ state, merged_at }): string {
 	return "UNKNOWN";
 }
 
-export default async (payload, github: GitHubAPI) => {
+/**
+ * Get the author or a ghost user.
+ */
+function getAuthor(author) {
+	// If author is null, return the ghost user
+	if (!author) {
+		return {
+			avatar: "https://github.com/ghost.png",
+			name: "Deleted User",
+			url: "https://github.com/ghost"
+		};
+	}
+
+	return {
+		avatar: author.avatar_url || undefined,
+		name: author.login || undefined,
+		url: author.url || undefined
+	};
+}
+
+export default async (payload, author, github: GitHubAPI) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
 	const issueKeys = issueKeyParser().parse(
@@ -24,31 +42,36 @@ export default async (payload, github: GitHubAPI) => {
 		return undefined;
 	}
 
-	const prGet = (await github?.pulls?.get({
+	const prGet = await github?.pulls?.get({
 		owner: repository.owner.login,
 		repo: repository.name,
 		pull_number: pullRequest.number
-	})).data;
+	});
+
+	const commentCount = prGet?.data.comments;
 
 	return {
 		id: repository.id,
 		name: repository.full_name,
 		pullRequests: [
 			{
-				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
-				author: getJiraAuthor(prGet.user, await getGithubUser(github, prGet.user?.login)),
-				commentCount: prGet.comments || 0,
-				destinationBranch: `${repository.html_url}/tree/${prGet.base?.ref || ""}`,
-				displayId: `#${prGet.number}`,
-				id: prGet.number,
+				author: getAuthor(author),
+				commentCount,
+				destinationBranch: `${repository.html_url}/tree/${
+					pullRequest.base ? pullRequest.base.ref : ""
+				}`,
+				displayId: `#${pullRequest.number}`,
+				id: pullRequest.number,
 				issueKeys,
-				lastUpdate: prGet.updated_at,
-				sourceBranch: `${prGet.head?.ref || ""}`,
-				sourceBranchUrl: `${repository.html_url}/tree/${prGet.head?.ref || ""}`,
-				status: mapStatus(prGet),
-				timestamp: prGet.updated_at,
-				title: prGet.title,
-				url: prGet.html_url,
+				lastUpdate: pullRequest.updated_at,
+				sourceBranch: `${pullRequest.head ? pullRequest.head.ref : ""}`,
+				sourceBranchUrl: `${repository.html_url}/tree/${
+					pullRequest.head ? pullRequest.head.ref : ""
+				}`,
+				status: mapStatus(pullRequest),
+				timestamp: pullRequest.updated_at,
+				title: pullRequest.title,
+				url: pullRequest.html_url,
 				updateSequenceId: Date.now()
 			}
 		],

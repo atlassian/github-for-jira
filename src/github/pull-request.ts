@@ -35,8 +35,7 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 		);
 	}
 
-	const jiraPayload = await transformPullRequest(
-		context.github,
+	const jiraPayload = transformPullRequest(
 		pull_request,
 		reviews.data,
 		context.log

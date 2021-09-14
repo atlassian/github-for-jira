@@ -2,7 +2,6 @@ import { getJiraId } from "../jira/util/id";
 import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
-import { getJiraAuthor } from "../util/jira";
 
 async function getLastCommit(context: Context, issueKeys: string[]) {
 	const { github, payload: { ref } } = context;
@@ -11,11 +10,13 @@ async function getLastCommit(context: Context, issueKeys: string[]) {
 		data: { object: { sha } }
 	} = await github.git.getRef(context.repo({ ref: `heads/${ref}` }));
 	const {
-		data: { commit, author, html_url: url }
+		data: { commit, html_url: url }
 	} = await github.repos.getCommit(context.repo({ ref: sha }));
 
 	return {
-		author: getJiraAuthor(author, commit.author),
+		author: {
+			name: commit.author.name
+		},
 		authorTimestamp: commit.author.date,
 		displayId: sha.substring(0, 6),
 		fileCount: 0,
