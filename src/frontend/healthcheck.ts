@@ -6,7 +6,7 @@ import { getLogger } from "../config/logger";
 import { sequelize } from "../models/sequelize";
 
 const router = express.Router();
-const cache = new Redis(getRedisInfo("ping").redisOptions);
+const cache = new Redis(getRedisInfo("ping"));
 
 /**
  * /deepcheck endpoint to checks to see that all our connections are OK
