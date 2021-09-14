@@ -31,9 +31,9 @@ import logMiddleware from "../middleware/log-middleware";
 import { App } from "@octokit/app";
 import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { EnvironmentEnum } from "../config/env";
 import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { isProd, isTest } from "../util/isEnv";
 
 // Adding session information to request
 declare global {
@@ -62,7 +62,7 @@ const oauth = GithubOAuth({
 
 // setup route middlewares
 const csrfProtection = csrf(
-	process.env.NODE_ENV === EnvironmentEnum.test
+	isTest()
 		? {
 			ignoreMethods: ["GET", "HEAD", "OPTIONS", "POST", "PUT"]
 		}
@@ -277,7 +277,7 @@ export default (octokitApp: App): Express => {
 	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 		req.log.error({ err, req, res }, "Error in frontend app.");
 
-		if (process.env.NODE_ENV !== EnvironmentEnum.production) {
+		if (!isProd()) {
 			return next(err);
 		}
 

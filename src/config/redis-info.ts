@@ -1,5 +1,5 @@
 import Redis from "ioredis";
-import isProd from "../jira/util/isProd";
+import { isProd } from "../util/isEnv";
 
 export default (connectionName: string): Redis.RedisOptions => ({
 	port: Number(process.env.REDISX_CACHE_PORT) || 6379,

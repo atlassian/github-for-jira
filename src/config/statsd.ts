@@ -1,13 +1,11 @@
 import { StatsCb, StatsD, Tags } from "hot-shots";
 import { getLogger } from "./logger";
 import { NextFunction, Request, Response } from "express";
-import { EnvironmentEnum } from "./env";
-
-const isTest = process.env.NODE_ENV === "test";
+import { isDev, isTest } from "../util/isEnv";
 
 export const globalTags = {
-	environment: isTest ? "test" : process.env.MICROS_ENV,
-	environment_type: isTest ? "testenv" : process.env.MICROS_ENVTYPE,
+	environment: isTest() ? "test" : process.env.MICROS_ENV,
+	environment_type: isTest() ? "testenv" : process.env.MICROS_ENVTYPE,
 	deployment_id: process.env.MICROS_DEPLOYMENT_ID || "1",
 	region: process.env.MICROS_AWS_REGION || "localhost"
 };
@@ -20,12 +18,12 @@ const statsd = new StatsD({
 	port: 8125,
 	globalTags,
 	errorHandler: (err) => {
-		if (process.env.NODE_ENV !== EnvironmentEnum.development) {
+		if (!isDev()) {
 			logger.warn(err, "Error writing metrics");
 		}
 	},
 
-	mock: isTest
+	mock: isTest()
 });
 
 /**
