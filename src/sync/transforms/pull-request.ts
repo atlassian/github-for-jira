@@ -30,8 +30,6 @@ export default async (payload, github: GitHubAPI) => {
 		pull_number: pullRequest.number
 	})).data;
 
-	const commentCount = prGet?.comments;
-
 	return {
 		id: repository.id,
 		name: repository.full_name,
@@ -39,7 +37,7 @@ export default async (payload, github: GitHubAPI) => {
 			{
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
 				author: getJiraAuthor(await getGithubUser(github, prGet.user?.login)),
-				commentCount,
+				commentCount: prGet.comments || 0,
 				destinationBranch: `${repository.html_url}/tree/${prGet.base?.ref || ""}`,
 				displayId: `#${prGet.number}`,
 				id: prGet.number,

@@ -3,6 +3,7 @@ import { isEmpty } from "../jira/util/isEmpty";
 import { getJiraId } from "../jira/util/id";
 import _ from "lodash";
 import { Octokit } from "@octokit/rest";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
 import { getGithubUser } from "../services/github/getGithubUser";
@@ -45,7 +46,7 @@ function mapReviews(reviews) {
 }
 
 // TODO: define arguments and return
-export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse) => {
+export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 
 	// This is the same thing we do in sync, concatenating these values
 	const issueKeys = issueKeyParser().parse(
@@ -53,10 +54,13 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 	);
 
 	if (isEmpty(issueKeys) || !pullRequest?.head?.repo) {
+		log?.info("Ignoring pullrequest hence it has no issues or repo")
 		return undefined;
 	}
 
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
+
+	log?.info(`Pull request status mapped to ${pullRequestStatus}`)
 
 	return {
 		id: pullRequest.base.repo.id,

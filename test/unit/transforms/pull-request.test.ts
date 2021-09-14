@@ -118,7 +118,7 @@ describe("pull_request transform", () => {
 						author: {
 							avatar: "https://avatars3.githubusercontent.com/u/31044959?v=4",
 							name: "Last Commit User Name",
-							url: "https://api.github.com/users/integrations",
+							url: "https://github.com/integrations",
 						},
 						authorTimestamp: "2018-05-04T14:06:56Z",
 						displayId: "09ca66",
