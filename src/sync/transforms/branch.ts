@@ -1,7 +1,6 @@
 import { getJiraId } from "../../jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../../jira/util/isEmpty";
-import { getJiraAuthor } from "../../util/jira";
 
 // TODO: better typing in file
 /**
@@ -16,9 +15,9 @@ import { getJiraAuthor } from "../../util/jira";
 function mapBranch(branch, repository) {
 	const branchKeys = issueKeyParser().parse(branch.name);
 	const pullRequestKeys = issueKeyParser().parse(
-		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
+		branch.associatedPullRequestTitle
 	);
-	const commitKeys = issueKeyParser().parse(branch.target.message);
+	const commitKeys = issueKeyParser().parse(branch.lastCommit.message);
 
 	const allKeys = branchKeys
 		.concat(pullRequestKeys)
@@ -35,16 +34,19 @@ function mapBranch(branch, repository) {
 		id: getJiraId(branch.name),
 		issueKeys: allKeys,
 		lastCommit: {
-			author: getJiraAuthor(branch.target.author, branch.target.history.nodes?.[0]?.author),
-			authorTimestamp: branch.target.authoredDate,
-			displayId: branch.target.oid.substring(0, 6),
-			fileCount: branch.target.changedFiles || 0,
-			hash: branch.target.oid,
-			id: branch.target.oid,
+			author: {
+				avatar: branch?.lastCommit?.author?.avatarUrl || undefined,
+				name: branch?.lastCommit?.author?.name || undefined
+			},
+			authorTimestamp: branch.lastCommit.authorTimestamp,
+			displayId: branch.lastCommit.sha.substring(0, 6),
+			fileCount: branch.lastCommit.fileCount,
+			hash: branch.lastCommit.sha,
+			id: branch.lastCommit.sha,
 			// Use only one set of keys for the last commit in order of most specific to least specific
 			issueKeys: commitKeys || branchKeys || pullRequestKeys,
-			message: branch.target.message,
-			url: branch.target.url || undefined,
+			message: branch.lastCommit.message,
+			url: branch.lastCommit.url,
 			updateSequenceId: Date.now()
 		},
 		name: branch.name,
@@ -66,7 +68,12 @@ function mapCommit(commit) {
 	}
 
 	return {
-		author: getJiraAuthor(commit.author),
+		author: {
+			avatar: commit.author?.avatarUrl || undefined,
+			email: commit.author?.email || undefined,
+			name: commit.author?.name || undefined,
+			url: commit.author?.user?.url || undefined
+		},
 		authorTimestamp: commit.authoredDate,
 		displayId: commit.oid.substring(0, 6),
 		fileCount: 0,
@@ -89,7 +96,7 @@ export default (payload) => {
 
 	// TODO: use reduce instead of map/filter
 	const commits = payload.branches.flatMap((branch) =>
-		branch.target.history.nodes
+		branch.commits
 			.map((commit) => mapCommit(commit))
 			.filter((branch) => !!branch)
 	);

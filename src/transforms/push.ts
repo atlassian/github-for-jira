@@ -7,13 +7,12 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { getLogger } from "../config/logger";
 import { JobOptions } from "bull";
-import { getJiraAuthor } from "../util/jira";
 
 // TODO: define better types for this file
 
 const logger = getLogger("transforms.push");
 
-const mapFile = (githubFile: any, repoName: string, repoOwner: string, commitHash: string) => {
+const mapFile = (githubFile:any, repoName: string, repoOwner: string, commitHash: string) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
 	const mapStatus = {
@@ -22,7 +21,7 @@ const mapFile = (githubFile: any, repoName: string, repoOwner: string, commitHas
 		modified: "MODIFIED"
 	};
 
-	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
+	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`
 
 	return {
 		path: githubFile.filename,
@@ -31,7 +30,7 @@ const mapFile = (githubFile: any, repoName: string, repoOwner: string, commitHas
 		linesRemoved: githubFile.deletions,
 		url: githubFile.blob_url || fallbackUrl
 	};
-};
+}
 
 export function createJobData(payload, jiraHost: string) {
 	// Store only necessary repository data in the queue
@@ -85,11 +84,9 @@ export function processPush(app: Application) {
 
 			const webhookId = job.data.webhookId || "none";
 
-			log = logger.child({
-				webhookId: webhookId,
+			log = logger.child({webhookId: webhookId,
 				repoName: repo,
-				orgName: owner.name
-			});
+				orgName: owner.name })
 
 			log.info({ installationId }, "Processing push");
 
@@ -123,6 +120,9 @@ export function processPush(app: Application) {
 
 					const { author: githubCommitAuthor, message } = githubCommit;
 
+					// Not all commits have a github author, so create username only if author exists
+					const username = author ? author.login : undefined;
+
 					// Jira only accepts a max of 10 files for each commit, so don't send all of them
 					const filesToSend = files.slice(0, 10);
 
@@ -132,7 +132,14 @@ export function processPush(app: Application) {
 					return {
 						hash: commitSha,
 						message,
-						author: getJiraAuthor(author, githubCommitAuthor),
+						author: {
+							avatar: username
+								? `https://github.com/${username}.png`
+								: undefined,
+							email: githubCommitAuthor.email,
+							name: githubCommitAuthor.name,
+							url: username ? `https://github.com/${username}` : undefined
+						},
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files

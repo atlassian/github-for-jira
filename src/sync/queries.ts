@@ -52,7 +52,6 @@ export const getCommits = `query ($owner: String!, $repo: String!, $per_page: In
                   message
                   oid
                   url
-                  changedFiles
                 }
               }
             }
@@ -82,7 +81,6 @@ export const getBranches = `query ($owner: String!, $repo: String!, $per_page: I
                   name
                 }
                 authoredDate
-                changedFiles
                 history(first: 50) {
                   nodes {
                     message

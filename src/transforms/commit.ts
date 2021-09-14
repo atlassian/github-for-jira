@@ -1,36 +1,40 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 import { JiraCommit, JiraCommitData } from "../interfaces/jira";
-import { getJiraAuthor } from "../util/jira";
 
-export const mapCommit = (commit): JiraCommit => {
+function mapCommit(githubCommit, author): JiraCommit {
 
-	const issueKeys = issueKeyParser().parse(commit.message);
+	const issueKeys = issueKeyParser().parse(githubCommit.message);
 
 	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
 
 	return {
-		author: getJiraAuthor(commit.author),
-		authorTimestamp: commit.authoredDate,
-		displayId: commit.oid.substring(0, 6),
-		fileCount: commit.changedFiles || 0,
-		hash: commit.oid,
-		id: commit.oid,
+		author: {
+			avatar: author.avatarUrl || undefined,
+			email: author.email || undefined,
+			name: author.name || undefined,
+			url: author.user?.url || undefined
+		},
+		authorTimestamp: githubCommit.authorTimestamp,
+		displayId: githubCommit.sha.substring(0, 6),
+		fileCount: githubCommit.fileCount,
+		hash: githubCommit.sha,
+		id: githubCommit.sha,
 		issueKeys,
-		message: commit.message,
-		timestamp: commit.authoredDate,
-		url: commit.url || undefined, // If blank string, don't send url
+		message: githubCommit.message,
+		timestamp: githubCommit.authorTimestamp,
+		url: githubCommit.url,
 		updateSequenceId: Date.now()
 	};
 }
 
 // TODO: type payload and return better
-export default (payload): JiraCommitData => {
+export default (payload, authorMap): JiraCommitData => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
-		.map((commit) => mapCommit(commit))
+		.map((commit, index) => mapCommit(commit, authorMap[index]))
 		.filter((commit) => !!commit);
 
 	if (commits.length === 0) {

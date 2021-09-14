@@ -24,10 +24,24 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 	})) as any;
 
 	// if the repository is empty, commitsData.repository.ref is null
-	const commits = commitsData.repository.ref?.target?.history?.edges?.map(({ node: item }) => item) || [];
+	const { edges } = commitsData.repository.ref
+		? commitsData.repository.ref.target.history
+		: { edges: [] };
+
+	const authors = edges.map(({ node: item }) => item.author);
+	const commits = edges.map(({ node: item }) =>
+		// translating the object into a schema that matches our transforms
+		({
+			author: item.author,
+			authorTimestamp: item.authoredDate,
+			fileCount: 0,
+			sha: item.oid,
+			message: item.message,
+			url: item.url || undefined
+		}));
 
 	return {
-		edges: commits,
-		jiraPayload: transformCommit({ commits, repository })
+		edges,
+		jiraPayload: transformCommit({ commits, repository }, authors)
 	};
 };

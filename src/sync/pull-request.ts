@@ -5,6 +5,16 @@ import { GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { metricHttpRequest } from "../config/metric-names";
 
+/**
+ * @typedef {object} RepositoryObject
+ * @property {number} id
+ * @property {string} name
+ * @property {object} owner
+ * @property {string} owner.login
+ * @property {string} html_url
+ * @property {string} full_name
+ */
+
 const logger = getLogger("sync.pull-request");
 
 /**
@@ -54,7 +64,6 @@ export default async function(
 	};
 
 	const asyncTags = [];
-	// TODO: use graphql here instead of rest API
 	await statsd.asyncTimer(
 		async () => {
 			({
@@ -92,6 +101,7 @@ export default async function(
 			edges.map(async (pull) => {
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
+					pull.user,
 					github
 				);
 				return data?.pullRequests[0];
@@ -102,7 +112,7 @@ export default async function(
 	return {
 		edges,
 		jiraPayload:
-			pullRequests?.length
+			pullRequests.length > 0
 				? {
 					id: repository.id,
 					name: repository.full_name,
