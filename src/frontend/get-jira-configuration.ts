@@ -9,9 +9,9 @@ import * as Sentry from "@sentry/node";
 const syncStatus = (syncStatus) =>
 	syncStatus === "ACTIVE" ? "IN PROGRESS" : syncStatus;
 
-const sendFailedStatusMetrics = (installationId: string, req: Request): void => {
+const sendFailedStatusMetrics = (installationId: string, reqLog: any): void => {
 	const syncError = "No updates in the last 15 minutes";
-	req.log.warn({ installationId, error: syncError }, "Sync failed");
+	reqLog.warn({ installationId, error: syncError }, "Sync failed");
 
 	Sentry.setExtra("Installation FAILED", syncError);
 	Sentry.captureException(syncError);
@@ -19,7 +19,7 @@ const sendFailedStatusMetrics = (installationId: string, req: Request): void => 
 	statsd.increment(metricSyncStatus.failed);
 };
 
-export async function getInstallation(client, subscription, req?: Request) {
+export async function getInstallation(client, subscription, reqLog?) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
@@ -35,11 +35,11 @@ export async function getInstallation(client, subscription, req?: Request) {
 			subscription.repoSyncState?.numberOfSyncedRepos || 0;
 		response.data.jiraHost = subscription.jiraHost;
 
-		response.data.syncStatus === "FAILED" && sendFailedStatusMetrics(id, req);
+		response.data.syncStatus === "FAILED" && sendFailedStatusMetrics(id, reqLog);
 
 		return response.data;
 	} catch (err) {
-		req.log.error(
+		reqLog.error(
 			{ installationId: id, error: err, uninstalled: err.code === 404 },
 			"Failed connection"
 		);
@@ -70,7 +70,7 @@ export default async (
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
 		const installations = await Promise.all(
 			subscriptions.map((subscription) =>
-				getInstallation(client, subscription, req)
+				getInstallation(client, subscription, req.log)
 			)
 		);
 
