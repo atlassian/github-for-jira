@@ -30,18 +30,19 @@ export default async (context: Context, jiraClient): Promise<void> => {
 		return;
 	}
 
-	context.log("Enqueueing push event");
+
 	// Since a push event can have any number of commits
 	// and we have to process each one individually to get the
 	// data we need for Jira, send this to a background job
 	// so we can close the http connection as soon as the jobs
 	// are in the queue.  Set as priority 1 to get this done before any other sync.
-
 	const prioritize = await booleanFlag(BooleanFlags.PRIORITIZE_PUSHES, true);
 
 	if (prioritize) {
+		context.log("Enqueueing push event (prioritized)");
 		await enqueuePush(payload, jiraClient.baseURL, { priority: 1 });
 	} else {
+		context.log("Enqueueing push event (not prioritized)");
 		await enqueuePush(payload, jiraClient.baseURL);
 	}
 };
