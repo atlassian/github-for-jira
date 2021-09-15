@@ -137,8 +137,8 @@ workers:
       metrics: *CpuMemScalingRules
 
 environmentOverrides:
-#  Uncomment lines 140-149 if you want remote debugging in ddev
-#  ddev:
+#  Uncomment lines 141-149 if you want remote debugging in ddev
+  ddev:
 #    loadBalancer:
 #      type: ELB # needed for remote debugging, default is "ALB"
 #    compose:
