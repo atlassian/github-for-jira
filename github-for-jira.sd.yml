@@ -52,6 +52,8 @@ resources:
         - PII/IndirectConfidential # name of GitHub org
       parameters:
         DBType: postgres125
+        CustomParameters:
+          log_min_duration_statement: 5000
 
   - name: database
     type: postgres-db
@@ -138,15 +140,17 @@ workers:
 
 environmentOverrides:
   ddev:
-    loadBalancer:
-      type: ELB # needed for remote debugging, default is "ALB"
-    compose:
-      microservice:
-        ports:
-          - 8080:8080
-          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
-    links:
-      remoteDebug: true
+#  Uncomment lines 140-149 if you want remote debugging in ddev
+#    loadBalancer:
+#      type: ELB # needed for remote debugging, default is "ALB"
+#    compose:
+#      microservice:
+#        ports:
+#          - 8080:8080
+#          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
+#    links:
+#      remoteDebug: true
+
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
@@ -345,7 +349,8 @@ environmentOverrides:
         attributes:
           parameters:
             DBInstanceClass: db.m5.large
-            AllocatedStorage: 10 # 10 GB
+            AllocatedStorage: 40 # GB
+            MaxAllocatedStorage: 100
             ConnectionAlarm: 250
 
       - type: globaledge
