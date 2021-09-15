@@ -298,8 +298,8 @@ environmentOverrides:
       - name: Worker
         scaling:
           instance: c5.2xlarge
-          min: 5
-          max: 10
+          min: 10
+          max: 20
           metrics: *CpuMemScalingRules
     alarms:
       overrides:
