@@ -171,7 +171,7 @@ export const start = (): void => {
 	initializeSentry();
 
 	// exposing queue metrics at a regular interval
-	setInterval(sendQueueMetrics, 1000);
+	setInterval(sendQueueMetrics, 60000);
 
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
 	queues.installation.process(
