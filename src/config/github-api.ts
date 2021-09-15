@@ -5,6 +5,7 @@ import Bottleneck from "bottleneck";
 import getRedisInfo from "./redis-info";
 import ehanceOctokit from "./enhance-octokit";
 import { Options } from "probot/lib/github";
+import { isNodeTest } from "../util/isNodeEnv";
 
 // Just create one connection and share it
 const redisOptions = getRedisInfo("octokit");
@@ -13,7 +14,7 @@ const connection = new Bottleneck.IORedisConnection({ client });
 
 export default (options: Partial<GithubAPIOptions> = {}): GitHubAPI => {
 	options.logger = options.logger || getLogger("config.github-api");
-	if (process.env.NODE_ENV === "test") {
+	if (isNodeTest()) {
 		// Don't throttle at all
 		options.throttle = {
 			enabled: false

@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import path from "path";
 import { LogLevelString } from "bunyan";
+import { getNodeEnv, isNodeTest } from "../util/isNodeEnv";
 
 export enum EnvironmentEnum {
 	test = "test",
@@ -13,9 +14,9 @@ export enum BooleanEnum {
 	false = "false",
 }
 
-const nodeEnv: EnvironmentEnum = EnvironmentEnum[process.env.NODE_ENV];
+const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 
-const filename = nodeEnv === EnvironmentEnum.test ? ".env.test" : ".env";
+const filename = isNodeTest() ? ".env.test" : ".env";
 const env = dotenv.config({
 	path: path.resolve(process.cwd(), filename)
 });

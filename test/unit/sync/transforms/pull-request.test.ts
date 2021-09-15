@@ -2,22 +2,29 @@
 import transformPullRequest from "../../../../src/sync/transforms/pull-request";
 
 describe("pull_request transform", () => {
+	let githubMock: any;
+	let pullRequest: any;
+	let user: any;
 
-	const githubMock: any = {
-		pulls: {
-			get: async () => ({ data: { comments: 1 } })
-		}
-	};
+	beforeEach(() => {
+		pullRequest = Object.assign({}, require("../../../fixtures/api/pull-request.json"));
+		user = Object.assign({}, require("../../../fixtures/api/user.json"));
+
+		githubMock = {
+			pulls: {
+				get: async () => ({ data: pullRequest })
+			},
+			users: {
+				getByUsername: async () => ({ data: user })
+			}
+		};
+	});
 
 	it("should send the ghost user to Jira when GitHub user has been deleted", async () => {
-		const pullRequestList = JSON.parse(
-			JSON.stringify(require("../../../fixtures/api/pull-request-list.json"))
-		);
-
-		pullRequestList[0].title = "[TES-123] Evernote Test";
+		pullRequest.title = "[TES-123] Evernote Test";
 
 		const fixture = {
-			pullRequest: pullRequestList[0],
+			pullRequest: pullRequest,
 			repository: {
 				id: 1234568,
 				name: "test-repo",
@@ -33,7 +40,6 @@ describe("pull_request transform", () => {
 
 		const data = await transformPullRequest(
 			fixture,
-			fixture.pullRequest.user,
 			githubMock
 		);
 
@@ -49,19 +55,19 @@ describe("pull_request transform", () => {
 						name: "Deleted User",
 						url: "https://github.com/ghost"
 					},
-					commentCount: 1,
+					commentCount: 10,
 					destinationBranch:
 						"https://github.com/test-owner/test-repo/tree/devel",
 					displayId: "#51",
 					id: 51,
 					issueKeys: ["TES-123"],
-					lastUpdate: pullRequestList[0].updated_at,
+					lastUpdate: pullRequest.updated_at,
 					sourceBranch: "use-the-force",
 					sourceBranchUrl:
 						"https://github.com/test-owner/test-repo/tree/use-the-force",
 					status: "DECLINED",
-					timestamp: pullRequestList[0].updated_at,
-					title: pullRequestList[0].title,
+					timestamp: pullRequest.updated_at,
+					title: pullRequest.title,
 					url: "https://github.com/integrations/test/pull/51",
 					updateSequenceId: 12345678
 				}
@@ -108,7 +114,6 @@ describe("pull_request transform", () => {
 
 		await expect(transformPullRequest(
 			fixture,
-			fixture.pullRequest.author,
 			githubMock
 		)).resolves.toBeUndefined();
 	});

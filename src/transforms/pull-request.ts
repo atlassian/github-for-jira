@@ -4,6 +4,9 @@ import { getJiraId } from "../jira/util/id";
 import _ from "lodash";
 import { Octokit } from "@octokit/rest";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import { getJiraAuthor } from "../util/jira";
+import { GitHubAPI } from "probot";
+import { getGithubUser } from "../services/github/getGithubUser";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -43,7 +46,7 @@ function mapReviews(reviews) {
 }
 
 // TODO: define arguments and return
-export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
+export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 
 	// This is the same thing we do in sync, concatenating these values
 	const issueKeys = issueKeyParser().parse(
@@ -72,9 +75,8 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 					{
 						createPullRequestUrl: `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
-							author: {
-								name: pullRequest.head?.user?.login || undefined
-							},
+							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
+							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
 							fileCount: 0,
@@ -94,11 +96,8 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 				],
 		pullRequests: [
 			{
-				author: {
-					avatar: pullRequest.user?.avatar_url || undefined,
-					name: pullRequest.user?.login || undefined,
-					url: pullRequest.user?.html_url || undefined
-				},
+				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
+				author: getJiraAuthor(pullRequest.user, await getGithubUser(github, pullRequest.user?.login)),
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
 				displayId: `#${pullRequest.number}`,

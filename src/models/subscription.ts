@@ -24,15 +24,22 @@ interface SyncStatusCount {
 }
 
 export interface Repositories {
-	[id: string]: {
-		repository?: Repository;
-		pullStatus?: string;
-		branchStatus?: string;
-		commitStatus?: string;
-		// TODO: need to get concrete typing
-		[key: string]: unknown;
-	};
+	[id: string]: RepositoryData;
 }
+
+export interface RepositoryData {
+	repository?: Repository;
+	pullStatus?: TaskStatus;
+	branchStatus?: TaskStatus;
+	commitStatus?: TaskStatus;
+	lastBranchCursor?: string | number;
+	lastCommitCursor?: string | number;
+	lastPullCursor?: string | number;
+	// TODO: need to get concrete typing
+	[key: string]: unknown;
+}
+
+export type TaskStatus = "pending" | "complete";
 
 export interface Repository {
 	id: string;
@@ -208,7 +215,7 @@ export default class Subscription extends Sequelize.Model {
 	async updateSyncState(updatedState: RepoSyncState): Promise<Subscription> {
 		this.repoSyncState = _.merge(this.repoSyncState, updatedState);
 		this.changed("repoSyncState", true);
-		return await this.save();
+		return this.save();
 	}
 
 	async uninstall(): Promise<void> {
