@@ -130,7 +130,8 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 
 const sendQueueMetrics = async () => {
 	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
-		for (const queue of Object.values(queues)) {
+
+		for (const [queueName, queue] of Object.entries(queues)) {
 
 			const counts = {
 				active: undefined,
@@ -152,8 +153,8 @@ const sendQueueMetrics = async () => {
 				queue.getWaitingCount().then((count: number) => counts.waiting = count),
 			]))
 
-			logger.info({ queue: queue.name, queueMetrics: counts }, "publishing queue metrics");
-			const tags = { queue: queue.name };
+			logger.info({ queue: queueName, queueMetrics: counts }, "publishing queue metrics");
+			const tags = { queue: queueName };
 			statsd.gauge(queueMetrics.active, counts.active, tags);
 			statsd.gauge(queueMetrics.completed, counts.completed, tags);
 			statsd.gauge(queueMetrics.delayed, counts.delayed, tags);
