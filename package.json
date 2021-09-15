@@ -21,7 +21,9 @@
     "build": "tsc -p ./tsconfig.json",
     "build:release": "tsc -p ./tsconfig.release.json",
     "build:watch": "tsc -w -p ./tsconfig.json",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "run-p lint:*",
+    "lint:ts": "eslint . --ext .ts,.tsx",
+    "lint:yaml": "yamllint github-for-jira.sd.yml",
     "pretest": "run-p db:test",
     "test": "jest --runInBand --forceExit --coverage",
     "test:watch": "jest --runInBand --watchAll",
@@ -122,7 +124,8 @@
     "supertest": "^4.0.2",
     "ts-jest": "~26.5.6",
     "ts-node": "^10.0.0",
-    "ts-node-dev": "^1.1.6"
+    "ts-node-dev": "^1.1.6",
+    "yaml-lint": "^1.2.4"
   },
   "volta": {
     "node": "14.17.0"

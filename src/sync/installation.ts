@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { Repositories, SyncStatus } from "../models/subscription";
+import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus } from "../models/subscription";
 import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
@@ -8,19 +8,31 @@ import statsd from "../config/statsd";
 import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
-import { Application } from "probot";
+import { Application, GitHubAPI } from "probot";
 import { metricHttpRequest, metricSyncStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 import Queue from "bull";
 
 const logger = getLogger("sync.installation");
 
-const tasks = {
+const tasks: TaskProcessors = {
 	pull: getPullRequests,
 	branch: getBranches,
 	commit: getCommits
 };
-const taskTypes = Object.keys(tasks);
+
+interface TaskProcessors {
+	[task: string]:
+		(
+			github: GitHubAPI,
+			repository: Repository,
+			cursor: string | number,
+			perPage: number
+		) => Promise<{ edges: any[], jiraPayload: any }>;
+}
+type TaskType = "pull" | "commit" | "branch";
+
+const taskTypes = Object.keys(tasks) as TaskType[];
 
 const updateNumberOfReposSynced = async (
 	repos: Repositories,
@@ -49,21 +61,20 @@ const updateNumberOfReposSynced = async (
 	});
 };
 
-export const sortedRepos = (repos: Repositories) =>
+export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
 		(a, b) =>
 			new Date(b[1].repository?.updated_at).getTime() -
 			new Date(a[1].repository?.updated_at).getTime()
 	);
 
-// TODO: type Task
-const getNextTask = async (subscription: SubscriptionClass) => {
+const getNextTask = async (subscription: SubscriptionClass): Promise<Task> => {
 	const repos = subscription?.repoSyncState?.repos || {};
 	await updateNumberOfReposSynced(repos, subscription);
 
 	for (const [repositoryId, repoData] of sortedRepos(repos)) {
 		const task = taskTypes.find(
-			(taskType) => repoData[`${taskType}Status`] !== "complete"
+			(taskType) => repoData[getStatusKey(taskType)] !== "complete"
 		);
 		if (!task) continue;
 		const { repository, [getCursorKey(task)]: cursor } = repoData;
@@ -71,15 +82,23 @@ const getNextTask = async (subscription: SubscriptionClass) => {
 			task,
 			repositoryId,
 			repository,
-			cursor
+			cursor: cursor as any
 		};
 	}
 	return undefined;
 };
 
+interface Task {
+	task:string;
+	repositoryId:string;
+	repository: Repository;
+	cursor: string | number;
+}
+
 const upperFirst = (str) =>
 	str.substring(0, 1).toUpperCase() + str.substring(1);
-const getCursorKey = (jobType) => `last${upperFirst(jobType)}Cursor`;
+const getCursorKey = (type:TaskType) => `last${upperFirst(type)}Cursor`;
+const getStatusKey = (type:TaskType) => `${type}Status`;
 
 const updateJobStatus = async (
 	queues,
@@ -108,7 +127,7 @@ const updateJobStatus = async (
 	await subscription.updateSyncState({
 		repos: {
 			[repositoryId]: {
-				[`${task}Status`]: status
+				[getStatusKey(task)]: status
 			}
 		}
 	});
@@ -195,7 +214,7 @@ export const processInstallation =
 				await subscription.updateSyncState({
 					repos: {
 						[repository.id]: {
-							repository: repository
+							repository
 						}
 					}
 				});
@@ -204,9 +223,6 @@ export const processInstallation =
 			logger.info({ job, task: nextTask }, "Starting task");
 
 			const processor = tasks[task];
-
-			// TODO: fix this function within function mess
-			const pagedProcessor = (perPage) => processor(github, repository, cursor, perPage);
 
 			const handleGitHubError = (err) => {
 				if (err.errors) {
@@ -226,8 +242,9 @@ export const processInstallation =
 			const execute = async () => {
 				for (const perPage of [20, 10, 5, 1]) {
 					try {
-						return await pagedProcessor(perPage);
+						return await processor(github, repository, cursor, perPage);
 					} catch (err) {
+						logger.error({ err, job, github, repository, cursor, task }, "Error Executing Task");
 						handleGitHubError(err);
 					}
 				}
