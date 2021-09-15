@@ -346,7 +346,8 @@ environmentOverrides:
         attributes:
           parameters:
             DBInstanceClass: db.m5.large
-            AllocatedStorage: 10 # 10 GB
+            AllocatedStorage: 40 # GB
+            MaxAllocatedStorage: 100
             ConnectionAlarm: 250
 
       - type: globaledge
