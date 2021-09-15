@@ -139,8 +139,8 @@ workers:
       metrics: *CpuMemScalingRules
 
 environmentOverrides:
-#  Uncomment lines 140-149 if you want remote debugging in ddev
   ddev:
+#  Uncomment lines 140-149 if you want remote debugging in ddev
 #    loadBalancer:
 #      type: ELB # needed for remote debugging, default is "ALB"
 #    compose:
@@ -150,6 +150,7 @@ environmentOverrides:
 #          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
 #    links:
 #      remoteDebug: true
+
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
