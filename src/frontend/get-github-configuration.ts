@@ -33,12 +33,13 @@ const mergeByLogin = (installationsWithAdmin: any, connectedStatuses: any) =>
 const installationConnectedStatus = async (
 	sessionJiraHost: string,
 	client: any,
-	installationsWithAdmin: any
+	installationsWithAdmin: any,
+	reqLog: any
 ) => {
 	const subscriptions = await Subscription.getAllForHost(sessionJiraHost);
 
 	const installationsWithSubscriptions = await Promise.all(
-		subscriptions.map((subscription) => getInstallation(client, subscription))
+		subscriptions.map((subscription) => getInstallation(client, subscription, reqLog))
 	);
 
 	const connectedStatuses = getConnectedStatus(
@@ -105,7 +106,8 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			const connectedInstallations = await installationConnectedStatus(
 				req.session.jiraHost,
 				client,
-				installationsWithAdmin
+				installationsWithAdmin,
+				req.log
 			);
 
 			return res.render("github-configuration.hbs", {
