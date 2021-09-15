@@ -13,6 +13,8 @@ export const queueMetrics = {
 	failed: `${server}.queue.failed`,
 	delayed: `${server}.queue.delayed`,
 	waiting: `${server}.queue.waiting`,
+	paused: `${server}.queue.paused`,
+	repeatable: `${server}.queue.repeatable`,
 }
 
 export const metricHttpRequest = (metricName?: string) => {
