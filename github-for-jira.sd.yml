@@ -52,6 +52,8 @@ resources:
         - PII/IndirectConfidential # name of GitHub org
       parameters:
         DBType: postgres125
+        CustomParameters:
+          log_min_duration_statement: 5000
 
   - name: database
     type: postgres-db
@@ -138,7 +140,7 @@ workers:
 
 environmentOverrides:
 #  Uncomment lines 140-149 if you want remote debugging in ddev
-#  ddev:
+  ddev:
 #    loadBalancer:
 #      type: ELB # needed for remote debugging, default is "ALB"
 #    compose:
