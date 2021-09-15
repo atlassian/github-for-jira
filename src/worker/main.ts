@@ -132,6 +132,7 @@ const sendQueueMetrics = async () => {
 	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
 		for (const queue of Object.values(queues)) {
 			const jobCounts = await queue.getJobCountByTypes(["completed", "waiting", "active", "delayed", "failed", "paused"]);
+			logger.info({queue: queue.name, queueMetrics: jobCounts}, "publishing queue metrics");
 			const tags = { queue: queue.name };
 			statsd.gauge(queueMetrics.active, jobCounts.active, tags);
 			statsd.gauge(queueMetrics.completed, jobCounts.completed, tags);
