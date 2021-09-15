@@ -15,7 +15,8 @@ export enum BooleanFlags {
 	//Controls if we should check the token properly for APIs which are called from Jira Frontend. (Fixes the current state)
 	FIX_IFRAME_ENDPOINTS_JWT = "fix-jwt-authentication-for-iframe-endpoints",
 	//If enabled, we'll use asymmetrically signed jwt tokens for /install and /uninstall endpoints callbacks.
-	USE_JWT_SIGNED_INSTALL_CALLBACKS = "use-jwt-signed-install-callbacks"
+	USE_JWT_SIGNED_INSTALL_CALLBACKS = "use-jwt-signed-install-callbacks",
+	PRIORITIZE_PUSHES = "prioritize-pushes"
 }
 
 export enum StringFlags {
