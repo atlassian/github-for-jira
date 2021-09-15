@@ -7,6 +7,14 @@ export const metricError = {
 	failedConnection: `${server}.error.failed-connection`
 };
 
+export const queueMetrics = {
+	active: `${server}.queue.active`,
+	completed: `${server}.queue.completed`,
+	failed: `${server}.queue.failed`,
+	delayed: `${server}.queue.delayed`,
+	waiting: `${server}.queue.waiting`,
+}
+
 export const metricHttpRequest = (metricName?: string) => {
 	return {
 		github: `${server}.http.request.github`,

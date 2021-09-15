@@ -12,11 +12,12 @@ import getRedisInfo from "../config/redis-info";
 import app, { probot } from "./app";
 import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
 import SentryScopeProxy from "../models/sentry-scope-proxy";
-import { metricHttpRequest } from "../config/metric-names";
+import { metricHttpRequest, queueMetrics } from "../config/metric-names";
 import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
 import "../config/proxy";
 import { isNodeDev } from "../util/isNodeEnv";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client"));
@@ -127,10 +128,27 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 	}
 };
 
+const sendQueueMetrics = async () => {
+	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
+		for (const queue of Object.values(queues)) {
+			const jobCounts = await queue.getJobCountByTypes(["completed", "waiting", "active", "delayed", "failed", "paused"]);
+			const tags = { queue: queue.name };
+			statsd.gauge(queueMetrics.active, jobCounts.active, tags);
+			statsd.gauge(queueMetrics.completed, jobCounts.completed, tags);
+			statsd.gauge(queueMetrics.delayed, jobCounts.delayed, tags);
+			statsd.gauge(queueMetrics.failed, jobCounts.failed, tags);
+			statsd.gauge(queueMetrics.waiting, jobCounts.waiting, tags);
+		}
+	}
+}
+
 const commonMiddleware = (jobHandler) => sentryMiddleware(jobHandler);
 
 export const start = (): void => {
 	initializeSentry();
+
+	// exposing queue metrics at a regular interval
+	setInterval(sendQueueMetrics, 30000);
 
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
 	queues.installation.process(
