@@ -16,7 +16,6 @@ import { metricHttpRequest, queueMetrics } from "../config/metric-names";
 import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
 import "../config/proxy";
-import { isNodeDev } from "../util/isNodeEnv";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
@@ -28,46 +27,41 @@ function measureElapsedTime(job: Queue.Job, tags) {
 	statsd.histogram(metricHttpRequest().jobDuration, job.finishedOn - job.processedOn, tags);
 }
 
-const queueOpts: QueueOptions = {
-	defaultJobOptions: {
-		attempts: 5,
-		timeout: 10 * 60 * 1000,
-		backoff: {
-			type: "exponential",
-			delay: 3 * 60 * 1000
+const getQueueOptions = (timeout: number): QueueOptions => {
+	return {
+		defaultJobOptions: {
+			attempts: 5,
+			timeout: timeout,
+			backoff: {
+				type: "exponential",
+				delay: 3 * 60 * 1000
+			},
+			removeOnComplete: true,
+			removeOnFail: true
 		},
-		removeOnComplete: true,
-		removeOnFail: true
-	},
-	redis: getRedisInfo("bull"),
-	createClient: (type, redisOpts = {}) => {
-		let redisInfo;
-		switch (type) {
-			case "client":
-				return client;
-			case "subscriber":
-				return subscriber;
-			default:
-				redisInfo = Object.assign({}, redisOpts);
-				redisInfo.connectionName = "bclient";
-				return new Redis(redisInfo);
+		redis: getRedisInfo("bull"),
+		createClient: (type, redisOpts = {}) => {
+			let redisInfo;
+			switch (type) {
+				case "client":
+					return client;
+				case "subscriber":
+					return subscriber;
+				default:
+					redisInfo = Object.assign({}, redisOpts);
+					redisInfo.connectionName = "bclient";
+					return new Redis(redisInfo);
+			}
 		}
-	}
-};
-
-if (isNodeDev()) {
-	queueOpts.settings = {
-		lockDuration: 100000,
-		lockRenewTime: 50000 // Interval on which to acquire the job lock
 	};
 }
 
 // Setup queues
 export const queues: { [key: string]: Queue.Queue } = {
-	discovery: new Queue("Content discovery", queueOpts),
-	installation: new Queue("Initial sync", queueOpts),
-	push: new Queue("Push transformation", queueOpts),
-	metrics: new Queue("Metrics", queueOpts)
+	discovery: new Queue("Content discovery", getQueueOptions(60 * 1000)),
+	installation: new Queue("Initial sync", getQueueOptions(10 * 60 * 1000)),
+	push: new Queue("Push transformation", getQueueOptions(60 * 1000)),
+	metrics: new Queue("Metrics", getQueueOptions(60 * 1000))
 };
 
 // Setup error handling for queues
