@@ -1,4 +1,4 @@
-import { enqueuePush } from "../transforms/push";
+import { createJobData, enqueuePush, processPush } from "../transforms/push";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 import { Context } from "probot/lib/context";
@@ -11,6 +11,7 @@ export default async (context: Context, jiraClient): Promise<void> => {
 	const payload = {
 		webhookId: context.id,
 		repository: context.payload?.repository,
+		// TODO: use reduce instead
 		commits: context.payload?.commits?.map((commit) => {
 			const issueKeys = issueKeyParser().parse(commit.message);
 
@@ -22,7 +23,7 @@ export default async (context: Context, jiraClient): Promise<void> => {
 		installation: context.payload?.installation
 	};
 
-	if (payload.commits?.length === 0) {
+	if (!payload.commits?.length) {
 		context.log(
 			{ noop: "no_commits" },
 			"Halting further execution for push since no commits were found for the payload"
@@ -30,6 +31,11 @@ export default async (context: Context, jiraClient): Promise<void> => {
 		return;
 	}
 
+	// If there's less than 20 commits (the number of commits the github API returns per call), just process it immediately
+	if(payload.commits?.length < 20 && await booleanFlag(BooleanFlags.PROCESS_PUSHES_IMMEDIATELY, true)) {
+		await processPush(context.github, createJobData(payload, jiraHost));
+		return;
+	}
 
 	// Since a push event can have any number of commits
 	// and we have to process each one individually to get the

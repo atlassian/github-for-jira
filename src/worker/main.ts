@@ -5,7 +5,7 @@ import Redis from "ioredis";
 
 import { discovery } from "../sync/discovery";
 import { processInstallation } from "../sync/installation";
-import { processPush } from "../transforms/push";
+import { processPushJob } from "../transforms/push";
 import metricsJob from "./metrics-job";
 import statsd from "../config/statsd";
 import getRedisInfo from "../config/redis-info";
@@ -139,7 +139,7 @@ export const start = (): void => {
 	);
 	queues.push.process(
 		Number(CONCURRENT_WORKERS),
-		commonMiddleware(processPush(app))
+		commonMiddleware(processPushJob(app))
 	);
 	queues.metrics.process(1, commonMiddleware(metricsJob));
 
