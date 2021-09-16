@@ -244,7 +244,7 @@ export const processInstallation =
 			const execute = async () => {
 				if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
 					try {
-						return await processor(github, repository, cursor, 10);
+						return await processor(github, repository, cursor, 20);
 					} catch (err) {
 						logger.error({ err, job, github, repository, cursor, task }, "Error Executing Task");
 						handleGitHubError(err);
