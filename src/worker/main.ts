@@ -132,36 +132,16 @@ const sendQueueMetrics = async () => {
 	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
 
 		for (const [queueName, queue] of Object.entries(queues)) {
+			const jobCounts = await queue.getJobCounts();
 
-			const counts = {
-				active: undefined,
-				delayed: undefined,
-				failed: undefined,
-				completed: undefined,
-				paused: undefined,
-				repeatable: undefined,
-				waiting: undefined
-			};
+			logger.info({ queue: queueName, queueMetrics: jobCounts }, "publishing queue metrics");
 
-			await (Promise.all([
-				queue.getActiveCount().then((count: number) => counts.active = count),
-				queue.getDelayedCount().then((count: number) => counts.delayed = count),
-				queue.getFailedCount().then((count: number) => counts.failed = count),
-				queue.getCompletedCount().then((count: number) => counts.completed = count),
-				queue.getPausedCount().then((count: number) => counts.paused = count),
-				queue.getRepeatableCount().then((count: number) => counts.repeatable = count),
-				queue.getWaitingCount().then((count: number) => counts.waiting = count),
-			]))
-
-			logger.info({ queue: queueName, queueMetrics: counts }, "publishing queue metrics");
 			const tags = { queue: queueName };
-			statsd.gauge(queueMetrics.active, counts.active, tags);
-			statsd.gauge(queueMetrics.completed, counts.completed, tags);
-			statsd.gauge(queueMetrics.delayed, counts.delayed, tags);
-			statsd.gauge(queueMetrics.failed, counts.failed, tags);
-			statsd.gauge(queueMetrics.waiting, counts.waiting, tags);
-			statsd.gauge(queueMetrics.paused, counts.paused, tags);
-			statsd.gauge(queueMetrics.repeatable, counts.repeatable, tags);
+			statsd.gauge(queueMetrics.active, jobCounts.active, tags);
+			statsd.gauge(queueMetrics.completed, jobCounts.completed, tags);
+			statsd.gauge(queueMetrics.delayed, jobCounts.delayed, tags);
+			statsd.gauge(queueMetrics.failed, jobCounts.failed, tags);
+			statsd.gauge(queueMetrics.waiting, jobCounts.waiting, tags);
 		}
 	}
 }
