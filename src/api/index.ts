@@ -16,6 +16,7 @@ import getRedisInfo from "../config/redis-info";
 import { elapsedTimeMetrics } from "../config/statsd";
 import { queues } from "../worker/main";
 import { getLogger } from "../config/logger";
+import { Job } from "bull";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -236,20 +237,23 @@ router.post(
 	"/requeue",
 	bodyParser,
 	elapsedTimeMetrics,
-	async (_: Request, response: Response): Promise<void> => {
+	async (_: Request, res: Response): Promise<void> => {
 
-		// This moves all active and waiting jobs to "completed". This way,
-		// the whole queue will be drained and all jobs will be rescheduled.
+		// This remove all jobs from the queue. This way,
+		// the whole queue will be drained and all jobs will be readded.
+		const jobs = await queues.push.getJobs(["active", "delayed", "waiting", "paused"]);
 
-		const activeJobs = await queues.push.getActive();
-		const waitingJobs = await queues.push.getWaiting();
-		for (const job of [...waitingJobs, ...activeJobs]) {
-			await job.moveToCompleted();
-			await queues.push.add(job.data);
-			logger.info({ job: job }, "requeued job")
-		}
+		await Promise.all(jobs.map(async (job: Job) => {
+			try {
+				await job.remove();
+				await queues.push.add(job.data);
+				logger.info({ job: job }, "requeued job");
+			} catch (e) {
+				// do nothing
+			}
+		}));
 
-		response.json(activeJobs.length + waitingJobs.length);
+		res.send(`${jobs.length} jobs discarded and re-added.`);
 	}
 );
 
