@@ -32,7 +32,8 @@ export default async (context: Context, jiraClient): Promise<void> => {
 	}
 
 	// If there's less than 20 commits (the number of commits the github API returns per call), just process it immediately
-	if(payload.commits?.length < 20 && await booleanFlag(BooleanFlags.PROCESS_PUSHES_IMMEDIATELY, true)) {
+	if(payload.commits?.length < 20 && await booleanFlag(BooleanFlags.PROCESS_PUSHES_IMMEDIATELY, true, jiraClient.baseURL)) {
+		context.log("targeted push");
 		await processPush(context.github, createJobData(payload, jiraClient.baseURL));
 		return;
 	}
