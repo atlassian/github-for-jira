@@ -14,9 +14,12 @@ import uninstall from "../jira/uninstall";
 import { serializeJiraInstallation, serializeSubscription } from "./serializers";
 import getRedisInfo from "../config/redis-info";
 import { elapsedTimeMetrics } from "../config/statsd";
+import { queues } from "../worker/main";
+import { getLogger } from "../config/logger";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
+const logger = getLogger("api");
 
 async function getInstallation(client, subscription) {
 	const id = subscription.gitHubInstallationId;
@@ -229,6 +232,27 @@ router.post(
 	}
 );
 
+router.post(
+	"/requeue",
+	bodyParser,
+	elapsedTimeMetrics,
+	async (_: Request, response: Response): Promise<void> => {
+
+		// This moves all active and waiting jobs to "completed". This way,
+		// the whole queue will be drained and all jobs will be rescheduled.
+
+		const activeJobs = await queues.push.getActive();
+		const waitingJobs = await queues.push.getWaiting();
+		for (const job of [...waitingJobs, ...activeJobs]) {
+			await job.moveToCompleted();
+			await queues.push.add(job.data);
+			logger.info({ job: job }, "requeued job")
+		}
+
+		response.json(activeJobs.length + waitingJobs.length);
+	}
+);
+
 router.get(
 	"/jira/:clientKeyOrJiraHost",
 	[
@@ -357,7 +381,7 @@ router.get(
 				}));
 
 			const failedConnections = installations.filter((response) => {
-				req.log.error({...response}, "Failed installation");
+				req.log.error({ ...response }, "Failed installation");
 				return response.error;
 			});
 
@@ -372,7 +396,7 @@ router.get(
 				)}/api/${installationId}/repoSyncState.json`
 			});
 		} catch (err) {
-			req.log.error({installationId, err}, "Error getting installation");
+			req.log.error({ installationId, err }, "Error getting installation");
 			res.status(500).json(err);
 		}
 	}
