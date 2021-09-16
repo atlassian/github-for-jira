@@ -151,7 +151,18 @@ const sendQueueMetrics = async () => {
 	}
 }
 
-const commonMiddleware = (jobHandler) => sentryMiddleware(jobHandler);
+const DEFAULT_JOB_TIMEOUT = 60 * 1000
+
+const timeoutMiddleware = (jobHandler) => async (job) => {
+	const timeoutPromise = new Promise((_, reject) =>
+		setTimeout(() => reject(`Job timed out after ${DEFAULT_JOB_TIMEOUT}ms, jobId: ${job.id}`), DEFAULT_JOB_TIMEOUT)
+	);
+
+	await Promise.race([jobHandler(job), timeoutPromise]);
+}
+
+
+const commonMiddleware = (jobHandler) => sentryMiddleware(timeoutMiddleware(jobHandler));
 
 export const start = (): void => {
 	initializeSentry();
