@@ -249,7 +249,7 @@ router.post(
 			logger.info({ job: job }, "requeued job")
 		}
 
-		response.send(activeJobs.length + waitingJobs.length);
+		response.json(activeJobs.length + waitingJobs.length);
 	}
 );
 
