@@ -2,7 +2,7 @@ import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { getLogger } from "../../config/logger";
 
-const logger = getLogger("services.github.getGithubUser")
+const logger = getLogger("services.github.user")
 
 export const getGithubUser = async (github:GitHubAPI, username:string):Promise<Octokit.UsersGetByUsernameResponse> => {
 	if(!username) {

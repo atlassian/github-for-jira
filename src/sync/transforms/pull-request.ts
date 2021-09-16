@@ -2,7 +2,7 @@ import { GitHubAPI } from "probot";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../../jira/util/isEmpty";
 import { getJiraAuthor } from "../../util/jira";
-import { getGithubUser } from "../../services/github/getGithubUser";
+import { getGithubUser } from "../../services/github/user";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {

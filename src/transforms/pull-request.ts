@@ -6,7 +6,7 @@ import { Octokit } from "@octokit/rest";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
-import { getGithubUser } from "../services/github/getGithubUser";
+import { getGithubUser } from "../services/github/user";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";

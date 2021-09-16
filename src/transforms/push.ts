@@ -8,28 +8,27 @@ import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
+import { getGithubCommits, GithubCommitFile } from "../services/github/commit";
 
 // TODO: define better types for this file
 
 const logger = getLogger("transforms.push");
 
-const mapFile = (githubFile, repoName: string, repoOwner: string, commitHash: string) => {
+const mapFile = (file: GithubCommitFile) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
-	const mapStatus = {
+	/*const mapStatus = {
 		added: "ADDED",
 		removed: "DELETED",
 		modified: "MODIFIED"
-	};
-
-	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
+	};*/
 
 	return {
-		path: githubFile.filename,
-		changeType: mapStatus[githubFile.status] || "UNKNOWN",
-		linesAdded: githubFile.additions,
-		linesRemoved: githubFile.deletions,
-		url: githubFile.blob_url || fallbackUrl
+		path: file.path,
+		changeType: /*mapStatus[file.status] ||*/ "UNKNOWN",
+		// linesAdded: file.additions,
+		// linesRemoved: file.deletions,
+		url: `https://github.com${file.object.commitResourcePath}`
 	};
 };
 
@@ -88,7 +87,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 	try {
 		const {
 			repository,
-			repository: { owner, name: repo },
+			repository: { owner, name: repoName },
 			shas,
 			installationId,
 			jiraHost
@@ -97,7 +96,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 		const webhookId = payload.webhookId || "none";
 		log = logger.child({
 			webhookId: webhookId,
-			repoName: repo,
+			repoName: repoName,
 			orgName: owner.name
 		});
 
@@ -116,14 +115,53 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			log
 		);
 
-		const commits = await Promise.all(
+		const commits = (await getGithubCommits(github, {
+			commitRefs: shas.map(s => s.id),
+			owner: owner.login,
+			repoName
+		})).map(commit => {
+			const {/* files,*/
+				oid,
+				abbreviatedOid,
+				author,
+				authoredDate,
+				parents: { totalCount: parentCount },
+				url,
+				message,
+				changedFiles,
+				tree: { entries: files }
+			} = commit;
+
+			// Jira only accepts a max of 10 files for each commit, so don't send all of them
+			// const filesToSend = files.slice(0, 10);
+
+			// merge commits will have 2 or more parents, depending how many are in the sequence
+			const isMergeCommit = parentCount !== 0;
+
+			return {
+				hash: oid,
+				message,
+				author: getJiraAuthor(author),
+				authorTimestamp: authoredDate,
+				displayId: abbreviatedOid,
+				fileCount: changedFiles, // Send the total count for all files
+				files: files.map(mapFile),
+				id: oid,
+				issueKeys: shas.find(s => s.id === commit.oid).issueKeys,
+				url,
+				updateSequenceId: Date.now(),
+				flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
+			};
+		});
+
+		/*const commits = await Promise.all(
 			shas.map(async (sha) => {
 				const {
 					data,
 					data: { commit: githubCommit }
 				} = await github.repos.getCommit({
 					owner: owner.login,
-					repo,
+					repo: repoName,
 					ref: sha.id
 				});
 
@@ -144,7 +182,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 					authorTimestamp: githubCommitAuthor.date,
 					displayId: commitSha.substring(0, 6),
 					fileCount: files.length, // Send the total count for all files
-					files: filesToSend.map(file => mapFile(file, repo, owner.name, sha.id)),
+					files: filesToSend.map(file => mapFile(file, repoName, owner.name, sha.id)),
 					id: commitSha,
 					issueKeys: sha.issueKeys,
 					url: html_url,
@@ -152,7 +190,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 					flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
 				};
 			})
-		);
+		);*/
 
 		// Jira accepts up to 400 commits per request
 		// break the array up into chunks of 400
