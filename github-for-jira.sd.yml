@@ -343,7 +343,7 @@ environmentOverrides:
       - name: database
         type: postgres-db
         attributes:
-          connectionLimit: 300
+          connectionLimit: 500
 
       - name: rds
         type: dedicated-rds
@@ -352,7 +352,7 @@ environmentOverrides:
             DBInstanceClass: db.m5.large
             AllocatedStorage: 40 # GB
             MaxAllocatedStorage: 100
-            ConnectionAlarm: 250
+            ConnectionAlarm: 450
 
       - type: globaledge
         name: proxy
