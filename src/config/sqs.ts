@@ -1,7 +1,7 @@
-import AWS from "aws-sdk";
+import AWS, {AWSError} from "aws-sdk";
 import Logger from "bunyan"
 import {getLogger} from "./logger"
-import {Message} from "aws-sdk/clients/sqs";
+import {Message, ReceiveMessageResult} from "aws-sdk/clients/sqs";
 import envVars from "./env";
 
 // All our queues must be in the same region so we can set a global parameter here
@@ -51,39 +51,50 @@ export class SqsQueue {
 		});
 	}
 
+	executeMessage(message: Message, messageHandler) {
+		const messagePayload = JSON.parse(message.Body);
+		logger.info({messagePayload}, "Sqs message received");
+
+		try {
+			messageHandler({data: messagePayload})
+			this.deleteMessage(message)
+		} catch (err) {
+			logger.error(err, "error executing sqs message")
+		}
+	}
+
+	async handleSqsResponse(err: AWSError, data: ReceiveMessageResult, messageHandler) {
+		if (err) {
+			logger.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
+		} else {
+			if (!data.Messages) {
+				logger.debug("Nothing to process");
+				return;
+			}
+
+			await Promise.all(data.Messages.map(message => {
+				return new Promise<void>((resolve) => {
+					this.executeMessage(message, messageHandler)
+					resolve()
+				})
+			})
+			)
+		}
+	}
+
 	listen(messageHandler) {
 		// Setup the receiveMessage parameters
 		const params = {
 			QueueUrl: this.queueUrl,
 			MaxNumberOfMessages: 1,
 			VisibilityTimeout: 0,
-			WaitTimeSeconds: 0
+			WaitTimeSeconds: 5
 		};
 		sqs.receiveMessage(params, async (err, data) => {
-			if (err) {
-				logger.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
-			} else {
-				if (!data.Messages) {
-					logger.debug("Nothing to process");
-					return;
-				}
-
-				await Promise.all(data.Messages.map(message => {
-
-					return new Promise<void>((resolve) => {
-						const messagePayload = JSON.parse(message.Body);
-						logger.info({messagePayload}, "Sqs message received");
-
-						try {
-							messageHandler({data: messagePayload})
-							this.deleteMessage(message)
-						} catch (err) {
-							logger.error(err, "error executing sqs message")
-						}
-						resolve()
-					})
-				})
-				)
+			try {
+				await this.handleSqsResponse(err, data, messageHandler)
+			} finally {
+				this.listen(messageHandler)
 			}
 		});
 	}
