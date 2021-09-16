@@ -18,6 +18,7 @@ export enum BooleanFlags {
 	USE_JWT_SIGNED_INSTALL_CALLBACKS = "use-jwt-signed-install-callbacks",
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
+	SIMPLER_PROCESSOR = "simpler-processor",
 }
 
 export enum StringFlags {
