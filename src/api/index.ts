@@ -16,7 +16,7 @@ import getRedisInfo from "../config/redis-info";
 import { elapsedTimeMetrics } from "../config/statsd";
 import { queues } from "../worker/main";
 import { getLogger } from "../config/logger";
-import { Job } from "bull";
+import { Job, Queue } from "bull";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -237,16 +237,26 @@ router.post(
 	"/requeue",
 	bodyParser,
 	elapsedTimeMetrics,
-	async (_: Request, res: Response): Promise<void> => {
+	async (request: Request, res: Response): Promise<void> => {
+
+		const queueName = request.body.queue;
+
+		const queue: Queue = queues[queueName];
+
+		if (queue == undefined) {
+			res.status(400);
+			res.send(`queue ${queueName} does not exist`);
+			return;
+		}
 
 		// This remove all jobs from the queue. This way,
 		// the whole queue will be drained and all jobs will be readded.
-		const jobs = await queues.push.getJobs(["active", "delayed", "waiting", "paused"]);
+		const jobs = await queue.getJobs(["active", "delayed", "waiting", "paused"]);
 
 		await Promise.all(jobs.map(async (job: Job) => {
 			try {
 				await job.remove();
-				await queues.push.add(job.data);
+				await queue.add(job.data);
 				logger.info({ job: job }, "requeued job");
 			} catch (e) {
 				// do nothing
