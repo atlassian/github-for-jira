@@ -40,9 +40,9 @@ export default async (context: Context, jiraClient): Promise<void> => {
 
 	if (prioritize) {
 		context.log("Enqueueing push event (prioritized)");
-		await enqueuePush(payload, jiraClient.baseURL, { priority: 1 });
+		await enqueuePush(payload, jiraClient.baseURL,  context.log, { priority: 1 });
 	} else {
 		context.log("Enqueueing push event (not prioritized)");
-		await enqueuePush(payload, jiraClient.baseURL);
+		await enqueuePush(payload, jiraClient.baseURL, context.log, {});
 	}
 };

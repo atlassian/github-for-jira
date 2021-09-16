@@ -12,6 +12,8 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY, {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
+	SEND_PUSH_TO_SQS = "send-push-events-to-sqs",
+	STOP_SENDING_PUSH_TO_REDIS = "stop-sending-push-to-redis",
 	//Controls if we should check the token properly for APIs which are called from Jira Frontend. (Fixes the current state)
 	FIX_IFRAME_ENDPOINTS_JWT = "fix-jwt-authentication-for-iframe-endpoints",
 	//If enabled, we'll use asymmetrically signed jwt tokens for /install and /uninstall endpoints callbacks.

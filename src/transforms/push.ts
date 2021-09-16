@@ -2,12 +2,15 @@ import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
-import { queues } from "../worker/main";
+import {queues} from "../worker/main";
+import {sqsQueues} from "../config/sqs";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { getLogger } from "../config/logger";
 import { JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import Logger from 'bunyan';
 
 // TODO: define better types for this file
 
@@ -67,8 +70,16 @@ export function createJobData(payload, jiraHost: string) {
 	};
 }
 
-export async function enqueuePush(payload: unknown, jiraHost: string, options?: JobOptions) {
-	await queues.push.add(createJobData(payload, jiraHost), options);
+export async function enqueuePush(payload: unknown, jiraHost: string, logger?: Logger, options?: JobOptions) {
+	const jobData = createJobData(payload, jiraHost);
+
+	if(!await booleanFlag(BooleanFlags.STOP_SENDING_PUSH_TO_REDIS, false, jiraHost)) {
+		await queues.push.add(jobData, options);
+	}
+
+	if(await booleanFlag(BooleanFlags.SEND_PUSH_TO_SQS, false, jiraHost)) {
+		sqsQueues.push.sendMessage(jobData, logger)
+	}
 }
 
 export function processPush(app: Application) {

@@ -38,6 +38,7 @@
     "db:migrate:prod": "sequelize db:migrate --env production",
     "db:dev": "run-s db:create:dev db:migrate:dev",
     "db:test": "run-s db:create:test db:migrate:test",
+		"sqs:init": "aws --endpoint-url=http://localhost:9602 sqs create-queue --queue-name webhooksqs",
     "prepare": "husky install",
     "precommit": "run-p lint build"
   },
@@ -63,6 +64,7 @@
     "@types/rate-limit-redis": "^1.7.1",
     "@types/supertest": "^2.0.11",
     "atlassian-jwt": "^2.0.0",
+    "aws-sdk": "^2.989.0",
     "axios": "^0.21.1",
     "body-parser": "^1.18.3",
     "bottleneck": "^2.19.5",

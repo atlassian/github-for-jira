@@ -17,6 +17,7 @@ import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
 import "../config/proxy";
 import { isNodeDev } from "../util/isNodeEnv";
+import {sqsQueues} from "../config/sqs";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client"));
@@ -141,6 +142,9 @@ export const start = (): void => {
 		Number(CONCURRENT_WORKERS),
 		commonMiddleware(processPush(app))
 	);
+
+	sqsQueues.push.listen(commonMiddleware(processPush(app)))
+
 	queues.metrics.process(1, commonMiddleware(metricsJob));
 
 	probot.start();

@@ -44,6 +44,16 @@ resources:
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
 
+  - type: sqs
+    name: webhooksqs
+    attributes:
+      MaxReceiveCount: 3 # If changing this attribute value, then also change the constant value in MessageRouter
+      MessageRetentionPeriod: 1209600
+      dataType:
+        - UGC/Label                # name of GitHub org / Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+
   - name: rds
     type: dedicated-rds
     attributes:
