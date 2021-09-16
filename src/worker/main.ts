@@ -155,7 +155,11 @@ const DEFAULT_JOB_TIMEOUT = 60 * 1000
 
 const timeoutMiddleware = (jobHandler) => async (job) => {
 	const timeoutPromise = new Promise((_, reject) =>
-		setTimeout(() => reject(`Job timed out after ${DEFAULT_JOB_TIMEOUT}ms, jobId: ${job.id}`), DEFAULT_JOB_TIMEOUT)
+		setTimeout(() => {
+			const timeoutMessage = `Job timed out after ${DEFAULT_JOB_TIMEOUT}ms, jobId: ${job.id}`;
+			logger.warn({job}, timeoutMessage);
+			reject(timeoutMessage)
+		}, DEFAULT_JOB_TIMEOUT)
 	);
 
 	await Promise.race([jobHandler(job), timeoutPromise]);
