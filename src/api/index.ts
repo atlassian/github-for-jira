@@ -236,18 +236,20 @@ router.post(
 	"/requeue",
 	bodyParser,
 	elapsedTimeMetrics,
-	async (_: Request, __: Response): Promise<void> => {
+	async (_: Request, response: Response): Promise<void> => {
 
 		// This moves all active and waiting jobs to "completed". This way,
 		// the whole queue will be drained and all jobs will be rescheduled.
 
 		const activeJobs = await queues.push.getActive();
 		const waitingJobs = await queues.push.getWaiting();
-		for (const job of [...activeJobs, ...waitingJobs]) {
+		for (const job of [...waitingJobs, ...activeJobs]) {
 			await job.moveToCompleted();
 			await queues.push.add(job.data);
 			logger.info({ job: job }, "requeued job")
 		}
+
+		response.send(activeJobs.length + waitingJobs.length);
 	}
 );
 
