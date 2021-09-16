@@ -12,6 +12,7 @@ import { Application, GitHubAPI } from "probot";
 import { metricHttpRequest, metricSyncStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 import Queue from "bull";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 const logger = getLogger("sync.installation");
 
@@ -30,6 +31,7 @@ interface TaskProcessors {
 			perPage: number
 		) => Promise<{ edges: any[], jiraPayload: any }>;
 }
+
 type TaskType = "pull" | "commit" | "branch";
 
 const taskTypes = Object.keys(tasks) as TaskType[];
@@ -89,16 +91,16 @@ const getNextTask = async (subscription: SubscriptionClass): Promise<Task> => {
 };
 
 interface Task {
-	task:string;
-	repositoryId:string;
+	task: string;
+	repositoryId: string;
 	repository: Repository;
 	cursor: string | number;
 }
 
 const upperFirst = (str) =>
 	str.substring(0, 1).toUpperCase() + str.substring(1);
-const getCursorKey = (type:TaskType) => `last${upperFirst(type)}Cursor`;
-const getStatusKey = (type:TaskType) => `${type}Status`;
+const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
+const getStatusKey = (type: TaskType) => `${type}Status`;
 
 const updateJobStatus = async (
 	queues,
@@ -240,12 +242,21 @@ export const processInstallation =
 			};
 
 			const execute = async () => {
-				for (const perPage of [20, 10, 5, 1]) {
+				if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
 					try {
-						return await processor(github, repository, cursor, perPage);
+						return await processor(github, repository, cursor, 20);
 					} catch (err) {
 						logger.error({ err, job, github, repository, cursor, task }, "Error Executing Task");
 						handleGitHubError(err);
+					}
+				} else {
+					for (const perPage of [20, 10, 5, 1]) {
+						try {
+							return await processor(github, repository, cursor, perPage);
+						} catch (err) {
+							logger.error({ err, job, github, repository, cursor, task }, "Error Executing Task");
+							handleGitHubError(err);
+						}
 					}
 				}
 
