@@ -17,7 +17,7 @@ export enum BooleanFlags {
 	//If enabled, we'll use asymmetrically signed jwt tokens for /install and /uninstall endpoints callbacks.
 	USE_JWT_SIGNED_INSTALL_CALLBACKS = "use-jwt-signed-install-callbacks",
 	PRIORITIZE_PUSHES = "prioritize-pushes",
-	EXPOSE_QUEUE_METRICS = "expose-queue-metrics"
+	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
 	SIMPLER_PROCESSOR = "simpler-processor",
 }
