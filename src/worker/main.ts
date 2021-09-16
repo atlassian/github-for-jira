@@ -30,7 +30,12 @@ function measureElapsedTime(job: Queue.Job, tags) {
 
 const queueOpts: QueueOptions = {
 	defaultJobOptions: {
-		attempts: 3,
+		attempts: 5,
+		timeout: 60000,
+		backoff: {
+			type: "exponential",
+			delay: 3 * 60 * 1000
+		},
 		removeOnComplete: true,
 		removeOnFail: true
 	},
