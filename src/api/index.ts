@@ -17,6 +17,7 @@ import { elapsedTimeMetrics } from "../config/statsd";
 import { queues } from "../worker/main";
 import { getLogger } from "../config/logger";
 import { Job, Queue } from "bull";
+import { deduplicateInstallations } from "../worker/deduplicate-installations";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -238,29 +239,8 @@ router.post(
 	bodyParser,
 	elapsedTimeMetrics,
 	async (_: Request, res: Response): Promise<void> => {
-
-		// This remove all jobs from the queue. This way,
-		// the whole queue will be drained and all jobs will be readded.
-		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
-		const foundInstallationIds = new Set<number>();
-		const duplicateJobs = [];
-
-		// collecting duplicate jobs per installation
-		for (const job of jobs) {
-			if (foundInstallationIds.has(job.data.installationId)) {
-				duplicateJobs.push(job);
-			} else {
-				foundInstallationIds.add(job.data.installationId);
-			}
-		}
-
-		// removing duplicate jobs
-		await Promise.all(duplicateJobs.map((job) => {
-			logger.info({ job }, "removing duplicate job");
-			job.remove();
-		}));
-
-		res.send(`${duplicateJobs.length} duplicate jobs removed.`);
+		const duplicateJobCount = await deduplicateInstallations();
+		res.send(`${duplicateJobCount} duplicate jobs removed.`);
 	}
 );
 

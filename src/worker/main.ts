@@ -18,6 +18,7 @@ import { getLogger } from "../config/logger";
 import "../config/proxy";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { RateLimitingError } from "../config/enhance-octokit";
+import { deduplicateInstallations } from "./deduplicate-installations";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client"));
@@ -174,11 +175,20 @@ const sendQueueMetrics = async () => {
 
 const commonMiddleware = (jobHandler) => sentryMiddleware(setDelayOnRateLimiting(jobHandler));
 
+const randomInteger = (min, max) => {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 export const start = (): void => {
 	initializeSentry();
 
 	// exposing queue metrics at a regular interval
 	setInterval(sendQueueMetrics, 60000);
+
+	// Run the deduplication job every 8 to 12 minutes (spreading it out a bit to make it less likely that two nodes are
+	// running it at exactly the same time). It should be less than 15 minutes, because if the installation queue is
+	// blocked for 15 minutes, sync jobs will begin to go into the "stalled" state.
+	setInterval(deduplicateInstallations, randomInteger(8 * 60 * 1000, 12 * 60 * 1000));
 
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
 	queues.installation.process(
