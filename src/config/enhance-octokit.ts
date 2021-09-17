@@ -29,8 +29,8 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 				const rateLimitReset: number = parseInt(error.headers["X-RateLimit-Reset"]);
 				throw new RateLimitingError(rateLimitReset);
 			}
-			throw error;
 		}
+		throw error;
 	});
 
 	octokit.hook.wrap("request", async (request, options) => {
