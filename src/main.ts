@@ -1,6 +1,5 @@
 import "./config/env"; // Important to be before other dependencies
 import throng from "throng";
-import getRedisInfo from "./config/redis-info";
 import * as PrivateKey from "probot/lib/private-key";
 import { createProbot } from "probot";
 import App from "./configure-robot";
@@ -9,8 +8,6 @@ import { getLogger, overrideProbotLoggingMethods } from "./config/logger";
 import "./config/proxy";
 import { isNodeProd } from "./util/isNodeEnv";
 
-const redisOptions = getRedisInfo("probot");
-
 const probot = createProbot({
 	id: Number(process.env.APP_ID),
 	secret: process.env.WEBHOOK_SECRET,
@@ -18,7 +15,9 @@ const probot = createProbot({
 	port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080,
 	webhookPath: "/github/events",
 	webhookProxy: process.env.WEBHOOK_PROXY_URL,
-	redisConfig: redisOptions
+	throttleOptions: {
+		enabled: false,
+	}
 });
 
 overrideProbotLoggingMethods(probot.logger);

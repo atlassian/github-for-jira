@@ -30,6 +30,11 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 				throw new RateLimitingError(rateLimitReset);
 			}
 		}
+
+		if(error.status == 403){
+			// delaying for an hour
+			throw new RateLimitingError(new Date().getTime() / 1000 + 60 * 60);
+		}
 		throw error;
 	});
 
