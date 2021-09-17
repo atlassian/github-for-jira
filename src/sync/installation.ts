@@ -12,7 +12,7 @@ import { Application, GitHubAPI } from "probot";
 import { metricHttpRequest, metricSyncStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 import Queue from "bull";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
 
 const logger = getLogger("sync.installation");
 
@@ -167,11 +167,26 @@ const updateJobStatus = async (
 const getEnhancedGitHub = async (app: Application, installationId) =>
 	enhanceOctokit(await app.auth(installationId));
 
+const isBlocked = async (installationId: number): Promise<boolean> => {
+	try {
+		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
+		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
+		return blockedInstallations.includes(installationId);
+	} catch (e) {
+		return false;
+	}
+}
+
 // TODO: type queues
 export const processInstallation =
 	(app: Application, queues) =>
 		async (job): Promise<void> => {
 			const { installationId, jiraHost } = job.data;
+
+			if (await isBlocked(installationId)) {
+				logger.warn({ job }, "blocking installation job");
+				return;
+			}
 
 			job.sentry.setUser({
 				gitHubInstallationId: installationId,

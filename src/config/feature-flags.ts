@@ -19,11 +19,11 @@ export enum BooleanFlags {
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
-	SIMPLER_PROCESSOR = "simpler-processor",
+	SIMPLER_PROCESSOR = "simpler-processor"
 }
 
 export enum StringFlags {
-	OTHER_STRING_FLAG = "other-string-flag",
+	BLOCKED_INSTALLATIONS = "blocked-installations"
 }
 
 const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
