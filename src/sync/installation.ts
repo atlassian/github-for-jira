@@ -12,7 +12,6 @@ import { Application, GitHubAPI } from "probot";
 import { metricHttpRequest, metricSyncStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 import Queue from "bull";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 const logger = getLogger("sync.installation");
 
@@ -27,8 +26,7 @@ interface TaskProcessors {
 		(
 			github: GitHubAPI,
 			repository: Repository,
-			cursor: string | number,
-			perPage: number
+			cursor: string | number
 		) => Promise<{ edges: any[], jiraPayload: any }>;
 }
 
@@ -242,22 +240,11 @@ export const processInstallation =
 			};
 
 			const execute = async () => {
-				if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
-					try {
-						return await processor(github, repository, cursor, 20);
-					} catch (err) {
-						logger.error({ err, job, github, repository, cursor, task }, "Error Executing Task");
-						handleGitHubError(err);
-					}
-				} else {
-					for (const perPage of [20, 10, 5, 1]) {
-						try {
-							return await processor(github, repository, cursor, perPage);
-						} catch (err) {
-							logger.error({ err, job, github, repository, cursor, task }, "Error Executing Task");
-							handleGitHubError(err);
-						}
-					}
+				try {
+					return await processor(github, repository, cursor);
+				} catch (err) {
+					logger.error({ err, job, github, repository, cursor, task }, "Error Executing Task");
+					handleGitHubError(err);
 				}
 
 				throw new Error(`Error processing GraphQL query: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);

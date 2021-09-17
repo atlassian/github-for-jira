@@ -7,6 +7,7 @@ import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
 import { getGithubUser } from "../services/github/user";
+import { PullRequestReview, PullRequestReviews } from "../services/github/pull-request-reviews";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -17,28 +18,26 @@ function mapStatus(status: string, merged_at?: string) {
 }
 
 // TODO: define arguments and return
-function mapReviews(reviews) {
+function mapReviews(reviews:PullRequestReview[]) {
 	reviews = reviews || [];
-	const sortedReviews = _.orderBy(reviews, "submitted_at", "desc");
+	const sortedReviews = _.orderBy(reviews, "submittedAt", "desc");
 	const usernames = {};
 	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
 	return sortedReviews.reduce((acc, review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
-		const user = review?.user;
-		if (!usernames[user?.login]) {
-			usernames[user?.login] = {
-				name: user?.login || undefined,
-				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED",
-				url: user?.html_url || undefined,
-				avatar: user?.avatar_url || undefined
+		const author = review?.author;
+		if (!usernames[author?.login]) {
+			usernames[author?.login] = {
+				...getJiraAuthor(author),
+				approvalStatus:  review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED",
 			};
-			acc.push(usernames[user?.login]);
+			acc.push(usernames[author?.login]);
 			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
 		} else if (
-			usernames[user?.login].approvalStatus !== "APPROVED" &&
+			usernames[author?.login].approvalStatus !== "APPROVED" &&
 			review.state === "APPROVED"
 		) {
-			usernames[user?.login].approvalStatus = "APPROVED";
+			usernames[author?.login].approvalStatus = "APPROVED";
 		}
 		// Returns the reviews' array with unique users
 		return acc;
@@ -46,7 +45,7 @@ function mapReviews(reviews) {
 }
 
 // TODO: define arguments and return
-export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
+export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: PullRequestReviews, log?: LoggerWithTarget) => {
 
 	// This is the same thing we do in sync, concatenating these values
 	const issueKeys = issueKeyParser().parse(
@@ -104,7 +103,7 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 				id: pullRequest.number,
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
-				reviewers: mapReviews(reviews),
+				reviewers: mapReviews(reviews.edges.map(e => e.node)),
 				sourceBranch: pullRequest.head.ref,
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: pullRequestStatus,

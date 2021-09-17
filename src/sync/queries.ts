@@ -1,6 +1,6 @@
-export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getPullRequests = `query ($owner: String!, $repo: String!, $cursor: String) {
     repository(owner: $owner, name: $repo){
-      pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
+      pullRequests(first: 100, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
         edges {
           cursor
           node {
@@ -31,12 +31,40 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
     }
   }`;
 
-export const getCommits = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
+export const getPullRequestReviews = `query($owner: String!, $repo: String!, $pullRequestNumber: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pullRequestNumber) {
+      reviews(first: 100, after: $cursor) {
+        totalCount
+        edges {
+          cursor
+          node {
+            body
+            state
+            url
+            submittedAt
+            author {
+              ... on User {
+                avatarUrl
+                login
+                email
+                url
+                name
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+
+export const getCommits = `query ($owner: String!, $repo: String!, $cursor: String, $default_ref: String!) {
     repository(owner: $owner, name: $repo){
       ref(qualifiedName: $default_ref) {
         target {
           ... on Commit {
-            history(first: $per_page, after: $cursor) {
+            history(first: 100, after: $cursor) {
               edges {
                 cursor
                 node {
@@ -62,9 +90,9 @@ export const getCommits = `query ($owner: String!, $repo: String!, $per_page: In
     }
   }`;
 
-export const getBranches = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getBranches = `query ($owner: String!, $repo: String!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
-      refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
+      refs(first: 100, refPrefix: "refs/heads/", after: $cursor) {
         edges {
           cursor
           node {
@@ -83,7 +111,7 @@ export const getBranches = `query ($owner: String!, $repo: String!, $per_page: I
                 }
                 authoredDate
                 changedFiles
-                history(first: 50) {
+                history(first: 100) {
                   nodes {
                     message
                     oid

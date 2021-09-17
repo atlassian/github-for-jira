@@ -3,6 +3,7 @@ import issueKeyParser from "jira-issue-key-parser";
 
 import { Context } from "probot/lib/context";
 import { isEmpty } from "../jira/util/isEmpty";
+import { getGithubPullRequestReviews, PullRequestReviews } from "../services/github/pull-request-reviews";
 
 export default async (context: Context, jiraClient, util): Promise<void> => {
 
@@ -10,19 +11,24 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 		pull_request,
 		repository: {
 			id: repositoryId,
-			name: repo,
+			name: repoName,
 			owner: { login: owner }
 		},
 		changes
 	} = context.payload;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let reviews: any = {};
+	let reviews: PullRequestReviews = {totalCount:0, edges: []};
 	try {
-		reviews = await context.github.pulls.listReviews({
+		/*reviews = await context.github.graphql(getPullRequestReviews,{
 			owner: owner,
 			repo: repo,
 			pull_number: pull_request.number
+		});*/
+		reviews = await getGithubPullRequestReviews(context.github, {
+			owner,
+			repoName,
+			pullRequestNumber: pull_request.number
 		});
 	} catch (e) {
 		context.log.warn(
@@ -38,7 +44,7 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 	const jiraPayload = await transformPullRequest(
 		context.github,
 		pull_request,
-		reviews.data,
+		reviews,
 		context.log
 	);
 

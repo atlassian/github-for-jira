@@ -75,7 +75,7 @@ describe.skip("sync/pull-request", () => {
 			pullRequestList[0].head.ref = head;
 
 			githubNock
-				.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc")
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=1&state=all&sort=created&direction=desc")
 				.reply(200, pullRequestList)
 				.get("/repos/integrations/test-repo-name/pulls/51")
 				.reply(200, { comments: 0 });
@@ -121,7 +121,7 @@ describe.skip("sync/pull-request", () => {
 	it("should not sync if nodes are empty", async () => {
 		const job = createJob({ data: { installationId, jiraHost } });
 
-		githubNock.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc")
+		githubNock.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=1&state=all&sort=created&direction=desc")
 			.reply(200, []);
 
 		const interceptor = jiraNock.post(/.*/);

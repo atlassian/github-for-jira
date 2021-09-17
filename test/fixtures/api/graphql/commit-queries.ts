@@ -1,9 +1,9 @@
-const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
+const query = `query ($owner: String!, $repo: String!, $cursor: String, $default_ref: String!) {
     repository(owner: $owner, name: $repo){
       ref(qualifiedName: $default_ref) {
         target {
           ... on Commit {
-            history(first: $per_page, after: $cursor) {
+            history(first: 100, after: $cursor) {
               edges {
                 cursor
                 node {
@@ -31,7 +31,7 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
 export const commitsNoLastCursor = {
 	query,
 	variables: {
-		owner: "integrations", repo: "test-repo-name", per_page: 20, default_ref: "master"
+		owner: "integrations", repo: "test-repo-name", default_ref: "master"
 	}
 };
 
@@ -40,7 +40,6 @@ export const commitsWithLastCursor = {
 	variables: {
 		owner: "integrations",
 		repo: "test-repo-name",
-		per_page: 20,
 		cursor: "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
 		default_ref: "master"
 	}

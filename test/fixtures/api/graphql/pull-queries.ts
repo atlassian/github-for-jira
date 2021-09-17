@@ -1,6 +1,6 @@
-const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+const query = `query ($owner: String!, $repo: String!, $cursor: String) {
     repository(owner: $owner, name: $repo){
-      pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
+      pullRequests(first: 100, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
         edges {
           cursor
           node {
@@ -33,7 +33,10 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
 
 export const pullsNoLastCursor = {
 	query,
-	variables: { owner: "integrations", repo: "test-repo-name", per_page: 20 }
+	variables: {
+		owner: "integrations",
+		repo: "test-repo-name",
+	}
 };
 
 export const pullsWithLastCursor = {
@@ -41,7 +44,6 @@ export const pullsWithLastCursor = {
 	variables: {
 		owner: "integrations",
 		repo: "test-repo-name",
-		per_page: 20,
 		cursor: "Y3Vyc29yOnYyOpK5MjAxOC0wOC0yM1QxNzozODowNS0wNDowMM4MjT7J"
 	}
 };

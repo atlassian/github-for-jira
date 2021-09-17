@@ -1,5 +1,5 @@
-const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {    repository(owner: $owner, name: $repo) {
-      refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
+const query = `query ($owner: String!, $repo: String!, $cursor: String) {    repository(owner: $owner, name: $repo) {
+      refs(first: 100, refPrefix: "refs/heads/", after: $cursor) {
         edges {
           cursor
           node {
@@ -17,7 +17,7 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
                   name
                 }
                 authoredDate
-                history(first: $per_page) {
+                history(first: 100) {
                   nodes {
                     message
                     oid
@@ -46,7 +46,7 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
 
 export const branchesNoLastCursor = {
 	query,
-	variables: { owner: "integrations", repo: "test-repo-name", per_page: 50 }
+	variables: { owner: "integrations", repo: "test-repo-name"}
 };
 
 export const branchesWithLastCursor = {
@@ -54,7 +54,6 @@ export const branchesWithLastCursor = {
 	variables: {
 		owner: "integrations",
 		repo: "test-repo-name",
-		per_page: 50,
 		cursor: "MQ"
 	}
 };

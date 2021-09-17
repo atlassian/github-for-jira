@@ -36,8 +36,7 @@ interface Headers {
 export default async function(
 	github: GitHubAPI,
 	repository: Repository,
-	cursor: string | number,
-	perPage: number
+	cursor: number
 ) {
 	let status: number;
 	let headers: Headers;
@@ -47,13 +46,6 @@ export default async function(
 	} else {
 		cursor = Number(cursor);
 	}
-	const vars = {
-		owner: repository.owner.login,
-		repo: repository.name,
-		per_page: perPage,
-		page: cursor
-	};
-
 	const asyncTags = [];
 	// TODO: use graphql here instead of rest API
 	await statsd.asyncTimer(
@@ -63,7 +55,10 @@ export default async function(
 				status,
 				headers
 			} = await github.pulls.list({
-				...vars,
+				owner: repository.owner.login,
+				repo: repository.name,
+				per_page: 100,
+				page: cursor,
 				state: "all",
 				sort: "created",
 				direction: "desc",
