@@ -144,9 +144,7 @@ const updateJobStatus = async (
 			}
 		});
 
-		const delay = Number(process.env.LIMITER_PER_INSTALLATION) || 1000;
-
-		queues.installation.add(job.data, { delay });
+		queues.installation.add(job.data);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription))) {
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE });

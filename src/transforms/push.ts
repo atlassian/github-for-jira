@@ -73,13 +73,15 @@ export async function enqueuePush(payload: unknown, jiraHost: string, options?: 
 
 export function processPushJob(app: Application) {
 	return async (job: Job): Promise<void> => {
+		let github
 		try {
-			const github = await app.auth(job.data.installationId);
-			enhanceOctokit(github);
-			await processPush(github, job.data);
+			github = await app.auth(job.data.installationId);
 		} catch (err) {
 			logger.error({ err, job }, "Could not authenticate");
+			return
 		}
+		enhanceOctokit(github);
+		await processPush(github, job.data);
 	};
 }
 
@@ -175,5 +177,6 @@ export const processPush = async (github: GitHubAPI, payload) => {
 
 	} catch (error) {
 		log.error(error, "Failed to process push");
+		throw error
 	}
 };
