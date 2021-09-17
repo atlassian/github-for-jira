@@ -234,6 +234,37 @@ router.post(
 );
 
 router.post(
+	"/dedupInstallationQueue",
+	bodyParser,
+	elapsedTimeMetrics,
+	async (_: Request, res: Response): Promise<void> => {
+
+		// This remove all jobs from the queue. This way,
+		// the whole queue will be drained and all jobs will be readded.
+		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
+		const foundInstallationIds = new Set<number>();
+		const duplicateJobs = [];
+
+		// collecting duplicate jobs per installation
+		for (const job of jobs) {
+			if (foundInstallationIds.has(job.data.installationId)) {
+				duplicateJobs.push(job);
+			} else {
+				foundInstallationIds.add(job.data.installationId);
+			}
+		}
+
+		// removing duplicate jobs
+		await Promise.all(duplicateJobs.map((job) => {
+			logger.info({ job }, "removing duplicate job");
+			job.remove();
+		}));
+
+		res.send(`${duplicateJobs.length} duplicate jobs removed.`);
+	}
+);
+
+router.post(
 	"/requeue",
 	bodyParser,
 	elapsedTimeMetrics,
@@ -242,7 +273,7 @@ router.post(
 		const queueName = request.body.queue;   // "installation", "push", "metrics", or "discovery"
 		const jobTypes = request.body.jobTypes || ["active", "delayed", "waiting", "paused"];
 
-		if(!jobTypes.length){
+		if (!jobTypes.length) {
 			res.status(400);
 			res.send("please specify the jobTypes field (available job types: [\"active\", \"delayed\", \"waiting\", \"paused\"])");
 			return;
