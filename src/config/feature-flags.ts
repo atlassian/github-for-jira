@@ -22,7 +22,7 @@ export enum BooleanFlags {
 }
 
 export enum StringFlags {
-	OTHER_STRING_FLAG = "other-string-flag",
+	BLOCKED_INSTALLATIONS = "blocked-installations"
 }
 
 const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
