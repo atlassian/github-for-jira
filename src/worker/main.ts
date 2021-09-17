@@ -128,30 +128,20 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 	}
 };
 
-
 const setDelayOnRateLimiting = (jobHandler) => async (job) => {
-
-
 	try {
 		await jobHandler(job);
 	} catch (err) {
-
 		if (err instanceof RateLimitingError) {
-
 			const delay = err.rateLimitReset * 1000 - new Date().getTime();
-
 			logger.warn({ job }, `Rate limiting detected, delaying job by ${delay} ms`)
-
 			job.opts.backoff = {
 				type: "fixed",
 				delay: delay
 			}
-
 		}
-
 		throw err;
 	}
-
 }
 
 const sendQueueMetrics = async () => {
