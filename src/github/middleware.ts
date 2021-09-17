@@ -38,6 +38,14 @@ const withSentry = function(callback) {
 	};
 };
 
+const omit = (obj, ...props) => {
+	const result = { ...obj };
+	props.forEach(function(prop) {
+		delete result[prop];
+	});
+	return result;
+}
+
 // TODO: We really should fix this...
 const isFromIgnoredRepo = (payload) =>
 	// These point back to a repository for an installation that
@@ -82,8 +90,10 @@ export default (
 		const gitHubInstallationId = Number(context.payload?.installation?.id);
 
 		//TODO Remove this line and uncomment the next one to get rid of payloads in logs
-		const loggerWithWebhookParams = logger.child({ webhookId: context.id, repoName, orgName, gitHubInstallationId, event: webhookEvent, payload: context.payload });
-		//const loggerWithWebhookParams = logger.child({ webhookId: context.id, repoName, orgName, gitHubInstallationId });
+		const webhookParams = { webhookId: context.id, repoName, orgName, gitHubInstallationId, event: webhookEvent, payload: context.payload }
+		// For all micros envs log the paylaod. Omit from local to reduce noise
+		const loggerWithWebhookParams =  process.env.MICROS_ENV ? logger.child(webhookParams) : logger.child((omit(webhookParams, "payload"))) ;
+
 		context.log = loggerWithWebhookParams;
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
