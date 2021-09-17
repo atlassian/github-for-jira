@@ -9,14 +9,14 @@
   },
   "production": {
     "dialect": "postgres",
-    "use_env_variable": "PG_DATABASE_URL",
+    "use_env_variable": "DATABASE_URL",
     "disable_sql_logging": true,
     "ssl": false,
     "dialectOptions": {
       "ssl": false
     },
     "pool": {
-			"max": 5,
+			"max": 15,
 			"min": 0,
 			"idle": 10000
     }
