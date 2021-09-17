@@ -140,7 +140,7 @@ const setDelayOnRateLimiting = (jobHandler) => async (job) => {
 
 			const delay = err.rateLimitReset * 1000 - new Date().getTime();
 
-			logger.warn({ job }, `Rate limiting detected, setting the exponential backoff base to ${delay}`)
+			logger.warn({ job }, `Rate limiting detected, delaying job by ${delay} ms`)
 
 			job.opts.backoff = {
 				type: "fixed",
