@@ -239,19 +239,26 @@ router.post(
 	elapsedTimeMetrics,
 	async (request: Request, res: Response): Promise<void> => {
 
-		const queueName = request.body.queue;
+		const queueName = request.body.queue;   // "installation", "push", "metrics", or "discovery"
+		const jobTypes = request.body.jobTypes || []; // any combination of ["active", "delayed", "waiting", "paused"]
+
+		if(!jobTypes.length){
+			res.status(400);
+			res.send("please specify the jobTypes field (available job types: [\"active\", \"delayed\", \"waiting\", \"paused\"])");
+			return;
+		}
 
 		const queue: Queue = queues[queueName];
 
 		if (queue == undefined) {
 			res.status(400);
-			res.send(`queue ${queueName} does not exist`);
+			res.send(`queue ${queueName} does not exist (available queues: "installation", "push", "metrics", or "discovery"`);
 			return;
 		}
 
 		// This remove all jobs from the queue. This way,
 		// the whole queue will be drained and all jobs will be readded.
-		const jobs = await queue.getJobs(["active", "delayed", "waiting", "paused"]);
+		const jobs = await queue.getJobs(jobTypes);
 
 		await Promise.all(jobs.map(async (job: Job) => {
 			try {
