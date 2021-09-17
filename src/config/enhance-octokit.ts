@@ -30,7 +30,7 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 			const tags = {
 				path: extractPath(options.url),
 				method: options.method,
-				status: responseStatus
+				status: responseStatus || "none"
 			};
 
 			statsd.histogram(metricHttpRequest().github, elapsed, tags);
