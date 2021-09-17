@@ -240,7 +240,7 @@ router.post(
 	async (request: Request, res: Response): Promise<void> => {
 
 		const queueName = request.body.queue;   // "installation", "push", "metrics", or "discovery"
-		const jobTypes = request.body.jobTypes || []; // any combination of ["active", "delayed", "waiting", "paused"]
+		const jobTypes = request.body.jobTypes || ["active", "delayed", "waiting", "paused"];
 
 		if(!jobTypes.length){
 			res.status(400);
@@ -250,7 +250,7 @@ router.post(
 
 		const queue: Queue = queues[queueName];
 
-		if (queue == undefined) {
+		if (!queue) {
 			res.status(400);
 			res.send(`queue ${queueName} does not exist (available queues: "installation", "push", "metrics", or "discovery"`);
 			return;
