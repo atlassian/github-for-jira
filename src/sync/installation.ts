@@ -173,6 +173,7 @@ const isBlocked = async (installationId: number): Promise<boolean> => {
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
 		return blockedInstallations.includes(installationId);
 	} catch (e) {
+		logger.error(e);
 		return false;
 	}
 }
