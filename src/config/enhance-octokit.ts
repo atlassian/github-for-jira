@@ -13,9 +13,9 @@ export class RateLimitingError extends Error {
 	 */
 	rateLimitReset: number;
 
-	constructor(resetMillis: number) {
+	constructor(resetEpochSeconds: number) {
 		super("rate limiting error");
-		this.rateLimitReset = resetMillis;
+		this.rateLimitReset = resetEpochSeconds;
 		Object.setPrototypeOf(this, RateLimitingError.prototype);
 	}
 }
