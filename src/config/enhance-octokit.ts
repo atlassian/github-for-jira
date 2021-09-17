@@ -23,7 +23,7 @@ export class RateLimitingError extends Error {
 const instrumentRequests = (octokit: GitHubAPI) => {
 
 	octokit.hook.error("request", async (error) => {
-		if (error.status === 403 && error.headers && error.headers["X-RateLimit-Remaining"] == "0") {
+		if (error.headers && error.headers["X-RateLimit-Remaining"] == "0") {
 			if(error.headers["X-RateLimit-Reset"]) {
 				logger.warn({error}, "rate limiting error");
 				const rateLimitReset: number = parseInt(error.headers["X-RateLimit-Reset"]);

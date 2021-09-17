@@ -17,7 +17,7 @@ import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
 import "../config/proxy";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import {RateLimitingError} from "../config/enhance-octokit";
+import { RateLimitingError } from "../config/enhance-octokit";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client"));
@@ -136,11 +136,11 @@ const setDelayOnRateLimiting = (jobHandler) => async (job) => {
 		await jobHandler(job);
 	} catch (err) {
 
-		if(err instanceof RateLimitingError) {
+		if (err instanceof RateLimitingError) {
 
-			const delay = err.rateLimitReset*1000 - new Date().getTime();
+			const delay = err.rateLimitReset * 1000 - new Date().getTime();
 
-			logger.warn({job}, `Rate limiting detected, setting the exponential backoff base to ${delay}`)
+			logger.warn({ job }, `Rate limiting detected, setting the exponential backoff base to ${delay}`)
 
 			job.opts.backoff = {
 				type: "fixed",
