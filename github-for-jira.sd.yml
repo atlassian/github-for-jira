@@ -136,7 +136,7 @@ config:
     NODE_OPTIONS: "--no-deprecation"
     LOG_LEVEL: info
     PORT: "8080"
-    CONCURRENT_WORKERS: "10"
+    CONCURRENT_WORKERS: "40"
     PG_DATABASE_BOUNCER: pgbouncer
     # These secret environment variables need to be stashed with "atlas micros stash" for each environment:
     # GITHUB_CLIENT_SECRET: GitHub app's client secret
