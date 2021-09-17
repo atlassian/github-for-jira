@@ -243,24 +243,24 @@ router.post(
 		// the whole queue will be drained and all jobs will be readded.
 		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
 		const foundInstallationIds = new Set<number>();
-		const jobsToRemove = [];
+		const duplicateJobs = [];
 
 		// collecting duplicate jobs per installation
 		for (const job of jobs) {
 			if (foundInstallationIds.has(job.data.installationId)) {
-				jobsToRemove.push(job);
+				duplicateJobs.push(job);
 			} else {
 				foundInstallationIds.add(job.data.installationId);
 			}
 		}
 
 		// removing duplicate jobs
-		await Promise.all(jobsToRemove.map((job) => {
+		await Promise.all(duplicateJobs.map((job) => {
 			logger.info({ job }, "removing duplicate job");
 			job.remove();
 		}));
 
-		res.send(`${jobsToRemove.length} duplicate jobs removed.`);
+		res.send(`${duplicateJobs.length} duplicate jobs removed.`);
 	}
 );
 
