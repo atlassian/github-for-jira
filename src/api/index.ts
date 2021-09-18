@@ -247,6 +247,10 @@ router.post(
 
 		// collecting duplicate jobs per installation
 		for (const job of jobs) {
+			// getJobs() sometimes seems to include a "null" job in the array
+			if (!job) {
+				continue;
+			}
 			if (foundInstallationIds.has(job.data.installationId)) {
 				duplicateJobs.push(job);
 			} else {
@@ -260,7 +264,7 @@ router.post(
 			job.remove();
 		}));
 
-		res.send(`${duplicateJobs.length} duplicate jobs removed.`);
+		res.send(`${duplicateJobs.length} duplicate jobs killed with fire.`);
 	}
 );
 
