@@ -1,7 +1,7 @@
 import { getJiraId } from "../../jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../../jira/util/isEmpty";
 import { getJiraAuthor } from "../../util/jira";
+import _ from "lodash";
 
 // TODO: better typing in file
 /**
@@ -14,11 +14,11 @@ import { getJiraAuthor } from "../../util/jira";
  *  - Messages from up to the last 100 commits in that branch
  */
 function mapBranch(branch, repository) {
-	const branchKeys = issueKeyParser().parse(branch.name);
+	const branchKeys = issueKeyParser().parse(branch.name) || [];
 	const pullRequestKeys = issueKeyParser().parse(
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
-	);
-	const commitKeys = issueKeyParser().parse(branch.target.message);
+	) || [];
+	const commitKeys = issueKeyParser().parse(branch.target.message) || [];
 
 	const allKeys = branchKeys
 		.concat(pullRequestKeys)
@@ -61,7 +61,7 @@ function mapBranch(branch, repository) {
 function mapCommit(commit) {
 	const issueKeys = issueKeyParser().parse(commit.message);
 
-	if (isEmpty(issueKeys)) {
+	if (_.isEmpty(issueKeys)) {
 		return undefined;
 	}
 

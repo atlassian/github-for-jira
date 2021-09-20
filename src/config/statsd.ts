@@ -4,8 +4,8 @@ import { NextFunction, Request, Response } from "express";
 import { isNodeDev, isNodeTest } from "../util/isNodeEnv";
 
 export const globalTags = {
-	environment: isNodeTest() ? "test" : process.env.MICROS_ENV,
-	environment_type: isNodeTest() ? "testenv" : process.env.MICROS_ENVTYPE,
+	environment: isNodeTest() ? "test" : process.env.MICROS_ENV || "",
+	environment_type: isNodeTest() ? "testenv" : process.env.MICROS_ENVTYPE || "",
 	deployment_id: process.env.MICROS_DEPLOYMENT_ID || "1",
 	region: process.env.MICROS_AWS_REGION || "localhost"
 };

@@ -1,7 +1,7 @@
 import transformBranch from "../transforms/branch";
 import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
+import _ from "lodash";
 
 export const createBranch = async (context: Context, jiraClient): Promise<void> => {
 	const jiraPayload = await transformBranch(context);
@@ -22,7 +22,7 @@ export const createBranch = async (context: Context, jiraClient): Promise<void> 
 export const deleteBranch = async (context, jiraClient): Promise<void> => {
 	const issueKeys = issueKeyParser().parse(context.payload.ref);
 
-	if (isEmpty(issueKeys)) {
+	if (_.isEmpty(issueKeys)) {
 		context.log(
 			{ noop: "no_issue_keys" },
 			"Halting further execution for deleteBranch since issueKeys is empty"

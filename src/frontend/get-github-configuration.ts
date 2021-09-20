@@ -5,6 +5,8 @@ import enhanceOctokit from "../config/enhance-octokit";
 import app from "../worker/app";
 import { getInstallation } from "./get-jira-configuration";
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
+import { GitHubAPI } from "probot";
+import { Octokit } from "@octokit/rest";
 
 const getConnectedStatus = (
 	installationsWithSubscriptions: any,
@@ -61,10 +63,12 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 	req.log.info({ installationId: req.body.installationId }, "Received delete jira configuration request");
 
-	const { github, client, isAdmin } = res.locals;
+	const github: GitHubAPI = res.locals.github;
+	const client: GitHubAPI = res.locals.client;
+	const isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean> = res.locals.isAdmin;
 
 	async function getInstallationsWithAdmin({ installations, login }) {
-		const installationsWithAdmin = [];
+		const installationsWithAdmin: InstallationWithAdmin[] = [];
 
 		for (const installation of installations) {
 			// See if we can get the membership for this user
@@ -98,6 +102,11 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			// we can get the jira client Key from the JWT's `iss` property
 			// so we'll decode the JWT here and verify it's the right key before continuing
 			const installation = await Installation.getForHost(req.session.jiraHost);
+			if (!installation) {
+				req.log.warn({ req, res }, "Missing installation");
+				res.status(404).send(`Missing installation for host '${req.session.jiraHost}'`);
+				return;
+			}
 			const { iss: clientKey } = decodeSymmetric(req.session.jwt, installation.sharedSecret, getAlgorithm(req.session.jwt));
 
 			const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
@@ -129,3 +138,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 	res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
 };
+
+interface InstallationWithAdmin extends Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem {
+	admin: boolean;
+}

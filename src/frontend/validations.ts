@@ -4,8 +4,7 @@ const subdomainRegexp = /^\w(?:[\w-]{0,61}\w)?$/;
 const jiraDomains = ["atlassian.net", "jira.com"];
 
 export const validJiraDomains = (jiraSubdomain: string, jiraDomain: string): boolean =>
-	jiraSubdomain &&
-	jiraDomains.includes(jiraDomain) &&
+	jiraDomains?.includes(jiraDomain) &&
 	subdomainRegexp.test(jiraSubdomain);
 
 export const jiraDomainOptions = (jiraDomain?: string): JiraDomain[] =>

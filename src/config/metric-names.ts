@@ -17,7 +17,7 @@ export const queueMetrics = {
 	repeatable: `${server}.queue.repeatable`,
 }
 
-export const metricHttpRequest = (metricName?: string) => {
+export const metricHttpRequest = () => {
 	return {
 		github: `${server}.http.request.github`,
 		jira: `${server}.http.request.jira`,
@@ -25,7 +25,6 @@ export const metricHttpRequest = (metricName?: string) => {
 		uninstall: `${server}.http.request.uninstall`,
 		fullSync: `${server}.http.request.full-sync`,
 		syncPullRequest: `${server}.http.request.sync-pull-request`,
-		hydroSubmission: `${server}.http.request.${metricName}`,
 		jobDuration: `${server}.http.request.job-duration`,
 		requestStatusSync: `${server}.http.request.request-status-syncs`
 	};

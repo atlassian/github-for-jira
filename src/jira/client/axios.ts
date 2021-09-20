@@ -37,7 +37,7 @@ function getAuthMiddleware(secret: string) {
 					iss,
 					qsh: createQueryStringHash({
 						method: config.method,
-						pathname,
+						pathname: pathname || undefined,
 						query
 					})
 				},
@@ -143,7 +143,7 @@ function getUrlMiddleware() {
 			config.urlParams = config.urlParams || {};
 
 			for (const param in config.urlParams) {
-				if (pathname.includes(`:${param}`)) {
+				if (pathname?.includes(`:${param}`)) {
 					pathname = pathname.replace(`:${param}`, config.urlParams[param]);
 				} else {
 					query[param] = config.urlParams[param];
@@ -198,7 +198,7 @@ const setRequestStartTime = (config) => {
  *
  */
 export const extractPath = (someUrl = ""): string =>
-	url.parse(someUrl).pathname;
+	url.parse(someUrl).pathname || "";
 
 /**
  * Submit statsd metrics on successful requests.
@@ -254,7 +254,7 @@ export default (
 	logger = logger || getLogger("jira.client.axios");
 	const instance = axios.create({
 		baseURL,
-		timeout: +process.env.JIRA_TIMEOUT || 30000
+		timeout: Number(process.env.JIRA_TIMEOUT) || 30000
 	});
 
 	instance.interceptors.request.use(setRequestStartTime);

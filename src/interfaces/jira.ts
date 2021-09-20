@@ -29,16 +29,26 @@ export interface JiraBuildData {
 
 export interface JiraCommit {
 	author: JiraAuthor;
-	authorTimestamp: number;
+	authorTimestamp: string;
 	displayId: string;
 	fileCount: number;
 	hash: string;
 	id: string;
 	issueKeys: string[];
 	message: string;
-	timestamp: number;
 	url: string;
 	updateSequenceId: number;
+
+	files?: JiraCommitFile[];
+	flags?: string[];
+}
+
+export interface JiraCommitFile {
+	path: string;
+	changeType: string;
+	linesAdded?: string[];
+	linesRemoved?: string[];
+	url: string;
 }
 
 export interface JiraAuthor {

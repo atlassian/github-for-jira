@@ -1,13 +1,14 @@
 import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
 import { queues } from "../worker/main";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
+import { JiraCommit } from "../interfaces/jira";
+import _ from "lodash";
 
 // TODO: define better types for this file
 
@@ -45,11 +46,11 @@ export function createJobData(payload, jiraHost: string) {
 		owner
 	};
 
-	const shas = [];
+	const shas: { id: string, issueKeys: string[] }[] = [];
 	for (const commit of payload.commits) {
-		const issueKeys = issueKeyParser().parse(commit.message);
+		const issueKeys = issueKeyParser().parse(commit.message) || [];
 
-		if (isEmpty(issueKeys)) {
+		if (_.isEmpty(issueKeys)) {
 			// Don't add this commit to the queue since it doesn't have issue keys
 			continue;
 		}
@@ -73,12 +74,12 @@ export async function enqueuePush(payload: unknown, jiraHost: string, options?: 
 
 export function processPushJob(app: Application) {
 	return async (job: Job): Promise<void> => {
-		let github
+		let github;
 		try {
 			github = await app.auth(job.data.installationId);
 		} catch (err) {
 			logger.error({ err, job }, "Could not authenticate");
-			return
+			return;
 		}
 		enhanceOctokit(github);
 		await processPush(github, job.data);
@@ -118,8 +119,8 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			log
 		);
 
-		const commits = await Promise.all(
-			shas.map(async (sha) => {
+		const commits: JiraCommit[] = await Promise.all(
+			shas.map(async (sha): Promise<JiraCommit> => {
 				const {
 					data,
 					data: { commit: githubCommit }
@@ -158,7 +159,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 
 		// Jira accepts up to 400 commits per request
 		// break the array up into chunks of 400
-		const chunks = [];
+		const chunks: JiraCommit[][] = [];
 		while (commits.length) {
 			chunks.push(commits.splice(0, 400));
 		}
@@ -177,6 +178,6 @@ export const processPush = async (github: GitHubAPI, payload) => {
 
 	} catch (error) {
 		log.error(error, "Failed to process push");
-		throw error
+		throw error;
 	}
 };

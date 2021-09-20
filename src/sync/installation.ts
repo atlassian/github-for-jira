@@ -27,7 +27,8 @@ interface TaskProcessors {
 		(
 			github: GitHubAPI,
 			repository: Repository,
-			cursor: any
+			cursor?: string | number,
+			perPage?: number
 		) => Promise<{ edges: any[], jiraPayload: any }>;
 }
 
@@ -69,11 +70,11 @@ const updateNumberOfReposSynced = async (
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
 		(a, b) =>
-			new Date(b[1].repository?.updated_at).getTime() -
-			new Date(a[1].repository?.updated_at).getTime()
+			new Date(b[1].repository?.updated_at || 0).getTime() -
+			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-const getNextTask = async (subscription: SubscriptionClass): Promise<Task> => {
+const getNextTask = async (subscription: SubscriptionClass): Promise<Task | undefined> => {
 	const repos = subscription?.repoSyncState?.repos || {};
 	await updateNumberOfReposSynced(repos, subscription);
 
@@ -86,15 +87,15 @@ const getNextTask = async (subscription: SubscriptionClass): Promise<Task> => {
 		return {
 			task,
 			repositoryId,
-			repository,
+			repository: repository as Repository,
 			cursor: cursor as any
 		};
 	}
 	return undefined;
 };
 
-interface Task {
-	task: string;
+export interface Task {
+	task: TaskType;
 	repositoryId: string;
 	repository: Repository;
 	cursor: string | number;
@@ -108,8 +109,8 @@ const getStatusKey = (type: TaskType) => `${type}Status`;
 const updateJobStatus = async (
 	queues,
 	job: Queue.Job,
-	edges,
-	task,
+	edges: any[] | undefined,
+	task: TaskType,
 	repositoryId: string
 ) => {
 	const { installationId, jiraHost } = job.data;
@@ -130,7 +131,7 @@ const updateJobStatus = async (
 	logger.info({ job, task, status }, "Updating job status");
 
 	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
-		await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status)
+		await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status);
 	} else {
 		await subscription.updateSyncState({
 			repos: {
@@ -144,7 +145,7 @@ const updateJobStatus = async (
 	if (edges?.length) {
 		// there's more data to get
 		if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
-			await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor)
+			await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 		} else {
 			await subscription.updateSyncState({
 				repos: {
@@ -187,7 +188,7 @@ const isBlocked = async (installationId: number): Promise<boolean> => {
 		logger.error(e);
 		return false;
 	}
-}
+};
 
 /**
  * Determines if an an error returned by the GitHub API means that we should retry it
@@ -200,7 +201,7 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 		const retryableErrors = err.errors.filter(
 			(error) => {
 				return "MAX_NODE_LIMIT_EXCEEDED" == error.type
-					|| error.message?.startsWith("Something went wrong while executing your query")
+					|| error.message?.startsWith("Something went wrong while executing your query");
 			}
 		);
 
@@ -224,10 +225,10 @@ export const handleNotFoundErrors = (
 	const isNotFoundError = isNotFoundErrorType?.length > 0 || err?.status === 404;
 
 	isNotFoundError &&
-		logger.info(
-			{ job, task: nextTask },
-			"Repository deleted after discovery, skipping initial sync"
-		);
+	logger.info(
+		{ job, task: nextTask },
+		"Repository deleted after discovery, skipping initial sync"
+	);
 
 	return isNotFoundError;
 };

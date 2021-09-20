@@ -8,7 +8,7 @@ import configureRobot from "../../src/configure-robot";
 export const createApplication = () => new Application({
 	app: new App({
 		id: 12257,
-		privateKey: findPrivateKey()
+		privateKey: findPrivateKey() || ""
 	}),
 	cache: caching({
 		store: "memory",

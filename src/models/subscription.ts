@@ -1,4 +1,4 @@
-import Sequelize, { Op } from "sequelize";
+import Sequelize, { Op, WhereOptions } from "sequelize";
 import { queues } from "../worker/main";
 import { Job } from "bull";
 import _ from "lodash";
@@ -35,6 +35,7 @@ export interface RepositoryData {
 	lastBranchCursor?: string | number;
 	lastCommitCursor?: string | number;
 	lastPullCursor?: string | number;
+
 	// TODO: need to get concrete typing
 	[key: string]: unknown;
 }
@@ -83,10 +84,10 @@ export default class Subscription extends Sequelize.Model {
 		installationIds: number[] = [],
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
 		offset = 0,
-		limit?: number,
+		limit?: number
 	): Promise<Subscription[]> {
 
-		const andFilter = [];
+		const andFilter: WhereOptions[] = [];
 
 		if (statusTypes?.length > 0) {
 			andFilter.push({
@@ -125,7 +126,7 @@ export default class Subscription extends Sequelize.Model {
 	static getSingleInstallation(
 		jiraHost: string,
 		gitHubInstallationId: number
-	): Promise<Subscription> {
+	): Promise<Subscription | null> {
 		return Subscription.findOne({
 			where: {
 				jiraHost,
@@ -137,7 +138,7 @@ export default class Subscription extends Sequelize.Model {
 	static async getInstallationForClientKey(
 		clientKey: string,
 		installationId: string
-	): Promise<Subscription> {
+	): Promise<Subscription | null> {
 		return Subscription.findOne({
 			where: {
 				jiraClientKey: clientKey,
@@ -202,7 +203,7 @@ export default class Subscription extends Sequelize.Model {
 	 * Returns array with sync status counts. [ { syncStatus: 'COMPLETED', count: 123 }, ...]
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
-		const [results] = await this.sequelize.query(
+		const [results] = await this.sequelize?.query(
 			`SELECT "syncStatus", COUNT(*)
 			 FROM "Subscriptions"
 			 GROUP BY "syncStatus"`
@@ -227,7 +228,7 @@ export default class Subscription extends Sequelize.Model {
 
 		this.repoSyncState.numberOfSyncedRepos = cnt;
 		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "repoSyncState" = jsonb_set("repoSyncState", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id`,
+			"UPDATE \"Subscriptions\" SET \"repoSyncState\" = jsonb_set(\"repoSyncState\", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id",
 			{
 				replacements: {
 					cnt: cnt,
@@ -248,7 +249,7 @@ export default class Subscription extends Sequelize.Model {
 		});
 
 		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "repoSyncState" = jsonb_set("repoSyncState", :path, :value, true) WHERE id = :id`,
+			"UPDATE \"Subscriptions\" SET \"repoSyncState\" = jsonb_set(\"repoSyncState\", :path, :value, true) WHERE id = :id",
 			{
 				replacements: {
 					path: `{repos,${repositoryId},${key}}`,

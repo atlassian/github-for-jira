@@ -20,7 +20,7 @@
 		"noImplicitAny": false,
 		"noImplicitThis": false,
     "esModuleInterop": true,
-    "outDir": "build"
+    "outDir": "build",
   },
   "include": [
     "src/**/*",

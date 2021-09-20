@@ -176,7 +176,7 @@ async function getJiraClient(
 							jiraHost,
 							gitHubInstallationId
 						);
-						await subscription.update({
+						await subscription?.update({
 							syncWarning:
 								"Exceeded issue key reference limit. Some issues may not be linked."
 						});
@@ -198,7 +198,7 @@ async function getJiraClient(
 				if (!withinIssueKeyLimit(data.builds)) {
 					updateIssueKeysFor(data.builds, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
-					await subscription.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
+					await subscription?.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
 				}
 				const payload = {
 					builds: data.builds,
@@ -209,8 +209,8 @@ async function getJiraClient(
 						product: data.product
 					}
 				};
-				logger.debug(`Sending builds payload to jira. Payload: ${payload}`);
-				logger.info("Sending builds payload to jira.");
+				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
+				logger?.info("Sending builds payload to jira.");
 				await instance.post("/rest/builds/0.1/bulk", payload);
 			}
 		},
@@ -220,7 +220,7 @@ async function getJiraClient(
 				if (!withinIssueKeyLimit(data.deployments)) {
 					updateIssueKeysFor(data.deployments, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
-					await subscription.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
+					await subscription?.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
 				}
 				const payload = {
 					deployments: data.deployments,
@@ -228,8 +228,8 @@ async function getJiraClient(
 						gitHubInstallationId
 					}
 				};
-				logger.debug(`Sending deployments payload to jira. Payload: ${payload}`);
-				logger.info("Sending deployments payload to jira.");
+				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
+				logger?.info("Sending deployments payload to jira.");
 				await instance.post("/rest/deployments/0.1/bulk", payload);
 			}
 		}
@@ -243,7 +243,7 @@ export default async (
 	gitHubInstallationId: number,
 	logger?: Logger
 ) => {
-	return await getJiraClient(jiraHost, gitHubInstallationId, logger);
+	return getJiraClient(jiraHost, gitHubInstallationId, logger);
 };
 
 /**
@@ -254,13 +254,13 @@ const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
 	installationId: number,
-	logger:Logger,
+	logger?: Logger,
 	options?: { preventTransitions: boolean }
 ) => {
-	const dedupedCommits = dedupCommits(data.commits);
+	const dedupedCommits: unknown[] = dedupCommits(data.commits);
 
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
-	const commitChunks = [];
+	const commitChunks: unknown[][] = [];
 	do {
 		commitChunks.push(dedupedCommits.splice(0, 400));
 	} while (dedupedCommits.length);
@@ -277,7 +277,7 @@ const batchedBulkUpdate = async (
 			}
 		};
 		return instance.post("/rest/devinfo/0.10/bulk", body).catch((err) => {
-			logger.error({...err, body, data}, "Jira Client Error: Cannot update Repository")
+			logger?.error({ ...err, body, data }, "Jira Client Error: Cannot update Repository");
 			return Promise.reject(err);
 		});
 	});
@@ -298,11 +298,15 @@ const withinIssueKeyLimit = (resources) => {
 /**
  * Deduplicates commits by ID field for a repository payload
  */
-const dedupCommits = (commits) =>
-	(commits || []).filter(
+const dedupCommits = <T extends IdObject>(commits:T[] = []) =>
+	commits.filter(
 		(obj, pos, arr) =>
 			arr.map((mapCommit) => mapCommit.id).indexOf(obj.id) === pos
 	);
+
+interface IdObject {
+	id: string;
+}
 
 /**
  * Deduplicates issueKeys field for branches and commits

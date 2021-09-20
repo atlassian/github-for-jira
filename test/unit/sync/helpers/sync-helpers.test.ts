@@ -1,17 +1,6 @@
-import {
-	mockNotFoundErrorOctokitRequest,
-	mockNotFoundErrorOctokitGraphql,
-	mockOtherOctokitRequestErrors,
-	mockOtherOctokitGraphqlErrors,
-	mockOtherError,
-	mockJob,
-	mockNextTask,
-} from "../../../mocks/errorResponses";
+import { mockJob, mockNextTask, mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "../../../mocks/errorResponses";
 /* eslint-disable @typescript-eslint/no-var-requires */
-import {
-	sortedRepos,
-	handleNotFoundErrors,
-} from "../../../../src/sync/installation";
+import { handleNotFoundErrors, sortedRepos } from "../../../../src/sync/installation";
 
 describe("Sync helpers suite", () => {
 	const repoSyncState = require("../../../fixtures/repo-sync-state.json");

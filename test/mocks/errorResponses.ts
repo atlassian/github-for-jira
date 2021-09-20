@@ -1,3 +1,5 @@
+import { Task } from "../../src/sync/installation";
+
 export const mockNotFoundErrorOctokitRequest = {
 	status: 404,
 	headers: {
@@ -186,15 +188,15 @@ export const mockJob = {
 	sentry: { _version: 4, _stack: [] },
 };
 
-export const mockNextTask = {
-	task: '"branch',
+export const mockNextTask:Task = {
+	task: "branch",
 	repositoryId: "483702170",
 	repository: {
 		id: "483702170",
 		name: "some-repo",
+		full_name: "Some-Org/some-repo",
 		owner: { login: "Some-Org" },
 		html_url: "https://github.com/some-org/some-repo",
-		full_name: "Some-Org/some-repo",
 		updated_at: 23132123,
 	},
 	cursor: 1,
