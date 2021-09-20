@@ -27,8 +27,7 @@ interface TaskProcessors {
 		(
 			github: GitHubAPI,
 			repository: Repository,
-			cursor: string | number,
-			perPage: number
+			cursor: string | number
 		) => Promise<{ edges: any[], jiraPayload: any }>;
 }
 
