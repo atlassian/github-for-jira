@@ -1,7 +1,7 @@
-import { CustomContext } from "./middleware";
 import JiraClient from "../models/jira-client";
+import { Context } from "probot/lib/context";
 
-export default async (context: CustomContext, _: JiraClient, util): Promise<void> => {
+export default async (context: Context, _: JiraClient, util): Promise<void> => {
 	const { issue } = context.payload;
 
 	let linkifiedBody;
