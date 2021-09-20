@@ -17,6 +17,7 @@ import { elapsedTimeMetrics } from "../config/statsd";
 import { queues } from "../worker/main";
 import { getLogger } from "../config/logger";
 import { Job, Queue } from "bull";
+import { WhereOptions } from "sequelize";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -153,6 +154,12 @@ router.get(
 		const githubInstallationId = Number(req.params.installationId);
 
 		try {
+			if (!req.session.jiraHost) {
+				req.log.warn({ req, res }, "Missing Jira Host");
+				res.status(500).send("Missing Jira Host");
+				return;
+			}
+
 			const subscription = await Subscription.getSingleInstallation(
 				req.session.jiraHost,
 				githubInstallationId
@@ -242,7 +249,7 @@ router.post(
 		const queueName = request.body.queue;   // "installation", "push", "metrics", or "discovery"
 		const jobTypes = request.body.jobTypes || ["active", "delayed", "waiting", "paused"];
 
-		if(!jobTypes.length){
+		if (!jobTypes.length) {
 			res.status(400);
 			res.send("please specify the jobTypes field (available job types: [\"active\", \"delayed\", \"waiting\", \"paused\"])");
 			return;
@@ -286,7 +293,7 @@ router.get(
 		elapsedTimeMetrics
 	],
 	async (req: Request, res: Response): Promise<void> => {
-		const where = req.params.clientKeyOrJiraHost.startsWith("http")
+		const where: WhereOptions = req.params.clientKeyOrJiraHost.startsWith("http")
 			? { jiraHost: req.params.clientKeyOrJiraHost }
 			: { clientKey: req.params.clientKeyOrJiraHost };
 		const jiraInstallations = await Installation.findAll({ where });

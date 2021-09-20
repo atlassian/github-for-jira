@@ -1,8 +1,8 @@
 import { createJobData, enqueuePush, processPush } from "../transforms/push";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import _ from "lodash";
 
 export default async (context: Context, jiraClient): Promise<void> => {
 	// Copy the shape of the context object for processing
@@ -15,7 +15,7 @@ export default async (context: Context, jiraClient): Promise<void> => {
 		commits: context.payload?.commits?.map((commit) => {
 			const issueKeys = issueKeyParser().parse(commit.message);
 
-			if (!isEmpty(issueKeys)) {
+			if (!_.isEmpty(issueKeys)) {
 				return commit;
 			}
 		})

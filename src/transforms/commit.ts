@@ -1,13 +1,11 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
 import { JiraCommit, JiraCommitData } from "../interfaces/jira";
 import { getJiraAuthor } from "../util/jira";
+import _ from "lodash";
 
-export const mapCommit = (commit): JiraCommit => {
-
-	const issueKeys = issueKeyParser().parse(commit.message);
-
-	if (isEmpty(issueKeys)) {
+export const mapCommit = (commit): JiraCommit | undefined => {
+	const issueKeys = issueKeyParser().parse(commit.message) || [];
+	if (_.isEmpty(issueKeys)) {
 		return undefined;
 	}
 
@@ -24,10 +22,10 @@ export const mapCommit = (commit): JiraCommit => {
 		url: commit.url || undefined, // If blank string, don't send url
 		updateSequenceId: Date.now()
 	};
-}
+};
 
 // TODO: type payload and return better
-export default (payload): JiraCommitData => {
+export default (payload): JiraCommitData | undefined => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
 		.map((commit) => mapCommit(commit))

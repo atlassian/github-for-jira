@@ -11,16 +11,16 @@ const logger = getLogger("sync.pull-request");
 /**
  * Find the next page number from the response headers.
  */
-export const getNextPage = (headers: Headers = {}): number => {
+export const getNextPage = (headers: Headers = {}): number | undefined => {
 	const nextUrl = ((headers.link || "").match(/<([^>]+)>;\s*rel="next"/) ||
 		[])[1];
 	if (!nextUrl) {
 		return undefined;
 	}
 	logger.debug("Extracting next PRs page url");
-	const parsed = url.parse(nextUrl).query.split("&");
+	const parsed = url.parse(nextUrl)?.query?.split("&");
 	let nextPage;
-	parsed.forEach((query) => {
+	parsed?.forEach((query) => {
 		const [key, value] = query.split("=");
 		if (key === "page") {
 			nextPage = Number(value);
@@ -39,14 +39,14 @@ export default async function(
 	cursor: number
 ) {
 	let status: number;
-	let headers: Headers;
+	let headers: Headers = {};
 	let edges;
 	if (!cursor) {
 		cursor = 1;
 	} else {
 		cursor = Number(cursor);
 	}
-	const asyncTags = [];
+	const asyncTags: string[] = [];
 	// TODO: use graphql here instead of rest API
 	await statsd.asyncTimer(
 		async () => {
@@ -61,12 +61,8 @@ export default async function(
 				page: cursor,
 				state: "all",
 				sort: "created",
-				direction: "desc",
+				direction: "desc"
 				// Retry up to 6 times pausing for 10s, for *very* large repos we need to wait a while for the result to succeed in dotcom
-				request: {
-					retries: 6,
-					retryAfter: 10
-				}
 			}));
 			asyncTags.push(`status:${status}`);
 		},

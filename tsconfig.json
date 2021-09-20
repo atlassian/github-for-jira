@@ -16,9 +16,9 @@
     "noUnusedParameters": true,
     "noImplicitAny": false,
     "noImplicitThis": false,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
     "esModuleInterop": true,
-    "outDir": "build"
+    "outDir": "build",
   },
   "include": [
     "src/**/*",

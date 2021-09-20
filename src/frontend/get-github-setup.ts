@@ -8,16 +8,11 @@ Redirects users back to github/configuration to install their Jira instance in G
 If the installation was done from Jira Marketplace, the app is already installed.
 */
 export default (req: Request, res: Response, next: NextFunction): void => {
-
 	req.log.info("Received get github setup page request");
-
-	if (req.session.jiraHost) {
-		const { host: githubHost, session } = req;
-		const { jwt, jiraHost } = session;
-
-		const urlArgs = { githubHost, jwt, jiraHost };
-
-		return res.redirect(getGitHubConfigurationUrl(urlArgs));
+	const { host: githubHost } = req;
+	const { jwt, jiraHost } = req.session;
+	if (jiraHost && jwt) {
+		return res.redirect(getGitHubConfigurationUrl({ githubHost, jwt, jiraHost }));
 	}
 
 	res.render("github-setup.hbs", {

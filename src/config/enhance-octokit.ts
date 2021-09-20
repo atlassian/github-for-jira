@@ -24,14 +24,14 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 
 	octokit.hook.error("request", async (error) => {
 		if (error.headers && error.headers["X-RateLimit-Remaining"] == "0") {
-			if(error.headers["X-RateLimit-Reset"]) {
-				logger.warn({error}, "rate limiting error");
+			if (error.headers["X-RateLimit-Reset"]) {
+				logger.warn({ error }, "rate limiting error");
 				const rateLimitReset: number = parseInt(error.headers["X-RateLimit-Reset"]);
 				throw new RateLimitingError(rateLimitReset);
 			}
 		}
 
-		if(error.status == 403){
+		if (error.status == 403) {
 			// delaying for an hour
 			throw new RateLimitingError(new Date().getTime() / 1000 + 60 * 60);
 		}
@@ -40,8 +40,7 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 
 	octokit.hook.wrap("request", async (request, options) => {
 		const requestStart = Date.now();
-		let responseStatus = null;
-
+		let responseStatus = 0;
 		let response: Octokit.Response<any>;
 		let error: any;
 		try {
@@ -51,20 +50,17 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 		} catch (err) {
 			error = err;
 			responseStatus = error?.responseCode;
-
 			throw error;
 		} finally {
 			if (error || responseStatus < 200 || responseStatus >= 400) {
-				logger.warn({ request, response, error }, `Octokit error: failed request '${options.method} ${options.url}'`);
+				logger.warn({ request, error }, `Octokit error: failed request '${options.method} ${options.url}'`);
 			}
-			const elapsed = Date.now() - requestStart;
-			const tags = {
+			const elapsed = Date.now () - requestStart;
+			statsd.histogram(metricHttpRequest().github, elapsed, {
 				path: extractPath(options.url),
 				method: options.method,
-				status: responseStatus
-			};
-
-			statsd.histogram(metricHttpRequest().github, elapsed, tags);
+				status: responseStatus.toString()
+			});
 		}
 	});
 };

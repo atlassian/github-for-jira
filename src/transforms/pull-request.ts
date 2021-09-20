@@ -1,13 +1,13 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
 import { getJiraId } from "../jira/util/id";
 import _ from "lodash";
 import { Octokit } from "@octokit/rest";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
 import { getGithubUser } from "../services/github/user";
 import { PullRequestReview, PullRequestReviews } from "../services/github/pull-request-reviews";
+import { JiraAuthor } from "../interfaces/jira";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -17,19 +17,22 @@ function mapStatus(status: string, merged_at?: string) {
 	return "UNKNOWN";
 }
 
+interface Review extends JiraAuthor {
+	approvalStatus: string;
+}
+
 // TODO: define arguments and return
-function mapReviews(reviews:PullRequestReview[]) {
-	reviews = reviews || [];
+function mapReviews(reviews: PullRequestReview[] = []) {
 	const sortedReviews = _.orderBy(reviews, "submittedAt", "desc");
-	const usernames = {};
+	const usernames: Record<string, Review> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
-	return sortedReviews.reduce((acc, review) => {
+	return sortedReviews.reduce((acc: Review[], review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
 		const author = review?.author;
 		if (!usernames[author?.login]) {
 			usernames[author?.login] = {
 				...getJiraAuthor(author),
-				approvalStatus:  review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED",
+				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
 			};
 			acc.push(usernames[author?.login]);
 			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
@@ -52,14 +55,14 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 		`${pullRequest.title}\n${pullRequest.head.ref}`
 	);
 
-	if (isEmpty(issueKeys) || !pullRequest?.head?.repo) {
-		log?.info("Ignoring pullrequest hence it has no issues or repo")
+	if (_.isEmpty(issueKeys) || !pullRequest?.head?.repo) {
+		log?.info("Ignoring pullrequest hence it has no issues or repo");
 		return undefined;
 	}
 
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
 
-	log?.info(`Pull request status mapped to ${pullRequestStatus}`)
+	log?.info(`Pull request status mapped to ${pullRequestStatus}`);
 
 	return {
 		id: pullRequest.base.repo.id,
@@ -103,7 +106,7 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 				id: pullRequest.number,
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
-				reviewers: mapReviews(reviews.edges.map(e => e.node)),
+				reviewers: mapReviews(reviews?.edges?.map(e => e.node)),
 				sourceBranch: pullRequest.head.ref,
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: pullRequestStatus,

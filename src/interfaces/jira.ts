@@ -39,6 +39,17 @@ export interface JiraCommit {
 	timestamp: number;
 	url: string;
 	updateSequenceId: number;
+
+	files?: JiraCommitFile[];
+	flags?: string[];
+}
+
+export interface JiraCommitFile {
+	path: string;
+	changeType: string;
+	linesAdded?: string[];
+	linesRemoved?: string[];
+	url: string;
 }
 
 export interface JiraAuthor {

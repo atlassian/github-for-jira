@@ -12,7 +12,7 @@ import { Application, GitHubAPI } from "probot";
 import { metricHttpRequest, metricSyncStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 import Queue from "bull";
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
+import { stringFlag, StringFlags } from "../config/feature-flags";
 
 const logger = getLogger("sync.installation");
 
@@ -65,11 +65,11 @@ const updateNumberOfReposSynced = async (
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
 		(a, b) =>
-			new Date(b[1].repository?.updated_at).getTime() -
-			new Date(a[1].repository?.updated_at).getTime()
+			new Date(b[1].repository?.updated_at || 0).getTime() -
+			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-const getNextTask = async (subscription: SubscriptionClass): Promise<Task> => {
+const getNextTask = async (subscription: SubscriptionClass): Promise<Task | undefined> => {
 	const repos = subscription?.repoSyncState?.repos || {};
 	await updateNumberOfReposSynced(repos, subscription);
 
@@ -126,6 +126,8 @@ const updateJobStatus = async (
 	logger.info({ job, task, status }, "Updating job status");
 
 	await subscription.updateSyncState({
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
 		repos: {
 			[repositoryId]: {
 				[getStatusKey(task)]: status
@@ -136,6 +138,8 @@ const updateJobStatus = async (
 	if (edges.length > 0) {
 		// there's more data to get
 		await subscription.updateSyncState({
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
 			repos: {
 				[repositoryId]: {
 					[getCursorKey(task)]: edges[edges.length - 1].cursor

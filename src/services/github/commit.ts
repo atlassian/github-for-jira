@@ -4,7 +4,7 @@ import { GraphQlQueryResponse } from "probot/lib/github";
 
 const logger = getLogger("services.github.commit");
 
-export const getGithubCommits = async (github: GitHubAPI, params: CommitParams): Promise<Commit[]> => {
+export const getGithubCommits = async (github: GitHubAPI, params: CommitParams): Promise<GithubCommit[]> => {
 	if (!params.commitRefs?.length) {
 		return [];
 	}
@@ -58,13 +58,11 @@ export const getGithubCommits = async (github: GitHubAPI, params: CommitParams):
 
 interface CommitResponse extends GraphQlQueryResponse {
 	data: {
-		commits: {
-			[oid: string]: Commit
-		}
+		commits: Record<string, GithubCommit>
 	};
 }
 
-interface Commit {
+export interface GithubCommit {
 	oid: string;
 	abbreviatedOid: string;
 	message: string;

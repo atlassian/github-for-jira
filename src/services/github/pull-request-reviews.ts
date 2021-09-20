@@ -21,11 +21,15 @@ const paginate = async (github: GitHubAPI, params: PullRequestReviewsParams, rev
 		pullRequestNumber: params.pullRequestNumber
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	})) as PullRequestReviewResponse;
-	reviews.edges.push(...response.data.repository.pullRequest.reviews.edges);
-	if(reviews.edges.length >= reviews.totalCount) {
+	if (reviews) {
+		reviews?.edges?.push(...response.data.repository.pullRequest.reviews.edges);
+	} else {
+		reviews = response.data.repository.pullRequest.reviews;
+	}
+	if (reviews?.edges?.length >= reviews?.totalCount) {
 		return reviews;
 	}
-	return paginate(github, {...params, cursor: reviews.edges[reviews.edges.length - 1].cursor}, reviews);
+	return paginate(github, { ...params, cursor: reviews.edges[reviews.edges.length - 1].cursor }, reviews);
 };
 
 interface PullRequestReviewResponse extends GraphQlQueryResponse {

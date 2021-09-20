@@ -16,7 +16,7 @@ export default class SentryScopeProxy {
 
 	constructor() {
 		this.extra = {};
-		this.fingerprint = null;
+		this.fingerprint = [];
 	}
 
 	static processEvent(event: any, hint: any) {

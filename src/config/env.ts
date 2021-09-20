@@ -26,7 +26,8 @@ if (env.error && nodeEnv !== EnvironmentEnum.production) {
 	throw env.error;
 }
 
-const getProxyFromEnvironment = (): string => {
+// TODO: Use whitelist proxy instead
+const getProxyFromEnvironment = (): string | undefined => {
 	const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
 	const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
 	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
@@ -65,8 +66,6 @@ export interface EnvVars {
 	TUNNEL_PORT?: string;
 	TUNNEL_SUBDOMAIN?: string;
 	TRACKING_DISABLED?: BooleanEnum;
-	HYDRO_BASE_URL?: string;
-	HYDRO_APP_SECRET?: string;
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
 	PROXY?: string,
