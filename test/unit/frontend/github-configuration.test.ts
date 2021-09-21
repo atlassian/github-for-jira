@@ -1,6 +1,5 @@
 import Keygrip from "keygrip";
 import supertest from "supertest";
-import testTracking from "../../setup/tracking";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/models";
 import FrontendApp from "../../../src/frontend/app";
@@ -164,8 +163,6 @@ describe("Frontend", () => {
 				githubNock
 					.get("/orgs/test-org/memberships/admin-user")
 					.reply(200, organizationAdminResponse);
-
-				await testTracking();
 
 				const jiraClientKey = "a-unique-client-key";
 

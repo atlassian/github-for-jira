@@ -11,6 +11,7 @@ describe("AxiosErrorDecorator", () => {
 		let hint;
 
 		beforeEach(async () => {
+			// Create Axios Error
 			nock("https://www.example.com")
 				.get("/foo/bar")
 				.reply(403, undefined, { "X-Request-Id": "abcdef" });
@@ -24,10 +25,9 @@ describe("AxiosErrorDecorator", () => {
 		it("adds response data", async () => {
 			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
 
-			expect(decoratedEvent.extra.response).toEqual({
+			expect(decoratedEvent.extra.response).toMatchObject({
 				status: 403,
 				headers: {
-					"content-type": "application/json",
 					"x-request-id": "abcdef"
 				}
 			});

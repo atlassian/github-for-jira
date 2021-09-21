@@ -7,24 +7,24 @@ import url from "url";
  * See https://docs.sentry.io/platforms/node/#eventprocessors
  */
 export default class AxiosErrorEventDecorator {
-	event: any;
-	hint: any;
+	event: any | undefined;
+	hint: any | undefined;
 
 	constructor(event: unknown, hint: unknown) {
 		this.event = event;
 		this.hint = hint;
 	}
 
-	get error() {
-		return this.hint.originalException;
+	get error(): any | undefined {
+		return this.hint?.originalException;
 	}
 
-	get response() {
-		return this.error.response;
+	get response(): any | undefined {
+		return this.error?.response;
 	}
 
-	get request() {
-		return this.response.request;
+	get request(): any | undefined {
+		return this.response?.request;
 	}
 
 	static decorate(event: any, hint: any): any {
@@ -48,31 +48,31 @@ export default class AxiosErrorEventDecorator {
 	}
 
 	requestMetadata() {
-		const body = this.response.config.data;
+		const body = this.response?.config?.data;
 		return {
-			method: this.request.method,
-			path: this.request.path,
-			host: this.request.getHeader("host"),
-			headers: this.request.getHeaders(),
-			body: body ? this.parseRequestBody(body) : undefined
+			method: this.request?.method,
+			path: this.request?.path,
+			host: this.request?.getHeader("host"),
+			headers: this.request?.getHeaders(),
+			body: this.parseRequestBody(body)
 		};
 	}
 
 	responseMetadata() {
 		return {
-			status: this.response.status,
-			headers: this.response.headers,
-			body: this.response.data?.toString().slice(0, 255)
+			status: this.response?.status,
+			headers: this.response?.headers,
+			body: this.response?.data?.toString().slice(0, 255)
 		};
 	}
 
 	generateFingerprint() {
-		const { pathname } = url.parse(this.request.path);
+		const { pathname } = url.parse(this.request?.path || "");
 
 		return [
 			"{{ default }}",
-			this.response.status,
-			`${this.request.method} ${pathname}`
+			this.response?.status,
+			`${this.request?.method} ${pathname}`
 		];
 	}
 
@@ -80,7 +80,7 @@ export default class AxiosErrorEventDecorator {
 	 * Parse JSON body, when present and valid, otherwise return unparsed body.
 	 */
 	parseRequestBody(body) {
-		if (this.isJsonRequest()) {
+		if (body && this.isJsonRequest()) {
 			try {
 				return JSON.parse(body);
 			} catch (error) {

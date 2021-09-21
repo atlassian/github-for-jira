@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
 import enable from "../../../src/jira/enable";
 import { Installation } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
@@ -27,7 +26,6 @@ describe("Webhook: /events/enabled", () => {
 	});
 
 	it("Pending Installation", async () => {
-		await testTracking();
 		const req = {
 			log: { info: jest.fn() },
 			body: { baseUrl: installation.jiraHost }
