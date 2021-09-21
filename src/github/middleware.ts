@@ -10,7 +10,7 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { getLogger } from "../config/logger";
-import { getCurrentTime } from "../util/time";
+import { getCurrentTime } from "../util/webhooks";
 
 const logger = getLogger("github.webhooks");
 

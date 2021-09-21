@@ -3,11 +3,10 @@ import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { getCurrentTime } from '../util/time';
+import { getCurrentTime } from '../util/webhooks';
 
 export default async (context: Context, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();
-	context.log.info("push WEBHOOK RECEIVED: ", webhookReceived);
 
 	// Copy the shape of the context object for processing
 	// but filter out any commits that don't have issue keys

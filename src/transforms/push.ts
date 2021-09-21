@@ -8,7 +8,7 @@ import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
-import { calculateProcessingTimeInSeconds } from '../util/time';
+import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 
 // TODO: define better types for this file
 
@@ -176,10 +176,10 @@ export const processPush = async (github: GitHubAPI, payload) => {
 				updateSequenceId: Date.now()
 			};
 
-			await jiraClient.devinfo.repository.update(jiraPayload);
-
+			const webhook = await jiraClient.devinfo.repository.update(jiraPayload);
 			const webhookName = payload.name || "none";
-			calculateProcessingTimeInSeconds(webhookReceived, webhookName);
+
+			calculateProcessingTimeInSeconds(webhookReceived, webhookName, webhook?.status);
 		}
 
 	} catch (error) {

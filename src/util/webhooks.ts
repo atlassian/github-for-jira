@@ -4,21 +4,26 @@ import { metricWebhooks } from "../config/metric-names";
 
 export const getCurrentTime = () => new Date();
 
-const logger = getLogger("time");
-
 export const calculateProcessingTimeInSeconds = (
 	webhookReceivedTime: Date,
-	webhookName: string
+	webhookName: string,
+	status?: number,
 ): number => {
+	const logger = getLogger("webhookProccessingTime");
 	const timeToProcessWebhookEvent =
-		getCurrentTime().getTime() - webhookReceivedTime.getTime() / 1000;
+		(getCurrentTime().getTime() - webhookReceivedTime.getTime()) / 1000;
 
-	logger.info({ webhookName, timeToProcessWebhookEvent }, "Webhook processed");
+	logger.info({ webhookName }, `Webhook processed in ${timeToProcessWebhookEvent}`);
+
+	const tags = {
+		name: webhookName,
+		status: status?.toString() || "none",
+	};
 
 	statsd.histogram(
-		metricWebhooks.webhookEventProcessed,
+		metricWebhooks.webhookEvent,
 		timeToProcessWebhookEvent,
-		{ name: webhookName }
+		tags
 	);
 
 	return timeToProcessWebhookEvent;

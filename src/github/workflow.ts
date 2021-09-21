@@ -1,6 +1,6 @@
 import transformWorkflow from "../transforms/workflow";
 import { CustomContext } from "./middleware";
-import { calculateProcessingTimeInSeconds } from "../util/time";
+import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 
 export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraPayload = transformWorkflow(context);
@@ -11,8 +11,8 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 	}
 
 	context.log(`Sending workflow event to Jira: ${jiraClient.baseURL}`)
-	await jiraClient.workflow.submit(jiraPayload);
+	const webhook = await jiraClient.workflow.submit(jiraPayload);
 
-	calculateProcessingTimeInSeconds(context.webhookReceived, context.name);
+	calculateProcessingTimeInSeconds(context.webhookReceived, context.name, webhook?.status);
 };
 

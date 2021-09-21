@@ -1,7 +1,7 @@
 import transformBranch from "../transforms/branch";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
-import { calculateProcessingTimeInSeconds } from "../util/time";
+import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 
 export const createBranch = async (context: CustomContext, jiraClient): Promise<void> => {
@@ -35,10 +35,10 @@ export const deleteBranch = async (context, jiraClient): Promise<void> => {
 
 	context.log(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`)
 
-	await jiraClient.devinfo.branch.delete(
+	const webhook = await jiraClient.devinfo.branch.delete(
 		context.payload.repository?.id,
 		context.payload.ref
 	);
 
-	calculateProcessingTimeInSeconds(context.webhookReceived, context.name)
+	calculateProcessingTimeInSeconds(context.webhookReceived, context.name, webhook?.status)
 };

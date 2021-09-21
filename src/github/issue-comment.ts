@@ -1,5 +1,5 @@
 import JiraClient from "../models/jira-client";
-import { calculateProcessingTimeInSeconds } from "../util/time";
+import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 
 export default async (context: CustomContext, _: JiraClient, util): Promise<void> => {
@@ -22,7 +22,7 @@ export default async (context: CustomContext, _: JiraClient, util): Promise<void
 	});
 
 	context.log(`Updating comment in GitHub with ID ${comment.id}`);
-	await context.github.issues.updateComment(editedComment);
+	const webhook = await context.github.issues.updateComment(editedComment);
 
-	calculateProcessingTimeInSeconds(context.webhookReceived, context.name);
+	calculateProcessingTimeInSeconds(context.webhookReceived, context.name, webhook?.status);
 };
