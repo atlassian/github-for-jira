@@ -122,7 +122,7 @@ const updateJobStatus = async (
 		return;
 	}
 
-	const status = edges.length > 0 ? "pending" : "complete";
+	const status = edges?.length ? "pending" : "complete";
 
 	logger.info({ job, task, status }, "Updating job status");
 
