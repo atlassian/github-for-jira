@@ -134,7 +134,7 @@ const updateJobStatus = async (
 		}
 	});
 
-	if (edges.length > 0) {
+	if (edges?.length) {
 		// there's more data to get
 		await subscription.updateSyncState({
 			repos: {
