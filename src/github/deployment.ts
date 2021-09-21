@@ -1,7 +1,8 @@
 import transformDeployment from "../transforms/deployment";
-import { Context } from "probot/lib/context";
+import { calculateProcessingTimeInSeconds } from "../util/time";
+import { CustomContext } from "./middleware";
 
-export default async (context: Context, jiraClient): Promise<void> => {
+export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraPayload = await transformDeployment(context);
 
 	if (!jiraPayload) {
@@ -11,4 +12,6 @@ export default async (context: Context, jiraClient): Promise<void> => {
 
 	context.log(`Sending deployment info to Jira: ${jiraClient.baseURL}`)
 	await jiraClient.deployment.submit(jiraPayload);
+
+	calculateProcessingTimeInSeconds(context.webhookReceived, context.name)
 };

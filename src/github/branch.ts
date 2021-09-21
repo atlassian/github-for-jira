@@ -1,9 +1,10 @@
 import transformBranch from "../transforms/branch";
-import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
+import { calculateProcessingTimeInSeconds } from "../util/time";
+import { CustomContext } from "./middleware";
 
-export const createBranch = async (context: Context, jiraClient): Promise<void> => {
+export const createBranch = async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraPayload = await transformBranch(context);
 
 	if (!jiraPayload) {
@@ -17,6 +18,8 @@ export const createBranch = async (context: Context, jiraClient): Promise<void> 
 	context.log(`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`)
 
 	await jiraClient.devinfo.repository.update(jiraPayload);
+
+	calculateProcessingTimeInSeconds(context.webhookReceived, context.name);
 };
 
 export const deleteBranch = async (context, jiraClient): Promise<void> => {
@@ -36,4 +39,6 @@ export const deleteBranch = async (context, jiraClient): Promise<void> => {
 		context.payload.repository?.id,
 		context.payload.ref
 	);
+
+	calculateProcessingTimeInSeconds(context.webhookReceived, context.name)
 };

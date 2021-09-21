@@ -8,6 +8,7 @@ import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
+import { calculateProcessingTimeInSeconds } from '../util/time';
 
 // TODO: define better types for this file
 
@@ -58,12 +59,14 @@ export function createJobData(payload, jiraHost: string) {
 		// Creates an array of shas for the job processor to work on
 		shas.push({ id: commit.id, issueKeys });
 	}
+
 	return {
 		repository,
 		shas,
 		jiraHost,
 		installationId: payload.installation.id,
-		webhookId: payload.webhookId || "none"
+		webhookId: payload.webhookId || "none",
+		webhookReceived: payload.webhookReceived || "none"
 	};
 }
 
@@ -95,10 +98,13 @@ export const processPush = async (github: GitHubAPI, payload) => {
 		} = payload;
 
 		const webhookId = payload.webhookId || "none";
+		const webhookReceived = payload.webhookReceived || "none";
+
 		log = logger.child({
 			webhookId: webhookId,
 			repoName: repo,
-			orgName: owner.name
+			orgName: owner.name,
+			webhookReceived
 		});
 
 		log.info({ installationId }, "Processing push");
@@ -171,6 +177,9 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			};
 
 			await jiraClient.devinfo.repository.update(jiraPayload);
+
+			const webhookName = payload.name || "none";
+			calculateProcessingTimeInSeconds(webhookReceived, webhookName);
 		}
 
 	} catch (error) {

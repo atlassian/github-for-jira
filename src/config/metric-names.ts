@@ -39,7 +39,8 @@ export const metricSyncStatus = {
 };
 
 export const metricWebhooks = {
-	webhookEvent: `${server}.webhooks.webhook-events`
+	webhookEvent: `${server}.webhooks.webhook-events`,
+	webhookEventProcessed: `${server}.webhooks.webhook-event-processed`,
 };
 
 export const pageRendered = {

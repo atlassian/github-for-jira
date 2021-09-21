@@ -1,10 +1,11 @@
 import transformPullRequest from "../transforms/pull-request";
 import issueKeyParser from "jira-issue-key-parser";
 
-import { Context } from "probot/lib/context";
 import { isEmpty } from "../jira/util/isEmpty";
+import { calculateProcessingTimeInSeconds } from "../util/time";
+import { CustomContext } from "./middleware";
 
-export default async (context: Context, jiraClient, util): Promise<void> => {
+export default async (context: CustomContext, jiraClient, util): Promise<void> => {
 
 	const {
 		pull_request,
@@ -77,4 +78,6 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 
 	context.log({ pullRequestNumber: pull_request.number, jiraPayload }, `Sending pull request update to Jira ${jiraClient.baseURL}`);
 	await jiraClient.devinfo.repository.update(jiraPayload);
+
+	calculateProcessingTimeInSeconds(context.webhookReceived, context.name);
 };

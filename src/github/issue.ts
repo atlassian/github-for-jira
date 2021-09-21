@@ -1,5 +1,6 @@
 import { CustomContext } from "./middleware";
 import JiraClient from "../models/jira-client";
+import { calculateProcessingTimeInSeconds } from "../util/time";
 
 export default async (context: CustomContext, _: JiraClient, util): Promise<void> => {
 	const { issue } = context.payload;
@@ -22,4 +23,6 @@ export default async (context: CustomContext, _: JiraClient, util): Promise<void
 
 	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);
 	await context.github.issues.update(editedIssue);
+
+	calculateProcessingTimeInSeconds(context.webhookReceived, context.name);
 };
