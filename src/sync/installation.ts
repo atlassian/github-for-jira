@@ -122,7 +122,7 @@ const updateJobStatus = async (
 		return;
 	}
 
-	const status = edges.length > 0 ? "pending" : "complete";
+	const status = edges?.length ? "pending" : "complete";
 
 	logger.info({ job, task, status }, "Updating job status");
 
@@ -134,7 +134,7 @@ const updateJobStatus = async (
 		}
 	});
 
-	if (edges.length > 0) {
+	if (edges?.length) {
 		// there's more data to get
 		await subscription.updateSyncState({
 			repos: {
