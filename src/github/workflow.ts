@@ -6,13 +6,21 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraPayload = transformWorkflow(context);
 
 	if (!jiraPayload) {
-		context.log({noop: "no_jira_payload_workflow_run"}, "Halting further execution for workflow since jiraPayload is empty");
+		context.log(
+			{ noop: "no_jira_payload_workflow_run" },
+			"Halting further execution for workflow since jiraPayload is empty"
+		);
 		return;
 	}
 
-	context.log(`Sending workflow event to Jira: ${jiraClient.baseURL}`)
-	const webhook = await jiraClient.workflow.submit(jiraPayload);
+	context.log(`Sending workflow event to Jira: ${jiraClient.baseURL}`);
+	const jiraResponse = await jiraClient.workflow.submit(jiraPayload);
+	const { webhookReceived, name, log } = context;
 
-	calculateProcessingTimeInSeconds(context.webhookReceived, context.name, webhook?.status);
+	webhookReceived && calculateProcessingTimeInSeconds(
+		webhookReceived,
+		name,
+		log,
+		jiraResponse?.status
+	);
 };
-

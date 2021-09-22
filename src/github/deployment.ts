@@ -14,7 +14,13 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 	}
 
 	context.log(`Sending deployment info to Jira: ${jiraClient.baseURL}`);
-	const webhook = await jiraClient.deployment.submit(jiraPayload);
+	const jiraResponse = await jiraClient.deployment.submit(jiraPayload);
+	const { webhookReceived, name, log } = context;
 
-	calculateProcessingTimeInSeconds(context.webhookReceived, context.name, webhook?.status);
+	webhookReceived && calculateProcessingTimeInSeconds(
+		webhookReceived,
+		name,
+		log,
+		jiraResponse?.status
+	);
 };

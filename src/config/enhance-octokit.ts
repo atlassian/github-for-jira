@@ -59,7 +59,6 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 			}
 			const elapsed = Date.now() - requestStart;
 			const tags = {
-				path: extractPath(options.url),
 				method: options.method,
 				status: responseStatus || "none"
 			};
