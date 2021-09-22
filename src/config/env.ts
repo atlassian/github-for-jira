@@ -26,10 +26,9 @@ if (env.error && nodeEnv !== EnvironmentEnum.production) {
 	throw env.error;
 }
 
-const getProxyFromEnvironment = (): string => {
-	const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
-	const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
-	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
+const getProxyFromEnvironment = (): string | undefined => {
+	const proxy = process.env.WHITELIST_PROXY;
+	return proxy ? `http://${proxy}` : undefined;
 };
 
 // TODO: Make envvars dynamic
