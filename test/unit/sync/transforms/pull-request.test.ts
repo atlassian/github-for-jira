@@ -3,11 +3,9 @@ import transformPullRequest from "../../../../src/sync/transforms/pull-request";
 import { PullRequest } from "../../../../src/services/github/pull-requests";
 
 describe("pull_request transform", () => {
-	let pullRequest: any;
 	let fixture: PullRequest;
 
 	beforeEach(() => {
-		pullRequest = Object.assign({}, require("../../../fixtures/api/pull-request.json"));
 
 		fixture = {
 			id: "fsdsnu329",
@@ -46,37 +44,29 @@ describe("pull_request transform", () => {
 	it("should send the ghost user to Jira when GitHub user has been deleted", async () => {
 		Date.now = jest.fn(() => 12345678);
 		fixture.author = undefined;
-		const data = await transformPullRequest(fixture);
+		const data = transformPullRequest(fixture);
 		expect(data).toMatchObject({
-			id: "msdu3243",
-			name: "test-owner/test-repo",
-			pullRequests: [
-				{
-					// 'ghost' is a special user GitHub associates with
-					// comments/PRs when a user deletes their account
-					author: {
-						avatar: "https://github.com/ghost.png",
-						name: "Deleted User",
-						url: "https://github.com/ghost"
-					},
-					commentCount: 10,
-					destinationBranch:
+			// 'ghost' is a special user GitHub associates with
+			// comments/PRs when a user deletes their account
+			author: {
+				avatar: "https://github.com/ghost.png",
+				name: "Deleted User",
+				url: "https://github.com/ghost"
+			},
+			commentCount: 10,
+			destinationBranch:
 						"https://github.com/test-owner/test-repo/tree/devel",
-					displayId: "#51",
-					id: "51",
-					issueKeys: ["TES-123"],
-					lastUpdate: pullRequest.updated_at,
-					sourceBranch: "use-the-force",
-					sourceBranchUrl:
+			displayId: "#51",
+			id: "51",
+			issueKeys: ["TES-123"],
+			lastUpdate: fixture.updatedAt,
+			sourceBranch: "use-the-force",
+			sourceBranchUrl:
 						"https://github.com/test-owner/test-repo/tree/use-the-force",
-					status: "DECLINED",
-					timestamp: pullRequest.updated_at,
-					title: pullRequest.title,
-					url: "https://github.com/test-owner/test-repo/pull/51",
-					updateSequenceId: 12345678
-				}
-			],
-			url: "https://github.com/test-owner/test-repo",
+			status: "DECLINED",
+			timestamp: fixture.updatedAt,
+			title: fixture.title,
+			url: "https://github.com/test-owner/test-repo/pull/51",
 			updateSequenceId: 12345678
 		});
 	});
@@ -85,8 +75,8 @@ describe("pull_request transform", () => {
 		fixture.title = "No Issue Keys";
 		Date.now = jest.fn(() => 12345678);
 
-		await expect(transformPullRequest(
+		expect(transformPullRequest(
 			fixture,
-		)).resolves.toBeUndefined();
+		)).toBeUndefined();
 	});
 });
