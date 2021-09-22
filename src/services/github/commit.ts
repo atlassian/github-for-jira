@@ -33,14 +33,6 @@ export const getSpecificGithubCommits = async (github: GitHubAPI, params: Specif
         parents {
           totalCount
         }
-        tree {
-          entries {
-            path
-            object {
-              commitResourcePath
-            }
-          }
-        }
       }
     }`)}
   }
@@ -82,10 +74,19 @@ interface CommitResponse {
 		ref?: {
 			target: {
 				history: {
+					totalCount: number;
 					edges?: GithubCommitNode[]
-				}
+				} & PageInfo
 			}
 		}
+	};
+}
+
+export interface PageInfo {
+	pageInfo: {
+		hasNextPage: boolean;
+		startCursor: string;
+		endCursor: string
 	};
 }
 
@@ -111,9 +112,6 @@ export interface GithubCommit {
 	};
 	parents: {
 		totalCount: number;
-	};
-	tree: {
-		entries: GithubCommitFile[]
 	};
 }
 

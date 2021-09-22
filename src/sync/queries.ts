@@ -1,6 +1,11 @@
 export const getPullRequests = `query ($owner: String!, $repo: String!, $cursor: String) {
     repository(owner: $owner, name: $repo){
       pullRequests(first: 100, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
         edges {
           cursor
           node {
@@ -46,6 +51,11 @@ export const getPullRequestReviews = `query($owner: String!, $repo: String!, $pu
   repository(owner: $owner, name: $repo) {
     pullRequest(number: $pullRequestNumber) {
       reviews(first: 100, after: $cursor) {
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
         totalCount
         edges {
           cursor
@@ -76,6 +86,12 @@ export const getCommits = `query ($owner: String!, $repo: String!, $cursor: Stri
         target {
           ... on Commit {
             history(first: 100, after: $cursor) {
+              pageInfo {
+                hasNextPage
+                startCursor
+                endCursor
+              }
+              totalCount
               edges {
                 cursor
                 node {
@@ -96,14 +112,6 @@ export const getCommits = `query ($owner: String!, $repo: String!, $cursor: Stri
 					        parents {
 					          totalCount
 					        }
-					        tree {
-					          entries {
-					            path
-					            object {
-					              commitResourcePath
-					            }
-					          }
-					        }
                 }
               }
             }
@@ -116,6 +124,12 @@ export const getCommits = `query ($owner: String!, $repo: String!, $cursor: Stri
 export const getBranches = `query ($owner: String!, $repo: String!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: 100, refPrefix: "refs/heads/", after: $cursor) {
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
+        totalCount
         edges {
           cursor
           node {

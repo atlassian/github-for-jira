@@ -18,7 +18,7 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 	} = context.payload;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let reviews: PullRequestReviews = {totalCount:0, edges: []};
+	let reviews: PullRequestReviews | undefined;
 	try {
 		reviews = await getGithubPullRequestReviews(context.github, {
 			owner,

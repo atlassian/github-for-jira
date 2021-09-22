@@ -1,6 +1,7 @@
 import { GitHubAPI } from "probot";
 import { getLogger } from "../../config/logger";
 import { getPullRequests } from "../../sync/queries";
+import { PageInfo } from "./commit";
 
 const logger = getLogger("services.github.pullrequests");
 
@@ -24,7 +25,7 @@ interface PullRequestResponse {
 	};
 }
 
-export interface PullRequests {
+export interface PullRequests extends PageInfo {
 	totalCount: number;
 	edges: {
 		cursor: string;

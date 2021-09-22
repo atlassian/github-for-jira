@@ -2,6 +2,9 @@ import { getJiraId } from "../../jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../../util/jira";
 import _ from "lodash";
+import { GithubBranch, GithubBranchCommit } from "../../services/github/branches";
+import { Repository } from "../../models/subscription";
+import { JiraBranch, JiraCommit } from "../../interfaces/jira";
 
 // TODO: better typing in file
 /**
@@ -13,7 +16,7 @@ import _ from "lodash";
  *  - Title of the associated Pull Request
  *  - Messages from up to the last 100 commits in that branch
  */
-function mapBranch(branch, repository) {
+function mapBranch(branch: GithubBranch, repository: Repository): JiraBranch | undefined {
 	const branchKeys = issueKeyParser().parse(branch.name) || [];
 	const pullRequestKeys = issueKeyParser().parse(
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
@@ -44,7 +47,7 @@ function mapBranch(branch, repository) {
 			// Use only one set of keys for the last commit in order of most specific to least specific
 			issueKeys: commitKeys || branchKeys || pullRequestKeys,
 			message: branch.target.message,
-			url: branch.target.url || undefined,
+			url: branch.target.url,
 			updateSequenceId: Date.now()
 		},
 		name: branch.name,
@@ -58,7 +61,7 @@ function mapBranch(branch, repository) {
  * of commits we got from the GraphQL response and maps the data
  * to the structure needed for the DevInfo API
  */
-function mapCommit(commit) {
+function mapCommit(commit: GithubBranchCommit): JiraCommit | undefined {
 	const issueKeys = issueKeyParser().parse(commit.message);
 
 	if (_.isEmpty(issueKeys)) {
@@ -74,23 +77,22 @@ function mapCommit(commit) {
 		id: commit.oid,
 		issueKeys: issueKeys || [],
 		message: commit.message,
-		timestamp: commit.authoredDate,
 		url: commit.url,
 		updateSequenceId: Date.now()
 	};
 }
 
 // TODO: add typings
-export default (payload) => {
+export default (payload: { branches: GithubBranch[], repository: Repository }) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
 		.map((branch) => mapBranch(branch, payload.repository))
 		.filter((branch) => !!branch);
 
 	// TODO: use reduce instead of map/filter
-	const commits = payload.branches.flatMap((branch) =>
+	const commits = _.flatMap(payload.branches, (branch) =>
 		branch.target.history.nodes
-			.map((commit) => mapCommit(commit))
+			.map(mapCommit)
 			.filter((branch) => !!branch)
 	);
 

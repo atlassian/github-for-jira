@@ -2,8 +2,9 @@ import issueKeyParser from "jira-issue-key-parser";
 import { JiraCommit, JiraCommitData } from "../interfaces/jira";
 import { getJiraAuthor } from "../util/jira";
 import _ from "lodash";
+import { GithubCommit } from "../services/github/commit";
 
-export const mapCommit = (commit): JiraCommit | undefined => {
+export const mapCommit = (commit:GithubCommit): JiraCommit | undefined => {
 	const issueKeys = issueKeyParser().parse(commit.message) || [];
 	if (_.isEmpty(issueKeys)) {
 		return undefined;
@@ -18,8 +19,7 @@ export const mapCommit = (commit): JiraCommit | undefined => {
 		id: commit.oid,
 		issueKeys,
 		message: commit.message,
-		timestamp: commit.authoredDate,
-		url: commit.url || undefined, // If blank string, don't send url
+		url: commit.url,
 		updateSequenceId: Date.now()
 	};
 };
@@ -28,10 +28,10 @@ export const mapCommit = (commit): JiraCommit | undefined => {
 export default (payload): JiraCommitData | undefined => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
-		.map((commit) => mapCommit(commit))
+		.map(mapCommit)
 		.filter((commit) => !!commit);
 
-	if (commits.length === 0) {
+	if (_.isEmpty(commits)) {
 		return undefined;
 	}
 

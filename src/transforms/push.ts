@@ -7,31 +7,13 @@ import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
-import { getSpecificGithubCommits, GithubCommit, GithubCommitFile } from "../services/github/commit";
-import { JiraCommit, JiraCommitFile } from "../interfaces/jira";
+import { getSpecificGithubCommits, GithubCommit } from "../services/github/commit";
+import { JiraCommit } from "../interfaces/jira";
 import _ from "lodash";
 
 // TODO: define better types for this file
 
 const logger = getLogger("transforms.push");
-
-const mapFile = (file: GithubCommitFile): JiraCommitFile => {
-	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
-	// on github when a file is renamed we get two "files": one added, one removed
-	/*const mapStatus = {
-		added: "ADDED",
-		removed: "DELETED",
-		modified: "MODIFIED"
-	};*/
-
-	return {
-		path: file.path,
-		changeType: /*mapStatus[file.status] ||*/ "UNKNOWN",
-		// linesAdded: file.additions,
-		// linesRemoved: file.deletions,
-		url: `https://github.com${file.object.commitResourcePath}`
-	};
-};
 
 export function createJobData(payload, jiraHost: string) {
 	// Store only necessary repository data in the queue
@@ -132,7 +114,6 @@ export const processPush = async (github: GitHubAPI, payload) => {
 				url,
 				message,
 				changedFiles,
-				tree: { entries: files }
 			} = commit;
 
 			// Jira only accepts a max of 10 files for each commit, so don't send all of them
@@ -145,15 +126,14 @@ export const processPush = async (github: GitHubAPI, payload) => {
 				hash: oid,
 				message,
 				author: getJiraAuthor(author),
-				authorTimestamp: Date.parse(authoredDate),
+				authorTimestamp: authoredDate,
 				displayId: abbreviatedOid,
 				fileCount: changedFiles, // Send the total count for all files
-				files: files.map(mapFile),
+				// files: files.map(mapFile),
 				id: oid,
 				issueKeys: shas.find(s => s.id === commit.oid).issueKeys,
 				url,
 				updateSequenceId: Date.now(),
-				timestamp: Date.now(),
 				flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
 			};
 		});

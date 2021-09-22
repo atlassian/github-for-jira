@@ -29,26 +29,24 @@ export interface JiraBuildData {
 
 export interface JiraCommit {
 	author: JiraAuthor;
-	authorTimestamp: number;
+	authorTimestamp: string;
 	displayId: string;
 	fileCount: number;
 	hash: string;
 	id: string;
 	issueKeys: string[];
 	message: string;
-	timestamp: number;
 	url: string;
 	updateSequenceId: number;
-
 	files?: JiraCommitFile[];
 	flags?: string[];
 }
 
 export interface JiraCommitFile {
 	path: string;
-	changeType: string;
-	linesAdded?: string[];
-	linesRemoved?: string[];
+	changeType: "ADDED" | "COPIED" | "DELETED" | "MODIFIED" | "MOVED" | "UNKNOWN";
+	linesAdded: number;
+	linesRemoved: number;
 	url: string;
 }
 
@@ -65,6 +63,16 @@ export interface JiraCommitData {
 	name: string;
 	url: string;
 	updateSequenceId: number;
+}
+
+export interface JiraBranch {
+	id: string;
+	createPullRequestUrl?: string;
+	issueKeys: string[];
+	name: string;
+	url: string;
+	updateSequenceId: number;
+	lastCommit: JiraCommit;
 }
 
 export interface JiraDeployment {

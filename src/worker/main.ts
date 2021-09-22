@@ -18,7 +18,6 @@ import { getLogger } from "../config/logger";
 import "../config/proxy";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { RateLimitingError } from "../config/enhance-octokit";
-import { isNodeDev } from "../util/isNodeEnv";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client"));
@@ -29,10 +28,10 @@ function measureElapsedTime(job: Queue.Job, tags) {
 	statsd.histogram(metricHttpRequest().jobDuration, Number(job.finishedOn) - Number(job.processedOn), tags);
 }
 
-const devSettings = isNodeDev() ? {
+const devSettings = /*isNodeDev() ? {
 	lockDuration: 100000,
 	lockRenewTime: 50000 // Interval on which to acquire the job lock
-} : {};
+} :*/ {};
 
 const getQueueOptions = (timeout: number): QueueOptions => {
 	return {
@@ -80,10 +79,10 @@ export type Queues = {
 };
 
 // Setup error handling for queues
-Object.keys(queues).forEach((name) => {
-	const queue = queues[name];
+Object.keys(queues).forEach(async (name) => {
+	const queue:Queue.Queue = queues[name];
 	// On startup, clean any failed jobs older than 10s
-	queue.clean(10000, "failed");
+	await queue.clean(10000, "failed");
 
 	// TODO: need ability to remove these listeners, especially for testing
 	queue.on("active", (job: Queue.Job) => {
