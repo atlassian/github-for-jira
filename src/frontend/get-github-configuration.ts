@@ -104,7 +104,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			const installation = await Installation.getForHost(req.session.jiraHost);
 			if (!installation) {
 				req.log.warn({ req, res }, "Missing installation");
-				res.status(404).send(`Missing installation for host '${jiraHost}'`);
+				res.status(404).send(`Missing installation for host '${req.session.jiraHost}'`);
 				return;
 			}
 			const { iss: clientKey } = decodeSymmetric(req.session.jwt, installation.sharedSecret, getAlgorithm(req.session.jwt));
