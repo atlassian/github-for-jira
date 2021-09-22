@@ -86,7 +86,7 @@ Object.keys(queues).forEach((name) => {
 		logger.error({ job, queue: name, failedReason }, "Job failed");
 		measureElapsedTime(job, { queue: name, status: "failed" });
 
-		const tags = [`queue:${name}`, `failedReason:${failedReason}`];
+		const tags = [`queue:${name}`];
 		statsd.increment(metricError.queueFailed, tags);
 	});
 
@@ -96,7 +96,7 @@ Object.keys(queues).forEach((name) => {
 		Sentry.setTag("queue", name);
 		Sentry.captureException(err);
 
-		const tags = [`queue:${name}`, `err:${err}`];
+		const tags = [`queue:${name}`];
 		statsd.increment(metricError.queueError, tags);
 	});
 });
