@@ -4,7 +4,7 @@ import { GitHubAPI } from "probot";
 import { Repository } from "../models/subscription";
 
 // TODO: better typings
-export default async (github: GitHubAPI, repository: Repository, cursor: string) => {
+export default async (github: GitHubAPI, repository: Repository, cursor?: string) => {
 	// TODO: fix typings for graphql
 	const { edges } = ((await github.graphql(getBranchesQuery, {
 		owner: repository.owner.login,

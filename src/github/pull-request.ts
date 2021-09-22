@@ -20,11 +20,6 @@ export default async (context: Context, jiraClient, util): Promise<void> => {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: PullRequestReviews = {totalCount:0, edges: []};
 	try {
-		/*reviews = await context.github.graphql(getPullRequestReviews,{
-			owner: owner,
-			repo: repo,
-			pull_number: pull_request.number
-		});*/
 		reviews = await getGithubPullRequestReviews(context.github, {
 			owner,
 			repoName,

@@ -7,7 +7,7 @@ import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
-import { getGithubCommits, GithubCommit, GithubCommitFile } from "../services/github/commit";
+import { getSpecificGithubCommits, GithubCommit, GithubCommitFile } from "../services/github/commit";
 import { JiraCommit, JiraCommitFile } from "../interfaces/jira";
 import _ from "lodash";
 
@@ -118,7 +118,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			log
 		);
 
-		const commits: JiraCommit[] = (await getGithubCommits(github, {
+		const commits: JiraCommit[] = (await getSpecificGithubCommits(github, {
 			commitRefs: shas.map(s => s.id),
 			owner: owner.login,
 			repoName

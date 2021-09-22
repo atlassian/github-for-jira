@@ -18,6 +18,7 @@ import { getLogger } from "../config/logger";
 import "../config/proxy";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { RateLimitingError } from "../config/enhance-octokit";
+import { isNodeDev } from "../util/isNodeEnv";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client"));
@@ -28,8 +29,16 @@ function measureElapsedTime(job: Queue.Job, tags) {
 	statsd.histogram(metricHttpRequest().jobDuration, Number(job.finishedOn) - Number(job.processedOn), tags);
 }
 
+const devSettings = isNodeDev() ? {
+	lockDuration: 100000,
+	lockRenewTime: 50000 // Interval on which to acquire the job lock
+} : {};
+
 const getQueueOptions = (timeout: number): QueueOptions => {
 	return {
+		settings: {
+			...devSettings
+		},
 		defaultJobOptions: {
 			attempts: 5,
 			timeout: timeout,
@@ -58,11 +67,16 @@ const getQueueOptions = (timeout: number): QueueOptions => {
 }
 
 // Setup queues
-export const queues: { [key: string]: Queue.Queue } = {
+export const queues: Queues = {
 	discovery: new Queue("Content discovery", getQueueOptions(60 * 1000)),
 	installation: new Queue("Initial sync", getQueueOptions(10 * 60 * 1000)),
 	push: new Queue("Push transformation", getQueueOptions(60 * 1000)),
 	metrics: new Queue("Metrics", getQueueOptions(60 * 1000))
+};
+
+export type QueueKeys = "discovery" | "installation" | "push" | "metrics";
+export type Queues = {
+	[key in QueueKeys]: Queue.Queue;
 };
 
 // Setup error handling for queues

@@ -1,58 +1,43 @@
-import { GitHubAPI } from "probot";
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../../util/jira";
-import { getGithubUser } from "../../services/github/user";
 import _ from "lodash";
+import { PullRequest } from "../../services/github/pull-requests";
+import { JiraPullRequest, JiraPullRequestStatus } from "../../interfaces/jira";
 
-// TODO: better typings in file
-function mapStatus({ state, merged_at }): string {
-	if (state === "merged") return "MERGED";
-	if (state === "open") return "OPEN";
-	if (state === "closed" && merged_at) return "MERGED";
-	if (state === "closed" && !merged_at) return "DECLINED";
+function mapStatus({ state, merged }: PullRequest): JiraPullRequestStatus {
+	if (state === "MERGED") return "MERGED";
+	if (state === "OPEN") return "OPEN";
+	if (state === "CLOSED" && merged) return "MERGED";
+	if (state === "CLOSED" && !merged) return "DECLINED";
 	return "UNKNOWN";
 }
 
-export default async (payload, github: GitHubAPI) => {
-	const { pullRequest, repository } = payload;
+export default (pullRequest: PullRequest): JiraPullRequest | undefined => {
 	// This is the same thing we do in transforms, concat'ing these values
 	const issueKeys = issueKeyParser().parse(
-		`${pullRequest.title}\n${pullRequest.head.ref}`
-	);
+		`${pullRequest.title}\n${pullRequest.headRef?.name || ""}`
+	) || [];
 
 	if (_.isEmpty(issueKeys)) {
 		return undefined;
 	}
 
-	const prGet = (await github?.pulls?.get({
-		owner: repository.owner.login,
-		repo: repository.name,
-		pull_number: pullRequest.number
-	})).data;
-
 	return {
-		id: repository.id,
-		name: repository.full_name,
-		pullRequests: [
-			{
-				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
-				author: getJiraAuthor(prGet.user, await getGithubUser(github, prGet.user?.login)),
-				commentCount: prGet.comments || 0,
-				destinationBranch: `${repository.html_url}/tree/${prGet.base?.ref || ""}`,
-				displayId: `#${prGet.number}`,
-				id: prGet.number,
-				issueKeys,
-				lastUpdate: prGet.updated_at,
-				sourceBranch: `${prGet.head?.ref || ""}`,
-				sourceBranchUrl: `${repository.html_url}/tree/${prGet.head?.ref || ""}`,
-				status: mapStatus(prGet),
-				timestamp: prGet.updated_at,
-				title: prGet.title,
-				url: prGet.html_url,
-				updateSequenceId: Date.now()
-			}
-		],
-		url: repository.html_url,
+		// Need to get full name from a REST call as `pullRequest.author` doesn't have it
+		author: getJiraAuthor(pullRequest.author),
+		commentCount: pullRequest.comments.totalCount,
+		displayId: `#${pullRequest.number}`,
+		id: pullRequest.number.toString(),
+		// TODO: this should probably use pullRequest.id instead of pullRequest.number
+		issueKeys,
+		lastUpdate: pullRequest.updatedAt,
+		sourceBranch: pullRequest.headRef?.name || "",
+		sourceBranchUrl: `${pullRequest.repository.url}/tree/${pullRequest.headRef?.name || ""}`,
+		destinationBranch: `${pullRequest.repository.url}/tree/${pullRequest.baseRef?.name || ""}`,
+		status: mapStatus(pullRequest),
+		timestamp: pullRequest.updatedAt,
+		title: pullRequest.title,
+		url: pullRequest.url,
 		updateSequenceId: Date.now()
 	};
 };

@@ -1,10 +1,10 @@
 import { GitHubAPI } from "probot";
 import { getLogger } from "../../config/logger";
-import { GraphQlQueryResponse } from "probot/lib/github";
+import { getCommits as getCommitsQuery } from "../../sync/queries";
 
-const logger = getLogger("services.github.commit");
+const logger = getLogger("services.github.commits");
 
-export const getGithubCommits = async (github: GitHubAPI, params: CommitParams): Promise<GithubCommit[]> => {
+export const getSpecificGithubCommits = async (github: GitHubAPI, params: SpecificCommitParams): Promise<GithubCommit[]> => {
 	if (!params.commitRefs?.length) {
 		return [];
 	}
@@ -48,24 +48,59 @@ export const getGithubCommits = async (github: GitHubAPI, params: CommitParams):
 				owner: params.owner,
 				repo: params.repoName
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			})) as CommitResponse;
-		return Object.values(response.data.commits);
+			})) as SpecificCommitResponse;
+		return response.commits ? Object.values(response.commits) : [];
 	} catch (err) {
-		logger.error({ err, params }, "Commit GraphQL Error");
+		logger.error({ err, params }, "Specific Commit GraphQL Error");
 		return Promise.reject();
 	}
 };
 
-interface CommitResponse extends GraphQlQueryResponse {
-	data: {
-		commits: Record<string, GithubCommit>
+
+export const getGithubCommits = async (github: GitHubAPI, params: CommitParams): Promise<GithubCommitNode[]> => {
+	try {
+		const response = (await github.graphql(getCommitsQuery, {
+			owner: params.owner,
+			repo: params.repoName,
+			default_ref: params.branchName,
+			cursor: params.cursor
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		})) as CommitResponse;
+		return response.repository.ref?.target.history.edges || [];
+	} catch (err) {
+		logger.error({ err, params }, "Commits GraphQL Error");
+		return Promise.reject();
+	}
+};
+
+interface SpecificCommitResponse {
+	commits: Record<string, GithubCommit>;
+}
+
+interface CommitResponse {
+	repository: {
+		ref?: {
+			target: {
+				history: {
+					edges?: GithubCommitNode[]
+				}
+			}
+		}
 	};
+}
+
+export interface GithubCommitNode {
+	cursor: string;
+	node: GithubCommit;
 }
 
 export interface GithubCommit {
 	oid: string;
 	abbreviatedOid: string;
 	message: string;
+	authoredDate: string;
+	url: string;
+	changedFiles: number;
 	author: {
 		avatarUrl: string;
 		email: string;
@@ -74,9 +109,6 @@ export interface GithubCommit {
 			url: string;
 		}
 	};
-	authoredDate: string;
-	url: string;
-	changedFiles: number;
 	parents: {
 		totalCount: number;
 	};
@@ -93,7 +125,14 @@ export interface GithubCommitFile {
 }
 
 interface CommitParams {
-	commitRefs: string[];
 	owner: string;
 	repoName: string;
+	branchName: string;
+	cursor?: string;
+}
+
+interface SpecificCommitParams {
+	owner: string;
+	repoName: string;
+	commitRefs: string[];
 }

@@ -1,33 +1,29 @@
 import transformCommit from "../transforms/commit";
-import { getCommits as getCommitsQuery, getDefaultRef } from "./queries";
 import { GitHubAPI } from "probot";
+import { Repository } from "../models/subscription";
+import { getGithubCommits } from "../services/github/commit";
+import { getGithubDefaultBranch } from "../services/github/branches";
 
 // TODO: better typings
-export default async (github: GitHubAPI, repository, cursor: string) => {
-	// TODO: fix typings for graphql
-	const data = (await github.graphql(getDefaultRef, {
+export default async (github: GitHubAPI, repository: Repository, cursor?: string) => {
+	const refName = await getGithubDefaultBranch(github, {
 		owner: repository.owner.login,
-		repo: repository.name
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	}) as any);
+		repoName: repository.name
+	});
 
-	const refName = (data.repository.defaultBranchRef) ? data.repository.defaultBranchRef.name : "master";
-
-	// TODO: fix typings for graphql
-	const commitsData = (await github.graphql(getCommitsQuery, {
+	const commitsData = await getGithubCommits(github, {
 		owner: repository.owner.login,
-		repo: repository.name,
-		cursor,
-		default_ref: refName
+		repoName: repository.name,
+		branchName: refName,
+		cursor
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	})) as any;
+	});
 
 	// if the repository is empty, commitsData.repository.ref is null
-	const edges = commitsData.repository.ref?.target?.history?.edges;
-	const commits = edges?.map(({ node: item }) => item) || [];
+	const commits = commitsData?.map(edge => edge.node);
 
 	return {
-		edges,
+		edges: commitsData,
 		jiraPayload: transformCommit({ commits, repository })
 	};
 };

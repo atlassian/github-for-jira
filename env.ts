@@ -4,13 +4,13 @@ import * as fs from "fs";
 const filepath = ".env";
 
 const call = async () => {
-	const results = await Promise.all([
-		axios.get("http://localhost:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => ({})),
-		axios.get("http://ngrok:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => ({}))
+	const results:(AxiosResponse | undefined)[] = await Promise.all([
+		axios.get("http://localhost:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => undefined),
+		axios.get("http://ngrok:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => undefined)
 	]);
 
-	const response = results.find((value: AxiosResponse) => value.status === 200) as AxiosResponse;
-	return response ? response : Promise.reject();
+	const response = results.find((value?: AxiosResponse) => value?.status === 200) as AxiosResponse;
+	return response || Promise.reject();
 };
 
 // Check to see if ngrok is up and running

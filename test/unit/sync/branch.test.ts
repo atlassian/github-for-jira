@@ -147,7 +147,7 @@ describe.skip("sync/branches", () => {
 			installation: {
 				add: jest.fn()
 			}
-		};
+		} as any;
 		await expect(processInstallation(app, queues)(job)).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
@@ -172,7 +172,7 @@ describe.skip("sync/branches", () => {
 			installation: {
 				add: jest.fn()
 			}
-		};
+		} as any;
 		await expect(processInstallation(app, queues)(job)).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
@@ -231,7 +231,7 @@ describe.skip("sync/branches", () => {
 			installation: {
 				add: jest.fn()
 			}
-		};
+		} as any;
 		await expect(processInstallation(app, queues)(job)).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
@@ -247,7 +247,7 @@ describe.skip("sync/branches", () => {
 			installation: {
 				add: jest.fn()
 			}
-		};
+		} as any;
 
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);

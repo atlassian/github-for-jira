@@ -13,6 +13,7 @@ import { metricHttpRequest, metricSyncStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 import Queue from "bull";
 import { stringFlag, StringFlags } from "../config/feature-flags";
+import { Queues } from "../worker/main";
 
 const logger = getLogger("sync.installation");
 
@@ -27,8 +28,8 @@ interface TaskProcessors {
 		(
 			github: GitHubAPI,
 			repository: Repository,
-			cursor: any
-		) => Promise<{ edges: any[], jiraPayload: any }>;
+			cursor?: string
+		) => Promise<{ edges: { cursor: string }[], jiraPayload: any }>;
 }
 
 type TaskType = "pull" | "commit" | "branch";
@@ -83,7 +84,7 @@ const getNextTask = async (subscription: SubscriptionClass): Promise<Task | unde
 			task,
 			repositoryId,
 			repository,
-			cursor: cursor as any
+			cursor: cursor as string
 		};
 	}
 	return undefined;
@@ -93,7 +94,7 @@ interface Task {
 	task: string;
 	repositoryId: string;
 	repository: Repository;
-	cursor: string | number;
+	cursor: string;
 }
 
 const upperFirst = (str) =>
@@ -183,7 +184,7 @@ const isBlocked = async (installationId: number): Promise<boolean> => {
 
 // TODO: type queues
 export const processInstallation =
-	(app: Application, queues) =>
+	(app: Application, queues: Queues) =>
 		async (job): Promise<void> => {
 			const { installationId, jiraHost } = job.data;
 
@@ -244,7 +245,7 @@ export const processInstallation =
 			const processor = tasks[task];
 
 			const handleGitHubError = (err) => {
-				if (err.errors) {
+				if (err?.errors) {
 					const ignoredErrorTypes = ["MAX_NODE_LIMIT_EXCEEDED"];
 					const notIgnoredError = err.errors.filter(
 						(error) => !ignoredErrorTypes.includes(error.type)

@@ -4,10 +4,11 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
 import { getLogger } from "../config/logger";
+import { Queues } from "../worker/main";
 
 const logger = getLogger("sync.discovery");
 
-export const discovery = (app: Application, queues) => async (job) => {
+export const discovery = (app: Application, queues: Queues) => async (job) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
 	const github = await app.auth(installationId);
@@ -28,8 +29,8 @@ export const discovery = (app: Application, queues) => async (job) => {
 			installationId
 		);
 
-		if(!subscription) {
-			logger.info({jiraHost, installationId}, "Subscription has been removed, ignoring job.");
+		if (!subscription) {
+			logger.info({ jiraHost, installationId }, "Subscription has been removed, ignoring job.");
 			return;
 		}
 

@@ -1,9 +1,8 @@
 import { GitHubAPI } from "probot";
 import { getLogger } from "../../config/logger";
-import { GraphQlQueryResponse } from "probot/lib/github";
 import { getPullRequestReviews } from "../../sync/queries";
 
-const logger = getLogger("services.github.commit");
+const logger = getLogger("services.github.pullrequestreviews");
 
 export const getGithubPullRequestReviews = async (github: GitHubAPI, params: PullRequestReviewsParams): Promise<PullRequestReviews> => {
 	try {
@@ -18,13 +17,13 @@ const paginate = async (github: GitHubAPI, params: PullRequestReviewsParams, rev
 	const response = (await github.graphql(getPullRequestReviews, {
 		owner: params.owner,
 		repo: params.repoName,
-		pullRequestNumber: params.pullRequestNumber
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		pullRequestNumber: params.pullRequestNumber,
+		cursor: params.cursor
 	})) as PullRequestReviewResponse;
 	if (reviews) {
-		reviews?.edges?.push(...response.data.repository.pullRequest.reviews.edges);
+		reviews?.edges?.push(...response.repository.pullRequest.reviews.edges);
 	} else {
-		reviews = response.data.repository.pullRequest.reviews;
+		reviews = response.repository.pullRequest.reviews;
 	}
 	if (reviews?.edges?.length >= reviews?.totalCount) {
 		return reviews;
@@ -32,12 +31,10 @@ const paginate = async (github: GitHubAPI, params: PullRequestReviewsParams, rev
 	return paginate(github, { ...params, cursor: reviews.edges[reviews.edges.length - 1].cursor }, reviews);
 };
 
-interface PullRequestReviewResponse extends GraphQlQueryResponse {
-	data: {
-		repository: {
-			pullRequest: {
-				reviews: PullRequestReviews
-			}
+interface PullRequestReviewResponse {
+	repository: {
+		pullRequest: {
+			reviews: PullRequestReviews
 		}
 	};
 }

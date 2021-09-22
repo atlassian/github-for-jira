@@ -108,7 +108,7 @@ describe.skip("sync/commits", () => {
 			installation: {
 				add: jest.fn()
 			}
-		};
+		} as any;
 		await expect(processInstallation(app, queues)(job)).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
@@ -197,7 +197,7 @@ describe.skip("sync/commits", () => {
 			installation: {
 				add: jest.fn()
 			}
-		};
+		} as any;
 		await expect(processInstallation(app, queues)(job)).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
@@ -252,7 +252,7 @@ describe.skip("sync/commits", () => {
 			installation: {
 				add: jest.fn()
 			}
-		};
+		} as any;
 		await expect(processInstallation(app, queues)(job)).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
@@ -278,7 +278,7 @@ describe.skip("sync/commits", () => {
 			installation: {
 				add: jest.fn()
 			}
-		};
+		} as any;
 		await expect(processInstallation(app, queues)(job)).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();
@@ -303,7 +303,7 @@ describe.skip("sync/commits", () => {
 			installation: {
 				add: jest.fn()
 			}
-		};
+		} as any;
 		await expect(processInstallation(app, queues)(job)).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();

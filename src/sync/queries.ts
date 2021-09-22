@@ -4,13 +4,27 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $cursor:
         edges {
           cursor
           node {
+            id
+            number
+            state
+            title
+            body
+            updatedAt
+            createdAt
+            merged
+            url
             author {
-              avatarUrl
-              login
-              url
+              ... on User {
+                avatarUrl
+                name
+                email
+                login
+                url
+              }
             }
-            databaseId
             repository {
+              id
+              name
               url
             }
             baseRef {
@@ -19,12 +33,9 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $cursor:
             headRef {
               name
             }
-            number
-            state
-            title
-            body
-            updatedAt
-            url
+            comments {
+              totalCount
+            }
           }
         }
       }
@@ -68,19 +79,31 @@ export const getCommits = `query ($owner: String!, $repo: String!, $cursor: Stri
               edges {
                 cursor
                 node {
-                  author {
-                    avatarUrl
-                    email
-                    name
-                    user {
-                      url
-                    }
-                  }
-                  authoredDate
-                  message
-                  oid
-                  url
-                  changedFiles
+                  abbreviatedOid
+					        oid
+					        message
+					        authoredDate
+					        url
+					        changedFiles
+					        author {
+					          avatarUrl
+					          email
+					          name
+					          user {
+					            url
+					          }
+					        }
+					        parents {
+					          totalCount
+					        }
+					        tree {
+					          entries {
+					            path
+					            object {
+					              commitResourcePath
+					            }
+					          }
+					        }
                 }
               }
             }

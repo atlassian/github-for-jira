@@ -1,4 +1,4 @@
-export interface JiraPullRequest {
+export interface JiraBuildReference {
 	commit: {
 		id: string;
 		repositoryUri: string;
@@ -6,7 +6,7 @@ export interface JiraPullRequest {
 	ref: {
 		name: string;
 		uri: string;
-	}
+	};
 }
 
 export interface JiraBuild {
@@ -19,7 +19,7 @@ export interface JiraBuild {
 	state: string;
 	lastUpdated: string;
 	issueKeys: string[];
-	references?: JiraPullRequest[];
+	references?: JiraBuildReference[];
 }
 
 export interface JiraBuildData {
@@ -92,3 +92,22 @@ export interface JiraDeployment {
 export interface JiraDeploymentData {
 	deployments: JiraDeployment[];
 }
+
+export interface JiraPullRequest {
+	author: JiraAuthor;
+	commentCount: number;
+	displayId: string;
+	id: string;
+	issueKeys: string[];
+	lastUpdate: string;
+	sourceBranch: string;
+	sourceBranchUrl: string;
+	destinationBranch: string;
+	status: JiraPullRequestStatus;
+	timestamp: string;
+	title: string;
+	url: string;
+	updateSequenceId: number;
+}
+
+export type JiraPullRequestStatus = "MERGED" | "OPEN" | "DECLINED" | "UNKNOWN";

@@ -1,50 +1,54 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import transformPullRequest from "../../../../src/sync/transforms/pull-request";
+import { PullRequest } from "../../../../src/services/github/pull-requests";
 
 describe("pull_request transform", () => {
-	let githubMock: any;
 	let pullRequest: any;
-	let user: any;
+	let fixture: PullRequest;
 
 	beforeEach(() => {
 		pullRequest = Object.assign({}, require("../../../fixtures/api/pull-request.json"));
-		user = Object.assign({}, require("../../../fixtures/api/user.json"));
 
-		githubMock = {
-			pulls: {
-				get: async () => ({ data: pullRequest })
+		fixture = {
+			id: "fsdsnu329",
+			number: 51,
+			url: "https://github.com/test-owner/test-repo/pull/51",
+			merged: false,
+			state: "CLOSED",
+			title: "[TES-123] Evernote Test",
+			body: "Some test body",
+			createdAt: "2021-09-22T00:43:09+00:00",
+			updatedAt: "2021-09-22T00:43:09+00:00",
+			comments: {
+				totalCount: 10
 			},
-			users: {
-				getByUsername: async () => ({ data: user })
+			author: {
+				login: "test-owner",
+				url: "https://github.com/test-owner",
+				name: "Test Owner",
+				email: "test-owner@test.com",
+				avatarUrl: "https://github.com/test-owner.png"
+			},
+			repository: {
+				id: "msdu3243",
+				name: "test-owner/test-repo",
+				url: "https://github.com/test-owner/test-repo"
+			},
+			headRef: {
+				name: "use-the-force"
+			},
+			baseRef: {
+				name: "devel"
 			}
 		};
 	});
 
 	it("should send the ghost user to Jira when GitHub user has been deleted", async () => {
-		pullRequest.title = "[TES-123] Evernote Test";
-
-		const fixture = {
-			pullRequest: pullRequest,
-			repository: {
-				id: 1234568,
-				name: "test-repo",
-				full_name: "test-owner/test-repo",
-				owner: { login: "test-login" },
-				html_url: "https://github.com/test-owner/test-repo"
-			}
-		};
-
-		fixture.pullRequest.user = null;
-
 		Date.now = jest.fn(() => 12345678);
-
-		const data = await transformPullRequest(
-			fixture,
-			githubMock
-		);
-
+		fixture.author = undefined;
+		const data = await transformPullRequest(fixture);
 		expect(data).toMatchObject({
-			id: 1234568,
+			id: "msdu3243",
 			name: "test-owner/test-repo",
 			pullRequests: [
 				{
@@ -59,7 +63,7 @@ describe("pull_request transform", () => {
 					destinationBranch:
 						"https://github.com/test-owner/test-repo/tree/devel",
 					displayId: "#51",
-					id: 51,
+					id: "51",
 					issueKeys: ["TES-123"],
 					lastUpdate: pullRequest.updated_at,
 					sourceBranch: "use-the-force",
@@ -68,7 +72,7 @@ describe("pull_request transform", () => {
 					status: "DECLINED",
 					timestamp: pullRequest.updated_at,
 					title: pullRequest.title,
-					url: "https://github.com/integrations/test/pull/51",
+					url: "https://github.com/test-owner/test-repo/pull/51",
 					updateSequenceId: 12345678
 				}
 			],
@@ -78,43 +82,11 @@ describe("pull_request transform", () => {
 	});
 
 	it("should return no data if there are no issue keys", async () => {
-		const fixture = {
-			pullRequest: {
-				author: null,
-				databaseId: 1234568,
-				comments: {
-					totalCount: 1
-				},
-				repository: {
-					url: "https://github.com/test-owner/test-repo"
-				},
-				baseRef: {
-					name: "master"
-				},
-				head: {
-					ref: "test-branch"
-				},
-				number: 123,
-				state: "MERGED",
-				title: "Test Pull Request title",
-				body: "",
-				updatedAt: "2018-04-18T15:42:13Z",
-				url: "https://github.com/test-owner/test-repo/pull/123"
-			},
-			repository: {
-				id: 1234568,
-				name: "test-repo",
-				full_name: "test-owner/test-repo",
-				owner: { login: "test-login" },
-				html_url: "https://github.com/test-owner/test-repo"
-			}
-		};
-
+		fixture.title = "No Issue Keys";
 		Date.now = jest.fn(() => 12345678);
 
 		await expect(transformPullRequest(
 			fixture,
-			githubMock
 		)).resolves.toBeUndefined();
 	});
 });
