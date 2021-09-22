@@ -32,13 +32,13 @@ export default async (
 	});
 
 	context.log(`Updating comment in GitHub with ID ${comment.id}`);
-	const jiraResponse = await context.github.issues.updateComment(editedComment);
+	const githubResponse = await context.github.issues.updateComment(editedComment);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && calculateProcessingTimeInSeconds(
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		githubResponse?.status
 	);
 };
