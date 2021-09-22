@@ -124,6 +124,8 @@ const updateJobStatus = async (
 
 	const status = edges?.length ? "pending" : "complete";
 
+	logger.info("STATUS: ", status)
+
 	logger.info({ job, task, status }, "Updating job status");
 
 	await subscription.updateSyncState({
@@ -350,11 +352,15 @@ export const processInstallation =
 					queues.installation.add(job.data, { delay: 60000 });
 					return;
 				}
+
+				logger.info("ERR: ", err.errors)
 				// Checks if parsed error type is NOT_FOUND: https://github.com/octokit/graphql.js/tree/master#errors
 				const isNotFoundError =
 					err.errors &&
 					err.errors.filter((error) => error.type === "NOT_FOUND").length;
 
+				logger.info("isNotFoundError: ", isNotFoundError)
+				// TODO - fix this
 				if (isNotFoundError) {
 					logger.info({ job, task: nextTask }, "Repository deleted after discovery, skipping initial sync");
 
@@ -368,6 +374,8 @@ export const processInstallation =
 					);
 					return;
 				}
+
+				logger.info("NOW RUNNING THIS...")
 
 				await subscription.update({ syncStatus: "FAILED" });
 
