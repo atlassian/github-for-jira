@@ -123,7 +123,7 @@ export const getCommits = `query ($owner: String!, $repo: String!, $cursor: Stri
 
 export const getBranches = `query ($owner: String!, $repo: String!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
-      refs(first: 100, refPrefix: "refs/heads/", after: $cursor) {
+      refs(first: 20, refPrefix: "refs/heads/", after: $cursor) {
         pageInfo {
           hasNextPage
           startCursor

@@ -28,7 +28,7 @@ function mapBranch(branch: GithubBranch, repository: Repository): JiraBranch | u
 		.concat(commitKeys)
 		.filter((key) => !!key);
 
-	if (!allKeys.length) {
+	if (_.isEmpty(allKeys)) {
 		// If we get here, no issue keys were found anywhere they might be found
 		return undefined;
 	}
@@ -56,11 +56,6 @@ function mapBranch(branch: GithubBranch, repository: Repository): JiraBranch | u
 	};
 }
 
-/**
- * mapCommit takes the a single commit object from the array
- * of commits we got from the GraphQL response and maps the data
- * to the structure needed for the DevInfo API
- */
 function mapCommit(commit: GithubBranchCommit): JiraCommit | undefined {
 	const issueKeys = issueKeyParser().parse(commit.message);
 
@@ -96,7 +91,7 @@ export default (payload: { branches: GithubBranch[], repository: Repository }) =
 			.filter((branch) => !!branch)
 	);
 
-	if ((!commits || !commits.length) && (!branches || !branches.length)) {
+	if (_.isEmpty(commits) &&  _.isEmpty(branches)) {
 		return undefined;
 	}
 
