@@ -250,7 +250,7 @@ router.post(
 		// the whole queue will be drained and all jobs will be readded.
 		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
 		const foundInstallationIds = new Set<number>();
-		const duplicateJobs = [];
+		const duplicateJobs:Job[] = [];
 
 		// collecting duplicate jobs per installation
 		for (const job of jobs) {
