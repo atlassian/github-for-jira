@@ -63,7 +63,7 @@ const getQueueOptions = (timeout: number): QueueOptions => {
 			}
 		}
 	};
-}
+};
 
 // Setup queues
 export const queues: Queues = {
@@ -80,7 +80,7 @@ export type Queues = {
 
 // Setup error handling for queues
 Object.keys(queues).forEach(async (name) => {
-	const queue:Queue.Queue = queues[name];
+	const queue: Queue.Queue = queues[name];
 	// On startup, clean any failed jobs older than 10s
 	await queue.clean(10000, "failed");
 
@@ -154,18 +154,18 @@ const setDelayOnRateLimiting = (jobHandler) => async (job) => {
 				job.opts.backoff = {
 					type: "exponential",
 					delay: 10 * 60 * 1000
-				}
+				};
 			} else {
 				logger.warn({ job }, `Rate limiting detected, delaying job by ${delay} ms`);
 				job.opts.backoff = {
 					type: "fixed",
 					delay: delay
-				}
+				};
 			}
 		}
 		throw err;
 	}
-}
+};
 
 const sendQueueMetrics = async () => {
 	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
@@ -183,7 +183,7 @@ const sendQueueMetrics = async () => {
 			statsd.gauge(queueMetrics.waiting, jobCounts.waiting, tags);
 		}
 	}
-}
+};
 
 const commonMiddleware = (jobHandler) => sentryMiddleware(setDelayOnRateLimiting(jobHandler));
 
