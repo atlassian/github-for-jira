@@ -10,6 +10,7 @@ import webhookTimeout from "../middleware/webhook-timeout";
 import statsd from "../config/statsd";
 import { metricWebhooks } from "../config/metric-names";
 import { Application } from "probot";
+import { deleteRepository } from "./repository";
 
 export default (robot: Application) => {
 
@@ -54,4 +55,6 @@ export default (robot: Application) => {
 
 	robot.on("create", middleware(createBranch));
 	robot.on("delete", middleware(deleteBranch));
+
+	robot.on("repository.deleted", middleware(deleteRepository));
 };
