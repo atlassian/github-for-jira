@@ -4,9 +4,7 @@ const server = "app.server";
 export const metricError = {
 	expressRateLimited: `${server}.error.express-rate-limited`,
 	githubErrorRendered: `${frontend}.error.github-error-rendered`,
-	failedConnection: `${server}.error.failed-connection`,
-	queueError: `${server}.error.queue-error`,
-	queueFailed: `${server}.error.queue-failed`
+	failedConnection: `${server}.error.failed-connection`
 };
 
 export const queueMetrics = {

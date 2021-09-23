@@ -3,17 +3,13 @@ import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { getCurrentTime } from '../util/webhooks';
 
 export default async (context: Context, jiraClient): Promise<void> => {
-	const webhookReceived = getCurrentTime();
-
 	// Copy the shape of the context object for processing
 	// but filter out any commits that don't have issue keys
 	// so we don't have to process them.
 	const payload = {
 		webhookId: context.id,
-		webhookReceived,
 		repository: context.payload?.repository,
 		// TODO: use reduce instead
 		commits: context.payload?.commits?.map((commit) => {

@@ -118,9 +118,7 @@ const updateJobStatus = async (
 
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
-		// Include job and task in any micros env logs, exclude from local
-		const loggerObj = process.env.MICROS_ENV ? { job, task } : {}
-		logger.info(loggerObj, "Organization has been deleted. Other active syncs will continue.");
+		logger.info({ job, task }, "Organization has been deleted. Other active syncs will continue.");
 		return;
 	}
 

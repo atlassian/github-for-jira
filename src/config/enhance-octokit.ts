@@ -1,4 +1,5 @@
 import statsd from "./statsd";
+import { extractPath } from "../jira/client/axios";
 import { GitHubAPI } from "probot";
 import { metricHttpRequest } from "./metric-names";
 import { getLogger } from "./logger";
@@ -58,8 +59,9 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 			}
 			const elapsed = Date.now() - requestStart;
 			const tags = {
+				path: extractPath(options.url),
 				method: options.method,
-				status: responseStatus || "none"
+				status: responseStatus
 			};
 
 			statsd.histogram(metricHttpRequest().github, elapsed, tags);

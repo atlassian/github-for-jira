@@ -1,26 +1,14 @@
 import transformDeployment from "../transforms/deployment";
-import { calculateProcessingTimeInSeconds } from "../util/webhooks";
-import { CustomContext } from "./middleware";
+import { Context } from "probot/lib/context";
 
-export default async (context: CustomContext, jiraClient): Promise<void> => {
+export default async (context: Context, jiraClient): Promise<void> => {
 	const jiraPayload = await transformDeployment(context);
 
 	if (!jiraPayload) {
-		context.log(
-			{ noop: "no_jira_payload_deployment" },
-			"Halting further execution for deployment since jiraPayload is empty"
-		);
+		context.log({ noop: "no_jira_payload_deployment" }, "Halting further execution for deployment since jiraPayload is empty");
 		return;
 	}
 
-	context.log(`Sending deployment info to Jira: ${jiraClient.baseURL}`);
-	const jiraResponse = await jiraClient.deployment.submit(jiraPayload);
-	const { webhookReceived, name, log } = context;
-
-	webhookReceived && calculateProcessingTimeInSeconds(
-		webhookReceived,
-		name,
-		log,
-		jiraResponse?.status
-	);
+	context.log(`Sending deployment info to Jira: ${jiraClient.baseURL}`)
+	await jiraClient.deployment.submit(jiraPayload);
 };

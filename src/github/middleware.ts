@@ -9,16 +9,17 @@ import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { getLogger } from "../config/logger";
-import { getCurrentTime } from "../util/webhooks";
+import {getLogger} from "../config/logger";
 
-const logger = getLogger("github.webhooks");
+
+const logger = getLogger("github.webhooks")
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function (callback) {
+const withSentry = function(callback) {
 	return async (context) => {
+
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
@@ -37,14 +38,6 @@ const withSentry = function (callback) {
 	};
 };
 
-const omit = (obj, ...props) => {
-	const result = { ...obj };
-	props.forEach(function (prop) {
-		delete result[prop];
-	});
-	return result;
-};
-
 // TODO: We really should fix this...
 const isFromIgnoredRepo = (payload) =>
 	// These point back to a repository for an installation that
@@ -56,14 +49,11 @@ const isFromIgnoredRepo = (payload) =>
 	payload.installation?.id === 491520 && payload.repository?.id === 205972230;
 
 const isStateChangeOrDeploymentAction = (action) =>
-	["opened", "closed", "reopened", "deployment", "deployment_status"].includes(
-		action
-	);
+	["opened", "closed", "reopened", "deployment", "deployment_status"].includes(action);
 
 export class CustomContext extends Context {
 	sentry: Sentry.Hub;
 	timedout: number;
-	webhookReceived?: Date;
 }
 
 // TODO: fix typings
@@ -72,7 +62,6 @@ export default (
 ) => {
 	return withSentry(async (context: CustomContext) => {
 		enhanceOctokit(context.github);
-		context.webhookReceived = getCurrentTime();
 
 		let webhookEvent = context.name;
 		if (context.payload.action) {
@@ -84,46 +73,27 @@ export default (
 			action: context.payload?.action,
 			id: context.id,
 			repo: context.payload?.repository ? context.repo() : undefined,
-			payload: context.payload,
-			webhookReceived: context.webhookReceived
+			payload: context.payload
 		});
 
-		const repoName = context.payload?.repository?.name || "none";
-		const orgName = context.payload?.repository?.owner?.name || "none";
+		const repoName = context.payload?.repository?.name || "none"
+		const orgName = context.payload?.repository?.owner?.name || "none"
+
 		const gitHubInstallationId = Number(context.payload?.installation?.id);
 
-		const webhookParams = {
-			webhookId: context.id,
-			repoName,
-			orgName,
-			gitHubInstallationId,
-			event: webhookEvent,
-			payload: context.payload,
-			webhookReceived: context.webhookReceived
-		};
-
-		// For all micros envs log the paylaod. Omit from local to reduce noise
-		const loggerWithWebhookParams = process.env.MICROS_ENV
-			? logger.child(webhookParams)
-			: logger.child(omit(webhookParams, "payload"));
-
+		//TODO Remove this line and uncomment the next one to get rid of payloads in logs
+		const loggerWithWebhookParams = logger.child({ webhookId: context.id, repoName, orgName, gitHubInstallationId, event: webhookEvent, payload: context.payload });
+		//const loggerWithWebhookParams = logger.child({ webhookId: context.id, repoName, orgName, gitHubInstallationId });
 		context.log = loggerWithWebhookParams;
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
-		if (
-			context.payload?.sender?.type === "Bot" &&
-			!isStateChangeOrDeploymentAction(context.payload.action) &&
-			!isStateChangeOrDeploymentAction(context.name)
-		) {
-			context.log(
-				{
-					noop: "bot",
-					botId: context.payload?.sender?.id,
-					botLogin: context.payload?.sender?.login,
-				},
-				"Halting further execution since the sender is a bot and action is not a state change nor a deployment"
-			);
+		if ((context.payload?.sender?.type === "Bot" && !isStateChangeOrDeploymentAction(context.payload.action)) && !isStateChangeOrDeploymentAction(context.name)) {
+			context.log({
+				noop: "bot",
+				botId: context.payload?.sender?.id,
+				botLogin: context.payload?.sender?.login
+			}, "Halting further execution since the sender is a bot and action is not a state change nor a deployment");
 			return;
 		}
 
@@ -132,18 +102,15 @@ export default (
 				{
 					noop: "ignored_repo",
 					installation_id: context.payload?.installation?.id,
-					repository_id: context.payload?.repository?.id,
+					repository_id: context.payload?.repository?.id
 				},
 				"Halting further execution since the repository is explicitly ignored"
 			);
 			return;
 		}
 
-		const subscriptions = await Subscription.getAllForInstallation(
-			gitHubInstallationId
-		);
+		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
 		const jiraSubscriptionsCount = subscriptions.length;
-
 		if (!jiraSubscriptionsCount) {
 			context.log(
 				{ noop: "no_subscriptions", orgName: orgName },
@@ -152,16 +119,14 @@ export default (
 			return;
 		}
 
-		context.log(
-			`Processing event for ${jiraSubscriptionsCount} jira instances`
-		);
+		context.log(`Processing event for ${jiraSubscriptionsCount} jira instances`);
 
 		context.sentry.setTag(
 			"transaction",
 			`webhook:${context.name}.${context.payload.action}`
 		);
 
-		for (const subscription of subscriptions) {
+		for(const subscription of subscriptions) {
 			const { jiraHost } = subscription;
 			context.sentry.setTag("jiraHost", jiraHost);
 			context.sentry.setTag(
@@ -173,9 +138,7 @@ export default (
 			context.log("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
-				context.log(
-					`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`
-				);
+				context.log(`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`);
 				continue;
 			}
 
@@ -186,7 +149,7 @@ export default (
 				context.log.error(
 					{
 						timeout: true,
-						timeoutElapsed: context.timedout,
+						timeoutElapsed: context.timedout
 					},
 					`Timing out at after ${context.timedout}ms`
 				);
@@ -211,10 +174,7 @@ export default (
 			try {
 				await callback(context, jiraClient, util);
 			} catch (err) {
-				context.log.error(
-					err,
-					`Error processing the event for Jira hostname '${jiraHost}'`
-				);
+				context.log.error(err, `Error processing the event for Jira hostname '${jiraHost}'`);
 				context.sentry.captureException(err);
 			}
 		}
