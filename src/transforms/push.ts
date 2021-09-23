@@ -130,7 +130,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			// const filesToSend = files.slice(0, 10);
 
 			// merge commits will have 2 or more parents, depending how many are in the sequence
-			const isMergeCommit = parentCount !== 0;
+			const isMergeCommit = parentCount > 1;
 
 			return {
 				hash: oid,
