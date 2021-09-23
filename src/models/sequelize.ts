@@ -13,6 +13,7 @@ config.logging = config.disable_sql_logging
 	? undefined
 	: (query, ms) => logger.trace({ ms }, query);
 
-export const sequelize = config.use_env_variable
-	? new Sequelize.Sequelize(process.env[config.use_env_variable] || "DATABASE_URL", config)
+const databaseUrl = process.env[config.use_env_variable];
+export const sequelize = databaseUrl
+	? new Sequelize.Sequelize(databaseUrl, config)
 	: new Sequelize.Sequelize(config);

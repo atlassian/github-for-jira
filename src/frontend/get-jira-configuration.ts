@@ -65,8 +65,8 @@ export default async (
 		const jiraHost = req.session.jiraHost;
 
 		if(!jiraHost) {
-			req.log.warn({jiraHost, req, res}, "Missing jiraHost");
-			res.status(404).send(`Missing Jira Host '${jiraHost}'`);
+			req.log.warn({req, res}, "Missing jiraHost");
+			res.status(404).send("Missing Jira Host");
 			return;
 		}
 
