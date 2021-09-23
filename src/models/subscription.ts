@@ -180,13 +180,16 @@ export default class Subscription extends Sequelize.Model {
 		// If repo sync state is empty
 		// start a sync job from scratch
 		if (!subscription.repoSyncState || syncType === "full") {
-			subscription.set({ syncStatus: SyncStatus.PENDING, syncWarning: "" });
-			subscription.setSyncState({
+			subscription.syncStatus = SyncStatus.PENDING;
+			subscription.syncWarning = "";
+			subscription.repoSyncState = { init: true } as any;
+			subscription.changed("repoSyncState", true);
+			await subscription.save();
+			await subscription.updateSyncState({
 				installationId,
 				jiraHost,
 				repos: {}
 			});
-			await subscription.save();
 			logger.info("Starting Jira sync");
 			return queues.discovery.add({ installationId, jiraHost });
 		}
@@ -227,7 +230,7 @@ export default class Subscription extends Sequelize.Model {
 			if (_.isPlainObject(value) && !_.isEmpty(value)) {
 				this.setRepoSyncState(value as Record<string, unknown>, parentKeys.concat([key]), options);
 			} else {
-				this.set(parentKeys.join(".") as any, value, options);
+				this.set({ [parentKeys.join(".")]: value } as any, options);
 			}
 		});
 	}
