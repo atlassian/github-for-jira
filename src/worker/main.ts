@@ -12,7 +12,7 @@ import getRedisInfo from "../config/redis-info";
 import app, { probot } from "./app";
 import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
 import SentryScopeProxy from "../models/sentry-scope-proxy";
-import { metricHttpRequest, queueMetrics, metricError } from "../config/metric-names";
+import { metricHttpRequest, queueMetrics } from "../config/metric-names";
 import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
 import "../config/proxy";
@@ -82,12 +82,8 @@ Object.keys(queues).forEach((name) => {
 	});
 
 	queue.on("failed", async (job) => {
-		const failedReason = job.failedReason || "failed";
-		logger.error({ job, queue: name, failedReason }, "Job failed");
+		logger.error({ job, queue: name }, "Job failed");
 		measureElapsedTime(job, { queue: name, status: "failed" });
-
-		const tags = [`queue:${name}`];
-		statsd.increment(metricError.queueFailed, tags);
 	});
 
 	queue.on("error", (err) => {
@@ -96,8 +92,9 @@ Object.keys(queues).forEach((name) => {
 		Sentry.setTag("queue", name);
 		Sentry.captureException(err);
 
-		const tags = [`queue:${name}`];
-		statsd.increment(metricError.queueError, tags);
+		const tags = [`name:${name}`];
+
+		statsd.increment("queue_error", tags);
 	});
 });
 
