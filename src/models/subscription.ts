@@ -3,6 +3,7 @@ import { queues } from "../worker/main";
 import { Job } from "bull";
 import _ from "lodash";
 import logger from "../config/logger";
+import { SetOptions } from "sequelize/types/lib/model";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -35,6 +36,7 @@ export interface RepositoryData {
 	lastBranchCursor?: string | number;
 	lastCommitCursor?: string | number;
 	lastPullCursor?: string | number;
+
 	// TODO: need to get concrete typing
 	[key: string]: unknown;
 }
@@ -83,7 +85,7 @@ export default class Subscription extends Sequelize.Model {
 		installationIds: number[] = [],
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
 		offset = 0,
-		limit?: number,
+		limit?: number
 	): Promise<Subscription[]> {
 
 		const andFilter = [];
@@ -178,16 +180,13 @@ export default class Subscription extends Sequelize.Model {
 		// If repo sync state is empty
 		// start a sync job from scratch
 		if (!subscription.repoSyncState || syncType === "full") {
-			subscription.changed("repoSyncState", true);
-			await subscription.update({
-				syncStatus: "PENDING",
-				syncWarning: "",
-				repoSyncState: {
-					installationId,
-					jiraHost,
-					repos: {}
-				}
+			subscription.set({ syncStatus: SyncStatus.PENDING, syncWarning: "" });
+			subscription.setSyncState({
+				installationId,
+				jiraHost,
+				repos: {}
 			});
+			await subscription.save();
 			logger.info("Starting Jira sync");
 			return queues.discovery.add({ installationId, jiraHost });
 		}
@@ -212,10 +211,25 @@ export default class Subscription extends Sequelize.Model {
 
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
 	// https://github.com/sequelize/sequelize/issues/4387
+	setSyncState(updatedState: RepoSyncState): Subscription {
+		this.setRepoSyncState(updatedState, ["repoSyncState"]);
+		return this;
+	}
+
 	async updateSyncState(updatedState: RepoSyncState): Promise<Subscription> {
-		this.repoSyncState = _.merge(this.repoSyncState, updatedState);
-		this.changed("repoSyncState", true);
-		return this.save();
+		this.setSyncState(updatedState);
+		await this.save();
+		return this;
+	}
+
+	private setRepoSyncState(obj: Partial<Record<keyof RepoSyncState, unknown>>, parentKeys: string[], options?: SetOptions): void {
+		Object.entries(obj).forEach(([key, value]) => {
+			if (_.isPlainObject(value) && !_.isEmpty(value)) {
+				this.setRepoSyncState(value as Record<string, unknown>, parentKeys.concat([key]), options);
+			} else {
+				this.set(parentKeys.join(".") as any, value, options);
+			}
+		});
 	}
 
 	async uninstall(): Promise<void> {
