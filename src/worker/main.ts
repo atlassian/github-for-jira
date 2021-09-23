@@ -41,8 +41,8 @@ const getQueueOptions = (timeout: number): QueueOptions => {
 			removeOnFail: true
 		},
 		settings: {
-			// lockDuration must be smaller than the timeout, otherwise a job might be processed twice
-			lockDuration: timeout - 500
+			// lockDuration must be greater than the timeout, so that it doesn't get processed again prematurely
+			lockDuration: timeout + 500
 		},
 		redis: getRedisInfo("bull"),
 		createClient: (type, redisOpts = {}) => {
