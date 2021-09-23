@@ -12,12 +12,12 @@ import getRedisInfo from "../config/redis-info";
 import app, { probot } from "./app";
 import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
 import SentryScopeProxy from "../models/sentry-scope-proxy";
-import { metricHttpRequest, queueMetrics } from "../config/metric-names";
+import { metricHttpRequest, queueMetrics, metricError } from "../config/metric-names";
 import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
 import "../config/proxy";
-import { isNodeDev } from "../util/isNodeEnv";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { RateLimitingError } from "../config/enhance-octokit";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const client = new Redis(getRedisInfo("client"));
@@ -28,41 +28,41 @@ function measureElapsedTime(job: Queue.Job, tags) {
 	statsd.histogram(metricHttpRequest().jobDuration, job.finishedOn - job.processedOn, tags);
 }
 
-const queueOpts: QueueOptions = {
-	defaultJobOptions: {
-		attempts: 3,
-		removeOnComplete: true,
-		removeOnFail: true
-	},
-	redis: getRedisInfo("bull"),
-	createClient: (type, redisOpts = {}) => {
-		let redisInfo;
-		switch (type) {
-			case "client":
-				return client;
-			case "subscriber":
-				return subscriber;
-			default:
-				redisInfo = Object.assign({}, redisOpts);
-				redisInfo.connectionName = "bclient";
-				return new Redis(redisInfo);
+const getQueueOptions = (timeout: number): QueueOptions => {
+	return {
+		defaultJobOptions: {
+			attempts: 5,
+			timeout: timeout,
+			backoff: {
+				type: "exponential",
+				delay: 3 * 60 * 1000
+			},
+			removeOnComplete: true,
+			removeOnFail: true
+		},
+		redis: getRedisInfo("bull"),
+		createClient: (type, redisOpts = {}) => {
+			let redisInfo;
+			switch (type) {
+				case "client":
+					return client;
+				case "subscriber":
+					return subscriber;
+				default:
+					redisInfo = Object.assign({}, redisOpts);
+					redisInfo.connectionName = "bclient";
+					return new Redis(redisInfo);
+			}
 		}
-	}
-};
-
-if (isNodeDev()) {
-	queueOpts.settings = {
-		lockDuration: 100000,
-		lockRenewTime: 50000 // Interval on which to acquire the job lock
 	};
 }
 
 // Setup queues
 export const queues: { [key: string]: Queue.Queue } = {
-	discovery: new Queue("Content discovery", queueOpts),
-	installation: new Queue("Initial sync", queueOpts),
-	push: new Queue("Push transformation", queueOpts),
-	metrics: new Queue("Metrics", queueOpts)
+	discovery: new Queue("Content discovery", getQueueOptions(60 * 1000)),
+	installation: new Queue("Initial sync", getQueueOptions(10 * 60 * 1000)),
+	push: new Queue("Push transformation", getQueueOptions(60 * 1000)),
+	metrics: new Queue("Metrics", getQueueOptions(60 * 1000))
 };
 
 // Setup error handling for queues
@@ -82,8 +82,12 @@ Object.keys(queues).forEach((name) => {
 	});
 
 	queue.on("failed", async (job) => {
-		logger.error({ job, queue: name }, "Job failed");
+		const failedReason = job.failedReason || "failed";
+		logger.error({ job, queue: name, failedReason }, "Job failed");
 		measureElapsedTime(job, { queue: name, status: "failed" });
+
+		const tags = [`queue:${name}`];
+		statsd.increment(metricError.queueFailed, tags);
 	});
 
 	queue.on("error", (err) => {
@@ -92,9 +96,8 @@ Object.keys(queues).forEach((name) => {
 		Sentry.setTag("queue", name);
 		Sentry.captureException(err);
 
-		const tags = [`name:${name}`];
-
-		statsd.increment("queue_error", tags);
+		const tags = [`queue:${name}`];
+		statsd.increment(metricError.queueError, tags);
 	});
 });
 
@@ -128,6 +131,32 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 	}
 };
 
+const setDelayOnRateLimiting = (jobHandler) => async (job) => {
+	try {
+		await jobHandler(job);
+	} catch (err) {
+		if (err instanceof RateLimitingError) {
+			// delaying until the rate limit is reset (plus a buffer of a couple seconds)
+			const delay = err.rateLimitReset * 1000 + 10000 - new Date().getTime();
+
+			if (delay <= 0) {
+				logger.warn({ job }, "Rate limiting detected but couldn't calculate delay, delaying exponentially");
+				job.opts.backoff = {
+					type: "exponential",
+					delay: 10 * 60 * 1000
+				}
+			} else {
+				logger.warn({ job }, `Rate limiting detected, delaying job by ${delay} ms`);
+				job.opts.backoff = {
+					type: "fixed",
+					delay: delay
+				}
+			}
+		}
+		throw err;
+	}
+}
+
 const sendQueueMetrics = async () => {
 	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
 
@@ -146,7 +175,7 @@ const sendQueueMetrics = async () => {
 	}
 }
 
-const commonMiddleware = (jobHandler) => sentryMiddleware(jobHandler);
+const commonMiddleware = (jobHandler) => sentryMiddleware(setDelayOnRateLimiting(jobHandler));
 
 export const start = (): void => {
 	initializeSentry();

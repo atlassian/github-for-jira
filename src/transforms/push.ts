@@ -8,18 +8,24 @@ import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
+import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 
 // TODO: define better types for this file
 
 const logger = getLogger("transforms.push");
 
-const mapFile = (githubFile, repoName: string, repoOwner: string, commitHash: string) => {
+const mapFile = (
+	githubFile,
+	repoName: string,
+	repoOwner: string,
+	commitHash: string
+) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
 	const mapStatus = {
 		added: "ADDED",
 		removed: "DELETED",
-		modified: "MODIFIED"
+		modified: "MODIFIED",
 	};
 
 	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
@@ -29,7 +35,7 @@ const mapFile = (githubFile, repoName: string, repoOwner: string, commitHash: st
 		changeType: mapStatus[githubFile.status] || "UNKNOWN",
 		linesAdded: githubFile.additions,
 		linesRemoved: githubFile.deletions,
-		url: githubFile.blob_url || fallbackUrl
+		url: githubFile.blob_url || fallbackUrl,
 	};
 };
 
@@ -42,7 +48,7 @@ export function createJobData(payload, jiraHost: string) {
 		name,
 		full_name,
 		html_url,
-		owner
+		owner,
 	};
 
 	const shas = [];
@@ -58,28 +64,36 @@ export function createJobData(payload, jiraHost: string) {
 		// Creates an array of shas for the job processor to work on
 		shas.push({ id: commit.id, issueKeys });
 	}
+
 	return {
 		repository,
 		shas,
 		jiraHost,
 		installationId: payload.installation.id,
-		webhookId: payload.webhookId || "none"
+		webhookId: payload.webhookId || "none",
+		webhookReceived: payload.webhookReceived || undefined,
 	};
 }
 
-export async function enqueuePush(payload: unknown, jiraHost: string, options?: JobOptions) {
+export async function enqueuePush(
+	payload: unknown,
+	jiraHost: string,
+	options?: JobOptions
+) {
 	return queues.push.add(createJobData(payload, jiraHost), options);
 }
 
 export function processPushJob(app: Application) {
 	return async (job: Job): Promise<void> => {
+		let github;
 		try {
-			const github = await app.auth(job.data.installationId);
-			enhanceOctokit(github);
-			await processPush(github, job.data);
+			github = await app.auth(job.data.installationId);
 		} catch (err) {
 			logger.error({ err, job }, "Could not authenticate");
+			return;
 		}
+		enhanceOctokit(github);
+		await processPush(github, job.data);
 	};
 }
 
@@ -91,14 +105,17 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			repository: { owner, name: repo },
 			shas,
 			installationId,
-			jiraHost
+			jiraHost,
 		} = payload;
 
 		const webhookId = payload.webhookId || "none";
+		const webhookReceived = payload.webhookReceived || undefined;
+
 		log = logger.child({
 			webhookId: webhookId,
 			repoName: repo,
-			orgName: owner.name
+			orgName: owner.name,
+			webhookReceived,
 		});
 
 		log.info({ installationId }, "Processing push");
@@ -120,11 +137,11 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			shas.map(async (sha) => {
 				const {
 					data,
-					data: { commit: githubCommit }
+					data: { commit: githubCommit },
 				} = await github.repos.getCommit({
 					owner: owner.login,
 					repo,
-					ref: sha.id
+					ref: sha.id,
 				});
 
 				const { files, author, parents, sha: commitSha, html_url } = data;
@@ -144,12 +161,14 @@ export const processPush = async (github: GitHubAPI, payload) => {
 					authorTimestamp: githubCommitAuthor.date,
 					displayId: commitSha.substring(0, 6),
 					fileCount: files.length, // Send the total count for all files
-					files: filesToSend.map(file => mapFile(file, repo, owner.name, sha.id)),
+					files: filesToSend.map((file) =>
+						mapFile(file, repo, owner.name, sha.id)
+					),
 					id: commitSha,
 					issueKeys: sha.issueKeys,
 					url: html_url,
 					updateSequenceId: Date.now(),
-					flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
+					flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined,
 				};
 			})
 		);
@@ -167,13 +186,23 @@ export const processPush = async (github: GitHubAPI, payload) => {
 				url: repository.html_url,
 				id: repository.id,
 				commits: chunk,
-				updateSequenceId: Date.now()
+				updateSequenceId: Date.now(),
 			};
 
-			await jiraClient.devinfo.repository.update(jiraPayload);
-		}
+			const jiraResponse = await jiraClient.devinfo.repository.update(
+				jiraPayload
+			);
+			const webhookName = payload.name || "none";
 
+			webhookReceived && calculateProcessingTimeInSeconds(
+				webhookReceived,
+				webhookName,
+				log,
+				jiraResponse?.status
+			);
+		}
 	} catch (error) {
 		log.error(error, "Failed to process push");
+		throw error;
 	}
 };

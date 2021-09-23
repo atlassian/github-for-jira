@@ -14,9 +14,13 @@ import uninstall from "../jira/uninstall";
 import { serializeJiraInstallation, serializeSubscription } from "./serializers";
 import getRedisInfo from "../config/redis-info";
 import { elapsedTimeMetrics } from "../config/statsd";
+import { queues } from "../worker/main";
+import { getLogger } from "../config/logger";
+import { Job, Queue } from "bull";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
+const logger = getLogger("api");
 
 async function getInstallation(client, subscription) {
 	const id = subscription.gitHubInstallationId;
@@ -229,6 +233,82 @@ router.post(
 	}
 );
 
+router.post(
+	"/dedupInstallationQueue",
+	bodyParser,
+	elapsedTimeMetrics,
+	async (_: Request, res: Response): Promise<void> => {
+
+		// This remove all jobs from the queue. This way,
+		// the whole queue will be drained and all jobs will be readded.
+		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
+		const foundInstallationIds = new Set<number>();
+		const duplicateJobs = [];
+
+		// collecting duplicate jobs per installation
+		for (const job of jobs) {
+			// getJobs() sometimes seems to include a "null" job in the array
+			if (!job) {
+				continue;
+			}
+			if (foundInstallationIds.has(job.data.installationId)) {
+				duplicateJobs.push(job);
+			} else {
+				foundInstallationIds.add(job.data.installationId);
+			}
+		}
+
+		// removing duplicate jobs
+		await Promise.all(duplicateJobs.map((job) => {
+			logger.info({ job }, "removing duplicate job");
+			job.remove();
+		}));
+
+		res.send(`${duplicateJobs.length} duplicate jobs killed with fire.`);
+	}
+);
+
+router.post(
+	"/requeue",
+	bodyParser,
+	elapsedTimeMetrics,
+	async (request: Request, res: Response): Promise<void> => {
+
+		const queueName = request.body.queue;   // "installation", "push", "metrics", or "discovery"
+		const jobTypes = request.body.jobTypes || ["active", "delayed", "waiting", "paused"];
+
+		if (!jobTypes.length) {
+			res.status(400);
+			res.send("please specify the jobTypes field (available job types: [\"active\", \"delayed\", \"waiting\", \"paused\"])");
+			return;
+		}
+
+		const queue: Queue = queues[queueName];
+
+		if (!queue) {
+			res.status(400);
+			res.send(`queue ${queueName} does not exist (available queues: "installation", "push", "metrics", or "discovery"`);
+			return;
+		}
+
+		// This remove all jobs from the queue. This way,
+		// the whole queue will be drained and all jobs will be readded.
+		const jobs = await queue.getJobs(jobTypes);
+
+		await Promise.all(jobs.map(async (job: Job) => {
+			try {
+				await job.remove();
+				await queue.add(job.data);
+				logger.info({ job: job }, "requeued job");
+			} catch (e) {
+				// do nothing
+			}
+		}));
+
+		res.send(`${jobs.length} jobs discarded and re-added.`);
+	}
+);
+
 router.get(
 	"/jira/:clientKeyOrJiraHost",
 	[
@@ -357,7 +437,7 @@ router.get(
 				}));
 
 			const failedConnections = installations.filter((response) => {
-				req.log.error({...response}, "Failed installation");
+				req.log.error({ ...response }, "Failed installation");
 				return response.error;
 			});
 
@@ -372,7 +452,7 @@ router.get(
 				)}/api/${installationId}/repoSyncState.json`
 			});
 		} catch (err) {
-			req.log.error({installationId, err}, "Error getting installation");
+			req.log.error({ installationId, err }, "Error getting installation");
 			res.status(500).json(err);
 		}
 	}
