@@ -360,6 +360,7 @@ export const processInstallation =
 
 				// logger.info("isNotFoundError: ", isNotFoundError)
 
+				logger.info("ERROR: ", err, typeof err)
 				if (isNotFoundError) {
 					logger.info({ job, task: nextTask }, "Repository deleted after discovery, skipping initial sync");
 
