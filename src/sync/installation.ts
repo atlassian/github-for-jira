@@ -124,8 +124,6 @@ const updateJobStatus = async (
 
 	const status = edges?.length ? "pending" : "complete";
 
-	logger.info("STATUS: ", status)
-
 	logger.info({ job, task, status }, "Updating job status");
 
 	await subscription.updateSyncState({
@@ -179,6 +177,34 @@ const isBlocked = async (installationId: number): Promise<boolean> => {
 		return false;
 	}
 }
+
+// Checks if parsed error type is NOT_FOUND which come from 2 different sources
+// - GraphqlError: https://github.com/octokit/graphql.js/tree/master#errors
+// - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
+export const handleNotFoundErrors = async (handleNotFoundPayload): Promise<boolean> | undefined => {
+	const { err, queues, job, task, repositoryId, nextTask } =
+		handleNotFoundPayload;
+
+	const isNotFoundError =
+		(err.errors &&
+			err.errors?.filter((error) => error.type === "NOT_FOUND").length) ||
+		err.status === 404;
+
+	if (isNotFoundError) {
+		logger.info(
+			{ job, task: nextTask },
+			"Repository deleted after discovery, skipping initial sync"
+		);
+
+		const edgesLeft = []; // No edges left to process since the repository doesn't exist
+
+		await updateJobStatus(queues, job, edgesLeft, task, repositoryId);
+
+		logger.info("updated job status");
+	}
+
+	return isNotFoundError;
+};
 
 // TODO: type queues
 export const processInstallation =
@@ -353,29 +379,16 @@ export const processInstallation =
 					return;
 				}
 
-				// Checks if parsed error type is NOT_FOUND: https://github.com/octokit/graphql.js/tree/master#errors
-				const isNotFoundError =
-					err.errors &&
-					err.errors.filter((error) => error.type === "NOT_FOUND").length;
-
-				// logger.info("isNotFoundError: ", isNotFoundError)
-
-				logger.info("ERROR: ", err, typeof err)
-				if (isNotFoundError) {
-					logger.info({ job, task: nextTask }, "Repository deleted after discovery, skipping initial sync");
-
-					const edgesLeft = []; // No edges left to process since the repository doesn't exist
-					await updateJobStatus(
-						queues,
-						job,
-						edgesLeft,
-						task,
-						repositoryId
-					);
-
-					logger.info("updated job status")
-					return;
+				const handleNotFoundPayload = {
+					err,
+					queues,
+					job,
+					task,
+					repositoryId,
+					nextTask
 				}
+
+				if (handleNotFoundErrors(handleNotFoundPayload)) return;
 
 				await subscription.update({ syncStatus: "FAILED" });
 
