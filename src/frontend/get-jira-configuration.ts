@@ -84,15 +84,17 @@ export default async (
 				repoSyncState: data.repoSyncState,
 			}));
 
-		const failedConnections = installations.filter(
-			(response) => !!response.error
-		);
+		const failedConnections = installations
+			.filter((response) => !!response.error)
+			.map((data) => ({
+				...data,
+			}));
 
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
 			connections,
 			failedConnections,
-			hasConnections: connections.length > 0 || failedConnections.length > 0,
+			hasConnections: connections.length > 0,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,
