@@ -353,14 +353,13 @@ export const processInstallation =
 					return;
 				}
 
-				logger.info("ERR: ", err.errors)
 				// Checks if parsed error type is NOT_FOUND: https://github.com/octokit/graphql.js/tree/master#errors
 				const isNotFoundError =
 					err.errors &&
 					err.errors.filter((error) => error.type === "NOT_FOUND").length;
 
-				logger.info("isNotFoundError: ", isNotFoundError)
-				// TODO - fix this
+				// logger.info("isNotFoundError: ", isNotFoundError)
+
 				if (isNotFoundError) {
 					logger.info({ job, task: nextTask }, "Repository deleted after discovery, skipping initial sync");
 
@@ -372,10 +371,10 @@ export const processInstallation =
 						task,
 						repositoryId
 					);
+
+					logger.info("updated job status")
 					return;
 				}
-
-				logger.info("NOW RUNNING THIS...")
 
 				await subscription.update({ syncStatus: "FAILED" });
 
