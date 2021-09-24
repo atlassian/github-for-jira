@@ -20,16 +20,20 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let commitsData: any = {};
 
-	// TODO: fix typings for graphql
-	try {
-		commitsData = (await github.graphql(getCommitsQuery(true), {
+	const getCommits = async (includeChangedFiles: boolean) => {
+		await github.graphql(getCommitsQuery(includeChangedFiles), {
 			owner: repository.owner.login,
 			repo: repository.name,
 			per_page: perPage,
 			cursor,
 			default_ref: refName
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		})) as any;
+		})
+	}
+
+	// TODO: fix typings for graphql
+	try {
+		commitsData = await getCommits(true);
 	} catch (err) {
 
 		if (!await booleanFlag(BooleanFlags.RETRY_WITHOUT_CHANGED_FILES, false)) {
@@ -43,14 +47,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 
 		const changedFilesErrors = err.errors?.filter(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
 		if (changedFilesErrors.length) {
-			commitsData = (await github.graphql(getCommitsQuery(false), {
-				owner: repository.owner.login,
-				repo: repository.name,
-				per_page: perPage,
-				cursor,
-				default_ref: refName
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			})) as any;
+			commitsData = await getCommits(false);
 		}
 
 		logger.info("successfully retried without changedFiles");
