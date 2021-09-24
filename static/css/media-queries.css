@@ -1,28 +1,58 @@
-/*  We can't use standard breakpoints as the left panel navigation in Jira hijacks some of the screen */
+/*  NOTE: We can't use standard breakpoints on GitHub config page
+as the left panel navigation in Jira hijacks some of the screen */
 @media (max-width: 1530px) {
-    .jiraConfiguration__table__cell__settings__ellipsis {
-      right: 0;
-    }
+  .jiraConfiguration__table__cell__settings__ellipsis {
+    right: 0;
+  }
+}
+
+/* Extra large devices  */
+@media (max-width: 1200px) {
+  .gitHubConfiguration__notAdminMsg {
+    height: 6.2em;
+    top: -1.5em;
+    width: 14em;
+  }
+}
+
+/* Large devices  */
+@media (max-width: 992px) {
+  .gitHubConfiguration__notAdminMsg {
+    left: -12em;
   }
 
-  @media (max-width: 800px) {
-    .jiraConfiguration {
-      padding: 2em;
-    }
-
-    .jiraConfiguration__table__cell__settings__ellipsis {
-      right: 0.2em !important;
-    }
+  .gitHubConfiguration__manageSubscriptions--notAdmin,
+  .gitHubConfiguration__failedSyncWarningLabel {
+    top: -0.5em;
   }
 
-  @media (max-width: 540px) {
-    .getConfiguration__tableHeader {
-      padding-bottom: 0;
-    }
-
-    .getConfiguration__wrapper,
-    .getConfiguration__accountLink,
-    .getConfiguration__disclaimer {
-      font-size: 0.8rem;
-    }
+  .gitHubConfiguration__manageSubscriptions--notAdmin  {
+    left: -16em;
   }
+
+  .gitHubConfiguration__failedSyncWarningLabel {
+    left: -39em;
+  }
+}
+
+@media (max-width: 800px) {
+  .jiraConfiguration {
+    padding: 2em;
+  }
+
+  .jiraConfiguration__table__cell__settings__ellipsis {
+    right: 0.2em !important;
+  }
+}
+
+@media (max-width: 540px) {
+  .getConfiguration__tableHeader {
+    padding-bottom: 0;
+  }
+
+  .getConfiguration__wrapper,
+  .getConfiguration__accountLink,
+  .getConfiguration__disclaimer {
+    font-size: 0.8rem;
+  }
+}

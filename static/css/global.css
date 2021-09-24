@@ -81,13 +81,13 @@ body {
     padding: 0.8em 0;
   }
 
-  .getConfiguration__orgContent__numberOfRepos,
+  .gitHubConfiguration__orgContent__numberOfRepos,
   .jiraConfiguration__table__syncCount {
     background-color: #dfe1e6;
     border-radius: 12px;
   }
 
-  .getConfiguration__orgContent__numberOfRepos {
+  .gitHubConfiguration__orgContent__numberOfRepos {
     margin: auto 0.5em;
     padding: 0.7em 0.6em;
   }
@@ -97,13 +97,13 @@ body {
     padding: 0.1em 0.4em 0.1em 0.6em;
   }
 
-  .getConfiguration__loaderContainer,
+  .gitHubConfiguration__loaderContainer,
   .jiraConfiguration__loaderContainer {
     display: flex;
     justify-content: center;
   }
 
-  .getConfiguration__loaderContainer {
+  .gitHubConfiguration__loaderContainer {
     width: 5.5em;
   }
 
@@ -111,10 +111,25 @@ body {
     width: 2em;
   }
 
-  .getConfiguration__orgContent__edit,
+  .gitHubConfiguration__orgContent__edit,
   .jiraConfiguration__table__edit {
     color: #43526e;
   }
+
+  .jiraConfiguration__retryMsg,
+  .gitHubConfiguration__notAdminMsg,
+  .gitHubConfiguration__manageSubscriptions,
+  .gitHubConfiguration__manageSubscriptions--notAdmin,
+  .gitHubConfiguration__failedSyncWarningLabel {
+    background-color: #172b4d;
+    border-radius: 3px;
+    display: none;
+    position: absolute;
+  }
+
+   /* .gitHubConfiguration__manageSubscriptions--notAdmin  {
+    display: block;
+  } */
 
   .jiraConfiguration__table__edit:before:hover,
   .jiraConfiguration__table__edit:before:active,
