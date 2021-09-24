@@ -40,6 +40,10 @@ const getQueueOptions = (timeout: number): QueueOptions => {
 			removeOnComplete: true,
 			removeOnFail: true
 		},
+		settings: {
+			// lockDuration must be greater than the timeout, so that it doesn't get processed again prematurely
+			lockDuration: timeout + 500
+		},
 		redis: getRedisInfo("bull"),
 		createClient: (type, redisOpts = {}) => {
 			let redisInfo;
