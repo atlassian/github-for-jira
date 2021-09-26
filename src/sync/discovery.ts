@@ -41,9 +41,11 @@ export const discovery = (app: Application, queues) => async (job) => {
 			return obj;
 		}, {});
 		await subscription.updateSyncState({
+			installationId,
+			jiraHost,
 			numberOfSyncedRepos: 0,
 			repos
-		});
+		}, true);
 
 		// Create job
 		queues.installation.add({ installationId, jiraHost, startTime });

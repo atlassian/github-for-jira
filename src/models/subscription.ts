@@ -180,15 +180,10 @@ export default class Subscription extends Sequelize.Model {
 		// If repo sync state is empty
 		// start a sync job from scratch
 		if (!subscription.repoSyncState || syncType === "full") {
-			subscription.syncStatus = SyncStatus.PENDING;
-			subscription.syncWarning = "";
-			subscription.repoSyncState = { init: true } as any;
-			subscription.changed("repoSyncState", true);
-			await subscription.save();
-			await subscription.updateSyncState({
-				installationId,
-				jiraHost,
-				repos: {}
+			await subscription.update({
+				syncStatus: SyncStatus.PENDING,
+				syncWarning: "",
+				repoSyncState: null
 			});
 			logger.info("Starting Jira sync");
 			return queues.discovery.add({ installationId, jiraHost });
@@ -214,13 +209,18 @@ export default class Subscription extends Sequelize.Model {
 
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
 	// https://github.com/sequelize/sequelize/issues/4387
-	setSyncState(updatedState: RepoSyncState): Subscription {
-		this.setRepoSyncState(updatedState, ["repoSyncState"]);
+	setSyncState(updatedState: RepoSyncState, reset = false): Subscription {
+		if (reset) {
+			this.repoSyncState = updatedState;
+			this.changed("repoSyncState", true);
+		} else {
+			this.setRepoSyncState(updatedState, ["repoSyncState"]);
+		}
 		return this;
 	}
 
-	async updateSyncState(updatedState: RepoSyncState): Promise<Subscription> {
-		this.setSyncState(updatedState);
+	async updateSyncState(updatedState: RepoSyncState, reset?: boolean): Promise<Subscription> {
+		this.setSyncState(updatedState, reset);
 		await this.save();
 		return this;
 	}
