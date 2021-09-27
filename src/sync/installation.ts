@@ -211,6 +211,28 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 	}
 };
 
+// Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources
+// - GraphqlError: https://github.com/octokit/graphql.js/tree/master#errors
+// - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
+export const handleNotFoundErrors = (
+	err: any,
+	job: any,
+	nextTask: Task
+): boolean | undefined => {
+	const isNotFoundErrorType =
+		err?.errors && err.errors?.filter((error) => error.type === "NOT_FOUND");
+
+	const isNotFoundError = isNotFoundErrorType?.length > 0 || err?.status === 404;
+
+	isNotFoundError &&
+		logger.info(
+			{ job, task: nextTask },
+			"Repository deleted after discovery, skipping initial sync"
+		);
+
+	return isNotFoundError;
+};
+
 // TODO: type queues
 export const processInstallation =
 	(app: Application, queues) =>
@@ -382,22 +404,11 @@ export const processInstallation =
 					queues.installation.add(job.data, { delay: 60000 });
 					return;
 				}
-				// Checks if parsed error type is NOT_FOUND: https://github.com/octokit/graphql.js/tree/master#errors
-				const isNotFoundError =
-					err.errors &&
-					err.errors.filter((error) => error.type === "NOT_FOUND").length;
 
-				if (isNotFoundError) {
-					logger.info({ job, task: nextTask }, "Repository deleted after discovery, skipping initial sync");
-
+				// Continue sync when a 404/NOT_FOUND is returned
+				if (handleNotFoundErrors(err, job, nextTask)) {
 					const edgesLeft = []; // No edges left to process since the repository doesn't exist
-					await updateJobStatus(
-						queues,
-						job,
-						edgesLeft,
-						task,
-						repositoryId
-					);
+					await updateJobStatus(queues, job, edgesLeft, task, repositoryId);
 					return;
 				}
 
