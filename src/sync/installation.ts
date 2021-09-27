@@ -55,12 +55,16 @@ const updateNumberOfReposSynced = async (
 		);
 	});
 
-	await subscription.update({
-		repoSyncState: {
-			...subscription.repoSyncState,
-			numberOfSyncedRepos: syncedRepos.length
-		}
-	});
+	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
+		await subscription.updateNumberOfSyncedRepos(syncedRepos.length);
+	} else {
+		await subscription.update({
+			repoSyncState: {
+				...subscription.repoSyncState,
+				numberOfSyncedRepos: syncedRepos.length
+			}
+		});
+	}
 };
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
@@ -126,23 +130,31 @@ const updateJobStatus = async (
 
 	logger.info({ job, task, status }, "Updating job status");
 
-	await subscription.updateSyncState({
-		repos: {
-			[repositoryId]: {
-				[getStatusKey(task)]: status
-			}
-		}
-	});
-
-	if (edges?.length) {
-		// there's more data to get
+	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
+		await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status)
+	} else {
 		await subscription.updateSyncState({
 			repos: {
 				[repositoryId]: {
-					[getCursorKey(task)]: edges[edges.length - 1].cursor
+					[getStatusKey(task)]: status
 				}
 			}
 		});
+	}
+
+	if (edges?.length) {
+		// there's more data to get
+		if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
+			await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor)
+		} else {
+			await subscription.updateSyncState({
+				repos: {
+					[repositoryId]: {
+						[getCursorKey(task)]: edges[edges.length - 1].cursor
+					}
+				}
+			});
+		}
 
 		queues.installation.add(job.data);
 		// no more data (last page was processed of this job type)
