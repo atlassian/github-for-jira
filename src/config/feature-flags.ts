@@ -19,7 +19,8 @@ export enum BooleanFlags {
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
-	SIMPLER_PROCESSOR = "simpler-processor"
+	SIMPLER_PROCESSOR = "simpler-processor",
+	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page"
 }
 
 export enum StringFlags {
