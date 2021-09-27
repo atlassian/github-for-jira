@@ -6,11 +6,25 @@ notifications:
   email: fusion-arc@atlassian.com
 
 compose:
+  pgbouncer:
+    image: docker.atl-paas.net/sox/micros/pgbouncer
+    tag: 1.15.0
+    command: [ "database" ]
+    environment:
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_DEFAULT_POOL_SIZE: 15 # Max scale up:
+                                      #   (10 web servers + 6 workers) * 15 pool size  = 240 connections
+                                      # Normal business:
+                                      #   (5 web servers + 3 workers) * 15 pool size = 120 connections
+      PGBOUNCER_SERVER_IDLE_TIMEOUT: 60
+      PGBOUNCER_MAX_CLIENT_CONN: 2000
   microservice:
     image: ${DOCKER_IMAGE_NAME}
     tag: ${DOCKER_IMAGE_TAG}
     ports:
       - 8080:8080
+    links:
+      - pgbouncer
 
 computeClassification:
   dataType:
@@ -122,7 +136,8 @@ config:
     NODE_OPTIONS: "--no-deprecation"
     LOG_LEVEL: info
     PORT: "8080"
-    CONCURRENT_WORKERS: "5"
+    CONCURRENT_WORKERS: "40"
+    PG_DATABASE_BOUNCER: pgbouncer
     # These secret environment variables need to be stashed with "atlas micros stash" for each environment:
     # GITHUB_CLIENT_SECRET: GitHub app's client secret
     # PRIVATE_KEY: contents of your (*.pem) generated in the GitHub app
@@ -296,14 +311,14 @@ environmentOverrides:
     scaling:
       instance: c5.2xlarge
       min: 5
-      max: 10
+      max: 10 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
       metrics: *CpuMemAlbScalingRules
     workers:
       - name: Worker
         scaling:
           instance: c5.2xlarge
-          min: 5
-          max: 10
+          min: 3
+          max: 6 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
           metrics: *CpuMemScalingRules
     alarms:
       overrides:
@@ -343,16 +358,17 @@ environmentOverrides:
       - name: database
         type: postgres-db
         attributes:
-          connectionLimit: 300
+          connectionLimit: 240 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
 
       - name: rds
         type: dedicated-rds
         attributes:
           parameters:
-            DBInstanceClass: db.m5.large
+            DBInstanceClass: db.r5.xlarge
             AllocatedStorage: 40 # GB
             MaxAllocatedStorage: 100
-            ConnectionAlarm: 250
+            ConnectionAlarm: 500 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 + N (cause two stacks can work
+                                 # together during the deploy)
 
       - type: globaledge
         name: proxy
