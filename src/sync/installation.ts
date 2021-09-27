@@ -55,12 +55,16 @@ const updateNumberOfReposSynced = async (
 		);
 	});
 
-	await subscription.update({
-		repoSyncState: {
-			...subscription.repoSyncState,
-			numberOfSyncedRepos: syncedRepos.length
-		}
-	});
+	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
+		await subscription.updateNumberOfSyncedRepos(syncedRepos.length);
+	} else {
+		await subscription.update({
+			repoSyncState: {
+				...subscription.repoSyncState,
+				numberOfSyncedRepos: syncedRepos.length
+			}
+		});
+	}
 };
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
@@ -128,23 +132,31 @@ const updateJobStatus = async (
 
 	logger.info({ job, task, status }, "Updating job status");
 
-	await subscription.updateSyncState({
-		repos: {
-			[repositoryId]: {
-				[getStatusKey(task)]: status
-			}
-		}
-	});
-
-	if (edges?.length) {
-		// there's more data to get
+	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
+		await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status)
+	} else {
 		await subscription.updateSyncState({
 			repos: {
 				[repositoryId]: {
-					[getCursorKey(task)]: edges[edges.length - 1].cursor
+					[getStatusKey(task)]: status
 				}
 			}
 		});
+	}
+
+	if (edges?.length) {
+		// there's more data to get
+		if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
+			await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor)
+		} else {
+			await subscription.updateSyncState({
+				repos: {
+					[repositoryId]: {
+						[getCursorKey(task)]: edges[edges.length - 1].cursor
+					}
+				}
+			});
+		}
 
 		queues.installation.add(job.data);
 		// no more data (last page was processed of this job type)
@@ -179,6 +191,28 @@ const isBlocked = async (installationId: number): Promise<boolean> => {
 		return false;
 	}
 }
+
+// Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources
+// - GraphqlError: https://github.com/octokit/graphql.js/tree/master#errors
+// - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
+export const handleNotFoundErrors = (
+	err: any,
+	job: any,
+	nextTask: Task
+): boolean | undefined => {
+	const isNotFoundErrorType =
+		err?.errors && err.errors?.filter((error) => error.type === "NOT_FOUND");
+
+	const isNotFoundError = isNotFoundErrorType?.length > 0 || err?.status === 404;
+
+	isNotFoundError &&
+		logger.info(
+			{ job, task: nextTask },
+			"Repository deleted after discovery, skipping initial sync"
+		);
+
+	return isNotFoundError;
+};
 
 // TODO: type queues
 export const processInstallation =
@@ -352,22 +386,11 @@ export const processInstallation =
 					queues.installation.add(job.data, { delay: 60000 });
 					return;
 				}
-				// Checks if parsed error type is NOT_FOUND: https://github.com/octokit/graphql.js/tree/master#errors
-				const isNotFoundError =
-					err.errors &&
-					err.errors.filter((error) => error.type === "NOT_FOUND").length;
 
-				if (isNotFoundError) {
-					logger.info({ job, task: nextTask }, "Repository deleted after discovery, skipping initial sync");
-
+				// Continue sync when a 404/NOT_FOUND is returned
+				if (handleNotFoundErrors(err, job, nextTask)) {
 					const edgesLeft = []; // No edges left to process since the repository doesn't exist
-					await updateJobStatus(
-						queues,
-						job,
-						edgesLeft,
-						task,
-						repositoryId
-					);
+					await updateJobStatus(queues, job, edgesLeft, task, repositoryId);
 					return;
 				}
 
