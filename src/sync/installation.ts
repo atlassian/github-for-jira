@@ -80,7 +80,7 @@ const getNextTask = async (subscription: SubscriptionClass): Promise<Task> => {
 
 	for (const [repositoryId, repoData] of sortedRepos(repos)) {
 		const task = taskTypes.find(
-			(taskType) => repoData[getStatusKey(taskType)] === "pending"
+			(taskType) => repoData[getStatusKey(taskType)] === undefined || repoData[getStatusKey(taskType)] === "pending"
 		);
 		if (!task) continue;
 		const { repository, [getCursorKey(task)]: cursor } = repoData;
@@ -407,7 +407,7 @@ export const processInstallation =
 					logger.warn({ job, task: nextTask, err }, "Task failed, continuing with next task");
 
 					// marking the current task as failed
-					await subscription.updateRepoSyncStateItem(nextTask.repositoryId, nextTask.task, "failed");
+					await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
 					await subscription.update({ syncWarning: "Some commits, branches, and pull requests couldn't be loaded from GitHub." });
 
 					statsd.increment(metricTaskStatus.failed);
