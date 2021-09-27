@@ -9,7 +9,7 @@ import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
 import { Application, GitHubAPI } from "probot";
-import { metricHttpRequest, metricSyncStatus } from "../config/metric-names";
+import { metricHttpRequest, metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 import Queue from "bull";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
@@ -80,7 +80,7 @@ const getNextTask = async (subscription: SubscriptionClass): Promise<Task> => {
 
 	for (const [repositoryId, repoData] of sortedRepos(repos)) {
 		const task = taskTypes.find(
-			(taskType) => repoData[getStatusKey(taskType)] !== "complete"
+			(taskType) => repoData[getStatusKey(taskType)] === "pending"
 		);
 		if (!task) continue;
 		const { repository, [getCursorKey(task)]: cursor } = repoData;
@@ -353,6 +353,7 @@ export const processInstallation =
 					task,
 					repositoryId
 				);
+
 			} catch (err) {
 				const rateLimit = Number(err?.headers?.["x-ratelimit-reset"]);
 				const delay = Math.max(Date.now() - rateLimit * 1000, 0);
@@ -401,15 +402,30 @@ export const processInstallation =
 					return;
 				}
 
-				await subscription.update({ syncStatus: "FAILED" });
+				if (await booleanFlag(BooleanFlags.CONTINUE_SYNC_ON_ERROR, false, jiraHost)) {
 
-				logger.warn({ job, task: nextTask, err }, "Sync failed");
+					logger.warn({ job, task: nextTask, err }, "Task failed, continuing with next task");
 
-				job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
-				job.sentry.captureException(err);
+					// marking the current task as failed
+					await subscription.updateRepoSyncStateItem(nextTask.repositoryId, nextTask.task, "failed");
+					await subscription.update({ syncWarning: "Some commits, branches, and pull requests couldn't be loaded from GitHub." });
 
-				statsd.increment(metricSyncStatus.failed);
+					statsd.increment(metricTaskStatus.failed);
 
-				throw err;
+					// queueing the job again to pick up the next task
+					queues.installation.add(job.data);
+				} else {
+
+					await subscription.update({ syncStatus: "FAILED" });
+
+					logger.warn({ job, task: nextTask, err }, "Sync failed");
+
+					job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
+					job.sentry.captureException(err);
+
+					statsd.increment(metricSyncStatus.failed);
+
+					throw err;
+				}
 			}
 		};
