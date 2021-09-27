@@ -4,6 +4,7 @@ import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 import { CustomContext } from "./middleware";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default async (
 	context: CustomContext,
@@ -92,13 +93,19 @@ export default async (
 		{ pullRequestNumber: pull_request.number, jiraPayload },
 		`Sending pull request update to Jira ${jiraClient.baseURL}`
 	);
+
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
 
-	webhookReceived && calculateProcessingTimeInSeconds(
-		webhookReceived,
-		name,
-		log,
-		jiraResponse?.status
-	);
+	if (
+		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
+		webhookReceived
+	) {
+		calculateProcessingTimeInSeconds(
+			webhookReceived,
+			name,
+			log,
+			jiraResponse?.status
+		);
+	}
 };

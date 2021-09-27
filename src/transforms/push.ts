@@ -9,6 +9,7 @@ import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
 import { calculateProcessingTimeInSeconds } from "../util/webhooks";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // TODO: define better types for this file
 
@@ -194,12 +195,17 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			);
 			const webhookName = payload.name || "none";
 
-			webhookReceived && calculateProcessingTimeInSeconds(
-				webhookReceived,
-				webhookName,
-				log,
-				jiraResponse?.status
-			);
+			if (
+				(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
+				webhookReceived
+			) {
+				calculateProcessingTimeInSeconds(
+					webhookReceived,
+					webhookName,
+					log,
+					jiraResponse?.status
+				);
+			}
 		}
 	} catch (error) {
 		log.error(error, "Failed to process push");

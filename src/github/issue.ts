@@ -1,6 +1,7 @@
 import { CustomContext } from "./middleware";
 import JiraClient from "../models/jira-client";
 import { calculateProcessingTimeInSeconds } from "../util/webhooks";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default async (
 	context: CustomContext,
@@ -32,13 +33,19 @@ export default async (
 	});
 
 	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);
-	const jiraResponse = await context.github.issues.update(editedIssue);
+
+	const githubResponse = await context.github.issues.update(editedIssue);
 	const { webhookReceived, name, log } = context;
 
-	webhookReceived && calculateProcessingTimeInSeconds(
-		webhookReceived,
-		name,
-		log,
-		jiraResponse?.status
-	);
+	if (
+		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
+		webhookReceived
+	) {
+		calculateProcessingTimeInSeconds(
+			webhookReceived,
+			name,
+			log,
+			githubResponse?.status
+		);
+	}
 };

@@ -1,6 +1,7 @@
 import transformDeployment from "../transforms/deployment";
 import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 import { CustomContext } from "./middleware";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraPayload = await transformDeployment(context);
@@ -14,13 +15,19 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 	}
 
 	context.log(`Sending deployment info to Jira: ${jiraClient.baseURL}`);
+
 	const jiraResponse = await jiraClient.deployment.submit(jiraPayload);
 	const { webhookReceived, name, log } = context;
 
-	webhookReceived && calculateProcessingTimeInSeconds(
-		webhookReceived,
-		name,
-		log,
-		jiraResponse?.status
-	);
+	if (
+		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
+		webhookReceived
+	) {
+		calculateProcessingTimeInSeconds(
+			webhookReceived,
+			name,
+			log,
+			jiraResponse?.status
+		);
+	}
 };

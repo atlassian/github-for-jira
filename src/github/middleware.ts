@@ -63,7 +63,7 @@ const isStateChangeOrDeploymentAction = (action) =>
 export class CustomContext extends Context {
 	sentry: Sentry.Hub;
 	timedout: number;
-	webhookReceived?: Date;
+	webhookReceived?: number;
 }
 
 // TODO: fix typings
@@ -79,13 +79,15 @@ export default (
 			webhookEvent = `${webhookEvent}.${context.payload.action}`;
 		}
 
+		const webhookReceived = context.webhookReceived || undefined
+
 		context.sentry.setExtra("GitHub Payload", {
 			event: webhookEvent,
 			action: context.payload?.action,
 			id: context.id,
 			repo: context.payload?.repository ? context.repo() : undefined,
 			payload: context.payload,
-			webhookReceived: context.webhookReceived
+			webhookReceived,
 		});
 
 		const repoName = context.payload?.repository?.name || "none";
@@ -99,7 +101,7 @@ export default (
 			gitHubInstallationId,
 			event: webhookEvent,
 			payload: context.payload,
-			webhookReceived: context.webhookReceived
+			webhookReceived
 		};
 
 		// For all micros envs log the paylaod. Omit from local to reduce noise

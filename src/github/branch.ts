@@ -3,6 +3,7 @@ import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty } from "../jira/util/isEmpty";
 import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 import { CustomContext } from "./middleware";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export const createBranch = async (
 	context: CustomContext,
@@ -25,12 +26,17 @@ export const createBranch = async (
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
 
-	webhookReceived && calculateProcessingTimeInSeconds(
-		webhookReceived,
-		name,
-		log,
-		jiraResponse?.status
-	);
+	if (
+		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
+		webhookReceived
+	) {
+		calculateProcessingTimeInSeconds(
+			webhookReceived,
+			name,
+			log,
+			jiraResponse?.status
+		);
+	}
 };
 
 export const deleteBranch = async (context, jiraClient): Promise<void> => {
@@ -54,10 +60,15 @@ export const deleteBranch = async (context, jiraClient): Promise<void> => {
 	);
 	const { webhookReceived, name, log } = context;
 
-	webhookReceived && calculateProcessingTimeInSeconds(
-		webhookReceived,
-		name,
-		log,
-		jiraResponse?.status
-	);
+	if (
+		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
+		webhookReceived
+	) {
+		calculateProcessingTimeInSeconds(
+			webhookReceived,
+			name,
+			log,
+			jiraResponse?.status
+		);
+	}
 };

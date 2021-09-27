@@ -1,6 +1,7 @@
 import JiraClient from "../models/jira-client";
 import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 import { CustomContext } from "./middleware";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default async (
 	context: CustomContext,
@@ -8,8 +9,8 @@ export default async (
 	util
 ): Promise<void> => {
 	const { comment } = context.payload;
-
 	let linkifiedBody;
+
 	try {
 		linkifiedBody = await util.unfurl(comment.body);
 		if (!linkifiedBody) {
@@ -32,13 +33,21 @@ export default async (
 	});
 
 	context.log(`Updating comment in GitHub with ID ${comment.id}`);
-	const githubResponse = await context.github.issues.updateComment(editedComment);
+
+	const githubResponse = await context.github.issues.updateComment(
+		editedComment
+	);
 	const { webhookReceived, name, log } = context;
 
-	webhookReceived && calculateProcessingTimeInSeconds(
-		webhookReceived,
-		name,
-		log,
-		githubResponse?.status
-	);
+	if (
+		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
+		webhookReceived
+	) {
+		calculateProcessingTimeInSeconds(
+			webhookReceived,
+			name,
+			log,
+			githubResponse?.status
+		);
+	}
 };

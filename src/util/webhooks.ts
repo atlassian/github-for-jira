@@ -1,32 +1,44 @@
 import statsd from "../config/statsd";
 import { metricWebhooks } from "../config/metric-names";
 
-export const getCurrentTime = () => new Date();
+export const getCurrentTime = () => Date.now();
 
 export const calculateProcessingTimeInSeconds = (
-	webhookReceivedTime: Date,
+	webhookReceivedTime: number,
 	webhookName: string,
 	contextLogger: any,
 	status?: number
-): number => {
-	const timeToProcessWebhookEvent =
-		getCurrentTime().getTime() - webhookReceivedTime.getTime();
+): number | undefined => {
+	const currentTime = getCurrentTime();
 
-	contextLogger.info(
-		{ webhookName },
-		`Webhook processed in ${timeToProcessWebhookEvent}`
-	);
+	// only send logs if time of webhookReceived occurred before the currentTime
+	// and if webhookReceivedTime is not null/undefined
+	if (webhookReceivedTime < currentTime) {
+		const timeToProcessWebhookEvent = getCurrentTime() - webhookReceivedTime;
 
-	const tags = {
-		name: webhookName,
-		status: status?.toString() || "none",
-	};
+		contextLogger.info(
+			"timeToProcessWebhookEvent: ",
+			timeToProcessWebhookEvent
+		);
 
-	statsd.histogram(
-		metricWebhooks.webhookEvent,
-		timeToProcessWebhookEvent,
-		tags
-	);
+		contextLogger.info(
+			{ webhookName },
+			`Webhook processed in ${timeToProcessWebhookEvent} milliseconds`
+		);
 
-	return timeToProcessWebhookEvent;
+		const tags = {
+			name: webhookName,
+			status: status?.toString() || "none",
+		};
+
+		statsd.histogram(
+			metricWebhooks.webhookEvent,
+			timeToProcessWebhookEvent,
+			tags
+		);
+
+		return timeToProcessWebhookEvent;
+	} else {
+		return undefined;
+	}
 };
