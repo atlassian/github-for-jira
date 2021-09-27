@@ -54,7 +54,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 	}
 
 	// if the repository is empty, commitsData.repository.ref is null
-	const edges = commitsData.repository.ref?.target?.history?.edges;
+	const edges = commitsData.repository?.ref?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
 
 	return {
