@@ -178,30 +178,24 @@ const isBlocked = async (installationId: number): Promise<boolean> => {
 	}
 }
 
-// Checks if parsed error type is NOT_FOUND which come from 2 different sources
+// Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources
 // - GraphqlError: https://github.com/octokit/graphql.js/tree/master#errors
 // - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
-export const handleNotFoundErrors = async (handleNotFoundPayload): Promise<boolean> | undefined => {
-	const { err, queues, job, task, repositoryId, nextTask } =
-		handleNotFoundPayload;
+export const handleNotFoundErrors = (
+	err: any,
+	job: any,
+	nextTask: Task
+): boolean | undefined => {
+	const isNotFoundErrorType =
+		err?.errors && err.errors?.filter((error) => error.type === "NOT_FOUND");
 
-	const isNotFoundError =
-		(err.errors &&
-			err.errors?.filter((error) => error.type === "NOT_FOUND").length) ||
-		err.status === 404;
+	const isNotFoundError = isNotFoundErrorType?.length > 0 || err?.status === 404;
 
-	if (isNotFoundError) {
+	isNotFoundError &&
 		logger.info(
 			{ job, task: nextTask },
 			"Repository deleted after discovery, skipping initial sync"
 		);
-
-		const edgesLeft = []; // No edges left to process since the repository doesn't exist
-
-		await updateJobStatus(queues, job, edgesLeft, task, repositoryId);
-
-		logger.info("updated job status");
-	}
 
 	return isNotFoundError;
 };
@@ -379,16 +373,12 @@ export const processInstallation =
 					return;
 				}
 
-				const handleNotFoundPayload = {
-					err,
-					queues,
-					job,
-					task,
-					repositoryId,
-					nextTask
+				// Continue sync when a 404/NOT_FOUND is returned
+				if (handleNotFoundErrors(err, job, nextTask)) {
+					const edgesLeft = []; // No edges left to process since the repository doesn't exist
+					await updateJobStatus(queues, job, edgesLeft, task, repositoryId);
+					return;
 				}
-
-				if (handleNotFoundErrors(handleNotFoundPayload)) return;
 
 				await subscription.update({ syncStatus: "FAILED" });
 

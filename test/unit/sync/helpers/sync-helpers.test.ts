@@ -1,4 +1,12 @@
-import { notFoundErrorOctokitRequest } from '../../../mocks/errorResponses';
+import {
+	mockNotFoundErrorOctokitRequest,
+	mockNotFoundErrorOctokitGraphql,
+	mockOtherOctokitRequestErrors,
+	mockOtherOctokitGraphqlErrors,
+	mockOtherError,
+	mockJob,
+	mockNextTask,
+} from "../../../mocks/errorResponses";
 /* eslint-disable @typescript-eslint/no-var-requires */
 import {
 	sortedRepos,
@@ -14,21 +22,68 @@ describe("Sync helpers suite", () => {
 	});
 
 	describe("handleNotFoundErrors", () => {
-		it("should continue sync if NOT FOUND error is sent in response from octokit/request", () => {
-			const mockHandleNotFoundPayload = {
-				err: notFoundErrorOctokitRequest
-				// err,
-				// queues,
-				// job,
-				// task,
-				// repositoryId,
-				// nextTask
-			}
-			// expect(sortedRepos(repoSyncState)).toEqual(sortedReposFunc);
+		it("should continue sync if 404 status is sent in response from octokit/request", (): void => {
+			// returns true if status is 404 so sync will continue
+			expect(
+				handleNotFoundErrors(
+					mockNotFoundErrorOctokitRequest,
+					mockJob,
+					mockNextTask
+				)
+			).toBeTruthy();
 		});
 
-		// it("handleNotFoundErrors should not continue sync for any other error response type", () => {
-		// 	// expect(sortedRepos(repoSyncState)).toEqual(sortedReposFunc);
-		// });
+		it("should continue sync if NOT FOUND error is sent in response from octokit/graphql", (): void => {
+			// returns true if error object has type 'NOT_FOUND' so sync will continue
+			expect(
+				handleNotFoundErrors(
+					mockNotFoundErrorOctokitGraphql,
+					mockJob,
+					mockNextTask
+				)
+			).toBeTruthy();
+		});
+
+		it("handleNotFoundErrors should not continue sync for any other error response type", () => {
+			expect(
+				handleNotFoundErrors(
+					mockOtherOctokitRequestErrors,
+					mockJob,
+					mockNextTask
+				)
+			).toBeFalsy();
+
+			expect(
+				handleNotFoundErrors(
+					mockOtherOctokitGraphqlErrors,
+					mockJob,
+					mockNextTask
+				)
+			).toBeFalsy();
+
+			expect(
+				handleNotFoundErrors(
+					mockOtherError,
+					mockJob,
+					mockNextTask
+				)
+			).toBeFalsy();
+
+			expect(
+				handleNotFoundErrors(
+					null,
+					mockJob,
+					mockNextTask
+				)
+			).toBeFalsy();
+
+			expect(
+				handleNotFoundErrors(
+					"",
+					mockJob,
+					mockNextTask
+				)
+			).toBeFalsy();
+		});
 	});
 });
