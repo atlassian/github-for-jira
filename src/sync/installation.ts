@@ -178,6 +178,27 @@ const isBlocked = async (installationId: number): Promise<boolean> => {
 	}
 }
 
+/**
+ * Determines if an an error returned by the GitHub API means that we should retry it
+ * with a smaller request (i.e. with fewer pages).
+ * @param err the error thrown by Octokit.
+ */
+export const isRetryableWithSmallerRequest = (err): boolean => {
+	if (err.errors) {
+
+		const retryableErrors = err.errors.filter(
+			(error) => {
+				return "MAX_NODE_LIMIT_EXCEEDED" == error.type
+					|| error.message?.startsWith("Something went wrong while executing your query")
+			}
+		);
+
+		return retryableErrors.length;
+	} else {
+		return false;
+	}
+};
+
 // TODO: type queues
 export const processInstallation =
 	(app: Application, queues) =>
@@ -240,38 +261,37 @@ export const processInstallation =
 
 			const processor = tasks[task];
 
-			const handleGitHubError = (err) => {
-				if (err.errors) {
-					const ignoredErrorTypes = ["MAX_NODE_LIMIT_EXCEEDED"];
-					const notIgnoredError = err.errors.filter(
-						(error) => !ignoredErrorTypes.includes(error.type)
-					).length;
-
-					if (notIgnoredError) {
-						throw err;
-					}
-				} else {
-					throw err;
-				}
-			};
-
 			const execute = async () => {
 				if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
-					try {
-						return await processor(github, repository, cursor, 20);
-					} catch (err) {
-						logger.error({ err, job, github, repository, cursor, task }, "Error Executing Task");
-						handleGitHubError(err);
-					}
+
+					// just try with one page size
+					return await processor(github, repository, cursor, 20);
+
 				} else {
+
 					for (const perPage of [20, 10, 5, 1]) {
+						// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 						try {
 							return await processor(github, repository, cursor, perPage);
 						} catch (err) {
-							logger.error({ err, job, github, repository, cursor, task }, "Error Executing Task");
-							handleGitHubError(err);
+							logger.error({
+								err,
+								job,
+								github,
+								repository,
+								cursor,
+								task
+							}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
+							if (isRetryableWithSmallerRequest(err)) {
+								// error is retryable, retrying with next smaller page size
+								continue;
+							} else {
+								// error is not retryable, re-throwing it
+								throw err;
+							}
 						}
 					}
+
 				}
 
 				throw new Error(`Error processing GraphQL query: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
