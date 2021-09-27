@@ -414,7 +414,8 @@ export const processInstallation =
 
 				await subscription.update({ syncStatus: "FAILED" });
 
-				logger.warn({ job, task: nextTask, err }, "Sync failed");
+				const host = subscription.jiraHost || "none";
+				logger.warn({ job, task: nextTask, err, jiraHost: host }, "Sync failed");
 
 				job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
 				job.sentry.captureException(err);
