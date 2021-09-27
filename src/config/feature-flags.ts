@@ -20,7 +20,8 @@ export enum BooleanFlags {
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
 	SIMPLER_PROCESSOR = "simpler-processor",
-	CUSTOM_QUERIES_FOR_REPO_SYNC_STATE = "use-custom-queries-for-repo-sync-state"
+	CUSTOM_QUERIES_FOR_REPO_SYNC_STATE = "use-custom-queries-for-repo-sync-state",
+	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files"
 }
 
 export enum StringFlags {
