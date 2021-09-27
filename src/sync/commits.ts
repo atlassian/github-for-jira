@@ -21,7 +21,7 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 	let commitsData: any = {};
 
 	const getCommits = async (includeChangedFiles: boolean) => {
-		await github.graphql(getCommitsQuery(includeChangedFiles), {
+		return github.graphql(getCommitsQuery(includeChangedFiles), {
 			owner: repository.owner.login,
 			repo: repository.name,
 			per_page: perPage,
