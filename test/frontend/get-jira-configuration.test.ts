@@ -75,7 +75,11 @@ describe("Jira Configuration Suite", () => {
 		query: { xdm_e: "https://somejirasite.atlassian.net" },
 		session: { jiraHost: subscriptions[0].jiraHost },
 		csrfToken: jest.fn().mockReturnValue({}),
-		log: jest.fn().mockReturnValue({})
+		log: {
+			info: jest.fn(),
+			warn: jest.fn(),
+			error: jest.fn()
+		}
 	});
 
 	const mockResponse = (): any => ({
@@ -91,8 +95,9 @@ describe("Jira Configuration Suite", () => {
 		send: jest.fn().mockReturnValue({})
 	});
 
-	it("should return success message after page is rendered", async () =>
-		await expect(
-			getJiraConfiguration(mockRequest(), mockResponse(), jest.fn())
-		).toResolve());
+	it("should return success message after page is rendered", async () => {
+		const response = mockResponse();
+		await getJiraConfiguration(mockRequest(), response, jest.fn());
+		expect(response.render.mock.calls[0][1].connections[0].totalNumberOfRepos).toBe(1);
+	});
 });
