@@ -19,7 +19,8 @@ export enum BooleanFlags {
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
-	SIMPLER_PROCESSOR = "simpler-processor"
+	SIMPLER_PROCESSOR = "simpler-processor",
+	CUSTOM_QUERIES_FOR_REPO_SYNC_STATE = "use-custom-queries-for-repo-sync-state"
 }
 
 export enum StringFlags {
