@@ -59,6 +59,7 @@ Your new GitHub app will need the following repository permissions & events:
 + Pull request review
 + Push
 + Workflow run
++ Repository
 
 ### Setting up your `.env` file
 
