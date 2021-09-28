@@ -2,18 +2,14 @@ import { createJobData, enqueuePush, processPush } from "../transforms/push";
 import issueKeyParser from "jira-issue-key-parser";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { getCurrentTime } from '../util/webhooks';
 import _ from "lodash";
 
 export default async (context: Context, jiraClient): Promise<void> => {
-	const webhookReceived = getCurrentTime();
-
 	// Copy the shape of the context object for processing
 	// but filter out any commits that don't have issue keys
 	// so we don't have to process them.
 	const payload = {
 		webhookId: context.id,
-		webhookReceived,
 		repository: context.payload?.repository,
 		// TODO: use reduce instead
 		commits: context.payload?.commits?.map((commit) => {
@@ -36,7 +32,7 @@ export default async (context: Context, jiraClient): Promise<void> => {
 	}
 
 	// If there's less than 100 commits (the max number of commits the github API returns per call), just process it immediately
-	if(payload.commits?.length < 100 && await booleanFlag(BooleanFlags.PROCESS_PUSHES_IMMEDIATELY, true)) {
+	if(payload.commits?.length < 100 && await booleanFlag(BooleanFlags.PROCESS_PUSHES_IMMEDIATELY, true, jiraClient.baseURL)) {
 		await processPush(context.github, createJobData(payload, jiraClient.baseURL));
 		return;
 	}

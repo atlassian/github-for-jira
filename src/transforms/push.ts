@@ -7,7 +7,6 @@ import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
-import { calculateProcessingTimeInSeconds } from "../util/webhooks";
 import { getSpecificGithubCommits, GithubCommit } from "../services/github/commit";
 import { JiraCommit } from "../interfaces/jira";
 import _ from "lodash";
@@ -25,7 +24,7 @@ export function createJobData(payload, jiraHost: string) {
 		name,
 		full_name,
 		html_url,
-		owner,
+		owner
 	};
 
 	const shas: { id: string, issueKeys: string[] }[] = [];
@@ -41,33 +40,27 @@ export function createJobData(payload, jiraHost: string) {
 		// Creates an array of shas for the job processor to work on
 		shas.push({ id: commit.id, issueKeys });
 	}
-
 	return {
 		repository,
 		shas,
 		jiraHost,
 		installationId: payload.installation.id,
-		webhookId: payload.webhookId || "none",
-		webhookReceived: payload.webhookReceived || undefined,
+		webhookId: payload.webhookId || "none"
 	};
 }
 
-export async function enqueuePush(
-	payload: unknown,
-	jiraHost: string,
-	options?: JobOptions
-) {
+export async function enqueuePush(payload: unknown, jiraHost: string, options?: JobOptions) {
 	return queues.push.add(createJobData(payload, jiraHost), options);
 }
 
 export function processPushJob(app: Application) {
 	return async (job: Job): Promise<void> => {
-		let github;
+		let github
 		try {
 			github = await app.auth(job.data.installationId);
 		} catch (err) {
 			logger.error({ err, job }, "Could not authenticate");
-			return;
+			return
 		}
 		enhanceOctokit(github);
 		await processPush(github, job.data);
@@ -82,17 +75,14 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			repository: { owner, name: repoName },
 			shas,
 			installationId,
-			jiraHost,
+			jiraHost
 		} = payload;
 
 		const webhookId = payload.webhookId || "none";
-		const webhookReceived = payload.webhookReceived || undefined;
-
 		log = logger.child({
 			webhookId: webhookId,
 			repoName: repoName,
-			orgName: owner.name,
-			webhookReceived,
+			orgName: owner.name
 		});
 
 		log.info({ installationId }, "Processing push");
@@ -161,23 +151,14 @@ export const processPush = async (github: GitHubAPI, payload) => {
 				url: repository.html_url,
 				id: repository.id,
 				commits: chunk,
-				updateSequenceId: Date.now(),
+				updateSequenceId: Date.now()
 			};
 
-			const jiraResponse = await jiraClient.devinfo.repository.update(
-				jiraPayload
-			);
-			const webhookName = payload.name || "none";
-
-			webhookReceived && calculateProcessingTimeInSeconds(
-				webhookReceived,
-				webhookName,
-				log,
-				jiraResponse?.status
-			);
+			await jiraClient.devinfo.repository.update(jiraPayload);
 		}
+
 	} catch (error) {
 		log.error(error, "Failed to process push");
-		throw error;
+		throw error
 	}
 };

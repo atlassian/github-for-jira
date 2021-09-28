@@ -4,6 +4,7 @@ import { Repository } from "../models/subscription";
 import { getGithubCommits } from "../services/github/commit";
 import { getGithubDefaultBranch } from "../services/github/branches";
 
+
 // TODO: better typings
 export default async (github: GitHubAPI, repository: Repository, cursor?: string) => {
 	const refName = await getGithubDefaultBranch(github, {
@@ -16,7 +17,6 @@ export default async (github: GitHubAPI, repository: Repository, cursor?: string
 		repoName: repository.name,
 		branchName: refName,
 		cursor
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	});
 
 	// if the repository is empty, commitsData.repository.ref is null

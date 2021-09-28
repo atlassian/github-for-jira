@@ -219,6 +219,48 @@ export default class Subscription extends Sequelize.Model {
 		return this.save();
 	}
 
+	async updateNumberOfSyncedRepos(cnt: number): Promise<Subscription> {
+		if (!this.repoSyncState) {
+			this.repoSyncState = {};
+			this.changed("repoSyncState", true);
+			await this.save();
+		}
+
+		this.repoSyncState.numberOfSyncedRepos = cnt;
+		await this.sequelize.query(
+			`UPDATE "Subscriptions" SET "repoSyncState" = jsonb_set("repoSyncState", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id`,
+			{
+				replacements: {
+					cnt: cnt,
+					id: (this as any).id
+				}
+			}
+		);
+		return this;
+	}
+
+	async updateRepoSyncStateItem(repositoryId: string, key: keyof RepositoryData, value: string) {
+		this.repoSyncState = _.merge(this.repoSyncState, {
+			repos: {
+				[repositoryId]: {
+					[key]: value
+				}
+			}
+		});
+
+		await this.sequelize.query(
+			`UPDATE "Subscriptions" SET "repoSyncState" = jsonb_set("repoSyncState", :path, :value, true) WHERE id = :id`,
+			{
+				replacements: {
+					path: `{repos,${repositoryId},${key}}`,
+					value: JSON.stringify(value),
+					id: (this as any).id
+				}
+			}
+		);
+		return this;
+	}
+
 	async uninstall(): Promise<void> {
 		await this.destroy();
 	}

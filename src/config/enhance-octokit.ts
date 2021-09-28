@@ -1,9 +1,9 @@
 import statsd from "./statsd";
+import { extractPath } from "../jira/client/axios";
 import { GitHubAPI } from "probot";
 import { metricHttpRequest } from "./metric-names";
 import { getLogger } from "./logger";
 import { Octokit } from "@octokit/rest";
-import { extractPath } from "../jira/client/axios";
 
 const logger = getLogger("octokit");
 
