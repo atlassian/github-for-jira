@@ -2,7 +2,7 @@
 
 ## About
 
-Connect your Github code with your project management in Jira. A separate Jira subscription is required. With two of your most important tools connected, you'll spend less time managing projects and more time working on them. This integration is an open source project, built and maintained by [Atlassian](https://atlassian.com).
+Connect your GitHub code with your project management in Jira. A separate Jira subscription is required. With two of your most important tools connected, you'll spend less time managing projects and more time working on them. This integration is an open source project, built and maintained by [Atlassian](https://atlassian.com).
 
 ## Table of Contents
 - [Installation and setup](#installation-and-setup)
@@ -28,13 +28,13 @@ Connect your Github code with your project management in Jira. A separate Jira s
 This app officially supports GitHub.com and Jira Cloud. Support for GitHub Enterprise and/or Jira server may be considered in the future.
 
 ### Installation from Atlassian
-1. Sign into your Jira Cloud account
-2. Open the left sidebar by clicking on **Personal Settings**, if the left side bar is not already open. From the left sidebar in Jira, select **Jira Settings** -> **Apps** -> **Find new Apps**. (If you're using an older version of Jira, you won't have a left sidebar. Instead, click the **Gear Icon** in the top-right corner and select **Settings**. From there, select **Manage add-ons** from the left sidebar.)
-3. Search for **GitHub for Jira** and Click **Install**
-![image](https://user-images.githubusercontent.com/13207348/46588299-08550800-ca68-11e8-8ed4-290533320ef4.png)
+1. Sign in to your Jira Cloud account.
+2. From the top navigation bar in Jira, select **Apps** -> **Find new Apps**. You can also click the **Gear Icon** in the top-right corner and select **Apps**. 
+3. Search for **GitHub for Jira** and Click **Get app**
+![image](./docs/images/install-app-atlassian.png)
 7. Click the **Get Started** button to connect your GitHub account.
 
-Next you will need to connect your GitHub organization to Jira, see the following steps.
+Next you will need to [connect your GitHub organization to Jira](#connecting-your-github-organization-to-jira).
 
 ### Installation from GitHub Marketplace
 1. Go to https://github.com/marketplace/jira-software-github
@@ -46,15 +46,15 @@ Next you will need to connect your GitHub organization to Jira, see the followin
 6. Once the add-on is installed, click the **Get Started** button.
 
 ### Connecting your GitHub organization to Jira
-As part of the installation flow you should be directed to install the Jira app on GitHub to your organization. You can also manage existing connections or add additional organizations any time within the Manage Add-ons section of your Jira settings:
-![image](https://user-images.githubusercontent.com/13207348/46588391-633b2f00-ca69-11e8-9c50-4249054b0cfa.png)
+As part of the installation flow, you should be directed to configure your GitHub organizations in the Jira app. In your Jira instance, in the `Manage Apps` section, click on `Get Started` under GitHub for Jira.  This will bring you to the app's configuration screen.  Click `Connect GitHub organization` and follow the steps to install the app on GitHub and allow it permission to view your repos. You can also manage existing connections or add additional organizations any time on this same screen.
+![image](./docs/images/get-started.png)
 
 
 #### Selecting GitHub repositories
-If you originally gave the app access to "All repositories" and you've created a new repository on GitHub after installing the GitHub integration for Jira, your new repository will automatically work with the integration. If you installed the app on a subset of repositories, the app will need to manually edit your repository selection by:
-1. Sign into your Jira Cloud account
-2. From the left sidebar in Jira, select **Jira Settings** -> **Add-ons** -> **Manage Add-ons** -> **GitHub** -> **Configure**
-3. Select Configure next to the relevant organization
+If you originally gave the app access to "All repositories", and you've created a new repository on GitHub after installing the GitHub integration for Jira, your new repository will automatically work with the integration. If you installed the app on a subset of repositories, you will need to manually edit your repository selection by:
+1. Sign in into your Jira Cloud account
+2. From the top navigation bar in Jira, select **Apps** -> **Manage your apps** -> **GitHub for Jira** -> **Get started**
+3. Select **Configure** next to the relevant GitHub organization and add the new repository you want the app to integrate with.
 
 ### Authorization
 By granting the app access, you are providing the following authorizations to your GitHub and Jira accounts:
@@ -68,14 +68,12 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 |---|---|
 |**Read** access to code & metadata | To sync development information to Jira|
 |**Read** and **write** access to issues and pull requests| To power Smart Commit actions and unfurl Jira URLs|
+|**Read** and **write** access to actions and deployments| To sync CI/CD (GitHub Actions) information to Jira|
 
 ## Using the integration
 
 ### Development information in Jira
-To access the development information in Jira...
-
-### Take action using Smart Commits
-Smart Commits are documented on the [Atlassian site](https://confluence.atlassian.com/jirasoftwarecloud/processing-issues-with-smart-commits-788960027.html) and allow you to comment on Jira issue in commit messages, branches, and pull requests. For example: `[JRA-123] fix typo` will be sent through to Jira and appear in the Development Information section of the Jira issue with the key `JRA-123`
+To start seeing your development information from GitHub in Jira, you'll need to start using Smart Commits. Smart Commits are documented on the [Atlassian site](https://confluence.atlassian.com/jirasoftwarecloud/processing-issues-with-smart-commits-788960027.html) but you'll have to simply make sure a Jira issue is a part of the commit message. For example: `[JRA-123] fix typo` will be sent through to Jira and appear in the Development Information section of the Jira issue with the key `JRA-123`. Any branch, commit, pull request, build and deployment linked to this commit will now appear in Jira. 
 
 > example
 ![image](https://user-images.githubusercontent.com/13207348/46588447-61be3680-ca6a-11e8-9976-ba3d1d3c42bf.png)
@@ -88,7 +86,6 @@ If an issue body contains a valid Jira issue key on your instance, the integrati
 This makes it so Jira issues can be linked inside a comment without it interrupting the flow of the comment as a whole.
 
 ### Manage Jira Subscriptions
-**New**
 
 Admins of an installation can view and delete subscriptions to other Jira instances, without having to log in to the Jira instance itself:
 
