@@ -55,16 +55,10 @@ const updateNumberOfReposSynced = async (
 		);
 	});
 
-	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
-		await subscription.updateNumberOfSyncedRepos(syncedRepos.length);
-	} else {
-		await subscription.update({
-			repoSyncState: {
-				...subscription.repoSyncState,
-				numberOfSyncedRepos: syncedRepos.length
-			}
-		});
-	}
+	await subscription.updateSyncState({
+		...subscription.repoSyncState,
+		numberOfSyncedRepos: syncedRepos.length
+	});
 };
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
@@ -130,31 +124,23 @@ const updateJobStatus = async (
 
 	logger.info({ job, task, status }, "Updating job status");
 
-	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
-		await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status)
-	} else {
-		await subscription.updateSyncState({
-			repos: {
-				[repositoryId]: {
-					[getStatusKey(task)]: status
-				}
+	await subscription.updateSyncState({
+		repos: {
+			[repositoryId]: {
+				[getStatusKey(task)]: status
 			}
-		});
-	}
+		}
+	});
 
 	if (edges?.length) {
 		// there's more data to get
-		if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
-			await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor)
-		} else {
-			await subscription.updateSyncState({
-				repos: {
-					[repositoryId]: {
-						[getCursorKey(task)]: edges[edges.length - 1].cursor
-					}
+		await subscription.updateSyncState({
+			repos: {
+				[repositoryId]: {
+					[getCursorKey(task)]: edges[edges.length - 1].cursor
 				}
-			});
-		}
+			}
+		});
 
 		queues.installation.add(job.data);
 		// no more data (last page was processed of this job type)
@@ -188,7 +174,7 @@ const isBlocked = async (installationId: number): Promise<boolean> => {
 		logger.error(e);
 		return false;
 	}
-}
+};
 
 /**
  * Determines if an an error returned by the GitHub API means that we should retry it
@@ -201,7 +187,7 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 		const retryableErrors = err.errors.filter(
 			(error) => {
 				return "MAX_NODE_LIMIT_EXCEEDED" == error.type
-					|| error.message?.startsWith("Something went wrong while executing your query")
+					|| error.message?.startsWith("Something went wrong while executing your query");
 			}
 		);
 
@@ -225,10 +211,10 @@ export const handleNotFoundErrors = (
 	const isNotFoundError = isNotFoundErrorType?.length > 0 || err?.status === 404;
 
 	isNotFoundError &&
-		logger.info(
-			{ job, task: nextTask },
-			"Repository deleted after discovery, skipping initial sync"
-		);
+	logger.info(
+		{ job, task: nextTask },
+		"Repository deleted after discovery, skipping initial sync"
+	);
 
 	return isNotFoundError;
 };

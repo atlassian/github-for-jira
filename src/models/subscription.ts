@@ -3,7 +3,6 @@ import { queues } from "../worker/main";
 import { Job } from "bull";
 import _ from "lodash";
 import logger from "../config/logger";
-import { SetOptions } from "sequelize/types/lib/model";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -56,7 +55,7 @@ export default class Subscription extends Sequelize.Model {
 	gitHubInstallationId: number;
 	jiraHost: string;
 	selectedRepositories?: number[];
-	repoSyncState?: RepoSyncState;
+	repoSyncState?: RepoSyncState = {};
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
 	jiraClientKey: string;
@@ -214,6 +213,7 @@ export default class Subscription extends Sequelize.Model {
 			this.repoSyncState = updatedState;
 			this.changed("repoSyncState", true);
 		} else {
+			this.repoSyncState = _.merge(this.repoSyncState, updatedState);
 			this.setRepoSyncState(updatedState, ["repoSyncState"]);
 		}
 		return this;
@@ -225,56 +225,15 @@ export default class Subscription extends Sequelize.Model {
 		return this;
 	}
 
-	private setRepoSyncState(obj: Partial<Record<keyof RepoSyncState, unknown>>, parentKeys: string[], options?: SetOptions): void {
+	private setRepoSyncState(obj: Partial<Record<keyof RepoSyncState, unknown>>, parentKeys: string[]): void {
 		Object.entries(obj).forEach(([key, value]) => {
+			const keys = parentKeys.concat([key]);
 			if (_.isPlainObject(value) && !_.isEmpty(value)) {
-				this.setRepoSyncState(value as Record<string, unknown>, parentKeys.concat([key]), options);
+				this.setRepoSyncState(value, keys);
 			} else {
-				this.set({ [parentKeys.join(".")]: value } as any, options);
+				this.set({ [keys.join(".")]: value } as any);
 			}
 		});
-	}
-
-	async updateNumberOfSyncedRepos(cnt: number): Promise<Subscription> {
-		if (!this.repoSyncState) {
-			this.repoSyncState = {};
-			this.changed("repoSyncState", true);
-			await this.save();
-		}
-
-		this.repoSyncState.numberOfSyncedRepos = cnt;
-		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "repoSyncState" = jsonb_set("repoSyncState", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id`,
-			{
-				replacements: {
-					cnt: cnt,
-					id: (this as any).id
-				}
-			}
-		);
-		return this;
-	}
-
-	async updateRepoSyncStateItem(repositoryId: string, key: keyof RepositoryData, value: string) {
-		this.repoSyncState = _.merge(this.repoSyncState, {
-			repos: {
-				[repositoryId]: {
-					[key]: value
-				}
-			}
-		});
-
-		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "repoSyncState" = jsonb_set("repoSyncState", :path, :value, true) WHERE id = :id`,
-			{
-				replacements: {
-					path: `{repos,${repositoryId},${key}}`,
-					value: JSON.stringify(value),
-					id: (this as any).id
-				}
-			}
-		);
-		return this;
 	}
 
 	async uninstall(): Promise<void> {
