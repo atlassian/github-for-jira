@@ -40,7 +40,6 @@ export const calculateProcessingTimeInSeconds = (
 			tags["gsd_histogram"] = histogramBuckets;
 
 			// send metrics with gsd_histogram so it will be treated as a histogram-type metric
-			// https://hello.atlassian.net/wiki/spaces/OBSERVABILITY/pages/797646144/Reference+-+Understanding+histogram-type+metrics#So%2C-how-do-I-get-started%3F
 			statsd.histogram(
 				metricWebhooks.webhookProcessingTimes,
 				timeToProcessWebhookEvent,

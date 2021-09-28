@@ -2,7 +2,7 @@ import { calculateProcessingTimeInSeconds } from "../../../src/util/webhooks";
 
 let dateNowSpy;
 
-const currentTime = 1632726221873;
+const currentTime = 2000;
 
 beforeAll(() => {
 	// Lock Time
@@ -16,13 +16,15 @@ afterAll(() => {
 
 describe("Webhooks suite", () => {
 	const mockInfoLog = jest.fn();
+	const mockErrorLog = jest.fn();
 	const mockContextLogger = {
 		info: mockInfoLog,
+		error: mockErrorLog,
 	};
 
 	describe("calculateProcessingTimeInSeconds", () => {
 		it("should calculate processing time for webhook events", () => {
-			const webhookReceived = 1632726220873;
+			const webhookReceived = 500;
 			const webhookName = "workflow_run";
 			const status = 202;
 			const result = currentTime - webhookReceived; // 1000ms
@@ -39,9 +41,9 @@ describe("Webhooks suite", () => {
 
 		describe("should return undefined", () => {
 			it("if webhookReceived time is later than the current time", () => {
-				const webhookReceived = 1632726222873;
+				const webhookReceived = 2500;
 				const webhookName = "workflow_run";
-				const status = 202;
+				const status = 400;
 
 				expect(
 					calculateProcessingTimeInSeconds(
@@ -56,7 +58,7 @@ describe("Webhooks suite", () => {
 			it("if webhookReceived is undefined", () => {
 				const webhookReceived = undefined;
 				const webhookName = "workflow_run";
-				const status = 202;
+				const status = null;
 
 				expect(
 					calculateProcessingTimeInSeconds(
@@ -71,7 +73,7 @@ describe("Webhooks suite", () => {
 			it("if webhookReceived is null", () => {
 				const webhookReceived = undefined;
 				const webhookName = "workflow_run";
-				const status = 202;
+				const status = undefined;
 
 				expect(
 					calculateProcessingTimeInSeconds(
