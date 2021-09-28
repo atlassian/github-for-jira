@@ -42,7 +42,7 @@ type TaskType = "pull" | "commit" | "branch";
 
 const taskTypes = Object.keys(tasks) as TaskType[];
 
-const completedTaskStatuses: TaskStatus[] = ["complete", "failed"];
+const completedTaskStatuses : TaskStatus[] = ["complete", "failed"];
 
 const updateNumberOfReposSynced = async (
 	repos: Repositories,
@@ -233,10 +233,10 @@ export const isNotFoundError = (
 	const isNotFoundError = isNotFoundErrorType?.length > 0 || err?.status === 404;
 
 	isNotFoundError &&
-	logger.info(
-		{ job, task: nextTask },
-		"Repository deleted after discovery, skipping initial sync"
-	);
+		logger.info(
+			{ job, task: nextTask },
+			"Repository deleted after discovery, skipping initial sync"
+		);
 
 	return isNotFoundError;
 };
@@ -425,7 +425,9 @@ export const processInstallation =
 
 				if (await booleanFlag(BooleanFlags.CONTINUE_SYNC_ON_ERROR, false, jiraHost)) {
 
-					logger.warn({ job, task: nextTask, err }, "Task failed, continuing with next task");
+					// TODO: add the jiraHost to the logger with logger.child()
+					const host = subscription.jiraHost || "none";
+					logger.warn({ job, task: nextTask, err, jiraHost: host }, "Task failed, continuing with next task");
 
 					// marking the current task as failed
 					await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
@@ -438,6 +440,7 @@ export const processInstallation =
 
 					await subscription.update({ syncStatus: "FAILED" });
 
+					// TODO: add the jiraHost to the logger with logger.child()
 					const host = subscription.jiraHost || "none";
 					logger.warn({ job, task: nextTask, err, jiraHost: host }, "Sync failed");
 
