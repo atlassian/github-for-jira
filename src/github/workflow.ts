@@ -1,26 +1,14 @@
 import transformWorkflow from "../transforms/workflow";
-import { CustomContext } from "./middleware";
-import { calculateProcessingTimeInSeconds } from "../util/webhooks";
+import { Context } from "probot/lib/context";
 
-export default async (context: CustomContext, jiraClient): Promise<void> => {
-	const jiraPayload = transformWorkflow(context);
+export default async (context: Context, jiraClient): Promise<void> => {
+	const jiraPayload = await transformWorkflow(context);
 
 	if (!jiraPayload) {
-		context.log(
-			{ noop: "no_jira_payload_workflow_run" },
-			"Halting further execution for workflow since jiraPayload is empty"
-		);
+		context.log({noop: "no_jira_payload_workflow_run"}, "Halting further execution for workflow since jiraPayload is empty");
 		return;
 	}
 
-	context.log(`Sending workflow event to Jira: ${jiraClient.baseURL}`);
-	const jiraResponse = await jiraClient.workflow.submit(jiraPayload);
-	const { webhookReceived, name, log } = context;
-
-	webhookReceived && calculateProcessingTimeInSeconds(
-		webhookReceived,
-		name,
-		log,
-		jiraResponse?.status
-	);
+	context.log(`Sending workflow event to Jira: ${jiraClient.baseURL}`)
+	await jiraClient.workflow.submit(jiraPayload);
 };

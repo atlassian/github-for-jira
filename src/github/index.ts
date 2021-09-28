@@ -16,9 +16,9 @@ export default (robot: Application) => {
 
 	// TODO: Need ability to remove these listeners, especially for testing...
 	robot.on("*", async (context) => {
-		const { name, payload, id } = context;
+		const { name, payload } = context;
 
-		context.log.info({ event: name, action: payload.action, webhookId: id }, "Event received");
+		context.log.info({ event: name, action: payload.action, webhookId: context.id }, "Event received");
 
 		const tags = [
 			"name: webhooks",
