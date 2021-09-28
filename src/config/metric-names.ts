@@ -41,6 +41,7 @@ export const metricSyncStatus = {
 export const metricWebhooks = {
 	webhookEvent: `${server}.webhooks.webhook-events`,
 	webhookProcessingTimes: `${server}.webhooks.processing-time.duration-ms`,
+	webhookLatency: `${server}.webhooks.processing-time.latency`,
 };
 
 export const pageRendered = {

@@ -41,7 +41,7 @@ export const calculateProcessingTimeInSeconds = (
 
 			// send metrics with gsd_histogram so it will be treated as a histogram-type metric
 			statsd.histogram(
-				metricWebhooks.webhookProcessingTimes,
+				metricWebhooks.webhookLatency,
 				timeToProcessWebhookEvent,
 				tags
 			);
