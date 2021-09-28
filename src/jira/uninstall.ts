@@ -14,7 +14,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 		await Promise.all(subscriptions.map(async (subscription) => subscription.uninstall()));
 	}
 
-	statsd.increment(metricHttpRequest().uninstall);
+	statsd.increment(metricHttpRequest.uninstall);
 
 	await installation.uninstall();
 

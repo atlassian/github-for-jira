@@ -18,7 +18,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 	req.log.info("Installed installation");
 
-	statsd.increment(metricHttpRequest().install);
+	statsd.increment(metricHttpRequest.install);
 
 	res.sendStatus(204);
 };

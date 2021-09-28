@@ -166,7 +166,7 @@ const updateJobStatus = async (
 		if (startTime) {
 			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
 			// startTime will be passed in when this sync job is queued from the discovery
-			statsd.histogram(metricHttpRequest().fullSync, timeDiff);
+			statsd.histogram(metricHttpRequest.fullSync, timeDiff);
 		}
 
 		logger.info({ job, task, startTime, endTime, timeDiff }, "Sync status is complete");

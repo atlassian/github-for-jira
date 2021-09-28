@@ -25,7 +25,7 @@ const subscriber = new Redis(getRedisInfo("subscriber"));
 const logger = getLogger("worker.main");
 
 function measureElapsedTime(job: Queue.Job, tags) {
-	statsd.histogram(metricHttpRequest().jobDuration, Number(job.finishedOn) - Number(job.processedOn), tags);
+	statsd.histogram(metricHttpRequest.jobDuration, Number(job.finishedOn) - Number(job.processedOn), tags);
 }
 
 const getQueueOptions = (timeout: number): QueueOptions => {

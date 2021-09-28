@@ -71,7 +71,7 @@ export default async function(
 			}));
 			asyncTags.push(`status:${status}`);
 		},
-		metricHttpRequest().syncPullRequest,
+		metricHttpRequest.syncPullRequest,
 		1,
 		asyncTags
 	)();
