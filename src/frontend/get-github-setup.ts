@@ -9,8 +9,7 @@ If the installation was done from Jira Marketplace, the app is already installed
 */
 export default (req: Request, res: Response, next: NextFunction): void => {
 	req.log.info("Received get github setup page request");
-	const { host: githubHost } = req;
-	const { jwt, jiraHost } = req.session;
+	const { host: githubHost, session: { jwt, jiraHost } } = req;
 	if (jiraHost && jwt) {
 		return res.redirect(getGitHubConfigurationUrl({ githubHost, jwt, jiraHost }));
 	}
