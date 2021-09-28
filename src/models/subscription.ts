@@ -39,7 +39,7 @@ export interface RepositoryData {
 	[key: string]: unknown;
 }
 
-export type TaskStatus = "pending" | "complete";
+export type TaskStatus = "pending" | "complete" | "failed";
 
 export interface Repository {
 	id: string;

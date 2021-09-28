@@ -21,7 +21,8 @@ export enum BooleanFlags {
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
 	SIMPLER_PROCESSOR = "simpler-processor",
 	CUSTOM_QUERIES_FOR_REPO_SYNC_STATE = "use-custom-queries-for-repo-sync-state",
-	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files"
+	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files",
+	CONTINUE_SYNC_ON_ERROR = "continue-sync-on-error"
 }
 
 export enum StringFlags {
