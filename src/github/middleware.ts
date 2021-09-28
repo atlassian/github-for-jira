@@ -72,14 +72,13 @@ export default (
 ) => {
 	return withSentry(async (context: CustomContext) => {
 		enhanceOctokit(context.github);
-		context.webhookReceived = getCurrentTime();
-
 		let webhookEvent = context.name;
 		if (context.payload.action) {
 			webhookEvent = `${webhookEvent}.${context.payload.action}`;
 		}
 
-		const webhookReceived = context.webhookReceived || undefined
+		const webhookReceived = getCurrentTime();
+		context.webhookReceived = webhookReceived;
 
 		context.sentry.setExtra("GitHub Payload", {
 			event: webhookEvent,
