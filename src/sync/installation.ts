@@ -214,7 +214,7 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 // Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources
 // - GraphqlError: https://github.com/octokit/graphql.js/tree/master#errors
 // - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
-export const handleNotFoundErrors = (
+export const isNotFoundError = (
 	err: any,
 	job: any,
 	nextTask: Task
@@ -376,6 +376,8 @@ export const processInstallation =
 					repositoryId
 				);
 
+				statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`]);
+
 			} catch (err) {
 				const rateLimit = Number(err?.headers?.["x-ratelimit-reset"]);
 				const delay = Math.max(Date.now() - rateLimit * 1000, 0);
@@ -407,7 +409,7 @@ export const processInstallation =
 				}
 
 				// Continue sync when a 404/NOT_FOUND is returned
-				if (handleNotFoundErrors(err, job, nextTask)) {
+				if (isNotFoundError(err, job, nextTask)) {
 					const edgesLeft = []; // No edges left to process since the repository doesn't exist
 					await updateJobStatus(queues, job, edgesLeft, task, repositoryId);
 					return;
@@ -419,9 +421,8 @@ export const processInstallation =
 
 					// marking the current task as failed
 					await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
-					await subscription.update({ syncWarning: "Some commits, branches, and pull requests couldn't be loaded from GitHub." });
 
-					statsd.increment(metricTaskStatus.failed);
+					statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
 
 					// queueing the job again to pick up the next task
 					queues.installation.add(job.data);
