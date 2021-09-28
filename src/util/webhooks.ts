@@ -1,4 +1,5 @@
 import statsd from "../config/statsd";
+import { metricWebhooks } from '../config/metric-names';
 
 export const getCurrentTime = () => Date.now();
 
@@ -28,7 +29,7 @@ export const calculateProcessingTimeInSeconds = (
 
 			// send metrics without gsd_histogram tag so we still have .count, .p99, .median etc
 			statsd.histogram(
-				"webhook-event-processing.duration-ms",
+				metricWebhooks.webhookProcessingTimes,
 				timeToProcessWebhookEvent,
 				tags
 			);
@@ -37,17 +38,18 @@ export const calculateProcessingTimeInSeconds = (
 				"1000_10000_30000_60000_120000_300000_600000_3000000";
 
 			tags["gsd_histogram"] = histogramBuckets;
-			
+
 			// send metrics with gsd_histogram so it will be treated as a histogram-type metric
 			// https://hello.atlassian.net/wiki/spaces/OBSERVABILITY/pages/797646144/Reference+-+Understanding+histogram-type+metrics#So%2C-how-do-I-get-started%3F
 			statsd.histogram(
-				"webhook-event-processing.duration-ms",
+				metricWebhooks.webhookProcessingTimes,
 				timeToProcessWebhookEvent,
 				tags
 			);
 
 			return timeToProcessWebhookEvent;
 		} else {
+			contextLogger?.error({ webhookReceivedTime }, "Failed to send timeToProcessWebhookEvent metric. webhookReceivedTime is not a number.");
 			return undefined;
 		}
 	} catch (err) {
