@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus } from "../models/subscription";
+import SubscriptionClass, {
+	Repositories,
+	Repository,
+	RepositoryData,
+	SyncStatus,
+	TaskStatus
+} from "../models/subscription";
 import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
@@ -36,6 +42,8 @@ type TaskType = "pull" | "commit" | "branch";
 
 const taskTypes = Object.keys(tasks) as TaskType[];
 
+const completedTaskStatuses: TaskStatus[] = ["complete", "failed"];
+
 const updateNumberOfReposSynced = async (
 	repos: Repositories,
 	subscription: SubscriptionClass
@@ -49,9 +57,9 @@ const updateNumberOfReposSynced = async (
 		// all 3 statuses need to be complete for a repo to be fully synced
 		const { pullStatus, branchStatus, commitStatus } = repos[id];
 		return (
-			pullStatus === "complete" &&
-			branchStatus === "complete" &&
-			commitStatus === "complete"
+			completedTaskStatuses.includes(pullStatus)
+			&& completedTaskStatuses.includes(branchStatus)
+			&& completedTaskStatuses.includes(commitStatus)
 		);
 	});
 
@@ -225,10 +233,10 @@ export const isNotFoundError = (
 	const isNotFoundError = isNotFoundErrorType?.length > 0 || err?.status === 404;
 
 	isNotFoundError &&
-		logger.info(
-			{ job, task: nextTask },
-			"Repository deleted after discovery, skipping initial sync"
-		);
+	logger.info(
+		{ job, task: nextTask },
+		"Repository deleted after discovery, skipping initial sync"
+	);
 
 	return isNotFoundError;
 };
