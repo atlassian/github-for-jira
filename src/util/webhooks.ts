@@ -18,11 +18,6 @@ export const calculateProcessingTimeInSeconds = (
 			const timeToProcessWebhookEvent = getCurrentTime() - webhookReceivedTime;
 
 			contextLogger.info(
-				"timeToProcessWebhookEvent: ",
-				timeToProcessWebhookEvent
-			);
-
-			contextLogger.info(
 				{ webhookName },
 				`Webhook processed in ${timeToProcessWebhookEvent} milliseconds`
 			);
