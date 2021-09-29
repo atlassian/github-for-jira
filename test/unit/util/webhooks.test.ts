@@ -1,4 +1,5 @@
 import { emitWebhookProcessingTimeMetrics } from "../../../src/util/webhooks";
+import statsd from "../../../src/config/statsd";
 
 let dateNowSpy;
 
@@ -27,7 +28,8 @@ describe("Webhooks suite", () => {
 			const webhookReceived = 500;
 			const webhookName = "workflow_run";
 			const status = 202;
-			const result = currentTime - webhookReceived; // 1000ms
+			const result = currentTime - webhookReceived;
+			const addStatsdSpy = jest.spyOn(statsd, "histogram");
 
 			expect(
 				emitWebhookProcessingTimeMetrics(
@@ -37,6 +39,28 @@ describe("Webhooks suite", () => {
 					status
 				)
 			).toEqual(result);
+
+			// one call to send webhookProcessingTimes, one call to send webhookLatency
+			expect(addStatsdSpy).toHaveBeenCalledTimes(2);
+			expect(addStatsdSpy).toHaveBeenCalledWith(
+				"app.server.webhooks.processing-time.duration-ms",
+				1500,
+				{
+					gsd_histogram: "1000_10000_30000_60000_120000_300000_600000_3000000",
+					name: "workflow_run",
+					status: "202",
+				}
+			);
+
+			expect(addStatsdSpy).toHaveBeenCalledWith(
+				"app.server.webhooks.processing-time.latency",
+				1500,
+				{
+					gsd_histogram: "1000_10000_30000_60000_120000_300000_600000_3000000",
+					name: "workflow_run",
+					status: "202",
+				}
+			);
 		});
 
 		describe("should return undefined", () => {
