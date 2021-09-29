@@ -128,7 +128,16 @@ alarms:
       Period: 120
       ComparisonOperator: GreaterThanThreshold
       Statistic: Average
-
+    TransactionLogsDiskUsageAlarm:
+      Namespace: AWS/RDS
+      MetricName: TransactionLogsDiskUsage
+      Description: "Master transaction logs disk usage is too high"
+      Threshold: 3.221225472E9
+      Priority: Low
+      EvaluationPeriods: 5
+      Period: 300
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Statistic: Average
 
 config:
   environmentVariables:
