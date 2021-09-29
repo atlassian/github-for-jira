@@ -1,5 +1,4 @@
 import statsd from "../config/statsd";
-import { metricWebhooks } from '../config/metric-names';
 
 export const getCurrentTime = () => Date.now();
 
@@ -29,7 +28,7 @@ export const calculateProcessingTimeInSeconds = (
 
 			// send metrics without gsd_histogram tag so we still have .count, .p99, .median etc
 			statsd.histogram(
-				metricWebhooks.webhookProcessingTimes,
+				"app.server.webhooks.processing-time.duration-ms",
 				timeToProcessWebhookEvent,
 				tags
 			);
@@ -41,7 +40,7 @@ export const calculateProcessingTimeInSeconds = (
 
 			// send metrics with gsd_histogram so it will be treated as a histogram-type metric
 			statsd.histogram(
-				metricWebhooks.webhookLatency,
+				"app.server..webhooks.processing-time.latency",
 				timeToProcessWebhookEvent,
 				tags
 			);
