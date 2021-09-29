@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus } from "../models/subscription";
+import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus, TaskStatus } from "../models/subscription";
 import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
@@ -9,7 +9,7 @@ import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
 import { Application, GitHubAPI } from "probot";
-import { metricHttpRequest, metricSyncStatus } from "../config/metric-names";
+import { metricHttpRequest, metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 import Queue from "bull";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
@@ -36,6 +36,11 @@ type TaskType = "pull" | "commit" | "branch";
 
 const taskTypes = Object.keys(tasks) as TaskType[];
 
+// TODO: why are we ignoring failed status as completed?
+const taskStatusCompleted:TaskStatus[] = ["complete", "failed"]
+const isTaskStatusCompleted = (...statuses: (TaskStatus | undefined)[]): boolean =>
+	statuses.every(status => !!status && taskStatusCompleted.includes(status));
+
 const updateNumberOfReposSynced = async (
 	repos: Repositories,
 	subscription: SubscriptionClass
@@ -48,11 +53,7 @@ const updateNumberOfReposSynced = async (
 	const syncedRepos = repoIds.filter((id: string) => {
 		// all 3 statuses need to be complete for a repo to be fully synced
 		const { pullStatus, branchStatus, commitStatus } = repos[id];
-		return (
-			pullStatus === "complete" &&
-			branchStatus === "complete" &&
-			commitStatus === "complete"
-		);
+		return isTaskStatusCompleted(pullStatus, branchStatus, commitStatus);
 	});
 
 	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
@@ -80,7 +81,7 @@ const getNextTask = async (subscription: SubscriptionClass): Promise<Task | unde
 
 	for (const [repositoryId, repoData] of sortedRepos(repos)) {
 		const task = taskTypes.find(
-			(taskType) => repoData[getStatusKey(taskType)] !== "complete"
+			(taskType) => repoData[getStatusKey(taskType)] === undefined || repoData[getStatusKey(taskType)] === "pending"
 		);
 		if (!task) continue;
 		const { repository, [getCursorKey(task)]: cursor } = repoData;
@@ -214,7 +215,7 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 // Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources
 // - GraphqlError: https://github.com/octokit/graphql.js/tree/master#errors
 // - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
-export const handleNotFoundErrors = (
+export const isNotFoundError = (
 	err: any,
 	job: any,
 	nextTask: Task
@@ -375,6 +376,9 @@ export const processInstallation =
 					task,
 					repositoryId
 				);
+
+				statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`]);
+
 			} catch (err) {
 				const rateLimit = Number(err?.headers?.["x-ratelimit-reset"]);
 				const delay = Math.max(Date.now() - rateLimit * 1000, 0);
@@ -406,22 +410,39 @@ export const processInstallation =
 				}
 
 				// Continue sync when a 404/NOT_FOUND is returned
-				if (handleNotFoundErrors(err, job, nextTask)) {
+				if (isNotFoundError(err, job, nextTask)) {
 					const edgesLeft = []; // No edges left to process since the repository doesn't exist
 					await updateJobStatus(queues, job, edgesLeft, task, repositoryId);
 					return;
 				}
 
-				await subscription.update({ syncStatus: "FAILED" });
+				if (await booleanFlag(BooleanFlags.CONTINUE_SYNC_ON_ERROR, false, jiraHost)) {
 
-				const host = subscription.jiraHost || "none";
-				logger.warn({ job, task: nextTask, err, jiraHost: host }, "Sync failed");
+					// TODO: add the jiraHost to the logger with logger.child()
+					const host = subscription.jiraHost || "none";
+					logger.warn({ job, task: nextTask, err, jiraHost: host }, "Task failed, continuing with next task");
 
-				job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
-				job.sentry.captureException(err);
+					// marking the current task as failed
+					await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
 
-				statsd.increment(metricSyncStatus.failed);
+					statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
 
-				throw err;
+					// queueing the job again to pick up the next task
+					queues.installation.add(job.data);
+				} else {
+
+					await subscription.update({ syncStatus: "FAILED" });
+
+					// TODO: add the jiraHost to the logger with logger.child()
+					const host = subscription.jiraHost || "none";
+					logger.warn({ job, task: nextTask, err, jiraHost: host }, "Sync failed");
+
+					job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
+					job.sentry.captureException(err);
+
+					statsd.increment(metricSyncStatus.failed);
+
+					throw err;
+				}
 			}
 		};

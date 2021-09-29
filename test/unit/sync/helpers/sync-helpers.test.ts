@@ -1,6 +1,9 @@
 import { mockJob, mockNextTask, mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "../../../mocks/errorResponses";
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { handleNotFoundErrors, sortedRepos } from "../../../../src/sync/installation";
+import {
+	sortedRepos,
+	isNotFoundError,
+} from "../../../../src/sync/installation";
 
 describe("Sync helpers suite", () => {
 	const repoSyncState = require("../../../fixtures/repo-sync-state.json");
@@ -14,7 +17,7 @@ describe("Sync helpers suite", () => {
 		it("should continue sync if 404 status is sent in response from octokit/request", (): void => {
 			// returns true if status is 404 so sync will continue
 			expect(
-				handleNotFoundErrors(
+				isNotFoundError(
 					mockNotFoundErrorOctokitRequest,
 					mockJob,
 					mockNextTask
@@ -25,7 +28,7 @@ describe("Sync helpers suite", () => {
 		it("should continue sync if NOT FOUND error is sent in response from octokit/graphql", (): void => {
 			// returns true if error object has type 'NOT_FOUND' so sync will continue
 			expect(
-				handleNotFoundErrors(
+				isNotFoundError(
 					mockNotFoundErrorOctokitGraphql,
 					mockJob,
 					mockNextTask
@@ -35,7 +38,7 @@ describe("Sync helpers suite", () => {
 
 		it("handleNotFoundErrors should not continue sync for any other error response type", () => {
 			expect(
-				handleNotFoundErrors(
+				isNotFoundError(
 					mockOtherOctokitRequestErrors,
 					mockJob,
 					mockNextTask
@@ -43,7 +46,7 @@ describe("Sync helpers suite", () => {
 			).toBeFalsy();
 
 			expect(
-				handleNotFoundErrors(
+				isNotFoundError(
 					mockOtherOctokitGraphqlErrors,
 					mockJob,
 					mockNextTask
@@ -51,7 +54,7 @@ describe("Sync helpers suite", () => {
 			).toBeFalsy();
 
 			expect(
-				handleNotFoundErrors(
+				isNotFoundError(
 					mockOtherError,
 					mockJob,
 					mockNextTask
@@ -59,7 +62,7 @@ describe("Sync helpers suite", () => {
 			).toBeFalsy();
 
 			expect(
-				handleNotFoundErrors(
+				isNotFoundError(
 					null,
 					mockJob,
 					mockNextTask
@@ -67,7 +70,7 @@ describe("Sync helpers suite", () => {
 			).toBeFalsy();
 
 			expect(
-				handleNotFoundErrors(
+				isNotFoundError(
 					"",
 					mockJob,
 					mockNextTask

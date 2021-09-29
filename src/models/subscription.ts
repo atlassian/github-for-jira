@@ -40,7 +40,7 @@ export interface RepositoryData {
 	[key: string]: unknown;
 }
 
-export type TaskStatus = "pending" | "complete";
+export type TaskStatus = "pending" | "complete" | "failed";
 
 export interface Repository {
 	id: string;
@@ -228,7 +228,7 @@ export default class Subscription extends Sequelize.Model {
 
 		this.repoSyncState.numberOfSyncedRepos = cnt;
 		await this.sequelize.query(
-			"UPDATE \"Subscriptions\" SET \"repoSyncState\" = jsonb_set(\"repoSyncState\", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id",
+			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id`,
 			{
 				replacements: {
 					cnt: cnt,
@@ -236,6 +236,7 @@ export default class Subscription extends Sequelize.Model {
 				}
 			}
 		);
+
 		return this;
 	}
 
@@ -249,7 +250,7 @@ export default class Subscription extends Sequelize.Model {
 		});
 
 		await this.sequelize.query(
-			"UPDATE \"Subscriptions\" SET \"repoSyncState\" = jsonb_set(\"repoSyncState\", :path, :value, true) WHERE id = :id",
+			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", :path, :value, true) WHERE id = :id`,
 			{
 				replacements: {
 					path: `{repos,${repositoryId},${key}}`,
@@ -265,17 +266,6 @@ export default class Subscription extends Sequelize.Model {
 		await this.destroy();
 	}
 
-	// An IN PROGRESS sync is one that is ACTIVE but has not seen any updates in the last 15 minutes.
-	// This may happen when an error causes a sync to die without setting the status to 'FAILED'
-	hasInProgressSyncFailed(): boolean {
-		if (this.syncStatus === "ACTIVE") {
-			const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-
-			return this.updatedAt < fifteenMinutesAgo;
-		} else {
-			return false;
-		}
-	}
 }
 
 export interface SubscriptionPayload {

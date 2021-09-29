@@ -33,6 +33,11 @@ export const metricSyncStatus = {
 	failed: `${server}.sync-status.failed`
 };
 
+export const metricTaskStatus = {
+	complete: `${server}.task-status.complete`,
+	failed: `${server}.task-status.failed`
+};
+
 export const metricWebhooks = {
 	webhookEvent: `${server}.webhooks.webhook-events`
 };
