@@ -2,17 +2,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { LogLevelString } from "bunyan";
 import { getNodeEnv, isNodeTest } from "../util/isNodeEnv";
-
-export enum EnvironmentEnum {
-	test = "test",
-	development = "development",
-	production = "production",
-}
-
-export enum BooleanEnum {
-	true = "true",
-	false = "false",
-}
+import { EnvironmentEnum } from "../interfaces/common";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 

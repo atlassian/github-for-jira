@@ -1,8 +1,8 @@
 import Sequelize, { Op, WhereOptions } from "sequelize";
-import { queues } from "../worker/main";
 import { Job } from "bull";
 import _ from "lodash";
 import logger from "../config/logger";
+import { queues } from "../worker/queues";
 
 export enum SyncStatus {
 	PENDING = "PENDING",

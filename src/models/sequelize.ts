@@ -1,7 +1,7 @@
 import Sequelize from "sequelize";
 import logger from "../config/logger";
-import { EnvironmentEnum } from "../config/env";
 import { getNodeEnv } from "../util/isNodeEnv";
+import { EnvironmentEnum } from "../interfaces/common";
 
 const nodeEnv = getNodeEnv() || EnvironmentEnum.development;
 // TODO: config misses timezone config to force to UTC, defaults to local timezone of PST

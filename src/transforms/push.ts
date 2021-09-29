@@ -1,7 +1,6 @@
 import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
-import { queues } from "../worker/main";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
@@ -9,6 +8,7 @@ import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
 import { JiraCommit } from "../interfaces/jira";
 import _ from "lodash";
+import { queues } from "../worker/queues";
 
 // TODO: define better types for this file
 
