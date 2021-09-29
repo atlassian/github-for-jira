@@ -25,7 +25,6 @@ describe("Jira Configuration Suite", () => {
 				gitHubInstallationId: 15,
 				jiraHost: "https://test-host.jira.com",
 				destroy: jest.fn().mockResolvedValue(undefined),
-				hasInProgressSyncFailed: jest.fn().mockResolvedValue(undefined),
 				syncWarning: "some warning",
 				updatedAt: "2018-04-18T15:42:13Z",
 				repoSyncState: {
