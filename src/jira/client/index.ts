@@ -5,6 +5,7 @@ import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 import issueKeyParser from "jira-issue-key-parser";
+import { JiraCommit, JiraIssue } from "../../interfaces/jira";
 
 // Max number of issue keys we can pass to the Jira API
 const ISSUE_KEY_API_LIMIT = 100;
@@ -35,38 +36,40 @@ async function getJiraClient(
 	const client = {
 		baseURL: instance.defaults.baseURL,
 		issues: {
-			// eslint-disable-next-line camelcase
-			get: (issue_id, query = { fields: "summary" }): Promise<AxiosResponse> =>
+			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
 				instance.get("/rest/api/latest/issue/:issue_id", {
 					urlParams: {
 						...query,
-						issue_id
+						issue_id: issueId
 					}
 				}),
-			getAll: async (issueIds, query) =>
-				(
-					await Promise.all<AxiosResponse>(
-						issueIds.map((issueId) => client.issues.get(issueId, query)
-							// Ignore any errors
-							.catch(() => undefined))
-					)
-				)
-					.filter((response) => response?.status === 200 && response?.data)
-					.map((response) => response.data),
-			parse: (text) => {
-				if (!text) return null;
-				return issueKeyParser().parse(text);
+			getAll: async (issueIds: string[], query?: { fields: string }): Promise<JiraIssue[]> => {
+				const responses = await Promise.all<AxiosResponse<JiraIssue> | undefined>(
+					issueIds.map((issueId) => client.issues.get(issueId, query)
+						// Ignore any errors
+						.catch(() => undefined))
+				);
+				return responses.reduce((acc: JiraIssue[], response) => {
+					if (response?.status === 200 && !!response?.data) {
+						acc.push(response.data);
+					}
+					return acc;
+				}, []);
+			},
+			parse: (text: string): string[] | undefined => {
+				if (!text) return undefined;
+				return issueKeyParser().parse(text) || undefined;
 			},
 			comments: {
 				// eslint-disable-next-line camelcase
-				getForIssue: (issue_id) =>
+				getForIssue: (issue_id: string) =>
 					instance.get("/rest/api/latest/issue/:issue_id/comment", {
 						urlParams: {
 							issue_id
 						}
 					}),
 				// eslint-disable-next-line camelcase
-				addForIssue: (issue_id, payload) =>
+				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/:issue_id/comment", payload, {
 						urlParams: {
 							issue_id
@@ -75,14 +78,14 @@ async function getJiraClient(
 			},
 			transitions: {
 				// eslint-disable-next-line camelcase
-				getForIssue: (issue_id) =>
+				getForIssue: (issue_id: string) =>
 					instance.get("/rest/api/latest/issue/:issue_id/transitions", {
 						urlParams: {
 							issue_id
 						}
 					}),
 				// eslint-disable-next-line camelcase
-				updateForIssue: (issue_id, transition_id) =>
+				updateForIssue: (issue_id: string, transition_id: string) =>
 					instance.post(
 						"/rest/api/latest/issue/:issue_id/transitions",
 						{
@@ -99,14 +102,14 @@ async function getJiraClient(
 			},
 			worklogs: {
 				// eslint-disable-next-line camelcase
-				getForIssue: (issue_id) =>
+				getForIssue: (issue_id: string) =>
 					instance.get("/rest/api/latest/issue/:issue_id/worklog", {
 						urlParams: {
 							issue_id
 						}
 					}),
 				// eslint-disable-next-line camelcase
-				addForIssue: (issue_id, payload) =>
+				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/:issue_id/worklog", payload, {
 						urlParams: {
 							issue_id
@@ -116,7 +119,7 @@ async function getJiraClient(
 		},
 		devinfo: {
 			branch: {
-				delete: (repositoryId, branchRef) =>
+				delete: (repositoryId: string, branchRef: string) =>
 					instance.delete(
 						"/rest/devinfo/0.10/repository/:repositoryId/branch/:branchJiraId",
 						{
@@ -130,17 +133,17 @@ async function getJiraClient(
 			},
 			// Add methods for handling installationId properties that exist in Jira
 			installation: {
-				exists: (gitHubInstallationId) =>
+				exists: (gitHubInstallationId: string) =>
 					instance.get(
 						`/rest/devinfo/0.10/existsByProperties?installationId=${gitHubInstallationId}`
 					),
-				delete: (gitHubInstallationId) =>
+				delete: (gitHubInstallationId: string) =>
 					instance.delete(
 						`/rest/devinfo/0.10/bulkByProperties?installationId=${gitHubInstallationId}`
 					)
 			},
 			pullRequest: {
-				delete: (repositoryId, pullRequestId) =>
+				delete: (repositoryId:string, pullRequestId:string) =>
 					instance.delete(
 						"/rest/devinfo/0.10/repository/:repositoryId/pull_request/:pullRequestId",
 						{
@@ -153,11 +156,11 @@ async function getJiraClient(
 					)
 			},
 			repository: {
-				get: (repositoryId) =>
+				get: (repositoryId:string) =>
 					instance.get("/rest/devinfo/0.10/repository/:repositoryId", {
 						urlParams: { repositoryId }
 					}),
-				delete: (repositoryId) =>
+				delete: (repositoryId:string) =>
 					instance.delete("/rest/devinfo/0.10/repository/:repositoryId", {
 						urlParams: {
 							_updateSequenceId: Date.now().toString(),
@@ -257,10 +260,10 @@ const batchedBulkUpdate = async (
 	logger?: Logger,
 	options?: { preventTransitions: boolean }
 ) => {
-	const dedupedCommits: unknown[] = dedupCommits(data.commits);
+	const dedupedCommits = dedupCommits(data.commits);
 
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
-	const commitChunks: unknown[][] = [];
+	const commitChunks: JiraCommit[][] = [];
 	do {
 		commitChunks.push(dedupedCommits.splice(0, 400));
 	} while (dedupedCommits.length);
@@ -298,15 +301,11 @@ const withinIssueKeyLimit = (resources) => {
 /**
  * Deduplicates commits by ID field for a repository payload
  */
-const dedupCommits = <T extends IdObject>(commits:T[] = []) =>
+const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
 	commits.filter(
 		(obj, pos, arr) =>
 			arr.map((mapCommit) => mapCommit.id).indexOf(obj.id) === pos
 	);
-
-interface IdObject {
-	id: string;
-}
 
 /**
  * Deduplicates issueKeys field for branches and commits

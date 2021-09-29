@@ -1,4 +1,5 @@
 import { getLogger } from "../../config/logger";
+import { JiraIssue } from "../../interfaces/jira";
 
 const logger = getLogger("jira.util");
 
@@ -29,10 +30,10 @@ export default (jiraClient) => {
 			.map((referenceLink) => referenceLink.slice(1, referenceLink.indexOf("]")));
 	};
 
-	function addJiraIssueLinks(text: string, issues): string {
+	function addJiraIssueLinks(text: string, issues:JiraIssue[]): string {
 		const referenceRegex = /\[([A-Z]+-[0-9]+)\](?!\()/g;
-		const issueMap = issues.reduce((issueMap, issue) => ({
-			...issueMap,
+		const issueMap = issues.reduce((acc, issue) => ({
+			...acc,
 			[issue.key]: issue
 		}), {});
 

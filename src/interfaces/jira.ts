@@ -6,7 +6,7 @@ export interface JiraPullRequest {
 	ref: {
 		name: string;
 		uri: string;
-	}
+	};
 }
 
 export interface JiraBuild {
@@ -41,6 +41,15 @@ export interface JiraCommit {
 
 	files?: JiraCommitFile[];
 	flags?: string[];
+}
+
+export interface JiraIssue {
+	id: string;
+	self: string;
+	key: string;
+	fields:{
+		summary: string;
+	};
 }
 
 export interface JiraCommitFile {
