@@ -45,7 +45,7 @@ const updateNumberOfReposSynced = async (
 		return;
 	}
 
-	const syncedRepos = repoIds.filter((id) => {
+	const syncedRepos = repoIds.filter((id: string) => {
 		// all 3 statuses need to be complete for a repo to be fully synced
 		const { pullStatus, branchStatus, commitStatus } = repos[id];
 		return (
@@ -98,10 +98,10 @@ export interface Task {
 	task: TaskType;
 	repositoryId: string;
 	repository: Repository;
-	cursor: string | number;
+	cursor?: string | number;
 }
 
-const upperFirst = (str) =>
+const upperFirst = (str: string) =>
 	str.substring(0, 1).toUpperCase() + str.substring(1);
 const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
