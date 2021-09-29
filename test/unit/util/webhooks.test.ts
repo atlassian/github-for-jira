@@ -1,4 +1,4 @@
-import { calculateProcessingTimeInSeconds } from "../../../src/util/webhooks";
+import { emitWebhookProcessingTimeMetrics } from "../../../src/util/webhooks";
 
 let dateNowSpy;
 
@@ -22,7 +22,7 @@ describe("Webhooks suite", () => {
 		error: mockErrorLog,
 	};
 
-	describe("calculateProcessingTimeInSeconds", () => {
+	describe("emitWebhookProcessingTimeMetrics", () => {
 		it("should calculate processing time for webhook events", () => {
 			const webhookReceived = 500;
 			const webhookName = "workflow_run";
@@ -30,7 +30,7 @@ describe("Webhooks suite", () => {
 			const result = currentTime - webhookReceived; // 1000ms
 
 			expect(
-				calculateProcessingTimeInSeconds(
+				emitWebhookProcessingTimeMetrics(
 					webhookReceived,
 					webhookName,
 					mockContextLogger,
@@ -46,7 +46,7 @@ describe("Webhooks suite", () => {
 				const status = 400;
 
 				expect(
-					calculateProcessingTimeInSeconds(
+					emitWebhookProcessingTimeMetrics(
 						webhookReceived,
 						webhookName,
 						mockContextLogger,
@@ -61,7 +61,7 @@ describe("Webhooks suite", () => {
 				const status = null;
 
 				expect(
-					calculateProcessingTimeInSeconds(
+					emitWebhookProcessingTimeMetrics(
 						webhookReceived,
 						webhookName,
 						mockContextLogger,
@@ -76,7 +76,7 @@ describe("Webhooks suite", () => {
 				const status = undefined;
 
 				expect(
-					calculateProcessingTimeInSeconds(
+					emitWebhookProcessingTimeMetrics(
 						webhookReceived,
 						webhookName,
 						mockContextLogger,

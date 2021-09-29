@@ -1,6 +1,6 @@
 import transformWorkflow from "../transforms/workflow";
 import { CustomContext } from "./middleware";
-import { calculateProcessingTimeInSeconds } from "../util/webhooks";
+import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default async (context: CustomContext, jiraClient): Promise<void> => {
@@ -23,7 +23,7 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
 		webhookReceived
 	) {
-		calculateProcessingTimeInSeconds(
+		emitWebhookProcessingTimeMetrics(
 			webhookReceived,
 			name,
 			log,

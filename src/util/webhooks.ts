@@ -1,8 +1,9 @@
 import statsd from "../config/statsd";
+import { metricWebhooks } from "../config/metric-names";
 
 export const getCurrentTime = () => Date.now();
 
-export const calculateProcessingTimeInSeconds = (
+export const emitWebhookProcessingTimeMetrics = (
 	webhookReceivedTime: number,
 	webhookName: string,
 	contextLogger: any,
@@ -28,7 +29,7 @@ export const calculateProcessingTimeInSeconds = (
 
 			// send metrics without gsd_histogram tag so we still have .count, .p99, .median etc
 			statsd.histogram(
-				"app.server.webhooks.processing-time.duration-ms",
+				metricWebhooks.webhookProcessingTimes,
 				timeToProcessWebhookEvent,
 				tags
 			);
@@ -40,14 +41,17 @@ export const calculateProcessingTimeInSeconds = (
 
 			// send metrics with gsd_histogram so it will be treated as a histogram-type metric
 			statsd.histogram(
-				"app.server..webhooks.processing-time.latency",
+				metricWebhooks.webhookLatency,
 				timeToProcessWebhookEvent,
 				tags
 			);
 
 			return timeToProcessWebhookEvent;
 		} else {
-			contextLogger?.error({ webhookReceivedTime }, "Failed to send timeToProcessWebhookEvent metric. webhookReceivedTime is not a number.");
+			contextLogger?.error(
+				{ webhookReceivedTime },
+				"Failed to send timeToProcessWebhookEvent metric. webhookReceivedTime is not a number."
+			);
 			return undefined;
 		}
 	} catch (err) {

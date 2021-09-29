@@ -1,4 +1,4 @@
-import { calculateProcessingTimeInSeconds } from "../util/webhooks";
+import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export const deleteRepository = async (context, jiraClient): Promise<void> => {
@@ -13,7 +13,7 @@ export const deleteRepository = async (context, jiraClient): Promise<void> => {
 		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
 		webhookReceived
 	) {
-		calculateProcessingTimeInSeconds(
+		emitWebhookProcessingTimeMetrics(
 			webhookReceived,
 			name,
 			log,

@@ -8,7 +8,7 @@ import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
-import { calculateProcessingTimeInSeconds } from "../util/webhooks";
+import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // TODO: define better types for this file
@@ -199,7 +199,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 				(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
 				webhookReceived
 			) {
-				calculateProcessingTimeInSeconds(
+				emitWebhookProcessingTimeMetrics(
 					webhookReceived,
 					webhookName,
 					log,
