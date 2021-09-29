@@ -4,9 +4,11 @@ import { Subscription } from "../../src/models";
 describe("Subscription", () => {
 	let sub: SubscriptionClass = undefined;
 
+	const getSubscription = async ():Promise<SubscriptionClass> => Subscription.findOne({ where: { gitHubInstallationId: sub.gitHubInstallationId } });
+
 	beforeEach(async () => {
 		sub = await Subscription.create({
-			gitHubInstallationId: 123,
+			gitHubInstallationId: Math.floor(Math.random() * 100000),
 			jiraHost: "http://blah.com",
 			jiraClientKey: "myClientKey",
 			repoSyncState: undefined,
@@ -16,7 +18,7 @@ describe("Subscription", () => {
 	});
 
 	afterEach(async () => {
-		await Subscription.destroy({ where: { gitHubInstallationId: 123 } });
+		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("updateSyncState", () => {
@@ -25,15 +27,25 @@ describe("Subscription", () => {
 				installationId: 123
 			};
 			await sub.updateSyncState(REPO_SYNC_STATE);
-			expect((await Subscription.findOne()).repoSyncState).toStrictEqual(REPO_SYNC_STATE);
+			const result = await getSubscription();
+			expect(result.repoSyncState).toStrictEqual(REPO_SYNC_STATE);
+		});
+
+		test("sets new updatedAt on state change", async () => {
+			const updatedAt = sub.updatedAt.getTime();
+			await sub.updateSyncState({
+				installationId: 123
+			});
+			const result = await getSubscription();
+			expect(result.updatedAt.getTime()).toBeGreaterThan(updatedAt);
 		});
 	});
 
-	describe("updateNumberOfSyncedRepos", () => {
+	describe("numberOfSyncedRepos", () => {
 		test("updates when absent", async () => {
 			await sub.updateSyncState({ numberOfSyncedRepos: 3 });
 			expect(sub.repoSyncState.numberOfSyncedRepos).toStrictEqual(3);
-			expect((await Subscription.findOne()).repoSyncState.numberOfSyncedRepos).toStrictEqual(3);
+			expect((await getSubscription()).repoSyncState.numberOfSyncedRepos).toStrictEqual(3);
 		});
 
 		test("updates changes when exists", async () => {
@@ -43,11 +55,11 @@ describe("Subscription", () => {
 			await sub.updateSyncState({ numberOfSyncedRepos: 5 });
 
 			expect(sub.repoSyncState.numberOfSyncedRepos).toStrictEqual(5);
-			expect((await Subscription.findOne()).repoSyncState.numberOfSyncedRepos).toStrictEqual(5);
+			expect((await getSubscription()).repoSyncState.numberOfSyncedRepos).toStrictEqual(5);
 		});
 	});
 
-	describe("updateRepoSyncStateItem", () => {
+	describe("update repos", () => {
 		test("populates the value", async () => {
 			await sub.updateSyncState({ repos: { hello: { branchStatus: "pending" } } });
 			expect(sub.repoSyncState).toStrictEqual({
@@ -85,6 +97,38 @@ describe("Subscription", () => {
 				}
 			});
 		});
-	});
 
+		test("doesn't delete previous values", async () => {
+			await sub.updateSyncState({
+				repos: {
+					hello: {
+						branchStatus: "complete"
+					}
+				}
+			});
+
+			await sub.updateSyncState({
+				repos: {
+					hello: {
+						commitStatus: "pending"
+					},
+					foo: {
+						pullStatus: "failed"
+					}
+				}
+			});
+
+			expect(sub.repoSyncState).toStrictEqual({
+				repos: {
+					hello: {
+						branchStatus: "complete",
+						commitStatus: "pending"
+					},
+					foo: {
+						pullStatus: "failed"
+					}
+				}
+			});
+		});
+	});
 });

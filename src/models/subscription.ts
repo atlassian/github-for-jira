@@ -40,7 +40,7 @@ export interface RepositoryData {
 	[key: string]: unknown;
 }
 
-export type TaskStatus = "pending" | "complete";
+export type TaskStatus = "pending" | "complete" | "failed";
 
 export interface Repository {
 	id: string;
@@ -55,7 +55,7 @@ export default class Subscription extends Sequelize.Model {
 	gitHubInstallationId: number;
 	jiraHost: string;
 	selectedRepositories?: number[];
-	repoSyncState?: RepoSyncState = {};
+	repoSyncState?: RepoSyncState;
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
 	jiraClientKey: string;
@@ -209,7 +209,7 @@ export default class Subscription extends Sequelize.Model {
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
 	// https://github.com/sequelize/sequelize/issues/4387
 	setSyncState(updatedState: RepoSyncState, reset = false): Subscription {
-		if (reset) {
+		if (reset || !this.repoSyncState) {
 			this.repoSyncState = updatedState;
 			this.changed("repoSyncState", true);
 		} else {
@@ -240,17 +240,6 @@ export default class Subscription extends Sequelize.Model {
 		await this.destroy();
 	}
 
-	// An IN PROGRESS sync is one that is ACTIVE but has not seen any updates in the last 15 minutes.
-	// This may happen when an error causes a sync to die without setting the status to 'FAILED'
-	hasInProgressSyncFailed(): boolean {
-		if (this.syncStatus === "ACTIVE") {
-			const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-
-			return this.updatedAt < fifteenMinutesAgo;
-		} else {
-			return false;
-		}
-	}
 }
 
 export interface SubscriptionPayload {
