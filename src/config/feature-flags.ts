@@ -23,6 +23,7 @@ export enum BooleanFlags {
 	CUSTOM_QUERIES_FOR_REPO_SYNC_STATE = "use-custom-queries-for-repo-sync-state",
 	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files",
 	WEBHOOK_RECEIVED_METRICS = "webhook-received-metrics",
+	CONTINUE_SYNC_ON_ERROR = "continue-sync-on-error"
 }
 
 export enum StringFlags {
