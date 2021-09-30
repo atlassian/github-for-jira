@@ -229,8 +229,10 @@ router.post(
 		const limit = Number(req.body.limit) || undefined;
 		// Needed for 'pagination'
 		const offset = Number(req.body.offset) || 0;
+		// only resync installations whose "updatedAt" date is older than x seconds
+		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
 
-		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit);
+		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
 			Subscription.findOrStartSync(subscription, syncType)

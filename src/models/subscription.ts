@@ -84,7 +84,8 @@ export default class Subscription extends Sequelize.Model {
 		installationIds: number[] = [],
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
 		offset = 0,
-		limit?: number
+		limit?: number,
+		inactiveForSeconds?: number
 	): Promise<Subscription[]> {
 
 		const andFilter: WhereOptions[] = [];
@@ -101,6 +102,17 @@ export default class Subscription extends Sequelize.Model {
 			andFilter.push({
 				gitHubInstallationId: {
 					[Op.in]: _.uniq(installationIds)
+				}
+			});
+		}
+
+		if (inactiveForSeconds) {
+
+			const xSecondsAgo = new Date(new Date().getTime() - (inactiveForSeconds * 1000))
+
+			andFilter.push({
+				updatedAt: {
+					[Op.lt]: xSecondsAgo
 				}
 			});
 		}
