@@ -1,4 +1,5 @@
 import "../config/env"; // Important to be before other dependencies
+import "../config/proxy"; // Important to be before other dependencies
 import * as Sentry from "@sentry/node";
 
 import { discovery } from "../sync/discovery";
@@ -9,13 +10,13 @@ import statsd from "../config/statsd";
 import app, { probot } from "./app";
 import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
 import SentryScopeProxy from "../models/sentry-scope-proxy";
-import {  queueMetrics } from "../config/metric-names";
 import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
-import "../config/proxy";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { RateLimitingError } from "../config/enhance-octokit";
 import { queues } from "./queues";
+import { queueMetrics } from "../config/metric-names";
+import { Job } from "bull";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const logger = getLogger("worker.main");
@@ -50,7 +51,7 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 	}
 };
 
-const setDelayOnRateLimiting = (jobHandler) => async (job) => {
+const setDelayOnRateLimiting = (jobHandler) => async (job: Job) => {
 	try {
 		await jobHandler(job);
 	} catch (err) {
@@ -63,18 +64,18 @@ const setDelayOnRateLimiting = (jobHandler) => async (job) => {
 				job.opts.backoff = {
 					type: "exponential",
 					delay: 10 * 60 * 1000
-				}
+				};
 			} else {
 				logger.warn({ job }, `Rate limiting detected, delaying job by ${delay} ms`);
 				job.opts.backoff = {
 					type: "fixed",
 					delay: delay
-				}
+				};
 			}
 		}
 		throw err;
 	}
-}
+};
 
 const sendQueueMetrics = async () => {
 	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
@@ -92,7 +93,7 @@ const sendQueueMetrics = async () => {
 			statsd.gauge(queueMetrics.waiting, jobCounts.waiting, tags);
 		}
 	}
-}
+};
 
 const commonMiddleware = (jobHandler) => sentryMiddleware(setDelayOnRateLimiting(jobHandler));
 

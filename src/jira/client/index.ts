@@ -185,7 +185,7 @@ async function getJiraClient(
 						});
 					}
 
-					await batchedBulkUpdate(
+					return await batchedBulkUpdate(
 						data,
 						instance,
 						gitHubInstallationId,
@@ -214,7 +214,7 @@ async function getJiraClient(
 				};
 				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
 				logger?.info("Sending builds payload to jira.");
-				await instance.post("/rest/builds/0.1/bulk", payload);
+				return await instance.post("/rest/builds/0.1/bulk", payload);
 			}
 		},
 		deployment: {
@@ -233,7 +233,7 @@ async function getJiraClient(
 				};
 				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
 				logger?.info("Sending deployments payload to jira.");
-				await instance.post("/rest/deployments/0.1/bulk", payload);
+				return await instance.post("/rest/deployments/0.1/bulk", payload);
 			}
 		}
 	};

@@ -4,7 +4,7 @@ import Redis from "ioredis";
 import * as Sentry from "@sentry/node";
 import statsd from "../config/statsd";
 import { getLogger } from "../config/logger";
-import { metricHttpRequest } from "../config/metric-names";
+import { metricError, metricHttpRequest } from "../config/metric-names";
 
 const client = new Redis(getRedisInfo("client"));
 const subscriber = new Redis(getRedisInfo("subscriber"));
@@ -72,8 +72,12 @@ Object.keys(queues).forEach((name) => {
 	});
 
 	queue.on("failed", async (job) => {
-		logger.error({ job, queue: name }, "Job failed");
+		const failedReason = job.failedReason || "failed";
+		logger.error({ job, queue: name, failedReason }, "Job failed");
 		measureElapsedTime(job, { queue: name, status: "failed" });
+
+		const tags = [`queue:${name}`];
+		statsd.increment(metricError.queueFailed, tags);
 	});
 
 	queue.on("error", (err) => {
@@ -82,8 +86,7 @@ Object.keys(queues).forEach((name) => {
 		Sentry.setTag("queue", name);
 		Sentry.captureException(err);
 
-		const tags = [`name:${name}`];
-
-		statsd.increment("queue_error", tags);
+		const tags = [`queue:${name}`];
+		statsd.increment(metricError.queueError, tags);
 	});
 });
