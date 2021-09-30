@@ -28,7 +28,7 @@ export interface Repositories {
 }
 
 export interface RepositoryData {
-	repository: Repository;
+	repository?: Repository;
 	pullStatus?: TaskStatus;
 	branchStatus?: TaskStatus;
 	commitStatus?: TaskStatus;
@@ -240,7 +240,7 @@ export default class Subscription extends Sequelize.Model {
 
 		this.repoSyncState.numberOfSyncedRepos = cnt;
 		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id`,
+			"UPDATE \"Subscriptions\" SET \"updatedAt\" = NOW(), \"repoSyncState\" = jsonb_set(\"repoSyncState\", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id",
 			{
 				replacements: {
 					cnt: cnt,
@@ -262,7 +262,7 @@ export default class Subscription extends Sequelize.Model {
 		});
 
 		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", :path, :value, true) WHERE id = :id`,
+			"UPDATE \"Subscriptions\" SET \"updatedAt\" = NOW(), \"repoSyncState\" = jsonb_set(\"repoSyncState\", :path, :value, true) WHERE id = :id",
 			{
 				replacements: {
 					path: `{repos,${repositoryId},${key}}`,

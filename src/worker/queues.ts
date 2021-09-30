@@ -15,7 +15,7 @@ function measureElapsedTime(job: Queue.Job, tags) {
 	statsd.histogram(metricHttpRequest.jobDuration, Number(job.finishedOn) - Number(job.processedOn), tags);
 }
 
-const devSettings = isNodeTest() ? {
+const testSettings = isNodeTest() ? {
 	lockDuration: 100000,
 	lockRenewTime: 50000 // Interval on which to acquire the job lock
 } : {};
@@ -35,7 +35,7 @@ const getQueueOptions = (timeout: number): QueueOptions => {
 		settings: {
 			// lockDuration must be greater than the timeout, so that it doesn't get processed again prematurely
 			lockDuration: timeout + 500,
-			...devSettings
+			...testSettings
 		},
 		redis: getRedisInfo("bull"),
 		createClient: (type, redisOpts = {}) => {

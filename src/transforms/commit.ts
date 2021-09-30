@@ -19,7 +19,7 @@ export const mapCommit = (commit:GithubCommit): JiraCommit | undefined => {
 		id: commit.oid,
 		issueKeys,
 		message: commit.message,
-		url: commit.url || undefined, // If blank string, don't send url
+		url: commit.url || "",
 		updateSequenceId: Date.now()
 	};
 };

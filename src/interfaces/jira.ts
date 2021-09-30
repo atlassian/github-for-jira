@@ -36,7 +36,7 @@ export interface JiraCommit {
 	id: string;
 	issueKeys: string[];
 	message: string;
-	url?: string;
+	url: string;
 	updateSequenceId: number;
 	files?: JiraCommitFile[];
 	flags?: string[];

@@ -123,22 +123,17 @@ const updateJobStatus = async (
 
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
-		// Include job and task in any micros env logs, exclude from local
-		const loggerObj = process.env.MICROS_ENV ? { job, task } : {};
-		logger.info(loggerObj, "Organization has been deleted. Other active syncs will continue.");
+		logger.info({ job, task }, "Organization has been deleted. Other active syncs will continue.");
 		return;
 	}
 
 	const status = edges?.length ? "pending" : "complete";
-
 	logger.info({ job, task, status }, "Updating job status");
 
 	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
 		await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status);
 	} else {
 		await subscription.updateSyncState({
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
 			repos: {
 				[repositoryId]: {
 					[getStatusKey(task)]: status
@@ -156,7 +151,7 @@ const updateJobStatus = async (
 				repos: {
 					[repositoryId]: {
 						[getCursorKey(task)]: edges[edges.length - 1].cursor
-					} as any
+					}
 				}
 			});
 		}
