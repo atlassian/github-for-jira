@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { getLogger } from "../config/logger";
 import { pageRendered } from "../config/metric-names";
 import statsd from "../config/statsd";
-
+import { Octokit } from "@octokit/rest";
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	if (!req.session.githubToken) {
@@ -20,7 +20,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			data: { installations }
 		} = await github.apps.listInstallationsForAuthenticatedUser();
 
-		const adminInstallations = [];
+		const adminInstallations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [];
 		// TODO: make this parallel instead of sequential, then filter out
 		for (const installation of installations) {
 			// See if we can get the membership for this user
@@ -49,7 +49,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			info
 		});
 	} catch (err) {
-		req.log.error(err, "Unable list github installations page",);
+		req.log.error(err, "Unable list github installations page");
 		return next(err);
 	}
 };

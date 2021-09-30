@@ -80,31 +80,23 @@ describe("Webhooks suite", () => {
 			});
 
 			it("if webhookReceived is undefined", () => {
-				const webhookReceived = undefined;
-				const webhookName = "workflow_run";
-				const status = null;
-
 				expect(
 					emitWebhookProcessingTimeMetrics(
-						webhookReceived,
-						webhookName,
+						0,
+						"workflow_run",
 						mockContextLogger,
-						status
+						undefined
 					)
 				).toEqual(undefined);
 			});
 
 			it("if webhookReceived is null", () => {
-				const webhookReceived = undefined;
-				const webhookName = "workflow_run";
-				const status = undefined;
-
 				expect(
 					emitWebhookProcessingTimeMetrics(
-						webhookReceived,
-						webhookName,
+						0,
+						"workflow_run",
 						mockContextLogger,
-						status
+						undefined
 					)
 				).toEqual(undefined);
 			});

@@ -52,13 +52,16 @@ declare global {
 	}
 }
 
+const throwError = (msg:string) => {throw new Error(msg)};
+
 const oauth = GithubOAuth({
-	githubClient: process.env.GITHUB_CLIENT_ID,
-	githubSecret: process.env.GITHUB_CLIENT_SECRET,
-	baseURL: process.env.APP_URL,
+	githubClient: process.env.GITHUB_CLIENT_ID || throwError("Missing GITHUB_CLIENT_ID"),
+	githubSecret: process.env.GITHUB_CLIENT_SECRET || throwError("Missing GITHUB_CLIENT_SECRET"),
+	baseURL: process.env.APP_URL || throwError("Missing APP_URL"),
 	loginURI: "/github/login",
 	callbackURI: "/github/callback"
 });
+
 
 // setup route middlewares
 const csrfProtection = csrf(
@@ -88,7 +91,7 @@ export default (octokitApp: App): Express => {
 
 	app.use(
 		cookieSession({
-			keys: [process.env.GITHUB_CLIENT_SECRET],
+			keys: [process.env.GITHUB_CLIENT_SECRET || throwError("Missing GITHUB_CLIENT_SECRET")],
 			maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 			signed: true,
 			sameSite: "none",

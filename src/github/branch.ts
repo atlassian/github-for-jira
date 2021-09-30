@@ -1,9 +1,9 @@
 import transformBranch from "../transforms/branch";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
 import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import _ from "lodash";
 
 export const createBranch = async (
 	context: CustomContext,
@@ -42,7 +42,7 @@ export const createBranch = async (
 export const deleteBranch = async (context, jiraClient): Promise<void> => {
 	const issueKeys = issueKeyParser().parse(context.payload.ref);
 
-	if (isEmpty(issueKeys)) {
+	if (_.isEmpty(issueKeys)) {
 		context.log(
 			{ noop: "no_issue_keys" },
 			"Halting further execution for deleteBranch since issueKeys is empty"

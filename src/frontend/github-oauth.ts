@@ -44,7 +44,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 			`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 		res.redirect(
 			`https://${host}/login/oauth/authorize?client_id=${opts.githubClient}${
-				opts.scopes.length ? `&scope=${opts.scopes.join(" ")}` : ""
+				opts.scopes?.length ? `&scope=${opts.scopes.join(" ")}` : ""
 			}&redirect_uri=${redirectURI}&state=${state}`
 		);
 	}

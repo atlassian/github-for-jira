@@ -1,8 +1,6 @@
 import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
-import { queues } from "../worker/main";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application, GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
@@ -10,6 +8,9 @@ import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
 import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { JiraCommit } from "../interfaces/jira";
+import _ from "lodash";
+import { queues } from "../worker/queues";
 
 // TODO: define better types for this file
 
@@ -52,11 +53,11 @@ export function createJobData(payload, jiraHost: string) {
 		owner,
 	};
 
-	const shas = [];
+	const shas: { id: string, issueKeys: string[] }[] = [];
 	for (const commit of payload.commits) {
-		const issueKeys = issueKeyParser().parse(commit.message);
+		const issueKeys = issueKeyParser().parse(commit.message) || [];
 
-		if (isEmpty(issueKeys)) {
+		if (_.isEmpty(issueKeys)) {
 			// Don't add this commit to the queue since it doesn't have issue keys
 			continue;
 		}
@@ -134,8 +135,8 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			log
 		);
 
-		const commits = await Promise.all(
-			shas.map(async (sha) => {
+		const commits: JiraCommit[] = await Promise.all(
+			shas.map(async (sha): Promise<JiraCommit> => {
 				const {
 					data,
 					data: { commit: githubCommit },
@@ -176,7 +177,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 
 		// Jira accepts up to 400 commits per request
 		// break the array up into chunks of 400
-		const chunks = [];
+		const chunks: JiraCommit[][] = [];
 		while (commits.length) {
 			chunks.push(commits.splice(0, 400));
 		}

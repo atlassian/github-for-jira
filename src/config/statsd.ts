@@ -5,8 +5,8 @@ import { isNodeDev, isNodeTest } from "../util/isNodeEnv";
 import {metricHttpRequest} from "./metric-names";
 
 export const globalTags = {
-	environment: isNodeTest() ? "test" : process.env.MICROS_ENV,
-	environment_type: isNodeTest() ? "testenv" : process.env.MICROS_ENVTYPE,
+	environment: isNodeTest() ? "test" : process.env.MICROS_ENV || "",
+	environment_type: isNodeTest() ? "testenv" : process.env.MICROS_ENVTYPE || "",
 	deployment_id: process.env.MICROS_DEPLOYMENT_ID || "1",
 	region: process.env.MICROS_AWS_REGION || "localhost"
 };
@@ -65,17 +65,17 @@ export const elapsedTimeMetrics = (path?: string) => (
 		(req.log || logger).debug(`Request executed in ${elapsedTime} with status ${statusCode} path ${pathTag}`)
 
 		//Count response time metric
-		statsd.histogram(metricHttpRequest().duration, elapsedTime, tags);
+		statsd.histogram(metricHttpRequest.duration, elapsedTime, tags);
 
 		//Publish bucketed histogram metric for the call duration
-		statsd.histogram(metricHttpRequest().duration, elapsedTime,
+		statsd.histogram(metricHttpRequest.duration, elapsedTime,
 			{...tags,
 				gsd_histogram: RESPONSE_TIME_HISTOGRAM_BUCKETS
 			}
 		);
 
 		//Count requests count
-		statsd.increment(metricHttpRequest().executed, tags)
+		statsd.increment(metricHttpRequest.executed, tags)
 	});
 
 	next();

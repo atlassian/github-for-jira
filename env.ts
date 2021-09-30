@@ -5,11 +5,11 @@ const filepath = ".env";
 
 const call = async () => {
 	const results = await Promise.all([
-		axios.get("http://localhost:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => ({})),
-		axios.get("http://ngrok:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => ({}))
+		axios.get("http://localhost:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => undefined),
+		axios.get("http://ngrok:4040/api/tunnels", { timeout: 300, responseType: "json" }).catch(() => undefined)
 	]);
 
-	const response = results.find((value: AxiosResponse) => value.status === 200) as AxiosResponse;
+	const response = results.find((value?: AxiosResponse) => value?.status === 200) as AxiosResponse;
 	return response ? response : Promise.reject();
 };
 

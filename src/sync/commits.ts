@@ -3,11 +3,12 @@ import { getCommits as getCommitsQuery, getDefaultRef } from "./queries";
 import { GitHubAPI } from "probot";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { getLogger } from "../config/logger";
+import { Repository } from "../models/subscription";
 
 const logger = getLogger("sync.commits");
 
 // TODO: better typings
-export default async (github: GitHubAPI, repository, cursor, perPage: number) => {
+export default async (github: GitHubAPI, repository: Repository, cursor?: string | number, perPage?: number) => {
 	// TODO: fix typings for graphql
 	const data = (await github.graphql(getDefaultRef, {
 		owner: repository.owner.login,
@@ -28,8 +29,8 @@ export default async (github: GitHubAPI, repository, cursor, perPage: number) =>
 			cursor,
 			default_ref: refName
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		})
-	}
+		});
+	};
 
 	// TODO: fix typings for graphql
 	try {
