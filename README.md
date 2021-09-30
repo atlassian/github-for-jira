@@ -43,7 +43,6 @@ Next you will need to connect your GitHub organization to Jira, see the followin
 4. Once installation completes, if we can't detect your Jira site, you will be prompted to enter a url, otherwise you will be redirected to the Jira marketplace to install the GitHub for Jira app.
 5. When you reach the page in marketplace, simply click **Get Started**.
 
-
 ### Connecting your GitHub organization to Jira
 As part of the installation flow you should be directed to install the Jira app on GitHub to your organization. You can also manage existing connections or add additional organizations any time within the Manage Add-ons section of your Jira settings:
 ![image](https://user-images.githubusercontent.com/13207348/46588391-633b2f00-ca69-11e8-9c50-4249054b0cfa.png)
