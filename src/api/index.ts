@@ -148,20 +148,22 @@ router.get(
 router.get(
 	"/:installationId/repoSyncState.json",
 	check("installationId").isInt(),
+	check("jiraHost").isString(),
 	returnOnValidationError,
 	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
+		const jiraHost = req.params.jiraHost;
+
+		if (!jiraHost || !githubInstallationId) {
+			req.log.warn({ req, res }, "Missing Jira Host or Installation ID");
+			res.status(400).send("Missing Jira Host");
+			return;
+		}
 
 		try {
-			if (!req.session.jiraHost) {
-				req.log.warn({ req, res }, "Missing Jira Host");
-				res.status(500).send("Missing Jira Host");
-				return;
-			}
-
 			const subscription = await Subscription.getSingleInstallation(
-				req.session.jiraHost,
+				jiraHost,
 				githubInstallationId
 			);
 
@@ -170,8 +172,7 @@ router.get(
 				return;
 			}
 
-			const data = subscription.repoSyncState;
-			res.json(data);
+			res.json(subscription.repoSyncState);
 		} catch (err) {
 			res.status(500).json(err);
 		}
