@@ -54,7 +54,7 @@ export default (jiraClient) => {
 				continue;
 			}
 
-			const issueTrackingParam = envVars.ALT_ORIGIN ? `?atlOrigin=${envVars.ALT_ORIGIN}` : "";
+			const issueTrackingParam = envVars.JIRA_LINK_QUERY_PARAMS ? `?atlOrigin=${envVars.JIRA_LINK_QUERY_PARAMS}` : "";
 
 			const link = `${jiraClient.baseURL}/browse/${key}${issueTrackingParam}`;
 			const reference = `[${key}]: ${link}`;
