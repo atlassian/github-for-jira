@@ -253,7 +253,7 @@ router.post(
 		// This remove all jobs from the queue. This way,
 		// the whole queue will be drained and all jobs will be readded.
 		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
-		const foundInstallationIds = new Set<number>();
+		const foundJobIds = new Set<string>();
 		const duplicateJobs: Job[] = [];
 
 		// collecting duplicate jobs per installation
@@ -262,10 +262,10 @@ router.post(
 			if (!job) {
 				continue;
 			}
-			if (foundInstallationIds.has(job.data.installationId)) {
+			if (foundJobIds.has(`${job.data.installationId}${job.data.jiraHost}`)) {
 				duplicateJobs.push(job);
 			} else {
-				foundInstallationIds.add(job.data.installationId);
+				foundJobIds.add(`${job.data.installationId}${job.data.jiraHost}`);
 			}
 		}
 
