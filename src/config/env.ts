@@ -40,7 +40,7 @@ const envVars: EnvVars = {
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
-	JIRA_LINK_QUERY_PARAMS: process.env.JIRA_LINK_QUERY_PARAMS,
+	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
 } as EnvVars;
 
@@ -70,7 +70,7 @@ export interface EnvVars {
 	HYDRO_APP_SECRET?: string;
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
-	JIRA_LINK_QUERY_PARAMS?: string,
+	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
 }
