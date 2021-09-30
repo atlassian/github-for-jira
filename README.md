@@ -1,24 +1,31 @@
-# GitHub For Jira 
+# GitHub For Jira
 
 ## About
 
 Connect your Github code with your project management in Jira. A separate Jira subscription is required. With two of your most important tools connected, you'll spend less time managing projects and more time working on them. This integration is an open source project, built and maintained by [Atlassian](https://atlassian.com).
 
 ## Table of Contents
-- [Installation and setup](#installation-and-setup)
-  - [Requirements](#requirements)
-  - [Installation](#installation)
-  - [Connecting your GitHub Organization](#connecting-your-github-organization-to-jira)
-  - [Authorization](#authorization)
-- [Using the integration](#using-the-integration)
-  - [Development information in Jira](#development-information-in-jira)
-  - [Take action using Smart Commits](#take-action-using-smart-commits)
-  - [Link issues in GitHub](#link-issues-in-github)
-  - [Manage Jira Subscriptions](#manage-jira-subscriptions)
-- [Migrating from the DVCS connector](#migrating-from-the-dvcs-connector)
-- [Need help?](#questions-need-help)
-- [Contributing](#contributing)
-- [License](#license)
+- [GitHub For Jira](#github-for-jira)
+  - [About](#about)
+  - [Table of Contents](#table-of-contents)
+  - [Installation and setup](#installation-and-setup)
+    - [Requirements](#requirements)
+    - [Installation from Atlassian](#installation-from-atlassian)
+    - [Installation from GitHub Marketplace](#installation-from-github-marketplace)
+    - [Connecting your GitHub organization to Jira](#connecting-your-github-organization-to-jira)
+      - [Selecting GitHub repositories](#selecting-github-repositories)
+    - [Authorization](#authorization)
+      - [Jira Permission Scopes](#jira-permission-scopes)
+      - [GitHub Permission Scopes](#github-permission-scopes)
+  - [Using the integration](#using-the-integration)
+    - [Development information in Jira](#development-information-in-jira)
+    - [Take action using Smart Commits](#take-action-using-smart-commits)
+    - [Link issues in GitHub](#link-issues-in-github)
+    - [Manage Jira Subscriptions](#manage-jira-subscriptions)
+  - [Migrating from the DVCS connector](#migrating-from-the-dvcs-connector)
+  - [Questions? Need help?](#questions-need-help)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 --------
 
@@ -39,11 +46,10 @@ Next you will need to connect your GitHub organization to Jira, see the followin
 ### Installation from GitHub Marketplace
 1. Go to https://github.com/marketplace/jira-software-github
 2. Complete the (free) order for your GitHub Organization
-3. On the installation setting screen, choose which repositories you want to use with the Jira Integration and press **Save**:
+3. On the installation setting screen, choose which repositories you want to use with the Jira Integration and press **Install**:
 ![image](https://user-images.githubusercontent.com/13207348/46588321-4baf7680-ca68-11e8-872a-a6d48924d655.png)
-4. Once installation completes, you will be redirected to https://jira.github.com/github/setup. Enter the site name for your Jira instance here and click **Continue**
-5. Once on the Atlassian add-on page, click **Install**.
-6. Once the add-on is installed, click the **Get Started** button.
+4. Once installation completes, if we can't detech your Jira site, you will be prompted to enter a url, otherwise you will be redirected to the Jira marketplace to install the GitHub for Jira app.
+5. When you reach the page in marketplace, simply click **Get Started**. 
 
 ### Connecting your GitHub organization to Jira
 As part of the installation flow you should be directed to install the Jira app on GitHub to your organization. You can also manage existing connections or add additional organizations any time within the Manage Add-ons section of your Jira settings:
