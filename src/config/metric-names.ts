@@ -22,8 +22,8 @@ export const queueMetrics = {
 
 export const metricHttpRequest = (metricName?: string) => {
 	return {
-		duration: `${server}.http.server.requestes.duration`, //Duration of incoming HTTP requests
-		executed: `${server}.http.server.requestes`, //Count of executed incoming HTTP requests
+		duration: `${server}.http.server.requests.duration`, //Duration of incoming HTTP requests
+		executed: `${server}.http.server.requests`, //Count of executed incoming HTTP requests
 		github: `${server}.http.request.github`, //Octokit requests execution time histogram
 		jira: `${server}.http.request.jira`, //Jira requests execution time histogram
 		install: `${server}.http.request.install`, //Count how many installation requests we received
