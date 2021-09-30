@@ -146,7 +146,7 @@ router.get(
 );
 
 router.get(
-	"/:installationId/repoSyncState.json",
+	"/:installationId/:jiraHost/repoSyncState.json",
 	check("installationId").isInt(),
 	check("jiraHost").isString(),
 	returnOnValidationError,
@@ -156,8 +156,9 @@ router.get(
 		const jiraHost = req.params.jiraHost;
 
 		if (!jiraHost || !githubInstallationId) {
-			req.log.warn({ req, res }, "Missing Jira Host or Installation ID");
-			res.status(400).send("Missing Jira Host");
+			const msg = "Missing Jira Host or Installation ID";
+			req.log.warn({ req, res }, msg);
+			res.status(400).send(msg);
 			return;
 		}
 
@@ -168,7 +169,7 @@ router.get(
 			);
 
 			if (!subscription) {
-				res.sendStatus(404);
+				res.status(404).send(`No Subscription found for jiraHost "${jiraHost}" and installationId "${githubInstallationId}"`);
 				return;
 			}
 
