@@ -1,23 +1,16 @@
-import { CustomContext } from "./middleware";
 import JiraClient from "../models/jira-client";
 import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { CustomContext } from "./middleware";
 
-export default async (
-	context: CustomContext,
-	_: JiraClient,
-	util
-): Promise<void> => {
+export default async (context: CustomContext, _: JiraClient, util): Promise<void> => {
 	const { issue } = context.payload;
 
 	let linkifiedBody;
 	try {
 		linkifiedBody = await util.unfurl(issue.body);
 		if (!linkifiedBody) {
-			context.log(
-				{ noop: "no_linkified_body_issue" },
-				"Halting further execution for issue since linkifiedBody is empty"
-			);
+			context.log("Halting further execution for issue since linkifiedBody is empty");
 			return;
 		}
 	} catch (err) {
@@ -29,7 +22,7 @@ export default async (
 
 	const editedIssue = context.issue({
 		body: linkifiedBody,
-		id: issue.id,
+		id: issue.id
 	});
 
 	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);

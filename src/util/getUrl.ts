@@ -1,10 +1,10 @@
-interface IUrlParams {
+interface UrlParams {
 	githubHost: string;
 	jwt: string;
 	jiraHost: string;
 }
 
-export const getGitHubConfigurationUrl = (urlParams: IUrlParams): string => {
+export const getGitHubConfigurationUrl = (urlParams: UrlParams): string => {
 	const { githubHost, jwt, jiraHost } = urlParams;
 
 	return `https://${githubHost}/github/configuration?jwt=${jwt}&xdm_e=${jiraHost}`;

@@ -16,21 +16,18 @@ export const queueMetrics = {
 	delayed: `${server}.queue.delayed`,
 	waiting: `${server}.queue.waiting`,
 	paused: `${server}.queue.paused`,
-	repeatable: `${server}.queue.repeatable`,
-}
+	repeatable: `${server}.queue.repeatable`
+};
 
-export const metricHttpRequest = (metricName?: string) => {
-	return {
-		github: `${server}.http.request.github`,
-		jira: `${server}.http.request.jira`,
-		install: `${server}.http.request.install`,
-		uninstall: `${server}.http.request.uninstall`,
-		fullSync: `${server}.http.request.full-sync`,
-		syncPullRequest: `${server}.http.request.sync-pull-request`,
-		hydroSubmission: `${server}.http.request.${metricName}`,
-		jobDuration: `${server}.http.request.job-duration`,
-		requestStatusSync: `${server}.http.request.request-status-syncs`
-	};
+export const metricHttpRequest = {
+	github: `${server}.http.request.github`,
+	jira: `${server}.http.request.jira`,
+	install: `${server}.http.request.install`,
+	uninstall: `${server}.http.request.uninstall`,
+	fullSync: `${server}.http.request.full-sync`,
+	syncPullRequest: `${server}.http.request.sync-pull-request`,
+	jobDuration: `${server}.http.request.job-duration`,
+	requestStatusSync: `${server}.http.request.request-status-syncs`
 };
 
 export const metricSyncStatus = {

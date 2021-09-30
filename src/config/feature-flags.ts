@@ -5,9 +5,9 @@ import crypto from "crypto";
 
 const logger = getLogger("feature-flags");
 
-const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY, {
-	logger,
-	offline: !envVars.LAUNCHDARKLY_KEY
+const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
+	offline: !envVars.LAUNCHDARKLY_KEY,
+	logger
 });
 
 export enum BooleanFlags {
@@ -42,7 +42,7 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 	return {
 		key: hash.digest("hex")
 	};
-}
+};
 
 const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags, defaultValue: boolean | string, jiraHost?: string): Promise<boolean | string> => {
 	try {
@@ -50,10 +50,10 @@ const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags, defaultVal
 		const user = createLaunchdarklyUser(jiraHost);
 		return launchdarklyClient.variation(flag, user, defaultValue);
 	} catch (err) {
-		logger.error({flag, err}, "Error resolving value for feature flag");
+		logger.error({ flag, err }, "Error resolving value for feature flag");
 		return defaultValue;
 	}
-}
+};
 
 export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jiraHost?: string): Promise<boolean> =>
 	Boolean(await getLaunchDarklyValue(flag, defaultValue, jiraHost));

@@ -11,7 +11,7 @@ if (!process.env.STORAGE_SECRET) {
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
-InstallationModel?.init(
+InstallationModel.init(
 	{
 		jiraHost: DataTypes.STRING,
 		secrets: encrypted.vault("secrets"),
@@ -28,7 +28,7 @@ InstallationModel?.init(
 	{ sequelize }
 );
 
-SubscriptionModel?.init(
+SubscriptionModel.init(
 	{
 		gitHubInstallationId: DataTypes.INTEGER,
 		jiraHost: DataTypes.STRING,
