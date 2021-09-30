@@ -1,8 +1,8 @@
 import { GitHubAPI } from "probot";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../../jira/util/isEmpty";
 import { getJiraAuthor } from "../../util/jira";
-import { getGithubUser } from "../../services/github/getGithubUser";
+import { getGithubUser } from "../../services/github/user";
+import _ from "lodash";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {
@@ -20,7 +20,7 @@ export default async (payload, github: GitHubAPI) => {
 		`${pullRequest.title}\n${pullRequest.head.ref}`
 	);
 
-	if (isEmpty(issueKeys)) {
+	if (_.isEmpty(issueKeys)) {
 		return undefined;
 	}
 

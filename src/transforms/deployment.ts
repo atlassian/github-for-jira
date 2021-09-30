@@ -62,12 +62,12 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (context: Context): Promise<JiraDeploymentData> => {
+export default async (context: Context): Promise<JiraDeploymentData | undefined> => {
 	const { github, payload: { deployment_status, deployment } } = context;
 	const { data: { commit: { message } } } = await github.repos.getCommit(context.repo({ ref: deployment.sha }));
-	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`);
+	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`) || [];
 
-	if (!issueKeys) {
+	if (_.isEmpty(issueKeys)) {
 		return undefined;
 	}
 

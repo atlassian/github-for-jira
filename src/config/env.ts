@@ -2,17 +2,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { LogLevelString } from "bunyan";
 import { getNodeEnv, isNodeTest } from "../util/isNodeEnv";
-
-export enum EnvironmentEnum {
-	test = "test",
-	development = "development",
-	production = "production",
-}
-
-export enum BooleanEnum {
-	true = "true",
-	false = "false",
-}
+import { EnvironmentEnum } from "../interfaces/common";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 
@@ -26,6 +16,7 @@ if (env.error && nodeEnv !== EnvironmentEnum.production) {
 	throw env.error;
 }
 
+// TODO: Use whitelist proxy instead
 const getProxyFromEnvironment = (): string | undefined => {
 	const proxy = process.env.WHITELIST_PROXY;
 	return proxy ? `http://${proxy}` : undefined;
@@ -63,9 +54,6 @@ export interface EnvVars {
 	WEBHOOK_PROXY_URL: string;
 	TUNNEL_PORT?: string;
 	TUNNEL_SUBDOMAIN?: string;
-	TRACKING_DISABLED?: BooleanEnum;
-	HYDRO_BASE_URL?: string;
-	HYDRO_APP_SECRET?: string;
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
 	PROXY?: string,

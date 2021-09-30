@@ -1,8 +1,8 @@
-import Sequelize, { Op } from "sequelize";
-import { queues } from "../worker/main";
+import Sequelize, { Op, WhereOptions } from "sequelize";
 import { Job } from "bull";
 import _ from "lodash";
 import logger from "../config/logger";
+import { queues } from "../worker/queues";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -32,9 +32,10 @@ export interface RepositoryData {
 	pullStatus?: TaskStatus;
 	branchStatus?: TaskStatus;
 	commitStatus?: TaskStatus;
-	lastBranchCursor?: string | number;
-	lastCommitCursor?: string | number;
-	lastPullCursor?: string | number;
+	lastBranchCursor?: string;
+	lastCommitCursor?: string;
+	lastPullCursor?: number;
+
 	// TODO: need to get concrete typing
 	[key: string]: unknown;
 }
@@ -87,7 +88,7 @@ export default class Subscription extends Sequelize.Model {
 		inactiveForSeconds?: number
 	): Promise<Subscription[]> {
 
-		const andFilter = [];
+		const andFilter: WhereOptions[] = [];
 
 		if (statusTypes?.length > 0) {
 			andFilter.push({
@@ -137,7 +138,7 @@ export default class Subscription extends Sequelize.Model {
 	static getSingleInstallation(
 		jiraHost: string,
 		gitHubInstallationId: number
-	): Promise<Subscription> {
+	): Promise<Subscription | null> {
 		return Subscription.findOne({
 			where: {
 				jiraHost,
@@ -149,7 +150,7 @@ export default class Subscription extends Sequelize.Model {
 	static async getInstallationForClientKey(
 		clientKey: string,
 		installationId: string
-	): Promise<Subscription> {
+	): Promise<Subscription | null> {
 		return Subscription.findOne({
 			where: {
 				jiraClientKey: clientKey,
@@ -214,7 +215,7 @@ export default class Subscription extends Sequelize.Model {
 	 * Returns array with sync status counts. [ { syncStatus: 'COMPLETED', count: 123 }, ...]
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
-		const [results] = await this.sequelize.query(
+		const [results] = await this.sequelize?.query(
 			`SELECT "syncStatus", COUNT(*)
 			 FROM "Subscriptions"
 			 GROUP BY "syncStatus"`
