@@ -40,6 +40,7 @@ const envVars: EnvVars = {
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
+	ALT_ORIGIN: process.env.ALT_ORIGIN,
 	PROXY: getProxyFromEnvironment(),
 } as EnvVars;
 
@@ -69,6 +70,7 @@ export interface EnvVars {
 	HYDRO_APP_SECRET?: string;
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
+	ALT_ORIGIN?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
 }
