@@ -62,6 +62,8 @@ const viewerPermissionQuery = `{
 }
 `;
 
+router.use(elapsedTimeMetrics("/api/*"))
+
 router.use(rateLimit({
 	store: new RedisStore({
 		client: new Redis(getRedisInfo("express-rate-limit"))
@@ -138,7 +140,6 @@ router.use(
 
 router.get(
 	"/",
-	elapsedTimeMetrics,
 	(_: Request, res: Response): void => {
 		res.send({});
 	}
@@ -148,7 +149,6 @@ router.get(
 	"/:installationId/repoSyncState.json",
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
 
@@ -176,7 +176,6 @@ router.post(
 	bodyParser,
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
 		req.log.info(req.body);
@@ -210,7 +209,6 @@ router.post(
 router.post(
 	"/resync",
 	bodyParser,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
@@ -236,7 +234,6 @@ router.post(
 router.post(
 	"/dedupInstallationQueue",
 	bodyParser,
-	elapsedTimeMetrics,
 	async (_: Request, res: Response): Promise<void> => {
 
 		// This remove all jobs from the queue. This way,
@@ -271,7 +268,6 @@ router.post(
 router.post(
 	"/requeue",
 	bodyParser,
-	elapsedTimeMetrics,
 	async (request: Request, res: Response): Promise<void> => {
 
 		const queueName = request.body.queue;   // "installation", "push", "metrics", or "discovery"
@@ -317,8 +313,7 @@ router.get(
 			check("clientKeyOrJiraHost").isURL(),
 			check("clientKeyOrJiraHost").isHexadecimal()
 		]),
-		returnOnValidationError,
-		elapsedTimeMetrics
+		returnOnValidationError
 	],
 	async (req: Request, res: Response): Promise<void> => {
 		const where = req.params.clientKeyOrJiraHost.startsWith("http")
@@ -340,7 +335,6 @@ router.post(
 	bodyParser,
 	check("clientKey").isHexadecimal(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (request: Request, response: Response): Promise<void> => {
 		response.locals.installation = await Installation.findOne({
 			where: { clientKey: request.params.clientKey }
@@ -376,7 +370,6 @@ router.post(
 	bodyParser,
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, response: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const installation = await Installation.findByPk(installationId);
@@ -406,7 +399,6 @@ router.get(
 	"/:installationId",
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const { client } = res.locals;

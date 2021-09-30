@@ -13,7 +13,7 @@ const cache = new Redis(getRedisInfo("ping"));
  *
  * It's a race between the setTimeout and our ping + authenticate.
  */
-router.get("/deepcheck", elapsedTimeMetrics, async (_, res: Response) => {
+router.get("/deepcheck", elapsedTimeMetrics("/deepcheck"), async (_, res: Response) => {
 	const logger = getLogger("deepcheck");
 	const timeout = 5000;
 
@@ -43,7 +43,7 @@ router.get("/deepcheck", elapsedTimeMetrics, async (_, res: Response) => {
  * /healtcheck endpoint to check that the app started properly
  */
 const healthcheckLogger = getLogger("healthcheck");
-router.get("/healthcheck", elapsedTimeMetrics, async (_, res: Response) => {
+router.get("/healthcheck", elapsedTimeMetrics("/healthcheck"), async (_, res: Response) => {
 	healthcheckLogger.info("Successfully called /healthcheck.");
 	return res.status(200).send("OK");
 });

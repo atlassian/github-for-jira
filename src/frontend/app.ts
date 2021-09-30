@@ -29,7 +29,7 @@ import api from "../api";
 import healthcheck from "./healthcheck";
 import logMiddleware from "../middleware/log-middleware";
 import { App } from "@octokit/app";
-import statsd, { elapsedTimeMetrics } from "../config/statsd";
+import statsd, {elapsedTimeMetrics} from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
@@ -130,19 +130,22 @@ export default (octokitApp: App): Express => {
 		syncStatus === "COMPLETE" ? "Connected" : "Connect"
 	);
 
-	app.use("/public", express.static(path.join(rootPath, "static")));
+	app.use("/public", elapsedTimeMetrics("/public/*"), express.static(path.join(rootPath, "static")));
 	app.use(
 		"/public/css-reset",
+		elapsedTimeMetrics("/public/*"),
 		express.static(
 			path.join(rootPath, "node_modules/@atlaskit/css-reset/dist")
 		)
 	);
 	app.use(
 		"/public/primer",
+		elapsedTimeMetrics("/public/*"),
 		express.static(path.join(rootPath, "node_modules/primer/build"))
 	);
 	app.use(
 		"/public/atlassian-ui-kit",
+		elapsedTimeMetrics("/public/*"),
 		express.static(
 			path.join(rootPath, "node_modules/@atlaskit/reduced-ui-pack/dist")
 		)
@@ -165,7 +168,7 @@ export default (octokitApp: App): Express => {
 	app.use("/", oauth.router);
 
 	// Atlassian Marketplace Connect
-	app.get("/jira/atlassian-connect.json", getJiraConnect);
+	app.get("/jira/atlassian-connect.json", elapsedTimeMetrics(), getJiraConnect);
 
 	// Maintenance mode view
 	app.use(async (req, res, next) => {
@@ -175,81 +178,81 @@ export default (octokitApp: App): Express => {
 		next();
 	});
 
-	app.get("/maintenance", csrfProtection, getMaintenance);
+	app.get("/maintenance", elapsedTimeMetrics(), csrfProtection, getMaintenance);
 
 	app.get(
 		"/github/setup",
+		elapsedTimeMetrics(),
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		getGitHubSetup
 	);
 
 	app.post(
 		"/github/setup",
+		elapsedTimeMetrics(),
 		csrfProtection,
-		elapsedTimeMetrics,
 		postGitHubSetup
 	);
 
 	app.get(
 		"/github/configuration",
+		elapsedTimeMetrics(),
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		getGitHubConfiguration
 	);
 
 	app.post(
 		"/github/configuration",
+		elapsedTimeMetrics(),
 		csrfProtection,
-		elapsedTimeMetrics,
 		postGitHubConfiguration
 	);
 
 	app.get(
 		"/github/installations",
+		elapsedTimeMetrics(),
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		listGitHubInstallations
 	);
 
 	app.get(
 		"/github/subscriptions/:installationId",
+		elapsedTimeMetrics(),
 		csrfProtection,
-		elapsedTimeMetrics,
 		getGitHubSubscriptions
 	);
 
 	app.post(
 		"/github/subscription",
+		elapsedTimeMetrics(),
 		csrfProtection,
-		elapsedTimeMetrics,
 		deleteGitHubSubscription
 	);
 
 	app.get(
 		"/jira/configuration",
+		elapsedTimeMetrics(),
 		csrfProtection,
 		verifyJiraJwtTokenMiddleware,
-		elapsedTimeMetrics,
 		getJiraConfiguration
 	);
 
 	app.delete(
 		"/jira/configuration",
+		elapsedTimeMetrics(),
 		verifyJiraContextJwtTokenMiddleware,
-		elapsedTimeMetrics,
 		deleteJiraConfiguration
 	);
 
-	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, elapsedTimeMetrics, retrySync);
+	app.post("/jira/sync",elapsedTimeMetrics(), verifyJiraContextJwtTokenMiddleware, retrySync);
 	// Set up event handlers
-	app.post("/jira/events/disabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
-	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
-	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
-	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
+	app.post("/jira/events/disabled", elapsedTimeMetrics(), extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
+	app.post("/jira/events/enabled", elapsedTimeMetrics(), extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
+	app.post("/jira/events/installed", elapsedTimeMetrics(), authenticateInstallCallback, postJiraInstall);
+	app.post("/jira/events/uninstalled", elapsedTimeMetrics(), extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
 
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});

@@ -12,7 +12,7 @@ import getRedisInfo from "../config/redis-info";
 import app, { probot } from "./app";
 import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
 import SentryScopeProxy from "../models/sentry-scope-proxy";
-import { metricHttpRequest, queueMetrics, metricError } from "../config/metric-names";
+import { queueMetrics, metricError } from "../config/metric-names";
 import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
 import "../config/proxy";
@@ -25,7 +25,7 @@ const subscriber = new Redis(getRedisInfo("subscriber"));
 const logger = getLogger("worker.main");
 
 function measureElapsedTime(job: Queue.Job, tags) {
-	statsd.histogram(metricHttpRequest().jobDuration, job.finishedOn - job.processedOn, tags);
+	statsd.histogram(queueMetrics.jobDuration, job.finishedOn - job.processedOn, tags);
 }
 
 const getQueueOptions = (timeout: number): QueueOptions => {

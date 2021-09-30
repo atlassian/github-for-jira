@@ -2,6 +2,7 @@ import { StatsCb, StatsD, Tags } from "hot-shots";
 import { getLogger } from "./logger";
 import { NextFunction, Request, Response } from "express";
 import { isNodeDev, isNodeTest } from "../util/isNodeEnv";
+import {metricHttpRequest} from "./metric-names";
 
 export const globalTags = {
 	environment: isNodeTest() ? "test" : process.env.MICROS_ENV,
@@ -10,6 +11,7 @@ export const globalTags = {
 	region: process.env.MICROS_AWS_REGION || "localhost"
 };
 
+const RESPONSE_TIME_HISTOGRAM_BUCKETS =	"100_1000_2000_3000_5000_10000_30000_60000";
 const logger = getLogger("config.statsd");
 
 const statsd = new StatsD({
@@ -42,17 +44,38 @@ function hrtimer() {
 	};
 }
 
-export const elapsedTimeMetrics = (
+/**
+ * Returns a middleware function which produce duration and requests count metrics
+ * @param path The value of the "path" tag. If not set then the rout path will be used
+ */
+export const elapsedTimeMetrics = (path?: string) => (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
 	const elapsedTimeInMs = hrtimer();
-	const { path, method } = req;
-	const tags = { path, method };
+	const method = req.method;
+	const pathTag = path || req.route?.path || "unknown";
 
 	res.once("finish", () => {
-		statsd.histogram("elapsedTimeInMs", elapsedTimeInMs(), tags);
+
+		const elapsedTime = elapsedTimeInMs();
+		const statusCode  = `${res.statusCode}`;
+		const tags = { path: pathTag, method,  statusCode};
+		(req.log || logger).debug(`Request executed in ${elapsedTime} with status ${statusCode} path ${pathTag}`)
+
+		//Count response time metric
+		statsd.histogram(metricHttpRequest().duration, elapsedTime, tags);
+
+		//Publish bucketed histogram metric for the call duration
+		statsd.histogram(metricHttpRequest().duration, elapsedTime,
+			{...tags,
+				gsd_histogram: RESPONSE_TIME_HISTOGRAM_BUCKETS
+			}
+		);
+
+		//Count requests count
+		statsd.increment(metricHttpRequest().executed, tags)
 	});
 
 	next();
