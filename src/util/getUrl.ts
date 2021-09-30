@@ -11,7 +11,7 @@ export const getGitHubConfigurationUrl = (urlParams: IUrlParams): string => {
 };
 
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
-	`https://${jiraHost}/plugins/servlet/upm/marketplace/plugins/com.github.integration.production`;
+	`${jiraHost}/plugins/servlet/ac/com.atlassian.jira.emcee/discover/app/com.github.integration.production#!/discover/app/com.github.integration.production`;
 
 export const getJiraHostFromRedirectUrl = (url: string): string => {
 	try {
