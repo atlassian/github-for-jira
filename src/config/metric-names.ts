@@ -4,7 +4,9 @@ const server = "app.server";
 export const metricError = {
 	expressRateLimited: `${server}.error.express-rate-limited`,
 	githubErrorRendered: `${frontend}.error.github-error-rendered`,
-	failedConnection: `${server}.error.failed-connection`
+	failedConnection: `${server}.error.failed-connection`,
+	queueError: `${server}.error.queue-error`,
+	queueFailed: `${server}.error.queue-failed`
 };
 
 export const queueMetrics = {
@@ -42,7 +44,9 @@ export const metricTaskStatus = {
 };
 
 export const metricWebhooks = {
-	webhookEvent: `${server}.webhooks.webhook-events`
+	webhookEvent: `${server}.webhooks.webhook-events`,
+	webhookProcessingTimes: `${server}.webhooks.processing-time.duration-ms`,
+	webhookLatency: `${server}.webhooks.processing-time.latency`,
 };
 
 export const pageRendered = {
