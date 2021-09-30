@@ -1,6 +1,5 @@
 import Keygrip from "keygrip";
 import supertest from "supertest";
-import testTracking from "../../setup/tracking";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/models";
 import FrontendApp from "../../../src/frontend/app";
@@ -34,7 +33,7 @@ describe("Frontend", () => {
 
 	function getCookieHeader(fixture): string[] {
 		const cookie = Buffer.from(JSON.stringify(fixture)).toString("base64");
-		const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET]);
+		const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET || ""]);
 
 		return [
 			`session=${cookie};session.sig=${keygrip.sign(`session=${cookie}`)};`
@@ -164,8 +163,6 @@ describe("Frontend", () => {
 				githubNock
 					.get("/orgs/test-org/memberships/admin-user")
 					.reply(200, organizationAdminResponse);
-
-				await testTracking();
 
 				const jiraClientKey = "a-unique-client-key";
 

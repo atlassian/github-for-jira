@@ -22,7 +22,7 @@ describe.skip("sync/branches", () => {
 	const branchNoIssueKeys = require("../../fixtures/api/graphql/branch-no-issue-keys.json");
 
 	function makeExpectedResponse({ branchName }) {
-		const issueKeys = issueKeyParser().parse(branchName);
+		const issueKeys = issueKeyParser().parse(branchName) || [];
 
 		return {
 			preventTransitions: true,

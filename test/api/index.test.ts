@@ -1,15 +1,17 @@
 import supertest from "supertest";
-import {Subscription} from "../../src/models";
 import express, {NextFunction, Request, Response} from "express";
 import Logger from "bunyan";
 import api from "../../src/api";
+import SubscriptionModel from "../../src/models/subscription";
+import { Subscription } from "../../src/models";
 
-describe('api/index', () => {
+describe("api/index", () => {
+	let sub:SubscriptionModel;
 	beforeEach(async () => {
-		await Subscription.create({
+		sub = await Subscription.create({
 			gitHubInstallationId: 123,
-			jiraHost: 'http://blah.com',
-			jiraClientKey: 'myClientKey',
+			jiraHost: "http://blah.com",
+			jiraClientKey: "myClientKey",
 			repoSyncState: {
 				installationId: 123
 			},
@@ -48,16 +50,16 @@ describe('api/index', () => {
 				level: "debug",
 				stream: process.stdout
 			});
-			req.session = { jiraHost: 'http://blah.com' };
+			req.session = { jiraHost: "http://blah.com" };
 			next();
 		});
 		app.use("/api", api);
 		return app;
 	};
 
-	test('GET repoSyncState.json', async () => {
+	test("GET repoSyncState.json", async () => {
 		await supertest(await createApp())
-			.get("/api/123/repoSyncState.json")
+			.get(`/api/${sub.gitHubInstallationId}/${encodeURIComponent(sub.jiraHost)}/repoSyncState.json`)
 			.set("Authorization", "Bearer xxx")
 			.then((response) => {
 				expect(response.text).toStrictEqual("{\"installationId\":123}");

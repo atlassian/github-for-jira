@@ -1,10 +1,10 @@
 import transformPullRequest from "../transforms/pull-request";
 import issueKeyParser from "jira-issue-key-parser";
 
-import { isEmpty } from "../jira/util/isEmpty";
 import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import _ from "lodash";
 
 export default async (
 	context: CustomContext,
@@ -53,7 +53,7 @@ export default async (
 	if (!jiraPayload && changes?.title) {
 		const issueKeys = issueKeyParser().parse(changes?.title?.from);
 
-		if (!isEmpty(issueKeys)) {
+		if (!_.isEmpty(issueKeys)) {
 			context.log.info(
 				{ issueKeys },
 				"Sending pullrequest delete event for issue keys"

@@ -48,7 +48,7 @@ function mapPullRequests(pull_requests: GitHubPullRequest[]): JiraPullRequest[] 
 	));
 }
 
-export default (context: Context): JiraBuildData => {
+export default (context: Context): JiraBuildData | undefined => {
 	const { workflow_run, workflow } = context.payload;
 	const issueKeys = issueKeyParser().parse(`${workflow_run.head_branch}\n${workflow_run.head_commit.message}`);
 
