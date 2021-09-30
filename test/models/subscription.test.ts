@@ -16,9 +16,7 @@ describe("Subscription", () => {
 	});
 
 	afterEach(async () => {
-		await Promise.all(await Subscription.findAll().map(
-			sub => sub.destroy()
-		));
+		await Subscription.destroy({where: {gitHubInstallationId: 123}})
 	});
 
 	describe("updateSyncState", () => {

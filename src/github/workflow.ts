@@ -1,14 +1,33 @@
 import transformWorkflow from "../transforms/workflow";
-import { Context } from "probot/lib/context";
+import { CustomContext } from "./middleware";
+import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
-export default async (context: Context, jiraClient): Promise<void> => {
-	const jiraPayload = await transformWorkflow(context);
+export default async (context: CustomContext, jiraClient): Promise<void> => {
+	const jiraPayload = transformWorkflow(context);
 
 	if (!jiraPayload) {
-		context.log({noop: "no_jira_payload_workflow_run"}, "Halting further execution for workflow since jiraPayload is empty");
+		context.log(
+			{ noop: "no_jira_payload_workflow_run" },
+			"Halting further execution for workflow since jiraPayload is empty"
+		);
 		return;
 	}
 
-	context.log(`Sending workflow event to Jira: ${jiraClient.baseURL}`)
-	await jiraClient.workflow.submit(jiraPayload);
+	context.log(`Sending workflow event to Jira: ${jiraClient.baseURL}`);
+
+	const jiraResponse = await jiraClient.workflow.submit(jiraPayload);
+	const { webhookReceived, name, log } = context;
+
+	if (
+		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
+		webhookReceived
+	) {
+		emitWebhookProcessingTimeMetrics(
+			webhookReceived,
+			name,
+			log,
+			jiraResponse?.status
+		);
+	}
 };

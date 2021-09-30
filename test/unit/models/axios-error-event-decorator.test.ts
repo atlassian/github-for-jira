@@ -66,7 +66,7 @@ describe("AxiosErrorDecorator", () => {
 		beforeEach(async () => {
 			nock("https://www.example.com")
 				.get("/foo/bar?hi=hello")
-				.reply(403, undefined, { "X-Request-Id": "abcdef" });
+				.reply(403, undefined, { "X-Request-Id": "abcdef", "Content-Type": "application/json" });
 			const error = await axios
 				.get("https://www.example.com/foo/bar", { params: { hi: "hello" } })
 				.catch((error) => Promise.resolve(error));

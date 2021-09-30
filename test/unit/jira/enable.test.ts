@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import enable from "../../../src/jira/enable";
 import { Installation } from "../../../src/models";
 import { mocked } from "ts-jest/utils";

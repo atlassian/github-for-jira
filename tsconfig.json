@@ -1,13 +1,13 @@
 {
-  "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "allowJs": true,
-    "importHelpers": true,
-    "jsx": "react",
-    "alwaysStrict": true,
+	"compilerOptions": {
+		"target": "es6",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"allowSyntheticDefaultImports": true,
+		"allowJs": true,
+		"importHelpers": true,
+		"jsx": "react",
+		"alwaysStrict": true,
 		"strictNullChecks": true,
 		"strictBindCallApply": true,
 		"strictFunctionTypes": true,
@@ -19,11 +19,11 @@
 		"noUnusedParameters": true,
 		"noImplicitAny": false,
 		"noImplicitThis": false,
-    "esModuleInterop": true,
-    "outDir": "build",
-  },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ]
+		"esModuleInterop": true,
+		"outDir": "build"
+	},
+	"include": [
+		"src/**/*",
+		"test/**/*"
+	]
 }

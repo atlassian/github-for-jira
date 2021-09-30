@@ -14,7 +14,7 @@ import uninstall from "../jira/uninstall";
 import { serializeJiraInstallation, serializeSubscription } from "./serializers";
 import getRedisInfo from "../config/redis-info";
 import { elapsedTimeMetrics } from "../config/statsd";
-import { queues } from "../worker/main";
+import { queues } from "../worker/queues";
 import { getLogger } from "../config/logger";
 import { Job, Queue } from "bull";
 import { WhereOptions } from "sequelize";
@@ -146,12 +146,21 @@ router.get(
 );
 
 router.get(
-	"/:installationId/repoSyncState.json",
+	"/:installationId/:jiraHost/repoSyncState.json",
 	check("installationId").isInt(),
+	check("jiraHost").isString(),
 	returnOnValidationError,
 	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
+		const jiraHost = req.params.jiraHost;
+
+		if (!jiraHost || !githubInstallationId) {
+			const msg = "Missing Jira Host or Installation ID";
+			req.log.warn({ req, res }, msg);
+			res.status(400).send(msg);
+			return;
+		}
 
 		try {
 			if (!req.session.jiraHost) {
@@ -161,17 +170,16 @@ router.get(
 			}
 
 			const subscription = await Subscription.getSingleInstallation(
-				req.session.jiraHost,
+				jiraHost,
 				githubInstallationId
 			);
 
 			if (!subscription) {
-				res.sendStatus(404);
+				res.status(404).send(`No Subscription found for jiraHost "${jiraHost}" and installationId "${githubInstallationId}"`);
 				return;
 			}
 
-			const data = subscription.repoSyncState;
-			res.json(data);
+			res.json(subscription.repoSyncState);
 		} catch (err) {
 			res.status(500).json(err);
 		}
@@ -229,8 +237,10 @@ router.post(
 		const limit = Number(req.body.limit) || undefined;
 		// Needed for 'pagination'
 		const offset = Number(req.body.offset) || 0;
+		// only resync installations whose "updatedAt" date is older than x seconds
+		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
 
-		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit);
+		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
 			Subscription.findOrStartSync(subscription, syncType)
@@ -250,7 +260,7 @@ router.post(
 		// the whole queue will be drained and all jobs will be readded.
 		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
 		const foundInstallationIds = new Set<number>();
-		const duplicateJobs:Job[] = [];
+		const duplicateJobs: Job[] = [];
 
 		// collecting duplicate jobs per installation
 		for (const job of jobs) {
@@ -266,7 +276,7 @@ router.post(
 		}
 
 		// removing duplicate jobs
-		await Promise.all(duplicateJobs.map((job) => {
+		await Promise.all(duplicateJobs.map((job: Job) => {
 			logger.info({ job }, "removing duplicate job");
 			job.remove();
 		}));

@@ -36,7 +36,7 @@ export interface JiraCommit {
 	id: string;
 	issueKeys: string[];
 	message: string;
-	url: string;
+	url?: string;
 	updateSequenceId: number;
 	files?: JiraCommitFile[];
 	flags?: string[];
@@ -48,6 +48,15 @@ export interface JiraCommitFile {
 	linesAdded: number;
 	linesRemoved: number;
 	url: string;
+}
+
+export interface JiraIssue {
+	id: string;
+	self: string;
+	key: string;
+	fields:{
+		summary: string;
+	};
 }
 
 export interface JiraAuthor {

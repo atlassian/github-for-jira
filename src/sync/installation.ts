@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus } from "../models/subscription";
+import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus, TaskStatus } from "../models/subscription";
 import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
@@ -9,11 +9,11 @@ import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
 import { Application, GitHubAPI } from "probot";
-import { metricHttpRequest, metricSyncStatus } from "../config/metric-names";
+import { metricHttpRequest, metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import { getLogger } from "../config/logger";
 import Queue from "bull";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
-import { Queues } from "../worker/main";
+import { Queues } from "../worker/queues";
 
 const logger = getLogger("sync.installation");
 
@@ -36,6 +36,11 @@ type TaskType = "pull" | "commit" | "branch";
 
 const taskTypes = Object.keys(tasks) as TaskType[];
 
+// TODO: why are we ignoring failed status as completed?
+const taskStatusCompleted: TaskStatus[] = ["complete", "failed"];
+const isAllTasksStatusesCompleted = (...statuses: (TaskStatus | undefined)[]): boolean =>
+	statuses.every(status => !!status && taskStatusCompleted.includes(status));
+
 const updateNumberOfReposSynced = async (
 	repos: Repositories,
 	subscription: SubscriptionClass
@@ -45,14 +50,10 @@ const updateNumberOfReposSynced = async (
 		return;
 	}
 
-	const syncedRepos = repoIds.filter((id) => {
+	const syncedRepos = repoIds.filter((id: string) => {
 		// all 3 statuses need to be complete for a repo to be fully synced
 		const { pullStatus, branchStatus, commitStatus } = repos[id];
-		return (
-			pullStatus === "complete" &&
-			branchStatus === "complete" &&
-			commitStatus === "complete"
-		);
+		return isAllTasksStatusesCompleted(pullStatus, branchStatus, commitStatus);
 	});
 
 	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
@@ -80,28 +81,28 @@ const getNextTask = async (subscription: SubscriptionClass): Promise<Task | unde
 
 	for (const [repositoryId, repoData] of sortedRepos(repos)) {
 		const task = taskTypes.find(
-			(taskType) => repoData[getStatusKey(taskType)] !== "complete"
+			(taskType) => repoData[getStatusKey(taskType)] === undefined || repoData[getStatusKey(taskType)] === "pending"
 		);
 		if (!task) continue;
 		const { repository, [getCursorKey(task)]: cursor } = repoData;
 		return {
 			task,
 			repositoryId,
-			repository,
+			repository: repository as Repository,
 			cursor: cursor as string
 		};
 	}
 	return undefined;
 };
 
-interface Task {
-	task: string;
+export interface Task {
+	task: TaskType;
 	repositoryId: string;
 	repository: Repository;
-	cursor: string;
+	cursor?: string;
 }
 
-const upperFirst = (str) =>
+const upperFirst = (str: string) =>
 	str.substring(0, 1).toUpperCase() + str.substring(1);
 const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
@@ -110,7 +111,7 @@ const updateJobStatus = async (
 	queues,
 	job: Queue.Job,
 	edges: any[] | undefined,
-	task,
+	task: TaskType,
 	repositoryId: string
 ) => {
 	const { installationId, jiraHost } = job.data;
@@ -122,7 +123,9 @@ const updateJobStatus = async (
 
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
-		logger.info({ job, task }, "Organization has been deleted. Other active syncs will continue.");
+		// Include job and task in any micros env logs, exclude from local
+		const loggerObj = process.env.MICROS_ENV ? { job, task } : {};
+		logger.info(loggerObj, "Organization has been deleted. Other active syncs will continue.");
 		return;
 	}
 
@@ -168,7 +171,7 @@ const updateJobStatus = async (
 		if (startTime) {
 			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
 			// startTime will be passed in when this sync job is queued from the discovery
-			statsd.histogram(metricHttpRequest().fullSync, timeDiff);
+			statsd.histogram(metricHttpRequest.fullSync, timeDiff);
 		}
 
 		logger.info({ job, task, startTime, endTime, timeDiff }, "Sync status is complete");
@@ -216,7 +219,7 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 // Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources
 // - GraphqlError: https://github.com/octokit/graphql.js/tree/master#errors
 // - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
-export const handleNotFoundErrors = (
+export const isNotFoundError = (
 	err: any,
 	job: any,
 	nextTask: Task
@@ -235,7 +238,6 @@ export const handleNotFoundErrors = (
 	return isNotFoundError;
 };
 
-// TODO: type queues
 export const processInstallation = (app: Application, queues: Queues) =>
 	async (job): Promise<void> => {
 		const { installationId, jiraHost } = job.data;
@@ -366,6 +368,9 @@ export const processInstallation = (app: Application, queues: Queues) =>
 				task,
 				repositoryId
 			);
+
+			statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`]);
+
 		} catch (err) {
 			const rateLimit = Number(err?.headers?.["x-ratelimit-reset"]);
 			const delay = Math.max(Date.now() - rateLimit * 1000, 0);
@@ -395,22 +400,39 @@ export const processInstallation = (app: Application, queues: Queues) =>
 			}
 
 			// Continue sync when a 404/NOT_FOUND is returned
-			if (handleNotFoundErrors(err, job, nextTask)) {
+			if (isNotFoundError(err, job, nextTask)) {
 				const edgesLeft = []; // No edges left to process since the repository doesn't exist
 				await updateJobStatus(queues, job, edgesLeft, task, repositoryId);
 				return;
 			}
 
-			await subscription.update({ syncStatus: "FAILED" });
+			if (await booleanFlag(BooleanFlags.CONTINUE_SYNC_ON_ERROR, false, jiraHost)) {
 
-			const host = subscription.jiraHost || "none";
-			logger.warn({ job, task: nextTask, err, jiraHost: host }, "Sync failed");
+				// TODO: add the jiraHost to the logger with logger.child()
+				const host = subscription.jiraHost || "none";
+				logger.warn({ job, task: nextTask, err, jiraHost: host }, "Task failed, continuing with next task");
 
-			job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
-			job.sentry.captureException(err);
+				// marking the current task as failed
+				await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
 
-			statsd.increment(metricSyncStatus.failed);
+				statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
 
-			throw err;
+				// queueing the job again to pick up the next task
+				queues.installation.add(job.data);
+			} else {
+
+				await subscription.update({ syncStatus: "FAILED" });
+
+				// TODO: add the jiraHost to the logger with logger.child()
+				const host = subscription.jiraHost || "none";
+				logger.warn({ job, task: nextTask, err, jiraHost: host }, "Sync failed");
+
+				job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
+				job.sentry.captureException(err);
+
+				statsd.increment(metricSyncStatus.failed);
+
+				throw err;
+			}
 		}
 	};

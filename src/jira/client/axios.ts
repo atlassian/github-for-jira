@@ -219,7 +219,7 @@ const instrumentRequest = (response) => {
 		status: response.status
 	};
 
-	statsd.histogram(metricHttpRequest().jira, requestDurationMs, tags);
+	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
 
 	return response;
 };

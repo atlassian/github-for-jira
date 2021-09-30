@@ -2,12 +2,12 @@
 
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../../src/models";
-import { createWebhookApp } from "../../utils/probot";
 import { Application } from "probot";
 import createJob from "../../setup/create-job";
 import { processInstallation } from "../../../src/sync/installation";
 import nock from "nock";
 import { RepoSyncState } from "../../../src/models/subscription";
+import { createWebhookApp } from "../../utils/probot";
 
 jest.mock("../../../src/models");
 

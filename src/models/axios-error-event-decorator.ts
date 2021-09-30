@@ -31,7 +31,7 @@ export default class AxiosErrorEventDecorator {
 		return new AxiosErrorEventDecorator(event, hint).decorate();
 	}
 
-	validError() {
+	validError(): boolean {
 		return this.error && this.response && this.request;
 	}
 
@@ -48,13 +48,12 @@ export default class AxiosErrorEventDecorator {
 	}
 
 	requestMetadata() {
-		const body = this.response?.config?.data;
 		return {
 			method: this.request?.method,
 			path: this.request?.path,
 			host: this.request?.getHeader("host"),
 			headers: this.request?.getHeaders(),
-			body: this.parseRequestBody(body)
+			body: this.parseRequestBody(this.response?.config?.data)
 		};
 	}
 
@@ -62,7 +61,7 @@ export default class AxiosErrorEventDecorator {
 		return {
 			status: this.response?.status,
 			headers: this.response?.headers,
-			body: this.response?.data?.toString().slice(0, 255)
+			body: this.response?.data ? this.response.data.toString().slice(0, 255) : undefined
 		};
 	}
 
@@ -95,7 +94,7 @@ export default class AxiosErrorEventDecorator {
 
 	isJsonRequest() {
 		return this.request
-			.getHeader("content-type")
-			.startsWith("application/json");
+			?.getHeader("content-type")
+			?.startsWith("application/json");
 	}
 }

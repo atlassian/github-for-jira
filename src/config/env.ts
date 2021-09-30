@@ -2,17 +2,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { LogLevelString } from "bunyan";
 import { getNodeEnv, isNodeTest } from "../util/isNodeEnv";
-
-export enum EnvironmentEnum {
-	test = "test",
-	development = "development",
-	production = "production",
-}
-
-export enum BooleanEnum {
-	true = "true",
-	false = "false",
-}
+import { EnvironmentEnum } from "../interfaces/common";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 
@@ -65,7 +55,6 @@ export interface EnvVars {
 	WEBHOOK_PROXY_URL: string;
 	TUNNEL_PORT?: string;
 	TUNNEL_SUBDOMAIN?: string;
-	TRACKING_DISABLED?: BooleanEnum;
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
 	PROXY?: string,

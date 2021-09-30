@@ -4,7 +4,7 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
 import { getLogger } from "../config/logger";
-import { Queues } from "../worker/main";
+import { Queues } from "../worker/queues";
 
 const logger = getLogger("sync.discovery");
 
