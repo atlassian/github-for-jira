@@ -38,7 +38,7 @@ const taskTypes = Object.keys(tasks) as TaskType[];
 
 // TODO: why are we ignoring failed status as completed?
 const taskStatusCompleted:TaskStatus[] = ["complete", "failed"]
-const isTaskStatusCompleted = (...statuses: (TaskStatus | undefined)[]): boolean =>
+const isAllTasksStatusesCompleted = (...statuses: (TaskStatus | undefined)[]): boolean =>
 	statuses.every(status => !!status && taskStatusCompleted.includes(status));
 
 const updateNumberOfReposSynced = async (
@@ -53,7 +53,7 @@ const updateNumberOfReposSynced = async (
 	const syncedRepos = repoIds.filter((id: string) => {
 		// all 3 statuses need to be complete for a repo to be fully synced
 		const { pullStatus, branchStatus, commitStatus } = repos[id];
-		return isTaskStatusCompleted(pullStatus, branchStatus, commitStatus);
+		return isAllTasksStatusesCompleted(pullStatus, branchStatus, commitStatus);
 	});
 
 	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
