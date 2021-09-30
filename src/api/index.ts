@@ -163,12 +163,6 @@ router.get(
 		}
 
 		try {
-			if (!req.session.jiraHost) {
-				req.log.warn({ req, res }, "Missing Jira Host");
-				res.status(500).send("Missing Jira Host");
-				return;
-			}
-
 			const subscription = await Subscription.getSingleInstallation(
 				jiraHost,
 				githubInstallationId
