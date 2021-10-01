@@ -60,6 +60,9 @@ async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
 }
 
 export default async (app: Application): Promise<Application> => {
+
+	app.router.use(elapsedTimeMetrics);
+
 	if (process.env.USE_RATE_LIMITING === "true") {
 		const GitHubCIDRs = await getGitHubCIDRs(getLogger("rate-limiting"));
 		const client = new Redis(getRedisInfo("rate-limiter"));
@@ -90,7 +93,6 @@ export default async (app: Application): Promise<Application> => {
 	}
 
 	app.router.use(logMiddleware);
-	app.router.use(elapsedTimeMetrics);
 
 	// Catch non successful responses
 	app.router.use((req: Request, res: Response, next: NextFunction) => {
