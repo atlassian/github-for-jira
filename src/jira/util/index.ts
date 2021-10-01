@@ -1,3 +1,4 @@
+import envVars from "../../config/env";
 import { getLogger } from "../../config/logger";
 import { JiraIssue } from "../../interfaces/jira";
 
@@ -54,7 +55,9 @@ export default (jiraClient) => {
 				continue;
 			}
 
-			const link = `${jiraClient.baseURL}/browse/${key}`;
+			const issueTrackingParam = envVars.JIRA_LINK_TRACKING_ID ? `?atlOrigin=${envVars.JIRA_LINK_TRACKING_ID}` : "";
+
+			const link = `${jiraClient.baseURL}/browse/${key}${issueTrackingParam}`;
 			const reference = `[${key}]: ${link}`;
 
 			if (text.includes(reference)) {
