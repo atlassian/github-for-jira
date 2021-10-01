@@ -24,7 +24,7 @@ describe("frontend-log-middleware", () => {
 	})
 
 	test("preserves old fields", () => {
-		request.log = request.log.child({foo: 123});
+		request.log = request.log!.child({foo: 123});
 		logMiddleware(request as Request, response as Response, next);
 
 		request.log.info('hello');

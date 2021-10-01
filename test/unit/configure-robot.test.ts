@@ -12,7 +12,7 @@ describe('configure-robot', () => {
 		logHistory = '';
 		probot = createProbot({
 			id: Math.floor(Math.random() * 1000),
-			cert: PrivateKey.findPrivateKey(),
+			cert: PrivateKey.findPrivateKey()!,
 		});
 		configureAndLoadApp(probot);
 		const stream = probot.logger.streams.pop();
