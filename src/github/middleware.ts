@@ -104,9 +104,9 @@ export default (
 			webhookReceived
 		};
 
-		const propageRequestId = await booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true);
+		const shouldPropagateRequestId = await booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true);
 
-		if (propageRequestId) {
+		if (shouldPropagateRequestId) {
 			// For all micros envs log the paylaod. Omit from local to reduce noise
 			const loggerWithWebhookParams = process.env.MICROS_ENV
 				? context.log.child({name: LOGGER_NAME, ...webhookParams})

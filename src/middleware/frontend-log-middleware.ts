@@ -52,8 +52,8 @@ export default (req: Request, res: Response, next: NextFunction): void => {
 		}
 	};
 
-	booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true).then(propagateRequestId => {
-		if (propagateRequestId) {
+	booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true).then(shouldPropagateRequestId => {
+		if (shouldPropagateRequestId) {
 			req.log = req.log.child({name: FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME});
 			res.once("finish", async () => {
 				if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {
