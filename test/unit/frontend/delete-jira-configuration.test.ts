@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
 import nock from "nock";
 import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
@@ -36,8 +35,6 @@ describe("DELETE /jira/configuration", () => {
 	});
 
 	it("Delete Jira Configuration", async () => {
-		await testTracking();
-
 		nock(subscription.jiraHost)
 			.delete("/rest/devinfo/0.10/bulkByProperties")
 			.query({ installationId: subscription.githubInstallationId })

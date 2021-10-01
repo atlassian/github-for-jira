@@ -27,6 +27,12 @@ export const discovery = (app: Application, queues) => async (job) => {
 			jiraHost,
 			installationId
 		);
+
+		if(!subscription) {
+			logger.info({jiraHost, installationId}, "Subscription has been removed, ignoring job.");
+			return;
+		}
+
 		if (repositories.length === 0) {
 			await subscription.update({
 				syncStatus: SyncStatus.COMPLETE

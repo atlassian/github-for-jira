@@ -12,11 +12,10 @@ export default class SentryScopeProxy {
 	event: any;
 	hint: any;
 	extra: Record<string, any>;
-	fingerprint: (string | number)[];
+	fingerprint: (string | number)[] | undefined;
 
 	constructor() {
 		this.extra = {};
-		this.fingerprint = null;
 	}
 
 	static processEvent(event: any, hint: any) {
@@ -36,7 +35,7 @@ export default class SentryScopeProxy {
 	}
 
 	addTo(event) {
-		Object.assign(event.extra, this.extra);
+		event.extra = Object.assign(event.extra, this.extra);
 
 		if (this.fingerprint) {
 			event.fingerprint = this.fingerprint;

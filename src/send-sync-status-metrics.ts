@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
-import { queues } from "./worker/main";
 import logger from "./config/logger";
+import { queues } from "./worker/queues";
 
 dotenv.config();
 

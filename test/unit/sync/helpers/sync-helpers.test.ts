@@ -1,12 +1,4 @@
-import {
-	mockNotFoundErrorOctokitRequest,
-	mockNotFoundErrorOctokitGraphql,
-	mockOtherOctokitRequestErrors,
-	mockOtherOctokitGraphqlErrors,
-	mockOtherError,
-	mockJob,
-	mockNextTask,
-} from "../../../mocks/errorResponses";
+import { mockJob, mockNextTask, mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "../../../mocks/errorResponses";
 /* eslint-disable @typescript-eslint/no-var-requires */
 import {
 	sortedRepos,

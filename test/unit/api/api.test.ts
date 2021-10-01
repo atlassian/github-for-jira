@@ -6,7 +6,7 @@ import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
 import { mockModels } from "../../utils/models";
 import api from "../../../src/api";
-import { EnvironmentEnum } from "../../../src/config/env";
+import { EnvironmentEnum } from "../../../src/interfaces/common";
 import { getLogger } from "../../../src/config/logger";
 
 jest.mock("../../../src/models");
