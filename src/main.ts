@@ -2,11 +2,10 @@ import "./config/env"; // Important to be before other dependencies
 import throng from "throng";
 import * as PrivateKey from "probot/lib/private-key";
 import { createProbot } from "probot";
-import App from "./configure-robot";
 import { initializeSentry } from "./config/sentry";
-import { getLogger, overrideProbotLoggingMethods } from "./config/logger";
 import "./config/proxy";
 import { isNodeProd } from "./util/isNodeEnv";
+import configureAndLoadApp from "./configure-robot";
 
 const probot = createProbot({
 	id: Number(process.env.APP_ID),
@@ -20,10 +19,6 @@ const probot = createProbot({
 	}
 });
 
-overrideProbotLoggingMethods(probot.logger);
-
-const logger = getLogger("probot");
-
 /**
  * Start the probot worker.
  */
@@ -32,10 +27,7 @@ async function start() {
 
 	// We are always behind a proxy, but we want the source IP
 	probot.server.set("trust proxy", true);
-	probot.load(App);
-	probot.webhook.on("error", (err: Error) => {
-		logger.error(err, "Webhook Error");
-	});
+	configureAndLoadApp(probot);
 	probot.start();
 }
 
