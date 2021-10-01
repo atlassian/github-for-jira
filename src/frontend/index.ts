@@ -8,7 +8,7 @@ import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import RateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
-import statsd from "../config/statsd";
+import statsd, { elapsedTimeMetrics } from "../config/statsd";
 import { metricError } from "../config/metric-names";
 
 function secureHeaders(router: Router, frontendApp: Express) {
@@ -64,6 +64,7 @@ function secureHeaders(router: Router, frontendApp: Express) {
 
 export default (app: Application): void => {
 	const router = app.route();
+	router.use(elapsedTimeMetrics);
 
 	if (process.env.USE_RATE_LIMITING === "true") {
 		const client = new Redis(getRedisInfo("rate-limiter"));
