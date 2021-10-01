@@ -11,7 +11,7 @@ import { isNodeProd } from "./util/isNodeEnv";
 const probot = createProbot({
 	id: Number(process.env.APP_ID),
 	secret: process.env.WEBHOOK_SECRET,
-	cert: PrivateKey.findPrivateKey(),
+	cert: PrivateKey.findPrivateKey() || undefined,
 	port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080,
 	webhookPath: "/github/events",
 	webhookProxy: process.env.WEBHOOK_PROXY_URL,

@@ -1,6 +1,6 @@
 import { JiraAuthor } from "../interfaces/jira";
 
-export const getJiraAuthor = (...authors: Author[]): JiraAuthor => {
+export const getJiraAuthor = (...authors: (Author | undefined)[]): JiraAuthor => {
 	const author = Object.assign({}, ...authors);
 	return author.login || author.name ? {
 		avatar: author.avatar_url || author.avatarUrl || `https://github.com/users/${author.login}.png`,
@@ -13,7 +13,7 @@ export const getJiraAuthor = (...authors: Author[]): JiraAuthor => {
 		email: "deleted@noreply.user.github.com",
 		url: "https://github.com/ghost"
 	};
-}
+};
 
 interface Author {
 	// Github REST API always returns `avatar_url` while the GraphQL API returns `avatarUrl`

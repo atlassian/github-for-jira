@@ -11,6 +11,7 @@ import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { getLogger } from "../config/logger";
 import { getCurrentTime } from "../util/webhooks";
+import JiraClient from "../models/jira-client";
 
 const logger = getLogger("github.webhooks");
 
@@ -20,10 +21,10 @@ const logger = getLogger("github.webhooks");
 const withSentry = function (callback) {
 	return async (context) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
-		context.sentry.configureScope((scope) =>
+		context.sentry?.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
 		);
-		context.sentry.configureScope((scope) =>
+		context.sentry?.configureScope((scope) =>
 			scope.addEventProcessor(SentryScopeProxy.processEvent)
 		);
 
@@ -31,7 +32,7 @@ const withSentry = function (callback) {
 			await callback(context);
 		} catch (err) {
 			context.log.error({ err, context }, "Error while processing webhook");
-			context.sentry.captureException(err);
+			context.sentry?.captureException(err);
 			throw err;
 		}
 	};
@@ -60,15 +61,15 @@ const isStateChangeOrDeploymentAction = (action) =>
 		action
 	);
 
-export class CustomContext extends Context {
-	sentry: Sentry.Hub;
-	timedout: number;
+export class CustomContext<E = any> extends Context<E> {
+	sentry?: Sentry.Hub;
+	timedout?: number;
 	webhookReceived?: number;
 }
 
 // TODO: fix typings
 export default (
-	callback: (context: any, jiraClient: any, util: any) => Promise<void>
+	callback: (context: CustomContext, jiraClient: JiraClient, util: any) => Promise<void>
 ) => {
 	return withSentry(async (context: CustomContext) => {
 		enhanceOctokit(context.github);
@@ -79,8 +80,7 @@ export default (
 
 		const webhookReceived = getCurrentTime();
 		context.webhookReceived = webhookReceived;
-
-		context.sentry.setExtra("GitHub Payload", {
+		context.sentry?.setExtra("GitHub Payload", {
 			event: webhookEvent,
 			action: context.payload?.action,
 			id: context.id,
@@ -157,19 +157,19 @@ export default (
 			`Processing event for ${jiraSubscriptionsCount} jira instances`
 		);
 
-		context.sentry.setTag(
+		context.sentry?.setTag(
 			"transaction",
 			`webhook:${context.name}.${context.payload.action}`
 		);
 
 		for (const subscription of subscriptions) {
 			const { jiraHost } = subscription;
-			context.sentry.setTag("jiraHost", jiraHost);
-			context.sentry.setTag(
+			context.sentry?.setTag("jiraHost", jiraHost);
+			context.sentry?.setTag(
 				"gitHubInstallationId",
 				gitHubInstallationId.toString()
 			);
-			context.sentry.setUser({ jiraHost, gitHubInstallationId });
+			context.sentry?.setUser({ jiraHost, gitHubInstallationId });
 			context.log = loggerWithWebhookParams.child({ jiraHost });
 			context.log("Processing event for Jira Host");
 
@@ -216,7 +216,7 @@ export default (
 					err,
 					`Error processing the event for Jira hostname '${jiraHost}'`
 				);
-				context.sentry.captureException(err);
+				context.sentry?.captureException(err);
 			}
 		}
 	});

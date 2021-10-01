@@ -49,6 +49,12 @@ export default async (
 	try {
 		const jiraHost = req.session.jiraHost;
 
+		if(!jiraHost) {
+			req.log.warn({jiraHost, req, res}, "Missing jiraHost");
+			res.status(404).send(`Missing Jira Host '${jiraHost}'`);
+			return;
+		}
+
 		req.log.info("Received jira configuration page request");
 
 		const { client } = res.locals;

@@ -1,5 +1,3 @@
-import { ActionFromInstallation, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
 import { Request, Response } from "express";
 
 /**
@@ -7,11 +5,7 @@ import { Request, Response } from "express";
  */
 export default async (req: Request, res: Response): Promise<void> => {
 	const { installation } = res.locals;
-	const action = await ActionFromInstallation(installation);
-	action.type = ActionType.DISABLED;
-	action.actionSource = ActionSource.WEBHOOK;
 	await installation.disable();
-	await submitProto(action);
 	req.log.info("Installation disabled on Jira");
 	res.sendStatus(204);
 };

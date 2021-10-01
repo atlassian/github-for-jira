@@ -24,8 +24,8 @@ describe("Connect", () => {
 	describe("Frontend", () => {
 		beforeEach(() => {
 			app.use("/", setupFrontend({
-				getSignedJsonWebToken: () => undefined,
-				getInstallationAccessToken: () => undefined
+				getSignedJsonWebToken: () => "",
+				getInstallationAccessToken: async () => ""
 			}));
 		});
 
