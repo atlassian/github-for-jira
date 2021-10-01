@@ -29,7 +29,7 @@ import api from "../api";
 import healthcheck from "./healthcheck";
 import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
-import statsd, { elapsedTimeMetrics } from "../config/statsd";
+import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
@@ -52,7 +52,9 @@ declare global {
 	}
 }
 
-const throwError = (msg:string) => {throw new Error(msg)};
+const throwError = (msg: string) => {
+	throw new Error(msg);
+};
 
 const oauth = GithubOAuth({
 	githubClient: process.env.GITHUB_CLIENT_ID || throwError("Missing GITHUB_CLIENT_ID"),
@@ -61,7 +63,6 @@ const oauth = GithubOAuth({
 	loginURI: "/github/login",
 	callbackURI: "/github/callback"
 });
-
 
 // setup route middlewares
 const csrfProtection = csrf(
@@ -184,14 +185,12 @@ export default (octokitApp: App): Express => {
 		"/github/setup",
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		getGitHubSetup
 	);
 
 	app.post(
 		"/github/setup",
 		csrfProtection,
-		elapsedTimeMetrics,
 		postGitHubSetup
 	);
 
@@ -199,14 +198,12 @@ export default (octokitApp: App): Express => {
 		"/github/configuration",
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		getGitHubConfiguration
 	);
 
 	app.post(
 		"/github/configuration",
 		csrfProtection,
-		elapsedTimeMetrics,
 		postGitHubConfiguration
 	);
 
@@ -214,21 +211,18 @@ export default (octokitApp: App): Express => {
 		"/github/installations",
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		listGitHubInstallations
 	);
 
 	app.get(
 		"/github/subscriptions/:installationId",
 		csrfProtection,
-		elapsedTimeMetrics,
 		getGitHubSubscriptions
 	);
 
 	app.post(
 		"/github/subscription",
 		csrfProtection,
-		elapsedTimeMetrics,
 		deleteGitHubSubscription
 	);
 
@@ -236,18 +230,16 @@ export default (octokitApp: App): Express => {
 		"/jira/configuration",
 		csrfProtection,
 		verifyJiraJwtTokenMiddleware,
-		elapsedTimeMetrics,
 		getJiraConfiguration
 	);
 
 	app.delete(
 		"/jira/configuration",
 		verifyJiraContextJwtTokenMiddleware,
-		elapsedTimeMetrics,
 		deleteJiraConfiguration
 	);
 
-	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, elapsedTimeMetrics, retrySync);
+	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, retrySync);
 	// Set up event handlers
 	app.post("/jira/events/disabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
 	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
