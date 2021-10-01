@@ -8,7 +8,7 @@ import BodyParser from "body-parser";
 import GithubAPI from "../config/github-api";
 import { Installation, Subscription } from "../models";
 import verifyInstallation from "../jira/verify-installation";
-import logMiddleware from "../middleware/log-middleware";
+import logMiddleware from "../middleware/frontend-log-middleware";
 import JiraClient from "../models/jira-client";
 import uninstall from "../jira/uninstall";
 import { serializeJiraInstallation, serializeSubscription } from "./serializers";

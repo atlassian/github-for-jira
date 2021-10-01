@@ -3,6 +3,7 @@ import {Subscription} from "../../src/models";
 import express, {NextFunction, Request, Response} from "express";
 import Logger from "bunyan";
 import api from "../../src/api";
+import {wrapLogger} from "probot/lib/wrap-logger";
 
 describe('api/index', () => {
 	beforeEach(async () => {
@@ -43,11 +44,11 @@ describe('api/index', () => {
 		const app = express();
 		app.use((req: Request, res: Response, next: NextFunction) => {
 			res.locals = {};
-			req.log = new Logger({
+			req.log = wrapLogger(new Logger({
 				name: "api.test.ts",
 				level: "debug",
 				stream: process.stdout
-			});
+			}));
 			req.session = { jiraHost: 'http://blah.com' };
 			next();
 		});

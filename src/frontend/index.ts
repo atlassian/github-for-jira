@@ -4,6 +4,12 @@ import getFrontendApp from "./app";
 import { Application } from "probot";
 import { Express, NextFunction, Request, Response, Router } from "express";
 import crypto from "crypto";
+import Redis from "ioredis";
+import getRedisInfo from "../config/redis-info";
+import RateLimit from "express-rate-limit";
+import RedisStore from "rate-limit-redis";
+import statsd from "../config/statsd";
+import { metricError } from "../config/metric-names";
 
 function secureHeaders(router: Router, frontendApp: Express) {
 	router.use((_: Request, res: Response, next: NextFunction): void => {
@@ -58,6 +64,26 @@ function secureHeaders(router: Router, frontendApp: Express) {
 
 export default (app: Application): void => {
 	const router = app.route();
+
+	if (process.env.USE_RATE_LIMITING === "true") {
+		const client = new Redis(getRedisInfo("rate-limiter"));
+		const limiter = RateLimit({
+			store: new RedisStore({
+				client
+			}),
+			skip(_) {
+				return false;
+			},
+			handler(_, res) {
+				// We don't include path in this metric as the bots scanning us generate many of them
+				statsd.increment(metricError.expressRateLimited);
+				res.status(429).send("Too many requests, please try again later.");
+			},
+			max: 100 // limit each IP to a number of requests per windowMs
+		});
+
+		router.use(limiter);
+	}
 
 	if (process.env.FORCE_HTTPS) {
 		router.use(sslify.HTTPS({ trustProtoHeader: true }));

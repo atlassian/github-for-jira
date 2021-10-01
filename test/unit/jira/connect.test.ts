@@ -3,6 +3,7 @@ import express, { Express } from "express";
 import setupFrontend from "../../../src/frontend/app";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { when } from "jest-when";
+import {getLogger} from "../../../src/config/logger";
 
 jest.mock("../../../src/config/feature-flags");
 
@@ -19,6 +20,10 @@ describe("Connect", () => {
 		// Defaults maintenance mode to true
 		whenSignedInstallCallbacks(true);
 		app = express();
+		app.use((request, _, next) => {
+			request.log = getLogger('test');
+			next();
+		});
 	});
 
 	describe("Frontend", () => {

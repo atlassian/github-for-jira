@@ -9,10 +9,8 @@ import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import {getLogger} from "../config/logger";
 
-
-const logger = getLogger("github.webhooks")
+const LOGGER_NAME = "github.webhooks";
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
@@ -82,9 +80,8 @@ export default (
 		const gitHubInstallationId = Number(context.payload?.installation?.id);
 
 		//TODO Remove this line and uncomment the next one to get rid of payloads in logs
-		const loggerWithWebhookParams = logger.child({ webhookId: context.id, repoName, orgName, gitHubInstallationId, event: webhookEvent, payload: context.payload });
-		//const loggerWithWebhookParams = logger.child({ webhookId: context.id, repoName, orgName, gitHubInstallationId });
-		context.log = loggerWithWebhookParams;
+		context.log = context.log.child({ name: LOGGER_NAME, webhookId: context.id, repoName, orgName, gitHubInstallationId, event: webhookEvent, payload: context.payload });
+		// context.log = context.log.child({ name: LOGGER_NAME, webhookId: context.id, repoName, orgName, gitHubInstallationId });
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
@@ -134,7 +131,7 @@ export default (
 				gitHubInstallationId.toString()
 			);
 			context.sentry.setUser({ jiraHost, gitHubInstallationId });
-			context.log = loggerWithWebhookParams.child({ jiraHost });
+			context.log = context.log.child({ jiraHost });
 			context.log("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
