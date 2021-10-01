@@ -8,7 +8,7 @@ import { findPrivateKey } from "probot/lib/private-key";
 import getRedisInfo from "./config/redis-info";
 import setupFrontend from "./frontend";
 import setupGitHub from "./github";
-import statsd from "./config/statsd";
+import statsd, { elapsedTimeMetrics } from "./config/statsd";
 import { isIp4InCidrs } from "./config/cidr-validator";
 import Logger from "bunyan";
 import { metricError } from "./config/metric-names";
@@ -90,6 +90,7 @@ export default async (app: Application): Promise<Application> => {
 	}
 
 	app.router.use(logMiddleware);
+	app.router.use(elapsedTimeMetrics);
 
 	// Catch non successful responses
 	app.router.use((req: Request, res: Response, next: NextFunction) => {

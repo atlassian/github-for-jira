@@ -13,7 +13,6 @@ import JiraClient from "../models/jira-client";
 import uninstall from "../jira/uninstall";
 import { serializeJiraInstallation, serializeSubscription } from "./serializers";
 import getRedisInfo from "../config/redis-info";
-import { elapsedTimeMetrics } from "../config/statsd";
 import { queues } from "../worker/queues";
 import { getLogger } from "../config/logger";
 import { Job, Queue } from "bull";
@@ -62,8 +61,6 @@ const viewerPermissionQuery = `{
   }
 }
 `;
-
-router.use(elapsedTimeMetrics("/api/*"))
 
 router.use(rateLimit({
 	store: new RedisStore({

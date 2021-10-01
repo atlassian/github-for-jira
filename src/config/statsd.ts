@@ -48,17 +48,16 @@ function hrtimer() {
  * Returns a middleware function which produce duration and requests count metrics
  * @param path The value of the "path" tag. If not set then the rout path will be used
  */
-export const elapsedTimeMetrics = (path?: string) => (
+export const elapsedTimeMetrics = (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
 	const elapsedTimeInMs = hrtimer();
 	const method = req.method;
-	const pathTag = path || req.route?.path || "unknown";
 
 	res.once("finish", () => {
-
+		const pathTag = req.route?.path || req.baseUrl || "/";
 		const elapsedTime = elapsedTimeInMs();
 		const statusCode  = `${res.statusCode}`;
 		const tags = { path: pathTag, method,  statusCode};

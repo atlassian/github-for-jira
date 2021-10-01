@@ -9,7 +9,6 @@ import url from "url";
 import express, { NextFunction, Request, RequestHandler, Response, Router } from "express";
 import axios from "axios";
 import { getJiraHostFromRedirectUrl } from "../util/getUrl";
-import {elapsedTimeMetrics} from "../config/statsd";
 
 const host = process.env.GHE_HOST || "github.com";
 
@@ -111,8 +110,8 @@ export default (opts: OAuthOptions): GithubOAuth => {
 
 	const router = express.Router();
 	// compatible with flatiron/director
-	router.get(opts.loginURI, elapsedTimeMetrics(opts.loginURI), login);
-	router.get(opts.callbackURI, elapsedTimeMetrics(opts.callbackURI), callback);
+	router.get(opts.loginURI, login);
+	router.get(opts.callbackURI, callback);
 
 	return {
 		router: router,
