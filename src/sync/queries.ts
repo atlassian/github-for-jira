@@ -31,7 +31,7 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
     }
   }`;
 
-export const getCommits = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
+export const getCommits = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
     repository(owner: $owner, name: $repo){
       ref(qualifiedName: $default_ref) {
         target {
@@ -52,7 +52,7 @@ export const getCommits = `query ($owner: String!, $repo: String!, $per_page: In
                   message
                   oid
                   url
-                  changedFiles
+                  ${includeChangedFiles ? "changedFiles" : ""}
                 }
               }
             }

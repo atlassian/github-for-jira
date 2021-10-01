@@ -33,8 +33,8 @@ declare global {
 
 beforeEach(() => {
 	resetEnvVars();
-	global.jiraHost = process.env.ATLASSIAN_URL;
-	global.jiraNock = nock(process.env.ATLASSIAN_URL);
+	global.jiraHost = process.env.ATLASSIAN_URL || "";
+	global.jiraNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
 });
 
