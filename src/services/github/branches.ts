@@ -6,6 +6,7 @@ import { PullRequest } from "./pull-requests";
 
 const logger = getLogger("services.github.branches");
 
+// TODO: need to reassess this to see if we should just grab the branch names, then the commits under those as a separate call
 export const getGithubBranches = async (github: GitHubAPI, params: GithubBranchParam): Promise<GithubBranchNode[]> => {
 	try {
 		const response = await github.graphql(getBranchesQuery, {

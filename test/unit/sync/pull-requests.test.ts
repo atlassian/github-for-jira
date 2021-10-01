@@ -118,6 +118,7 @@ describe.skip("sync/pull-request", () => {
 		});
 	});
 
+	//TODO: fix this test
 	it("should not sync if nodes are empty", async () => {
 		const job = createJob({ data: { installationId, jiraHost } });
 
