@@ -1,4 +1,4 @@
-# GitHub For Jira 
+# GitHub For Jira
 
 ## About
 
@@ -37,13 +37,11 @@ This app officially supports GitHub.com and Jira Cloud. Support for GitHub Enter
 Next you will need to connect your GitHub organization to Jira, see the following steps.
 
 ### Installation from GitHub Marketplace
-1. Go to https://github.com/marketplace/jira-software-github
-2. Complete the (free) order for your GitHub Organization
-3. On the installation setting screen, choose which repositories you want to use with the Jira Integration and press **Save**:
-![image](https://user-images.githubusercontent.com/13207348/46588321-4baf7680-ca68-11e8-872a-a6d48924d655.png)
-4. Once installation completes, you will be redirected to https://jira.github.com/github/setup. Enter the site name for your Jira instance here and click **Continue**
-5. Once on the Atlassian add-on page, click **Install**.
-6. Once the add-on is installed, click the **Get Started** button.
+1. Go to https://github.com/marketplace/jira-software-github.
+2. Complete the (free) order for your GitHub Organization.
+3. On the installation settings screen, choose which repositories you want to use with the Jira Integration and press **Install**.
+4. Once installation completes, if we can't detect your Jira site, you will be prompted to enter a url, otherwise you will be redirected to the Jira marketplace to install the GitHub for Jira app.
+5. When you reach the page in marketplace, simply click **Get Started**.
 
 ### Connecting your GitHub organization to Jira
 As part of the installation flow you should be directed to install the Jira app on GitHub to your organization. You can also manage existing connections or add additional organizations any time within the Manage Add-ons section of your Jira settings:
