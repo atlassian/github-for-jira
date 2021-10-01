@@ -16,7 +16,7 @@ describe("Maintenance", () => {
 			BooleanFlags.MAINTENANCE_MODE,
 			expect.anything(),
 			jiraHost
-		).mockResolvedValue(value);
+		).mockResolvedValue(Promise.resolve(value));
 
 	beforeEach(() => {
 		// Defaults maintenance mode to true
@@ -26,6 +26,10 @@ describe("Maintenance", () => {
 			request.log = getLogger('test');
 			next();
 		});
+		when(booleanFlag).calledWith(
+			BooleanFlags.PROPAGATE_REQUEST_ID,
+			expect.anything()
+		).mockResolvedValue(Promise.resolve(true));
 	});
 
 	describe("Healthcheck", () => {
