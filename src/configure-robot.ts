@@ -8,7 +8,7 @@ import { findPrivateKey } from "probot/lib/private-key";
 import getRedisInfo from "./config/redis-info";
 import setupFrontend from "./frontend";
 import setupGitHub from "./github";
-import statsd from "./config/statsd";
+import statsd, { elapsedTimeMetrics } from "./config/statsd";
 import { isIp4InCidrs } from "./config/cidr-validator";
 import Logger from "bunyan";
 import { metricError } from "./config/metric-names";
@@ -60,6 +60,9 @@ async function getGitHubCIDRs(logger: Logger): Promise<string[]> {
 }
 
 export default async (app: Application): Promise<Application> => {
+
+	app.router.use(elapsedTimeMetrics);
+
 	if (process.env.USE_RATE_LIMITING === "true") {
 		const GitHubCIDRs = await getGitHubCIDRs(getLogger("rate-limiting"));
 		const client = new Redis(getRedisInfo("rate-limiter"));
