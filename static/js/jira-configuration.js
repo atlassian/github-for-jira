@@ -51,9 +51,11 @@ $('.delete-connection-link').click(function (event) {
 
 })
 
-$('.sync-connection-link').click(function (event) {
+$('.sync-connection-link-OLD').click(function (event) {
   event.preventDefault()
   const installationId = $(event.target).data('installation-id')
+	const jiraHost = $(event.target).data("jira-host");
+	const csrfToken = document.getElementById("_csrf").value;
 
 	window.AP.context.getToken(function(token){
 		$.ajax({
@@ -61,10 +63,10 @@ $('.sync-connection-link').click(function (event) {
 			url: `/jira/sync`,
 			data: {
 				installationId: installationId,
-				jiraHost: $(event.target).data('jira-host'),
+				jiraHost: jiraHost,
 				syncType: document.getElementById(`${installationId}-sync-type`).value,
 				jwt: token,
-				_csrf: document.getElementById('_csrf').value
+				_csrf: csrfToken
 			},
 			success: function (data) {
 				AP.navigator.reload()
@@ -74,15 +76,44 @@ $('.sync-connection-link').click(function (event) {
 			}
 		});
 	});
-
 })
 
+$(".sync-connection-link").click(function (event) {
+	event.preventDefault();
+	const installationId = $(event.target).data("installation-id");
+	const jiraHost = $(event.target).data("jira-host");
+	const csrfToken = document.getElementById("_csrf").value;
+
+	window.AP.context.getToken(function (token) {
+		$.ajax({
+			type: "POST",
+			url: `/jira/sync`,
+			data: {
+				installationId,
+				jiraHost,
+				syncType: "full",
+				jwt: token,
+				_csrf: csrfToken,
+			},
+			success: function (data) {
+				AP.navigator.reload();
+			},
+			error: function (error) {
+				console.log(error);
+			},
+		});
+	});
+});
+
+/* ***************************** */
+/* To be removed after FF tested */
+/* ***************************** */
 const retryModal = document.getElementById('sync-retry-modal')
-const statusModal = document.getElementById('sync-status-modal')
+const statusModal = document.getElementById('sync-status-modal-old')
 const retryBtn = document.getElementById('sync-retry-modal-btn')
-const statusBtn = document.getElementById('sync-status-modal-btn')
+const statusBtn = document.getElementById('sync-status-modal-btn-old')
 const retrySpan = document.getElementById('retry-close')
-const statusSpan = document.getElementById('status-close')
+const statusSpan = document.getElementById('status-close-old')
 
 if (retryBtn != null) {
   retryBtn.onclick = function () {
@@ -117,3 +148,29 @@ window.onclick = function (event) {
     statusModal.style.display = 'none'
   }
 }
+/* ***************************** */
+/* To be removed after FF tested */
+/* ***************************** */
+
+const syncStatusBtn = document.getElementById("sync-status-modal-btn");
+const syncStatusModal = document.getElementById("sync-status-modal");
+const syncStatusCloseBtn = document.getElementById("status-close");
+
+if (syncStatusBtn != null) {
+	syncStatusBtn.onclick = function () {
+		syncStatusModal.style.display = "block";
+	};
+}
+
+if (syncStatusCloseBtn != null) {
+	syncStatusCloseBtn.onclick = function () {
+		syncStatusModal.style.display = "none";
+	};
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function (event) {
+	if (event.target.className === "jiraConfiguration__syncRetryModalOverlay") {
+		syncStatusModal.style.display = "none";
+	}
+};

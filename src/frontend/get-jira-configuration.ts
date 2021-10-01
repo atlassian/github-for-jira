@@ -4,6 +4,7 @@ import { Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
+import { booleanFlag, BooleanFlags } from '../config/feature-flags';
 
 const syncStatus = (status) =>
 	status === "ACTIVE" ? "IN PROGRESS" : status;
@@ -75,19 +76,33 @@ export default async (
 				repoSyncState: data.repoSyncState,
 			}));
 
-		const failedConnections = installations.filter(
-			(response) => !!response.error
-		);
+		const failedConnections = installations
+			.filter((response) => !!response.error)
+			.map((data) => ({
+				...data,
+			}));
 
-		res.render("jira-configuration.hbs", {
-			host: jiraHost,
-			connections,
-			failedConnections,
-			hasConnections: connections.length > 0 || failedConnections.length > 0,
-			APP_URL: process.env.APP_URL,
-			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
-		});
+		if (await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, false)) {
+			res.render("jira-configuration.hbs", {
+				host: jiraHost,
+				connections,
+				failedConnections,
+				hasConnections: connections.length > 0,
+				APP_URL: process.env.APP_URL,
+				csrfToken: req.csrfToken(),
+				nonce: res.locals.nonce,
+			});
+		} else {
+			res.render("jira-configuration-OLD.hbs", {
+				host: jiraHost,
+				connections,
+				failedConnections,
+				hasConnections: connections.length > 0 || failedConnections.length > 0,
+				APP_URL: process.env.APP_URL,
+				csrfToken: req.csrfToken(),
+				nonce: res.locals.nonce,
+			});
+		}
 
 		req.log.info("Jira configuration rendered successfully.");
 	} catch (error) {

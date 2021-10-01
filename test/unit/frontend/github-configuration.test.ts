@@ -3,6 +3,8 @@ import supertest from "supertest";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/models";
 import FrontendApp from "../../../src/frontend/app";
+import { getLogger } from "../../../src/config/logger";
+import express from "express";
 
 jest.mock("../../../src/models");
 
@@ -60,10 +62,15 @@ describe("Frontend", () => {
 		mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
 		mocked(Installation.getForHost).mockResolvedValue(installation);
 
-		frontendApp = FrontendApp({
+		frontendApp = express();
+		frontendApp.use((request, _, next) => {
+			request.log = getLogger('test');
+			next();
+		});
+		frontendApp.use(FrontendApp({
 			getSignedJsonWebToken: jest.fn().mockReturnValue("github-token"),
 			getInstallationAccessToken: jest.fn().mockReturnValue("access-token")
-		});
+		}));
 	});
 
 	describe("GitHub Configuration", () => {
