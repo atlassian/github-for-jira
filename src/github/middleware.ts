@@ -12,6 +12,7 @@ import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { getCurrentTime } from "../util/webhooks";
 import JiraClient from "../models/jira-client";
 import { getLogger } from "../config/logger";
+import envVars from "../config/env";
 
 const LOGGER_NAME = "github.webhooks";
 const logger = getLogger(LOGGER_NAME);
@@ -108,7 +109,7 @@ export default (
 
 		if (shouldPropagateRequestId) {
 			// For all micros envs log the paylaod. Omit from local to reduce noise
-			const loggerWithWebhookParams = process.env.MICROS_ENV
+			const loggerWithWebhookParams = envVars.MICROS_ENV
 				? context.log.child({name: LOGGER_NAME, ...webhookParams})
 				: context.log.child({name: LOGGER_NAME, ...omit(webhookParams, "payload")});
 
