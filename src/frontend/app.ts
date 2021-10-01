@@ -130,6 +130,14 @@ export default (octokitApp: App): Express => {
 		(syncStatus) => syncStatus === "IN PROGRESS"
 	);
 
+	hbs.registerHelper("failedSync", (syncStatus) => syncStatus === "FAILED");
+
+	hbs.registerHelper("failedConnectionErrorMsg", (deleted) =>
+		deleted
+			? "The GitHub for Jira app was uninstalled from this org."
+			: "There was an error getting information for this installation."
+	);
+
 	hbs.registerHelper("connectedStatus", (syncStatus) =>
 		syncStatus === "COMPLETE" ? "Connected" : "Connect"
 	);
@@ -149,6 +157,13 @@ export default (octokitApp: App): Express => {
 		"/public/atlassian-ui-kit",
 		express.static(
 			path.join(rootPath, "node_modules/@atlaskit/reduced-ui-pack/dist")
+		)
+	);
+
+	app.use(
+		"/public/aui",
+		express.static(
+			path.join(rootPath, "node_modules/@atlassian/aui/dist/aui")
 		)
 	);
 

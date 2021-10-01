@@ -25,7 +25,8 @@ export enum BooleanFlags {
 	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files",
 	WEBHOOK_RECEIVED_METRICS = "webhook-received-metrics",
 	CONTINUE_SYNC_ON_ERROR = "continue-sync-on-error",
-	PROPAGATE_REQUEST_ID = "propagate-request-id",
+	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
+	PROPAGATE_REQUEST_ID = "propagate-request-id"
 }
 
 export enum StringFlags {

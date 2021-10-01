@@ -21,7 +21,7 @@ function secureHeaders(router: Router, frontendApp: Express) {
 	router.use(helmet.contentSecurityPolicy({
 		useDefaults: true,
 		directives: {
-			defaultSrc: ["'none'"],
+			defaultSrc: ["'self'"],
 			// Allow <script> tags hosted by ourselves and from atlassian when inserted into an iframe
 			scriptSrc: ["'self'", process.env.APP_URL, "https://*.atlassian.net", "https://*.jira.com", "https://connect-cdn.atl-paas.net/",
 				"'unsafe-inline'", "'strict-dynamic'", (_: Request, res: Response): string => `'nonce-${res.locals.nonce}'`],
