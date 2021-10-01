@@ -14,7 +14,7 @@ describe("Connect", () => {
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_JWT_SIGNED_INSTALL_CALLBACKS,
 			expect.anything()
-		).mockResolvedValue(value);
+		).mockResolvedValue(Promise.resolve(value));
 
 	beforeEach(() => {
 		// Defaults maintenance mode to true
@@ -24,6 +24,10 @@ describe("Connect", () => {
 			request.log = getLogger('test');
 			next();
 		});
+		when(booleanFlag).calledWith(
+			BooleanFlags.PROPAGATE_REQUEST_ID,
+			expect.anything()
+		).mockResolvedValue(Promise.resolve(true));
 	});
 
 	describe("Frontend", () => {
