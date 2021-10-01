@@ -11,8 +11,10 @@ import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { getCurrentTime } from "../util/webhooks";
 import JiraClient from "../models/jira-client";
+import { getLogger } from "../config/logger";
 
 const LOGGER_NAME = "github.webhooks";
+const logger = getLogger(LOGGER_NAME);
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
@@ -102,12 +104,23 @@ export default (
 			webhookReceived
 		};
 
-		// For all micros envs log the paylaod. Omit from local to reduce noise
-		const loggerWithWebhookParams = process.env.MICROS_ENV
-			? context.log.child({ name: LOGGER_NAME, ...webhookParams })
-			: context.log.child({ name: LOGGER_NAME, ...omit(webhookParams, "payload")});
+		const propageRequestId = await booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true);
 
-		context.log = loggerWithWebhookParams;
+		if (propageRequestId) {
+			// For all micros envs log the paylaod. Omit from local to reduce noise
+			const loggerWithWebhookParams = process.env.MICROS_ENV
+				? context.log.child({name: LOGGER_NAME, ...webhookParams})
+				: context.log.child({name: LOGGER_NAME, ...omit(webhookParams, "payload")});
+
+			context.log = loggerWithWebhookParams;
+		} else {
+			// For all micros envs log the paylaod. Omit from local to reduce noise
+			const loggerWithWebhookParams = process.env.MICROS_ENV
+				? logger.child(webhookParams)
+				: logger.child(omit(webhookParams, "payload"));
+
+			context.log = loggerWithWebhookParams;
+		}
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
@@ -169,7 +182,7 @@ export default (
 				gitHubInstallationId.toString()
 			);
 			context.sentry?.setUser({ jiraHost, gitHubInstallationId });
-			context.log = loggerWithWebhookParams.child({ jiraHost });
+			context.log = context.log.child({ jiraHost });
 			context.log("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {

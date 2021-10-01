@@ -1,5 +1,5 @@
 import logMiddleware from "../../../src/middleware/frontend-log-middleware";
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import Logger from "bunyan";
 import {Writable} from "stream";
 import {wrapLogger} from "probot/lib/wrap-logger";
@@ -7,7 +7,6 @@ import {wrapLogger} from "probot/lib/wrap-logger";
 describe("frontend-log-middleware", () => {
 	const request: { log: Logger | undefined } = { log: undefined }
 	const response: any = { once: jest.fn() }
-	const next: NextFunction = jest.fn();
 	let loggedStuff = '';
 
 	beforeEach(() => {
@@ -23,12 +22,15 @@ describe("frontend-log-middleware", () => {
 		}));
 	})
 
-	test("preserves old fields", () => {
+	test("preserves old fields", async () => {
 		request.log = request.log!.child({foo: 123});
-		logMiddleware(request as Request, response as Response, next);
-
-		request.log.info('hello');
-		expect(loggedStuff).toContain('foo');
-		expect(loggedStuff).toContain(123);
+		await new Promise((resolve => {
+			logMiddleware(request as Request, response as Response, () => {
+				request.log!.info('hello');
+				expect(loggedStuff).toContain('foo');
+				expect(loggedStuff).toContain(123);
+				resolve(0);
+			});
+		}))
 	});
 });
