@@ -1,19 +1,30 @@
 body {
-   overflow: hidden;
+  overflow: hidden;
 }
 
 p {
-    margin-bottom: 0;
+  margin: 0;
+}
+
+a:hover,
+a:active,
+a:focus {
+  text-decoration: none;
+}
+
+.pageContent {
+  padding: 20px;
+  min-height: 600px;
 }
 
 .headerImage {
-    margin: 2em auto 1em;
-    text-align: center;
+  margin: 2em auto 1em;
+  text-align: center;
 }
 
 .headerText {
-    font-size: 1.5rem;
-    text-align: center;
+  font-size: 1.5rem;
+  text-align: center;
 }
 
 .jiraInstance {
@@ -24,20 +35,20 @@ p {
 
 .actionBtn,
 .actionBtn--empty {
-    border: 0;
-    border-radius: 3px;
-    min-width: 5em;
-    padding: 0.5em 0.8em;
+  border: 0;
+  border-radius: 3px;
+  min-width: 5em;
+  padding: 0.5em 0.8em;
 }
 
 .actionBtn {
-    background-color: #f4f5f7;
-    color: #42526e;
+  background-color: #f4f5f7;
+  color: #42526e;
 }
 
 .actionBtn--empty {
-    background-color: #0052CC;
-    color: #fff;
+  background-color: #0052cc;
+  color: #fff;
 }
 
 .actionBtn:hover,
@@ -45,41 +56,68 @@ p {
 .actionBtn:active,
 .actionBtn:focus:active,
 .actionBtn:hover:active {
-    background-color: #ebecf0;
+  background-color: #ebecf0;
 }
 
 .tableHeader {
-    color: #6b778c;
-    display: flex;
-    flex-direction: row;
-    font-size: 0.8rem;
-    padding: 1em 0 0;
+  color: #6b778c;
+  display: flex;
+  flex-direction: row;
+  font-size: 0.8rem;
+  padding: 1em 0 0;
 }
 
 .tableHeader__label {
-    margin-bottom: 0;
-}
-
-.org__cell:not(.getConfiguration__orgContent__account) {
-    flex: 1;
+  margin-bottom: 0;
 }
 
 .tableHeader__label {
-    flex: 2;
+  flex: 2;
 }
 
 .githubOrgs__table {
-    border-top: 2px solid #e0e2e7;
-    border-bottom: 2px solid #e0e2e7;
-    padding: 0.8em 0;
+  border-top: 2px solid #e0e2e7;
+  border-bottom: 2px solid #e0e2e7;
+  padding: 0.8em 0;
 }
 
-p {
-    margin: 0;
+.getConfiguration__orgContent__numberOfRepos,
+.jiraConfiguration__table__syncCount {
+  background-color: #dfe1e6;
+  border-radius: 12px;
 }
 
-@media (max-width: 540px) {
-    .getConfiguration__tableHeader {
-        padding-bottom: 0;
-    }
+.getConfiguration__orgContent__numberOfRepos {
+  margin: auto 0.5em;
+  padding: 0.7em 0.6em;
+}
+
+.jiraConfiguration__table__syncCount {
+  margin: auto 0.3em;
+  padding: 0.1em 0.4em 0.1em 0.6em;
+}
+
+.getConfiguration__loaderContainer,
+.jiraConfiguration__loaderContainer {
+  display: flex;
+  justify-content: center;
+}
+
+.getConfiguration__loaderContainer {
+  width: 5.5em;
+}
+
+.jiraConfiguration__loaderContainer {
+  width: 2em;
+}
+
+.getConfiguration__orgContent__edit,
+.jiraConfiguration__table__edit {
+  color: #43526e;
+}
+
+.jiraConfiguration__table__edit:before:hover,
+.jiraConfiguration__table__edit:before:active,
+.jiraConfiguration__table__edit:before:focus {
+  text-decoration: none;
 }
