@@ -61,4 +61,9 @@ export interface EnvVars {
 	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
+
+	// Micros Lifecycle Env Vars
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?:string;
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_NAME?:string;
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION?:string;
 }

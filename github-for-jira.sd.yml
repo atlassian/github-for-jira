@@ -45,6 +45,11 @@ links:
 
 cleanup: true
 
+lifecycleEvents:
+  source: queue
+  # Number of seconds between the termination message and when the instance is terminated.
+  timeout: 30
+
 resources:
   - type: redisx
     name: cache

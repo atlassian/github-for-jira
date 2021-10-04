@@ -6,6 +6,7 @@ import { initializeSentry } from "./config/sentry";
 import "./config/proxy";
 import { isNodeProd } from "./util/isNodeEnv";
 import configureAndLoadApp from "./configure-robot";
+import { listenToMicrosLifecycle } from "./services/micros/lifecycle";
 
 const probot = createProbot({
 	id: Number(process.env.APP_ID),
@@ -33,13 +34,13 @@ async function start() {
 
 // TODO: this should work in dev/production and should be `workers = process.env.NODE_ENV === 'production' ? undefined : 1`
 if (isNodeProd()) {
-	// Start clustered server
-	throng(
-		{
-			lifetime: Infinity
-		},
-		start
-	);
+	// Listen to micros lifecycle event to know when to start/stop
+	listenToMicrosLifecycle(() => {
+		// Start clustered server
+		throng({ lifetime: Infinity }, start);
+	}, () => {
+		// TODO: add shutdown mechanism here - might need different clustering lib
+	});
 } else {
 	start();
 }
