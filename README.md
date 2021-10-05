@@ -95,7 +95,7 @@ This is useful if your installation is setup to send Development information to 
 
 ## Migrating from the DVCS connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
-1. Sign into your Jira Cloud account
+1. Sign in into your Jira Cloud account
 2. From the left sidebar in Jira, select Jira Settings -> Applications -> DVCS accounts.
 3. Follow the prompt to upgrade your GitHub connection
 
