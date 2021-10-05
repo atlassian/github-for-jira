@@ -26,7 +26,7 @@ as the left panel navigation in Jira hijacks some of the screen */
     top: -0.5em;
   }
 
-  .gitHubConfiguration__manageSubscriptions--notAdmin  {
+  .gitHubConfiguration__manageSubscriptions--notAdmin {
     left: -16em;
   }
 

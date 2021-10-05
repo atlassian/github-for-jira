@@ -82,7 +82,7 @@ export default async (
 				...data,
 			}));
 
-		if (await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, true)) {
+		if (await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, false)) {
 			res.render("jira-configuration.hbs", {
 				host: jiraHost,
 				connections,

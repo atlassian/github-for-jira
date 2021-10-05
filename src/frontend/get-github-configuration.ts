@@ -7,6 +7,7 @@ import { getInstallation } from "./get-jira-configuration";
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
+import { booleanFlag, BooleanFlags } from '../config/feature-flags';
 
 const getConnectedStatus = (
 	installationsWithSubscriptions: any,
@@ -119,15 +120,28 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 				req.log
 			);
 
-			return res.render("github-configuration-OLD.hbs", {
-				csrfToken: req.csrfToken(),
-				installations: connectedInstallations,
-				jiraHost: req.session.jiraHost,
-				nonce: res.locals.nonce,
-				info,
-				clientKey,
-				login
-			});
+			if (await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, false)) {
+				return res.render("github-configuration.hbs", {
+					csrfToken: req.csrfToken(),
+					installations: connectedInstallations,
+					jiraHost: req.session.jiraHost,
+					nonce: res.locals.nonce,
+					info,
+					clientKey,
+					login
+				});
+			} else {
+				return res.render("github-configuration-OLD.hbs", {
+					csrfToken: req.csrfToken(),
+					installations: connectedInstallations,
+					jiraHost: req.session.jiraHost,
+					nonce: res.locals.nonce,
+					info,
+					clientKey,
+					login
+				});
+			}
+
 		} catch (err) {
 			// If we get here, there was either a problem decoding the JWT
 			// or getting the data we need from GitHub, so we'll show the user an error.

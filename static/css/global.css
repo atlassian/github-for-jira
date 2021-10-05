@@ -127,10 +127,6 @@ a:focus {
   position: absolute;
 }
 
-/* .gitHubConfiguration__manageSubscriptions--notAdmin  {
-    display: block;
-  } */
-
 .jiraConfiguration__table__edit:before:hover,
 .jiraConfiguration__table__edit:before:active,
 .jiraConfiguration__table__edit:before:focus {
