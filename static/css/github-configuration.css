@@ -257,3 +257,48 @@
     transform: rotate(360deg);
   }
 }
+
+/* ******************* */
+/* ** Media Queries ** */
+/* ******************* */
+/* Extra large devices  */
+@media (max-width: 1200px) {
+  .gitHubConfiguration__notAdminMsg {
+    height: 6.2em;
+    top: -1.5em;
+    width: 14em;
+  }
+}
+
+/* Large devices  */
+@media (max-width: 992px) {
+  .gitHubConfiguration__notAdminMsg {
+    left: -12em;
+  }
+
+  .gitHubConfiguration__manageSubscriptions--notAdmin,
+  .gitHubConfiguration__failedSyncWarningLabel {
+    top: -0.5em;
+  }
+
+  .gitHubConfiguration__manageSubscriptions--notAdmin {
+    left: -16em;
+  }
+
+  .gitHubConfiguration__failedSyncWarningLabel {
+    left: -39em;
+  }
+}
+
+
+@media (max-width: 540px) {
+  .getConfiguration__tableHeader {
+    padding-bottom: 0;
+  }
+
+  .getConfiguration__wrapper,
+  .getConfiguration__accountLink,
+  .getConfiguration__disclaimer {
+    font-size: 0.8rem;
+  }
+}
