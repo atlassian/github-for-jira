@@ -150,7 +150,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		}
 	}
 
-	res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
+	// res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
 };
 
 interface InstallationWithAdmin extends Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem {
