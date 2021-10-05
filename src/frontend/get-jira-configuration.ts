@@ -3,29 +3,17 @@ import moment from "moment";
 import { Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
-import { metricSyncStatus, metricError } from "../config/metric-names";
-import * as Sentry from "@sentry/node";
+import { metricError } from "../config/metric-names";
+import { booleanFlag, BooleanFlags } from '../config/feature-flags';
 
-const syncStatus = (syncStatus) =>
-	syncStatus === "ACTIVE" ? "IN PROGRESS" : syncStatus;
-
-const sendFailedStatusMetrics = (installationId: string, reqLog: any): void => {
-	const syncError = "No updates in the last 15 minutes";
-	reqLog.warn({ installationId, error: syncError }, "Sync failed");
-
-	Sentry.setExtra("Installation FAILED", syncError);
-	Sentry.captureException(syncError);
-
-	statsd.increment(metricSyncStatus.failed);
-};
+const syncStatus = (status) =>
+	status === "ACTIVE" ? "IN PROGRESS" : status;
 
 export async function getInstallation(client, subscription, reqLog?) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
-		response.data.syncStatus = subscription.hasInProgressSyncFailed()
-			? "FAILED"
-			: syncStatus(subscription.syncStatus);
+		response.data.syncStatus = syncStatus(subscription.syncStatus);
 		response.data.syncWarning = subscription.syncWarning;
 		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
 		response.data.totalNumberOfRepos = Object.keys(
@@ -34,8 +22,6 @@ export async function getInstallation(client, subscription, reqLog?) {
 		response.data.numberOfSyncedRepos =
 			subscription.repoSyncState?.numberOfSyncedRepos || 0;
 		response.data.jiraHost = subscription.jiraHost;
-
-		response.data.syncStatus === "FAILED" && sendFailedStatusMetrics(id, reqLog);
 
 		return response.data;
 	} catch (err) {
@@ -64,6 +50,12 @@ export default async (
 	try {
 		const jiraHost = req.session.jiraHost;
 
+		if(!jiraHost) {
+			req.log.warn({jiraHost, req, res}, "Missing jiraHost");
+			res.status(404).send(`Missing Jira Host '${jiraHost}'`);
+			return;
+		}
+
 		req.log.info("Received jira configuration page request");
 
 		const { client } = res.locals;
@@ -90,15 +82,27 @@ export default async (
 				...data,
 			}));
 
-		res.render("jira-configuration.hbs", {
-			host: jiraHost,
-			connections,
-			failedConnections,
-			hasConnections: connections.length > 0,
-			APP_URL: process.env.APP_URL,
-			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
-		});
+		if (await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, true)) {
+			res.render("jira-configuration.hbs", {
+				host: jiraHost,
+				connections,
+				failedConnections,
+				hasConnections: connections.length > 0,
+				APP_URL: process.env.APP_URL,
+				csrfToken: req.csrfToken(),
+				nonce: res.locals.nonce,
+			});
+		} else {
+			res.render("jira-configuration-OLD.hbs", {
+				host: jiraHost,
+				connections,
+				failedConnections,
+				hasConnections: connections.length > 0 || failedConnections.length > 0,
+				APP_URL: process.env.APP_URL,
+				csrfToken: req.csrfToken(),
+				nonce: res.locals.nonce,
+			});
+		}
 
 		req.log.info("Jira configuration rendered successfully.");
 	} catch (error) {

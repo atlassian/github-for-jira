@@ -1,138 +1,138 @@
 body {
-    overflow: hidden;
-  }
+  overflow: hidden;
+}
 
-  p {
-    margin: 0;
-  }
+p {
+  margin: 0;
+}
 
-  a:hover,
-  a:active,
-  a:focus {
-    text-decoration: none;
-  }
+a:hover,
+a:active,
+a:focus {
+  text-decoration: none;
+}
 
-  .pageContent {
-    padding: 20px;
-    min-height: 600px;
-  }
+.pageContent {
+  padding: 20px;
+  min-height: 600px;
+}
 
-  .headerImage {
-    margin: 2em auto 1em;
-    text-align: center;
-  }
+.headerImage {
+  margin: 2em auto 1em;
+  text-align: center;
+}
 
-  .headerText {
-    font-size: 1.5rem;
-    text-align: center;
-  }
+.headerText {
+  font-size: 1.5rem;
+  text-align: center;
+}
 
-  .jiraInstance {
-    color: #586069;
-    margin-bottom: 0;
-    text-align: center;
-  }
+.jiraInstance {
+  color: #586069;
+  margin-bottom: 0;
+  text-align: center;
+}
 
-  .actionBtn,
-  .actionBtn--empty {
-    border: 0;
-    border-radius: 3px;
-    min-width: 5em;
-    padding: 0.5em 0.8em;
-  }
+.actionBtn,
+.actionBtn--empty {
+  border: 0;
+  border-radius: 3px;
+  min-width: 5em;
+  padding: 0.5em 0.8em;
+}
 
-  .actionBtn {
-    background-color: #f4f5f7;
-    color: #42526e;
-  }
+.actionBtn {
+  background-color: #f4f5f7;
+  color: #42526e;
+}
 
-  .actionBtn--empty {
-    background-color: #0052cc;
-    color: #fff;
-  }
+.actionBtn--empty {
+  background-color: #0052cc;
+  color: #fff;
+}
 
-  .actionBtn:hover,
-  .actionBtn:focus,
-  .actionBtn:active,
-  .actionBtn:focus:active,
-  .actionBtn:hover:active {
-    background-color: #ebecf0;
-  }
+.actionBtn:hover,
+.actionBtn:focus,
+.actionBtn:active,
+.actionBtn:focus:active,
+.actionBtn:hover:active {
+  background-color: #ebecf0;
+}
 
-  .tableHeader {
-    color: #6b778c;
-    display: flex;
-    flex-direction: row;
-    font-size: 0.8rem;
-    padding: 1em 0 0;
-  }
+.tableHeader {
+  color: #6b778c;
+  display: flex;
+  flex-direction: row;
+  font-size: 0.8rem;
+  padding: 1em 0 0;
+}
 
-  .tableHeader__label {
-    margin-bottom: 0;
-  }
+.tableHeader__label {
+  margin-bottom: 0;
+}
 
-  .tableHeader__label {
-    flex: 2;
-  }
+.tableHeader__label {
+  flex: 2;
+}
 
-  .githubOrgs__table {
-    border-top: 2px solid #e0e2e7;
-    border-bottom: 2px solid #e0e2e7;
-    padding: 0.8em 0;
-  }
+.githubOrgs__table {
+  border-top: 2px solid #e0e2e7;
+  border-bottom: 2px solid #e0e2e7;
+  padding: 0.8em 0;
+}
 
-  .gitHubConfiguration__orgContent__numberOfRepos,
-  .jiraConfiguration__table__syncCount {
-    background-color: #dfe1e6;
-    border-radius: 12px;
-  }
+.gitHubConfiguration__orgContent__numberOfRepos,
+.jiraConfiguration__table__syncCount {
+  background-color: #dfe1e6;
+  border-radius: 12px;
+}
 
-  .gitHubConfiguration__orgContent__numberOfRepos {
-    margin: auto 0.5em;
-    padding: 0.7em 0.6em;
-  }
+.gitHubConfiguration__orgContent__numberOfRepos {
+  margin: auto 0.5em;
+  padding: 0.7em 0.6em;
+}
 
-  .jiraConfiguration__table__syncCount {
-    margin: auto 0.3em;
-    padding: 0.1em 0.4em 0.1em 0.6em;
-  }
+.jiraConfiguration__table__syncCount {
+  margin: auto 0.3em;
+  padding: 0.1em 0.4em 0.1em 0.6em;
+}
 
-  .gitHubConfiguration__loaderContainer,
-  .jiraConfiguration__loaderContainer {
-    display: flex;
-    justify-content: center;
-  }
+.gitHubConfiguration__loaderContainer,
+.jiraConfiguration__loaderContainer {
+  display: flex;
+  justify-content: center;
+}
 
-  .gitHubConfiguration__loaderContainer {
-    width: 5.5em;
-  }
+.gitHubConfiguration__loaderContainer {
+  width: 5.5em;
+}
 
-  .jiraConfiguration__loaderContainer {
-    width: 2em;
-  }
+.jiraConfiguration__loaderContainer {
+  width: 2em;
+}
 
-  .gitHubConfiguration__orgContent__edit,
-  .jiraConfiguration__table__edit {
-    color: #43526e;
-  }
+.gitHubConfiguration__orgContent__edit,
+.jiraConfiguration__table__edit {
+  color: #43526e;
+}
 
-  .jiraConfiguration__retryMsg,
-  .gitHubConfiguration__notAdminMsg,
-  .gitHubConfiguration__manageSubscriptions,
-  .gitHubConfiguration__manageSubscriptions--notAdmin,
-  .gitHubConfiguration__failedSyncWarningLabel {
-    background-color: #172b4d;
-    border-radius: 3px;
-    display: none;
-    position: absolute;
-  }
+.jiraConfiguration__retryMsg,
+.gitHubConfiguration__notAdminMsg,
+.gitHubConfiguration__manageSubscriptions,
+.gitHubConfiguration__manageSubscriptions--notAdmin,
+.gitHubConfiguration__failedSyncWarningLabel {
+  background-color: #172b4d;
+  border-radius: 3px;
+  display: none;
+  position: absolute;
+}
 
-   /* .gitHubConfiguration__manageSubscriptions--notAdmin  {
+/* .gitHubConfiguration__manageSubscriptions--notAdmin  {
     display: block;
   } */
 
-  .jiraConfiguration__table__edit:before:hover,
-  .jiraConfiguration__table__edit:before:active,
-  .jiraConfiguration__table__edit:before:focus {
-    text-decoration: none;
-  }
+.jiraConfiguration__table__edit:before:hover,
+.jiraConfiguration__table__edit:before:active,
+.jiraConfiguration__table__edit:before:focus {
+  text-decoration: none;
+}

@@ -164,10 +164,15 @@
   }
 
   .jiraConfiguration__retryMsg {
+    background-color: #172b4d;
+    border-radius: 3px;
     color: #fff;
+    display: none;
     font-size: 1rem;
     left: -0.8em;
     padding: 0.3em;
+    position: absolute;
+    right: em;
     top: -2em;
   }
 
@@ -237,6 +242,23 @@
   .jiraConfiguration__table__cell__settings__links {
     /* override aui styling */
     margin-top: 0 !important;
+  }
+
+  .jiraConfiguration__table__cell__settings__link {
+    /* override aui styling */
+    padding: 0.6em 1em !important;
+  }
+
+  .jiraConfiguration__table__cell__settings__link:hover {
+    background-color: #e9edf0 !important;
+  }
+
+  .jiraConfiguration__table__cell__settings__link:active,
+  .jiraConfiguration__table__cell__settings__link:focus {
+    /* override aui styling */
+    background-color: #ecedf0 !important;
+    box-shadow: none !important;
+    color: #455570 !important;
   }
 
   .jiraConfiguration__table__cell:nth-child(3) {

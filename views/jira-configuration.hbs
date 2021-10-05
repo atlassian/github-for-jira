@@ -51,14 +51,14 @@
             <li>View deployment information within your linked Jira issue.</li>
             <li>View deployment pipelines over a timeline in your insights.</li>
           </ul>
-          <p>Even if your organization is still syncing, you can stat linking
+          <p>Even if your organization is still backfilling data, you can stat linking
             issue keys in your development work immediately.</p>
 
-         {{!-- Sync Status Info Modal --}}
+         {{!-- Backfill Status Info Modal --}}
           <div class='jiraConfiguration__syncRetryModal'  id="sync-status-modal">
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
-                <h4 class="jiraConfiguration__syncRetryModal__header">Sync status</h4>
+                <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status</h4>
                 <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn">&times;</span>
               </div>
 
@@ -69,7 +69,7 @@
                       <span class="syncStatusInProgress">In progress</span>
                     </td>
                     <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
-                      The sync has started and is still in progress for this account. New data may not immediately be displayed in Jira.
+                      Backfilling data has started and is still in progress for this account. New data may not immediately be displayed in Jira.
                     </td>
                   </tr>
 
@@ -78,8 +78,8 @@
                       <span class="syncStatusFailed">Failed</span>
                     </td>
                     <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
-                      There was a problem syncing data from your account. The sync process will automatically retry.
-                      However, if this does not happen, click the retry button next to the status, or 'Resync' in the dropdown menu.
+                      There was a problem backfilling data from your account. The backfill process will automatically retry.
+                      However, if this does not happen, click the retry button next to the status, or "restart backfill" in the dropdown menu.
                     </td>
                   </tr>
 
@@ -88,7 +88,7 @@
                       <span class="syncStatusPending">Pending</span>
                     </td>
                     <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
-                      The sync has been queued, but is not actively syncing data from GitHub.
+                      The backfill has been queued, but is not actively backfilling data from GitHub.
                     </td>
                   </tr>
 
@@ -97,7 +97,7 @@
                        <span class="syncStatusComplete">Complete</span>
                     </td>
                     <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
-                      The sync has finished. Information from selected repositories will be shown in Jira's development information panel.
+                      The backfill has finished. Information from selected repositories will be shown in Jira’s development information panel.
                     </td>
                   </tr>
                 </tbody>
@@ -112,7 +112,7 @@
               <tr>
                 <th class="jiraConfiguration__table__head__title">Connected organization</th>
                 <th class="jiraConfiguration__table__head__title">Repository access</th>
-                <th class="jiraConfiguration__table__head__title">Sync status
+                <th class="jiraConfiguration__table__head__title">Backfill status
                   <span class="jiraConfiguration__table__infoIcon aui-icon aui-iconfont-info-filled" id="sync-status-modal-btn">
                     Information
                   </span>
@@ -153,7 +153,11 @@
                       }}
                     </span>
 
-                    <a href="{{html_url}}">
+                    <a
+                      href="{{html_url}}"
+                      data-installation-link="{{html_url}}"
+                      target="_blank"
+                    >
                       <span
                         class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit"
                       >
@@ -162,7 +166,7 @@
                     </a>
                   </td>
 
-                  {{! Sync status }}
+                  {{! Backfill status }}
                   <td class="jiraConfiguration__table__cell">
                     {{#if syncWarning}}
                       <a

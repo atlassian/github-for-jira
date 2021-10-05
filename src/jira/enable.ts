@@ -1,5 +1,3 @@
-import { ActionFromInstallation, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
 import { Installation } from "../models";
 import verifyInstallation from "./verify-installation";
 import { Request, Response } from "express";
@@ -19,10 +17,6 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 	req.log.info("Received installation enabled request");
 
-	const action = await ActionFromInstallation(installation);
-	action.type = ActionType.ENABLED;
-	action.actionSource = ActionSource.WEBHOOK;
 	res.on("finish", verifyInstallation(installation, req.log));
 	res.sendStatus(204);
-	await submitProto(action);
 };
