@@ -8,15 +8,15 @@ import BodyParser from "body-parser";
 import GithubAPI from "../config/github-api";
 import { Installation, Subscription } from "../models";
 import verifyInstallation from "../jira/verify-installation";
-import logMiddleware from "../middleware/log-middleware";
+import logMiddleware from "../middleware/frontend-log-middleware";
 import JiraClient from "../models/jira-client";
 import uninstall from "../jira/uninstall";
 import { serializeJiraInstallation, serializeSubscription } from "./serializers";
 import getRedisInfo from "../config/redis-info";
-import { elapsedTimeMetrics } from "../config/statsd";
-import { queues } from "../worker/main";
+import { queues } from "../worker/queues";
 import { getLogger } from "../config/logger";
 import { Job, Queue } from "bull";
+import { WhereOptions } from "sequelize";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -138,33 +138,39 @@ router.use(
 
 router.get(
 	"/",
-	elapsedTimeMetrics,
 	(_: Request, res: Response): void => {
 		res.send({});
 	}
 );
 
 router.get(
-	"/:installationId/repoSyncState.json",
+	"/:installationId/:jiraHost/repoSyncState.json",
 	check("installationId").isInt(),
+	check("jiraHost").isString(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
+		const jiraHost = req.params.jiraHost;
+
+		if (!jiraHost || !githubInstallationId) {
+			const msg = "Missing Jira Host or Installation ID";
+			req.log.warn({ req, res }, msg);
+			res.status(400).send(msg);
+			return;
+		}
 
 		try {
 			const subscription = await Subscription.getSingleInstallation(
-				req.session.jiraHost,
+				jiraHost,
 				githubInstallationId
 			);
 
 			if (!subscription) {
-				res.sendStatus(404);
+				res.status(404).send(`No Subscription found for jiraHost "${jiraHost}" and installationId "${githubInstallationId}"`);
 				return;
 			}
 
-			const data = subscription.repoSyncState;
-			res.json(data);
+			res.json(subscription.repoSyncState);
 		} catch (err) {
 			res.status(500).json(err);
 		}
@@ -176,7 +182,6 @@ router.post(
 	bodyParser,
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
 		req.log.info(req.body);
@@ -210,7 +215,6 @@ router.post(
 router.post(
 	"/resync",
 	bodyParser,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
@@ -222,8 +226,10 @@ router.post(
 		const limit = Number(req.body.limit) || undefined;
 		// Needed for 'pagination'
 		const offset = Number(req.body.offset) || 0;
+		// only resync installations whose "updatedAt" date is older than x seconds
+		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
 
-		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit);
+		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
 			Subscription.findOrStartSync(subscription, syncType)
@@ -236,14 +242,13 @@ router.post(
 router.post(
 	"/dedupInstallationQueue",
 	bodyParser,
-	elapsedTimeMetrics,
 	async (_: Request, res: Response): Promise<void> => {
 
 		// This remove all jobs from the queue. This way,
 		// the whole queue will be drained and all jobs will be readded.
 		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
-		const foundInstallationIds = new Set<number>();
-		const duplicateJobs = [];
+		const foundJobIds = new Set<string>();
+		const duplicateJobs: Job[] = [];
 
 		// collecting duplicate jobs per installation
 		for (const job of jobs) {
@@ -251,15 +256,15 @@ router.post(
 			if (!job) {
 				continue;
 			}
-			if (foundInstallationIds.has(job.data.installationId)) {
+			if (foundJobIds.has(`${job.data.installationId}${job.data.jiraHost}`)) {
 				duplicateJobs.push(job);
 			} else {
-				foundInstallationIds.add(job.data.installationId);
+				foundJobIds.add(`${job.data.installationId}${job.data.jiraHost}`);
 			}
 		}
 
 		// removing duplicate jobs
-		await Promise.all(duplicateJobs.map((job) => {
+		await Promise.all(duplicateJobs.map((job: Job) => {
 			logger.info({ job }, "removing duplicate job");
 			job.remove();
 		}));
@@ -271,7 +276,6 @@ router.post(
 router.post(
 	"/requeue",
 	bodyParser,
-	elapsedTimeMetrics,
 	async (request: Request, res: Response): Promise<void> => {
 
 		const queueName = request.body.queue;   // "installation", "push", "metrics", or "discovery"
@@ -317,11 +321,10 @@ router.get(
 			check("clientKeyOrJiraHost").isURL(),
 			check("clientKeyOrJiraHost").isHexadecimal()
 		]),
-		returnOnValidationError,
-		elapsedTimeMetrics
+		returnOnValidationError
 	],
 	async (req: Request, res: Response): Promise<void> => {
-		const where = req.params.clientKeyOrJiraHost.startsWith("http")
+		const where: WhereOptions = req.params.clientKeyOrJiraHost.startsWith("http")
 			? { jiraHost: req.params.clientKeyOrJiraHost }
 			: { clientKey: req.params.clientKeyOrJiraHost };
 		const jiraInstallations = await Installation.findAll({ where });
@@ -340,7 +343,6 @@ router.post(
 	bodyParser,
 	check("clientKey").isHexadecimal(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (request: Request, response: Response): Promise<void> => {
 		response.locals.installation = await Installation.findOne({
 			where: { clientKey: request.params.clientKey }
@@ -376,7 +378,6 @@ router.post(
 	bodyParser,
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, response: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const installation = await Installation.findByPk(installationId);
@@ -406,7 +407,6 @@ router.get(
 	"/:installationId",
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const { client } = res.locals;

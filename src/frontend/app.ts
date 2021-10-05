@@ -27,9 +27,9 @@ import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
 import api from "../api";
 import healthcheck from "./healthcheck";
-import logMiddleware from "../middleware/log-middleware";
+import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
-import statsd, { elapsedTimeMetrics } from "../config/statsd";
+import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
@@ -52,10 +52,14 @@ declare global {
 	}
 }
 
+const throwError = (msg: string) => {
+	throw new Error(msg);
+};
+
 const oauth = GithubOAuth({
-	githubClient: process.env.GITHUB_CLIENT_ID,
-	githubSecret: process.env.GITHUB_CLIENT_SECRET,
-	baseURL: process.env.APP_URL,
+	githubClient: process.env.GITHUB_CLIENT_ID || throwError("Missing GITHUB_CLIENT_ID"),
+	githubSecret: process.env.GITHUB_CLIENT_SECRET || throwError("Missing GITHUB_CLIENT_SECRET"),
+	baseURL: process.env.APP_URL || throwError("Missing APP_URL"),
 	loginURI: "/github/login",
 	callbackURI: "/github/callback"
 });
@@ -88,7 +92,7 @@ export default (octokitApp: App): Express => {
 
 	app.use(
 		cookieSession({
-			keys: [process.env.GITHUB_CLIENT_SECRET],
+			keys: [process.env.GITHUB_CLIENT_SECRET || throwError("Missing GITHUB_CLIENT_SECRET")],
 			maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 			signed: true,
 			sameSite: "none",
@@ -126,6 +130,14 @@ export default (octokitApp: App): Express => {
 		(syncStatus) => syncStatus === "IN PROGRESS"
 	);
 
+	hbs.registerHelper("failedSync", (syncStatus) => syncStatus === "FAILED");
+
+	hbs.registerHelper("failedConnectionErrorMsg", (deleted) =>
+		deleted
+			? "The GitHub for Jira app was uninstalled from this org."
+			: "There was an error getting information for this installation."
+	);
+
 	hbs.registerHelper("connectedStatus", (syncStatus) =>
 		syncStatus === "COMPLETE" ? "Connected" : "Connect"
 	);
@@ -145,6 +157,13 @@ export default (octokitApp: App): Express => {
 		"/public/atlassian-ui-kit",
 		express.static(
 			path.join(rootPath, "node_modules/@atlaskit/reduced-ui-pack/dist")
+		)
+	);
+
+	app.use(
+		"/public/aui",
+		express.static(
+			path.join(rootPath, "node_modules/@atlassian/aui/dist/aui")
 		)
 	);
 
@@ -181,14 +200,12 @@ export default (octokitApp: App): Express => {
 		"/github/setup",
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		getGitHubSetup
 	);
 
 	app.post(
 		"/github/setup",
 		csrfProtection,
-		elapsedTimeMetrics,
 		postGitHubSetup
 	);
 
@@ -196,14 +213,12 @@ export default (octokitApp: App): Express => {
 		"/github/configuration",
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		getGitHubConfiguration
 	);
 
 	app.post(
 		"/github/configuration",
 		csrfProtection,
-		elapsedTimeMetrics,
 		postGitHubConfiguration
 	);
 
@@ -211,21 +226,18 @@ export default (octokitApp: App): Express => {
 		"/github/installations",
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		listGitHubInstallations
 	);
 
 	app.get(
 		"/github/subscriptions/:installationId",
 		csrfProtection,
-		elapsedTimeMetrics,
 		getGitHubSubscriptions
 	);
 
 	app.post(
 		"/github/subscription",
 		csrfProtection,
-		elapsedTimeMetrics,
 		deleteGitHubSubscription
 	);
 
@@ -233,18 +245,16 @@ export default (octokitApp: App): Express => {
 		"/jira/configuration",
 		csrfProtection,
 		verifyJiraJwtTokenMiddleware,
-		elapsedTimeMetrics,
 		getJiraConfiguration
 	);
 
 	app.delete(
 		"/jira/configuration",
 		verifyJiraContextJwtTokenMiddleware,
-		elapsedTimeMetrics,
 		deleteJiraConfiguration
 	);
 
-	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, elapsedTimeMetrics, retrySync);
+	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, retrySync);
 	// Set up event handlers
 	app.post("/jira/events/disabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
 	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);

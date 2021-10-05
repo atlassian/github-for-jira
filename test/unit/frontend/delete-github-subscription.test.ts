@@ -1,17 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
 import nock from "nock";
 import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
 import deleteSubscription from "../../../src/frontend/delete-github-subscription";
-import { isDisabled, setIsDisabled } from "../../../src/tracking";
 
 jest.mock("../../../src/models");
 
 describe("POST /github/subscription", () => {
 	let installation;
 	let subscription;
-	let origDisabledState;
 	let deleteGitHubSubscription;
 
 	beforeEach(async () => {
@@ -36,18 +33,9 @@ describe("POST /github/subscription", () => {
 		mocked(Installation.getForHost).mockResolvedValue(installation);
 
 		deleteGitHubSubscription = await deleteSubscription;
-
-		origDisabledState = isDisabled();
-		setIsDisabled(false);
-	});
-
-	afterEach(() => {
-		setIsDisabled(origDisabledState);
 	});
 
 	it("Delete Jira Configuration", async () => {
-		await testTracking();
-
 		nock(subscription.jiraHost)
 			.delete("/rest/devinfo/0.10/bulkByProperties")
 			.query({ installationId: subscription.githubInstallationId })

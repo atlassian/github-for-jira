@@ -10,7 +10,7 @@ export default async (): Promise<void> => {
 	const syncStatusCounts = await Subscription.syncStatusCounts();
 
 	syncStatusCounts.forEach((row) => {
-		statsd.gauge(metricHttpRequest().requestStatusSync, row.count, {
+		statsd.gauge(metricHttpRequest.requestStatusSync, row.count, {
 			status: row.syncStatus
 		});
 	});

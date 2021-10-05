@@ -2,17 +2,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { LogLevelString } from "bunyan";
 import { getNodeEnv, isNodeTest } from "../util/isNodeEnv";
-
-export enum EnvironmentEnum {
-	test = "test",
-	development = "development",
-	production = "production",
-}
-
-export enum BooleanEnum {
-	true = "true",
-	false = "false",
-}
+import { EnvironmentEnum } from "../interfaces/common";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 
@@ -26,7 +16,8 @@ if (env.error && nodeEnv !== EnvironmentEnum.production) {
 	throw env.error;
 }
 
-const getProxyFromEnvironment = (): string => {
+// TODO: Use whitelist proxy instead
+const getProxyFromEnvironment = (): string | undefined => {
 	const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
 	const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
 	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
@@ -40,6 +31,7 @@ const envVars: EnvVars = {
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
+	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
 } as EnvVars;
 
@@ -64,11 +56,9 @@ export interface EnvVars {
 	WEBHOOK_PROXY_URL: string;
 	TUNNEL_PORT?: string;
 	TUNNEL_SUBDOMAIN?: string;
-	TRACKING_DISABLED?: BooleanEnum;
-	HYDRO_BASE_URL?: string;
-	HYDRO_APP_SECRET?: string;
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
+	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
 }

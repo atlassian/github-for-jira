@@ -9,7 +9,7 @@ import { overrideProbotLoggingMethods } from "../config/logger";
 
 export const probot = createProbot({
 	id: Number(process.env.APP_ID),
-	cert: findPrivateKey(),
+	cert: findPrivateKey() || undefined,
 
 	// These aren't needed by worker process
 	secret: undefined,

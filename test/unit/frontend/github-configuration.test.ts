@@ -1,9 +1,10 @@
 import Keygrip from "keygrip";
 import supertest from "supertest";
-import testTracking from "../../setup/tracking";
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/models";
 import FrontendApp from "../../../src/frontend/app";
+import { getLogger } from "../../../src/config/logger";
+import express from "express";
 
 jest.mock("../../../src/models");
 
@@ -34,7 +35,7 @@ describe("Frontend", () => {
 
 	function getCookieHeader(fixture): string[] {
 		const cookie = Buffer.from(JSON.stringify(fixture)).toString("base64");
-		const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET]);
+		const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET || ""]);
 
 		return [
 			`session=${cookie};session.sig=${keygrip.sign(`session=${cookie}`)};`
@@ -61,10 +62,15 @@ describe("Frontend", () => {
 		mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
 		mocked(Installation.getForHost).mockResolvedValue(installation);
 
-		frontendApp = FrontendApp({
+		frontendApp = express();
+		frontendApp.use((request, _, next) => {
+			request.log = getLogger('test');
+			next();
+		});
+		frontendApp.use(FrontendApp({
 			getSignedJsonWebToken: jest.fn().mockReturnValue("github-token"),
 			getInstallationAccessToken: jest.fn().mockReturnValue("access-token")
-		});
+		}));
 	});
 
 	describe("GitHub Configuration", () => {
@@ -164,8 +170,6 @@ describe("Frontend", () => {
 				githubNock
 					.get("/orgs/test-org/memberships/admin-user")
 					.reply(200, organizationAdminResponse);
-
-				await testTracking();
 
 				const jiraClientKey = "a-unique-client-key";
 

@@ -1,6 +1,4 @@
-import { ActionFromSubscription, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
-import { Installation, Subscription } from "../models";
+import { Subscription } from "../models";
 import { Request, Response } from "express";
 
 /**
@@ -66,13 +64,12 @@ export default async (req: Request, res: Response): Promise<void> => {
 			}
 
 			const subscription = await Subscription.getSingleInstallation(req.body.jiraHost, req.body.installationId);
-			const installation = await Installation.getForHost(req.body.jiraHost);
-			const action = ActionFromSubscription(subscription, installation);
-			action.type = ActionType.DESTROYED;
-			action.actionSource = ActionSource.WEB_CONSOLE;
-
+			if(!subscription) {
+				req.log.warn({req, res}, "Cannot find Subscription");
+				res.status(404).send("Cannot find Subscription.");
+				return;
+			}
 			await subscription.destroy();
-			await submitProto(action);
 			res.sendStatus(202);
 		} catch (err) {
 			res.status(403)

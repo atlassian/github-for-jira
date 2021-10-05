@@ -1,6 +1,6 @@
 import Logger, { levelFromName } from "bunyan";
 import bformat from "bunyan-format";
-import filteringStream from "../util/filteringStream";
+import filteringHttpLogsStream from "../util/filteringHttpLogsStream";
 import { LoggerWithTarget, wrapLogger } from "probot/lib/wrap-logger";
 import { Request } from "express";
 
@@ -8,8 +8,17 @@ import { Request } from "express";
 // Otherwise, if local development, we want human readable logs.
 const outputMode = process.env.MICROS_ENV ? "json" : "short";
 
+// We cannot redefine the stream on middleware level (when we create the child logger),
+// therefore we have to do it here, on global level, for all loggers :(
+// And there's no way to disable those for webhooks, see:
+//   https://github.com/probot/probot/issues/1577
+//   https://github.com/probot/probot/issues/598
+//
+export const FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME = "frontend-log-middleware";
 // add levelInString to include DEBUG | ERROR | INFO | WARN
-const formatOut = filteringStream(bformat({ outputMode, levelInString: true }));
+const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME,
+	bformat({ outputMode, levelInString: true })
+);
 
 const requestSerializer = (req: Request) => (!req || !req.connection) ? req : {
 	method: req.method,
@@ -43,7 +52,7 @@ const logger = Logger.createLogger(
 	{
 		name: "github-for-jira",
 		logger: "root-logger",
-		stream: formatOut,
+		stream: LOG_STREAM,
 		serializers: {
 			err: errorSerializer,
 			res: Logger.stdSerializers.res,
@@ -67,7 +76,7 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	// Replace with formatOut stream
 	probotLogger.addStream({
 		type: "stream",
-		stream: formatOut,
+		stream: LOG_STREAM,
 		closeOnExit: false,
 		level: globalLoggingLevel
 	});

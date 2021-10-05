@@ -43,7 +43,7 @@ describe("test installation model", () => {
 		eventType: "installed"
 	};
 
-	let storageSecret: string;
+	let storageSecret: string | undefined;
 
 	beforeEach(async () => {
 		storageSecret = process.env.STORAGE_SECRET;

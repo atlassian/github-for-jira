@@ -1,6 +1,4 @@
-import { ActionFromSubscription, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
-import { Installation, Subscription } from "../models";
+import { Subscription } from "../models";
 import { getHashedKey } from "../models/installation";
 import { Request, Response } from "express";
 
@@ -54,17 +52,11 @@ export default async (req: Request, res: Response): Promise<void> => {
 			}
 		}
 
-		const subscription = await Subscription.install({
+		await Subscription.install({
 			clientKey: getHashedKey(req.body.clientKey),
 			installationId: req.body.installationId,
 			host: req.session.jiraHost
 		});
-		const jiraInstallation = await Installation.getForHost(req.session.jiraHost);
-		const action = ActionFromSubscription(subscription, jiraInstallation);
-		action.type = ActionType.CREATED;
-		action.actionSource = ActionSource.WEB_CONSOLE;
-
-		await submitProto(action);
 
 		res.sendStatus(200);
 	} catch (err) {

@@ -1,106 +1,25 @@
 import "../config/env"; // Important to be before other dependencies
-import Queue, { QueueOptions } from "bull";
+import "../config/proxy"; // Important to be before other dependencies
 import * as Sentry from "@sentry/node";
-import Redis from "ioredis";
 
 import { discovery } from "../sync/discovery";
 import { processInstallation } from "../sync/installation";
 import { processPushJob } from "../transforms/push";
 import metricsJob from "./metrics-job";
 import statsd from "../config/statsd";
-import getRedisInfo from "../config/redis-info";
 import app, { probot } from "./app";
 import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
 import SentryScopeProxy from "../models/sentry-scope-proxy";
-import { metricHttpRequest, queueMetrics } from "../config/metric-names";
 import { initializeSentry } from "../config/sentry";
 import { getLogger } from "../config/logger";
-import "../config/proxy";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { RateLimitingError } from "../config/enhance-octokit";
+import { queues } from "./queues";
+import { queueMetrics } from "../config/metric-names";
+import { Job } from "bull";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
-const client = new Redis(getRedisInfo("client"));
-const subscriber = new Redis(getRedisInfo("subscriber"));
 const logger = getLogger("worker.main");
-
-function measureElapsedTime(job: Queue.Job, tags) {
-	statsd.histogram(metricHttpRequest().jobDuration, job.finishedOn - job.processedOn, tags);
-}
-
-const getQueueOptions = (timeout: number): QueueOptions => {
-	return {
-		defaultJobOptions: {
-			attempts: 5,
-			timeout: timeout,
-			backoff: {
-				type: "exponential",
-				delay: 3 * 60 * 1000
-			},
-			removeOnComplete: true,
-			removeOnFail: true
-		},
-		settings: {
-			// lockDuration must be greater than the timeout, so that it doesn't get processed again prematurely
-			lockDuration: timeout + 500
-		},
-		redis: getRedisInfo("bull"),
-		createClient: (type, redisOpts = {}) => {
-			let redisInfo;
-			switch (type) {
-				case "client":
-					return client;
-				case "subscriber":
-					return subscriber;
-				default:
-					redisInfo = Object.assign({}, redisOpts);
-					redisInfo.connectionName = "bclient";
-					return new Redis(redisInfo);
-			}
-		}
-	};
-}
-
-// Setup queues
-export const queues: { [key: string]: Queue.Queue } = {
-	discovery: new Queue("Content discovery", getQueueOptions(60 * 1000)),
-	installation: new Queue("Initial sync", getQueueOptions(10 * 60 * 1000)),
-	push: new Queue("Push transformation", getQueueOptions(60 * 1000)),
-	metrics: new Queue("Metrics", getQueueOptions(60 * 1000))
-};
-
-// Setup error handling for queues
-Object.keys(queues).forEach((name) => {
-	const queue = queues[name];
-	// On startup, clean any failed jobs older than 10s
-	queue.clean(10000, "failed");
-
-	// TODO: need ability to remove these listeners, especially for testing
-	queue.on("active", (job: Queue.Job) => {
-		logger.info({ job, queue: name }, "Job started");
-	});
-
-	queue.on("completed", (job) => {
-		logger.info({ job, queue: name }, "Job completed");
-		measureElapsedTime(job, { queue: name, status: "completed" });
-	});
-
-	queue.on("failed", async (job) => {
-		logger.error({ job, queue: name }, "Job failed");
-		measureElapsedTime(job, { queue: name, status: "failed" });
-	});
-
-	queue.on("error", (err) => {
-		logger.error({ queue: name, err }, "Job Errored");
-
-		Sentry.setTag("queue", name);
-		Sentry.captureException(err);
-
-		const tags = [`name:${name}`];
-
-		statsd.increment("queue_error", tags);
-	});
-});
 
 /**
  * Return an async function that assigns a Sentry hub to `job.sentry` and sends exceptions.
@@ -132,7 +51,7 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 	}
 };
 
-const setDelayOnRateLimiting = (jobHandler) => async (job) => {
+const setDelayOnRateLimiting = (jobHandler) => async (job: Job) => {
 	try {
 		await jobHandler(job);
 	} catch (err) {
@@ -145,18 +64,18 @@ const setDelayOnRateLimiting = (jobHandler) => async (job) => {
 				job.opts.backoff = {
 					type: "exponential",
 					delay: 10 * 60 * 1000
-				}
+				};
 			} else {
 				logger.warn({ job }, `Rate limiting detected, delaying job by ${delay} ms`);
 				job.opts.backoff = {
 					type: "fixed",
 					delay: delay
-				}
+				};
 			}
 		}
 		throw err;
 	}
-}
+};
 
 const sendQueueMetrics = async () => {
 	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
@@ -174,7 +93,7 @@ const sendQueueMetrics = async () => {
 			statsd.gauge(queueMetrics.waiting, jobCounts.waiting, tags);
 		}
 	}
-}
+};
 
 const commonMiddleware = (jobHandler) => sentryMiddleware(setDelayOnRateLimiting(jobHandler));
 
