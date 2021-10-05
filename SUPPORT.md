@@ -79,4 +79,13 @@ You can check the email address on GitHub by adding `.patch` to the end of a com
 
 ## My deployments are showing up as unmapped
 
-The app does a mapping between both GitHub and Jira deployments environments names. GitHub does not have a concept of "environment type" and users can name their environments whatever they like. Jira, on the other hand, expects the types of environment, in addition to the environment name. Those can only be development, testing, staging and production. We map GitHub's environments names to one of the Jira environment types. If there's no match, Jira will consider it unmapped. The mapping logic can be found [here](https://github.com/atlassian/github-for-jira/blob/main/src/transforms/deployment.ts#L34), but it simply considers [a set of common values](https://github.com/atlassian/github-for-jira/blob/main/src/transforms/deployment.ts#L49) and their variations, e.g. "prod-east" and "prod-west" are considered variants of "prod".
+The app does a mapping from GitHub environments to Jira deployment environments. GitHub does not have a concept of "environment type" and users can name their environments whatever they like. 
+
+Jira, on the other hand, expects the environment type to be one of:
+
+ * `development`, 
+ * `testing`, 
+ * `staging`, or
+ * `production`. 
+ 
+ We map GitHub's environments names to one of the Jira environment types. If there's no match, Jira will consider it unmapped. The mapping logic can be found [here](https://github.com/atlassian/github-for-jira/blob/main/src/transforms/deployment.ts#L34), but it simply considers [a set of common values](https://github.com/atlassian/github-for-jira/blob/main/src/transforms/deployment.ts#L49) and their variations, e.g. "prod-east" and "prod-west" are considered variants of "prod".
