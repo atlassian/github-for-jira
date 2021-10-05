@@ -1,5 +1,5 @@
 import JiraClient from "../models/jira-client";
-import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
+import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
@@ -43,7 +43,7 @@ export default async (
 		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
 		webhookReceived
 	) {
-		emitWebhookProcessingTimeMetrics(
+		emitWebhookProcessedMetrics(
 			webhookReceived,
 			name,
 			log,
