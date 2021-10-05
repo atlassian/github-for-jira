@@ -37,7 +37,7 @@ You can check your sync status in the integration settings:
 |----------|----------------------------|
 | PENDING  | The sync has not started.  |
 | IN PROGRESS   | The sync has started and is still in progress. No historical information will be displayed in Jira, but the integration will work for new data sent in. |
-| COMPLETE | The sync has finished. Historical Information will be displayed in Jira. |
+| COMPLETE | The sync has finished. Historical data will be displayed in Jira. |
 | FAILED   | The sync hit an error and stopped without completing. Partial historical information may appear in Jira. |
 
 The time it takes to complete the sync will depend on the size of your GitHub organization, especially the number of commits in your repositories. Since the sync scans branches, commits and pull requests for every repository in your installation, be mindful that selecting "All Repositories" will perform a scan of every repository in your account, including forks. If your repositories have a lot of commits, the process can take hours or even days to complete.
