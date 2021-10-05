@@ -1,68 +1,53 @@
 /* globals $, AP */
-const params = new URLSearchParams(window.location.search.substring(1));
-const appUrl = document
-	.querySelector("meta[name=public-url]")
-	.getAttribute("content");
+const params = new URLSearchParams(window.location.search.substring(1))
+const appUrl = document.querySelector('meta[name=public-url]').getAttribute('content')
 
-$(".add-organization-link").click(function (event) {
-	event.preventDefault();
+$('.add-organization-link').click(function (event) {
+  event.preventDefault()
 
-	const child = window.open(
-		`${appUrl}/github/login?jwt=${encodeURIComponent(
-			params.get("jwt")
-		)}&xdm_e=${encodeURIComponent(params.get("xdm_e"))}`
-	);
+  const child = window.open(`${appUrl}/github/login?jwt=${encodeURIComponent(params.get('jwt'))}&xdm_e=${encodeURIComponent(params.get('xdm_e'))}`)
 
-	const interval = setInterval(function () {
-		if (child.closed) {
-			clearInterval(interval);
+  const interval = setInterval(function () {
+    if (child.closed) {
+      clearInterval(interval)
 
-			AP.navigator.reload();
-		}
-	}, 100);
-});
+      AP.navigator.reload()
+    }
+  }, 100)
+})
 
-$(".configure-connection-link").click(function (event) {
-	event.preventDefault();
+$('.configure-connection-link').click(function (event) {
+  event.preventDefault()
 
-	const installationLink = $(event.target).data("installation-link");
-	const child = window.open(installationLink);
+  const installationLink = $(event.target).data('installation-link')
+  const child = window.open(installationLink)
 
-	const interval = setInterval(function () {
-		if (child.closed) {
-			clearInterval(interval);
+  const interval = setInterval(function () {
+    if (child.closed) {
+      clearInterval(interval)
 
-			AP.navigator.reload();
-		}
-	}, 100);
-});
+      AP.navigator.reload()
+    }
+  }, 100)
+})
 
-$(".delete-connection-link").click(function (event) {
-	event.preventDefault();
-	const installationId = $(event.target).data("installation-id");
+$('.delete-connection-link').click(function (event) {
+  event.preventDefault()
 
-	window.AP.context.getToken(function (token) {
+	window.AP.context.getToken(function(token){
 		$.ajax({
-			type: "DELETE",
-			url: `/jira/configuration?xdm_e=${encodeURIComponent(
-				params.get("xdm_e")
-			)}`,
+			type: 'DELETE',
+			url: `/jira/configuration?xdm_e=${encodeURIComponent(params.get('xdm_e'))}`,
 			data: {
-				installationId,
-				jwt: token,
+				installationId: $(event.target).data('installation-id'),
+				jwt: token
 			},
 			success: function (data) {
-				AP.navigator.reload();
-			},
+				AP.navigator.reload()
+			}
 		});
 	});
-});
 
-$(".sync-connection-link").click(function (event) {
-	event.preventDefault();
-	const installationId = $(event.target).data("installation-id");
-	const jiraHost = $(event.target).data("jira-host");
-	const csrfToken = document.getElementById("_csrf").value;
 
 })
 
@@ -74,7 +59,7 @@ $('.sync-connection-link-OLD').click(function (event) {
 
 	window.AP.context.getToken(function(token){
 		$.ajax({
-			type: "POST",
+			type: 'POST',
 			url: `/jira/sync`,
 			data: {
 				installationId: installationId,
@@ -84,11 +69,11 @@ $('.sync-connection-link-OLD').click(function (event) {
 				_csrf: csrfToken
 			},
 			success: function (data) {
-				AP.navigator.reload();
+				AP.navigator.reload()
 			},
 			error: function (error) {
-				console.log(error);
-			},
+				console.log(error)
+			}
 		});
 	});
 })
@@ -130,16 +115,28 @@ const statusBtn = document.getElementById('sync-status-modal-btn-old')
 const retrySpan = document.getElementById('retry-close')
 const statusSpan = document.getElementById('status-close-old')
 
-if (syncStatusBtn != null) {
-	syncStatusBtn.onclick = function () {
-		syncStatusModal.style.display = "block";
-	};
+if (retryBtn != null) {
+  retryBtn.onclick = function () {
+    retryModal.style.display = 'block'
+  }
 }
 
-if (syncStatusCloseBtn != null) {
-	syncStatusCloseBtn.onclick = function () {
-		syncStatusModal.style.display = "none";
-	};
+if (statusBtn != null) {
+  statusBtn.onclick = function () {
+    statusModal.style.display = 'block'
+  }
+}
+
+if (retrySpan != null) {
+  retrySpan.onclick = function () {
+    retryModal.style.display = 'none'
+  }
+}
+
+if (statusSpan != null) {
+  statusSpan.onclick = function () {
+    statusModal.style.display = 'none'
+  }
 }
 
 // When the user clicks anywhere outside of the modal, close it

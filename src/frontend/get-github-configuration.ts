@@ -1,6 +1,5 @@
 import { Installation, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
-import { getJiraMarketplaceUrl } from "../util/getUrl";
 import enhanceOctokit from "../config/enhance-octokit";
 import app from "../worker/app";
 import { getInstallation } from "./get-jira-configuration";
@@ -121,7 +120,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			);
 
 			if (await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, false)) {
-				return res.render("github-configuration.hbs", {
+				res.render("github-configuration.hbs", {
 					csrfToken: req.csrfToken(),
 					installations: connectedInstallations,
 					jiraHost: req.session.jiraHost,
@@ -131,7 +130,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 					login
 				});
 			} else {
-				return res.render("github-configuration-OLD.hbs", {
+				res.render("github-configuration-OLD.hbs", {
 					csrfToken: req.csrfToken(),
 					installations: connectedInstallations,
 					jiraHost: req.session.jiraHost,
@@ -149,8 +148,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			return next(err);
 		}
 	}
-
-	// res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
 };
 
 interface InstallationWithAdmin extends Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem {
