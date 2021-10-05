@@ -1,5 +1,7 @@
-import { CustomContext } from "./middleware";
 import JiraClient from "../models/jira-client";
+import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { CustomContext } from "./middleware";
 
 export default async (context: CustomContext, _: JiraClient, util): Promise<void> => {
 	const { issue } = context.payload;
@@ -8,11 +10,14 @@ export default async (context: CustomContext, _: JiraClient, util): Promise<void
 	try {
 		linkifiedBody = await util.unfurl(issue.body);
 		if (!linkifiedBody) {
-			context.log({ noop: "no_linkified_body_issue" }, "Halting further execution for issue since linkifiedBody is empty");
+			context.log("Halting further execution for issue since linkifiedBody is empty");
 			return;
 		}
 	} catch (err) {
-		context.log.warn({ err, linkifiedBody, body: issue.body }, "Error while trying to find jira keys in issue body");
+		context.log.warn(
+			{ err, linkifiedBody, body: issue.body },
+			"Error while trying to find jira keys in issue body"
+		);
 	}
 
 	const editedIssue = context.issue({
@@ -21,5 +26,19 @@ export default async (context: CustomContext, _: JiraClient, util): Promise<void
 	});
 
 	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);
-	await context.github.issues.update(editedIssue);
+
+	const githubResponse = await context.github.issues.update(editedIssue);
+	const { webhookReceived, name, log } = context;
+
+	if (
+		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
+		webhookReceived
+	) {
+		emitWebhookProcessingTimeMetrics(
+			webhookReceived,
+			name,
+			log,
+			githubResponse?.status
+		);
+	}
 };

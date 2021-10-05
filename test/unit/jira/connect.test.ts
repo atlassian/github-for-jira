@@ -3,6 +3,7 @@ import express, { Express } from "express";
 import setupFrontend from "../../../src/frontend/app";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { when } from "jest-when";
+import {getLogger} from "../../../src/config/logger";
 
 jest.mock("../../../src/config/feature-flags");
 
@@ -13,19 +14,27 @@ describe("Connect", () => {
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_JWT_SIGNED_INSTALL_CALLBACKS,
 			expect.anything()
-		).mockResolvedValue(value);
+		).mockResolvedValue(Promise.resolve(value));
 
 	beforeEach(() => {
 		// Defaults maintenance mode to true
 		whenSignedInstallCallbacks(true);
 		app = express();
+		app.use((request, _, next) => {
+			request.log = getLogger('test');
+			next();
+		});
+		when(booleanFlag).calledWith(
+			BooleanFlags.PROPAGATE_REQUEST_ID,
+			expect.anything()
+		).mockResolvedValue(Promise.resolve(true));
 	});
 
 	describe("Frontend", () => {
 		beforeEach(() => {
 			app.use("/", setupFrontend({
-				getSignedJsonWebToken: () => undefined,
-				getInstallationAccessToken: () => undefined
+				getSignedJsonWebToken: () => "",
+				getInstallationAccessToken: async () => ""
 			}));
 		});
 

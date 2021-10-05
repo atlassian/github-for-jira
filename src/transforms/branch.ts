@@ -1,8 +1,8 @@
 import { getJiraId } from "../jira/util/id";
 import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
 import { getJiraAuthor } from "../util/jira";
+import _ from "lodash";
 
 async function getLastCommit(context: Context, issueKeys: string[]) {
 	const { github, payload: { ref } } = context;
@@ -34,9 +34,9 @@ export default async (context: Context) => {
 
 	const { ref, repository } = context.payload;
 
-	const issueKeys = issueKeyParser().parse(ref);
+	const issueKeys = issueKeyParser().parse(ref) || [];
 
-	if (isEmpty(issueKeys)) {
+	if (_.isEmpty(issueKeys)) {
 		return undefined;
 	}
 
