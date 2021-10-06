@@ -18,14 +18,17 @@
   </head>
 
   <body class="pageContent">
-    <section class="gitHubSetup__getJira__container">
-      <p class="gitHubSetup__getJira__message">Don't have a Jira site?</p>
-      <a
-        class="gitHubSetup__getJira__link"
-        href="https://www.atlassian.com/software/jira"
-        target="_blank"
-      >Get Jira</a>
-    </section>
+    {{! Only render if there is not Jira Host present }}
+    {{#if hasNoHost}}
+      <section class="gitHubSetup__getJira__container">
+        <p class="gitHubSetup__getJira__message">Don't have a Jira site?</p>
+        <a
+          class="gitHubSetup__getJira__link"
+          href="https://www.atlassian.com/software/jira"
+          target="_blank"
+        >Get Jira</a>
+      </section>
+    {{/if}}
 
     <div class="headerImage">
       <img
@@ -38,50 +41,83 @@
       configuration</h2>
 
     <section class="githubSetup__container">
-      <p class="githubSetup__inputLabel"></p>
 
-      <form class="githubSetup__form aui" method="post" action="/github/setup">
-        <input type="hidden" name="_csrf" value="{{csrfToken}}" />
-
-        <div class="githubSetup__form__fieldGroup">
-          <label class="githubSetup__inputLabel" for="jiraSubdomain">What is
-            your Jira Cloud site?</label>
-          <div class="githubSetup__form__inputContainer">
-            <input
-              class="githubSetup__form__input text"
-              type="text"
-              id="jiraSubdomain"
-              name="jiraSubdomain"
-              placeholder="Jira Cloud site"
-              aria-label="Jira Cloud Site"
-              value="{{jiraSubdomain}}"
-              autofocus
-            />
-            {{!-- TODO - find out if we need the dropdown --}}
-            <span class="githubSetup__form__jiraSiteSuffix">
-              .atlassian.net
-              {{!-- <select name="jiraDomain" class="form-select" aria-label="Preference">
-                            {{#each jiraDomainOptions}}
-                              <option {{#if selected}}selected{{/if}}>{{value}}</option>
-                            {{/each}}
-                          </select> --}}
-            </span>
-          </div>
-        </div>
-
-        <button
-          class="githubSetup__form__submitBtn aui-button aui-button-primary"
-          type="submit"
+      {{#if hasNoHost}}
+        <form
+          class="githubSetup__form aui"
+          method="post"
+          action="/github/setup"
         >
-          Continue
-        </button>
+          <input type="hidden" name="_csrf" value="{{csrfToken}}" />
 
-        {{#if error}}
-          <div class="flash flash-error mb-2">
-            {{error}}
+          <div class="githubSetup__form__fieldGroup">
+            <label class="githubSetup__inputLabel" for="jiraSubdomain">What is
+              your Jira Cloud site?</label>
+            <div class="githubSetup__form__inputContainer">
+              <input
+                class="githubSetup__form__input text"
+                type="text"
+                id="jiraSubdomain"
+                name="jiraSubdomain"
+                placeholder="Jira Cloud site"
+                aria-label="Jira Cloud Site"
+                value="{{jiraSubdomain}}"
+                autofocus
+              />
+              {{! TODO - find out if we need the dropdown }}
+              <span class="githubSetup__form__jiraSiteSuffix">
+                .atlassian.net
+                {{!-- <select name="jiraDomain" class="form-select" aria-label="Preference">
+                              {{#each jiraDomainOptions}}
+                                <option {{#if selected}}selected{{/if}}>{{value}}</option>
+                              {{/each}}
+                            </select> --}}
+              </span>
+            </div>
           </div>
-        {{/if}}
-      </form>
+
+          <button
+            class="githubSetup__form__submitBtn aui-button aui-button-primary"
+            type="submit"
+          >
+            Continue
+          </button>
+
+          {{#if error}}
+            <div class="flash flash-error mb-2">
+              {{error}}
+            </div>
+          {{/if}}
+        </form>
+      {{else}}
+        <div class="githubSetup__jiraHostWrapper">
+          <div class="githubSetup__headerWrapper">
+            <p class="tableHeader__label org__cell">Jira site</p>
+          </div>
+
+          <div class="githubSetup__table">
+            <div class="githubSetup__table__row clearfix">
+              <div class="org__cell">
+                {{!-- <img
+                    class="getConfiguration__orgContent__avatar"
+                    src="{{account.avatar_url}}"
+                    alt="Github organization avatar"
+                  /> --}}
+                <a class="githubSetup__marketplaceUrl" href={{marketplaceUrl}} target="_blank">
+                  {{jiraHost}}</a>
+              </div>
+            </div>
+          </div>
+
+          <a
+            class="githubSetup__connectNewJiraInstance"
+            href=""
+          >
+            <span class="githubSetup__connectNewJiraInstance__plus">+</span>
+            Connect another Jira Cloud site
+          </a>
+        </div>
+      {{/if}}
     </section>
   </body>
 

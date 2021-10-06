@@ -12,10 +12,12 @@ export default async (req: Request, res: Response): Promise<void> => {
 	const { jiraSubdomain, jiraDomain } = req.body;
 
 	req.log.info(
-		`Received github setup page request for jira ${jiraSubdomain}.${jiraDomain}`
+		`Received github setup page request for jira ${jiraSubdomain}.atlassian.net`
+		// `Received github setup page request for jira ${jiraSubdomain}.${jiraDomain}`
 	);
 
-	if (!validJiraDomains(jiraSubdomain, jiraDomain)) {
+	// TODO UPDATE CORRECTLY AFTER JADE UPDATES
+	if (!validJiraDomains(jiraSubdomain, "atlassian.net")) {
 		res.status(400);
 
 		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, false)) {
@@ -23,7 +25,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 				error: "The entered Jira Cloud Site is not valid",
 				jiraSubdomain,
 				nonce: res.locals.nonce,
-				jiraDomainOptions: jiraDomainOptions(jiraDomain),
+				jiraDomainOptions: jiraDomainOptions("atlassian.net"),
 				csrfToken: req.csrfToken(),
 			});
 		} else {
@@ -37,7 +39,8 @@ export default async (req: Request, res: Response): Promise<void> => {
 		}
 	}
 
-	req.session.jiraHost = `https://${jiraSubdomain}.${jiraDomain}`;
+	req.session.jiraHost = `https://${jiraSubdomain}.atlassian.net`;
+	// req.session.jiraHost = `https://${jiraSubdomain}.${jiraDomain}`;
 
 	res.redirect(
 		req.session.githubToken

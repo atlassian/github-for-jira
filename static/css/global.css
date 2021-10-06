@@ -76,7 +76,8 @@ a:focus {
   flex: 2;
 }
 
-.githubOrgs__table {
+.githubOrgs__table,
+.githubSetup__table {
   border-top: 2px solid #e0e2e7;
   border-bottom: 2px solid #e0e2e7;
   padding: 0.8em 0;
@@ -143,4 +144,25 @@ a:focus {
 .githubConfiguration__header,
 .gitHubSetup__header {
   font-weight: 500 !important;
+}
+
+.githubOrgs__table__row {
+  border-top: 0;
+  line-height: 0;
+}
+
+/* Need to tidy up after other branch is merged */
+
+.githubSetup__jiraHostWrapper {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  line-height: 1;
+  margin: 2em auto;
+}
+
+.githubOrgs__table__row,
+.getConfiguration__orgContent:nth-child(2) {
+  display: flex;
+  flex-direction: row;
 }

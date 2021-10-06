@@ -28,3 +28,43 @@
 .githubSetup__form__submitBtn {
   font-weight: normal;
 }
+
+.githubSetup__table__row {
+  padding: 1em auto;
+}
+
+.githubSetup__headerWrapper {
+  color: #6b778c;
+  font-size: 0.9rem;
+  padding: 1em 0;
+}
+
+.githubSetup__marketplaceUrl {
+  color: #172b4d;
+}
+
+.githubSetup__marketplaceUrl:active,
+.githubSetup__marketplaceUrl:hover,
+.githubSetup__marketplaceUrl:focus {
+  color: #172b4d;
+}
+
+.githubSetup__connectNewJiraInstance {
+  color: #172b4d;
+  font-weight: 500;
+  padding: 0.8em 0;
+}
+
+.githubSetup__connectNewJiraInstance:hover,
+.githubSetup__connectNewJiraInstance:focus,
+.githubSetup__connectNewJiraInstance:active {
+  background-color: #f5f6f7;
+  color: #172b4d;
+  text-decoration: none;
+}
+
+.githubSetup__connectNewJiraInstance__plus {
+  font-size: 1.1rem;
+  padding: 0 0.7em 0 0.3em;
+  transform: scale(1.5);
+}
