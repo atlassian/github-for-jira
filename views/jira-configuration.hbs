@@ -24,7 +24,6 @@
       href="/public/css/jira-configuration.css"
       media="all"
     />
-    <link rel="stylesheet" href="/public/css/media-queries.css" media="all" />
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
@@ -249,7 +248,7 @@
                               data-jira-host="{{ ../host }}"
                               data-installation-id="{{ id }}"
                             >
-                              Resync
+                              Restart backfill
                             </span>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                         </a>
