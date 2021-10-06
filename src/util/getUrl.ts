@@ -31,10 +31,7 @@ export const getJiraHostFromRedirectUrlNew = (urlOrPath: string, log: Logger): s
 	}
 	try {
 		const { host, query } = url.parse(urlOrPath, true);
-		if (query?.xdm_e) {
-			return "" + url.parse("" + query.xdm_e, false).host;
-		}
-		return host || "unknown";
+		return (query?.xdm_e ? url.parse(query.xdm_e.toString(), false).host : host) || "unknown";
 	} catch (err) {
 		log.error(err, "Cannot detect jiraHost from redirect URL");
 		return "error";
