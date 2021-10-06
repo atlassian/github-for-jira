@@ -11,11 +11,16 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 	eventEmitter.on("active", active);
 	eventEmitter.on("inactive", inactive);
 	if (!client) {
+		if (!envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL) {
+			const msg = "Missing 'SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL' environment variable for Micros Lifecycle Events.";
+			logger.error(msg);
+			throw new Error(msg);
+		}
 		client = Consumer.create({
 			queueUrl: envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL,
-			handleMessage: async (data: SQSMessage): Promise<void> => {
+			handleMessage: async (data: SQSMessage) => {
 				logger.info(data, "Received Micros lifecycle event");
-				if(!data.Body) {
+				if (!data.Body) {
 					logger.debug("Lifecycle event missing body, skipping.");
 					return;
 				}
