@@ -1,4 +1,5 @@
 import Logger from "bunyan";
+import url from "url";
 
 interface UrlParams {
 	githubHost: string;
@@ -24,24 +25,18 @@ export const getJiraHostFromRedirectUrl = (url: string): string => {
 	}
 };
 
-export const getJiraHostFromRedirectUrlNew = (url: string, log: Logger): string => {
-	if (!url) {
+export const getJiraHostFromRedirectUrlNew = (urlOrPath: string, log: Logger): string => {
+	if (!urlOrPath) {
 		return "empty";
 	}
 	try {
-		const [_, jiraBaseUrlAndTail] = url.split('&xdm_e=', 2);
-		if (jiraBaseUrlAndTail) {
-			const [jiraBaseUrlEncoded] = jiraBaseUrlAndTail.split('&');
-			const jiraBaseUrl = decodeURIComponent(jiraBaseUrlEncoded);
-			if (jiraBaseUrl.startsWith("http") && jiraBaseUrl.indexOf('//') >= 0) {
-				const [_, jiraHost] = jiraBaseUrl.split('//');
-				return jiraHost;
-			}
-			return jiraBaseUrl;
+		const { host, query } = url.parse(urlOrPath, true);
+		if (query && query.xdm_e) {
+			return "" + url.parse("" + query.xdm_e, false).host;
 		}
-		return new URL(url).host;
+		return host ? host : "unknown";
 	} catch (err) {
 		log.error(err, "Cannot detect jiraHost from redirect URL");
-		return "unknown";
+		return "error";
 	}
 };
