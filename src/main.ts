@@ -7,6 +7,11 @@ import "./config/proxy";
 import { isNodeProd } from "./util/isNodeEnv";
 import configureAndLoadApp from "./configure-robot";
 import { listenToMicrosLifecycle } from "./services/micros/lifecycle";
+import { sendCommandToCluster, ClusterCommand } from "./services/cluster/send-command";
+import { listenForClusterCommand } from "./services/cluster/listen-command";
+import { getLogger } from "./config/logger";
+
+const logger = getLogger("main");
 
 const probot = createProbot({
 	id: Number(process.env.APP_ID),
@@ -20,27 +25,38 @@ const probot = createProbot({
 	}
 });
 
-/**
- * Start the probot worker.
- */
+let running = false;
 async function start() {
-	initializeSentry();
+	if(running) {
+		logger.debug("Main instance already running, skipping.");
+		return;
+	}
 
+	logger.info("Micros Lifecycle: Starting http server");
 	// We are always behind a proxy, but we want the source IP
 	probot.server.set("trust proxy", true);
 	configureAndLoadApp(probot);
 	probot.start();
+	running = true;
 }
 
-// TODO: this should work in dev/production and should be `workers = process.env.NODE_ENV === 'production' ? undefined : 1`
+async function initialize() {
+	initializeSentry();
+	listenForClusterCommand(ClusterCommand.start, start);
+	listenForClusterCommand(ClusterCommand.stop, stop);
+}
+
+// Production clustering (one process per core)
 if (isNodeProd()) {
+	// Start clustered server
+	throng({ lifetime: Infinity }, initialize);
 	// Listen to micros lifecycle event to know when to start/stop
-	listenToMicrosLifecycle(() => {
-		// Start clustered server
-		throng({ lifetime: Infinity }, start);
-	}, () => {
-		// TODO: add shutdown mechanism here - might need different clustering lib
-	});
+	listenToMicrosLifecycle(
+		() => sendCommandToCluster(ClusterCommand.start),
+		() => sendCommandToCluster(ClusterCommand.stop)
+	);
 } else {
+	// Dev/test single process
+	initializeSentry();
 	start();
 }

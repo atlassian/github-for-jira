@@ -6,6 +6,7 @@ import { getLogger } from "../../config/logger";
 const logger = getLogger("micros.lifecycle");
 const eventEmitter = new EventEmitter();
 let client: Consumer;
+
 export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): void => {
 	eventEmitter.on("active", active);
 	eventEmitter.on("inactive", inactive);
