@@ -1,117 +1,199 @@
-<!doctype html>
 <html>
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
-    <meta name='ap-local-base-url' content='{{localBaseUrl}}' />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
     <title>{{title}}</title>
-    <link rel='stylesheet' href='/public/primer/build.css' media='all' />
     <link
-      rel='stylesheet'
-      href='/public/css/github-configuration.css'
-      media='all'
-    />
-     <link
       rel="stylesheet"
-      href="/public/css/global-OLD.css"
+      href="/public/aui/aui-prototyping.css"
+      integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="/public/primer/build.css" media="all" />
+    <link
+      rel="stylesheet"
+      href="/public/css/github-configuration.css"
       media="all"
     />
-    <script src='/public/js/jquery.min.js' nonce='{{nonce}}'></script>
+    <link rel="stylesheet" href="/public/css/global.css" media="all" />
+    <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
-  <body class='px-3 py-6'>
-    <input type='hidden' id='_csrf' name='_csrf' value='{{csrfToken}}' />
-    <input type='hidden' id='jiraHost' name='jiraHost' value='{{jiraHost}}' />
+  <body class="px-3 py-6">
+    <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
+    <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
     <input
-      type='hidden'
-      id='clientKey'
-      name='clientKey'
-      value='{{clientKey}}'
+      type="hidden"
+      id="clientKey"
+      name="clientKey"
+      value="{{clientKey}}"
     />
 
-    <section class="githubConfiguration__logout__container">
-      <p class="githubConfiguration__logout__account">GitHub Account: <span class="githubConfiguration__logout__name">{{login}}</span></p>
-      <p class="githubConfiguration__logout__link logout-link"  target="_blank" >Logout</p>
+    <section class="gitHubConfiguration__logout__container">
+      <p class="gitHubConfiguration__logout__account">GitHub Account:
+        <span class="gitHubConfiguration__logout__name">{{login}}</span></p>
+      <p
+        class="gitHubConfiguration__logout__link logout-link"
+        target="_blank"
+      >Logout</p>
     </section>
 
-    <section class='getConfiguration'>
+    <section class="gitHubConfiguration">
       <div class="headerImage">
-        <img src='/public/assets/jira-and-github.png' alt="Jira and GitHub logos" />
+        <img
+          src="/public/assets/jira-and-github.png"
+          alt="Jira and GitHub logos"
+        />
       </div>
 
-      <h2 class='f2 text-center text-normal getConfiguration__header'>Connect a GitHub organization to your Jira site</h2>
-      <p class='jiraInstance'>{{jiraHost}}</p>
+      <h2 class="f2 text-center text-normal gitHubConfiguration__header">Connect a
+        GitHub organization to your Jira site</h2>
+      <p class="jiraInstance">{{jiraHost}}</p>
 
-        <div class='Box'>
-          <div class='getConfiguration__wrapper'>
-            <div class='tableHeader'>
-              <p class='tableHeader__label org__cell'>Unconnected organizations with Jira app</p>
-              <p class='tableHeader__label org__cell'>Repository access</p>
-            </div>
-
-            <div class="githubOrgs__table">
-              {{#each installations}}
-                <div class='githubOrgs__table__row clearfix'>
-                  {{!-- Organizations --}}
-                  <div class='getConfiguration__orgContent__account org__cell'>
-                    <img class='getConfiguration__orgContent__avatar' src='{{account.avatar_url}}' alt='Github organization avatar' />
-                    <span class='text-bold text-gray-dark'><a
-                        href='{{html_url}}'
-                      >{{account.login}}</a></span>
-                  </div>
-
-                  {{!-- Repository access --}}
-                  <div class='getConfiguration__orgContent org__cell'>
-                    <p class="getConfiguration__orgContent__repoSelection">{{repoAccessType repository_selection}}</p>
-                    <p class="getConfiguration__orgContent__numberOfRepos">{{numberOfRepos}}</p>
-                    {{#if admin}}
-                      <a
-                        href='/github/subscriptions/{{id}}'
-                      >
-                        <img class="getConfiguration__orgContent_edit" src='/public/assets/edit-icon.png' alt='Edit' />
-                      </a>
-                    {{/if}}
-                  </div>
-
-                  {{!-- Connect --}}
-                  <div class='getConfiguration__orgContent org__cell'>
-                    {{#if admin}}
-                      {{#if (isNotConnected syncStatus)}}
-                        <button
-                          class='install-link btn-info getConfiguration__orgContent__connectBtn'
-                          data-installation-id='{{id}}'
-                          type='submit'
-                        >
-                          {{connectedStatus syncStatus}}
-                        </button>
-                      {{else if (inProgressSync syncStatus)}}
-                        <div class="getConfiguration__loaderContainer">
-                          <div class="getConfiguration__loader"></div>
-                        </div>
-                      {{else}}
-                        <p class="getConfiguration__orgContent__connectedMsg">
-                          {{connectedStatus syncStatus}}
-                        </p>
-                      {{/if}}
-                    {{/if}}
-                  </div>
-
-                </div>
-              {{/each}}
-
-              {{#unless installations}}
-                <p class="getConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
-              {{/unless}}
-            </div>
-
-            <a class="getConfiguration__connectNewOrg" href='{{info.html_url}}/installations/new'>
-              <span class="getConfiguration__connectNewOrg__plus">+</span> Install Jira on a new organization
-            </a>
+      <div class="Box">
+        <div class="gitHubConfiguration__wrapper">
+          <div class="gitHubConfiguration__tableHeader">
+            <p class="gitHubConfiguration__tableHeader__label">GitHub organization</p>
+            {{#if installations}}
+              <p class="gitHubConfiguration__tableHeader__label">Repository access</p>
+            {{/if}}
           </div>
+
+          <div class="githubOrgs__table">
+            {{#each installations}}
+              <div class="githubOrgs__table__row clearfix">
+                {{! Organizations }}
+                <div class="gitHubConfiguration__orgContent__account org__cell">
+                  <img
+                    class="gitHubConfiguration__orgContent__avatar"
+                    src="{{account.avatar_url}}"
+                    alt="Github organization avatar"
+                  />
+                  <span class="text-bold text-gray-dark">{{account.login}}</a></span>
+                </div>
+
+                {{! Repository access }}
+                <div class="gitHubConfiguration__orgContent__repoAccess org__cell">
+                  <p
+                    class="gitHubConfiguration__orgContent__repoSelection"
+                  >{{repoAccessType repository_selection}}</p>
+                  <p
+                    class="gitHubConfiguration__orgContent__numberOfRepos"
+                  >{{numberOfRepos}}</p>
+                  {{#if admin}}
+                    <a href="{{html_url}}">
+                      <span
+                        class="gitHubConfiguration__orgContent__edit aui-icon aui-icon-small aui-iconfont-new-edit"
+                      >
+                        Edit
+                      </span>
+                    </a>
+                  {{/if}}
+                </div>
+
+                {{! Connect }}
+                <div class="gitHubConfiguration__orgContent__connect org__cell">
+                  {{#if admin}}
+                    {{#if (isNotConnected syncStatus)}}
+                      <button
+                        class="gitHubConfiguration__orgContent__connectBtn aui-button install-link"
+                        data-installation-id="{{id}}"
+                        type="submit"
+                      >
+                        {{connectedStatus syncStatus}}
+                      </button>
+                    {{else if (inProgressSync syncStatus)}}
+                      <div class="gitHubConfiguration__loaderContainer">
+                        <aui-spinner size="small"></aui-spinner>
+                      </div>
+                    {{else if (failedSync syncStatus)}}
+                      <div class="gitHubConfiguration__orgContent__connectFailed__warningIconContainer">
+                        <span class="gitHubConfiguration__orgContent__connectFailed__warningIcon aui-icon aui-icon-smalll aui-iconfont-warning">
+                          Sync failed warning
+                        </span>
+                      </div>
+                      <button
+                        class="gitHubConfiguration__orgContent__connectFailed aui-button sync-connection-link"
+                        data-jira-host="{{ ../jiraHost }}"
+                        data-installation-id="{{ id }}"
+                      >
+                        Restart backfill
+                      </button>
+                      <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                    {{else}}
+                      <p class="gitHubConfiguration__orgContent__connectedMsg">
+                        {{connectedStatus syncStatus}}
+                      </p>
+                    {{/if}}
+                    {{else}}
+                    <button class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button" aria-disabled="true" disabled>
+                      Connect
+                    </button>
+                  {{/if}}
+
+                  {{#if admin}}
+                    <a class="gitHubConfiguration__orgContent__settingsContainer" href='/github/subscriptions/{{id}}'>
+                      <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
+                        Manage Jira Subscriptions
+                      </span>
+                    </a>
+                  {{else}}
+                     <div class="gitHubConfiguration__orgContent__settingsContainer--disabled">
+                      <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
+                        Manage Jira Subscriptions
+                      </span>
+                    </div>
+                  {{/if}}
+
+                  {{!-- Hidden unless non-admin hovers on connect button --}}
+                  <p class="gitHubConfiguration__notAdminMsg">
+                    You need repository admin permissions to install this app. Please contact your admin.
+                  </p>
+
+                  {{!-- Hidden unless user hovers over settings icon --}}
+                  <p class="gitHubConfiguration__manageSubscriptions">
+                    Manage Jira subscriptions
+                  </p>
+
+                  {{!-- Hidden unless user hovers over settings icon when user is not an admin --}}
+                  <p class="gitHubConfiguration__manageSubscriptions--notAdmin">
+                    You must have admin permissions to manage Jira subscriptions. Please contact your admin.
+                  </p>
+
+                  {{!-- Hidden unless user hovers over warning icon when a sync fails --}}
+                  <p class="gitHubConfiguration__failedSyncWarningLabel">
+                    There was a problem syncing data from your account. The sync process will automatically retry.
+                    If this does not happen, please restart backfill.
+                  </p>
+                </div>
+              </div>
+            {{/each}}
+
+            {{#unless installations}}
+              <p class="gitHubConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
+            {{/unless}}
+          </div>
+
+          <a
+            class="gitHubConfiguration__connectNewOrg"
+            href="{{info.html_url}}/installations/new"
+          >
+            <span class="gitHubConfiguration__connectNewOrg__plus">+</span>Install GitHub for Jira on a new organization
+          </a>
         </div>
+      </div>
 
     </section>
-    <script src='/public/js/github-configuration.js' nonce='{{nonce}}'></script>
+    <script src="/public/js/github-configuration.js" nonce="{{nonce}}"></script>
+    <script
+      src="/public/aui/aui-prototyping.js"
+      integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+      nonce="{{nonce}}"
+    ></script>
   </body>
 
 </html>
