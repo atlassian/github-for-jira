@@ -1,17 +1,17 @@
 .getConfiguration__logout__container {
-    align-items: flex-end;
-    display: flex;
-    flex-direction: column;
-  }
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+}
 
-  .getConfiguration__logout__link {
-    cursor: pointer;
-    color: #0366d6;
-  }
+.getConfiguration__logout__link {
+  cursor: pointer;
+  color: #0366d6;
+}
 
-  .getConfiguration__logout__name {
-    font-weight: bold;
-  }
+.getConfiguration__logout__name {
+  font-weight: bold;
+}
 
 .getConfiguration {
   margin: auto;
@@ -175,20 +175,12 @@
     font-size: 0.8rem;
   }
 
-  .getConfiguration__connectNewOrg:hover,
-  .getConfiguration__connectNewOrg:focus,
-  .getConfiguration__connectNewOrg:active {
-    background-color: #f5f6f7;
-    border-radius: 3px;
-    color: #172b4d;
-    text-decoration: none;
+  .getConfiguration__tableHeader {
+    padding-bottom: 0;
   }
 
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
+  .getConfiguration__loader {
+    height: 1.8em;
+    width: 1.8em;
   }
+}

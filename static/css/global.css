@@ -27,11 +27,11 @@ a:focus {
   text-align: center;
 }
 
-  .jiraInstance {
-    color: #586069;
-    margin-bottom: 0;
-    text-align: center;
-  }
+.jiraInstance {
+  color: #586069;
+  margin-bottom: 0;
+  text-align: center;
+}
 
 .actionBtn,
 .actionBtn--empty {
