@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
-import Logger from "bunyan";
 import nock from "nock";
 import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
 import { mockModels } from "../../utils/models";
 import api from "../../../src/api";
-import { EnvironmentEnum } from "../../../src/config/env";
+import { EnvironmentEnum } from "../../../src/interfaces/common";
+import { getLogger } from "../../../src/config/logger";
 
 jest.mock("../../../src/models");
 
@@ -43,11 +43,7 @@ describe("API", () => {
 		const app = express();
 		app.use((req: Request, res: Response, next: NextFunction) => {
 			res.locals = locals || {};
-			req.log = new Logger({
-				name: "api.test.ts",
-				level: "debug",
-				stream: process.stdout
-			});
+			req.log =  getLogger("test");
 			req.session = { jiraHost: process.env.ATLASSIAN_URL };
 			next();
 		});

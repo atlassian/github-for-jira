@@ -1,9 +1,10 @@
 import transformBranches from "./transforms/branch";
 import { getBranches as getBranchesQuery } from "./queries";
 import { GitHubAPI } from "probot";
+import { Repository } from "../models/subscription";
 
 // TODO: better typings
-export default async (github: GitHubAPI, repository, cursor, perPage) => {
+export default async (github: GitHubAPI, repository:Repository, cursor?:string | number, perPage?:number) => {
 	// TODO: fix typings for graphql
 	const { edges } = ((await github.graphql(getBranchesQuery, {
 		owner: repository.owner.login,

@@ -1,4 +1,6 @@
+import envVars from "../../config/env";
 import { getLogger } from "../../config/logger";
+import { JiraIssue } from "../../interfaces/jira";
 
 const logger = getLogger("jira.util");
 
@@ -29,14 +31,14 @@ export default (jiraClient) => {
 			.map((referenceLink) => referenceLink.slice(1, referenceLink.indexOf("]")));
 	};
 
-	function addJiraIssueLinks(text:string, issues):string {
+	function addJiraIssueLinks(text: string, issues:JiraIssue[]): string {
 		const referenceRegex = /\[([A-Z]+-[0-9]+)\](?!\()/g;
-		const issueMap = issues.reduce((issueMap, issue) => ({
-			...issueMap,
+		const issueMap = issues.reduce((acc, issue) => ({
+			...acc,
 			[issue.key]: issue
 		}), {});
 
-		const links = [];
+		const links: string[] = [];
 		const keys = checkForReferenceText(text);
 
 		// Parse the text up to a maximum amount of characters.
@@ -53,7 +55,9 @@ export default (jiraClient) => {
 				continue;
 			}
 
-			const link = `${jiraClient.baseURL}/browse/${key}`;
+			const issueTrackingParam = envVars.JIRA_LINK_TRACKING_ID ? `?atlOrigin=${envVars.JIRA_LINK_TRACKING_ID}` : "";
+
+			const link = `${jiraClient.baseURL}/browse/${key}${issueTrackingParam}`;
 			const reference = `[${key}]: ${link}`;
 
 			if (text.includes(reference)) {
@@ -66,7 +70,7 @@ export default (jiraClient) => {
 		return links.length ? [text, links.join("\n")].join("\n\n") : text;
 	}
 
-	async function unfurl(text: string):Promise<string> {
+	async function unfurl(text: string): Promise<string | undefined> {
 		try {
 			const issues = jiraClient.issues.parse(text);
 			if (!issues) return undefined;
@@ -79,7 +83,7 @@ export default (jiraClient) => {
 
 			return linkifiedBody;
 		} catch (err) {
-			logger.warn({err, issueText:text}, "Error getting all JIRA issues");
+			logger.warn({ err, issueText: text }, "Error getting all JIRA issues");
 			return undefined;
 		}
 	}

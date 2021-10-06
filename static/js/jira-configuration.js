@@ -64,6 +64,41 @@ $(".sync-connection-link").click(function (event) {
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
 
+})
+
+$('.sync-connection-link-OLD').click(function (event) {
+  event.preventDefault()
+  const installationId = $(event.target).data('installation-id')
+	const jiraHost = $(event.target).data("jira-host");
+	const csrfToken = document.getElementById("_csrf").value;
+
+	window.AP.context.getToken(function(token){
+		$.ajax({
+			type: "POST",
+			url: `/jira/sync`,
+			data: {
+				installationId: installationId,
+				jiraHost: jiraHost,
+				syncType: document.getElementById(`${installationId}-sync-type`).value,
+				jwt: token,
+				_csrf: csrfToken
+			},
+			success: function (data) {
+				AP.navigator.reload();
+			},
+			error: function (error) {
+				console.log(error);
+			},
+		});
+	});
+})
+
+$(".sync-connection-link").click(function (event) {
+	event.preventDefault();
+	const installationId = $(event.target).data("installation-id");
+	const jiraHost = $(event.target).data("jira-host");
+	const csrfToken = document.getElementById("_csrf").value;
+
 	window.AP.context.getToken(function (token) {
 		$.ajax({
 			type: "POST",
@@ -84,6 +119,41 @@ $(".sync-connection-link").click(function (event) {
 		});
 	});
 });
+
+/* ***************************** */
+/* To be removed after FF tested */
+/* ***************************** */
+const retryModal = document.getElementById('sync-retry-modal')
+const statusModal = document.getElementById('sync-status-modal-old')
+const retryBtn = document.getElementById('sync-retry-modal-btn')
+const statusBtn = document.getElementById('sync-status-modal-btn-old')
+const retrySpan = document.getElementById('retry-close')
+const statusSpan = document.getElementById('status-close-old')
+
+if (syncStatusBtn != null) {
+	syncStatusBtn.onclick = function () {
+		syncStatusModal.style.display = "block";
+	};
+}
+
+if (syncStatusCloseBtn != null) {
+	syncStatusCloseBtn.onclick = function () {
+		syncStatusModal.style.display = "none";
+	};
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function (event) {
+  if (event.target === retryModal) {
+    retryModal.style.display = 'none'
+  }
+  if (event.target === statusModal) {
+    statusModal.style.display = 'none'
+  }
+}
+/* ***************************** */
+/* To be removed after FF tested */
+/* ***************************** */
 
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
 const syncStatusModal = document.getElementById("sync-status-modal");
