@@ -119,7 +119,7 @@
                         data-jira-host="{{ ../jiraHost }}"
                         data-installation-id="{{ id }}"
                       >
-                        Resync
+                        Restart backfill
                       </button>
                       <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                     {{else}}
@@ -165,7 +165,7 @@
                   {{!-- Hidden unless user hovers over warning icon when a sync fails --}}
                   <p class="gitHubConfiguration__failedSyncWarningLabel">
                     There was a problem syncing data from your account. The sync process will automatically retry.
-                    If this does not happen, please resync.
+                    If this does not happen, please restart backfill.
                   </p>
                 </div>
 
