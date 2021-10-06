@@ -13,6 +13,7 @@ a:focus {
 }
 
 .pageContent {
+  background-color: #fff;
   padding: 20px;
   min-height: 600px;
 }
@@ -120,4 +121,26 @@ a:focus {
 .jiraConfiguration__table__edit:before:active,
 .jiraConfiguration__table__edit:before:focus {
   text-decoration: none;
+}
+
+.githubConfiguration__logout__container,
+.gitHubSetup__getJira__container {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+}
+
+.githubConfiguration__logout__link,
+.gitHubSetup__getJira__link {
+  cursor: pointer;
+  color: #0366d6;
+}
+
+.githubConfiguration__logout__name {
+  font-weight: bold;
+}
+
+.githubConfiguration__header,
+.gitHubSetup__header {
+  font-weight: 500 !important;
 }

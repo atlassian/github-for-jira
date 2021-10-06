@@ -1,26 +1,7 @@
-.getConfiguration__logout__container {
-  align-items: flex-end;
-  display: flex;
-  flex-direction: column;
-}
-
-.getConfiguration__logout__link {
-  cursor: pointer;
-  color: #0366d6;
-}
-
-.getConfiguration__logout__name {
-  font-weight: bold;
-}
-
 .getConfiguration {
   margin: auto;
   max-width: 740px;
   height: 100vh;
-}
-
-.getConfiguration__header {
-  font-weight: 500 !important;
 }
 
 .getConfiguration__wrapper {

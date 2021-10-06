@@ -1,0 +1,30 @@
+.githubSetup__container {
+  margin: 6em auto;
+  width: 500px;
+}
+
+.githubSetup__inputLabel {
+  color: #172b4d !important;
+  font-size: 1.2rem !important;
+  font-weight: 500 !important;
+}
+
+.githubSetup__form__inputContainer {
+  align-items: center;
+  display: flex;
+  margin: 1em auto;
+}
+
+.githubSetup__form__input {
+  margin-right: 0.5em !important;
+  max-width: inherit !important;
+  padding: 1.3em 0.5em !important;
+}
+
+.githubSetup__form__jiraSiteSuffix {
+  font-weight: bold;
+}
+
+.githubSetup__form__submitBtn {
+  font-weight: normal;
+}

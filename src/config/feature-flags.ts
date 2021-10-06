@@ -26,6 +26,7 @@ export enum BooleanFlags {
 	WEBHOOK_RECEIVED_METRICS = "webhook-received-metrics",
 	CONTINUE_SYNC_ON_ERROR = "continue-sync-on-error",
 	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
+	NEW_SETUP_PAGE = "new-setup-page",
 	PROPAGATE_REQUEST_ID = "propagate-request-id"
 }
 
