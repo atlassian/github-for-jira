@@ -156,24 +156,3 @@ a:focus {
 .gitHubSetup__header {
   font-weight: 500 !important;
 }
-
-.githubOrgs__table__row {
-  border-top: 0;
-  line-height: 0;
-}
-
-/* Need to tidy up after other branch is merged */
-
-.githubSetup__jiraHostWrapper {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  line-height: 1;
-  margin: 2em auto;
-}
-
-.githubOrgs__table__row,
-.getConfiguration__orgContent:nth-child(2) {
-  display: flex;
-  flex-direction: row;
-}

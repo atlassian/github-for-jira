@@ -1,3 +1,9 @@
+.gitHubSetup__spacer {
+  content: "";
+  display: block;
+  height: 4.5em;
+}
+
 .githubSetup__container {
   margin: 6em auto;
   width: 500px;
@@ -7,6 +13,14 @@
   color: #172b4d !important;
   font-size: 1.2rem !important;
   font-weight: 500 !important;
+}
+
+.githubSetup__form__true {
+  display: block;
+}
+
+.githubSetup__form__false {
+  display: none;
 }
 
 .githubSetup__form__inputContainer {
@@ -33,6 +47,14 @@
   padding: 1em auto;
 }
 
+.githubSetup__jiraHostWrapper {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  line-height: 1;
+  margin: 2em auto;
+}
+
 .githubSetup__headerWrapper {
   color: #6b778c;
   font-size: 0.9rem;
@@ -51,6 +73,7 @@
 
 .githubSetup__connectNewJiraInstance {
   color: #172b4d;
+  cursor: pointer;
   font-weight: 500;
   padding: 0.8em 0;
 }

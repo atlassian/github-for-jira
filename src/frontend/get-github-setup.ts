@@ -23,16 +23,21 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 		res.redirect(getGitHubConfigurationUrl(githubHost, jwt, jiraHost));
 	} else {
+		req.log.info("HERE: ", req.session)
+		const marketplaceUrl = req.session.jiraHost
+			? getJiraMarketplaceUrl(req.session.jiraHost)
+			: "";
+		const shouldDisplayForm = req.session.jiraHost ? "false" : "true";
+
 		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, true)) {
 			res.render("github-setup.hbs", {
 				jiraDomainOptions: jiraDomainOptions(),
 				csrfToken: req.csrfToken(),
 				nonce: res.locals.nonce,
+				displayForm: shouldDisplayForm,
 				jiraHost: req.session.jiraHost,
 				hasNoHost: req.session.jiraHost == undefined,
-				marketplaceUrl: req.session.jiraHost
-					? getJiraMarketplaceUrl(req.session.jiraHost)
-					: "",
+				marketplaceUrl, // only used is jiraHost is present
 			});
 		} else {
 			res.render("github-setup-OLD.hbs", {
