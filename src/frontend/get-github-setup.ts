@@ -23,7 +23,6 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 		res.redirect(getGitHubConfigurationUrl(githubHost, jwt, jiraHost));
 	} else {
-		req.log.info("HERE: ", req.session)
 		const marketplaceUrl = req.session.jiraHost
 			? getJiraMarketplaceUrl(req.session.jiraHost)
 			: "";
