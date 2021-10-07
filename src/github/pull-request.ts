@@ -3,7 +3,6 @@ import issueKeyParser from "jira-issue-key-parser";
 
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import _ from "lodash";
 
 export default async (
@@ -97,15 +96,10 @@ export default async (
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
 
-	if (
-		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
-		webhookReceived
-	) {
-		emitWebhookProcessedMetrics(
-			webhookReceived,
-			name,
-			log,
-			jiraResponse?.status
-		);
-	}
+	webhookReceived && emitWebhookProcessedMetrics(
+		webhookReceived,
+		name,
+		log,
+		jiraResponse?.status
+	);
 };

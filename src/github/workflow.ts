@@ -1,7 +1,6 @@
 import transformWorkflow from "../transforms/workflow";
 import { CustomContext } from "./middleware";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraPayload = transformWorkflow(context);
@@ -19,15 +18,10 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraResponse = await jiraClient.workflow.submit(jiraPayload);
 	const { webhookReceived, name, log } = context;
 
-	if (
-		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
-		webhookReceived
-	) {
-		emitWebhookProcessedMetrics(
-			webhookReceived,
-			name,
-			log,
-			jiraResponse?.status
-		);
-	}
+	webhookReceived && emitWebhookProcessedMetrics(
+		webhookReceived,
+		name,
+		log,
+		jiraResponse?.status
+	);
 };

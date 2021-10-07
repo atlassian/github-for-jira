@@ -23,7 +23,6 @@ export enum BooleanFlags {
 	SIMPLER_PROCESSOR = "simpler-processor",
 	CUSTOM_QUERIES_FOR_REPO_SYNC_STATE = "use-custom-queries-for-repo-sync-state",
 	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files",
-	WEBHOOK_RECEIVED_METRICS = "webhook-received-metrics",
 	CONTINUE_SYNC_ON_ERROR = "continue-sync-on-error",
 	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
 	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
