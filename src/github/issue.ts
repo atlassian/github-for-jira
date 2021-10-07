@@ -1,6 +1,5 @@
 import JiraClient from "../models/jira-client";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { CustomContext } from "./middleware";
 
 export default async (context: CustomContext, _: JiraClient, util): Promise<void> => {
@@ -30,15 +29,10 @@ export default async (context: CustomContext, _: JiraClient, util): Promise<void
 	const githubResponse = await context.github.issues.update(editedIssue);
 	const { webhookReceived, name, log } = context;
 
-	if (
-		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
-		webhookReceived
-	) {
-		emitWebhookProcessedMetrics(
-			webhookReceived,
-			name,
-			log,
-			githubResponse?.status
-		);
-	}
+	webhookReceived && emitWebhookProcessedMetrics(
+		webhookReceived,
+		name,
+		log,
+		githubResponse?.status
+	);
 };
