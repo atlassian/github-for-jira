@@ -22,6 +22,7 @@ import { queues } from "./worker/queues";
 import { queueMetrics } from "./config/metric-names";
 import { Job } from "bull";
 import { listenForClusterCommand } from "./services/cluster/listen-command";
+import Timeout = NodeJS.Timeout;
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const logger = getLogger("worker");
@@ -103,6 +104,9 @@ const sendQueueMetrics = async () => {
 const commonMiddleware = (jobHandler) => sentryMiddleware(setDelayOnRateLimiting(jobHandler));
 
 let running = false;
+let timer:Timeout;
+
+// Start function for Node cluster worker
 async function start() {
 	if (running) {
 		logger.debug("Worker instance already running, skipping.");
@@ -111,8 +115,9 @@ async function start() {
 
 	logger.info("Micros Lifecycle: Starting queue processing");
 	// exposing queue metrics at a regular interval
-	setInterval(sendQueueMetrics, 60000);
+	timer = setInterval(sendQueueMetrics, 60000);
 
+	// Start processing queues
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
 	queues.installation.process(
 		Number(CONCURRENT_WORKERS),
@@ -134,6 +139,11 @@ async function stop() {
 	logger.info("Micros Lifecycle: Stopping queue processing");
 	// TODO: change this to `probot.close()` once we update probot to latest version
 	probot.httpServer?.close();
+
+	// Stop sending metrics for queues
+	clearInterval(timer);
+
+	// Close all queues
 	await Promise.all([
 		queues.discovery.close(),
 		queues.installation.close(),
@@ -145,26 +155,29 @@ async function stop() {
 
 const initialize = () => {
 	initializeSentry();
-	probot.start(); // start healthcheck
-}
+	// starts healthcheck/deepcheck or else deploy will fail
+	probot.start();
+};
 
-export const initializeWorker = (): void => {
+const initializeWorker = (): void => {
 	initialize();
 	listenForClusterCommand(ClusterCommand.start, start);
 	listenForClusterCommand(ClusterCommand.stop, stop);
 };
 
-// Production clustering (one process per core)
 if (isNodeProd()) {
-	// Start clustered server
+	// Production clustering (one process per core)
+	// Read more about Node clustering: https://nodejs.org/api/cluster.html
 	throng({ lifetime: Infinity }, initializeWorker);
 	// Listen to micros lifecycle event to know when to start/stop
 	listenToMicrosLifecycle(
+		// When 'active' event is triggered, start queue processing
 		() => sendCommandToCluster(ClusterCommand.start),
+		// When 'inactive' event is triggered, stop queue processing
 		() => sendCommandToCluster(ClusterCommand.stop)
 	);
 } else {
-	// Dev/test single process
+	// Dev/test single process, no need for clustering or lifecycle events
 	initialize();
 	start();
 }

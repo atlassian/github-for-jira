@@ -27,11 +27,10 @@ async function start() {
 	probot.start();
 }
 
-// Production clustering (one process per core)
 if (isNodeProd()) {
-	// Start clustered server
+	// Production clustering (one process per core)
 	throng({ lifetime: Infinity }, start);
 } else {
-	// Dev/test single process
+	// Dev/test single process, don't need clustering
 	start();
 }
