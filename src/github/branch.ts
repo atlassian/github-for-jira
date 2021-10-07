@@ -1,6 +1,6 @@
 import transformBranch from "../transforms/branch";
 import issueKeyParser from "jira-issue-key-parser";
-import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
+import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import _ from "lodash";
@@ -30,7 +30,7 @@ export const createBranch = async (
 		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
 		webhookReceived
 	) {
-		emitWebhookProcessingTimeMetrics(
+		emitWebhookProcessedMetrics(
 			webhookReceived,
 			name,
 			log,
@@ -64,7 +64,7 @@ export const deleteBranch = async (context, jiraClient): Promise<void> => {
 		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
 		webhookReceived
 	) {
-		emitWebhookProcessingTimeMetrics(
+		emitWebhookProcessedMetrics(
 			webhookReceived,
 			name,
 			log,

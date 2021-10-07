@@ -1,4 +1,4 @@
-import { emitWebhookProcessingTimeMetrics } from "../../../src/util/webhooks";
+import { emitWebhookProcessedMetrics } from "../../../src/util/webhooks";
 import statsd from "../../../src/config/statsd";
 
 let dateNowSpy;
@@ -32,7 +32,7 @@ describe("Webhooks suite", () => {
 			const addStatsdSpy = jest.spyOn(statsd, "histogram");
 
 			expect(
-				emitWebhookProcessingTimeMetrics(
+				emitWebhookProcessedMetrics(
 					webhookReceived,
 					webhookName,
 					mockContextLogger,
@@ -70,7 +70,7 @@ describe("Webhooks suite", () => {
 				const status = 400;
 
 				expect(
-					emitWebhookProcessingTimeMetrics(
+					emitWebhookProcessedMetrics(
 						webhookReceived,
 						webhookName,
 						mockContextLogger,
@@ -81,7 +81,7 @@ describe("Webhooks suite", () => {
 
 			it("if webhookReceived is undefined", () => {
 				expect(
-					emitWebhookProcessingTimeMetrics(
+					emitWebhookProcessedMetrics(
 						0,
 						"workflow_run",
 						mockContextLogger,
@@ -92,7 +92,7 @@ describe("Webhooks suite", () => {
 
 			it("if webhookReceived is null", () => {
 				expect(
-					emitWebhookProcessingTimeMetrics(
+					emitWebhookProcessedMetrics(
 						0,
 						"workflow_run",
 						mockContextLogger,
