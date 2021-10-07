@@ -28,7 +28,7 @@ export const listenToMicrosLifecycle = (active?: Callback, inactive?: Callback):
 		client = Consumer.create({
 			queueUrl: envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL,
 			handleMessage: async (data: SQSMessage) => {
-				logger.info(data, "Received Micros lifecycle event");
+				logger.debug(data, "Received Micros event");
 				if (!data.Body) { // Just making sure SQS message has data
 					logger.debug("Lifecycle event missing body, skipping.");
 					return;
@@ -39,6 +39,7 @@ export const listenToMicrosLifecycle = (active?: Callback, inactive?: Callback):
 					// Only continue if it's a micros lifecycle events as there are
 					// other internal events on this queue
 					if (lifecycleData.Subject === "Micros Lifecycle Notification") {
+						logger.info(data, "Received Micros lifecycle event");
 						// Need to parse THIS message as well because reasons instead of having it all as flat data
 						const notification: LifecycleMessageData = JSON.parse(lifecycleData.Message);
 						// Get the event name (`active` or `inactive`) from the events, removing the prefix

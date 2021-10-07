@@ -1,5 +1,6 @@
 import cluster, { Worker } from "cluster";
 import { getLogger } from "../../config/logger";
+import { isNodeProd } from "../../util/isNodeEnv";
 
 const logger = getLogger("cluster.send-command");
 
@@ -12,7 +13,8 @@ export enum ClusterCommand {
 // https://nodejs.org/api/cluster.html
 export const sendCommandToCluster = (command: ClusterCommand) => {
 	// Only cluster master process can send commands
-	if (!cluster.isMaster) {
+	// TODO: change to isPrimary after update to node v16
+	if (isNodeProd() && !cluster.isMaster) {
 		logger.debug("Cannot send command from worker, skipping.");
 		return;
 	}
