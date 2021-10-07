@@ -1,17 +1,13 @@
+
 import Logger from "bunyan";
 import url from "url";
 
-interface UrlParams {
-	githubHost: string;
-	jwt: string;
-	jiraHost: string;
-}
-
-export const getGitHubConfigurationUrl = (urlParams: UrlParams): string => {
-	const { githubHost, jwt, jiraHost } = urlParams;
-
-	return `https://${githubHost}/github/configuration?jwt=${jwt}&xdm_e=${jiraHost}`;
-};
+export const getGitHubConfigurationUrl = (
+	githubHost,
+	jwt,
+	jiraHost
+): string =>
+	`https://${githubHost}/github/configuration?jwt=${jwt}&xdm_e=${jiraHost}`;
 
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
 	`${jiraHost}/plugins/servlet/ac/com.atlassian.jira.emcee/discover#!/discover/app/com.github.integration.production`;

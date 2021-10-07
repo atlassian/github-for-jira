@@ -284,7 +284,7 @@ export default (octokitApp: App): Express => {
 	app.use(Sentry.Handlers.errorHandler());
 
 	// Error catcher - Batter up!
-	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+	app.use(async (err: Error, req: Request, res: Response, next: NextFunction) => {
 		req.log.error({ err, req, res }, "Error in frontend app.");
 
 		if (!isNodeProd()) {
@@ -304,10 +304,17 @@ export default (octokitApp: App): Express => {
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		return res.status(errorStatusCode).render("github-error.hbs", {
-			title: "GitHub + Jira integration",
-			nonce: res.locals.nonce
-		});
+		if (await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, false)) {
+			return res.status(errorStatusCode).render("github-error.hbs", {
+				title: "GitHub + Jira integration",
+				nonce: res.locals.nonce
+			});
+		} else {
+			return res.status(errorStatusCode).render("github-error-OLD.hbs", {
+				title: "GitHub + Jira integration",
+				nonce: res.locals.nonce
+			});
+		}
 	});
 
 	return app;
