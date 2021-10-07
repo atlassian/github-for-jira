@@ -103,7 +103,6 @@ const sendQueueMetrics = async () => {
 const commonMiddleware = (jobHandler) => sentryMiddleware(setDelayOnRateLimiting(jobHandler));
 
 let running = false;
-
 async function start() {
 	if (running) {
 		logger.debug("Worker instance already running, skipping.");
@@ -124,8 +123,6 @@ async function start() {
 		commonMiddleware(processPushJob(app))
 	);
 	queues.metrics.process(1, commonMiddleware(metricsJob));
-
-	probot.start();
 	running = true;
 }
 
@@ -146,8 +143,13 @@ async function stop() {
 	running = false;
 }
 
-export const initializeWorker = (): void => {
+const initialize = () => {
 	initializeSentry();
+	probot.start(); // start healthcheck
+}
+
+export const initializeWorker = (): void => {
+	initialize();
 	listenForClusterCommand(ClusterCommand.start, start);
 	listenForClusterCommand(ClusterCommand.stop, stop);
 };
@@ -163,7 +165,7 @@ if (isNodeProd()) {
 	);
 } else {
 	// Dev/test single process
-	initializeSentry();
+	initialize();
 	start();
 }
 
