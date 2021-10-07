@@ -1,7 +1,7 @@
 import transformPullRequest from "../transforms/pull-request";
 import issueKeyParser from "jira-issue-key-parser";
 
-import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
+import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import _ from "lodash";
@@ -101,7 +101,7 @@ export default async (
 		(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
 		webhookReceived
 	) {
-		emitWebhookProcessingTimeMetrics(
+		emitWebhookProcessedMetrics(
 			webhookReceived,
 			name,
 			log,
