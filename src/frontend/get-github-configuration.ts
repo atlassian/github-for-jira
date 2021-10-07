@@ -119,28 +119,18 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 				req.log
 			);
 
-			if (await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, false)) {
-				res.render("github-configuration.hbs", {
-					csrfToken: req.csrfToken(),
-					installations: connectedInstallations,
-					jiraHost: req.session.jiraHost,
-					nonce: res.locals.nonce,
-					info,
-					clientKey,
-					login
-				});
-			} else {
-				res.render("github-configuration-OLD.hbs", {
-					csrfToken: req.csrfToken(),
-					installations: connectedInstallations,
-					jiraHost: req.session.jiraHost,
-					nonce: res.locals.nonce,
-					info,
-					clientKey,
-					login
-				});
-			}
+			const newConnectAnOrgPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, false);
+			const connectAnOrgPageVersion = newConnectAnOrgPgFlagIsOn ? "github-configuration.hbs" : "github-configuration-OLD.hbs";
 
+			res.render(connectAnOrgPageVersion, {
+				csrfToken: req.csrfToken(),
+				installations: connectedInstallations,
+				jiraHost: req.session.jiraHost,
+				nonce: res.locals.nonce,
+				info,
+				clientKey,
+				login
+			});
 		} catch (err) {
 			// If we get here, there was either a problem decoding the JWT
 			// or getting the data we need from GitHub, so we'll show the user an error.

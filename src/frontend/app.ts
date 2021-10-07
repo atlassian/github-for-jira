@@ -304,17 +304,13 @@ export default (octokitApp: App): Express => {
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		if (await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, false)) {
-			return res.status(errorStatusCode).render("github-error.hbs", {
-				title: "GitHub + Jira integration",
-				nonce: res.locals.nonce
-			});
-		} else {
-			return res.status(errorStatusCode).render("github-error-OLD.hbs", {
-				title: "GitHub + Jira integration",
-				nonce: res.locals.nonce
-			});
-		}
+		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, false);
+		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs"
+
+		return res.status(errorStatusCode).render(errorPageVersion, {
+			title: "GitHub + Jira integration",
+			nonce: res.locals.nonce
+		});
 	});
 
 	return app;
