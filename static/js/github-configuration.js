@@ -38,3 +38,27 @@ $('.logout-link').click(function (event) {
 		this.close()
 	}, 100)
 })
+
+$(".sync-connection-link").click(function (event) {
+	event.preventDefault();
+	const installationId = $(event.target).data("installation-id");
+	const jiraHost = $(event.target).data("jira-host");
+	const csrfToken = document.getElementById("_csrf").value;
+
+	$.ajax({
+		type: "POST",
+		url: `/jira/sync`,
+		data: {
+			installationId,
+			jiraHost,
+			syncType: "full",
+			_csrf: csrfToken,
+		},
+		success: function (data) {
+			window.close();
+		},
+		error: function (error) {
+			console.log(error);
+		},
+	});
+});
