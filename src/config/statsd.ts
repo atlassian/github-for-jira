@@ -57,7 +57,8 @@ export const elapsedTimeMetrics = (
 	const method = req.method;
 
 	res.once("finish", () => {
-		const pathTag = req.route?.path || ((req.baseUrl || "/") + "*" );
+
+		const pathTag = req.baseUrl ? req.baseUrl + (req.route?.path || "*") : (req.route?.path || "/*");
 		const elapsedTime = elapsedTimeInMs();
 		const statusCode  = `${res.statusCode}`;
 		const tags = { path: pathTag, method,  statusCode};
