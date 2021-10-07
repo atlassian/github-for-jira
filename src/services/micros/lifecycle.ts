@@ -8,12 +8,11 @@ let client: Consumer;
 
 // Create a single event emitter for all listeners
 const eventEmitter = new EventEmitter();
-
 // Listen to Micros Lifecycle Events from SQS: https://hello.atlassian.net/wiki/spaces/MICROS/pages/169248561/Lifecycle+hooks
-export const listenToMicrosLifecycle = (active?: Callback, inactive?: Callback): void => {
+export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): void => {
 	// Subscribe active/inactive callback to our event emitter
-	active && eventEmitter.on("active", active);
-	inactive && eventEmitter.on("inactive", inactive);
+	eventEmitter.on("active", active);
+	eventEmitter.on("inactive", inactive);
 
 	// Create SQS consumer if not already created - which means we won't be consuming events
 	// unless a listener is actually added to prevent missing events at startup
