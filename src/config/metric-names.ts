@@ -45,6 +45,8 @@ export const metricTaskStatus = {
 export const metricWebhooks = {
 	webhookEvent: `${server}.webhooks.webhook-events`,
 	webhookProcessingTimes: `${server}.webhooks.processing-time.duration-ms`,
+	webhookProcessed: `${server}.webhooks.processed`,
+	webhookFailure: `${server}.webhooks.failed`,
 	webhookLatency: `${server}.webhooks.processing-time.latency`,
 };
 

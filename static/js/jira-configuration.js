@@ -87,7 +87,7 @@ $(".sync-connection-link").click(function (event) {
 	window.AP.context.getToken(function (token) {
 		$.ajax({
 			type: "POST",
-			url: `/jira/sync`,
+			url: "/jira/sync",
 			data: {
 				installationId,
 				jiraHost,

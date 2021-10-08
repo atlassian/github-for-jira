@@ -322,7 +322,7 @@ environmentOverrides:
         scaling:
           instance: c5.2xlarge
           min: 3
-          max: 6 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          max: 4 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
           metrics: *CpuMemScalingRules
     alarms:
       overrides:
@@ -368,7 +368,7 @@ environmentOverrides:
         type: dedicated-rds
         attributes:
           parameters:
-            DBInstanceClass: db.r5.xlarge
+            DBInstanceClass: db.r5.4xlarge
             AllocatedStorage: 40 # GB
             MaxAllocatedStorage: 100
             ConnectionAlarm: 500 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 + N (cause two stacks can work
