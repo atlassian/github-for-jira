@@ -1,11 +1,11 @@
 import { metricHttpRequest } from "../config/metric-names";
 import statsd from "../config/statsd";
 import { Subscription } from "../models";
-import { getLogger } from "../config/logger";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
-const logger = getLogger("metrics-job");
+export const METRICS_LOGGER_NAME = "metrics-job";
 
-export default async (): Promise<void> => {
+export default async (_: any, logger: LoggerWithTarget): Promise<void> => {
 	logger.info("Received sync status metrics event. Getting sync status count for sync status metrics.");
 	const syncStatusCounts = await Subscription.syncStatusCounts();
 

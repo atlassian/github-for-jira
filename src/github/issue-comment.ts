@@ -16,7 +16,7 @@ export default async (
 		if (!linkifiedBody) {
 			context.log.debug(
 				{ noop: "no_linkified_body_issue_comment" },
-				"Halting futher execution for issueComment since linkifiedBody is empty"
+				"Halting further execution for issueComment since linkifiedBody is empty"
 			);
 			return;
 		}
