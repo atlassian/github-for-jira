@@ -1,7 +1,7 @@
 import transformDeployment from "../transforms/deployment";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
-import { AxiosResponse } from "axios";
+import { DeploymentsResult } from "../jira/client";
 
 export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraPayload = await transformDeployment(context);
@@ -14,10 +14,9 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 		return;
 	}
 
-	const jiraResponse: AxiosResponse = await jiraClient.deployment.submit(jiraPayload);
-
-	if (jiraResponse.data?.rejectedDeployments?.length) {
-		context.log.warn({ rejectedDeployments: jiraResponse.data.rejectedDeployments }, "Jira API rejected deployment!");
+	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
+	if (result.rejectedDeployments?.length) {
+		context.log.warn({ rejectedDeployments: result.rejectedDeployments }, "Jira API rejected deployment!");
 	}
 
 	const { webhookReceived, name, log } = context;
@@ -26,6 +25,6 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		result?.status
 	);
 };
