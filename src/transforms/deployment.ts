@@ -65,7 +65,7 @@ export function mapEnvironment(environment: string): string {
 export default async (context: Context): Promise<JiraDeploymentData | undefined> => {
 	const { github, payload: { deployment_status, deployment } } = context;
 	const { data: { commit: { message } } } = await github.repos.getCommit(context.repo({ ref: deployment.sha }));
-	const issueKeys = issueKeyParser().parse(`${ deployment.ref }\n${ message }`) || [];
+	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`) || [];
 
 	if (_.isEmpty(issueKeys)) {
 		return undefined;
@@ -73,7 +73,7 @@ export default async (context: Context): Promise<JiraDeploymentData | undefined>
 
 	const environment = mapEnvironment(deployment_status.environment);
 	if (environment === "unmapped") {
-		context.log(`Unmapped environment detected for deployment. Unmapped value is ${ deployment_status }. Sending it as unmapped to Jira.`);
+		context.log(`Unmapped environment detected for deployment. Unmapped value is ${deployment_status}. Sending it as unmapped to Jira.`);
 	}
 
 	return {
