@@ -37,8 +37,8 @@
     <h2 class="f2 text-center text-normal gitHubSetup__header">Jira Cloud
       configuration</h2>
     {{#if jiraHost}}
-    <p class="text-center text-normal gitHubSetup__subHeader">Which site would
-      you like to connect?</p>
+      <p class="text-center text-normal gitHubSetup__subHeader">Which site would
+        you like to connect?</p>
     {{/if}}
 
     <section class="githubSetup__newJiraSiteModal" id="new-jira-site-modal">
@@ -52,17 +52,17 @@
           <input type="hidden" name="_csrf" value="{{csrfToken}}" />
 
           <div class="githubSetup__form__fieldGroup">
-            <label class="githubSetup__inputLabel" for="jiraSubdomain">What is
+            <label class="githubSetup__inputLabel" for="jiraSubdomainModal">What is
               your Jira Cloud site?</label>
             <div class="githubSetup__form__inputContainer">
               <input
-                class="githubSetup__form__input text"
+                class="githubSetup__form__input__modal text"
                 type="text"
-                id="jiraSubdomain"
-                name="jiraSubdomain"
+                id="jiraSubdomainModal"
+                name="jiraSubdomainModal"
                 placeholder="Jira Cloud site"
                 aria-label="Jira Cloud Site"
-                value="{{jiraSubdomain}}"
+                value="{{jiraSubdomainModal}}"
                 autofocus
               />
               <span class="githubSetup__form__jiraSiteSuffix">
@@ -71,12 +71,13 @@
             </div>
           </div>
 
-          <button class="aui-button" id="modal-close" type="button">
+          <p id="modal-close" >
             Cancel
-          </button>
+          </p>
           <button
             class="githubSetup__form__submitBtn aui-button aui-button-primary"
             type="submit"
+            id="jiraSubdomainModalSubmitBtn"
             aria-disabled="true"
             disabled
           >
@@ -110,10 +111,7 @@
                     src="{{account.avatar_url}}"
                     alt="Github organization avatar"
                   /> --}}
-                <a
-                  class="githubSetup__marketplaceUrl"
-                  href={{marketplaceUrl}}
-                >
+                <a class="githubSetup__marketplaceUrl" href={{marketplaceUrl}}>
                   {{jiraHost}}</a>
               </div>
             </div>
@@ -159,6 +157,7 @@
           <button
             class="githubSetup__form__submitBtn aui-button aui-button-primary"
             type="submit"
+            id="jiraSubdomainSubmitBtn"
             aria-disabled="true"
             disabled
           >

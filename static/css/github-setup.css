@@ -19,7 +19,8 @@
   margin: 1em auto;
 }
 
-.githubSetup__form__input {
+.githubSetup__form__input,
+.githubSetup__form__input__modal {
   margin-right: 0.5em !important;
   max-width: inherit !important;
   padding: 1.3em 0.5em !important;
