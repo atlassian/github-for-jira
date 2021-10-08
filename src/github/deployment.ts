@@ -1,7 +1,7 @@
 import transformDeployment from "../transforms/deployment";
-import {emitWebhookProcessedMetrics} from "../util/webhooks";
-import {CustomContext} from "./middleware";
-import {AxiosResponse} from "axios";
+import { emitWebhookProcessedMetrics } from "../util/webhooks";
+import { CustomContext } from "./middleware";
+import { AxiosResponse } from "axios";
 
 export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraPayload = await transformDeployment(context);
