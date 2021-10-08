@@ -25,6 +25,22 @@
   padding: 1.3em 0.5em !important;
 }
 
+.text,
+.text:hover,
+.text:active,
+.text:focus,
+.text:focus-within,
+.text:focus-visible,
+.text:target {
+  /* Override AUI styling */
+  -webkit-text-fill-color: #262b31 !important;
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  background-color: #fff !important;
+  border-color: #4c9aff !important;
+  color: #262b31 !important;
+}
+
 .githubSetup__form__jiraSiteSuffix {
   font-weight: bold;
 }

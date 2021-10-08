@@ -16,7 +16,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 		// `Received github setup page request for jira ${jiraSubdomain}.${jiraDomain}`
 	);
 
-	req.log.info("RES: ", res)
+	req.log.info("HERE: ", res)
 
 	// TODO UPDATE CORRECTLY AFTER JADE UPDATES
 	if (!validJiraDomains(jiraSubdomain, "atlassian.net")) {

@@ -7,7 +7,6 @@ import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
 import {emitWebhookFailedMetrics, emitWebhookProcessedMetrics} from "../util/webhooks";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { JiraCommit } from "../interfaces/jira";
 import _ from "lodash";
 import { queues } from "../worker/queues";
@@ -195,17 +194,12 @@ export const processPush = async (github: GitHubAPI, payload) => {
 				jiraPayload
 			);
 
-			if (
-				(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
-				webhookReceived
-			) {
-				emitWebhookProcessedMetrics(
-					webhookReceived,
-					"push",
-					log,
-					jiraResponse?.status
-				);
-			}
+			webhookReceived && emitWebhookProcessedMetrics(
+				webhookReceived,
+				"push",
+				log,
+				jiraResponse?.status
+			);
 		}
 	} catch (error) {
 		log.error(error, "Failed to process push");
