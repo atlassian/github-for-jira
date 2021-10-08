@@ -299,12 +299,9 @@ export default (octokitApp: App): Express => {
 		};
 
 		const errorStatusCode = errorCodes[err.message] || 500;
-
 		const tags = [`status: ${errorStatusCode}`];
 
 		statsd.increment(metricError.githubErrorRendered, tags);
-
-		const jiraHost = req.session.jiraHost ? req.session.jiraHost : "";
 
 		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, false, jiraHost);
 		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs"
