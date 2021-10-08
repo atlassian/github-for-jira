@@ -47,7 +47,7 @@ $(".sync-connection-link").click(function (event) {
 
 	$.ajax({
 		type: "POST",
-		url: `/jira/sync`,
+		url: "/jira/sync",
 		data: {
 			installationId,
 			jiraHost,

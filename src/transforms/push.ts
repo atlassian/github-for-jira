@@ -5,8 +5,7 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Application, GitHubAPI } from "probot";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
-import { emitWebhookProcessingTimeMetrics } from "../util/webhooks";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import {emitWebhookFailedMetrics, emitWebhookProcessedMetrics} from "../util/webhooks";
 import { JiraCommit } from "../interfaces/jira";
 import _ from "lodash";
 import { queues } from "../worker/queues";
@@ -194,22 +193,17 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 			const jiraResponse = await jiraClient.devinfo.repository.update(
 				jiraPayload
 			);
-			const webhookName = payload.name || "none";
 
-			if (
-				(await booleanFlag(BooleanFlags.WEBHOOK_RECEIVED_METRICS, false)) &&
-				webhookReceived
-			) {
-				emitWebhookProcessingTimeMetrics(
-					webhookReceived,
-					webhookName,
-					log,
-					jiraResponse?.status
-				);
-			}
+			webhookReceived && emitWebhookProcessedMetrics(
+				webhookReceived,
+				"push",
+				log,
+				jiraResponse?.status
+			);
 		}
 	} catch (error) {
 		rootLogger.error(error, "Failed to process push");
+		emitWebhookFailedMetrics("push");
 		throw error;
 	}
 };

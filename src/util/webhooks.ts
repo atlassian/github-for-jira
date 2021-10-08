@@ -3,7 +3,17 @@ import { metricWebhooks } from "../config/metric-names";
 
 export const getCurrentTime = () => Date.now();
 
-export const emitWebhookProcessingTimeMetrics = (
+/**
+ * Emits metrics for successfully processed webhook. These metrics include:
+ *  - Webhook processing duration histogram
+ *  - Processed webhooks counter
+ *
+ * @param webhookReceivedTime time when GitHub for Jira app received a webhook from GitHub
+ * @param webhookName name of the webhook (type)
+ * @param contextLogger logger for the function logs
+ * @param status http response code if applicable to this webhook type
+ */
+export const emitWebhookProcessedMetrics = (
 	webhookReceivedTime: number,
 	webhookName: string,
 	contextLogger: any,
@@ -26,6 +36,8 @@ export const emitWebhookProcessingTimeMetrics = (
 				name: webhookName,
 				status: status?.toString() || "none",
 			};
+
+			statsd.increment(metricWebhooks.webhookProcessed, tags);
 
 			// send metrics without gsd_histogram tag so we still have .count, .p99, .median etc
 			statsd.histogram(
@@ -61,3 +73,17 @@ export const emitWebhookProcessingTimeMetrics = (
 		);
 	}
 };
+
+/**
+ * Emits metric for failed webhook
+ * @param webhookName
+ */
+export const emitWebhookFailedMetrics = (webhookName: string) => {
+
+	const tags = {
+		name: webhookName,
+	};
+
+	statsd.increment(metricWebhooks.webhookFailure, tags);
+
+}
