@@ -45,6 +45,8 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 
 	const hash = crypto.createHash("sha1");
 	hash.update(jiraHost);
+
+	logger.info("HERE: ", hash.digest("hex"))
 	return {
 		key: hash.digest("hex")
 	};

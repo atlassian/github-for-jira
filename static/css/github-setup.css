@@ -1,7 +1,5 @@
-.gitHubSetup__spacer {
-  content: "";
-  display: block;
-  height: 4.5em;
+.gitHubSetup__subHeader {
+  color: #586069;
 }
 
 .githubSetup__container {
@@ -13,14 +11,6 @@
   color: #172b4d !important;
   font-size: 1.2rem !important;
   font-weight: 500 !important;
-}
-
-.githubSetup__form__true {
-  display: block;
-}
-
-.githubSetup__form__false {
-  display: none;
 }
 
 .githubSetup__form__inputContainer {

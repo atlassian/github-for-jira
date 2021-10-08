@@ -28,6 +28,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 			: "";
 		const shouldDisplayForm = req.session.jiraHost ? "false" : "true";
 
+		// TODO - tidy this up
 		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, true)) {
 			res.render("github-setup.hbs", {
 				jiraDomainOptions: jiraDomainOptions(),

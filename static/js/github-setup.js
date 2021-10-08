@@ -1,6 +1,15 @@
-$(".connect-new-instance").click(function (event) {
-	event.preventDefault();
+const newJiraSiteBtn = document.getElementById("new-jira-site-modal-btn");
+const newJiraSiteModal = document.getElementById("new-jira-site-modal");
+const cancelNewJiraSiteBtn = document.getElementById("modal-close");
 
-	document.getElementById("jira-instance-form").className =
-		"githubSetup__form__true";
-});
+if (newJiraSiteBtn != null) {
+	newJiraSiteBtn.onclick = function () {
+		newJiraSiteModal.style.display = "block";
+	};
+}
+
+if (cancelNewJiraSiteBtn != null) {
+	cancelNewJiraSiteBtn.onclick = function () {
+		newJiraSiteModal.style.display = "none";
+	};
+}

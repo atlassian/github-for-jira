@@ -16,11 +16,13 @@ export default async (req: Request, res: Response): Promise<void> => {
 		// `Received github setup page request for jira ${jiraSubdomain}.${jiraDomain}`
 	);
 
+	req.log.info("RES: ", res)
+
 	// TODO UPDATE CORRECTLY AFTER JADE UPDATES
 	if (!validJiraDomains(jiraSubdomain, "atlassian.net")) {
 		res.status(400);
 
-		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, false)) {
+		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, true)) {
 			return res.render("github-setup.hbs", {
 				error: "The entered Jira Cloud Site is not valid",
 				jiraSubdomain,
