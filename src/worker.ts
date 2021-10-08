@@ -1,8 +1,9 @@
 import "./config/env"; // Important to be before other dependencies
 import "./config/proxy"; // Important to be before other dependencies
-import clusterfork from "clusterfork";
+import throng from "throng";
 import { isNodeProd } from "./util/isNodeEnv";
 import { listenToMicrosLifecycle } from "./services/micros/lifecycle";
+import { ClusterCommand, sendCommandToCluster } from "./services/cluster/send-command";
 import * as Sentry from "@sentry/node";
 
 import { discovery } from "./sync/discovery";
@@ -20,8 +21,8 @@ import { RateLimitingError } from "./config/enhance-octokit";
 import { queues } from "./worker/queues";
 import { queueMetrics } from "./config/metric-names";
 import { Job } from "bull";
+import { listenForClusterCommand } from "./services/cluster/listen-command";
 import Timeout = NodeJS.Timeout;
-import cluster from "cluster";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const logger = getLogger("worker");
@@ -102,13 +103,15 @@ const sendQueueMetrics = async () => {
 
 const commonMiddleware = (jobHandler) => sentryMiddleware(setDelayOnRateLimiting(jobHandler));
 
-let timer:Timeout;
+let running = false;
+let timer: Timeout;
 
 // Start function for Node cluster worker
 async function start() {
-	initializeSentry();
-	// starts healthcheck/deepcheck or else deploy will fail
-	probot.start();
+	if (running) {
+		logger.debug("Worker instance already running, skipping.");
+		return;
+	}
 
 	logger.info("Micros Lifecycle: Starting queue processing");
 	// exposing queue metrics at a regular interval
@@ -125,11 +128,14 @@ async function start() {
 		commonMiddleware(processPushJob(app))
 	);
 	queues.metrics.process(1, commonMiddleware(metricsJob));
-
-	cluster.worker.once("disconnect", stop);
+	running = true;
 }
 
 async function stop() {
+	if (!running) {
+		logger.debug("Worker instance not running, skipping.");
+		return;
+	}
 	logger.info("Micros Lifecycle: Stopping queue processing");
 	// TODO: change this to `probot.close()` once we update probot to latest version
 	probot.httpServer?.close();
@@ -144,37 +150,41 @@ async function stop() {
 		queues.push.close(),
 		queues.metrics.close()
 	]);
+	running = false;
 }
+
+const initializeMaster = () => {
+	initializeSentry();
+	// starts healthcheck/deepcheck or else deploy will fail
+	probot.start();
+};
+
+const initializeWorker = (): void => {
+	initializeSentry();
+	listenForClusterCommand(ClusterCommand.start, start);
+	listenForClusterCommand(ClusterCommand.stop, stop);
+};
 
 if (isNodeProd()) {
 	// Production clustering (one process per core)
 	// Read more about Node clustering: https://nodejs.org/api/cluster.html
-	const cf = clusterfork(start, 0);
-	let running = false;
-	// Listen to micros lifecycle event to know when to start/stop
-	// TODO: make this testable with localstack
-	listenToMicrosLifecycle(
-		// When 'active' event is triggered, start queue processing
-		() => {
-			if (running) {
-				logger.debug("Worker instance already running, skipping.");
-				return;
-			}
-			cf.start()
-			running = true;
+	throng({
+		worker: initializeWorker,
+		master: () => {
+			initializeMaster();
+			// Listen to micros lifecycle event to know when to start/stop
+			listenToMicrosLifecycle(
+				// When 'active' event is triggered, start queue processing
+				() => sendCommandToCluster(ClusterCommand.start),
+				// When 'inactive' event is triggered, stop queue processing
+				() => sendCommandToCluster(ClusterCommand.stop)
+			);
 		},
-		// When 'inactive' event is triggered, stop queue processing
-		() => {
-			if (!running) {
-				logger.debug("Worker instance not running, skipping.");
-				return;
-			}
-			cf.stop()
-			running = false;
-		}
-	);
+		lifetime: Infinity
+	});
 } else {
 	// Dev/test single process, no need for clustering or lifecycle events
+	initializeMaster();
 	start();
 }
 

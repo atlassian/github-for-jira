@@ -71,7 +71,6 @@
     "bull": "^3.12.1",
     "bunyan": "^1.8.15",
     "bunyan-format": "^0.2.1",
-    "clusterfork": "^1.0.1",
     "cookie-session": "^2.0.0-rc.1",
     "csurf": "^1.11.0",
     "date-fns": "^1.29.0",
@@ -97,6 +96,7 @@
     "sequelize-cli": "^6.2.0",
     "sequelize-encrypted": "^1.0.0",
     "sqs-consumer": "^5.6.0",
+    "throng": "^5.0.0",
     "tslib": "~2.2.0",
     "typescript": "~4.2.4",
     "uuid": "^8.3.2"

@@ -1,5 +1,5 @@
 import "./config/env"; // Important to be before other dependencies
-import clusterfork from "clusterfork";
+import throng from "throng";
 import * as PrivateKey from "probot/lib/private-key";
 import { createProbot } from "probot";
 import { initializeSentry } from "./config/sentry";
@@ -29,7 +29,7 @@ async function start() {
 
 if (isNodeProd()) {
 	// Production clustering (one process per core)
-	clusterfork(start, 0).start();
+	throng({ lifetime: Infinity }, start);
 } else {
 	// Dev/test single process, don't need clustering
 	start();
