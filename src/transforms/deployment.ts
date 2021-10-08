@@ -80,7 +80,7 @@ export default async (context: Context): Promise<JiraDeploymentData | undefined>
 		deployments: [{
 			schemaVersion: "1.0",
 			deploymentSequenceNumber: deployment.id,
-			updateSequenceNumber: Date.parse(deployment_status.updated_at),
+			updateSequenceNumber: deployment_status.id,
 			issueKeys,
 			displayName: deployment.task,
 			url: deployment_status.log_url || deployment_status.target_url || deployment.url,
