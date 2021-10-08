@@ -149,9 +149,10 @@ async function stop() {
 if (isNodeProd()) {
 	// Production clustering (one process per core)
 	// Read more about Node clustering: https://nodejs.org/api/cluster.html
-	const cf = clusterfork(start);
+	const cf = clusterfork(start, 0);
 	let running = false;
 	// Listen to micros lifecycle event to know when to start/stop
+	// TODO: make this testable with localstack
 	listenToMicrosLifecycle(
 		// When 'active' event is triggered, start queue processing
 		() => {
