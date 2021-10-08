@@ -57,7 +57,11 @@ const logMiddleware = (jobHandler, jobName: string) => {
 	return async (job) => {
 		const jobLogger = await booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true) ? logger.child({
 			name: jobName,
-			id: uuidv4() // Probot uses "id" key as "requestId" for tracing; let's use the same key (consistency)
+			// Probot uses "id" key as "requestId" for tracing; let's use the same key for consistency and also
+			// to have uniform logs for webhooks that are processed both asynchronously and in request handlers
+			//
+			// Let's use random ID rather than "job.id" to be able to separate retries of the same job
+			id: uuidv4(),
 		}) : logger;
 		try {
 			await jobHandler(job, jobLogger);
