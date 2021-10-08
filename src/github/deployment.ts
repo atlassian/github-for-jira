@@ -8,7 +8,7 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 
 	if (!jiraPayload) {
 		context.log(
-			{noop: "no_jira_payload_deployment"},
+			{ noop: "no_jira_payload_deployment" },
 			"Halting further execution for deployment since jiraPayload is empty"
 		);
 		return;
@@ -17,10 +17,10 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraResponse: AxiosResponse = await jiraClient.deployment.submit(jiraPayload);
 
 	if (jiraResponse.data?.rejectedDeployments?.length) {
-		context.log.warn({rejectedDeployments: jiraResponse.data.rejectedDeployments}, "Jira API rejected deployment!");
+		context.log.warn({ rejectedDeployments: jiraResponse.data.rejectedDeployments }, "Jira API rejected deployment!");
 	}
 
-	const {webhookReceived, name, log} = context;
+	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
