@@ -10,6 +10,11 @@ import { JiraCommit, JiraIssue } from "../../interfaces/jira";
 // Max number of issue keys we can pass to the Jira API
 const ISSUE_KEY_API_LIMIT = 100;
 
+export interface DeploymentsResult {
+	status: number;
+	rejectedDeployments?: any[]
+}
+
 /*
  * Similar to the existing Octokit rest.js instance included in probot
  * apps by default, this client adds a Jira client that allows us to
@@ -143,7 +148,7 @@ async function getJiraClient(
 					)
 			},
 			pullRequest: {
-				delete: (repositoryId:string, pullRequestId:string) =>
+				delete: (repositoryId: string, pullRequestId: string) =>
 					instance.delete(
 						"/rest/devinfo/0.10/repository/:repositoryId/pull_request/:pullRequestId",
 						{
@@ -156,11 +161,11 @@ async function getJiraClient(
 					)
 			},
 			repository: {
-				get: (repositoryId:string) =>
+				get: (repositoryId: string) =>
 					instance.get("/rest/devinfo/0.10/repository/:repositoryId", {
 						urlParams: { repositoryId }
 					}),
-				delete: (repositoryId:string) =>
+				delete: (repositoryId: string) =>
 					instance.delete("/rest/devinfo/0.10/repository/:repositoryId", {
 						urlParams: {
 							_updateSequenceId: Date.now().toString(),
@@ -218,7 +223,7 @@ async function getJiraClient(
 			}
 		},
 		deployment: {
-			submit: async (data) => {
+			submit: async (data): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, dedup);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					updateIssueKeysFor(data.deployments, truncate);
@@ -233,7 +238,11 @@ async function getJiraClient(
 				};
 				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
 				logger?.info("Sending deployments payload to jira.");
-				return await instance.post("/rest/deployments/0.1/bulk", payload);
+				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
+				return {
+					status: response.status,
+					rejectedDeployments: response.data?.rejectedDeployments
+				};
 			}
 		}
 	};
