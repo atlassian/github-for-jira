@@ -113,7 +113,6 @@ export default (
 			// TODO: log only for local dev and for those who has enabled verbose logging
 			context.log.info({repoName,
 				orgName,
-				event: webhookEvent,
 				payload: context.payload
 			}, "Webhook verbose data");
 		} else {
