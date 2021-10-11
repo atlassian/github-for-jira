@@ -59,6 +59,7 @@ const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags, defaultVal
 	}
 };
 
+// Include jiraHost for any FF that needs to be rolled out in stages
 export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jiraHost?: string): Promise<boolean> =>
 	Boolean(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
 
