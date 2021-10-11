@@ -143,8 +143,10 @@ export default (octokitApp: App): Express => {
 		syncStatus === "COMPLETE" ? "Connected" : "Connect"
 	);
 
+	hbs.registerHelper("isModal", (modalId) => modalId === "jiraDomainModal");
 
 	const partials = ["githubSetupForm"];
+
 	partials.forEach((partial) => {
 		hbs.registerPartial(
 			partial,

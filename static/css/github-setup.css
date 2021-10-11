@@ -16,30 +16,52 @@
 .githubSetup__form__inputContainer {
   align-items: center;
   display: flex;
-  margin: 1em auto;
+  margin: 1em auto 0.5em;
+}
+
+/* TODO - clean up */
+.githubSetup__form__input,
+.githubSetup__form__inputError {
+  -webkit-text-fill-color: #262b31 !important;
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  background-color: #fff !important;
+  border-radius: 3.01px;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  box-sizing: border-box !important;
+  color: #262b31 !important;
+  font-size: inherit !important;
+  height: 2.14285714em;
+  line-height: 1.42857143;
+  margin-right: 0.5em;
+  max-width: inherit;
+  padding: 1.3em 0.5em;
+  width: 100%;
+  vertical-align: initial;
 }
 
 .githubSetup__form__input,
-.githubSetup__form__input__modal {
-  margin-right: 0.5em !important;
-  max-width: inherit !important;
-  padding: 1.3em 0.5em !important;
+.githubSetup__form__input:hover,
+.githubSetup__form__input:active,
+.githubSetup__form__input:focus,
+.githubSetup__form__input:focus-within,
+.githubSetup__form__input:focus-visible,
+.githubSetup__form__input:target {
+  border: 2px solid #4c9aff !important;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
-.text,
-.text:hover,
-.text:active,
-.text:focus,
-.text:focus-within,
-.text:focus-visible,
-.text:target {
-  /* Override AUI styling */
-  -webkit-text-fill-color: #262b31 !important;
-  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
-  box-shadow: 0 0 0 1000px #fff inset !important;
-  background-color: #fff !important;
-  border-color: #4c9aff !important;
-  color: #262b31 !important;
+.githubSetup__form__inputError,
+.githubSetup__form__inputError:hover,
+.githubSetup__form__inputError:active,
+.githubSetup__form__inputError:focus,
+.githubSetup__form__inputError:focus-within,
+.githubSetup__form__inputError:focus-visible,
+.githubSetup__form__inputError:target,
+.githubSetup__form__inputError:visited {
+  border: 2px solid #de350b !important;
+  border-color: #de350b !important;
+  outline: none !important;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
 .githubSetup__form__jiraSiteSuffix {
@@ -48,6 +70,10 @@
 
 .githubSetup__form__submitBtn {
   font-weight: normal;
+}
+
+.githubSetup__form__cancelBtn {
+  margin-right: 1em;
 }
 
 .githubSetup__table__row {
@@ -105,4 +131,29 @@
   font-size: 1.1rem;
   padding: 0 0.7em 0 0.3em;
   transform: scale(1.5);
+}
+
+.githubSetup__form__errorMessage__container {
+  display: flex;
+}
+
+.githubSetup__form__modalButtons {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.githubSetup__form__errorMessage__container {
+  align-items: center;
+  color: #de350b;
+  display: flex;
+  margin-bottom: 1em;
+}
+
+.githubSetup__form__errorMessage {
+  margin-left: 0.5em;
+}
+
+.hidden {
+  display: none;
 }

@@ -36,7 +36,6 @@ export default async (req: Request, res: Response): Promise<void> => {
 				jiraHost: req.session.jiraHost,
 				hasNoHost: req.session.jiraHost == undefined,
 				marketplaceUrl, // only used is jiraHost is present
-				id: "mainForm"
 			});
 		} else {
 			res.render("github-setup-OLD.hbs", {

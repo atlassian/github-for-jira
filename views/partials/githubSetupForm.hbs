@@ -12,12 +12,12 @@
 		</label>
     <div class="githubSetup__form__inputContainer">
       <input
-        class="githubSetup__form__input text"
+        class="githubSetup__form__input"
         type="text"
         id="{{id}}"
         name="{{id}}"
         placeholder="Site name"
-        aria-label="Jira Cloud Site"
+        aria-label="Jira site"
         value="{{jiraDomain}}"
         autofocus
       />
@@ -27,18 +27,32 @@
     </div>
   </div>
 
-  <p id="modal-close">
-    Cancel
-  </p>
-  <button
-    class="githubSetup__form__submitBtn aui-button aui-button-primary"
-    type="submit"
-    id="{{id}}SubmitBtn"
-    aria-disabled="true"
-    disabled
-  >
-    Continue
-  </button>
+  <div class="githubSetup__form__errorMessage__container hidden">
+    <span class="githubSetup__form__errorMessage__errorIcon aui-icon aui-icon-small aui-iconfont-warning">
+      GitHub setup error message
+    </span>
+    <p class="githubSetup__form__errorMessage">
+      Do not include http or https in the site name
+    </p>
+  </div>
+
+  <div class="githubSetup__form__modalButtons">
+    {{#if (isModal id)}}
+      <p class="githubSetup__form__cancelBtn" id="modal-close">
+        Cancel
+      </p>
+    {{/if}}
+    <button
+      class="githubSetup__form__submitBtn aui-button aui-button-primary"
+      type="submit"
+      id="{{id}}SubmitBtn"
+      aria-disabled="true"
+      disabled
+    >
+      Continue
+    </button>
+  </div>
+
 
   {{#if error}}
     <div class="flash flash-error mb-2">
