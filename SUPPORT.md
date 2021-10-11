@@ -35,12 +35,12 @@ You can check your sync status in the integration settings:
 
 | Status   | Definition                 |
 |----------|----------------------------|
-| PENDING  | The sync has not started.  |
-| IN PROGRESS   | The sync has started and is still in progress. No historical information will be displayed in Jira, but the integration will work for new data sent in. |
-| COMPLETE | The sync has finished. Historical Information will be displayed in Jira. |
-| FAILED   | The sync hit an error and stopped without completing. Partial historical information may appear in Jira. |
+| PENDING  | The backfilling of historical data has not started.  |
+| IN PROGRESS   | The backfilling of historical data has started and is still in progress. Over time, more and more historical data will show up in Jira, and the integration will work for new data sent in. |
+| COMPLETE | The backfilling of historical data has finished. Historical data will be displayed in Jira. |
+| FAILED   | The backfilling of historical data hit an error and stopped without completing. Partial historical data may appear in Jira. |
 
-The time it takes to complete the sync will depend on the size of your installation. Since the sync scans branches, commits and pull requests for every repository in your installation, be mindful that selecting "All Repositories" will perform a scan of every repository in your account, including forks. If you have repositories with hundreds of thousands of forks (e.g. a fork of the Linux repo), the scan might take several hours to complete.
+The time it takes to complete the sync will depend on the size of your GitHub organization, especially the number of commits in your repositories. Since the sync scans branches, commits and pull requests for every repository in your installation, be mindful that selecting "All Repositories" will perform a scan of every repository in your account, including forks. If your repositories have a lot of commits, the process can take hours or even days to complete.
 
 Because everyone's repository histories are different, it's difficult to determine how long the scan should take for a specific installation, but on average the sync can process around 100 commits per second. If it's still stuck in `IN PROGRESS` after a few hours, please check your installation for any large repositories first and attempt a full re-sync:
 
