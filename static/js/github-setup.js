@@ -53,6 +53,10 @@ $(document).ready(() => {
 		) {
 			$("#jiraDomainModalSubmitBtn").prop("disabled", false);
 			$("#jiraDomainModalSubmitBtn").attr("aria-disabled", "false");
+			$(".githubSetup__form__input").removeClass(
+				"githubSetup__form__inputError"
+			);
+			$(".githubSetup__form__errorMessage__container").addClass("hidden");
 		}
 
 		if (
@@ -61,6 +65,8 @@ $(document).ready(() => {
 		) {
 			$("#jiraDomainModalSubmitBtn").prop("disabled", true);
 			$("#jiraDomainModalSubmitBtn").attr("aria-disabled", "true");
+			$(".githubSetup__form__input").addClass("githubSetup__form__inputError");
+			$(".githubSetup__form__errorMessage__container").removeClass("hidden");
 		}
 	});
 });

@@ -19,7 +19,6 @@
   margin: 1em auto 0.5em;
 }
 
-/* TODO - clean up */
 .githubSetup__form__input,
 .githubSetup__form__inputError {
   -webkit-text-fill-color: #262b31 !important;

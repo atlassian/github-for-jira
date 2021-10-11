@@ -12,7 +12,7 @@ const renderGitHubSetupPageVersion = async (
 ) => {
 	const newgithubSetupPgFlagIsOn = await booleanFlag(
 		BooleanFlags.NEW_SETUP_PAGE,
-		true
+		false
 	);
 
 	const setupPageVersion = newgithubSetupPgFlagIsOn

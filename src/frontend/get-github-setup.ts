@@ -28,7 +28,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 			: "";
 		const shouldDisplayForm = req.session.jiraHost ? "false" : "true";
 
-		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, true)) {
+		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, false)) {
 			res.render("github-setup.hbs", {
 				csrfToken: req.csrfToken(),
 				nonce: res.locals.nonce,
