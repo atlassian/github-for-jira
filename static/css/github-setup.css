@@ -51,7 +51,15 @@
 }
 
 .githubSetup__table__row {
-  padding: 1em auto;
+  align-items: center;
+  display: flex;
+  padding: 2.5em auto;
+}
+
+.githubSetup__table__logo {
+  height: 24px;
+  margin-right: 0.5em;
+  width: 24px;
 }
 
 .githubSetup__jiraHostWrapper {
