@@ -1,4 +1,4 @@
-import { jiraDomainOptions } from "./validations";
+import { jiraTopleveldomainOptions } from "./validations";
 import { Request, Response } from "express";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import {
@@ -36,10 +36,11 @@ export default async (req: Request, res: Response): Promise<void> => {
 				jiraHost: req.session.jiraHost,
 				hasNoHost: req.session.jiraHost == undefined,
 				marketplaceUrl, // only used is jiraHost is present
+				id: "mainForm"
 			});
 		} else {
 			res.render("github-setup-OLD.hbs", {
-				jiraDomainOptions: jiraDomainOptions(),
+				jiraTopleveldomainOptions: jiraTopleveldomainOptions(),
 				csrfToken: req.csrfToken(),
 				nonce: res.locals.nonce,
 			});

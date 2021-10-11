@@ -18,11 +18,11 @@
     <form method="post" action="/github/setup">
       <input type="hidden" name="_csrf" value="{{csrfToken}}">
       <div class="input-group">
-        <input class="form-control input-lg" type="text" name="jiraSubdomain" placeholder="Jira Cloud Site"
-          aria-label="Jira Cloud Site" value="{{jiraSubdomain}}" autofocus>
+        <input class="form-control input-lg" type="text" name="jiraDomain" placeholder="Jira Cloud Site"
+          aria-label="Jira Cloud Site" value="{{jiraDomain}}" autofocus>
         <span class="input-group-button">
-          <select name="jiraDomain" class="form-select" aria-label="Preference">
-            {{#each jiraDomainOptions}}
+          <select name="jiraTopleveldomain" class="form-select" aria-label="Preference">
+            {{#each jiraToplevedomainOptions}}
               <option {{#if selected}}selected{{/if}}>{{value}}</option>
             {{/each}}
           </select>

@@ -16,32 +16,30 @@ if (cancelNewJiraSiteBtn != null) {
 
 $(document).ready(() => {
 	$(".githubSetup__form__input").on("input", () => {
-		const jiraSubdomain = $("#jiraSubdomain").val();
+		// Handle events for main form
+		const jiraDomainMain = $("#jiraDomainMain").val();
 
-		if (jiraSubdomain.length > 0) {
-			$("#jiraSubdomainSubmitBtn").prop("disabled", false);
-			$("#jiraSubdomainSubmitBtn").attr("aria-disabled", "false");
+		if (jiraDomainMain && jiraDomainMain.length > 0) {
+			$("#jiraDomainMainSubmitBtn").prop("disabled", false);
+			$("#jiraDomainMainSubmitBtn").attr("aria-disabled", "false");
 		}
 
-		if (jiraSubdomain.length === 0) {
-			$("#jiraSubdomainSubmitBtn").prop("disabled", true);
-			$("#jiraSubdomainSubmitBtn").attr("aria-disabled", "true");
-		}
-	});
-});
-
-$(document).ready(() => {
-	$(".githubSetup__form__input__modal").on("input", () => {
-		const jiraSubdomainModal = $("#jiraSubdomainModal").val();
-
-		if (jiraSubdomainModal.length > 0) {
-			$("#jiraSubdomainModalSubmitBtn").prop("disabled", false);
-			$("#jiraSubdomainModalSubmitBtn").attr("aria-disabled", "false");
+		if (jiraDomainMain && jiraDomainMain.length === 0) {
+			$("#jiraDomainMainSubmitBtn").prop("disabled", true);
+			$("#jiraDomainMainSubmitBtn").attr("aria-disabled", "true");
 		}
 
-		if (jiraSubdomainModal.length === 0) {
-			$("#jiraSubdomainModalSubmitBtn").prop("disabled", true);
-			$("#jiraSubdomainModalSubmitBtn").attr("aria-disabled", "true");
+		// Handle events for modal form
+		const jiraDomainModal = $("#jiraDomainModal").val();
+
+		if (jiraDomainModal && jiraDomainModal.length > 0) {
+			$("#jiraDomainModalSubmitBtn").prop("disabled", false);
+			$("#jiraDomainModalSubmitBtn").attr("aria-disabled", "false");
+		}
+
+		if (jiraDomainModal && jiraDomainModal.length === 0) {
+			$("#jiraDomainModalSubmitBtn").prop("disabled", true);
+			$("#jiraDomainModalSubmitBtn").attr("aria-disabled", "true");
 		}
 	});
 });

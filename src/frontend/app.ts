@@ -143,11 +143,16 @@ export default (octokitApp: App): Express => {
 		syncStatus === "COMPLETE" ? "Connected" : "Connect"
 	);
 
-	hbs.registerPartial(
-		"partial",
-		fs.readFileSync(path.join(rootPath, "views", "partial.hbs"), "utf8")
-	);
-	// hbs.registerPartials(path.join(__dirname, "views", "partials"));
+
+	const partials = ["githubSetupForm"];
+	partials.forEach((partial) => {
+		hbs.registerPartial(
+			partial,
+			fs.readFileSync(`${rootPath}/views/partials/${partial}.hbs`, {
+				encoding: "utf8",
+			})
+		);
+	});
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
 	app.use(
