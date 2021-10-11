@@ -153,14 +153,15 @@ async function stop() {
 	running = false;
 }
 
-const initializeMaster = () => {
+const initialize = () => {
+	logger.info("Initializing Worker...");
 	initializeSentry();
 	// starts healthcheck/deepcheck or else deploy will fail
 	probot.start();
 };
 
 const initializeWorker = (): void => {
-	initializeSentry();
+	initialize();
 	listenForClusterCommand(ClusterCommand.start, start);
 	listenForClusterCommand(ClusterCommand.stop, stop);
 };
@@ -171,7 +172,6 @@ if (isNodeProd()) {
 	throng({
 		worker: initializeWorker,
 		master: () => {
-			initializeMaster();
 			// Listen to micros lifecycle event to know when to start/stop
 			listenToMicrosLifecycle(
 				// When 'active' event is triggered, start queue processing
@@ -182,9 +182,11 @@ if (isNodeProd()) {
 		},
 		lifetime: Infinity
 	});
+
+	initialize();
 } else {
 	// Dev/test single process, no need for clustering or lifecycle events
-	initializeMaster();
+	initialize();
 	start();
 }
 
