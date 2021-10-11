@@ -153,24 +153,18 @@ async function stop() {
 	running = false;
 }
 
-const initialize = () => {
-	logger.info("Initializing Worker...");
-	initializeSentry();
-	// starts healthcheck/deepcheck or else deploy will fail
-	probot.start();
-};
-
-const initializeWorker = (): void => {
-	initialize();
-	listenForClusterCommand(ClusterCommand.start, start);
-	listenForClusterCommand(ClusterCommand.stop, stop);
-};
+initializeSentry();
+// starts healthcheck/deepcheck or else deploy will fail
+probot.start();
 
 if (isNodeProd()) {
 	// Production clustering (one process per core)
 	// Read more about Node clustering: https://nodejs.org/api/cluster.html
 	throng({
-		worker: initializeWorker,
+		worker: () => {
+			listenForClusterCommand(ClusterCommand.start, start);
+			listenForClusterCommand(ClusterCommand.stop, stop);
+		},
 		master: () => {
 			// Listen to micros lifecycle event to know when to start/stop
 			listenToMicrosLifecycle(
@@ -182,11 +176,8 @@ if (isNodeProd()) {
 		},
 		lifetime: Infinity
 	});
-
-	initialize();
 } else {
 	// Dev/test single process, no need for clustering or lifecycle events
-	initialize();
 	start();
 }
 

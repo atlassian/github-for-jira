@@ -15,7 +15,7 @@ const probot = createProbot({
 	webhookPath: "/github/events",
 	webhookProxy: process.env.WEBHOOK_PROXY_URL,
 	throttleOptions: {
-		enabled: false,
+		enabled: false
 	}
 });
 
@@ -29,7 +29,10 @@ async function start() {
 
 if (isNodeProd()) {
 	// Production clustering (one process per core)
-	throng({ lifetime: Infinity }, start);
+	throng({
+		worker: start,
+		lifetime: Infinity
+	});
 } else {
 	// Dev/test single process, don't need clustering
 	start();
