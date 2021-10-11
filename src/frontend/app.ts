@@ -21,7 +21,6 @@ import postJiraDisable from "../jira/disable";
 import postJiraEnable from "../jira/enable";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
-import { authenticateJiraEvent } from "../jira/authenticate";
 import extractInstallationFromJiraCallback from "../jira/extract-installation-from-jira-callback";
 import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
@@ -31,10 +30,13 @@ import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
+import {
+	authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback,
+	verifyJiraContextJwtTokenMiddleware,
+	verifyJiraJwtTokenMiddleware
+} from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
-import {verifyAsymmetricJwtTokenMiddleware} from "../jira/util/jwt";
 
 // Adding session information to request
 declare global {
@@ -259,9 +261,8 @@ export default (octokitApp: App): Express => {
 	// Set up event handlers
 	app.post("/jira/events/disabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
 	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
-	app.post("/jira/events/installed", verifyAsymmetricJwtTokenMiddleware, postJiraInstall);
-	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, verifyAsymmetricJwtTokenMiddleware, postJiraUninstall);
-
+	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
+	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
 		return res.redirect(info.external_url);
