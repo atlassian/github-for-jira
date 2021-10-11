@@ -34,6 +34,7 @@ import { metricError } from "../config/metric-names";
 import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
+import * as fs from 'fs';
 
 // Adding session information to request
 declare global {
@@ -141,6 +142,12 @@ export default (octokitApp: App): Express => {
 	hbs.registerHelper("connectedStatus", (syncStatus) =>
 		syncStatus === "COMPLETE" ? "Connected" : "Connect"
 	);
+
+	hbs.registerPartial(
+		"partial",
+		fs.readFileSync(path.join(rootPath, "views", "partial.hbs"), "utf8")
+	);
+	// hbs.registerPartials(path.join(__dirname, "views", "partials"));
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
 	app.use(
