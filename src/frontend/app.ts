@@ -145,7 +145,7 @@ export default (octokitApp: App): Express => {
 
 	hbs.registerHelper("isModal", (modalId) => modalId === "jiraDomainModal");
 
-	const partials = ["githubSetupForm"];
+	const partials = ["githubSetupForm", "githubSetupFormError"];
 
 	partials.forEach((partial) => {
 		hbs.registerPartial(

@@ -27,14 +27,11 @@
     </div>
   </div>
 
-  <div class="githubSetup__form__errorMessage__container hidden">
-    <span class="githubSetup__form__errorMessage__errorIcon aui-icon aui-icon-small aui-iconfont-warning">
-      GitHub setup error message
-    </span>
-    <p class="githubSetup__form__errorMessage">
-      Do not include http or https in the site name
-    </p>
-  </div>
+  {{> githubSetupFormError errorMessage="Do not include http or https in the site name" hiddenClass="hidden" }}
+
+  {{#if error}}
+     {{> githubSetupFormError errorMessage=error hiddenClass="" }}
+  {{/if}}
 
   <div class="githubSetup__form__modalButtons">
     {{#if (isModal id)}}
@@ -52,11 +49,4 @@
       Continue
     </button>
   </div>
-
-
-  {{#if error}}
-    <div class="flash flash-error mb-2">
-      {{error}}
-    </div>
-  {{/if}}
 </form>
