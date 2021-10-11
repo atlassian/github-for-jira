@@ -1,6 +1,7 @@
 import transformDeployment from "../transforms/deployment";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
+import { DeploymentsResult } from "../jira/client";
 
 export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const jiraPayload = await transformDeployment(context);
@@ -13,15 +14,17 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 		return;
 	}
 
-	context.log(`Sending deployment info to Jira: ${jiraClient.baseURL}`);
+	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
+	if (result.rejectedDeployments?.length) {
+		context.log.warn({ rejectedDeployments: result.rejectedDeployments }, "Jira API rejected deployment!");
+	}
 
-	const jiraResponse = await jiraClient.deployment.submit(jiraPayload);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		result?.status
 	);
 };

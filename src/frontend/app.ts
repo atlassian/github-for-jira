@@ -4,7 +4,6 @@ import path from "path";
 import cookieSession from "cookie-session";
 import csrf from "csurf";
 import * as Sentry from "@sentry/node";
-import hbs from "hbs";
 import GithubOAuth from "./github-oauth";
 import getGitHubSetup from "./get-github-setup";
 import postGitHubSetup from "./post-github-setup";
@@ -21,7 +20,6 @@ import postJiraDisable from "../jira/disable";
 import postJiraEnable from "../jira/enable";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
-import { authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback } from "../jira/authenticate";
 import extractInstallationFromJiraCallback from "../jira/extract-installation-from-jira-callback";
 import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
@@ -31,10 +29,15 @@ import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
+import {
+	authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback,
+	verifyJiraContextJwtTokenMiddleware,
+	verifyJiraJwtTokenMiddleware
+} from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
-import * as fs from 'fs';
+import { registerHandlebarsPartials } from "../util/handlebars/partials"
+import { handlebarsHelpers } from '../util/handlebars/helpers';
 
 // Adding session information to request
 declare global {
@@ -103,58 +106,12 @@ export default (octokitApp: App): Express => {
 
 	app.use(logMiddleware);
 
-	// TODO: move all view/static/public/handlebars helper things in it's own folder
 	app.set("view engine", "hbs");
 	app.set("views", path.join(rootPath, "views"));
 
-	// Handlebars helpers
-	hbs.registerHelper("toLowerCase", (str) => str.toLowerCase());
+	registerHandlebarsPartials(rootPath);
 
-	hbs.registerHelper("replaceSpaceWithHyphen", (str) => str.replace(/ /g, "-"));
-
-	hbs.registerHelper(
-		"ifAllReposSynced",
-		(numberOfSyncedRepos, totalNumberOfRepos) =>
-			numberOfSyncedRepos === totalNumberOfRepos
-				? totalNumberOfRepos
-				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
-	);
-
-	hbs.registerHelper("repoAccessType", (repository_selection) =>
-		repository_selection === "all" ? "All repos" : "Only select repos"
-	);
-
-	hbs.registerHelper("isNotConnected", (syncStatus) => syncStatus == null);
-
-	hbs.registerHelper(
-		"inProgressSync",
-		(syncStatus) => syncStatus === "IN PROGRESS"
-	);
-
-	hbs.registerHelper("failedSync", (syncStatus) => syncStatus === "FAILED");
-
-	hbs.registerHelper("failedConnectionErrorMsg", (deleted) =>
-		deleted
-			? "The GitHub for Jira app was uninstalled from this org."
-			: "There was an error getting information for this installation."
-	);
-
-	hbs.registerHelper("connectedStatus", (syncStatus) =>
-		syncStatus === "COMPLETE" ? "Connected" : "Connect"
-	);
-
-	hbs.registerHelper("isModal", (modalId) => modalId === "jiraDomainModal");
-
-	const partials = ["githubSetupForm", "githubSetupFormError"];
-
-	partials.forEach((partial) => {
-		hbs.registerPartial(
-			partial,
-			fs.readFileSync(`${rootPath}/views/partials/${partial}.hbs`, {
-				encoding: "utf8",
-			})
-		);
-	});
+	handlebarsHelpers();
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
 	app.use(
@@ -274,7 +231,6 @@ export default (octokitApp: App): Express => {
 	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
 	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
 	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
-
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
 		return res.redirect(info.external_url);
@@ -313,12 +269,11 @@ export default (octokitApp: App): Express => {
 		};
 
 		const errorStatusCode = errorCodes[err.message] || 500;
-
 		const tags = [`status: ${errorStatusCode}`];
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, false);
+		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, false, req.session.jiraHost);
 		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs"
 
 		return res.status(errorStatusCode).render(errorPageVersion, {

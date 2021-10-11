@@ -8,14 +8,16 @@ const renderGitHubSetupPageVersion = async (
 	domain: string,
 	topLevelDomain: string,
 	res: Response,
-	req: Request
+	req: Request,
+	jiraSiteUrl?: string
 ) => {
-	const newgithubSetupPgFlagIsOn = await booleanFlag(
+	const newGithubSetupPgFlagIsOn = await booleanFlag(
 		BooleanFlags.NEW_SETUP_PAGE,
-		false
+		false,
+		jiraSiteUrl
 	);
 
-	const setupPageVersion = newgithubSetupPgFlagIsOn
+	const setupPageVersion = newGithubSetupPgFlagIsOn
 		? "github-setup.hbs"
 		: "github-setup-OLD.hbs";
 
@@ -33,7 +35,7 @@ const renderGitHubSetupPageVersion = async (
 	oldGitHubSetupPagePayload["jiraTopleveldomainOptions"] =
 		jiraTopleveldomainOptions(topLevelDomain);
 
-	return newgithubSetupPgFlagIsOn
+	return newGithubSetupPgFlagIsOn
 		? res.render(setupPageVersion, newGitHubSetupPagePayload)
 		: res.render(setupPageVersion, oldGitHubSetupPagePayload);
 };
@@ -51,19 +53,19 @@ export default async (req: Request, res: Response): Promise<void> => {
 		`Received github setup page request for jira ${jiraSiteUrl}`
 	);
 
-	const newgithubSetupPgFlagIsOn = await booleanFlag(
+	const newGithubSetupPgFlagIsOn = await booleanFlag(
 		BooleanFlags.NEW_SETUP_PAGE,
-		true
+		false
 	);
 
-	const invalidDomain = newgithubSetupPgFlagIsOn
+	const siteUrlIncludesProtocol = newGithubSetupPgFlagIsOn
 		? !validJiraDomains(domain, "atlassian.net")
 		: !validJiraDomains(domain, topLevelDomain);
 
-	if (invalidDomain) {
+	if (siteUrlIncludesProtocol) {
 		res.status(400);
 
-		renderGitHubSetupPageVersion(domain, topLevelDomain, res, req);
+		renderGitHubSetupPageVersion(domain, topLevelDomain, res, req, jiraSiteUrl);
 	}
 
 	// Check that the entered domain is valid by making a request to the status endpoint

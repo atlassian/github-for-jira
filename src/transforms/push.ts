@@ -3,17 +3,17 @@ import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application, GitHubAPI } from "probot";
-import { getLogger } from "../config/logger";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
 import {emitWebhookFailedMetrics, emitWebhookProcessedMetrics} from "../util/webhooks";
 import { JiraCommit } from "../interfaces/jira";
 import _ from "lodash";
 import { queues } from "../worker/queues";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
 // TODO: define better types for this file
 
-const logger = getLogger("transforms.push");
+export const PUSH_LOGGER_NAME = "transforms.push";
 
 const mapFile = (
 	githubFile,
@@ -85,7 +85,7 @@ export async function enqueuePush(
 }
 
 export function processPushJob(app: Application) {
-	return async (job: Job): Promise<void> => {
+	return async (job: Job, logger: LoggerWithTarget): Promise<void> => {
 		let github;
 		try {
 			github = await app.auth(job.data.installationId);
@@ -94,12 +94,11 @@ export function processPushJob(app: Application) {
 			return;
 		}
 		enhanceOctokit(github);
-		await processPush(github, job.data);
+		await processPush(github, job.data, logger);
 	};
 }
 
-export const processPush = async (github: GitHubAPI, payload) => {
-	let log = logger;
+export const processPush = async (github: GitHubAPI, payload, rootLogger: LoggerWithTarget) => {
 	try {
 		const {
 			repository,
@@ -112,7 +111,8 @@ export const processPush = async (github: GitHubAPI, payload) => {
 		const webhookId = payload.webhookId || "none";
 		const webhookReceived = payload.webhookReceived || undefined;
 
-		log = logger.child({
+		const log = rootLogger.child({
+			name: PUSH_LOGGER_NAME, // overriding even though it is provided worker; webserver processed the webhooks synchronously, too
 			webhookId: webhookId,
 			repoName: repo,
 			orgName: owner.name,
@@ -202,7 +202,7 @@ export const processPush = async (github: GitHubAPI, payload) => {
 			);
 		}
 	} catch (error) {
-		log.error(error, "Failed to process push");
+		rootLogger.error(error, "Failed to process push");
 		emitWebhookFailedMetrics("push");
 		throw error;
 	}
