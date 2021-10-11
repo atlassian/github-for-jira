@@ -9,10 +9,9 @@ import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { getCurrentTime } from "../util/webhooks";
+import {emitWebhookFailedMetrics, getCurrentTime} from "../util/webhooks";
 import JiraClient from "../models/jira-client";
 import { getLogger } from "../config/logger";
-import envVars from "../config/env";
 
 const LOGGER_NAME = "github.webhooks";
 const logger = getLogger(LOGGER_NAME);
@@ -34,6 +33,7 @@ const withSentry = function (callback) {
 			await callback(context);
 		} catch (err) {
 			context.log.error({ err, context }, "Error while processing webhook");
+			emitWebhookFailedMetrics(extractWebhookEventNameFromContext(context));
 			context.sentry?.captureException(err);
 			throw err;
 		}
@@ -69,16 +69,21 @@ export class CustomContext<E = any> extends Context<E> {
 	webhookReceived?: number;
 }
 
+function extractWebhookEventNameFromContext(context: CustomContext<any>): string {
+	let webhookEvent = context.name;
+	if (context.payload?.action) {
+		webhookEvent = `${webhookEvent}.${context.payload.action}`;
+	}
+	return webhookEvent;
+}
+
 // TODO: fix typings
 export default (
 	callback: (context: CustomContext, jiraClient: JiraClient, util: any) => Promise<void>
 ) => {
 	return withSentry(async (context: CustomContext) => {
 		enhanceOctokit(context.github);
-		let webhookEvent = context.name;
-		if (context.payload.action) {
-			webhookEvent = `${webhookEvent}.${context.payload.action}`;
-		}
+		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		const webhookReceived = getCurrentTime();
 		context.webhookReceived = webhookReceived;
@@ -95,26 +100,31 @@ export default (
 		const orgName = context.payload?.repository?.owner?.name || "none";
 		const gitHubInstallationId = Number(context.payload?.installation?.id);
 
-		const webhookParams = {
-			webhookId: context.id,
-			repoName,
-			orgName,
-			gitHubInstallationId,
-			event: webhookEvent,
-			payload: context.payload,
-			webhookReceived
-		};
-
 		const shouldPropagateRequestId = await booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true);
 
 		if (shouldPropagateRequestId) {
-			// For all micros envs log the paylaod. Omit from local to reduce noise
-			const loggerWithWebhookParams = envVars.MICROS_ENV
-				? context.log.child({name: LOGGER_NAME, ...webhookParams})
-				: context.log.child({name: LOGGER_NAME, ...omit(webhookParams, "payload")});
-
-			context.log = loggerWithWebhookParams;
+			const webhookParams = {
+				webhookId: context.id,
+				gitHubInstallationId,
+				event: webhookEvent,
+				webhookReceived
+			};
+			context.log = context.log.child({ name: LOGGER_NAME, ...webhookParams } );
+			// TODO: log only for local dev and for those who has enabled verbose logging
+			context.log.info({repoName,
+				orgName,
+				payload: context.payload
+			}, "Webhook verbose data");
 		} else {
+			const webhookParams = {
+				webhookId: context.id,
+				repoName,
+				orgName,
+				gitHubInstallationId,
+				event: webhookEvent,
+				payload: context.payload,
+				webhookReceived
+			};
 			// For all micros envs log the paylaod. Omit from local to reduce noise
 			const loggerWithWebhookParams = process.env.MICROS_ENV
 				? logger.child(webhookParams)
@@ -229,7 +239,9 @@ export default (
 					err,
 					`Error processing the event for Jira hostname '${jiraHost}'`
 				);
+				emitWebhookFailedMetrics(webhookEvent);
 				context.sentry?.captureException(err);
+
 			}
 		}
 	});

@@ -24,7 +24,6 @@
       href="/public/css/jira-configuration.css"
       media="all"
     />
-    <link rel="stylesheet" href="/public/css/media-queries.css" media="all" />
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
@@ -47,11 +46,11 @@
             include issue keys in branch names, commit messages, and pull
             request titles, you will be able to:</p>
           <ul class="jiraConfiguration__content__list">
-            <li>Create branches and pull requests from your Jira project.</li>
+            <li>Create pull requests from your Jira project.</li>
             <li>View deployment information within your linked Jira issue.</li>
             <li>View deployment pipelines over a timeline in your insights.</li>
           </ul>
-          <p>Even if your organization is still backfilling data, you can stat linking
+          <p>Even if your organization is still backfilling data, you can start linking
             issue keys in your development work immediately.</p>
 
          {{!-- Backfill Status Info Modal --}}
@@ -249,7 +248,7 @@
                               data-jira-host="{{ ../host }}"
                               data-installation-id="{{ id }}"
                             >
-                              Resync
+                              Restart backfill
                             </span>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                         </a>

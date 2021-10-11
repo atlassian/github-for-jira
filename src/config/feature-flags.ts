@@ -13,19 +13,16 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	//Controls if we should check the token properly for APIs which are called from Jira Frontend. (Fixes the current state)
-	FIX_IFRAME_ENDPOINTS_JWT = "fix-jwt-authentication-for-iframe-endpoints",
-	//If enabled, we'll use asymmetrically signed jwt tokens for /install and /uninstall endpoints callbacks.
-	USE_JWT_SIGNED_INSTALL_CALLBACKS = "use-jwt-signed-install-callbacks",
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
 	SIMPLER_PROCESSOR = "simpler-processor",
 	CUSTOM_QUERIES_FOR_REPO_SYNC_STATE = "use-custom-queries-for-repo-sync-state",
 	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files",
-	WEBHOOK_RECEIVED_METRICS = "webhook-received-metrics",
 	CONTINUE_SYNC_ON_ERROR = "continue-sync-on-error",
 	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
+	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
+	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
 	PROPAGATE_REQUEST_ID = "propagate-request-id"
 }
 
@@ -58,6 +55,7 @@ const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags, defaultVal
 	}
 };
 
+// Include jiraHost for any FF that needs to be rolled out in stages
 export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jiraHost?: string): Promise<boolean> =>
 	Boolean(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
 

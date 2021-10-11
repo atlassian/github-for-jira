@@ -1,12 +1,12 @@
 import { Installation, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
-import { getJiraMarketplaceUrl } from "../util/getUrl";
 import enhanceOctokit from "../config/enhance-octokit";
 import app from "../worker/app";
 import { getInstallation } from "./get-jira-configuration";
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
+import { booleanFlag, BooleanFlags } from '../config/feature-flags';
 
 const getConnectedStatus = (
 	installationsWithSubscriptions: any,
@@ -95,34 +95,39 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		return installationsWithAdmin;
 	}
 
-	if (req.session.jwt && req.session.jiraHost) {
+	const { jiraHost, jwt } = req.session;
+
+	if (jwt && jiraHost) {
 		const { data: { login } } = await github.users.getAuthenticated();
 
 		try {
 			// we can get the jira client Key from the JWT's `iss` property
 			// so we'll decode the JWT here and verify it's the right key before continuing
-			const installation = await Installation.getForHost(req.session.jiraHost);
+			const installation = await Installation.getForHost(jiraHost);
 			if (!installation) {
 				req.log.warn({ req, res }, "Missing installation");
-				res.status(404).send(`Missing installation for host '${req.session.jiraHost}'`);
+				res.status(404).send(`Missing installation for host '${jiraHost}'`);
 				return;
 			}
-			const { iss: clientKey } = decodeSymmetric(req.session.jwt, installation.sharedSecret, getAlgorithm(req.session.jwt));
+			const { iss: clientKey } = decodeSymmetric(jwt, installation.sharedSecret, getAlgorithm(jwt));
 
 			const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
 			const installationsWithAdmin = await getInstallationsWithAdmin({ installations, login });
 			const { data: info } = (await client.apps.getAuthenticated());
 			const connectedInstallations = await installationConnectedStatus(
-				req.session.jiraHost,
+				jiraHost,
 				client,
 				installationsWithAdmin,
 				req.log
 			);
 
-			return res.render("github-configuration.hbs", {
+			const newConnectAnOrgPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, false, jiraHost);
+			const connectAnOrgPageVersion = newConnectAnOrgPgFlagIsOn ? "github-configuration.hbs" : "github-configuration-OLD.hbs";
+
+			res.render(connectAnOrgPageVersion, {
 				csrfToken: req.csrfToken(),
 				installations: connectedInstallations,
-				jiraHost: req.session.jiraHost,
+				jiraHost: jiraHost,
 				nonce: res.locals.nonce,
 				info,
 				clientKey,
@@ -135,8 +140,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			return next(err);
 		}
 	}
-
-	res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
 };
 
 interface InstallationWithAdmin extends Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem {
