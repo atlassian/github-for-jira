@@ -41,7 +41,7 @@ const withSentry = function (callback) {
 	};
 };
 
-export const omit = (obj, ...props) => {
+const omit = (obj, ...props) => {
 	const result = { ...obj };
 	props.forEach(function (prop) {
 		delete result[prop];
