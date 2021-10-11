@@ -187,12 +187,15 @@ if (isNodeProd()) {
 		},
 		master: () => {
 			// Listen to micros lifecycle event to know when to start/stop
-			listenToMicrosLifecycle(
-				// When 'active' event is triggered, start queue processing
-				() => sendCommandToCluster(ClusterCommand.start),
-				// When 'inactive' event is triggered, stop queue processing
-				() => sendCommandToCluster(ClusterCommand.stop)
-			);
+			setTimeout(() => {
+				listenToMicrosLifecycle(
+					// When 'active' event is triggered, start queue processing
+					() => sendCommandToCluster(ClusterCommand.start),
+					// When 'inactive' event is triggered, stop queue processing
+					() => sendCommandToCluster(ClusterCommand.stop)
+				);
+			}, 10000);
+
 		},
 		lifetime: Infinity
 	});
