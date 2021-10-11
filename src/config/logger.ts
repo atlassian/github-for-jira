@@ -48,22 +48,21 @@ const getFullErrorStack = (ex) => {
 	return ret;
 };
 
-const logger = Logger.createLogger(
+const logLevel = process.env.LOG_LEVEL || "info";
+const globalLoggingLevel = levelFromName[logLevel] || Logger.INFO;
+
+const logger = wrapLogger(Logger.createLogger(
 	{
-		name: "github-for-jira",
-		logger: "root-logger",
+		name: "root-logger",
 		stream: LOG_STREAM,
+		level: globalLoggingLevel,
 		serializers: {
 			err: errorSerializer,
 			res: Logger.stdSerializers.res,
 			req: requestSerializer
 		}
 	}
-);
-
-const logLevel = process.env.LOG_LEVEL || "info";
-const globalLoggingLevel = levelFromName[logLevel] || Logger.INFO;
-logger.level(globalLoggingLevel);
+));
 
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
 export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
@@ -83,7 +82,7 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 };
 
 export const getLogger = (name: string): LoggerWithTarget => {
-	return wrapLogger(logger.child({ logger: name }));
+	return logger.child({ name });
 };
 
 //Override console.log with bunyan logger.

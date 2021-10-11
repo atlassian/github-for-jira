@@ -1,15 +1,16 @@
 import "./config/env"; // Important to be before other dependencies
 import "./config/proxy"; // Important to be before other dependencies
 import throng from "throng";
+import {v4 as uuidv4} from "uuid";
 import { isNodeProd } from "./util/isNodeEnv";
 import { listenToMicrosLifecycle } from "./services/micros/lifecycle";
 import { ClusterCommand, sendCommandToCluster } from "./services/cluster/send-command";
 import * as Sentry from "@sentry/node";
 
-import { discovery } from "./sync/discovery";
-import { processInstallation } from "./sync/installation";
-import { processPushJob } from "./transforms/push";
-import metricsJob from "./worker/metrics-job";
+import { discovery, DISCOVERY_LOGGER_NAME } from "./sync/discovery";
+import { INSTALLATION_LOGGER_NAME, processInstallation } from "./sync/installation";
+import { processPushJob, PUSH_LOGGER_NAME } from "./transforms/push";
+import metricsJob, { METRICS_LOGGER_NAME } from "./worker/metrics-job";
 import statsd from "./config/statsd";
 import app, { probot } from "./worker/app";
 import AxiosErrorEventDecorator from "./models/axios-error-event-decorator";
@@ -23,6 +24,7 @@ import { queueMetrics } from "./config/metric-names";
 import { Job } from "bull";
 import { listenForClusterCommand } from "./services/cluster/listen-command";
 import Timeout = NodeJS.Timeout;
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const logger = getLogger("worker");
@@ -30,7 +32,7 @@ const logger = getLogger("worker");
 /**
  * Return an async function that assigns a Sentry hub to `job.sentry` and sends exceptions.
  */
-const sentryMiddleware = (jobHandler) => async (job) => {
+const sentryMiddleware = (jobHandler) => async (job, logger: LoggerWithTarget) => {
 	job.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 	job.sentry.configureScope((scope) =>
 		scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
@@ -40,7 +42,7 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 	);
 
 	try {
-		await jobHandler(job);
+		await jobHandler(job, logger);
 	} catch (err) {
 		job.sentry.setExtra("job", {
 			id: job.id,
@@ -57,9 +59,27 @@ const sentryMiddleware = (jobHandler) => async (job) => {
 	}
 };
 
-const setDelayOnRateLimiting = (jobHandler) => async (job: Job) => {
+const logMiddleware = (jobHandler, jobName: string) => {
+	return async (job) => {
+		const jobLogger = await booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true) ? logger.child({
+			name: jobName,
+			// Probot uses "id" key as "requestId" for tracing; let's use the same key for consistency and also
+			// to have uniform logs for webhooks that are processed both asynchronously and in request handlers
+			//
+			// Let's use random ID rather than "job.id" to be able to separate retries of the same job
+			id: uuidv4(),
+		}) : logger;
+		try {
+			await jobHandler(job, jobLogger);
+		} catch (err) {
+			jobLogger.error({err}, "Execution failed!");
+		}
+	};
+}
+
+const setDelayOnRateLimiting = (jobHandler) => async (job: Job, logger: LoggerWithTarget) => {
 	try {
-		await jobHandler(job);
+		await jobHandler(job, logger);
 	} catch (err) {
 		if (err instanceof RateLimitingError) {
 			// delaying until the rate limit is reset (plus a buffer of a couple seconds)
@@ -101,7 +121,7 @@ const sendQueueMetrics = async () => {
 	}
 };
 
-const commonMiddleware = (jobHandler) => sentryMiddleware(setDelayOnRateLimiting(jobHandler));
+const commonMiddleware = (jobHandler, loggerName: string) => logMiddleware(sentryMiddleware(setDelayOnRateLimiting(jobHandler)), loggerName);
 
 let running = false;
 let timer: Timeout;
@@ -118,16 +138,16 @@ async function start() {
 	timer = setInterval(sendQueueMetrics, 60000);
 
 	// Start processing queues
-	queues.discovery.process(5, commonMiddleware(discovery(app, queues)));
+	queues.discovery.process(5, commonMiddleware(discovery(app, queues), DISCOVERY_LOGGER_NAME));
 	queues.installation.process(
 		Number(CONCURRENT_WORKERS),
-		commonMiddleware(processInstallation(app, queues))
+		commonMiddleware(processInstallation(app, queues), INSTALLATION_LOGGER_NAME)
 	);
 	queues.push.process(
 		Number(CONCURRENT_WORKERS),
-		commonMiddleware(processPushJob(app))
+		commonMiddleware(processPushJob(app), PUSH_LOGGER_NAME)
 	);
-	queues.metrics.process(1, commonMiddleware(metricsJob));
+	queues.metrics.process(1, commonMiddleware(metricsJob, METRICS_LOGGER_NAME));
 	running = true;
 }
 
