@@ -71,7 +71,7 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 ## Using the integration
 
 ### Development information in Jira
-To start seeing your development information from GitHub in Jira, you'll need to start using Smart Commits. Smart Commits are documented on the [Atlassian site](https://confluence.atlassian.com/jirasoftwarecloud/processing-issues-with-smart-commits-788960027.html) but you'll have to simply make sure a Jira issue is a part of the commit message. For example: `[JRA-123] fix typo` will be sent through to Jira and appear in the Development Information section of the Jira issue with the key `JRA-123`. Any branch, commit, pull request, build and deployment linked to this commit will now appear in Jira. 
+To start seeing your development information from GitHub in Jira, all you need to do is to add a Jira issue key to your commit message, branch name, or PR title. For example: `[JRA-123] fix typo` will be sent through to Jira and appear in the Development Information section of the Jira issue with the key `JRA-123`. Any branch, commit, pull request, build and deployment linked to this commit will now appear in Jira. You can find more information on how to reference issues in your development work [here](https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/).
 
 > example
 ![image](https://user-images.githubusercontent.com/13207348/46588447-61be3680-ca6a-11e8-9976-ba3d1d3c42bf.png)
