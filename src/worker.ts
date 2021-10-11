@@ -1,7 +1,7 @@
 import "./config/env"; // Important to be before other dependencies
 import "./config/proxy"; // Important to be before other dependencies
 import throng from "throng";
-import {v4 as uuidv4} from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import { isNodeProd } from "./util/isNodeEnv";
 import { listenToMicrosLifecycle } from "./services/micros/lifecycle";
 import { ClusterCommand, sendCommandToCluster } from "./services/cluster/send-command";
@@ -23,8 +23,8 @@ import { queues } from "./worker/queues";
 import { queueMetrics } from "./config/metric-names";
 import { Job } from "bull";
 import { listenForClusterCommand } from "./services/cluster/listen-command";
-import Timeout = NodeJS.Timeout;
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Timeout = NodeJS.Timeout;
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const logger = getLogger("worker");
@@ -173,33 +173,34 @@ async function stop() {
 	running = false;
 }
 
-initializeSentry();
-// starts healthcheck/deepcheck or else deploy will fail
-probot.start();
+const initialize = () => {
+	initializeSentry();
+	// starts healthcheck/deepcheck or else deploy will fail
+	probot.start();
+}
 
 if (isNodeProd()) {
 	// Production clustering (one process per core)
 	// Read more about Node clustering: https://nodejs.org/api/cluster.html
 	throng({
 		worker: () => {
+			initialize();
 			listenForClusterCommand(ClusterCommand.start, start);
 			listenForClusterCommand(ClusterCommand.stop, stop);
 		},
 		master: () => {
 			// Listen to micros lifecycle event to know when to start/stop
-			setTimeout(() => {
-				listenToMicrosLifecycle(
-					// When 'active' event is triggered, start queue processing
-					() => sendCommandToCluster(ClusterCommand.start),
-					// When 'inactive' event is triggered, stop queue processing
-					() => sendCommandToCluster(ClusterCommand.stop)
-				);
-			}, 10000);
-
+			listenToMicrosLifecycle(
+				// When 'active' event is triggered, start queue processing
+				() => sendCommandToCluster(ClusterCommand.start),
+				// When 'inactive' event is triggered, stop queue processing
+				() => sendCommandToCluster(ClusterCommand.stop)
+			);
 		},
 		lifetime: Infinity
 	});
 } else {
+	initialize();
 	// Dev/test single process, no need for clustering or lifecycle events
 	start();
 }
