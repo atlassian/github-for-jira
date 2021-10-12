@@ -104,9 +104,7 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 	 *
 	 * If the retry limit has been reached, skip the step.
 	 */
-	private
-
-	retryStep(step: Step<JOB_ID>, stepProcessor: StepProcessor<JOB_STATE>, stepResult: StepResult): NextAction<JOB_ID> {
+	private retryStep(step: Step<JOB_ID>, stepProcessor: StepProcessor<JOB_STATE>, stepResult: StepResult): NextAction<JOB_ID> {
 		const failedAttempts = this.jobStore.getFailedAttemptsCount(step.jobId);
 
 		const retry = this.retryStrategy.getRetry(failedAttempts);
