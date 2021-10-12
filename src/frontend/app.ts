@@ -37,7 +37,7 @@ import {
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
 import { registerHandlebarsPartials } from "../util/handlebars/partials"
-import { handlebarsHelpers } from '../util/handlebars/helpers';
+import { registerHandlebarsHelpers } from '../util/handlebars/helpers';
 
 // Adding session information to request
 declare global {
@@ -111,7 +111,7 @@ export default (octokitApp: App): Express => {
 
 	registerHandlebarsPartials(rootPath);
 
-	handlebarsHelpers();
+	registerHandlebarsHelpers();
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
 	app.use(

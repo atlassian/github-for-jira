@@ -1,6 +1,6 @@
 import hbs from "hbs";
 
-export const handlebarsHelpers = () => {
+export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("toLowerCase", (str) => str.toLowerCase());
 
 	hbs.registerHelper("replaceSpaceWithHyphen", (str) => str.replace(/ /g, "-"));
