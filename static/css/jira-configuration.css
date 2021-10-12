@@ -239,22 +239,23 @@
   margin-bottom: 0.3em;
 }
 
-.jiraConfiguration__table__cell__settings__links {
+.jiraConfiguration__table__cell__settings__dropdownItems {
   /* override aui styling */
   margin-top: 0 !important;
 }
 
-.jiraConfiguration__table__cell__settings__link {
+.jiraConfiguration__table__cell__settings__dropdownItem {
   /* override aui styling */
+  cursor: pointer;
   padding: 0.6em 1em !important;
 }
 
-.jiraConfiguration__table__cell__settings__link:hover {
+.jiraConfiguration__table__cell__settings__dropdownItem:hover {
   background-color: #e9edf0 !important;
 }
 
-.jiraConfiguration__table__cell__settings__link:active,
-.jiraConfiguration__table__cell__settings__link:focus {
+.jiraConfiguration__table__cell__settings__dropdownItem:active,
+.jiraConfiguration__table__cell__settings__dropdownItem:focus {
   /* override aui styling */
   background-color: #ecedf0 !important;
   box-shadow: none !important;
