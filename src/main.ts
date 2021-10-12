@@ -15,31 +15,25 @@ const probot = createProbot({
 	webhookPath: "/github/events",
 	webhookProxy: process.env.WEBHOOK_PROXY_URL,
 	throttleOptions: {
-		enabled: false,
+		enabled: false
 	}
 });
 
-/**
- * Start the probot worker.
- */
 async function start() {
 	initializeSentry();
-
 	// We are always behind a proxy, but we want the source IP
 	probot.server.set("trust proxy", true);
 	configureAndLoadApp(probot);
 	probot.start();
 }
 
-// TODO: this should work in dev/production and should be `workers = process.env.NODE_ENV === 'production' ? undefined : 1`
 if (isNodeProd()) {
-	// Start clustered server
-	throng(
-		{
-			lifetime: Infinity
-		},
-		start
-	);
+	// Production clustering (one process per core)
+	throng({
+		worker: start,
+		lifetime: Infinity
+	});
 } else {
+	// Dev/test single process, don't need clustering
 	start();
 }

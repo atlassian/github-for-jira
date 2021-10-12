@@ -2,6 +2,7 @@
 import nock from "nock";
 import { createJobData, processPushJob } from "../../src/transforms/push";
 import { createWebhookApp } from "../utils/probot";
+import {getLogger} from "../../src/config/logger";
 
 describe("GitHub Actions", () => {
 	let app;
@@ -72,7 +73,7 @@ describe("GitHub Actions", () => {
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/api/commit-no-username.json"));
 
-			await expect(processPushJob(app)(job)).toResolve();
+			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -240,7 +241,7 @@ describe("GitHub Actions", () => {
 				}
 			}).reply(200);
 
-			await expect(processPushJob(app)(job)).toResolve();
+			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
 		});
 
 		it("should not run a command without a Jira issue", async () => {
@@ -325,7 +326,7 @@ describe("GitHub Actions", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job)).toResolve();
+			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
 		});
 
 		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
@@ -386,7 +387,7 @@ describe("GitHub Actions", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job)).toResolve();
+			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
 		});
 	});
 });

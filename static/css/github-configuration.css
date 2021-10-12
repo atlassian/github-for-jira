@@ -1,29 +1,29 @@
-.getConfiguration__logout__container {
+.gitHubConfiguration__logout__container {
   align-items: flex-end;
   display: flex;
   flex-direction: column;
 }
 
-.getConfiguration__logout__link {
+.gitHubConfiguration__logout__link {
   cursor: pointer;
   color: #0366d6;
 }
 
-.getConfiguration__logout__name {
+.gitHubConfiguration__logout__name {
   font-weight: bold;
 }
 
-.getConfiguration {
+.gitHubConfiguration {
   margin: auto;
   max-width: 740px;
   height: 100vh;
 }
 
-.getConfiguration__header {
+.gitHubConfiguration__header {
   font-weight: 500 !important;
 }
 
-.getConfiguration__wrapper {
+.gitHubConfiguration__wrapper {
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
@@ -31,16 +31,24 @@
   margin: 2em auto;
 }
 
-.getConfiguration__tableHeader {
+.gitHubConfiguration__tableHeader {
   color: #6b778c;
   display: flex;
   flex-direction: row;
-  font-size: 0.8rem;
-  padding: 1em 0 0;
+  font-size: 0.9rem;
 }
 
-.getConfiguration__tableHeader__label {
-  margin-bottom: 0;
+.gitHubConfiguration__tableHeader__label {
+  align-self: flex-end;
+  margin-bottom: 0.7em;
+}
+
+.gitHubConfiguration__tableHeader__label:first-child {
+  flex: 3;
+}
+
+.gitHubConfiguration__tableHeader__label:last-child {
+  flex: 4;
 }
 
 .Box {
@@ -54,107 +62,190 @@
 }
 
 .githubOrgs__table__row:not(:last-child) {
-  padding-bottom: 0.8em;
+  padding-bottom: 1.5em;
 }
 
 .githubOrgs__table__row,
-.getConfiguration__orgContent:nth-child(2) {
+.gitHubConfiguration__orgContent:nth-child(2) {
   display: flex;
   flex-direction: row;
 }
 
-.getConfiguration__orgContent,
-.getConfiguration__orgContent__account {
+.gitHubConfiguration__orgContent__account,
+.gitHubConfiguration__orgContent__repoAccess,
+.gitHubConfiguration__orgContent__connect {
   align-items: center;
   color: #213658;
   display: flex;
 }
 
-.getConfiguration__orgContent:last-child {
+.gitHubConfiguration__orgContent:last-child {
   display: flex;
   justify-content: flex-end;
 }
 
-.getConfiguration__orgContent__account {
-  flex: 2;
+.gitHubConfiguration__orgContent__account,
+.gitHubConfiguration__orgContent__repoAccess {
+  flex: 3;
 }
 
-.getConfiguration__orgContent__avatar {
+.gitHubConfiguration__orgContent__connect {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.gitHubConfiguration__orgContent__avatar {
   margin-right: 0.5em;
   width: 25px;
 }
 
-.getConfiguration__orgContent__repoSelection {
+.gitHubConfiguration__orgContent__repoSelection {
   margin: 0;
 }
 
-.getConfiguration__orgContent__numberOfRepos {
-  background-color: #f4f5f7;
-  border-radius: 12px;
-  margin: auto 0.5em;
-  padding: 0.7em 0.6em;
+.gitHubConfiguration__orgContent__numberOfRepos {
+  margin: auto 0.5em !important;
 }
 
-.getConfiguration__orgContent__connectBtn,
-.getConfiguration__orgContent__connectBtn--disabled {
+.gitHubConfiguration__orgContent__connectedMsg,
+.gitHubConfiguration__loaderContainer {
   border: 0;
   border-radius: 3px;
   color: #42526e;
 }
 
-.getConfiguration__orgContent__connectBtn {
-  background-color: #f4f5f7;
-  padding: 1em 0.8em;
+.gitHubConfiguration__orgContent__connectFailed__warningIconContainer {
+  margin-right: 0.3em;
 }
 
-.getConfiguration__orgContent__connectedMsg {
+.gitHubConfiguration__orgContent__connectFailed__warningIcon {
+  color: #ff9b20;
+  left: -20px;
+  position: absolute;
+  top: 7px;
+  transform: scale(1.3);
+}
+
+.gitHubConfiguration__orgContent__connectBtn,
+.gitHubConfiguration__orgContent__connectBtn--disabled,
+.gitHubConfiguration__orgContent__connectedMsg,
+.gitHubConfiguration__loaderContainer,
+.gitHubConfiguration__orgContent__connectFailed {
+  margin-right: 0.5em;
+}
+
+.gitHubConfiguration__orgContent__connectBtn--disabled:hover,
+.gitHubConfiguration__orgContent__settingsContainer--disabled:hover,
+.gitHubConfiguration__manageSubscriptions--notAdmin:hover {
+  cursor: not-allowed;
+}
+
+.gitHubConfiguration__manageSubscriptions--notAdmin {
+  position: absolute;
+}
+
+.gitHubConfiguration__notAdminMsg {
+  height: 3.8em;
+  left: 8.3em;
+  top: -0.3em;
+  width: 22em;
+}
+
+.gitHubConfiguration__failedSyncWarningLabel {
+  left: -19em;
+  top: -4em;
+  width: 36em;
+}
+
+.gitHubConfiguration__notAdminMsg,
+.gitHubConfiguration__manageSubscriptions,
+.gitHubConfiguration__manageSubscriptions--notAdmin,
+.gitHubConfiguration__failedSyncWarningLabel {
+  color: #b4bbc5;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  padding: 0.5em;
+}
+
+.gitHubConfiguration__orgContent__connectBtn--disabled:hover
+  ~ .gitHubConfiguration__notAdminMsg {
+  display: block;
+}
+
+.gitHubConfiguration__orgContent__connectedMsg {
   font-style: italic;
-  margin: 0;
+  margin: 0 0.5em !important;
 }
 
-.getConfiguration__orgContent__connectBtn:hover,
-.getConfiguration__orgContent__connectBtn:focus,
-.getConfiguration__orgContent__connectBtn:active,
-.getConfiguration__orgContent__connectBtn:focus:active,
-.getConfiguration__orgContent__connectBtn:hover:active {
-  background-color: #ebecf0;
+.gitHubConfiguration__orgContent__settingsContainer,
+.gitHubConfiguration__orgContent__settingsContainer--disabled {
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0.45em;
+  position: relative;
 }
 
-.getConfiguration__loaderContainer {
-  display: flex;
-  justify-content: center;
-  width: 5.5em;
+.gitHubConfiguration__orgContent__connectFailed__warningIcon {
+  cursor: pointer;
 }
 
-.getConfiguration__loader {
-  animation: spin 2s linear infinite;
-  border: 2px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 2px solid #42526e;
-  height: 1.8em;
-  width: 1.8em;
+.gitHubConfiguration__orgContent__settingsContainer--disabled:hover {
+  background-color: #f5f6f8;
 }
 
-.getConfiguration__noOrganizations {
+.gitHubConfiguration__orgContent__settingsContainer,
+.gitHubConfiguration__orgContent__settingsContainer:hover,
+.gitHubConfiguration__orgContent__settingsContainer:active,
+.gitHubConfiguration__orgContent__settingsContainer:focus {
+  color: inherit;
+}
+
+.gitHubConfiguration__orgContent__settingsContainer:hover
+  ~ .gitHubConfiguration__manageSubscriptions,
+.gitHubConfiguration__orgContent__settingsContainer--disabled:hover
+  ~ .gitHubConfiguration__manageSubscriptions--notAdmin,
+.gitHubConfiguration__orgContent__connectFailed__warningIconContainer:hover
+  ~ .gitHubConfiguration__failedSyncWarningLabel {
+  display: block;
+}
+
+.gitHubConfiguration__manageSubscriptions--notAdmin {
+  left: -2em;
+  top: -4em;
+  width: 24em;
+}
+
+.gitHubConfiguration__manageSubscriptions {
+  height: 2.3em;
+  left: 3em;
+  top: -2.6em;
+  width: 13.8em;
+}
+
+.gitHubConfiguration__noOrganizations {
   color: #172b4d;
 }
 
-.getConfiguration__connectNewOrg {
+.gitHubConfiguration__connectNewOrg {
   color: #172b4d;
   font-weight: 500;
   padding: 0.8em 0;
 }
 
-.getConfiguration__connectNewOrg__plus {
+.gitHubConfiguration__connectNewOrg__plus {
   font-size: 1.1rem;
-  padding: 0 0.7em 0 0.3em;
+  padding: 0 0.7em 0 0.5em;
   transform: scale(1.5);
 }
 
-.getConfiguration__connectNewOrg:hover,
-.getConfiguration__connectNewOrg:focus,
-.getConfiguration__connectNewOrg:active {
+.gitHubConfiguration__connectNewOrg:hover,
+.gitHubConfiguration__connectNewOrg:focus,
+.gitHubConfiguration__connectNewOrg:active {
   background-color: #f5f6f7;
+  border-radius: 3px;
+  color: #172b4d;
   text-decoration: none;
 }
 
@@ -167,20 +258,47 @@
   }
 }
 
-/* Media Queries */
-@media (max-width: 540px) {
-  .getConfiguration__wrapper,
-  .getConfiguration__accountLink,
-  .getConfiguration__disclaimer {
-    font-size: 0.8rem;
+/* ******************* */
+/* ** Media Queries ** */
+/* ******************* */
+/* Extra large devices  */
+@media (max-width: 1200px) {
+  .gitHubConfiguration__notAdminMsg {
+    height: 6.2em;
+    top: -1.5em;
+    width: 14em;
+  }
+}
+
+/* Large devices  */
+@media (max-width: 992px) {
+  .gitHubConfiguration__notAdminMsg {
+    left: -12em;
   }
 
+  .gitHubConfiguration__manageSubscriptions--notAdmin,
+  .gitHubConfiguration__failedSyncWarningLabel {
+    top: -0.5em;
+  }
+
+  .gitHubConfiguration__manageSubscriptions--notAdmin {
+    left: -16em;
+  }
+
+  .gitHubConfiguration__failedSyncWarningLabel {
+    left: -39em;
+  }
+}
+
+
+@media (max-width: 540px) {
   .getConfiguration__tableHeader {
     padding-bottom: 0;
   }
 
-  .getConfiguration__loader {
-    height: 1.8em;
-    width: 1.8em;
+  .getConfiguration__wrapper,
+  .getConfiguration__accountLink,
+  .getConfiguration__disclaimer {
+    font-size: 0.8rem;
   }
 }

@@ -4,10 +4,14 @@
 
 Connect your GitHub code with your project management in Jira. A separate Jira subscription is required. With two of your most important tools connected, you'll spend less time managing projects and more time working on them. This integration is an open source project, built and maintained by [Atlassian](https://atlassian.com).
 
+## Support
+
+For general support inquiries, [please contact the Atlassian Support team](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=jira-software).  For technical issues, [please create a new issue](https://github.com/atlassian/github-for-jira/issues/new).
+
 ## Table of Contents
 - [Installation and setup](#installation-and-setup)
   - [Requirements](#requirements)
-  - [Installation](#installation)
+  - [Installation](#installation-and-setup)
   - [Connecting your GitHub Organization](#connecting-your-github-organization-to-jira)
   - [Authorization](#authorization)
 - [Using the integration](#using-the-integration)
