@@ -62,8 +62,7 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 		const currentRateLimitState = this.jobStore.getRateLimitState(step.jobId);
 
 		// If the rate limit is hit, delay the next step of the job accordingly.
-		if (this.rateLimitStrategy.getDelayInSeconds(currentRateLimitState) > 0
-		) {
+		if (this.rateLimitStrategy.getDelayInSeconds(currentRateLimitState) > 0) {
 			return this.continueJobWithRateLimit(step, currentRateLimitState);
 		}
 
