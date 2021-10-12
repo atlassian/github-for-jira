@@ -3,11 +3,11 @@ import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
-import { getLogger } from "../config/logger";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
-const logger = getLogger("sync.discovery");
+export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 
-export const discovery = (app: Application, queues) => async (job) => {
+export const discovery = (app: Application, queues) => async (job, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
 	const github = await app.auth(installationId);

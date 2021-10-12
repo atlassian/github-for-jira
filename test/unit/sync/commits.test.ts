@@ -7,6 +7,7 @@ import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
 import { createApplication } from "../../utils/probot";
 import nock from "nock";
+import {getLogger} from "../../../src/config/logger";
 
 jest.mock("../../../src/models");
 
@@ -109,7 +110,7 @@ describe.skip("sync/commits", () => {
 				add: jest.fn()
 			}
 		};
-		await expect(processInstallation(app, queues)(job)).toResolve();
+		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
@@ -198,7 +199,7 @@ describe.skip("sync/commits", () => {
 				add: jest.fn()
 			}
 		};
-		await expect(processInstallation(app, queues)(job)).toResolve();
+		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
@@ -253,7 +254,7 @@ describe.skip("sync/commits", () => {
 				add: jest.fn()
 			}
 		};
-		await expect(processInstallation(app, queues)(job)).toResolve();
+		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
@@ -279,7 +280,7 @@ describe.skip("sync/commits", () => {
 				add: jest.fn()
 			}
 		};
-		await expect(processInstallation(app, queues)(job)).toResolve();
+		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
@@ -304,7 +305,7 @@ describe.skip("sync/commits", () => {
 				add: jest.fn()
 			}
 		};
-		await expect(processInstallation(app, queues)(job)).toResolve();
+		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
