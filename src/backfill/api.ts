@@ -192,7 +192,7 @@ export class BackoffRetryStrategy implements RetryStrategy {
 	private readonly initialDelayInSeconds: number;
 	private readonly backoffMultiplier: number;
 
-	constructor(retries: number, backoffMultiplier: number, initialDelayInSeconds: number) {
+	constructor(retries: number, initialDelayInSeconds: number, backoffMultiplier: number) {
 		this.retries = retries;
 		this.backoffMultiplier = backoffMultiplier;
 		this.initialDelayInSeconds = initialDelayInSeconds;
@@ -200,7 +200,7 @@ export class BackoffRetryStrategy implements RetryStrategy {
 
 	getRetry(failedAttempts: number): Retry {
 		return {
-			shouldRetry: failedAttempts <= this.retries,
+			shouldRetry: failedAttempts <= this.retries + 1, // +1 because with 3 retries, we'll have 4 failed attempts in the end
 			retryAfterSeconds: this.initialDelayInSeconds * Math.pow(this.backoffMultiplier, failedAttempts)
 		};
 	}
