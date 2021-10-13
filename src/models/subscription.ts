@@ -187,7 +187,6 @@ export default class Subscription extends Sequelize.Model {
 		syncType?: string
 	): Promise<Job> {
 		const { gitHubInstallationId: installationId, jiraHost } = subscription;
-
 		// If repo sync state is empty
 		// start a sync job from scratch
 		if (!subscription.repoSyncState || syncType === "full") {
