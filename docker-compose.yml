@@ -20,10 +20,19 @@ services:
     ports: [ "4040:4040" ]
     command: ngrok http app:8080
 
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:0.8.7
+    environment:
+      - SERVICES=sqs:9602
+    ports:
+      - 9602:9602
+
   app:
     depends_on:
       - redis
       - postgres
+      - localstack
     volumes:
       - .:/app
     build:
