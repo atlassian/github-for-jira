@@ -13,7 +13,7 @@ describe("Backfilling API", () => {
 			[3, 1, true, 4],
 			[3, 2, true, 8],
 			[3, 3, true, 16],
-			[3, 4, true, 32],
+			[3, 4, false, 32],
 			[3, 5, false, 64],
 			[3, 6, false, 128],
 		]).it("input: retries=%s, failed attempts=%s; output: shouldRetry=%s, delay=%s", async (retries: number, failedAttempts: number, expectedToRetry: boolean, expectedDelay: boolean) => {

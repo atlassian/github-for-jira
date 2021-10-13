@@ -1,9 +1,11 @@
 import {
 	JobStore,
-	StepResult,
-	StepPrioritizer,
 	RateLimitState,
-	RateLimitStrategy, Step, RetryStrategy, StepProcessor
+	RateLimitStrategy,
+	RetryStrategy,
+	Step,
+	StepPrioritizer,
+	StepResult
 } from "./api";
 import Logger from "bunyan";
 
@@ -69,15 +71,16 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 		// find the right processor and process the next step of the job
 		const jobState = this.jobStore.getJobState(step.jobId);
 		const stepProcessor = this.prioritizer.getStepProcessor(step, jobState, currentRateLimitState);
-		const stepResult = stepProcessor.process(jobState);
+
+		if (!stepProcessor) {
+			return this.stopJob(step);
+		}
+
+		const stepResult = stepProcessor.process(jobState, currentRateLimitState);
 
 		// store the new rate limit state in the database
 		this.updateRateLimitState(stepResult, step);
-
-		// the job is finished, don't schedule another step
-		if (stepResult.jobFinished) {
-			return this.stopJob(step);
-		}
+		this.jobStore.setJobState(step.jobId, stepResult.jobState);
 
 		// in case of success, we want to schedule the job back on the queue
 		if (stepResult.success) {
@@ -86,15 +89,22 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 
 		// in case of an error we want to throw an error to let the queueing system know that we want to retry
 		if (!stepResult.error || stepResult.error?.isRetryable) {
-			this.logger.error(`Retrying step ${JSON.stringify(step)} due to error: ${stepResult.error?.message}`);
-			return this.retryStep(step, stepProcessor, stepResult);
+			return this.retryStep(step, stepResult, jobState);
 		} else if (stepResult.error.isFatal) {
 			this.logger.error(`Stopping job ${step.jobId} due to error: ${stepResult.error?.message}`);
 			return this.stopJob(step);
-		} else {
+		} else if (!stepResult.error.isRetryable) {
 			this.logger.error(`Skipping step ${JSON.stringify(step)} due to error: ${stepResult.error?.message}`);
-			return stepProcessor.skip();
+			this.skipStep(step, jobState, stepResult);
 		}
+
+		throw new Error(`Job ${step.jobId} ran into an invalid error state: ${JSON.stringify(stepResult.error)}`);
+	}
+
+	private skipStep(step: Step<JOB_ID>, jobState: JOB_STATE, stepResult: StepResult<JOB_STATE>): NextAction<JOB_ID> {
+		const updatedJobState = this.prioritizer.skip(step, jobState, stepResult.rateLimit);
+		this.jobStore.setJobState(step.jobId, updatedJobState);
+		return this.continueJobWithRateLimit(step, stepResult.rateLimit);
 	}
 
 	/**
@@ -103,20 +113,22 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 	 *
 	 * If the retry limit has been reached, skip the step.
 	 */
-	private retryStep(step: Step<JOB_ID>, stepProcessor: StepProcessor<JOB_STATE>, stepResult: StepResult): NextAction<JOB_ID> {
-		const failedAttempts = this.jobStore.getFailedAttemptsCount(step.jobId);
+	private retryStep(step: Step<JOB_ID>, stepResult: StepResult<JOB_STATE>, jobState: JOB_STATE): NextAction<JOB_ID> {
+		const failedAttempts = this.jobStore.getFailedAttemptsCount(step.jobId) + 1;
+
 
 		const retry = this.retryStrategy.getRetry(failedAttempts);
 
-		if (retry.shouldRetry
-		) {
+		if (retry.shouldRetry) {
 			// Retry the same step again, honoring the retry delay.
-			this.jobStore.setFailedAttemptsCount(step.jobId, failedAttempts + 1);
+			this.logger.warn(`Retrying step ${JSON.stringify(step)} due to error: ${stepResult.error?.message}`);
+			this.jobStore.setFailedAttemptsCount(step.jobId, failedAttempts);
 			return this.continueJobWithDelay(step, retry.retryAfterSeconds);
 		} else {
 			// Don't retry. Reset the failed attempts and skip the current step.
+			this.logger.warn(`Not retrying step ${JSON.stringify(step)} after ${failedAttempts} failed attempts. Error was: ${stepResult.error?.message}`);
 			this.jobStore.setFailedAttemptsCount(step.jobId, 0);
-			stepProcessor.skip();
+			return this.skipStep(step, jobState, stepResult);
 		}
 
 		return this.continueJobWithRateLimit(step, stepResult.rateLimit);
@@ -141,7 +153,7 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 		};
 	}
 
-	private updateRateLimitState(stepResult: StepResult, step: Step<JOB_ID>) {
+	private updateRateLimitState(stepResult: StepResult<JOB_STATE>, step: Step<JOB_ID>) {
 		if (stepResult.rateLimit) {
 			this.jobStore.updateRateLimitState(step.jobId, stepResult.rateLimit);
 		}

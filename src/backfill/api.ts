@@ -20,19 +20,11 @@ export interface StepProcessor<JOB_STATE> {
 	 * Processes the next step in the job. Can make use of the JobState to determine what exactly it needs to do
 	 * as the next step.
 	 */
-	process(jobState: JOB_STATE): StepResult;
+	process(jobState: JOB_STATE, currentRateLimitState?: RateLimitState): StepResult<JOB_STATE>;
 
-	/**
-	 * This method is called when the processing of the step has failed for some reason and the same processing
-	 * shouldn't be retried.
-	 *
-	 * An implementation of this function must increment some kind of cursor in the job state so that the next step of the
-	 * job doesn't try to do the exact same thing again (and fail again). By moving a cursor, the step is basically skipped.
-	 */
-	skip();
 }
 
-export interface StepResult {
+export interface StepResult<JOB_STATE> {
 
 	/**
 	 * True if the processing step was successful. False if the processing was not successful. In this case, the error
@@ -41,9 +33,9 @@ export interface StepResult {
 	success: boolean;
 
 	/**
-	 * Set to true if the whole job is finished (i.e. if this was the last step).
+	 * The job state after the step has been processed.
 	 */
-	jobFinished: boolean;
+	jobState: JOB_STATE;
 
 	/**
 	 * Information about the state of the rate limit for the job after successful or unsuccessful processing of the step.
@@ -71,8 +63,16 @@ export interface StepPrioritizer<JOB_ID, JOB_STATE> {
 	 * If the job entails the processing items of different types, for example, this method can prioritize between them.
 	 * It can also prioritize based on recency (i.e. which item type has longest not been updated), or on the state of
 	 * a rate limit.
+	 *
+	 * Return null or undefined when the job is done and there is nothing left to do.
 	 */
-	getStepProcessor(step: Step<JOB_ID>, jobState: JOB_STATE, rateLimitState?: RateLimitState): StepProcessor<JOB_STATE>;
+	getStepProcessor(step: Step<JOB_ID>, jobState: JOB_STATE, rateLimitState?: RateLimitState): StepProcessor<JOB_STATE> | null | undefined;
+
+	/**
+	 * Modifies the job state to skip the current step (by incrementing a cursor or something like that).
+	 * Returns the modified job state.
+	 */
+	skip(step: Step<JOB_ID>, jobState: JOB_STATE, rateLimitState?: RateLimitState): JOB_STATE;
 }
 
 
@@ -98,6 +98,11 @@ export interface JobStore<JOB_ID, JOB_STATE> {
 	 * Returns the jobState for the given job.
 	 */
 	getJobState(jobId: JOB_ID): JOB_STATE;
+
+	/**
+	 * Updates the job state in the database.
+	 */
+	setJobState(jobId: JOB_ID, jobState: JOB_STATE);
 
 	/**
 	 * Increments the number of failed attempts for the current step of the given job in the database.
@@ -222,7 +227,7 @@ export class BackoffRetryStrategy implements RetryStrategy {
 
 	getRetry(failedAttempts: number): Retry {
 		return {
-			shouldRetry: failedAttempts <= this.retries + 1, // +1 because with 3 retries, we'll have 4 failed attempts in the end
+			shouldRetry: failedAttempts <= this.retries,
 			retryAfterSeconds: this.initialDelayInSeconds * Math.pow(this.backoffMultiplier, failedAttempts)
 		};
 	}
