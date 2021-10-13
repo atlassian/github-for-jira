@@ -2,7 +2,7 @@ import AWS, {AWSError} from "aws-sdk";
 import Logger from "bunyan"
 import {getLogger} from "../config/logger"
 import {DeleteMessageRequest, Message, ReceiveMessageResult} from "aws-sdk/clients/sqs";
-import { uuidv4 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 const logger = getLogger("sqs")
 
@@ -31,23 +31,30 @@ export type Context<MessagePayload> = {
  * Handler for the queue messages
  */
 export interface MessageHandler<MessagePayload> {
-	handle(context: Context<MessagePayload>);
+	handle(context: Context<MessagePayload>): Promise<void>;
 }
+
 
 export class SqsQueue<MessagePayload> {
 	queueUrl: string;
 	queueName: string;
 	queueRegion: string;
-	sqs: AWS.SQS;
 
-	constructor(queueName: string, queueUrl: string, queueRegion: string) {
+	messageHandler: MessageHandler<MessagePayload>
+
+	sqs: AWS.SQS;
+	stopped: boolean
+
+	public constructor(queueName: string, queueUrl: string, queueRegion: string, messageHandler: MessageHandler<MessagePayload>) {
 		this.queueUrl = queueUrl;
 		this.queueName = queueName;
 		this.queueRegion = queueRegion;
 		this.sqs = new AWS.SQS({apiVersion: "2012-11-05", region: queueRegion});
+		this.stopped = false
+		this.messageHandler = messageHandler;
 	}
 
-	sendMessage(payload: MessagePayload, log?: Logger) {
+	public sendMessage(payload: MessagePayload, log?: Logger) {
 		const params = {
 			MessageBody: JSON.stringify(payload),
 			QueueUrl: this.queueUrl
@@ -61,7 +68,7 @@ export class SqsQueue<MessagePayload> {
 		});
 	}
 
-	deleteMessage(message: Message) {
+	private deleteMessage(message: Message) {
 
 		if(!message.ReceiptHandle) {
 			logger.error({ message }, "Unable to delete message, ReceiptHandle parameter is missing");
@@ -81,7 +88,7 @@ export class SqsQueue<MessagePayload> {
 		});
 	}
 
-	executeMessage(message: Message, messageHandler: MessageHandler<MessagePayload>) {
+	private async executeMessage(message: Message): Promise<void> {
 		const payload = message.Body ? JSON.parse(message.Body) : {};
 
 		const log = logger.child({id: message.MessageId, executionId: uuidv4()})
@@ -91,14 +98,14 @@ export class SqsQueue<MessagePayload> {
 		log.info({messagePayload: payload}, "Sqs message received");
 
 		try {
-			messageHandler.handle(context)
+			await this.messageHandler.handle(context)
 			this.deleteMessage(message)
 		} catch (err) {
 			log.error(err, "error executing sqs message")
 		}
 	}
 
-	async handleSqsResponse(err: AWSError, data: ReceiveMessageResult, messageHandler) {
+	async handleSqsResponse(err: AWSError, data: ReceiveMessageResult) {
 		if (err) {
 			logger.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
 		} else {
@@ -108,29 +115,41 @@ export class SqsQueue<MessagePayload> {
 			}
 
 			await Promise.all(data.Messages.map(message => {
-				return new Promise<void>((resolve) => {
-					this.executeMessage(message, messageHandler)
-					resolve()
-				})
+				this.executeMessage(message)
 			})
 			)
 		}
 	}
 
-	listen(messageHandler) {
+	public async listen() {
+		this.poll();
+	}
+
+
+	private async poll() {
+
+		if(this.stopped) {
+			return
+		}
+
 		// Setup the receiveMessage parameters
 		const params = {
 			QueueUrl: this.queueUrl,
 			MaxNumberOfMessages: 1,
 			VisibilityTimeout: 0,
-			WaitTimeSeconds: 5
+			WaitTimeSeconds: 1
 		};
+		//Get messages from the queue with long polling enabled
 		this.sqs.receiveMessage(params, async (err, data) => {
 			try {
-				await this.handleSqsResponse(err, data, messageHandler)
+				await this.handleSqsResponse(err, data)
 			} finally {
-				this.listen(messageHandler)
+				this.poll()
 			}
 		});
+	}
+
+	public stop() {
+		this.stopped = true;
 	}
 }
