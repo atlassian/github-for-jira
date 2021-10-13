@@ -76,7 +76,7 @@ export interface StepPrioritizer<JOB_ID, JOB_STATE> {
 }
 
 
-export class RateLimitState {
+export interface RateLimitState {
 
 	/**
 	 * The rate limit budget that is left. If 0, the rate limit is hit.
@@ -150,10 +150,20 @@ export interface RateLimitStrategy {
 }
 
 /**
- * Calculates a maximum delay of 15 minutes so that it works with restriction of the maximum 15 minute delay in SQS
- * queues.
+ * Calculates a delay with a hard upper limit. Can be used in combination with SQS queues, for example, because
+ * they only allow a max delay of 15 minutes.
  */
-export class SqsRateLimitStrategy implements RateLimitStrategy {
+export class CappedDelayRateLimitStrategy implements RateLimitStrategy {
+
+	private readonly maxDelayInSeconds: number;
+	private readonly now: () => Date;
+
+	constructor(maxDelayInSeconds: number, now?: () => Date) {
+		this.maxDelayInSeconds = maxDelayInSeconds;
+		this.now = now
+			? now
+			: () => new Date()
+	}
 
 	public getDelayInSeconds(rateLimitState?: RateLimitState): number {
 
@@ -167,7 +177,7 @@ export class SqsRateLimitStrategy implements RateLimitStrategy {
 			return 0;
 		}
 
-		const now = new Date();
+		const now = this.now();
 
 		// If the refresh date is in the past, we just assume that the rate limit has refreshed already,
 		// so no delay is needed.
@@ -176,9 +186,9 @@ export class SqsRateLimitStrategy implements RateLimitStrategy {
 		}
 
 		// Otherwise, calculate the delay from the rate limit refresh date.
-		const delay = (now.getTime() - rateLimitState.refreshDate.getTime()) / 1000;
+		const delay = (rateLimitState.refreshDate.getTime() - now.getTime()) / 1000;
 
-		return Math.min(delay, 15 * 60);
+		return Math.min(delay, this.maxDelayInSeconds);
 	}
 
 }
@@ -193,6 +203,18 @@ export class BackoffRetryStrategy implements RetryStrategy {
 	private readonly backoffMultiplier: number;
 
 	constructor(retries: number, initialDelayInSeconds: number, backoffMultiplier: number) {
+		if (retries < 0) {
+			throw new Error("retries must be greater than 0");
+		}
+
+		if (backoffMultiplier < 0) {
+			throw new Error("backoffMultiplier must be greater than 0");
+		}
+
+		if (initialDelayInSeconds < 0) {
+			throw new Error("initialDelayInSeconds must be greater than 0");
+		}
+
 		this.retries = retries;
 		this.backoffMultiplier = backoffMultiplier;
 		this.initialDelayInSeconds = initialDelayInSeconds;

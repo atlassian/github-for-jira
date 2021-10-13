@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable jest/no-standalone-expect */
 
-import { BackoffRetryStrategy } from "../../src/backfill/api";
+import { BackoffRetryStrategy, CappedDelayRateLimitStrategy, RateLimitState } from "../../src/backfill/api";
 import each from "jest-each";
 
 describe("Backfilling API", () => {
@@ -20,6 +20,43 @@ describe("Backfilling API", () => {
 			const backoffStrategy = new BackoffRetryStrategy(retries, 2, 2);
 			expect(backoffStrategy.getRetry(failedAttempts).shouldRetry).toBe(expectedToRetry);
 			expect(backoffStrategy.getRetry(failedAttempts).retryAfterSeconds).toBe(expectedDelay);
+		});
+
+		it("throws error on invalid input", async () => {
+			expect(() => new BackoffRetryStrategy(3, -1, 2)).toThrow();
+			expect(() => new BackoffRetryStrategy(3, 2, -1)).toThrow();
+			expect(() => new BackoffRetryStrategy(-1, 2, -1)).toThrow();
+		});
+
+
+	});
+
+	describe("CappedDelayRateLimitStrategy", () => {
+
+		const now = new Date(2021, 10, 10, 10);
+		const fiveMinutesFromNow = new Date(2021, 10, 10, 10, 5);
+		const anHourFromNow = new Date(2021, 10, 11);
+		const fiveMinutesAgo = new Date(2021, 10, 10, 9, 55);
+
+		const rateLimit = (budgetLeft: number, refreshDate: Date): RateLimitState => {
+			return {
+				budgetLeft,
+				refreshDate
+			};
+		};
+
+		each([
+			[900, now, rateLimit(1, anHourFromNow), 0], 					// no delay because budget left
+			[900, now, rateLimit(0, anHourFromNow), 900], 				// delay capped at max
+			[900, now, rateLimit(0, fiveMinutesFromNow), 5 * 60], // delay of 5 minutes because budget is empty
+			[900, now, rateLimit(-1, fiveMinutesFromNow), 300], 	// delay of 5 minutes because budget is empty
+			[900, now, rateLimit(0, fiveMinutesAgo), 0], 					// no delay, because refresh date is in the past
+			[-1, now, rateLimit(0, fiveMinutesAgo), 0], 					// no delay because of invalid cap value
+			[900, now, undefined, 0], 																			// no delay because no rate limit provided
+		]).it("input: maxDelay=%s, now=%s, rateLimit=%s; output: expectedDelay=%s", async (maxDelay: number, now: Date, ratelimit: RateLimitState, expectedDelay: number) => {
+			const retryStrategy = new CappedDelayRateLimitStrategy(maxDelay, () => now);
+			const delay = retryStrategy.getDelayInSeconds(ratelimit);
+			expect(delay).toBe(expectedDelay);
 		});
 
 	});
