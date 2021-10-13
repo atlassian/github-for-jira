@@ -1,0 +1,15 @@
+{
+	"allow": [{
+		"description": "allow me to access testPoco endpoint",
+		"paths": ["/testPoco"],
+		"methods": ["GET"],
+		"principals": {
+			"staff": {
+				"employees": ["atrigueiro"]
+			},
+			"asap": {
+				"issuers": ["micros/github-for-jira"]
+			}
+		}
+	}]
+}

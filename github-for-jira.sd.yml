@@ -45,6 +45,18 @@ links:
 
 cleanup: true
 
+serviceProxy:
+  enabled: true
+  ingress:
+    authentication:
+      enabled: true
+
+  plugins:
+    auth:
+      authorization:
+        plugins:
+          - type: poco
+
 lifecycleEvents:
   source: queue
   # Number of seconds between the termination message and when the instance is terminated.
