@@ -50,7 +50,7 @@ As part of the installation flow, you should be directed to configure your GitHu
 
 #### Selecting GitHub repositories
 If you originally gave the app access to "All repositories", and you've created a new repository on GitHub after installing the GitHub integration for Jira, your new repository will automatically work with the integration. If you installed the app on a subset of repositories, you will need to manually edit your repository selection by:
-1. Sign in into your Jira Cloud account
+1. Sign in to your Jira Cloud account
 2. From the top navigation bar in Jira, select **Apps** -> **Manage your apps** -> **GitHub for Jira** -> **Get started**
 3. Select **Configure** next to the relevant GitHub organization and add the new repository you want the app to integrate with.
 
@@ -93,7 +93,7 @@ This is useful if your installation is setup to send Development information to 
 
 ## Migrating from the DVCS connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
-1. Sign in into your Jira Cloud account
+1. Sign in to your Jira Cloud account
 2. From the left sidebar in Jira, select Jira Settings -> Applications -> DVCS accounts.
 3. Follow the prompt to upgrade your GitHub connection
 
