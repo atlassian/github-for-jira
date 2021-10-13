@@ -61,4 +61,6 @@ export interface EnvVars {
 	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
+	COMMIT_SHA: string;
+	COMMIT_DATE: string;
 }
