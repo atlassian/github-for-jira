@@ -46,11 +46,11 @@
             include issue keys in branch names, commit messages, and pull
             request titles, you will be able to:</p>
           <ul class="jiraConfiguration__content__list">
-            <li>Create branches and pull requests from your Jira project.</li>
+            <li>Create pull requests from your Jira project.</li>
             <li>View deployment information within your linked Jira issue.</li>
             <li>View deployment pipelines over a timeline in your insights.</li>
           </ul>
-          <p>Even if your organization is still backfilling data, you can stat linking
+          <p>Even if your organization is still backfilling data, you can start linking
             issue keys in your development work immediately.</p>
 
          {{!-- Backfill Status Info Modal --}}
@@ -228,31 +228,27 @@
                         <span class="jiraConfiguration__table__cell__settings__headerItem">Organization</span>
                       </h6>
                       <aui-section
-                        class="jiraConfiguration__table__cell__settings__links"
+                        class="jiraConfiguration__table__cell__settings__dropdownItems"
                       >
                         <a
-                          class="jiraConfiguration__table__cell__settings__link configure-connection-link"
+                          class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
                           href="{{html_url}}"
                           data-installation-link="{{html_url}}"
                           target="_blank"
                         >
                           Configure
                         </a>
-                        <a
-                          class="jiraConfiguration__table__cell__settings__link"
-                          href=""
-                          target="_blank"
-                        >
-                            <span
-                              class="sync-connection-link"
-                              data-jira-host="{{ ../host }}"
-                              data-installation-id="{{ id }}"
-                            >
-                              Restart backfill
-                            </span>
-                            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                        </a>
-                        <button class="jiraConfiguration__table__cell__settings__link delete-connection-link" data-installation-id="{{ id }}">Disconnect</button>
+                        <div class="jiraConfiguration__table__cell__settings__dropdownItem">
+                          <span
+                            class="sync-connection-link"
+                            data-jira-host="{{ ../host }}"
+                            data-installation-id="{{ id }}"
+                          >
+                            Restart backfill
+                          </span>
+                          <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                        </div>
+                        <button class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link" data-installation-id="{{ id }}">Disconnect</button>
                       </aui-section>
                     </aui-dropdown-menu>
                   </td>

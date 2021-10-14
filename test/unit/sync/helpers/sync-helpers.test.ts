@@ -4,6 +4,7 @@ import {
 	sortedRepos,
 	isNotFoundError,
 } from "../../../../src/sync/installation";
+import {getLogger} from "../../../../src/config/logger";
 
 describe("Sync helpers suite", () => {
 	const repoSyncState = require("../../../fixtures/repo-sync-state.json");
@@ -20,7 +21,8 @@ describe("Sync helpers suite", () => {
 				isNotFoundError(
 					mockNotFoundErrorOctokitRequest,
 					mockJob,
-					mockNextTask
+					mockNextTask,
+					getLogger('test')
 				)
 			).toBeTruthy();
 		});
@@ -31,7 +33,8 @@ describe("Sync helpers suite", () => {
 				isNotFoundError(
 					mockNotFoundErrorOctokitGraphql,
 					mockJob,
-					mockNextTask
+					mockNextTask,
+					getLogger('test')
 				)
 			).toBeTruthy();
 		});
@@ -41,7 +44,8 @@ describe("Sync helpers suite", () => {
 				isNotFoundError(
 					mockOtherOctokitRequestErrors,
 					mockJob,
-					mockNextTask
+					mockNextTask,
+					getLogger('test')
 				)
 			).toBeFalsy();
 
@@ -49,7 +53,8 @@ describe("Sync helpers suite", () => {
 				isNotFoundError(
 					mockOtherOctokitGraphqlErrors,
 					mockJob,
-					mockNextTask
+					mockNextTask,
+					getLogger('test')
 				)
 			).toBeFalsy();
 
@@ -57,7 +62,8 @@ describe("Sync helpers suite", () => {
 				isNotFoundError(
 					mockOtherError,
 					mockJob,
-					mockNextTask
+					mockNextTask,
+					getLogger('test')
 				)
 			).toBeFalsy();
 
@@ -65,7 +71,8 @@ describe("Sync helpers suite", () => {
 				isNotFoundError(
 					null,
 					mockJob,
-					mockNextTask
+					mockNextTask,
+					getLogger('test')
 				)
 			).toBeFalsy();
 
@@ -73,7 +80,8 @@ describe("Sync helpers suite", () => {
 				isNotFoundError(
 					"",
 					mockJob,
-					mockNextTask
+					mockNextTask,
+					getLogger('test')
 				)
 			).toBeFalsy();
 		});

@@ -18,6 +18,7 @@ export const probot = createProbot({
 	webhookProxy: undefined
 });
 
+// TODO: remove probot from here, just use express
 const App = async (app: Application): Promise<Application> => {
 	const router = app.route();
 	router.use("/", healthcheck);

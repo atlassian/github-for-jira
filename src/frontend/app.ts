@@ -21,7 +21,6 @@ import postJiraDisable from "../jira/disable";
 import postJiraEnable from "../jira/enable";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
-import { authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback } from "../jira/authenticate";
 import extractInstallationFromJiraCallback from "../jira/extract-installation-from-jira-callback";
 import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
@@ -32,7 +31,11 @@ import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
+import {
+	authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback,
+	verifyJiraContextJwtTokenMiddleware,
+	verifyJiraJwtTokenMiddleware
+} from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
 
@@ -181,8 +184,6 @@ export default (octokitApp: App): Express => {
 
 	app.use("/api", api);
 
-	app.get("/info", info);
-
 	// Add oauth routes
 	app.use("/", oauth.router);
 
@@ -196,6 +197,8 @@ export default (octokitApp: App): Express => {
 		}
 		next();
 	});
+
+	app.get("/info", info);
 
 	app.get("/maintenance", csrfProtection, getMaintenance);
 
@@ -263,7 +266,6 @@ export default (octokitApp: App): Express => {
 	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
 	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
 	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
-
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
 		return res.redirect(info.external_url);
@@ -302,22 +304,17 @@ export default (octokitApp: App): Express => {
 		};
 
 		const errorStatusCode = errorCodes[err.message] || 500;
-
 		const tags = [`status: ${errorStatusCode}`];
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		if (await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, false)) {
-			return res.status(errorStatusCode).render("github-error.hbs", {
-				title: "GitHub + Jira integration",
-				nonce: res.locals.nonce
-			});
-		} else {
-			return res.status(errorStatusCode).render("github-error-OLD.hbs", {
-				title: "GitHub + Jira integration",
-				nonce: res.locals.nonce
-			});
-		}
+		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, false, req.session.jiraHost);
+		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs"
+
+		return res.status(errorStatusCode).render(errorPageVersion, {
+			title: "GitHub + Jira integration",
+			nonce: res.locals.nonce
+		});
 	});
 
 	return app;

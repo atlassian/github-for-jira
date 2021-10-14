@@ -63,4 +63,9 @@ export interface EnvVars {
 	LAUNCHDARKLY_KEY?: string;
 	COMMIT_SHA: string;
 	COMMIT_DATE: string;
+
+	// Micros Lifecycle Env Vars
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?:string;
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_NAME?:string;
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION?:string;
 }
