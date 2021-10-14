@@ -94,7 +94,6 @@ export default async (
 		const configPageVersion = newConfigPgFlagIsOn ? "jira-configuration.hbs" : "jira-configuration-OLD.hbs";
 		const hasConnections = newConfigPgFlagIsOn ? connections.length > 0 : connections.length > 0 || failedConnections.length > 0;
 
-		req.log.info("CONNECTIONS: ", connections)
 		res.render(configPageVersion, {
 			host: jiraHost,
 			connections,

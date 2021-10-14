@@ -304,7 +304,7 @@
   color: #0747a6;
 }
 
-.jiraConfiguration__table__complete,
+.jiraConfiguration__table__finished,
 .syncStatusFinished {
   background-color: #e3fcef;
   color: #006644;
