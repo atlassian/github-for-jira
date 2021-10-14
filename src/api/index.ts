@@ -73,6 +73,13 @@ router.use(rateLimit({
 
 router.use(logMiddleware);
 
+router.get(
+	"/testPoco",
+	(_: Request, res: Response): void => {
+		res.sendStatus(200);
+	}
+);
+
 // All routes require a PAT to belong to someone on staff
 // This middleware will take the token and make a request to GraphQL
 // to see if it belongs to someone on staff
@@ -491,14 +498,6 @@ router.delete(
 		} catch (err) {
 			res.status(500).json(err);
 		}
-	}
-);
-
-router.get(
-	"/testPoco",
-	async (res: Response): Promise<void> => {
-		res.status(202).send("OK");
-		return;
 	}
 );
 

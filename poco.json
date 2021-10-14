@@ -1,7 +1,7 @@
 {
 	"allow": [{
 		"description": "allow me to access testPoco endpoint",
-		"paths": ["/testPoco"],
+		"paths": ["/api/testPoco"],
 		"methods": ["GET"],
 		"principals": {
 			"staff": {

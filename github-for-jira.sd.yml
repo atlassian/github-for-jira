@@ -53,6 +53,9 @@ serviceProxy:
 
   plugins:
     auth:
+      authentication:
+        plugins:
+          - type: asap
       authorization:
         plugins:
           - type: poco
