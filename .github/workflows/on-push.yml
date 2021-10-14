@@ -65,6 +65,7 @@ jobs:
           DEFAULT_REGION: us-west-1
           AWS_ACCESS_KEY_ID: localkey
           AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
         run: npm test
 
   docker:
