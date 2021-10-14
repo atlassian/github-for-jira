@@ -1,7 +1,7 @@
 import AWS, {AWSError} from "aws-sdk";
 import Logger from "bunyan"
 import {getLogger} from "../config/logger"
-import {DeleteMessageRequest, Message, ReceiveMessageResult} from "aws-sdk/clients/sqs";
+import {DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest} from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
 
 const logger = getLogger("sqs")
@@ -27,6 +27,21 @@ export type Context<MessagePayload> = {
 	log: Logger;
 }
 
+export type QueueSettings = {
+
+	queueName: string,
+
+	queueUrl: string,
+
+	queueRegion: string,
+
+	longPollingInterval: number
+
+	//TODO Add concurrency
+
+	//TODO Add batching
+}
+
 /**
  * Handler for the queue messages
  */
@@ -39,25 +54,33 @@ export class SqsQueue<MessagePayload> {
 	queueUrl: string;
 	queueName: string;
 	queueRegion: string;
+	settings: QueueSettings;
 
 	messageHandler: MessageHandler<MessagePayload>
 
 	sqs: AWS.SQS;
 	stopped: boolean
 
-	public constructor(queueName: string, queueUrl: string, queueRegion: string, messageHandler: MessageHandler<MessagePayload>) {
-		this.queueUrl = queueUrl;
-		this.queueName = queueName;
-		this.queueRegion = queueRegion;
-		this.sqs = new AWS.SQS({apiVersion: "2012-11-05", region: queueRegion});
+	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>) {
+		this.settings = settings;
+		this.queueUrl = settings.queueUrl;
+		this.queueName = settings.queueName;
+		this.queueRegion = settings.queueRegion;
+		this.sqs = new AWS.SQS({apiVersion: "2012-11-05", region: settings.queueRegion});
 		this.stopped = false
 		this.messageHandler = messageHandler;
 	}
 
-	public sendMessage(payload: MessagePayload, log?: Logger) {
-		const params = {
+	/**
+	 * Send message to the queue
+	 * @param payload Message payload
+	 * @param log Logger to be used to log message sending status
+	 */
+	public sendMessage(payload: MessagePayload, delay?: number, log?: Logger) {
+		const params : SendMessageRequest = {
 			MessageBody: JSON.stringify(payload),
-			QueueUrl: this.queueUrl
+			QueueUrl: this.queueUrl,
+			DelaySeconds: delay || 0
 		};
 		this.sqs.sendMessage(params, (err, data) => {
 			if (err) {
@@ -68,7 +91,23 @@ export class SqsQueue<MessagePayload> {
 		});
 	}
 
+	/**
+	 * Starts listening to the queue asynchronously
+	 */
+	public async listen() {
+		this.poll();
+	}
+
+	/**
+	 * Stops reading messages from the queue. When stopped it can't be resumed.
+	 */
+	public stop() {
+		this.stopped = true;
+	}
+
 	private deleteMessage(message: Message) {
+
+		logger.debug({message}, "deleting the message")
 
 		if(!message.ReceiptHandle) {
 			logger.error({ message }, "Unable to delete message, ReceiptHandle parameter is missing");
@@ -114,21 +153,18 @@ export class SqsQueue<MessagePayload> {
 				return;
 			}
 
-			await Promise.all(data.Messages.map(message => {
-				this.executeMessage(message)
-			})
-			)
+			logger.debug("Processing messages batch")
+			await Promise.all(data.Messages.map(async message => {
+				await this.executeMessage(message)
+			}))
+			logger.debug("Messages batch processed")
 		}
 	}
-
-	public async listen() {
-		this.poll();
-	}
-
 
 	private async poll() {
 
 		if(this.stopped) {
+			logger.info("Queue stopped finishing processing")
 			return
 		}
 
@@ -136,8 +172,7 @@ export class SqsQueue<MessagePayload> {
 		const params = {
 			QueueUrl: this.queueUrl,
 			MaxNumberOfMessages: 1,
-			VisibilityTimeout: 0,
-			WaitTimeSeconds: 1
+			WaitTimeSeconds: this.settings.longPollingInterval
 		};
 		//Get messages from the queue with long polling enabled
 		this.sqs.receiveMessage(params, async (err, data) => {
@@ -147,9 +182,5 @@ export class SqsQueue<MessagePayload> {
 				this.poll()
 			}
 		});
-	}
-
-	public stop() {
-		this.stopped = true;
 	}
 }
