@@ -26,10 +26,12 @@ export interface NextAction<JOB_ID> {
 	scheduleNextStep: boolean;
 
 	/**
-	 * Number of seconds to delay the next step of the job to not run into rate limits (or to wait
-	 * until a rate limit is refreshed).
+	 * If this is set, the next step should be delayed.
 	 */
-	delayInSeconds?: number;
+	delay?: {
+		seconds: number;
+		reason: "retry" | "rate-limit"
+	}
 }
 
 export class Backfiller<JOB_ID, JOB_STATE> {
@@ -65,7 +67,8 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 
 		// If the rate limit is hit, delay the next step of the job accordingly.
 		if (this.rateLimitStrategy.getDelayInSeconds(currentRateLimitState) > 0) {
-			return this.continueJobWithRateLimit(step, currentRateLimitState);
+			this.logger.info("RATE LIMIT HIT!");
+			return this.continueJobWithRateLimitDelay(step, currentRateLimitState);
 		}
 
 		// find the right processor and process the next step of the job
@@ -84,7 +87,7 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 
 		// in case of success, we want to schedule the job back on the queue
 		if (stepResult.success) {
-			return this.continueJobWithRateLimit(step, stepResult.rateLimit);
+			return this.continueJobWithRateLimitDelay(step, stepResult.rateLimit);
 		}
 
 		// in case of an error we want to throw an error to let the queueing system know that we want to retry
@@ -104,7 +107,7 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 	private skipStep(step: Step<JOB_ID>, jobState: JOB_STATE, stepResult: StepResult<JOB_STATE>): NextAction<JOB_ID> {
 		const updatedJobState = this.prioritizer.skip(step, jobState, stepResult.rateLimit);
 		this.jobStore.setJobState(step.jobId, updatedJobState);
-		return this.continueJobWithRateLimit(step, stepResult.rateLimit);
+		return this.continueJobWithRateLimitDelay(step, stepResult.rateLimit);
 	}
 
 	/**
@@ -116,14 +119,13 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 	private retryStep(step: Step<JOB_ID>, stepResult: StepResult<JOB_STATE>, jobState: JOB_STATE): NextAction<JOB_ID> {
 		const failedAttempts = this.jobStore.getFailedAttemptsCount(step.jobId) + 1;
 
-
 		const retry = this.retryStrategy.getRetry(failedAttempts);
 
 		if (retry.shouldRetry) {
 			// Retry the same step again, honoring the retry delay.
 			this.logger.warn(`Retrying step ${JSON.stringify(step)} due to error: ${stepResult.error?.message}`);
 			this.jobStore.setFailedAttemptsCount(step.jobId, failedAttempts);
-			return this.continueJobWithDelay(step, retry.retryAfterSeconds);
+			return this.continueJobWithRetryDelay(step, retry.retryAfterSeconds);
 		} else {
 			// Don't retry. Reset the failed attempts and skip the current step.
 			this.logger.warn(`Not retrying step ${JSON.stringify(step)} after ${failedAttempts} failed attempts. Error was: ${stepResult.error?.message}`);
@@ -131,19 +133,34 @@ export class Backfiller<JOB_ID, JOB_STATE> {
 			return this.skipStep(step, jobState, stepResult);
 		}
 
-		return this.continueJobWithRateLimit(step, stepResult.rateLimit);
+		return this.continueJobWithRateLimitDelay(step, stepResult.rateLimit);
 	}
 
-	private continueJobWithDelay(step: Step<JOB_ID>, delayInSeconds ?: number): NextAction<JOB_ID> {
+	private continueJobWithRetryDelay(step: Step<JOB_ID>, delayInSeconds?: number): NextAction<JOB_ID> {
 		return {
 			jobId: step.jobId,
 			scheduleNextStep: true,
-			delayInSeconds: delayInSeconds
+			delay: !delayInSeconds
+				? undefined
+				: {
+					seconds: delayInSeconds,
+					reason: "retry"
+				}
 		};
 	}
 
-	private continueJobWithRateLimit(step: Step<JOB_ID>, rateLimitState ?: RateLimitState): NextAction<JOB_ID> {
-		return this.continueJobWithDelay(step, this.rateLimitStrategy.getDelayInSeconds(rateLimitState));
+	private continueJobWithRateLimitDelay(step: Step<JOB_ID>, rateLimitState?: RateLimitState): NextAction<JOB_ID> {
+		const delayInSeconds = this.rateLimitStrategy.getDelayInSeconds(rateLimitState)
+		return {
+			jobId: step.jobId,
+			scheduleNextStep: true,
+			delay: !rateLimitState || delayInSeconds == 0
+				? undefined
+				: {
+					seconds: delayInSeconds,
+					reason: "rate-limit"
+				}
+		};
 	}
 
 	private stopJob(step: Step<JOB_ID>): NextAction<JOB_ID> {

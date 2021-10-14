@@ -41,12 +41,17 @@ describe("Backfiller", () => {
 
 	class MyProcessor implements StepProcessor<MyJobState> {
 
+		private readonly failingCursors: number[] = [];
 		itemsProcessed: number[] = [];
+
+		constructor(failingCursors: number[]) {
+			this.failingCursors = failingCursors;
+		}
 
 		process(jobState: MyJobState, rateLimitState: RateLimitState): StepResult<MyJobState> {
 			rateLimitState.budgetLeft--;
 
-			if (jobState.cursor == 7) {
+			if (this.failingCursors.includes(jobState.cursor)) {
 				return {
 					success: false,
 					rateLimit: rateLimitState,
@@ -122,7 +127,7 @@ describe("Backfiller", () => {
 	}
 
 	const jobStore = new MyJobStore();
-	const processor = new MyProcessor();
+	const processor = new MyProcessor([3, 7]);
 	const prioritizer = new MyPrioritizer(processor);
 
 	const backfiller = new Backfiller<MyJobId, MyJobState>(
@@ -137,17 +142,30 @@ describe("Backfiller", () => {
 
 		let nextAction = backfiller.processStep({ jobId: "job1" });
 		let i = 1;
+		let retryCount = 0;
+		let ratelimitedCount = 0;
 
+		// In a real implementation, this would not be called in a simple loop, but instead triggered by an async queue mechanism.
 		while (nextAction.scheduleNextStep) {
 
 			logger.info(`STATE AFTER STEP ${i}: ${JSON.stringify(DATABASE, null, 2)}`)
-			logger.info(`now: ${now}`);
 
 			// travel into the future to simulate waiting time and refresh the rate limit
-			if (nextAction.delayInSeconds) {
-				now = new Date(now.getTime() + nextAction.delayInSeconds * 1000);
-				DATABASE.rateLimitState.refreshDate = new Date(DATABASE.rateLimitState.refreshDate.getTime() + 60 * 1000);
-				DATABASE.rateLimitState.budgetLeft = 5;
+			if (nextAction.delay) {
+				logger.info(`DELAYING BY ${nextAction.delay.seconds} seconds due to ${nextAction.delay.reason}!`);
+				now = new Date(now.getTime() + nextAction.delay.seconds * 1000);
+
+				if(nextAction.delay.reason == "retry"){
+					retryCount++;
+				}
+
+				// refresh the rate limit
+				if (nextAction.delay.reason == "rate-limit") {
+					ratelimitedCount++;
+					logger.info("REFRESHING RATE LIMIT");
+					DATABASE.rateLimitState.refreshDate = new Date(now.getTime() + 60 * 1000);
+					DATABASE.rateLimitState.budgetLeft = 5;
+				}
 			}
 
 			nextAction = backfiller.processStep({ jobId: "job1" });
@@ -155,10 +173,12 @@ describe("Backfiller", () => {
 		}
 
 		expect(DATABASE.jobState.cursor).toBe(10);
-		expect(processor.itemsProcessed).toHaveLength(9);
-		expect(processor.itemsProcessed).toEqual(expect.arrayContaining([1,2,3,4,5,6,8,9]));
+		expect(processor.itemsProcessed).toHaveLength(8);
+		expect(processor.itemsProcessed).toEqual(expect.arrayContaining([1, 2, 4, 5, 6, 8, 9]));
+		expect(processor.itemsProcessed).not.toContain(3) // item 3 was skipped due to failed retries
 		expect(processor.itemsProcessed).not.toContain(7) // item 7 was skipped due to failed retries
-
+		expect(retryCount).toBe(6) // 2 * 3 retries
+		expect(ratelimitedCount).toBe(3) // the rate limit budget should have run out 3 times
 
 	});
 
