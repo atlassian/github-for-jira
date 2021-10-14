@@ -206,8 +206,9 @@ export class BackoffRetryStrategy implements RetryStrategy {
 	private readonly retries: number;
 	private readonly initialDelayInSeconds: number;
 	private readonly backoffMultiplier: number;
+	private readonly maxDelayInSeconds = Number.MAX_SAFE_INTEGER;
 
-	constructor(retries: number, initialDelayInSeconds: number, backoffMultiplier: number) {
+	constructor(retries: number, initialDelayInSeconds: number, backoffMultiplier: number, maxDelayInSeconds?: number) {
 		if (retries < 0) {
 			throw new Error("retries must be greater than 0");
 		}
@@ -220,6 +221,14 @@ export class BackoffRetryStrategy implements RetryStrategy {
 			throw new Error("initialDelayInSeconds must be greater than 0");
 		}
 
+		if (maxDelayInSeconds && maxDelayInSeconds < 0) {
+			throw new Error("maxDelayInSeconds must be greater than 0");
+		}
+
+		if (maxDelayInSeconds) {
+			this.maxDelayInSeconds = maxDelayInSeconds;
+		}
+
 		this.retries = retries;
 		this.backoffMultiplier = backoffMultiplier;
 		this.initialDelayInSeconds = initialDelayInSeconds;
@@ -228,7 +237,7 @@ export class BackoffRetryStrategy implements RetryStrategy {
 	getRetry(failedAttempts: number): Retry {
 		return {
 			shouldRetry: failedAttempts <= this.retries,
-			retryAfterSeconds: this.initialDelayInSeconds * Math.pow(this.backoffMultiplier, failedAttempts)
+			retryAfterSeconds: Math.min(this.maxDelayInSeconds, this.initialDelayInSeconds * Math.pow(this.backoffMultiplier, failedAttempts))
 		};
 	}
 

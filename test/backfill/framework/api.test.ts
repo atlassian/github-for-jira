@@ -28,6 +28,12 @@ describe("Backfilling API", () => {
 			expect(() => new BackoffRetryStrategy(-1, 2, -1)).toThrow();
 		});
 
+		it("honors maxDelay", async () => {
+			const backoffStrategy = new BackoffRetryStrategy(10, 2, 2, 10);
+			expect(backoffStrategy.getRetry(5).shouldRetry).toBe(true);
+			expect(backoffStrategy.getRetry(5).retryAfterSeconds).toBe(10);
+		});
+
 
 	});
 
