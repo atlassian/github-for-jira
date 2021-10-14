@@ -38,9 +38,9 @@ jobs:
       localstack:
         image: localstack/localstack:0.8.7
         env:
-          SERVICES: sqs:9602
+          SERVICES: "sqs:9602"
         ports:
-          - 9602:9602
+          - "9602:9602"
 
     steps:
       - uses: actions/checkout@v1

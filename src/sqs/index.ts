@@ -29,13 +29,13 @@ export type Context<MessagePayload> = {
 
 export type QueueSettings = {
 
-	queueName: string,
+	readonly queueName: string,
 
-	queueUrl: string,
+	readonly queueUrl: string,
 
-	queueRegion: string,
+	readonly queueRegion: string,
 
-	longPollingInterval: number
+	readonly longPollingInterval: number
 
 	//TODO Add concurrency
 
@@ -51,15 +51,14 @@ export interface MessageHandler<MessagePayload> {
 
 
 export class SqsQueue<MessagePayload> {
-	queueUrl: string;
-	queueName: string;
-	queueRegion: string;
-	settings: QueueSettings;
+	readonly queueUrl: string;
+	readonly queueName: string;
+	readonly queueRegion: string;
+	readonly settings: QueueSettings;
+	readonly messageHandler: MessageHandler<MessagePayload>
+	readonly sqs: AWS.SQS;
 
-	messageHandler: MessageHandler<MessagePayload>
-
-	sqs: AWS.SQS;
-	stopped: boolean
+	stopped: boolean;
 
 	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>) {
 		this.settings = settings;
@@ -95,7 +94,25 @@ export class SqsQueue<MessagePayload> {
 	 * Starts listening to the queue asynchronously
 	 */
 	public async listen() {
-		this.poll();
+		if(this.stopped) {
+			logger.info({queue: this.settings}, "Queue has been stopped. Not processing further messages.");
+			return
+		}
+
+		// Setup the receiveMessage parameters
+		const params = {
+			QueueUrl: this.queueUrl,
+			MaxNumberOfMessages: 1,
+			WaitTimeSeconds: this.settings.longPollingInterval
+		};
+		//Get messages from the queue with long polling enabled
+		this.sqs.receiveMessage(params, async (err, data) => {
+			try {
+				await this.handleSqsResponse(err, data)
+			} finally {
+				this.listen()
+			}
+		});
 	}
 
 	/**
@@ -120,7 +137,7 @@ export class SqsQueue<MessagePayload> {
 		};
 		this.sqs.deleteMessage(deleteParams, (err, data) => {
 			if (err) {
-				logger.error({err, data}, "Error deleting message from the queue");
+				logger.warn({err, data}, "Error deleting message from the queue");
 			} else {
 				logger.debug({data}, "Successfully deleted message from queue");
 			}
@@ -159,28 +176,5 @@ export class SqsQueue<MessagePayload> {
 			}))
 			logger.debug("Messages batch processed")
 		}
-	}
-
-	private async poll() {
-
-		if(this.stopped) {
-			logger.info("Queue stopped finishing processing")
-			return
-		}
-
-		// Setup the receiveMessage parameters
-		const params = {
-			QueueUrl: this.queueUrl,
-			MaxNumberOfMessages: 1,
-			WaitTimeSeconds: this.settings.longPollingInterval
-		};
-		//Get messages from the queue with long polling enabled
-		this.sqs.receiveMessage(params, async (err, data) => {
-			try {
-				await this.handleSqsResponse(err, data)
-			} finally {
-				this.poll()
-			}
-		});
 	}
 }
