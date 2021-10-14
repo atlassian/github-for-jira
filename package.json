@@ -25,7 +25,7 @@
     "lint": "run-p lint:*",
     "lint:ts": "eslint . --ext .ts,.tsx",
     "lint:yaml": "yamllint github-for-jira.sd.yml",
-    "pretest": "run-p db:test sqs:create:test",
+    "pretest": "run-s db:test sqs:create:test",
     "test": "jest --runInBand --forceExit --coverage",
     "test:watch": "jest --runInBand --watchAll",
     "db": "run-s db:create db:migrate",
