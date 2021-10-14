@@ -1,7 +1,7 @@
 import AWS, {AWSError} from "aws-sdk";
 import Logger from "bunyan"
 import {getLogger} from "../config/logger"
-import {DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest} from "aws-sdk/clients/sqs";
+import SQS, {DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest} from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
 
 const logger = getLogger("sqs")
@@ -35,12 +35,16 @@ export type QueueSettings = {
 
 	readonly queueRegion: string,
 
-	readonly longPollingInterval: number
-
-	//TODO Add concurrency
+	readonly longPollingInterval?: number
 
 	//TODO Add batching
+
+	//TODO Add error handling
+
+	//TODO Add message processing timeouts
 }
+
+const DEFAULT_LONG_POLLING_INTERVAL = 4
 
 /**
  * Handler for the queue messages
@@ -56,7 +60,7 @@ export class SqsQueue<MessagePayload> {
 	readonly queueRegion: string;
 	readonly settings: QueueSettings;
 	readonly messageHandler: MessageHandler<MessagePayload>
-	readonly sqs: AWS.SQS;
+	readonly sqs: SQS;
 
 	stopped: boolean;
 
@@ -103,7 +107,7 @@ export class SqsQueue<MessagePayload> {
 		const params = {
 			QueueUrl: this.queueUrl,
 			MaxNumberOfMessages: 1,
-			WaitTimeSeconds: this.settings.longPollingInterval
+			WaitTimeSeconds: this.settings.longPollingInterval !== undefined ? this.settings.longPollingInterval : DEFAULT_LONG_POLLING_INTERVAL
 		};
 		//Get messages from the queue with long polling enabled
 		this.sqs.receiveMessage(params, async (err, data) => {
@@ -157,6 +161,7 @@ export class SqsQueue<MessagePayload> {
 			await this.messageHandler.handle(context)
 			this.deleteMessage(message)
 		} catch (err) {
+			//TODO Add error handling
 			log.error(err, "error executing sqs message")
 		}
 	}
