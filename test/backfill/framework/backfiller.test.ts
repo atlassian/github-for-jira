@@ -10,9 +10,9 @@ import {
 	StepPrioritizer,
 	StepProcessor,
 	StepResult
-} from "../../src/backfill/api";
-import { Backfiller } from "../../src/backfill/backfiller";
-import { getLogger } from "../../src/config/logger";
+} from "../../../src/backfill/framework/api";
+import { Backfiller } from "../../../src/backfill/framework/backfiller";
+import { getLogger } from "../../../src/config/logger";
 
 const logger = getLogger("backfiller.test.ts")
 

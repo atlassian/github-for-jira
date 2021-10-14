@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable jest/no-standalone-expect */
 
-import { BackoffRetryStrategy, CappedDelayRateLimitStrategy, RateLimitState } from "../../src/backfill/api";
+import { BackoffRetryStrategy, CappedDelayRateLimitStrategy, RateLimitState } from "../../../src/backfill/framework/api";
 import each from "jest-each";
 
 describe("Backfilling API", () => {
