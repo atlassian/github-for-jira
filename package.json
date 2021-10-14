@@ -42,7 +42,7 @@
     "prepare": "husky install",
     "precommit": "run-p lint build",
 		"sqs": "run-s sqs:create:test",
-    "sqs:create:test": "aws --endpoint-url=http://127.0.0.1:9602 sqs create-queue --queue-name test"
+    "sqs:create:test": "aws --debug --endpoint-url=http://127.0.0.1:9602 sqs create-queue --queue-name test"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
