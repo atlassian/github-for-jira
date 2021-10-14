@@ -18,7 +18,7 @@ describe("/info", () => {
 			.expect(200)
 			.then((response) => {
 				expect(response.body).toEqual({
-					id: "34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8",
+					commit: "https://github.com/atlassian/github-for-jira/commit/34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8",
 					date: "Wed Oct 13 16:32:22 2021 +1100",
 				});
 			});
