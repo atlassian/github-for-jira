@@ -3,6 +3,8 @@ import { Job } from "bull";
 import _ from "lodash";
 import logger from "../config/logger";
 import { queues } from "../worker/queues";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import RepoSyncState from "./reposyncstate";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -11,7 +13,7 @@ export enum SyncStatus {
 	FAILED = "FAILED",
 }
 
-export interface RepoSyncState {
+export interface RepoSyncStateObject {
 	installationId?: number;
 	jiraHost?: string;
 	numberOfSyncedRepos?: number;
@@ -52,15 +54,20 @@ export interface Repository {
 }
 
 export default class Subscription extends Sequelize.Model {
+	id: number;
 	gitHubInstallationId: number;
 	jiraHost: string;
 	selectedRepositories?: number[];
-	repoSyncState?: RepoSyncState;
+	repoSyncState?: RepoSyncStateObject;
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
 	jiraClientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
+	numberOfSyncedRepos?: number;
+
+	// New repo sync state table
+	// repoSyncStates: RepoSyncState[];
 
 	static async getAllForHost(host: string): Promise<Subscription[]> {
 		return Subscription.findAll({
@@ -108,7 +115,7 @@ export default class Subscription extends Sequelize.Model {
 
 		if (inactiveForSeconds) {
 
-			const xSecondsAgo = new Date(new Date().getTime() - (inactiveForSeconds * 1000))
+			const xSecondsAgo = new Date(new Date().getTime() - (inactiveForSeconds * 1000));
 
 			andFilter.push({
 				updatedAt: {
@@ -225,29 +232,40 @@ export default class Subscription extends Sequelize.Model {
 
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
 	// https://github.com/sequelize/sequelize/issues/4387
-	async updateSyncState(updatedState: RepoSyncState): Promise<Subscription> {
+	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
 		this.repoSyncState = _.merge(this.repoSyncState, updatedState);
 		this.changed("repoSyncState", true);
-		return this.save();
+		await this.save();
+
+		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, true)) {
+			await RepoSyncState.updateFromJson(this, this.repoSyncState);
+		}
+
+		return this;
 	}
 
-	async updateNumberOfSyncedRepos(cnt: number): Promise<Subscription> {
+	async updateNumberOfSyncedRepos(value: number): Promise<Subscription> {
 		if (!this.repoSyncState) {
 			this.repoSyncState = {};
 			this.changed("repoSyncState", true);
 			await this.save();
 		}
 
-		this.repoSyncState.numberOfSyncedRepos = cnt;
+		this.repoSyncState.numberOfSyncedRepos = value;
 		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id`,
+			"UPDATE \"Subscriptions\" SET \"updatedAt\" = NOW(), \"repoSyncState\" = jsonb_set(\"repoSyncState\", '{numberOfSyncedRepos}', value, true) WHERE id = :id",
 			{
 				replacements: {
-					cnt: cnt,
+					cnt: value,
 					id: (this as any).id
 				}
 			}
 		);
+
+		if(await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, true)) {
+			this.numberOfSyncedRepos = value;
+			await this.save();
+		}
 
 		return this;
 	}
@@ -262,7 +280,7 @@ export default class Subscription extends Sequelize.Model {
 		});
 
 		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", :path, :value, true) WHERE id = :id`,
+			"UPDATE \"Subscriptions\" SET \"updatedAt\" = NOW(), \"repoSyncState\" = jsonb_set(\"repoSyncState\", :path, :value, true) WHERE id = :id",
 			{
 				replacements: {
 					path: `{repos,${repositoryId},${key}}`,
@@ -271,6 +289,10 @@ export default class Subscription extends Sequelize.Model {
 				}
 			}
 		);
+
+		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, true)) {
+			await RepoSyncState.updateRepoForSubscription(this, this.repoSyncState.repos?.[repositoryId]);
+		}
 		return this;
 	}
 

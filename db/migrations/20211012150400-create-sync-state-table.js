@@ -2,8 +2,8 @@
 
 const tableName = "RepoSyncState";
 module.exports = {
-	up: (queryInterface, Sequelize) => {
-		return queryInterface.createTable(tableName, {
+	up: async (queryInterface, Sequelize) => {
+		await queryInterface.createTable(tableName, {
 			id: {
 				type: Sequelize.INTEGER,
 				allowNull: false,
@@ -38,56 +38,29 @@ module.exports = {
 				type: Sequelize.STRING,
 				allowNull: false
 			},
-			commitCount: {
-				type: Sequelize.INTEGER
-			},
-			branchCount: {
-				type: Sequelize.INTEGER
-			},
-			issueCount: {
-				type: Sequelize.INTEGER
-			},
-			pullCount: {
-				type: Sequelize.INTEGER
-			},
-			buildCount: {
-				type: Sequelize.INTEGER
-			},
-			deploymentCount: {
-				type: Sequelize.INTEGER
-			},
-			watchCount: {
-				type: Sequelize.INTEGER
-			},
-			starCount: {
-				type: Sequelize.INTEGER
-			},
-			forkCount: {
-				type: Sequelize.INTEGER
-			},
-			popularity: {
+			priority: {
 				type: Sequelize.INTEGER
 			},
 			status: {
-				type: Sequelize.STRING
+				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
 			},
 			branchStatus: {
-				type: Sequelize.STRING
+				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
 			},
 			commitStatus: {
-				type: Sequelize.STRING
+				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
 			},
 			issueStatus: {
-				type: Sequelize.STRING
+				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
 			},
 			pullStatus: {
-				type: Sequelize.STRING
+				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
 			},
 			buildStatus: {
-				type: Sequelize.STRING
+				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
 			},
 			deploymentStatus: {
-				type: Sequelize.STRING
+				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
 			},
 			branchCursor: {
 				type: Sequelize.STRING
@@ -110,26 +83,39 @@ module.exports = {
 			forked: {
 				type: Sequelize.BOOLEAN
 			},
-			archived: {
-				type: Sequelize.BOOLEAN
-			},
-			disabled: {
-				type: Sequelize.BOOLEAN
-			},
-			pushedAt: {
+			repoPushedAt: {
 				type: Sequelize.DATE
 			},
-			createdAt: {
-				allowNull: false,
+			repoCreatedAt: {
+				type: Sequelize.DATE
+			},
+			repoUpdatedAt: {
+				type: Sequelize.DATE
+			},
+			syncUpdatedAt: {
+				type: Sequelize.DATE
+			},
+			syncCompletedAt: {
 				type: Sequelize.DATE
 			},
 			updatedAt: {
+				type: Sequelize.DATE,
 				allowNull: false,
-				type: Sequelize.DATE
+			},
+			createdAt: {
+				type: Sequelize.DATE,
+				allowNull: false,
 			}
 		});
 	},
-	down: (queryInterface, Sequelize) => {
-		return queryInterface.dropTable(tableName);
+	down: async (queryInterface, Sequelize) => {
+		await queryInterface.dropTable(tableName);
+		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_status";`);
+		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_branchStatus";`);
+		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_commitStatus";`);
+		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_issueStatus";`);
+		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_pullStatus";`);
+		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_buildStatus";`);
+		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_deploymentStatus";`);
 	}
 };
