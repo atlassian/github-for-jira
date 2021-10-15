@@ -8,6 +8,7 @@ interface JiraTopleveldomain {
 	value: string;
 	selected: boolean;
 }
+
 interface SetupPagePayload {
 	error: string;
 	domain: string;
