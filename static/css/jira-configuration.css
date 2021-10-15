@@ -284,7 +284,7 @@
 .jiraConfiguration__table__syncStatus,
 .syncStatusPending,
 .syncStatusInProgress,
-.syncStatusComplete,
+.syncStatusFinished,
 .syncStatusFailed {
   border-radius: 5px;
   font-size: 1rem;
@@ -304,8 +304,8 @@
   color: #0747a6;
 }
 
-.jiraConfiguration__table__complete,
-.syncStatusComplete {
+.jiraConfiguration__table__finished,
+.syncStatusFinished {
   background-color: #e3fcef;
   color: #006644;
 }
