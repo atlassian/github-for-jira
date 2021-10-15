@@ -72,12 +72,15 @@ export default class RepoSyncState extends Sequelize.Model {
 			}
 		});
 
-		return await Promise.all(
-			repoIds.map(id => {
-				const repo = json.repos?.[id];
-				const model = states.find(s => s.repoId === Number(id)) || RepoSyncState.buildFromRepoJson(subscription, repo);
-				return model?.setFromRepoJson(repo).save();
-			})
+
+		return RepoSyncState.sequelize?.transaction(async (transaction) =>
+			Promise.all(
+				repoIds.map(id => {
+					const repo = json.repos?.[id];
+					const model = states.find(s => s.repoId === Number(id)) || RepoSyncState.buildFromRepoJson(subscription, repo);
+					return model?.setFromRepoJson(repo).save({ transaction });
+				})
+			)
 		);
 	}
 

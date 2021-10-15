@@ -1,6 +1,7 @@
 "use strict";
 
 const tableName = "RepoSyncState";
+const indexName = `${tableName}_subscriptionId_repoId_idx`
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
 		await queryInterface.createTable(tableName, {
@@ -14,10 +15,7 @@ module.exports = {
 				type: Sequelize.INTEGER,
 				allowNull: false,
 				references: {
-					model: {
-						tableName: 'Subscriptions',
-						schema: 'public'
-					},
+					model: 'Subscription',
 					key: 'id'
 				}
 			},
@@ -45,25 +43,25 @@ module.exports = {
 				type: Sequelize.INTEGER
 			},
 			status: {
-				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
+				type: Sequelize.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED")
 			},
 			branchStatus: {
-				type: Sequelize.ENUM('"pending", "complete", "failed"'),
+				type: Sequelize.ENUM("pending", "complete", "failed")
 			},
 			commitStatus: {
-				type: Sequelize.ENUM('"pending", "complete", "failed"'),
+				type: Sequelize.ENUM("pending", "complete", "failed")
 			},
 			issueStatus: {
-				type: Sequelize.ENUM('"pending", "complete", "failed"'),
+				type: Sequelize.ENUM("pending", "complete", "failed")
 			},
 			pullStatus: {
-				type: Sequelize.ENUM('"pending", "complete", "failed"'),
+				type: Sequelize.ENUM("pending", "complete", "failed")
 			},
 			buildStatus: {
-				type: Sequelize.ENUM('"pending", "complete", "failed"'),
+				type: Sequelize.ENUM("pending", "complete", "failed")
 			},
 			deploymentStatus: {
-				type: Sequelize.ENUM('"pending", "complete", "failed"'),
+				type: Sequelize.ENUM("pending", "complete", "failed")
 			},
 			branchCursor: {
 				type: Sequelize.STRING
@@ -103,15 +101,21 @@ module.exports = {
 			},
 			updatedAt: {
 				type: Sequelize.DATE,
-				allowNull: false,
+				allowNull: false
 			},
 			createdAt: {
 				type: Sequelize.DATE,
-				allowNull: false,
+				allowNull: false
 			}
 		});
+
+		await queryInterface.addIndex(tableName, {
+			fields: ['subscriptionId', 'repoId'],
+			name: indexName
+		})
 	},
 	down: async (queryInterface, Sequelize) => {
+		await queryInterface.removeIndex(tableName, indexName);
 		await queryInterface.dropTable(tableName);
 		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_status";`);
 		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_branchStatus";`);

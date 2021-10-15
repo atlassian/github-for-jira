@@ -253,7 +253,7 @@ export default class Subscription extends Sequelize.Model {
 
 		this.repoSyncState.numberOfSyncedRepos = value;
 		await this.sequelize.query(
-			"UPDATE \"Subscriptions\" SET \"updatedAt\" = NOW(), \"repoSyncState\" = jsonb_set(\"repoSyncState\", '{numberOfSyncedRepos}', value, true) WHERE id = :id",
+			"UPDATE \"Subscriptions\" SET \"updatedAt\" = NOW(), \"repoSyncState\" = jsonb_set(\"repoSyncState\", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id",
 			{
 				replacements: {
 					cnt: value,

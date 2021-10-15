@@ -13,6 +13,10 @@ if (!process.env.STORAGE_SECRET) {
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
 InstallationModel.init({
+	id: {
+		type: DataTypes.INTEGER,
+		primaryKey: true
+	},
 	jiraHost: DataTypes.STRING,
 	secrets: encrypted.vault("secrets"),
 	sharedSecret: encrypted.field("sharedSecret", {
@@ -27,7 +31,10 @@ InstallationModel.init({
 }, { sequelize });
 
 SubscriptionModel.init({
-	id: DataTypes.INTEGER,
+	id: {
+		type: DataTypes.INTEGER,
+		primaryKey: true
+	},
 	gitHubInstallationId: DataTypes.INTEGER,
 	jiraHost: DataTypes.STRING,
 	selectedRepositories: DataTypes.ARRAY(DataTypes.INTEGER),
@@ -38,8 +45,17 @@ SubscriptionModel.init({
 }, { sequelize });
 
 RepoSyncStateModel.init({
-	id: Sequelize.INTEGER,
-	subscriptionId: Sequelize.INTEGER,
+	id: {
+		type: DataTypes.INTEGER,
+		primaryKey: true
+	},
+	subscriptionId: {
+		type: DataTypes.INTEGER,
+		references: {
+			model: "Subscription",
+			key: "id"
+		}
+	},
 	repoId: Sequelize.INTEGER,
 	repoName: Sequelize.STRING,
 	repoOwner: Sequelize.STRING,
@@ -56,12 +72,12 @@ RepoSyncStateModel.init({
 	forkCount: Sequelize.INTEGER,
 	popularity: Sequelize.INTEGER,
 	status: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
-	branchStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
-	commitStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
-	issueStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
-	pullStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
-	buildStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
-	deploymentStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
+	branchStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	commitStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	issueStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	pullStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	buildStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	deploymentStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	branchCursor: Sequelize.STRING,
 	commitCursor: Sequelize.STRING,
 	issueCursor: Sequelize.STRING,
@@ -73,10 +89,6 @@ RepoSyncStateModel.init({
 	createdAt: Sequelize.DATE,
 	updatedAt: Sequelize.DATE
 }, { sequelize });
-
-// Associations
-// TODO: update sequelize to V6, use sequelize-typescript library
-// SubscriptionModel.hasMany(RepoSyncStateModel, {as: "repoSyncStates"});
 
 export const Installation = InstallationModel;
 export const Subscription = SubscriptionModel;
