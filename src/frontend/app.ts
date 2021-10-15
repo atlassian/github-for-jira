@@ -10,7 +10,6 @@ import getGitHubSetup from "./get-github-setup";
 import postGitHubSetup from "./post-github-setup";
 import getGitHubConfiguration from "./get-github-configuration";
 import postGitHubConfiguration from "./post-github-configuration";
-import listGitHubInstallations from "./list-github-installations";
 import getGitHubSubscriptions from "./get-github-subscriptions";
 import deleteGitHubSubscription from "./delete-github-subscription";
 import getJiraConfiguration from "./get-jira-configuration";
@@ -226,13 +225,6 @@ export default (octokitApp: App): Express => {
 		"/github/configuration",
 		csrfProtection,
 		postGitHubConfiguration
-	);
-
-	app.get(
-		"/github/installations",
-		csrfProtection,
-		oauth.checkGithubAuth,
-		listGitHubInstallations
 	);
 
 	app.get(
