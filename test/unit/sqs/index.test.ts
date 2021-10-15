@@ -39,7 +39,8 @@ describe("SqsQueue tests", () => {
 	})
 
 	afterEach(() => {
-		queue.stop();
+		queue.stop();	
+		delay(100)
 	})
 
 	test("Message gets received", (done:DoneCallback) => {
