@@ -20,7 +20,7 @@ describe("/info", () => {
 			.then((response) => {
 				expect(response.body).toEqual({
 					branch: "arc-384-info",
-					branchUr: "https://github.com/atlassian/github-for-jira/tree/arc-384-info",
+					branchUrl: "https://github.com/atlassian/github-for-jira/tree/arc-384-info",
 					commit: "34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8",
 					commitDate: "Wed Oct 13 16:32:22 2021 +1100",
 					commitUrl: "https://github.com/atlassian/github-for-jira/commit/34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8"
