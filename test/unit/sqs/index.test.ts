@@ -35,7 +35,7 @@ describe("SqsQueue tests", () => {
 
 	beforeEach(() => {
 		queue = createSqsQueue()
-		queue.listen();
+		queue.start();
 	})
 
 	afterEach(() => {
@@ -53,6 +53,25 @@ describe("SqsQueue tests", () => {
 		queue.sendMessage(testPayload);
 	});
 
+
+	test("Queue is restartable", (done:DoneCallback) => {
+
+		const testPayload = generatePayload();
+
+		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
+			expect(context.payload).toStrictEqual(testPayload);
+			done();
+		})
+
+		queue.stop();
+
+		//delaying to make sure all asynchronous invocations inside the queue will be finished and it will stop
+		delay(10)
+
+		queue.start();
+
+		queue.sendMessage(testPayload);
+	});
 
 	test("Message received with delay", (done:DoneCallback) => {
 

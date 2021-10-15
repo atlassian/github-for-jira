@@ -10,7 +10,7 @@
   "main": "src/main",
   "scripts": {
     "prestart": "run-p env clean db:dev",
-    "init": "run-s db sqs",
+    "init": "run-p db sqs",
     "start": "run-p start:main start:worker",
     "start:main": "tsnd --watch=.env,db/config.json --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
     "start:worker": "tsnd --watch=.env,db/config.json --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/worker.ts",
@@ -25,7 +25,7 @@
     "lint": "run-p lint:*",
     "lint:ts": "eslint . --ext .ts,.tsx",
     "lint:yaml": "yamllint github-for-jira.sd.yml",
-    "pretest": "run-s db:test sqs:create:test",
+    "pretest": "run-p db:test sqs:create:test",
     "test": "jest --runInBand --forceExit --coverage",
     "test:watch": "jest --runInBand --watchAll",
     "db": "run-s db:create db:migrate",
