@@ -14,8 +14,11 @@ module.exports = {
 				type: Sequelize.INTEGER,
 				allowNull: false,
 				references: {
-					model: "Subscriptions",
-					key: "id"
+					model: {
+						tableName: 'Subscriptions',
+						schema: 'public'
+					},
+					key: 'id'
 				}
 			},
 			repoId: {
@@ -45,22 +48,22 @@ module.exports = {
 				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
 			},
 			branchStatus: {
-				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
+				type: Sequelize.ENUM('"pending", "complete", "failed"'),
 			},
 			commitStatus: {
-				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
+				type: Sequelize.ENUM('"pending", "complete", "failed"'),
 			},
 			issueStatus: {
-				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
+				type: Sequelize.ENUM('"pending", "complete", "failed"'),
 			},
 			pullStatus: {
-				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
+				type: Sequelize.ENUM('"pending", "complete", "failed"'),
 			},
 			buildStatus: {
-				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
+				type: Sequelize.ENUM('"pending", "complete", "failed"'),
 			},
 			deploymentStatus: {
-				type: Sequelize.ENUM('PENDING', 'COMPLETE', 'ACTIVE', 'FAILED'),
+				type: Sequelize.ENUM('"pending", "complete", "failed"'),
 			},
 			branchCursor: {
 				type: Sequelize.STRING
