@@ -127,8 +127,7 @@ describe("SqsQueue tests", () => {
 	});
 
 
-	//TODO Add tests for parallel processing when it will be enabled.
-	//Set concurrency level to 1 when concurrency will be added
+	//TODO Add tests for parallel processing when it will be implemented, set concurrency level to 1 for this test
 	test("Messages are not processed in parallel", async (done:DoneCallback) => {
 
 		const testPayload = generatePayload();
@@ -152,7 +151,7 @@ describe("SqsQueue tests", () => {
 				done(err)
 			}
 		})
-		queue.sendMessage(testPayload);
+		await queue.sendMessage(testPayload);
 		await delay(100)
 		queue.sendMessage(testPayload);
 	});
