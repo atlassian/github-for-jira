@@ -4,6 +4,18 @@ import { Request, Response } from "express";
 import { getJiraMarketplaceUrl } from "../util/getUrl";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
+interface JiraTopleveldomain {
+	value: string;
+	selected: boolean;
+}
+interface SetupPagePayload {
+	error: string;
+	domain: string;
+	nonce: string;
+	csrfToken: string;
+	jiraTopleveldomainOptions?: JiraTopleveldomain[];
+}
+
 const renderGitHubSetupPageVersion = async (
 	domain: string,
 	topLevelDomain: string,
@@ -13,31 +25,25 @@ const renderGitHubSetupPageVersion = async (
 ) => {
 	const newGithubSetupPgFlagIsOn = await booleanFlag(
 		BooleanFlags.NEW_SETUP_PAGE,
-		false,
+		true,
 		jiraSiteUrl
 	);
 
-	const setupPageVersion = newGithubSetupPgFlagIsOn
-		? "github-setup.hbs"
-		: "github-setup-OLD.hbs";
-
-	const newGitHubSetupPagePayload = {
+	const newGitHubSetupPagePayload: SetupPagePayload = {
 		error: "The entered Jira Cloud site is not valid.",
 		domain,
 		nonce: res.locals.nonce,
 		csrfToken: req.csrfToken(),
 	};
 
-	const oldGitHubSetupPagePayload = Object.assign(
-		{},
-		newGitHubSetupPagePayload
-	);
-	oldGitHubSetupPagePayload["jiraTopleveldomainOptions"] =
+	const oldGitHubSetupPagePayload = { ...newGitHubSetupPagePayload };
+
+	oldGitHubSetupPagePayload.jiraTopleveldomainOptions =
 		jiraTopleveldomainOptions(topLevelDomain);
 
 	return newGithubSetupPgFlagIsOn
-		? res.render(setupPageVersion, newGitHubSetupPagePayload)
-		: res.render(setupPageVersion, oldGitHubSetupPagePayload);
+		? res.render("github-setup.hbs", newGitHubSetupPagePayload)
+		: res.render("github-setup-OLD.hbs", oldGitHubSetupPagePayload);
 };
 
 const validateJiraSite = (
@@ -86,7 +92,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 	const newGithubSetupPgFlagIsOn = await booleanFlag(
 		BooleanFlags.NEW_SETUP_PAGE,
-		false
+		true
 	);
 
 	const siteUrlIncludesProtocol = newGithubSetupPgFlagIsOn
