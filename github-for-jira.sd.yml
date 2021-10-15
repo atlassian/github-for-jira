@@ -133,6 +133,7 @@ alarms:
       Period: 120
       ComparisonOperator: GreaterThanThreshold
       Statistic: Average
+    LowSeverityAlarmWhenTooManyBackend5xxErrors: null
 
 config:
   environmentVariables:
