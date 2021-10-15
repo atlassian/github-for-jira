@@ -93,7 +93,7 @@ export class SqsQueue<MessagePayload> {
 		const params: SendMessageRequest = {
 			MessageBody: JSON.stringify(payload),
 			QueueUrl: this.queueUrl,
-			DelaySeconds: delay || 0
+			DelaySeconds: delay
 		};
 		await this.sqs.sendMessage(params)
 			.promise()
@@ -139,8 +139,12 @@ export class SqsQueue<MessagePayload> {
 	/**
 	 * Starts listening to the queue asynchronously
 	 *
-	 * @param listenerStatus The object holding a status of this listener. We are keeping it on a function level,
-	 * to make sure that we won't run into
+	 * @param listenerStatus The object holding a status of this listener. We are keeping it on a function level, because
+	 * the next time we call "start" we'll create a new state and override this.listenerStatus with a status for the new listener.
+	 * It is to make sure that if we restart the queue, we won't get
+	 * 2 listeners running if the old listener didn't finish before "start" being called
+	 * (listener can be waiting for the message being processed, or for an sqs message)
+	 *
 	 */
 	private async listen(listenerStatus: ListenerStatus) {
 		if(listenerStatus.stopped) {
@@ -156,7 +160,7 @@ export class SqsQueue<MessagePayload> {
 		};
 
 		//Get messages from the queue with long polling enabled
-		this.sqs.receiveMessage(params)
+		return this.sqs.receiveMessage(params)
 			.promise()
 			.then(async result => {
 				await this.handleSqsResponse(result)
