@@ -142,8 +142,9 @@ config:
     PORT: "8080"
     CONCURRENT_WORKERS: "40"
     PG_DATABASE_BOUNCER: pgbouncer
-    COMMIT_SHA: ${GIT_COMMIT_SHA}
-    COMMIT_DATE: ${GIT_COMMIT_DATE}
+    GIT_COMMIT_SHA: ${GIT_COMMIT_SHA}
+    GIT_COMMIT_DATE: ${GIT_COMMIT_DATE}
+    GIT_BRANCH_NAME: ${GIT_BRANCH_NAME}
     # These secret environment variables need to be stashed with "atlas micros stash" for each environment:
     # GITHUB_CLIENT_SECRET: GitHub app's client secret
     # PRIVATE_KEY: contents of your (*.pem) generated in the GitHub app
