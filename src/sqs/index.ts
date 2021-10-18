@@ -1,8 +1,8 @@
-import AWS, {AWSError} from "aws-sdk";
+import AWS from "aws-sdk";
 import Logger from "bunyan"
 import {getLogger} from "../config/logger"
-import {DeleteMessageRequest, Message, ReceiveMessageResult} from "aws-sdk/clients/sqs";
-import { uuidv4 } from "uuid";
+import SQS, {DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest} from "aws-sdk/clients/sqs";
+import { v4 as uuidv4 } from "uuid";
 
 const logger = getLogger("sqs")
 
@@ -27,44 +27,159 @@ export type Context<MessagePayload> = {
 	log: Logger;
 }
 
+export type QueueSettings = {
+
+	readonly queueName: string,
+
+	readonly queueUrl: string,
+
+	readonly queueRegion: string,
+
+	readonly longPollingInterval?: number
+
+	//TODO Add batching
+
+	//TODO Add error handling
+
+	//TODO Add message processing timeouts
+}
+
+const DEFAULT_LONG_POLLING_INTERVAL = 4
+
 /**
  * Handler for the queue messages
  */
 export interface MessageHandler<MessagePayload> {
-	handle(context: Context<MessagePayload>);
+	handle(context: Context<MessagePayload>): Promise<void>;
 }
 
+type ListenerStatus = {
+	stopped: boolean;
+}
+
+/**
+ * Class which represents an SQS client for a single SQS queue.
+ *
+ * Allows sending SQS messages, as well as listening to the queue messages.
+ */
 export class SqsQueue<MessagePayload> {
-	queueUrl: string;
-	queueName: string;
-	queueRegion: string;
-	sqs: AWS.SQS;
+	readonly queueUrl: string;
+	readonly queueName: string;
+	readonly queueRegion: string;
+  readonly longPollingInterval: number;
+	readonly messageHandler: MessageHandler<MessagePayload>
+	readonly sqs: SQS;
+	readonly log: Logger;
 
-	constructor(queueName: string, queueUrl: string, queueRegion: string) {
-		this.queueUrl = queueUrl;
-		this.queueName = queueName;
-		this.queueRegion = queueRegion;
-		this.sqs = new AWS.SQS({apiVersion: "2012-11-05", region: queueRegion});
+	listenerStatus: ListenerStatus;
+
+	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>) {
+		this.queueUrl = settings.queueUrl;
+		this.queueName = settings.queueName;
+		this.queueRegion = settings.queueRegion;
+		this.longPollingInterval = settings.longPollingInterval !== undefined ? settings.longPollingInterval : DEFAULT_LONG_POLLING_INTERVAL
+		this.sqs = new AWS.SQS({apiVersion: "2012-11-05", region: settings.queueRegion});
+		this.messageHandler = messageHandler;
+		this.log = logger.child({queue: this.queueName});
 	}
 
-	sendMessage(payload: MessagePayload, log?: Logger) {
-		const params = {
+	/**
+	 * Send message to the queue
+	 * @param payload Message payload
+	 * @param delay Delay after which the message will be ready to be processed
+	 * @param log Logger to be used to log message sending status
+	 */
+	public async sendMessage(payload: MessagePayload, delay = 0, log: Logger = this.log) {
+		const params: SendMessageRequest = {
 			MessageBody: JSON.stringify(payload),
-			QueueUrl: this.queueUrl
+			QueueUrl: this.queueUrl,
+			DelaySeconds: delay
 		};
-		this.sqs.sendMessage(params, (err, data) => {
-			if (err) {
-				( log || logger).error(err, "Error sending SQS message");
-			} else {
-				( log || logger).info(`Successfully added message to sqs queue messageId: ${data.MessageId}`);
-			}
-		});
+		await this.sqs.sendMessage(params)
+			.promise()
+			.then(data => {
+				log.info(`Successfully added message to sqs queue messageId: ${data.MessageId}`);
+			})
+			.catch((err) => {
+				log.warn({err}, "Error sending SQS message");
+				throw err;
+			});
 	}
 
-	deleteMessage(message: Message) {
+	/**
+	 * Starts listening to the queue
+	 */
+	public start() {
+
+		if(this.listenerStatus && !this.listenerStatus.stopped) {
+			this.log.error("Queue is already running")
+			return;
+		}
+		this.log.info({queueUrl: this.queueUrl,
+			queueRegion: this.queueRegion, longPollingInterval: this.longPollingInterval},"Starting the queue")
+		//Every time we start a listener we create a separate ListenerStatus object,
+		//This is to make sure that we won't have 2 listeners running at the same time
+		//if the previous listener was stopped but still processing its current message
+		this.listenerStatus = {stopped: false}
+		this.listen(this.listenerStatus)
+	}
+
+
+	/**
+	 * Stops reading messages from the queue. When stopped it can't be resumed.
+	 */
+	public stop() {
+		if(!this.listenerStatus || this.listenerStatus.stopped) {
+			this.log.error("Queue is already stopped")
+			return;
+		}
+		this.log.info("Stopping the queue");
+		this.listenerStatus.stopped = true;
+	}
+	/**
+	 * Starts listening to the queue asynchronously
+	 *
+	 * @param listenerStatus The object holding a status of this listener. We are keeping it on a function level, because
+	 * the next time we call "start" we'll create a new state and override this.listenerStatus with a status for the new listener.
+	 * It is to make sure that if we restart the queue, we won't get
+	 * 2 listeners running if the old listener didn't finish before "start" being called
+	 * (listener can be waiting for the message being processed, or for an sqs message)
+	 *
+	 */
+	private async listen(listenerStatus: ListenerStatus) {
+		if(listenerStatus.stopped) {
+			this.log.info("Queue has been stopped. Not processing further messages.");
+			return
+		}
+
+		// Setup the receiveMessage parameters
+		const params = {
+			QueueUrl: this.queueUrl,
+			MaxNumberOfMessages: 1,
+			WaitTimeSeconds: this.longPollingInterval
+		};
+
+		//Get messages from the queue with long polling enabled
+		return this.sqs.receiveMessage(params)
+			.promise()
+			.then(async result => {
+				await this.handleSqsResponse(result)
+			})
+			.catch((err) => {
+				this.log.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
+			})
+			.finally( () =>
+				this.listen(listenerStatus)
+			);
+	}
+
+
+	private async deleteMessage(message: Message, log: Logger) {
+
+		log.debug({ message }, "deleting the message")
 
 		if(!message.ReceiptHandle) {
-			logger.error({ message }, "Unable to delete message, ReceiptHandle parameter is missing");
+			log.error({ message }, "Unable to delete message, ReceiptHandle parameter is missing");
 			return;
 		}
 
@@ -72,65 +187,45 @@ export class SqsQueue<MessagePayload> {
 			QueueUrl: this.queueUrl,
 			ReceiptHandle: message.ReceiptHandle || ""
 		};
-		this.sqs.deleteMessage(deleteParams, (err, data) => {
-			if (err) {
-				logger.error({err, data}, "Error deleting message from the queue");
-			} else {
-				logger.debug({data}, "Successfully deleted message from queue");
-			}
-		});
+		return this.sqs.deleteMessage(deleteParams)
+			.promise()
+			.then(() => {
+				log.debug("Successfully deleted message from queue");
+			})
+			.catch((err) => {
+				log.warn({err}, "Error deleting message from the queue");
+			});
 	}
 
-	executeMessage(message: Message, messageHandler: MessageHandler<MessagePayload>) {
+	private async executeMessage(message: Message): Promise<void> {
 		const payload = message.Body ? JSON.parse(message.Body) : {};
 
-		const log = logger.child({id: message.MessageId, executionId: uuidv4()})
+		const log = logger.child({id: message.MessageId, executionId: uuidv4(), queue: this.queueName})
 
 		const context: Context<MessagePayload> = {message, payload, log }
 
-		log.info({messagePayload: payload}, "Sqs message received");
+		log.info("Sqs message received");
 
 		try {
-			messageHandler.handle(context)
-			this.deleteMessage(message)
+			await this.messageHandler.handle(context)
+			await this.deleteMessage(message, log)
 		} catch (err) {
-			log.error(err, "error executing sqs message")
+			//TODO Add error handling
+			log.error({err}, "error executing sqs message")
 		}
 	}
 
-	async handleSqsResponse(err: AWSError, data: ReceiveMessageResult, messageHandler) {
-		if (err) {
-			logger.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
-		} else {
-			if (!data.Messages) {
-				logger.debug("Nothing to process");
-				return;
-			}
-
-			await Promise.all(data.Messages.map(message => {
-				return new Promise<void>((resolve) => {
-					this.executeMessage(message, messageHandler)
-					resolve()
-				})
-			})
-			)
+	async handleSqsResponse(data: ReceiveMessageResult) {
+		if (!data.Messages) {
+			this.log.debug("Nothing to process");
+			return;
 		}
+
+		this.log.debug("Processing messages batch")
+		await Promise.all(data.Messages.map(async message => {
+			await this.executeMessage(message)
+		}))
+		this.log.debug("Messages batch processed")
 	}
 
-	listen(messageHandler) {
-		// Setup the receiveMessage parameters
-		const params = {
-			QueueUrl: this.queueUrl,
-			MaxNumberOfMessages: 1,
-			VisibilityTimeout: 0,
-			WaitTimeSeconds: 5
-		};
-		this.sqs.receiveMessage(params, async (err, data) => {
-			try {
-				await this.handleSqsResponse(err, data, messageHandler)
-			} finally {
-				this.listen(messageHandler)
-			}
-		});
-	}
 }
