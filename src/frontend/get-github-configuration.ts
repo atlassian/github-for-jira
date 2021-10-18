@@ -6,7 +6,7 @@ import { getInstallation } from "./get-jira-configuration";
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { booleanFlag, BooleanFlags } from '../config/feature-flags';
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 const getConnectedStatus = (
 	installationsWithSubscriptions: any,
@@ -52,6 +52,38 @@ const installationConnectedStatus = async (
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
+
+async function getInstallationsWithAdmin(installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[], login: string, isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> {
+	const installationsWithAdmin: InstallationWithAdmin[] = [];
+
+	for (const installation of installations) {
+		// See if we can get the membership for this user
+		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
+		const checkAdmin = isAdmin({
+			org: installation.account.login,
+			username: login,
+			type: installation.target_type
+		});
+
+		const authedApp = await app.auth(installation.id);
+		enhanceOctokit(authedApp);
+
+		const repositories = authedApp.paginate(
+			authedApp.apps.listRepos.endpoint.merge({ per_page: 100 }),
+			(res) => res.data
+		);
+
+		const [admin, numberOfRepos] = await Promise.all([checkAdmin, repositories]);
+
+		installationsWithAdmin.push({
+			...installation,
+			numberOfRepos: numberOfRepos.length || 0,
+			admin
+		});
+	}
+	return installationsWithAdmin;
+}
+
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	if (!req.session.githubToken) {
 		return next(new Error("Github Auth token is missing"));
@@ -61,39 +93,11 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		return next(new Error("Jira Host url is missing"));
 	}
 
-	req.log.info({ installationId: req.body.installationId }, "Received delete jira configuration request");
+	req.log.info({ installationId: req.body.installationId }, "Received get jira configuration request");
 
 	const github: GitHubAPI = res.locals.github;
 	const client: GitHubAPI = res.locals.client;
-	const isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean> = res.locals.isAdmin;
-
-	async function getInstallationsWithAdmin({ installations, login }) {
-		const installationsWithAdmin: InstallationWithAdmin[] = [];
-
-		for (const installation of installations) {
-			// See if we can get the membership for this user
-			// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
-			const checkAdmin = isAdmin({
-				org: installation.account.login,
-				username: login,
-				type: installation.target_type
-			});
-
-			const authedApp = await app.auth(installation.id);
-			enhanceOctokit(authedApp);
-
-			const repositories = authedApp.paginate(
-				authedApp.apps.listRepos.endpoint.merge({ per_page: 100 }),
-				(res) => res.data
-			);
-
-			const [admin, numberOfRepos] = await Promise.all([checkAdmin, repositories]);
-
-			installation.numberOfRepos = numberOfRepos.length || 0;
-			installationsWithAdmin.push({ ...installation, admin });
-		}
-		return installationsWithAdmin;
-	}
+	const isAdmin = res.locals.isAdmin;
 
 	const { jiraHost, jwt } = req.session;
 
@@ -112,7 +116,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			const { iss: clientKey } = decodeSymmetric(jwt, installation.sharedSecret, getAlgorithm(jwt));
 
 			const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
-			const installationsWithAdmin = await getInstallationsWithAdmin({ installations, login });
+			const installationsWithAdmin = await getInstallationsWithAdmin(installations, login, isAdmin);
 			const { data: info } = (await client.apps.getAuthenticated());
 			const connectedInstallations = await installationConnectedStatus(
 				jiraHost,
@@ -143,5 +147,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 };
 
 interface InstallationWithAdmin extends Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem {
+	numberOfRepos: number;
 	admin: boolean;
 }
