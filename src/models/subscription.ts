@@ -66,9 +66,6 @@ export default class Subscription extends Sequelize.Model {
 	createdAt: Date;
 	numberOfSyncedRepos?: number;
 
-	// New repo sync state table
-	// repoSyncStates: RepoSyncState[];
-
 	static async getAllForHost(host: string): Promise<Subscription[]> {
 		return Subscription.findAll({
 			where: {

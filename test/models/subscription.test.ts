@@ -60,19 +60,20 @@ describe("Subscription", () => {
 		});
 
 		test("updates the value", async () => {
+			const repoId = "1234";
 			await sub.updateSyncState({
 				repos: {
-					hello: {
+					[repoId]: {
 						branchStatus: "pending"
 					}
 				}
 			} as any);
 
-			await sub.updateRepoSyncStateItem("hello", "branchStatus", "complete");
-			expect(sub.repoSyncState?.repos?.hello?.branchStatus).toStrictEqual("complete");
+			await sub.updateRepoSyncStateItem(repoId, "branchStatus", "complete");
+			expect(sub.repoSyncState?.repos?.[repoId]?.branchStatus).toStrictEqual("complete");
 			expect(sub.repoSyncState).toStrictEqual({
 				repos: {
-					hello: {
+					[repoId]: {
 						branchStatus: "complete"
 					}
 				}

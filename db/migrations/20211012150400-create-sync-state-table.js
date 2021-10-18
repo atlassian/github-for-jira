@@ -1,6 +1,6 @@
 "use strict";
 
-const tableName = "RepoSyncState";
+const tableName = "RepoSyncStates";
 const indexName = `${tableName}_subscriptionId_repoId_idx`
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
@@ -14,10 +14,6 @@ module.exports = {
 			subscriptionId: {
 				type: Sequelize.INTEGER,
 				allowNull: false,
-				references: {
-					model: 'Subscription',
-					key: 'id'
-				}
 			},
 			repoId: {
 				type: Sequelize.INTEGER,

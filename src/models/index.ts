@@ -15,7 +15,9 @@ const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 InstallationModel.init({
 	id: {
 		type: DataTypes.INTEGER,
-		primaryKey: true
+		primaryKey: true,
+		allowNull: false,
+		autoIncrement: true
 	},
 	jiraHost: DataTypes.STRING,
 	secrets: encrypted.vault("secrets"),
@@ -33,7 +35,9 @@ InstallationModel.init({
 SubscriptionModel.init({
 	id: {
 		type: DataTypes.INTEGER,
-		primaryKey: true
+		primaryKey: true,
+		allowNull: false,
+		autoIncrement: true
 	},
 	gitHubInstallationId: DataTypes.INTEGER,
 	jiraHost: DataTypes.STRING,
@@ -47,30 +51,23 @@ SubscriptionModel.init({
 RepoSyncStateModel.init({
 	id: {
 		type: DataTypes.INTEGER,
-		primaryKey: true
+		primaryKey: true,
+		allowNull: false,
+		autoIncrement: true
 	},
 	subscriptionId: {
 		type: DataTypes.INTEGER,
-		references: {
-			model: "Subscription",
-			key: "id"
-		}
+		allowNull: false
 	},
-	repoId: Sequelize.INTEGER,
+	repoId: {
+		type: Sequelize.INTEGER,
+		allowNull: false
+	},
 	repoName: Sequelize.STRING,
 	repoOwner: Sequelize.STRING,
 	repoFullName: Sequelize.STRING,
 	repoUrl: Sequelize.STRING,
-	commitCount: Sequelize.INTEGER,
-	branchCount: Sequelize.INTEGER,
-	issueCount: Sequelize.INTEGER,
-	pullCount: Sequelize.INTEGER,
-	buildCount: Sequelize.INTEGER,
-	deploymentCount: Sequelize.INTEGER,
-	watchCount: Sequelize.INTEGER,
-	starCount: Sequelize.INTEGER,
-	forkCount: Sequelize.INTEGER,
-	popularity: Sequelize.INTEGER,
+	priority: Sequelize.INTEGER,
 	status: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	branchStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	commitStatus: DataTypes.ENUM("pending", "complete", "failed"),
@@ -85,7 +82,11 @@ RepoSyncStateModel.init({
 	buildCursor: Sequelize.STRING,
 	deploymentCursor: Sequelize.STRING,
 	forked: Sequelize.BOOLEAN,
-	pushedAt: Sequelize.DATE,
+	repoPushedAt: Sequelize.DATE,
+	repoUpdatedAt: Sequelize.DATE,
+	repoCreatedAt: Sequelize.DATE,
+	syncUpdatedAt: Sequelize.DATE,
+	syncCompletedAt: Sequelize.DATE,
 	createdAt: Sequelize.DATE,
 	updatedAt: Sequelize.DATE
 }, { sequelize });
