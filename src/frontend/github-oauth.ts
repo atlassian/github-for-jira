@@ -1,17 +1,13 @@
-/*
- * Copied from https://github.com/maxogden/github-oauth/blob/master/index.js
- * But it had a vulnerability on the `request` package version range.
- * So, instead of making a fork, since it's only one file and the package
- * hasn't been updated in 3 years I thought it was simpler to just copy the source here
- */
 import crypto from "crypto";
 import url from "url";
-import express, {NextFunction, Request, RequestHandler, Response, Router} from "express";
+import express, { NextFunction, Request, RequestHandler, Response, Router } from "express";
 import axios from "axios";
-import {getJiraHostFromRedirectUrl, getJiraHostFromRedirectUrlNew} from "../util/getUrl";
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import { getJiraHostFromRedirectUrl, getJiraHostFromRedirectUrlNew } from "../util/getUrl";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { getLogger } from "../config/logger";
 
 const host = process.env.GHE_HOST || "github.com";
+const logger = getLogger("github-oauth");
 
 export interface OAuthOptions {
 	baseURL: string;
@@ -33,6 +29,8 @@ export default (opts: OAuthOptions): GithubOAuth => {
 	opts.scopes = opts.scopes || ["user", "repo"];
 	const redirectURI = new URL(opts.callbackURI, opts.baseURL).toString();
 
+	logger.info(opts, "Configuring github auth");
+
 	function login(req: Request, res: Response): void {
 		// TODO: We really should be using an Auth library for this, like @octokit/github-auth
 		// Create unique state for each oauth request
@@ -42,11 +40,11 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		req.session[state] =
 			res.locals.redirect ||
 			`/github/configuration${url.parse(req.originalUrl).search || ""}`;
-		res.redirect(
-			`https://${host}/login/oauth/authorize?client_id=${opts.githubClient}${
-				opts.scopes?.length ? `&scope=${opts.scopes.join(" ")}` : ""
-			}&redirect_uri=${redirectURI}&state=${state}`
-		);
+		const redirectUrl = `https://${host}/login/oauth/authorize?client_id=${opts.githubClient}${
+			opts.scopes?.length ? `&scope=${opts.scopes.join(" ")}` : ""
+		}&redirect_uri=${redirectURI}&state=${state}`;
+		req.log.info({ redirectUrl, postLoginUrl: req.session[state] }, `Received request for ${opts.loginURI}, redirecting to Github OAuth flow`);
+		res.redirect(redirectUrl);
 	}
 
 	async function callback(
@@ -62,6 +60,8 @@ export default (opts: OAuthOptions): GithubOAuth => {
 			state
 		} = req.query as Record<string, string>;
 
+		logger.info(req.query, "");
+
 		// Show the oauth error if there is one
 		if (error) {
 			return next(`OAuth Error: ${error}
@@ -73,15 +73,16 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		const redirectUrl = req.session[state] as string;
 		delete req.session[state];
 
+		req.log.info({ query: req.query }, `Received request to ${opts.callbackURI}`);
+
 		// Check if state is available and matches a previous request
 		if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 		if (!code) return next("Missing OAuth Code");
 
-
 		if (await booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true)) {
-			req.log.info({jiraHost: getJiraHostFromRedirectUrlNew(redirectUrl, req.log)}, "Jira Host attempting to auth with GitHub");
+			req.log.info({ jiraHost: getJiraHostFromRedirectUrlNew(redirectUrl, req.log) }, "Jira Host attempting to auth with GitHub");
 		} else {
-			req.log.info({jiraHost: getJiraHostFromRedirectUrl(redirectUrl)}, "Jira Host attempting to auth with GitHub");
+			req.log.info({ jiraHost: getJiraHostFromRedirectUrl(redirectUrl) }, "Jira Host attempting to auth with GitHub");
 		}
 
 		try {
@@ -108,6 +109,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 				return next(new Error("Missing Access Token from Github OAuth Flow."));
 			}
 
+			req.log.info({ redirectUrl }, "Github OAuth code valid, redirecting to internal URL");
 			return res.redirect(redirectUrl);
 		} catch (e) {
 			return next(new Error("Cannot retrieve access token from Github"));
