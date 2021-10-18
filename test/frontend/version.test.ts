@@ -1,12 +1,12 @@
 import express, { Application } from "express";
-import info from "../../src/frontend/info";
+import version from "../../src/frontend/version";
 import supertest from "supertest";
 
-describe("/info", () => {
+describe("/version", () => {
 	let app: Application;
 	beforeEach(async () => {
 		app = express();
-		app.use("/info", info);
+		app.use("/version", version);
 	});
 
 	it("should return 200 with relevant git branch and commit details", async () => {
@@ -15,7 +15,7 @@ describe("/info", () => {
 		process.env.GIT_BRANCH_NAME = "arc-384-info";
 
 		return supertest(app)
-			.get("/info")
+			.get("/version")
 			.expect(200)
 			.then((response) => {
 				expect(response.body).toEqual({
