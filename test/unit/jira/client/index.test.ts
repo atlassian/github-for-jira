@@ -35,7 +35,7 @@ describe("Test getting a jira client", () => {
 
 	it("Installation does not exist", async () => {
 		await installation.disable();
-		expect(client).not.toBeDefined();
+		expect(await getJiraClient(envVars.ATLASSIAN_URL, gitHubInstallationId)).not.toBeDefined();
 	});
 
 	it("Should truncate issueKeys if over the limit", async () => {
