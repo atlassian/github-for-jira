@@ -4,7 +4,6 @@ import path from "path";
 import cookieSession from "cookie-session";
 import csrf from "csurf";
 import * as Sentry from "@sentry/node";
-import hbs from "hbs";
 import GithubOAuth from "./github-oauth";
 import getGitHubSetup from "./get-github-setup";
 import postGitHubSetup from "./post-github-setup";
@@ -37,6 +36,8 @@ import {
 } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
+import { registerHandlebarsPartials } from "../util/handlebars/partials"
+import { registerHandlebarsHelpers } from '../util/handlebars/helpers';
 
 // Adding session information to request
 declare global {
@@ -105,45 +106,12 @@ export default (octokitApp: App): Express => {
 
 	app.use(logMiddleware);
 
-	// TODO: move all view/static/public/handlebars helper things in it's own folder
 	app.set("view engine", "hbs");
 	app.set("views", path.join(rootPath, "views"));
 
-	// Handlebars helpers
-	hbs.registerHelper("toLowerCase", (str) => str.toLowerCase());
+	registerHandlebarsPartials(rootPath);
 
-	hbs.registerHelper("replaceSpaceWithHyphen", (str) => str.replace(/ /g, "-"));
-
-	hbs.registerHelper(
-		"ifAllReposSynced",
-		(numberOfSyncedRepos, totalNumberOfRepos) =>
-			numberOfSyncedRepos === totalNumberOfRepos
-				? totalNumberOfRepos
-				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
-	);
-
-	hbs.registerHelper("repoAccessType", (repository_selection) =>
-		repository_selection === "all" ? "All repos" : "Only select repos"
-	);
-
-	hbs.registerHelper("isNotConnected", (syncStatus) => syncStatus == null);
-
-	hbs.registerHelper(
-		"inProgressSync",
-		(syncStatus) => syncStatus === "IN PROGRESS"
-	);
-
-	hbs.registerHelper("failedSync", (syncStatus) => syncStatus === "FAILED");
-
-	hbs.registerHelper("failedConnectionErrorMsg", (deleted) =>
-		deleted
-			? "The GitHub for Jira app was uninstalled from this org."
-			: "There was an error getting information for this installation."
-	);
-
-	hbs.registerHelper("connectedStatus", (syncStatus) =>
-		syncStatus === "COMPLETE" ? "Connected" : "Connect"
-	);
+	registerHandlebarsHelpers();
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
 	app.use(
@@ -300,7 +268,7 @@ export default (octokitApp: App): Express => {
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, false, req.session.jiraHost);
+		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, true, req.session.jiraHost);
 		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs"
 
 		return res.status(errorStatusCode).render(errorPageVersion, {
