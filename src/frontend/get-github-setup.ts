@@ -26,7 +26,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 		const jiraHost = req.session.jiraHost;
 		const marketplaceUrl = jiraHost
 			? getJiraMarketplaceUrl(jiraHost)
-			: "";
+			: undefined;
 
 		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, true, jiraHost)) {
 			res.render("github-setup.hbs", {
