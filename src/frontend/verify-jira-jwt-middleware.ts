@@ -1,13 +1,13 @@
 import {Installation} from "../models";
 import {NextFunction, Request, Response} from "express";
-import {TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware} from "../jira/util/jwt";
+import { extractJwtFromRequest, TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
 
 const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
-	const jiraHost = req.session.jiraHost || req.body?.jiraHost;
+	const jiraHost = (req.query.xdm_e as string) || req.session.jiraHost || req.body?.jiraHost;
 	const installation = await Installation.getForHost(jiraHost);
 
 	if (!installation) {
@@ -21,7 +21,17 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 			installation.clientKey && `${installation.clientKey.substr(0, 5)}***`
 	});
 
-	verifySymmetricJwtTokenMiddleware(installation.sharedSecret, tokenType, req, res, next);
+	verifySymmetricJwtTokenMiddleware(
+		installation.sharedSecret,
+		tokenType,
+		req,
+		res,
+		(...args) => {
+			// set the jiraHost to session as undefined on error, or the actual host when jwt verified
+			req.session.jiraHost = args.length ? undefined : jiraHost;
+			req.session.jwt = args.length ? undefined : extractJwtFromRequest(req);
+			next(...args);
+		});
 };
 
 export const verifyJiraJwtTokenMiddleware = verifyJiraJwtMiddleware(TokenType.normal);

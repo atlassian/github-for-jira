@@ -71,15 +71,6 @@ const csrfProtection = csrf(
 		: undefined
 );
 
-// Check to see if jira host has been passed to any routes and save it to session
-const getJiraQueryStrings = (req: Request, _: Response, next: NextFunction): void => {
-	req.session.jwt = (req.query.jwt as string) || req.session.jwt;
-	req.session.jiraHost = getJiraHost(req);
-	next();
-};
-
-const getJiraHost = (req:Request) => (req.query.xdm_e as string) || req.session.jiraHost;
-
 export default (octokitApp: App): Express => {
 	const githubClientMiddleware = getGithubClientMiddleware(octokitApp);
 
@@ -188,7 +179,7 @@ export default (octokitApp: App): Express => {
 
 	// Maintenance mode view
 	app.use(async (req, res, next) => {
-		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, getJiraHost(req))) {
+		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost)) {
 			return getMaintenance(req, res);
 		}
 		next();
@@ -237,7 +228,6 @@ export default (octokitApp: App): Express => {
 	app.get(
 		"/jira/configuration",
 		csrfProtection,
-		getJiraQueryStrings,
 		verifyJiraJwtTokenMiddleware,
 		getJiraConfiguration
 	);
@@ -262,7 +252,7 @@ export default (octokitApp: App): Express => {
 	// Add Sentry Context
 	app.use((err: Error, req: Request, _: Response, next: NextFunction) => {
 		Sentry.withScope((scope: Sentry.Scope): void => {
-			const jiraHost = getJiraHost(req);
+			const jiraHost = req.session.jiraHost;
 			if (jiraHost) {
 				scope.setTag("jiraHost", jiraHost);
 			}
@@ -297,7 +287,7 @@ export default (octokitApp: App): Express => {
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, false, getJiraHost(req));
+		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, false, req.session.jiraHost);
 		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs";
 
 		return res.status(errorStatusCode).render(errorPageVersion, {
