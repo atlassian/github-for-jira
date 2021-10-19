@@ -25,6 +25,7 @@ import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
 import api from "../api";
 import healthcheck from "./healthcheck";
+import version from "./version";
 import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
@@ -184,6 +185,8 @@ export default (octokitApp: App): Express => {
 		}
 		next();
 	});
+
+	app.get("/version", version);
 
 	app.get("/maintenance", csrfProtection, getMaintenance);
 
