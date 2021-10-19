@@ -191,6 +191,7 @@ async function getJiraClient(
 							gitHubInstallationId
 						);
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
+						logger.info(subscription?.syncWarning);
 					}
 
 					return await batchedBulkUpdate(
