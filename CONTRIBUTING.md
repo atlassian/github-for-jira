@@ -82,7 +82,7 @@ The first time you run the app, simply run:
 ```
 npm install # installs node modules
 docker-compose up # Spin up docker containers
-npm run db # Creates DBs and initializes tables
+npm run init # Creates DBs and initializes tables, creates sqs queues
 ```
 
 That's it.  Everything is ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread).
