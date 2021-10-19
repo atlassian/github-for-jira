@@ -133,10 +133,6 @@ alarms:
       Period: 120
       ComparisonOperator: GreaterThanThreshold
       Statistic: Average
-    HighSeverityAlarmWhenTooManyBackend5xxErrors: null
-    HighSeverityAlarmWhenTooManyELB5xxErrors: null
-    LowSeverityAlarmWhenTooManyBackend5xxErrors: null
-    LowSeverityAlarmWhenTooManyELB5xxErrors: null
 
 config:
   environmentVariables:
