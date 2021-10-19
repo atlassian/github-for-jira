@@ -22,7 +22,8 @@ export enum BooleanFlags {
 	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
 	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
 	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
-	PROPAGATE_REQUEST_ID = "propagate-request-id"
+	PROPAGATE_REQUEST_ID = "propagate-request-id",
+	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
 }
 
 export enum StringFlags {
