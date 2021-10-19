@@ -27,7 +27,7 @@ describe("SqsQueue tests", () => {
 		return new SqsQueue({queueName: TEST_QUEUE_NAME,
 			queueUrl: TEST_QUEUE_URL,
 			queueRegion: TEST_QUEUE_REGION,
-			longPollingInterval: 0},
+			longPollingIntervalSec: 0},
 		mockRequestHandler);
 	}
 
@@ -39,7 +39,7 @@ describe("SqsQueue tests", () => {
 	})
 
 	afterEach(() => {
-		queue.stop();	
+		queue.stop();
 		delay(100)
 	})
 
