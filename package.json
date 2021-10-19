@@ -10,6 +10,7 @@
   "main": "src/main",
   "scripts": {
     "prestart": "run-p env clean db:dev",
+    "init": "run-p db sqs",
     "start": "run-p start:main start:worker",
     "start:main": "tsnd --watch=.env,db/config.json --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
     "start:worker": "tsnd --watch=.env,db/config.json --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/worker.ts",
@@ -24,7 +25,7 @@
     "lint": "run-p lint:*",
     "lint:ts": "eslint . --ext .ts,.tsx",
     "lint:yaml": "yamllint github-for-jira.sd.yml",
-    "pretest": "run-p db:test",
+    "pretest": "run-p db:test sqs:create:test",
     "test": "jest --runInBand --forceExit --coverage",
     "test:watch": "jest --runInBand --watchAll",
     "db": "run-s db:create db:migrate",
@@ -39,7 +40,9 @@
     "db:dev": "run-s db:create:dev db:migrate:dev",
     "db:test": "run-s db:create:test db:migrate:test",
     "prepare": "husky install",
-    "precommit": "run-p lint build"
+    "precommit": "run-p lint build",
+		"sqs": "run-s sqs:create:test",
+    "sqs:create:test": "aws --debug --endpoint-url=http://127.0.0.1:9602 sqs create-queue --queue-name test"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
