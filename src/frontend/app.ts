@@ -10,7 +10,6 @@ import getGitHubSetup from "./get-github-setup";
 import postGitHubSetup from "./post-github-setup";
 import getGitHubConfiguration from "./get-github-configuration";
 import postGitHubConfiguration from "./post-github-configuration";
-import listGitHubInstallations from "./list-github-installations";
 import getGitHubSubscriptions from "./get-github-subscriptions";
 import deleteGitHubSubscription from "./delete-github-subscription";
 import getJiraConfiguration from "./get-jira-configuration";
@@ -26,6 +25,7 @@ import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
 import api from "../api";
 import healthcheck from "./healthcheck";
+import version from "./version";
 import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
@@ -197,6 +197,8 @@ export default (octokitApp: App): Express => {
 		next();
 	});
 
+	app.get("/version", version);
+
 	app.get("/maintenance", csrfProtection, getMaintenance);
 
 	app.get(
@@ -223,13 +225,6 @@ export default (octokitApp: App): Express => {
 		"/github/configuration",
 		csrfProtection,
 		postGitHubConfiguration
-	);
-
-	app.get(
-		"/github/installations",
-		csrfProtection,
-		oauth.checkGithubAuth,
-		listGitHubInstallations
 	);
 
 	app.get(
