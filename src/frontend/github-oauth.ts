@@ -60,8 +60,6 @@ export default (opts: OAuthOptions): GithubOAuth => {
 			state
 		} = req.query as Record<string, string>;
 
-		logger.info(req.query, "");
-
 		// Show the oauth error if there is one
 		if (error) {
 			return next(`OAuth Error: ${error}
