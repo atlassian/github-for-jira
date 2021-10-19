@@ -61,6 +61,9 @@ export interface EnvVars {
 	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
+	GIT_COMMIT_SHA: string;
+	GIT_COMMIT_DATE: string;
+	GIT_BRANCH_NAME: string;
 
 	// Micros Lifecycle Env Vars
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?:string;
