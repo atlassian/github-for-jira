@@ -13,6 +13,7 @@ a:focus {
 }
 
 .pageContent {
+  background-color: #fff;
   padding: 20px;
   min-height: 600px;
 }
@@ -75,7 +76,8 @@ a:focus {
   flex: 2;
 }
 
-.githubOrgs__table {
+.githubOrgs__table,
+.githubSetup__table {
   border-top: 2px solid #e0e2e7;
   border-bottom: 2px solid #e0e2e7;
   padding: 0.8em 0;
@@ -131,4 +133,80 @@ a:focus {
 .jiraConfiguration__table__edit:before:active,
 .jiraConfiguration__table__edit:before:focus {
   text-decoration: none;
+}
+
+.githubConfiguration__logout__container,
+.gitHubSetup__getJira__container {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+}
+
+.githubConfiguration__logout__link,
+.gitHubSetup__getJira__link {
+  cursor: pointer;
+  color: #0366d6;
+}
+
+.githubConfiguration__logout__name {
+  font-weight: bold;
+}
+
+.githubConfiguration__header,
+.gitHubSetup__header {
+  font-weight: 500 !important;
+}
+
+/* Modals */
+.jiraConfiguration__syncRetryModalOverlay,
+.githubSetup__newJiraSiteModalOverlay {
+  background: #091e42;
+  opacity: 54%;
+  z-index: 100;
+}
+
+.jiraConfiguration__syncRetryModal,
+.githubSetup__newJiraSiteModal {
+  display: none;
+}
+
+.jiraConfiguration__syncRetryModal,
+.jiraConfiguration__syncRetryModalOverlay,
+.githubSetup__newJiraSiteModal,
+.githubSetup__newJiraSiteModalOverlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+}
+
+.jiraConfiguration__syncRetryModalContent,
+.githubSetup__newJiraSiteModalContent {
+  -webkit-transform: translateX(-50%);
+  background-color: #fff;
+  box-shadow: 0px 3px 5px rgb(9 30 66 / 20%), 0px 0px 1px rgb(9 30 66 / 31%);
+  border-radius: 3px;
+  left: 50%;
+  padding: 2em;
+  position: absolute;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.jiraConfiguration__syncRetryModalContent {
+  top: 15%;
+  width: 56%;
+}
+
+.githubSetup__newJiraSiteModalContent {
+  top: 30%;
+  width: 30%;
+}
+
+.jiraConfiguration__syncRetryModalOverlay,
+.githubSetup__newJiraSiteModalOverlay {
+  background: #091e42;
+  opacity: 54%;
+  z-index: 100;
 }

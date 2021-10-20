@@ -35,7 +35,7 @@ export type QueueSettings = {
 
 	readonly queueRegion: string,
 
-	readonly longPollingInterval?: number
+	readonly longPollingIntervalSec?: number,
 
 	//TODO Add batching
 
@@ -66,7 +66,7 @@ export class SqsQueue<MessagePayload> {
 	readonly queueUrl: string;
 	readonly queueName: string;
 	readonly queueRegion: string;
-  readonly longPollingInterval: number;
+  readonly longPollingIntervalSec: number;
 	readonly messageHandler: MessageHandler<MessagePayload>
 	readonly sqs: SQS;
 	readonly log: Logger;
@@ -77,7 +77,7 @@ export class SqsQueue<MessagePayload> {
 		this.queueUrl = settings.queueUrl;
 		this.queueName = settings.queueName;
 		this.queueRegion = settings.queueRegion;
-		this.longPollingInterval = settings.longPollingInterval !== undefined ? settings.longPollingInterval : DEFAULT_LONG_POLLING_INTERVAL
+		this.longPollingIntervalSec = settings.longPollingIntervalSec !== undefined ? settings.longPollingIntervalSec : DEFAULT_LONG_POLLING_INTERVAL
 		this.sqs = new AWS.SQS({apiVersion: "2012-11-05", region: settings.queueRegion});
 		this.messageHandler = messageHandler;
 		this.log = logger.child({queue: this.queueName});
@@ -86,24 +86,18 @@ export class SqsQueue<MessagePayload> {
 	/**
 	 * Send message to the queue
 	 * @param payload Message payload
-	 * @param delay Delay after which the message will be ready to be processed
+	 * @param delaySec Delay in seconds after which the message will be ready to be processed
 	 * @param log Logger to be used to log message sending status
 	 */
-	public async sendMessage(payload: MessagePayload, delay = 0, log: Logger = this.log) {
+	public async sendMessage(payload: MessagePayload, delaySec = 0, log: Logger = this.log) {
 		const params: SendMessageRequest = {
 			MessageBody: JSON.stringify(payload),
 			QueueUrl: this.queueUrl,
-			DelaySeconds: delay
+			DelaySeconds: delaySec
 		};
-		await this.sqs.sendMessage(params)
-			.promise()
-			.then(data => {
-				log.info(`Successfully added message to sqs queue messageId: ${data.MessageId}`);
-			})
-			.catch((err) => {
-				log.warn({err}, "Error sending SQS message");
-				throw err;
-			});
+		const sendMessageResult = await this.sqs.sendMessage(params)
+			.promise();
+		log.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
 	}
 
 	/**
@@ -116,10 +110,10 @@ export class SqsQueue<MessagePayload> {
 			return;
 		}
 		this.log.info({queueUrl: this.queueUrl,
-			queueRegion: this.queueRegion, longPollingInterval: this.longPollingInterval},"Starting the queue")
+			queueRegion: this.queueRegion, longPollingInterval: this.longPollingIntervalSec},"Starting the queue")
 		//Every time we start a listener we create a separate ListenerStatus object,
-		//This is to make sure that we won't have 2 listeners running at the same time
-		//if the previous listener was stopped but still processing its current message
+		//This is to make sure that we won't have 2 listeners running at the same time when we restart the listener.
+		//Hence the old one can still be processing messages on the moment `start()' been called.
 		this.listenerStatus = {stopped: false}
 		this.listen(this.listenerStatus)
 	}
@@ -156,11 +150,11 @@ export class SqsQueue<MessagePayload> {
 		const params = {
 			QueueUrl: this.queueUrl,
 			MaxNumberOfMessages: 1,
-			WaitTimeSeconds: this.longPollingInterval
+			WaitTimeSeconds: this.longPollingIntervalSec
 		};
 
 		//Get messages from the queue with long polling enabled
-		return this.sqs.receiveMessage(params)
+		await this.sqs.receiveMessage(params)
 			.promise()
 			.then(async result => {
 				await this.handleSqsResponse(result)
@@ -187,14 +181,14 @@ export class SqsQueue<MessagePayload> {
 			QueueUrl: this.queueUrl,
 			ReceiptHandle: message.ReceiptHandle || ""
 		};
-		return this.sqs.deleteMessage(deleteParams)
-			.promise()
-			.then(() => {
-				log.debug("Successfully deleted message from queue");
-			})
-			.catch((err) => {
-				log.warn({err}, "Error deleting message from the queue");
-			});
+
+		try {
+			await this.sqs.deleteMessage(deleteParams)
+				.promise()
+			log.debug("Successfully deleted message from queue");
+		} catch(err) {
+			log.warn({err}, "Error deleting message from the queue");
+		}
 	}
 
 	private async executeMessage(message: Message): Promise<void> {

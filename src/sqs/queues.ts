@@ -7,7 +7,7 @@ const sqsQueues = {
 	backfill: new SqsQueue<BackfillMessagePayload>({ queueName: "backfill",
 		queueUrl: envVars.SQS_BACKFILL_QUEUE_URL || "http://localhost:9602/queue/backfill",
 		queueRegion: envVars.SQS_BACKFILL_QUEUE_REGION || "us-west-1",
-		longPollingInterval: 3}, backfillQueueMessageHandler),
+		longPollingIntervalSec: 3}, backfillQueueMessageHandler),
 
 	start: () => {
 		sqsQueues.backfill.start();

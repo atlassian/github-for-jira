@@ -1,5 +1,6 @@
-import { jiraDomainOptions } from "./validations";
+import { jiraTopleveldomainOptions } from "./validations";
 import { Request, Response } from "express";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import {
 	getJiraMarketplaceUrl,
 	getGitHubConfigurationUrl,
@@ -13,7 +14,7 @@ import {
 			- If we have the users Jira host, redirect to marketplace.
 			- Otherwise, render the setup page.
 */
-export default (req: Request, res: Response): void => {
+export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
 
 	if (req.headers.referer) {
@@ -21,13 +22,25 @@ export default (req: Request, res: Response): void => {
 		const { jwt, jiraHost } = req.session;
 
 		res.redirect(getGitHubConfigurationUrl(githubHost, jwt, jiraHost));
-	} else if (req.session.jiraHost) {
-		res.redirect(getJiraMarketplaceUrl(req.session.jiraHost));
 	} else {
-		res.render("github-setup.hbs", {
-			jiraDomainOptions: jiraDomainOptions(),
-			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
-		});
+		const jiraHost = req.session.jiraHost;
+		const marketplaceUrl = jiraHost
+			? getJiraMarketplaceUrl(jiraHost)
+			: undefined;
+
+		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, true, jiraHost)) {
+			res.render("github-setup.hbs", {
+				csrfToken: req.csrfToken(),
+				nonce: res.locals.nonce,
+				jiraHost: jiraHost,
+				marketplaceUrl, // only used is jiraHost is present
+			});
+		} else {
+			res.render("github-setup-OLD.hbs", {
+				jiraTopleveldomainOptions: jiraTopleveldomainOptions(),
+				csrfToken: req.csrfToken(),
+				nonce: res.locals.nonce,
+			});
+		}
 	}
 };

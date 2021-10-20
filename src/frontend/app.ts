@@ -4,7 +4,6 @@ import path from "path";
 import cookieSession from "cookie-session";
 import csrf from "csurf";
 import * as Sentry from "@sentry/node";
-import hbs from "hbs";
 import GithubOAuth from "./github-oauth";
 import getGitHubSetup from "./get-github-setup";
 import postGitHubSetup from "./post-github-setup";
@@ -25,17 +24,17 @@ import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
 import api from "../api";
 import healthcheck from "./healthcheck";
+import version from "./version";
 import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import {
-	authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback,
-	verifyJiraContextJwtTokenMiddleware,
-	verifyJiraJwtTokenMiddleware
-} from "./verify-jira-jwt-middleware";
+import { authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback, verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
+import { registerHandlebarsPartials } from "../util/handlebars/partials";
+import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
+import { Errors } from "../config/errors";
 
 // Adding session information to request
 declare global {
@@ -47,7 +46,6 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
-				jwt?: string;
 				[key: string]: unknown;
 			};
 		}
@@ -74,6 +72,13 @@ const csrfProtection = csrf(
 		}
 		: undefined
 );
+
+const saveSessionVariables = (req: Request, _: Response, next: NextFunction) => {
+	req.log.info("Setting session variables 'jiraHost'");
+	// set jirahost after token if no errors
+	req.session.jiraHost = req.query.xdm_e as string;
+	next();
+};
 
 export default (octokitApp: App): Express => {
 	const githubClientMiddleware = getGithubClientMiddleware(octokitApp);
@@ -104,45 +109,12 @@ export default (octokitApp: App): Express => {
 
 	app.use(logMiddleware);
 
-	// TODO: move all view/static/public/handlebars helper things in it's own folder
 	app.set("view engine", "hbs");
 	app.set("views", path.join(rootPath, "views"));
 
-	// Handlebars helpers
-	hbs.registerHelper("toLowerCase", (str) => str.toLowerCase());
+	registerHandlebarsPartials(rootPath);
 
-	hbs.registerHelper("replaceSpaceWithHyphen", (str) => str.replace(/ /g, "-"));
-
-	hbs.registerHelper(
-		"ifAllReposSynced",
-		(numberOfSyncedRepos, totalNumberOfRepos) =>
-			numberOfSyncedRepos === totalNumberOfRepos
-				? totalNumberOfRepos
-				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
-	);
-
-	hbs.registerHelper("repoAccessType", (repository_selection) =>
-		repository_selection === "all" ? "All repos" : "Only select repos"
-	);
-
-	hbs.registerHelper("isNotConnected", (syncStatus) => syncStatus == null);
-
-	hbs.registerHelper(
-		"inProgressSync",
-		(syncStatus) => syncStatus === "IN PROGRESS"
-	);
-
-	hbs.registerHelper("failedSync", (syncStatus) => syncStatus === "FAILED");
-
-	hbs.registerHelper("failedConnectionErrorMsg", (deleted) =>
-		deleted
-			? "The GitHub for Jira app was uninstalled from this org."
-			: "There was an error getting information for this installation."
-	);
-
-	hbs.registerHelper("connectedStatus", (syncStatus) =>
-		syncStatus === "COMPLETE" ? "Connected" : "Connect"
-	);
+	registerHandlebarsHelpers();
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
 	app.use(
@@ -169,13 +141,6 @@ export default (octokitApp: App): Express => {
 		)
 	);
 
-	// Check to see if jira host has been passed to any routes and save it to session
-	app.use((req: Request, _: Response, next: NextFunction): void => {
-		req.session.jwt = (req.query.jwt as string) || req.session.jwt;
-		req.session.jiraHost = (req.query.xdm_e as string) || req.session.jiraHost;
-		next();
-	});
-
 	app.use(githubClientMiddleware);
 
 	app.use("/", healthcheck);
@@ -195,6 +160,8 @@ export default (octokitApp: App): Express => {
 		}
 		next();
 	});
+
+	app.get("/version", version);
 
 	app.get("/maintenance", csrfProtection, getMaintenance);
 
@@ -240,6 +207,7 @@ export default (octokitApp: App): Express => {
 		"/jira/configuration",
 		csrfProtection,
 		verifyJiraJwtTokenMiddleware,
+		saveSessionVariables,
 		getJiraConfiguration
 	);
 
@@ -263,8 +231,9 @@ export default (octokitApp: App): Express => {
 	// Add Sentry Context
 	app.use((err: Error, req: Request, _: Response, next: NextFunction) => {
 		Sentry.withScope((scope: Sentry.Scope): void => {
-			if (req.session.jiraHost) {
-				scope.setTag("jiraHost", req.session.jiraHost);
+			const jiraHost = req.session.jiraHost;
+			if (jiraHost) {
+				scope.setTag("jiraHost", jiraHost);
 			}
 
 			if (req.body) {
@@ -292,16 +261,22 @@ export default (octokitApp: App): Express => {
 			"Not Found": 404
 		};
 
+		const messages = {
+			[Errors.MISSING_JIRA_HOST]: "Session information missing - please enable all cookies in your browser settings."
+		};
+
 		const errorStatusCode = errorCodes[err.message] || 500;
+		const message = messages[err.message];
 		const tags = [`status: ${errorStatusCode}`];
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, false, req.session.jiraHost);
-		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs"
+		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, true, req.session.jiraHost);
+		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs";
 
 		return res.status(errorStatusCode).render(errorPageVersion, {
 			title: "GitHub + Jira integration",
+			message,
 			nonce: res.locals.nonce
 		});
 	});

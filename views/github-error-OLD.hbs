@@ -12,9 +12,10 @@
     <img class="centered small mb-6" src="https://octodex.github.com/images/supportcat.png" height="300"/>
     <section class="mx-auto" style="max-width: 510px">
       <h2 class="f2 text-center text-normal mb-2">Looks like something went wrong!</h2>
-
       <hr />
-
+      {{#if message}}
+      <p class="text-gray text-center mb-4">{{message}}</p>
+      {{/if}}
       <p class="text-gray text-center mb-4">We track these errors automatically, but if the problem persists feel free to <a href="https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product">contact us</a>. In the meantime, try adding an organization again in Jira.</p>
     </section>
   </body>
