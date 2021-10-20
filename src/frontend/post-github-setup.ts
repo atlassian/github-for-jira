@@ -64,11 +64,9 @@ const validateJiraSite = (
 		.then((response) => {
 			// If Jira site is valid, response returns a state of RUNNING
 			if (response?.data?.state === "RUNNING") {
-				req.session.jiraHost = `${jiraSiteUrl}`;
-
 				res.redirect(
 					req.session.githubToken
-						? getJiraMarketplaceUrl(req.session.jiraHost)
+						? getJiraMarketplaceUrl(jiraSiteUrl)
 						: "/github/login"
 				);
 			}
