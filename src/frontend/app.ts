@@ -32,8 +32,9 @@ import { metricError } from "../config/metric-names";
 import { authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback, verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
-import { registerHandlebarsPartials } from "../util/handlebars/partials"
-import { registerHandlebarsHelpers } from '../util/handlebars/helpers';
+import { registerHandlebarsPartials } from "../util/handlebars/partials";
+import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
+import { extractJwtFromRequest } from "../jira/util/jwt";
 
 // Adding session information to request
 declare global {
@@ -72,6 +73,14 @@ const csrfProtection = csrf(
 		}
 		: undefined
 );
+
+const saveSessionVariables = (req: Request, _: Response, next: NextFunction) => {
+	req.log.info("Setting session variables 'jiraHost' and 'jwt'");
+	// set jirahost/jwt after token if no errors
+	req.session.jiraHost = req.query.xdm_e as string;
+	req.session.jwt = extractJwtFromRequest(req);
+	next();
+};
 
 export default (octokitApp: App): Express => {
 	const githubClientMiddleware = getGithubClientMiddleware(octokitApp);
@@ -200,6 +209,7 @@ export default (octokitApp: App): Express => {
 		"/jira/configuration",
 		csrfProtection,
 		verifyJiraJwtTokenMiddleware,
+		saveSessionVariables,
 		getJiraConfiguration
 	);
 
