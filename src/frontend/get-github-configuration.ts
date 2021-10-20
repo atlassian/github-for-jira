@@ -3,10 +3,10 @@ import { NextFunction, Request, Response } from "express";
 import enhanceOctokit from "../config/enhance-octokit";
 import app from "../worker/app";
 import { getInstallation } from "./get-jira-configuration";
-import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { Errors } from "../config/errors";
 
 const getConnectedStatus = (
 	installationsWithSubscriptions: any,
@@ -85,12 +85,13 @@ async function getInstallationsWithAdmin(installations: Octokit.AppsListInstalla
 }
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	if (!req.session.githubToken) {
-		return next(new Error("Github Auth token is missing"));
+	const { jiraHost, githubToken } = req.session;
+	if (!githubToken) {
+		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-	if (!req.session.jiraHost) {
-		return next(new Error("Jira Host url is missing"));
+	if (!jiraHost) {
+		return next(new Error(Errors.MISSING_JIRA_HOST));
 	}
 
 	req.log.info({ installationId: req.body.installationId }, "Received get jira configuration request");
@@ -99,50 +100,44 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 	const client: GitHubAPI = res.locals.client;
 	const isAdmin = res.locals.isAdmin;
 
-	const { jiraHost, jwt } = req.session;
+	const { data: { login } } = await github.users.getAuthenticated();
 
-	if (jwt && jiraHost) {
-		const { data: { login } } = await github.users.getAuthenticated();
-
-		try {
-			// we can get the jira client Key from the JWT's `iss` property
-			// so we'll decode the JWT here and verify it's the right key before continuing
-			const installation = await Installation.getForHost(jiraHost);
-			if (!installation) {
-				req.log.warn({ req, res }, "Missing installation");
-				res.status(404).send(`Missing installation for host '${jiraHost}'`);
-				return;
-			}
-			const { iss: clientKey } = decodeSymmetric(jwt, installation.sharedSecret, getAlgorithm(jwt));
-
-			const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
-			const installationsWithAdmin = await getInstallationsWithAdmin(installations, login, isAdmin);
-			const { data: info } = (await client.apps.getAuthenticated());
-			const connectedInstallations = await installationConnectedStatus(
-				jiraHost,
-				client,
-				installationsWithAdmin,
-				req.log
-			);
-
-			const newConnectAnOrgPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, true, jiraHost);
-			const connectAnOrgPageVersion = newConnectAnOrgPgFlagIsOn ? "github-configuration.hbs" : "github-configuration-OLD.hbs";
-
-			res.render(connectAnOrgPageVersion, {
-				csrfToken: req.csrfToken(),
-				installations: connectedInstallations,
-				jiraHost: jiraHost,
-				nonce: res.locals.nonce,
-				info,
-				clientKey,
-				login
-			});
-		} catch (err) {
-			// If we get here, there was either a problem decoding the JWT
-			// or getting the data we need from GitHub, so we'll show the user an error.
-			req.log.error({ err, req, res }, "Error while getting github configuration page");
-			return next(err);
+	try {
+		// we can get the jira client Key from the JWT's `iss` property
+		// so we'll decode the JWT here and verify it's the right key before continuing
+		const installation = await Installation.getForHost(jiraHost);
+		if (!installation) {
+			req.log.warn({ req, res }, "Missing installation");
+			res.status(404).send(`Missing installation for host '${jiraHost}'`);
+			return;
 		}
+		const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
+		const installationsWithAdmin = await getInstallationsWithAdmin(installations, login, isAdmin);
+		const { data: info } = (await client.apps.getAuthenticated());
+		const connectedInstallations = await installationConnectedStatus(
+			jiraHost,
+			client,
+			installationsWithAdmin,
+			req.log
+		);
+
+		const newConnectAnOrgPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, true, jiraHost);
+		const connectAnOrgPageVersion = newConnectAnOrgPgFlagIsOn ? "github-configuration.hbs" : "github-configuration-OLD.hbs";
+
+		res.render(connectAnOrgPageVersion, {
+			csrfToken: req.csrfToken(),
+			installations: connectedInstallations,
+			jiraHost: jiraHost,
+			nonce: res.locals.nonce,
+			info,
+			clientKey: installation.clientKey,
+			login
+		});
+	} catch (err) {
+		// If we get here, there was either a problem decoding the JWT
+		// or getting the data we need from GitHub, so we'll show the user an error.
+		req.log.error({ err, req, res }, "Error while getting github configuration page");
+		return next(err);
 	}
 };
 

@@ -34,7 +34,7 @@ import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
 import { registerHandlebarsPartials } from "../util/handlebars/partials";
 import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
-import { extractJwtFromRequest } from "../jira/util/jwt";
+import { Errors } from "../config/errors";
 
 // Adding session information to request
 declare global {
@@ -46,7 +46,6 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
-				jwt?: string;
 				[key: string]: unknown;
 			};
 		}
@@ -75,10 +74,9 @@ const csrfProtection = csrf(
 );
 
 const saveSessionVariables = (req: Request, _: Response, next: NextFunction) => {
-	req.log.info("Setting session variables 'jiraHost' and 'jwt'");
-	// set jirahost/jwt after token if no errors
+	req.log.info("Setting session variables 'jiraHost'");
+	// set jirahost after token if no errors
 	req.session.jiraHost = req.query.xdm_e as string;
-	req.session.jwt = extractJwtFromRequest(req);
 	next();
 };
 
@@ -263,7 +261,12 @@ export default (octokitApp: App): Express => {
 			"Not Found": 404
 		};
 
+		const messages = {
+			[Errors.MISSING_JIRA_HOST]: "Session information missing - please enable all cookies in your browser settings."
+		};
+
 		const errorStatusCode = errorCodes[err.message] || 500;
+		const message = messages[err.message] || "Looks like something went wrong!";
 		const tags = [`status: ${errorStatusCode}`];
 
 		statsd.increment(metricError.githubErrorRendered, tags);
@@ -273,6 +276,7 @@ export default (octokitApp: App): Express => {
 
 		return res.status(errorStatusCode).render(errorPageVersion, {
 			title: "GitHub + Jira integration",
+			message,
 			nonce: res.locals.nonce
 		});
 	});

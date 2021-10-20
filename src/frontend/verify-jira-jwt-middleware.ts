@@ -13,6 +13,7 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	if (!installation) {
 		return next(new Error("Not Found"));
 	}
+	// TODO: Probably not the best place to set things globally
 	res.locals.installation = installation;
 
 	req.addLogFields({
