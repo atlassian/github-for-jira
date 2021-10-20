@@ -4,15 +4,24 @@ import { Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
-const syncStatus = (status) =>
-	status === "ACTIVE" ? "IN PROGRESS" : status;
+function mapSyncStatus(syncStatus: string): string {
+	switch (syncStatus) {
+		case "ACTIVE":
+			return "IN PROGRESS";
+		case "COMPLETE":
+			return "FINISHED";
+		default:
+			return syncStatus;
+	}
+}
 
 export async function getInstallation(client, subscription, reqLog?) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
-		response.data.syncStatus = syncStatus(subscription.syncStatus);
+		response.data.syncStatus = mapSyncStatus(subscription.syncStatus);
 		response.data.syncWarning = subscription.syncWarning;
 		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
 		response.data.totalNumberOfRepos = Object.keys(
@@ -75,15 +84,21 @@ export default async (
 				repoSyncState: data.repoSyncState,
 			}));
 
-		const failedConnections = installations.filter(
-			(response) => !!response.error
-		);
+		const failedConnections = installations
+			.filter((response) => !!response.error)
+			.map((data) => ({
+				...data,
+			}));
 
-		res.render("jira-configuration.hbs", {
+		const newConfigPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, true, jiraHost);
+		const configPageVersion = newConfigPgFlagIsOn ? "jira-configuration.hbs" : "jira-configuration-OLD.hbs";
+		const hasConnections = newConfigPgFlagIsOn ? connections.length > 0 : connections.length > 0 || failedConnections.length > 0;
+
+		res.render(configPageVersion, {
 			host: jiraHost,
 			connections,
 			failedConnections,
-			hasConnections: connections.length > 0 || failedConnections.length > 0,
+			hasConnections,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,

@@ -45,6 +45,11 @@ links:
 
 cleanup: true
 
+lifecycleEvents:
+  source: queue
+  # Number of seconds between the termination message and when the instance is terminated.
+  timeout: 30
+
 resources:
   - type: redisx
     name: cache
@@ -128,16 +133,9 @@ alarms:
       Period: 120
       ComparisonOperator: GreaterThanThreshold
       Statistic: Average
-    TransactionLogsDiskUsageAlarm:
-      Namespace: AWS/RDS
-      MetricName: TransactionLogsDiskUsage
-      Description: "Master transaction logs disk usage is too high"
-      Threshold: 4000000000 # Approx 4GB
-      Priority: Low
-      EvaluationPeriods: 5
-      Period: 60
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      Statistic: Average
+    HighSeverityAlarmWhenTooManyELB5xxErrors: null
+    LowSeverityAlarmWhenTooManyBackend5xxErrors: null
+    LowSeverityAlarmWhenTooManyELB5xxErrors: null
 
 config:
   environmentVariables:
@@ -147,6 +145,9 @@ config:
     PORT: "8080"
     CONCURRENT_WORKERS: "40"
     PG_DATABASE_BOUNCER: pgbouncer
+    GIT_COMMIT_SHA: ${GIT_COMMIT_SHA}
+    GIT_COMMIT_DATE: ${GIT_COMMIT_DATE}
+    GIT_BRANCH_NAME: ${GIT_BRANCH_NAME}
     # These secret environment variables need to be stashed with "atlas micros stash" for each environment:
     # GITHUB_CLIENT_SECRET: GitHub app's client secret
     # PRIVATE_KEY: contents of your (*.pem) generated in the GitHub app
@@ -203,13 +204,12 @@ environmentOverrides:
         LatencyHigh: null
         HealthyHostCount: null
         UnHealthyHostCount: null
-        LowSeverityAlarmWhenTooManyELB5xxErrors: null
-        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
         WebServerAlarmWhenLowCPUCredits: null
         WebServerDiskSpaceUtilizationAlarmHigh: null
         WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
         WebServerMemoryAlarmHigh: null
         WebServerServiceRespawnAlarm: null
+        HighSeverityAlarmWhenTooManyBackend5xxErrors: null
 
   staging:
     config:
@@ -265,9 +265,6 @@ environmentOverrides:
               ReturnData: false
     alarms:
       overrides:
-        LowSeverityAlarmWhenTooManyELB5xxErrors: null
-        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
-        HighSeverityAlarmWhenTooManyELB5xxErrors: null
         HighSeverityAlarmWhenTooManyBackend5xxErrors: null
         ElbResponseTimeAlert:
           Namespace: AWS/ApplicationELB
@@ -327,7 +324,7 @@ environmentOverrides:
         scaling:
           instance: c5.2xlarge
           min: 3
-          max: 6 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          max: 4 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
           metrics: *CpuMemScalingRules
     alarms:
       overrides:
@@ -346,9 +343,6 @@ environmentOverrides:
           Period: 60
           ComparisonOperator: GreaterThanThreshold
           Statistic: Average
-        LowSeverityAlarmWhenTooManyELB5xxErrors: null
-        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
-        HighSeverityAlarmWhenTooManyELB5xxErrors: null
         HighSeverityAlarmWhenTooManyBackend5xxErrors:
           MetricName: HTTPCode_Target_5XX_Count
           Namespace: AWS/ApplicationELB
@@ -373,11 +367,12 @@ environmentOverrides:
         type: dedicated-rds
         attributes:
           parameters:
-            DBInstanceClass: db.r5.xlarge
+            DBInstanceClass: db.r5.4xlarge
             AllocatedStorage: 40 # GB
             MaxAllocatedStorage: 100
             ConnectionAlarm: 500 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 + N (cause two stacks can work
                                  # together during the deploy)
+            TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
 
       - type: globaledge
         name: proxy

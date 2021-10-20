@@ -30,6 +30,7 @@ const envVars: EnvVars = {
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
+	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
 } as EnvVars;
 
@@ -56,6 +57,15 @@ export interface EnvVars {
 	TUNNEL_SUBDOMAIN?: string;
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
+	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
+	GIT_COMMIT_SHA: string;
+	GIT_COMMIT_DATE: string;
+	GIT_BRANCH_NAME: string;
+
+	// Micros Lifecycle Env Vars
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?:string;
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_NAME?:string;
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION?:string;
 }

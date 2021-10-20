@@ -6,9 +6,16 @@ import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 import issueKeyParser from "jira-issue-key-parser";
 import { JiraCommit, JiraIssue } from "../../interfaces/jira";
+import { getLogger } from "../../config/logger";
 
 // Max number of issue keys we can pass to the Jira API
-const ISSUE_KEY_API_LIMIT = 100;
+export const ISSUE_KEY_API_LIMIT = 100;
+const issueKeyLimitWarning = "Exceeded issue key reference limit. Some issues may not be linked.";
+
+export interface DeploymentsResult {
+	status: number;
+	rejectedDeployments?: any[];
+}
 
 /*
  * Similar to the existing Octokit rest.js instance included in probot
@@ -20,7 +27,7 @@ const ISSUE_KEY_API_LIMIT = 100;
 async function getJiraClient(
 	jiraHost: string,
 	gitHubInstallationId: number,
-	logger?: Logger
+	logger: Logger = getLogger("jira-client")
 ): Promise<any> {
 	const installation = await Installation.getForHost(jiraHost);
 	if (installation == null) {
@@ -143,7 +150,7 @@ async function getJiraClient(
 					)
 			},
 			pullRequest: {
-				delete: (repositoryId:string, pullRequestId:string) =>
+				delete: (repositoryId: string, pullRequestId: string) =>
 					instance.delete(
 						"/rest/devinfo/0.10/repository/:repositoryId/pull_request/:pullRequestId",
 						{
@@ -156,11 +163,11 @@ async function getJiraClient(
 					)
 			},
 			repository: {
-				get: (repositoryId:string) =>
+				get: (repositoryId: string) =>
 					instance.get("/rest/devinfo/0.10/repository/:repositoryId", {
 						urlParams: { repositoryId }
 					}),
-				delete: (repositoryId:string) =>
+				delete: (repositoryId: string) =>
 					instance.delete("/rest/devinfo/0.10/repository/:repositoryId", {
 						urlParams: {
 							_updateSequenceId: Date.now().toString(),
@@ -174,15 +181,16 @@ async function getJiraClient(
 						!withinIssueKeyLimit(data.commits) ||
 						!withinIssueKeyLimit(data.branches)
 					) {
+						logger.warn({
+							truncatedCommits: getTruncatedIssuekeys(data.commits),
+							truncatedBranches: getTruncatedIssuekeys(data.branches)
+						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
 							jiraHost,
 							gitHubInstallationId
 						);
-						await subscription?.update({
-							syncWarning:
-								"Exceeded issue key reference limit. Some issues may not be linked."
-						});
+						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
 
 					return await batchedBulkUpdate(
@@ -199,9 +207,12 @@ async function getJiraClient(
 			submit: async (data) => {
 				updateIssueKeysFor(data.builds, dedup);
 				if (!withinIssueKeyLimit(data.builds)) {
+					logger.warn({
+						truncatedBuilds: getTruncatedIssuekeys(data.builds)
+					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.builds, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
-					await subscription?.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
+					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				const payload = {
 					builds: data.builds,
@@ -218,12 +229,15 @@ async function getJiraClient(
 			}
 		},
 		deployment: {
-			submit: async (data) => {
+			submit: async (data): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, dedup);
 				if (!withinIssueKeyLimit(data.deployments)) {
+					logger.warn({
+						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
+					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.deployments, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
-					await subscription?.update({ syncWarning: "Exceeded issue key reference limit. Some issues may not be linked." });
+					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				const payload = {
 					deployments: data.deployments,
@@ -233,7 +247,11 @@ async function getJiraClient(
 				};
 				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
 				logger?.info("Sending deployments payload to jira.");
-				return await instance.post("/rest/deployments/0.1/bulk", payload);
+				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
+				return {
+					status: response.status,
+					rejectedDeployments: response.data?.rejectedDeployments
+				};
 			}
 		}
 	};
@@ -291,9 +309,8 @@ const batchedBulkUpdate = async (
  * Returns if the max length of the issue
  * key field is within the limit
  */
-const withinIssueKeyLimit = (resources) => {
-	if (resources == null) return [];
-
+const withinIssueKeyLimit = (resources: { issueKeys: string[] }[]): boolean => {
+	if (!resources) return true;
 	const issueKeyCounts = resources.map((resource) => resource.issueKeys.length);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
@@ -320,6 +337,23 @@ const dedupIssueKeys = (repositoryObj) => {
 const truncateIssueKeys = (repositoryObj) => {
 	updateRepositoryIssueKeys(repositoryObj, truncate);
 };
+
+interface IssueKeyObject {
+	issueKeys?: string[]
+}
+
+export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
+	data.reduce((acc:IssueKeyObject[], value:IssueKeyObject) => {
+		// Filter out anything that doesn't have issue keys or are not over the limit
+		if(value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
+			// Create copy of object and add the issue keys that are truncated
+			acc.push({
+				...value,
+				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
+			});
+		}
+		return acc;
+	}, []);
 
 /**
  * Runs a mutating function on all branches and commits

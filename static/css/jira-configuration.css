@@ -1,59 +1,373 @@
-.jiraConfigurationTable {
-    table-layout: fixed;
-    width: 100%;
+.jiraConfiguration {
+  box-sizing: border-box;
+  height: 100vh;
+  overflow-y: hidden;
+  padding: 3.5em 4.5em;
 }
 
-.jiraConfigurationTable__connectionLinks > :first-child {
-    padding-left: 0;
+.jiraConfiguration__header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2em;
 }
 
-.jiraConfigurationTable__syncStatus {
-    border-radius: 5px;
-    font-weight: bold;
-    padding: 0.2em 0.3em;
+.jiraConfiguration__header__title {
+  font-weight: 500;
 }
 
-.jiraConfigurationTable__pending {
-    background-color: #DFE1E6;
-    color: #42526E;
+.jiraConfiguration__header__title__cta {
+  font-size: 1rem;
+  font-weight: normal;
+  padding: 0 1em;
 }
 
-.jiraConfigurationTable__in-progress {
-    background-color: #DEEBFF;
-    color: #0747A6;
+.jiraConfiguration__content__list {
+  margin: 0.5em auto;
+  padding-left: 2em;
 }
 
-.jiraConfigurationTable__complete {
-    background-color: #E3FCEF;
-    color: #006644;
+.jiraConfiguration_content {
+  margin-top: 2em;
 }
 
-.jiraConfigurationTable__failed {
-    background-color: #FFEBE6;
-    color: #BF2600;
+
+
+.jiraConfiguration__syncRetryModal__headerContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.2em;
 }
 
-.jiraConfigurationTable__refresh {
-    font-weight: bold;
+.jiraConfiguration__syncRetryModal__header {
+  font-size: 20px;
 }
 
+.jiraConfiguration__syncRetryModal__closeBtn {
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.jiraConfiguration__syncRetryModal__table {
+  border-collapse: separate;
+  border-spacing: 0 15px;
+}
+
+.jiraConfiguration__syncRetryModal__tableBody {
+  border-bottom: none;
+}
+
+.jiraConfiguration__syncRetryModal__tableRow {
+  margin-bottom: 1em;
+}
+
+.jiraConfiguration__syncRetryModal__syncStatus__type {
+  display: flex;
+  text-transform: uppercase;
+  width: 9em;
+}
+
+.jiraConfiguration__syncRetryModal__syncStatus__details {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.jiraConfiguration__table {
+  color: #172b4d;
+  /* override aui styling */
+  margin-top: 2.5em !important;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.jiraConfiguration__table__head {
+  color: #6b778c;
+  font-size: 0.8rem;
+}
+
+.jiraConfiguration__table__head__title {
+  font-weight: normal;
+  /* override aui styling */
+  padding: 0.3em 0 !important;
+}
+
+.jiraConfiguration__table__head__title:not(:last-child) {
+  width: 30%;
+}
+
+.jiraConfiguration__table__head__title:last-child {
+  /* override aui styling */
+  padding-right: 1em !important;
+  text-align: right;
+}
+
+.jiraConfiguration__table__infoIcon {
+  cursor: pointer;
+}
+
+.jiraConfiguration__table__cell,
+.jiraConfiguration__table__cell__settings {
+  /* override aui styling */
+  border-bottom: none !important;
+  border-top: none !important;
+  padding: 0.8em 0 !important;
+}
+
+.jiraConfiguration__table__syncWarningLink {
+  color: #586069 !important;
+}
+
+.jiraConfiguration__table__syncWarningLink:hover {
+  color: #0366d6 !important;
+  text-decoration: none;
+}
+
+.jiraConfiguration__retryContainer {
+  font-size: 1.5rem;
+  position: relative;
+}
+
+.jiraConfiguration__retry {
+  cursor: pointer;
+  font-weight: normal;
+  margin-left: 0.2em;
+  position: absolute;
+  transform: scaleX(-1) rotate(30deg);
+}
+
+.jiraConfiguration__retryMsg {
+  background-color: #172b4d;
+  border-radius: 3px;
+  color: #fff;
+  display: none;
+  font-size: 1rem;
+  left: -0.8em;
+  padding: 0.3em;
+  position: absolute;
+  right: em;
+  top: -2em;
+}
+
+.jiraConfiguration__retry:hover ~ .jiraConfiguration__retryMsg {
+  display: block;
+}
+
+.jiraConfiguration__table__cell__settings {
+  /* override aui styling */
+  padding: 0 !important;
+  text-align: right !important;
+}
+
+.jiraConfiguration__table__cell__settings__ellipsis {
+  background-color: #fff;
+  border: none;
+  box-shadow: none;
+  color: #7a869a;
+  font-size: 3rem;
+  height: 1em;
+  margin: 0.1em 0.4em;
+  position: relative;
+  right: 0 !important;
+  top: 0em;
+  width: 1em;
+}
+
+.jiraConfiguration__table__cell__settings__ellipsisSpan {
+  position: absolute;
+  right: 0.15em;
+  top: -0.5em;
+}
+
+.aui-dropdown2-trigger:not(.aui-dropdown2-trigger-arrowless) {
+  /* override aui styling */
+  padding-right: 0.2em !important;
+}
+
+.aui-button.active:not(.aui-button-link) {
+  background-color: #263858 !important;
+  color: #fff !important;
+}
+
+.jiraConfiguration__table__cell__settings__ellipsis::before {
+  /* override aui styling */
+  content: none !important;
+}
+
+.aui-dropdown2 {
+  /* override aui styling */
+  margin-top: 0 !important;
+  padding: 1em 0;
+}
+
+.jiraConfiguration__table__cell__settings__headerItem {
+  padding: 0 1.3em;
+}
+
+.jiraConfiguration__table__cell__settings__headerItem {
+  font-size: 0.8rem;
+}
+
+.jiraConfiguration__table__cell__settings__header {
+  margin-bottom: 0.3em;
+}
+
+.jiraConfiguration__table__cell__settings__dropdownItems {
+  /* override aui styling */
+  margin-top: 0 !important;
+}
+
+.jiraConfiguration__table__cell__settings__dropdownItem {
+  /* override aui styling */
+  cursor: pointer;
+  padding: 0.6em 1em !important;
+}
+
+.jiraConfiguration__table__cell__settings__dropdownItem:hover {
+  background-color: #e9edf0 !important;
+}
+
+.jiraConfiguration__table__cell__settings__dropdownItem:active,
+.jiraConfiguration__table__cell__settings__dropdownItem:focus {
+  /* override aui styling */
+  background-color: #ecedf0 !important;
+  box-shadow: none !important;
+  color: #455570 !important;
+}
+
+.jiraConfiguration__table__cell:nth-child(3) {
+  display: flex;
+}
+
+.jiraConfiguration__table__cell__avatar {
+  border-radius: 4px;
+  height: 24px;
+  vertical-align: middle;
+  width: 24px;
+}
+
+.jiraConfiguration__table__cell__orgName {
+  margin-left: 0.2em;
+}
+
+.jiraConfiguration__table__connectionLinks > :first-child {
+  padding-left: 0;
+}
+
+.jiraConfiguration__table__syncStatus,
+.syncStatusPending,
+.syncStatusInProgress,
+.syncStatusFinished,
+.syncStatusFailed {
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 0.2em 0.3em;
+}
+
+.jiraConfiguration__table__pending,
+.syncStatusPending {
+  background-color: #dfe1e6;
+  color: #42526e;
+}
+
+.jiraConfiguration__table__in-progress,
+.syncStatusInProgress {
+  background-color: #deebff;
+  color: #0747a6;
+}
+
+.jiraConfiguration__table__finished,
+.syncStatusFinished {
+  background-color: #e3fcef;
+  color: #006644;
+}
+
+.jiraConfiguration__table__failed,
+.syncStatusFailed {
+  background-color: #ffebe6;
+  color: #bf2600;
+}
+
+.jiraConfiguration__table__refresh {
+  font-weight: bold;
+}
+
+.jiraConfiguration__table__cell__settings__header {
+  color: #6b778c;
+}
+
+/* Failed connections */
+.jiraConfiguration__failedConnections__container {
+  background-color: #ffebe6;
+  display: flex;
+  margin-top: 1.1em;
+  padding: 0.8em 1.2em;
+}
+
+.jiraConfiguration__failedConnections__errorIcon__container {
+  margin: 0.5em 1em 0 0;
+}
+
+.jiraConfiguration__failedConnections__errorIcon {
+  color: #bf2600;
+}
+
+.jiraConfiguration__failedConnections__orgInfo {
+  line-height: 2;
+}
+
+.jiraConfiguration__failedConnections__header {
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.jiraConfiguration__failedConnections__dismiss {
+  background: transparent;
+  border: none;
+  color: #0052cc;
+  cursor: pointer;
+  margin-top: 0.6em;
+  padding: 0;
+}
+
+/*  Empty state - no orgs connected */
 .jiraConfiguration__empty {
-    margin: auto;
-    max-width: 570px;
-    padding: 6.5em 0;
-    text-align: center;
+  margin: auto;
+  max-width: 570px;
+  padding: 6.5em 0;
+  text-align: center;
 }
 
 .jiraConfiguration__empty__header {
-    font-size: 1.6rem;
+  font-size: 1.6rem;
 }
 
 .jiraConfiguration__empty__message {
-    font-size: 0.9rem;
-    margin: 2em auto;
+  font-size: 0.9rem;
+  margin: 2em auto;
 }
 
 .jiraConfiguration__empty__image {
-    width: 100%;
-    max-width: 332px;
+  width: 100%;
+  max-width: 332px;
+}
+
+/*  NOTE: We can't use standard breakpoints on GitHub config page
+as the left panel navigation in Jira hijacks some of the screen */
+/* ******************* */
+/* ** Media Queries ** */
+/* ******************* */
+@media (max-width: 1530px) {
+  .jiraConfiguration__table__cell__settings__ellipsis {
+    right: 0;
+  }
+}
+
+@media (max-width: 800px) {
+  .jiraConfiguration {
+    padding: 2em;
+  }
+
+  .jiraConfiguration__table__cell__settings__ellipsis {
+    right: 0.2em !important;
+  }
 }

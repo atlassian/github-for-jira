@@ -9,12 +9,12 @@ import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
 import { Application, GitHubAPI } from "probot";
-import { metricHttpRequest, metricSyncStatus, metricTaskStatus } from "../config/metric-names";
-import { getLogger } from "../config/logger";
+import {metricSyncStatus, metricTaskStatus} from "../config/metric-names";
 import Queue from "bull";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
-const logger = getLogger("sync.installation");
+export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
 const tasks: TaskProcessors = {
 	pull: getPullRequests,
@@ -56,16 +56,7 @@ const updateNumberOfReposSynced = async (
 		return isAllTasksStatusesCompleted(pullStatus, branchStatus, commitStatus);
 	});
 
-	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
-		await subscription.updateNumberOfSyncedRepos(syncedRepos.length);
-	} else {
-		await subscription.update({
-			repoSyncState: {
-				...subscription.repoSyncState,
-				numberOfSyncedRepos: syncedRepos.length
-			}
-		});
-	}
+	await subscription.updateNumberOfSyncedRepos(syncedRepos.length);
 };
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
@@ -112,7 +103,8 @@ const updateJobStatus = async (
 	job: Queue.Job,
 	edges: any[] | undefined,
 	task: TaskType,
-	repositoryId: string
+	repositoryId: string,
+	logger: LoggerWithTarget
 ) => {
 	const { installationId, jiraHost } = job.data;
 	// Get a fresh subscription instance
@@ -133,31 +125,11 @@ const updateJobStatus = async (
 
 	logger.info({ job, task, status }, "Updating job status");
 
-	if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
-		await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status);
-	} else {
-		await subscription.updateSyncState({
-			repos: {
-				[repositoryId]: {
-					[getStatusKey(task)]: status
-				}
-			}
-		});
-	}
+	await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status);
 
 	if (edges?.length) {
 		// there's more data to get
-		if (await booleanFlag(BooleanFlags.CUSTOM_QUERIES_FOR_REPO_SYNC_STATE, false)) {
-			await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
-		} else {
-			await subscription.updateSyncState({
-				repos: {
-					[repositoryId]: {
-						[getCursorKey(task)]: edges[edges.length - 1].cursor
-					}
-				}
-			});
-		}
+		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 
 		queues.installation.add(job.data);
 		// no more data (last page was processed of this job type)
@@ -169,7 +141,7 @@ const updateJobStatus = async (
 		if (startTime) {
 			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
 			// startTime will be passed in when this sync job is queued from the discovery
-			statsd.histogram(metricHttpRequest.fullSync, timeDiff);
+			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff);
 		}
 
 		logger.info({ job, task, startTime, endTime, timeDiff }, "Sync status is complete");
@@ -182,7 +154,7 @@ const updateJobStatus = async (
 const getEnhancedGitHub = async (app: Application, installationId) =>
 	enhanceOctokit(await app.auth(installationId));
 
-const isBlocked = async (installationId: number): Promise<boolean> => {
+const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
@@ -220,7 +192,8 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 export const isNotFoundError = (
 	err: any,
 	job: any,
-	nextTask: Task
+	nextTask: Task,
+	logger: LoggerWithTarget
 ): boolean | undefined => {
 	const isNotFoundErrorType =
 		err?.errors && err.errors?.filter((error) => error.type === "NOT_FOUND");
@@ -239,10 +212,10 @@ export const isNotFoundError = (
 // TODO: type queues
 export const processInstallation =
 	(app: Application, queues) =>
-		async (job): Promise<void> => {
+		async (job, logger: LoggerWithTarget): Promise<void> => {
 			const { installationId, jiraHost } = job.data;
 
-			if (await isBlocked(installationId)) {
+			if (await isBlocked(installationId, logger)) {
 				logger.warn({ job }, "blocking installation job");
 				return;
 			}
@@ -376,7 +349,8 @@ export const processInstallation =
 					job,
 					edges,
 					task,
-					repositoryId
+					repositoryId,
+					logger,
 				);
 
 				statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`]);
@@ -412,9 +386,9 @@ export const processInstallation =
 				}
 
 				// Continue sync when a 404/NOT_FOUND is returned
-				if (isNotFoundError(err, job, nextTask)) {
+				if (isNotFoundError(err, job, nextTask, logger)) {
 					const edgesLeft = []; // No edges left to process since the repository doesn't exist
-					await updateJobStatus(queues, job, edgesLeft, task, repositoryId);
+					await updateJobStatus(queues, job, edgesLeft, task, repositoryId, logger);
 					return;
 				}
 

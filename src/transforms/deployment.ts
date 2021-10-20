@@ -83,14 +83,14 @@ export default async (context: Context): Promise<JiraDeploymentData | undefined>
 			updateSequenceNumber: deployment_status.id,
 			issueKeys,
 			displayName: deployment.task,
-			url: deployment_status.log_url || deployment_status.target_url || undefined,
+			url: deployment_status.log_url || deployment_status.target_url || deployment.url,
 			description: deployment.description || deployment_status.description || deployment.task,
 			lastUpdated: deployment_status.updated_at,
 			state: mapState(deployment_status.state),
 			pipeline: {
 				id: deployment.task,
 				displayName: deployment.task,
-				url: deployment_status.log_url || deployment_status.target_url || undefined,
+				url: deployment_status.log_url || deployment_status.target_url || deployment.url,
 			},
 			environment: {
 				id: deployment_status.environment,

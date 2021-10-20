@@ -1,22 +1,35 @@
-interface UrlParams {
-	githubHost: string;
-	jwt: string;
-	jiraHost: string;
-}
 
-export const getGitHubConfigurationUrl = (urlParams: UrlParams): string => {
-	const { githubHost, jwt, jiraHost } = urlParams;
+import Logger from "bunyan";
+import url from "url";
 
-	return `https://${githubHost}/github/configuration?jwt=${jwt}&xdm_e=${jiraHost}`;
-};
+export const getGitHubConfigurationUrl = (
+	githubHost,
+	jwt,
+	jiraHost
+): string =>
+	`https://${githubHost}/github/configuration?jwt=${jwt}&xdm_e=${jiraHost}`;
 
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
-	`https://${jiraHost}/plugins/servlet/upm/marketplace/plugins/com.github.integration.production`;
+	`${jiraHost}/plugins/servlet/ac/com.atlassian.jira.emcee/discover#!/discover/app/com.github.integration.production`;
 
+// Deprecated, will be removed with the feature flag. Use getJiraHostFromRedirectUrlNew() instead
 export const getJiraHostFromRedirectUrl = (url: string): string => {
 	try {
 		return new URL(url).host;
 	} catch (err) {
 		return "unknown";
+	}
+};
+
+export const getJiraHostFromRedirectUrlNew = (urlOrPath: string, log: Logger): string => {
+	if (!urlOrPath) {
+		return "empty";
+	}
+	try {
+		const { host, query } = url.parse(urlOrPath, true);
+		return (query?.xdm_e ? url.parse(query.xdm_e.toString(), false).host : host) || "unknown";
+	} catch (err) {
+		log.error(err, "Cannot detect jiraHost from redirect URL");
+		return "error";
 	}
 };
