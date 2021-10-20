@@ -121,7 +121,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 				req.log
 			);
 
-			const newConnectAnOrgPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, false, jiraHost);
+			const newConnectAnOrgPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, true, jiraHost);
 			const connectAnOrgPageVersion = newConnectAnOrgPgFlagIsOn ? "github-configuration.hbs" : "github-configuration-OLD.hbs";
 
 			res.render(connectAnOrgPageVersion, {
