@@ -266,7 +266,7 @@ export default (octokitApp: App): Express => {
 		};
 
 		const errorStatusCode = errorCodes[err.message] || 500;
-		const message = messages[err.message] || "Looks like something went wrong!";
+		const message = messages[err.message];
 		const tags = [`status: ${errorStatusCode}`];
 
 		statsd.increment(metricError.githubErrorRendered, tags);
