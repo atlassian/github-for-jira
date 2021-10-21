@@ -34,7 +34,7 @@ export interface NextAction<JOB_ID> {
 	}
 }
 
-export class Backfiller<JOB_ID, JOB_STATE> {
+export class Looper<JOB_ID, JOB_STATE> {
 
 	private readonly prioritizer: StepPrioritizer<JOB_ID, JOB_STATE>;
 	private readonly jobStore: JobStore<JOB_ID, JOB_STATE>;

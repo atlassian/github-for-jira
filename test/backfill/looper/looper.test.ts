@@ -10,13 +10,13 @@ import {
 	StepPrioritizer,
 	StepProcessor,
 	StepResult
-} from "../../../src/backfill/framework/api";
-import { Backfiller } from "../../../src/backfill/framework/backfiller";
+} from "../../../src/backfill/looper/api";
+import { Looper } from "../../../src/backfill/looper/looper";
 import { getLogger } from "../../../src/config/logger";
 
-const logger = getLogger("backfiller.test.ts")
+const logger = getLogger("looper.test.ts")
 
-describe("Backfiller", () => {
+describe("Looper", () => {
 
 	let now = new Date(2021, 10, 10, 10, 10, 10);
 	const nowFunction = () => now;
@@ -130,7 +130,7 @@ describe("Backfiller", () => {
 	const processor = new MyProcessor([3, 7]);
 	const prioritizer = new MyPrioritizer(processor);
 
-	const backfiller = new Backfiller<MyJobId, MyJobState>(
+	const looper = new Looper<MyJobId, MyJobState>(
 		prioritizer,
 		jobStore,
 		new CappedDelayRateLimitStrategy(15 * 60, nowFunction),
@@ -138,9 +138,9 @@ describe("Backfiller", () => {
 		logger
 	);
 
-	it("finishes a backfill", async () => {
+	it("completes a loop through a job", async () => {
 
-		let nextAction = backfiller.processStep({ jobId: "job1" });
+		let nextAction = looper.processStep({ jobId: "job1" });
 		let i = 1;
 		let retryCount = 0;
 		let ratelimitedCount = 0;
@@ -168,7 +168,7 @@ describe("Backfiller", () => {
 				}
 			}
 
-			nextAction = backfiller.processStep({ jobId: "job1" });
+			nextAction = looper.processStep({ jobId: "job1" });
 			i++;
 		}
 
