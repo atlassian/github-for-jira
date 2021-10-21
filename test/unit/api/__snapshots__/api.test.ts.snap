@@ -55,9 +55,31 @@ Object {
 
 exports[`API Authentication should return 404 if no token is provided 1`] = `Object {}`;
 
-exports[`API Endpoints installation should return 404 if no installation is found 1`] = `Object {}`;
+exports[`API Endpoints (skipped, wtf?!) repoSyncState should return 404 if no installation is found 1`] = `Object {}`;
 
-exports[`API Endpoints installation should return information for an existing installation 1`] = `
+exports[`API Endpoints (skipped, wtf?!) repoSyncState should return the repoSyncState information for an existing installation 1`] = `""`;
+
+exports[`API Endpoints (skipped, wtf?!) sync should reset repoSyncState if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+
+exports[`API Endpoints (skipped, wtf?!) sync should return 404 if no installation is found 1`] = `"Not Found"`;
+
+exports[`API Endpoints (skipped, wtf?!) sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+
+exports[`API Endpoints (skipped, wtf?!) sync should trigger the sync or start function 2`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+
+exports[`API Endpoints (skipped, wtf?!) undo and complete - nonprod should not migrate an installation 1`] = `"Error trying to complete migration: TypeError: Cannot read property 'devinfo' of undefined"`;
+
+exports[`API Endpoints (skipped, wtf?!) undo and complete - nonprod should not migrate an installation 2`] = `[MockFunction]`;
+
+exports[`API Endpoints (skipped, wtf?!) undo and complete - nonprod should not undo a migration 1`] = `"Error trying to undo migration: TypeError: Cannot read property 'devinfo' of undefined"`;
+
+exports[`API Endpoints (skipped, wtf?!) undo and complete - nonprod should not undo a migration 2`] = `[MockFunction]`;
+
+exports[`API Endpoints (skipped, wtf?!) undo and complete - prod should return 404 if no installation is found 1`] = `"Not Found"`;
+
+exports[`API Endpoints (skipped, wtf?!) installation should return 404 if no installation is found 1`] = `Object {}`;
+
+exports[`API Endpoints (skipped, wtf?!) installation should return information for an existing installation 1`] = `
 Object {
   "connections": Array [
     Object {
@@ -72,27 +94,5 @@ Object {
   "repoSyncState": "http://127.0.0.1/api/1234/repoSyncState.json",
 }
 `;
-
-exports[`API Endpoints repoSyncState should return 404 if no installation is found 1`] = `Object {}`;
-
-exports[`API Endpoints repoSyncState should return the repoSyncState information for an existing installation 1`] = `""`;
-
-exports[`API Endpoints sync should reset repoSyncState if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
-
-exports[`API Endpoints sync should return 404 if no installation is found 1`] = `"Not Found"`;
-
-exports[`API Endpoints sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
-
-exports[`API Endpoints sync should trigger the sync or start function 2`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
-
-exports[`API Endpoints undo and complete - nonprod should not migrate an installation 1`] = `"Error trying to complete migration: TypeError: Cannot read property 'devinfo' of undefined"`;
-
-exports[`API Endpoints undo and complete - nonprod should not migrate an installation 2`] = `[MockFunction]`;
-
-exports[`API Endpoints undo and complete - nonprod should not undo a migration 1`] = `"Error trying to undo migration: TypeError: Cannot read property 'devinfo' of undefined"`;
-
-exports[`API Endpoints undo and complete - nonprod should not undo a migration 2`] = `[MockFunction]`;
-
-exports[`API Endpoints undo and complete - prod should return 404 if no installation is found 1`] = `"Not Found"`;
 
 exports[`API Endpoints verify should return 'Installation already enabled' 1`] = `"Verification successful"`;
