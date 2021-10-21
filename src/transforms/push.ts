@@ -5,11 +5,14 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Application, GitHubAPI } from "probot";
 import { Job, JobOptions } from "bull";
 import { getJiraAuthor } from "../util/jira";
-import {emitWebhookFailedMetrics, emitWebhookProcessedMetrics} from "../util/webhooks";
+import {
+	emitWebhookFailedMetrics,
+	emitWebhookProcessedMetrics,
+} from "../util/webhooks";
 import { JiraCommit } from "../interfaces/jira";
 import _ from "lodash";
 import { queues } from "../worker/queues";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 // TODO: define better types for this file
 
@@ -52,7 +55,7 @@ export function createJobData(payload, jiraHost: string) {
 		owner,
 	};
 
-	const shas: { id: string, issueKeys: string[] }[] = [];
+	const shas: { id: string; issueKeys: string[] }[] = [];
 	for (const commit of payload.commits) {
 		const issueKeys = issueKeyParser().parse(commit.message) || [];
 
@@ -98,89 +101,93 @@ export function processPushJob(app: Application) {
 	};
 }
 
-export const processPush = async (github: GitHubAPI, payload, rootLogger: LoggerWithTarget) => {
+export const processPush = async (
+	github: GitHubAPI,
+	payload,
+	rootLogger: LoggerWithTarget
+) => {
+	const {
+		repository,
+		repository: { owner, name: repo },
+		shas,
+		installationId,
+		jiraHost,
+	} = payload;
+
+	const webhookId = payload.webhookId || "none";
+	const webhookReceived = payload.webhookReceived || undefined;
+
+	const log = rootLogger.child({
+		name: PUSH_LOGGER_NAME, // overriding even though it is provided worker; webserver processed the webhooks synchronously, too
+		webhookId: webhookId,
+		repoName: repo,
+		orgName: owner.name,
+		webhookReceived,
+	});
+
+	log.info({ installationId }, "Processing push");
+
+	const subscription = await Subscription.getSingleInstallation(
+		jiraHost,
+		installationId
+	);
+
+	if (!subscription) return;
+
+	const jiraClient = await getJiraClient(
+		subscription.jiraHost,
+		installationId,
+		log
+	);
+
+	const commits: JiraCommit[] = await Promise.all(
+		shas.map(async (sha): Promise<JiraCommit> => {
+			const {
+				data,
+				data: { commit: githubCommit },
+			} = await github.repos.getCommit({
+				owner: owner.login,
+				repo,
+				ref: sha.id,
+			});
+
+			const { files, author, parents, sha: commitSha, html_url } = data;
+
+			const { author: githubCommitAuthor, message } = githubCommit;
+
+			// Jira only accepts a max of 10 files for each commit, so don't send all of them
+			const filesToSend = files.slice(0, 10);
+
+			// merge commits will have 2 or more parents, depending how many are in the sequence
+			const isMergeCommit = parents?.length > 1;
+
+			return {
+				hash: commitSha,
+				message,
+				author: getJiraAuthor(author, githubCommitAuthor),
+				authorTimestamp: githubCommitAuthor.date,
+				displayId: commitSha.substring(0, 6),
+				fileCount: files.length, // Send the total count for all files
+				files: filesToSend.map((file) =>
+					mapFile(file, repo, owner.name, sha.id)
+				),
+				id: commitSha,
+				issueKeys: sha.issueKeys,
+				url: html_url,
+				updateSequenceId: Date.now(),
+				flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined,
+			};
+		})
+	);
+
+	// Jira accepts up to 400 commits per request
+	// break the array up into chunks of 400
+	const chunks: JiraCommit[][] = [];
+	while (commits.length) {
+		chunks.push(commits.splice(0, 400));
+	}
+
 	try {
-		const {
-			repository,
-			repository: { owner, name: repo },
-			shas,
-			installationId,
-			jiraHost,
-		} = payload;
-
-		const webhookId = payload.webhookId || "none";
-		const webhookReceived = payload.webhookReceived || undefined;
-
-		const log = rootLogger.child({
-			name: PUSH_LOGGER_NAME, // overriding even though it is provided worker; webserver processed the webhooks synchronously, too
-			webhookId: webhookId,
-			repoName: repo,
-			orgName: owner.name,
-			webhookReceived,
-		});
-
-		log.info({ installationId }, "Processing push");
-
-		const subscription = await Subscription.getSingleInstallation(
-			jiraHost,
-			installationId
-		);
-
-		if (!subscription) return;
-
-		const jiraClient = await getJiraClient(
-			subscription.jiraHost,
-			installationId,
-			log
-		);
-
-		const commits: JiraCommit[] = await Promise.all(
-			shas.map(async (sha): Promise<JiraCommit> => {
-				const {
-					data,
-					data: { commit: githubCommit },
-				} = await github.repos.getCommit({
-					owner: owner.login,
-					repo,
-					ref: sha.id,
-				});
-
-				const { files, author, parents, sha: commitSha, html_url } = data;
-
-				const { author: githubCommitAuthor, message } = githubCommit;
-
-				// Jira only accepts a max of 10 files for each commit, so don't send all of them
-				const filesToSend = files.slice(0, 10);
-
-				// merge commits will have 2 or more parents, depending how many are in the sequence
-				const isMergeCommit = parents?.length > 1;
-
-				return {
-					hash: commitSha,
-					message,
-					author: getJiraAuthor(author, githubCommitAuthor),
-					authorTimestamp: githubCommitAuthor.date,
-					displayId: commitSha.substring(0, 6),
-					fileCount: files.length, // Send the total count for all files
-					files: filesToSend.map((file) =>
-						mapFile(file, repo, owner.name, sha.id)
-					),
-					id: commitSha,
-					issueKeys: sha.issueKeys,
-					url: html_url,
-					updateSequenceId: Date.now(),
-					flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined,
-				};
-			})
-		);
-
-		// Jira accepts up to 400 commits per request
-		// break the array up into chunks of 400
-		const chunks: JiraCommit[][] = [];
-		while (commits.length) {
-			chunks.push(commits.splice(0, 400));
-		}
-
 		for (const chunk of chunks) {
 			const jiraPayload = {
 				name: repository.name,
@@ -194,12 +201,13 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 				jiraPayload
 			);
 
-			webhookReceived && emitWebhookProcessedMetrics(
-				webhookReceived,
-				"push",
-				log,
-				jiraResponse?.status
-			);
+			webhookReceived &&
+				emitWebhookProcessedMetrics(
+					webhookReceived,
+					"push",
+					log,
+					jiraResponse?.status
+				);
 		}
 	} catch (error) {
 		rootLogger.error(error, "Failed to process push");
