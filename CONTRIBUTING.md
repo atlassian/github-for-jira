@@ -90,8 +90,6 @@ If you want to debug, you can connect to the remote port of 9229 for the main th
 For tests, run `npm test`.
 If you want to run a different tunneling tool, run `docker-compose up app` instead as it will only bring up the app and its dependencies (redis & postgres).  You can then run you tunnelling tool to point to `http://app:8080`.
 
-If aws cli returns an error, please run `aws configure` and provide some fake data (region is us-east1) to make it working with localstack.
-
 ### Installing the App
 
 Go to your Jira instance that you created earlier and do the following steps:
