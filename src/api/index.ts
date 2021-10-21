@@ -388,23 +388,18 @@ router.post(
 		const { installationId } = req.params;
 		const installation = await Installation.findByPk(installationId);
 
+		const isValid = await verifyInstallation(installation, req.log)();
 		const respondWith = (message) =>
 			response.json({
 				message,
 				installation: {
-					enabled: installation.enabled,
+					enabled: isValid,
 					id: installation.id,
 					jiraHost: installation.jiraHost
 				}
 			});
-
-		if (installation.enabled) {
-			respondWith("Installation already enabled");
-			return;
-		}
-		await verifyInstallation(installation, req.log)();
 		respondWith(
-			installation.enabled ? "Verification successful" : "Verification failed"
+			isValid ? "Verification successful" : "Verification failed"
 		);
 	}
 );
