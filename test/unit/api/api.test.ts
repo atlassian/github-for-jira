@@ -8,8 +8,10 @@ import { mockModels } from "../../utils/models";
 import api from "../../../src/api";
 import { EnvironmentEnum } from "../../../src/interfaces/common";
 import { getLogger } from "../../../src/config/logger";
+import getAxiosInstance from "../../../src/jira/client/axios";
 
 jest.mock("../../../src/models");
+jest.mock("../../../src/jira/client/axios");
 
 describe("API", () => {
 	let app: Application;
@@ -173,7 +175,44 @@ describe("API", () => {
 		});
 	});
 
-	describe.skip("Endpoints", () => {
+	describe('Endpoints', () => {
+		function mockJiraResponse(status: number) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			mocked(getAxiosInstance).mockReturnValue({
+				"get": () => Promise.resolve<any>({
+					status
+				})
+			});
+		}
+
+		describe("verify", () => {
+			beforeEach(() => {
+				mockJiraResponse(200);
+				mocked(Installation.findByPk).mockResolvedValue(
+					mockModels.Installation.findByPk
+				);
+			});
+
+			it("should return 'Installation already enabled'", () => {
+				githubNock
+					.post("/graphql")
+					.reply(200, successfulAuthResponseAdmin);
+
+				return supertest(app)
+					.post(`/api/jira/${installationId}/verify`)
+					.set("Authorization", "Bearer xxx")
+					.expect(200)
+					.expect("Content-Type", /json/)
+					.then((response) => {
+						expect(response.body.message).toMatchSnapshot();
+						expect(response.body.installation.enabled).toBeTruthy();
+					});
+			});
+		});
+	});
+
+	describe.skip("Endpoints (skipped, wtf?!)", () => {
 		beforeEach(() => {
 			githubNock
 				.post("/graphql")
@@ -287,23 +326,6 @@ describe("API", () => {
 						expect(response.text).toMatchSnapshot();
 						// td.verify(Subscription.findOrStartSync(subscription, "full"));
 					});
-			});
-		});
-
-		describe("verify", () => {
-			beforeEach(() => {
-				mocked(Installation.findByPk).mockResolvedValue(
-					mockModels.Installation.findByPk
-				);
-			});
-
-			it("should return 'Installation already enabled'", () => {
-				return supertest(app)
-					.post(`/api/jira/${installationId}/verify`)
-					.set("Authorization", "Bearer xxx")
-					.expect(200)
-					.expect("Content-Type", /json/)
-					.then((response) => expect(response.body.message).toMatchSnapshot());
 			});
 		});
 

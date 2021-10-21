@@ -41,7 +41,7 @@
     "db:test": "run-s db:create:test db:migrate:test",
     "prepare": "husky install",
     "precommit": "run-p lint build",
-		"sqs": "run-s sqs:create:test",
+    "sqs": "run-s sqs:create:test",
     "sqs:create:test": "aws --debug --endpoint-url=http://127.0.0.1:9602 sqs create-queue --queue-name test"
   },
   "dependencies": {
