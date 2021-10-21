@@ -39,11 +39,13 @@ jobs:
         ports:
           - "6379:6379"
       localstack:
-        image: localstack/localstack:0.8.7
+        image: localstack/localstack
         env:
-          SERVICES: "sqs:9602"
+          SERVICES: "sqs"
         ports:
-          - "9602:9602"
+          - "4566:4566"
+        volumes:
+          - ./.localstack:/docker-entrypoint-initaws.d
 
     steps:
       - uses: actions/checkout@v1
@@ -58,7 +60,6 @@ jobs:
       - run: npm run db:test
       - name: Run tests
         env:
-          NODE_ENV: test
           REDISX_CACHE_HOST: localhost
           REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
           DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test

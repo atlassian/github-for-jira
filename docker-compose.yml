@@ -22,11 +22,15 @@ services:
 
   localstack:
     container_name: localstack
-    image: localstack/localstack:0.8.7
+    image: localstack/localstack
     environment:
-      - SERVICES=sqs:9602
+      - DEFAULT_REGION=us-west-1
+      - SERVICES=sqs
+      - DEBUG=1 # Uncomment to debug SQS
     ports:
-      - 9602:9602
+      - "4566:4566"
+    volumes:
+      - ./.localstack:/docker-entrypoint-initaws.d
 
   app:
     depends_on:

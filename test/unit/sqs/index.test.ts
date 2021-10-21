@@ -1,13 +1,9 @@
-import {SqsQueue, Context} from "../../../src/sqs";
+import { Context, SqsQueue } from "../../../src/sqs";
+import { v4 as uuidv4 } from "uuid";
+import envVars from "../../../src/config/env";
 import DoneCallback = jest.DoneCallback;
-import {v4 as uuidv4} from "uuid";
 
-
-const TEST_QUEUE_URL = "http://localhost:9602/queue/test"
-const TEST_QUEUE_REGION = "us-west-1"
-const TEST_QUEUE_NAME = "test"
-
-type TestMessage = {msg: string}
+type TestMessage = { msg: string }
 
 function delay(time) {
 	return new Promise(resolve => setTimeout(resolve, time));
@@ -17,146 +13,92 @@ function delay(time) {
 /* eslint-disable jest/no-done-callback */
 describe("SqsQueue tests", () => {
 
+	let listening: Promise<unknown>;
 	const mockRequestHandler = {
 		handle: jest.fn()
-	}
+	};
 
-	const generatePayload = () : TestMessage => ({ msg: uuidv4()})
+	const generatePayload = (): TestMessage => ({ msg: uuidv4() });
 
-	const createSqsQueue = () => {
-		return new SqsQueue({queueName: TEST_QUEUE_NAME,
-			queueUrl: TEST_QUEUE_URL,
-			queueRegion: TEST_QUEUE_REGION,
-			longPollingIntervalSec: 0},
-		mockRequestHandler);
-	}
-
-	let queue : SqsQueue<TestMessage>;
+	let queue: SqsQueue<TestMessage>;
 
 	beforeEach(() => {
-		queue = createSqsQueue()
-		queue.start();
-	})
+		queue = new SqsQueue({
+			queueUrl: envVars.PROCESS_QUEUE_URL,
+			longPollingIntervalSec: 0
+		}, mockRequestHandler);
+		listening = queue.start();
+	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		queue.stop();
-		delay(100)
-	})
+		await listening;
+	});
 
-	test("Message gets received", (done:DoneCallback) => {
-
+	test("Message gets received", (done: DoneCallback) => {
 		const testPayload = generatePayload();
-
 		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
 			expect(context.payload).toStrictEqual(testPayload);
 			done();
-		})
+		});
 		queue.sendMessage(testPayload);
 	});
 
 
-	test("Queue is restartable", (done:DoneCallback) => {
-
+	test("Queue is restartable", (done: DoneCallback) => {
 		const testPayload = generatePayload();
-
 		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
 			expect(context.payload).toStrictEqual(testPayload);
 			done();
-		})
+		});
 
 		queue.stop();
-
-		//delaying to make sure all asynchronous invocations inside the queue will be finished and it will stop
-		delay(10)
-
-		queue.start();
-
 		queue.sendMessage(testPayload);
+		queue.start();
 	});
 
-	test("Message received with delay", (done:DoneCallback) => {
-
-		const testPayload = { msg: "Hi4"};
-		const receivedTime = {time: new Date().getTime()}
-
+	test("Message received with delay", (done: DoneCallback) => {
+		const testPayload = { msg: "Hi4" };
+		const startTime = Date.now();
 		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
-			try {
-				context.log.info("hi");
-				const currentTime = new Date().getTime();
-				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
-				done();
-			} catch (err) {
-				done(err)
-			}
-		})
+			context.log.info("hi");
+			expect(Date.now() - startTime).toBeGreaterThanOrEqual(1000);
+			done();
+		});
 		queue.sendMessage(testPayload, 1);
 	});
 
-	test("Message gets executed exactly once", (done:DoneCallback) => {
-
+	test("Message gets executed exactly once", (done: DoneCallback) => {
 		const testPayload = generatePayload();
-		const testData : {messageId: undefined | string} = {messageId: undefined}
 
-		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
-
-			try {
-				expect(context.payload).toStrictEqual(testPayload);
-
-				if(!testData.messageId) {
-					testData.messageId = context.message.MessageId
-				} else if (testData.messageId === context.message.MessageId){
-					done.fail("Message was received more than once")
-				} else {
-					done.fail("Different message on the tests queue")
-				}
-
-			} catch (err) {
-				done(err)
-			}
-		})
+		mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
+			expect(context.payload).toStrictEqual(testPayload);
+			const result = await queue.receiveMessage();
+			expect(result.Messages).toBeFalsy();
+			done();
+		});
 		queue.sendMessage(testPayload);
-
-		//code before the pause
-		setTimeout(function(){
-			if(testData.messageId) {
-				done();
-			} else {
-				done.fail("No message was received")
-			}
-		}, 3000);
-
 	});
 
 
 	//TODO Add tests for parallel processing when it will be implemented, set concurrency level to 1 for this test
-	test("Messages are not processed in parallel", async (done:DoneCallback) => {
+	test("Messages are not processed in parallel", (done: DoneCallback) => {
 
 		const testPayload = generatePayload();
-		const receivedTime = {time: new Date().getTime(), counter: 0}
+		const startTime = Date.now();
+		let counter = 0;
+		const delayTime = 200;
 
-		mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
-			try {
-
-				if(receivedTime.counter == 0) {
-					receivedTime.counter++
-					context.log.info("Delaying the message")
-					await delay(1000)
-					context.log.info("Message processed after delay")
-					return
-				}
-
-				const currentTime = new Date().getTime();
-				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
-				done();
-			} catch (err) {
-				done(err)
+		mockRequestHandler.handle.mockImplementation(async () => {
+			if (counter == 0) {
+				counter++;
+				await delay(delayTime);
+				return;
 			}
-		})
-		await queue.sendMessage(testPayload);
-		await delay(100)
+			expect(Date.now() - startTime).toBeGreaterThanOrEqual(delayTime);
+			done();
+		});
+		queue.sendMessage(testPayload);
 		queue.sendMessage(testPayload);
 	});
-
-
-
 });

@@ -10,7 +10,7 @@ const call = async () => {
 	]);
 
 	const response = results.find((value?: AxiosResponse) => value?.status === 200) as AxiosResponse;
-	return response ? response : Promise.reject();
+	return response || Promise.reject();
 };
 
 // Check to see if ngrok is up and running
