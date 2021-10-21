@@ -12,11 +12,6 @@ export const mockModels = {
 			id: 1234,
 			jiraHost: process.env.ATLASSIAN_URL
 		} as any,
-		getPendingHost: {
-			jiraHost: process.env.ATLASSIAN_URL,
-			sharedSecret: process.env.ATLASSIAN_SECRET,
-			enabled: false
-		} as any,
 		install: {
 			id: 1234,
 			jiraHost: process.env.ATLASSIAN_URL,

@@ -2,7 +2,7 @@
 
 exports[`Test getting a jira client Installation exists 1`] = `
 Object {
-  "baseURL": "https://base-url.atlassian.net",
+  "baseURL": "https://test-atlassian-instance.net",
   "deployment": Object {
     "submit": [Function],
   },
