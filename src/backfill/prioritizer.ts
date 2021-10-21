@@ -21,11 +21,11 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 	getStepProcessor(_: Step<JobId>, jobState: JobState): StepProcessor<JobState> | null | undefined {
 
 		if (Prioritizer.hasWaitingPullrequests(jobState.repository)) {
-			return new PullRequestProcessor(this);
+			return new PullRequestProcessor();
 		} else if (Prioritizer.hasWaitingBranches(jobState.repository)) {
-			return new BranchProcessor(this);
+			return new BranchProcessor();
 		} else if (Prioritizer.hasWaitingCommits(jobState.repository)) {
-			return new CommitProcessor(this);
+			return new CommitProcessor();
 		} else {
 			// The job is done.
 			return undefined;
