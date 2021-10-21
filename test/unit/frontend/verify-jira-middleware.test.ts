@@ -11,7 +11,7 @@ jest.mock("../../../src/config/feature-flags");
 
 describe("#verifyJiraMiddleware", () => {
 	let res;
-	const next = jest.fn();
+	let next;
 	let installation;
 	let subscription;
 	const testSharedSecret = "test-secret";
@@ -22,6 +22,7 @@ describe("#verifyJiraMiddleware", () => {
 			status: jest.fn(),
 			json: jest.fn()
 		};
+		next = jest.fn();
 
 		res.status.mockReturnValue(res)
 		res.json.mockReturnValue(res)

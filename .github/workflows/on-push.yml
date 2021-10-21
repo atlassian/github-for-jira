@@ -27,6 +27,9 @@ jobs:
         image: postgres
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
         ports:
           - "5432:5432"
         # needed because the postgres container does not provide a healthcheck
@@ -37,8 +40,10 @@ jobs:
           - "6379:6379"
       localstack:
         image: localstack/localstack:0.8.7
+        env:
+          SERVICES: "sqs:9602"
         ports:
-          - 9602:9602
+          - "9602:9602"
 
     steps:
       - uses: actions/checkout@v1
@@ -57,6 +62,10 @@ jobs:
           REDISX_CACHE_HOST: localhost
           REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
           DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
         run: npm test
 
   docker:

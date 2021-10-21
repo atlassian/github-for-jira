@@ -242,20 +242,26 @@ router.post(
 router.post(
 	"/dedupInstallationQueue",
 	bodyParser,
-	async (_: Request, res: Response): Promise<void> => {
+	async (req: Request, res: Response): Promise<void> => {
 
-		// This remove all jobs from the queue. This way,
-		// the whole queue will be drained and all jobs will be readded.
+		const limit = req.body?.limit || 10000;
 		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
 		const foundJobIds = new Set<string>();
 		const duplicateJobs: Job[] = [];
 
 		// collecting duplicate jobs per installation
 		for (const job of jobs) {
+
+			// we only want to deduplicate a certain number of jobs
+			if (duplicateJobs.length >= limit) {
+				break;
+			}
+
 			// getJobs() sometimes seems to include a "null" job in the array
 			if (!job) {
 				continue;
 			}
+
 			if (foundJobIds.has(`${job.data.installationId}${job.data.jiraHost}`)) {
 				duplicateJobs.push(job);
 			} else {

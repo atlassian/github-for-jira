@@ -27,7 +27,7 @@ describe("SqsQueue tests", () => {
 		return new SqsQueue({queueName: TEST_QUEUE_NAME,
 			queueUrl: TEST_QUEUE_URL,
 			queueRegion: TEST_QUEUE_REGION,
-			longPollingInterval: 0},
+			longPollingIntervalSec: 0},
 		mockRequestHandler);
 	}
 
@@ -35,11 +35,12 @@ describe("SqsQueue tests", () => {
 
 	beforeEach(() => {
 		queue = createSqsQueue()
-		queue.listen();
+		queue.start();
 	})
 
 	afterEach(() => {
 		queue.stop();
+		delay(100)
 	})
 
 	test("Message gets received", (done:DoneCallback) => {
@@ -53,6 +54,25 @@ describe("SqsQueue tests", () => {
 		queue.sendMessage(testPayload);
 	});
 
+
+	test("Queue is restartable", (done:DoneCallback) => {
+
+		const testPayload = generatePayload();
+
+		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
+			expect(context.payload).toStrictEqual(testPayload);
+			done();
+		})
+
+		queue.stop();
+
+		//delaying to make sure all asynchronous invocations inside the queue will be finished and it will stop
+		delay(10)
+
+		queue.start();
+
+		queue.sendMessage(testPayload);
+	});
 
 	test("Message received with delay", (done:DoneCallback) => {
 
@@ -108,8 +128,7 @@ describe("SqsQueue tests", () => {
 	});
 
 
-	//TODO Add tests for parallel processing when it will be enabled.
-	//Set concurrency level to 1 when concurrency will be added
+	//TODO Add tests for parallel processing when it will be implemented, set concurrency level to 1 for this test
 	test("Messages are not processed in parallel", async (done:DoneCallback) => {
 
 		const testPayload = generatePayload();
@@ -133,7 +152,7 @@ describe("SqsQueue tests", () => {
 				done(err)
 			}
 		})
-		queue.sendMessage(testPayload);
+		await queue.sendMessage(testPayload);
 		await delay(100)
 		queue.sendMessage(testPayload);
 	});

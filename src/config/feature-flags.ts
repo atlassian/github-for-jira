@@ -20,8 +20,9 @@ export enum BooleanFlags {
 	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files",
 	CONTINUE_SYNC_ON_ERROR = "continue-sync-on-error",
 	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
-	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
 	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
+	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
+	NEW_SETUP_PAGE = "new-setup-page",
 	PROPAGATE_REQUEST_ID = "propagate-request-id"
 }
 
@@ -38,6 +39,7 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 
 	const hash = crypto.createHash("sha1");
 	hash.update(jiraHost);
+
 	return {
 		key: hash.digest("hex")
 	};
