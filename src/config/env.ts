@@ -40,6 +40,8 @@ export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,
 	MICROS_ENV: EnvironmentEnum;
 	MICROS_SERVICE_VERSION?: string,
+	SQS_BACKFILL_QUEUE_REGION: string,
+	SQS_BACKFILL_QUEUE_URL: string,
 
 	APP_ID: string;
 	APP_URL: string;
