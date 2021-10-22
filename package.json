@@ -25,7 +25,7 @@
     "lint": "run-p lint:*",
     "lint:ts": "eslint . --ext .ts,.tsx",
     "lint:yaml": "yamllint github-for-jira.sd.yml",
-    "pretest": "run-p db:test sqs:create:test",
+    "pretest": "run-p db:test sqs",
     "test": "jest --runInBand --forceExit --coverage",
     "test:watch": "jest --runInBand --watchAll",
     "db": "run-s db:create db:migrate",
@@ -41,8 +41,9 @@
     "db:test": "run-s db:create:test db:migrate:test",
     "prepare": "husky install",
     "precommit": "run-p lint build",
-		"sqs": "run-s sqs:create:test",
-    "sqs:create:test": "aws --debug --endpoint-url=http://127.0.0.1:9602 sqs create-queue --queue-name test"
+		"sqs": "run-s sqs:create:test sqs:create:backfill",
+    "sqs:create:test": "aws --endpoint-url=http://127.0.0.1:9602 sqs create-queue --queue-name test",
+		"sqs:create:backfill": "aws --endpoint-url=http://127.0.0.1:9602 sqs create-queue --queue-name backfill"
   },
   "dependencies": {
     "@atlaskit/css-reset": "^2.0.5",
