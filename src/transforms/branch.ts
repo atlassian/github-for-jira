@@ -29,7 +29,8 @@ async function getLastCommit(context: Context, issueKeys: string[]) {
 		};
 
 	} catch (err) {
-		context.log.error({ err }, "Failed to get ref or commit from GitHub.")
+		context.log.error({ err }, "Failed to get ref or commit from GitHub.");
+		return;
 	}
 }
 
