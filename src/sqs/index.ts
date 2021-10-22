@@ -35,7 +35,7 @@ export type QueueSettings = {
 
 	readonly queueRegion: string,
 
-	readonly longPollingIntervalSec?: number
+	readonly longPollingIntervalSec?: number,
 
 	//TODO Add batching
 
@@ -211,15 +211,15 @@ export class SqsQueue<MessagePayload> {
 
 	async handleSqsResponse(data: ReceiveMessageResult) {
 		if (!data.Messages) {
-			this.log.debug("Nothing to process");
+			this.log.trace("Nothing to process");
 			return;
 		}
 
-		this.log.debug("Processing messages batch")
+		this.log.trace("Processing messages batch")
 		await Promise.all(data.Messages.map(async message => {
 			await this.executeMessage(message)
 		}))
-		this.log.debug("Messages batch processed")
+		this.log.trace("Messages batch processed")
 	}
 
 }
