@@ -7,25 +7,30 @@ import _ from "lodash";
 async function getLastCommit(context: Context, issueKeys: string[]) {
 	const { github, payload: { ref } } = context;
 
-	const {
-		data: { object: { sha } }
-	} = await github.git.getRef(context.repo({ ref: `heads/${ref}` }));
-	const {
-		data: { commit, author, html_url: url }
-	} = await github.repos.getCommit(context.repo({ ref: sha }));
+	try {
+		const {
+			data: { object: { sha } }
+		} = await github.git.getRef(context.repo({ ref: `heads/${ref}` }));
+		const {
+			data: { commit, author, html_url: url }
+		} = await github.repos.getCommit(context.repo({ ref: sha }));
 
-	return {
-		author: getJiraAuthor(author, commit.author),
-		authorTimestamp: commit.author.date,
-		displayId: sha.substring(0, 6),
-		fileCount: 0,
-		hash: sha,
-		id: sha,
-		issueKeys,
-		message: commit.message,
-		url,
-		updateSequenceId: Date.now()
-	};
+		return {
+			author: getJiraAuthor(author, commit.author),
+			authorTimestamp: commit.author.date,
+			displayId: sha.substring(0, 6),
+			fileCount: 0,
+			hash: sha,
+			id: sha,
+			issueKeys,
+			message: commit.message,
+			url,
+			updateSequenceId: Date.now()
+		};
+
+	} catch (err) {
+		context.log.error({ err }, "Failed to get ref or commit from GitHub.")
+	}
 }
 
 // TODO: type this payload better
@@ -40,24 +45,30 @@ export default async (context: Context) => {
 		return undefined;
 	}
 
-	const lastCommit = await getLastCommit(context, issueKeys);
+	try {
+		const lastCommit = await getLastCommit(context, issueKeys);
 
-	// TODO: type this return
-	return {
-		id: repository.id,
-		name: repository.full_name,
-		url: repository.html_url,
-		branches: [
-			{
-				createPullRequestUrl: `${repository.html_url}/pull/new/${ref}`,
-				lastCommit,
-				id: getJiraId(ref),
-				issueKeys,
-				name: ref,
-				url: `${repository.html_url}/tree/${ref}`,
-				updateSequenceId: Date.now()
-			}
-		],
-		updateSequenceId: Date.now()
-	};
+		// TODO: type this return
+		return {
+			id: repository.id,
+			name: repository.full_name,
+			url: repository.html_url,
+			branches: [
+				{
+					createPullRequestUrl: `${repository.html_url}/pull/new/${ref}`,
+					lastCommit,
+					id: getJiraId(ref),
+					issueKeys,
+					name: ref,
+					url: `${repository.html_url}/tree/${ref}`,
+					updateSequenceId: Date.now()
+				}
+			],
+			updateSequenceId: Date.now()
+		};
+
+	} catch (err) {
+		context.log.error({ err, repositoryName: repository.full_name }, "Failed to get last commit.");
+		return;
+	}
 };

@@ -223,7 +223,7 @@ async function getJiraClient(
 						product: data.product
 					}
 				};
-				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
+				logger?.debug(`Sending builds payload to jira. Payload: ${JSON.stringify(payload)}`);
 				logger?.info("Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
 			}
