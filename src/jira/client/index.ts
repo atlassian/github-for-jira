@@ -7,7 +7,6 @@ import Logger from "bunyan";
 import issueKeyParser from "jira-issue-key-parser";
 import { JiraCommit, JiraIssue } from "../../interfaces/jira";
 import { getLogger } from "../../config/logger";
-import { getTruncatedIssuekeys } from "../../util/get-truncated-issuekeys";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -182,12 +181,9 @@ async function getJiraClient(
 						!withinIssueKeyLimit(data.commits) ||
 						!withinIssueKeyLimit(data.branches)
 					) {
-						const commitExcessKeys = getTruncatedIssuekeys(data.commits);
-						const branchExcessKeys = getTruncatedIssuekeys(data.branches);
 						logger.warn({
-							commits: data.commits.slice(ISSUE_KEY_API_LIMIT),
-							branches: data.branches.slice(ISSUE_KEY_API_LIMIT),
-							commitExcessKeys, branchExcessKeys
+							truncatedCommits: getTruncatedIssuekeys(data.commits),
+							truncatedBranches: getTruncatedIssuekeys(data.branches)
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
@@ -211,8 +207,9 @@ async function getJiraClient(
 			submit: async (data) => {
 				updateIssueKeysFor(data.builds, dedup);
 				if (!withinIssueKeyLimit(data.builds)) {
-					const excessKeys = getTruncatedIssuekeys(data.builds);
-					logger.warn({ builds: data.builds.slice(ISSUE_KEY_API_LIMIT), excessKeys }, issueKeyLimitWarning);
+					logger.warn({
+						truncatedBuilds: getTruncatedIssuekeys(data.builds)
+					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.builds, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
@@ -235,8 +232,9 @@ async function getJiraClient(
 			submit: async (data): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, dedup);
 				if (!withinIssueKeyLimit(data.deployments)) {
-					const excessKeys = getTruncatedIssuekeys(data.deployments);
-					logger.warn({ deployments: data.deployments.slice(ISSUE_KEY_API_LIMIT), excessKeys }, issueKeyLimitWarning);
+					logger.warn({
+						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
+					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.deployments, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
@@ -339,6 +337,23 @@ const dedupIssueKeys = (repositoryObj) => {
 const truncateIssueKeys = (repositoryObj) => {
 	updateRepositoryIssueKeys(repositoryObj, truncate);
 };
+
+interface IssueKeyObject {
+	issueKeys?: string[]
+}
+
+export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
+	data.reduce((acc:IssueKeyObject[], value:IssueKeyObject) => {
+		// Filter out anything that doesn't have issue keys or are not over the limit
+		if(value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
+			// Create copy of object and add the issue keys that are truncated
+			acc.push({
+				...value,
+				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
+			});
+		}
+		return acc;
+	}, []);
 
 /**
  * Runs a mutating function on all branches and commits

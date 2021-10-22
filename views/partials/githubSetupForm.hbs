@@ -1,0 +1,52 @@
+<form
+  class="githubSetup__form aui"
+  method="post"
+  action="/github/setup"
+  id="jira-instance-form"
+>
+  <input type="hidden" name="_csrf" value="{{csrfToken}}" />
+
+  <div class="githubSetup__form__fieldGroup">
+    <label class="githubSetup__inputLabel" for="{{id}}">
+			What is your Jira Cloud site?
+		</label>
+    <div class="githubSetup__form__inputContainer">
+      <input
+        class="githubSetup__form__input"
+        type="text"
+        id="{{id}}"
+        name="{{id}}"
+        placeholder="Site name"
+        aria-label="Jira site"
+        value="{{jiraDomain}}"
+        autofocus
+      />
+      <span class="githubSetup__form__jiraSiteSuffix">
+        .atlassian.net
+      </span>
+    </div>
+  </div>
+
+  {{> githubSetupFormError errorMessage="Do not include http or https in the site name" hiddenClass="hidden" }}
+
+  {{#if error}}
+     {{> githubSetupFormError errorMessage=error hiddenClass="" }}
+  {{/if}}
+
+  <div class="githubSetup__form__modalButtons">
+    {{#if (isModal id)}}
+      <p class="githubSetup__form__cancelBtn" id="modal-close">
+        Cancel
+      </p>
+    {{/if}}
+    <button
+      class="githubSetup__form__submitBtn aui-button aui-button-primary"
+      type="submit"
+      id="{{id}}SubmitBtn"
+      aria-disabled="true"
+      disabled
+    >
+      Continue
+    </button>
+  </div>
+</form>
