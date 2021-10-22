@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - run: docker-compose up app -d
+      - run: docker-compose up -d app
       - uses: volta-cli/action@v1
       - name: Cache node_modules
         id: cache-primes

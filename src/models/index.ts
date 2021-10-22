@@ -23,7 +23,6 @@ InstallationModel.init(
 			type: DataTypes.STRING,
 			allowNull: false
 		},
-		enabled: Sequelize.BOOLEAN
 	},
 	{ sequelize }
 );

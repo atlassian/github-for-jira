@@ -12,6 +12,7 @@ const requiredEnvVars = [
 	"GITHUB_CLIENT_SECRET",
 	"ATLASSIAN_SECRET",
 	"BACKFILL_QUEUE_URL",
+	"PUSH_QUEUE_URL",
 	"MICROS_AWS_REGION",
 ];
 
@@ -29,9 +30,8 @@ if (env.error && nodeEnv !== EnvironmentEnum.production) {
 
 // TODO: Use whitelist proxy instead
 const getProxyFromEnvironment = (): string | undefined => {
-	const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
-	const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
-	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
+	const proxy = process.env.WHITELIST_PROXY;
+	return proxy ? `http://${proxy}` : undefined;
 };
 
 // TODO: Make envvars dynamic
@@ -72,6 +72,7 @@ export interface EnvVars {
 	ATLASSIAN_URL: string;
 	WEBHOOK_PROXY_URL: string;
 	BACKFILL_QUEUE_URL: string;
+	PUSH_QUEUE_URL: string;
 	MICROS_AWS_REGION: string;
 	TUNNEL_PORT?: string;
 	TUNNEL_SUBDOMAIN?: string;
