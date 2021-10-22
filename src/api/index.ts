@@ -73,13 +73,6 @@ router.use(rateLimit({
 
 router.use(logMiddleware);
 
-router.get(
-	"/testPoco",
-	(_: Request, res: Response): void => {
-		res.sendStatus(200);
-	}
-);
-
 // All routes require a PAT to belong to someone on staff
 // This middleware will take the token and make a request to GraphQL
 // to see if it belongs to someone on staff
@@ -472,7 +465,7 @@ router.delete(
 	check("jiraHost").isString(),
 	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
-		const githubInstallationId = Number(req.params.installationId);
+		const githubInstallationId = req.params.installationId;
 		const jiraHost = req.params.jiraHost;
 
 		if (!jiraHost || !githubInstallationId) {
@@ -482,19 +475,22 @@ router.delete(
 			return;
 		}
 
-		const jiraClient = await getJiraClient(jiraHost, githubInstallationId, req.log);
+		const subscription = await Subscription.getSingleInstallation(
+			jiraHost,
+			Number(githubInstallationId)
+		);
+
+		if (!subscription) {
+			req.log.info("no subscription");
+			res.sendStatus(404);
+			return;
+		}
 
 		try {
-			const checkIfExistsResponse = await jiraClient.devinfo.installation.exists(githubInstallationId.toString());
-			if(checkIfExistsResponse?.data.hasDataMatchingProperties){
-				console.log("installation exists")
-			}
-			else{
-				console.log("didnt find installation")
-			}
-
-			// req.log.info(`Deleting dev info for jiraHost: $1 githubInstallationId: $2`, jiraHost, githubInstallationId);
-			// await jiraClient.devinfo.installation.delete(githubInstallationId);
+			const jiraClient = await getJiraClient(jiraHost, Number(githubInstallationId), req.log);
+			req.log.info(`Deleting dev info for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
+			await jiraClient.devinfo.installation.delete(githubInstallationId);
+			res.status(200).send(`devinfo deleted for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
 		} catch (err) {
 			res.status(500).json(err);
 		}
