@@ -4,7 +4,7 @@ import envVars from "../../../src/config/env";
 import DoneCallback = jest.DoneCallback;
 
 
-const TEST_QUEUE_URL = envVars.BACKFILL_QUEUE_URL;
+const TEST_QUEUE_URL = envVars.SQS_BACKFILL_QUEUE_URL;
 const TEST_QUEUE_REGION = envVars.MICROS_AWS_REGION;
 const TEST_QUEUE_NAME = "test";
 

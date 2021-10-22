@@ -11,8 +11,8 @@ const requiredEnvVars = [
 	"GITHUB_CLIENT_ID",
 	"GITHUB_CLIENT_SECRET",
 	"ATLASSIAN_SECRET",
-	"BACKFILL_QUEUE_URL",
-	"PUSH_QUEUE_URL",
+	"SQS_BACKFILL_QUEUE_URL",
+	"SQS_PUSH_QUEUE_URL",
 	"MICROS_AWS_REGION",
 ];
 
@@ -57,7 +57,9 @@ export default envVars;
 export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,
 	MICROS_ENV: EnvironmentEnum;
-	MICROS_SERVICE_VERSION?: string,
+	MICROS_SERVICE_VERSION?: string;
+	SQS_BACKFILL_QUEUE_URL: string;
+	SQS_PUSH_QUEUE_URL: string;
 
 	APP_ID: string;
 	APP_URL: string;
@@ -71,8 +73,6 @@ export interface EnvVars {
 	PRIVATE_KEY_PATH: string;
 	ATLASSIAN_URL: string;
 	WEBHOOK_PROXY_URL: string;
-	BACKFILL_QUEUE_URL: string;
-	PUSH_QUEUE_URL: string;
 	MICROS_AWS_REGION: string;
 	TUNNEL_PORT?: string;
 	TUNNEL_SUBDOMAIN?: string;
