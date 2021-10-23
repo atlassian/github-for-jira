@@ -46,16 +46,6 @@ afterEach(() => {
 });
 
 afterEach(() => {
-	try {
-		// eslint-disable-next-line jest/no-standalone-expect
-		expect(nock).toBeDone();
-	} finally {
-		nock.cleanAll(); // removes HTTP mocks
-		jest.resetAllMocks(); // Removes jest mocks
-	}
-});
-
-afterEach(() => {
 	nock.cleanAll(); // removes HTTP mocks
 	jest.resetAllMocks(); // Removes jest mocks
 });

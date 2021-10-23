@@ -4,6 +4,8 @@ import { LogLevelString } from "bunyan";
 import { getNodeEnv, isNodeTest } from "../util/isNodeEnv";
 import { EnvironmentEnum } from "../interfaces/common";
 
+const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
+
 const requiredEnvVars = [
 	"APP_ID",
 	"APP_URL",
@@ -12,11 +14,11 @@ const requiredEnvVars = [
 	"GITHUB_CLIENT_SECRET",
 	"ATLASSIAN_SECRET",
 	"SQS_BACKFILL_QUEUE_URL",
+	"SQS_BACKFILL_QUEUE_REGION",
 	"SQS_PUSH_QUEUE_URL",
+	"SQS_PUSH_QUEUE_REGION",
 	"MICROS_AWS_REGION",
 ];
-
-const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 
 const filename = isNodeTest() ? ".env.test" : ".env";
 const env = dotenv.config({
@@ -37,7 +39,6 @@ const getProxyFromEnvironment = (): string | undefined => {
 // TODO: Make envvars dynamic
 const envVars: EnvVars = {
 	...process.env,
-	...env.parsed,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
 	NODE_ENV: nodeEnv,
@@ -59,7 +60,9 @@ export interface EnvVars {
 	MICROS_ENV: EnvironmentEnum;
 	MICROS_SERVICE_VERSION?: string;
 	SQS_BACKFILL_QUEUE_URL: string;
+	SQS_BACKFILL_QUEUE_REGION: string;
 	SQS_PUSH_QUEUE_URL: string;
+	SQS_PUSH_QUEUE_REGION: string;
 
 	APP_ID: string;
 	APP_URL: string;
