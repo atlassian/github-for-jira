@@ -4,7 +4,6 @@ import * as fs from "fs";
 import * as path from "path";
 
 const envFilePath = path.resolve(__dirname, ".env");
-let envContents = fs.readFileSync(envFilePath, { encoding: "utf-8" });
 
 const callTunnel = async () => {
 	const results = await Promise.all([
@@ -28,14 +27,18 @@ const waitForTunnel = async () => {
 		.catch(callTunnel)
 		.catch(() => undefined);
 	if (response) {
-		const tunnel = response.data.tunnels.find(tunnel => tunnel.public_url.startsWith("https"));
-		const ngrokDomain = tunnel.public_url;
-		console.info(`ngrok forwarding ${ngrokDomain} to ${tunnel.config.addr}`);
-
-		envContents = envContents.replace(/APP_URL=.*/, `APP_URL=${ngrokDomain}`);
-		envContents = envContents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/events`);
-		fs.writeFileSync(envFilePath, envContents);
-		console.info(`Updated .env file to use ngrok domain ${ngrokDomain}.`);
+		try {
+			let envContents = fs.readFileSync(envFilePath, { encoding: "utf-8" });
+			const tunnel = response.data.tunnels.find(tunnel => tunnel.public_url.startsWith("https"));
+			const ngrokDomain = tunnel.public_url;
+			console.info(`ngrok forwarding ${ngrokDomain} to ${tunnel.config.addr}`);
+			envContents = envContents.replace(/APP_URL=.*/, `APP_URL=${ngrokDomain}`);
+			envContents = envContents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/events`);
+			fs.writeFileSync(envFilePath, envContents);
+			console.info(`Updated .env file to use ngrok domain ${ngrokDomain}.`);
+		} catch (e) {
+			console.info(`'${envFilePath}' not found, skipping...`);
+		}
 	} else {
 		console.info("Ngrok not running, skipping updating .env file.");
 	}
@@ -49,7 +52,7 @@ const callQueues = async () => {
 	if (URLs.length) {
 		const url = new URL(URLs[0]);
 		const response = await axios.get(`${url.protocol}//${url.host}/health`, { responseType: "json" });
-		if(response.data?.services?.sqs !== "running") {
+		if (response.data?.services?.sqs !== "running") {
 			console.info("localstack not initialized.");
 			return Promise.reject();
 		}
