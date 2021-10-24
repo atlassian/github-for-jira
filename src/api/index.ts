@@ -242,20 +242,26 @@ router.post(
 router.post(
 	"/dedupInstallationQueue",
 	bodyParser,
-	async (_: Request, res: Response): Promise<void> => {
+	async (req: Request, res: Response): Promise<void> => {
 
-		// This remove all jobs from the queue. This way,
-		// the whole queue will be drained and all jobs will be readded.
+		const limit = req.body?.limit || 10000;
 		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
 		const foundJobIds = new Set<string>();
 		const duplicateJobs: Job[] = [];
 
 		// collecting duplicate jobs per installation
 		for (const job of jobs) {
+
+			// we only want to deduplicate a certain number of jobs
+			if (duplicateJobs.length >= limit) {
+				break;
+			}
+
 			// getJobs() sometimes seems to include a "null" job in the array
 			if (!job) {
 				continue;
 			}
+
 			if (foundJobIds.has(`${job.data.installationId}${job.data.jiraHost}`)) {
 				duplicateJobs.push(job);
 			} else {
@@ -382,23 +388,18 @@ router.post(
 		const { installationId } = req.params;
 		const installation = await Installation.findByPk(installationId);
 
+		const isValid = await verifyInstallation(installation, req.log)();
 		const respondWith = (message) =>
 			response.json({
 				message,
 				installation: {
-					enabled: installation.enabled,
+					enabled: isValid,
 					id: installation.id,
 					jiraHost: installation.jiraHost
 				}
 			});
-
-		if (installation.enabled) {
-			respondWith("Installation already enabled");
-			return;
-		}
-		await verifyInstallation(installation, req.log)();
 		respondWith(
-			installation.enabled ? "Verification successful" : "Verification failed"
+			isValid ? "Verification successful" : "Verification failed"
 		);
 	}
 );

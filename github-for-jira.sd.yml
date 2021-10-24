@@ -63,6 +63,15 @@ resources:
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
 
+  - type: sqs
+    name: backfill
+    attributes:
+      MaxReceiveCount: 3
+      MessageRetentionPeriod: 1209600
+      dataType:
+        - UGC/Label                # name of GitHub org
+        - PII/IndirectConfidential # name of GitHub org
+
   - name: rds
     type: dedicated-rds
     attributes:
@@ -133,7 +142,6 @@ alarms:
       Period: 120
       ComparisonOperator: GreaterThanThreshold
       Statistic: Average
-    HighSeverityAlarmWhenTooManyBackend5xxErrors: null
     HighSeverityAlarmWhenTooManyELB5xxErrors: null
     LowSeverityAlarmWhenTooManyBackend5xxErrors: null
     LowSeverityAlarmWhenTooManyELB5xxErrors: null
@@ -146,6 +154,9 @@ config:
     PORT: "8080"
     CONCURRENT_WORKERS: "40"
     PG_DATABASE_BOUNCER: pgbouncer
+    GIT_COMMIT_SHA: ${GIT_COMMIT_SHA}
+    GIT_COMMIT_DATE: ${GIT_COMMIT_DATE}
+    GIT_BRANCH_NAME: ${GIT_BRANCH_NAME}
     # These secret environment variables need to be stashed with "atlas micros stash" for each environment:
     # GITHUB_CLIENT_SECRET: GitHub app's client secret
     # PRIVATE_KEY: contents of your (*.pem) generated in the GitHub app
@@ -202,13 +213,12 @@ environmentOverrides:
         LatencyHigh: null
         HealthyHostCount: null
         UnHealthyHostCount: null
-        LowSeverityAlarmWhenTooManyELB5xxErrors: null
-        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
         WebServerAlarmWhenLowCPUCredits: null
         WebServerDiskSpaceUtilizationAlarmHigh: null
         WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
         WebServerMemoryAlarmHigh: null
         WebServerServiceRespawnAlarm: null
+        HighSeverityAlarmWhenTooManyBackend5xxErrors: null
 
   staging:
     config:
@@ -264,9 +274,6 @@ environmentOverrides:
               ReturnData: false
     alarms:
       overrides:
-        LowSeverityAlarmWhenTooManyELB5xxErrors: null
-        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
-        HighSeverityAlarmWhenTooManyELB5xxErrors: null
         HighSeverityAlarmWhenTooManyBackend5xxErrors: null
         ElbResponseTimeAlert:
           Namespace: AWS/ApplicationELB
@@ -345,9 +352,6 @@ environmentOverrides:
           Period: 60
           ComparisonOperator: GreaterThanThreshold
           Statistic: Average
-        LowSeverityAlarmWhenTooManyELB5xxErrors: null
-        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
-        HighSeverityAlarmWhenTooManyELB5xxErrors: null
         HighSeverityAlarmWhenTooManyBackend5xxErrors:
           MetricName: HTTPCode_Target_5XX_Count
           Namespace: AWS/ApplicationELB

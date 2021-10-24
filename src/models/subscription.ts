@@ -3,7 +3,8 @@ import { Job } from "bull";
 import _ from "lodash";
 import logger from "../config/logger";
 import { queues } from "../worker/queues";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import sqsQueues from "../sqs/queues";
 import RepoSyncState from "./reposyncstate";
 
 export enum SyncStatus {
@@ -186,11 +187,21 @@ export default class Subscription extends Sequelize.Model {
 		});
 	}
 
+	static async startNewSyncProcess(subscription: Subscription) {
+		//TODO Add a sync start logic
+		await sqsQueues.backfill.sendMessage({ gitHubInstallationId: subscription.gitHubInstallationId,
+			jiraHost: subscription.jiraHost });
+	}
+
 	static async findOrStartSync(
 		subscription: Subscription,
 		syncType?: string
 	): Promise<Job> {
 		const { gitHubInstallationId: installationId, jiraHost } = subscription;
+
+		if(await booleanFlag(BooleanFlags.NEW_BACKFILL_PROCESS_ENABLED, false, subscription.jiraHost)) {
+			await this.startNewSyncProcess(subscription);
+		}
 
 		// If repo sync state is empty
 		// start a sync job from scratch
