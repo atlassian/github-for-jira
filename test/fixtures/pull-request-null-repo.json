@@ -2,14 +2,7 @@
   "name": "pull_request",
   "payload": {
     "action": "closed",
-    "repository": {
-      "name": "test-repo-name",
-      "full_name": "example/test-repo-name",
-      "html_url": "test-repo-url",
-      "owner": {
-        "login": "test-repo-owner"
-      }
-    },
+    "repository": null,
     "pull_request": {
       "id": "test-pull-request-id",
       "number": 1,
