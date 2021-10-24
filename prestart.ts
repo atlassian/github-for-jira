@@ -2,6 +2,7 @@ import envVars from "./src/config/env";
 import axios, { AxiosResponse } from "axios";
 import * as fs from "fs";
 import * as path from "path";
+import { isNodeDev } from "./src/util/isNodeEnv";
 
 const envFilePath = path.resolve(__dirname, ".env");
 
@@ -21,6 +22,12 @@ const wait = async (time = 0) => {
 };
 
 const waitForTunnel = async () => {
+	// Does .env exist?
+	if (isNodeDev() && !fs.existsSync(envFilePath)) {
+		console.error(`.env file doesn't exist. Please create it following the steps in the CONTRIBUTING.md file.`);
+		process.exit(1);
+	}
+
 	// Call the service 3 times until ready
 	const response = await callTunnel()
 		.catch(callTunnel)
@@ -87,12 +94,6 @@ const waitForQueues = async () => {
 
 // Check to see if ngrok is up and running
 (async function main() {
-
-	// Does .env exist?
-	if (!fs.existsSync(envFilePath)) {
-		console.error(`.env file doesn't exist. Please create it following the steps in the CONTRIBUTING.md file.`);
-		process.exit(1);
-	}
 
 	try {
 		await Promise.all([
