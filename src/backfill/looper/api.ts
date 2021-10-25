@@ -165,9 +165,7 @@ export class CappedDelayRateLimitStrategy implements RateLimitStrategy {
 
 	constructor(maxDelayInSeconds: number, now?: () => Date) {
 		this.maxDelayInSeconds = maxDelayInSeconds;
-		this.now = now
-			? now
-			: () => new Date()
+		this.now = now || (() => new Date());
 	}
 
 	public getDelayInSeconds(rateLimitState?: RateLimitState): number {
