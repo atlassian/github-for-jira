@@ -25,6 +25,7 @@ import { Job } from "bull";
 import { listenForClusterCommand } from "./services/cluster/listen-command";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import Timeout = NodeJS.Timeout;
+import sqsQueues from "./sqs/queues";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const logger = getLogger("worker");
@@ -148,6 +149,9 @@ async function start() {
 		commonMiddleware(processPushJob(app), PUSH_LOGGER_NAME)
 	);
 	queues.metrics.process(1, commonMiddleware(metricsJob, METRICS_LOGGER_NAME));
+
+	sqsQueues.start()
+
 	running = true;
 }
 
@@ -170,6 +174,9 @@ async function stop() {
 		queues.push.close(),
 		queues.metrics.close()
 	]);
+
+	sqsQueues.stop();
+
 	running = false;
 }
 

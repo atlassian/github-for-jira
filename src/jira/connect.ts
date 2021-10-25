@@ -29,9 +29,7 @@ export default async (_: Request, res: Response): Promise<void> => {
 			baseUrl: envVars.APP_URL,
 			lifecycle: {
 				installed: "/jira/events/installed",
-				uninstalled: "/jira/events/uninstalled",
-				enabled: "/jira/events/enabled",
-				disabled: "/jira/events/disabled"
+				uninstalled: "/jira/events/uninstalled"
 			},
 			vendor: {
 				name: "Atlassian",

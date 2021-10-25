@@ -63,6 +63,15 @@ resources:
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
 
+  - type: sqs
+    name: backfill
+    attributes:
+      MaxReceiveCount: 3
+      MessageRetentionPeriod: 1209600
+      dataType:
+        - UGC/Label                # name of GitHub org
+        - PII/IndirectConfidential # name of GitHub org
+
   - name: rds
     type: dedicated-rds
     attributes:
