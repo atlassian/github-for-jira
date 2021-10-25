@@ -53,8 +53,26 @@ export interface MessageHandler<MessagePayload> {
 	handle(context: Context<MessagePayload>): Promise<void>;
 }
 
-type ListenerStatus = {
+type ListenerContext = {
+	/**
+	 * Indicates if this listener should stop processing messages.
+	 *
+	 * If it is "true" the listener won't take new messages for processing, however, it might
+	 * still be finishing with the current message.
+	 */
 	stopped: boolean;
+	/**
+	 * Indicates if this listener stopped processing messages.
+	 *
+	 * If it is "false" that mean that the listener was stopped and it is done with its last
+	 * message.
+	 */
+	listenerRunning: boolean;
+
+	/**
+	 * Logger which contains listener debug parameters
+	 */
+	log: Logger;
 }
 
 /**
@@ -71,7 +89,10 @@ export class SqsQueue<MessagePayload> {
 	readonly sqs: SQS;
 	readonly log: Logger;
 
-	listenerStatus: ListenerStatus;
+	/**
+	 * Context of the currently active listener, or the last active if the queue stopped
+	 */
+	listenerContext: ListenerContext;
 
 	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>) {
 		this.queueUrl = settings.queueUrl;
@@ -101,21 +122,23 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	/**
-	 * Starts listening to the queue
+	 * Starts listening to the queue, times out in 1 minute
 	 */
 	public start() {
 
-		if(this.listenerStatus && !this.listenerStatus.stopped) {
+		//This checks if the previous listener was stopped or never created. However it could be that the
+		//previous listener is stopped, but still processing its last message
+		if(this.listenerContext && !this.listenerContext.stopped) {
 			this.log.error("Queue is already running")
 			return;
 		}
-		this.log.info({queueUrl: this.queueUrl,
+
+		//Every time we start a listener we create a separate ListenerContext object. There can be more than 1 listeners
+		//running at the same time, if the previous listener still processing its last message
+		this.listenerContext = {stopped: false, log: this.log.child({sqsListenerId: uuidv4()}), listenerRunning: true}
+		this.listenerContext.log.info({queueUrl: this.queueUrl,
 			queueRegion: this.queueRegion, longPollingInterval: this.longPollingIntervalSec},"Starting the queue")
-		//Every time we start a listener we create a separate ListenerStatus object,
-		//This is to make sure that we won't have 2 listeners running at the same time when we restart the listener.
-		//Hence the old one can still be processing messages on the moment `start()' been called.
-		this.listenerStatus = {stopped: false}
-		this.listen(this.listenerStatus)
+		this.listen(this.listenerContext)
 	}
 
 
@@ -123,26 +146,54 @@ export class SqsQueue<MessagePayload> {
 	 * Stops reading messages from the queue. When stopped it can't be resumed.
 	 */
 	public stop() {
-		if(!this.listenerStatus || this.listenerStatus.stopped) {
+		if(!this.listenerContext || this.listenerContext.stopped) {
 			this.log.error("Queue is already stopped")
 			return;
 		}
-		this.log.info("Stopping the queue");
-		this.listenerStatus.stopped = true;
+		this.listenerContext.log.info("Stopping the queue");
+		this.listenerContext.stopped = true;
 	}
+
+
+	/**
+	 * Function which is used for testing. Awaits until the currently stopped listener finished with
+	 * processing its last message
+	 */
+	public async waitUntilListenerStopped() {
+		const listenerContext = this.listenerContext;
+
+		if(!listenerContext.stopped) {
+			throw new Error("Listener is not stopped, nothing to await")
+		}
+
+		return new Promise<void>((resolve, reject) => {
+			const startTime = Date.now();
+			function checkFlag() {
+				if (!listenerContext.listenerRunning) {
+					listenerContext.log.info("Awaited listener stop");
+					resolve();
+				} else if (Date.now() - startTime > 60000) {
+					reject("Listener didn't stop in 1 minute");
+				} else {
+					setTimeout(checkFlag, 10);
+				}
+			}
+			checkFlag();
+		});
+	}
+
 	/**
 	 * Starts listening to the queue asynchronously
 	 *
-	 * @param listenerStatus The object holding a status of this listener. We are keeping it on a function level, because
-	 * the next time we call "start" we'll create a new state and override this.listenerStatus with a status for the new listener.
-	 * It is to make sure that if we restart the queue, we won't get
-	 * 2 listeners running if the old listener didn't finish before "start" being called
-	 * (listener can be waiting for the message being processed, or for an sqs message)
+	 * @param listenerContext The object holding a status of this listener. This object keeps parameters specific to the
+	 * particular queue listener. These parameters are not kept on SqsQueue level, hence there might be more than 1 listener
+	 * running at the same time
 	 *
 	 */
-	private async listen(listenerStatus: ListenerStatus) {
-		if(listenerStatus.stopped) {
-			this.log.info("Queue has been stopped. Not processing further messages.");
+	private async listen(listenerContext: ListenerContext) {
+		if(listenerContext.stopped) {
+			listenerContext.listenerRunning = false;
+			listenerContext.log.info("Queue has been stopped. Not processing further messages.");
 			return
 		}
 
@@ -157,13 +208,13 @@ export class SqsQueue<MessagePayload> {
 		await this.sqs.receiveMessage(params)
 			.promise()
 			.then(async result => {
-				await this.handleSqsResponse(result)
+				await this.handleSqsResponse(result, listenerContext)
 			})
 			.catch((err) => {
-				this.log.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
+				listenerContext.log.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
 			})
 			.finally( () =>
-				this.listen(listenerStatus)
+				this.listen(listenerContext)
 			);
 	}
 
@@ -191,10 +242,12 @@ export class SqsQueue<MessagePayload> {
 		}
 	}
 
-	private async executeMessage(message: Message): Promise<void> {
+	private async executeMessage(message: Message, listenerContext: ListenerContext): Promise<void> {
 		const payload = message.Body ? JSON.parse(message.Body) : {};
 
-		const log = logger.child({id: message.MessageId, executionId: uuidv4(), queue: this.queueName})
+		const log = listenerContext.log.child({id: message.MessageId,
+			executionId: uuidv4(),
+			queue: this.queueName})
 
 		const context: Context<MessagePayload> = {message, payload, log }
 
@@ -209,17 +262,17 @@ export class SqsQueue<MessagePayload> {
 		}
 	}
 
-	async handleSqsResponse(data: ReceiveMessageResult) {
+	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: ListenerContext) {
 		if (!data.Messages) {
-			this.log.trace("Nothing to process");
+			listenerContext.log.trace("Nothing to process");
 			return;
 		}
 
-		this.log.trace("Processing messages batch")
+		listenerContext.log.trace("Processing messages batch")
 		await Promise.all(data.Messages.map(async message => {
-			await this.executeMessage(message)
+			await this.executeMessage(message, listenerContext)
 		}))
-		this.log.trace("Messages batch processed")
+		listenerContext.log.trace("Messages batch processed")
 	}
 
 }
