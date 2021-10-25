@@ -207,8 +207,7 @@ export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Resp
 
 		const publicKey = await queryAtlassianConnectPublicKey(getKeyId(token), isStagingTenant(req));
 
-		let unverifiedClaims: any = undefined
-		unverifiedClaims = decodeAsymmetricToken(token, publicKey, true)
+		const unverifiedClaims = decodeAsymmetricToken(token, publicKey, true)
 
 		const issuer = unverifiedClaims.iss;
 		if (!issuer) {
