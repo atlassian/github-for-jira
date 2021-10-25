@@ -6,6 +6,20 @@ import { EnvironmentEnum } from "../interfaces/common";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 
+const requiredEnvVars = [
+	"APP_ID",
+	"APP_URL",
+	"WEBHOOK_SECRET",
+	"GITHUB_CLIENT_ID",
+	"GITHUB_CLIENT_SECRET",
+	"ATLASSIAN_SECRET",
+	"SQS_BACKFILL_QUEUE_URL",
+	"SQS_BACKFILL_QUEUE_REGION",
+	"SQS_PUSH_QUEUE_URL",
+	"SQS_PUSH_QUEUE_REGION",
+	"MICROS_AWS_REGION",
+];
+
 const filename = isNodeTest() ? ".env.test" : ".env";
 const env = dotenv.config({
 	path: path.resolve(process.cwd(), filename)
@@ -25,23 +39,30 @@ const getProxyFromEnvironment = (): string | undefined => {
 // TODO: Make envvars dynamic
 const envVars: EnvVars = {
 	...process.env,
-	...env.parsed,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
-	PROXY: getProxyFromEnvironment(),
+	PROXY: getProxyFromEnvironment()
 } as EnvVars;
+
+// Check to see if all required environment variables are set
+const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
+if (missingVars.length) {
+	throw new Error(`Missing required Environment Variables: ${missingVars.join(", ")}`);
+}
 
 export default envVars;
 
 export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,
 	MICROS_ENV: EnvironmentEnum;
-	MICROS_SERVICE_VERSION?: string,
-	SQS_BACKFILL_QUEUE_REGION: string,
-	SQS_BACKFILL_QUEUE_URL: string,
+	MICROS_SERVICE_VERSION?: string;
+	SQS_BACKFILL_QUEUE_URL: string;
+	SQS_BACKFILL_QUEUE_REGION: string;
+	SQS_PUSH_QUEUE_URL: string;
+	SQS_PUSH_QUEUE_REGION: string;
 
 	APP_ID: string;
 	APP_URL: string;
@@ -55,6 +76,7 @@ export interface EnvVars {
 	PRIVATE_KEY_PATH: string;
 	ATLASSIAN_URL: string;
 	WEBHOOK_PROXY_URL: string;
+	MICROS_AWS_REGION: string;
 	TUNNEL_PORT?: string;
 	TUNNEL_SUBDOMAIN?: string;
 	LOG_LEVEL?: LogLevelString;
@@ -67,7 +89,7 @@ export interface EnvVars {
 	GIT_BRANCH_NAME: string;
 
 	// Micros Lifecycle Env Vars
-	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?:string;
-	SNS_NOTIFICATION_LIFECYCLE_QUEUE_NAME?:string;
-	SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION?:string;
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_NAME?: string;
+	SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION?: string;
 }

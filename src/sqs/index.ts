@@ -66,7 +66,7 @@ export class SqsQueue<MessagePayload> {
 	readonly queueUrl: string;
 	readonly queueName: string;
 	readonly queueRegion: string;
-  readonly longPollingIntervalSec: number;
+	readonly longPollingIntervalSec: number;
 	readonly messageHandler: MessageHandler<MessagePayload>
 	readonly sqs: SQS;
 	readonly log: Logger;
