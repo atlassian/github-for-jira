@@ -113,7 +113,7 @@ export class SqsQueue<MessagePayload> {
 		}
 		//Every time we start a listener we create a separate ListenerContext object,
 		//This is to make sure that there won't be 2 `listen` functions running and sharing the same context
-		this.listenerContext = {stopped: false, log: this.log.child({listenerId: uuidv4()}), listenerRunning: true}
+		this.listenerContext = {stopped: false, log: this.log.child({sqsListenerId: uuidv4()}), listenerRunning: true}
 		this.listenerContext.log.info({queueUrl: this.queueUrl,
 			queueRegion: this.queueRegion, longPollingInterval: this.longPollingIntervalSec},"Starting the queue")
 		this.listen(this.listenerContext)
