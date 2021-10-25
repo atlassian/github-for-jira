@@ -5,7 +5,7 @@
     "repository": null,
     "pull_request": {
       "id": "test-pull-request-id",
-      "number": 1,
+      "number": "test-pull-request-number",
       "state": "open",
       "title": "[TEST-123] Test pull request.",
       "comments": "test-pull-request-comment-count",

@@ -6,7 +6,6 @@ import { caching } from "cache-manager";
 import { setupApp } from "../../src/configure-robot";
 
 export const createApplication = () => new Application({
-	githubToken: "test",
 	app: new App({
 		id: 12257,
 		privateKey: findPrivateKey() || ""
