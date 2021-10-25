@@ -64,7 +64,7 @@ type ListenerContext = {
 	/**
 	 * Indicates if this listener stopped processing messages.
 	 *
-	 * If it is "false" that mean that the listener was stopped and it is done with the current
+	 * If it is "false" that mean that the listener was stopped and it is done with its last
 	 * message.
 	 */
 	listenerRunning: boolean;
@@ -133,8 +133,8 @@ export class SqsQueue<MessagePayload> {
 			return;
 		}
 
-		//Every time we start a listener we create a separate ListenerContext object. There can be more than 1 listener
-		// running at the same time, if the previous listener still processing its last message
+		//Every time we start a listener we create a separate ListenerContext object. There can be more than 1 listeners
+		//running at the same time, if the previous listener still processing its last message
 		this.listenerContext = {stopped: false, log: this.log.child({sqsListenerId: uuidv4()}), listenerRunning: true}
 		this.listenerContext.log.info({queueUrl: this.queueUrl,
 			queueRegion: this.queueRegion, longPollingInterval: this.longPollingIntervalSec},"Starting the queue")
