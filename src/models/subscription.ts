@@ -3,7 +3,7 @@ import { Job } from "bull";
 import _ from "lodash";
 import logger from "../config/logger";
 import { queues } from "../worker/queues";
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import sqsQueues from "../sqs/queues";
 import RepoSyncState from "./reposyncstate";
 
@@ -189,8 +189,10 @@ export default class Subscription extends Sequelize.Model {
 
 	static async startNewSyncProcess(subscription: Subscription) {
 		//TODO Add a sync start logic
-		await sqsQueues.backfill.sendMessage({ gitHubInstallationId: subscription.gitHubInstallationId,
-			jiraHost: subscription.jiraHost });
+		await sqsQueues.backfill.sendMessage({
+			gitHubInstallationId: subscription.gitHubInstallationId,
+			jiraHost: subscription.jiraHost
+		});
 	}
 
 	static async findOrStartSync(
@@ -199,7 +201,7 @@ export default class Subscription extends Sequelize.Model {
 	): Promise<Job> {
 		const { gitHubInstallationId: installationId, jiraHost } = subscription;
 
-		if(await booleanFlag(BooleanFlags.NEW_BACKFILL_PROCESS_ENABLED, false, subscription.jiraHost)) {
+		if (await booleanFlag(BooleanFlags.NEW_BACKFILL_PROCESS_ENABLED, false, subscription.jiraHost)) {
 			await this.startNewSyncProcess(subscription);
 		}
 
@@ -261,7 +263,7 @@ export default class Subscription extends Sequelize.Model {
 
 		this.repoSyncState.numberOfSyncedRepos = value;
 		await this.sequelize.query(
-			"UPDATE \"Subscriptions\" SET \"updatedAt\" = NOW(), \"repoSyncState\" = jsonb_set(\"repoSyncState\", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id",
+			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id`,
 			{
 				replacements: {
 					cnt: value,
@@ -270,7 +272,7 @@ export default class Subscription extends Sequelize.Model {
 			}
 		);
 
-		if(await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, true)) {
+		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, true)) {
 			this.numberOfSyncedRepos = value;
 			await this.save();
 		}
@@ -288,7 +290,7 @@ export default class Subscription extends Sequelize.Model {
 		});
 
 		await this.sequelize.query(
-			"UPDATE \"Subscriptions\" SET \"updatedAt\" = NOW(), \"repoSyncState\" = jsonb_set(\"repoSyncState\", :path, :value, true) WHERE id = :id",
+			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", :path, :value, true) WHERE id = :id`,
 			{
 				replacements: {
 					path: `{repos,${repositoryId},${key}}`,

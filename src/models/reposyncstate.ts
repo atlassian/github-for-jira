@@ -1,5 +1,5 @@
 import Sequelize, { Op } from "sequelize";
-import Subscription, { RepositoryData, RepoSyncStateObject, SyncStatus, TaskStatus } from "./subscription";
+import Subscription, { RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
 
 export default class RepoSyncState extends Sequelize.Model {
 	id: number;
@@ -10,7 +10,6 @@ export default class RepoSyncState extends Sequelize.Model {
 	repoFullName: string;
 	repoUrl: string;
 	priority?: number;
-	status?: SyncStatus;
 	branchStatus?: TaskStatus;
 	commitStatus?: TaskStatus;
 	issueStatus?: TaskStatus;
@@ -108,7 +107,6 @@ export default class RepoSyncState extends Sequelize.Model {
 			this.commitCursor = repo.lastCommitCursor;
 			this.pullStatus = repo.pullStatus;
 			this.pullCursor = repo.lastPullCursor?.toString();
-			this.status = repo.branchStatus == "complete" && repo.commitStatus == "complete" && repo.pullStatus == "complete" ? SyncStatus.COMPLETE : SyncStatus.ACTIVE;
 		}
 		return this;
 	}

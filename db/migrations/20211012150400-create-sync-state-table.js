@@ -38,9 +38,6 @@ module.exports = {
 			priority: {
 				type: Sequelize.INTEGER
 			},
-			status: {
-				type: Sequelize.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED")
-			},
 			branchStatus: {
 				type: Sequelize.ENUM("pending", "complete", "failed")
 			},
