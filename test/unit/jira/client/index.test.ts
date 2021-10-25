@@ -16,7 +16,6 @@ describe("Test getting a jira client", () => {
 			sharedSecret: "shared-secret",
 			clientKey: "client-key"
 		});
-		await installation.enable();
 		subscription = await Subscription.create({
 			jiraHost: envVars.ATLASSIAN_URL,
 			gitHubInstallationId
@@ -34,8 +33,7 @@ describe("Test getting a jira client", () => {
 	});
 
 	it("Installation does not exist", async () => {
-		await installation.disable();
-		expect(await getJiraClient(envVars.ATLASSIAN_URL, gitHubInstallationId)).not.toBeDefined();
+		expect(await getJiraClient("https://non-existing-url.atlassian.net", gitHubInstallationId)).not.toBeDefined();
 	});
 
 	it("Should truncate issueKeys if over the limit", async () => {
