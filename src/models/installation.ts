@@ -19,6 +19,8 @@ export default class Installation extends Sequelize.Model {
 	secrets: string;
 	sharedSecret: string;
 	clientKey: string;
+	updatedAt: Date;
+	createdAt: Date;
 
 	static async getForClientKey(
 		clientKey: string

@@ -16,7 +16,7 @@ describe("Subscription", () => {
 	});
 
 	afterEach(async () => {
-		await sub.destroy();
+		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("updateSyncState", () => {
@@ -43,7 +43,15 @@ describe("Subscription", () => {
 			await sub.updateNumberOfSyncedRepos(3);
 
 			expect(sub.repoSyncState?.numberOfSyncedRepos).toStrictEqual(3);
-			expect((await Subscription.findOne()).repoSyncState.numberOfSyncedRepos).toStrictEqual(3);
+			await sub.reload();
+			expect(sub.repoSyncState?.numberOfSyncedRepos).toStrictEqual(3);
+		});
+
+		test("Should update the number of synced repos in column as well as JSON", async () => {
+			const num = 100;
+			await sub.updateNumberOfSyncedRepos(num);
+			expect(sub.repoSyncState?.numberOfSyncedRepos).toEqual(num);
+			expect(sub.numberOfSyncedRepos).toEqual(num);
 		});
 	});
 

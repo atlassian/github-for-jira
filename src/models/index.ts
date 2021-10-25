@@ -29,7 +29,9 @@ InstallationModel.init({
 		type: DataTypes.STRING,
 		allowNull: false
 	},
-	enabled: Sequelize.BOOLEAN
+	enabled: Sequelize.BOOLEAN,
+	createdAt: Sequelize.DATE,
+	updatedAt: Sequelize.DATE
 }, { sequelize });
 
 SubscriptionModel.init({
@@ -45,7 +47,9 @@ SubscriptionModel.init({
 	repoSyncState: DataTypes.JSONB,
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
-	jiraClientKey: DataTypes.STRING
+	jiraClientKey: DataTypes.STRING,
+	createdAt: Sequelize.DATE,
+	updatedAt: Sequelize.DATE
 }, { sequelize });
 
 RepoSyncStateModel.init({
@@ -63,12 +67,23 @@ RepoSyncStateModel.init({
 		type: Sequelize.INTEGER,
 		allowNull: false
 	},
-	repoName: Sequelize.STRING,
-	repoOwner: Sequelize.STRING,
-	repoFullName: Sequelize.STRING,
-	repoUrl: Sequelize.STRING,
+	repoName: {
+		type: Sequelize.STRING,
+		allowNull: false
+	},
+	repoOwner: {
+		type: Sequelize.STRING,
+		allowNull: false
+	},
+	repoFullName: {
+		type: Sequelize.STRING,
+		allowNull: false
+	},
+	repoUrl: {
+		type: Sequelize.STRING,
+		allowNull: false
+	},
 	priority: Sequelize.INTEGER,
-	status: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	branchStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	commitStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	issueStatus: DataTypes.ENUM("pending", "complete", "failed"),

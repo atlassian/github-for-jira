@@ -31,7 +31,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	updatedAt: Date;
 	createdAt: Date;
 
-	static async getAllReposForSubscription(subscription: Subscription): Promise<RepoSyncState[]> {
+	static async findAllFromSubscription(subscription: Subscription): Promise<RepoSyncState[]> {
 		return RepoSyncState.findAll({
 			where: {
 				subscriptionId: subscription.id
@@ -39,7 +39,7 @@ export default class RepoSyncState extends Sequelize.Model {
 		});
 	}
 
-	static async deleteAllStateFromSubscription(subscription: Subscription): Promise<number> {
+	static async deleteAllFromSubscription(subscription: Subscription): Promise<number> {
 		return RepoSyncState.destroy({
 			where: {
 				subscriptionId: subscription.id
@@ -47,21 +47,10 @@ export default class RepoSyncState extends Sequelize.Model {
 		});
 	}
 
-	static async updateFromJson(subscription: Subscription, json: RepoSyncStateObject): Promise<RepoSyncState[]> {
+	static async updateFromJson(subscription: Subscription, json: RepoSyncStateObject = {}): Promise<RepoSyncState[]> {
 		const repoIds = Object.keys(json.repos || {});
 
-		if (repoIds.length) {
-			// Delete all repos that's not in repoSyncState
-			await RepoSyncState.destroy({
-				where: {
-					subscriptionId: subscription.id,
-					repoId: {
-						[Op.notIn]: repoIds
-					}
-				}
-			});
-		}
-
+		// Get states that are already in DB
 		const states: RepoSyncState[] = await RepoSyncState.findAll({
 			where: {
 				subscriptionId: subscription.id,
@@ -72,15 +61,26 @@ export default class RepoSyncState extends Sequelize.Model {
 		});
 
 
-		return RepoSyncState.sequelize?.transaction(async (transaction) =>
-			Promise.all(
+		return RepoSyncState.sequelize?.transaction(async (transaction) =>{
+			// Delete all repos that's not in repoSyncState anymore
+			await RepoSyncState.destroy({
+				where: {
+					subscriptionId: subscription.id,
+					repoId: {
+						[Op.notIn]: repoIds
+					}
+				},
+				transaction
+			});
+
+			return Promise.all(
 				repoIds.map(id => {
 					const repo = json.repos?.[id];
 					const model = states.find(s => s.repoId === Number(id)) || RepoSyncState.buildFromRepoJson(subscription, repo);
 					return model?.setFromRepoJson(repo).save({ transaction });
 				})
 			)
-		);
+		});
 	}
 
 	static buildFromRepoJson(subscription: Subscription, repo?: RepositoryData): RepoSyncState | undefined {
@@ -92,7 +92,7 @@ export default class RepoSyncState extends Sequelize.Model {
 			repoId,
 			subscriptionId: subscription.id,
 			repoName: repo?.repository?.name,
-			repoOwner: repo?.repository?.owner,
+			repoOwner: repo?.repository?.owner?.login,
 			repoFullName: repo?.repository?.full_name,
 			repoUrl: repo?.repository?.html_url
 		});

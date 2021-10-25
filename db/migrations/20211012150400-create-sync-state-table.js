@@ -110,7 +110,6 @@ module.exports = {
 	down: async (queryInterface, Sequelize) => {
 		await queryInterface.removeIndex(tableName, indexName);
 		await queryInterface.dropTable(tableName);
-		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_status";`);
 		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_branchStatus";`);
 		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_commitStatus";`);
 		await queryInterface.sequelize.query(`DROP TYPE "enum_${tableName}_issueStatus";`);
