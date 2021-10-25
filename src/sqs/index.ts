@@ -55,6 +55,7 @@ export interface MessageHandler<MessagePayload> {
 
 type ListenerContext = {
 	stopped: boolean;
+	listenerRunning: boolean;
 	log: Logger;
 }
 
@@ -102,7 +103,7 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	/**
-	 * Starts listening to the queue
+	 * Starts listening to the queue, times out in 1 minute
 	 */
 	public start() {
 
@@ -110,11 +111,11 @@ export class SqsQueue<MessagePayload> {
 			this.log.error("Queue is already running")
 			return;
 		}
-		this.log.info({queueUrl: this.queueUrl,
-			queueRegion: this.queueRegion, longPollingInterval: this.longPollingIntervalSec},"Starting the queue")
 		//Every time we start a listener we create a separate ListenerContext object,
 		//This is to make sure that there won't be 2 `listen` functions running and sharing the same context
-		this.listenerContext = {stopped: false, log: this.log.child({listenerId: uuidv4()})}
+		this.listenerContext = {stopped: false, log: this.log.child({listenerId: uuidv4()}), listenerRunning: true}
+		this.listenerContext.log.info({queueUrl: this.queueUrl,
+			queueRegion: this.queueRegion, longPollingInterval: this.longPollingIntervalSec},"Starting the queue")
 		this.listen(this.listenerContext)
 	}
 
@@ -127,9 +128,37 @@ export class SqsQueue<MessagePayload> {
 			this.log.error("Queue is already stopped")
 			return;
 		}
-		this.log.info("Stopping the queue");
+		this.listenerContext.log.info("Stopping the queue");
 		this.listenerContext.stopped = true;
 	}
+
+
+	/**
+	 * Function which is used for testing. Awaits until the listener is stopped
+	 */
+	public async waitUntilListenerStopped() {
+		const listenerContext = this.listenerContext;
+
+		if(!listenerContext.stopped) {
+			throw new Error("Listener is not stopped, nothing to await")
+		}
+
+		return new Promise<void>((resolve, reject) => {
+			const startTime = Date.now();
+			function checkFlag() {
+				if (!listenerContext.listenerRunning) {
+					listenerContext.log.info("Awaited listener stop");
+					resolve();
+				} else if (Date.now() - startTime > 60000) {
+					reject("Listener didn't stop in 1 minute");
+				} else {
+					setTimeout(checkFlag, 10);
+				}
+			}
+			checkFlag();
+		});
+	}
+
 	/**
 	 * Starts listening to the queue asynchronously
 	 *
@@ -141,6 +170,7 @@ export class SqsQueue<MessagePayload> {
 	 */
 	private async listen(listenerContext: ListenerContext) {
 		if(listenerContext.stopped) {
+			listenerContext.listenerRunning = false;
 			listenerContext.log.info("Queue has been stopped. Not processing further messages.");
 			return
 		}

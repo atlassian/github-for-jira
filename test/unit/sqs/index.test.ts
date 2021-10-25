@@ -41,9 +41,9 @@ describe("SqsQueue tests", () => {
 		queue.start();
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		queue.stop();
-		delay(100);
+		await queue.waitUntilListenerStopped();
 	});
 
 	test("Message gets received", (done: DoneCallback) => {
@@ -58,7 +58,7 @@ describe("SqsQueue tests", () => {
 	});
 
 
-	test("Queue is restartable", (done: DoneCallback) => {
+	test("Queue is restartable", async (done: DoneCallback) => {
 
 		const testPayload = generatePayload();
 
@@ -70,7 +70,7 @@ describe("SqsQueue tests", () => {
 		queue.stop();
 
 		//delaying to make sure all asynchronous invocations inside the queue will be finished and it will stop
-		delay(10);
+		await queue.waitUntilListenerStopped();
 
 		queue.start();
 
@@ -156,7 +156,6 @@ describe("SqsQueue tests", () => {
 			}
 		});
 		await queue.sendMessage(testPayload);
-		await delay(100);
-		queue.sendMessage(testPayload);
+		await queue.sendMessage(testPayload);
 	});
 });
