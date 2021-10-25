@@ -19,7 +19,6 @@ export default class Installation extends Sequelize.Model {
 	secrets: string;
 	sharedSecret: string;
 	clientKey: string;
-	enabled: boolean;
 
 	static async getForClientKey(
 		clientKey: string
@@ -34,17 +33,7 @@ export default class Installation extends Sequelize.Model {
 	static async getForHost(host: string): Promise<Installation | null> {
 		return Installation.findOne({
 			where: {
-				jiraHost: host,
-				enabled: true
-			}
-		});
-	}
-
-	static async getPendingHost(jiraHost: string): Promise<Installation | null> {
-		return Installation.findOne({
-			where: {
-				jiraHost,
-				enabled: false
+				jiraHost: host
 			}
 		});
 	}
@@ -70,7 +59,6 @@ export default class Installation extends Sequelize.Model {
 			await installation
 				.update({
 					sharedSecret: payload.sharedSecret,
-					enabled: false,
 					jiraHost: payload.host
 				})
 				.then(async (record) => {
@@ -87,23 +75,7 @@ export default class Installation extends Sequelize.Model {
 				});
 		}
 
-		await installation.update({
-			enabled: false
-		});
-
 		return installation;
-	}
-
-	async enable(): Promise<void> {
-		await this.update({
-			enabled: true
-		});
-	}
-
-	async disable(): Promise<void> {
-		await this.update({
-			enabled: false
-		});
 	}
 
 	async uninstall(): Promise<void> {
