@@ -54,7 +54,6 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 				logger.warn({ req: request, err: error }, `Octokit error: failed request '${options.method} ${options.url}'`);
 			}
 			const elapsed = Date.now() - requestStart;
-			logger.info(responseStatus, "rate limiting logger test");
 			statsd.histogram(metricHttpRequest.github, elapsed, {
 				path: extractPath(options.url),
 				method: options.method,
