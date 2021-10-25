@@ -54,8 +54,24 @@ export interface MessageHandler<MessagePayload> {
 }
 
 type ListenerContext = {
+	/**
+	 * Indicates if this listener should stop processing messages.
+	 *
+	 * If it is "true" the listener won't take new messages for processing, however, it might
+	 * still be finishing with the current message.
+	 */
 	stopped: boolean;
+	/**
+	 * Indicates if this listener stopped processing messages.
+	 *
+	 * If it is "false" that mean that the listener was stopped and it is done with the current
+	 * message.
+	 */
 	listenerRunning: boolean;
+
+	/**
+	 * Logger which contains listener debug parameters
+	 */
 	log: Logger;
 }
 
@@ -73,6 +89,9 @@ export class SqsQueue<MessagePayload> {
 	readonly sqs: SQS;
 	readonly log: Logger;
 
+	/**
+	 * Context of the currently active listener, or the last active if the queue stopped
+	 */
 	listenerContext: ListenerContext;
 
 	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>) {
@@ -107,12 +126,15 @@ export class SqsQueue<MessagePayload> {
 	 */
 	public start() {
 
+		//This checks if the previous listener was stopped or never created. However it could be that the
+		//previous listener is stopped, but still processing its last message
 		if(this.listenerContext && !this.listenerContext.stopped) {
 			this.log.error("Queue is already running")
 			return;
 		}
-		//Every time we start a listener we create a separate ListenerContext object,
-		//This is to make sure that there won't be 2 `listen` functions running and sharing the same context
+
+		//Every time we start a listener we create a separate ListenerContext object. There can be more than 1 listener
+		// running at the same time, if the previous listener still processing its last message
 		this.listenerContext = {stopped: false, log: this.log.child({sqsListenerId: uuidv4()}), listenerRunning: true}
 		this.listenerContext.log.info({queueUrl: this.queueUrl,
 			queueRegion: this.queueRegion, longPollingInterval: this.longPollingIntervalSec},"Starting the queue")
@@ -134,7 +156,8 @@ export class SqsQueue<MessagePayload> {
 
 
 	/**
-	 * Function which is used for testing. Awaits until the listener is stopped
+	 * Function which is used for testing. Awaits until the currently stopped listener finished with
+	 * processing its last message
 	 */
 	public async waitUntilListenerStopped() {
 		const listenerContext = this.listenerContext;
@@ -163,9 +186,8 @@ export class SqsQueue<MessagePayload> {
 	 * Starts listening to the queue asynchronously
 	 *
 	 * @param listenerContext The object holding a status of this listener. This object keeps parameters specific to the
-	 * particular queue listener. These parameters are not kept on SqsQueue level, hence we want to avoid  a situation
-	 * when there are 2 listen functions running and sharing the same parameters. (Which could happen if we call stop and the call
-	 * start again before the first listen function check the stop condition and return)
+	 * particular queue listener. These parameters are not kept on SqsQueue level, hence there might be more than 1 listener
+	 * running at the same time
 	 *
 	 */
 	private async listen(listenerContext: ListenerContext) {
