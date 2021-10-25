@@ -8,7 +8,7 @@ export const globalTags = {
 	environment: isNodeTest() ? "test" : process.env.MICROS_ENV || "",
 	environment_type: isNodeTest() ? "testenv" : process.env.MICROS_ENVTYPE || "",
 	deployment_id: process.env.MICROS_DEPLOYMENT_ID || "1",
-	region: process.env.MICROS_AWS_REGION || "localhost"
+	region: process.env.MICROS_AWS_REGION || "us-west-1"
 };
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS =	"100_1000_2000_3000_5000_10000_30000_60000";

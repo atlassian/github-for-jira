@@ -67,12 +67,9 @@ describe("jwt", () => {
 	beforeEach(async () => {
 		res = {
 			locals: {},
-			status: jest.fn(),
-			json: jest.fn()
+			status: jest.fn().mockReturnValue(res),
+			json: jest.fn().mockReturnValue(res)
 		};
-
-		res.status.mockReturnValue(res)
-		res.json.mockReturnValue(res)
 	});
 
 	describe("#verifySymmetricJwtTokenMiddleware", () => {

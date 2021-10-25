@@ -28,7 +28,7 @@ export enum TokenType {
 	context = "context"
 }
 
-export function extractJwtFromRequest(req: Request): string | void {
+export function extractJwtFromRequest(req: Request): string | undefined {
 	const tokenInQuery = req.query?.[JWT_PARAM];
 
 	// JWT appears in both parameter and body will result query hash being invalid.
@@ -53,7 +53,6 @@ export function extractJwtFromRequest(req: Request): string | void {
 	// JWT is missing in query and we don't have a valid body.
 	if (!token) {
 		req.log.info("JWT token is missing in the request");
-		return;
 	}
 
 	return token;
@@ -208,8 +207,7 @@ export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Resp
 
 		const publicKey = await queryAtlassianConnectPublicKey(getKeyId(token), isStagingTenant(req));
 
-		let unverifiedClaims: any = undefined
-		unverifiedClaims = decodeAsymmetricToken(token, publicKey, true)
+		const unverifiedClaims = decodeAsymmetricToken(token, publicKey, true)
 
 		const issuer = unverifiedClaims.iss;
 		if (!issuer) {

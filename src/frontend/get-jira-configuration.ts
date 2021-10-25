@@ -90,7 +90,7 @@ export default async (
 				...data,
 			}));
 
-		const newConfigPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, false, jiraHost);
+		const newConfigPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, true, jiraHost);
 		const configPageVersion = newConfigPgFlagIsOn ? "jira-configuration.hbs" : "jira-configuration-OLD.hbs";
 		const hasConnections = newConfigPgFlagIsOn ? connections.length > 0 : connections.length > 0 || failedConnections.length > 0;
 

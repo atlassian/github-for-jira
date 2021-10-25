@@ -18,6 +18,9 @@
 
       <h3 class="githubError__header">Looks like something went wrong!</h3>
 
+      {{#if message}}
+      <p class="githubError__message">{{message}}</p>
+      {{/if}}
       <p class="githubError__message">
         We track these errors automatically, but if the problem persists feel
         free to

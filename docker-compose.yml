@@ -20,10 +20,23 @@ services:
     ports: [ "4040:4040" ]
     command: ngrok http app:8080
 
+  localstack:
+    container_name: localstack
+    image: localstack/localstack
+    environment:
+      - DEFAULT_REGION=us-west-1
+      - SERVICES=sqs
+#      - DEBUG=1 # Uncomment to debug SQS
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./.localstack:/docker-entrypoint-initaws.d
+
   app:
     depends_on:
       - redis
       - postgres
+      - localstack
     volumes:
       - .:/app
     build:
@@ -35,4 +48,6 @@ services:
       - "9230:9230" # worker debug port
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/jira-dev
+      SQS_BACKFILL_QUEUE_URL: http://localstack:4566/000000000000/backfill
+      SQS_PUSH_QUEUE_URL: http://localstack:4566/000000000000/push
       REDISX_CACHE_HOST: redis
