@@ -22,11 +22,15 @@ services:
 
   localstack:
     container_name: localstack
-    image: localstack/localstack:0.8.7
+    image: localstack/localstack
     environment:
-      - SERVICES=sqs:9602
+      - DEFAULT_REGION=us-west-1
+      - SERVICES=sqs
+#      - DEBUG=1 # Uncomment to debug SQS
     ports:
-      - 9602:9602
+      - "4566:4566"
+    volumes:
+      - ./.localstack:/docker-entrypoint-initaws.d
 
   app:
     depends_on:
@@ -44,4 +48,6 @@ services:
       - "9230:9230" # worker debug port
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/jira-dev
+      SQS_BACKFILL_QUEUE_URL: http://localstack:4566/000000000000/backfill
+      SQS_PUSH_QUEUE_URL: http://localstack:4566/000000000000/push
       REDISX_CACHE_HOST: redis

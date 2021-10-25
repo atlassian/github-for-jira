@@ -15,8 +15,6 @@ import getJiraConfiguration from "./get-jira-configuration";
 import deleteJiraConfiguration from "./delete-jira-configuration";
 import getGithubClientMiddleware from "./github-client-middleware";
 import getJiraConnect from "../jira/connect";
-import postJiraDisable from "../jira/disable";
-import postJiraEnable from "../jira/enable";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
 import extractInstallationFromJiraCallback from "../jira/extract-installation-from-jira-callback";
@@ -29,7 +27,7 @@ import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback, verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
+import { authenticateInstallCallback, authenticateUninstallCallback, verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
 import { registerHandlebarsPartials } from "../util/handlebars/partials";
@@ -219,8 +217,16 @@ export default (octokitApp: App): Express => {
 
 	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, retrySync);
 	// Set up event handlers
-	app.post("/jira/events/disabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
-	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
+
+	// TODO: remove enabled and disabled events once the descriptor is updated in marketplace
+	app.post("/jira/events/disabled",(_: Request, res: Response) => {
+		return res.sendStatus(204);
+	});
+	app.post("/jira/events/enabled", (_: Request, res: Response) => {
+		return res.sendStatus(204);
+	});
+
+
 	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
 	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
 	app.get("/", async (_: Request, res: Response) => {
@@ -248,7 +254,7 @@ export default (octokitApp: App): Express => {
 
 	// Error catcher - Batter up!
 	app.use(async (err: Error, req: Request, res: Response, next: NextFunction) => {
-		req.log.error({ err, req, res }, "Error in frontend app.");
+		req.log.error({ payload: req.body, err, req, res }, "Error in frontend app.");
 
 		if (!isNodeProd()) {
 			return next(err);
