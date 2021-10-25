@@ -44,6 +44,87 @@ jobs:
           AWS_SECRET_ACCESS_KEY: localsecret
           AWS_EC2_METADATA_DISABLED: true
         run: npm test
+      - name: Run tests
+        env:
+          REDISX_CACHE_HOST: localhost
+          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
+          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
+        run: npm test
+      - name: Run tests 2
+        env:
+          REDISX_CACHE_HOST: localhost
+          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
+          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
+        run: npm test
+      - name: Run tests 3
+        env:
+          REDISX_CACHE_HOST: localhost
+          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
+          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
+        run: npm test
+      - name: Run tests 4
+        env:
+          REDISX_CACHE_HOST: localhost
+          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
+          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
+        run: npm test
+      - name: Run tests 5
+        env:
+          REDISX_CACHE_HOST: localhost
+          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
+          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
+        run: npm test
+      - name: Run tests 6
+        env:
+          REDISX_CACHE_HOST: localhost
+          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
+          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
+        run: npm test
+      - name: Run tests 7
+        env:
+          REDISX_CACHE_HOST: localhost
+          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
+          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
+        run: npm test
+      - name: Run tests 8
+        env:
+          REDISX_CACHE_HOST: localhost
+          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
+          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          AWS_DEFAULT_REGION: us-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          AWS_EC2_METADATA_DISABLED: true
+        run: npm test
+
 
   docker:
     runs-on: ubuntu-latest
