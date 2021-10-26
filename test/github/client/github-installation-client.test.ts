@@ -4,6 +4,7 @@
 import GithubAppClient from "../../../src/github/client/github-app-client";
 import GithubInstallationClient from "../../../src/github/client/github-installation-client";
 import { AuthToken } from "../../../src/github/client/http-client";
+import nock from "nock";
 
 jest.mock("../../../src/github/client/github-app-client");
 
@@ -32,6 +33,11 @@ describe("GitHubInstallationClient", () => {
 				{ number: 1 } // we don't really care about the contents of the response in this test because it depends on the real GitHub API, anyways
 			]);
 	}
+
+	afterEach(() => {
+		nock.cleanAll();
+		jest.restoreAllMocks();
+	});
 
 	it("lists pull requests", async () => {
 

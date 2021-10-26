@@ -2,6 +2,7 @@
 /* eslint-disable jest/no-standalone-expect */
 
 import GithubAppClient from "../../../src/github/client/github-app-client";
+import nock from "nock";
 
 describe("GithubAppClient", () => {
 
@@ -60,6 +61,11 @@ ahB/41gpFPr4XRBUBzfi9csW4T4TAOdY/0s1+sliZ8jkUNOcfqSspA==
 				token: installationToken
 			});
 	}
+
+	afterEach(() => {
+		nock.cleanAll();
+		jest.restoreAllMocks();
+	});
 
 	it("generates installation token", async () => {
 		givenGitHubReturnsToken();
