@@ -283,7 +283,8 @@ export default (octokitApp: App): Express => {
 		return res.status(errorStatusCode).render(errorPageVersion, {
 			title: "GitHub + Jira integration",
 			message,
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			GITHUB_REPO_URL: process.env.GITHUB_REPO_URL
 		});
 	});
 
