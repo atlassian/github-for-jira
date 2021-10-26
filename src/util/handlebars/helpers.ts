@@ -20,8 +20,8 @@ export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("isNotConnected", (syncStatus) => syncStatus == null);
 
 	hbs.registerHelper(
-		"inProgressSync",
-		(syncStatus) => syncStatus === "IN PROGRESS"
+		"inProgressOrPendingSync",
+		(syncStatus) => syncStatus === "IN PROGRESS" || syncStatus === "PENDING"
 	);
 
 	hbs.registerHelper("failedSync", (syncStatus) => syncStatus === "FAILED");
@@ -32,8 +32,9 @@ export const registerHandlebarsHelpers = () => {
 			: "There was an error getting information for this installation."
 	);
 
+	// TODO - remove after removing old github config hbs
 	hbs.registerHelper("connectedStatus", (syncStatus) =>
-		syncStatus === "COMPLETE" ? "Connected" : "Connect"
+		syncStatus === "FINISHED" ? "Connected" : "Connect"
 	);
 
 	hbs.registerHelper("isModal", (modalId) => modalId === "jiraDomainModal");

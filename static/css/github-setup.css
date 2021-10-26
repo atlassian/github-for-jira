@@ -75,6 +75,10 @@
   margin-right: 1em;
 }
 
+.githubSetup__table {
+  padding: 0.4em 0;
+}
+
 .githubSetup__table__row {
   align-items: center;
   display: flex;

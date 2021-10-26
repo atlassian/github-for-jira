@@ -50,6 +50,25 @@ const formatDate = function (date) {
 	};
 };
 
+const getFailedConnections = (installations, subscriptions) => {
+	return installations
+		.filter((response) => !!response.error)
+		.map((failedConnection) => ({
+			...failedConnection,
+			...subscriptions.find(
+				(sub) =>
+					failedConnection.id === sub.getDataValue("gitHubInstallationId")
+			),
+		}))
+		.map((sub) => {
+			const repos = sub.dataValues.repoSyncState?.repos;
+			const repoId = Object.keys(sub.dataValues.repoSyncState?.repos || {});
+			const orgName = repos[repoId[0]].repository?.owner.login || undefined;
+
+			return { id: sub.id, deleted: sub.deleted, orgName };
+		});
+};
+
 export default async (
 	req: Request,
 	res: Response,
@@ -84,23 +103,7 @@ export default async (
 				repoSyncState: data.repoSyncState,
 			}));
 
-		// todo - move this out and handle null data
-		const failedConnections = installations
-			.filter((response) => !!response.error)
-			.map((failedConnection) => ({
-				...failedConnection,
-				...subscriptions.find(
-					(sub) =>
-						failedConnection.id === sub.getDataValue("gitHubInstallationId")
-				),
-			}))
-			.map((sub) => {
-				const repos = sub.dataValues.repoSyncState?.repos;
-				const repoId = Object.keys(sub.dataValues.repoSyncState?.repos || {});
-				const orgName = repos[repoId[0]].repository?.owner.login || undefined;
-
-				return { id: sub.id, deleted: sub.deleted, orgName };
-			});
+		const failedConnections = getFailedConnections(installations, subscriptions);
 
 		const newConfigPgFlagIsOn = await booleanFlag(
 			BooleanFlags.NEW_GITHUB_CONFIG_PAGE,
