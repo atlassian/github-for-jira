@@ -80,27 +80,25 @@ ahB/41gpFPr4XRBUBzfi9csW4T4TAOdY/0s1+sliZ8jkUNOcfqSspA==
 		expect(githubNock.pendingMocks()).toEqual([]);
 	});
 
-	it.skip("re-generates expired app token", async () => {
-		const originalAppToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2Mzc3NTg3NDAsImV4cCI6MTYzNzc1OTQwMCwiaXNzIjoiMTA2ODM4In0.rIczMZQB-kyTW4Rf4uVT3TSLY5gwD8wn5k57ctejqhfHuyY3JViRTY_nIemGsyZAaIMBOdJQ1dL0TVI2hkXFGqAqZIONqfHJ4S9r7KhUeue-Dqkpfs7GRFBovExNzwwKPbdcpkjFUTVfHEmJlHOG4bzYVuJy6h1eapzPbv8Rx--_sjAoKl1jcim0G7Vj6obwaByfyBTRC5nrJQe4v_xMXT6QeC42dd1JCgmkGn8UtuA398DEOlT61Vq5s-eMFqC7BmQDnSJWAykFGAd0k3PLCLWGErSCyzhivmZf_O6Y0m62YtZvq1wGTpAbyh7KvhAwbKhuSZk9dd0aqM8lw7husdKMFwkpoQcbUv99d-NkVG4H-TQBek5u2L23gAT29268qlGda4E1a6ZHfaxeCk9Gow5oSwCTtKZ-MYVOgymrZpoUbdMGIQmAt-71ME7Bw6ZTpjaMEdp5D8GaEInFk6X5fnVkVlJjEQaIwL-CSJRa_Dd5puRe07TzsHiJaFLMpMPR";
-		const freshAppToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2NjkyOTUzNDAsImV4cCI6MTY2OTI5NjAwMCwiaXNzIjoiMTA2ODM4In0.bKg1exqqMFPdYT0f-Ox5cMVc_ckYPaXpz_iNY0YlNv1wBuc-BsyvtbrIbQ82QugDOASwjhErTp_IjtOWYMv4gW_9DZu3cH7J4pTjgRc_KX5I6uQpmUmoDUqmXYpgNznzRXqzZOVKkcexifavPY_JEPyAKul6BZGGQVOuQt0yL_vTVuP34eGFHZ71z_lRiPfPdMVW8etGKtMz4N_9GQoIiDmA4Svah27EMiWCFnyjRZt_rwe29poIBD-Vv9sHlYpAtRt_XJm83N22jDKGHFZic-BdL5dOSjf82f9rW9XnAXicLdtppxp6k2q09k4hKWkWIzWlSDXSk8cxh_rLFEgtavU3GDf_-ZlLLb32hTBEY2N5bALJh-ozyzrlb6slo3YFkuSoSVolRwN-1F12CkGZ2L9biINAE31ONd0I23-JXJK3S4LB3UtjMBKfXlU3Gx_GH2g_wmivreLMIv4Ogpu_PyBg0uRetggK9Jglj0n2lrzylW90FZ2xsU_IlI_IbpNf";
+	it("re-generates expired app token", async () => {
 		let now = new Date(2021, 10, 25, 0, 0);
+		const originalAppToken = GithubAppClient.createAppJwt(privateKey, "106838", () => now);
 		const client = new GithubAppClient(privateKey, "106838", "https://api.github.com", () => now);
 
-		givenGitHubReturnsToken(originalAppToken);
+		givenGitHubReturnsToken(originalAppToken.token);
 		await client.createInstallationToken(githubInstallationId);
 		expect(githubNock.pendingMocks()).toEqual([]);
 
 		// after 5 minutes the client should still use the original JWT because it's still valid
 		now = new Date(2021,10,25, 0, 5);
-
-		givenGitHubReturnsToken(originalAppToken);
+		givenGitHubReturnsToken(originalAppToken.token);
 		await client.createInstallationToken(githubInstallationId);
 		expect(githubNock.pendingMocks()).toEqual([]);
 
 		// after 10 minutes the client should use a fresh JWT because the original one is about to expire
-		now = new Date(2022,10,25, 0, 10);
-
-		givenGitHubReturnsToken(freshAppToken);
+		now = new Date(2021,10,25, 0, 10);
+		const freshAppToken = GithubAppClient.createAppJwt(privateKey, "106838", () => now);
+		givenGitHubReturnsToken(freshAppToken.token);
 		await client.createInstallationToken(githubInstallationId);
 		expect(githubNock.pendingMocks()).toEqual([]);
 	});

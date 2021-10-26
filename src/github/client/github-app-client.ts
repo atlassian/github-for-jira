@@ -59,7 +59,7 @@ export default class GithubAppClient extends HttpClient<Context> {
 	/**
 	 * Generates a JWT using the private key of the GitHub app to authorize against the GitHub API.
 	 */
-	private static createAppJwt(key: string, appId: string, now: () => Date): AuthToken {
+	static createAppJwt(key: string, appId: string, now: () => Date): AuthToken {
 
 		const expirationDate = new Date(now().getTime() + TEN_MINUTES);
 
