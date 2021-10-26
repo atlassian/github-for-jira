@@ -43,7 +43,8 @@ jobs:
           AWS_ACCESS_KEY_ID: localkey
           AWS_SECRET_ACCESS_KEY: localsecret
           AWS_EC2_METADATA_DISABLED: true
-        run: DEBUG=nock.* npm test
+          DEBUG: nock.*
+        run: npm test
 
   docker:
     runs-on: ubuntu-latest
