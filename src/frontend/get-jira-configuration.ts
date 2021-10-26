@@ -58,8 +58,8 @@ export default async (
 	try {
 		const jiraHost = req.session.jiraHost;
 
-		if(!jiraHost) {
-			req.log.warn({jiraHost, req, res}, "Missing jiraHost");
+		if (!jiraHost) {
+			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
 			res.status(404).send(`Missing Jira Host '${jiraHost}'`);
 			return;
 		}
@@ -84,15 +84,35 @@ export default async (
 				repoSyncState: data.repoSyncState,
 			}));
 
+		// todo - move this out and handle null data
 		const failedConnections = installations
 			.filter((response) => !!response.error)
-			.map((data) => ({
-				...data,
-			}));
+			.map((failedConnection) => ({
+				...failedConnection,
+				...subscriptions.find(
+					(sub) =>
+						failedConnection.id === sub.getDataValue("gitHubInstallationId")
+				),
+			}))
+			.map((sub) => {
+				const repos = sub.dataValues.repoSyncState?.repos;
+				const repoId = Object.keys(sub.dataValues.repoSyncState?.repos || {});
+				const orgName = repos[repoId[0]].repository?.owner.login || undefined;
 
-		const newConfigPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, true, jiraHost);
-		const configPageVersion = newConfigPgFlagIsOn ? "jira-configuration.hbs" : "jira-configuration-OLD.hbs";
-		const hasConnections = newConfigPgFlagIsOn ? connections.length > 0 : connections.length > 0 || failedConnections.length > 0;
+				return { id: sub.id, deleted: sub.deleted, orgName };
+			});
+
+		const newConfigPgFlagIsOn = await booleanFlag(
+			BooleanFlags.NEW_GITHUB_CONFIG_PAGE,
+			true,
+			jiraHost
+		);
+		const configPageVersion = newConfigPgFlagIsOn
+			? "jira-configuration.hbs"
+			: "jira-configuration-OLD.hbs";
+		const hasConnections = newConfigPgFlagIsOn
+			? connections.length > 0
+			: connections.length > 0 || failedConnections.length > 0;
 
 		res.render(configPageVersion, {
 			host: jiraHost,

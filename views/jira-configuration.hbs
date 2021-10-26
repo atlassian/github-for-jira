@@ -265,9 +265,15 @@
               </span>
             </div>
             <div class="jiraConfiguration__failedConnections__orgInfo">
-              <p class="jiraConfiguration__failedConnections__header">
-                There was an error for organization with ID: {{ id }}
-              </p>
+              {{#if orgName}}
+                <p class="jiraConfiguration__failedConnections__header">
+                  There was an error for organization {{ orgName }}
+                </p>
+              {{else}}
+                <p class="jiraConfiguration__failedConnections__header">
+                  There was an error for organization with ID: {{ id }}
+                </p>
+              {{/if}}
               <p class="jiraConfiguration__failedConnections__errorMsg">
                 {{failedConnectionErrorMsg deleted}} You will need to reconnect.
               </p>
