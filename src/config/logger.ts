@@ -20,13 +20,13 @@ const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWA
 	bformat({ outputMode, levelInString: true })
 );
 
-const requestSerializer = (req: Request) => (!req || !req.connection) ? req : {
+const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 	method: req.method,
 	url: req.originalUrl || req.url,
 	path: req.path,
 	headers: req.headers,
-	remoteAddress: req.connection.remoteAddress,
-	remotePort: req.connection.remotePort,
+	remoteAddress: req.socket.remoteAddress,
+	remotePort: req.socket.remotePort,
 	body: req.body
 };
 
