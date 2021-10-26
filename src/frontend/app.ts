@@ -26,6 +26,7 @@ import version from "./version";
 import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
+import envVars from "../config/env";
 import { metricError } from "../config/metric-names";
 import { authenticateInstallCallback, authenticateUninstallCallback, verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
@@ -226,7 +227,6 @@ export default (octokitApp: App): Express => {
 		return res.sendStatus(204);
 	});
 
-
 	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
 	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
 	app.get("/", async (_: Request, res: Response) => {
@@ -284,7 +284,7 @@ export default (octokitApp: App): Express => {
 			title: "GitHub + Jira integration",
 			message,
 			nonce: res.locals.nonce,
-			GITHUB_REPO_URL: process.env.GITHUB_REPO_URL
+			GITHUB_REPO_URL: envVars.GITHUB_REPO_URL
 		});
 	});
 
