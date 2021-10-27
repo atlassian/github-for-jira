@@ -17,18 +17,18 @@ describe("GitHub Actions", () => {
 		beforeEach(() => {
 			mocked(Subscription.getAllForInstallation).mockResolvedValue([
 				{
-					jiraHost: process.env.ATLASSIAN_URL,
+					jiraHost,
 					gitHubInstallationId: 1234,
 					enabled: true
 				}] as any);
 			mocked(Subscription.getSingleInstallation).mockResolvedValue(
 				{
 					id: 1,
-					jiraHost: process.env.ATLASSIAN_URL
+					jiraHost
 				} as any);
 			mocked(Installation.getForHost).mockResolvedValue(
 				{
-					jiraHost: process.env.ATLASSIAN_URL,
+					jiraHost,
 					sharedSecret: process.env.ATLASSIAN_SECRET,
 					enabled: true
 				} as any

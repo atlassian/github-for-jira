@@ -2,14 +2,15 @@
 import nock from "nock";
 import { createJobData, processPushJob } from "../../src/transforms/push";
 import { createWebhookApp } from "../utils/probot";
-import {getLogger} from "../../src/config/logger";
+import { getLogger } from "../../src/config/logger";
+import SubscriptionClass from "../../src/models/subscription";
+import { Subscription } from "../../src/models";
 
 describe("GitHub Actions", () => {
 	let app;
 	beforeEach(async () => app = await createWebhookApp());
 
-	const getAtlassianUrl = () => process.env.ATLASSIAN_URL || "";
-	const createJob = (payload, jiraHost:string) => ({data: createJobData(payload, jiraHost)} as any);
+	const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
 
 	describe.skip("add to push queue", () => {
 		beforeEach(() => {
@@ -27,7 +28,7 @@ describe("GitHub Actions", () => {
 				{
 					repository: event.payload.repository,
 					shas: [{ id: "test-commit-id", issueKeys: ["TEST-123"] }],
-					jiraHost: getAtlassianUrl(),
+					jiraHost,
 					installationId: event.payload.installation.id
 				}, { removeOnFail: true, removeOnComplete: true }
 			);
@@ -58,22 +59,32 @@ describe("GitHub Actions", () => {
 	});
 
 	describe("process push payloads", () => {
-		beforeEach(() => {
+		let sub: SubscriptionClass;
+
+		beforeEach(async () => {
 			Date.now = jest.fn(() => 12345678);
+			sub = await Subscription.create({
+				gitHubInstallationId: 1234,
+				jiraHost,
+				jiraClientKey: "myClientKey",
+			});
 		});
+
+		afterEach(async () => {
+			await sub.destroy();
+		})
 
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, getAtlassianUrl());
-			githubNock
-				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.reply(200, require("../fixtures/api/commit-no-username.json"));
+			const job = createJob(event.payload, jiraHost);
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/api/commit-no-username.json"));
 
-			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
+			githubNock
+				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+				.reply(200, require("../fixtures/api/commit-no-username.json"));
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -129,11 +140,13 @@ describe("GitHub Actions", () => {
 					installationId: 1234
 				}
 			}).reply(200);
+
+			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
 		});
 
 		it("should only send 10 files if push contains more than 10 files changed", async () => {
 			const event = require("../fixtures/push-multiple.json");
-			const job = createJob(event.payload, getAtlassianUrl());
+			const job = createJob(event.payload, jiraHost);
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
@@ -241,7 +254,7 @@ describe("GitHub Actions", () => {
 				}
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
+			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
 		});
 
 		it("should not run a command without a Jira issue", async () => {
@@ -270,7 +283,7 @@ describe("GitHub Actions", () => {
 
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, getAtlassianUrl());
+			const job = createJob(event.payload, jiraHost);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-merge-commit.json"));
@@ -326,12 +339,12 @@ describe("GitHub Actions", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
+			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
 		});
 
 		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, getAtlassianUrl());
+			const job = createJob(event.payload, jiraHost);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-non-merge-commit"));
@@ -387,7 +400,7 @@ describe("GitHub Actions", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
+			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
 		});
 	});
 });

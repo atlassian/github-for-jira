@@ -2,7 +2,6 @@ import { Installation, Subscription } from "../../../../src/models";
 import InstallationClass from "../../../../src/models/installation";
 import SubscriptionClass from "../../../../src/models/subscription";
 import getJiraClient from "../../../../src/jira/client";
-import envVars from "../../../../src/config/env";
 
 describe("Test getting a jira client", () => {
 	const gitHubInstallationId = Math.round(Math.random()*10000);
@@ -12,15 +11,15 @@ describe("Test getting a jira client", () => {
 
 	beforeEach(async () => {
 		installation = await Installation.install({
-			host: envVars.ATLASSIAN_URL,
+			host: jiraHost,
 			sharedSecret: "shared-secret",
 			clientKey: "client-key"
 		});
 		subscription = await Subscription.create({
-			jiraHost: envVars.ATLASSIAN_URL,
+			jiraHost,
 			gitHubInstallationId
 		});
-		client = await getJiraClient(envVars.ATLASSIAN_URL, gitHubInstallationId);
+		client = await getJiraClient(jiraHost, gitHubInstallationId);
 	});
 
 	afterEach(async () => {
