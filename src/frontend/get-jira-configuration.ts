@@ -121,14 +121,10 @@ export default async (
 		const hasConnections =
 			connections.length > 0 || failedConnections.length > 0;
 
-		const hasOnlyFailedConnections =
-			connections.length === 0 || failedConnections.length > 0;
-
 		res.render(configPageVersion, {
 			host: jiraHost,
 			connections,
 			failedConnections,
-			hasOnlyFailedConnections,
 			hasConnections,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
