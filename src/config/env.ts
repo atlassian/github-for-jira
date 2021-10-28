@@ -84,9 +84,9 @@ export interface EnvVars {
 	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
-	GIT_COMMIT_SHA: string;
-	GIT_COMMIT_DATE: string;
-	GIT_BRANCH_NAME: string;
+	GIT_COMMIT_SHA?: string;
+	GIT_COMMIT_DATE?: string;
+	GIT_BRANCH_NAME?: string;
 	GITHUB_REPO_URL: string;
 
 	// Test Vars
