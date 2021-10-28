@@ -10,11 +10,13 @@ const sqsQueues = {
 		longPollingIntervalSec: 3}, backfillQueueMessageHandler),
 
 	start: () => {
-		sqsQueues.backfill.start();
+		//do nothing
+		//sqsQueues.backfill.start();
 	},
 
 	stop: () => {
-		sqsQueues.backfill.stop();
+		//do nothing
+		//sqsQueues.backfill.stop();
 	}
 }
 
