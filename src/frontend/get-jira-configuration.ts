@@ -50,7 +50,7 @@ const formatDate = function (date) {
 	};
 };
 
-const getFailedConnections = (installations, subscriptions) => {
+export const getFailedConnections = (installations, subscriptions) => {
 	return installations
 		.filter((response) => !!response.error)
 		.map((failedConnection) => ({
@@ -93,6 +93,11 @@ export default async (
 			)
 		);
 
+		const failedConnections = getFailedConnections(
+			installations,
+			subscriptions
+		);
+
 		const connections = installations
 			.filter((response) => !response.error)
 			.map((data) => ({
@@ -103,24 +108,27 @@ export default async (
 				repoSyncState: data.repoSyncState,
 			}));
 
-		const failedConnections = getFailedConnections(installations, subscriptions);
-
 		const newConfigPgFlagIsOn = await booleanFlag(
 			BooleanFlags.NEW_GITHUB_CONFIG_PAGE,
 			true,
 			jiraHost
 		);
+
 		const configPageVersion = newConfigPgFlagIsOn
 			? "jira-configuration.hbs"
 			: "jira-configuration-OLD.hbs";
-		const hasConnections = newConfigPgFlagIsOn
-			? connections.length > 0
-			: connections.length > 0 || failedConnections.length > 0;
+
+		const hasConnections =
+			connections.length > 0 || failedConnections.length > 0;
+
+		const hasOnlyFailedConnections =
+			connections.length === 0 || failedConnections.length > 0;
 
 		res.render(configPageVersion, {
 			host: jiraHost,
 			connections,
 			failedConnections,
+			hasOnlyFailedConnections,
 			hasConnections,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),

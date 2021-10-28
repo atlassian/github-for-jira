@@ -44,7 +44,7 @@
 
     <section class="githubSetup__newJiraSiteModal" id="new-jira-site-modal">
       <div class="githubSetup__newJiraSiteModalContent">
-        {{> githubSetupForm csrfToken=csrfToken error=error id="jiraDomainModal" }}
+        {{> githubSetupForm csrfToken=csrfToken error=error id="jiraDomainModal" className="inputModal" errorClass="errorModal" }}
       </div>
 
       <div class="githubSetup__newJiraSiteModalOverlay"></div>
@@ -79,7 +79,7 @@
           </div>
         </div>
       {{else}}
-        {{> githubSetupForm csrfToken=csrfToken error=error id="jiraDomainMain" }}
+        {{> githubSetupForm csrfToken=csrfToken error=error id="jiraDomainMain" className="inputMain" }}
       {{/if}}
   </section>
   <script src="/public/js/github-setup.js" nonce="{{nonce}}"></script>

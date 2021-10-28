@@ -72,6 +72,7 @@
 }
 
 .githubSetup__form__cancelBtn {
+  cursor: pointer;
   margin-right: 1em;
 }
 
