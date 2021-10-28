@@ -30,7 +30,6 @@ if (env.error && nodeEnv !== EnvironmentEnum.production) {
 	throw env.error;
 }
 
-// TODO: Use whitelist proxy instead
 const getProxyFromEnvironment = (): string | undefined => {
 	const proxy = process.env.WHITELIST_PROXY;
 	return proxy ? `http://${proxy}` : undefined;
