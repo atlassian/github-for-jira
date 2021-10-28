@@ -5,6 +5,7 @@ import axios from "axios";
 import { getJiraHostFromRedirectUrl, getJiraHostFromRedirectUrlNew } from "../util/getUrl";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { getLogger } from "../config/logger";
+import {verifyJiraContextJwtTokenMiddleware} from "./verify-jira-jwt-middleware";
 
 const host = process.env.GHE_HOST || "github.com";
 const logger = getLogger("github-oauth");
@@ -33,6 +34,10 @@ export default (opts: OAuthOptions): GithubOAuth => {
 
 	function login(req: Request, res: Response): void {
 		// TODO: We really should be using an Auth library for this, like @octokit/github-auth
+
+		//Save jiraHost to the session
+		req.session.jiraHost = req.query.xdm_e as string
+
 		// Create unique state for each oauth request
 		const state = crypto.randomBytes(8).toString("hex");
 
@@ -116,7 +121,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 
 	const router = express.Router();
 	// compatible with flatiron/director
-	router.get(opts.loginURI, login);
+	router.get(opts.loginURI, verifyJiraContextJwtTokenMiddleware, login);
 	router.get(opts.callbackURI, callback);
 
 	return {

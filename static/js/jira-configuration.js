@@ -5,15 +5,18 @@ const appUrl = document.querySelector('meta[name=public-url]').getAttribute('con
 $('.add-organization-link').click(function (event) {
   event.preventDefault()
 
-  const child = window.open(`${appUrl}/github/login`)
+	window.AP.context.getToken(function(token){
+		const child = window.open(`${appUrl}/github/login?xdm_e=${encodeURIComponent(params.get('xdm_e'))}&jwt=${token}`)
 
-  const interval = setInterval(function () {
-    if (child.closed) {
-      clearInterval(interval)
+		const interval = setInterval(function () {
+			if (child.closed) {
+				clearInterval(interval)
 
-      AP.navigator.reload()
-    }
-  }, 100)
+				AP.navigator.reload()
+			}
+		}, 100)
+	});
+
 })
 
 $('.configure-connection-link').click(function (event) {
