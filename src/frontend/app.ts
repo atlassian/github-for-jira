@@ -284,7 +284,7 @@ export default (octokitApp: App): Express => {
 			title: "GitHub + Jira integration",
 			message,
 			nonce: res.locals.nonce,
-			GITHUB_REPO_URL: envVars.GITHUB_REPO_URL
+			githubRepoUrl: envVars.GITHUB_REPO_URL
 		});
 	});
 
