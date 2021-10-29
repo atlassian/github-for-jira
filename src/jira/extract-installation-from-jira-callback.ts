@@ -11,7 +11,7 @@ import {NextFunction, Request, Response} from "express";
  * @param next Next function
  */
 export default async (req: Request, res: Response, next: NextFunction) => {
-	if (!req.body) {
+	if (!req.body?.clientKey) {
 		res.status(401);
 		return;
 	}
