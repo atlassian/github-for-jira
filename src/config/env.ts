@@ -44,7 +44,8 @@ const envVars: EnvVars = {
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
-	PROXY: getProxyFromEnvironment()
+	PROXY: getProxyFromEnvironment(),
+	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira"
 } as EnvVars;
 
 // Check to see if all required environment variables are set
@@ -83,9 +84,10 @@ export interface EnvVars {
 	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
-	GIT_COMMIT_SHA: string;
-	GIT_COMMIT_DATE: string;
-	GIT_BRANCH_NAME: string;
+	GIT_COMMIT_SHA?: string;
+	GIT_COMMIT_DATE?: string;
+	GIT_BRANCH_NAME?: string;
+	GITHUB_REPO_URL: string;
 
 	// Test Vars
 	ATLASSIAN_SECRET?: string;
