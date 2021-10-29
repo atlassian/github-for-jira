@@ -32,6 +32,7 @@ export const sqsQueueMetrics = {
 	failed: `${server}.sqs.queue.failed`,
 	sent:  `${server}.sqs.queue.sent`,
 	deleted: `${server}.sqs.queue.deleted`,
+	duration: `${server}.sqs.queue.duration`,
 };
 
 export const metricHttpRequest = {
