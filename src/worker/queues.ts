@@ -4,14 +4,14 @@ import Redis from "ioredis";
 import * as Sentry from "@sentry/node";
 import statsd from "../config/statsd";
 import { getLogger } from "../config/logger";
-import {metricError, queueMetrics} from "../config/metric-names";
+import {metricError, redisQueueMetrics} from "../config/metric-names";
 
 const client = new Redis(getRedisInfo("client"));
 const subscriber = new Redis(getRedisInfo("subscriber"));
 const logger = getLogger("queues");
 
 function measureElapsedTime(job: Queue.Job, tags) {
-	statsd.histogram(queueMetrics.jobDuration, Number(job.finishedOn) - Number(job.processedOn), tags);
+	statsd.histogram(redisQueueMetrics.jobDuration, Number(job.finishedOn) - Number(job.processedOn), tags);
 }
 
 const getQueueOptions = (timeout: number): QueueOptions => {

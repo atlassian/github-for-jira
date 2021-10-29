@@ -3,6 +3,8 @@ import Logger from "bunyan"
 import {getLogger} from "../config/logger"
 import SQS, {DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest} from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
+import statsd from "../config/statsd";
+import {sqsQueueMetrics} from "../config/metric-names";
 
 const logger = getLogger("sqs")
 
@@ -119,6 +121,7 @@ export class SqsQueue<MessagePayload> {
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
 		log.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
+		statsd.increment(sqsQueueMetrics.sent);
 	}
 
 	/**
@@ -236,6 +239,7 @@ export class SqsQueue<MessagePayload> {
 		try {
 			await this.sqs.deleteMessage(deleteParams)
 				.promise()
+			statsd.increment(sqsQueueMetrics.deleted)
 			log.debug("Successfully deleted message from queue");
 		} catch(err) {
 			log.warn({err}, "Error deleting message from the queue");
@@ -255,9 +259,11 @@ export class SqsQueue<MessagePayload> {
 
 		try {
 			await this.messageHandler.handle(context)
+			statsd.increment(sqsQueueMetrics.completed)
 			await this.deleteMessage(message, log)
 		} catch (err) {
 			//TODO Add error handling
+			statsd.increment(sqsQueueMetrics.failed)
 			log.error({err}, "error executing sqs message")
 		}
 	}
@@ -267,6 +273,8 @@ export class SqsQueue<MessagePayload> {
 			listenerContext.log.trace("Nothing to process");
 			return;
 		}
+
+		statsd.increment(sqsQueueMetrics.received, data.Messages.length);
 
 		listenerContext.log.trace("Processing messages batch")
 		await Promise.all(data.Messages.map(async message => {
