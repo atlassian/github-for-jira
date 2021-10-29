@@ -28,8 +28,9 @@ export interface DeploymentsResult {
 async function getJiraClient(
 	jiraHost: string,
 	gitHubInstallationId: number,
-	logger: Logger = getLogger("jira-client")
+	log: Logger = getLogger("jira-client")
 ): Promise<any> {
+	const logger = log.child({jiraHost, gitHubInstallationId});
 	const installation = await Installation.getForHost(jiraHost);
 	if (installation == null) {
 		return undefined;
