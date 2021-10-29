@@ -108,6 +108,8 @@ const sendQueueMetrics = async () => {
 	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
 
 		for (const [queueName, queue] of Object.entries(queues)) {
+			logger.info("fetching queue metrics");
+
 			const jobCounts = await queue.getJobCounts();
 
 			logger.info({ queue: queueName, queueMetrics: jobCounts }, "publishing queue metrics");
