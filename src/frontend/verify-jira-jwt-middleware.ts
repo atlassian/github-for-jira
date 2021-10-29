@@ -7,6 +7,11 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
+	if (!req.query?.xdm_e && !req.body?.jiraHost) {
+		res.status(401);
+		return;
+	}
+
 	const jiraHost = (req.query.xdm_e as string) || req.body?.jiraHost;
 	const installation = await Installation.getForHost(jiraHost);
 

@@ -228,7 +228,7 @@ export default (octokitApp: App): Express => {
 
 
 	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
-	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
+	app.post("/jira/events/uninstalled", authenticateUninstallCallback, extractInstallationFromJiraCallback, postJiraUninstall);
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
 		return res.redirect(info.external_url);
