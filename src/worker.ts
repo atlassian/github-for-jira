@@ -20,7 +20,7 @@ import { getLogger } from "./config/logger";
 import { booleanFlag, BooleanFlags } from "./config/feature-flags";
 import { RateLimitingError } from "./config/enhance-octokit";
 import { queues } from "./worker/queues";
-import { queueMetrics } from "./config/metric-names";
+import { redisQueueMetrics } from "./config/metric-names";
 import { Job } from "bull";
 import { listenForClusterCommand } from "./services/cluster/listen-command";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -115,11 +115,11 @@ const sendQueueMetrics = async () => {
 			logger.info({ queue: queueName, queueMetrics: jobCounts }, "publishing queue metrics");
 
 			const tags = { queue: queueName };
-			statsd.gauge(queueMetrics.active, jobCounts.active, tags);
-			statsd.gauge(queueMetrics.completed, jobCounts.completed, tags);
-			statsd.gauge(queueMetrics.delayed, jobCounts.delayed, tags);
-			statsd.gauge(queueMetrics.failed, jobCounts.failed, tags);
-			statsd.gauge(queueMetrics.waiting, jobCounts.waiting, tags);
+			statsd.gauge(redisQueueMetrics.active, jobCounts.active, tags);
+			statsd.gauge(redisQueueMetrics.completed, jobCounts.completed, tags);
+			statsd.gauge(redisQueueMetrics.delayed, jobCounts.delayed, tags);
+			statsd.gauge(redisQueueMetrics.failed, jobCounts.failed, tags);
+			statsd.gauge(redisQueueMetrics.waiting, jobCounts.waiting, tags);
 		}
 	}
 };
