@@ -30,7 +30,7 @@ async function getJiraClient(
 	gitHubInstallationId: number,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> {
-	const logger = log.child({jiraHost, gitHubInstallationId});
+	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
 	if (installation == null) {
 		return undefined;
@@ -281,20 +281,27 @@ const batchedBulkUpdate = async (
 	options?: { preventTransitions: boolean }
 ) => {
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
-	const commitChunks: JiraCommit[][] = _.chunk(dedupCommits(data.commits), 400);
+	let commitChunks: JiraCommit[][] = _.chunk(dedupCommits(data.commits), 400);
+
+	// Need to create empty 2d array to send at least once if commits are empty
+	if(!commitChunks.length) {
+		commitChunks = [[]];
+	}
 
 	return Promise.all(
-		commitChunks.map((commitChunk) => {
-			if (commitChunk.length) {
-				data.commits = commitChunk;
-			}
-			const body = {
-				preventTransitions: options?.preventTransitions || false,
-				repositories: [data],
-				properties: {
-					installationId
+		commitChunks.map((commits) => {
+			const body = [
+				{
+					preventTransitions: options?.preventTransitions || false,
+					repositories: [{
+						...data,
+						commits
+					}],
+					properties: {
+						installationId
+					}
 				}
-			};
+			];
 			return instance.post("/rest/devinfo/0.10/bulk", body).catch((err) => {
 				logger?.error({ ...err, body, data }, "Jira Client Error: Cannot update Repository");
 				return Promise.reject(err);
