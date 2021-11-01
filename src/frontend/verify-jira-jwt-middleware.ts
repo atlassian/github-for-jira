@@ -1,18 +1,18 @@
 import { Installation } from "../models";
 import { NextFunction, Request, Response } from "express";
-import { TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
+import { TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware, sendError } from "../jira/util/jwt";
 
 const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
-	if (!req.query?.xdm_e && !req.body?.jiraHost) {
-		res.status(401);
-		return;
+	const jiraHost = (req.query.xdm_e as string) || req.body?.jiraHost;
+
+	if(!jiraHost) {
+		sendError(res, 401, "Unauthorised");
 	}
 
-	const jiraHost = (req.query.xdm_e as string) || req.body?.jiraHost;
 	const installation = await Installation.getForHost(jiraHost);
 
 	if (!installation) {
