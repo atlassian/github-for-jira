@@ -8,7 +8,6 @@ import issueKeyParser from "jira-issue-key-parser";
 import { JiraCommit, JiraIssue } from "../../interfaces/jira";
 import { getLogger } from "../../config/logger";
 import _ from "lodash";
-import { booleanFlag, BooleanFlags } from "../../config/feature-flags";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -31,7 +30,7 @@ async function getJiraClient(
 	gitHubInstallationId: number,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> {
-	const logger = log.child({ jiraHost, gitHubInstallationId });
+	const logger = log.child({jiraHost, gitHubInstallationId});
 	const installation = await Installation.getForHost(jiraHost);
 	if (installation == null) {
 		return undefined;
@@ -281,45 +280,11 @@ const batchedBulkUpdate = async (
 	logger?: Logger,
 	options?: { preventTransitions: boolean }
 ) => {
-	if (booleanFlag(BooleanFlags.REMOVE_WHILE_LOOP, false)) {
-		// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
-		let commitChunks: JiraCommit[][] = _.chunk(dedupCommits(data.commits), 400);
+	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
+	const commitChunks: JiraCommit[][] = _.chunk(dedupCommits(data.commits), 400);
 
-		// Need to create empty 2d array to send at least once if commits are empty
-		if (!commitChunks.length) {
-			commitChunks = [[]];
-		}
-
-		return Promise.all(
-			commitChunks.map((commits) => {
-				const body = [
-					{
-						preventTransitions: options?.preventTransitions || false,
-						repositories: [{
-							...data,
-							commits
-						}],
-						properties: {
-							installationId
-						}
-					}
-				];
-				return instance.post("/rest/devinfo/0.10/bulk", body).catch((err) => {
-					logger?.error({ ...err, body, data }, "Jira Client Error: Cannot update Repository");
-					return Promise.reject(err);
-				});
-			})
-		);
-	} else {
-		const dedupedCommits = dedupCommits(data.commits);
-
-		// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
-		const commitChunks: JiraCommit[][] = [];
-		do {
-			commitChunks.push(dedupedCommits.splice(0, 400));
-		} while (dedupedCommits.length);
-
-		const batchedUpdates = commitChunks.map((commitChunk) => {
+	return Promise.all(
+		commitChunks.map((commitChunk) => {
 			if (commitChunk.length) {
 				data.commits = commitChunk;
 			}
@@ -334,9 +299,8 @@ const batchedBulkUpdate = async (
 				logger?.error({ ...err, body, data }, "Jira Client Error: Cannot update Repository");
 				return Promise.reject(err);
 			});
-		});
-		return Promise.all(batchedUpdates);
-	}
+		})
+	);
 };
 
 /**
