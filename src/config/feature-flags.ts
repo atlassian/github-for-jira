@@ -25,6 +25,7 @@ export enum BooleanFlags {
 	NEW_SETUP_PAGE = "new-setup-page",
 	PROPAGATE_REQUEST_ID = "propagate-request-id",
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
+	REMOVE_WHILE_LOOP = "remove-while-loop"
 }
 
 export enum StringFlags {
