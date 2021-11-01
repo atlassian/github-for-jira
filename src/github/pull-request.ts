@@ -10,15 +10,23 @@ export default async (
 	jiraClient,
 	util
 ): Promise<void> => {
-	const { pull_request, repository, changes } = context.payload;
+	const {
+		pull_request,
+		repository: {
+			id: repositoryId,
+			name: repo,
+			owner: { login: owner },
+		},
+		changes,
+	} = context.payload;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: any = {};
 	try {
 		reviews = await context.github.pulls.listReviews({
-			owner: repository?.owner?.login,
-			repo: repository?.name,
-			pull_number: pull_request?.number,
+			owner: owner,
+			repo: repo,
+			pull_number: pull_request.number,
 		});
 	} catch (e) {
 		context.log.warn(
@@ -49,7 +57,7 @@ export default async (
 				"Sending pullrequest delete event for issue keys"
 			);
 			await jiraClient.devinfo.pullRequest.delete(
-				repository?.id,
+				repositoryId,
 				pull_request.number
 			);
 			return;

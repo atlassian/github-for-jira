@@ -42,6 +42,7 @@ export default (jiraClient) => {
 		const keys = checkForReferenceText(text);
 
 		// Parse the text up to a maximum amount of characters.
+		// TODO: remove while loop and reimagine this. Why limiting to 1000 characters?  Need to add tests
 		while (referenceRegex.lastIndex < 1000) {
 			const match = referenceRegex.exec(text);
 
