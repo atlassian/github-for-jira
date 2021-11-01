@@ -246,9 +246,9 @@ export default (
 					emitWebhookFailedMetrics(webhookEvent);
 					context.sentry?.captureException(err);
 				} else {
-					context.log.info(
+					context.log.warn(
 						err,
-						`Error processing the event for Jira hostname '${jiraHost}'`
+						`Warning: failed to process event for the Jira hostname '${jiraHost}'`
 					);
 				}
 
