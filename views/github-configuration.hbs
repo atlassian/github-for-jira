@@ -102,9 +102,9 @@
                         data-installation-id="{{id}}"
                         type="submit"
                       >
-                        {{connectedStatus syncStatus}}
+                        Connect
                       </button>
-                    {{else if (inProgressSync syncStatus)}}
+                    {{else if (inProgressOrPendingSync syncStatus)}}
                       <div class="gitHubConfiguration__loaderContainer">
                         <aui-spinner size="small"></aui-spinner>
                       </div>
@@ -124,9 +124,10 @@
                       <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                     {{else}}
                       <p class="gitHubConfiguration__orgContent__connectedMsg">
-                        {{connectedStatus syncStatus}}
+                        Connected
                       </p>
                     {{/if}}
+
                     {{else}}
                     <button class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button" aria-disabled="true" disabled>
                       Connect

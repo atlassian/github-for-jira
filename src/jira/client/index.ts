@@ -7,7 +7,6 @@ import Logger from "bunyan";
 import issueKeyParser from "jira-issue-key-parser";
 import { JiraCommit, JiraIssue } from "../../interfaces/jira";
 import { getLogger } from "../../config/logger";
-import _ from "lodash";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -280,27 +279,31 @@ const batchedBulkUpdate = async (
 	logger?: Logger,
 	options?: { preventTransitions: boolean }
 ) => {
-	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
-	const commitChunks: JiraCommit[][] = _.chunk(dedupCommits(data.commits), 400);
+	const dedupedCommits = dedupCommits(data.commits);
 
-	return Promise.all(
-		commitChunks.map((commitChunk) => {
-			if (commitChunk.length) {
-				data.commits = commitChunk;
+	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
+	const commitChunks: JiraCommit[][] = [];
+	do {
+		commitChunks.push(dedupedCommits.splice(0, 400));
+	} while (dedupedCommits.length);
+
+	const batchedUpdates = commitChunks.map((commitChunk) => {
+		if (commitChunk.length) {
+			data.commits = commitChunk;
+		}
+		const body = {
+			preventTransitions: options?.preventTransitions || false,
+			repositories: [data],
+			properties: {
+				installationId
 			}
-			const body = {
-				preventTransitions: options?.preventTransitions || false,
-				repositories: [data],
-				properties: {
-					installationId
-				}
-			};
-			return instance.post("/rest/devinfo/0.10/bulk", body).catch((err) => {
-				logger?.error({ ...err, body, data }, "Jira Client Error: Cannot update Repository");
-				return Promise.reject(err);
-			});
-		})
-	);
+		};
+		return instance.post("/rest/devinfo/0.10/bulk", body).catch((err) => {
+			logger?.error({ ...err, body, data }, "Jira Client Error: Cannot update Repository");
+			return Promise.reject(err);
+		});
+	});
+	return Promise.all(batchedUpdates);
 };
 
 /**
@@ -337,13 +340,13 @@ const truncateIssueKeys = (repositoryObj) => {
 };
 
 interface IssueKeyObject {
-	issueKeys?: string[];
+	issueKeys?: string[]
 }
 
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
-	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
+	data.reduce((acc:IssueKeyObject[], value:IssueKeyObject) => {
 		// Filter out anything that doesn't have issue keys or are not over the limit
-		if (value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
+		if(value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
 			// Create copy of object and add the issue keys that are truncated
 			acc.push({
 				...value,
