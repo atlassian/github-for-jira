@@ -281,7 +281,7 @@ const batchedBulkUpdate = async (
 	logger?: Logger,
 	options?: { preventTransitions: boolean }
 ) => {
-	if (booleanFlag(BooleanFlags.REMOVE_WHILE_LOOP, true)) {
+	if (booleanFlag(BooleanFlags.REMOVE_WHILE_LOOP, false)) {
 		// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
 		let commitChunks: JiraCommit[][] = _.chunk(dedupCommits(data.commits), 400);
 
