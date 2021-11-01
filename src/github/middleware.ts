@@ -16,7 +16,7 @@ import { getLogger } from "../config/logger";
 const LOGGER_NAME = "github.webhooks";
 const logger = getLogger(LOGGER_NAME);
 
-const warnOnErrorCodes = ["401", "404"];
+const warnOnErrorCodes = ["401", "403", "404"];
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
