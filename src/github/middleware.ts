@@ -16,6 +16,8 @@ import { getLogger } from "../config/logger";
 const LOGGER_NAME = "github.webhooks";
 const logger = getLogger(LOGGER_NAME);
 
+const warnOnErrorCodes = ["401", "403", "404"];
+
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
@@ -235,12 +237,20 @@ export default (
 			try {
 				await callback(context, jiraClient, util);
 			} catch (err) {
-				context.log.error(
-					err,
-					`Error processing the event for Jira hostname '${jiraHost}'`
-				);
-				emitWebhookFailedMetrics(webhookEvent);
-				context.sentry?.captureException(err);
+				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
+				if(!isWarning) {
+					context.log.error(
+						err,
+						`Error processing the event for Jira hostname '${jiraHost}'`
+					);
+					emitWebhookFailedMetrics(webhookEvent);
+					context.sentry?.captureException(err);
+				} else {
+					context.log.warn(
+						err,
+						`Warning: failed to process event for the Jira hostname '${jiraHost}'`
+					);
+				}
 
 			}
 		}
