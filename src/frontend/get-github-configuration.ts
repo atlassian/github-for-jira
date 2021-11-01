@@ -92,10 +92,10 @@ const getAllInstallations = async (client, logger, jiraHost) => {
 	);
 }
 
-const removeFailedConnectionsFromDb = (req: Request, installations: any, jiraHost: string): void => {
-	installations
+const removeFailedConnectionsFromDb = async (req: Request, installations: any, jiraHost: string): Promise<void> => {
+	await Promise.all(installations
 		.filter((response) => !!response.error)
-		.forEach(async (connection) => {
+		.map(async (connection) => {
 			try {
 				const payload = {
 					installationId: connection.id,
@@ -106,9 +106,8 @@ const removeFailedConnectionsFromDb = (req: Request, installations: any, jiraHos
 				const deleteSubscriptionError = `Failed to delete subscription: ${err}`;
 				req.log.error(deleteSubscriptionError);
 			}
-		});
+		}));
 };
-
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost, githubToken } = req.session;
@@ -130,7 +129,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 	// Remove any failed installations before a user attempts to reconnect
 	const allInstallations = await getAllInstallations(client, req.log, jiraHost)
-	removeFailedConnectionsFromDb(req, allInstallations, jiraHost)
+	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost)
 
 	try {
 		// we can get the jira client Key from the JWT's `iss` property
