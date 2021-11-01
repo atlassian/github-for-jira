@@ -12,14 +12,12 @@ const requiredEnvVars = [
 	"WEBHOOK_SECRET",
 	"GITHUB_CLIENT_ID",
 	"GITHUB_CLIENT_SECRET",
-	"ATLASSIAN_SECRET",
 	"SQS_BACKFILL_QUEUE_URL",
 	"SQS_BACKFILL_QUEUE_REGION",
-	"SQS_PUSH_QUEUE_URL",
-	"SQS_PUSH_QUEUE_REGION",
+	// TODO: Uncomment when push queue is added to the service descriptor
+	// "SQS_PUSH_QUEUE_URL",
+	// "SQS_PUSH_QUEUE_REGION",
 	"MICROS_AWS_REGION",
-	"AWS_ACCESS_KEY_ID",
-	"AWS_SECRET_ACCESS_KEY"
 ];
 
 const filename = isNodeTest() ? ".env.test" : ".env";
@@ -46,7 +44,8 @@ const envVars: EnvVars = {
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
-	PROXY: getProxyFromEnvironment()
+	PROXY: getProxyFromEnvironment(),
+	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira"
 } as EnvVars;
 
 // Check to see if all required environment variables are set
@@ -71,7 +70,6 @@ export interface EnvVars {
 	WEBHOOK_SECRET: string;
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;
-	ATLASSIAN_SECRET: string;
 	INSTANCE_NAME: string;
 	DATABASE_URL: string;
 	STORAGE_SECRET: string;
@@ -86,9 +84,15 @@ export interface EnvVars {
 	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
-	GIT_COMMIT_SHA: string;
-	GIT_COMMIT_DATE: string;
-	GIT_BRANCH_NAME: string;
+	GIT_COMMIT_SHA?: string;
+	GIT_COMMIT_DATE?: string;
+	GIT_BRANCH_NAME?: string;
+	GITHUB_REPO_URL: string;
+
+	// Test Vars
+	ATLASSIAN_SECRET?: string;
+	AWS_ACCESS_KEY_ID?: string;
+	AWS_SECRET_ACCESS_KEY?: string;
 
 	// Micros Lifecycle Env Vars
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;
