@@ -57,12 +57,12 @@ export const getFailedConnections = (installations, subscriptions) => {
 			...failedConnection,
 			...subscriptions.find(
 				(sub) =>
-					failedConnection.id === sub.getDataValue("gitHubInstallationId")
+					failedConnection.id === sub.gitHubInstallationId
 			),
 		}))
 		.map((sub) => {
-			const repos = sub.dataValues.repoSyncState?.repos;
-			const repoId = Object.keys(sub.dataValues.repoSyncState?.repos || {});
+			const repos = sub.reposSyncState || {};
+			const repoId = Object.keys(repos);
 			const orgName = repos[repoId[0]].repository?.owner.login || undefined;
 
 			return { id: sub.id, deleted: sub.deleted, orgName };

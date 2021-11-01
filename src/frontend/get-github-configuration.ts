@@ -52,7 +52,6 @@ const installationConnectedStatus = async (
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
-
 async function getInstallationsWithAdmin(installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[], login: string, isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> {
 	const installationsWithAdmin: InstallationWithAdmin[] = [];
 
