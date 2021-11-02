@@ -58,7 +58,7 @@ export function extractJwtFromRequest(req: Request): string | undefined {
 	return token;
 }
 
-function sendError(res: Response, code: number, msg: string): void {
+export function sendError(res: Response, code: number, msg: string): void {
 	res.status(code).json({
 		message: msg
 	});
