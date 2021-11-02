@@ -32,8 +32,8 @@ describe("GitHub Actions", () => {
 
 	afterEach(async () => {
 		if (!nock.isDone()) {
-			// eslint-disable-next-line jest/no-standalone-expect
-			expect(nock).toBeDone();
+			// eslint-disable-next-line jest/no-jasmine-globals
+			fail("nock is not done yet");
 		}
 		nock.cleanAll();
 	});
@@ -44,7 +44,9 @@ describe("GitHub Actions", () => {
 			const fixture = require("../fixtures/branch-basic.json");
 
 			const sha = "test-branch-ref-sha";
-			//Issue with Octokit where it doenst encode the uri
+
+			// When getting branch details from github, `github.git.getRef` should encode the ref and attach it to url.
+			// Octokit doesnt do this and calls the below endpoint hence the url is mocked in this way.
 			githubNock.get("/repos/test-repo-owner/test-repo-name/git/ref/heads%2FTES-123-test-ref")
 				.reply(200, {
 					ref: "refs/heads/test-ref",
