@@ -182,6 +182,7 @@
   padding-right: 0.2em !important;
 }
 
+.jiraConfiguration__table__cell__settings__ellipsis:hover,
 .aui-button.active:not(.aui-button-link) {
   background-color: #263858 !important;
   color: #fff !important;
@@ -300,7 +301,7 @@
   background-color: #ffebe6;
   display: flex;
   margin-top: 1.1em;
-  padding: 0.8em 1.2em;
+  padding: 0.8em 1.2em 1.2em;
 }
 
 .jiraConfiguration__failedConnections__errorIcon__container {
