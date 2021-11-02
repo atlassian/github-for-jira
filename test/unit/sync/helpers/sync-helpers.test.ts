@@ -6,6 +6,8 @@ import {
 } from "../../../../src/sync/installation";
 import {getLogger} from "../../../../src/config/logger";
 
+jest.mock("../../../../src/models");
+
 describe("Sync helpers suite", () => {
 	const repoSyncState = require("../../../fixtures/repo-sync-state.json");
 	const sortedReposFunc = require("../../../fixtures/sorted-repos.json");
