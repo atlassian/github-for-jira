@@ -176,7 +176,10 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 
 		// Jira accepts up to 400 commits per request
 		// break the array up into chunks of 400
-		const chunks: JiraCommit[][] = _.chunk(commits, 400);
+		const chunks: JiraCommit[][] = [];
+		while (commits.length) {
+			chunks.push(commits.splice(0, 400));
+		}
 
 		for (const chunk of chunks) {
 			const jiraPayload = {

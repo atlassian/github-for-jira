@@ -1,13 +1,13 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { mocked } from "ts-jest/utils";
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
+import nock from "nock";
 
 jest.mock("../../src/models");
 
-// TODO: skipping this for now as it's breaking after a while loop fix which was probably a false positive and there's another ticket to fix the tests properly already in the works.
-describe.skip("Pull Requests", () => {
+describe("GitHub Actions", () => {
 	let app: Application;
 	beforeEach(async () => {
 		app = await createWebhookApp();
@@ -33,6 +33,10 @@ describe.skip("Pull Requests", () => {
 					enabled: true
 				} as any
 			);
+		});
+		afterEach(() => {
+			nock.cleanAll();
+			jest.restoreAllMocks();
 		});
 
 		it("should have reviewers on pull request action", async () => {
@@ -173,6 +177,8 @@ describe.skip("Pull Requests", () => {
 			Date.now = jest.fn(() => 12345678);
 
 			await expect(app.receive(fixture)).toResolve();
+			expect(githubNock.pendingMocks()).toEqual([]);
+			expect(jiraNock.pendingMocks()).toEqual([]);
 		});
 
 
@@ -187,6 +193,8 @@ describe.skip("Pull Requests", () => {
 			Date.now = jest.fn(() => 12345678);
 
 			await expect(app.receive(fixture)).toResolve();
+			expect(jiraNock.pendingMocks()).toEqual([]);
+			expect(githubNock.pendingMocks()).toEqual([]);
 		});
 
 		it("should not update the Jira issue if the source repo of a pull_request was deleted", async () => {
@@ -195,6 +203,8 @@ describe.skip("Pull Requests", () => {
 			Date.now = jest.fn(() => 12345678);
 
 			await expect(app.receive(fixture)).toResolve();
+			expect(githubNock.pendingMocks()).toEqual([]);
+			expect(jiraNock.pendingMocks()).toEqual([]);
 		});
 
 		it("will not delete references if a branch still has an issue key", async () => {
@@ -203,6 +213,8 @@ describe.skip("Pull Requests", () => {
 			Date.now = jest.fn(() => 12345678);
 
 			await expect(app.receive(fixture)).toResolve();
+			expect(githubNock.pendingMocks()).toEqual([]);
+			expect(jiraNock.pendingMocks()).toEqual([]);
 		});
 
 		describe("Trigged by Bot", () => {
@@ -237,6 +249,8 @@ describe.skip("Pull Requests", () => {
 				Date.now = jest.fn(() => 12345678);
 
 				await expect(app.receive(fixture[0])).toResolve();
+				expect(githubNock.pendingMocks()).toEqual([]);
+				expect(jiraNock.pendingMocks()).toEqual([]);
 			});
 
 			it("should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot", async () => {
@@ -350,6 +364,8 @@ describe.skip("Pull Requests", () => {
 				Date.now = jest.fn(() => 12345678);
 
 				await expect(app.receive(fixture[1])).toResolve();
+				expect(githubNock.pendingMocks()).toEqual([]);
+				expect(jiraNock.pendingMocks()).toEqual([]);
 			});
 
 			it("should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot", async () => {
