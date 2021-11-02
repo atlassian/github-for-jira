@@ -56,6 +56,10 @@
   border-radius: 0;
 }
 
+.githubOrgs__table {
+  padding: 0.8em 0;
+}
+
 .githubOrgs__table__row {
   border-top: 0;
   line-height: 0;

@@ -3,6 +3,9 @@ import Logger from "bunyan"
 import {getLogger} from "../config/logger"
 import SQS, {DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest} from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
+import statsd from "../config/statsd";
+import { Tags } from "hot-shots";
+import {sqsQueueMetrics} from "../config/metric-names";
 
 const logger = getLogger("sqs")
 
@@ -46,6 +49,8 @@ export type QueueSettings = {
 
 const DEFAULT_LONG_POLLING_INTERVAL = 4
 
+const PROCESSING_DURATION_HISTOGRAM_BUCKETS =	"10_100_500_1000_2000_3000_5000_10000_30000_60000";
+
 /**
  * Handler for the queue messages
  */
@@ -88,6 +93,7 @@ export class SqsQueue<MessagePayload> {
 	readonly messageHandler: MessageHandler<MessagePayload>
 	readonly sqs: SQS;
 	readonly log: Logger;
+	readonly metricsTags: Tags;
 
 	/**
 	 * Context of the currently active listener, or the last active if the queue stopped
@@ -102,6 +108,7 @@ export class SqsQueue<MessagePayload> {
 		this.sqs = new AWS.SQS({apiVersion: "2012-11-05", region: settings.queueRegion});
 		this.messageHandler = messageHandler;
 		this.log = logger.child({queue: this.queueName});
+		this.metricsTags = {queue: this.queueName};
 	}
 
 	/**
@@ -119,6 +126,7 @@ export class SqsQueue<MessagePayload> {
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
 		log.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
+		statsd.increment(sqsQueueMetrics.sent, this.metricsTags);
 	}
 
 	/**
@@ -236,6 +244,7 @@ export class SqsQueue<MessagePayload> {
 		try {
 			await this.sqs.deleteMessage(deleteParams)
 				.promise()
+			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags)
 			log.debug("Successfully deleted message from queue");
 		} catch(err) {
 			log.warn({err}, "Error deleting message from the queue");
@@ -254,12 +263,27 @@ export class SqsQueue<MessagePayload> {
 		log.info("Sqs message received");
 
 		try {
+			const messageProcessingStartTime = new Date().getTime();
 			await this.messageHandler.handle(context)
+			const messageProcessingDuration = new Date().getTime() - messageProcessingStartTime;
+			this.sendProcessedMetrics(messageProcessingDuration);
 			await this.deleteMessage(message, log)
 		} catch (err) {
 			//TODO Add error handling
+			statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
 			log.error({err}, "error executing sqs message")
 		}
+	}
+
+	private sendProcessedMetrics(messageProcessingDuration: number) {
+		statsd.increment(sqsQueueMetrics.completed, this.metricsTags)
+		//Sending histogram metric twice hence it will produce different metrics, first call produces mean, min, max and precentiles metrics
+		statsd.histogram(sqsQueueMetrics.duration, messageProcessingDuration, this.metricsTags);
+		//the second call produces only histogram buckets metrics
+		statsd.histogram(sqsQueueMetrics.duration, messageProcessingDuration, {
+			...this.metricsTags,
+			gsd_histogram: PROCESSING_DURATION_HISTOGRAM_BUCKETS
+		})
 	}
 
 	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: ListenerContext) {
@@ -267,6 +291,8 @@ export class SqsQueue<MessagePayload> {
 			listenerContext.log.trace("Nothing to process");
 			return;
 		}
+
+		statsd.increment(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
 
 		listenerContext.log.trace("Processing messages batch")
 		await Promise.all(data.Messages.map(async message => {

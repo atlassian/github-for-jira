@@ -98,7 +98,7 @@
                       >
                         {{connectedStatus syncStatus}}
                       </button>
-                    {{else if (inProgressSync syncStatus)}}
+                    {{else if (inProgressOrPendingSync syncStatus)}}
                       <div class="getConfiguration__loaderContainer">
                         <div class="getConfiguration__loader"></div>
                       </div>
