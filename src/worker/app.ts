@@ -2,12 +2,12 @@
 //        instance, mainly to use the `auth()` method. Probot needs refactored
 //        so that method is more easily accessible.
 
-import { Application, createProbot } from "probot";
+import {Application, createProbot, Probot} from "probot";
 import { findPrivateKey } from "probot/lib/private-key";
 import healthcheck from "../frontend/healthcheck";
 import { overrideProbotLoggingMethods } from "../config/logger";
 
-export const probot = createProbot({
+export const probot: Probot = createProbot({
 	id: Number(process.env.APP_ID),
 	cert: findPrivateKey() || undefined,
 

@@ -10,6 +10,9 @@ import { JiraCommit } from "../interfaces/jira";
 import _ from "lodash";
 import { queues } from "../worker/queues";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import sqsQueues from "../sqs/queues";
+import {PushQueueMessagePayload} from "../sqs/push";
 
 // TODO: define better types for this file
 
@@ -40,7 +43,7 @@ const mapFile = (
 	};
 };
 
-export function createJobData(payload, jiraHost: string) {
+export const createJobData = (payload, jiraHost: string) : PushQueueMessagePayload => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 
@@ -81,7 +84,12 @@ export async function enqueuePush(
 	jiraHost: string,
 	options?: JobOptions
 ) {
-	return queues.push.add(createJobData(payload, jiraHost), options);
+	const queueMesssagePayload = createJobData(payload, jiraHost);
+	if(await booleanFlag(BooleanFlags.SEND_PUSH_TO_SQS, false, jiraHost)) {
+		return sqsQueues.push.sendMessage(queueMesssagePayload);
+	} else {
+		return queues.push.add(createJobData(queueMesssagePayload, jiraHost), options);
+	}
 }
 
 export function processPushJob(app: Application) {

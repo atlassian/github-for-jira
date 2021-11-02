@@ -14,9 +14,8 @@ const requiredEnvVars = [
 	"GITHUB_CLIENT_SECRET",
 	"SQS_BACKFILL_QUEUE_URL",
 	"SQS_BACKFILL_QUEUE_REGION",
-	// TODO: Uncomment when push queue is added to the service descriptor
-	// "SQS_PUSH_QUEUE_URL",
-	// "SQS_PUSH_QUEUE_REGION",
+	"SQS_PUSH_QUEUE_URL",
+	"SQS_PUSH_QUEUE_REGION",
 	"MICROS_AWS_REGION",
 ];
 
