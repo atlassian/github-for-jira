@@ -151,7 +151,7 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
 	try {
 		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
 	} catch (error) {
-		sendError(res, 400, `Unable to decode JWT token: ${error}`);
+		sendError(res, 401, `Unable to decode JWT token: ${error}`);
 		return false;
 	}
 

@@ -113,7 +113,7 @@ describe("jwt", () => {
 
 				verifySymmetricJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next)
 
-				expect(res.status).toHaveBeenCalledWith(400)
+				expect(res.status).toHaveBeenCalledWith(401)
 				expect(next).toBeCalledTimes(0)
 
 			});
@@ -161,7 +161,7 @@ describe("jwt", () => {
 
 				verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next)
 
-				expect(res.status).toHaveBeenCalledWith(400)
+				expect(res.status).toHaveBeenCalledWith(401)
 				expect(next).toBeCalledTimes(0)
 
 			});

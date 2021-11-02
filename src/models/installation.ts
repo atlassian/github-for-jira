@@ -26,7 +26,8 @@ export default class Installation extends Sequelize.Model {
 		return Installation.findOne({
 			where: {
 				clientKey: getHashedKey(clientKey)
-			}
+			},
+			order: [ [ "updatedAt", "DESC" ]]
 		});
 	}
 
@@ -34,7 +35,17 @@ export default class Installation extends Sequelize.Model {
 		return Installation.findOne({
 			where: {
 				jiraHost: host
-			}
+			},
+			order: [ [ "updatedAt", "DESC" ]]
+		});
+	}
+
+	static async getAllForHost(host: string): Promise<Installation | null> {
+		return Installation.findAll({
+			where: {
+				jiraHost: host
+			},
+			order: [ [ "updatedAt", "DESC" ]]
 		});
 	}
 
