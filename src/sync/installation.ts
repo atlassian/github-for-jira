@@ -416,7 +416,9 @@ export const processInstallation =
 			const {installationId, jiraHost} = job.data;
 
 			let logger: LoggerWithTarget;
-			if (await booleanFlag(BooleanFlags.SPLIT_PROCESS_INSTALLATION_FUNCTION, false, jiraHost)) {
+
+			const splitProcessInstallationFunctionFlagIsOn = await booleanFlag(BooleanFlags.SPLIT_PROCESS_INSTALLATION_FUNCTION, false, jiraHost);
+			if (splitProcessInstallationFunctionFlagIsOn) {
 				logger = rootLogger.child({job});
 			} else {
 				logger = rootLogger;
@@ -432,8 +434,9 @@ export const processInstallation =
 				jiraHost
 			});
 
-			if (await booleanFlag(BooleanFlags.SPLIT_PROCESS_INSTALLATION_FUNCTION, false, jiraHost)) {
-				return await doProcessInstallation(app, queues, job, installationId, jiraHost, logger);
+			if (splitProcessInstallationFunctionFlagIsOn) {
+				await doProcessInstallation(app, queues, job, installationId, jiraHost, logger);
+				return ;
 			}
 
 			// TODO: remove with SPLIT_PROCESS_INSTALLATION_FUNCTION feature flag cause it was moved to
