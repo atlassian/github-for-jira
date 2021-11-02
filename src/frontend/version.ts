@@ -7,6 +7,7 @@ export default (_: Request, res: Response) => {
 		branchUrl: `${envVars.GITHUB_REPO_URL}/tree/${envVars.GIT_BRANCH_NAME}`,
 		commit: envVars.GIT_COMMIT_SHA,
 		commitDate: envVars.GIT_COMMIT_DATE,
-		commitUrl: `${envVars.GITHUB_REPO_URL}/commit/${envVars.GIT_COMMIT_SHA}`
+		commitUrl: `${envVars.GITHUB_REPO_URL}/commit/${envVars.GIT_COMMIT_SHA}`,
+		deploymentDate: envVars.DEPLOYMENT_DATE
 	});
 };
