@@ -1,20 +1,53 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { createWebhookApp } from "../utils/probot";
+import nock from "nock";
+import { Installation, Subscription } from "../../src/models";
+import { mocked } from "ts-jest/utils";
+
+jest.mock("../../src/models");
 
 describe("GitHub Actions", () => {
 	let app;
-	beforeEach(async () => app = await createWebhookApp());
+	beforeEach(async () => {
+		mocked(Subscription.getAllForInstallation).mockResolvedValue([
+			{
+				jiraHost: process.env.ATLASSIAN_URL,
+				gitHubInstallationId: 1234,
+				enabled: true
+			}] as any);
+		mocked(Subscription.getSingleInstallation).mockResolvedValue(
+			{
+				id: 1,
+				jiraHost: process.env.ATLASSIAN_URL
+			} as any);
+		mocked(Installation.getForHost).mockResolvedValue(
+			{
+				jiraHost: process.env.ATLASSIAN_URL,
+				sharedSecret: process.env.ATLASSIAN_SECRET,
+				enabled: true
+			} as any
+		);
+		app = await createWebhookApp()
+	});
+
+	afterEach(async () => {
+		if (!nock.isDone()) {
+			// eslint-disable-next-line jest/no-jasmine-globals
+			fail("nock is not done yet");
+		}
+		nock.cleanAll();
+	});
 
 	describe("Create Branch", () => {
 		it("should update Jira issue with link to a branch on GitHub", async () => {
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			const fixture = require("../fixtures/branch-basic.json");
 
-
-			const ref = "TES-123-test-ref";
 			const sha = "test-branch-ref-sha";
 
-			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/refs/heads/${ref}`)
+			// When getting branch details from github, `github.git.getRef` should encode the ref and attach it to url.
+			// Octokit doesnt do this and calls the below endpoint hence the url is mocked in this way.
+			githubNock.get("/repos/test-repo-owner/test-repo-name/git/ref/heads%2FTES-123-test-ref")
 				.reply(200, {
 					ref: "refs/heads/test-ref",
 					object: {
@@ -38,14 +71,19 @@ describe("GitHub Actions", () => {
 				preventTransitions: false,
 				repositories: [
 					{
+						id: "test-repo-id",
 						name: "example/test-repo-name",
 						url: "test-repo-url",
-						id: "test-repo-id",
 						branches: [
 							{
 								createPullRequestUrl: "test-repo-url/pull/new/TES-123-test-ref",
 								lastCommit: {
-									author: { name: "test-branch-author-name" },
+									author: {
+										avatar: "https://github.com/users/undefined.png",
+										name: "test-branch-author-name",
+										email: "undefined@noreply.user.github.com",
+										url: "https://github.com/users/undefined"
+									},
 									authorTimestamp: "test-branch-author-date",
 									displayId: "test-b",
 									fileCount: 0,
@@ -53,8 +91,8 @@ describe("GitHub Actions", () => {
 									id: "test-branch-ref-sha",
 									issueKeys: ["TES-123"],
 									message: "test-commit-message",
-									updateSequenceId: 12345678,
-									url: "test-repo-url/commits/test-branch-ref-sha"
+									url: "test-repo-url/commits/test-branch-ref-sha",
+									updateSequenceId: 12345678
 								},
 								id: "TES-123-test-ref",
 								issueKeys: ["TES-123"],
@@ -66,9 +104,7 @@ describe("GitHub Actions", () => {
 						updateSequenceId: 12345678
 					}
 				],
-				properties: {
-					installationId: 1234
-				}
+				properties: { installationId: 1234 }
 			}).reply(200);
 
 			Date.now = jest.fn(() => 12345678);
