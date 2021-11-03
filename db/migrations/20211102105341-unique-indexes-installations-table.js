@@ -2,6 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+		// TODO - sql query to remove duplicates before adding unique constraint
 		await queryInterface.addConstraint('Installations', {
 			fields: ['jiraHost', 'clientKey'],
 			type: 'unique',
