@@ -120,7 +120,6 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 		const webhookReceived = payload.webhookReceived || undefined;
 
 		const log = rootLogger.child({
-			name: PUSH_LOGGER_NAME, // overriding even though it is provided worker; webserver processed the webhooks synchronously, too
 			webhookId: webhookId,
 			repoName: repo,
 			orgName: owner.name,
