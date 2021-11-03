@@ -87,6 +87,7 @@ export interface EnvVars {
 	GIT_COMMIT_DATE?: string;
 	GIT_BRANCH_NAME?: string;
 	GITHUB_REPO_URL: string;
+	DEPLOYMENT_DATE: string;
 
 	// Test Vars
 	ATLASSIAN_SECRET?: string;
