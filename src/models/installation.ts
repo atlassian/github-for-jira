@@ -16,17 +16,6 @@ export const getHashedKey = (clientKey: string): string => {
 
 const sortInstallationsByIdFlagIsOn = async (jiraHost): Promise<boolean> =>
 	booleanFlag(BooleanFlags.SORT_INSTALLATIONS_BY_ID, true, jiraHost);
-
-// interface WhereQuery {
-// 	jiraHost: string;
-// }
-// interface OrderQuer {
-// 	jiraHost: string;
-// }
-// interface QueryPayload {
-// 	where: WhereQuery;
-// 	order?: any;
-// }
 export default class Installation extends Sequelize.Model {
 	id: number;
 	jiraHost: string;
