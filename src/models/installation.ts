@@ -14,9 +14,19 @@ export const getHashedKey = (clientKey: string): string => {
 	return keyHash.digest("hex");
 };
 
-export const sortInstallationsByIdFlagIsOn = async (jiraHost): Promise<boolean> =>
+const sortInstallationsByIdFlagIsOn = async (jiraHost): Promise<boolean> =>
 	booleanFlag(BooleanFlags.SORT_INSTALLATIONS_BY_ID, true, jiraHost);
 
+// interface WhereQuery {
+// 	jiraHost: string;
+// }
+// interface OrderQuer {
+// 	jiraHost: string;
+// }
+// interface QueryPayload {
+// 	where: WhereQuery;
+// 	order?: any;
+// }
 export default class Installation extends Sequelize.Model {
 	id: number;
 	jiraHost: string;
@@ -35,40 +45,28 @@ export default class Installation extends Sequelize.Model {
 	}
 
 	static async getForHost(host: string): Promise<Installation | null> {
-		let payload;
+		const payload: any = {
+			where: {
+				jiraHost: host,
+			}
+		}
+
 		if (await sortInstallationsByIdFlagIsOn(host)) {
-			payload =	{
-				where: {
-					jiraHost: host,
-				},
-				order: [["id", "DESC"]]
-			}
-		} else {
-			payload = {
-				where: {
-					jiraHost: host,
-				}
-			}
+			payload.order = [["id", "DESC"]]
 		}
 
 		return Installation.findOne(payload);
 	}
 
 	static async getAllForHost(host: string): Promise<Installation[]> {
-		let payload;
+		const payload: any = {
+			where: {
+				jiraHost: host,
+			}
+		}
+
 		if (await sortInstallationsByIdFlagIsOn(host)) {
-			payload =	{
-				where: {
-					jiraHost: host,
-				},
-				order: [["id", "DESC"]]
-			}
-		} else {
-			payload = {
-				where: {
-					jiraHost: host,
-				}
-			}
+			payload.order = [["id", "DESC"]]
 		}
 
 		return Installation.findAll(payload);
