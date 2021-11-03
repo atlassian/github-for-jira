@@ -1,14 +1,14 @@
-import { Subscription } from "../models";
+import {Subscription} from "../models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
 import enhanceOctokit from "../config/enhance-octokit";
-import { Application, GitHubAPI } from "probot";
-import { Job, JobOptions } from "bull";
-import { getJiraAuthor } from "../util/jira";
+import {Application, GitHubAPI} from "probot";
+import {Job, JobOptions} from "bull";
+import {getJiraAuthor} from "../util/jira";
 import {emitWebhookFailedMetrics, emitWebhookProcessedMetrics} from "../util/webhooks";
-import { JiraCommit } from "../interfaces/jira";
+import {JiraCommit} from "../interfaces/jira";
 import _ from "lodash";
-import { queues } from "../worker/queues";
+import {queues} from "../worker/queues";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 import sqsQueues from "../sqs/queues";
@@ -84,11 +84,10 @@ export async function enqueuePush(
 	jiraHost: string,
 	options?: JobOptions
 ) {
-	const queueMesssagePayload = createJobData(payload, jiraHost);
 	if(await booleanFlag(BooleanFlags.SEND_PUSH_TO_SQS, false, jiraHost)) {
-		return sqsQueues.push.sendMessage(queueMesssagePayload);
+		return sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
 	} else {
-		return queues.push.add(createJobData(queueMesssagePayload, jiraHost), options);
+		return queues.push.add(createJobData(payload, jiraHost), options);
 	}
 }
 
