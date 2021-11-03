@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import Sequelize from "sequelize";
 import Subscription from "./subscription";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
@@ -13,31 +14,78 @@ export const getHashedKey = (clientKey: string): string => {
 	return keyHash.digest("hex");
 };
 
+const sortInstallationsByIdFlagIsOn = async (jiraHost): Promise<boolean> =>
+	await booleanFlag(BooleanFlags.SORT_INSTALLATIONS_BY_ID, false, jiraHost);
+
+
 export default class Installation extends Sequelize.Model {
 	id: number;
 	jiraHost: string;
-	secrets: string;
+	secrets: string; // TODO - fix name (secret, not secrets)
 	sharedSecret: string;
 	clientKey: string;
 
 	static async getForClientKey(
 		clientKey: string
 	): Promise<Installation | null> {
-		return Installation.findOne({
-			where: {
-				clientKey: getHashedKey(clientKey)
-			},
-			order: [ [ "updatedAt", "DESC" ]]
-		});
+
+		let payload;
+		if (await sortInstallationsByIdFlagIsOn(jiraHost)) {
+			payload =	{
+				where: {
+					clientKey: getHashedKey(clientKey),
+				},
+				order: [["id", "DESC"]],
+			}
+		} else {
+			payload =	{
+				where: {
+					clientKey: getHashedKey(clientKey),
+				}
+			}
+		}
+
+		return Installation.findOne(payload);
 	}
 
 	static async getForHost(host: string): Promise<Installation | null> {
-		return Installation.findOne({
-			where: {
-				jiraHost: host
-			},
-			order: [ [ "updatedAt", "DESC" ]]
-		});
+		let payload;
+		if (await sortInstallationsByIdFlagIsOn(jiraHost)) {
+			payload =	{
+				where: {
+					jiraHost: host,
+				},
+				order: [["id", "DESC"]],
+			}
+		} else {
+			payload = {
+				where: {
+					jiraHost: host,
+				}
+			}
+		}
+
+		return Installation.findOne(payload);
+	}
+
+	static async getAllForHost(host: string): Promise<Installation[]> {
+		let payload;
+		if (await sortInstallationsByIdFlagIsOn(jiraHost)) {
+			payload =	{
+				where: {
+					jiraHost: host,
+				},
+				order: [["id", "DESC"]],
+			}
+		} else {
+			payload = {
+				where: {
+					jiraHost: host,
+				}
+			}
+		}
+
+		return Installation.findAll(payload);
 	}
 
 	/**
@@ -49,19 +97,19 @@ export default class Installation extends Sequelize.Model {
 	static async install(payload: InstallationPayload): Promise<Installation> {
 		const [installation, created] = await Installation.findOrCreate({
 			where: {
-				clientKey: getHashedKey(payload.clientKey)
+				clientKey: getHashedKey(payload.clientKey),
 			},
 			defaults: {
 				jiraHost: payload.host,
-				sharedSecret: payload.sharedSecret
-			}
+				sharedSecret: payload.sharedSecret,
+			},
 		});
 
 		if (!created) {
 			await installation
 				.update({
 					sharedSecret: payload.sharedSecret,
-					jiraHost: payload.host
+					jiraHost: payload.host,
 				})
 				.then(async (record) => {
 					const subscriptions = await Subscription.getAllForClientKey(

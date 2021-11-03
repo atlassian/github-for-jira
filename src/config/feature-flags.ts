@@ -25,7 +25,8 @@ export enum BooleanFlags {
 	NEW_SETUP_PAGE = "new-setup-page",
 	PROPAGATE_REQUEST_ID = "propagate-request-id",
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
-	SPLIT_PROCESS_INSTALLATION_FUNCTION = "split-process-installation-function"
+	SPLIT_PROCESS_INSTALLATION_FUNCTION = "split-process-installation-function",
+	SORT_INSTALLATIONS_BY_ID = "sort-installations-by-id"
 }
 
 export enum StringFlags {
