@@ -38,6 +38,15 @@ export default class Installation extends Sequelize.Model {
 		});
 	}
 
+	static async getAllForHost(host: string): Promise<Installation[]> {
+		return Installation.findOne({
+			where: {
+				jiraHost: host,
+			},
+			order: [["id", "DESC"]]
+		});
+	}
+
 	/**
 	 * Create a new Installation object from a Jira Webhook
 	 *
