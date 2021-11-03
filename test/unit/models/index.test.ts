@@ -197,9 +197,6 @@ describe("test installation model", () => {
 
 			// Ids of installations should decrement to ensure most recently added is retrieved first
 			expect(installations[0].id).toBeGreaterThan(installations[1].id);
-
-			const firstRetreivedInstallation = await Installation.getForHost(jiraHost);
-			expect(firstRetreivedInstallation?.id).toEqual(installations[0].id);
 		});
 
 		it("getForHost should return the most recent entry if there are 2 duplicate entries", async () => {
@@ -218,10 +215,6 @@ describe("test installation model", () => {
 			});
 
 			const installations = await Installation.getAllForHost(jiraHost);
-
-			// Ids of installations should decrement to ensure most recently added is retrieved first
-			expect(installations[0].id).toBeGreaterThan(installations[1].id);
-
 			const firstRetreivedInstallation = await Installation.getForHost(jiraHost);
 			expect(firstRetreivedInstallation?.id).toEqual(installations[0].id);
 		});
@@ -259,6 +252,7 @@ describe("test installation model", () => {
 
 			const installations = await Installation.getAllForHost(jiraHost);
 			expect(installations.length).toEqual(5);
+			
 			installations.forEach((installation) => {
 				// both installations should have the same host.
 				expect(installation.jiraHost).toBe(jiraHost);
