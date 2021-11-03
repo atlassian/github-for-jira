@@ -2,7 +2,7 @@ import "./config/env"; // Important to be before other dependencies
 import "./config/proxy"; // Important to be before other dependencies
 import throng from "throng";
 import { v4 as uuidv4 } from "uuid";
-import { isNodeProd } from "./util/isNodeEnv";
+import {isNodeProd, isNodeTest} from "./util/isNodeEnv";
 import { listenToMicrosLifecycle } from "./services/micros/lifecycle";
 import { ClusterCommand, sendCommandToCluster } from "./services/cluster/send-command";
 import * as Sentry from "@sentry/node";
@@ -130,7 +130,7 @@ let running = false;
 let timer: Timeout;
 
 // Start function for Node cluster worker
-async function start() {
+export async function start() {
 	if (running) {
 		logger.debug("Worker instance already running, skipping.");
 		return;
@@ -157,7 +157,7 @@ async function start() {
 	running = true;
 }
 
-async function stop() {
+export async function stop() {
 	if (!running) {
 		logger.debug("Worker instance not running, skipping.");
 		return;
@@ -208,7 +208,9 @@ if (isNodeProd()) {
 		},
 		lifetime: Infinity
 	});
-} else {
+
+	//Don't start worker automatically in test environments to allow calling start() and stop() functions in unit tests
+} else if (!isNodeTest()) {
 	initialize();
 	// Dev/test single process, no need for clustering or lifecycle events
 	start();

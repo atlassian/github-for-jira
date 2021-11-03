@@ -5,8 +5,13 @@ import { createWebhookApp } from "../utils/probot";
 import {getLogger} from "../../src/config/logger";
 import {mocked} from "ts-jest/utils";
 import {Installation, Subscription} from "../../src/models";
+import {booleanFlag, BooleanFlags} from "../../src/config/feature-flags";
+import {when} from "jest-when";
+import waitUntil from "../utils/waitUntil";
+import {start, stop} from "../../src/worker"
 
 jest.mock("../../src/models");
+jest.mock("../../src/config/feature-flags");
 
 describe("GitHub Push", () => {
 	let app;
@@ -45,10 +50,6 @@ describe("GitHub Push", () => {
 
 	afterEach(() => {
 
-		// eslint-disable-next-line jest/no-standalone-expect
-		expect(githubNock.pendingMocks()).toEqual([]);
-		// eslint-disable-next-line jest/no-standalone-expect
-		expect(jiraNock.pendingMocks()).toEqual([]);
 		if (!nock.isDone()) {
 			// eslint-disable-next-line jest/no-jasmine-globals
 			fail("nock is not done yet");
@@ -60,6 +61,7 @@ describe("GitHub Push", () => {
 	const getAtlassianUrl = () => process.env.ATLASSIAN_URL || "";
 	const createJob = (payload, jiraHost:string) => ({data: createJobData(payload, jiraHost)} as any);
 
+	//TODO
 	describe.skip("add to push queue", () => {
 		beforeEach(() => {
 			process.env.REDIS_URL = "redis://test";
@@ -110,6 +112,13 @@ describe("GitHub Push", () => {
 		beforeEach(() => {
 			Date.now = jest.fn(() => 12345678);
 		});
+
+		afterEach(() => {
+			// eslint-disable-next-line jest/no-standalone-expect
+			expect(githubNock.pendingMocks()).toEqual([]);
+			// eslint-disable-next-line jest/no-standalone-expect
+			expect(jiraNock.pendingMocks()).toEqual([]);
+		})
 
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
@@ -456,4 +465,134 @@ describe("GitHub Push", () => {
 			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
 		});
 	});
+
+	describe("end 2 end tests with queue", () => {
+
+		beforeEach(() => {
+			Date.now = jest.fn(() => 12345678);
+		})
+
+		beforeAll(async () => {
+			//Start worker node for queues processing
+			await start();
+		});
+
+		afterAll(async () => {
+			//Stop worker node
+			await stop();
+		})
+
+
+		function createPushEventAndMockRestReqeustsForItsProcessing() {
+			const event = require("../fixtures/push-no-username.json");
+
+			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+				.reply(200, require("../fixtures/push-non-merge-commit"));
+
+			// flag property should not be present
+			jiraNock.post("/rest/devinfo/0.10/bulk", {
+				preventTransitions: false,
+				repositories: [
+					{
+						name: "test-repo-name",
+						url: "test-repo-url",
+						id: "test-repo-id",
+						commits: [
+							{
+								hash: "commit-no-username",
+								message: "[TEST-123] Test commit.",
+								author: {
+									avatar: "https://github.com/users/undefined.png",
+									name: "test-commit-name",
+									email: "test-email@example.com",
+									url: "https://github.com/users/undefined",
+								},
+								authorTimestamp: "test-commit-date",
+								displayId: "commit",
+								fileCount: 3,
+								files: [
+									{
+										path: "test-modified",
+										changeType: "MODIFIED",
+										linesAdded: 10,
+										linesRemoved: 2,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
+									},
+									{
+										path: "test-added",
+										changeType: "ADDED",
+										linesAdded: 4,
+										linesRemoved: 0,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
+									},
+									{
+										path: "test-removal",
+										changeType: "DELETED",
+										linesAdded: 0,
+										linesRemoved: 4,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
+									}
+								],
+								id: "commit-no-username",
+								issueKeys: ["TEST-123"],
+								url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
+								updateSequenceId: 12345678
+							}
+						],
+						updateSequenceId: 12345678
+					}
+				],
+				properties: {installationId: 1234}
+			}).reply(200);
+			return event;
+		}
+
+		/**
+		 * Tests when we process pushes immediately without using the queue
+		 */
+		it("should send bulk update event to Jira when push webhook received and queue is not involved", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(true);
+
+			const event = createPushEventAndMockRestReqeustsForItsProcessing();
+
+			await app.receive(event);
+
+			// eslint-disable-next-line jest/no-standalone-expect
+			expect(githubNock.pendingMocks()).toEqual([]);
+			// eslint-disable-next-line jest/no-standalone-expect
+			expect(jiraNock.pendingMocks()).toEqual([]);
+		});
+
+		/**
+		 * Tests webhook processing through redis
+		 */
+		it("should send bulk update event to Jira when push webhook received and sent through redis queue", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(false);
+
+			mockGithubAccessToken();
+
+			const event = createPushEventAndMockRestReqeustsForItsProcessing();
+			await app.receive(event);
+
+			await waitUntil( async () => {
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(githubNock.pendingMocks()).toEqual([]);
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(jiraNock.pendingMocks()).toEqual([]);
+			})
+
+		});
+
+	});
+
 });
