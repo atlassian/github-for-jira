@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import Sequelize from "sequelize";
 import Subscription from "./subscription";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
@@ -14,8 +13,6 @@ export const getHashedKey = (clientKey: string): string => {
 	return keyHash.digest("hex");
 };
 
-export const sortInstallationsByIdFlagIsOn = async (jiraHost): Promise<boolean> =>
-	booleanFlag(BooleanFlags.SORT_INSTALLATIONS_BY_ID, true, jiraHost);
 export default class Installation extends Sequelize.Model {
 	id: number;
 	jiraHost: string;
@@ -26,64 +23,19 @@ export default class Installation extends Sequelize.Model {
 	static async getForClientKey(
 		clientKey: string
 	): Promise<Installation | null> {
-
-		let payload;
-		if (await sortInstallationsByIdFlagIsOn(jiraHost)) {
-			payload =	{
-				where: {
-					clientKey: getHashedKey(clientKey),
-				},
-				// order: [["id", "DESC"]],
+		return Installation.findOne({
+			where: {
+				clientKey: getHashedKey(clientKey)
 			}
-		} else {
-			payload =	{
-				where: {
-					clientKey: getHashedKey(clientKey),
-				}
-			}
-		}
-
-		return Installation.findOne(payload);
+		});
 	}
 
 	static async getForHost(host: string): Promise<Installation | null> {
-		let payload;
-		if (await sortInstallationsByIdFlagIsOn(jiraHost)) {
-			payload =	{
-				where: {
-					jiraHost: host,
-				},
-				// order: [["id", "DESC"]],
+		return Installation.findOne({
+			where: {
+				jiraHost: host
 			}
-		} else {
-			payload = {
-				where: {
-					jiraHost: host,
-				}
-			}
-		}
-
-		return Installation.findOne(payload);
-	}
-
-	static async getAllForHost(host: string): Promise<Installation[]> {
-		let payload;
-		if (await sortInstallationsByIdFlagIsOn(jiraHost)) {
-			payload =	{
-				where: {
-					jiraHost: host,
-				},
-				// order: [["id", "DESC"]],
-			}
-		} else {
-			payload = {
-				where: {
-					jiraHost: host,
-				}
-			}
-		}
-
-		return Installation.findAll(payload);
+		});
 	}
 
 	/**
