@@ -230,6 +230,31 @@ describe("test installation model", () => {
 				expect(installation.jiraHost).toBe(jiraHost);
 			});
 
+			const firstRetreivedInstallation = await Installation.getForHost(jiraHost);
+			expect(firstRetreivedInstallation?.id).toEqual(installations[0].id);
+		});
+
+		it("should sort duplicates on Installation.create", async () => {
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret1",
+				clientKey: "1",
+			})
+
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "goodsecret",
+				clientKey: "1",
+			})
+
+			const installations = await Installation.getAllForHost(jiraHost);
+			expect(installations.length).toEqual(2);
+
+			installations.forEach((installation) => {
+				// both installations should have the same host.
+				expect(installation.jiraHost).toBe(jiraHost);
+			});
+
 			// Ids of installations should decrement to ensure most recently added is retrieved first
 			expect(installations[0].id).toBeGreaterThan(installations[1].id);
 
