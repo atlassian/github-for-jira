@@ -191,9 +191,7 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 				updateSequenceId: Date.now(),
 			};
 
-			const jiraResponse = await jiraClient.devinfo.repository.update(
-				jiraPayload
-			);
+			const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 
 			webhookReceived && emitWebhookProcessedMetrics(
 				webhookReceived,

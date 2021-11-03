@@ -72,14 +72,12 @@ describe("test installation model", () => {
 	afterEach(async () => {
 		process.env.STORAGE_SECRET = storageSecret;
 		// Clean up the database
-		await Installation.truncate({
-			cascade: true,
-			restartIdentity: true
+		await Installation.destroy({
+			truncate: true
 		});
 
-		await Subscription.truncate({
-			cascade: true,
-			restartIdentity: true
+		await Subscription.destroy({
+			truncate: true
 		});
 	});
 

@@ -31,7 +31,8 @@ async function getJiraClient(
 ): Promise<any> {
 	const logger = log.child({jiraHost, gitHubInstallationId});
 	const installation = await Installation.getForHost(jiraHost);
-	if (installation == null) {
+	if (!installation) {
+		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
 		return undefined;
 	}
 	const instance = getAxiosInstance(

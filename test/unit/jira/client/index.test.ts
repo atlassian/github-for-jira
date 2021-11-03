@@ -1,16 +1,14 @@
 import { Installation, Subscription } from "../../../../src/models";
-import InstallationClass from "../../../../src/models/installation";
 import SubscriptionClass from "../../../../src/models/subscription";
 import getJiraClient from "../../../../src/jira/client";
 
 describe("Test getting a jira client", () => {
-	const gitHubInstallationId = Math.round(Math.random()*10000);
-	let installation: InstallationClass;
+	const gitHubInstallationId = Math.round(Math.random() * 10000);
 	let subscription: SubscriptionClass;
 	let client;
 
 	beforeEach(async () => {
-		installation = await Installation.install({
+		await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
 			clientKey: "client-key"
@@ -23,9 +21,9 @@ describe("Test getting a jira client", () => {
 	});
 
 	afterEach(async () => {
-		await installation.destroy();
-		await subscription.destroy();
-	})
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
+	});
 
 	it("Installation exists", async () => {
 		expect(client).toMatchSnapshot();
@@ -50,7 +48,7 @@ describe("Test getting a jira client", () => {
 					fileCount: 3,
 					hash: "hashihashhash",
 					id: "id",
-					issueKeys: Array.from(new Array(125)).map((_,i) => `TEST-${i}`),
+					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
 					message: "commit message",
 					url: "some-url",
 					updateSequenceId: 1234567890

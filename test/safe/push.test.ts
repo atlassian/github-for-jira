@@ -3,15 +3,27 @@ import nock from "nock";
 import { createJobData, processPushJob } from "../../src/transforms/push";
 import { createWebhookApp } from "../utils/probot";
 import { getLogger } from "../../src/config/logger";
-import SubscriptionClass from "../../src/models/subscription";
-import { Subscription } from "../../src/models";
+import { Installation, Subscription } from "../../src/models";
+import { Application } from "probot";
 
-describe("GitHub Actions", () => {
-	let app;
-	beforeEach(async () => app = await createWebhookApp());
+const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
 
-	const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
+describe("Push Webhook", () => {
+	let app: Application;
+	beforeEach(async () => {
+		app = await createWebhookApp();
+		await Installation.create({
+			clientKey: "client-key",
+			sharedSecret: "shared-secret",
+			jiraHost
+		});
+	});
 
+	afterEach(async () => {
+		await Installation.destroy({ truncate: true });
+	});
+
+	// TODO: figure out how to tests with queue
 	describe.skip("add to push queue", () => {
 		beforeEach(() => {
 			process.env.REDIS_URL = "redis://test";
@@ -59,28 +71,22 @@ describe("GitHub Actions", () => {
 	});
 
 	describe("process push payloads", () => {
-		let sub: SubscriptionClass;
-
 		beforeEach(async () => {
 			Date.now = jest.fn(() => 12345678);
-			sub = await Subscription.create({
+			await Subscription.create({
 				gitHubInstallationId: 1234,
 				jiraHost,
-				jiraClientKey: "myClientKey",
+				jiraClientKey: "myClientKey"
 			});
 		});
 
 		afterEach(async () => {
-			await sub.destroy();
-		})
+			await Subscription.destroy({ truncate: true });
+		});
 
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
 			const job = createJob(event.payload, jiraHost);
-
-			githubNock
-				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.reply(200, require("../fixtures/api/commit-no-username.json"));
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
@@ -98,8 +104,8 @@ describe("GitHub Actions", () => {
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
 								author: {
-									email: "test-email@example.com",
-									name: "test-commit-name"
+									name: "test-commit-name",
+									email: "test-email@example.com"
 								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
@@ -267,18 +273,17 @@ describe("GitHub Actions", () => {
 			nock.removeInterceptor(interceptor);
 		});
 
-		it("should support commits without smart commands", async () => {
-			const fixture = require("../fixtures/push-empty.json");
-			// match any post calls
+		it("should not send anything to Jira if there's", async () => {
+			const fixture = require("../fixtures/push-no-issuekey-commits.json");
+			// match any post calls for jira and github
 			jiraNock.post(/.*/).reply(200);
-
-			// match any post calls
-			const interceptor = githubNock.get(/.*/);
-			const scope = interceptor.reply(200);
+			githubNock.get(/.*/).reply(200);
 
 			await expect(app.receive(fixture)).toResolve();
-			expect(scope).not.toBeDone();
-			nock.removeInterceptor(interceptor);
+			// Since no issues keys are found, there should be no calls to github's or jira's API
+			expect(nock).not.toBeDone();
+			// Clean up all nock mocks
+			nock.cleanAll();
 		});
 
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {

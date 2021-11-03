@@ -1,22 +1,41 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { createWebhookApp } from "../utils/probot";
+import { Installation, Subscription } from "../../src/models";
+import { Application } from "probot";
 
-describe("GitHub Actions", () => {
-	let app;
-	beforeEach(async () => app = await createWebhookApp());
+describe("Branch Webhook", () => {
+	let app: Application;
+	const gitHubInstallationId = 1234;
+	beforeEach(async () => {
+		app = await createWebhookApp();
+		const clientKey = "client-key";
+		await Installation.create({
+			clientKey,
+			sharedSecret: "shared-secret",
+			jiraHost
+		});
+		await Subscription.create({
+			gitHubInstallationId,
+			jiraHost,
+			jiraClientKey: clientKey
+		});
+	});
+
+	afterEach(async () => {
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
+	});
 
 	describe("Create Branch", () => {
 		it("should update Jira issue with link to a branch on GitHub", async () => {
-			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			const fixture = require("../fixtures/branch-basic.json");
 
-
-			const ref = "TES-123-test-ref";
+			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
-			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/refs/heads/${ref}`)
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
-					ref: "refs/heads/test-ref",
+					ref: `refs/${ref}`,
 					object: {
 						sha
 					}
@@ -26,13 +45,13 @@ describe("GitHub Actions", () => {
 					commit: {
 						author: {
 							name: "test-branch-author-name",
+							email: "test-branch-author-name@github.com",
 							date: "test-branch-author-date"
 						},
 						message: "test-commit-message"
 					},
 					html_url: `test-repo-url/commits/${sha}`
 				});
-
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -45,7 +64,10 @@ describe("GitHub Actions", () => {
 							{
 								createPullRequestUrl: "test-repo-url/pull/new/TES-123-test-ref",
 								lastCommit: {
-									author: { name: "test-branch-author-name" },
+									author: {
+										name: "test-branch-author-name",
+										email: "test-branch-author-name@github.com"
+									},
 									authorTimestamp: "test-branch-author-date",
 									displayId: "test-b",
 									fileCount: 0,
@@ -67,7 +89,7 @@ describe("GitHub Actions", () => {
 					}
 				],
 				properties: {
-					installationId: 1234
+					installationId: gitHubInstallationId
 				}
 			}).reply(200);
 

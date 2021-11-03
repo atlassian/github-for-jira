@@ -168,9 +168,8 @@ export default (
 		const subscriptions = await Subscription.getAllForInstallation(
 			gitHubInstallationId
 		);
-		const jiraSubscriptionsCount = subscriptions.length;
 
-		if (!jiraSubscriptionsCount) {
+		if (!subscriptions.length) {
 			context.log(
 				{ noop: "no_subscriptions", orgName: orgName },
 				"Halting further execution since no subscriptions were found."
@@ -179,7 +178,7 @@ export default (
 		}
 
 		context.log(
-			`Processing event for ${jiraSubscriptionsCount} jira instances`
+			`Processing event for ${subscriptions.length} jira instances`
 		);
 
 		context.sentry?.setTag(

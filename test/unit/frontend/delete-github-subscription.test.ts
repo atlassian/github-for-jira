@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import nock from "nock";
 import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
 import deleteSubscription from "../../../src/frontend/delete-github-subscription";
@@ -14,13 +13,13 @@ describe("POST /github/subscription", () => {
 	beforeEach(async () => {
 		subscription = {
 			githubInstallationId: 15,
-			jiraHost: "https://test-host.jira.com",
+			jiraHost,
 			destroy: jest.fn().mockResolvedValue(undefined)
 		};
 
 		installation = {
 			id: 19,
-			jiraHost: subscription.jiraHost,
+			jiraHost,
 			clientKey: "abc123",
 			enabled: true,
 			secrets: "def234",
@@ -36,7 +35,7 @@ describe("POST /github/subscription", () => {
 	});
 
 	it("Delete Jira Configuration", async () => {
-		nock(subscription.jiraHost)
+		jiraNock
 			.delete("/rest/devinfo/0.10/bulkByProperties")
 			.query({ installationId: subscription.githubInstallationId })
 			.reply(200, "OK");
@@ -45,10 +44,10 @@ describe("POST /github/subscription", () => {
 			log: { error: jest.fn(), info: jest.fn() },
 			body: {
 				installationId: subscription.githubInstallationId,
-				jiraHost: subscription.jiraHost
+				jiraHost
 			},
 			query: {
-				xdm_e: subscription.jiraHost
+				xdm_e: jiraHost
 			},
 			session: {
 				githubToken: "abc-token"
@@ -105,7 +104,7 @@ describe("POST /github/subscription", () => {
 				session: { githubToken: "example-token" },
 				body: {
 					installationId: "an installation id",
-					jiraHost: "https://jira-host"
+					jiraHost,
 				}
 			};
 			delete req.body[property];
