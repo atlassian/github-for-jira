@@ -1,8 +1,6 @@
 import supertest from "supertest";
 import express, { Express } from "express";
 import setupFrontend from "../../../src/frontend/app";
-import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
-import { when } from "jest-when";
 import {getLogger} from "../../../src/config/logger";
 
 jest.mock("../../../src/config/feature-flags");
@@ -17,10 +15,6 @@ describe("Connect", () => {
 			request.log = getLogger('test');
 			next();
 		});
-		when(booleanFlag).calledWith(
-			BooleanFlags.PROPAGATE_REQUEST_ID,
-			expect.anything()
-		).mockResolvedValue(Promise.resolve(true));
 	});
 
 	describe("Frontend", () => {

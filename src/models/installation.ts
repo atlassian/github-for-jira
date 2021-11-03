@@ -21,7 +21,7 @@ const sortInstallationsByIdFlagIsOn = async (jiraHost): Promise<boolean> =>
 export default class Installation extends Sequelize.Model {
 	id: number;
 	jiraHost: string;
-	secrets: string; // TODO - fix name (secret, not secrets)
+	secrets: string;
 	sharedSecret: string;
 	clientKey: string;
 
@@ -101,7 +101,7 @@ export default class Installation extends Sequelize.Model {
 			},
 			defaults: {
 				jiraHost: payload.host,
-				sharedSecret: payload.sharedSecret,
+				sharedSecret: payload.sharedSecret
 			},
 		});
 
@@ -109,7 +109,7 @@ export default class Installation extends Sequelize.Model {
 			await installation
 				.update({
 					sharedSecret: payload.sharedSecret,
-					jiraHost: payload.host,
+					jiraHost: payload.host
 				})
 				.then(async (record) => {
 					const subscriptions = await Subscription.getAllForClientKey(

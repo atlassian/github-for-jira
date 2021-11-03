@@ -12,16 +12,7 @@ export const getGitHubConfigurationUrl = (
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
 	`${jiraHost}/plugins/servlet/ac/com.atlassian.jira.emcee/discover#!/discover/app/com.github.integration.production`;
 
-// Deprecated, will be removed with the feature flag. Use getJiraHostFromRedirectUrlNew() instead
-export const getJiraHostFromRedirectUrl = (url: string): string => {
-	try {
-		return new URL(url).host;
-	} catch (err) {
-		return "unknown";
-	}
-};
-
-export const getJiraHostFromRedirectUrlNew = (urlOrPath: string, log: Logger): string => {
+export const getJiraHostFromRedirectUrl = (urlOrPath: string, log: Logger): string => {
 	if (!urlOrPath) {
 		return "empty";
 	}
