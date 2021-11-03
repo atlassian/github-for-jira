@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import Sequelize from "sequelize";
 import Subscription from "./subscription";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
@@ -12,6 +13,9 @@ export const getHashedKey = (clientKey: string): string => {
 	keyHash.update(clientKey);
 	return keyHash.digest("hex");
 };
+
+export const sortInstallationsByIdFlagIsOn = async (jiraHost): Promise<boolean> =>
+	booleanFlag(BooleanFlags.SORT_INSTALLATIONS_BY_ID, true, jiraHost);
 
 export default class Installation extends Sequelize.Model {
 	id: number;
@@ -26,27 +30,48 @@ export default class Installation extends Sequelize.Model {
 		return Installation.findOne({
 			where: {
 				clientKey: getHashedKey(clientKey)
-			},
-			order: [["id", "DESC"]]
+			}
 		});
 	}
 
 	static async getForHost(host: string): Promise<Installation | null> {
-		return Installation.findOne({
-			where: {
-				jiraHost: host
-			},
-			order: [["id", "DESC"]]
-		});
+		let payload;
+		if (await sortInstallationsByIdFlagIsOn(host)) {
+			payload =	{
+				where: {
+					jiraHost: host,
+				},
+				order: [["id", "DESC"]]
+			}
+		} else {
+			payload = {
+				where: {
+					jiraHost: host,
+				}
+			}
+		}
+
+		return Installation.findOne(payload);
 	}
 
 	static async getAllForHost(host: string): Promise<Installation[]> {
-		return Installation.findOne({
-			where: {
-				jiraHost: host,
-			},
-			order: [["id", "DESC"]]
-		});
+		let payload;
+		if (await sortInstallationsByIdFlagIsOn(host)) {
+			payload =	{
+				where: {
+					jiraHost: host,
+				},
+				order: [["id", "DESC"]]
+			}
+		} else {
+			payload = {
+				where: {
+					jiraHost: host,
+				}
+			}
+		}
+
+		return Installation.findAll(payload);
 	}
 
 	/**
