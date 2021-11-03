@@ -1,4 +1,3 @@
-/* eslint-disable jest/no-conditional-expect */
 import { Installation, Subscription } from "../../../src/models";
 import { getHashedKey } from "../../../src/models/installation";
 
@@ -88,7 +87,7 @@ describe("test installation model", () => {
 		const installation = await Installation.install({
 			host: newInstallPayload.baseUrl,
 			sharedSecret: newInstallPayload.sharedSecret,
-			clientKey: newInstallPayload.clientKey,
+			clientKey: newInstallPayload.clientKey
 		});
 
 		expect(installation.jiraHost).toBe(newInstallPayload.baseUrl);

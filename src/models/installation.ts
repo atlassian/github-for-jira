@@ -97,12 +97,12 @@ export default class Installation extends Sequelize.Model {
 	static async install(payload: InstallationPayload): Promise<Installation> {
 		const [installation, created] = await Installation.findOrCreate({
 			where: {
-				clientKey: getHashedKey(payload.clientKey),
+				clientKey: getHashedKey(payload.clientKey)
 			},
 			defaults: {
 				jiraHost: payload.host,
 				sharedSecret: payload.sharedSecret
-			},
+			}
 		});
 
 		if (!created) {
