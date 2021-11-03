@@ -33,7 +33,7 @@ export default class Installation extends Sequelize.Model {
 				where: {
 					clientKey: getHashedKey(clientKey),
 				},
-				order: [["id", "DESC"]],
+				// order: [["id", "DESC"]],
 			}
 		} else {
 			payload =	{
@@ -53,7 +53,7 @@ export default class Installation extends Sequelize.Model {
 				where: {
 					jiraHost: host,
 				},
-				order: [["id", "DESC"]],
+				// order: [["id", "DESC"]],
 			}
 		} else {
 			payload = {
@@ -73,7 +73,7 @@ export default class Installation extends Sequelize.Model {
 				where: {
 					jiraHost: host,
 				},
-				order: [["id", "DESC"]],
+				// order: [["id", "DESC"]],
 			}
 		} else {
 			payload = {
