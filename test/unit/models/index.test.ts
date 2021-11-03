@@ -12,7 +12,7 @@ describe("test installation model", () => {
 		baseUrl: "https://test-user.atlassian.net",
 		productType: "jira",
 		description: "Atlassian JIRA at https://test-user.atlassian.net ",
-		eventType: "installed"
+		eventType: "installed",
 	};
 
 	// this payload is identical to newInstallPayload except for a renamed `baseUrl`
@@ -26,7 +26,7 @@ describe("test installation model", () => {
 		baseUrl: "https://renamed-user.atlassian.net", // This is the only part that's different
 		productType: "jira",
 		description: "Atlassian JIRA at https://renamed-user.atlassian.net ",
-		eventType: "installed"
+		eventType: "installed",
 	};
 
 	// Setup an installation
@@ -40,7 +40,7 @@ describe("test installation model", () => {
 		baseUrl: "https://existing-instance.atlassian.net",
 		productType: "jira",
 		description: "Atlassian JIRA at https://existing-instance.atlassian.net ",
-		eventType: "installed"
+		eventType: "installed",
 	};
 
 	let storageSecret: string | undefined;
@@ -52,20 +52,20 @@ describe("test installation model", () => {
 		const installation = await Installation.install({
 			host: existingInstallPayload.baseUrl,
 			sharedSecret: existingInstallPayload.sharedSecret,
-			clientKey: existingInstallPayload.clientKey
+			clientKey: existingInstallPayload.clientKey,
 		});
 
 		// Setup two subscriptions for this host
 		await Subscription.install({
 			host: installation.jiraHost,
 			installationId: "1234",
-			clientKey: installation.clientKey
+			clientKey: installation.clientKey,
 		});
 
 		await Subscription.install({
 			host: installation.jiraHost,
 			installationId: "2345",
-			clientKey: installation.clientKey
+			clientKey: installation.clientKey,
 		});
 	});
 
@@ -74,12 +74,12 @@ describe("test installation model", () => {
 		// Clean up the database
 		await Installation.truncate({
 			cascade: true,
-			restartIdentity: true
+			restartIdentity: true,
 		});
 
 		await Subscription.truncate({
 			cascade: true,
-			restartIdentity: true
+			restartIdentity: true,
 		});
 	});
 
@@ -87,7 +87,7 @@ describe("test installation model", () => {
 		const installation = await Installation.install({
 			host: newInstallPayload.baseUrl,
 			sharedSecret: newInstallPayload.sharedSecret,
-			clientKey: newInstallPayload.clientKey
+			clientKey: newInstallPayload.clientKey,
 		});
 
 		expect(installation.jiraHost).toBe(newInstallPayload.baseUrl);
@@ -103,14 +103,14 @@ describe("test installation model", () => {
 		const newInstallation = await Installation.install({
 			host: newInstallPayload.baseUrl,
 			sharedSecret: newInstallPayload.sharedSecret,
-			clientKey: newInstallPayload.clientKey
+			clientKey: newInstallPayload.clientKey,
 		});
 		expect(newInstallation.jiraHost).toBe(newInstallPayload.baseUrl);
 
 		const updatedInstallation = await Installation.install({
 			host: renamedInstallPayload.baseUrl,
 			sharedSecret: renamedInstallPayload.sharedSecret,
-			clientKey: renamedInstallPayload.clientKey
+			clientKey: renamedInstallPayload.clientKey,
 		});
 
 		expect(updatedInstallation.jiraHost).toBe(renamedInstallPayload.baseUrl);
@@ -120,7 +120,7 @@ describe("test installation model", () => {
 		const updatedInstallation = await Installation.install({
 			host: renamedInstallPayload.baseUrl,
 			sharedSecret: renamedInstallPayload.sharedSecret,
-			clientKey: renamedInstallPayload.clientKey
+			clientKey: renamedInstallPayload.clientKey,
 		});
 
 		const updatedSubscriptions = await Subscription.getAllForClientKey(
@@ -132,5 +132,41 @@ describe("test installation model", () => {
 		for (const subscription of updatedSubscriptions) {
 			expect(subscription.jiraHost).toBe(renamedInstallPayload.baseUrl);
 		}
+	});
+
+	it.only("should return the most recent entry if there are duplicate hosts", async () => {
+		await Installation.install({
+			host: newInstallPayload.baseUrl,
+			sharedSecret: newInstallPayload.sharedSecret,
+			clientKey: newInstallPayload.clientKey,
+		});
+
+		const firstInstallationForHost = await Installation.getForHost(
+			newInstallPayload.baseUrl
+		);
+
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		const firstInstallationForHostCreatedAt = firstInstallationForHost?.getDataValue("createdAt");
+
+		// setTimeout(async () => {
+			await Installation.install({
+				host: newInstallPayload.baseUrl,
+				sharedSecret: newInstallPayload.sharedSecret,
+				clientKey: newInstallPayload.clientKey,
+			});
+
+			const secondInstallationForHost = await Installation.getForHost(
+				newInstallPayload.baseUrl
+			);
+
+			console.log(secondInstallationForHost)
+			console.log("HERE")
+		// }, 1000);
+
+
+
+
+
 	});
 });
