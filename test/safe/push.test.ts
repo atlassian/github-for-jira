@@ -3,10 +3,59 @@ import nock from "nock";
 import { createJobData, processPushJob } from "../../src/transforms/push";
 import { createWebhookApp } from "../utils/probot";
 import {getLogger} from "../../src/config/logger";
+import {mocked} from "ts-jest/utils";
+import {Installation, Subscription} from "../../src/models";
 
-describe("GitHub Actions", () => {
+jest.mock("../../src/models");
+
+describe("GitHub Push", () => {
 	let app;
-	beforeEach(async () => app = await createWebhookApp());
+	const mockGithubAccessToken = () => {
+		githubNock
+			.post("/app/installations/1234/access_tokens")
+			.reply(200, {
+				token: "token",
+				expires_at: new Date().getTime()
+			});
+	}
+
+	beforeEach(async () => {
+
+		mocked(Subscription.getAllForInstallation).mockResolvedValue([
+			{
+				jiraHost: process.env.ATLASSIAN_URL,
+				gitHubInstallationId: 1234,
+				enabled: true
+			}] as any);
+		mocked(Subscription.getSingleInstallation).mockResolvedValue(
+			{
+				id: 1,
+				jiraHost: process.env.ATLASSIAN_URL
+			} as any);
+		mocked(Installation.getForHost).mockResolvedValue(
+			{
+				jiraHost: process.env.ATLASSIAN_URL,
+				sharedSecret: process.env.ATLASSIAN_SECRET,
+				enabled: true
+			} as any
+		);
+
+		app = await createWebhookApp();
+	});
+
+	afterEach(() => {
+
+		// eslint-disable-next-line jest/no-standalone-expect
+		expect(githubNock.pendingMocks()).toEqual([]);
+		// eslint-disable-next-line jest/no-standalone-expect
+		expect(jiraNock.pendingMocks()).toEqual([]);
+		if (!nock.isDone()) {
+			// eslint-disable-next-line jest/no-jasmine-globals
+			fail("nock is not done yet");
+		}
+		nock.cleanAll();
+		jest.restoreAllMocks();
+	});
 
 	const getAtlassianUrl = () => process.env.ATLASSIAN_URL || "";
 	const createJob = (payload, jiraHost:string) => ({data: createJobData(payload, jiraHost)} as any);
@@ -65,15 +114,12 @@ describe("GitHub Actions", () => {
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
 			const job = createJob(event.payload, getAtlassianUrl());
-			githubNock
-				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.reply(200, require("../fixtures/api/commit-no-username.json"));
+
+			mockGithubAccessToken();
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/api/commit-no-username.json"));
-
-			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
@@ -87,8 +133,10 @@ describe("GitHub Actions", () => {
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
 								author: {
+									avatar: "https://github.com/users/undefined.png",
+									name: "test-commit-name",
 									email: "test-email@example.com",
-									name: "test-commit-name"
+									url: "https://github.com/users/undefined"
 								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
@@ -129,11 +177,15 @@ describe("GitHub Actions", () => {
 					installationId: 1234
 				}
 			}).reply(200);
+
+			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
 		});
 
 		it("should only send 10 files if push contains more than 10 files changed", async () => {
 			const event = require("../fixtures/push-multiple.json");
 			const job = createJob(event.payload, getAtlassianUrl());
+
+			mockGithubAccessToken();
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
@@ -151,8 +203,10 @@ describe("GitHub Actions", () => {
 								hash: "test-commit-id",
 								message: "TEST-123 TEST-246 #comment This is a comment",
 								author: {
+									avatar: "https://github.com/users/undefined.png",
+									name: "test-commit-name",
 									email: "test-email@example.com",
-									name: "test-commit-name"
+									url: "https://github.com/users/undefined",
 								},
 								displayId: "test-c",
 								fileCount: 12,
@@ -256,8 +310,6 @@ describe("GitHub Actions", () => {
 
 		it("should support commits without smart commands", async () => {
 			const fixture = require("../fixtures/push-empty.json");
-			// match any post calls
-			jiraNock.post(/.*/).reply(200);
 
 			// match any post calls
 			const interceptor = githubNock.get(/.*/);
@@ -271,6 +323,8 @@ describe("GitHub Actions", () => {
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
 			const event = require("../fixtures/push-no-username.json");
 			const job = createJob(event.payload, getAtlassianUrl());
+
+			mockGithubAccessToken();
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-merge-commit.json"));
@@ -286,7 +340,12 @@ describe("GitHub Actions", () => {
 							{
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
-								author: { email: "test-email@example.com", name: "test-commit-name" },
+								author: {
+									avatar: "https://github.com/users/undefined.png",
+									name: "test-commit-name",
+									email: "test-email@example.com",
+									url: "https://github.com/users/undefined",
+								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
 								fileCount: 3,
@@ -333,6 +392,8 @@ describe("GitHub Actions", () => {
 			const event = require("../fixtures/push-no-username.json");
 			const job = createJob(event.payload, getAtlassianUrl());
 
+			mockGithubAccessToken();
+
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-non-merge-commit"));
 
@@ -348,7 +409,12 @@ describe("GitHub Actions", () => {
 							{
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
-								author: { email: "test-email@example.com", name: "test-commit-name" },
+								author: {
+									avatar: "https://github.com/users/undefined.png",
+									name: "test-commit-name",
+									email: "test-email@example.com",
+									url: "https://github.com/users/undefined",
+								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
 								fileCount: 3,
