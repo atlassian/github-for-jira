@@ -172,6 +172,7 @@ config:
     GIT_COMMIT_SHA: ${GIT_COMMIT_SHA}
     GIT_COMMIT_DATE: ${GIT_COMMIT_DATE}
     GIT_BRANCH_NAME: ${GIT_BRANCH_NAME}
+    DEPLOYMENT_DATE: ${DEPLOYMENT_DATE}
     # These secret environment variables need to be stashed with "atlas micros stash" for each environment:
     # GITHUB_CLIENT_SECRET: GitHub app's client secret
     # PRIVATE_KEY: contents of your (*.pem) generated in the GitHub app
