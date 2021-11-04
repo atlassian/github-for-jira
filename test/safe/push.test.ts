@@ -18,6 +18,7 @@ describe("GitHub Push", () => {
 	const mockGithubAccessToken = () => {
 		githubNock
 			.post("/app/installations/1234/access_tokens")
+			.optionally()
 			.reply(200, {
 				token: "token",
 				expires_at: new Date().getTime()
@@ -470,13 +471,16 @@ describe("GitHub Push", () => {
 
 		beforeEach(async () => {
 			Date.now = jest.fn(() => 12345678);
+		});
+
+		beforeAll(async () => {
 
 			//Start worker node for queues processing
 			await start();
-		})
+		});
 
 
-		afterEach(async () => {
+		afterAll(async () => {
 			//Stop worker node
 			await stop();
 		})
