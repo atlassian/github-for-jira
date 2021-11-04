@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import {FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, getLogger} from "../config/logger";
+import {FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME} from "../config/logger";
 
 /*
 
@@ -51,18 +51,11 @@ export default (req: Request, res: Response, next: NextFunction): void => {
 			throw new Error(`No log found during request: ${req.method} ${req.path}`);
 		}
 	};
-
-	booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true).then(shouldPropagateRequestId => {
-		if (shouldPropagateRequestId) {
-			req.log = req.log.child({name: FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME});
-			res.once("finish", async () => {
-				if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {
-					req.log.warn({res, req}, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
-				}
-			});
-		} else {
-			req.log = getLogger(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME);
+	req.log = req.log.child({name: FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME});
+	res.once("finish", async () => {
+		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {
+			req.log.warn({res, req}, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
 		}
-		next();
 	});
+	next();
 };

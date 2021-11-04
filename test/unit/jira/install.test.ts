@@ -38,6 +38,4 @@ describe("Webhook: /events/installed", () => {
 		await install(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 	});
-
-	// todo call supertest to make sure it's hooked up correctly on the endpoint
 });

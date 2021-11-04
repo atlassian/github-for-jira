@@ -26,10 +26,6 @@ describe("Maintenance", () => {
 			request.log = getLogger('test');
 			next();
 		});
-		when(booleanFlag).calledWith(
-			BooleanFlags.PROPAGATE_REQUEST_ID,
-			expect.anything()
-		).mockResolvedValue(Promise.resolve(true));
 	});
 
 	describe("Healthcheck", () => {
