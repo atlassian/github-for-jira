@@ -141,7 +141,8 @@ export async function start() {
 		queues.metrics.process(1, commonMiddleware(metricsJob, METRICS_LOGGER_NAME));
 		firstInitialisation = false;
 	} else {
-		//resumes all Bull queues globally
+		//Resumes all Bull queues globally.
+		//The first parameter of this function "isLocal" controls if all queues will be resummed
 		await queues.discovery.resume(false)
 	}
 
@@ -162,7 +163,8 @@ export async function stop() {
 	// Stop sending metrics for queues
 	clearInterval(timer);
 
-	// Pauses messagse processing in all queue.
+	// Pauses message processing in all queues globally.
+	// The first parameter of this function "isLocal" controls if all queues will be paused
 	await queues.discovery.pause(false, true)
 
 	sqsQueues.stop();
