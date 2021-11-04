@@ -1,4 +1,5 @@
 import {Redis} from "ioredis";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  *
@@ -177,7 +178,7 @@ export class Deduplicator {
 	 *  													 flag was removed.
 	 */
 	async executeWithDeduplication(jobKey: string, jobRunner: () => Promise<void>): Promise<DeduplicatorResult> {
-		const jobRunnerId = 'jobRunnerId-' + Math.random();
+		const jobRunnerId = 'jobRunnerId-' + uuidv4();
 
 		const inProgressFlagWorkerId = await this.inProgressStorage.hasInProgressFlag(jobKey, this.jobRunnerFlagUpdateTimeoutMsecs * 10);
 		if (inProgressFlagWorkerId) {
