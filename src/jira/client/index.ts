@@ -194,13 +194,15 @@ async function getJiraClient(
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
 
-					return await batchedBulkUpdate(
+					const batchBulkUpdateReq = await batchedBulkUpdate(
 						data,
 						instance,
 						gitHubInstallationId,
 						logger,
 						options
 					);
+
+					return batchBulkUpdateReq;
 				}
 			}
 		},
@@ -361,25 +363,31 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
  * with issue keys in a Jira Repository object
  */
 const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
-	if (repositoryObj.commits) {
-		repositoryObj.commits = updateIssueKeysFor(
-			repositoryObj.commits,
-			mutatingFunc
-		);
-	}
-	if (repositoryObj.branches) {
-		repositoryObj.branches = updateIssueKeysFor(
-			repositoryObj.branches,
-			mutatingFunc
-		);
-		repositoryObj.branches.forEach((branch) => {
-			if (branch.lastCommit) {
-				branch.lastCommit = updateIssueKeysFor(
-					[branch.lastCommit],
-					mutatingFunc
-				)[0];
-			}
-		});
+	const logger = getLogger("jiraClient.repository.update");
+
+	if (repositoryObj.commits || repositoryObj.branches) {
+		if (repositoryObj.commits) {
+			repositoryObj.commits = updateIssueKeysFor(
+				repositoryObj.commits,
+				mutatingFunc
+			);
+		}
+		if (repositoryObj.branches) {
+			repositoryObj.branches = updateIssueKeysFor(
+				repositoryObj.branches,
+				mutatingFunc
+			);
+			repositoryObj.branches.forEach((branch) => {
+				if (branch.lastCommit) {
+					branch.lastCommit = updateIssueKeysFor(
+						[branch.lastCommit],
+						mutatingFunc
+					)[0];
+				}
+			});
+		}
+	} else {
+		logger.warn("No branches or commits found. Cannot update.")
 	}
 };
 
