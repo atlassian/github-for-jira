@@ -112,6 +112,7 @@ const sendQueueMetrics = async () => {
 };
 const commonMiddleware = (jobHandler, loggerName: string) => logMiddleware(sentryMiddleware(setDelayOnRateLimiting(jobHandler)), loggerName);
 let running = false;
+let firstInitialisation = true;
 let timer: Timeout;
 
 // Start function for Node cluster worker
@@ -125,17 +126,24 @@ export async function start() {
 	// exposing queue metrics at a regular interval
 	timer = setInterval(sendQueueMetrics, 60000);
 
-	// Start processing queues
-	queues.discovery.process(5, commonMiddleware(discovery(app, queues), DISCOVERY_LOGGER_NAME));
-	queues.installation.process(
-		Number(CONCURRENT_WORKERS),
-		commonMiddleware(processInstallation(app, queues), INSTALLATION_LOGGER_NAME)
-	);
-	queues.push.process(
-		Number(CONCURRENT_WORKERS),
-		commonMiddleware(processPushJob(app), PUSH_LOGGER_NAME)
-	);
-	queues.metrics.process(1, commonMiddleware(metricsJob, METRICS_LOGGER_NAME));
+	if (firstInitialisation) {
+		logger.info("Initialising queue listeners");
+		// Start processing queues
+		queues.discovery.process(5, commonMiddleware(discovery(app, queues), DISCOVERY_LOGGER_NAME));
+		queues.installation.process(
+			Number(CONCURRENT_WORKERS),
+			commonMiddleware(processInstallation(app, queues), INSTALLATION_LOGGER_NAME)
+		);
+		queues.push.process(
+			Number(CONCURRENT_WORKERS),
+			commonMiddleware(processPushJob(app), PUSH_LOGGER_NAME)
+		);
+		queues.metrics.process(1, commonMiddleware(metricsJob, METRICS_LOGGER_NAME));
+		firstInitialisation = false;
+	} else {
+		//resumes all Bull queues globally
+		await queues.discovery.resume(false)
+	}
 
 	sqsQueues.start()
 
@@ -154,15 +162,22 @@ export async function stop() {
 	// Stop sending metrics for queues
 	clearInterval(timer);
 
-	// Close all queues
+	// Pauses messagse processing in all queue.
+	await queues.discovery.pause(false, true)
+
+	sqsQueues.stop();
+
+	running = false;
+}
+
+/**
+ * Shuts down the worker and releases all resources. Currently used to cleanup after tests
+ */
+export async function shutdown() {
 	await Promise.all([
 		queues.discovery.close(),
 		queues.installation.close(),
 		queues.push.close(),
 		queues.metrics.close()
 	]);
-
-	sqsQueues.stop();
-
-	running = false;
 }

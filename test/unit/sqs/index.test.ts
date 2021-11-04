@@ -2,6 +2,7 @@ import { Context, SqsQueue } from "../../../src/sqs";
 import { v4 as uuidv4 } from "uuid";
 import envVars from "../../../src/config/env";
 import DoneCallback = jest.DoneCallback;
+import delay from "../../utils/delay";
 
 
 const TEST_QUEUE_URL = envVars.SQS_BACKFILL_QUEUE_URL;
@@ -9,10 +10,6 @@ const TEST_QUEUE_REGION = envVars.SQS_BACKFILL_QUEUE_REGION;
 const TEST_QUEUE_NAME = "test";
 
 type TestMessage = { msg: string }
-
-function delay(time) {
-	return new Promise(resolve => setTimeout(resolve, time));
-}
 
 //We have to disable this rule here hence there is no way to have a proper test for sqs queue with await here
 /* eslint-disable jest/no-done-callback */

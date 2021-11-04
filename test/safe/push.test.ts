@@ -8,7 +8,7 @@ import {Installation, Subscription} from "../../src/models";
 import {booleanFlag, BooleanFlags} from "../../src/config/feature-flags";
 import {when} from "jest-when";
 import waitUntil from "../utils/waitUntil";
-import {start, stop} from "../../src/worker/startup";
+import {start, stop,  shutdown} from "../../src/worker/startup";
 
 jest.mock("../../src/models");
 jest.mock("../../src/config/feature-flags");
@@ -18,6 +18,7 @@ describe("GitHub Push", () => {
 	const mockGithubAccessToken = () => {
 		githubNock
 			.post("/app/installations/1234/access_tokens")
+			.optionally()
 			.reply(200, {
 				token: "token",
 				expires_at: new Date().getTime()
@@ -57,6 +58,10 @@ describe("GitHub Push", () => {
 		nock.cleanAll();
 		jest.restoreAllMocks();
 	});
+
+	afterAll(async () => {
+		await shutdown();
+	})
 
 	const getAtlassianUrl = () => process.env.ATLASSIAN_URL || "";
 	const createJob = (payload, jiraHost:string) => ({data: createJobData(payload, jiraHost)} as any);
