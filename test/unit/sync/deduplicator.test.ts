@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 import getRedisInfo from "../../../src/config/redis-info";
 import {Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout} from "../../../src/sync/deduplicator";
+import IORedis from "ioredis";
 
 describe('deduplicator', () => {
 	const redis = new Redis(getRedisInfo("deduplicator-test" + new Date().toISOString()));
@@ -47,26 +48,28 @@ describe('deduplicator', () => {
 		});
 
 		describe('isExecutionLive', () => {
-			beforeEach(() => {
-				// Too tricky to orchestrate with fake timers; if flaky consider increasing timeout passed to isExecutionLive
-				// or add retries
-				jest.useRealTimers();
-			});
 
 			test('should report live if another processes refreshes the flag', async () => {
-				await storage.setInProgressFlag(key, 'foo');
-				const interval = setInterval(async () => {
-					await storage.setInProgressFlag(key, 'foo');
-				}, 100);
-
-				try {
-					expect(await storage.isExecutionLive(key, 'foo', 200)).toBeTruthy();
-				} finally {
-					clearInterval(interval);
-				}
+				jest.useRealTimers();
+				const redisGet = jest.fn();
+				redisGet.mockResolvedValueOnce(JSON.stringify({
+					executionId: 'blah',
+					timestamp: 0
+				}));
+				redisGet.mockResolvedValueOnce(JSON.stringify({
+					executionId: 'blah',
+					timestamp: 100
+				}));
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				const storage = new RedisInProgressStorageWithTimeout({
+					get: redisGet
+				} as IORedis.Redis);
+				expect(await storage.isExecutionLive(key, "blah", 10)).toBeTruthy();
 			});
 
 			test('should not report live if flag is not moving', async () => {
+				jest.useRealTimers();
 				await storage.setInProgressFlag(key, 'foo');
 				expect(await storage.isExecutionLive(key, 'foo', 1)).toBeFalsy();
 			});
@@ -78,6 +81,12 @@ describe('deduplicator', () => {
 
 			test('should not report live if no flag', async () => {
 				expect(await storage.isExecutionLive(key, 'foo', 1)).toBeFalsy();
+			});
+
+			test('shall not allow to wait for too long', async() => {
+				jest.useRealTimers();
+				await storage.setInProgressFlag(key, 'foo');
+				await expect(storage.isExecutionLive(key, 'foo', 50_000)).toReject();
 			});
 		})
 

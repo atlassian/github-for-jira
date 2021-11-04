@@ -128,6 +128,9 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 			return false;
 		}
 
+		if (executorFlagUpdateTimeoutMsecs > 5_000) {
+			throw new Error("Thou shalt not keep the lock for too long!");
+		}
 		await sleep(executorFlagUpdateTimeoutMsecs * 2);
 
 		const flagNew = await this.redis.get(jobKey);
