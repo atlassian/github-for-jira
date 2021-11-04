@@ -129,7 +129,7 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 		}
 
 		if (executorFlagUpdateTimeoutMsecs > 5_000) {
-			throw new Error("Thou shalt not keep the lock for too long!");
+			throw new Error("One shouldn't block the execution for too long!");
 		}
 		await sleep(executorFlagUpdateTimeoutMsecs * 2);
 
@@ -156,7 +156,7 @@ export class Deduplicator {
 
 	constructor(inProgressStorage: InProgressStorage, executorFlagUpdateTimeoutMsecs: number) {
 		this.inProgressStorage = inProgressStorage;
-		this.executorFlagUpdateTimeoutMsecs = executorFlagUpdateTimeoutMsecs;
+		this.executorFlagUpdateTimeoutMsecs = Math.min(executorFlagUpdateTimeoutMsecs, 5_000);
 	}
 
 	/**
