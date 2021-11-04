@@ -8,7 +8,7 @@ import {Installation, Subscription} from "../../src/models";
 import {booleanFlag, BooleanFlags} from "../../src/config/feature-flags";
 import {when} from "jest-when";
 import waitUntil from "../utils/waitUntil";
-import {start, stop} from "../../src/worker"
+import {start, stop} from "../../src/worker/startup";
 
 jest.mock("../../src/models");
 jest.mock("../../src/config/feature-flags");
