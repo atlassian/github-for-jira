@@ -47,17 +47,17 @@ describe('deduplicator', () => {
 			expect(await storage.hasInProgressFlag(key, 10)).toBeNull();
 		});
 
-		describe('isExecutionLive', () => {
+		describe('isJobRunnerLive', () => {
 
 			test('should report live if another processes refreshes the flag', async () => {
 				jest.useRealTimers();
 				const redisGet = jest.fn();
 				redisGet.mockResolvedValueOnce(JSON.stringify({
-					executionId: 'blah',
+					jobRunnerId: 'blah',
 					timestamp: 0
 				}));
 				redisGet.mockResolvedValueOnce(JSON.stringify({
-					executionId: 'blah',
+					jobRunnerId: 'blah',
 					timestamp: 100
 				}));
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -65,28 +65,28 @@ describe('deduplicator', () => {
 				const storage = new RedisInProgressStorageWithTimeout({
 					get: redisGet
 				} as IORedis.Redis);
-				expect(await storage.isExecutionLive(key, "blah", 10)).toBeTruthy();
+				expect(await storage.isJobRunnerLive(key, "blah", 10)).toBeTruthy();
 			});
 
 			test('should not report live if flag is not moving', async () => {
 				jest.useRealTimers();
 				await storage.setInProgressFlag(key, 'foo');
-				expect(await storage.isExecutionLive(key, 'foo', 1)).toBeFalsy();
+				expect(await storage.isJobRunnerLive(key, 'foo', 1)).toBeFalsy();
 			});
 
-			test('should not report live if different execution id', async () => {
+			test('should not report live if different jobRunnerId', async () => {
 				await storage.setInProgressFlag(key, 'foo');
-				expect(await storage.isExecutionLive(key, 'bar', 1)).toBeFalsy();
+				expect(await storage.isJobRunnerLive(key, 'bar', 1)).toBeFalsy();
 			});
 
 			test('should not report live if no flag', async () => {
-				expect(await storage.isExecutionLive(key, 'foo', 1)).toBeFalsy();
+				expect(await storage.isJobRunnerLive(key, 'foo', 1)).toBeFalsy();
 			});
 
 			test('shall not allow to wait for too long', async() => {
 				jest.useRealTimers();
 				await storage.setInProgressFlag(key, 'foo');
-				await expect(storage.isExecutionLive(key, 'foo', 50_000)).toReject();
+				await expect(storage.isJobRunnerLive(key, 'foo', 50_000)).toReject();
 			});
 		})
 
@@ -102,9 +102,9 @@ describe('deduplicator', () => {
 
 		test('should setup the flag before kicking off the job', async () => {
 			await new Deduplicator(storage, 100).executeWithDeduplication(key, async () => {
-				const execId = await storage.hasInProgressFlag(key, 100);
-				expect(execId).toContain('execid');
-				expect(execId!.length).toBeGreaterThan('execid0.0'.length)
+				const jobRunnerId = await storage.hasInProgressFlag(key, 100);
+				expect(jobRunnerId).toContain('jobRunnerId');
+				expect(jobRunnerId!.length).toBeGreaterThan('jobRunnerId-'.length)
 				return Promise.resolve()
 			})
 		});
@@ -142,11 +142,11 @@ describe('deduplicator', () => {
 		});
 
 		test('should return NOT_SURE when flag exists but not moving', async () => {
-			await storage.setInProgressFlag(key, "anotherExecutionId");
-			storage.isExecutionLive = jest.fn().mockImplementation((jobKey: string, executionId: string, executionFlagUpdateTimeoutMsec: number) => {
+			await storage.setInProgressFlag(key, "anotherJobRunnerId");
+			storage.isJobRunnerLive = jest.fn().mockImplementation((jobKey: string, jobRunnerId: string, jobRunnerFlagUpdateTimeoutMsec: number) => {
 				expect(jobKey).toBe(key);
-				expect(executionId).toBe("anotherExecutionId");
-				expect(executionFlagUpdateTimeoutMsec).toBe(2000);
+				expect(jobRunnerId).toBe("anotherJobRunnerId");
+				expect(jobRunnerFlagUpdateTimeoutMsec).toBe(2000);
 				return Promise.resolve(false);
 			})
 			expect(
@@ -155,8 +155,8 @@ describe('deduplicator', () => {
 		});
 
 		test('should return OTHER_WORKER_DOING when flag exists but not moving', async () => {
-			await storage.setInProgressFlag(key, "anotherExecutionId");
-			storage.isExecutionLive = jest.fn().mockImplementation(() => {
+			await storage.setInProgressFlag(key, "anotherJobRunnerId");
+			storage.isJobRunnerLive = jest.fn().mockImplementation(() => {
 				return Promise.resolve(true);
 			})
 			expect(
