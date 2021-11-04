@@ -46,7 +46,9 @@ export default async (
 		context.log
 	);
 
-	context.log.info({ jiraPayload }, "Pullrequest mapped to Jira Payload");
+	const { number: pullRequestNumber, body: pullRequestBody } =  pull_request
+
+	context.log.info({ jiraPayload, pullRequestNumber }, "Pullrequest mapped to Jira Payload");
 
 	// Deletes PR link to jira if ticket id is removed from PR title
 	if (!jiraPayload && changes?.title) {
@@ -58,14 +60,14 @@ export default async (
 			);
 			await jiraClient.devinfo.pullRequest.delete(
 				repositoryId,
-				pull_request.number
+				pullRequestNumber
 			);
 			return;
 		}
 	}
 
 	try {
-		const linkifiedBody = await util.unfurl(pull_request.body);
+		const linkifiedBody = await util.unfurl(pullRequestBody);
 		if (linkifiedBody) {
 			const editedPullRequest = context.issue({
 				body: linkifiedBody,
@@ -75,21 +77,21 @@ export default async (
 		}
 	} catch (err) {
 		context.log.warn(
-			{ err, body: pull_request.body, pullRequestNumber: pull_request.number },
+			{ err, body: pullRequestBody, pullRequestNumber },
 			"Error while trying to update PR body with links to Jira ticket"
 		);
 	}
 
 	if (!jiraPayload) {
 		context.log.info(
-			{ pullRequestNumber: pull_request.number },
+			{ pullRequestNumber },
 			"Halting futher execution for pull request since jiraPayload is empty"
 		);
 		return;
 	}
 
 	context.log(
-		{ pullRequestNumber: pull_request.number, jiraPayload },
+		{ pullRequestNumber, jiraPayload },
 		`Sending pull request update to Jira ${jiraClient.baseURL}`
 	);
 
