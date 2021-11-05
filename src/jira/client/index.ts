@@ -176,7 +176,7 @@ async function getJiraClient(
 						}
 					}),
 				update: async (data, options?: { preventTransitions: boolean }) => {
-					dedupIssueKeys(data);
+					dedupIssueKeys(data, logger);
 
 					if (
 						!withinIssueKeyLimit(data.commits) ||
@@ -330,8 +330,8 @@ const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
 /**
  * Deduplicates issueKeys field for branches and commits
  */
-const dedupIssueKeys = (repositoryObj) => {
-	updateRepositoryIssueKeys(repositoryObj, dedup);
+const dedupIssueKeys = (repositoryObj, logger?) => {
+	updateRepositoryIssueKeys(repositoryObj, dedup, logger);
 };
 
 /**
@@ -362,31 +362,30 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
  * Runs a mutating function on all branches and commits
  * with issue keys in a Jira Repository object
  */
-const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
-	const logger = getLogger("jiraClient.repository.update");
+const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc, logger?) => {
+	if (repositoryObj.commits) {
+		repositoryObj.commits = updateIssueKeysFor(
+			repositoryObj.commits,
+			mutatingFunc
+		);
+	}
 
-	if (repositoryObj.commits || repositoryObj.branches) {
-		if (repositoryObj.commits) {
-			repositoryObj.commits = updateIssueKeysFor(
-				repositoryObj.commits,
-				mutatingFunc
-			);
-		}
-		if (repositoryObj.branches) {
-			repositoryObj.branches = updateIssueKeysFor(
-				repositoryObj.branches,
-				mutatingFunc
-			);
-			repositoryObj.branches.forEach((branch) => {
-				if (branch.lastCommit) {
-					branch.lastCommit = updateIssueKeysFor(
-						[branch.lastCommit],
-						mutatingFunc
-					)[0];
-				}
-			});
-		}
-	} else {
+	if (repositoryObj.branches) {
+		repositoryObj.branches = updateIssueKeysFor(
+			repositoryObj.branches,
+			mutatingFunc
+		);
+		repositoryObj.branches.forEach((branch) => {
+			if (branch.lastCommit) {
+				branch.lastCommit = updateIssueKeysFor(
+					[branch.lastCommit],
+					mutatingFunc
+				)[0];
+			}
+		});
+	}
+
+	if (!repositoryObj.commits && !repositoryObj.branches) {
 		logger.warn("No branches or commits found. Cannot update.")
 	}
 };
