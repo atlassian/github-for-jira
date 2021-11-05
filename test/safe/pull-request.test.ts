@@ -13,6 +13,14 @@ describe("GitHub Actions", () => {
 		app = await createWebhookApp();
 	});
 
+	afterEach(async () => {
+		if (!nock.isDone()) {
+			// eslint-disable-next-line jest/no-standalone-expect
+			expect(nock).toBeDone();
+		}
+		nock.cleanAll();
+	});
+
 	describe("pull_request", () => {
 		beforeEach(() => {
 			mocked(Subscription.getAllForInstallation).mockResolvedValue([

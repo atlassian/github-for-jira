@@ -131,4 +131,166 @@ describe("test installation model", () => {
 			expect(subscription.jiraHost).toBe(renamedInstallPayload.baseUrl);
 		}
 	});
+
+	describe("duplicate entries in Installations table", () => {
+		const { baseUrl: jiraHost, clientKey } = newInstallPayload;
+
+		it("getAllForHost should return no installations if jiraHost is not found", async () => {
+			const installations = await Installation.getAllForHost(jiraHost);
+			expect(installations.length).toEqual(0);
+		});
+
+		it("getForHost should return no installations if jiraHost is not found", async () => {
+			const installation = await Installation.getForHost(jiraHost);
+			expect(installation).toEqual(null);
+		});
+
+		it("getAllForHost should return a single installation if 1 host is installed", async () => {
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret",
+				clientKey,
+			});
+
+			const installations = await Installation.getAllForHost(jiraHost);
+			expect(installations.length).toEqual(1);
+		});
+
+		it("getForHost should return a single installation if 1 host is installed", async () => {
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret",
+				clientKey,
+			});
+
+			const installation = await Installation.getForHost(jiraHost);
+			expect(installation?.jiraHost).toEqual(jiraHost);
+		});
+
+		it("getAllForHost should return 2 entries if the same jira site is installed twice", async () => {
+			// Install jira host
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret",
+				clientKey,
+			});
+
+			const singleInstallation = await Installation.getAllForHost(jiraHost);
+			expect(singleInstallation.length).toEqual(1);
+
+			// Install duplicate of jira host
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "goodsecret",
+				clientKey,
+			});
+
+			const installations = await Installation.getAllForHost(jiraHost);
+			expect(installations.length).toEqual(2);
+
+			installations.forEach((installation) => {
+				// both installations should have the same host.
+				expect(installation.jiraHost).toBe(jiraHost);
+			});
+
+			// Ids of installations should decrement to ensure most recently added is retrieved first
+			expect(installations[0].id).toBeGreaterThan(installations[1].id);
+		});
+
+		it("getForHost should return the most recent entry if there are 2 duplicate entries", async () => {
+			// Install jira host
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret",
+				clientKey,
+			});
+
+			// Install duplicate of jira host
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "goodsecret",
+				clientKey,
+			});
+
+			const installations = await Installation.getAllForHost(jiraHost);
+			const firstRetreivedInstallation = await Installation.getForHost(jiraHost);
+			expect(firstRetreivedInstallation?.id).toEqual(installations[0].id);
+		});
+
+		it("getAllForHost should return multiple entries if there are duplicates", async () => {
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret1",
+				clientKey,
+			});
+
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret2",
+				clientKey,
+			});
+
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret3",
+				clientKey,
+			});
+
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret4",
+				clientKey,
+			});
+
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "goodsecret",
+				clientKey,
+			});
+
+			const installations = await Installation.getAllForHost(jiraHost);
+			expect(installations.length).toEqual(5);
+			
+			installations.forEach((installation) => {
+				// both installations should have the same host.
+				expect(installation.jiraHost).toBe(jiraHost);
+			});
+		});
+
+		it("getForHost should return the most recent entry if there are more than 2 entries", async () => {
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret1",
+				clientKey,
+			});
+
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret2",
+				clientKey,
+			});
+
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret3",
+				clientKey,
+			});
+
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "badsecret4",
+				clientKey,
+			});
+
+			await Installation.create({
+				jiraHost,
+				sharedSecret: "goodsecret",
+				clientKey,
+			});
+
+			const installations = await Installation.getAllForHost(jiraHost);
+			const firstRetreivedInstallation = await Installation.getForHost(jiraHost);
+			expect(firstRetreivedInstallation?.id).toEqual(installations[0].id);
+		});
+	});
 });

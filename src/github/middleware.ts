@@ -11,10 +11,8 @@ import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import {emitWebhookFailedMetrics, getCurrentTime} from "../util/webhooks";
 import JiraClient from "../models/jira-client";
-import { getLogger } from "../config/logger";
 
 const LOGGER_NAME = "github.webhooks";
-const logger = getLogger(LOGGER_NAME);
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
@@ -40,14 +38,6 @@ const withSentry = function (callback) {
 			throw err;
 		}
 	};
-};
-
-const omit = (obj, ...props) => {
-	const result = { ...obj };
-	props.forEach(function (prop) {
-		delete result[prop];
-	});
-	return result;
 };
 
 // TODO: We really should fix this...
@@ -102,38 +92,18 @@ export default (
 		const orgName = context.payload?.repository?.owner?.name || "none";
 		const gitHubInstallationId = Number(context.payload?.installation?.id);
 
-		const shouldPropagateRequestId = await booleanFlag(BooleanFlags.PROPAGATE_REQUEST_ID, true);
-
-		if (shouldPropagateRequestId) {
-			const webhookParams = {
-				webhookId: context.id,
-				gitHubInstallationId,
-				event: webhookEvent,
-				webhookReceived
-			};
-			context.log = context.log.child({ name: LOGGER_NAME, ...webhookParams } );
-			// TODO: log only for local dev and for those who has enabled verbose logging
-			context.log.info({repoName,
-				orgName,
-				payload: context.payload
-			}, "Webhook verbose data");
-		} else {
-			const webhookParams = {
-				webhookId: context.id,
-				repoName,
-				orgName,
-				gitHubInstallationId,
-				event: webhookEvent,
-				payload: context.payload,
-				webhookReceived
-			};
-			// For all micros envs log the paylaod. Omit from local to reduce noise
-			const loggerWithWebhookParams = process.env.MICROS_ENV
-				? logger.child(webhookParams)
-				: logger.child(omit(webhookParams, "payload"));
-
-			context.log = loggerWithWebhookParams;
-		}
+		const webhookParams = {
+			webhookId: context.id,
+			gitHubInstallationId,
+			event: webhookEvent,
+			webhookReceived
+		};
+		context.log = context.log.child({ name: LOGGER_NAME, ...webhookParams } );
+		// TODO: log only for local dev and for those who has enabled verbose logging
+		context.log.info({repoName,
+			orgName,
+			payload: context.payload
+		}, "Webhook verbose data");
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
