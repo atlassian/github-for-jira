@@ -68,7 +68,7 @@ export default (context: Context): JiraBuildData | undefined => {
 			state: mapStatus(workflow_run.status, workflow_run.conclusion),
 			lastUpdated: workflow_run.updated_at,
 			issueKeys,
-			references: workflow_run.pull_requests.length > 0 ? mapPullRequests(workflow_run.pull_requests).slice(0, 5) : undefined // Optional information that links PRs. Min items: 1, Max items: 5
+			references: workflow_run.pull_requests?.length ? mapPullRequests(workflow_run.pull_requests).slice(0, 5) : undefined // Optional information that links PRs. Min items: 1, Max items: 5
 		}],
 	};
 };

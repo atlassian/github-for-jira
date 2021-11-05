@@ -1,49 +1,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation, Subscription } from "../../../src/models";
-import { mocked } from "ts-jest/utils";
 import deleteSubscription from "../../../src/frontend/delete-github-subscription";
 
-jest.mock("../../../src/models");
-
 describe("POST /github/subscription", () => {
-	let installation;
-	let subscription;
-	let deleteGitHubSubscription;
+	const gitHubInstallationId = 15;
 
 	beforeEach(async () => {
-		subscription = {
-			githubInstallationId: 15,
+		await Subscription.create({
+			gitHubInstallationId,
+			jiraHost
+		});
+
+		await Installation.create({
 			jiraHost,
-			destroy: jest.fn().mockResolvedValue(undefined)
-		};
+			clientKey: "client-key",
+			sharedSecret: "shared-secret"
+		});
+	});
 
-		installation = {
-			id: 19,
-			jiraHost,
-			clientKey: "abc123",
-			enabled: true,
-			secrets: "def234",
-			sharedSecret: "ghi345",
-			subscriptions: jest.fn().mockResolvedValue([])
-		};
-
-		mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
-		mocked(Subscription.install).mockResolvedValue(subscription);
-		mocked(Installation.getForHost).mockResolvedValue(installation);
-
-		deleteGitHubSubscription = await deleteSubscription;
+	afterEach(async () => {
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
 	});
 
 	it("Delete Jira Configuration", async () => {
-		jiraNock
-			.delete("/rest/devinfo/0.10/bulkByProperties")
-			.query({ installationId: subscription.githubInstallationId })
-			.reply(200, "OK");
-
 		const req = {
 			log: { error: jest.fn(), info: jest.fn() },
 			body: {
-				installationId: subscription.githubInstallationId,
+				installationId: gitHubInstallationId,
 				jiraHost
 			},
 			query: {
@@ -55,17 +39,6 @@ describe("POST /github/subscription", () => {
 		};
 
 		const login = "test-user";
-		const listInstallations = jest.fn().mockResolvedValue({
-			data: {
-				installations: [
-					{
-						id: subscription.githubInstallationId,
-						target_type: "User",
-						account: { login }
-					}
-				]
-			}
-		});
 
 		const getAuthenticated = jest.fn().mockResolvedValue({ data: { login } });
 		const res = {
@@ -73,15 +46,27 @@ describe("POST /github/subscription", () => {
 			status: jest.fn(),
 			locals: {
 				github: {
-					apps: { listInstallationsForAuthenticatedUser: listInstallations },
+					apps: {
+						listInstallationsForAuthenticatedUser: jest.fn().mockResolvedValue({
+							data: {
+								installations: [
+									{
+										id: gitHubInstallationId,
+										target_type: "User",
+										account: { login }
+									}
+								]
+							}
+						})
+					},
 					users: { getAuthenticated }
 				}
 			}
 		};
 
-		await deleteGitHubSubscription(req as any, res as any);
-		expect(subscription.destroy).toHaveBeenCalled();
+		await deleteSubscription(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(202);
+		expect(await Subscription.count()).toEqual(0);
 	});
 
 	it("Missing githubToken", async () => {
@@ -93,7 +78,7 @@ describe("POST /github/subscription", () => {
 			sendStatus: jest.fn()
 		};
 
-		await deleteGitHubSubscription(req as any, res as any);
+		await deleteSubscription(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
 	});
 
@@ -104,7 +89,7 @@ describe("POST /github/subscription", () => {
 				session: { githubToken: "example-token" },
 				body: {
 					installationId: "an installation id",
-					jiraHost,
+					jiraHost
 				}
 			};
 			delete req.body[property];
@@ -116,7 +101,7 @@ describe("POST /github/subscription", () => {
 
 			res.status.mockReturnValue(res);
 
-			await deleteGitHubSubscription(req as any, res as any);
+			await deleteSubscription(req as any, res as any);
 			expect(res.status).toHaveBeenCalledWith(400);
 			expect(res.json.mock.calls[0]).toMatchSnapshot([
 				{
