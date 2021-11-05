@@ -5,6 +5,7 @@ describe("getFailedConnections", () => {
 	const noSubscriptions = require("../../fixtures/get-jira-configuration/no-subscriptions");
 	const singleSubscription = require("../../fixtures/get-jira-configuration/single-subscription");
 	const multipleSubscriptions = require("../../fixtures/get-jira-configuration/multiple-subscriptions");
+	const subscriptionWithNoRepos = require("../../fixtures/get-jira-configuration/subscription-with-no-repos");
 
 	it("should return no failed connections if there are no installations", async () => {
 		const noInstallations = require("../../fixtures/get-jira-configuration/no-installations");
@@ -80,5 +81,16 @@ describe("getFailedConnections", () => {
 			{ deleted: true, id: 12345678, orgName: "fake-name" },
 			{ deleted: true, id: 23456789, orgName: "fake-name-two" },
 		]);
+	});
+
+	it("should return 'undefined' for the orgName of subscriptions with no repos", async () => {
+		const singleFailedInstallation = require("../../fixtures/get-jira-configuration/single-failed-installation");
+
+		expect(
+			getFailedConnections(singleFailedInstallation, subscriptionWithNoRepos)
+		).toHaveLength(1);
+		expect(
+			getFailedConnections(singleFailedInstallation, subscriptionWithNoRepos)
+		).toEqual([{ deleted: true, id: 12345678, orgName: undefined }]);
 	});
 });
