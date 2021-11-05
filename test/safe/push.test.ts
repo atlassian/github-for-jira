@@ -5,6 +5,11 @@ import { createWebhookApp } from "../utils/probot";
 import { getLogger } from "../../src/config/logger";
 import { Installation, Subscription } from "../../src/models";
 import { Application } from "probot";
+import { start, stop } from "../../src/worker/startup";
+import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
+import { when } from "jest-when";
+
+jest.mock("../../src/config/feature-flags");
 
 const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
 
@@ -12,15 +17,22 @@ describe("Push Webhook", () => {
 	let app: Application;
 	beforeEach(async () => {
 		app = await createWebhookApp();
+		const clientKey = "client-key";
 		await Installation.create({
-			clientKey: "client-key",
+			clientKey,
 			sharedSecret: "shared-secret",
 			jiraHost
+		});
+		await Subscription.create({
+			jiraHost,
+			gitHubInstallationId: 1234,
+			jiraClientKey: clientKey
 		});
 	});
 
 	afterEach(async () => {
 		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
 	});
 
 	// TODO: figure out how to tests with queue
@@ -304,7 +316,10 @@ describe("Push Webhook", () => {
 							{
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
-								author: { email: "test-email@example.com", name: "test-commit-name" },
+								author: {
+									email: "test-email@example.com",
+									name: "test-commit-name"
+								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
 								fileCount: 3,
@@ -366,7 +381,10 @@ describe("Push Webhook", () => {
 							{
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
-								author: { email: "test-email@example.com", name: "test-commit-name" },
+								author: {
+									email: "test-email@example.com",
+									name: "test-commit-name"
+								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
 								fileCount: 3,
@@ -406,6 +424,130 @@ describe("Push Webhook", () => {
 			}).reply(200);
 
 			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
+		});
+	});
+
+	describe.skip("end 2 end tests with queue", () => {
+		let event;
+
+		beforeEach(async () => {
+			Date.now = jest.fn(() => 12345678);
+			event = require("../fixtures/push-no-username.json");
+
+			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+				.reply(200, require("../fixtures/push-non-merge-commit"));
+
+			// flag property should not be present
+			jiraNock.post("/rest/devinfo/0.10/bulk", {
+				preventTransitions: false,
+				repositories: [
+					{
+						name: "test-repo-name",
+						url: "test-repo-url",
+						id: "test-repo-id",
+						commits: [
+							{
+								hash: "commit-no-username",
+								message: "[TEST-123] Test commit.",
+								author: {
+									avatar: "https://github.com/users/undefined.png",
+									name: "test-commit-name",
+									email: "test-email@example.com",
+									url: "https://github.com/users/undefined"
+								},
+								authorTimestamp: "test-commit-date",
+								displayId: "commit",
+								fileCount: 3,
+								files: [
+									{
+										path: "test-modified",
+										changeType: "MODIFIED",
+										linesAdded: 10,
+										linesRemoved: 2,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
+									},
+									{
+										path: "test-added",
+										changeType: "ADDED",
+										linesAdded: 4,
+										linesRemoved: 0,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
+									},
+									{
+										path: "test-removal",
+										changeType: "DELETED",
+										linesAdded: 0,
+										linesRemoved: 4,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
+									}
+								],
+								id: "commit-no-username",
+								issueKeys: ["TEST-123"],
+								url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
+								updateSequenceId: 12345678
+							}
+						],
+						updateSequenceId: 12345678
+					}
+				],
+				properties: { installationId: 1234 }
+			}).reply(200);
+		});
+
+		beforeAll(async () => {
+
+			//Start worker node for queues processing
+			await start();
+		});
+
+
+		afterAll(async () => {
+			//Stop worker node
+			await stop();
+		});
+
+		it("should send bulk update event to Jira when push webhook received and queue is not involved", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(true);
+
+			await expect(app.receive(event)).toResolve();
+		});
+
+		it("should send bulk update event to Jira when push webhook received and sent through redis queue", async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(false);
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.SEND_PUSH_TO_SQS,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(false);
+
+			await expect(app.receive(event)).toResolve();
+		});
+
+		it("should send bulk update event to Jira when push webhook received and sent through sqs queue", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(false);
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.SEND_PUSH_TO_SQS,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(true);
+
+			await expect(app.receive(event)).toResolve();
 		});
 	});
 });
