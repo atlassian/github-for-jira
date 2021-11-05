@@ -1,15 +1,18 @@
-import { Subscription } from "../models";
+import {Subscription} from "../models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
 import enhanceOctokit from "../config/enhance-octokit";
-import { Application, GitHubAPI } from "probot";
-import { Job, JobOptions } from "bull";
-import { getJiraAuthor } from "../util/jira";
+import {Application, GitHubAPI} from "probot";
+import {Job, JobOptions} from "bull";
+import {getJiraAuthor} from "../util/jira";
 import {emitWebhookFailedMetrics, emitWebhookProcessedMetrics} from "../util/webhooks";
-import { JiraCommit } from "../interfaces/jira";
+import {JiraCommit} from "../interfaces/jira";
 import _ from "lodash";
-import { queues } from "../worker/queues";
+import {queues} from "../worker/queues";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import sqsQueues from "../sqs/queues";
+import {PushQueueMessagePayload} from "../sqs/push";
 
 // TODO: define better types for this file
 
@@ -40,7 +43,7 @@ const mapFile = (
 	};
 };
 
-export function createJobData(payload, jiraHost: string) {
+export const createJobData = (payload, jiraHost: string) : PushQueueMessagePayload => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 
@@ -81,7 +84,11 @@ export async function enqueuePush(
 	jiraHost: string,
 	options?: JobOptions
 ) {
-	return queues.push.add(createJobData(payload, jiraHost), options);
+	if(await booleanFlag(BooleanFlags.SEND_PUSH_TO_SQS, false, jiraHost)) {
+		return sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
+	} else {
+		return queues.push.add(createJobData(payload, jiraHost), options);
+	}
 }
 
 export function processPushJob(app: Application) {
@@ -112,7 +119,6 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 		const webhookReceived = payload.webhookReceived || undefined;
 
 		const log = rootLogger.child({
-			name: PUSH_LOGGER_NAME, // overriding even though it is provided worker; webserver processed the webhooks synchronously, too
 			webhookId: webhookId,
 			repoName: repo,
 			orgName: owner.name,
