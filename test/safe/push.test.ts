@@ -18,6 +18,7 @@ describe("GitHub Push", () => {
 	const mockGithubAccessToken = () => {
 		githubNock
 			.post("/app/installations/1234/access_tokens")
+			.optionally()
 			.reply(200, {
 				token: "token",
 				expires_at: new Date().getTime()
@@ -468,14 +469,16 @@ describe("GitHub Push", () => {
 
 	describe("end 2 end tests with queue", () => {
 
-		beforeEach(() => {
+		beforeEach(async () => {
 			Date.now = jest.fn(() => 12345678);
-		})
+		});
 
 		beforeAll(async () => {
+
 			//Start worker node for queues processing
 			await start();
 		});
+
 
 		afterAll(async () => {
 			//Stop worker node
@@ -578,6 +581,44 @@ describe("GitHub Push", () => {
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(false);
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.SEND_PUSH_TO_SQS,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(false);
+
+			mockGithubAccessToken();
+
+			const event = createPushEventAndMockRestReqeustsForItsProcessing();
+			await app.receive(event);
+
+			await waitUntil( async () => {
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(githubNock.pendingMocks()).toEqual([]);
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(jiraNock.pendingMocks()).toEqual([]);
+			})
+
+		});
+
+
+		/**
+		 * Tests webhook processing through sqs
+		 */
+		it("should send bulk update event to Jira when push webhook received and sent through sqs queue", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(false);
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.SEND_PUSH_TO_SQS,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(true);
 
 			mockGithubAccessToken();
 
