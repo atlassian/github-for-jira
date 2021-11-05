@@ -56,14 +56,14 @@ export const getFailedConnections = (installations, subscriptions) => {
 		.map((failedConnection) => ({
 			...failedConnection,
 			...subscriptions.find(
-				(sub) =>
-					failedConnection.id === sub.gitHubInstallationId
+				(sub) => failedConnection.id === sub.dataValues.gitHubInstallationId
 			),
 		}))
 		.map((sub) => {
-			const repos = sub.reposSyncState || {};
+			const repos = sub?.dataValues?.repoSyncState?.repos || {};
 			const repoId = Object.keys(repos);
-			const orgName = repos[repoId[0]].repository?.owner.login || undefined;
+			const orgName =
+				repos[repoId[0]] && repos[repoId[0]].repository?.owner.login || undefined;
 
 			return { id: sub.id, deleted: sub.deleted, orgName };
 		});
@@ -95,7 +95,7 @@ export default async (
 
 		const failedConnections = getFailedConnections(
 			installations,
-			subscriptions
+			subscriptions,
 		);
 
 		const connections = installations
