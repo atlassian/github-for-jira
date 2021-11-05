@@ -25,6 +25,8 @@ jest.mock('../../../src/config/feature-flags', () => {
 	};
 });
 
+jest.mock("../../../src/models");
+
 describe("sync/installation", () => {
 
 	beforeEach(() => {
