@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import SubscriptionClass from "../../src/models/subscription";
 import { Subscription } from "../../src/models";
 

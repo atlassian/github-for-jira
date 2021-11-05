@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any,no-unused-vars,@typescript-eslint/no-unused-vars */
 import statsd from "../../../src/config/statsd";
-/*
+/**
 
 This matcher makes it easier to write tests against Datadog metrics
 by providing the `toHaveSentMetrics` matcher.

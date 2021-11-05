@@ -5,7 +5,7 @@ import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
 export const METRICS_LOGGER_NAME = "metrics-job";
 
-export default async (_: any, logger: LoggerWithTarget): Promise<void> => {
+export default async (_: unknown, logger: LoggerWithTarget): Promise<void> => {
 	logger.info("Received sync status metrics event. Getting sync status count for sync status metrics.");
 	const syncStatusCounts = await Subscription.syncStatusCounts();
 

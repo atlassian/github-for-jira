@@ -1,9 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/no-namespace
+/* eslint-disable no-unused-vars,@typescript-eslint/no-namespace,@typescript-eslint/no-unused-vars */
 declare namespace jest {
-	// eslint-disable-next-line @typescript-eslint/no-namespace
 	interface Matchers<R> {
 		toResolve(): Promise<R>;
-
 		toReject(): Promise<R>;
 	}
 }

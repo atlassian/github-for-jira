@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { mapEnvironment } from "../../../src/transforms/deployment";
 
 describe("deployment environment mapping", () => {

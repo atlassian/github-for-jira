@@ -13,7 +13,7 @@ jest.mock("../../../src/util/webhooks");
 
 describe("Probot event middleware", () => {
 	let context;
-	let loggedStuff = '';
+	let loggedStuff = "";
 	beforeEach(async () => {
 		context = {
 			payload: {
@@ -22,7 +22,7 @@ describe("Probot event middleware", () => {
 			},
 			github: GitHubAPI(),
 			log: wrapLogger(Logger.createLogger({
-				name: 'test',
+				name: "test",
 				stream: new Writable({
 					write: function (chunk, _, next) {
 						loggedStuff += chunk.toString();
@@ -100,7 +100,7 @@ describe("Probot event middleware", () => {
 		context.log = context.log.child({foo: 123});
 		await middleware(jest.fn())(context);
 		context.log.info("test");
-		expect(loggedStuff).toContain('foo');
+		expect(loggedStuff).toContain("foo");
 		expect(loggedStuff).toContain(123);
 	});
 });
