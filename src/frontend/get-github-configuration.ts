@@ -52,7 +52,6 @@ const installationConnectedStatus = async (
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
-
 async function getInstallationsWithAdmin(installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[], login: string, isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> {
 	const installationsWithAdmin: InstallationWithAdmin[] = [];
 
@@ -84,6 +83,32 @@ async function getInstallationsWithAdmin(installations: Octokit.AppsListInstalla
 	return installationsWithAdmin;
 }
 
+const getAllInstallations = async (client, logger, jiraHost) => {
+	const subscriptions = await Subscription.getAllForHost(jiraHost);
+	return Promise.all(
+		subscriptions.map((subscription) =>
+			getInstallation(client, subscription, logger)
+		)
+	);
+}
+
+const removeFailedConnectionsFromDb = async (req: Request, installations: any, jiraHost: string): Promise<void> => {
+	await Promise.all(installations
+		.filter((response) => !!response.error)
+		.map(async (connection) => {
+			try {
+				const payload = {
+					installationId: connection.id,
+					host: jiraHost,
+				};
+				await Subscription.uninstall(payload);
+			} catch (err) {
+				const deleteSubscriptionError = `Failed to delete subscription: ${err}`;
+				req.log.error(deleteSubscriptionError);
+			}
+		}));
+};
+
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost, githubToken } = req.session;
 	if (!githubToken) {
@@ -101,6 +126,10 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 	const isAdmin = res.locals.isAdmin;
 
 	const { data: { login } } = await github.users.getAuthenticated();
+
+	// Remove any failed installations before a user attempts to reconnect
+	const allInstallations = await getAllInstallations(client, req.log, jiraHost)
+	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost)
 
 	try {
 		// we can get the jira client Key from the JWT's `iss` property

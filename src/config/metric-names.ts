@@ -9,7 +9,10 @@ export const metricError = {
 	queueFailed: `${server}.error.queue-failed`
 };
 
-export const queueMetrics = {
+/**
+ * Old Redis queue metrics
+ */
+export const redisQueueMetrics = {
 	active: `${server}.queue.active`,
 	completed: `${server}.queue.completed`,
 	failed: `${server}.queue.failed`,
@@ -18,6 +21,18 @@ export const queueMetrics = {
 	paused: `${server}.queue.paused`,
 	repeatable: `${server}.queue.repeatable`,
 	jobDuration: `${server}.queue.job-duration`
+};
+
+/**
+ * New SQS queue metrics
+ */
+export const sqsQueueMetrics = {
+	received: `${server}.sqs.queue.received`,
+	completed: `${server}.sqs.queue.success`,
+	failed: `${server}.sqs.queue.failed`,
+	sent:  `${server}.sqs.queue.sent`,
+	deleted: `${server}.sqs.queue.deleted`,
+	duration: `${server}.sqs.queue.duration`,
 };
 
 export const metricHttpRequest = {

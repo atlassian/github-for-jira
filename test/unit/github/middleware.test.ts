@@ -6,8 +6,10 @@ import { mockModels } from "../../utils/models";
 import {wrapLogger} from "probot/lib/wrap-logger";
 import Logger from "bunyan";
 import {Writable} from "stream";
+import { emitWebhookFailedMetrics } from "../../../src/util/webhooks";
 
 jest.mock("../../../src/models");
+jest.mock("../../../src/util/webhooks");
 
 describe("Probot event middleware", () => {
 	let context;
@@ -69,6 +71,28 @@ describe("Probot event middleware", () => {
 			const spy = jest.fn().mockRejectedValue(new Error("Failed!"));
 			await expect(middleware(spy)(context)).toResolve();
 			expect(spy).toHaveBeenCalledTimes(3);
+		});
+
+		it("should not call slo metrics when call fails with 401/404s", async () => {
+			mocked(Installation.getForHost).mockResolvedValue(
+				mockModels.Installation.getForHost
+			);
+
+			const spy = jest.fn().mockRejectedValue(new Error("Request Failed with 401"));
+			await expect(middleware(spy)(context)).toResolve();
+			expect(spy).toHaveBeenCalledTimes(3);
+			expect(emitWebhookFailedMetrics).not.toHaveBeenCalled();
+		});
+
+		it("should call slo metrics when call fails with other errors", async () => {
+			mocked(Installation.getForHost).mockResolvedValue(
+				mockModels.Installation.getForHost
+			);
+
+			const spy = jest.fn().mockRejectedValue(new Error("Request Failed with 500"));
+			await expect(middleware(spy)(context)).toResolve();
+			expect(spy).toHaveBeenCalledTimes(3);
+			expect(emitWebhookFailedMetrics).toHaveBeenCalled();
 		});
 	});
 

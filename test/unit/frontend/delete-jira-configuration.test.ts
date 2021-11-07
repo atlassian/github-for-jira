@@ -2,14 +2,14 @@
 import nock from "nock";
 import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
-import deleteConfig from "../../../src/frontend/delete-jira-configuration";
+import deleteJiraConfiguration from "../../../src/frontend/delete-jira-configuration";
+import { getLogger } from "../../../src/config/logger";
 
 jest.mock("../../../src/models");
 
 describe("DELETE /jira/configuration", () => {
 	let installation;
 	let subscription;
-	let deleteJiraConfiguration;
 
 	beforeEach(async () => {
 		subscription = {
@@ -30,8 +30,6 @@ describe("DELETE /jira/configuration", () => {
 
 		mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
 		mocked(Installation.getForHost).mockResolvedValue(installation);
-
-		deleteJiraConfiguration = await deleteConfig;
 	});
 
 	it("Delete Jira Configuration", async () => {
@@ -40,8 +38,9 @@ describe("DELETE /jira/configuration", () => {
 			.query({ installationId: subscription.githubInstallationId })
 			.reply(200, "OK");
 
+		// TODO: use supertest for this
 		const req = {
-			log: { debug: jest.fn(), error: jest.fn(), info: jest.fn() },
+			log: getLogger("request"),
 			body: { installationId: subscription.githubInstallationId },
 			query: {
 				xdm_e: subscription.jiraHost
