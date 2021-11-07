@@ -62,8 +62,7 @@ export const getFailedConnections = (installations, subscriptions) => {
 		.map((sub) => {
 			const repos = sub?.dataValues?.repoSyncState?.repos || {};
 			const repoId = Object.keys(repos);
-			const orgName =
-				repos[repoId[0]] && repos[repoId[0]].repository?.owner.login || undefined;
+			const orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
 
 			return { id: sub.id, deleted: sub.deleted, orgName };
 		});
