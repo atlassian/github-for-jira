@@ -87,3 +87,15 @@ export const emitWebhookFailedMetrics = (webhookName: string) => {
 	statsd.increment(metricWebhooks.webhookFailure, tags);
 
 }
+
+export const emitWebhookPayloadMetrics = (webhookName: string, size: number) => {
+	const tags = {
+		name: webhookName,
+		payloadSize: size.toString()
+	};
+	statsd.histogram(
+		metricWebhooks.webhookPayloadSize,
+		size,
+		tags
+	);
+}
