@@ -48,20 +48,26 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 
 // TODO: define arguments and return
 export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
-
+	const { title: prTitle, head } = pullRequest;
 	// This is the same thing we do in sync, concatenating these values
 	const issueKeys = issueKeyParser().parse(
-		`${pullRequest.title}\n${pullRequest.head.ref}`
+		`${prTitle}\n${pullRequest.head.ref}`
 	);
 
-	if (_.isEmpty(issueKeys) || !pullRequest?.head?.repo) {
-		log?.info("Ignoring pullrequest hence it has no issues or repo");
+	const logPayload = {
+		prTitle: prTitle || "none",
+		repoName: head?.repo.name || "none",
+		prRef: pullRequest.head.ref || "none"
+	}
+
+	if (_.isEmpty(issueKeys) || !head?.repo) {
+		log?.info(logPayload, "Ignoring pullrequest hence it has no issue keys or repo");
 		return undefined;
 	}
 
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
 
-	log?.info(`Pull request status mapped to ${pullRequestStatus}`);
+	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
 
 	return {
 		id: pullRequest.base.repo.id,
