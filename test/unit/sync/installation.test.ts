@@ -1,5 +1,7 @@
 import { isRetryableWithSmallerRequest } from "../../../src/sync/installation";
 
+jest.mock("../../../src/models");
+
 describe("sync/installation", () => {
 
 	describe("isRetryableWithSmallerRequest()", () => {
