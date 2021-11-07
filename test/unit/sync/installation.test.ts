@@ -18,20 +18,26 @@ jest.mock('../../../src/sync/deduplicator', () => {
 	}
 });
 
+jest.mock("../../../src/models");
+
+let mockedBooleanFeatureFlags = {};
 jest.mock('../../../src/config/feature-flags', () => {
 	return {
 		...jest.requireActual('../../../src/config/feature-flags'),
-		booleanFlag: (key) => Promise.resolve(key === BooleanFlags.USE_DEDUPLICATOR_FOR_BACKFILLING)
+		booleanFlag: (key) => Promise.resolve(mockedBooleanFeatureFlags[key])
 	};
 });
-
-jest.mock("../../../src/models");
 
 describe("sync/installation", () => {
 
 	beforeEach(() => {
 		mockedExecuteWithDeduplication.mockReset();
-	})
+		mockedBooleanFeatureFlags[BooleanFlags.USE_DEDUPLICATOR_FOR_BACKFILLING] = true;
+	});
+
+	afterEach(() => {
+		mockedBooleanFeatureFlags = {};
+	});
 
 	describe("isRetryableWithSmallerRequest()", () => {
 
