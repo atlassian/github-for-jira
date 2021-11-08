@@ -448,6 +448,23 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 	}
 }
 
+// Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
+export function maybeScheduleNextTask(queue: Queue.Queue, jobData, nextTaskDelays: Array<number>, logger: LoggerWithTarget) {
+	if (nextTaskDelays.length > 0) {
+		nextTaskDelays.sort().reverse();
+		if (nextTaskDelays.length > 1) {
+			logger.warn("Multiple next jobs were scheduled, scheduling one with the highest priority");
+		}
+		const delay = nextTaskDelays.shift()!;
+		logger.info("Scheduling next job with a delay = " + delay);
+		if (delay > 0) {
+			queue.add(jobData, {delay});
+		} else {
+			queue.add(jobData);
+		}
+	}
+}
+
 // TODO: type queues
 export const processInstallation =
 	(app: Application, queues) => {
@@ -482,17 +499,7 @@ export const processInstallation =
 				switch (result) {
 					case DeduplicatorResult.E_OK:
 						logger.info("Job was executed by deduplicator");
-						if (nextTaskDelays.length > 1) {
-							logger.warn("Multiple next jobs were scheduled");
-						}
-						nextTaskDelays.forEach(delay => {
-							logger.info("Scheduling next job with a delay = " + delay);
-							if (delay > 0) {
-								queues.installation.add(job.data, {delay});
-							} else {
-								queues.installation.add(job.data);
-							}
-						});
+						maybeScheduleNextTask(queues.installation, job.data, nextTaskDelays, logger);
 						break;
 					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER:
 						logger.warn("Possible duplicate job was detected, rescheduling");
