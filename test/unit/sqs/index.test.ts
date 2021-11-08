@@ -22,6 +22,10 @@ describe("SqsQueue tests", () => {
 		handle: jest.fn()
 	};
 
+	const mockErrorHandler = {
+		handle: jest.fn()
+	};
+
 	const generatePayload = (): TestMessage => ({ msg: uuidv4() });
 
 	const createSqsQueue = () => {
@@ -29,9 +33,12 @@ describe("SqsQueue tests", () => {
 			queueName: TEST_QUEUE_NAME,
 			queueUrl: TEST_QUEUE_URL,
 			queueRegion: TEST_QUEUE_REGION,
-			longPollingIntervalSec: 0
+			longPollingIntervalSec: 0,
+			timeoutSec: 6,
+			maxAttempts: 3
 		},
-		mockRequestHandler);
+		mockRequestHandler,
+		mockErrorHandler);
 	};
 
 	let queue: SqsQueue<TestMessage>;

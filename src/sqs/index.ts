@@ -1,7 +1,13 @@
 import AWS from "aws-sdk";
 import Logger from "bunyan"
 import {getLogger} from "../config/logger"
-import SQS, {DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest} from "aws-sdk/clients/sqs";
+import SQS, {
+	ChangeMessageVisibilityRequest,
+	DeleteMessageRequest,
+	Message, MessageAttributeValue,
+	ReceiveMessageResult,
+	SendMessageRequest
+} from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
 import statsd from "../config/statsd";
 import { Tags } from "hot-shots";
@@ -28,6 +34,11 @@ export type Context<MessagePayload> = {
 	 * Context logger, which has parameters for the processing context (like message id, execution id, etc)
 	 */
 	log: Logger;
+
+	/**
+	 * How many times this messages attempted to be processed, including the current attempt
+	 */
+	receiveCount: number;
 }
 
 export type QueueSettings = {
@@ -40,11 +51,18 @@ export type QueueSettings = {
 
 	readonly longPollingIntervalSec?: number,
 
+	/**
+	 * Timeout for processing a single message in seconds
+	 */
+	readonly timeoutSec: number;
+
+	/**
+	 * Defines how many times the message can be attempted to be executed
+	 */
+	readonly maxAttempts: number;
+
 	//TODO Add batching
 
-	//TODO Add error handling
-
-	//TODO Add message processing timeouts
 }
 
 const DEFAULT_LONG_POLLING_INTERVAL = 4
@@ -52,10 +70,39 @@ const DEFAULT_LONG_POLLING_INTERVAL = 4
 const PROCESSING_DURATION_HISTOGRAM_BUCKETS =	"10_100_500_1000_2000_3000_5000_10000_30000_60000";
 
 /**
+ * Error indicating a timeout
+ */
+export class TimeoutError extends Error {
+}
+/**
  * Handler for the queue messages
  */
 export interface MessageHandler<MessagePayload> {
 	handle(context: Context<MessagePayload>): Promise<void>;
+}
+
+export interface ErrorHandler<MessagePayload> {
+	handle(error: Error, context: Context<MessagePayload>): ErrorHandlingResult;
+}
+
+type ErrorHandlingResult = {
+
+
+	/**
+	 * Indicates if the message should be deleted or retried
+	 */
+	retryable: boolean;
+
+	/**
+	 * Number in seconds of the retry delay
+	 */
+	retryDelaySec ?: number;
+
+	/**
+	 * If set to true, the message will be deleted when the maximum amount of retries reacched
+	 */
+	skipDlq ?: boolean;
+
 }
 
 type ListenerContext = {
@@ -90,7 +137,10 @@ export class SqsQueue<MessagePayload> {
 	readonly queueName: string;
 	readonly queueRegion: string;
 	readonly longPollingIntervalSec: number;
-	readonly messageHandler: MessageHandler<MessagePayload>
+	readonly timeoutSec: number;
+	readonly maxAttempts: number;
+	readonly errorHandler: ErrorHandler<MessagePayload>;
+	readonly messageHandler: MessageHandler<MessagePayload>;
 	readonly sqs: SQS;
 	readonly log: Logger;
 	readonly metricsTags: Tags;
@@ -100,13 +150,16 @@ export class SqsQueue<MessagePayload> {
 	 */
 	listenerContext: ListenerContext;
 
-	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>) {
+	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>, errorHandler: ErrorHandler<MessagePayload>) {
 		this.queueUrl = settings.queueUrl;
 		this.queueName = settings.queueName;
 		this.queueRegion = settings.queueRegion;
 		this.longPollingIntervalSec = settings.longPollingIntervalSec !== undefined ? settings.longPollingIntervalSec : DEFAULT_LONG_POLLING_INTERVAL
 		this.sqs = new AWS.SQS({apiVersion: "2012-11-05", region: settings.queueRegion});
+		this.timeoutSec = settings.timeoutSec;
+		this.maxAttempts = settings.maxAttempts;
 		this.messageHandler = messageHandler;
+		this.errorHandler = errorHandler;
 		this.log = logger.child({queue: this.queueName});
 		this.metricsTags = {queue: this.queueName};
 	}
@@ -258,20 +311,64 @@ export class SqsQueue<MessagePayload> {
 			executionId: uuidv4(),
 			queue: this.queueName})
 
-		const context: Context<MessagePayload> = {message, payload, log }
+		const maybeReceivedCount: MessageAttributeValue | undefined = message.MessageAttributes ? message.MessageAttributes["ApproximateReceiveCount"] : undefined;
+
+		const receiveCount = maybeReceivedCount ? parseInt(maybeReceivedCount?.StringValue || "1") : 1
+
+		const context: Context<MessagePayload> = {message, payload, log, receiveCount: receiveCount}
 
 		log.info("Sqs message received");
 
 		try {
 			const messageProcessingStartTime = new Date().getTime();
-			await this.messageHandler.handle(context)
+
+			// Change message visibility timeout to the max processing time
+			// plus some room for error handling in case of timeout
+			await this.changeVisabilityTimeout(message, this.timeoutSec + 2, log);
+
+			const timeoutPromise = new Promise((_, reject) =>
+				setTimeout(() => reject(new TimeoutError()), this.timeoutSec*1000)
+			);
+
+			await Promise.race([this.messageHandler.handle(context), timeoutPromise])
+
 			const messageProcessingDuration = new Date().getTime() - messageProcessingStartTime;
 			this.sendProcessedMetrics(messageProcessingDuration);
 			await this.deleteMessage(message, log)
 		} catch (err) {
+
+			const errorHandlingResult = this.errorHandler.handle(err, context);
+			if(!errorHandlingResult.retryable ||
+				(errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts)) {
+				await this.deleteMessage(message, log)
+			} else {
+				if(errorHandlingResult.retryDelaySec) {
+					await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
+				}
+			}
+
 			//TODO Add error handling
 			statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
 			log.error({err}, "error executing sqs message")
+		}
+	}
+
+	private async changeVisabilityTimeout(message: Message, timeout: number, logger: Logger): Promise<void> {
+
+		if(!message.ReceiptHandle) {
+			logger.error("NO Receipt Handle on a message")
+			return;
+		}
+
+		const params : ChangeMessageVisibilityRequest = {
+			QueueUrl: this.queueUrl,
+			ReceiptHandle: message.ReceiptHandle || "",
+			VisibilityTimeout: timeout
+		} ;
+		try {
+			await this.sqs.changeMessageVisibility(params).promise()
+		} catch (err) {
+			logger.error("Message visibility timeout change failed")
 		}
 	}
 
