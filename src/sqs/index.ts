@@ -72,7 +72,7 @@ const PROCESSING_DURATION_HISTOGRAM_BUCKETS =	"10_100_500_1000_2000_3000_5000_10
 /**
  * Error indicating a timeout
  */
-export class TimeoutError extends Error {
+export class SqsTimeoutError extends Error {
 }
 /**
  * Handler for the queue messages
@@ -85,7 +85,7 @@ export interface ErrorHandler<MessagePayload> {
 	handle(error: Error, context: Context<MessagePayload>): ErrorHandlingResult;
 }
 
-type ErrorHandlingResult = {
+export type ErrorHandlingResult = {
 
 
 	/**
@@ -317,7 +317,7 @@ export class SqsQueue<MessagePayload> {
 
 		const context: Context<MessagePayload> = {message, payload, log, receiveCount: receiveCount}
 
-		log.info("Sqs message received");
+		log.info(`Sqs message received. Receive count: ${receiveCount}`);
 
 		try {
 			const messageProcessingStartTime = new Date().getTime();
@@ -327,7 +327,7 @@ export class SqsQueue<MessagePayload> {
 			await this.changeVisabilityTimeout(message, this.timeoutSec + 2, log);
 
 			const timeoutPromise = new Promise((_, reject) =>
-				setTimeout(() => reject(new TimeoutError()), this.timeoutSec*1000)
+				setTimeout(() => reject(new SqsTimeoutError()), this.timeoutSec*1000)
 			);
 
 			await Promise.race([this.messageHandler.handle(context), timeoutPromise])

@@ -1,7 +1,8 @@
-import { Context, SqsQueue } from "../../../src/sqs";
+import {Context, ErrorHandlingResult, SqsQueue, SqsTimeoutError} from "../../../src/sqs";
 import { v4 as uuidv4 } from "uuid";
 import envVars from "../../../src/config/env";
 import DoneCallback = jest.DoneCallback;
+import {DeleteMessageRequest} from "aws-sdk/clients/sqs";
 
 
 const TEST_QUEUE_URL = envVars.SQS_BACKFILL_QUEUE_URL;
@@ -28,13 +29,13 @@ describe("SqsQueue tests", () => {
 
 	const generatePayload = (): TestMessage => ({ msg: uuidv4() });
 
-	const createSqsQueue = () => {
+	const createSqsQueue = (timeout: number) => {
 		return new SqsQueue({
 			queueName: TEST_QUEUE_NAME,
 			queueUrl: TEST_QUEUE_URL,
 			queueRegion: TEST_QUEUE_REGION,
 			longPollingIntervalSec: 0,
-			timeoutSec: 6,
+			timeoutSec: timeout,
 			maxAttempts: 3
 		},
 		mockRequestHandler,
@@ -43,126 +44,275 @@ describe("SqsQueue tests", () => {
 
 	let queue: SqsQueue<TestMessage>;
 
-	beforeEach(() => {
-		queue = createSqsQueue();
-		queue.start();
-	});
+	describe("Normal execution tests", () => {
 
-	afterEach(async () => {
-		queue.stop();
-		await queue.waitUntilListenerStopped();
-	});
-
-	test("Message gets received", (done: DoneCallback) => {
-
-		const testPayload = generatePayload();
-
-		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
-			expect(context.payload).toStrictEqual(testPayload);
-			done();
-		});
-		queue.sendMessage(testPayload);
-	});
-
-
-	test("Queue is restartable", async (done: DoneCallback) => {
-
-		const testPayload = generatePayload();
-
-		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
-			expect(context.payload).toStrictEqual(testPayload);
-			done();
+		beforeEach(() => {
+			queue = createSqsQueue(10);
+			queue.start();
 		});
 
-		queue.stop();
-
-		//delaying to make sure all asynchronous invocations inside the queue will be finished and it will stop
-		await queue.waitUntilListenerStopped();
-
-		queue.start();
-
-		queue.sendMessage(testPayload);
-	});
-
-	test("Message received with delay", (done: DoneCallback) => {
-
-		const testPayload = { msg: "Hi4" };
-		const receivedTime = { time: new Date().getTime() };
-
-		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
-			try {
-				context.log.info("hi");
-				const currentTime = new Date().getTime();
-				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
-				done();
-			} catch (err) {
-				done(err);
-			}
+		afterEach(async () => {
+			queue.stop();
+			await queue.waitUntilListenerStopped();
 		});
-		queue.sendMessage(testPayload, 1);
-	});
 
-	test("Message gets executed exactly once", (done: DoneCallback) => {
+		test("Message gets received", (done: DoneCallback) => {
 
-		const testPayload = generatePayload();
-		const testData: { messageId: undefined | string } = { messageId: undefined };
+			const testPayload = generatePayload();
 
-		mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
-
-			try {
+			mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
 				expect(context.payload).toStrictEqual(testPayload);
-
-				if (!testData.messageId) {
-					testData.messageId = context.message.MessageId;
-				} else if (testData.messageId === context.message.MessageId) {
-					done.fail("Message was received more than once");
-				} else {
-					done.fail("Different message on the tests queue");
-				}
-
-			} catch (err) {
-				done(err);
-			}
-		});
-		queue.sendMessage(testPayload);
-
-		//code before the pause
-		setTimeout(function() {
-			if (testData.messageId) {
 				done();
-			} else {
-				done.fail("No message was received");
-			}
-		}, 3000);
-
-	});
+			});
+			queue.sendMessage(testPayload);
+		});
 
 
-	//TODO Add tests for parallel processing when it will be implemented, set concurrency level to 1 for this test
-	test("Messages are not processed in parallel", async (done: DoneCallback) => {
+		test("Queue is restartable", async (done: DoneCallback) => {
 
-		const testPayload = generatePayload();
-		const receivedTime = { time: new Date().getTime(), counter: 0 };
+			const testPayload = generatePayload();
 
-		mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
-			try {
+			mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
+				expect(context.payload).toStrictEqual(testPayload);
+				done();
+			});
 
-				if (receivedTime.counter == 0) {
-					receivedTime.counter++;
-					context.log.info("Delaying the message");
-					await delay(1000);
-					context.log.info("Message processed after delay");
+			queue.stop();
+
+			//delaying to make sure all asynchronous invocations inside the queue will be finished and it will stop
+			await queue.waitUntilListenerStopped();
+
+			queue.start();
+
+			queue.sendMessage(testPayload);
+		});
+
+		test("Message received with delay", (done: DoneCallback) => {
+
+			const testPayload = generatePayload();
+			const receivedTime = {time: new Date().getTime()};
+
+			mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
+
+				if(context.payload.msg !== testPayload.msg) {
+					//discard message if it is not our test message
 					return;
 				}
 
+				try {
+					context.log.info("hi");
+					const currentTime = new Date().getTime();
+					expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
+					done();
+				} catch (err) {
+					done(err);
+				}
+			});
+			queue.sendMessage(testPayload, 1);
+		});
+
+		test("Message gets executed exactly once", (done: DoneCallback) => {
+
+			const testPayload = generatePayload();
+			const testData: { messageId: undefined | string } = {messageId: undefined};
+
+			mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
+
+				if(context.payload.msg !== testPayload.msg) {
+					//discard message if it is not our test message
+					return;
+				}
+
+				try {
+					expect(context.payload).toStrictEqual(testPayload);
+
+					if (!testData.messageId) {
+						testData.messageId = context.message.MessageId;
+					} else if (testData.messageId === context.message.MessageId) {
+						done.fail("Message was received more than once");
+					} else {
+						done.fail("Different message on the tests queue");
+					}
+
+				} catch (err) {
+					done(err);
+				}
+			});
+			queue.sendMessage(testPayload);
+
+			//code before the pause
+			setTimeout(function () {
+				if (testData.messageId) {
+					done();
+				} else {
+					done.fail("No message was received");
+				}
+			}, 3000);
+
+		});
+
+		test("Messages are not processed in parallel", async (done: DoneCallback) => {
+
+			const testPayload = generatePayload();
+			const receivedTime = {time: new Date().getTime(), counter: 0};
+
+			mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
+				try {
+
+					if(context.payload.msg !== testPayload.msg) {
+						//discard message if it is not our test message
+						return;
+					}
+
+					if (receivedTime.counter == 0) {
+						receivedTime.counter++;
+						context.log.info("Delaying the message");
+						await delay(1000);
+						context.log.info("Message processed after delay");
+						return;
+					}
+
+					const currentTime = new Date().getTime();
+					expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
+					done();
+				} catch (err) {
+					done(err);
+				}
+			});
+			await queue.sendMessage(testPayload);
+			await queue.sendMessage(testPayload);
+		});
+
+		test("Retries with the correct delay", async (done: DoneCallback) => {
+
+			const testErrorMessage = "Something bad happened";
+			const testPayload = generatePayload();
+			const receivedTime = {time: new Date().getTime(), receivesCounter: 0, errorHandlingCounter: 0};
+
+			mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
+
+				if(context.payload.msg !== testPayload.msg) {
+					//discard message if it is not our test message
+					return;
+				}
+
+				if (receivedTime.receivesCounter == 0) {
+					receivedTime.receivesCounter++;
+					context.log.info("Throwing error on first processing");
+					throw new Error("Something bad happened");
+				}
+
+				expect(receivedTime.receivesCounter).toBe(1);
+				expect(receivedTime.errorHandlingCounter).toBe(1);
+
 				const currentTime = new Date().getTime();
 				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
 				done();
-			} catch (err) {
-				done(err);
-			}
+				return;
+			});
+
+			mockErrorHandler.handle.mockImplementation((error: Error, context: Context<TestMessage>) : ErrorHandlingResult => {
+
+				if(context.payload.msg !== testPayload.msg) {
+					//discard message if it is not our test message
+					return {retryable: false};
+				}
+
+				expect(error.message).toBe(testErrorMessage)
+				receivedTime.errorHandlingCounter++;
+				return {retryable: true, retryDelaySec: 1}
+			})
+
+			await queue.sendMessage(testPayload);
 		});
-		await queue.sendMessage(testPayload);
-		await queue.sendMessage(testPayload);
+
+		test("Message deleted from the queue when unretryable", async (done: DoneCallback) => {
+
+			const testPayload = generatePayload();
+
+			const deleteMock = jest.fn();
+			queue.sqs.deleteMessage = deleteMock;
+
+			const expected : {ReceiptHandle?: string} = {ReceiptHandle: ""};
+
+			deleteMock.mockImplementation((deleteRequest: DeleteMessageRequest) => {
+
+				if(deleteRequest.ReceiptHandle === expected.ReceiptHandle) {
+					done();
+				}
+
+				return {promise: () => {
+					return new Promise<void>(resolve => {
+						resolve()
+					});
+				}}
+			})
+
+			mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
+				if(context.payload.msg !== testPayload.msg) {
+					//discard message if it is not our test message
+					return;
+				}
+
+				expected.ReceiptHandle = context.message.ReceiptHandle;
+
+				throw new Error("Something bad happened");
+			});
+
+			mockErrorHandler.handle.mockImplementation(() : ErrorHandlingResult => {
+				return {retryable: false};
+			})
+
+			await queue.sendMessage(testPayload);
+		});
+
+	});
+
+	describe("Timeouts tests", () => {
+
+		beforeEach(() => {
+			queue = createSqsQueue(1);
+			queue.start();
+		});
+
+		afterEach(async () => {
+			queue.stop();
+			await queue.waitUntilListenerStopped();
+		});
+
+		test("Timeout works", async (done: DoneCallback) => {
+
+			const testPayload = generatePayload();
+			const receivedTime = {time: new Date().getTime(), counter: 0};
+
+			mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
+
+				if(context.payload.msg !== testPayload.msg) {
+					//discard message if it is not our test message
+					return;
+				}
+
+				context.log.info("Delaying the message for 2 secs");
+				await delay(2000);
+				return;
+			});
+
+			mockErrorHandler.handle.mockImplementation((error: Error, context: Context<TestMessage>) => {
+
+				if(context.payload.msg !== testPayload.msg) {
+					//discard message if it is not our test message
+					return {retryable: false};
+				}
+
+				expect(error).toBeInstanceOf(SqsTimeoutError);
+
+				const currentTime = new Date().getTime();
+				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
+				done();
+				return {retryable: false};
+			})
+
+			await queue.sendMessage(testPayload);
+		});
 	});
 });
