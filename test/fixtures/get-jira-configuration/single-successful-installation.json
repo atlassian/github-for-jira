@@ -1,0 +1,71 @@
+[
+	{
+		"id": 12345678,
+		"account": {
+			"login": "fake-account",
+			"id": 12345678,
+			"node_id": "sahjdbo2afbsahfbsahdf",
+			"avatar_url": "https://avatars.githubusercontent.com/u/232423424?v=4",
+			"gravatar_id": "",
+			"url": "https://api.github.com/users/fake-account",
+			"html_url": "https://github.com/fake-account",
+			"followers_url": "https://api.github.com/users/fake-account/followers",
+			"following_url": "https://api.github.com/users/fake-account/following{/other_user}",
+			"gists_url": "https://api.github.com/users/fake-account/gists{/gist_id}",
+			"starred_url": "https://api.github.com/users/fake-account/starred{/owner}{/repo}",
+			"subscriptions_url": "https://api.github.com/users/fake-account/subscriptions",
+			"organizations_url": "https://api.github.com/users/fake-account/orgs",
+			"repos_url": "https://api.github.com/users/fake-account/repos",
+			"events_url": "https://api.github.com/users/fake-account/events{/privacy}",
+			"received_events_url": "https://api.github.com/users/fake-account/received_events",
+			"type": "Organization",
+			"site_admin": false
+		},
+		"repository_selection": "all",
+		"access_tokens_url": "https://api.github.com/app/installations/12314234234/access_tokens",
+		"repositories_url": "https://api.github.com/installation/repositories",
+		"html_url": "https://github.com/organizations/fake-account/settings/installations/20519068",
+		"app_id": 1287313,
+		"app_slug": "fake-github-app",
+		"target_id": 12345678,
+		"target_type": "Organization",
+		"permissions": {
+			"issues": "write",
+			"actions": "write",
+			"members": "read",
+			"contents": "write",
+			"metadata": "read",
+			"deployments": "write",
+			"pull_requests": "write"
+		},
+		"events": [
+			"commit_comment",
+			"create",
+			"delete",
+			"deployment_status",
+			"issues",
+			"issue_comment",
+			"pull_request",
+			"pull_request_review",
+			"push",
+			"repository",
+			"workflow_run"
+		],
+		"created_at": "2021-11-05T04:31:06.000Z",
+		"updated_at": "2021-11-05T04:31:07.000Z",
+		"single_file_name": null,
+		"has_multiple_single_files": false,
+		"single_file_paths": [],
+		"suspended_by": null,
+		"suspended_at": null,
+		"syncStatus": "FINISHED",
+		"syncWarning": "",
+		"subscriptionUpdatedAt": {
+			"relative": "3 minutes ago",
+			"absolute": "November 5, 2021 4:31 am"
+		},
+		"totalNumberOfRepos": 2,
+		"numberOfSyncedRepos": 2,
+		"jiraHost": "https://fakejirahost.atlassian.net"
+	}
+]

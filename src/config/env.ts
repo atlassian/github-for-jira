@@ -14,9 +14,8 @@ const requiredEnvVars = [
 	"GITHUB_CLIENT_SECRET",
 	"SQS_BACKFILL_QUEUE_URL",
 	"SQS_BACKFILL_QUEUE_REGION",
-	// TODO: Uncomment when push queue is added to the service descriptor
-	// "SQS_PUSH_QUEUE_URL",
-	// "SQS_PUSH_QUEUE_REGION",
+	"SQS_PUSH_QUEUE_URL",
+	"SQS_PUSH_QUEUE_REGION",
 	"MICROS_AWS_REGION",
 ];
 
@@ -88,6 +87,7 @@ export interface EnvVars {
 	GIT_COMMIT_DATE?: string;
 	GIT_BRANCH_NAME?: string;
 	GITHUB_REPO_URL: string;
+	DEPLOYMENT_DATE: string;
 
 	// Test Vars
 	ATLASSIAN_SECRET?: string;

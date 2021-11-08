@@ -14,6 +14,7 @@ describe("/version", () => {
 		envVars.GIT_COMMIT_SHA = "34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8";
 		envVars.GIT_COMMIT_DATE = "Wed Oct 13 16:32:22 2021 +1100";
 		envVars.GIT_BRANCH_NAME = "arc-384-info";
+		envVars.DEPLOYMENT_DATE = "Wed Oct 13 16:32:22 2021 AEDT";
 
 		return supertest(app)
 			.get("/version")
@@ -24,7 +25,8 @@ describe("/version", () => {
 					branchUrl: "https://github.com/atlassian/github-for-jira/tree/arc-384-info",
 					commit: "34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8",
 					commitDate: "Wed Oct 13 16:32:22 2021 +1100",
-					commitUrl: "https://github.com/atlassian/github-for-jira/commit/34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8"
+					commitUrl: "https://github.com/atlassian/github-for-jira/commit/34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8",
+					deploymentDate: "Wed Oct 13 16:32:22 2021 AEDT"
 				});
 			});
 	});

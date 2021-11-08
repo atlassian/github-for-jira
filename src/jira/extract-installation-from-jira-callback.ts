@@ -11,6 +11,11 @@ import {NextFunction, Request, Response} from "express";
  * @param next Next function
  */
 export default async (req: Request, res: Response, next: NextFunction) => {
+	if (!req.body?.clientKey) {
+		res.status(401);
+		return;
+	}
+
 	const installation = await Installation.getForClientKey(req.body.clientKey);
 	if (!installation) {
 		res.status(404);
