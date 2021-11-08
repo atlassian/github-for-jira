@@ -1,60 +1,58 @@
 [
-  {
-		"dataValues": {
-			"id": 12345678,
-			"gitHubInstallationId": 12345678,
-			"jiraHost": "https://fakehost.atlassian.net",
-			"selectedRepositories": null,
-			"repoSyncState": {
-				"repos": {
-					"364475676": {
-					  "pullStatus": "complete",
-					  "repository": {
-							"id": 1,
-							"name": "sandbox",
-							"owner": { "login": "fake-name" },
-							"html_url": "https://github.com/fake-name/sandbox",
-							"full_name": "fake-name/sandbox",
-							"updated_at": "2021-09-24T03:59:39Z"
-						},
-					  "branchStatus": "complete",
-					  "commitStatus": "complete",
-					  "lastBranchCursor": "MQ",
-					  "lastCommitCursor": "b20e5b207e3f5a33c199048dfd460703f423a9eb 19"
+	{
+		"id": 12345678,
+		"gitHubInstallationId": 12345678,
+		"jiraHost": "https://fakehost.atlassian.net",
+		"selectedRepositories": null,
+		"repoSyncState": {
+			"repos": {
+				"364475676": {
+					"pullStatus": "complete",
+					"repository": {
+						"id": 1,
+						"name": "sandbox",
+						"owner": { "login": "fake-name" },
+						"html_url": "https://github.com/fake-name/sandbox",
+						"full_name": "fake-name/sandbox",
+						"updated_at": "2021-09-24T03:59:39Z"
 					},
-					"366880016": {
-					  "pullStatus": "complete",
-					  "repository": {
-							"id": 2,
-							"name": "test",
-							"owner": { "login": "fake-name-two" },
-							"html_url": "https://github.com/fake-name-twog/sandbox",
-							"full_name": "fake-name-two/sandbox",
-							"updated_at": "2021-09-24T03:59:39Z"
-						},
-					  "branchStatus": "complete",
-					  "commitStatus": "complete",
-					  "lastPullCursor": 2,
-					  "lastBranchCursor": "Nw",
-					  "lastCommitCursor": "5b6d21ce749578796a4233635fea0b86f56df292 0"
-					}
+					"branchStatus": "complete",
+					"commitStatus": "complete",
+					"lastBranchCursor": "MQ",
+					"lastCommitCursor": "b20e5b207e3f5a33c199048dfd460703f423a9eb 19"
 				},
-				"jiraHost": "https://fakehost.atlassian.net",
-				"installationId": 20519355,
-				"numberOfSyncedRepos": 2
+				"366880016": {
+					"pullStatus": "complete",
+					"repository": {
+						"id": 2,
+						"name": "test",
+						"owner": { "login": "fake-name-two" },
+						"html_url": "https://github.com/fake-name-twog/sandbox",
+						"full_name": "fake-name-two/sandbox",
+						"updated_at": "2021-09-24T03:59:39Z"
+					},
+					"branchStatus": "complete",
+					"commitStatus": "complete",
+					"lastPullCursor": 2,
+					"lastBranchCursor": "Nw",
+					"lastCommitCursor": "5b6d21ce749578796a4233635fea0b86f56df292 0"
+				}
 			},
-			"syncStatus": "COMPLETE",
-			"syncWarning": "",
-			"jiraClientKey": "fakeclientkey",
-			"createdAt": "2021-11-05T04:31:14.841Z",
-			"updatedAt": "2021-11-05T04:31:32.367Z"
+			"jiraHost": "https://fakehost.atlassian.net",
+			"installationId": 20519355,
+			"numberOfSyncedRepos": 2
 		},
+		"syncStatus": "COMPLETE",
+		"syncWarning": "",
+		"jiraClientKey": "fakeclientkey",
+		"createdAt": "2021-11-05T04:31:14.841Z",
+		"updatedAt": "2021-11-05T04:31:32.367Z",
 		"_previousDataValues": {
 			"id": 1,
 			"gitHubInstallationId": 12345678,
 			"jiraHost": "https://fakehost.atlassian.net",
 			"selectedRepositories": null,
-			"repoSyncState":{},
+			"repoSyncState": {},
 			"syncStatus": "COMPLETE",
 			"syncWarning": "",
 			"jiraClientKey": "fakeclientkey",
@@ -89,62 +87,60 @@
 		},
 		"isNewRecord": false
 	},
-  {
-		"dataValues": {
-			"id": 23456789,
-			"gitHubInstallationId": 23456789,
-			"jiraHost": "https://fakehost-two.atlassian.net",
-			"selectedRepositories": null,
-			"repoSyncState": {
-				"repos": {
-					"364475676": {
-					  "pullStatus": "complete",
-					  "repository": {
-							"id": 1,
-							"name": "sandbox",
-							"owner": { "login": "fake-name-two" },
-							"html_url": "https://github.com/fake-name/sandbox",
-							"full_name": "fake-name/sandbox",
-							"updated_at": "2021-09-24T03:59:39Z"
-						},
-					  "branchStatus": "complete",
-					  "commitStatus": "complete",
-					  "lastBranchCursor": "MQ",
-					  "lastCommitCursor": "b20e5b207e3f5a33c199048dfd460703f423a9eb 19"
+	{
+		"id": 23456789,
+		"gitHubInstallationId": 23456789,
+		"jiraHost": "https://fakehost-two.atlassian.net",
+		"selectedRepositories": null,
+		"repoSyncState": {
+			"repos": {
+				"364475676": {
+					"pullStatus": "complete",
+					"repository": {
+						"id": 1,
+						"name": "sandbox",
+						"owner": { "login": "fake-name-two" },
+						"html_url": "https://github.com/fake-name/sandbox",
+						"full_name": "fake-name/sandbox",
+						"updated_at": "2021-09-24T03:59:39Z"
 					},
-					"366880016": {
-					  "pullStatus": "complete",
-					  "repository": {
-							"id": 2,
-							"name": "test",
-							"owner": { "login": "fake-name-two" },
-							"html_url": "https://github.com/fake-name-two/sandbox",
-							"full_name": "fake-name-two/sandbox",
-							"updated_at": "2021-09-24T03:59:39Z"
-						},
-					  "branchStatus": "complete",
-					  "commitStatus": "complete",
-					  "lastPullCursor": 2,
-					  "lastBranchCursor": "Nw",
-					  "lastCommitCursor": "5b6d21ce749578796a4233635fea0b86f56df292 0"
-					}
+					"branchStatus": "complete",
+					"commitStatus": "complete",
+					"lastBranchCursor": "MQ",
+					"lastCommitCursor": "b20e5b207e3f5a33c199048dfd460703f423a9eb 19"
 				},
-				"jiraHost": "https://fakehost-two.atlassian.net",
-				"installationId": 20519355,
-				"numberOfSyncedRepos": 2
+				"366880016": {
+					"pullStatus": "complete",
+					"repository": {
+						"id": 2,
+						"name": "test",
+						"owner": { "login": "fake-name-two" },
+						"html_url": "https://github.com/fake-name-two/sandbox",
+						"full_name": "fake-name-two/sandbox",
+						"updated_at": "2021-09-24T03:59:39Z"
+					},
+					"branchStatus": "complete",
+					"commitStatus": "complete",
+					"lastPullCursor": 2,
+					"lastBranchCursor": "Nw",
+					"lastCommitCursor": "5b6d21ce749578796a4233635fea0b86f56df292 0"
+				}
 			},
-			"syncStatus": "COMPLETE",
-			"syncWarning": "",
-			"jiraClientKey": "fakeclientkey",
-			"createdAt": "2021-11-05T04:31:14.841Z",
-			"updatedAt": "2021-11-05T04:31:32.367Z"
+			"jiraHost": "https://fakehost-two.atlassian.net",
+			"installationId": 20519355,
+			"numberOfSyncedRepos": 2
 		},
+		"syncStatus": "COMPLETE",
+		"syncWarning": "",
+		"jiraClientKey": "fakeclientkey",
+		"createdAt": "2021-11-05T04:31:14.841Z",
+		"updatedAt": "2021-11-05T04:31:32.367Z",
 		"_previousDataValues": {
 			"id": 1,
 			"gitHubInstallationId": 23456789,
 			"jiraHost": "https://fakehost.atlassian.net",
 			"selectedRepositories": null,
-			"repoSyncState":{},
+			"repoSyncState": {},
 			"syncStatus": "COMPLETE",
 			"syncWarning": "",
 			"jiraClientKey": "fakeclientkey",

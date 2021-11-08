@@ -53,18 +53,15 @@ const formatDate = function (date) {
 export const getFailedConnections = (installations, subscriptions) => {
 	return installations
 		.filter((response) => !!response.error)
-		.map((failedConnection) => ({
-			...failedConnection,
-			...subscriptions.find(
-				(sub) => failedConnection.id === sub.dataValues.gitHubInstallationId
-			),
-		}))
-		.map((sub) => {
-			const repos = sub?.dataValues?.repoSyncState?.repos || {};
+		.map((failedConnection) => {
+			const sub = subscriptions.find(
+				(sub) => failedConnection.id === sub.gitHubInstallationId
+			)
+			const repos = sub?.repoSyncState?.repos || {};
 			const repoId = Object.keys(repos);
 			const orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
 
-			return { id: sub.id, deleted: sub.deleted, orgName };
+			return { id: failedConnection.id, deleted: failedConnection.deleted, orgName };
 		});
 };
 
