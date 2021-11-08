@@ -64,7 +64,7 @@ describe("Frontend", () => {
 
 		frontendApp = express();
 		frontendApp.use((request, _, next) => {
-			request.log = getLogger("test");
+			request.log = getLogger('test');
 			next();
 		});
 		frontendApp.use(FrontendApp({

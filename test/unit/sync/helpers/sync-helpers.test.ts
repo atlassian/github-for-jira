@@ -24,7 +24,7 @@ describe("Sync helpers suite", () => {
 					mockNotFoundErrorOctokitRequest,
 					mockJob,
 					mockNextTask,
-					getLogger("test")
+					getLogger('test')
 				)
 			).toBeTruthy();
 		});
@@ -36,7 +36,7 @@ describe("Sync helpers suite", () => {
 					mockNotFoundErrorOctokitGraphql,
 					mockJob,
 					mockNextTask,
-					getLogger("test")
+					getLogger('test')
 				)
 			).toBeTruthy();
 		});
@@ -47,7 +47,7 @@ describe("Sync helpers suite", () => {
 					mockOtherOctokitRequestErrors,
 					mockJob,
 					mockNextTask,
-					getLogger("test")
+					getLogger('test')
 				)
 			).toBeFalsy();
 
@@ -56,7 +56,7 @@ describe("Sync helpers suite", () => {
 					mockOtherOctokitGraphqlErrors,
 					mockJob,
 					mockNextTask,
-					getLogger("test")
+					getLogger('test')
 				)
 			).toBeFalsy();
 
@@ -65,7 +65,7 @@ describe("Sync helpers suite", () => {
 					mockOtherError,
 					mockJob,
 					mockNextTask,
-					getLogger("test")
+					getLogger('test')
 				)
 			).toBeFalsy();
 
@@ -74,7 +74,7 @@ describe("Sync helpers suite", () => {
 					null,
 					mockJob,
 					mockNextTask,
-					getLogger("test")
+					getLogger('test')
 				)
 			).toBeFalsy();
 
@@ -83,7 +83,7 @@ describe("Sync helpers suite", () => {
 					"",
 					mockJob,
 					mockNextTask,
-					getLogger("test")
+					getLogger('test')
 				)
 			).toBeFalsy();
 		});

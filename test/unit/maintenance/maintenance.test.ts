@@ -23,7 +23,7 @@ describe("Maintenance", () => {
 		whenMaintenanceMode(true);
 		app = express();
 		app.use((request, _, next) => {
-			request.log = getLogger("test");
+			request.log = getLogger('test');
 			next();
 		});
 	});

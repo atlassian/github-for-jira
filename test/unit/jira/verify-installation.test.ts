@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import verifyInstallation from "../../../src/jira/verify-installation";
 import {getLogger} from "../../../src/config/logger";
 import InstallationClass from "../../../src/models/installation";
