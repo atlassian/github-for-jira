@@ -31,10 +31,11 @@ const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 	body: req.body
 };
 
-const jobSerializer = (job: Job) => !job ? job : {
+const jobSerializer = (job: Job) => job && {
 	...job,
-	// Removing data as some have extremely large amount of data
-	data: undefined
+	// Removing potentially extremely large amount of data from logs
+	data: undefined,
+	queue: undefined
 };
 
 const errorSerializer = (err) => (!err || !err.stack) ? err : {
