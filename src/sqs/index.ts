@@ -128,7 +128,7 @@ type ListenerContext = {
 	log: Logger;
 }
 
-const EXTRA_VISIBILITY_TIMEOUT_DELAY_SEC = 2;
+const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
 
 /**
  * Class which represents an SQS client for a single SQS queue.
@@ -316,7 +316,7 @@ export class SqsQueue<MessagePayload> {
 
 		const maybeReceivedCount: MessageAttributeValue | undefined = message.MessageAttributes ? message.MessageAttributes["ApproximateReceiveCount"] : undefined;
 
-		const receiveCount = maybeReceivedCount ? parseInt(maybeReceivedCount?.StringValue || "1") : 1
+		const receiveCount = Number(maybeReceivedCount?.StringValue) || 1;
 
 		const context: Context<MessagePayload> = {message, payload, log, receiveCount: receiveCount}
 
@@ -326,8 +326,8 @@ export class SqsQueue<MessagePayload> {
 			const messageProcessingStartTime = new Date().getTime();
 
 			// Change message visibility timeout to the max processing time
-			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY_SEC to have some room for error handling in case of a timeout
-			await this.changeVisabilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY_SEC, log);
+			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
+			await this.changeVisabilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, log);
 
 			const timeoutPromise = new Promise((_, reject) =>
 				setTimeout(() => reject(new SqsTimeoutError()), this.timeoutSec*1000)
