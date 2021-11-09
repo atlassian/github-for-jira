@@ -45,14 +45,6 @@ describe("Deployment Webhook", () => {
 					html_url: `test-repo-url/commits/${sha}`
 				});
 
-			/*jiraNock.get("/rest/api/latest/issue/TEST-123?fields=summary")
-				.reply(200, {
-					key: "TEST-123",
-					fields: {
-						summary: "Example Issue",
-					},
-				});*/
-
 			jiraNock.post("/rest/deployments/0.1/bulk", {
 				deployments:
 					[
