@@ -506,7 +506,18 @@ export const processInstallation =
 						await queues.installation.add(job.data, {delay: 60_000});
 						break;
 					case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB:
-						logger.warn("Duplicate job was detected, cancelling");
+						logger.warn("Duplicate job was detected, rescheduling");
+						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
+						// Worker A - doing a long-running task
+						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
+						// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
+						// Worker A dies (e.g. node is rotated).
+						// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
+						//
+						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
+						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
+						// is finished.
+						await queues.installation.add(job.data, {delay: Math.floor(60_000 + 60_000 * Math.random())});
 						break;
 				}
 			} else {
