@@ -128,7 +128,7 @@ type ListenerContext = {
 	log: Logger;
 }
 
-const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
+const EXTRA_VISIBILITY_TIMEOUT_DELAY_SEC = 2;
 
 /**
  * Class which represents an SQS client for a single SQS queue.
@@ -326,8 +326,8 @@ export class SqsQueue<MessagePayload> {
 			const messageProcessingStartTime = new Date().getTime();
 
 			// Change message visibility timeout to the max processing time
-			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
-			await this.changeVisabilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, log);
+			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY_SEC to have some room for error handling in case of a timeout
+			await this.changeVisabilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY_SEC, log);
 
 			const timeoutPromise = new Promise((_, reject) =>
 				setTimeout(() => reject(new SqsTimeoutError()), this.timeoutSec*1000)
@@ -343,12 +343,13 @@ export class SqsQueue<MessagePayload> {
 			const errorHandlingResult = await this.errorHandler(err, context);
 			if(!errorHandlingResult.retryable ||
 				(errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts)) {
+				log.info("Deleting the message hence it reached the maximum amount of retries")
 				await this.deleteMessage(message, log)
 			} else if (errorHandlingResult.retryDelaySec) {
+				log.info(`Delaying the retry for ${errorHandlingResult.retryDelaySec} seconds`)
 				await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
 			}
 
-			//TODO Add error handling
 			statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
 			log.error({err}, "error executing sqs message")
 		}
