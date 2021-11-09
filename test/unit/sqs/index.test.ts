@@ -89,20 +89,10 @@ describe("SqsQueue tests", () => {
 			const receivedTime = {time: Date.now()};
 
 			mockRequestHandler.mockImplementation((context: Context<TestMessage>) => {
-
-				if(context.payload.msg !== testPayload.msg) {
-					//discard message if it is not our test message
-					return;
-				}
-
-				try {
-					context.log.info("hi");
-					const currentTime = Date.now();
-					expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
-					done();
-				} catch (err) {
-					done(err);
-				}
+				context.log.info("hi");
+				const currentTime = Date.now();
+				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
+				done();
 			});
 			queue.sendMessage(testPayload, 1);
 		});
@@ -150,11 +140,6 @@ describe("SqsQueue tests", () => {
 			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 				try {
 
-					if(context.payload.msg !== testPayload.msg) {
-						//discard message if it is not our test message
-						return;
-					}
-
 					if (receivedTime.counter == 0) {
 						receivedTime.counter++;
 						context.log.info("Delaying the message");
@@ -182,11 +167,6 @@ describe("SqsQueue tests", () => {
 
 			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 
-				if(context.payload.msg !== testPayload.msg) {
-					//discard message if it is not our test message
-					return;
-				}
-
 				if (receivedTime.receivesCounter == 0) {
 					receivedTime.receivesCounter++;
 					context.log.info("Throwing error on first processing");
@@ -203,12 +183,7 @@ describe("SqsQueue tests", () => {
 			});
 
 			mockErrorHandler.mockImplementation((error: Error, context: Context<TestMessage>) : ErrorHandlingResult => {
-
-				if(context.payload.msg !== testPayload.msg) {
-					//discard message if it is not our test message
-					return {retryable: false};
-				}
-
+				expect(context.payload.msg).toBe(testPayload.msg)
 				expect(error.message).toBe(testErrorMessage)
 				receivedTime.errorHandlingCounter++;
 				return {retryable: true, retryDelaySec: 1}
@@ -240,11 +215,6 @@ describe("SqsQueue tests", () => {
 			})
 
 			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
-				if(context.payload.msg !== testPayload.msg) {
-					//discard message if it is not our test message
-					return;
-				}
-
 				expected.ReceiptHandle = context.message.ReceiptHandle;
 
 				throw new Error("Something bad happened");
@@ -277,12 +247,6 @@ describe("SqsQueue tests", () => {
 			const receivedTime = {time: Date.now(), counter: 0};
 
 			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
-
-				if(context.payload.msg !== testPayload.msg) {
-					//discard message if it is not our test message
-					return;
-				}
-
 				context.log.info("Delaying the message for 2 secs");
 				await delay(2000);
 				return;
@@ -290,11 +254,7 @@ describe("SqsQueue tests", () => {
 
 			mockErrorHandler.mockImplementation((error: Error, context: Context<TestMessage>) => {
 
-				if(context.payload.msg !== testPayload.msg) {
-					//discard message if it is not our test message
-					return {retryable: false};
-				}
-
+				expect(context.payload.msg).toBe(testPayload.msg);
 				expect(error).toBeInstanceOf(SqsTimeoutError);
 
 				const currentTime = Date.now();
