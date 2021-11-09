@@ -1,6 +1,6 @@
 import { Octokit } from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
-import AppTokenCache from "./app-token-cache";
+import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
 
@@ -12,12 +12,12 @@ import AuthToken from "./auth-token";
 export default class GitHubClient {
 
 	private readonly axios: AxiosInstance;
-	private readonly appTokenCache: AppTokenCache;
+	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	private readonly githubInstallationId: number;
 
 	constructor(
-		appTokenCache: AppTokenCache,
+		appTokenHolder: AppTokenHolder,
 		installationTokenCache: InstallationTokenCache,
 		githubInstallationId: number,
 		baseURL = "https://api.github.com"
@@ -25,7 +25,7 @@ export default class GitHubClient {
 		this.axios = axios.create({
 			baseURL
 		});
-		this.appTokenCache = appTokenCache;
+		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = installationTokenCache;
 		this.githubInstallationId = githubInstallationId;
 	}
@@ -33,8 +33,8 @@ export default class GitHubClient {
 	/**
 	 * Use this config in a request to authenticate with the app token.
 	 */
-	private asAppConfig(): Partial<AxiosRequestConfig> {
-		const appToken = this.appTokenCache.getAppToken();
+	private appAuthenticationHeaders(): Partial<AxiosRequestConfig> {
+		const appToken = this.appTokenHolder.getAppToken();
 		return {
 			headers: {
 				Accept: "application/vnd.github.v3+json",
@@ -46,7 +46,7 @@ export default class GitHubClient {
 	/**
 	 * Use this config in a request to authenticate with an installation token for the githubInstallationId.
 	 */
-	private async asInstallationConfig(): Promise<Partial<AxiosRequestConfig>> {
+	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
 		const installationToken = await this.installationTokenCache.getInstallationToken(
 			this.githubInstallationId,
 			() => this.createInstallationToken(this.githubInstallationId));
@@ -64,7 +64,7 @@ export default class GitHubClient {
 	 */
 	private async createInstallationToken(githubInstallationId: number): Promise<AuthToken> {
 		const response = await this.axios.post<Octokit.AppsCreateInstallationTokenResponse>(`/app/installations/${githubInstallationId}/access_tokens`, {}, {
-			...this.asAppConfig()
+			...this.appAuthenticationHeaders()
 		});
 		const tokenResponse: Octokit.AppsCreateInstallationTokenResponse = response.data;
 		return new AuthToken(tokenResponse.token, new Date(tokenResponse.expires_at));
@@ -79,7 +79,7 @@ export default class GitHubClient {
 		pageSize: number,
 		page: number): Promise<Octokit.PullsListResponseItem[]> {
 		const response = await this.axios.get<Octokit.PullsListResponseItem[]>(`/repos/${owner}/${repo}/pulls`, {
-			...await this.asInstallationConfig(),
+			...await this.installationAuthenticationHeaders(),
 			params: {
 				installationId: this.githubInstallationId,
 				per_page: pageSize,

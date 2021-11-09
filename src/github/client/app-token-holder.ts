@@ -9,7 +9,7 @@ import AuthToken, { ONE_MINUTE, TEN_MINUTES } from "./auth-token";
  * @see https://docs.github.com/en/rest/reference/apps
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#authenticating-as-a-github-app
  */
-export default class AppTokenCache {
+export default class AppTokenHolder {
 
 	private readonly key: string;
 	private readonly appId: string;
@@ -25,7 +25,7 @@ export default class AppTokenCache {
 	 */
 	public getAppToken(): AuthToken {
 		if (!this.currentToken || this.currentToken.isAboutToExpire()) {
-			this.currentToken = AppTokenCache.createAppJwt(this.key, this.appId);
+			this.currentToken = AppTokenHolder.createAppJwt(this.key, this.appId);
 		}
 		return this.currentToken;
 	}

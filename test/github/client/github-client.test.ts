@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable jest/no-standalone-expect */
 
-import nock from "nock";
 import GitHubClient from "../../../src/github/client/github-client";
-import AppTokenCache from "../../../src/github/client/app-token-cache";
+import AppTokenHolder from "../../../src/github/client/app-token-holder";
 import InstallationTokenCache from "../../../src/github/client/installation-token-cache";
 import fs from "fs";
 
 describe("GitHub Client", () => {
 
-	const privateKey = fs.readFileSync("./test/github/client/dummy.key", "utf-8");
+	const privateKeyBase64 = fs.readFileSync("./test/github/client/dummy.key", "utf-8");
+	const privateKey = Buffer.from(privateKeyBase64, "base64").toString("ascii");
 	const appTokenExpirationDate = new Date(2021, 10, 25, 0, 0);
 	const githubInstallationId = 17979017;
-	const appTokenCache = new AppTokenCache(privateKey, "106838");
+	const appTokenCache = new AppTokenHolder(privateKey, "106838");
 	const installationTokenCache = new InstallationTokenCache(1000);
 
 	function givenGitHubReturnsInstallationToken(installationToken: string, expectedAppTokenInHeader?: string) {
@@ -20,8 +20,6 @@ describe("GitHub Client", () => {
 			.post(`/app/installations/${githubInstallationId}/access_tokens`)
 			.matchHeader("Authorization", expectedAppTokenInHeader ? `Bearer ${expectedAppTokenInHeader}` : /^Bearer .+$/)
 			.matchHeader("Accept", "application/vnd.github.v3+json")
-			.matchHeader("Content-Type", /^.*$/)
-			.matchHeader("User-Agent", /^.*$/)
 			.reply(200, {
 				expires_at: appTokenExpirationDate.toISOString(),
 				token: installationToken
@@ -38,17 +36,10 @@ describe("GitHub Client", () => {
 			})
 			.matchHeader("Authorization", expectedInstallationTokenInHeader ? `Bearer ${expectedInstallationTokenInHeader}` : /^Bearer .+$/)
 			.matchHeader("Accept", "application/vnd.github.v3+json")
-			.matchHeader("User-Agent", /^.*$/)
-			.matchHeader("Content-Length", /^.*$/)
 			.reply(200, [
 				{ number: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
 			]);
 	}
-
-	afterEach(() => {
-		nock.cleanAll();
-		jest.restoreAllMocks();
-	});
 
 	it("lists pull requests", async () => {
 
