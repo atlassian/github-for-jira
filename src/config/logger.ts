@@ -35,7 +35,6 @@ const jobSerializer = (job: Job) => job && {
 	...job,
 	// Removing potentially extremely large amount of data from logs
 	data: undefined,
-	queueName: job?.queue?.name
 };
 
 const errorSerializer = (err) => (!err || !err.stack) ? err : {
