@@ -114,10 +114,10 @@ describe("sync/installation", () => {
 			expect(queues.installation.add.mock.calls).toEqual([[job.data, {delay: 60_000}]]);
 		});
 
-		test('should drop the job if deduplicator is sure', async () => {
+		test('should also reschedule the job if deduplicator is sure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
 			await processInstallation(app, queues)(job, logger);
-			expect(queues.installation.add.mock.calls.length).toEqual(0);
+			expect(queues.installation.add.mock.calls.length).toEqual(1);
 		});
 	});
 
