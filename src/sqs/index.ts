@@ -77,13 +77,14 @@ export class SqsTimeoutError extends Error {
 /**
  * Handler for the queue messages
  */
-export interface MessageHandler<MessagePayload> {
-	handle(context: Context<MessagePayload>): Promise<void>;
-}
+export type MessageHandler<MessagePayload> = (context: Context<MessagePayload>) => Promise<void>;
 
-export interface ErrorHandler<MessagePayload> {
-	handle(error: Error, context: Context<MessagePayload>): ErrorHandlingResult;
-}
+export type ErrorHandler<MessagePayload> = (error: Error, context: Context<MessagePayload>) => Promise<ErrorHandlingResult>;
+
+/**
+ * Trivial error handler which classifies all errros as retryable
+ */
+export const defaultErrorHandler = async () => ({retryable: true});
 
 export type ErrorHandlingResult = {
 
@@ -126,6 +127,8 @@ type ListenerContext = {
 	 */
 	log: Logger;
 }
+
+const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
 
 /**
  * Class which represents an SQS client for a single SQS queue.
@@ -323,28 +326,26 @@ export class SqsQueue<MessagePayload> {
 			const messageProcessingStartTime = new Date().getTime();
 
 			// Change message visibility timeout to the max processing time
-			// plus some room for error handling in case of timeout
-			await this.changeVisabilityTimeout(message, this.timeoutSec + 2, log);
+			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
+			await this.changeVisabilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, log);
 
 			const timeoutPromise = new Promise((_, reject) =>
 				setTimeout(() => reject(new SqsTimeoutError()), this.timeoutSec*1000)
 			);
 
-			await Promise.race([this.messageHandler.handle(context), timeoutPromise])
+			await Promise.race([this.messageHandler(context), timeoutPromise])
 
 			const messageProcessingDuration = new Date().getTime() - messageProcessingStartTime;
 			this.sendProcessedMetrics(messageProcessingDuration);
 			await this.deleteMessage(message, log)
 		} catch (err) {
 
-			const errorHandlingResult = this.errorHandler.handle(err, context);
+			const errorHandlingResult = await this.errorHandler(err, context);
 			if(!errorHandlingResult.retryable ||
 				(errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts)) {
 				await this.deleteMessage(message, log)
-			} else {
-				if(errorHandlingResult.retryDelaySec) {
-					await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
-				}
+			} else if (errorHandlingResult.retryDelaySec) {
+				await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
 			}
 
 			//TODO Add error handling
@@ -356,7 +357,7 @@ export class SqsQueue<MessagePayload> {
 	private async changeVisabilityTimeout(message: Message, timeout: number, logger: Logger): Promise<void> {
 
 		if(!message.ReceiptHandle) {
-			logger.error("NO Receipt Handle on a message")
+			logger.error(`NO Receipt Handle on a message with Id ${message.MessageId}`)
 			return;
 		}
 

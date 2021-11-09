@@ -19,13 +19,9 @@ function delay(time) {
 /* eslint-disable jest/no-done-callback */
 describe("SqsQueue tests", () => {
 
-	const mockRequestHandler = {
-		handle: jest.fn()
-	};
+	const mockRequestHandler = jest.fn();
 
-	const mockErrorHandler = {
-		handle: jest.fn()
-	};
+	const mockErrorHandler = jest.fn();
 
 	const generatePayload = (): TestMessage => ({ msg: uuidv4() });
 
@@ -56,11 +52,11 @@ describe("SqsQueue tests", () => {
 			await queue.waitUntilListenerStopped();
 		});
 
-		test("Message gets received", (done: DoneCallback) => {
+		it("Message gets received", (done: DoneCallback) => {
 
 			const testPayload = generatePayload();
 
-			mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
+			mockRequestHandler.mockImplementation((context: Context<TestMessage>) => {
 				expect(context.payload).toStrictEqual(testPayload);
 				done();
 			});
@@ -68,11 +64,11 @@ describe("SqsQueue tests", () => {
 		});
 
 
-		test("Queue is restartable", async (done: DoneCallback) => {
+		it("Queue is restartable", async (done: DoneCallback) => {
 
 			const testPayload = generatePayload();
 
-			mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
+			mockRequestHandler.mockImplementation((context: Context<TestMessage>) => {
 				expect(context.payload).toStrictEqual(testPayload);
 				done();
 			});
@@ -87,12 +83,12 @@ describe("SqsQueue tests", () => {
 			queue.sendMessage(testPayload);
 		});
 
-		test("Message received with delay", (done: DoneCallback) => {
+		it("Message received with delay", (done: DoneCallback) => {
 
 			const testPayload = generatePayload();
-			const receivedTime = {time: new Date().getTime()};
+			const receivedTime = {time: Date.now()};
 
-			mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
+			mockRequestHandler.mockImplementation((context: Context<TestMessage>) => {
 
 				if(context.payload.msg !== testPayload.msg) {
 					//discard message if it is not our test message
@@ -101,7 +97,7 @@ describe("SqsQueue tests", () => {
 
 				try {
 					context.log.info("hi");
-					const currentTime = new Date().getTime();
+					const currentTime = Date.now();
 					expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
 					done();
 				} catch (err) {
@@ -111,17 +107,12 @@ describe("SqsQueue tests", () => {
 			queue.sendMessage(testPayload, 1);
 		});
 
-		test("Message gets executed exactly once", (done: DoneCallback) => {
+		it("Message gets executed exactly once", (done: DoneCallback) => {
 
 			const testPayload = generatePayload();
 			const testData: { messageId: undefined | string } = {messageId: undefined};
 
-			mockRequestHandler.handle.mockImplementation((context: Context<TestMessage>) => {
-
-				if(context.payload.msg !== testPayload.msg) {
-					//discard message if it is not our test message
-					return;
-				}
+			mockRequestHandler.mockImplementation((context: Context<TestMessage>) => {
 
 				try {
 					expect(context.payload).toStrictEqual(testPayload);
@@ -135,7 +126,7 @@ describe("SqsQueue tests", () => {
 					}
 
 				} catch (err) {
-					done(err);
+					done.fail(err);
 				}
 			});
 			queue.sendMessage(testPayload);
@@ -151,12 +142,12 @@ describe("SqsQueue tests", () => {
 
 		});
 
-		test("Messages are not processed in parallel", async (done: DoneCallback) => {
+		it("Messages are not processed in parallel", async (done: DoneCallback) => {
 
 			const testPayload = generatePayload();
-			const receivedTime = {time: new Date().getTime(), counter: 0};
+			const receivedTime = {time: Date.now(), counter: 0};
 
-			mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
+			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 				try {
 
 					if(context.payload.msg !== testPayload.msg) {
@@ -172,7 +163,7 @@ describe("SqsQueue tests", () => {
 						return;
 					}
 
-					const currentTime = new Date().getTime();
+					const currentTime = Date.now();
 					expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
 					done();
 				} catch (err) {
@@ -183,13 +174,13 @@ describe("SqsQueue tests", () => {
 			await queue.sendMessage(testPayload);
 		});
 
-		test("Retries with the correct delay", async (done: DoneCallback) => {
+		it("Retries with the correct delay", async (done: DoneCallback) => {
 
 			const testErrorMessage = "Something bad happened";
 			const testPayload = generatePayload();
-			const receivedTime = {time: new Date().getTime(), receivesCounter: 0, errorHandlingCounter: 0};
+			const receivedTime = {time: Date.now(), receivesCounter: 0, errorHandlingCounter: 0};
 
-			mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
+			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 
 				if(context.payload.msg !== testPayload.msg) {
 					//discard message if it is not our test message
@@ -205,13 +196,13 @@ describe("SqsQueue tests", () => {
 				expect(receivedTime.receivesCounter).toBe(1);
 				expect(receivedTime.errorHandlingCounter).toBe(1);
 
-				const currentTime = new Date().getTime();
+				const currentTime = Date.now();
 				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
 				done();
 				return;
 			});
 
-			mockErrorHandler.handle.mockImplementation((error: Error, context: Context<TestMessage>) : ErrorHandlingResult => {
+			mockErrorHandler.mockImplementation((error: Error, context: Context<TestMessage>) : ErrorHandlingResult => {
 
 				if(context.payload.msg !== testPayload.msg) {
 					//discard message if it is not our test message
@@ -226,7 +217,7 @@ describe("SqsQueue tests", () => {
 			await queue.sendMessage(testPayload);
 		});
 
-		test("Message deleted from the queue when unretryable", async (done: DoneCallback) => {
+		it("Message deleted from the queue when unretryable", async (done: DoneCallback) => {
 
 			const testPayload = generatePayload();
 
@@ -248,7 +239,7 @@ describe("SqsQueue tests", () => {
 				}}
 			})
 
-			mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
+			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 				if(context.payload.msg !== testPayload.msg) {
 					//discard message if it is not our test message
 					return;
@@ -259,7 +250,7 @@ describe("SqsQueue tests", () => {
 				throw new Error("Something bad happened");
 			});
 
-			mockErrorHandler.handle.mockImplementation(() : ErrorHandlingResult => {
+			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
 				return {retryable: false};
 			})
 
@@ -280,12 +271,12 @@ describe("SqsQueue tests", () => {
 			await queue.waitUntilListenerStopped();
 		});
 
-		test("Timeout works", async (done: DoneCallback) => {
+		it("Timeout works", async (done: DoneCallback) => {
 
 			const testPayload = generatePayload();
-			const receivedTime = {time: new Date().getTime(), counter: 0};
+			const receivedTime = {time: Date.now(), counter: 0};
 
-			mockRequestHandler.handle.mockImplementation(async (context: Context<TestMessage>) => {
+			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 
 				if(context.payload.msg !== testPayload.msg) {
 					//discard message if it is not our test message
@@ -297,7 +288,7 @@ describe("SqsQueue tests", () => {
 				return;
 			});
 
-			mockErrorHandler.handle.mockImplementation((error: Error, context: Context<TestMessage>) => {
+			mockErrorHandler.mockImplementation((error: Error, context: Context<TestMessage>) => {
 
 				if(context.payload.msg !== testPayload.msg) {
 					//discard message if it is not our test message
@@ -306,7 +297,7 @@ describe("SqsQueue tests", () => {
 
 				expect(error).toBeInstanceOf(SqsTimeoutError);
 
-				const currentTime = new Date().getTime();
+				const currentTime = Date.now();
 				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
 				done();
 				return {retryable: false};
