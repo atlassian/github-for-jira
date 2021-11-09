@@ -26,6 +26,7 @@ import version from "./version";
 import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
+import envVars from "../config/env";
 import { metricError } from "../config/metric-names";
 import { authenticateInstallCallback, authenticateUninstallCallback, verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
@@ -226,9 +227,8 @@ export default (octokitApp: App): Express => {
 		return res.sendStatus(204);
 	});
 
-
 	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
-	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
+	app.post("/jira/events/uninstalled", authenticateUninstallCallback, extractInstallationFromJiraCallback, postJiraUninstall);
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
 		return res.redirect(info.external_url);
@@ -283,7 +283,8 @@ export default (octokitApp: App): Express => {
 		return res.status(errorStatusCode).render(errorPageVersion, {
 			title: "GitHub + Jira integration",
 			message,
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			githubRepoUrl: envVars.GITHUB_REPO_URL
 		});
 	});
 

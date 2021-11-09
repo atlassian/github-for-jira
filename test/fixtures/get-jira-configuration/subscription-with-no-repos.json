@@ -1,0 +1,60 @@
+[
+  {
+		"dataValues": {
+			"id": 12345678,
+			"gitHubInstallationId": 12345678,
+			"jiraHost": "https://fakehost.atlassian.net",
+			"selectedRepositories": null,
+			"repoSyncState": {
+				"repos": {},
+				"jiraHost": "https://fakehost.atlassian.net",
+				"installationId": 20519355,
+				"numberOfSyncedRepos": 2
+			},
+			"syncStatus": "COMPLETE",
+			"syncWarning": "",
+			"jiraClientKey": "fakeclientkey",
+			"createdAt": "2021-11-05T04:31:14.841Z",
+			"updatedAt": "2021-11-05T04:31:32.367Z"
+		},
+		"_previousDataValues": {
+			"id": 1,
+			"gitHubInstallationId": 12345678,
+			"jiraHost": "https://fakehost.atlassian.net",
+			"selectedRepositories": null,
+			"repoSyncState":{},
+			"syncStatus": "COMPLETE",
+			"syncWarning": "",
+			"jiraClientKey": "fakeclientkey",
+			"createdAt": "2021-11-05T04:31:14.841Z",
+			"updatedAt": "2021-11-05T04:31:32.367Z"
+		},
+		"_changed": {},
+		"_modelOptions": {
+			"timestamps": true,
+			"validate": {},
+			"freezeTableName": false,
+			"underscored": false,
+			"paranoid": false,
+			"rejectOnEmpty": false,
+			"whereCollection": {},
+			"schema": null,
+			"schemaDelimiter": "",
+			"defaultScope": {},
+			"scopes": {},
+			"indexes": [],
+			"name": {},
+			"omitNull": false,
+			"sequelize": [],
+			"hooks": {}
+		},
+		"_options": {
+			"isNewRecord": false,
+			"_schema": null,
+			"_schemaDelimiter": "",
+			"raw": true,
+			"attributes": []
+		},
+		"isNewRecord": false
+	}
+]

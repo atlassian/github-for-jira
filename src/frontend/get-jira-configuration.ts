@@ -50,6 +50,21 @@ const formatDate = function (date) {
 	};
 };
 
+export const getFailedConnections = (installations, subscriptions) => {
+	return installations
+		.filter((response) => !!response.error)
+		.map((failedConnection) => {
+			const sub = subscriptions.find(
+				(sub) => failedConnection.id === sub.gitHubInstallationId
+			)
+			const repos = sub?.repoSyncState?.repos || {};
+			const repoId = Object.keys(repos);
+			const orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
+
+			return { id: failedConnection.id, deleted: failedConnection.deleted, orgName };
+		});
+};
+
 export default async (
 	req: Request,
 	res: Response,
@@ -58,8 +73,8 @@ export default async (
 	try {
 		const jiraHost = req.session.jiraHost;
 
-		if(!jiraHost) {
-			req.log.warn({jiraHost, req, res}, "Missing jiraHost");
+		if (!jiraHost) {
+			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
 			res.status(404).send(`Missing Jira Host '${jiraHost}'`);
 			return;
 		}
@@ -74,6 +89,11 @@ export default async (
 			)
 		);
 
+		const failedConnections = getFailedConnections(
+			installations,
+			subscriptions,
+		);
+
 		const connections = installations
 			.filter((response) => !response.error)
 			.map((data) => ({
@@ -84,15 +104,18 @@ export default async (
 				repoSyncState: data.repoSyncState,
 			}));
 
-		const failedConnections = installations
-			.filter((response) => !!response.error)
-			.map((data) => ({
-				...data,
-			}));
+		const newConfigPgFlagIsOn = await booleanFlag(
+			BooleanFlags.NEW_GITHUB_CONFIG_PAGE,
+			true,
+			jiraHost
+		);
 
-		const newConfigPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_CONFIG_PAGE, true, jiraHost);
-		const configPageVersion = newConfigPgFlagIsOn ? "jira-configuration.hbs" : "jira-configuration-OLD.hbs";
-		const hasConnections = newConfigPgFlagIsOn ? connections.length > 0 : connections.length > 0 || failedConnections.length > 0;
+		const configPageVersion = newConfigPgFlagIsOn
+			? "jira-configuration.hbs"
+			: "jira-configuration-OLD.hbs";
+
+		const hasConnections =
+			connections.length > 0 || failedConnections.length > 0;
 
 		res.render(configPageVersion, {
 			host: jiraHost,

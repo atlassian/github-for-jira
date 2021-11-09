@@ -27,8 +27,9 @@ export interface DeploymentsResult {
 async function getJiraClient(
 	jiraHost: string,
 	gitHubInstallationId: number,
-	logger: Logger = getLogger("jira-client")
+	log: Logger = getLogger("jira-client")
 ): Promise<any> {
+	const logger = log.child({jiraHost, gitHubInstallationId});
 	const installation = await Installation.getForHost(jiraHost);
 	if (installation == null) {
 		return undefined;
@@ -175,7 +176,7 @@ async function getJiraClient(
 						}
 					}),
 				update: async (data, options?: { preventTransitions: boolean }) => {
-					dedupIssueKeys(data);
+					dedupIssueKeys(data, logger);
 
 					if (
 						!withinIssueKeyLimit(data.commits) ||
@@ -193,13 +194,15 @@ async function getJiraClient(
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
 
-					return await batchedBulkUpdate(
+					const batchBulkUpdateReq = await batchedBulkUpdate(
 						data,
 						instance,
 						gitHubInstallationId,
 						logger,
 						options
 					);
+
+					return batchBulkUpdateReq;
 				}
 			}
 		},
@@ -327,8 +330,8 @@ const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
 /**
  * Deduplicates issueKeys field for branches and commits
  */
-const dedupIssueKeys = (repositoryObj) => {
-	updateRepositoryIssueKeys(repositoryObj, dedup);
+const dedupIssueKeys = (repositoryObj, logger?) => {
+	updateRepositoryIssueKeys(repositoryObj, dedup, logger);
 };
 
 /**
@@ -359,13 +362,14 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
  * Runs a mutating function on all branches and commits
  * with issue keys in a Jira Repository object
  */
-const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
+const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc, logger?) => {
 	if (repositoryObj.commits) {
 		repositoryObj.commits = updateIssueKeysFor(
 			repositoryObj.commits,
 			mutatingFunc
 		);
 	}
+
 	if (repositoryObj.branches) {
 		repositoryObj.branches = updateIssueKeysFor(
 			repositoryObj.branches,
@@ -379,6 +383,10 @@ const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
 				)[0];
 			}
 		});
+	}
+
+	if (!repositoryObj.commits && !repositoryObj.branches) {
+		logger?.warn("No branches or commits found. Cannot update.")
 	}
 };
 
