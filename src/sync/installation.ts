@@ -1,18 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus, TaskStatus } from "../models/subscription";
-import { Subscription } from "../models";
+import SubscriptionClass, {
+	Repositories,
+	Repository,
+	RepositoryData,
+	SyncStatus,
+	TaskStatus
+} from "../models/subscription";
+import {Subscription} from "../models";
 import getJiraClient from "../jira/client";
-import { getRepositorySummary } from "./jobs";
+import {getRepositorySummary} from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import statsd from "../config/statsd";
 import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
-import { Application, GitHubAPI } from "probot";
+import {Application, GitHubAPI} from "probot";
 import {metricSyncStatus, metricTaskStatus} from "../config/metric-names";
 import Queue from "bull";
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
+import {booleanFlag, BooleanFlags, stringFlag, StringFlags} from "../config/feature-flags";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import {Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout} from "./deduplicator";
+import Redis from "ioredis";
+import getRedisInfo from "../config/redis-info";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -104,7 +113,8 @@ const updateJobStatus = async (
 	edges: any[] | undefined,
 	task: TaskType,
 	repositoryId: string,
-	logger: LoggerWithTarget
+	logger: LoggerWithTarget,
+	scheduleNextTask: (delay) => void
 ) => {
 	const { installationId, jiraHost } = job.data;
 	// Get a fresh subscription instance
@@ -112,6 +122,8 @@ const updateJobStatus = async (
 		jiraHost,
 		installationId
 	);
+
+	const useScheduleNextTask = await booleanFlag(BooleanFlags.USE_DEDUPLICATOR_FOR_BACKFILLING, false, jiraHost);
 
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
@@ -131,7 +143,11 @@ const updateJobStatus = async (
 		// there's more data to get
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 
-		queues.installation.add(job.data);
+		if (useScheduleNextTask) {
+			scheduleNextTask(0);
+		} else {
+			queues.installation.add(job.data);
+		}
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription))) {
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
@@ -147,7 +163,11 @@ const updateJobStatus = async (
 		logger.info({ job, task, startTime, endTime, timeDiff }, "Sync status is complete");
 	} else {
 		logger.info({ job, task }, "Sync status is pending");
-		queues.installation.add(job.data);
+		if (useScheduleNextTask) {
+			scheduleNextTask(0);
+		} else {
+			queues.installation.add(job.data);
+		}
 	}
 };
 
@@ -210,13 +230,15 @@ export const isNotFoundError = (
 };
 
 // TODO: type queues
-async function doProcessInstallation(app, queues, job, installationId: number, jiraHost: string, logger: LoggerWithTarget): Promise<void> {
+async function doProcessInstallation(app, queues, job, installationId: number, jiraHost: string, logger: LoggerWithTarget, scheduleNextTask: (delay) => void): Promise<void> {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId
 	);
 	// TODO: should this reject instead? it's just ignoring an error
 	if (!subscription) return;
+
+	const useScheduleNextTask = await booleanFlag(BooleanFlags.USE_DEDUPLICATOR_FOR_BACKFILLING, false, jiraHost);
 
 	const jiraClient = await getJiraClient(
 		subscription.jiraHost,
@@ -337,6 +359,7 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 			task,
 			repositoryId,
 			logger,
+			scheduleNextTask
 		);
 
 		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`]);
@@ -348,7 +371,11 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 		if (delay) {
 			// if not NaN or 0
 			logger.info({ delay, job, task: nextTask }, `Delaying job for ${delay}ms`);
-			queues.installation.add(job.data, { delay });
+			if (useScheduleNextTask) {
+				scheduleNextTask(delay);
+			} else {
+				queues.installation.add(job.data, {delay});
+			}
 			return;
 		}
 
@@ -356,7 +383,11 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 			// There was a network connection issue.
 			// Add the job back to the queue with a 5 second delay
 			logger.warn({ job, task: nextTask }, "ETIMEDOUT error, retrying in 5 seconds");
-			queues.installation.add(job.data, { delay: 5000 });
+			if (useScheduleNextTask) {
+				scheduleNextTask(5_000);
+			} else {
+				queues.installation.add(job.data, {delay: 5_000});
+			}
 			return;
 		}
 
@@ -367,14 +398,18 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 		) {
 			// Too much server processing time, wait 60 seconds and try again
 			logger.warn({ job, task: nextTask }, "Abuse detection triggered. Retrying in 60 seconds");
-			queues.installation.add(job.data, { delay: 60000 });
+			if (useScheduleNextTask) {
+				scheduleNextTask(60_000)
+			} else {
+				queues.installation.add(job.data, {delay: 60_000});
+			}
 			return;
 		}
 
 		// Continue sync when a 404/NOT_FOUND is returned
 		if (isNotFoundError(err, job, nextTask, logger)) {
 			const edgesLeft = []; // No edges left to process since the repository doesn't exist
-			await updateJobStatus(queues, job, edgesLeft, task, repositoryId, logger);
+			await updateJobStatus(queues, job, edgesLeft, task, repositoryId, logger, scheduleNextTask);
 			return;
 		}
 
@@ -390,7 +425,11 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 			statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
 
 			// queueing the job again to pick up the next task
-			queues.installation.add(job.data);
+			if (useScheduleNextTask) {
+				scheduleNextTask(0);
+			} else {
+				queues.installation.add(job.data);
+			}
 		} else {
 
 			await subscription.update({ syncStatus: "FAILED" });
@@ -409,10 +448,32 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 	}
 }
 
+// Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
+export function maybeScheduleNextTask(queue: Queue.Queue, jobData, nextTaskDelays: Array<number>, logger: LoggerWithTarget) {
+	if (nextTaskDelays.length > 0) {
+		nextTaskDelays.sort().reverse();
+		if (nextTaskDelays.length > 1) {
+			logger.warn("Multiple next jobs were scheduled, scheduling one with the highest priority");
+		}
+		const delay = nextTaskDelays.shift()!;
+		logger.info("Scheduling next job with a delay = " + delay);
+		if (delay > 0) {
+			queue.add(jobData, {delay});
+		} else {
+			queue.add(jobData);
+		}
+	}
+}
+
 // TODO: type queues
 export const processInstallation =
-	(app: Application, queues) =>
-		async (job, rootLogger: LoggerWithTarget): Promise<void> => {
+	(app: Application, queues) => {
+		const inProgressStorage = new RedisInProgressStorageWithTimeout(new Redis(getRedisInfo("installations-in-progress")));
+		const deduplicator = new Deduplicator(
+			inProgressStorage, 1_000
+		);
+
+		return async (job, rootLogger: LoggerWithTarget): Promise<void> => {
 			const {installationId, jiraHost} = job.data;
 
 			const logger = rootLogger.child({job});
@@ -427,5 +488,42 @@ export const processInstallation =
 				jiraHost
 			});
 
-			await doProcessInstallation(app, queues, job, installationId, jiraHost, logger);
-		};
+			if (await booleanFlag(BooleanFlags.USE_DEDUPLICATOR_FOR_BACKFILLING, false, jiraHost)) {
+				const nextTaskDelays: Array<number> = [];
+
+				const result = await deduplicator.executeWithDeduplication("i-" + installationId,
+					() => doProcessInstallation(app, queues, job, installationId, jiraHost, logger, (delay: number) =>
+						nextTaskDelays.push(delay)
+					));
+
+				switch (result) {
+					case DeduplicatorResult.E_OK:
+						logger.info("Job was executed by deduplicator");
+						maybeScheduleNextTask(queues.installation, job.data, nextTaskDelays, logger);
+						break;
+					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER:
+						logger.warn("Possible duplicate job was detected, rescheduling");
+						await queues.installation.add(job.data, {delay: 60_000});
+						break;
+					case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB:
+						logger.warn("Duplicate job was detected, rescheduling");
+						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
+						// Worker A - doing a long-running task
+						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
+						// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
+						// Worker A dies (e.g. node is rotated).
+						// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
+						//
+						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
+						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
+						// is finished.
+						await queues.installation.add(job.data, {delay: Math.floor(60_000 + 60_000 * Math.random())});
+						break;
+				}
+			} else {
+				// eslint-disable-next-line @typescript-eslint/no-empty-function
+				await doProcessInstallation(app, queues, job, installationId, jiraHost, logger, () => {
+				});
+			}
+		}
+	}
