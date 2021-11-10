@@ -1,19 +1,18 @@
-import verifyInstallation from '../../../src/jira/verify-installation';
+import verifyInstallation from "../../../src/jira/verify-installation";
 import {getLogger} from "../../../src/config/logger";
 import InstallationClass from "../../../src/models/installation";
 import {Installation} from "../../../src/models";
-import envVars from "../../../src/config/env";
 import getAxiosInstance from "../../../src/jira/client/axios";
 import {mocked} from "ts-jest/utils";
 
 jest.mock("../../../src/jira/client/axios");
 
-describe('verify-installation', () => {
+describe("verify-installation", () => {
 	let installation: InstallationClass;
 
 	beforeEach(async () => {
 		installation = await Installation.install({
-			host: envVars.ATLASSIAN_URL,
+			host: jiraHost,
 			sharedSecret: "shared-secret",
 			clientKey: "client-key"
 		});
@@ -41,18 +40,18 @@ describe('verify-installation', () => {
 		await installation.destroy();
 	})
 
-	test('returns true when Jira responds with 200', async () => {
+	test("returns true when Jira responds with 200", async () => {
 		mockJiraResponse(200);
-		expect(await verifyInstallation(installation, getLogger('test'))()).toBeTruthy();
+		expect(await verifyInstallation(installation, getLogger("test"))()).toBeTruthy();
 	});
 
-	test('returns false when Jira responds with 401', async () => {
+	test("returns false when Jira responds with 401", async () => {
 		mockJiraResponse(401);
-		expect(await verifyInstallation(installation, getLogger('test'))()).toBeFalsy();
+		expect(await verifyInstallation(installation, getLogger("test"))()).toBeFalsy();
 	});
 
-	test('returns false when Jira client throws an exception', async () => {
+	test("returns false when Jira client throws an exception", async () => {
 		mockJiraResponseException(new Error("boom"));
-		expect(await verifyInstallation(installation, getLogger('test'))()).toBeFalsy();
+		expect(await verifyInstallation(installation, getLogger("test"))()).toBeFalsy();
 	});
 });

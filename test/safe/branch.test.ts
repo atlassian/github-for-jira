@@ -1,55 +1,41 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { createWebhookApp } from "../utils/probot";
-import nock from "nock";
 import { Installation, Subscription } from "../../src/models";
-import { mocked } from "ts-jest/utils";
+import { Application } from "probot";
 
-jest.mock("../../src/models");
-
-describe("GitHub Actions", () => {
-	let app;
+describe("Branch Webhook", () => {
+	let app: Application;
+	const gitHubInstallationId = 1234;
 	beforeEach(async () => {
-		mocked(Subscription.getAllForInstallation).mockResolvedValue([
-			{
-				jiraHost: process.env.ATLASSIAN_URL,
-				gitHubInstallationId: 1234,
-				enabled: true
-			}] as any);
-		mocked(Subscription.getSingleInstallation).mockResolvedValue(
-			{
-				id: 1,
-				jiraHost: process.env.ATLASSIAN_URL
-			} as any);
-		mocked(Installation.getForHost).mockResolvedValue(
-			{
-				jiraHost: process.env.ATLASSIAN_URL,
-				sharedSecret: process.env.ATLASSIAN_SECRET,
-				enabled: true
-			} as any
-		);
-		app = await createWebhookApp()
+		app = await createWebhookApp();
+		const clientKey = "client-key";
+		await Installation.create({
+			clientKey,
+			sharedSecret: "shared-secret",
+			jiraHost
+		});
+		await Subscription.create({
+			gitHubInstallationId,
+			jiraHost,
+			jiraClientKey: clientKey
+		});
 	});
 
 	afterEach(async () => {
-		if (!nock.isDone()) {
-			// eslint-disable-next-line jest/no-jasmine-globals
-			fail("nock is not done yet");
-		}
-		nock.cleanAll();
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("Create Branch", () => {
 		it("should update Jira issue with link to a branch on GitHub", async () => {
-			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			const fixture = require("../fixtures/branch-basic.json");
 
+			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
-			// When getting branch details from github, `github.git.getRef` should encode the ref and attach it to url.
-			// Octokit doesnt do this and calls the below endpoint hence the url is mocked in this way.
-			githubNock.get("/repos/test-repo-owner/test-repo-name/git/ref/heads%2FTES-123-test-ref")
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
-					ref: "refs/heads/test-ref",
+					ref: `refs/${ref}`,
 					object: {
 						sha
 					}
@@ -59,6 +45,7 @@ describe("GitHub Actions", () => {
 					commit: {
 						author: {
 							name: "test-branch-author-name",
+							email: "test-branch-author-name@github.com",
 							date: "test-branch-author-date"
 						},
 						message: "test-commit-message"
@@ -66,23 +53,20 @@ describe("GitHub Actions", () => {
 					html_url: `test-repo-url/commits/${sha}`
 				});
 
-
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
 				repositories: [
 					{
-						id: "test-repo-id",
 						name: "example/test-repo-name",
 						url: "test-repo-url",
+						id: "test-repo-id",
 						branches: [
 							{
 								createPullRequestUrl: "test-repo-url/pull/new/TES-123-test-ref",
 								lastCommit: {
 									author: {
-										avatar: "https://github.com/users/undefined.png",
 										name: "test-branch-author-name",
-										email: "undefined@noreply.user.github.com",
-										url: "https://github.com/users/undefined"
+										email: "test-branch-author-name@github.com"
 									},
 									authorTimestamp: "test-branch-author-date",
 									displayId: "test-b",
@@ -91,8 +75,8 @@ describe("GitHub Actions", () => {
 									id: "test-branch-ref-sha",
 									issueKeys: ["TES-123"],
 									message: "test-commit-message",
-									url: "test-repo-url/commits/test-branch-ref-sha",
-									updateSequenceId: 12345678
+									updateSequenceId: 12345678,
+									url: "test-repo-url/commits/test-branch-ref-sha"
 								},
 								id: "TES-123-test-ref",
 								issueKeys: ["TES-123"],
@@ -104,7 +88,9 @@ describe("GitHub Actions", () => {
 						updateSequenceId: 12345678
 					}
 				],
-				properties: { installationId: 1234 }
+				properties: {
+					installationId: gitHubInstallationId
+				}
 			}).reply(200);
 
 			Date.now = jest.fn(() => 12345678);

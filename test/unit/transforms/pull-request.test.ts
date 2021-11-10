@@ -17,12 +17,6 @@ describe("pull_request transform", () => {
 				name: "Some User Name"
 			});
 
-		githubNock.get(`/users/${fixture.head.user.login}`)
-			.reply(200, {
-				...fixture.head.user,
-				name: "Last Commit User Name"
-			});
-
 		const data = await transformPullRequest(GitHubAPI(), fixture);
 
 		const { updated_at, title } = fixture;
