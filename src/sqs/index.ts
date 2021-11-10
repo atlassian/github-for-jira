@@ -4,7 +4,7 @@ import {getLogger} from "../config/logger"
 import SQS, {
 	ChangeMessageVisibilityRequest,
 	DeleteMessageRequest,
-	Message, MessageAttributeValue,
+	Message,
 	ReceiveMessageResult,
 	SendMessageRequest
 } from "aws-sdk/clients/sqs";
@@ -314,9 +314,7 @@ export class SqsQueue<MessagePayload> {
 			executionId: uuidv4(),
 			queue: this.queueName})
 
-		const maybeReceivedCount: MessageAttributeValue | undefined = message.MessageAttributes ? message.MessageAttributes["ApproximateReceiveCount"] : undefined;
-
-		const receiveCount = Number(maybeReceivedCount?.StringValue) || 1;
+		const receiveCount = Number(message.MessageAttributes?.ApproximateReceiveCount?.StringValue || "1");
 
 		const context: Context<MessagePayload> = {message, payload, log, receiveCount: receiveCount}
 
@@ -340,6 +338,9 @@ export class SqsQueue<MessagePayload> {
 			await this.deleteMessage(message, log)
 		} catch (err) {
 
+			statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
+			log.error({err}, "error executing sqs message")
+
 			const errorHandlingResult = await this.errorHandler(err, context);
 			if(!errorHandlingResult.retryable ||
 				(errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts)) {
@@ -349,9 +350,6 @@ export class SqsQueue<MessagePayload> {
 				log.info(`Delaying the retry for ${errorHandlingResult.retryDelaySec} seconds`)
 				await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
 			}
-
-			statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
-			log.error({err}, "error executing sqs message")
 		}
 	}
 
@@ -364,7 +362,7 @@ export class SqsQueue<MessagePayload> {
 
 		const params : ChangeMessageVisibilityRequest = {
 			QueueUrl: this.queueUrl,
-			ReceiptHandle: message.ReceiptHandle || "",
+			ReceiptHandle: message.ReceiptHandle,
 			VisibilityTimeout: timeout
 		} ;
 		try {
