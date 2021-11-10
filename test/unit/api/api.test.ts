@@ -46,7 +46,7 @@ describe("API", () => {
 		app.use((req: Request, res: Response, next: NextFunction) => {
 			res.locals = locals || {};
 			req.log =  getLogger("test");
-			req.session = { jiraHost: process.env.ATLASSIAN_URL };
+			req.session = { jiraHost };
 			next();
 		});
 		app.use("/api", api);
@@ -175,7 +175,7 @@ describe("API", () => {
 		});
 	});
 
-	describe('Endpoints', () => {
+	describe("Endpoints", () => {
 		function mockJiraResponse(status: number) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
@@ -235,7 +235,7 @@ describe("API", () => {
 			it("should return information for an existing installation", async () => {
 				mocked(Subscription.getAllForInstallation).mockResolvedValue([
 					{
-						jiraHost: process.env.ATLASSIAN_URL,
+						jiraHost,
 						gitHubInstallationId: installationId
 					}
 				] as any);
@@ -303,7 +303,7 @@ describe("API", () => {
 					.post(`/api/${installationId}/sync`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
+					.send(`jiraHost=${jiraHost}`)
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -319,7 +319,7 @@ describe("API", () => {
 					.post(`/api/${installationId}/sync`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
+					.send(`jiraHost=${jiraHost}`)
 					.send("resetType=full")
 					.expect(202)
 					.then((response) => {
@@ -364,7 +364,7 @@ describe("API", () => {
 					.post(`/api/${installationId}/migrate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
+					.send(`jiraHost=${jiraHost}`)
 					.expect(200)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -387,7 +387,7 @@ describe("API", () => {
 					.post(`/api/${installationId}/migrate/undo`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
+					.send(`jiraHost=${jiraHost}`)
 					.expect(200)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -411,7 +411,7 @@ describe("API", () => {
 					.post(`/api/${installationId}/migrate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
+					.send(`jiraHost=${jiraHost}`)
 					.expect(200)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -435,7 +435,7 @@ describe("API", () => {
 					.post(`/api/${installationId}/migrate/undo`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
+					.send(`jiraHost=${jiraHost}`)
 					.expect(200)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
