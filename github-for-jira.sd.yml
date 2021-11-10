@@ -83,6 +83,7 @@ resources:
     attributes:
       MaxReceiveCount: 3
       MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 602 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails.
       dataType:
         - UGC/Label                # name of GitHub org
         - PII/IndirectConfidential # name of GitHub org
@@ -92,7 +93,7 @@ resources:
     attributes:
       MaxReceiveCount: 3
       MessageRetentionPeriod: 1209600
-      VisibilityTimeout: 120 #TODO Add timeout to the queue itself. Adjust when ARC-776 is done
+      VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
       dataType:
         - UGC/Label                # name of GitHub org
         - PII/IndirectConfidential # name of GitHub org
