@@ -109,7 +109,7 @@ describe("Webhooks suite", () => {
 			const webhookName = "workflow_run";
 			const payloadSize = 0;
 			emitWebhookPayloadMetrics(webhookName, payloadSize);
-			expect(statsdSpy).toHaveBeenCalled();
+			expect(statsdSpy).toHaveBeenCalledTimes(2);
 		});
 	});
 });

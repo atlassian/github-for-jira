@@ -77,7 +77,7 @@ export default (
 		enhanceOctokit(context.github);
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
-		// Metrics for payload size
+		// Metrics for webhook payload size
 		emitWebhookPayloadMetrics(webhookEvent,
 			Buffer.byteLength(JSON.stringify(context.payload), "utf-8"));
 

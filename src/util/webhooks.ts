@@ -88,13 +88,29 @@ export const emitWebhookFailedMetrics = (webhookName: string) => {
 
 }
 
+
+/**
+ * Emits metric for webhook payload size
+ * @param webhookName
+ * @param size
+ */
 export const emitWebhookPayloadMetrics = (webhookName: string, size: number) => {
 	const tags = {
-		name: webhookName,
-		payloadSize: size.toString()
+		name: webhookName
 	};
 	statsd.histogram(
 		metricWebhooks.webhookPayloadSize,
+		size,
+		tags
+	);
+
+	const histogramBuckets =
+	"128000_256000_512000_1024000_2048000"; //buckets in byte size
+
+	tags["gsd_histogram"] = histogramBuckets;
+
+	statsd.histogram(
+		metricWebhooks.webhookLatency,
 		size,
 		tags
 	);
