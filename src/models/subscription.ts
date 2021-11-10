@@ -164,7 +164,7 @@ export default class Subscription extends Sequelize.Model {
 		});
 	}
 
-	static async install(payload: SubscriptionPayload): Promise<Subscription> {
+	static async install(payload: SubscriptionInstallPayload): Promise<Subscription> {
 		const [subscription] = await Subscription.findOrCreate({
 			where: {
 				gitHubInstallationId: payload.installationId,
@@ -309,11 +309,12 @@ export default class Subscription extends Sequelize.Model {
 	async uninstall(): Promise<void> {
 		await this.destroy();
 	}
-
 }
 
 export interface SubscriptionPayload {
 	installationId: string;
 	host: string;
+}
+export interface SubscriptionInstallPayload extends SubscriptionPayload {
 	clientKey: string;
 }

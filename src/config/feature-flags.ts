@@ -20,11 +20,13 @@ export enum BooleanFlags {
 	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files",
 	CONTINUE_SYNC_ON_ERROR = "continue-sync-on-error",
 	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
+	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
 	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
 	NEW_SETUP_PAGE = "new-setup-page",
-	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
-	PROPAGATE_REQUEST_ID = "propagate-request-id",
+	SORT_INSTALLATIONS_BY_ID = "sort-installations-by-id",
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
+	USE_DEDUPLICATOR_FOR_BACKFILLING = "use-deduplicator-for-backfilling",
+	SEND_PUSH_TO_SQS = "send-push-events-to-sqs",
 	NEW_REPO_SYNC_STATE = "new-repo-sync-state"
 }
 

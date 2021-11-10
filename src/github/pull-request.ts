@@ -46,52 +46,60 @@ export default async (
 		context.log
 	);
 
-	context.log.info({ jiraPayload }, "Pullrequest mapped to Jira Payload");
+	const { number: pullRequestNumber, body: pullRequestBody, id: pullRequestId } =  pull_request
+	const logPayload = { pullRequestId, pullRequestNumber, jiraPayload }
+
+	context.log.info(logPayload, "Pullrequest mapped to Jira Payload");
 
 	// Deletes PR link to jira if ticket id is removed from PR title
 	if (!jiraPayload && changes?.title) {
 		const issueKeys = issueKeyParser().parse(changes?.title?.from);
+
 		if (!_.isEmpty(issueKeys)) {
 			context.log.info(
 				{ issueKeys },
 				"Sending pullrequest delete event for issue keys"
 			);
+
 			await jiraClient.devinfo.pullRequest.delete(
 				repositoryId,
-				pull_request.number
+				pullRequestNumber
 			);
+
 			return;
 		}
 	}
 
 	try {
-		const linkifiedBody = await util.unfurl(pull_request.body);
+		const linkifiedBody = await util.unfurl(pullRequestBody);
+
 		if (linkifiedBody) {
 			const editedPullRequest = context.issue({
 				body: linkifiedBody,
 				id: pull_request.id,
 			});
+			context.log(logPayload, "Updating pull request");
+
 			await context.github.issues.update(editedPullRequest);
 		}
 	} catch (err) {
 		context.log.warn(
-			{ err, body: pull_request.body, pullRequestNumber: pull_request.number },
+			{ err, body: pullRequestBody, pullRequestNumber },
 			"Error while trying to update PR body with links to Jira ticket"
 		);
 	}
 
 	if (!jiraPayload) {
 		context.log.info(
-			{ pullRequestNumber: pull_request.number },
+			{ pullRequestNumber, pullRequestId },
 			"Halting futher execution for pull request since jiraPayload is empty"
 		);
 		return;
 	}
 
-	context.log(
-		{ pullRequestNumber: pull_request.number, jiraPayload },
-		`Sending pull request update to Jira ${jiraClient.baseURL}`
-	);
+	const baseUrl = jiraClient.baseUrl || "none";
+
+	context.log(logPayload, `Sending pull request update to Jira ${baseUrl}`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;

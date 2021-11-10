@@ -24,7 +24,7 @@ export const emitWebhookProcessedMetrics = (
 	try {
 		// only send logs if time of webhookReceived occurred before the currentTime
 		// and if webhookReceivedTime is not null/undefined
-		if (webhookReceivedTime < currentTime) {
+		if (webhookReceivedTime <= currentTime) {
 			const timeToProcessWebhookEvent = getCurrentTime() - webhookReceivedTime;
 
 			contextLogger.info(
