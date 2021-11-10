@@ -1,13 +1,13 @@
 import supertest from "supertest";
-import express, {NextFunction, Request, Response} from "express";
+import express, { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import api from "../../src/api";
 import SubscriptionModel from "../../src/models/subscription";
 import { Subscription } from "../../src/models";
-import {wrapLogger} from "probot/lib/wrap-logger";
+import { wrapLogger } from "probot/lib/wrap-logger";
 
 describe("api/index", () => {
-	let sub:SubscriptionModel;
+	let sub: SubscriptionModel;
 	beforeEach(async () => {
 		sub = await Subscription.create({
 			gitHubInstallationId: 123,
@@ -16,12 +16,8 @@ describe("api/index", () => {
 			repoSyncState: {
 				installationId: 123
 			},
-			updatedAt: new Date(),
-			createdAt: new Date()
 		});
-	});
 
-	beforeEach(() =>
 		githubNock
 			.post("/graphql")
 			.reply(200, {
@@ -34,12 +30,10 @@ describe("api/index", () => {
 					}
 				}
 			})
-	);
+	});
 
 	afterEach(async () => {
-		await Promise.all(await Subscription.findAll().map(
-			sub => sub.destroy()
-		));
+		await Subscription.destroy({ truncate: true });
 	});
 
 	const createApp = async () => {
@@ -51,7 +45,7 @@ describe("api/index", () => {
 				level: "debug",
 				stream: process.stdout
 			}));
-			req.session = { jiraHost: 'http://blah.com' };
+			req.session = { jiraHost: "http://blah.com" };
 			next();
 		});
 		app.use("/api", api);

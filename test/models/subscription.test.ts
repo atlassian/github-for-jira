@@ -16,7 +16,7 @@ describe("Subscription", () => {
 	});
 
 	afterEach(async () => {
-		await Subscription.destroy({where: {gitHubInstallationId: 123}})
+		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("updateSyncState", () => {

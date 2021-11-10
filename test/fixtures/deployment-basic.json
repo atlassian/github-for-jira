@@ -26,7 +26,10 @@
 			"creator": {
 				"login": "test-user[bot]",
 				"type": "Bot"
-			}
+			},
+			"node_id": "MDEwOkRlcGxveW1lbnQxNDU5ODg3NDY=",
+			"sha": "f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
+			"ref": "master"
 		},
 		"action": "created",
 		"repository": {

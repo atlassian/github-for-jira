@@ -6,6 +6,45 @@
 			"id": 977675483,
 			"name": "My Deployment flow",
 			"head_branch": "TES-123-test-ref",
+			"head_commit": {
+				"id": "ec26c3e57ca3a959ca5aad62de7213c562f8c821",
+				"tree_id": "31b122c26a97cf9af023e9ddab94a82c6e77b0ea",
+				"message": "Update README.md",
+				"timestamp": "2019-05-15T15:20:30Z",
+				"author": {
+					"name": "test-user",
+					"email": "test-user@users.noreply.github.com"
+				},
+				"committer": {
+					"name": "test-user",
+					"email": "test-user@users.noreply.github.com"
+				}
+			},
+			"pull_requests": [
+				{
+					"url": "test-repo-url",
+					"id": 279147437,
+					"number": 2,
+					"head": {
+						"ref": "changes",
+						"sha": "ec26c3e57ca3a959ca5aad62de7213c562f8c821",
+						"repo": {
+							"id": 186853002,
+							"url": "https://api.github.com/repos/test-repo-owner/test-repo-name",
+							"name": "test-repo-name"
+						}
+					},
+					"base": {
+						"ref": "master",
+						"sha": "f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
+						"repo": {
+							"id": 186853002,
+							"url": "https://api.github.com/repos/test-repo-owner/test-repo-name",
+							"name": "test-repo-name"
+						}
+					}
+				}
+			],
 			"run_number": 84,
 			"event": "push",
 			"status": "queued",
@@ -29,7 +68,7 @@
 		"repository": {
 			"id": "test-repo-id",
 			"name": "test-repo-name",
-			"full_name": "example/test-repo-name",
+			"full_name": "test-repo-owner/test-repo-name",
 			"html_url": "test-repo-url",
 			"owner": {
 				"login": "test-repo-owner"

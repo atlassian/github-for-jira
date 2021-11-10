@@ -183,6 +183,7 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 		// Jira accepts up to 400 commits per request
 		// break the array up into chunks of 400
 		const chunks: JiraCommit[][] = [];
+
 		while (commits.length) {
 			chunks.push(commits.splice(0, 400));
 		}
@@ -196,9 +197,7 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 				updateSequenceId: Date.now(),
 			};
 
-			const jiraResponse = await jiraClient.devinfo.repository.update(
-				jiraPayload
-			);
+			const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 
 			webhookReceived && emitWebhookProcessedMetrics(
 				webhookReceived,
