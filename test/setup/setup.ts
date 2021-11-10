@@ -41,13 +41,13 @@ beforeEach(() => {
 // Checks to make sure there's no extra HTTP mocks waiting
 // Needs to be in it's own aftereach so that the expect doesn't stop it from cleaning up afterwards
 afterEach(() => {
-	// eslint-disable-next-line jest/no-standalone-expect
-	expect(nock).toBeDone();
-});
-
-afterEach(() => {
-	nock.cleanAll(); // removes HTTP mocks
-	jest.resetAllMocks(); // Removes jest mocks
+	try {
+		// eslint-disable-next-line jest/no-standalone-expect
+		expect(nock).toBeDone();
+	} finally {
+		nock.cleanAll(); // removes HTTP mocks
+		jest.resetAllMocks(); // Removes jest mocks
+	}
 });
 
 afterAll(async () => {
