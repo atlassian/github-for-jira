@@ -21,7 +21,6 @@ export enum BooleanFlags {
 	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
 	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
 	NEW_SETUP_PAGE = "new-setup-page",
-	SORT_INSTALLATIONS_BY_ID = "sort-installations-by-id",
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
 	USE_DEDUPLICATOR_FOR_BACKFILLING = "use-deduplicator-for-backfilling",
 
