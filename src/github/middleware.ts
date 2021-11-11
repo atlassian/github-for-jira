@@ -209,14 +209,14 @@ export default (
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
 				if(!isWarning) {
 					context.log.error(
-						{ err },
+						err,
 						`Error processing the event for Jira hostname '${jiraHost}'`
 					);
 					emitWebhookFailedMetrics(webhookEvent);
 					context.sentry?.captureException(err);
 				} else {
 					context.log.warn(
-						{ err },
+						err,
 						`Warning: failed to process event for the Jira hostname '${jiraHost}'`
 					);
 				}
