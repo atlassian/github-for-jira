@@ -234,6 +234,15 @@
   color: #455570 !important;
 }
 
+.restart-backfill-button {
+   /* override aui styling */
+  padding: 0 !important;
+}
+
+.restart-backfill-button:hover {
+  background-color: inherit !important;
+}
+
 .jiraConfiguration__table__cell:nth-child(3) {
   display: flex;
 }
