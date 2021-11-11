@@ -325,6 +325,13 @@ environmentOverrides:
           max: 5
           metrics: *CpuMemScalingRules
     resources:
+      - name: rds
+        type: dedicated-rds
+        attributes:
+          parameters:
+            # Adding read replica in staging as it's not enabled by default so we can read state
+            ReadReplica: true
+
       - type: globaledge
         name: proxy
         attributes:
