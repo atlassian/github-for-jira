@@ -23,12 +23,7 @@ describe("SqsQueue tests", () => {
 
 	const mockErrorHandler = jest.fn();
 
-	const generatePayload = (): TestMessage => {
-		const payload = {msg: uuidv4()};
-		console.log("Generated test payload: " + JSON.stringify(payload));
-		return payload
-	};
-
+	const generatePayload = (): TestMessage => ({ msg: uuidv4() });
 
 	const createSqsQueue = (timeout: number) => {
 		return new SqsQueue({
