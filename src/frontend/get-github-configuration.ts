@@ -115,8 +115,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-	req.log.info("JIRAHOST: ", req.session)
-
 	if (!jiraHost) {
 		return next(new Error(Errors.MISSING_JIRA_HOST));
 	}
@@ -136,8 +134,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 	try {
 		// we can get the jira client Key from the JWT's `iss` property
 		// so we'll decode the JWT here and verify it's the right key before continuing
-
-
 		const installation = await Installation.getForHost(jiraHost);
 		if (!installation) {
 			req.log.warn({ req, res }, "Missing installation");
