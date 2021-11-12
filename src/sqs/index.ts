@@ -268,19 +268,23 @@ export class SqsQueue<MessagePayload> {
 			WaitTimeSeconds: this.longPollingIntervalSec
 		};
 
-		//Get messages from the queue with long polling enabled
-		await this.sqs.receiveMessage(params)
-			.promise()
-			.then(async result => {
-				await this.handleSqsResponse(result, listenerContext)
-			})
-			.catch((err) => {
-				listenerContext.log.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
-			})
-			.finally( () =>
-				this.listen(listenerContext)
-			);
+		try {
+			//Get messages from the queue with long polling enabled
+			const result = await this.sqs.receiveMessage(params)
+				.promise();
+
+			await this.handleSqsResponse(result, listenerContext)
+		} catch(err) {
+			listenerContext.log.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
+			//In case of aws client error we wait for the long polling interval to prevent bombarding the queue with failing requests
+			await new Promise(resolve => setTimeout(resolve, this.longPollingIntervalSec * 1000));
+		} finally {
+			this.listen(listenerContext)
+		}
 	}
+
+
+
 
 
 	private async deleteMessage(message: Message, log: Logger) {
@@ -341,14 +345,18 @@ export class SqsQueue<MessagePayload> {
 			statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
 			log.error({err}, "error executing sqs message")
 
-			const errorHandlingResult = await this.errorHandler(err, context);
-			if(!errorHandlingResult.retryable ||
-				(errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts)) {
-				log.info("Deleting the message hence it reached the maximum amount of retries")
-				await this.deleteMessage(message, log)
-			} else if (errorHandlingResult.retryDelaySec) {
-				log.info(`Delaying the retry for ${errorHandlingResult.retryDelaySec} seconds`)
-				await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
+			try {
+				const errorHandlingResult = await this.errorHandler(err, context);
+				if (!errorHandlingResult.retryable ||
+					(errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts)) {
+					log.info("Deleting the message hence it reached the maximum amount of retries")
+					await this.deleteMessage(message, log)
+				} else if (errorHandlingResult.retryDelaySec) {
+					log.info(`Delaying the retry for ${errorHandlingResult.retryDelaySec} seconds`)
+					await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
+				}
+			} catch (err) {
+				log.error({err}, "Error while performing error handling");
 			}
 		}
 	}
