@@ -2,7 +2,7 @@ import {Context, ErrorHandlingResult, SqsQueue, SqsTimeoutError} from "../../../
 import { v4 as uuidv4 } from "uuid";
 import envVars from "../../../src/config/env";
 import DoneCallback = jest.DoneCallback;
-import {DeleteMessageRequest} from "aws-sdk/clients/sqs";
+import waitUntil from "../../utils/waitUntil";
 
 
 const TEST_QUEUE_URL = envVars.SQS_BACKFILL_QUEUE_URL;
@@ -192,27 +192,13 @@ describe("SqsQueue tests", () => {
 			await queue.sendMessage(testPayload);
 		});
 
-		it("Message deleted from the queue when unretryable", async (done: DoneCallback) => {
+		it("Message deleted from the queue when unretryable", async () => {
 
 			const testPayload = generatePayload();
 
-			const deleteMock = jest.fn();
-			queue.sqs.deleteMessage = deleteMock;
+			const queueDeletionSpy = jest.spyOn(queue.sqs, 'deleteMessage');
 
 			const expected : {ReceiptHandle?: string} = {ReceiptHandle: ""};
-
-			deleteMock.mockImplementation((deleteRequest: DeleteMessageRequest) => {
-
-				if(deleteRequest.ReceiptHandle === expected.ReceiptHandle) {
-					done();
-				}
-
-				return {promise: () => {
-					return new Promise<void>(resolve => {
-						resolve()
-					});
-				}}
-			})
 
 			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 				expected.ReceiptHandle = context.message.ReceiptHandle;
@@ -225,6 +211,10 @@ describe("SqsQueue tests", () => {
 			})
 
 			await queue.sendMessage(testPayload);
+
+			await waitUntil(async () => {
+				expect(queueDeletionSpy).toBeCalledTimes(1)
+			})
 		});
 
 	});

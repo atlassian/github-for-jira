@@ -1,22 +1,21 @@
 import Timeout = NodeJS.Timeout;
-import {Job} from "bull";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import {RateLimitingError} from "../config/enhance-octokit";
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
-import {queues} from "./queues";
+import { Job } from "bull";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { RateLimitingError } from "../config/enhance-octokit";
+import { queues } from "./queues";
 import statsd from "../config/statsd";
-import {redisQueueMetrics} from "../config/metric-names";
-import app, {probot} from "./app";
+import { redisQueueMetrics } from "../config/metric-names";
+import app, { probot } from "./app";
 import sqsQueues from "../sqs/queues";
-import {discovery, DISCOVERY_LOGGER_NAME} from "../sync/discovery";
-import {INSTALLATION_LOGGER_NAME, processInstallation} from "../sync/installation";
-import {processPushJob, PUSH_LOGGER_NAME} from "../transforms/push";
-import metricsJob, {METRICS_LOGGER_NAME} from "./metrics-job";
+import { discovery, DISCOVERY_LOGGER_NAME } from "../sync/discovery";
+import { INSTALLATION_LOGGER_NAME, processInstallation } from "../sync/installation";
+import { processPushJob, PUSH_LOGGER_NAME } from "../transforms/push";
+import metricsJob, { METRICS_LOGGER_NAME } from "./metrics-job";
 import * as Sentry from "@sentry/node";
 import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
 import SentryScopeProxy from "../models/sentry-scope-proxy";
-import {getLogger} from "../config/logger";
-import {v4 as uuidv4} from 'uuid'
+import { getLogger } from "../config/logger";
+import { v4 as uuidv4 } from 'uuid'
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const logger = getLogger("worker");
@@ -62,7 +61,7 @@ const logMiddleware = (jobHandler, jobName: string) => {
 		try {
 			await jobHandler(job, jobLogger);
 		} catch (err) {
-			jobLogger.error({err}, "Execution failed!");
+			jobLogger.error({ err }, "Execution failed!");
 		}
 	};
 }
@@ -75,13 +74,13 @@ const setDelayOnRateLimiting = (jobHandler) => async (job: Job, logger: LoggerWi
 			const delay = err.rateLimitReset * 1000 + 10000 - new Date().getTime();
 
 			if (delay <= 0) {
-				logger.warn({job}, "Rate limiting detected but couldn't calculate delay, delaying exponentially");
+				logger.warn({ job }, "Rate limiting detected but couldn't calculate delay, delaying exponentially");
 				job.opts.backoff = {
 					type: "exponential",
 					delay: 10 * 60 * 1000
 				};
 			} else {
-				logger.warn({job}, `Rate limiting detected, delaying job by ${delay} ms`);
+				logger.warn({ job }, `Rate limiting detected, delaying job by ${delay} ms`);
 				job.opts.backoff = {
 					type: "fixed",
 					delay: delay
@@ -91,25 +90,24 @@ const setDelayOnRateLimiting = (jobHandler) => async (job: Job, logger: LoggerWi
 		throw err;
 	}
 };
+
 const sendQueueMetrics = async () => {
-	if (await booleanFlag(BooleanFlags.EXPOSE_QUEUE_METRICS, false)) {
+	for (const [queueName, queue] of Object.entries(queues)) {
+		logger.info("fetching queue metrics");
 
-		for (const [queueName, queue] of Object.entries(queues)) {
-			logger.info("fetching queue metrics");
+		const jobCounts = await queue.getJobCounts();
 
-			const jobCounts = await queue.getJobCounts();
+		logger.info({ queue: queueName, queueMetrics: jobCounts }, "publishing queue metrics");
 
-			logger.info({queue: queueName, queueMetrics: jobCounts}, "publishing queue metrics");
-
-			const tags = {queue: queueName};
-			statsd.gauge(redisQueueMetrics.active, jobCounts.active, tags);
-			statsd.gauge(redisQueueMetrics.completed, jobCounts.completed, tags);
-			statsd.gauge(redisQueueMetrics.delayed, jobCounts.delayed, tags);
-			statsd.gauge(redisQueueMetrics.failed, jobCounts.failed, tags);
-			statsd.gauge(redisQueueMetrics.waiting, jobCounts.waiting, tags);
-		}
+		const tags = { queue: queueName };
+		statsd.gauge(redisQueueMetrics.active, jobCounts.active, tags);
+		statsd.gauge(redisQueueMetrics.completed, jobCounts.completed, tags);
+		statsd.gauge(redisQueueMetrics.delayed, jobCounts.delayed, tags);
+		statsd.gauge(redisQueueMetrics.failed, jobCounts.failed, tags);
+		statsd.gauge(redisQueueMetrics.waiting, jobCounts.waiting, tags);
 	}
 };
+
 const commonMiddleware = (jobHandler, loggerName: string) => logMiddleware(sentryMiddleware(setDelayOnRateLimiting(jobHandler)), loggerName);
 let running = false;
 let timer: Timeout;

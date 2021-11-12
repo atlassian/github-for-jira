@@ -16,8 +16,6 @@ export enum BooleanFlags {
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
 	SIMPLER_PROCESSOR = "simpler-processor",
-	RETRY_WITHOUT_CHANGED_FILES = "retry-without-changed-files",
-	CONTINUE_SYNC_ON_ERROR = "continue-sync-on-error",
 	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
 	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
 	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
