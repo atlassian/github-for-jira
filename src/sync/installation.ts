@@ -6,20 +6,20 @@ import SubscriptionClass, {
 	SyncStatus,
 	TaskStatus
 } from "../models/subscription";
-import {Subscription} from "../models";
+import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
-import {getRepositorySummary} from "./jobs";
+import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import statsd from "../config/statsd";
 import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
-import {Application, GitHubAPI} from "probot";
-import {metricSyncStatus, metricTaskStatus} from "../config/metric-names";
+import { Application, GitHubAPI } from "probot";
+import { metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import Queue from "bull";
-import {booleanFlag, BooleanFlags, stringFlag, StringFlags} from "../config/feature-flags";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import {Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout} from "./deduplicator";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
@@ -51,7 +51,7 @@ type TaskType = "pull" | "commit" | "branch";
 const taskTypes = Object.keys(tasks) as TaskType[];
 
 // TODO: why are we ignoring failed status as completed?
-const taskStatusCompleted:TaskStatus[] = ["complete", "failed"]
+const taskStatusCompleted: TaskStatus[] = ["complete", "failed"]
 const isAllTasksStatusesCompleted = (...statuses: (TaskStatus | undefined)[]): boolean =>
 	statuses.every(status => !!status && taskStatusCompleted.includes(status));
 
@@ -386,7 +386,7 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 			if (useScheduleNextTask) {
 				scheduleNextTask(delay);
 			} else {
-				queues.installation.add(job.data, {delay});
+				queues.installation.add(job.data, { delay });
 			}
 			return;
 		}
@@ -398,7 +398,7 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 			if (useScheduleNextTask) {
 				scheduleNextTask(5_000);
 			} else {
-				queues.installation.add(job.data, {delay: 5_000});
+				queues.installation.add(job.data, { delay: 5_000 });
 			}
 			return;
 		}
@@ -413,7 +413,7 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 			if (useScheduleNextTask) {
 				scheduleNextTask(60_000)
 			} else {
-				queues.installation.add(job.data, {delay: 60_000});
+				queues.installation.add(job.data, { delay: 60_000 });
 			}
 			return;
 		}
@@ -425,38 +425,23 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 			return;
 		}
 
-		if (await booleanFlag(BooleanFlags.CONTINUE_SYNC_ON_ERROR, false, jiraHost)) {
 
-			// TODO: add the jiraHost to the logger with logger.child()
-			const host = subscription.jiraHost || "none";
-			logger.warn({ job, task: nextTask, err, jiraHost: host }, "Task failed, continuing with next task");
+		// TODO: add the jiraHost to the logger with logger.child()
+		const host = subscription.jiraHost || "none";
+		logger.warn({ job, task: nextTask, err, jiraHost: host }, "Task failed, continuing with next task");
 
-			// marking the current task as failed
-			await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
+		// marking the current task as failed
+		await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
 
-			statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
+		statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
 
-			// queueing the job again to pick up the next task
-			if (useScheduleNextTask) {
-				scheduleNextTask(0);
-			} else {
-				queues.installation.add(job.data);
-			}
+		// queueing the job again to pick up the next task
+		if (useScheduleNextTask) {
+			scheduleNextTask(0);
 		} else {
-
-			await subscription.update({ syncStatus: "FAILED" });
-
-			// TODO: add the jiraHost to the logger with logger.child()
-			const host = subscription.jiraHost || "none";
-			logger.warn({ job, task: nextTask, err, jiraHost: host }, "Sync failed");
-
-			job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
-			job.sentry.captureException(err);
-
-			statsd.increment(metricSyncStatus.failed);
-
-			throw err;
+			queues.installation.add(job.data);
 		}
+
 	}
 }
 
@@ -470,7 +455,7 @@ export function maybeScheduleNextTask(queue: Queue.Queue, jobData, nextTaskDelay
 		const delay = nextTaskDelays.shift()!;
 		logger.info("Scheduling next job with a delay = " + delay);
 		if (delay > 0) {
-			queue.add(jobData, {delay});
+			queue.add(jobData, { delay });
 		} else {
 			queue.add(jobData);
 		}
@@ -486,12 +471,12 @@ export const processInstallation =
 		);
 
 		return async (job, rootLogger: LoggerWithTarget): Promise<void> => {
-			const {installationId, jiraHost} = job.data;
+			const { installationId, jiraHost } = job.data;
 
-			const logger = rootLogger.child({job});
+			const logger = rootLogger.child({ job });
 
 			if (await isBlocked(installationId, logger)) {
-				logger.warn({job}, "blocking installation job");
+				logger.warn({ job }, "blocking installation job");
 				return;
 			}
 
@@ -515,7 +500,7 @@ export const processInstallation =
 						break;
 					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER:
 						logger.warn("Possible duplicate job was detected, rescheduling");
-						await queues.installation.add(job.data, {delay: 60_000});
+						await queues.installation.add(job.data, { delay: 60_000 });
 						break;
 					case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB:
 						logger.warn("Duplicate job was detected, rescheduling");
@@ -529,7 +514,7 @@ export const processInstallation =
 						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
 						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
 						// is finished.
-						await queues.installation.add(job.data, {delay: Math.floor(60_000 + 60_000 * Math.random())});
+						await queues.installation.add(job.data, { delay: Math.floor(60_000 + 60_000 * Math.random()) });
 						break;
 				}
 			} else {
