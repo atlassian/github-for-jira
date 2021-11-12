@@ -47,6 +47,8 @@ $('.delete-connection-link').click(function (event) {
 			}
 		});
 	});
+
+
 })
 
 $('.sync-connection-link-OLD').click(function (event) {
@@ -54,9 +56,6 @@ $('.sync-connection-link-OLD').click(function (event) {
   const installationId = $(event.target).data('installation-id')
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
-
-	$("#restart-backfill").prop("disabled", true);
-	$("#restart-backfill").attr("aria-disabled", "true");
 
 	window.AP.context.getToken(function(token){
 		$.ajax({
@@ -73,9 +72,7 @@ $('.sync-connection-link-OLD').click(function (event) {
 				AP.navigator.reload()
 			},
 			error: function (error) {
-				console.log(error);
-				$("#restart-backfill").prop("disabled", false);
-				$("#restart-backfill").attr("aria-disabled", "false");
+				console.log(error)
 			}
 		});
 	});
@@ -86,9 +83,6 @@ $(".sync-connection-link").click(function (event) {
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
-
-	$("#restart-backfill").prop("disabled", true);
-	$("#restart-backfill").attr("aria-disabled", "true");
 
 	window.AP.context.getToken(function (token) {
 		$.ajax({
@@ -102,13 +96,10 @@ $(".sync-connection-link").click(function (event) {
 				_csrf: csrfToken,
 			},
 			success: function (data) {
-				console.log("success")
 				AP.navigator.reload();
 			},
 			error: function (error) {
 				console.log(error);
-				$("#restart-backfill").prop("disabled", false);
-				$("#restart-backfill").attr("aria-disabled", "false");
 			},
 		});
 	});

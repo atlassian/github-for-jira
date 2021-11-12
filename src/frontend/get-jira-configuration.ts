@@ -1,10 +1,11 @@
 import format from "date-fns/format";
 import moment from "moment";
-import { Subscription } from "../models";
+import { Subscription, Installation } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { FailedInstallations, Subscriptions } from "../config/interfaces";
 
 function mapSyncStatus(syncStatus: string): string {
 	switch (syncStatus) {
@@ -50,18 +51,26 @@ const formatDate = function (date) {
 	};
 };
 
-export const getFailedConnections = (installations, subscriptions) => {
-	return installations
+export const getFailedConnections = (
+	installations: FailedInstallations[] | typeof Installation[],
+	subscriptions: Subscriptions[]
+) => {
+	return (installations as FailedInstallations[])
 		.filter((response) => !!response.error)
 		.map((failedConnection) => {
 			const sub = subscriptions.find(
-				(sub) => failedConnection.id === sub.gitHubInstallationId
-			)
+				(subscription: Subscriptions) =>
+					Number(failedConnection.id) === subscription.gitHubInstallationId
+			);
 			const repos = sub?.repoSyncState?.repos || {};
 			const repoId = Object.keys(repos);
 			const orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
 
-			return { id: failedConnection.id, deleted: failedConnection.deleted, orgName };
+			return {
+				id: failedConnection.id,
+				deleted: failedConnection.deleted,
+				orgName,
+			};
 		});
 };
 
@@ -91,7 +100,7 @@ export default async (
 
 		const failedConnections = getFailedConnections(
 			installations,
-			subscriptions,
+			subscriptions
 		);
 
 		const connections = installations

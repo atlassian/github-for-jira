@@ -64,7 +64,6 @@
               <table class="jiraConfiguration__syncRetryModal__table">
                 <tbody class="jiraConfiguration__syncRetryModal__tableBody">
                   <tr class="jiraConfiguration__syncRetryModal__tableRow">
-
                     <td class="jiraConfiguration__syncRetryModal__syncStatus__type">
                       <span class="syncStatusInProgress">In progress</span>
                     </td>
@@ -203,14 +202,7 @@
                         {{/if}}
                         {{#if (failedSync syncStatus)}}
                           <div class="jiraConfiguration__retryContainer">
-                            <button
-                              class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
-                              data-jira-host="{{ ../host }}"
-                              data-installation-id="{{ id }}"
-                              id="restart-backfill"
-                            >
-                              &#x21bb;
-                            </button>
+                            <span class="jiraConfiguration__retry sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">&#x21bb;</span>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                             <div class="jiraConfiguration__retryMsg">Retry</div>
                           </div>
@@ -248,14 +240,13 @@
                             Configure
                           </a>
                           <div class="jiraConfiguration__table__cell__settings__dropdownItem">
-                            <button
-                              class="sync-connection-link restart-backfill-button"
+                            <span
+                              class="sync-connection-link"
                               data-jira-host="{{ ../host }}"
                               data-installation-id="{{ id }}"
-                              id="restart-backfill"
                             >
                               Restart backfill
-                            </button>
+                            </span>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                           </div>
                           <button class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link" data-installation-id="{{ id }}">Disconnect</button>
