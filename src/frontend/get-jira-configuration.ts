@@ -1,7 +1,8 @@
 import format from "date-fns/format";
 import moment from "moment";
-import { Subscription, Installation } from "../models";
+import { Subscription } from "../models";
 import SubscriptionClass from "../models/subscription";
+import InstallationClass from "../models/installation";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
@@ -52,13 +53,19 @@ const formatDate = function (date) {
 	};
 };
 
+interface FailedConnections {
+	id: number;
+	deleted: boolean;
+	orgName: string | undefined;
+}
+
 export const getFailedConnections = (
-	installations: FailedInstallations[] | typeof Installation[],
+	installations: (FailedInstallations | InstallationClass)[],
 	subscriptions: SubscriptionClass[]
-) => {
+): FailedConnections[] => {
 	return (installations as FailedInstallations[])
 		.filter((response) => !!response.error)
-		.map((failedConnection) => {
+		.map((failedConnection: FailedInstallations) => {
 			const sub = subscriptions.find(
 				(subscription: SubscriptionClass) =>
 					failedConnection.id === subscription.gitHubInstallationId
