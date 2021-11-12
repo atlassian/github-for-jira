@@ -1,11 +1,12 @@
 import format from "date-fns/format";
 import moment from "moment";
 import { Subscription, Installation } from "../models";
+import SubscriptionClass from "../models/subscription";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { FailedInstallations, Subscriptions } from "../config/interfaces";
+import { FailedInstallations } from "../config/interfaces";
 
 function mapSyncStatus(syncStatus: string): string {
 	switch (syncStatus) {
@@ -53,13 +54,13 @@ const formatDate = function (date) {
 
 export const getFailedConnections = (
 	installations: FailedInstallations[] | typeof Installation[],
-	subscriptions: Subscriptions[]
+	subscriptions: SubscriptionClass[]
 ) => {
 	return (installations as FailedInstallations[])
 		.filter((response) => !!response.error)
 		.map((failedConnection) => {
 			const sub = subscriptions.find(
-				(subscription: Subscriptions) =>
+				(subscription: SubscriptionClass) =>
 					failedConnection.id === subscription.gitHubInstallationId
 			);
 			const repos = sub?.repoSyncState?.repos || {};
