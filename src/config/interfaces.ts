@@ -68,6 +68,6 @@ interface FailedInstallationError {
 
 export interface FailedInstallations {
 	error: FailedInstallationError;
-	id: string;
+	id: number;
 	deleted: boolean;
 }

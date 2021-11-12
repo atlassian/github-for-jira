@@ -60,7 +60,7 @@ export const getFailedConnections = (
 		.map((failedConnection) => {
 			const sub = subscriptions.find(
 				(subscription: Subscriptions) =>
-					Number(failedConnection.id) === subscription.gitHubInstallationId
+					failedConnection.id === subscription.gitHubInstallationId
 			);
 			const repos = sub?.repoSyncState?.repos || {};
 			const repoId = Object.keys(repos);
