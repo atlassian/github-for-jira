@@ -1,6 +1,10 @@
 import { AsymmetricAlgorithm, encodeAsymmetric } from "atlassian-jwt";
 import AuthToken, { ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 
+//TODO: Remove Probot dependency to find privateKey
+import * as PrivateKey from "probot/lib/private-key";
+import envVars from "../../config/env";
+
 /**
  * Holds the GitHub app's token to authenticate as a GitHub app and refreshes it as needed.
  *
@@ -15,9 +19,9 @@ export default class AppTokenHolder {
 	private readonly appId: string;
 	private currentToken: AuthToken;
 
-	constructor(key: string, appId: string) {
-		this.key = key;
-		this.appId = appId;
+	constructor() {
+		this.key = PrivateKey.findPrivateKey() || "";
+		this.appId = envVars.APP_ID;
 	}
 
 	/**

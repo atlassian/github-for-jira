@@ -4,15 +4,12 @@
 import GitHubClient from "../../../src/github/client/github-client";
 import AppTokenHolder from "../../../src/github/client/app-token-holder";
 import InstallationTokenCache from "../../../src/github/client/installation-token-cache";
-import fs from "fs";
 
 describe("GitHub Client", () => {
 
-	const privateKeyBase64 = fs.readFileSync("./test/github/client/dummy.key", "utf-8");
-	const privateKey = Buffer.from(privateKeyBase64, "base64").toString("ascii");
 	const appTokenExpirationDate = new Date(2021, 10, 25, 0, 0);
 	const githubInstallationId = 17979017;
-	const appTokenCache = new AppTokenHolder(privateKey, "106838");
+	const appTokenCache = new AppTokenHolder();
 	const installationTokenCache = new InstallationTokenCache(1000);
 
 	function givenGitHubReturnsInstallationToken(installationToken: string, expectedAppTokenInHeader?: string) {

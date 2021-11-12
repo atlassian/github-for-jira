@@ -5,6 +5,8 @@ import { GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { metricHttpRequest } from "../config/metric-names";
 import { Repository } from "../models/subscription";
+import GitHubClient from "../github/client/github-client";
+import { getGithubUser } from "../services/github/user";
 
 const logger = getLogger("sync.pull-request");
 
@@ -35,6 +37,8 @@ interface Headers {
 
 export default async function(
 	github: GitHubAPI,
+	newGithub: GitHubClient,
+	useNewGHClient: boolean,
 	repository: Repository,
 	cursor?: string | number,
 	perPage?: number
@@ -57,18 +61,25 @@ export default async function(
 	const asyncTags:any[] = [];
 	// TODO: use graphql here instead of rest API
 	await statsd.asyncTimer(
+		// Retry up to 6 times pausing for 10s, for *very* large repos we need to wait a while for the result to succeed in dotcom
 		async () => {
-			({
-				data: edges,
-				status,
-				headers
-			} = await github.pulls.list({
-				...vars,
-				state: "all",
-				sort: "created",
-				direction: "desc"
-				// Retry up to 6 times pausing for 10s, for *very* large repos we need to wait a while for the result to succeed in dotcom
-			}));
+			(
+
+				{
+					data: edges,
+					status,
+					headers
+				} = useNewGHClient?
+					await github.pulls.list({ ...vars, state: "all", sort: "created", direction: "desc"})
+					:
+					await newGithub
+						.getPullRequests(repository.owner.login, repository.name, perPage, Number(cursor),
+							{
+								...vars,
+								state: "all",
+								sort: "created",
+								direction: "desc"
+							}));
 			asyncTags.push(`status:${status}`);
 		},
 		metricHttpRequest.syncPullRequest,
@@ -87,9 +98,19 @@ export default async function(
 	const pullRequests = (
 		await Promise.all(
 			edges.map(async (pull) => {
+				const prDetails = useNewGHClient ? await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number) :
+					(await github?.pulls?.get({
+						owner: repository.owner.login,
+						repo: repository.name,
+						pull_number: pull.number
+					})).data;
+
+				//TODO: Add getGithubUser call to new GH client
+				const ghUser = await getGithubUser(github, prDetails.user?.login);
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
-					github
+					prDetails,
+					ghUser
 				);
 				return data?.pullRequests[0];
 			})

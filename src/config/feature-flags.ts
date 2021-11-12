@@ -26,7 +26,8 @@ export enum BooleanFlags {
 	SORT_INSTALLATIONS_BY_ID = "sort-installations-by-id",
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
 	USE_DEDUPLICATOR_FOR_BACKFILLING = "use-deduplicator-for-backfilling",
-	SEND_PUSH_TO_SQS = "send-push-events-to-sqs"
+	SEND_PUSH_TO_SQS = "send-push-events-to-sqs",
+	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests"
 }
 
 export enum StringFlags {

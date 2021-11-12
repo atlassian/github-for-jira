@@ -2,22 +2,12 @@
 import transformPullRequest from "../../../../src/sync/transforms/pull-request";
 
 describe("pull_request transform", () => {
-	let githubMock: any;
 	let pullRequest: any;
 	let user: any;
 
 	beforeEach(() => {
 		pullRequest = Object.assign({}, require("../../../fixtures/api/pull-request.json"));
 		user = Object.assign({}, require("../../../fixtures/api/user.json"));
-
-		githubMock = {
-			pulls: {
-				get: async () => ({ data: pullRequest })
-			},
-			users: {
-				getByUsername: async () => ({ data: user })
-			}
-		};
 	});
 
 	it("should send the ghost user to Jira when GitHub user has been deleted", async () => {
@@ -38,10 +28,7 @@ describe("pull_request transform", () => {
 
 		Date.now = jest.fn(() => 12345678);
 
-		const data = await transformPullRequest(
-			fixture,
-			githubMock
-		);
+		const data = await transformPullRequest(fixture, pullRequest, user);
 
 		expect(data).toMatchObject({
 			id: 1234568,
@@ -114,7 +101,8 @@ describe("pull_request transform", () => {
 
 		await expect(transformPullRequest(
 			fixture,
-			githubMock
+			pullRequest,
+			user
 		)).resolves.toBeUndefined();
 	});
 });

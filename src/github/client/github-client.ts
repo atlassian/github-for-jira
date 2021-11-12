@@ -1,5 +1,5 @@
 import { Octokit } from "@octokit/rest";
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
@@ -76,14 +76,35 @@ export default class GitHubClient {
 	public async getPullRequests(
 		owner: string,
 		repo: string,
-		pageSize: number,
-		page: number): Promise<Octokit.PullsListResponseItem[]> {
+		pageSize?: number,
+		page?: number,
+		options?: any
+	): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
 		const response = await this.axios.get<Octokit.PullsListResponseItem[]>(`/repos/${owner}/${repo}/pulls`, {
 			...await this.installationAuthenticationHeaders(),
 			params: {
 				installationId: this.githubInstallationId,
 				per_page: pageSize,
-				page: page
+				page: page,
+				...options
+			}
+		});
+
+		return response;
+	}
+
+	/**
+	 * Get a single pull request for the given repository.
+	 */
+	public async getPullRequest(
+		owner: string,
+		repo: string,
+		pullNumber: string,
+	): Promise<Octokit.PullsGetResponse> {
+		const response = await this.axios.get<Octokit.PullsGetResponse>(`/repos/${owner}/${repo}/pulls/${pullNumber}`, {
+			...await this.installationAuthenticationHeaders(),
+			params: {
+				installationId: this.githubInstallationId,
 			}
 		});
 
