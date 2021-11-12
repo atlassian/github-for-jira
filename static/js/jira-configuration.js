@@ -103,7 +103,7 @@ $(".sync-connection-link").click(function (event) {
 			},
 			success: function (data) {
 				console.log("success")
-				AP.navigator.reload();
+				// AP.navigator.reload();
 			},
 			error: function (error) {
 				console.log(error);
