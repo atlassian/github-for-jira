@@ -28,7 +28,7 @@ describe("pull_request transform", () => {
 
 		Date.now = jest.fn(() => 12345678);
 
-		const data = await transformPullRequest(fixture, pullRequest, user);
+		const data = await transformPullRequest(fixture, pullRequest, null);
 
 		expect(data).toMatchObject({
 			id: 1234568,
