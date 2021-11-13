@@ -84,16 +84,30 @@ function getErrorMiddleware(logger: Logger) {
 		 * @returns {Promise<Error>} The rejected promise
 		 */
 		(error: AxiosError): Promise<Error> => {
-			if (error?.response) {
-				const status = error.response.status;
+
+			let isError = true;
+			let logPayload = false;
+			let errorMessage = "";
+
+			const status = error?.response?.status;
+
+			if (status) {
 
 				// truncating the detail message returned from Jira to 200 characters
-				const errorMessage = getJiraErrorMessages(status);
-				// Creating an object that isn't of type Error as bunyan handles it differently
-				// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
-				(status >= 300 && status < 500 ? logger.warn : logger.error)(error, errorMessage);
+				errorMessage = getJiraErrorMessages(status);
+
+				isError = status >= 300 && status < 500;
+
+				logPayload = status === 400 || status > 500;
 			}
-			return Promise.reject(error);
+
+			// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
+			// Log payload only in case of 400 and 500. error.config gets redacted by logger from the error, so we have to set it explicitly
+			(isError ? logger.warn : logger.error)({err: error, requestConfig: logPayload ? error.config : undefined},
+				"Error executing Axios Request: " + errorMessage);
+
+			//Add status to the error, for use in the business logic error handler
+			return Promise.reject({...error, status});
 		});
 }
 
@@ -230,10 +244,9 @@ const instrumentRequest = (response) => {
  * @param {import("axios").AxiosError} error - The Axios error response object.
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-const instrumentFailedRequest = (logger) => {
+const instrumentFailedRequest = () => {
 	return (error) => {
 		instrumentRequest(error?.response);
-		logger.error(error, "Error during Axios request");
 		return Promise.reject(error);
 	};
 };
@@ -260,7 +273,7 @@ export default (
 	instance.interceptors.request.use(setRequestStartTime);
 	instance.interceptors.response.use(
 		instrumentRequest,
-		instrumentFailedRequest(logger)
+		instrumentFailedRequest()
 	);
 
 	instance.interceptors.request.use(getAuthMiddleware(secret));

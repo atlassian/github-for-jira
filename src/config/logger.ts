@@ -37,11 +37,22 @@ const jobSerializer = (job: Job) => job && {
 	data: undefined,
 };
 
-const errorSerializer = (err) => (!err || !err.stack) ? err : {
-	...err,
-	response: Logger.stdSerializers.res(err.response),
-	request: requestSerializer(err.request),
-	stack: getFullErrorStack(err)
+const errorSerializer = (err) => {
+	if (!err) {
+		return err;
+	}
+
+	return  {
+		...err,
+		response: Logger.stdSerializers.res(
+			{...err.response,
+				//Remove Axios config from logs, to avoid logging large payloads
+				config: "redacted"}),
+		request: requestSerializer(err.request),
+		stack: err.stack ? getFullErrorStack(err) : undefined,
+		//Remove AxiosError config from logs, to avoid logging large payloads
+		config: "redacted",
+	}
 };
 
 const getFullErrorStack = (ex) => {
