@@ -140,19 +140,19 @@ GitHub Actions is a feature from GitHub for automation such as CI/CD. If you’r
 When a workflow (e.g. GitHub Action) or development event (e.g. pull request, commit, branch) runs, our app receives a webhook from GitHub. We then extract the issue key from the respective branch/commit/PR and send this information to Jira.
 
 ## Migrate from the DVCS Connector
-Existing users of Jira's built-in DVCS connector that meet the [requirements](https://github.com/atlassian/github-for-jira/blob/main/README.md#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
+Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
 
 1. Sign in to your Jira Cloud account.
 2. From the left sidebar in Jira, select **Jira Settings > Applications > DVCS accounts**.
 3. Follow the prompt to upgrade your GitHub connection.
 
 ## Need help?
-Take a look through the troubleshooting steps in our [support guide](https://github.com/atlassian/github-for-jira/blob/main/SUPPORT.md).
+Take a look through the troubleshooting steps in our [support guide](./SUPPORT.md).
 
 ## Contribute
-Want to help improve the integration between GitHub and Jira? Check out the [contributing docs](https://github.com/atlassian/github-for-jira/blob/main/CONTRIBUTING.md) to get involved.
+Want to help improve the integration between GitHub and Jira? Check out the [contributing docs](./CONTRIBUTING.md) to get involved.
 
 ## License
-The project is available as open source under the terms of the [MIT License](https://github.com/atlassian/github-for-jira/blob/main/LICENSE).
+The project is available as open source under the terms of the [MIT License](./LICENSE).
 
 When using the GitHub logos, be sure to follow the [GitHub logo guidelines](https://github.com/logos).
