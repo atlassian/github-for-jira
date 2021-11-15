@@ -4,7 +4,7 @@ import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
 import { GetPullRequestParams } from "./types";
-
+	
 /**
  * A GitHub client that supports authentication as a GitHub app.
  *
@@ -24,8 +24,8 @@ export default class GitHubClient {
 		this.axios = axios.create({
 			baseURL
 		});
-		this.appTokenHolder = new AppTokenHolder();
-		this.installationTokenCache = new InstallationTokenCache(1000);
+		this.appTokenHolder = AppTokenHolder.getInstance();
+		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 	}
 

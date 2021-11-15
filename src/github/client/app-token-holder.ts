@@ -19,10 +19,20 @@ export default class AppTokenHolder {
 	private readonly appId: string;
 	private currentToken: AuthToken;
 
+	private static instance: AppTokenHolder;
+
 	constructor() {
 		this.key = PrivateKey.findPrivateKey() || "";
 		this.appId = envVars.APP_ID;
 	}
+
+	public static getInstance(): AppTokenHolder {
+		if (!AppTokenHolder.instance) {
+			AppTokenHolder.instance = new AppTokenHolder();
+		}
+		return AppTokenHolder.instance;
+	}
+
 
 	/**
 	 * Gets the current app token or creates a new one if the old is about to expire.

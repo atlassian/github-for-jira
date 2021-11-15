@@ -7,7 +7,7 @@ import { getLogger } from "../config/logger";
 import { metricHttpRequest } from "../config/metric-names";
 import { Repository } from "../models/subscription";
 import GitHubClient from "../github/client/github-client";
-import { getGithubUser } from "../services/github/user";
+import { getGithubUser, getGithubUserNew } from "../services/github/user";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 const logger = getLogger("sync.pull-request");
@@ -104,7 +104,7 @@ export default async function(
 						owner: repository.owner.login, repo: repository.name,pull_number: pull.number
 					})).data;
 				const ghUser = useNewGHClient ?
-					await newGithub.getUserByUsername(prDetails.user.login) :
+					await getGithubUserNew(newGithub, prDetails.user.login) :
 					await getGithubUser(github, prDetails.user.login);
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
