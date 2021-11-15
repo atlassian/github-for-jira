@@ -11,6 +11,7 @@ import AuthToken from "./auth-token";
 export default class InstallationTokenCache {
 	private readonly installationTokenCache: LRUCache<number, AuthToken>;
 
+	private static instance: InstallationTokenCache;
 	/**
 	 * Creates a new InstallationTokenCache. This cache should be shared between all GitHub clients so that the clients don't
 	 * have to re-generate a new installation token for every request they make (which is expensive, because it includes a call to GitHub).
@@ -20,6 +21,14 @@ export default class InstallationTokenCache {
 	constructor(maxTokens: number) {
 		this.installationTokenCache = new LRUCache<number, AuthToken>({ max: maxTokens });
 	}
+
+	public static getInstance(): InstallationTokenCache {
+		if (!InstallationTokenCache.instance) {
+			InstallationTokenCache.instance = new InstallationTokenCache(1000);
+		}
+		return InstallationTokenCache.instance;
+	}
+
 
 	/**
 	 * Gets the current installation token for the given githubInstallationId. If that token is not in the cache, or if it

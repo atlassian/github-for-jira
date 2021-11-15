@@ -1,9 +1,10 @@
 import { Octokit } from "@octokit/rest";
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
-
+import { GetPullRequestParams } from "./types";
+	
 /**
  * A GitHub client that supports authentication as a GitHub app.
  *
@@ -17,16 +18,14 @@ export default class GitHubClient {
 	private readonly githubInstallationId: number;
 
 	constructor(
-		appTokenHolder: AppTokenHolder,
-		installationTokenCache: InstallationTokenCache,
 		githubInstallationId: number,
 		baseURL = "https://api.github.com"
 	) {
 		this.axios = axios.create({
 			baseURL
 		});
-		this.appTokenHolder = appTokenHolder;
-		this.installationTokenCache = installationTokenCache;
+		this.appTokenHolder = AppTokenHolder.getInstance();
+		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 	}
 
@@ -70,24 +69,37 @@ export default class GitHubClient {
 		return new AuthToken(tokenResponse.token, new Date(tokenResponse.expires_at));
 	}
 
+	private async get<T>(url, params = {}): Promise<AxiosResponse<T>> {
+		const response = await this.axios.get<T>(url, {
+			...await this.installationAuthenticationHeaders(),
+			params: { 
+				installationId: this.githubInstallationId,
+				...params
+			}
+		});
+		//TODO: error handling
+		return response;
+	}
+
 	/**
 	 * Lists pull requests for the given repository.
 	 */
-	public async getPullRequests(
-		owner: string,
-		repo: string,
-		pageSize: number,
-		page: number): Promise<Octokit.PullsListResponseItem[]> {
-		const response = await this.axios.get<Octokit.PullsListResponseItem[]>(`/repos/${owner}/${repo}/pulls`, {
-			...await this.installationAuthenticationHeaders(),
-			params: {
-				installationId: this.githubInstallationId,
-				per_page: pageSize,
-				page: page
-			}
-		});
+	public async getPullRequests(owner:string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
+		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/${owner}/${repo}/pulls`, pullRequestParams);
+	}
 
-		return response.data;
+	/**
+	 * Get a single pull request for the given repository.
+	 */
+	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
+		return await this.get<Octokit.PullsGetResponse>(`/repos/${owner}/${repo}/pulls/${pullNumber}`);
+	}
+
+	/**
+	 * Get publicly available information for user with given username.
+	 */
+	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
+		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/${username}`);
 	}
 
 }
