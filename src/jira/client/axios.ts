@@ -55,6 +55,22 @@ function getAuthMiddleware(secret: string) {
 	);
 }
 
+/**
+ * Wrapper for AxiosError, which includes error status
+ */
+export class JiraClientError extends Error {
+	status?: number;
+	cause: AxiosError
+
+	constructor(message: string, cause: AxiosError, status?:number) {
+		super(message);
+		this.status = status
+
+		//Remove config from the cause to prevent large payloads from being logged
+		this.cause = {...cause, config: {}};
+	}
+}
+
 export const getJiraErrorMessages = (status: number) => {
 	switch (status) {
 		case 400:
@@ -85,8 +101,7 @@ function getErrorMiddleware(logger: Logger) {
 		 */
 		(error: AxiosError): Promise<Error> => {
 
-			let isError = true;
-			let logPayload = false;
+			let isWarning = false;
 			let errorMessage = "";
 
 			const status = error?.response?.status;
@@ -96,18 +111,21 @@ function getErrorMiddleware(logger: Logger) {
 				// truncating the detail message returned from Jira to 200 characters
 				errorMessage = getJiraErrorMessages(status);
 
-				isError = status >= 300 && status < 500;
-
-				logPayload = status === 400 || status > 500;
+				isWarning = status >= 300 && status < 500 && status !== 400;
 			}
 
-			// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
-			// Log payload only in case of 400 and 500. error.config gets redacted by logger from the error, so we have to set it explicitly
-			(isError ? logger.warn : logger.error)({err: error, requestConfig: logPayload ? error.config : undefined},
-				"Error executing Axios Request: " + errorMessage);
+			errorMessage = "Error executing Axios Request: " + errorMessage;
 
-			//Add status to the error, for use in the business logic error handler
-			return Promise.reject({...error, status});
+			// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
+			// Log exception only if it is error, because AxiosError contains the request payload
+
+			if (isWarning) {
+				logger.warn(errorMessage)
+			} else {
+				logger.error({err: error}, errorMessage)
+			}
+
+			return Promise.reject(new JiraClientError(errorMessage, error, status));
 		});
 }
 

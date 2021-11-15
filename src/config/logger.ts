@@ -34,20 +34,15 @@ const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 const jobSerializer = (job: Job) => job && {
 	...job,
 	// Removing potentially extremely large amount of data from logs
-	data: "redacted",
+	data: undefined,
 };
 
-const errorSerializer = (err) => err && {
+const errorSerializer = (err) => (!err || !err.stack) ? err : {
 	...err,
-	response: Logger.stdSerializers.res(
-		{...err.response,
-			//Remove Axios config from logs, to avoid logging large payloads
-			config: "redacted"}),
+	response: Logger.stdSerializers.res(err.response),
 	request: requestSerializer(err.request),
-	stack: err.stack ? getFullErrorStack(err) : undefined,
-	//Remove AxiosError config from logs, to avoid logging large payloads
-	config: "redacted",
-}
+	stack: getFullErrorStack(err)
+};
 
 const getFullErrorStack = (ex) => {
 	let ret = ex.stack || ex.toString();
