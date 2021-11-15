@@ -23,8 +23,6 @@ import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } f
 import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
-import AppTokenHolder from "../github/client/app-token-holder";
-import InstallationTokenCache from "../github/client/installation-token-cache";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -39,7 +37,7 @@ interface TaskProcessors {
 		(
 			github: GitHubAPI,
 			newGithub: GitHubClient,
-			useNewGHClient: boolean,
+			jiraHost: string,
 			repository: Repository,
 			cursor?: string | number,
 			perPage?: number
@@ -250,11 +248,8 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 		installationId,
 		logger
 	);
-	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);
 
-	const appTokenCache = new AppTokenHolder();
-	const installationTokenCache = new InstallationTokenCache(1000);
-	const newGithub = new GitHubClient(appTokenCache, installationTokenCache, installationId);
+	const newGithub = new GitHubClient(installationId);
 
 	const github = await getEnhancedGitHub(app, installationId);
 
@@ -295,14 +290,14 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 		if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
 
 			// just try with one page size
-			return await processor(github, newGithub, useNewGHClient, repository, cursor, 20);
+			return await processor(github, newGithub, jiraHost, repository, cursor, 20);
 
 		} else {
 
 			for (const perPage of [20, 10, 5, 1]) {
 				// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 				try {
-					return await processor(github, newGithub, useNewGHClient, repository, cursor, perPage);
+					return await processor(github, newGithub, jiraHost, repository, cursor, perPage);
 				} catch (err) {
 					logger.error({
 						err,

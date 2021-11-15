@@ -1,3 +1,4 @@
+import { PullRequestState, PullRequestSort, SortDirection } from "./../github/client/types";
 import url from "url";
 import transformPullRequest from "./transforms/pull-request";
 import statsd from "../config/statsd";
@@ -7,6 +8,7 @@ import { metricHttpRequest } from "../config/metric-names";
 import { Repository } from "../models/subscription";
 import GitHubClient from "../github/client/github-client";
 import { getGithubUser } from "../services/github/user";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 const logger = getLogger("sync.pull-request");
 
@@ -38,7 +40,7 @@ interface Headers {
 export default async function(
 	github: GitHubAPI,
 	newGithub: GitHubClient,
-	useNewGHClient: boolean,
+	jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
 	perPage?: number
@@ -46,11 +48,10 @@ export default async function(
 	let status: number;
 	let headers: Headers = {};
 	let edges;
-	if (!cursor) {
-		cursor = 1;
-	} else {
-		cursor = Number(cursor);
-	}
+
+	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);
+	cursor = !cursor? cursor = 1 : Number(cursor);
+
 	const vars = {
 		owner: repository.owner.login,
 		repo: repository.name,
@@ -70,16 +71,16 @@ export default async function(
 					status,
 					headers
 				} = useNewGHClient?
-					await github.pulls.list({ ...vars, state: "all", sort: "created", direction: "desc"})
-					:
 					await newGithub
-						.getPullRequests(repository.owner.login, repository.name, perPage, Number(cursor),
+						.getPullRequests(repository.owner.login, repository.name,
 							{
-								...vars,
-								state: "all",
-								sort: "created",
-								direction: "desc"
-							}));
+								per_page: perPage,
+								page: Number(cursor),
+								state: PullRequestState.ALL,
+								sort: PullRequestSort.CREATED,
+								direction: SortDirection.DES
+							})
+					: await github.pulls.list({ ...vars, state: "all", sort: "created", direction: "desc"}));
 			asyncTags.push(`status:${status}`);
 		},
 		metricHttpRequest.syncPullRequest,
@@ -98,15 +99,13 @@ export default async function(
 	const pullRequests = (
 		await Promise.all(
 			edges.map(async (pull) => {
-				const prDetails = useNewGHClient ? await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number) :
+				const prDetails = useNewGHClient ? (await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)).data :
 					(await github?.pulls?.get({
-						owner: repository.owner.login,
-						repo: repository.name,
-						pull_number: pull.number
+						owner: repository.owner.login, repo: repository.name,pull_number: pull.number
 					})).data;
-
-				//TODO: Add getGithubUser call to new GH client
-				const ghUser = await getGithubUser(github, prDetails.user?.login);
+				const ghUser = useNewGHClient ?
+					await newGithub.getUserByUsername(prDetails.user.login) :
+					await getGithubUser(github, prDetails.user.login);
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
 					prDetails,

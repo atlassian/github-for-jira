@@ -8,7 +8,7 @@ import GitHubClient from "../github/client/github-client";
 const logger = getLogger("sync.commits");
 
 // TODO: better typings
-export default async (github: GitHubAPI, _newGithub: GitHubClient, _useNewGHClient: boolean, repository: Repository, cursor?: string | number, perPage?: number) => {
+export default async (github: GitHubAPI, _newGithub: GitHubClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 	// TODO: fix typings for graphql
 	const data = (await github.graphql(getDefaultRef, {
 		owner: repository.owner.login,

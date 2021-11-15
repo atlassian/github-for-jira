@@ -2,15 +2,11 @@
 /* eslint-disable jest/no-standalone-expect */
 
 import GitHubClient from "../../../src/github/client/github-client";
-import AppTokenHolder from "../../../src/github/client/app-token-holder";
-import InstallationTokenCache from "../../../src/github/client/installation-token-cache";
 
 describe("GitHub Client", () => {
 
 	const appTokenExpirationDate = new Date(2021, 10, 25, 0, 0);
 	const githubInstallationId = 17979017;
-	const appTokenCache = new AppTokenHolder();
-	const installationTokenCache = new InstallationTokenCache(1000);
 
 	function givenGitHubReturnsInstallationToken(installationToken: string, expectedAppTokenInHeader?: string) {
 		githubNock
@@ -48,8 +44,8 @@ describe("GitHub Client", () => {
 		givenGitHubReturnsInstallationToken("installation token");
 		givenGitHubReturnsPullrequests(owner, repo, pageSize, page, "installation token");
 
-		const client = new GitHubClient(appTokenCache, installationTokenCache, githubInstallationId);
-		const pullrequests = await client.getPullRequests(owner, repo, pageSize, page);
+		const client = new GitHubClient(githubInstallationId);
+		const pullrequests = await client.getPullRequests(owner, repo, { per_page: pageSize, page });
 
 		expect(pullrequests).toBeTruthy();
 		expect(githubNock.pendingMocks()).toEqual([]);
