@@ -22,6 +22,7 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
+import GitHubClient from "../github/client/github-client";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -35,6 +36,8 @@ interface TaskProcessors {
 	[task: string]:
 		(
 			github: GitHubAPI,
+			newGithub: GitHubClient,
+			jiraHost: string,
 			repository: Repository,
 			cursor?: string | number,
 			perPage?: number
@@ -245,7 +248,11 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 		installationId,
 		logger
 	);
+
+	const newGithub = new GitHubClient(installationId);
+
 	const github = await getEnhancedGitHub(app, installationId);
+
 	const nextTask = await getNextTask(subscription);
 
 	if (!nextTask) {
@@ -283,14 +290,14 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 		if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
 
 			// just try with one page size
-			return await processor(github, repository, cursor, 20);
+			return await processor(github, newGithub, jiraHost, repository, cursor, 20);
 
 		} else {
 
 			for (const perPage of [20, 10, 5, 1]) {
 				// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 				try {
-					return await processor(github, repository, cursor, perPage);
+					return await processor(github, newGithub, jiraHost, repository, cursor, perPage);
 				} catch (err) {
 					logger.error({
 						err,

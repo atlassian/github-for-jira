@@ -1,10 +1,6 @@
 import AppTokenHolder from "../../../src/github/client/app-token-holder";
-import fs from "fs";
 
 describe("AppTokenHolder", () => {
-
-	const privateKeyBase64 = fs.readFileSync("./test/github/client/dummy.key", "utf-8");
-	const privateKey = Buffer.from(privateKeyBase64, "base64").toString("ascii");
 
 	beforeAll(() => {
 		jest.useFakeTimers("modern");
@@ -15,7 +11,7 @@ describe("AppTokenHolder", () => {
 	})
 
 	it("Re-generates expired tokens", async () => {
-		const appTokenHolder = new AppTokenHolder(privateKey, "42");
+		const appTokenHolder = new AppTokenHolder();
 
 		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
 		const token1 = appTokenHolder.getAppToken();
