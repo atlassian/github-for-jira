@@ -16,12 +16,8 @@ describe("api/index", () => {
 			repoSyncState: {
 				installationId: 123
 			},
-			updatedAt: new Date(),
-			createdAt: new Date()
 		});
-	});
 
-	beforeEach(() =>
 		githubNock
 			.post("/graphql")
 			.reply(200, {
@@ -34,7 +30,7 @@ describe("api/index", () => {
 					}
 				}
 			})
-	);
+	});
 
 	afterEach(async () => {
 		await Subscription.destroy({ truncate: true });

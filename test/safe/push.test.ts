@@ -2,67 +2,51 @@
 import nock from "nock";
 import { createJobData, processPushJob } from "../../src/transforms/push";
 import { createWebhookApp } from "../utils/probot";
-import {getLogger} from "../../src/config/logger";
-import {mocked} from "ts-jest/utils";
-import {Installation, Subscription} from "../../src/models";
-import {booleanFlag, BooleanFlags} from "../../src/config/feature-flags";
-import {when} from "jest-when";
+import { getLogger } from "../../src/config/logger";
+import { Installation, Subscription } from "../../src/models";
+import { Application } from "probot";
+import { start, stop } from "../../src/worker/startup";
+import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
+import { when } from "jest-when";
 import waitUntil from "../utils/waitUntil";
-import {start, stop} from "../../src/worker/startup";
+import sqsQueues from "../../src/sqs/queues";
 
-jest.mock("../../src/models");
 jest.mock("../../src/config/feature-flags");
 
-describe("GitHub Push", () => {
-	let app;
-	const mockGithubAccessToken = () => {
-		githubNock
-			.post("/app/installations/1234/access_tokens")
-			.optionally()
-			.reply(200, {
-				token: "token",
-				expires_at: new Date().getTime()
-			});
-	}
+const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
 
+describe("Push Webhook", () => {
+
+	const realDateNow = Date.now.bind(global.Date);
+
+	let app: Application;
 	beforeEach(async () => {
-
-		mocked(Subscription.getAllForInstallation).mockResolvedValue([
-			{
-				jiraHost: process.env.ATLASSIAN_URL,
-				gitHubInstallationId: 1234,
-				enabled: true
-			}] as any);
-		mocked(Subscription.getSingleInstallation).mockResolvedValue(
-			{
-				id: 1,
-				jiraHost: process.env.ATLASSIAN_URL
-			} as any);
-		mocked(Installation.getForHost).mockResolvedValue(
-			{
-				jiraHost: process.env.ATLASSIAN_URL,
-				sharedSecret: process.env.ATLASSIAN_SECRET,
-				enabled: true
-			} as any
-		);
-
 		app = await createWebhookApp();
+		const clientKey = "client-key";
+		await Installation.create({
+			clientKey,
+			sharedSecret: "shared-secret",
+			jiraHost
+		});
+		await Subscription.create({
+			jiraHost,
+			gitHubInstallationId: 1234,
+			jiraClientKey: clientKey
+		});
 	});
 
-	afterEach(() => {
-
-		if (!nock.isDone()) {
-			// eslint-disable-next-line jest/no-jasmine-globals
-			fail("nock is not done yet");
-		}
-		nock.cleanAll();
-		jest.restoreAllMocks();
+	afterEach(async () => {
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
+		//We have to restore Date.now to avoid errors in SQS Client.
+		//SQS Client uses Date.now and fails if it is "undefined"
+		//Hence we mock Date with jest, it will be returning undefined when we clean all mocks
+		//Some async operations might still be running (like message deletion) even after the test is finished.
+		//TODO Instead stop the queue every time after each test. However it would be possible only when we get rid of Redis because bull queues are not restartable
+		global.Date.now = realDateNow;
 	});
 
-	const getAtlassianUrl = () => process.env.ATLASSIAN_URL || "";
-	const createJob = (payload, jiraHost:string) => ({data: createJobData(payload, jiraHost)} as any);
-
-	//TODO
+	// TODO: figure out how to tests with queue
 	describe.skip("add to push queue", () => {
 		beforeEach(() => {
 			process.env.REDIS_URL = "redis://test";
@@ -79,7 +63,7 @@ describe("GitHub Push", () => {
 				{
 					repository: event.payload.repository,
 					shas: [{ id: "test-commit-id", issueKeys: ["TEST-123"] }],
-					jiraHost: getAtlassianUrl(),
+					jiraHost,
 					installationId: event.payload.installation.id
 				}, { removeOnFail: true, removeOnComplete: true }
 			);
@@ -110,22 +94,23 @@ describe("GitHub Push", () => {
 	});
 
 	describe("process push payloads", () => {
-		beforeEach(() => {
+
+		beforeEach(async () => {
 			Date.now = jest.fn(() => 12345678);
+			await Subscription.create({
+				gitHubInstallationId: 1234,
+				jiraHost,
+				jiraClientKey: "myClientKey"
+			});
 		});
 
-		afterEach(() => {
-			// eslint-disable-next-line jest/no-standalone-expect
-			expect(githubNock.pendingMocks()).toEqual([]);
-			// eslint-disable-next-line jest/no-standalone-expect
-			expect(jiraNock.pendingMocks()).toEqual([]);
-		})
+		afterEach(async () => {
+			await Subscription.destroy({ truncate: true });
+		});
 
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, getAtlassianUrl());
-
-			mockGithubAccessToken();
+			const job = createJob(event.payload, jiraHost);
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
@@ -143,10 +128,8 @@ describe("GitHub Push", () => {
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
 								author: {
-									avatar: "https://github.com/users/undefined.png",
 									name: "test-commit-name",
-									email: "test-email@example.com",
-									url: "https://github.com/users/undefined"
+									email: "test-email@example.com"
 								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
@@ -188,14 +171,12 @@ describe("GitHub Push", () => {
 				}
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
+			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
 		});
 
 		it("should only send 10 files if push contains more than 10 files changed", async () => {
 			const event = require("../fixtures/push-multiple.json");
-			const job = createJob(event.payload, getAtlassianUrl());
-
-			mockGithubAccessToken();
+			const job = createJob(event.payload, jiraHost);
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
@@ -213,10 +194,8 @@ describe("GitHub Push", () => {
 								hash: "test-commit-id",
 								message: "TEST-123 TEST-246 #comment This is a comment",
 								author: {
-									avatar: "https://github.com/users/undefined.png",
-									name: "test-commit-name",
 									email: "test-email@example.com",
-									url: "https://github.com/users/undefined",
+									name: "test-commit-name"
 								},
 								displayId: "test-c",
 								fileCount: 12,
@@ -305,7 +284,7 @@ describe("GitHub Push", () => {
 				}
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
+			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
 		});
 
 		it("should not run a command without a Jira issue", async () => {
@@ -318,23 +297,22 @@ describe("GitHub Push", () => {
 			nock.removeInterceptor(interceptor);
 		});
 
-		it("should support commits without smart commands", async () => {
-			const fixture = require("../fixtures/push-empty.json");
-
-			// match any post calls
-			const interceptor = githubNock.get(/.*/);
-			const scope = interceptor.reply(200);
+		it("should not send anything to Jira if there's", async () => {
+			const fixture = require("../fixtures/push-no-issuekey-commits.json");
+			// match any post calls for jira and github
+			jiraNock.post(/.*/).reply(200);
+			githubNock.get(/.*/).reply(200);
 
 			await expect(app.receive(fixture)).toResolve();
-			expect(scope).not.toBeDone();
-			nock.removeInterceptor(interceptor);
+			// Since no issues keys are found, there should be no calls to github's or jira's API
+			expect(nock).not.toBeDone();
+			// Clean up all nock mocks
+			nock.cleanAll();
 		});
 
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, getAtlassianUrl());
-
-			mockGithubAccessToken();
+			const job = createJob(event.payload, jiraHost);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-merge-commit.json"));
@@ -351,10 +329,8 @@ describe("GitHub Push", () => {
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
 								author: {
-									avatar: "https://github.com/users/undefined.png",
-									name: "test-commit-name",
 									email: "test-email@example.com",
-									url: "https://github.com/users/undefined",
+									name: "test-commit-name"
 								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
@@ -395,14 +371,12 @@ describe("GitHub Push", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
+			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
 		});
 
 		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, getAtlassianUrl());
-
-			mockGithubAccessToken();
+			const job = createJob(event.payload, jiraHost);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-non-merge-commit"));
@@ -420,10 +394,8 @@ describe("GitHub Push", () => {
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
 								author: {
-									avatar: "https://github.com/users/undefined.png",
-									name: "test-commit-name",
 									email: "test-email@example.com",
-									url: "https://github.com/users/undefined",
+									name: "test-commit-name"
 								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
@@ -463,26 +435,36 @@ describe("GitHub Push", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger('test'))).toResolve();
+			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
 		});
 	});
 
 	describe("end 2 end tests with queue", () => {
 
+		const mockGithubAccessToken = () => {
+			githubNock
+				.post("/app/installations/1234/access_tokens")
+				.optionally()
+				.reply(200, {
+					token: "token",
+					expires_at: new Date().getTime()
+				});
+		}
+
 		beforeEach(async () => {
 			Date.now = jest.fn(() => 12345678);
 		});
 
-		beforeAll(async () => {
-
+		beforeAll( async () => {
+			Date.now = jest.fn(() => 12345678);
 			//Start worker node for queues processing
 			await start();
-		});
-
+		})
 
 		afterAll(async () => {
 			//Stop worker node
 			await stop();
+			await sqsQueues.push.waitUntilListenerStopped();
 		})
 
 
@@ -505,10 +487,8 @@ describe("GitHub Push", () => {
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
 								author: {
-									avatar: "https://github.com/users/undefined.png",
 									name: "test-commit-name",
 									email: "test-email@example.com",
-									url: "https://github.com/users/undefined",
 								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
@@ -563,6 +543,9 @@ describe("GitHub Push", () => {
 
 			const event = createPushEventAndMockRestReqeustsForItsProcessing();
 
+
+			console.log("Date now: " + Date.now())
+
 			await app.receive(event);
 
 			// eslint-disable-next-line jest/no-standalone-expect
@@ -591,6 +574,8 @@ describe("GitHub Push", () => {
 			mockGithubAccessToken();
 
 			const event = createPushEventAndMockRestReqeustsForItsProcessing();
+
+			console.log("Date now: " + Date.now())
 			await app.receive(event);
 
 			await waitUntil( async () => {
@@ -623,6 +608,8 @@ describe("GitHub Push", () => {
 			mockGithubAccessToken();
 
 			const event = createPushEventAndMockRestReqeustsForItsProcessing();
+
+			console.log("Date now: " + Date.now())
 			await app.receive(event);
 
 			await waitUntil( async () => {

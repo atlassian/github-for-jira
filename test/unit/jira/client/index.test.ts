@@ -1,32 +1,29 @@
 import { Installation, Subscription } from "../../../../src/models";
-import InstallationClass from "../../../../src/models/installation";
 import SubscriptionClass from "../../../../src/models/subscription";
 import getJiraClient from "../../../../src/jira/client";
-import envVars from "../../../../src/config/env";
 
 describe("Test getting a jira client", () => {
-	const gitHubInstallationId = Math.round(Math.random()*10000);
-	let installation: InstallationClass;
+	const gitHubInstallationId = Math.round(Math.random() * 10000);
 	let subscription: SubscriptionClass;
 	let client;
 
 	beforeEach(async () => {
-		installation = await Installation.install({
-			host: envVars.ATLASSIAN_URL,
+		await Installation.install({
+			host: jiraHost,
 			sharedSecret: "shared-secret",
 			clientKey: "client-key"
 		});
 		subscription = await Subscription.create({
-			jiraHost: envVars.ATLASSIAN_URL,
+			jiraHost,
 			gitHubInstallationId
 		});
-		client = await getJiraClient(envVars.ATLASSIAN_URL, gitHubInstallationId);
+		client = await getJiraClient(jiraHost, gitHubInstallationId);
 	});
 
 	afterEach(async () => {
-		await installation.destroy();
-		await subscription.destroy();
-	})
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
+	});
 
 	it("Installation exists", async () => {
 		expect(client).toMatchSnapshot();
@@ -51,7 +48,7 @@ describe("Test getting a jira client", () => {
 					fileCount: 3,
 					hash: "hashihashhash",
 					id: "id",
-					issueKeys: Array.from(new Array(125)).map((_,i) => `TEST-${i}`),
+					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
 					message: "commit message",
 					url: "some-url",
 					updateSequenceId: 1234567890

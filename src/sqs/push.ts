@@ -1,4 +1,4 @@
-import { MessageHandler } from './index'
+import {Context, MessageHandler} from "./index"
 import enhanceOctokit from "../config/enhance-octokit";
 import {processPush} from "../transforms/push";
 import app from "../worker/app";
@@ -22,22 +22,20 @@ export type PushQueueMessagePayload = {
 	webhookReceived?: Date,
 }
 
-export const pushQueueMessageHandler : MessageHandler<PushQueueMessagePayload> = {
+export const pushQueueMessageHandler : MessageHandler<PushQueueMessagePayload> = async (context : Context<PushQueueMessagePayload>) => {
 
-	async handle(context) {
+	context.log.info("Handling push message from the SQS queue")
 
-		context.log.info("Handling push message from the SQS queue")
+	const payload = context.payload;
 
-		const payload = context.payload;
-
-		let github;
-		try {
-			github = await app.auth(payload.installationId);
-		} catch (err) {
-			context.log.warn({ err, payload }, "Could not authenticate for the supplied InstallationId");
-			return;
-		}
-		enhanceOctokit(github);
-		await processPush(github, payload, wrapLogger(context.log));
+	let github;
+	try {
+		github = await app.auth(payload.installationId);
+	} catch (err) {
+		context.log.warn({ err, payload }, "Could not authenticate for the supplied InstallationId");
+		return;
 	}
+	enhanceOctokit(github);
+	await processPush(github, payload, wrapLogger(context.log));
 }
+
