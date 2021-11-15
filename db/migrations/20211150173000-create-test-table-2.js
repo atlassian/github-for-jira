@@ -1,6 +1,6 @@
 "use strict";
 
-const tableName = "MichelTestTable";
+const tableName = "MichelTestTable2";
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
 		await queryInterface.createTable(tableName, {
