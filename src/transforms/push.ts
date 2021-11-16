@@ -207,9 +207,9 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 				jiraResponse?.status
 			);
 		}
-	} catch (error) {
-		log.error({err: error}, "Failed to process push");
+	} catch (err) {
+		log.error({ err }, "Failed to process push");
 		emitWebhookFailedMetrics("push");
-		throw error;
+		throw err;
 	}
 };

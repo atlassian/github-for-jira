@@ -101,24 +101,14 @@ function getErrorMiddleware(logger: Logger) {
 		 */
 		(error: AxiosError): Promise<Error> => {
 
-			let isWarning = false;
-			let errorMessage = "";
-
 			const status = error?.response?.status;
 
-			if (status) {
+			const errorMessage = "Error executing Axios Request " + (status ? getJiraErrorMessages(status) : error.message || "");
 
-				// truncating the detail message returned from Jira to 200 characters
-				errorMessage = getJiraErrorMessages(status);
-
-				isWarning = status >= 300 && status < 500 && status !== 400;
-			}
-
-			errorMessage = "Error executing Axios Request: " + errorMessage;
+			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
 			// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
 			// Log exception only if it is error, because AxiosError contains the request payload
-
 			if (isWarning) {
 				logger.warn(errorMessage)
 			} else {
