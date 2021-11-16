@@ -71,7 +71,6 @@ describe("Jira axios instance", () => {
 				expect(error).toBeInstanceOf(JiraClientError);
 				const serialisedError = JSON.stringify(error);
 				expect(serialisedError).not.toContain(requestPayload);
-
 			});
 		});
 	});
