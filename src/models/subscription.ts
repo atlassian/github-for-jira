@@ -247,7 +247,7 @@ export default class Subscription extends Sequelize.Model {
 		this.changed("repoSyncState", true);
 		await this.save();
 
-		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, true, this.jiraHost)) {
+		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, this.jiraHost)) {
 			await RepoSyncState.updateFromJson(this, this.repoSyncState);
 		}
 
@@ -272,7 +272,7 @@ export default class Subscription extends Sequelize.Model {
 			}
 		);
 
-		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, true, this.jiraHost)) {
+		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, this.jiraHost)) {
 			this.numberOfSyncedRepos = value;
 			await this.save();
 		}
@@ -300,7 +300,7 @@ export default class Subscription extends Sequelize.Model {
 			}
 		);
 
-		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, true, this.jiraHost)) {
+		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, this.jiraHost)) {
 			await RepoSyncState.updateRepoForSubscription(this, this.repoSyncState.repos?.[repositoryId]);
 		}
 		return this;
