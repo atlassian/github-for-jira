@@ -43,7 +43,15 @@ describe("Subscription", () => {
 			await sub.updateNumberOfSyncedRepos(3);
 
 			expect(sub.repoSyncState?.numberOfSyncedRepos).toStrictEqual(3);
-			expect((await Subscription.findOne()).repoSyncState.numberOfSyncedRepos).toStrictEqual(3);
+			await sub.reload();
+			expect(sub.repoSyncState?.numberOfSyncedRepos).toStrictEqual(3);
+		});
+
+		test("Should update the number of synced repos in column as well as JSON", async () => {
+			const num = 100;
+			await sub.updateNumberOfSyncedRepos(num);
+			expect(sub.repoSyncState?.numberOfSyncedRepos).toEqual(num);
+			expect(sub.numberOfSyncedRepos).toEqual(num);
 		});
 	});
 
@@ -60,19 +68,20 @@ describe("Subscription", () => {
 		});
 
 		test("updates the value", async () => {
+			const repoId = "1234";
 			await sub.updateSyncState({
 				repos: {
-					hello: {
+					[repoId]: {
 						branchStatus: "pending"
 					}
 				}
 			} as any);
 
-			await sub.updateRepoSyncStateItem("hello", "branchStatus", "complete");
-			expect(sub.repoSyncState?.repos?.hello?.branchStatus).toStrictEqual("complete");
+			await sub.updateRepoSyncStateItem(repoId, "branchStatus", "complete");
+			expect(sub.repoSyncState?.repos?.[repoId]?.branchStatus).toStrictEqual("complete");
 			expect(sub.repoSyncState).toStrictEqual({
 				repos: {
-					hello: {
+					[repoId]: {
 						branchStatus: "complete"
 					}
 				}
