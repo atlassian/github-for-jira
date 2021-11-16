@@ -30,7 +30,8 @@
 			"warn",
 			"double",
 			{
-				"avoidEscape": true
+				"avoidEscape": true,
+				"allowTemplateLiterals": true
 			}
 		],
 		"indent": ["error", "tab", {
