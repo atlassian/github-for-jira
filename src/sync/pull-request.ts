@@ -1,3 +1,4 @@
+import { PullRequestState, PullRequestSort, SortDirection } from "./../github/client/types";
 import url from "url";
 import transformPullRequest from "./transforms/pull-request";
 import statsd from "../config/statsd";
@@ -5,6 +6,9 @@ import { GitHubAPI } from "probot";
 import { getLogger } from "../config/logger";
 import { metricHttpRequest } from "../config/metric-names";
 import { Repository } from "../models/subscription";
+import GitHubClient from "../github/client/github-client";
+import { getGithubUser, getGithubUserNew } from "../services/github/user";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 const logger = getLogger("sync.pull-request");
 
@@ -35,6 +39,8 @@ interface Headers {
 
 export default async function(
 	github: GitHubAPI,
+	newGithub: GitHubClient,
+	jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
 	perPage?: number
@@ -42,11 +48,10 @@ export default async function(
 	let status: number;
 	let headers: Headers = {};
 	let edges;
-	if (!cursor) {
-		cursor = 1;
-	} else {
-		cursor = Number(cursor);
-	}
+
+	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);
+	cursor = !cursor? cursor = 1 : Number(cursor);
+
 	const vars = {
 		owner: repository.owner.login,
 		repo: repository.name,
@@ -57,18 +62,25 @@ export default async function(
 	const asyncTags:any[] = [];
 	// TODO: use graphql here instead of rest API
 	await statsd.asyncTimer(
+		// Retry up to 6 times pausing for 10s, for *very* large repos we need to wait a while for the result to succeed in dotcom
 		async () => {
-			({
-				data: edges,
-				status,
-				headers
-			} = await github.pulls.list({
-				...vars,
-				state: "all",
-				sort: "created",
-				direction: "desc"
-				// Retry up to 6 times pausing for 10s, for *very* large repos we need to wait a while for the result to succeed in dotcom
-			}));
+			(
+
+				{
+					data: edges,
+					status,
+					headers
+				} = useNewGHClient?
+					await newGithub
+						.getPullRequests(repository.owner.login, repository.name,
+							{
+								per_page: perPage,
+								page: Number(cursor),
+								state: PullRequestState.ALL,
+								sort: PullRequestSort.CREATED,
+								direction: SortDirection.DES
+							})
+					: await github.pulls.list({ ...vars, state: "all", sort: "created", direction: "desc"}));
 			asyncTags.push(`status:${status}`);
 		},
 		metricHttpRequest.syncPullRequest,
@@ -87,9 +99,17 @@ export default async function(
 	const pullRequests = (
 		await Promise.all(
 			edges.map(async (pull) => {
+				const prDetails = useNewGHClient ? (await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)).data :
+					(await github?.pulls?.get({
+						owner: repository.owner.login, repo: repository.name,pull_number: pull.number
+					})).data;
+				const ghUser = useNewGHClient ?
+					await getGithubUserNew(newGithub, prDetails.user.login) :
+					await getGithubUser(github, prDetails.user.login);
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
-					github
+					prDetails,
+					ghUser
 				);
 				return data?.pullRequests[0];
 			})
