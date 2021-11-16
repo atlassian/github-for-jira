@@ -106,6 +106,7 @@ export function processPushJob(app: Application) {
 }
 
 export const processPush = async (github: GitHubAPI, payload, rootLogger: LoggerWithTarget) => {
+	let log = rootLogger;
 	try {
 		const {
 			repository,
@@ -118,7 +119,7 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 		const webhookId = payload.webhookId || "none";
 		const webhookReceived = payload.webhookReceived || undefined;
 
-		const log = rootLogger.child({
+		log = rootLogger.child({
 			webhookId: webhookId,
 			repoName: repo,
 			orgName: owner.name,
@@ -206,9 +207,9 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 				jiraResponse?.status
 			);
 		}
-	} catch (error) {
-		rootLogger.error(error, "Failed to process push");
+	} catch (err) {
+		log.error({ err }, "Failed to process push");
 		emitWebhookFailedMetrics("push");
-		throw error;
+		throw err;
 	}
 };
