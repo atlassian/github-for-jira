@@ -296,7 +296,7 @@ environmentOverrides:
                 Metric:
                   Dimensions:
                     - Name: LoadBalancer
-                      Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+                      Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
                     - Name: TargetGroup
                       Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
                   MetricName: TargetResponseTime
@@ -314,7 +314,7 @@ environmentOverrides:
           Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
           Dimensions:
             - Name: LoadBalancer
-              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
             - Name: TargetGroup
               Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
           Threshold: 5
@@ -376,7 +376,7 @@ environmentOverrides:
           Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
           Dimensions:
             - Name: LoadBalancer
-              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
             - Name: TargetGroup
               Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
           Threshold: 5
