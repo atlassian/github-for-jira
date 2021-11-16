@@ -543,9 +543,6 @@ describe("Push Webhook", () => {
 
 			const event = createPushEventAndMockRestReqeustsForItsProcessing();
 
-
-			console.log("Date now: " + Date.now())
-
 			await app.receive(event);
 
 			// eslint-disable-next-line jest/no-standalone-expect
@@ -575,7 +572,6 @@ describe("Push Webhook", () => {
 
 			const event = createPushEventAndMockRestReqeustsForItsProcessing();
 
-			console.log("Date now: " + Date.now())
 			await app.receive(event);
 
 			await waitUntil( async () => {
@@ -609,7 +605,6 @@ describe("Push Webhook", () => {
 
 			const event = createPushEventAndMockRestReqeustsForItsProcessing();
 
-			console.log("Date now: " + Date.now())
 			await app.receive(event);
 
 			await waitUntil( async () => {
