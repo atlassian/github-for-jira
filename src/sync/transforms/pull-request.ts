@@ -1,7 +1,5 @@
-import { GitHubAPI } from "probot";
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../../util/jira";
-import { getGithubUser } from "../../services/github/user";
 import _ from "lodash";
 
 // TODO: better typings in file
@@ -13,7 +11,7 @@ function mapStatus({ state, merged_at }): string {
 	return "UNKNOWN";
 }
 
-export default async (payload, github: GitHubAPI) => {
+export default async (payload, prDetails, ghUser) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
 	const issueKeys = issueKeyParser().parse(
@@ -24,19 +22,14 @@ export default async (payload, github: GitHubAPI) => {
 		return undefined;
 	}
 
-	const prGet = (await github?.pulls?.get({
-		owner: repository.owner.login,
-		repo: repository.name,
-		pull_number: pullRequest.number
-	})).data;
-
+	const prGet = prDetails;
 	return {
 		id: repository.id,
 		name: repository.full_name,
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
-				author: getJiraAuthor(prGet.user, await getGithubUser(github, prGet.user?.login)),
+				author: getJiraAuthor(prGet.user, ghUser),
 				commentCount: prGet.comments || 0,
 				destinationBranch: `${repository.html_url}/tree/${prGet.base?.ref || ""}`,
 				displayId: `#${prGet.number}`,
