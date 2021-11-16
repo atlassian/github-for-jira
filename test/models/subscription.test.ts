@@ -1,10 +1,15 @@
 import SubscriptionClass from "../../src/models/subscription";
 import { Subscription } from "../../src/models";
+import { mocked } from "ts-jest/utils";
+import { booleanFlag } from "../../src/config/feature-flags";
+
+jest.mock("../../src/config/feature-flags");
 
 describe("Subscription", () => {
 	let sub: SubscriptionClass;
 
 	beforeEach(async () => {
+		mocked(booleanFlag).mockResolvedValue(true);
 		sub = await Subscription.create({
 			gitHubInstallationId: 123,
 			jiraHost: "http://blah.com",
