@@ -192,6 +192,11 @@ config:
     # SENTRY_DSN: client key required to connect to Sentry
     # WEBHOOK_SECRET: the webhook secret configured in the GitHub app
 
+loadBalancer:
+  type: ALB
+  single: true
+  slowStart: 180
+
 workers:
   - name: Worker
     scaling:
@@ -291,7 +296,7 @@ environmentOverrides:
                 Metric:
                   Dimensions:
                     - Name: LoadBalancer
-                      Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+                      Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
                     - Name: TargetGroup
                       Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
                   MetricName: TargetResponseTime
@@ -309,13 +314,13 @@ environmentOverrides:
           Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
           Dimensions:
             - Name: LoadBalancer
-              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
             - Name: TargetGroup
               Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
           Threshold: 5
           Priority: Low
-          EvaluationPeriods: 3
-          Period: 60
+          EvaluationPeriods: 5
+          Period: 180
           ComparisonOperator: GreaterThanThreshold
           Statistic: Average
     workers:
@@ -378,13 +383,13 @@ environmentOverrides:
           Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
           Dimensions:
             - Name: LoadBalancer
-              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
             - Name: TargetGroup
               Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
           Threshold: 5
           Priority: Low
-          EvaluationPeriods: 3
-          Period: 60
+          EvaluationPeriods: 5
+          Period: 180
           ComparisonOperator: GreaterThanThreshold
           Statistic: Average
         HighSeverityAlarmWhenTooManyBackend5xxErrors:
