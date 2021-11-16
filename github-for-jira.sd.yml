@@ -45,6 +45,11 @@ links:
 
 cleanup: true
 
+deployment:
+  type: progressive
+  progressiveStates: [ 5,10,30,100 ] # Roll-out increments
+  progressiveInterval: 1 # Minutes between each roll-forward
+
 #serviceProxy:
 #  enabled: true
 #  ingress:
