@@ -20,5 +20,18 @@
 			"min": 0,
 			"idle": 10000
     }
-  }
+  },
+	"production-migrate": {
+		"dialect": "postgres",
+		"use_env_variable": "PG_DATABASE_URL",
+		"ssl": false,
+		"dialectOptions": {
+			"ssl": false
+		},
+		"pool": {
+			"max": 15,
+			"min": 0,
+			"idle": 10000
+		}
+	}
 }
