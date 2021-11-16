@@ -79,7 +79,7 @@ Next, you will need to [configure the app](#configure-app).
 As part of the installation flow, you should be directed to a **GitHub configuration** screen to configure your GitHub 
 organizations in the Jira app.
 
-> :warning: If you are not directed, navigate to the Apps page of your Jira instance and click **Configure integration** under the ”GitHub” heading. If you do not see this, click on **Manage apps** and **Get started** under GitHub for Jira. This will bring you to the app's configuration screen.
+> :warning: If you are not directed, navigate to the Apps page of your Jira instance and click **Configure integration** under the ”GitHub” heading. If you do not see this, click on **Manage your apps** and **Get started** under GitHub for Jira (only visible for Jira admins). This will bring you to the app's configuration screen.
 
 Click **Connect GitHub organization** and select the organization and repositories that you would like to connect.
 
@@ -102,7 +102,7 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 
 #### GitHub permission scopes
 
-|**Permission scope**|**Why we need it**|
+|**Permission scope**|**Why the app needs it**|
 |---|---|
 |**Read** access to code & metadata | To sync development information to Jira|
 |**Read** and **write** access to issues and pull requests| To power Smart Commit actions and unfurl Jira URLs|
@@ -137,7 +137,7 @@ This makes it so Jira issues can be linked inside a comment without it interrupt
 GitHub Actions is a feature from GitHub for automation such as CI/CD. If you’re setting this up for the first time, follow [GitHub Actions Documentation - GitHub Docs](https://docs.github.com/en/actions). If you already have GitHub Actions and want to see CI/CD data from Github in Jira, include the Jira issue key in your commit message, branch name, or PR.
 
 ### How the integration works
-When a workflow (e.g. GitHub Action) or development event (e.g. pull request, commit, branch) runs, our app receives a webhook from GitHub. We then extract the issue key from the respective branch/commit/PR and send this information to Jira.
+When a workflow (e.g. GitHub Action) or development event (e.g. pull request, commit, branch) runs, the app receives a webhook from GitHub. The app then extract the issue key from the respective branch/commit/PR and send this information to Jira.
 
 ## Migrate from the DVCS Connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
