@@ -1,7 +1,7 @@
 import envVars from "../config/env";
 import {defaultErrorHandler, SqsQueue} from "./index";
 import {BackfillMessagePayload, backfillQueueMessageHandler} from "./backfill";
-import {PushQueueMessagePayload, pushQueueMessageHandler} from "./push";
+import {PushQueueMessagePayload, pushQueueMessageHandler, pushQueueErrorHandler} from "./push";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 
@@ -22,7 +22,7 @@ const sqsQueues = {
 		queueRegion: envVars.SQS_PUSH_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
-		maxAttempts: 5}, pushQueueMessageHandler,	defaultErrorHandler),
+		maxAttempts: 5}, pushQueueMessageHandler,	pushQueueErrorHandler),
 
 
 	start: () => {

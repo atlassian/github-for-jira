@@ -91,7 +91,7 @@ resources:
   - type: sqs
     name: push
     attributes:
-      MaxReceiveCount: 3
+      MaxReceiveCount: 5
       MessageRetentionPeriod: 1209600
       VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
       dataType:
