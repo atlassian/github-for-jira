@@ -1,6 +1,5 @@
 import Redis from "ioredis";
 import { isNodeProd } from "../util/isNodeEnv";
-import envVars from "./env";
 
 export default (connectionName: string): Redis.RedisOptions => ({
 	port: Number(process.env.REDISX_CACHE_PORT) || 6379,
@@ -12,6 +11,5 @@ export default (connectionName: string): Redis.RedisOptions => ({
 	enableReadyCheck: false,
 
 	tls: isNodeProd() ? { checkServerIdentity: () => undefined } : undefined,
-	keyPrefix: envVars.REDIS_KEY_PREFIX,
 	connectionName
 });
