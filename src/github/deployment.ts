@@ -16,7 +16,7 @@ export default async (context: CustomContext, jiraClient): Promise<void> => {
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
 	if (result.rejectedDeployments?.length) {
-		context.log.warn({ rejectedDeployments: result.rejectedDeployments }, "Jira API rejected deployment!");
+		context.log.warn({ jiraPayload, rejectedDeployments: result.rejectedDeployments }, "Jira API rejected deployment!");
 	}
 
 	const { webhookReceived, name, log } = context;

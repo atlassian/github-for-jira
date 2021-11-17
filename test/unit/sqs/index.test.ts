@@ -2,7 +2,7 @@ import {Context, ErrorHandlingResult, SqsQueue, SqsTimeoutError} from "../../../
 import { v4 as uuidv4 } from "uuid";
 import envVars from "../../../src/config/env";
 import DoneCallback = jest.DoneCallback;
-import {DeleteMessageRequest} from "aws-sdk/clients/sqs";
+import waitUntil from "../../utils/waitUntil";
 
 
 const TEST_QUEUE_URL = envVars.SQS_BACKFILL_QUEUE_URL;
@@ -23,16 +23,18 @@ describe("SqsQueue tests", () => {
 
 	const mockErrorHandler = jest.fn();
 
+	const testMaxQueueAttempts = 3;
+
 	const generatePayload = (): TestMessage => ({ msg: uuidv4() });
 
-	const createSqsQueue = (timeout: number) => {
+	const createSqsQueue = (timeout: number, maxAttempts: number = testMaxQueueAttempts) => {
 		return new SqsQueue({
 			queueName: TEST_QUEUE_NAME,
 			queueUrl: TEST_QUEUE_URL,
 			queueRegion: TEST_QUEUE_REGION,
 			longPollingIntervalSec: 0,
 			timeoutSec: timeout,
-			maxAttempts: 3
+			maxAttempts: maxAttempts
 		},
 		mockRequestHandler,
 		mockErrorHandler);
@@ -44,11 +46,17 @@ describe("SqsQueue tests", () => {
 
 		beforeEach(() => {
 			queue = createSqsQueue(10);
+			queue.sqs.purgeQueue();
 			queue.start();
+
+			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
+				return {retryable: false};
+			})
 		});
 
 		afterEach(async () => {
 			queue.stop();
+			queue.sqs.purgeQueue();
 			await queue.waitUntilListenerStopped();
 		});
 
@@ -192,27 +200,13 @@ describe("SqsQueue tests", () => {
 			await queue.sendMessage(testPayload);
 		});
 
-		it("Message deleted from the queue when unretryable", async (done: DoneCallback) => {
+		it("Message deleted from the queue when unretryable", async () => {
 
 			const testPayload = generatePayload();
 
-			const deleteMock = jest.fn();
-			queue.sqs.deleteMessage = deleteMock;
+			const queueDeletionSpy = jest.spyOn(queue.sqs, "deleteMessage");
 
 			const expected : {ReceiptHandle?: string} = {ReceiptHandle: ""};
-
-			deleteMock.mockImplementation((deleteRequest: DeleteMessageRequest) => {
-
-				if(deleteRequest.ReceiptHandle === expected.ReceiptHandle) {
-					done();
-				}
-
-				return {promise: () => {
-					return new Promise<void>(resolve => {
-						resolve()
-					});
-				}}
-			})
 
 			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 				expected.ReceiptHandle = context.message.ReceiptHandle;
@@ -225,6 +219,10 @@ describe("SqsQueue tests", () => {
 			})
 
 			await queue.sendMessage(testPayload);
+
+			await waitUntil(async () => {
+				expect(queueDeletionSpy).toBeCalledTimes(1)
+			})
 		});
 
 	});
@@ -233,11 +231,13 @@ describe("SqsQueue tests", () => {
 
 		beforeEach(() => {
 			queue = createSqsQueue(1);
+			queue.sqs.purgeQueue();
 			queue.start();
 		});
 
 		afterEach(async () => {
 			queue.stop();
+			queue.sqs.purgeQueue();
 			await queue.waitUntilListenerStopped();
 		});
 
@@ -254,16 +254,56 @@ describe("SqsQueue tests", () => {
 
 			mockErrorHandler.mockImplementation((error: Error, context: Context<TestMessage>) => {
 
-				expect(context.payload.msg).toBe(testPayload.msg);
-				expect(error).toBeInstanceOf(SqsTimeoutError);
+				try {
+					expect(context.payload.msg).toBe(testPayload.msg);
+					expect(error).toBeInstanceOf(SqsTimeoutError);
 
-				const currentTime = Date.now();
-				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
+					const currentTime = Date.now();
+					expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
+				} catch (err) {
+					done.fail(err);
+				}
 				done();
 				return {retryable: false};
 			})
 
 			await queue.sendMessage(testPayload);
 		});
+
+		it("Receive Count and Max Attempts are populated correctly", async (done: DoneCallback) => {
+
+			const testPayload = generatePayload();
+			const receiveCounter = {receivesCounter: 0};
+
+			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
+				/* eslint-disable jest/no-conditional-expect */
+				try {
+					if (receiveCounter.receivesCounter == 0) {
+						expect(context.receiveCount).toBe(1)
+						expect(context.lastAttempt).toBe(false)
+					} else if (receiveCounter.receivesCounter == 1) {
+						expect(context.receiveCount).toBe(2)
+						expect(context.lastAttempt).toBe(false)
+					} else if (receiveCounter.receivesCounter == 2) {
+						expect(context.receiveCount).toBe(3)
+						expect(context.lastAttempt).toBe(true)
+						done();
+						return;
+					}
+				}	catch(err) {
+					done.fail(err)
+				}
+
+				receiveCounter.receivesCounter++;
+				throw new Error("Something bad happened");
+			});
+
+			mockErrorHandler.mockImplementation((_error: Error, _context: Context<TestMessage>): ErrorHandlingResult => {
+				return {retryable: receiveCounter.receivesCounter < 3, retryDelaySec: 0}
+			})
+
+			await queue.sendMessage(testPayload);
+		});
 	});
+
 });

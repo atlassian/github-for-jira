@@ -55,6 +55,22 @@ function getAuthMiddleware(secret: string) {
 	);
 }
 
+/**
+ * Wrapper for AxiosError, which includes error status
+ */
+export class JiraClientError extends Error {
+	status?: number;
+	cause: AxiosError
+
+	constructor(message: string, cause: AxiosError, status?:number) {
+		super(message);
+		this.status = status
+
+		//Remove config from the cause to prevent large payloads from being logged
+		this.cause = {...cause, config: {}};
+	}
+}
+
 export const getJiraErrorMessages = (status: number) => {
 	switch (status) {
 		case 400:
@@ -84,16 +100,22 @@ function getErrorMiddleware(logger: Logger) {
 		 * @returns {Promise<Error>} The rejected promise
 		 */
 		(error: AxiosError): Promise<Error> => {
-			if (error?.response) {
-				const status = error.response.status;
 
-				// truncating the detail message returned from Jira to 200 characters
-				const errorMessage = getJiraErrorMessages(status);
-				// Creating an object that isn't of type Error as bunyan handles it differently
-				// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
-				(status >= 300 && status < 500 ? logger.warn : logger.error)(error, errorMessage);
+			const status = error?.response?.status;
+
+			const errorMessage = "Error executing Axios Request " + (status ? getJiraErrorMessages(status) : error.message || "");
+
+			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
+
+			// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
+			// Log exception only if it is error, because AxiosError contains the request payload
+			if (isWarning) {
+				logger.warn(errorMessage)
+			} else {
+				logger.error({err: error}, errorMessage)
 			}
-			return Promise.reject(error);
+
+			return Promise.reject(new JiraClientError(errorMessage, error, status));
 		});
 }
 
@@ -230,10 +252,9 @@ const instrumentRequest = (response) => {
  * @param {import("axios").AxiosError} error - The Axios error response object.
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-const instrumentFailedRequest = (logger) => {
+const instrumentFailedRequest = () => {
 	return (error) => {
 		instrumentRequest(error?.response);
-		logger.error(error, "Error during Axios request");
 		return Promise.reject(error);
 	};
 };
@@ -260,7 +281,7 @@ export default (
 	instance.interceptors.request.use(setRequestStartTime);
 	instance.interceptors.response.use(
 		instrumentRequest,
-		instrumentFailedRequest(logger)
+		instrumentFailedRequest()
 	);
 
 	instance.interceptors.request.use(getAuthMiddleware(secret));

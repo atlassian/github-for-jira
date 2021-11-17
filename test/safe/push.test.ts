@@ -8,12 +8,17 @@ import { Application } from "probot";
 import { start, stop } from "../../src/worker/startup";
 import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 import { when } from "jest-when";
+import waitUntil from "../utils/waitUntil";
+import sqsQueues from "../../src/sqs/queues";
 
 jest.mock("../../src/config/feature-flags");
 
 const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
 
 describe("Push Webhook", () => {
+
+	const realDateNow = Date.now.bind(global.Date);
+
 	let app: Application;
 	beforeEach(async () => {
 		app = await createWebhookApp();
@@ -33,6 +38,12 @@ describe("Push Webhook", () => {
 	afterEach(async () => {
 		await Installation.destroy({ truncate: true });
 		await Subscription.destroy({ truncate: true });
+		//We have to restore Date.now to avoid errors in SQS Client.
+		//SQS Client uses Date.now and fails if it is "undefined"
+		//Hence we mock Date with jest, it will be returning undefined when we clean all mocks
+		//Some async operations might still be running (like message deletion) even after the test is finished.
+		//TODO Instead stop the queue every time after each test. However it would be possible only when we get rid of Redis because bull queues are not restartable
+		global.Date.now = realDateNow;
 	});
 
 	// TODO: figure out how to tests with queue
@@ -83,6 +94,7 @@ describe("Push Webhook", () => {
 	});
 
 	describe("process push payloads", () => {
+
 		beforeEach(async () => {
 			Date.now = jest.fn(() => 12345678);
 			await Subscription.create({
@@ -427,13 +439,37 @@ describe("Push Webhook", () => {
 		});
 	});
 
-	// TODO: need to fix this further
-	describe.skip("end 2 end tests with queue", () => {
-		let event;
+	describe("end 2 end tests with queue", () => {
+
+		const mockGithubAccessToken = () => {
+			githubNock
+				.post("/app/installations/1234/access_tokens")
+				.optionally()
+				.reply(200, {
+					token: "token",
+					expires_at: new Date().getTime()
+				});
+		}
 
 		beforeEach(async () => {
 			Date.now = jest.fn(() => 12345678);
-			event = require("../fixtures/push-no-username.json");
+		});
+
+		beforeAll( async () => {
+			Date.now = jest.fn(() => 12345678);
+			//Start worker node for queues processing
+			await start();
+		})
+
+		afterAll(async () => {
+			//Stop worker node
+			await stop();
+			await sqsQueues.push.waitUntilListenerStopped();
+		})
+
+
+		function createPushEventAndMockRestReqeustsForItsProcessing() {
+			const event = require("../fixtures/push-no-username.json");
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-non-merge-commit"));
@@ -451,10 +487,8 @@ describe("Push Webhook", () => {
 								hash: "commit-no-username",
 								message: "[TEST-123] Test commit.",
 								author: {
-									avatar: "https://github.com/users/undefined.png",
 									name: "test-commit-name",
 									email: "test-email@example.com",
-									url: "https://github.com/users/undefined"
 								},
 								authorTimestamp: "test-commit-date",
 								displayId: "commit",
@@ -491,22 +525,14 @@ describe("Push Webhook", () => {
 						updateSequenceId: 12345678
 					}
 				],
-				properties: { installationId: 1234 }
+				properties: {installationId: 1234}
 			}).reply(200);
-		});
+			return event;
+		}
 
-		beforeAll(async () => {
-
-			//Start worker node for queues processing
-			await start();
-		});
-
-
-		afterAll(async () => {
-			//Stop worker node
-			await stop();
-		});
-
+		/**
+		 * Tests when we process pushes immediately without using the queue
+		 */
 		it("should send bulk update event to Jira when push webhook received and queue is not involved", async () => {
 
 			when(booleanFlag).calledWith(
@@ -515,10 +541,21 @@ describe("Push Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(true);
 
-			await expect(app.receive(event)).toResolve();
+			const event = createPushEventAndMockRestReqeustsForItsProcessing();
+
+			await app.receive(event);
+
+			// eslint-disable-next-line jest/no-standalone-expect
+			expect(githubNock.pendingMocks()).toEqual([]);
+			// eslint-disable-next-line jest/no-standalone-expect
+			expect(jiraNock.pendingMocks()).toEqual([]);
 		});
 
+		/**
+		 * Tests webhook processing through redis
+		 */
 		it("should send bulk update event to Jira when push webhook received and sent through redis queue", async () => {
+
 			when(booleanFlag).calledWith(
 				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
 				expect.anything(),
@@ -531,9 +568,25 @@ describe("Push Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(false);
 
-			await expect(app.receive(event)).toResolve();
+			mockGithubAccessToken();
+
+			const event = createPushEventAndMockRestReqeustsForItsProcessing();
+
+			await app.receive(event);
+
+			await waitUntil( async () => {
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(githubNock.pendingMocks()).toEqual([]);
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(jiraNock.pendingMocks()).toEqual([]);
+			})
+
 		});
 
+
+		/**
+		 * Tests webhook processing through sqs
+		 */
 		it("should send bulk update event to Jira when push webhook received and sent through sqs queue", async () => {
 
 			when(booleanFlag).calledWith(
@@ -548,7 +601,21 @@ describe("Push Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(true);
 
-			await expect(app.receive(event)).toResolve();
+			mockGithubAccessToken();
+
+			const event = createPushEventAndMockRestReqeustsForItsProcessing();
+
+			await app.receive(event);
+
+			await waitUntil( async () => {
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(githubNock.pendingMocks()).toEqual([]);
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(jiraNock.pendingMocks()).toEqual([]);
+			})
+
 		});
+
 	});
+
 });
