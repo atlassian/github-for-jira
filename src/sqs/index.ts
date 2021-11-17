@@ -290,10 +290,6 @@ export class SqsQueue<MessagePayload> {
 		}
 	}
 
-
-
-
-
 	private async deleteMessage(message: Message, log: Logger) {
 
 		log.debug({ message }, "deleting the message")
@@ -327,7 +323,7 @@ export class SqsQueue<MessagePayload> {
 
 		const receiveCount = Number(message.Attributes?.ApproximateReceiveCount || "1");
 
-		const context: Context<MessagePayload> = {message, payload, log, receiveCount: receiveCount, lastAttempt: receiveCount===this.maxAttempts}
+		const context: Context<MessagePayload> = {message, payload, log, receiveCount: receiveCount, lastAttempt: receiveCount >= this.maxAttempts}
 
 		log.info(`Sqs message received. Receive count: ${receiveCount}`);
 
@@ -358,7 +354,7 @@ export class SqsQueue<MessagePayload> {
 					(errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts)) {
 					log.info("Deleting the message hence it reached the maximum amount of retries")
 					await this.deleteMessage(message, log)
-				} else if (errorHandlingResult.retryDelaySec !== undefined /*zero delay supported*/) {
+				} else if (errorHandlingResult.retryDelaySec !== undefined /*zero seconds delay is also supported*/) {
 					log.info(`Delaying the retry for ${errorHandlingResult.retryDelaySec} seconds`)
 					await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
 				}
