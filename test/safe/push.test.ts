@@ -10,6 +10,7 @@ import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 import { when } from "jest-when";
 import waitUntil from "../utils/waitUntil";
 import sqsQueues from "../../src/sqs/queues";
+import _ from "lodash";
 
 jest.mock("../../src/config/feature-flags");
 
@@ -440,8 +441,25 @@ describe("Push Webhook", () => {
 	});
 
 	describe("end 2 end tests with queue", () => {
+		beforeEach(async () => {
+			Date.now = jest.fn(() => 12345678);
+		});
 
-		const mockGithubAccessToken = () => {
+		beforeAll(async () => {
+			Date.now = jest.fn(() => 12345678);
+			//Start worker node for queues processing
+			await start();
+		});
+
+		afterAll(async () => {
+			//Stop worker node
+			await stop();
+			await sqsQueues.push.waitUntilListenerStopped();
+		});
+
+		function createPushEventAndMockRestRequestsForItsProcessing() {
+			const event = require("../fixtures/push-no-username.json");
+
 			githubNock
 				.post("/app/installations/1234/access_tokens")
 				.optionally()
@@ -449,29 +467,9 @@ describe("Push Webhook", () => {
 					token: "token",
 					expires_at: new Date().getTime()
 				});
-		}
 
-		beforeEach(async () => {
-			Date.now = jest.fn(() => 12345678);
-		});
-
-		beforeAll( async () => {
-			Date.now = jest.fn(() => 12345678);
-			//Start worker node for queues processing
-			await start();
-		})
-
-		afterAll(async () => {
-			//Stop worker node
-			await stop();
-			await sqsQueues.push.waitUntilListenerStopped();
-		})
-
-
-		function createPushEventAndMockRestReqeustsForItsProcessing() {
-			const event = require("../fixtures/push-no-username.json");
-
-			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+			githubNock
+				.get(`/repos/test-repo-owner/test-repo-name/commits/commit-no-username`)
 				.reply(200, require("../fixtures/push-non-merge-commit"));
 
 			// flag property should not be present
@@ -482,140 +480,93 @@ describe("Push Webhook", () => {
 						name: "test-repo-name",
 						url: "test-repo-url",
 						id: "test-repo-id",
-						commits: [
-							{
-								hash: "commit-no-username",
-								message: "[TEST-123] Test commit.",
-								author: {
-									name: "test-commit-name",
-									email: "test-email@example.com",
+						commits: [{
+							hash: "commit-no-username",
+							message: "[TEST-123] Test commit.",
+							author: {
+								name: "test-commit-name",
+								email: "test-email@example.com"
+							},
+							authorTimestamp: "test-commit-date",
+							displayId: "commit",
+							fileCount: 3,
+							files: [
+								{
+									path: "test-modified",
+									changeType: "MODIFIED",
+									linesAdded: 10,
+									linesRemoved: 2,
+									url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
 								},
-								authorTimestamp: "test-commit-date",
-								displayId: "commit",
-								fileCount: 3,
-								files: [
-									{
-										path: "test-modified",
-										changeType: "MODIFIED",
-										linesAdded: 10,
-										linesRemoved: 2,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
-									},
-									{
-										path: "test-added",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-removal",
-										changeType: "DELETED",
-										linesAdded: 0,
-										linesRemoved: 4,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
-									}
-								],
-								id: "commit-no-username",
-								issueKeys: ["TEST-123"],
-								url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
-								updateSequenceId: 12345678
-							}
-						],
+								{
+									path: "test-added",
+									changeType: "ADDED",
+									linesAdded: 4,
+									linesRemoved: 0,
+									url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
+								},
+								{
+									path: "test-removal",
+									changeType: "DELETED",
+									linesAdded: 0,
+									linesRemoved: 4,
+									url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
+								}
+							],
+							id: "commit-no-username",
+							issueKeys: ["TEST-123"],
+							url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
+							updateSequenceId: 12345678
+						}],
 						updateSequenceId: 12345678
 					}
 				],
-				properties: {installationId: 1234}
+				properties: { installationId: 1234 }
 			}).reply(200);
 			return event;
 		}
 
 		/**
-		 * Tests when we process pushes immediately without using the queue
-		 */
-		it("should send bulk update event to Jira when push webhook received and queue is not involved", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(true);
-
-			const event = createPushEventAndMockRestReqeustsForItsProcessing();
-
-			await app.receive(event);
-
-			// eslint-disable-next-line jest/no-standalone-expect
-			expect(githubNock.pendingMocks()).toEqual([]);
-			// eslint-disable-next-line jest/no-standalone-expect
-			expect(jiraNock.pendingMocks()).toEqual([]);
-		});
-
-		/**
 		 * Tests webhook processing through redis
 		 */
-		it("should send bulk update event to Jira when push webhook received and sent through redis queue", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(false);
-
+		it("should send bulk update event to Jira when push webhook received through redis queue", async () => {
 			when(booleanFlag).calledWith(
 				BooleanFlags.SEND_PUSH_TO_SQS,
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(false);
 
-			mockGithubAccessToken();
+			const event = createPushEventAndMockRestRequestsForItsProcessing();
+			await expect(app.receive(event)).toResolve();
 
-			const event = createPushEventAndMockRestReqeustsForItsProcessing();
-
-			await app.receive(event);
-
-			await waitUntil( async () => {
+			await waitUntil(async () => {
 				// eslint-disable-next-line jest/no-standalone-expect
 				expect(githubNock.pendingMocks()).toEqual([]);
 				// eslint-disable-next-line jest/no-standalone-expect
 				expect(jiraNock.pendingMocks()).toEqual([]);
-			})
-
+			});
 		});
-
 
 		/**
 		 * Tests webhook processing through sqs
 		 */
-		it("should send bulk update event to Jira when push webhook received and sent through sqs queue", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(false);
-
+		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
 			when(booleanFlag).calledWith(
 				BooleanFlags.SEND_PUSH_TO_SQS,
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(true);
 
-			mockGithubAccessToken();
+			const event = createPushEventAndMockRestRequestsForItsProcessing();
 
-			const event = createPushEventAndMockRestReqeustsForItsProcessing();
+			await expect(app.receive(event)).toResolve();
 
-			await app.receive(event);
-
-			await waitUntil( async () => {
+			await waitUntil(async () => {
 				// eslint-disable-next-line jest/no-standalone-expect
 				expect(githubNock.pendingMocks()).toEqual([]);
 				// eslint-disable-next-line jest/no-standalone-expect
 				expect(jiraNock.pendingMocks()).toEqual([]);
-			})
-
+			});
 		});
-
 	});
-
 });

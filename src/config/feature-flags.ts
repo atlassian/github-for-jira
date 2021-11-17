@@ -14,7 +14,6 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
-	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
 	SIMPLER_PROCESSOR = "simpler-processor",
 	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
 	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",

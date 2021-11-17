@@ -1,8 +1,8 @@
-import { createJobData, enqueuePush, processPush } from "../transforms/push";
+import { enqueuePush } from "../transforms/push";
 import issueKeyParser from "jira-issue-key-parser";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { getCurrentTime } from '../util/webhooks';
+import { getCurrentTime } from "../util/webhooks";
 import _ from "lodash";
 
 export default async (context: Context, jiraClient): Promise<void> => {
@@ -32,13 +32,6 @@ export default async (context: Context, jiraClient): Promise<void> => {
 			{ noop: "no_commits" },
 			"Halting further execution for push since no commits were found for the payload"
 		);
-		return;
-	}
-
-	// If there's less than 20 commits (the number of commits the github API returns per call), just process it immediately
-	if(payload.commits?.length < 20 && await booleanFlag(BooleanFlags.PROCESS_PUSHES_IMMEDIATELY, true, jiraClient.baseURL)) {
-		context.log.info("Processing push straight away");
-		await processPush(context.github, createJobData(payload, jiraClient.baseURL), context.log);
 		return;
 	}
 
