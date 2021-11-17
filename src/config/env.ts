@@ -17,6 +17,8 @@ const requiredEnvVars = [
 	"SQS_PUSH_QUEUE_URL",
 	"SQS_PUSH_QUEUE_REGION",
 	"MICROS_AWS_REGION",
+	"AWS_ACCESS_KEY_ID",
+	"AWS_SECRET_ACCESS_KEY"
 ];
 
 const filename = isNodeTest() ? ".env.test" : ".env";
