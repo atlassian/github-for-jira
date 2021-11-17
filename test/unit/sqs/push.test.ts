@@ -3,6 +3,8 @@ import {pushQueueErrorHandler, PushQueueMessagePayload} from "../../../src/sqs/p
 import {Context} from "../../../src/sqs/index";
 import {getLogger} from "../../../src/config/logger";
 import {JiraClientError} from "../../../src/jira/client/axios";
+import {RateLimitingError} from "../../../src/config/enhance-octokit";
+import {Octokit} from "probot";
 
 
 describe("Push Queue Error Handler", () => {
@@ -10,14 +12,16 @@ describe("Push Queue Error Handler", () => {
 
 	let statsdIncrementSpy = jest.spyOn(statsd, "histogram");
 
-	beforeAll(() => {
+	beforeEach(() => {
 		// Lock Time
 		statsdIncrementSpy = jest.spyOn(statsd, "increment");
+		jest.useFakeTimers("modern").setSystemTime(new Date("2020-01-01").getTime());
 	});
 
-	afterAll(() => {
+	afterEach(() => {
 		// Unlock Time
 		statsdIncrementSpy.mockRestore();
+		jest.useRealTimers();
 	});
 
 	const mockPayload = {
@@ -101,5 +105,30 @@ describe("Push Queue Error Handler", () => {
 		expect(result.retryable).toBe(true)
 		expect(statsdIncrementSpy).toBeCalledTimes(1);
 	});
-	
-})
+
+	it("Retryable with proper delay on Rate Limiting", async () => {
+		const result = await pushQueueErrorHandler(new RateLimitingError(Math.floor(new Date("2020-01-01").getTime()/1000) + 100), createContext(1, false));
+		expect(result.retryable).toBe(true)
+		//Make sure delay is equal to recommended delay + 10 seconds
+		expect(result.retryDelaySec).toBe(110)
+		expect(statsdIncrementSpy).toBeCalledTimes(0);
+	});
+
+	it("Unretryable and no failure metric on OctokitError 401", async () => {
+
+		const error : Octokit.HookError = {...new Error("Err"), status: 401, headers: {}}
+
+		const result = await pushQueueErrorHandler(error, createContext(1, true));
+		expect(result.retryable).toBe(false)
+		expect(statsdIncrementSpy).toBeCalledTimes(0);
+	});
+
+	it("Retryable and emits failure metrics on OctokitError 500", async () => {
+
+		const error : Octokit.HookError = {...new Error("Err"), status: 500, headers: {}}
+
+		const result = await pushQueueErrorHandler(error, createContext(1, true));
+		expect(result.retryable).toBe(true)
+		expect(statsdIncrementSpy).toBeCalledTimes(1);
+	});
+});
