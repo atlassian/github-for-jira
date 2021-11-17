@@ -39,6 +39,12 @@ export type Context<MessagePayload> = {
 	 * How many times this messages attempted to be processed, including the current attempt
 	 */
 	receiveCount: number;
+
+
+	/**
+	 * Indicates if it is the last attempt to process this message
+	 */
+	lastAttempt: boolean;
 }
 
 export type QueueSettings = {
@@ -265,7 +271,8 @@ export class SqsQueue<MessagePayload> {
 		const params = {
 			QueueUrl: this.queueUrl,
 			MaxNumberOfMessages: 1,
-			WaitTimeSeconds: this.longPollingIntervalSec
+			WaitTimeSeconds: this.longPollingIntervalSec,
+			AttributeNames: ["ApproximateReceiveCount"]
 		};
 
 		try {
@@ -318,9 +325,9 @@ export class SqsQueue<MessagePayload> {
 			executionId: uuidv4(),
 			queue: this.queueName})
 
-		const receiveCount = Number(message.MessageAttributes?.ApproximateReceiveCount?.StringValue || "1");
+		const receiveCount = Number(message.Attributes?.ApproximateReceiveCount || "1");
 
-		const context: Context<MessagePayload> = {message, payload, log, receiveCount: receiveCount}
+		const context: Context<MessagePayload> = {message, payload, log, receiveCount: receiveCount, lastAttempt: receiveCount===this.maxAttempts}
 
 		log.info(`Sqs message received. Receive count: ${receiveCount}`);
 
@@ -351,7 +358,7 @@ export class SqsQueue<MessagePayload> {
 					(errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts)) {
 					log.info("Deleting the message hence it reached the maximum amount of retries")
 					await this.deleteMessage(message, log)
-				} else if (errorHandlingResult.retryDelaySec) {
+				} else if (errorHandlingResult.retryDelaySec !== undefined /*zero delay supported*/) {
 					log.info(`Delaying the retry for ${errorHandlingResult.retryDelaySec} seconds`)
 					await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
 				}
