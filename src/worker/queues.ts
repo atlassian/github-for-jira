@@ -5,7 +5,6 @@ import * as Sentry from "@sentry/node";
 import statsd from "../config/statsd";
 import { getLogger } from "../config/logger";
 import {metricError, redisQueueMetrics} from "../config/metric-names";
-import envVars from "../config/env";
 
 const client = new Redis(getRedisInfo("client"));
 const subscriber = new Redis(getRedisInfo("subscriber"));
@@ -27,7 +26,6 @@ const getQueueOptions = (timeout: number): QueueOptions => {
 			removeOnComplete: true,
 			removeOnFail: true
 		},
-		prefix: envVars.BULL_QUEUE_PREFIX,
 		settings: {
 			// lockDuration must be greater than the timeout, so that it doesn't get processed again prematurely
 			lockDuration: timeout + 500
