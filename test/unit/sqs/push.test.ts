@@ -9,7 +9,6 @@ import {Octokit} from "probot";
 
 describe("Push Queue Error Handler", () => {
 
-
 	let statsdIncrementSpy = jest.spyOn(statsd, "histogram");
 
 	beforeEach(() => {
@@ -68,7 +67,6 @@ describe("Push Queue Error Handler", () => {
 
 		expect(statsdIncrementSpy).toBeCalledTimes(1);
 	});
-
 
 	function getJiraClientError(code: number) {
 		return new JiraClientError("err", {
