@@ -1,4 +1,4 @@
-import { emitWebhookProcessedMetrics, emitWebhookPayloadMetrics } from "./../../../src/util/webhooks";
+import { emitWebhookProcessedMetrics } from "../../../src/util/webhooks";
 import statsd from "../../../src/config/statsd";
 
 let dateNowSpy;
@@ -100,16 +100,6 @@ describe("Webhooks suite", () => {
 					)
 				).toEqual(undefined);
 			});
-		});
-	});
-
-	describe("emitWebhookPayloadMetrics", () => {
-		it("should push metrics for payload size", ()=> {
-			const statsdSpy = jest.spyOn(statsd, "histogram");
-			const webhookName = "workflow_run";
-			const payloadSize = 0;
-			emitWebhookPayloadMetrics(webhookName, payloadSize);
-			expect(statsdSpy).toHaveBeenCalledTimes(2);
 		});
 	});
 });
