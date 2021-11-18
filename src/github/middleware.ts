@@ -9,7 +9,7 @@ import getJiraUtil from "../jira/util";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { emitWebhookPayloadMetrics, emitWebhookFailedMetrics, getCurrentTime } from "./../util/webhooks";
+import {emitWebhookFailedMetrics, getCurrentTime} from "../util/webhooks";
 import JiraClient from "../models/jira-client";
 
 const LOGGER_NAME = "github.webhooks";
@@ -76,10 +76,6 @@ export default (
 	return withSentry(async (context: CustomContext) => {
 		enhanceOctokit(context.github);
 		const webhookEvent = extractWebhookEventNameFromContext(context);
-
-		// Metrics for webhook payload size
-		emitWebhookPayloadMetrics(webhookEvent,
-			Buffer.byteLength(JSON.stringify(context.payload), "utf-8"));
 
 		const webhookReceived = getCurrentTime();
 		context.webhookReceived = webhookReceived;
