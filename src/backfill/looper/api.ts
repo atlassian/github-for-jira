@@ -20,17 +20,11 @@ export interface StepProcessor<JOB_STATE> {
 	 * Processes the next step in the job. Can make use of the JobState to determine what exactly it needs to do
 	 * as the next step.
 	 */
-	process(jobState: JOB_STATE, currentRateLimitState?: RateLimitState): StepResult<JOB_STATE>;
+	process(jobState: JOB_STATE, currentRateLimitState?: RateLimitState): Promise<StepResult<JOB_STATE>>;
 
 }
 
 export interface StepResult<JOB_STATE> {
-
-	/**
-	 * True if the processing step was successful. False if the processing was not successful. In this case, the error
-	 * field should be populated with information about the error.
-	 */
-	success: boolean;
 
 	/**
 	 * The job state after the step has been processed.
@@ -42,14 +36,6 @@ export interface StepResult<JOB_STATE> {
 	 */
 	rateLimit?: RateLimitState;
 
-	/**
-	 * Information about the error, if an error has occurred during processing.
-	 */
-	error?: {
-		message: string;
-		isRetryable: boolean;
-		isFatal: boolean;
-	}
 }
 
 /**
@@ -133,14 +119,31 @@ export interface JobStore<JOB_ID, JOB_STATE> {
 export interface RetryStrategy {
 
 	/**
-	 * Decides based on the already failed attempts if a step should be retried and how long the retry should be delayed.
+	 * Decides based on the error and the number of already failed attempts if a step should be retried and how long the retry should be delayed.
 	 */
-	getRetry(failedAttempts: number): Retry;
+	getRetry(e: Error, failedAttempts: number): Retry;
 }
 
 export interface Retry {
-	shouldRetry: boolean;
+	action: RetryAction;
 	retryAfterSeconds?: number;
+}
+
+export enum RetryAction {
+	/**
+	 * Retry the current step.
+	 */
+	RETRY = "retry",
+
+	/**
+	 * Skip the current step, continuing with the next one.
+	 */
+	SKIP = "skip",
+
+	/**
+	 * Stop the whole job.
+	 */
+	STOP = "stop"
 }
 
 /**
@@ -234,11 +237,20 @@ export class BackoffRetryStrategy implements RetryStrategy {
 		this.initialDelayInSeconds = initialDelayInSeconds;
 	}
 
-	getRetry(failedAttempts: number): Retry {
+	getRetry(e: Error, failedAttempts: number): Retry {
 		return {
-			shouldRetry: failedAttempts <= this.retries,
+			action: this.getRetryAction(e, failedAttempts),
 			retryAfterSeconds: Math.min(this.maxDelayInSeconds, this.initialDelayInSeconds * Math.pow(this.backoffMultiplier, failedAttempts))
 		};
+	}
+
+	private getRetryAction(_: Error, failedAttempts: number): RetryAction {
+		// TODO: evaluate error and decide if it's retryable
+		if (failedAttempts <= this.retries) {
+			return RetryAction.RETRY;
+		} else {
+			return RetryAction.SKIP;
+		}
 	}
 
 }

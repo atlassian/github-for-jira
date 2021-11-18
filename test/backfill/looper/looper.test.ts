@@ -48,26 +48,16 @@ describe("Looper", () => {
 			this.failingCursors = failingCursors;
 		}
 
-		process(jobState: MyJobState, rateLimitState: RateLimitState): StepResult<MyJobState> {
+		async process(jobState: MyJobState, rateLimitState: RateLimitState): Promise<StepResult<MyJobState>> {
 			rateLimitState.budgetLeft--;
 
 			if (this.failingCursors.includes(jobState.cursor)) {
-				return {
-					success: false,
-					rateLimit: rateLimitState,
-					error: {
-						isRetryable: true,
-						message: "retryable error",
-						isFatal: false
-					},
-					jobState
-				}
+				throw Error(`failing step ${jobState.cursor}`);
 			}
 
 			this.itemsProcessed.push(jobState.cursor);
 			jobState.cursor++;
 			return {
-				success: true,
 				rateLimit: rateLimitState,
 				jobState
 			}
@@ -140,7 +130,7 @@ describe("Looper", () => {
 
 	it("completes a loop through a job", async () => {
 
-		let nextAction = looper.processStep({ jobId: "job1" });
+		let nextAction = await looper.processStep({ jobId: "job1" });
 		let i = 1;
 		let retryCount = 0;
 		let ratelimitedCount = 0;
@@ -155,7 +145,7 @@ describe("Looper", () => {
 				logger.info(`DELAYING BY ${nextAction.delay.seconds} seconds due to ${nextAction.delay.reason}!`);
 				now = new Date(now.getTime() + nextAction.delay.seconds * 1000);
 
-				if(nextAction.delay.reason == "retry"){
+				if (nextAction.delay.reason == "retry") {
 					retryCount++;
 				}
 
@@ -168,7 +158,7 @@ describe("Looper", () => {
 				}
 			}
 
-			nextAction = looper.processStep({ jobId: "job1" });
+			nextAction = await looper.processStep({ jobId: "job1" });
 			i++;
 		}
 

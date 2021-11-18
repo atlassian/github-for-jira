@@ -1,4 +1,4 @@
-import { RepositoryData } from "../models/subscription";
+import { Repository, RepositoryData } from "../models/subscription";
 
 export type JobId = {
 	installationId: number;
@@ -15,5 +15,6 @@ export type JobState = {
 	installationId: number;
 	jiraHost: string;
 	numberOfSyncedRepos?: number;
-	repository: RepositoryData;
+	repository: Repository;
+	repositoryState: RepositoryData;
 }

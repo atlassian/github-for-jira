@@ -7,8 +7,8 @@ import { CommitProcessor } from "./commit-processor";
 
 export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 
-	private readonly commitsSkipCount;
-	private readonly pullrequestSkipCount;
+	private readonly commitsSkipCount: number;
+	private readonly pullrequestSkipCount: number;
 
 	constructor(
 		commitsSkipCount?: number,
@@ -20,11 +20,11 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 
 	getStepProcessor(_: Step<JobId>, jobState: JobState): StepProcessor<JobState> | null | undefined {
 
-		if (Prioritizer.hasWaitingPullrequests(jobState.repository)) {
+		if (Prioritizer.hasWaitingPullrequests(jobState.repositoryState)) {
 			return new PullRequestProcessor();
-		} else if (Prioritizer.hasWaitingBranches(jobState.repository)) {
+		} else if (Prioritizer.hasWaitingBranches(jobState.repositoryState)) {
 			return new BranchProcessor();
-		} else if (Prioritizer.hasWaitingCommits(jobState.repository)) {
+		} else if (Prioritizer.hasWaitingCommits(jobState.repositoryState)) {
 			return new CommitProcessor();
 		} else {
 			// The job is done.
@@ -34,9 +34,9 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 	}
 
 	skip(_: Step<JobId>, jobState: JobState): JobState {
-		const repo = jobState.repository;
+		const repo = jobState.repositoryState;
 
-		if (Prioritizer.hasWaitingPullrequests(jobState.repository)) {
+		if (Prioritizer.hasWaitingPullrequests(jobState.repositoryState)) {
 			if (!repo.lastPullCursor) {
 				repo.lastPullCursor = 0;
 			}

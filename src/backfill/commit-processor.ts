@@ -3,12 +3,10 @@ import { JobState } from "./index";
 
 export class CommitProcessor implements StepProcessor<JobState> {
 
-	process(jobState: JobState, _?: RateLimitState): StepResult<JobState> {
+	async process(jobState: JobState, _?: RateLimitState): Promise<StepResult<JobState>> {
 		return {
-			success: true,
 			jobState: jobState
 		};
 	}
-
 
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable jest/no-standalone-expect */
 
-import { BackoffRetryStrategy, CappedDelayRateLimitStrategy, RateLimitState } from "../../../src/backfill/looper/api";
+import { BackoffRetryStrategy, CappedDelayRateLimitStrategy, RateLimitState, RetryAction } from "../../../src/backfill/looper/api";
 import each from "jest-each";
 
 describe("Looper API", () => {
@@ -9,17 +9,17 @@ describe("Looper API", () => {
 	describe("BackoffRetryStrategy", () => {
 
 		each([
-			[3, 0, true, 2],
-			[3, 1, true, 4],
-			[3, 2, true, 8],
-			[3, 3, true, 16],
-			[3, 4, false, 32],
-			[3, 5, false, 64],
-			[3, 6, false, 128],
-		]).it("input: retries=%s, failed attempts=%s; output: shouldRetry=%s, delay=%s", async (retries: number, failedAttempts: number, expectedToRetry: boolean, expectedDelay: boolean) => {
+			[3, 0, RetryAction.RETRY, 2],
+			[3, 1, RetryAction.RETRY, 4],
+			[3, 2, RetryAction.RETRY, 8],
+			[3, 3, RetryAction.RETRY, 16],
+			[3, 4, RetryAction.SKIP, 32],
+			[3, 5, RetryAction.SKIP, 64],
+			[3, 6, RetryAction.SKIP, 128],
+		]).it("input: retries=%s, failed attempts=%s; output: expectedRetryAction=%s, delay=%s", async (retries: number, failedAttempts: number, expectedRetryAction: RetryAction, expectedDelay: boolean) => {
 			const backoffStrategy = new BackoffRetryStrategy(retries, 2, 2);
-			expect(backoffStrategy.getRetry(failedAttempts).shouldRetry).toBe(expectedToRetry);
-			expect(backoffStrategy.getRetry(failedAttempts).retryAfterSeconds).toBe(expectedDelay);
+			expect(backoffStrategy.getRetry(Error("boo"), failedAttempts).action).toBe(expectedRetryAction);
+			expect(backoffStrategy.getRetry(Error("boo"), failedAttempts).retryAfterSeconds).toBe(expectedDelay);
 		});
 
 		it("throws error on invalid input", async () => {
@@ -30,8 +30,8 @@ describe("Looper API", () => {
 
 		it("honors maxDelay", async () => {
 			const backoffStrategy = new BackoffRetryStrategy(10, 2, 2, 10);
-			expect(backoffStrategy.getRetry(5).shouldRetry).toBe(true);
-			expect(backoffStrategy.getRetry(5).retryAfterSeconds).toBe(10);
+			expect(backoffStrategy.getRetry(Error("boo"),5).action).toBe(RetryAction.RETRY);
+			expect(backoffStrategy.getRetry(Error("boo"),5).retryAfterSeconds).toBe(10);
 		});
 
 

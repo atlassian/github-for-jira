@@ -2,6 +2,7 @@ import {
 	JobStore,
 	RateLimitState,
 	RateLimitStrategy,
+	RetryAction,
 	RetryStrategy,
 	Step,
 	StepPrioritizer,
@@ -61,13 +62,12 @@ export class Looper<JOB_ID, JOB_STATE> {
 	 * the return NextAction.scheduleNextStep is false. If NextAction.delayInSeconds is set, don't call the method
 	 * for the same job again before this number of seconds has passed to honor rate limits.
 	 */
-	public processStep(step: Step<JOB_ID>): NextAction<JOB_ID> {
+	public async processStep(step: Step<JOB_ID>): Promise<NextAction<JOB_ID>> {
 
 		const currentRateLimitState = this.jobStore.getRateLimitState(step.jobId);
 
 		// If the rate limit is hit, delay the next step of the job accordingly.
 		if (this.rateLimitStrategy.getDelayInSeconds(currentRateLimitState) > 0) {
-			this.logger.info("RATE LIMIT HIT!");
 			return this.continueJobWithRateLimitDelay(step, currentRateLimitState);
 		}
 
@@ -79,35 +79,24 @@ export class Looper<JOB_ID, JOB_STATE> {
 			return this.stopJob(step);
 		}
 
-		const stepResult = stepProcessor.process(jobState, currentRateLimitState);
+		try {
+			const stepResult = await stepProcessor.process(jobState, currentRateLimitState);
 
-		// store the new rate limit state in the database
-		this.updateRateLimitState(stepResult, step);
-		this.jobStore.setJobState(step.jobId, stepResult.jobState);
+			// store the new rate limit state in the database
+			this.updateRateLimitState(stepResult, step);
+			this.jobStore.setJobState(step.jobId, stepResult.jobState);
 
-		// in case of success, we want to schedule the job back on the queue
-		if (stepResult.success) {
+			// in case of success, we want to schedule the job back on the queue
 			return this.continueJobWithRateLimitDelay(step, stepResult.rateLimit);
+		} catch (e) {
+			return this.handleError(e, step, jobState, currentRateLimitState);
 		}
-
-		// in case of an error we want to throw an error to let the queueing system know that we want to retry
-		if (!stepResult.error || stepResult.error?.isRetryable) {
-			return this.retryStep(step, stepResult, jobState);
-		} else if (stepResult.error.isFatal) {
-			this.logger.error(`Stopping job ${step.jobId} due to error: ${stepResult.error?.message}`);
-			return this.stopJob(step);
-		} else if (!stepResult.error.isRetryable) {
-			this.logger.error(`Skipping step ${JSON.stringify(step)} due to error: ${stepResult.error?.message}`);
-			this.skipStep(step, jobState, stepResult);
-		}
-
-		throw new Error(`Job ${step.jobId} ran into an invalid error state: ${JSON.stringify(stepResult.error)}`);
 	}
 
-	private skipStep(step: Step<JOB_ID>, jobState: JOB_STATE, stepResult: StepResult<JOB_STATE>): NextAction<JOB_ID> {
-		const updatedJobState = this.prioritizer.skip(step, jobState, stepResult.rateLimit);
+	private skipStep(step: Step<JOB_ID>, jobState: JOB_STATE, rateLimitState: RateLimitState | undefined): NextAction<JOB_ID> {
+		const updatedJobState = this.prioritizer.skip(step, jobState, rateLimitState);
 		this.jobStore.setJobState(step.jobId, updatedJobState);
-		return this.continueJobWithRateLimitDelay(step, stepResult.rateLimit);
+		return this.continueJobWithRateLimitDelay(step, rateLimitState);
 	}
 
 	/**
@@ -116,24 +105,26 @@ export class Looper<JOB_ID, JOB_STATE> {
 	 *
 	 * If the retry limit has been reached, skip the step.
 	 */
-	private retryStep(step: Step<JOB_ID>, stepResult: StepResult<JOB_STATE>, jobState: JOB_STATE): NextAction<JOB_ID> {
+	private handleError(e: Error, step: Step<JOB_ID>, jobState: JOB_STATE, rateLimitState: RateLimitState | undefined): NextAction<JOB_ID> {
 		const failedAttempts = this.jobStore.getFailedAttemptsCount(step.jobId) + 1;
 
-		const retry = this.retryStrategy.getRetry(failedAttempts);
+		const retry = this.retryStrategy.getRetry(e, failedAttempts);
 
-		if (retry.shouldRetry) {
-			// Retry the same step again, honoring the retry delay.
-			this.logger.warn(`Retrying step ${JSON.stringify(step)} due to error: ${stepResult.error?.message}`);
-			this.jobStore.setFailedAttemptsCount(step.jobId, failedAttempts);
-			return this.continueJobWithRetryDelay(step, retry.retryAfterSeconds);
-		} else {
-			// Don't retry. Reset the failed attempts and skip the current step.
-			this.logger.warn(`Not retrying step ${JSON.stringify(step)} after ${failedAttempts} failed attempts. Error was: ${stepResult.error?.message}`);
-			this.jobStore.setFailedAttemptsCount(step.jobId, 0);
-			return this.skipStep(step, jobState, stepResult);
+		switch (retry.action) {
+			case RetryAction.RETRY:
+				this.logger.warn(e, `Retrying step ${JSON.stringify(step)} due to error: ${String(e)}`);
+				this.jobStore.setFailedAttemptsCount(step.jobId, failedAttempts);
+				return this.continueJobWithRetryDelay(step, retry.retryAfterSeconds);
+			case RetryAction.STOP:
+				this.logger.error(e, `Stopping job ${step.jobId} due to error: ${e.message}`);
+				return this.stopJob(step);
+			case RetryAction.SKIP:
+				this.logger.warn(e, `Not retrying step ${JSON.stringify(step)} after ${failedAttempts} failed attempts. Error was: ${e.message}`);
+				this.jobStore.setFailedAttemptsCount(step.jobId, 0);
+				return this.skipStep(step, jobState, rateLimitState);
 		}
 
-		return this.continueJobWithRateLimitDelay(step, stepResult.rateLimit);
+		return this.continueJobWithRateLimitDelay(step, rateLimitState);
 	}
 
 	private continueJobWithRetryDelay(step: Step<JOB_ID>, delayInSeconds?: number): NextAction<JOB_ID> {

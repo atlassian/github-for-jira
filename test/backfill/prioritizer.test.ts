@@ -2,7 +2,7 @@
 /* eslint-disable jest/no-standalone-expect */
 import { Prioritizer } from "../../src/backfill/prioritizer";
 import { TaskStatus } from "../../src/models/subscription";
-import { JobState, JobId } from "../../src/backfill";
+import { JobId, JobState } from "../../src/backfill";
 import { Step } from "../../src/backfill/looper/api";
 import { CommitProcessor } from "../../src/backfill/commit-processor";
 import { BranchProcessor } from "../../src/backfill/branch-processor";
@@ -28,26 +28,26 @@ describe("Prioritizer", () => {
 
 	it("skips pullrequests", async () => {
 		const prioritizer = new Prioritizer();
-		expect(prioritizer.skip(step(), jobStateWithWaitingPullrequests()).repository.lastPullCursor).toEqual(20);
-		expect(prioritizer.skip(step(), jobStateWithWaitingPullrequests()).repository.pullStatus).toEqual("pending");
+		expect(prioritizer.skip(step(), jobStateWithWaitingPullrequests()).repositoryState.lastPullCursor).toEqual(20);
+		expect(prioritizer.skip(step(), jobStateWithWaitingPullrequests()).repositoryState.pullStatus).toEqual("pending");
 	});
 
 	it("fails branches sub task when skipping branches", async () => {
 		const prioritizer = new Prioritizer();
-		expect(prioritizer.skip(step(), jobStateWithWaitingBranches()).repository.branchStatus).toEqual("failed");
+		expect(prioritizer.skip(step(), jobStateWithWaitingBranches()).repositoryState.branchStatus).toEqual("failed");
 	});
 
 	it("skips commits", async () => {
 		const prioritizer = new Prioritizer();
-		expect(prioritizer.skip(step(), jobStateWithWaitingCommits()).repository.lastCommitCursor).toEqual("25f9fd7d31025b824dd384b094c49adcd9d2887b 49");
-		expect(prioritizer.skip(step(), jobStateWithWaitingCommits()).repository.commitStatus).toEqual("pending");
+		expect(prioritizer.skip(step(), jobStateWithWaitingCommits()).repositoryState.lastCommitCursor).toEqual("25f9fd7d31025b824dd384b094c49adcd9d2887b 49");
+		expect(prioritizer.skip(step(), jobStateWithWaitingCommits()).repositoryState.commitStatus).toEqual("pending");
 	});
 
 	it("fails commits sub task when invalid cursor", async () => {
 		const prioritizer = new Prioritizer();
 		const jobState = jobStateWithWaitingCommits();
-		jobState.repository.lastCommitCursor = undefined;
-		expect(prioritizer.skip(step(), jobState).repository.commitStatus).toEqual("failed");
+		jobState.repositoryState.lastCommitCursor = undefined;
+		expect(prioritizer.skip(step(), jobState).repositoryState.commitStatus).toEqual("failed");
 	});
 
 	function step(): Step<JobId> {
@@ -101,27 +101,25 @@ describe("Prioritizer", () => {
 			installationId: 4711,
 			jiraHost: "https://foo.atlassian.net",
 			numberOfSyncedRepos: 0,
-			repository: {
+			repositoryState: {
 				lastCommitCursor: lastCommitCursor,
 				lastPullCursor: lastPullrequestCursor,
 				lastBranchCursor: lastBranchCursor,
 				commitStatus: commitStatus,
 				branchStatus: branchStatus,
-				pullStatus: pullrequestStatus,
-				repository: {
-					id: "foo",
-					name: "repo1",
-					full_name: "repo1",
-					owner: {
-						login: "owner"
-					},
-					html_url: "https://github.com/foo",
-					updated_at: 42
-				}
+				pullStatus: pullrequestStatus
+			},
+			repository: {
+				id: "foo",
+				name: "repo1",
+				full_name: "repo1",
+				owner: {
+					login: "owner"
+				},
+				html_url: "https://github.com/foo",
+				updated_at: 42
 			}
 		}
 	}
-
-
 });
 
