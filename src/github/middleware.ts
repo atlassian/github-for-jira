@@ -77,6 +77,12 @@ export default (
 		enhanceOctokit(context.github);
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
+		// Metrics for webhook payload size
+		if (await booleanFlag(BooleanFlags.PAYLOAD_SIZE_METRIC, false)) {
+			emitWebhookPayloadMetrics(webhookEvent,
+				Buffer.byteLength(JSON.stringify(context.payload), "utf-8"));
+		}
+
 		const webhookReceived = getCurrentTime();
 		context.webhookReceived = webhookReceived;
 		context.sentry?.setExtra("GitHub Payload", {
@@ -166,12 +172,6 @@ export default (
 			context.sentry?.setUser({ jiraHost, gitHubInstallationId });
 			context.log = context.log.child({ jiraHost });
 			context.log("Processing event for Jira Host");
-
-			// Metrics for webhook payload size
-			if (await booleanFlag(BooleanFlags.PAYLOAD_SIZE_METRIC, false, jiraHost)) {
-				emitWebhookPayloadMetrics(webhookEvent,
-					Buffer.byteLength(JSON.stringify(context.payload), "utf-8"));
-			}
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(
