@@ -32,6 +32,10 @@ function mapStatus(status: string, conclusion?: string): string {
 			return "unknown";
 	}
 }
+//
+// function findJiraIssueKeysFromPR() {
+//
+// }
 
 function mapPullRequests(pull_requests: GitHubPullRequest[]): JiraPullRequest[] {
 	return pull_requests.map(pr => (
@@ -50,6 +54,16 @@ function mapPullRequests(pull_requests: GitHubPullRequest[]): JiraPullRequest[] 
 
 export default (context: Context): JiraBuildData | undefined => {
 	const { workflow_run, workflow } = context.payload;
+
+	/*
+	* 1. Grab the pr
+	* 2. Get the commits from that PR max 250
+	* 3. Get the message for every commit
+	* 4. Check if there's a Jira issue key on that message
+	* 5. Add to issueKeys const
+	*
+	* */
+
 	const issueKeys = issueKeyParser().parse(`${workflow_run.head_branch}\n${workflow_run.head_commit.message}`);
 
 	if (!issueKeys) {

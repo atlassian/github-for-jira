@@ -2,6 +2,60 @@ import _ from "lodash";
 import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
 import { JiraDeploymentData } from "../interfaces/jira";
+import {GitHubAPI} from "probot";
+
+async function lookForCommitsOnThisDeployment(owner: string, repoName: string, currentDeploySha:string, currentDeployEnv: string, github: GitHubAPI): Promise<string> {
+	// Grab all deployments for this repo
+	const deployments = await github.repos.listDeployments({
+		owner: owner,
+		repo: repoName,
+	})
+
+	let latestSuccessfulDeploy = "";
+	for (const deployment of deployments.data) {
+		// Filter by environment
+		if(deployment.environment === currentDeployEnv) {
+			// Get all status for a deployment
+			const listDeploymentStatusResponse = await github.repos.listDeploymentStatuses({
+				owner: owner,
+				repo: repoName,
+				deployment_id: deployment.id
+			})
+
+			// Look for a successful one
+			for (const deploymentStatus of listDeploymentStatusResponse.data) {
+				const getDeploymentStatusResponse = await github.repos.getDeploymentStatus({
+					owner: owner,
+					repo: repoName,
+					deployment_id: deployment.id,
+					status_id: Number(deploymentStatus.id)
+				})
+
+				if(getDeploymentStatusResponse.data.state === "success" && deployment.sha !== currentDeploySha) {
+					latestSuccessfulDeploy = deployment.sha;
+					break;
+				}
+			}
+		}
+		if(latestSuccessfulDeploy !== ""){
+			break;
+		}
+	}
+
+	const commitsDiff = await github.repos.compareCommits({
+		owner: owner,
+		repo: repoName,
+		base: latestSuccessfulDeploy,
+		head: currentDeploySha
+	})
+
+	let allCommitMessages = "";
+	for (const commit of commitsDiff.data.commits) {
+		allCommitMessages = allCommitMessages + " " + commit.commit.message
+	}
+
+	return allCommitMessages;
+}
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
 // https://docs.github.com/en/rest/reference/repos#list-deployments
@@ -65,7 +119,10 @@ export function mapEnvironment(environment: string): string {
 export default async (context: Context): Promise<JiraDeploymentData | undefined> => {
 	const { github, payload: { deployment_status, deployment } } = context;
 	const { data: { commit: { message } } } = await github.repos.getCommit(context.repo({ ref: deployment.sha }));
-	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`) || [];
+
+	const allCommitsMessages = await lookForCommitsOnThisDeployment(context.payload.repository.owner.login, context.payload.repository.name, deployment.sha, deployment_status.environment, github);
+
+	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}\n${allCommitsMessages}`) || [];
 
 	if (_.isEmpty(issueKeys)) {
 		return undefined;
