@@ -202,7 +202,14 @@
                         {{/if}}
                         {{#if (failedSync syncStatus)}}
                           <div class="jiraConfiguration__retryContainer">
-                            <span class="jiraConfiguration__retry sync-connection-link" data-jira-host="{{ ../host }}" data-installation-id="{{ id }}">&#x21bb;</span>
+                            <button
+                              class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
+                              data-jira-host="{{ ../host }}"
+                              data-installation-id="{{ id }}"
+                              id="restart-backfill"
+                            >
+                              &#x21bb;
+                            </button>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                             <div class="jiraConfiguration__retryMsg">Retry</div>
                           </div>
@@ -240,13 +247,14 @@
                             Configure
                           </a>
                           <div class="jiraConfiguration__table__cell__settings__dropdownItem">
-                            <span
-                              class="sync-connection-link"
+                            <button
+                              class="sync-connection-link restart-backfill-button"
                               data-jira-host="{{ ../host }}"
                               data-installation-id="{{ id }}"
+                              id="restart-backfill"
                             >
                               Restart backfill
-                            </span>
+                            </button>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                           </div>
                           <button class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link" data-installation-id="{{ id }}">Disconnect</button>
