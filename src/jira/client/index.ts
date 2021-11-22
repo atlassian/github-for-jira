@@ -199,7 +199,6 @@ async function getJiraClient(
 						data,
 						instance,
 						gitHubInstallationId,
-						logger,
 						options
 					);
 				}
@@ -277,7 +276,6 @@ const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
 	installationId: number,
-	logger?: Logger,
 	options?: { preventTransitions: boolean }
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
@@ -299,10 +297,7 @@ const batchedBulkUpdate = async (
 				installationId
 			}
 		};
-		return instance.post("/rest/devinfo/0.10/bulk", body).catch((err) => {
-			logger?.error({ ...err, body, data }, "Jira Client Error: Cannot update Repository");
-			return Promise.reject(err);
-		});
+		return instance.post("/rest/devinfo/0.10/bulk", body);
 	});
 	return Promise.all(batchedUpdates);
 };

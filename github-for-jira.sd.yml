@@ -91,7 +91,7 @@ resources:
   - type: sqs
     name: push
     attributes:
-      MaxReceiveCount: 3
+      MaxReceiveCount: 5
       MessageRetentionPeriod: 1209600
       VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
       dataType:
@@ -192,6 +192,11 @@ config:
     # SENTRY_DSN: client key required to connect to Sentry
     # WEBHOOK_SECRET: the webhook secret configured in the GitHub app
 
+loadBalancer:
+  type: ALB
+  single: true
+  slowStart: 180
+
 workers:
   - name: Worker
     scaling:
@@ -291,7 +296,7 @@ environmentOverrides:
                 Metric:
                   Dimensions:
                     - Name: LoadBalancer
-                      Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+                      Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
                     - Name: TargetGroup
                       Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
                   MetricName: TargetResponseTime
@@ -303,21 +308,23 @@ environmentOverrides:
     alarms:
       overrides:
         HighSeverityAlarmWhenTooManyBackend5xxErrors: null
-        ElbResponseTimeAlert:
-          Namespace: AWS/ApplicationELB
-          MetricName: TargetResponseTime
-          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
-          Dimensions:
-            - Name: LoadBalancer
-              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
-            - Name: TargetGroup
-              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-          Threshold: 5
-          Priority: Low
-          EvaluationPeriods: 3
-          Period: 60
-          ComparisonOperator: GreaterThanThreshold
-          Statistic: Average
+        LatencyHigh: null
+#TODO Uncomment when we stop doing hourly deployments
+#        ElbResponseTimeAlert:
+#          Namespace: AWS/ApplicationELB
+#          MetricName: TargetResponseTime
+#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+#          Dimensions:
+#            - Name: LoadBalancer
+#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+#            - Name: TargetGroup
+#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+#          Threshold: 5
+#          Priority: Low
+#          EvaluationPeriods: 5
+#          Period: 180
+#          ComparisonOperator: GreaterThanThreshold
+#          Statistic: Average
     workers:
       - name: Worker
         scaling:
@@ -326,6 +333,13 @@ environmentOverrides:
           max: 5
           metrics: *CpuMemScalingRules
     resources:
+      - name: rds
+        type: dedicated-rds
+        attributes:
+          parameters:
+            # Adding read replica in staging as it's not enabled by default so we can read state
+            ReadReplica: true
+
       - type: globaledge
         name: proxy
         attributes:
@@ -365,21 +379,23 @@ environmentOverrides:
           metrics: *CpuMemScalingRules
     alarms:
       overrides:
-        ElbResponseTimeAlert:
-          Namespace: AWS/ApplicationELB
-          MetricName: TargetResponseTime
-          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
-          Dimensions:
-            - Name: LoadBalancer
-              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
-            - Name: TargetGroup
-              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-          Threshold: 5
-          Priority: Low
-          EvaluationPeriods: 3
-          Period: 60
-          ComparisonOperator: GreaterThanThreshold
-          Statistic: Average
+        LatencyHigh: null
+#TODO Uncomment when we stop doing hourly deployments
+#        ElbResponseTimeAlert:
+#          Namespace: AWS/ApplicationELB
+#          MetricName: TargetResponseTime
+#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+#          Dimensions:
+#            - Name: LoadBalancer
+#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+#            - Name: TargetGroup
+#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+#          Threshold: 5
+#          Priority: Low
+#          EvaluationPeriods: 5
+#          Period: 180
+#          ComparisonOperator: GreaterThanThreshold
+#          Statistic: Average
         HighSeverityAlarmWhenTooManyBackend5xxErrors:
           MetricName: HTTPCode_Target_5XX_Count
           Namespace: AWS/ApplicationELB

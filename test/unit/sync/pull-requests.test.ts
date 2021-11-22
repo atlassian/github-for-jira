@@ -6,7 +6,7 @@ import { Application } from "probot";
 import createJob from "../../setup/create-job";
 import { processInstallation } from "../../../src/sync/installation";
 import nock from "nock";
-import { RepoSyncState } from "../../../src/models/subscription";
+import { RepoSyncStateObject } from "../../../src/models/subscription";
 import { createWebhookApp } from "../../utils/probot";
 import {getLogger} from "../../../src/config/logger";
 
@@ -19,7 +19,7 @@ describe.skip("sync/pull-request", () => {
 
 	beforeEach(async () => {
 		jest.setTimeout(10000);
-		const repoSyncStatus: RepoSyncState = {
+		const repoSyncStatus: RepoSyncStateObject = {
 			installationId: 12345678,
 			jiraHost: "tcbyrd.atlassian.net",
 			repos: {
@@ -115,7 +115,7 @@ describe.skip("sync/pull-request", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
+			await expect(processInstallation(app, queues)(job, getLogger("test"))).toResolve();
 		});
 	});
 
@@ -128,7 +128,7 @@ describe.skip("sync/pull-request", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app, queues)(job, getLogger("test"))).toResolve();
 		expect(queues.pullRequests.add).not.toHaveBeenCalled();
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
@@ -147,7 +147,7 @@ describe.skip("sync/pull-request", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app, queues)(job, getLogger("test"))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);

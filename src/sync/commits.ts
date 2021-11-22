@@ -1,14 +1,14 @@
 import transformCommit from "../transforms/commit";
 import { getCommits as getCommitsQuery, getDefaultRef } from "./queries";
 import { GitHubAPI } from "probot";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { getLogger } from "../config/logger";
 import { Repository } from "../models/subscription";
+import GitHubClient from "../github/client/github-client";
 
 const logger = getLogger("sync.commits");
 
 // TODO: better typings
-export default async (github: GitHubAPI, repository: Repository, cursor?: string | number, perPage?: number) => {
+export default async (github: GitHubAPI, _newGithub: GitHubClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 	// TODO: fix typings for graphql
 	const data = (await github.graphql(getDefaultRef, {
 		owner: repository.owner.login,
@@ -36,10 +36,6 @@ export default async (github: GitHubAPI, repository: Repository, cursor?: string
 	try {
 		commitsData = await getCommits(true);
 	} catch (err) {
-
-		if (!await booleanFlag(BooleanFlags.RETRY_WITHOUT_CHANGED_FILES, false)) {
-			throw err;
-		}
 
 		// According to the logs, GraphQL queries sometimes fail because the "changedFiles" field is not available.
 		// In this case we just try again, but without asking for the changedFiles field.
