@@ -130,8 +130,12 @@
   cursor: pointer;
   font-weight: normal;
   margin-left: 0.2em;
+  margin: 0.2em auto auto 0.5em;
+  font-size: 1.2rem;
   position: absolute;
   transform: scaleX(-1) rotate(30deg);
+  background: inherit;
+  border: none;
 }
 
 .jiraConfiguration__retryMsg {
@@ -232,6 +236,14 @@
   background-color: #ecedf0 !important;
   box-shadow: none !important;
   color: #455570 !important;
+}
+
+.sync-connection-link.restart-backfill-button {
+  padding: 0;
+}
+
+#restart-backfill:hover {
+  background-color: inherit;
 }
 
 .jiraConfiguration__table__cell:nth-child(3) {
