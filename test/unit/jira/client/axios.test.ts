@@ -1,4 +1,4 @@
-import getJiraAxios from "../../../../src/jira/client/axios";
+import getJiraAxios, {JiraClientError} from "../../../../src/jira/client/axios";
 
 describe("Jira axios instance", () => {
 
@@ -55,6 +55,22 @@ describe("Jira axios instance", () => {
 				//   },
 				//   value: (value) => value > 0 && value < 1000,
 				// });
+			});
+
+			it("Serialized error doesn't have request payload", async () => {
+				const requestPayload = "TestRequestPayload";
+				jiraNock.post("/foo/bar", requestPayload).reply(500);
+
+				let error = undefined;
+				try {
+					await getJiraAxios(jiraHost, "secret").post("/foo/bar", requestPayload)
+				} catch(e) {
+					error = e
+				}
+
+				expect(error).toBeInstanceOf(JiraClientError);
+				const serialisedError = JSON.stringify(error);
+				expect(serialisedError).not.toContain(requestPayload);
 			});
 		});
 	});

@@ -1,4 +1,4 @@
-import getAxiosInstance from "../jira/client/axios";
+import getAxiosInstance, {JiraClientError} from "../jira/client/axios";
 import { AxiosInstance } from "axios";
 import Installation from "./installation";
 import Logger from "bunyan";
@@ -20,7 +20,7 @@ export default class JiraClient {
 		try {
 			return (await this.axios.get("/rest/devinfo/0.10/existsByProperties?fakeProperty=1")).status === 200;
 		} catch (error) {
-			if (!error.response) {
+			if (!(error instanceof JiraClientError)) {
 				throw error;
 			}
 			return false;
