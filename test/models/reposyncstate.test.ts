@@ -106,7 +106,7 @@ describe("RepoSyncState", () => {
 		};
 
 		it("Should create a new row in table when setting JSON with repos", async () => {
-			await RepoSyncState.updateFromJson(sub, {
+			await RepoSyncState.updateFromRepoJson(sub, {
 				numberOfSyncedRepos: 2,
 				jiraHost: sub.jiraHost,
 				installationId: sub.gitHubInstallationId,
@@ -144,7 +144,7 @@ describe("RepoSyncState", () => {
 
 			let repos = await RepoSyncState.findAllFromSubscription(sub);
 			expect(repos.length).toEqual(2);
-			await RepoSyncState.updateFromJson(sub, {
+			await RepoSyncState.updateFromRepoJson(sub, {
 				numberOfSyncedRepos: 1,
 				jiraHost: sub.jiraHost,
 				installationId: sub.gitHubInstallationId,

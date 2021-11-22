@@ -27,7 +27,8 @@ export enum BooleanFlags {
 	SEND_PUSH_TO_SQS = "send-push-events-to-sqs",
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
-	NEW_REPO_SYNC_STATE = "new-repo-sync-state"
+	NEW_REPO_SYNC_STATE = "new-repo-sync-state",
+	REPO_SYNC_STATE_AS_SOURCE = "repo-sync-state-as-source"
 }
 
 export enum StringFlags {
