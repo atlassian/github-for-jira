@@ -1,29 +1,44 @@
+import Logger from 'bunyan';
 import { Octokit } from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
 import { GetPullRequestParams } from "./types";
-	
+import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
+import { metricHttpRequest } from "../../config/metric-names";
+import { getLogger } from "../../config/logger";
+
 /**
  * A GitHub client that supports authentication as a GitHub app.
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
 export default class GitHubClient {
-
 	private readonly axios: AxiosInstance;
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	private readonly githubInstallationId: number;
+	private logger: Logger;
 
 	constructor(
 		githubInstallationId: number,
+		logger: Logger,
 		baseURL = "https://api.github.com"
 	) {
+		this.logger = logger || getLogger("github.client.axios");
 		this.axios = axios.create({
 			baseURL
 		});
+		this.axios.interceptors.request.use(setRequestStartTime);
+		this.axios.interceptors.response.use(
+			undefined,
+			handleFailedRequest(this.logger)
+		);
+		this.axios.interceptors.response.use(
+			instrumentRequest(metricHttpRequest.github),
+			instrumentFailedRequest(metricHttpRequest.github)
+		);
 		this.appTokenHolder = AppTokenHolder.getInstance();
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;

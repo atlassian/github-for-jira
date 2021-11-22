@@ -249,7 +249,7 @@ async function doProcessInstallation(app, queues, job, installationId: number, j
 		logger
 	);
 
-	const newGithub = new GitHubClient(installationId);
+	const newGithub = new GitHubClient(installationId, logger);
 
 	const github = await getEnhancedGitHub(app, installationId);
 
