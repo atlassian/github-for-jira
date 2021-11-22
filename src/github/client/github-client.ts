@@ -8,6 +8,7 @@ import { GetPullRequestParams } from "./types";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
+import {urlParamsMiddleware} from "../../util/axios/common-middleware";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -30,6 +31,7 @@ export default class GitHubClient {
 		this.axios = axios.create({
 			baseURL
 		});
+		this.axios.interceptors.request.use(urlParamsMiddleware)
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.response.use(
 			undefined,
@@ -84,13 +86,14 @@ export default class GitHubClient {
 		return new AuthToken(tokenResponse.token, new Date(tokenResponse.expires_at));
 	}
 
-	private async get<T>(url, params = {}): Promise<AxiosResponse<T>> {
+	private async get<T>(url, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
 		const response = await this.axios.get<T>(url, {
 			...await this.installationAuthenticationHeaders(),
-			params: { 
+			params: {
 				installationId: this.githubInstallationId,
-				...params
-			}
+				...params,
+			},
+			urlParams,
 		});
 		//TODO: error handling
 		return response;
@@ -100,21 +103,30 @@ export default class GitHubClient {
 	 * Lists pull requests for the given repository.
 	 */
 	public async getPullRequests(owner:string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
-		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/${owner}/${repo}/pulls`, pullRequestParams);
+		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/:owner/:repo/pulls`, pullRequestParams, {
+			owner,
+			repo
+		});
 	}
 
 	/**
 	 * Get a single pull request for the given repository.
 	 */
 	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
-		return await this.get<Octokit.PullsGetResponse>(`/repos/${owner}/${repo}/pulls/${pullNumber}`);
+		return await this.get<Octokit.PullsGetResponse>(`/repos/:owner/:repo/pulls/:pullNumber`, {
+			owner,
+			repo,
+			pullNumber
+		});
 	}
 
 	/**
 	 * Get publicly available information for user with given username.
 	 */
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
-		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/${username}`);
+		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/:username`, {
+			username
+		});
 	}
 
 }

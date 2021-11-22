@@ -6,6 +6,7 @@ import statsd from "../../config/statsd";
 import { getLogger } from "../../config/logger";
 import { metricHttpRequest } from "../../config/metric-names";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
+import {urlParamsMiddleware} from "../../util/axios/common-middleware";
 
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
@@ -148,44 +149,6 @@ function getSuccessMiddleware(logger: Logger) {
 	);
 }
 
-/**
- * Enrich the Axios Request Config with a URL object.
- */
-
-// TODO: non-standard and probably should be done through string interpolation
-function getUrlMiddleware() {
-	return (
-		/**
-		 * @param {import("axios").AxiosRequestConfig} config - The outgoing request configuration.
-		 * @returns {import("axios").AxiosRequestConfig} The enriched axios request config.
-		 */
-		(config) => {
-			// eslint-disable-next-line prefer-const
-			let { query, pathname, ...rest } = url.parse(config.url, true);
-			config.urlParams = config.urlParams || {};
-
-			for (const param in config.urlParams) {
-				if (pathname?.includes(`:${param}`)) {
-					pathname = pathname.replace(`:${param}`, config.urlParams[param]);
-				} else {
-					query[param] = config.urlParams[param];
-				}
-			}
-
-			config.urlParams.baseUrl = config.baseURL;
-
-			return {
-				...config,
-				originalUrl: config.url,
-				url: url.format({
-					...rest,
-					pathname,
-					query
-				})
-			};
-		}
-	);
-}
 
 /*
  * The Atlassian API uses JSON Web Tokens (JWT) for authentication along with
@@ -285,7 +248,7 @@ export default (
 	);
 
 	instance.interceptors.request.use(getAuthMiddleware(secret));
-	instance.interceptors.request.use(getUrlMiddleware());
+	instance.interceptors.request.use(urlParamsMiddleware);
 
 	instance.interceptors.response.use(
 		getSuccessMiddleware(logger),

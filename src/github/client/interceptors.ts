@@ -22,6 +22,7 @@ export const setRequestStartTime = (config) => {
 	return config;
 };
 
+//TODO Move to util/axios/common-middleware.ts and use with Jira Client
 const sendResponseMetrics = (response, metricName: string, status?: string | number) => {
 	status = `${status || response.status}`;
 	const requestDurationMs = Number(
@@ -43,7 +44,7 @@ const sendResponseMetrics = (response, metricName: string, status?: string | num
 }
 
 
-export const instrumentRequest = (metricName) => 
+export const instrumentRequest = (metricName) =>
 	(response) => {
 		if(!response) {
 			return;
@@ -67,32 +68,34 @@ export const instrumentFailedRequest = (metricName) =>
 		} else {
 			sendResponseMetrics(error.response, metricName)
 		}
-		
+
 		return Promise.reject(error);
 	};
 
 
-export const handleFailedRequest = (logger: Logger) => 
+export const handleFailedRequest = (logger: Logger) =>
 	(error) => {
-		if(error.response) {
-			const status = error.response?.status;
+		const response = error.response;
+		if(response) {
+			const status = response?.status;
 			const errorMessage = `Error executing Axios Request ` + error.message;
 
-			if(error.headers?.["X-RateLimit-Remaining"] == "0" && error.headers?.["X-RateLimit-Reset"])
+			const rateLimitResetHeaderValue:string = response.headers?.["x-ratelimit-reset"];
+			if(response.headers?.["x-ratelimit-remaining"] == "0" && rateLimitResetHeaderValue)
 			{
 				logger.warn({ err: error }, "Rate limiting error");
-				const rateLimitReset: number = parseInt(error.headers["X-RateLimit-Reset"]);
+				const rateLimitReset: number = parseInt(rateLimitResetHeaderValue);
 				return Promise.reject(new RateLimitingError(rateLimitReset, error, status));
 			}
 
 			if (status === 403)
 			{
 				logger.warn({ err: error }, "Github returned 403 without ratelimit header");
-				return Promise.reject(new RateLimitingError(new Date().getTime() / 1000 + 60 * 60, error, status));
+				return Promise.reject(new RateLimitingError(Date.now() / 1000 + 60 * 60, error, status));
 			}
-			
+
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
-			
+
 			isWarning? logger.warn(errorMessage) : logger.error({err: error}, errorMessage);
 			return Promise.reject(new GithubClientError(errorMessage, error, status));
 		}
