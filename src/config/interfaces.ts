@@ -1,27 +1,27 @@
-interface FailledInstallationsRequestHeaders {
+interface FailedInstallationsRequestHeaders {
 	accept: string;
 	"user-agent": string;
 	authorization: string;
 }
 
-interface FailledInstallationsRequestObjectValidateId {
+interface FailedInstallationsRequestObjectValidateId {
 	required: boolean;
 	type: string;
 }
 
-interface FailledInstallationsRequestObjectValidate {
-	installation_id: FailledInstallationsRequestObjectValidateId;
+interface FailedInstallationsRequestObjectValidate {
+	installation_id: FailedInstallationsRequestObjectValidateId;
 }
 
-interface FailledInstallationsRequestObject {
-	validate: FailledInstallationsRequestObjectValidate;
+interface FailedInstallationsRequestObject {
+	validate: FailedInstallationsRequestObjectValidate;
 }
 
 interface FailedInstallationRequest {
 	method: string;
 	url: string;
-	headers: FailledInstallationsRequestHeaders;
-	request: FailledInstallationsRequestObject;
+	headers: FailedInstallationsRequestHeaders;
+	request: FailedInstallationsRequestObject;
 }
 
 interface FailedInstallationError {
