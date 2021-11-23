@@ -9,8 +9,6 @@ import {DeduplicatorResult} from "../../../src/sync/deduplicator";
 import {Application} from "probot";
 import {getLogger} from "../../../src/config/logger";
 
-import '../../../src/config/feature-flags';
-import {BooleanFlags} from "../../../src/config/feature-flags";
 import Queue from "bull";
 
 const mockedExecuteWithDeduplication = jest.fn();
@@ -25,23 +23,10 @@ jest.mock('../../../src/sync/deduplicator', () => {
 
 jest.mock("../../../src/models");
 
-let mockedBooleanFeatureFlags = {};
-jest.mock('../../../src/config/feature-flags', () => {
-	return {
-		...jest.requireActual('../../../src/config/feature-flags'),
-		booleanFlag: (key) => Promise.resolve(mockedBooleanFeatureFlags[key])
-	};
-});
-
 describe("sync/installation", () => {
 
 	beforeEach(() => {
 		mockedExecuteWithDeduplication.mockReset();
-		mockedBooleanFeatureFlags[BooleanFlags.USE_DEDUPLICATOR_FOR_BACKFILLING] = true;
-	});
-
-	afterEach(() => {
-		mockedBooleanFeatureFlags = {};
 	});
 
 	describe("isRetryableWithSmallerRequest()", () => {
