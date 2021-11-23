@@ -29,10 +29,10 @@ if (env.error && nodeEnv !== EnvironmentEnum.production) {
 	throw env.error;
 }
 
-// TODO: Use whitelist proxy instead
 const getProxyFromEnvironment = (): string | undefined => {
-	const proxy = process.env.WHITELIST_PROXY;
-	return proxy ? `http://${proxy}` : undefined;
+	const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
+	const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
+	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
 };
 
 // TODO: Make envvars dynamic
@@ -88,6 +88,7 @@ export interface EnvVars {
 	GIT_BRANCH_NAME?: string;
 	GITHUB_REPO_URL: string;
 	DEPLOYMENT_DATE: string;
+	BULL_QUEUE_PREFIX?: string;
 
 	// Test Vars
 	ATLASSIAN_SECRET?: string;

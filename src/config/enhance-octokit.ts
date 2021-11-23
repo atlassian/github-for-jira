@@ -31,6 +31,7 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 
 		if (error.status === 403) {
 			// delaying for an hour
+			logger.warn({ err: error }, "GitHub returned 403");
 			throw new RateLimitingError(new Date().getTime() / 1000 + 60 * 60);
 		}
 		throw error;

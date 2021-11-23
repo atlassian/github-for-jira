@@ -13,7 +13,6 @@ import { Application } from "probot";
 import { deleteRepository } from "./repository";
 
 export default (robot: Application) => {
-
 	// TODO: Need ability to remove these listeners, especially for testing...
 	robot.on("*", async (context) => {
 		const { name, payload, id } = context;

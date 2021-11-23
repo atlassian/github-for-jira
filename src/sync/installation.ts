@@ -6,22 +6,23 @@ import SubscriptionClass, {
 	SyncStatus,
 	TaskStatus
 } from "../models/subscription";
-import {Subscription} from "../models";
+import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
-import {getRepositorySummary} from "./jobs";
+import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import statsd from "../config/statsd";
 import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
-import {Application, GitHubAPI} from "probot";
-import {metricSyncStatus, metricTaskStatus} from "../config/metric-names";
+import { Application, GitHubAPI } from "probot";
+import { metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import Queue from "bull";
-import {booleanFlag, BooleanFlags, stringFlag, StringFlags} from "../config/feature-flags";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import {Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout} from "./deduplicator";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
+import GitHubClient from "../github/client/github-client";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -35,6 +36,8 @@ interface TaskProcessors {
 	[task: string]:
 		(
 			github: GitHubAPI,
+			newGithub: GitHubClient,
+			jiraHost: string,
 			repository: Repository,
 			cursor?: string | number,
 			perPage?: number
@@ -46,7 +49,7 @@ type TaskType = "pull" | "commit" | "branch";
 const taskTypes = Object.keys(tasks) as TaskType[];
 
 // TODO: why are we ignoring failed status as completed?
-const taskStatusCompleted:TaskStatus[] = ["complete", "failed"]
+const taskStatusCompleted: TaskStatus[] = ["complete", "failed"]
 const isAllTasksStatusesCompleted = (...statuses: (TaskStatus | undefined)[]): boolean =>
 	statuses.every(status => !!status && taskStatusCompleted.includes(status));
 
@@ -232,7 +235,11 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		installationId,
 		logger
 	);
+
+	const newGithub = new GitHubClient(installationId);
+
 	const github = await getEnhancedGitHub(app, installationId);
+
 	const nextTask = await getNextTask(subscription);
 
 	if (!nextTask) {
@@ -270,14 +277,14 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
 
 			// just try with one page size
-			return await processor(github, repository, cursor, 20);
+			return await processor(github, newGithub, jiraHost, repository, cursor, 20);
 
 		} else {
 
 			for (const perPage of [20, 10, 5, 1]) {
 				// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 				try {
-					return await processor(github, repository, cursor, perPage);
+					return await processor(github, newGithub, jiraHost, repository, cursor, perPage);
 				} catch (err) {
 					logger.error({
 						err,
@@ -387,34 +394,19 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 			return;
 		}
 
-		if (await booleanFlag(BooleanFlags.CONTINUE_SYNC_ON_ERROR, false, jiraHost)) {
 
-			// TODO: add the jiraHost to the logger with logger.child()
-			const host = subscription.jiraHost || "none";
-			logger.warn({ job, task: nextTask, err, jiraHost: host }, "Task failed, continuing with next task");
+		// TODO: add the jiraHost to the logger with logger.child()
+		const host = subscription.jiraHost || "none";
+		logger.warn({ job, task: nextTask, err, jiraHost: host }, "Task failed, continuing with next task");
 
-			// marking the current task as failed
-			await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
+		// marking the current task as failed
+		await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
 
-			statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
+		statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
 
-			// queueing the job again to pick up the next task
-			scheduleNextTask(0);
-		} else {
+		// queueing the job again to pick up the next task
+		scheduleNextTask(0);
 
-			await subscription.update({ syncStatus: "FAILED" });
-
-			// TODO: add the jiraHost to the logger with logger.child()
-			const host = subscription.jiraHost || "none";
-			logger.warn({ job, task: nextTask, err, jiraHost: host }, "Sync failed");
-
-			job.sentry.setExtra("Installation FAILED", JSON.stringify(err, null, 2));
-			job.sentry.captureException(err);
-
-			statsd.increment(metricSyncStatus.failed);
-
-			throw err;
-		}
 	}
 }
 
@@ -428,7 +420,7 @@ export function maybeScheduleNextTask(queue: Queue.Queue, jobData, nextTaskDelay
 		const delay = nextTaskDelays.shift()!;
 		logger.info("Scheduling next job with a delay = " + delay);
 		if (delay > 0) {
-			queue.add(jobData, {delay});
+			queue.add(jobData, { delay });
 		} else {
 			queue.add(jobData);
 		}
@@ -444,12 +436,12 @@ export const processInstallation =
 		);
 
 		return async (job, rootLogger: LoggerWithTarget): Promise<void> => {
-			const {installationId, jiraHost} = job.data;
+			const { installationId, jiraHost } = job.data;
 
-			const logger = rootLogger.child({job});
+			const logger = rootLogger.child({ job });
 
 			if (await isBlocked(installationId, logger)) {
-				logger.warn({job}, "blocking installation job");
+				logger.warn({ job }, "blocking installation job");
 				return;
 			}
 
