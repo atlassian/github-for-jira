@@ -6,7 +6,8 @@ export const metricError = {
 	githubErrorRendered: `${frontend}.error.github-error-rendered`,
 	failedConnection: `${server}.error.failed-connection`,
 	queueError: `${server}.error.queue-error`,
-	queueFailed: `${server}.error.queue-failed`
+	queueFailed: `${server}.error.queue-failed`,
+	blockedByGitHubAllowlist: `${server}.error.blocked-by-github-allowlist`
 };
 
 /**
