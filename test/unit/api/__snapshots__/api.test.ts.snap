@@ -2,8 +2,6 @@
 
 exports[`API Authentication should return 200 if a valid token is provided 1`] = `Object {}`;
 
-exports[`API Authentication should return 200 if a valid token is provided 2`] = `Object {}`;
-
 exports[`API Authentication should return 200 if token belongs to an admin 1`] = `Object {}`;
 
 exports[`API Authentication should return 401 if the GraphQL query returns errors 1`] = `
@@ -75,8 +73,6 @@ Object {
   "repoSyncState": "http://127.0.0.1/api/1234/repoSyncState.json",
 }
 `;
-
-exports[`API Endpoints repoSyncState RepoSyncState as Source should return the repoSyncState information for an existing installation 1`] = `""`;
 
 exports[`API Endpoints repoSyncState should return 404 if no installation is found 1`] = `Object {}`;
 
