@@ -131,7 +131,7 @@ export async function start() {
 			return Promise.resolve({
 				schedule: async (jobData, delayMsecs) => {
 					// TBD: switch to SQS with a FF
-					if ((delayMsecs || 0) > 0) {
+					if (delayMsecs) {
 						await queues.installation.add(jobData, {delay: delayMsecs});
 					} else {
 						await queues.installation.add(jobData);
