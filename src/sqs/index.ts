@@ -26,7 +26,7 @@ export type Context<MessagePayload> = {
 	payload: MessagePayload;
 
 	/**
-	 * Oritinal SQS Mesage
+	 * Original SQS Mesage
 	 */
 	message: Message;
 
@@ -36,7 +36,7 @@ export type Context<MessagePayload> = {
 	log: Logger;
 
 	/**
-	 * How many times this messages attempted to be processed, including the current attempt
+	 * How many times this messages attempted to be processed, including the current attempt (always greater 0)
 	 */
 	receiveCount: number;
 

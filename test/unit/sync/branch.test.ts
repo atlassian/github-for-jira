@@ -149,7 +149,7 @@ describe.skip("sync/branches", () => {
 				add: jest.fn()
 			}
 		};
-		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
@@ -174,7 +174,7 @@ describe.skip("sync/branches", () => {
 				add: jest.fn()
 			}
 		};
-		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
@@ -233,7 +233,7 @@ describe.skip("sync/branches", () => {
 				add: jest.fn()
 			}
 		};
-		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
@@ -253,7 +253,7 @@ describe.skip("sync/branches", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app, queues)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
 		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);

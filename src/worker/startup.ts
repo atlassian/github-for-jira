@@ -127,7 +127,18 @@ export async function start() {
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues), DISCOVERY_LOGGER_NAME));
 	queues.installation.process(
 		Number(CONCURRENT_WORKERS),
-		commonMiddleware(processInstallation(app, queues), INSTALLATION_LOGGER_NAME)
+		commonMiddleware(processInstallation(app, queues, () => {
+			return Promise.resolve({
+				schedule: async (jobData, delayMsecs) => {
+					// TBD: switch to SQS with a FF
+					if ((delayMsecs || 0) > 0) {
+						await queues.installation.add(jobData, {delay: delayMsecs});
+					} else {
+						await queues.installation.add(jobData);
+					}
+				}
+			})
+		}), INSTALLATION_LOGGER_NAME)
 	);
 	queues.push.process(
 		Number(CONCURRENT_WORKERS),
