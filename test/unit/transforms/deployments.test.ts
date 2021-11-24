@@ -1,8 +1,14 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+// eslint-disable-next-line import/no-duplicates
 import { mapEnvironment } from "../../../src/transforms/deployment";
 import transformDeployment from "../../../src/transforms/deployment";
 import {getLogger} from "../../../src/config/logger";
 import {GitHubAPI} from "probot";
+import nock from "nock"
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
+
+jest.mock("../../../src/config/feature-flags");
 
 describe("deployment environment mapping", () => {
 	test("classifies known environments correctly", () => {
@@ -74,12 +80,10 @@ describe("deployment environment mapping", () => {
 describe("transform GitHub webhook payload to Jira payload", () => {
 
 	const deployment_status = require("../../fixtures/deployment_status-basic.json");
-	console.log(JSON.stringify(deployment_status));
-	const owner = deployment_status.payload.deployment_status.creator.login;
+	const owner = deployment_status.payload.repository.owner.login;
 	const repo = deployment_status.payload.repository.name;
 
 	beforeEach(async () => {
-		jest.setTimeout(30000);
 		// Mocking all GitHub API Calls
 		// Get commit
 		githubNock.get(`/repos/${owner}/${repo}/commits/${deployment_status.payload.deployment.sha}`)
@@ -92,11 +96,12 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 		// List deployments
 		githubNock.get(`/repos/${owner}/${repo}/deployments`)
-			.reply(200, {
-				data: [
+			.reply(200,
+				[
 					{
 						id: 1,
-						environment: "test"
+						environment: "Production",
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
 					},
 					{
 						id: 2,
@@ -107,10 +112,38 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 						environment: " new test env"
 					}
 				]
-			});
+			);
 
 		// List deployments statuses
 		githubNock.get(`/repos/${owner}/${repo}/deployments/1/statuses`)
+			.reply(200, [
+				{
+					id: 1,
+					state: "pending"
+				},
+				{
+					id: 2,
+					state: "success"
+				}
+			]);
+
+		// List deployments statuses
+		githubNock.get(`/repos/${owner}/${repo}/deployments/2/statuses`)
+			.reply(200, {
+				data: [
+					{
+						id: 1,
+						state: "pending"
+					},
+					{
+						id: 2,
+						state: "success"
+					}
+				]
+			});
+
+		// List deployments statuses
+		githubNock.get(`/repos/${owner}/${repo}/deployments/3/statuses`)
 			.reply(200, {
 				data: [
 					{
@@ -131,56 +164,68 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
 			});
 
-		// Compare commits
-		githubNock.get(`/repos/${owner}/${repo}/compare/{6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+		// Get a deployment status
+		githubNock.get(`/repos/${owner}/${repo}/deployments/1/statuses/2`)
 			.reply(200, {
-				data: [{
-					commits: [
-						{
-							commit: {
-								message: "ABC-1"
-							}
-						},
-						{
-							commit: {
-								message: "ABC-2"
-							}
-						}
-					]}
-				]
+				state: "pending",
+				sha: "6e87a40179eb7ecf5094b9c8d690db727472222"
 			});
+
+		// Compare commits
+		githubNock.get(`/repos/${owner}/${repo}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+			.reply(200,{
+				commits: [
+					{
+						commit: {
+							message: "ABC-1"
+						}
+					},
+					{
+						commit: {
+							message: "ABC-2"
+						}
+					}
+				]}
+			);
 	});
 
-	it("supports branch and merge workflows", async () => {
+	it("supports branch and merge workflows - FF TRUE", async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
 
-		try {
-			const jiraPayload = await transformDeployment(GitHubAPI(), deployment_status.payload, getLogger("deploymentLogger"))
+		const jiraPayload = await transformDeployment(GitHubAPI(), deployment_status.payload, getLogger("deploymentLogger"))
 
-			expect(jiraPayload).toMatchObject({
-				deployments: [{
-					schemaVersion: "1.0",
-					deploymentSequenceNumber: 1234,
-					updateSequenceNumber: 123456,
-					issueKeys: ["ABC-1", "ABC-2"],
+		// Clean up all nock mocks
+		nock.cleanAll();
+
+		expect(jiraPayload).toMatchObject({
+			deployments: [{
+				schemaVersion: "1.0",
+				deploymentSequenceNumber: 1234,
+				updateSequenceNumber: 123456,
+				issueKeys: ["ABC-1", "ABC-2"],
+				displayName: "deploy",
+				url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
+				description: "deploy",
+				lastUpdated: "2021-06-28T12:15:18Z",
+				state: "successful",
+				pipeline: {
+					id: "deploy",
 					displayName: "deploy",
 					url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
-					description: "deploy",
-					lastUpdated: "2021-06-28T12:15:18Z",
-					state: "successful",
-					pipeline: {
-						id: "deploy",
-						displayName: "deploy",
-						url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
-					},
-					environment: {
-						id: "Production",
-						displayName: "Production",
-						type: "production",
-					},
-				}]
-			})
-		} catch (e) {
-			console.log(e);
-		}
+				},
+				environment: {
+					id: "Production",
+					displayName: "Production",
+					type: "production",
+				},
+			}]
+		})
+		expect(githubNock.pendingMocks()).toEqual([]);
 	})
+
+	// TODO add test if FF is false
 });

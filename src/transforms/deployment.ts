@@ -1,52 +1,69 @@
 import _ from "lodash";
 import issueKeyParser from "jira-issue-key-parser";
-import { JiraDeploymentData } from "../interfaces/jira";
+import {JiraDeploymentData} from "../interfaces/jira";
 import {GitHubAPI} from "probot";
 import {WebhookPayloadDeploymentStatus} from "@octokit/webhooks";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import {Octokit} from "@octokit/rest";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 
-async function lookForCommitsOnThisDeployment(owner: string, repoName: string, currentDeploySha:string, currentDeployEnv: string, github: GitHubAPI): Promise<string> {
+async function getLastSuccessfulDeployCommitSha(
+	owner: string,
+	repoName: string,
+	github: GitHubAPI,
+	deployments: Octokit.ReposListDeploymentsResponseItem[]
+): Promise<string> {
+
+	for (const deployment of deployments) {
+		// Get each deployment status for this environment so we can have their statuses' ids
+		const listDeploymentStatusResponse: Octokit.Response<Octokit.ReposListDeploymentStatusesResponse> = await github.repos.listDeploymentStatuses({
+			owner: owner,
+			repo: repoName,
+			deployment_id: deployment.id
+		});
+
+		// Filter only the successful ones
+		const lastSuccessful: Octokit.ReposListDeploymentStatusesResponseItem[] = listDeploymentStatusResponse.data.filter(deployment => deployment.state === "success");
+		if (lastSuccessful) {
+			return deployment.sha;
+		}
+	}
+
+	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 250) then we'll return the last one from the array, even if it's a failed one.
+	return deployments[deployments.length - 1].sha;
+}
+
+async function getCommitMessagesSinceLastSuccessfulDeployment(
+	owner: string,
+	repoName: string,
+	currentDeploySha: string,
+	currentDeployId: number,
+	currentDeployEnv: string,
+	github: GitHubAPI
+): Promise<string> {
+
 	// Grab all deployments for this repo
-	const deployments = await github.repos.listDeployments({
+	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> = await github.repos.listDeployments({
 		owner: owner,
 		repo: repoName,
 	})
 
-	let latestSuccessfulDeploy = "";
-	for (const deployment of deployments.data) {
-		// Filter by environment
-		if(deployment.environment === currentDeployEnv) {
-			// Get all status for a deployment
-			const listDeploymentStatusResponse = await github.repos.listDeploymentStatuses({
-				owner: owner,
-				repo: repoName,
-				deployment_id: deployment.id
-			})
+	// Filter per current environment and exclude itself
+	const filteredDeployments = deployments.data
+		.filter(deployment => deployment.environment === currentDeployEnv)
+		.filter(deployment => deployment.id !== currentDeployId);
 
-			// Look for a successful one
-			for (const deploymentStatus of listDeploymentStatusResponse.data) {
-				const getDeploymentStatusResponse = await github.repos.getDeploymentStatus({
-					owner: owner,
-					repo: repoName,
-					deployment_id: deployment.id,
-					status_id: Number(deploymentStatus.id)
-				})
-
-				if(getDeploymentStatusResponse.data.state === "success" && deployment.sha !== currentDeploySha) {
-					latestSuccessfulDeploy = deployment.sha;
-					break;
-				}
-			}
-		}
-		if(latestSuccessfulDeploy !== ""){
-			break;
-		}
+	// If this is the very first successful deployment ever, return nothing because we won't have any commit sha to compare with the current one.
+	if (!filteredDeployments.length) {
+		return "";
 	}
+
+	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, github, filteredDeployments);
 
 	const commitsDiff = await github.repos.compareCommits({
 		owner: owner,
 		repo: repoName,
-		base: latestSuccessfulDeploy,
+		base: lastSuccessfullyDeployedCommit,
 		head: currentDeploySha
 	})
 
@@ -121,21 +138,27 @@ export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeployment
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 
-	const { data: { commit: { message } } } = await githubClient.repos.getCommit({
+	const {data: {commit: {message}}} = await githubClient.repos.getCommit({
 		owner: payload.repository.owner.login,
 		repo: payload.repository.name,
 		ref: deployment.sha
 	});
 
-	const allCommitsMessages = await lookForCommitsOnThisDeployment(
-		payload.repository.owner.login,
-		payload.repository.name,
-		deployment.sha,
-		deployment_status.environment,
-		githubClient
-	);
+	let issueKeys;
+	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {
+		const allCommitsMessages = await getCommitMessagesSinceLastSuccessfulDeployment(
+			payload.repository.owner.login,
+			payload.repository.name,
+			deployment.sha,
+			deployment.id,
+			deployment_status.environment,
+			githubClient
+		);
 
-	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}\n${allCommitsMessages}`) || [];
+		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}\n${allCommitsMessages}`) || [];
+	} else {
+		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`) || [];
+	}
 
 	if (_.isEmpty(issueKeys)) {
 		return undefined;

@@ -4,7 +4,7 @@
 		"deployment_status": {
 			"url": "test-repo-url/deployments/1234/statuses/1",
 			"id": 123456,
-			"state": "pending",
+			"state": "success",
 			"creator": {
 				"login": "TestUser[bot]",
 				"type": "Bot"
