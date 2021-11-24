@@ -21,12 +21,14 @@ export enum BooleanFlags {
 	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
 	NEW_SETUP_PAGE = "new-setup-page",
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
+	USE_DEDUPLICATOR_FOR_BACKFILLING = "use-deduplicator-for-backfilling",
 	// When cleaning up the SEND_PUSH_TO_SQS feature flag, please also clean up the PRIORITIZE_PUSHES
 	// feature flag, because it doesn't make sense with SQS any more.
 	SEND_PUSH_TO_SQS = "send-push-events-to-sqs",
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
 	NEW_REPO_SYNC_STATE = "new-repo-sync-state",
+	PAYLOAD_SIZE_METRIC = "payload-size-metrics",
 	USE_BACKFILL_QUEUE_SUPPLIER = "use-backfill-queue-supplier"
 }
 
