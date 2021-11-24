@@ -15,8 +15,10 @@ export class RateLimitingError extends GithubClientError {
 	 * The value of the x-ratelimit-reset header, i.e. the epoch seconds when the rate limit is refreshed.
 	 */
 	rateLimitReset: number;
-	constructor(resetEpochSeconds: number, error: AxiosError, status?: number) {
+	rateLimitRemaining: number;
+	constructor(resetEpochSeconds: number, rateLimitRemaining: number, error: AxiosError, status?: number) {
 		super("Rate limiting error", error, status);
 		this.rateLimitReset = resetEpochSeconds;
+		this.rateLimitRemaining = rateLimitRemaining;
 	}
 }
