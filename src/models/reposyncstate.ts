@@ -88,11 +88,12 @@ export default class RepoSyncState extends Sequelize.Model {
 		return RepoSyncState.findOne(_.merge(options, {
 			where: {
 				subscriptionId: subscription.id
-			}
-		}));
+			},
+			order: [["repoUpdatedAt", "DESC"]]
+		} as FindOptions));
 	}
 
-	static async deleteAllFromSubscription(subscription: Subscription, options: DestroyOptions = {}): Promise<number> {
+	static async deleteFromSubscription(subscription: Subscription, options: DestroyOptions = {}): Promise<number> {
 		return RepoSyncState.destroy(_.merge(options, {
 			where: {
 				subscriptionId: subscription.id
@@ -145,8 +146,8 @@ export default class RepoSyncState extends Sequelize.Model {
 			return Promise.all(
 				repoIds.map(id => {
 					const repo = json.repos?.[id];
-					const model = states.find(s => s.repoId === Number(id)) || RepoSyncState.buildFromRepoJson(subscription, repo);
-					return model?.setFromRepoJson(repo).save({ transaction });
+					const model = states.find(s => s.repoId === Number(id)) || RepoSyncState.buildFromRepositoryData(subscription, repo);
+					return model?.setFromRepositoryData(repo).save({ transaction });
 				})
 			);
 		});
@@ -165,8 +166,8 @@ export default class RepoSyncState extends Sequelize.Model {
 		};
 	}
 
-	static buildFromRepoJson(subscription: Subscription, repo?: RepositoryData): RepoSyncState | undefined {
-		const repoId = repo?.repository?.id;
+	static buildFromRepositoryData(subscription: Subscription, repo?: RepositoryData): RepoSyncState | undefined {
+		const repoId = Number(repo?.repository?.id);
 		if (!repoId) {
 			return undefined;
 		}
@@ -181,7 +182,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	static async updateRepoForSubscription(subscription: Subscription, repo?: RepositoryData): Promise<RepoSyncState | undefined> {
-		const repoId = repo?.repository?.id;
+		const repoId = Number(repo?.repository?.id);
 		if (!repoId) {
 			return undefined;
 		}
@@ -191,12 +192,12 @@ export default class RepoSyncState extends Sequelize.Model {
 				repoId
 			}
 		});
-		return model?.setFromRepoJson(repo)?.save();
+		return model?.setFromRepositoryData(repo)?.save();
 	}
 
-	setFromRepoJson(repo?: RepositoryData): RepoSyncState {
+	setFromRepositoryData(repo?: RepositoryData): RepoSyncState {
 		if (repo) {
-			this.repoUpdatedAt = new Date(repo.repository?.updated_at || Date.now());
+			this.repoUpdatedAt = new Date(repo.repository?.updated_at ?? Date.now());
 			this.branchStatus = repo.branchStatus;
 			this.branchCursor = repo.lastBranchCursor;
 			this.commitStatus = repo.commitStatus;
@@ -208,7 +209,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	toRepositoryData(): RepositoryData {
-		return {
+		return _.pickBy({
 			repository: {
 				id: this.repoId.toString(),
 				name: this.repoName,
@@ -218,14 +219,14 @@ export default class RepoSyncState extends Sequelize.Model {
 				},
 				html_url: this.repoUrl,
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				updated_at: (this.repoUpdatedAt || new Date(0)) as any
+				updated_at: (this.repoUpdatedAt ?? new Date(0)) as any
 			},
 			pullStatus: this.pullStatus,
-			lastPullCursor: Number(this.pullCursor),
+			lastPullCursor: this.pullCursor ? Number(this.pullCursor) : undefined,
 			commitStatus: this.commitStatus,
 			lastCommitCursor: this.commitCursor,
 			branchStatus: this.branchStatus,
 			lastBranchCursor: this.branchCursor
-		};
+		});
 	}
 }
