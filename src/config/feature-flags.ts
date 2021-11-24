@@ -28,7 +28,8 @@ export enum BooleanFlags {
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
 	NEW_REPO_SYNC_STATE = "new-repo-sync-state",
-	PAYLOAD_SIZE_METRIC = "payload-size-metrics"
+	PAYLOAD_SIZE_METRIC = "payload-size-metrics",
+	USE_BACKFILL_QUEUE_SUPPLIER = "use-backfill-queue-supplier"
 }
 
 export enum StringFlags {

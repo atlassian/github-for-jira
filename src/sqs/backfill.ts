@@ -1,10 +1,11 @@
-import { MessageHandler } from "./index"
+import {MessageHandler} from "./index"
 import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 
 
 export type BackfillMessagePayload = {
-	gitHubInstallationId: number,
-	jiraHost: string
+	installationId: number,
+	jiraHost: string,
+	startTime?: string
 }
 
 export const backfillQueueMessageHandler : MessageHandler<BackfillMessagePayload> = async (context) => {

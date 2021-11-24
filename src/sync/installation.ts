@@ -23,6 +23,7 @@ import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } f
 import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
+import {BackfillMessagePayload} from "../sqs/backfill";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -411,7 +412,13 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 }
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
-export function maybeScheduleNextTask(queue: Queue.Queue, jobData, nextTaskDelays: Array<number>, logger: LoggerWithTarget) {
+export async function maybeScheduleNextTask(
+	queue: Queue.Queue,
+	backfillQueue: BackfillQueue,
+	jobData: BackfillMessagePayload,
+	nextTaskDelays: Array<number>,
+	logger: LoggerWithTarget
+) {
 	if (nextTaskDelays.length > 0) {
 		nextTaskDelays.sort().reverse();
 		if (nextTaskDelays.length > 1) {
@@ -419,17 +426,25 @@ export function maybeScheduleNextTask(queue: Queue.Queue, jobData, nextTaskDelay
 		}
 		const delay = nextTaskDelays.shift()!;
 		logger.info("Scheduling next job with a delay = " + delay);
-		if (delay > 0) {
-			queue.add(jobData, { delay });
+		if (await booleanFlag(BooleanFlags.USE_BACKFILL_QUEUE_SUPPLIER, false, jobData.jiraHost)) {
+			await backfillQueue.schedule(jobData, delay);
 		} else {
-			queue.add(jobData);
+			if (delay > 0) {
+				await queue.add(jobData, {delay});
+			} else {
+				await queue.add(jobData);
+			}
 		}
 	}
 }
 
+export interface BackfillQueue {
+	schedule: (message: BackfillMessagePayload, delayMsecs?: number) => Promise<void>;
+}
+
 // TODO: type queues
 export const processInstallation =
-	(app: Application, queues) => {
+	(app: Application, queues, backfillQueueSupplier: () => Promise<BackfillQueue>) => {
 		const inProgressStorage = new RedisInProgressStorageWithTimeout(new Redis(getRedisInfo("installations-in-progress")));
 		const deduplicator = new Deduplicator(
 			inProgressStorage, 1_000
@@ -460,11 +475,16 @@ export const processInstallation =
 			switch (result) {
 				case DeduplicatorResult.E_OK:
 					logger.info("Job was executed by deduplicator");
-					maybeScheduleNextTask(queues.installation, job.data, nextTaskDelays, logger);
+					maybeScheduleNextTask(queues.installation, await backfillQueueSupplier(), job.data, nextTaskDelays, logger);
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER:
 					logger.warn("Possible duplicate job was detected, rescheduling");
-					await queues.installation.add(job.data, {delay: 60_000});
+					if (await booleanFlag(BooleanFlags.USE_BACKFILL_QUEUE_SUPPLIER, false, jiraHost)) {
+						const queue = await backfillQueueSupplier();
+						await queue.schedule(job.data, 60_000);
+					} else {
+						await queues.installation.add(job.data, {delay: 60_000});
+					}
 					break;
 				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB:
 					logger.warn("Duplicate job was detected, rescheduling");
@@ -478,7 +498,12 @@ export const processInstallation =
 					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
 					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
 					// is finished.
-					await queues.installation.add(job.data, {delay: Math.floor(60_000 + 60_000 * Math.random())});
+					if (await booleanFlag(BooleanFlags.USE_BACKFILL_QUEUE_SUPPLIER, false, jiraHost)) {
+						const queue = await backfillQueueSupplier();
+						await queue.schedule(job.data, Math.floor(60_000 + 60_000 * Math.random()));
+					} else {
+						await queues.installation.add(job.data, {delay: Math.floor(60_000 + 60_000 * Math.random())});
+					}
 					break;
 			}
 		}

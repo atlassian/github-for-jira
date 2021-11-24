@@ -190,7 +190,7 @@ export default class Subscription extends Sequelize.Model {
 	static async startNewSyncProcess(subscription: Subscription) {
 		//TODO Add a sync start logic
 		await sqsQueues.backfill.sendMessage({
-			gitHubInstallationId: subscription.gitHubInstallationId,
+			installationId: subscription.gitHubInstallationId,
 			jiraHost: subscription.jiraHost
 		});
 	}
