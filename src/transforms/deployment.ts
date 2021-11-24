@@ -1,8 +1,9 @@
 import _ from "lodash";
-import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
 import { JiraDeploymentData } from "../interfaces/jira";
 import {GitHubAPI} from "probot";
+import {WebhookPayloadDeploymentStatus} from "@octokit/webhooks";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
 async function lookForCommitsOnThisDeployment(owner: string, repoName: string, currentDeploySha:string, currentDeployEnv: string, github: GitHubAPI): Promise<string> {
 	// Grab all deployments for this repo
@@ -116,11 +117,23 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (context: Context): Promise<JiraDeploymentData | undefined> => {
-	const { github, payload: { deployment_status, deployment } } = context;
-	const { data: { commit: { message } } } = await github.repos.getCommit(context.repo({ ref: deployment.sha }));
+export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeploymentStatus, logger?: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+	const deployment = payload.deployment;
+	const deployment_status = payload.deployment_status;
 
-	const allCommitsMessages = await lookForCommitsOnThisDeployment(context.payload.repository.owner.login, context.payload.repository.name, deployment.sha, deployment_status.environment, github);
+	const { data: { commit: { message } } } = await githubClient.repos.getCommit({
+		owner: payload.repository.owner.login,
+		repo: payload.repository.name,
+		ref: deployment.sha
+	});
+
+	const allCommitsMessages = await lookForCommitsOnThisDeployment(
+		payload.repository.owner.login,
+		payload.repository.name,
+		deployment.sha,
+		deployment_status.environment,
+		githubClient
+	);
 
 	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}\n${allCommitsMessages}`) || [];
 
@@ -130,7 +143,7 @@ export default async (context: Context): Promise<JiraDeploymentData | undefined>
 
 	const environment = mapEnvironment(deployment_status.environment);
 	if (environment === "unmapped") {
-		context.log(`Unmapped environment detected for deployment. Unmapped value is ${deployment_status}. Sending it as unmapped to Jira.`);
+		logger?.info(`Unmapped environment detected for deployment. Unmapped value is ${deployment_status}. Sending it as unmapped to Jira.`);
 	}
 
 	return {
@@ -140,14 +153,14 @@ export default async (context: Context): Promise<JiraDeploymentData | undefined>
 			updateSequenceNumber: deployment_status.id,
 			issueKeys,
 			displayName: deployment.task,
-			url: deployment_status.log_url || deployment_status.target_url || deployment.url,
+			url: deployment_status.target_url || deployment.url,
 			description: deployment.description || deployment_status.description || deployment.task,
 			lastUpdated: deployment_status.updated_at,
 			state: mapState(deployment_status.state),
 			pipeline: {
 				id: deployment.task,
 				displayName: deployment.task,
-				url: deployment_status.log_url || deployment_status.target_url || deployment.url,
+				url: deployment_status.target_url || deployment.url,
 			},
 			environment: {
 				id: deployment_status.environment,

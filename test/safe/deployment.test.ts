@@ -29,7 +29,7 @@ describe("Deployment Webhook", () => {
 
 	describe("deployment_status", () => {
 		it("should update the Jira issue with the linked GitHub deployment", async () => {
-			const fixture = require("../fixtures/deployment-basic.json");
+			const fixture = require("../fixtures/deployment_status-basic.json");
 			const sha = fixture.payload.deployment.sha;
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
