@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import Sequelize from "sequelize";
-import Subscription from "./subscription";
+import { Subscription } from "./index";
+import SubscriptionClass from "./subscription";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
@@ -35,10 +36,10 @@ export default class Installation extends Sequelize.Model {
 	static async getForHost(host: string): Promise<Installation | null> {
 		const payload: any = {
 			where: {
-				jiraHost: host,
+				jiraHost: host
 			},
 			order: [["id", "DESC"]]
-		}
+		};
 
 		return Installation.findOne(payload);
 	}
@@ -46,10 +47,10 @@ export default class Installation extends Sequelize.Model {
 	static async getAllForHost(host: string): Promise<Installation[]> {
 		const payload: any = {
 			where: {
-				jiraHost: host,
+				jiraHost: host
 			},
 			order: [["id", "DESC"]]
-		}
+		};
 
 		return Installation.findAll(payload);
 	}
@@ -98,7 +99,7 @@ export default class Installation extends Sequelize.Model {
 		await this.destroy();
 	}
 
-	async subscriptions(): Promise<Subscription[]> {
+	async subscriptions(): Promise<SubscriptionClass[]> {
 		return Subscription.getAllForClientKey(this.clientKey);
 	}
 }

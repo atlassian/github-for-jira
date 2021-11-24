@@ -173,7 +173,7 @@ router.get(
 			}
 
 			if(await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false)) {
-				res.json(RepoSyncState.toRepoJson(subscription));
+				res.json(await RepoSyncState.toRepoJson(subscription));
 			} else {
 				res.json(subscription.repoSyncState);
 			}
@@ -390,23 +390,18 @@ router.post(
 	bodyParser,
 	check("installationId").isInt(),
 	returnOnValidationError,
-	async (req: Request, response: Response): Promise<void> => {
+	async (req: Request, res: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const installation = await Installation.findByPk(installationId);
-
 		const isValid = await verifyInstallation(installation, req.log)();
-		const respondWith = (message) =>
-			response.json({
-				message,
-				installation: {
-					enabled: isValid,
-					id: installation.id,
-					jiraHost: installation.jiraHost
-				}
-			});
-		respondWith(
-			isValid ? "Verification successful" : "Verification failed"
-		);
+		res.json({
+			message: isValid ? "Verification successful" : "Verification failed",
+			installation: {
+				enabled: isValid,
+				id: installation.id,
+				jiraHost: installation.jiraHost
+			}
+		})
 	}
 );
 
