@@ -127,7 +127,7 @@ export async function start() {
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues), DISCOVERY_LOGGER_NAME));
 	queues.installation.process(
 		Number(CONCURRENT_WORKERS),
-		commonMiddleware(processInstallation(app, queues, () => {
+		commonMiddleware(processInstallation(app, () => {
 			return Promise.resolve({
 				schedule: async (jobData, delayMsecs) => {
 					// TBD: switch to SQS with a FF
