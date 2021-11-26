@@ -73,6 +73,7 @@
     "bull": "^3.12.1",
     "bunyan": "^1.8.15",
     "bunyan-format": "^0.2.1",
+    "cookie-parser": "^1.4.6",
     "cookie-session": "^2.0.0-rc.1",
     "csurf": "^1.11.0",
     "date-fns": "^1.29.0",

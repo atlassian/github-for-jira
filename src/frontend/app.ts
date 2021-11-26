@@ -34,6 +34,7 @@ import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
 import { registerHandlebarsPartials } from "../util/handlebars/partials";
 import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
 import { Errors } from "../config/errors";
+import cookieParser from "cookie-parser";
 
 // Adding session information to request
 declare global {
@@ -91,6 +92,7 @@ export default (octokitApp: App): Express => {
 	// Parse URL-encoded bodies for Jira configuration requests
 	app.use(bodyParser.urlencoded({ extended: false }));
 	app.use(bodyParser.json());
+	app.use(cookieParser());
 
 	// We run behind ngrok.io so we need to trust the proxy always
 	// TODO: look into the security of this.  Maybe should only be done for local dev?
@@ -102,7 +104,8 @@ export default (octokitApp: App): Express => {
 			maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 			signed: true,
 			sameSite: "none",
-			secure: true
+			secure: true,
+			httpOnly: false
 		})
 	);
 
@@ -139,6 +142,25 @@ export default (octokitApp: App): Express => {
 			path.join(rootPath, "node_modules/@atlassian/aui/dist/aui")
 		)
 	);
+
+	app.get("/session", (req: Request, res: Response) => {
+		return res.render("session.hbs", {
+			title: "Redirecting...",
+			APP_URL: process.env.APP_URL,
+			redirectUrl: req.params.url,
+			nonce: res.locals.nonce
+		});
+	});
+
+	app.use((req: Request, res: Response, next: NextFunction) => {
+		if (req.cookies.jiraHost) {
+			// Save jirahost to secure session
+			req.session.jiraHost = req.cookies.jiraHost;
+			// delete jirahost from cookies.
+			res.clearCookie("jiraHost");
+		}
+		next();
+	});
 
 	app.use(githubClientMiddleware);
 
@@ -220,7 +242,7 @@ export default (octokitApp: App): Express => {
 	// Set up event handlers
 
 	// TODO: remove enabled and disabled events once the descriptor is updated in marketplace
-	app.post("/jira/events/disabled",(_: Request, res: Response) => {
+	app.post("/jira/events/disabled", (_: Request, res: Response) => {
 		return res.sendStatus(204);
 	});
 	app.post("/jira/events/enabled", (_: Request, res: Response) => {
