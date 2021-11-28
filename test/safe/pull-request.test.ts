@@ -990,7 +990,7 @@ describe("Pull Request Webhook", () => {
 			await expect(app.receive(fixture)).toResolve();
 		});
 		
-		it.only("should associate PR with to multiple jira with same issue keys", async () => {
+		it("should associate PR with to multiple jira with same issue keys", async () => {
 			const fixture = require("../fixtures/pull-request-basic.json");
 
 			githubNock.get("/users/test-pull-request-user-login")
@@ -1044,6 +1044,11 @@ describe("Pull Request Webhook", () => {
 						author_association: "COLLABORATOR"
 					}
 				]);
+
+			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
+				body: "[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test1-atlassian-instance.net/browse/TEST-123",
+				id: "test-pull-request-id"
+			}).reply(200);
 
 			githubNock
 				.patch("/repos/test-repo-owner/test-repo-name/issues/2", {
