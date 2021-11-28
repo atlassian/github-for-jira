@@ -19,13 +19,17 @@ function resetEnvVars() {
 
 declare global {
 	let jiraHost: string;
+	let jira2Host: string;
+	let jira2Nock: nock.Scope;
 	let jiraNock: nock.Scope;
 	let githubNock: nock.Scope;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
 			jiraHost: string;
+			jira2Host: string;
 			jiraNock: nock.Scope;
+			jira2Nock: nock.Scope;
 			githubNock: nock.Scope;
 		}
 	}
@@ -34,7 +38,9 @@ declare global {
 beforeEach(() => {
 	resetEnvVars();
 	global.jiraHost = process.env.ATLASSIAN_URL || "";
+	global.jira2Host = process.env.ALTERNATE_ATLASSIAN_URL || "https://test2-atlassian-instance.net";
 	global.jiraNock = nock(global.jiraHost);
+	global.jira2Nock = nock(global.jira2Host);
 	global.githubNock = nock("https://api.github.com");
 });
 
