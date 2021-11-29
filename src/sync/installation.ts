@@ -24,6 +24,7 @@ import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
 import {BackfillMessagePayload} from "../sqs/backfill";
+import {Hub} from "@sentry/types/dist/hub";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -433,7 +434,6 @@ export interface BackfillQueue {
 	schedule: (message: BackfillMessagePayload, delayMsecs?: number) => Promise<void>;
 }
 
-// TODO: type queues
 export const processInstallation =
 	(app: Application, backfillQueueSupplier: () => Promise<BackfillQueue>) => {
 		const inProgressStorage = new RedisInProgressStorageWithTimeout(new Redis(getRedisInfo("installations-in-progress")));
@@ -441,7 +441,7 @@ export const processInstallation =
 			inProgressStorage, 1_000
 		);
 
-		return async (job, rootLogger: LoggerWithTarget): Promise<void> => {
+		return async (job: {data: BackfillMessagePayload, sentry: Hub}, rootLogger: LoggerWithTarget): Promise<void> => {
 			const { installationId, jiraHost } = job.data;
 
 			const logger = rootLogger.child({ job });

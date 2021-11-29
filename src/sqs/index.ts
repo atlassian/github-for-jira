@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import statsd from "../config/statsd";
 import { Tags } from "hot-shots";
 import {sqsQueueMetrics} from "../config/metric-names";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
 const logger = getLogger("sqs")
 
@@ -33,7 +34,7 @@ export type Context<MessagePayload> = {
 	/**
 	 * Context logger, which has parameters for the processing context (like message id, execution id, etc)
 	 */
-	log: Logger;
+	log: LoggerWithTarget;
 
 	/**
 	 * How many times this messages attempted to be processed, including the current attempt (always greater 0)
@@ -131,7 +132,7 @@ type ListenerContext = {
 	/**
 	 * Logger which contains listener debug parameters
 	 */
-	log: Logger;
+	log: LoggerWithTarget;
 }
 
 const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
@@ -151,7 +152,7 @@ export class SqsQueue<MessagePayload> {
 	readonly errorHandler: ErrorHandler<MessagePayload>;
 	readonly messageHandler: MessageHandler<MessagePayload>;
 	readonly sqs: SQS;
-	readonly log: Logger;
+	readonly log: LoggerWithTarget;
 	readonly metricsTags: Tags;
 
 	/**

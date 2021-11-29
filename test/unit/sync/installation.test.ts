@@ -10,6 +10,7 @@ import '../../../src/config/feature-flags';
 
 import {Application} from "probot";
 import {getLogger} from "../../../src/config/logger";
+import createJob from "../../setup/create-job";
 
 const mockedExecuteWithDeduplication = jest.fn();
 jest.mock('../../../src/sync/deduplicator', () => {
@@ -85,15 +86,12 @@ describe("sync/installation", () => {
 		// @ts-ignore
 		const app: Application = jest.fn() as Application;
 
-		const job = {
+		const job = createJob({
 			data: {
 				installationId: 1,
 				jiraHost: 'https://blah.atlassian.com'
-			},
-			sentry: {
-				setUser: jest.fn()
 			}
-		};
+		});
 		const logger = getLogger('test');
 
 		test('should process the installation with deduplication', async () => {

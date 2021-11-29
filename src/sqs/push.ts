@@ -54,8 +54,9 @@ const UNRETRYABLE_STATUS_CODES = [401, 404, 403];
 const RATE_LIMITING_DELAY_BUFFER_SEC = 10;
 const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
-export const pushQueueErrorHandler : ErrorHandler<PushQueueMessagePayload> = async (error: JiraClientError | Octokit.HookError | RateLimitingError | Error,
-	context: Context<PushQueueMessagePayload>) : Promise<ErrorHandlingResult> => {
+// TODO: move to shared space between push and backfill
+export const pushQueueErrorHandler : ErrorHandler<any> = async (error: JiraClientError | Octokit.HookError | RateLimitingError | Error,
+	context: Context<any>) : Promise<ErrorHandlingResult> => {
 
 	const maybeResult = maybeHandleNonFailureCase(error, context);
 	if (maybeResult) {
@@ -72,6 +73,7 @@ export const pushQueueErrorHandler : ErrorHandler<PushQueueMessagePayload> = asy
 	return errorHandlingResult;
 }
 
+// TODO: move to shared space between push and backfill
 function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult | undefined {
 	if (error instanceof JiraClientError &&
 		error.status &&
@@ -92,6 +94,7 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 	return undefined;
 }
 
+// TODO: move to shared space between push and backfill
 function handleFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult {
 	if (error instanceof RateLimitingError) {
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
