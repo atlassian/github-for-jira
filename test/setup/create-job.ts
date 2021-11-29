@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Create a job stub with data
-// TODO: add better typings
 import {Hub} from "@sentry/types/dist/hub";
 
 export default ({ data, opts }: { data: any, opts?: any }) => {

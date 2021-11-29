@@ -89,10 +89,7 @@ describe("sync/installation", () => {
 		const app: Application = jest.fn() as Application;
 
 		const job = createJob({
-			data: {
-				installationId: 1,
-				jiraHost: 'https://blah.atlassian.com'
-			}
+			data: JOB_DATA
 		});
 
 		test('should process the installation with deduplication', async () => {
@@ -103,7 +100,10 @@ describe("sync/installation", () => {
 		test('should reschedule the job if deduplicator is unsure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
 			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, TEST_LOGGER);
-			expect(backfillQueueSchedule.mock.calls).toEqual([[job.data, 60_000, TEST_LOGGER]]);
+			expect(backfillQueueSchedule.mock.calls).toHaveLength(1);
+			expect(backfillQueueSchedule.mock.calls[0][0]).toEqual(JOB_DATA);
+			expect(backfillQueueSchedule.mock.calls[0][1]).toEqual(60_000);
+			expect(backfillQueueSchedule.mock.calls[0][2].warn).toBeDefined();
 		});
 
 		test('should also reschedule the job if deduplicator is sure', async () => {
