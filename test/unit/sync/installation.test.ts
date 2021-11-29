@@ -12,6 +12,8 @@ import {Application} from "probot";
 import {getLogger} from "../../../src/config/logger";
 import createJob from "../../setup/create-job";
 
+const TEST_LOGGER = getLogger('test');
+
 const mockedExecuteWithDeduplication = jest.fn();
 jest.mock('../../../src/sync/deduplicator', () => {
 	return {
@@ -92,40 +94,39 @@ describe("sync/installation", () => {
 				jiraHost: 'https://blah.atlassian.com'
 			}
 		});
-		const logger = getLogger('test');
 
 		test('should process the installation with deduplication', async () => {
-			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, logger);
+			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 		});
 
 		test('should reschedule the job if deduplicator is unsure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
-			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, logger);
-			expect(backfillQueueSchedule.mock.calls).toEqual([[job.data, 60_000]]);
+			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, TEST_LOGGER);
+			expect(backfillQueueSchedule.mock.calls).toEqual([[job.data, 60_000, TEST_LOGGER]]);
 		});
 
 		test('should also reschedule the job if deduplicator is sure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
-			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, logger);
+			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, TEST_LOGGER);
 			expect(backfillQueueSchedule.mock.calls.length).toEqual(1);
 		});
 	});
 
 	describe('maybeScheduleNextTask', () => {
 		test('does nothing if there is no next task', () => {
-			maybeScheduleNextTask(backfillQueue, JOB_DATA, [], getLogger('test'));
+			maybeScheduleNextTask(backfillQueue, JOB_DATA, [], TEST_LOGGER);
 			expect(backfillQueueSchedule.mock.calls).toHaveLength(0);
 		});
 
 		test('when multiple tasks, picks the one with the highest delay', async () => {
-			await maybeScheduleNextTask(backfillQueue, JOB_DATA, [30, 60, 0], getLogger('test'));
-			expect(backfillQueueSchedule.mock.calls).toEqual([[JOB_DATA, 60]]);
+			await maybeScheduleNextTask(backfillQueue, JOB_DATA, [30, 60, 0], TEST_LOGGER);
+			expect(backfillQueueSchedule.mock.calls).toEqual([[JOB_DATA, 60, TEST_LOGGER]]);
 		});
 
 		test('not passing delay to queue when not provided', async () => {
-			await maybeScheduleNextTask(backfillQueue, JOB_DATA, [0], getLogger('test'));
-			expect(backfillQueueSchedule.mock.calls).toEqual([[JOB_DATA, 0]]);
+			await maybeScheduleNextTask(backfillQueue, JOB_DATA, [0], TEST_LOGGER);
+			expect(backfillQueueSchedule.mock.calls).toEqual([[JOB_DATA, 0, TEST_LOGGER]]);
 		});
 	});
 });

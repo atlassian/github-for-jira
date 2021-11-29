@@ -27,9 +27,8 @@ class BackfillQueueSupplier {
 			return Promise.reject(new Error("SQS queue wasn't provided"));
 		}
 		return {
-			// TODO: propagate logger from both redis and sqs
 			schedule: async (payload, delayMsec?: number, log?: LoggerWithTarget) => {
-				// TODO: add a feature flag switch
+				// TODO: add a feature flag switch + test
 				await this.sqsQueue.sendMessage(payload, (delayMsec || 0) / 1000, (log || fallbackLogger));
 
 				// if (delayMsec) {
