@@ -1,7 +1,11 @@
 {
   "development": {
     "dialect": "postgres",
-    "use_env_variable": "DATABASE_URL"
+		"logging": true,
+    "use_env_variable": "DATABASE_URL",
+		"pool": {
+			"idle": 1000
+		}
   },
   "test": {
     "dialect": "postgres",

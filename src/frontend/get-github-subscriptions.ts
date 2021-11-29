@@ -29,7 +29,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 				nonce: res.locals.nonce,
 				installation,
 				info,
-				host: req.session.jiraHost,
+				host: res.locals.jiraHost,
 				subscriptions,
 				hasSubscriptions: subscriptions.length > 0
 			});

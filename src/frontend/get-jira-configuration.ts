@@ -87,7 +87,7 @@ export default async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const jiraHost = req.session.jiraHost;
+		const jiraHost = res.locals.jiraHost;
 
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");

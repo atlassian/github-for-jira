@@ -6,9 +6,10 @@ import { Request, Response } from "express";
  * Handle the when a user deletes an entry in the UI
  */
 export default async (req: Request, res: Response): Promise<void> => {
-	const jiraHost = req.session.jiraHost;
+	const jiraHost = req.body.jiraHost;
 	if(!jiraHost) {
-		req.log.warn("Missing Jira Host");
+		req.log.error("Missing Jira Host");
+		res.status(401).send("Missing jiraHost in body");
 		return;
 	}
 

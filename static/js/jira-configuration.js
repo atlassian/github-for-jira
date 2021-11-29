@@ -8,52 +8,26 @@ $(".add-organization-link").click(function(event) {
 	// window.sessionStorage.setItem("jiraHost", params.get('xdm_e'));
 	const child = window.open("/session");
 	child.addEventListener("load", function() {
-		const delimiter = "; ";
 		const key = "jiraHost=";
-		console.log('window loaded');
-		child.document.cookie =
-			// Set jiraHost value
-			[key + params.get("xdm_e")]
-				// Append previous cookie values
-				.concat(
-					// Split cookie values into 2d array
-					child.document.cookie.split(delimiter)
-						// remove jiraHost cookie if present
-						.filter(v => !v.startsWith(key))
-				)
-				// join values back into single string
-				.join(delimiter);
-
+		console.log("before cookies: " + child.document.cookie);
+		// Set jiraHost value
+		child.document.cookie = key + params.get("xdm_e");
+		console.log("after cookies: " + child.document.cookie);
 		child.window.location.href = appUrl + "/github/configuration";
 	}, true);
 
-	child.addEventListener("unload", function() {
+	const interval = setInterval(function () {
 		if (child.closed) {
+			clearInterval(interval);
 			AP.navigator.reload();
 		}
-	});
-
-	/*child.onunload = function() {
-		if (child.closed) {
-			AP.navigator.reload();
-		}
-	};*/
-
-	/*const interval = setInterval(function () {
-		if (child.closed) {
-			clearInterval(interval)
-
-			AP.navigator.reload()
-		}
-	}, 100)*/
+	}, 100);
 });
 
 $(".configure-connection-link").click(function(event) {
 	event.preventDefault();
-
 	const installationLink = $(event.target).data("installation-link");
 	const child = window.open(installationLink);
-
 	const interval = setInterval(function() {
 		if (child.closed) {
 			clearInterval(interval);
@@ -69,10 +43,11 @@ $(".delete-connection-link").click(function(event) {
 	window.AP.context.getToken(function(token) {
 		$.ajax({
 			type: "DELETE",
-			url: `/jira/configuration?xdm_e=${encodeURIComponent(params.get("xdm_e"))}`,
+			url: "/jira/configuration",
 			data: {
 				installationId: $(event.target).data("installation-id"),
-				jwt: token
+				jwt: token,
+				jiraHost: params.get("xdm_e")
 			},
 			success: function(data) {
 				AP.navigator.reload();

@@ -46,7 +46,6 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
-				[key: string]: unknown;
 			};
 		}
 	}
@@ -73,12 +72,12 @@ const csrfProtection = csrf(
 		: undefined
 );
 
-const saveSessionVariables = (req: Request, _: Response, next: NextFunction) => {
+/*const saveSessionVariables = (req: Request, _: Response, next: NextFunction) => {
 	req.log.info("Setting session variables 'jiraHost'");
 	// set jirahost after token if no errors
 	req.session.jiraHost = req.query.xdm_e as string;
 	next();
-};
+};*/
 
 export default (octokitApp: App): Express => {
 	const githubClientMiddleware = getGithubClientMiddleware(octokitApp);
@@ -162,6 +161,12 @@ export default (octokitApp: App): Express => {
 		next();
 	});
 
+	// Creating standard entrypoint for jiraHost
+	app.use((req, res, next) => {
+		res.locals.jiraHost = req.query.xdm_e as string || req.session.jiraHost;
+		next();
+	})
+
 	app.use(githubClientMiddleware);
 
 	app.use("/", healthcheck);
@@ -176,7 +181,7 @@ export default (octokitApp: App): Express => {
 
 	// Maintenance mode view
 	app.use(async (req, res, next) => {
-		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost)) {
+		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, res.locals.jiraHost)) {
 			return getMaintenance(req, res);
 		}
 		next();
@@ -228,7 +233,7 @@ export default (octokitApp: App): Express => {
 		"/jira/configuration",
 		csrfProtection,
 		verifyJiraJwtTokenMiddleware,
-		saveSessionVariables,
+		// saveSessionVariables,
 		getJiraConfiguration
 	);
 
@@ -257,9 +262,9 @@ export default (octokitApp: App): Express => {
 	});
 
 	// Add Sentry Context
-	app.use((err: Error, req: Request, _: Response, next: NextFunction) => {
+	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 		Sentry.withScope((scope: Sentry.Scope): void => {
-			const jiraHost = req.session.jiraHost;
+			const jiraHost = res.locals.jiraHost;
 			if (jiraHost) {
 				scope.setTag("jiraHost", jiraHost);
 			}
@@ -299,7 +304,7 @@ export default (octokitApp: App): Express => {
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, true, req.session.jiraHost);
+		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, true, res.locals.jiraHost);
 		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs";
 
 		return res.status(errorStatusCode).render(errorPageVersion, {
