@@ -1,11 +1,11 @@
-
 import Logger from "bunyan";
 import url from "url";
+import envVars from "../config/env";
 
 export const getGitHubConfigurationUrl = (
 	jiraHost
 ): string =>
-	`https://${jiraHost}/plugins/servlet/ac/com.github.integration.production/github-post-install-page`;
+	`https://${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page`;
 
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
 	`${jiraHost}/plugins/servlet/ac/com.atlassian.jira.emcee/discover#!/discover/app/com.github.integration.production`;

@@ -41,11 +41,8 @@ describe("DELETE /jira/configuration", () => {
 		// TODO: use supertest for this
 		const req = {
 			log: getLogger("request"),
-			body: { installationId: subscription.githubInstallationId },
-			query: {
-				xdm_e: subscription.jiraHost
-			},
-			session: {
+			body: {
+				installationId: subscription.githubInstallationId,
 				jiraHost: subscription.jiraHost
 			}
 		};
