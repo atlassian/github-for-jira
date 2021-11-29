@@ -1,10 +1,12 @@
 import format from "date-fns/format";
 import moment from "moment";
 import { Subscription } from "../models";
+import SubscriptionClass from "../models/subscription";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { FailedInstallations } from "../config/interfaces";
 
 function mapSyncStatus(syncStatus: string): string {
 	switch (syncStatus) {
@@ -50,18 +52,32 @@ const formatDate = function (date) {
 	};
 };
 
-export const getFailedConnections = (installations, subscriptions) => {
+interface FailedConnections {
+	id: number;
+	deleted: boolean;
+	orgName: string | undefined;
+}
+
+export const getFailedConnections = (
+	installations: FailedInstallations[],
+	subscriptions: SubscriptionClass[]
+): FailedConnections[] => {
 	return installations
 		.filter((response) => !!response.error)
-		.map((failedConnection) => {
+		.map((failedConnection: FailedInstallations) => {
 			const sub = subscriptions.find(
-				(sub) => failedConnection.id === sub.gitHubInstallationId
-			)
+				(subscription: SubscriptionClass) =>
+					failedConnection.id === subscription.gitHubInstallationId
+			);
 			const repos = sub?.repoSyncState?.repos || {};
 			const repoId = Object.keys(repos);
 			const orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
 
-			return { id: failedConnection.id, deleted: failedConnection.deleted, orgName };
+			return {
+				id: failedConnection.id,
+				deleted: failedConnection.deleted,
+				orgName,
+			};
 		});
 };
 
@@ -91,7 +107,7 @@ export default async (
 
 		const failedConnections = getFailedConnections(
 			installations,
-			subscriptions,
+			subscriptions
 		);
 
 		const connections = installations
