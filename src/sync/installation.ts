@@ -6,20 +6,20 @@ import SubscriptionClass, {
 	SyncStatus,
 	TaskStatus
 } from "../models/subscription";
-import { Subscription } from "../models";
+import {Subscription} from "../models";
 import getJiraClient from "../jira/client";
-import { getRepositorySummary } from "./jobs";
+import {getRepositorySummary} from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import statsd from "../config/statsd";
 import getPullRequests from "./pull-request";
 import getBranches from "./branches";
 import getCommits from "./commits";
-import { Application, GitHubAPI } from "probot";
-import { metricSyncStatus, metricTaskStatus } from "../config/metric-names";
+import {Application, GitHubAPI} from "probot";
+import {metricSyncStatus, metricTaskStatus} from "../config/metric-names";
 import Queue from "bull";
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
+import {booleanFlag, BooleanFlags, stringFlag, StringFlags} from "../config/feature-flags";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import {Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout} from "./deduplicator";
 import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
@@ -458,10 +458,14 @@ export const processInstallation =
 
 			const nextTaskDelays: Array<number> = [];
 
-			const result = await deduplicator.executeWithDeduplication("i-" + installationId,
-				() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
-					nextTaskDelays.push(delay)
-				));
+			const includeHostnameToDedupKey = await booleanFlag(BooleanFlags.INCLUDE_JIRA_HOSTNAME_TO_DEDUP_KEY, false, jiraHost);
+
+			const result = await deduplicator.executeWithDeduplication(includeHostnameToDedupKey
+				? "i-" + installationId
+				: "i-" + installationId + "-" + jiraHost,
+			() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
+				nextTaskDelays.push(delay)
+			));
 
 			switch (result) {
 				case DeduplicatorResult.E_OK:
