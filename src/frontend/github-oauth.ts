@@ -133,6 +133,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 			req.log.info({ redirectUrl }, "Github OAuth code valid, redirecting to internal URL");
 			return res.redirect(redirectUrl);
 		} catch (e) {
+			tracer.trace(`Cannot retrieve access token from Github`);
 			return next(new Error("Cannot retrieve access token from Github"));
 		}
 	}

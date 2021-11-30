@@ -114,12 +114,12 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 	const { jiraHost, githubToken } = req.session;
 	const log = req.log.child({ jiraHost });
 
-	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
-
 	if (!githubToken) {
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
+
+	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
+	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
 
 	tracer.trace("found github token");
 
@@ -151,6 +151,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		// so we'll decode the JWT here and verify it's the right key before continuing
 		const installation = await Installation.getForHost(jiraHost);
 		if (!installation) {
+			tracer.trace(`missing installation`);
 			log.warn({ req, res }, "Missing installation");
 			res.status(404).send(`Missing installation for host '${jiraHost}'`);
 			return;
@@ -197,6 +198,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 	} catch (err) {
 		// If we get here, there was either a problem decoding the JWT
 		// or getting the data we need from GitHub, so we'll show the user an error.
+		tracer.trace(`Error while getting github configuration page`);
 		log.error({ err, req, res }, "Error while getting github configuration page");
 		return next(err);
 	}
