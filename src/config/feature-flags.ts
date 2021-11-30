@@ -67,12 +67,3 @@ export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jir
 
 export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHost?: string): Promise<string> =>
 	String(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
-
-/**
- * Convenience function to do something only when a certain feature flag is enabled.
- */
-export const ifFeatureFlag = async (flag: BooleanFlags, action: () => void, jiraHost?: string) => {
-	if (await booleanFlag(flag, false, jiraHost)) {
-		action();
-	}
-}
