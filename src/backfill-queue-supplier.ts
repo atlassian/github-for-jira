@@ -4,6 +4,7 @@ import {BackfillMessagePayload} from "./sqs/backfill";
 import {BackfillQueue} from "./sync/installation";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import {getLogger} from "./config/logger";
+import {booleanFlag, BooleanFlags} from "./config/feature-flags";
 
 const fallbackLogger = getLogger("queue-supplier-default");
 
@@ -28,14 +29,15 @@ class BackfillQueueSupplier {
 		}
 		return {
 			schedule: async (payload, delayMsec?: number, log?: LoggerWithTarget) => {
-				// TODO: add a feature flag switch + test
-				await this.sqsQueue.sendMessage(payload, (delayMsec || 0) / 1000, (log || fallbackLogger));
-
-				// if (delayMsec) {
-				// 	await this.redisQueue.add(payload, {delay: delayMsec});
-				// } else {
-				// 	await this.redisQueue.add(payload);
-				// }
+				if (await booleanFlag(BooleanFlags.USE_SQS_FOR_BACKFILL, false, payload.jiraHost)) {
+					await this.sqsQueue.sendMessage(payload, (delayMsec || 0) / 1000, (log || fallbackLogger));
+				} else {
+					if (delayMsec) {
+						await this.redisQueue.add(payload, {delay: delayMsec});
+					} else {
+						await this.redisQueue.add(payload);
+					}
+				}
 			}
 		};
 	}
