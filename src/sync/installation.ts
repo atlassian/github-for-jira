@@ -458,10 +458,14 @@ export const processInstallation =
 
 			const nextTaskDelays: Array<number> = [];
 
-			const result = await deduplicator.executeWithDeduplication("i-" + installationId,
-				() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
-					nextTaskDelays.push(delay)
-				));
+			const includeHostnameToDedupKey = await booleanFlag(BooleanFlags.INCLUDE_JIRA_HOSTNAME_TO_DEDUP_KEY, false, jiraHost);
+
+			const result = await deduplicator.executeWithDeduplication(includeHostnameToDedupKey
+				? "i-" + installationId
+				: "i-" + installationId + "-" + jiraHost,
+			() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
+				nextTaskDelays.push(delay)
+			));
 
 			switch (result) {
 				case DeduplicatorResult.E_OK:
