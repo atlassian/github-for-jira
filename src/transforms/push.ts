@@ -5,7 +5,7 @@ import enhanceOctokit from "../config/enhance-octokit";
 import {Application, GitHubAPI} from "probot";
 import {Job, JobOptions} from "bull";
 import {getJiraAuthor} from "../util/jira";
-import {emitWebhookFailedMetrics, emitWebhookProcessedMetrics} from "../util/webhooks";
+import {emitWebhookProcessedMetrics} from "../util/webhooks";
 import {JiraCommit} from "../interfaces/jira";
 import _ from "lodash";
 import {queues} from "../worker/queues";
@@ -106,110 +106,103 @@ export function processPushJob(app: Application) {
 }
 
 export const processPush = async (github: GitHubAPI, payload, rootLogger: LoggerWithTarget) => {
-	let log = rootLogger;
-	try {
-		const {
-			repository,
-			repository: { owner, name: repo },
-			shas,
-			installationId,
-			jiraHost,
-		} = payload;
+	const {
+		repository,
+		repository: { owner, name: repo },
+		shas,
+		installationId,
+		jiraHost,
+	} = payload;
 
-		const webhookId = payload.webhookId || "none";
-		const webhookReceived = payload.webhookReceived || undefined;
+	const webhookId = payload.webhookId || "none";
+	const webhookReceived = payload.webhookReceived || undefined;
 
-		log = rootLogger.child({
-			webhookId: webhookId,
-			repoName: repo,
-			orgName: owner.name,
-			webhookReceived,
-		});
+	const log = rootLogger.child({
+		webhookId: webhookId,
+		repoName: repo,
+		orgName: owner.name,
+		webhookReceived,
+	});
 
-		log.info({ installationId }, "Processing push");
+	log.info({ installationId }, "Processing push");
 
-		const subscription = await Subscription.getSingleInstallation(
-			jiraHost,
-			installationId
-		);
+	const subscription = await Subscription.getSingleInstallation(
+		jiraHost,
+		installationId
+	);
 
-		if (!subscription) return;
+	if (!subscription) return;
 
-		const jiraClient = await getJiraClient(
-			subscription.jiraHost,
-			installationId,
-			log
-		);
+	const jiraClient = await getJiraClient(
+		subscription.jiraHost,
+		installationId,
+		log
+	);
 
-		const commits: JiraCommit[] = await Promise.all(
-			shas.map(async (sha): Promise<JiraCommit> => {
-				const {
-					data,
-					data: { commit: githubCommit },
-				} = await github.repos.getCommit({
-					owner: owner.login,
-					repo,
-					ref: sha.id,
-				});
+	const commits: JiraCommit[] = await Promise.all(
+		shas.map(async (sha): Promise<JiraCommit> => {
+			const {
+				data,
+				data: { commit: githubCommit },
+			} = await github.repos.getCommit({
+				owner: owner.login,
+				repo,
+				ref: sha.id,
+			});
 
-				const { files, author, parents, sha: commitSha, html_url } = data;
+			const { files, author, parents, sha: commitSha, html_url } = data;
 
-				const { author: githubCommitAuthor, message } = githubCommit;
+			const { author: githubCommitAuthor, message } = githubCommit;
 
-				// Jira only accepts a max of 10 files for each commit, so don't send all of them
-				const filesToSend = files.slice(0, 10);
+			// Jira only accepts a max of 10 files for each commit, so don't send all of them
+			const filesToSend = files.slice(0, 10);
 
-				// merge commits will have 2 or more parents, depending how many are in the sequence
-				const isMergeCommit = parents?.length > 1;
+			// merge commits will have 2 or more parents, depending how many are in the sequence
+			const isMergeCommit = parents?.length > 1;
 
-				return {
-					hash: commitSha,
-					message,
-					author: getJiraAuthor(author, githubCommitAuthor),
-					authorTimestamp: githubCommitAuthor.date,
-					displayId: commitSha.substring(0, 6),
-					fileCount: files.length, // Send the total count for all files
-					files: filesToSend.map((file) =>
-						mapFile(file, repo, owner.name, sha.id)
-					),
-					id: commitSha,
-					issueKeys: sha.issueKeys,
-					url: html_url,
-					updateSequenceId: Date.now(),
-					flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined,
-				};
-			})
-		);
-
-		// Jira accepts up to 400 commits per request
-		// break the array up into chunks of 400
-		const chunks: JiraCommit[][] = [];
-
-		while (commits.length) {
-			chunks.push(commits.splice(0, 400));
-		}
-
-		for (const chunk of chunks) {
-			const jiraPayload = {
-				name: repository.name,
-				url: repository.html_url,
-				id: repository.id,
-				commits: chunk,
+			return {
+				hash: commitSha,
+				message,
+				author: getJiraAuthor(author, githubCommitAuthor),
+				authorTimestamp: githubCommitAuthor.date,
+				displayId: commitSha.substring(0, 6),
+				fileCount: files.length, // Send the total count for all files
+				files: filesToSend.map((file) =>
+					mapFile(file, repo, owner.name, sha.id)
+				),
+				id: commitSha,
+				issueKeys: sha.issueKeys,
+				url: html_url,
 				updateSequenceId: Date.now(),
+				flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined,
 			};
+		})
+	);
 
-			const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+	// Jira accepts up to 400 commits per request
+	// break the array up into chunks of 400
+	const chunks: JiraCommit[][] = [];
 
-			webhookReceived && emitWebhookProcessedMetrics(
-				webhookReceived,
-				"push",
-				log,
-				jiraResponse?.status
-			);
-		}
-	} catch (err) {
-		log.error({ err }, "Failed to process push");
-		emitWebhookFailedMetrics("push");
-		throw err;
+	while (commits.length) {
+		chunks.push(commits.splice(0, 400));
+	}
+
+	for (const chunk of chunks) {
+		const jiraPayload = {
+			name: repository.name,
+			url: repository.html_url,
+			id: repository.id,
+			commits: chunk,
+			updateSequenceId: Date.now(),
+		};
+
+		const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+
+		webhookReceived && emitWebhookProcessedMetrics(
+			webhookReceived,
+			"push",
+			log,
+			jiraResponse?.status
+		);
 	}
 };

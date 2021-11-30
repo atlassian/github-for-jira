@@ -1,6 +1,6 @@
 import statsd from "./statsd";
 import { GitHubAPI } from "probot";
-import { metricHttpRequest } from "./metric-names";
+import { metricError, metricHttpRequest } from "./metric-names";
 import { getLogger } from "./logger";
 import { Octokit } from "@octokit/rest";
 import { extractPath } from "../jira/client/axios";
@@ -29,10 +29,11 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 			throw new RateLimitingError(rateLimitReset);
 		}
 
-		if (error.status === 403) {
-			// delaying for an hour
-			throw new RateLimitingError(new Date().getTime() / 1000 + 60 * 60);
+		if (error.status === 403 && error.stack?.includes("has an IP allow list enabled")) {
+			logger.error({ err: error }, "blocked by GitHub allowlist!");
+			statsd.increment(metricError.blockedByGitHubAllowlist);
 		}
+
 		throw error;
 	});
 
