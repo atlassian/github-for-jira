@@ -2,6 +2,7 @@
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
+import nock from "nock";
 
 describe("Deployment Webhook", () => {
 	let app: Application;
@@ -84,6 +85,8 @@ describe("Deployment Webhook", () => {
 			Date.now = jest.fn(() => 12345678);
 
 			await expect(app.receive(fixture)).toResolve();
+			// Clean up all nock mocks
+			nock.cleanAll();
 		});
 	});
 });

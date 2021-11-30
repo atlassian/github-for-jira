@@ -7,29 +7,37 @@ import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import {Octokit} from "@octokit/rest";
 import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 
+// https://docs.github.com/en/rest/reference/repos#list-deployments
 async function getLastSuccessfulDeployCommitSha(
 	owner: string,
 	repoName: string,
 	github: GitHubAPI,
-	deployments: Octokit.ReposListDeploymentsResponseItem[]
+	deployments: Octokit.ReposListDeploymentsResponseItem[],
+	logger
 ): Promise<string> {
 
-	for (const deployment of deployments) {
-		// Get each deployment status for this environment so we can have their statuses' ids
-		const listDeploymentStatusResponse: Octokit.Response<Octokit.ReposListDeploymentStatusesResponse> = await github.repos.listDeploymentStatuses({
-			owner: owner,
-			repo: repoName,
-			deployment_id: deployment.id
-		});
+	try {
+		for (const deployment of deployments) {
+			// Get each deployment status for this environment so we can have their statuses' ids
+			const listDeploymentStatusResponse: Octokit.Response<Octokit.ReposListDeploymentStatusesResponse> = await github.repos.listDeploymentStatuses({
+				owner: owner,
+				repo: repoName,
+				deployment_id: deployment.id,
+				per_page: 100 // Default is 30, max we can request is 100
+			});
 
-		// Filter only the successful ones
-		const lastSuccessful: Octokit.ReposListDeploymentStatusesResponseItem[] = listDeploymentStatusResponse.data.filter(deployment => deployment.state === "success");
-		if (lastSuccessful) {
-			return deployment.sha;
+			// Find the first successful one
+			const lastSuccessful: Octokit.ReposListDeploymentStatusesResponseItem | undefined = listDeploymentStatusResponse.data.find(deployment => deployment.state === "success");
+			if (lastSuccessful !== undefined) {
+				return deployment.sha;
+			}
 		}
+	} catch (e) {
+		logger?.error(`Failed to get deployment statuses.`);
 	}
 
-	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 250) then we'll return the last one from the array, even if it's a failed one.
+
+	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 100) then we'll return the last one from the array, even if it's a failed one.
 	return deployments[deployments.length - 1].sha;
 }
 
@@ -39,26 +47,28 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 	currentDeploySha: string,
 	currentDeployId: number,
 	currentDeployEnv: string,
-	github: GitHubAPI
-): Promise<string> {
+	github: GitHubAPI,
+	logger?: LoggerWithTarget
+): Promise<string | undefined> {
 
-	// Grab all deployments for this repo
+	// Grab the last 100 deployments for this repo
 	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> = await github.repos.listDeployments({
 		owner: owner,
 		repo: repoName,
+		environment: currentDeployEnv,
+		per_page: 100 // Default is 30, max we can request is 100
 	})
 
 	// Filter per current environment and exclude itself
 	const filteredDeployments = deployments.data
-		.filter(deployment => deployment.environment === currentDeployEnv)
 		.filter(deployment => deployment.id !== currentDeployId);
 
 	// If this is the very first successful deployment ever, return nothing because we won't have any commit sha to compare with the current one.
 	if (!filteredDeployments.length) {
-		return "";
+		return undefined;
 	}
 
-	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, github, filteredDeployments);
+	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, github, filteredDeployments, logger);
 
 	const commitsDiff = await github.repos.compareCommits({
 		owner: owner,
@@ -67,12 +77,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		head: currentDeploySha
 	})
 
-	let allCommitMessages = "";
-	for (const commit of commitsDiff.data.commits) {
-		allCommitMessages = allCommitMessages + " " + commit.commit.message
-	}
-
-	return allCommitMessages;
+	return commitsDiff.data?.commits?.map(c => c.commit.message).join(" ");
 }
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
@@ -152,7 +157,8 @@ export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeployment
 			deployment.sha,
 			deployment.id,
 			deployment_status.environment,
-			githubClient
+			githubClient,
+			logger
 		);
 
 		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}\n${allCommitsMessages}`) || [];

@@ -95,7 +95,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			});
 
 		// List deployments
-		githubNock.get(`/repos/${owner}/${repo}/deployments`)
+		githubNock.get(`/repos/${owner}/${repo}/deployments?environment=Production&per_page=100`)
 			.reply(200,
 				[
 					{
@@ -115,7 +115,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			);
 
 		// List deployments statuses
-		githubNock.get(`/repos/${owner}/${repo}/deployments/1/statuses`)
+		githubNock.get(`/repos/${owner}/${repo}/deployments/1/statuses?per_page=100`)
 			.reply(200, [
 				{
 					id: 1,
@@ -128,7 +128,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			]);
 
 		// List deployments statuses
-		githubNock.get(`/repos/${owner}/${repo}/deployments/2/statuses`)
+		githubNock.get(`/repos/${owner}/${repo}/deployments/2/statuses?per_page=100`)
 			.reply(200, {
 				data: [
 					{
@@ -143,7 +143,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			});
 
 		// List deployments statuses
-		githubNock.get(`/repos/${owner}/${repo}/deployments/3/statuses`)
+		githubNock.get(`/repos/${owner}/${repo}/deployments/3/statuses?per_page=100`)
 			.reply(200, {
 				data: [
 					{
