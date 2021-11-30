@@ -4,7 +4,7 @@ import { CustomContext } from "./middleware";
 import { DeploymentsResult } from "../jira/client";
 
 export default async (context: CustomContext, jiraClient): Promise<void> => {
-	const jiraPayload = await transformDeployment(context.github, context.payload, context.log);
+	const jiraPayload = await transformDeployment(context.github, context.payload, jiraHost, context.log);
 
 	if (!jiraPayload) {
 		context.log(

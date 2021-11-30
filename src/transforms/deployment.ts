@@ -139,7 +139,7 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeploymentStatus, logger?: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger?: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 

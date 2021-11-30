@@ -196,7 +196,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			expect.anything()
 		).mockResolvedValue(true);
 
-		const jiraPayload = await transformDeployment(GitHubAPI(), deployment_status.payload, getLogger("deploymentLogger"))
+		const jiraPayload = await transformDeployment(GitHubAPI(), deployment_status.payload, "testing.atlassian.net", getLogger("deploymentLogger"))
 
 		// Clean up all nock mocks
 		nock.cleanAll();
