@@ -15,7 +15,11 @@ jest.mock("../../../src/models");
 describe.skip("sync/pull-request", () => {
 	const installationId = 1234;
 	let app: Application;
-	let queues;
+
+	const backfillQueue = {
+		schedule: jest.fn()
+	};
+	const queueSupplier = () => Promise.resolve(backfillQueue);
 
 	beforeEach(async () => {
 		jest.setTimeout(10000);
@@ -39,14 +43,9 @@ describe.skip("sync/pull-request", () => {
 			}
 		};
 
-		queues = {
-			installation: {
-				add: jest.fn()
-			},
-			pullRequests: {
-				add: jest.fn()
-			}
-		};
+		afterEach(() => {
+			backfillQueue.schedule.mockReset();
+		})
 
 		Date.now = jest.fn(() => 12345678);
 
@@ -115,7 +114,7 @@ describe.skip("sync/pull-request", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processInstallation(app, queues)(job, getLogger("test"))).toResolve();
+			await expect(processInstallation(app, queueSupplier)(job, getLogger("test"))).toResolve();
 		});
 	});
 
@@ -128,8 +127,7 @@ describe.skip("sync/pull-request", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app, queues)(job, getLogger("test"))).toResolve();
-		expect(queues.pullRequests.add).not.toHaveBeenCalled();
+		await expect(processInstallation(app, queueSupplier)(job, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});
@@ -147,8 +145,8 @@ describe.skip("sync/pull-request", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app, queues)(job, getLogger("test"))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger("test"))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});
