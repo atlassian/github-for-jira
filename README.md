@@ -113,20 +113,20 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 
 |**Permission scope**|**Why the app needs it**|
 |---|---|
-|**Read** access to contents & metadata |**Contents** (aka code) and **metadata** are needed to sync development information to Jira. <br><br> **Medadata:** All GitHub apps have read-only metadata permission set by default. This is a madatory requirement by GitHub and is needed to provide access to a collection of read-only endpoints with metadata for various resources. These endpoints do not leak sensitive private repository information. Read-only metadata permissions are used for the following webhook: <br> * repository (all events excluding `deleted`) <br><br> **Contents:** Read-only content permissions are used for the following webhooks: <br> * commit comment <br> * create <br> * delete <br> * push <br>* workflow run|
-|**Read** and **write** access to issues and pull requests|**Issues** and **pull requests** are used by the GitHub for Jira app to power Smart Commit actions and unfurl Jira URLs. This allows us to create links to Jira issues from GitHub pull requests comments or issue comments when you include an issue key in the body e.g. [ABC-123] will link to Jira issue ABC-123 <br><br> **Issues:** Read and write issue permissions are used for the following webhooks: <br> * issue comment <br> * issues <br><br> **Pull requests:** Read and write pull request permissions are used for the following webhooks: <br> * pull request <br> * pull request review|
-|**Read** and **write** access to actions and deployments|If you want to see build and deployment information in Jira, the app will need read and write permissions for deployments. In order for the GitHub for Jira app to send the correct status (pending, in progress, successful etc) of a deployment to Jira we require the `state` property. This property is only available on the `deployment_status` event which occurs when a deployment is created. The [GitHub API](https://docs.github.com/en/rest/reference/repos#create-deployment-statuses) requires that GitHub apps have read and write access to listen to deployment creation events. <br><br> **Deployments:** Read and write deployment permissions are used for the following webhooks: <br> * deployment status|
+|**Read** access to contents & metadata |**Contents** (aka code) and **metadata** are needed to sync development information to Jira. <br><br> **Medadata:** All GitHub apps have read-only metadata permission set by default. This is a madatory requirement by GitHub and is needed to provide access to a collection of read-only endpoints with metadata for various resources. These endpoints do not leak sensitive private repository information. Read-only metadata permissions are used for the following webhook: <br> - repository (all events excluding `deleted`) <br><br> **Contents:** Read-only content permissions are used for the following webhooks: <br> - commit comment <br> - create <br> - delete <br> - push <br> - workflow run|
+|**Read** and **write** access to issues and pull requests|**Issues** and **pull requests** are used by the GitHub for Jira app to power Smart Commit actions and unfurl Jira URLs. This allows us to create links to Jira issues from GitHub pull requests comments or issue comments when you include an issue key in the body e.g. [ABC-123] will link to Jira issue ABC-123 <br><br> **Issues:** Read and write issue permissions are used for the following webhooks: <br> - issue comment <br> - issues <br><br> **Pull requests:** Read and write pull request permissions are used for the following webhooks: <br> - pull request <br> - pull request review|
+|**Read** and **write** access to actions and deployments|If you want to see build and deployment information in Jira, the app will need read and write permissions for deployments. In order for the GitHub for Jira app to send the correct status (pending, in progress, successful etc) of a deployment to Jira we require the `state` property. This property is only available on the `deployment_status` event which occurs when a deployment is created. The [GitHub API](https://docs.github.com/en/rest/reference/repos#create-deployment-statuses) requires that GitHub apps have read and write access to listen to deployment creation events. <br><br> **Deployments:** Read and write deployment permissions are used for the following webhooks: <br> - deployment status|
 
 ##### Organization permissions
 
 |**Permission scope**|**Why the app needs it**|
 |---|---|
-|**Read** access to members | To determine if you have admin access to a GitHub organization |
+|**Read** access to members | To determine if you have admin access to a GitHub organization.|
 
 ##### Events Our App Subscribes To
 
 |**Event**|**When this event occurs**|**Activity specified in the `action` property of the payload object (Y/N)**|
-|---|---|
+|---|---|---|
 |Commit comment|A commit comment is created|Y|
 |Create|A Git branch or tag is created|N|
 |Delete|A Git branch or tag is deleted|N|
