@@ -23,7 +23,7 @@
 <br>
 
 **Q:** Why do you need read and **write** access for deployments? It appears that sending deployment data to Jira would only require read access.
-**A:** To correctly map the status of your deployments (pending, in progress, successful etc) we need to access the `state` property which only exists on the `deployment_status` webhook event which occurs when a deployment is created. The [GitHub API](https://docs.github.com/en/rest/reference/repos#create-a-deployment) requires that GitHub apps have read and write access to listen to deployment creation events. Unfortunately, the GitHub documentation doesn’t specify why write access is needed but we have raised the concern with them. You can follow the discussion [here](https://github.community/t/write-access-to-deployment-creation-events/215078).
+**A:** To correctly map the status of your deployments (pending, in progress, successful etc) we need to access the `state` property which only exists on the `deployment_status` webhook event which occurs when a deployment is created. The [GitHub API](https://docs.github.com/en/rest/reference/repos#create-a-deployment-status) requires that GitHub apps have read and write access to listen to deployment creation events. Unfortunately, the GitHub documentation doesn’t specify why write access is needed but we have raised the concern with them. You can follow the discussion [here](https://github.community/t/write-access-to-deployment-creation-events/215078).
 
 <br>
 
