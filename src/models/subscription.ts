@@ -3,7 +3,6 @@ import _ from "lodash";
 import logger from "../config/logger";
 import { queues } from "../worker/queues";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import sqsQueues from "../sqs/queues";
 import RepoSyncState from "./reposyncstate";
 import backfillQueueSupplier from '../backfill-queue-supplier';
 
@@ -184,14 +183,6 @@ export default class Subscription extends Sequelize.Model {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host
 			}
-		});
-	}
-
-	static async startNewSyncProcess(subscription: Subscription) {
-		//TODO Add a sync start logic
-		await sqsQueues.backfill.sendMessage({
-			installationId: subscription.gitHubInstallationId,
-			jiraHost: subscription.jiraHost
 		});
 	}
 

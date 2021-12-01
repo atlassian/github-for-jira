@@ -25,7 +25,6 @@ export const backfillQueueMessageHandlerFactory: (queueSupplier: BackfillQueueSu
 		);
 
 		try {
-			// TODO: add a happy path test to make sure that it reaches deduplicator at least
 			const processor = await processInstallation(app, queueSupplier);
 			await processor({
 				data: context.payload,
@@ -34,14 +33,13 @@ export const backfillQueueMessageHandlerFactory: (queueSupplier: BackfillQueueSu
 		} catch (err) {
 			sentry.setExtra("job", {
 				id: context.message.MessageId,
-				attemptsMade: context.message.Attributes?.ApproximateReceiveCount || 1,
+				attemptsMade: parseInt(context.message.Attributes?.ApproximateReceiveCount || "1"),
 				timestamp: new Date(),
 				data: context.payload
 			});
 
 			sentry.setTag("jiraHost", context.payload.jiraHost);
-			sentry.setTag("queue", "backfill");
-			// TODO: add test for sentry to capture exception
+			sentry.setTag("queue", "sqs-backfill");
 			sentry.captureException(err);
 
 			throw err;
