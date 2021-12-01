@@ -26,7 +26,7 @@ export type Context<MessagePayload> = {
 	payload: MessagePayload;
 
 	/**
-	 * Oritinal SQS Mesage
+	 * Original SQS Mesage
 	 */
 	message: Message;
 
@@ -36,7 +36,7 @@ export type Context<MessagePayload> = {
 	log: Logger;
 
 	/**
-	 * How many times this messages attempted to be processed, including the current attempt
+	 * How many times this messages attempted to be processed, including the current attempt (always greater 0)
 	 */
 	receiveCount: number;
 
@@ -282,7 +282,7 @@ export class SqsQueue<MessagePayload> {
 
 			await this.handleSqsResponse(result, listenerContext)
 		} catch(err) {
-			listenerContext.log.error({err}, `Error receiving message from SQS queue, queueName ${this.queueName}`);
+			listenerContext.log.error({err}, `Error receiving message from SQS queue`);
 			//In case of aws client error we wait for the long polling interval to prevent bombarding the queue with failing requests
 			await new Promise(resolve => setTimeout(resolve, this.longPollingIntervalSec * 1000));
 		} finally {
@@ -325,7 +325,7 @@ export class SqsQueue<MessagePayload> {
 
 		const context: Context<MessagePayload> = {message, payload, log, receiveCount: receiveCount, lastAttempt: receiveCount >= this.maxAttempts}
 
-		log.info(`Sqs message received. Receive count: ${receiveCount}`);
+		log.info(`SQS message received. Receive count: ${receiveCount}`);
 
 		try {
 			const messageProcessingStartTime = new Date().getTime();
@@ -346,13 +346,15 @@ export class SqsQueue<MessagePayload> {
 		} catch (err) {
 
 			statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
-			log.error({err}, "error executing sqs message")
+			log.error({err}, "Error while executing SQS message")
 
 			try {
 				const errorHandlingResult = await this.errorHandler(err, context);
-				if (!errorHandlingResult.retryable ||
-					(errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts)) {
-					log.info("Deleting the message hence it reached the maximum amount of retries")
+				if (!errorHandlingResult.retryable) {
+					log.info("Deleting the message because it is not retryable")
+					await this.deleteMessage(message, log)
+				} else if (errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts) {
+					log.info("Deleting the message because it has reached the maximum amount of retries")
 					await this.deleteMessage(message, log)
 				} else if (errorHandlingResult.retryDelaySec !== undefined /*zero seconds delay is also supported*/) {
 					log.info(`Delaying the retry for ${errorHandlingResult.retryDelaySec} seconds`)
@@ -367,7 +369,7 @@ export class SqsQueue<MessagePayload> {
 	private async changeVisabilityTimeout(message: Message, timeout: number, logger: Logger): Promise<void> {
 
 		if(!message.ReceiptHandle) {
-			logger.error(`NO Receipt Handle on a message with Id ${message.MessageId}`)
+			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`)
 			return;
 		}
 

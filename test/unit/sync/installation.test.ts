@@ -6,12 +6,10 @@ import {
 
 import {DeduplicatorResult} from "../../../src/sync/deduplicator";
 
+import '../../../src/config/feature-flags';
+
 import {Application} from "probot";
 import {getLogger} from "../../../src/config/logger";
-
-import '../../../src/config/feature-flags';
-import {BooleanFlags} from "../../../src/config/feature-flags";
-import Queue from "bull";
 
 const mockedExecuteWithDeduplication = jest.fn();
 jest.mock('../../../src/sync/deduplicator', () => {
@@ -25,23 +23,22 @@ jest.mock('../../../src/sync/deduplicator', () => {
 
 jest.mock("../../../src/models");
 
-let mockedBooleanFeatureFlags = {};
-jest.mock('../../../src/config/feature-flags', () => {
-	return {
-		...jest.requireActual('../../../src/config/feature-flags'),
-		booleanFlag: (key) => Promise.resolve(mockedBooleanFeatureFlags[key])
-	};
-});
-
 describe("sync/installation", () => {
+
+	const JOB_DATA = {installationId: 1, jiraHost: "http://foo"};
+
+	const backfillQueue = {
+		schedule: jest.fn()
+	}
+
+	const backfillQueueSchedule: jest.Mock = backfillQueue.schedule as jest.Mock;
 
 	beforeEach(() => {
 		mockedExecuteWithDeduplication.mockReset();
-		mockedBooleanFeatureFlags[BooleanFlags.USE_DEDUPLICATOR_FOR_BACKFILLING] = true;
 	});
 
 	afterEach(() => {
-		mockedBooleanFeatureFlags = {};
+		(backfillQueue.schedule as jest.Mock).mockReset();
 	});
 
 	describe("isRetryableWithSmallerRequest()", () => {
@@ -87,11 +84,7 @@ describe("sync/installation", () => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		const app: Application = jest.fn() as Application;
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
+
 		const job = {
 			data: {
 				installationId: 1,
@@ -104,52 +97,37 @@ describe("sync/installation", () => {
 		const logger = getLogger('test');
 
 		test('should process the installation with deduplication', async () => {
-			await processInstallation(app, queues)(job, logger);
+			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, logger);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 		});
 
 		test('should reschedule the job if deduplicator is unsure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
-			await processInstallation(app, queues)(job, logger);
-			expect(queues.installation.add.mock.calls).toEqual([[job.data, {delay: 60_000}]]);
+			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, logger);
+			expect(backfillQueueSchedule.mock.calls).toEqual([[job.data, 60_000]]);
 		});
 
 		test('should also reschedule the job if deduplicator is sure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
-			await processInstallation(app, queues)(job, logger);
-			expect(queues.installation.add.mock.calls.length).toEqual(1);
+			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, logger);
+			expect(backfillQueueSchedule.mock.calls.length).toEqual(1);
 		});
 	});
 
 	describe('maybeScheduleNextTask', () => {
 		test('does nothing if there is no next task', () => {
-			const queue = {
-				add: jest.fn()
-			};
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			maybeScheduleNextTask(queue as Queue.Queue, {foo: 'bar'}, [], getLogger('test'));
-			expect(queue.add.mock.calls).toHaveLength(0);
+			maybeScheduleNextTask(backfillQueue, JOB_DATA, [], getLogger('test'));
+			expect(backfillQueueSchedule.mock.calls).toHaveLength(0);
 		});
 
-		test('when multiple tasks, picks the one with the highest delay', () => {
-			const queue = {
-				add: jest.fn()
-			};
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			maybeScheduleNextTask(queue as Queue.Queue, {foo: 'bar'}, [30, 60, 0], getLogger('test'));
-			expect(queue.add.mock.calls).toEqual([[{foo: 'bar'}, {'delay': 60}]]);
+		test('when multiple tasks, picks the one with the highest delay', async () => {
+			await maybeScheduleNextTask(backfillQueue, JOB_DATA, [30, 60, 0], getLogger('test'));
+			expect(backfillQueueSchedule.mock.calls).toEqual([[JOB_DATA, 60]]);
 		});
 
-		test('not passing delay to queue when not provided', () => {
-			const queue = {
-				add: jest.fn()
-			};
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			maybeScheduleNextTask(queue as Queue.Queue, {foo: 'bar'}, [0], getLogger('test'));
-			expect(queue.add.mock.calls).toEqual([[{foo: 'bar'}]]);
+		test('not passing delay to queue when not provided', async () => {
+			await maybeScheduleNextTask(backfillQueue, JOB_DATA, [0], getLogger('test'));
+			expect(backfillQueueSchedule.mock.calls).toEqual([[JOB_DATA, 0]]);
 		});
 	});
 });
