@@ -113,7 +113,6 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 
 |**Permission scope**|**Why the app needs it**|
 |---|---|
-
 |**Read** access to contents & metadata |**Contents** (aka code) and **metadata** are needed to sync development information to Jira. \n **Medadata:** All GitHub apps have read-only metadata permission set by default. This is a madatory requirement by GitHub and is needed to provide access to a collection of read-only endpoints with metadata for various resources. These endpoints do not leak sensitive private repository information.\n Read-only metadata permissions are used for the following webhook: \n * repository (all events excluding `deleted`) \n **Contents:** Read-only content permissions are used for the following webhooks: \n * commit comment \n * create \n * delete \n * push \n* workflow run|
 
 |**Read** and **write** access to issues and pull requests|
