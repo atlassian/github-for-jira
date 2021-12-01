@@ -8,6 +8,10 @@ import {booleanFlag, BooleanFlags} from "./config/feature-flags";
 
 const fallbackLogger = getLogger("queue-supplier-default");
 
+/**
+ * A temp class to support switching between Redis and SQS. Will be gone with the feature flag and the
+ * Redis queue.
+ */
 class BackfillQueueSupplier {
 	private redisQueue: Queue.Queue;
 	private sqsQueue: SqsQueue<BackfillMessagePayload>;
