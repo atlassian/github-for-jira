@@ -1,4 +1,3 @@
-
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import envVars from "./env";
@@ -28,7 +27,7 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
 	NEW_REPO_SYNC_STATE = "new-repo-sync-state",
 	PAYLOAD_SIZE_METRIC = "payload-size-metrics",
-	INCLUDE_JIRA_HOSTNAME_TO_DEDUP_KEY = "include-jira-hostname-to-dedup-key"
+	TRACE_LOGGING = "trace-logging"
 }
 
 export enum StringFlags {
