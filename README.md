@@ -125,19 +125,19 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 
 ##### Events Our App Subscribes To
 
-|**Event**|**When this event occurs**|**Activity specified in the `action` property of the payload object (Y/N)**|
-|---|---|---|
-|Commit comment|A commit comment is created|Y|
-|Create|A Git branch or tag is created|N|
-|Delete|A Git branch or tag is deleted|N|
-|Deployment status|A deployment is created|Y|
-|Issue comment|Activity related to an issue or pull request comment|Y|
-|Issues|Activity related to an issue|Y|
-|Pull request|Activity related to pull requests|Y|
-|Pull request review|Activity related to pull request reviews|Y|
-|Push|One or more commits are pushed to a repository branch or tag|N|
-|Repository|Activity related to a repository|Y|
-|Workflow run|When a GitHub Actions workflow run is requested or completed|N|
+|**Event**|**When this event occurs**|
+|---|---|
+|Commit comment|A commit comment is created|
+|Create|A Git branch or tag is created|
+|Delete|A Git branch or tag is deleted|
+|Deployment status|A deployment is created|
+|Issue comment|Activity related to an issue or pull request comment|
+|Issues|Activity related to an issue|
+|Pull request|Activity related to pull requests|
+|Pull request review|Activity related to pull request reviews|
+|Push|One or more commits are pushed to a repository branch or tag|
+|Repository|Activity related to a repository|
+|Workflow run|When a GitHub Actions workflow run is requested or completed|
 
 Have more questions about permissions? Please see our [FAQ documentation](https://github.com/atlassian/github-for-jira/blob/ARC-677-permissions-doc-update/docs/FAQs.md). If you can’t find the answer to a question, please feel free to [open an issue](https://github.com/atlassian/github-for-jira/issues/new) and send your question to our team. We’ll be more than happy to answer and will update our FAQ doc accordingly.
 
