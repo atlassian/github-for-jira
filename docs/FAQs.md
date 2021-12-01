@@ -1,4 +1,4 @@
-#FAQs
+# GitHub for Jira FAQs
 
 ### Permissions
 
