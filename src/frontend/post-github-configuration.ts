@@ -6,7 +6,7 @@ import { Request, Response } from "express";
  * Handle the when a user adds a repo to this installation
  */
 export default async (req: Request, res: Response): Promise<void> => {
-	if (!req.session.githubToken || !res.locals.jiraHost) {
+	if (!req.session.githubToken || !req.session.jiraHost) {
 		res.sendStatus(401);
 		return;
 	}
@@ -55,7 +55,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 		await Subscription.install({
 			clientKey: getHashedKey(req.body.clientKey),
 			installationId: req.body.installationId,
-			host: res.locals.jiraHost
+			host: req.session.jiraHost
 		});
 
 		res.sendStatus(200);

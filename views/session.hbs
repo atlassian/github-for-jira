@@ -9,5 +9,17 @@
 </head>
 <body>
 Logging you into Github, one moment...
+<script nonce="{{nonce}}">
+  setTimeout(function() {
+    const jiraHost = window.localStorage.getItem("jiraHost");
+    if (jiraHost) {
+      // Set jiraHost value
+      document.cookie = "jiraHost=" + jiraHost+"; path=/; expires=" + new Date(Date.now() + (60000 * 5)).toUTCString();
+      // Remove old value
+      window.localStorage.removeItem("jiraHost");
+    }
+    window.location.href = "{{redirectUrl}}";
+  }, 30000);
+</script>
 </body>
 </html>

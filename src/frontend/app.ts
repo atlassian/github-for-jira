@@ -14,7 +14,7 @@ import deleteGitHubSubscription from "./delete-github-subscription";
 import getJiraConfiguration from "./get-jira-configuration";
 import deleteJiraConfiguration from "./delete-jira-configuration";
 import getGithubClientMiddleware from "./github-client-middleware";
-import getJiraConnect from "../jira/connect";
+import getJiraConnect, { postInstallUrl } from "../jira/connect";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
 import extractInstallationFromJiraCallback from "../jira/extract-installation-from-jira-callback";
@@ -142,30 +142,34 @@ export default (octokitApp: App): Express => {
 		)
 	);
 
-	app.get("/session", (req: Request, res: Response) => {
+	app.get(["/session", "/session/*"], (req: Request, res: Response, next:NextFunction) => {
+		if(!req.params[0]) {
+			return next(new Error("Missing redirect url for session.  Needs to be in format `/session/:redirectUrl`"));
+		}
 		return res.render("session.hbs", {
 			title: "Redirecting...",
 			APP_URL: process.env.APP_URL,
-			redirectUrl: req.params.url,
+			redirectUrl: new URL(req.params[0], process.env.APP_URL).href,
 			nonce: res.locals.nonce
 		});
 	});
 
+	// Saves the jiraHost cookie to the secure session if available
 	app.use((req: Request, res: Response, next: NextFunction) => {
-		if (req.cookies.jiraHost) {
+		const jiraHost = req.cookies.jiraHost;
+		if (jiraHost) {
 			// Save jirahost to secure session
-			req.session.jiraHost = req.cookies.jiraHost;
+			req.session.jiraHost = jiraHost;
 			// delete jirahost from cookies.
 			res.clearCookie("jiraHost");
 		}
+
+		// Only save xdm_e query when on the post install url (iframe url)
+		if (req.path == postInstallUrl && req.method == "GET" && req.query.xdm_e) {
+			req.session.jiraHost = req.query.xdm_e as string;
+		}
 		next();
 	});
-
-	// Creating standard entrypoint for jiraHost
-	app.use((req, res, next) => {
-		res.locals.jiraHost = req.query.xdm_e as string || req.session.jiraHost;
-		next();
-	})
 
 	app.use(githubClientMiddleware);
 
@@ -181,7 +185,7 @@ export default (octokitApp: App): Express => {
 
 	// Maintenance mode view
 	app.use(async (req, res, next) => {
-		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, res.locals.jiraHost)) {
+		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost)) {
 			return getMaintenance(req, res);
 		}
 		next();
@@ -233,7 +237,6 @@ export default (octokitApp: App): Express => {
 		"/jira/configuration",
 		csrfProtection,
 		verifyJiraJwtTokenMiddleware,
-		// saveSessionVariables,
 		getJiraConfiguration
 	);
 
@@ -262,9 +265,9 @@ export default (octokitApp: App): Express => {
 	});
 
 	// Add Sentry Context
-	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+	app.use((err: Error, req: Request, _: Response, next: NextFunction) => {
 		Sentry.withScope((scope: Sentry.Scope): void => {
-			const jiraHost = res.locals.jiraHost;
+			const jiraHost = req.session.jiraHost;
 			if (jiraHost) {
 				scope.setTag("jiraHost", jiraHost);
 			}
@@ -304,7 +307,7 @@ export default (octokitApp: App): Express => {
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, true, res.locals.jiraHost);
+		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, true, req.session.jiraHost);
 		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs";
 
 		return res.status(errorStatusCode).render(errorPageVersion, {

@@ -7,17 +7,18 @@ import { Request, Response } from "express";
  */
 export default async (req: Request, res: Response): Promise<void> => {
 	const jiraHost = req.body.jiraHost;
+	const installationId = Number(req.body.installationId);
 	if(!jiraHost) {
 		req.log.error("Missing Jira Host");
 		res.status(401).send("Missing jiraHost in body");
 		return;
 	}
 
-	req.log.info({ installationId: req.body.installationId }, "Received delete jira configuration request");
+	req.log.info({ installationId }, "Received delete jira configuration request");
 
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		req.body.installationId
+		installationId
 	);
 
 	if(!subscription) {
@@ -25,8 +26,8 @@ export default async (req: Request, res: Response): Promise<void> => {
 		return;
 	}
 
-	const jiraClient = await getJiraClient(jiraHost, req.body.installationId, req.log);
-	await jiraClient.devinfo.installation.delete(req.body.installationId);
+	const jiraClient = await getJiraClient(jiraHost, installationId, req.log);
+	await jiraClient.devinfo.installation.delete(installationId);
 	await subscription.destroy();
 
 	res.sendStatus(204);

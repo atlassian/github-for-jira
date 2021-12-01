@@ -5,20 +5,15 @@ const appUrl = document.querySelector("meta[name=public-url]").getAttribute("con
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
 
-	// window.sessionStorage.setItem("jiraHost", params.get('xdm_e'));
-	const child = window.open("/session");
+	const child = window.open("/session/github/configuration");
 	child.addEventListener("load", function() {
-		const key = "jiraHost=";
-		console.log("before cookies: " + child.document.cookie);
-		// Set jiraHost value
-		child.document.cookie = key + params.get("xdm_e");
-		console.log("after cookies: " + child.document.cookie);
-		child.window.location.href = appUrl + "/github/configuration";
+		child.window.localStorage.setItem("jiraHost", params.get("xdm_e"))
 	}, true);
 
 	const interval = setInterval(function () {
 		if (child.closed) {
 			clearInterval(interval);
+			child.removeEventListener("load", onload);
 			AP.navigator.reload();
 		}
 	}, 100);
