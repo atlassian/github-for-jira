@@ -15,7 +15,6 @@ type BackfillQueueSupplier = () => Promise<BackfillQueue>;
 
 export const backfillQueueMessageHandlerFactory: (queueSupplier: BackfillQueueSupplier) => MessageHandler<BackfillMessagePayload> =
 	(queueSupplier) => async (context,) => {
-		context.log.info("Processing backfill message", app, queueSupplier);
 		const sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		sentry.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)

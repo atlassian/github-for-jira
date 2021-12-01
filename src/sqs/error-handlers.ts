@@ -37,7 +37,6 @@ export const jiraOctokitErrorHandler : ErrorHandler<any> = async (error: JiraCli
 	return errorHandlingResult;
 }
 
-// TODO: move to shared space between push and backfill
 function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult | undefined {
 	if (error instanceof JiraClientError &&
 		error.status &&
@@ -58,7 +57,6 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 	return undefined;
 }
 
-// TODO: move to shared space between push and backfill
 function handleFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult {
 	if (error instanceof RateLimitingError) {
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
