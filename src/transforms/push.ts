@@ -115,7 +115,7 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 	} = payload;
 
 	if (await isBlocked(installationId, rootLogger)) {
-		rootLogger.warn({ payload }, "blocking push event to be sent to sqs");
+		rootLogger.warn({ payload }, "blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
 
