@@ -76,7 +76,7 @@ export const isBlocked = async (installationId: number, logger: LoggerWithTarget
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
 		return blockedInstallations.includes(installationId);
 	} catch (e) {
-		logger.error(e);
+		logger.error({ err: e, installationId }, "Cannot define if isBlocked")
 		return false;
 	}
 };
