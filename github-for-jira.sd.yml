@@ -374,8 +374,8 @@ environmentOverrides:
       - name: Worker
         scaling:
           instance: c5.2xlarge
-          min: 3
-          max: 4 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          min: 4
+          max: 6 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
           metrics: *CpuMemScalingRules
     alarms:
       overrides:
