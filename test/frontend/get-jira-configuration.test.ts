@@ -73,6 +73,9 @@ describe("Jira Configuration Suite", () => {
 	const mockRequest = (): any => ({
 		query: { xdm_e: "https://somejirasite.atlassian.net" },
 		csrfToken: jest.fn().mockReturnValue({}),
+		session: {
+			jiraHost: subscriptions[0].jiraHost,
+		},
 		log: {
 			info: jest.fn(),
 			warn: jest.fn(),
@@ -82,7 +85,6 @@ describe("Jira Configuration Suite", () => {
 
 	const mockResponse = (): any => ({
 		locals: {
-			jiraHost: subscriptions[0].jiraHost,
 			client: {
 				apps: {
 					getInstallation: jest.fn().mockReturnValue({ data: {} })

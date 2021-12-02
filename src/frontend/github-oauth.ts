@@ -43,7 +43,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 			opts.scopes?.length ? `&scope=${opts.scopes.join(" ")}` : ""
 		}&redirect_uri=${redirectURI}&state=${state}`;
 		req.log.info({ redirectUrl, postLoginUrl: req.session[state] }, `Received request for ${opts.loginURI}, redirecting to Github OAuth flow`);
-		res.redirect(redirectUrl);
+		return res.redirect(redirectUrl);
 	}
 
 	async function callback(
