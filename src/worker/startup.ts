@@ -15,7 +15,8 @@ import * as Sentry from "@sentry/node";
 import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
 import SentryScopeProxy from "../models/sentry-scope-proxy";
 import { getLogger } from "../config/logger";
-import { v4 as uuidv4 } from "uuid"
+import { v4 as uuidv4 } from 'uuid'
+import backfillSupplier from '../backfill-queue-supplier';
 import { isNodeProd } from "../util/isNodeEnv";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
@@ -129,22 +130,13 @@ export async function start() {
 	// exposing queue metrics at a regular interval
 	timer = setInterval(sendQueueMetrics, 60000);
 
+	backfillSupplier.setRedisQueue(queues.installation);
+
 	// Start processing queues
 	queues.discovery.process(5, commonMiddleware(discovery(app, queues), DISCOVERY_LOGGER_NAME));
 	queues.installation.process(
 		Number(CONCURRENT_WORKERS),
-		commonMiddleware(processInstallation(app, queues, () => {
-			return Promise.resolve({
-				schedule: async (jobData, delayMsecs) => {
-					// TBD: switch to SQS with a FF
-					if (delayMsecs) {
-						await queues.installation.add(jobData, {delay: delayMsecs});
-					} else {
-						await queues.installation.add(jobData);
-					}
-				}
-			})
-		}), INSTALLATION_LOGGER_NAME)
+		commonMiddleware(processInstallation(app, () => backfillSupplier.supply()), INSTALLATION_LOGGER_NAME)
 	);
 	queues.push.process(
 		Number(CONCURRENT_WORKERS),

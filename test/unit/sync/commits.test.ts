@@ -22,6 +22,11 @@ describe.skip("sync/commits", () => {
 	const defaultBranchNullFixture = require("../../fixtures/api/graphql/default-branch-null.json");
 	const commitsNoKeys = require("../../fixtures/api/graphql/commit-nodes-no-keys.json");
 
+	const backfillQueue = {
+		schedule: jest.fn()
+	};
+	const queueSupplier = () => Promise.resolve(backfillQueue);
+
 	beforeEach(async () => {
 		// TODO: move this into utils to easily construct mock data
 		const repoSyncStatus = {
@@ -57,6 +62,10 @@ describe.skip("sync/commits", () => {
 		} as any);
 
 		app = createApplication();
+	});
+
+	afterEach(() => {
+		backfillQueue.schedule.mockReset();
 	});
 
 	it("should sync to Jira when Commit Nodes have jira references", async () => {
@@ -105,13 +114,8 @@ describe.skip("sync/commits", () => {
 			}
 		}).reply(200);
 
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
-		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
 	});
 
 	it("should send Jira all commits that have Issue Keys", async () => {
@@ -194,13 +198,8 @@ describe.skip("sync/commits", () => {
 			}
 		}).reply(200);
 
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
-		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
 	it("should default to master branch if defaultBranchRef is null", async () => {
@@ -249,13 +248,8 @@ describe.skip("sync/commits", () => {
 			}
 		}).reply(200);
 
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
-		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
@@ -275,13 +269,8 @@ describe.skip("sync/commits", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
-		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});
@@ -300,13 +289,8 @@ describe.skip("sync/commits", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
-		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});

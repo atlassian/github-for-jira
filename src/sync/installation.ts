@@ -24,6 +24,7 @@ import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
 import {BackfillMessagePayload} from "../sqs/backfill";
+import {Hub} from "@sentry/types/dist/hub";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -413,7 +414,6 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export async function maybeScheduleNextTask(
-	queue: Queue.Queue,
 	backfillQueue: BackfillQueue,
 	jobData: BackfillMessagePayload,
 	nextTaskDelays: Array<number>,
@@ -426,31 +426,22 @@ export async function maybeScheduleNextTask(
 		}
 		const delay = nextTaskDelays.shift()!;
 		logger.info("Scheduling next job with a delay = " + delay);
-		if (await booleanFlag(BooleanFlags.USE_BACKFILL_QUEUE_SUPPLIER, false, jobData.jiraHost)) {
-			await backfillQueue.schedule(jobData, delay);
-		} else {
-			if (delay > 0) {
-				await queue.add(jobData, {delay});
-			} else {
-				await queue.add(jobData);
-			}
-		}
+		await backfillQueue.schedule(jobData, delay, logger);
 	}
 }
 
 export interface BackfillQueue {
-	schedule: (message: BackfillMessagePayload, delayMsecs?: number) => Promise<void>;
+	schedule: (message: BackfillMessagePayload, delayMsecs?: number, logger?: LoggerWithTarget) => Promise<void>;
 }
 
-// TODO: type queues
 export const processInstallation =
-	(app: Application, queues, backfillQueueSupplier: () => Promise<BackfillQueue>) => {
+	(app: Application, backfillQueueSupplier: () => Promise<BackfillQueue>) => {
 		const inProgressStorage = new RedisInProgressStorageWithTimeout(new Redis(getRedisInfo("installations-in-progress")));
 		const deduplicator = new Deduplicator(
 			inProgressStorage, 1_000
 		);
 
-		return async (job, rootLogger: LoggerWithTarget): Promise<void> => {
+		return async (job: {data: BackfillMessagePayload, sentry: Hub}, rootLogger: LoggerWithTarget): Promise<void> => {
 			const { installationId, jiraHost } = job.data;
 
 			const logger = rootLogger.child({ job });
@@ -467,7 +458,8 @@ export const processInstallation =
 
 			const nextTaskDelays: Array<number> = [];
 
-			const result = await deduplicator.executeWithDeduplication("i-" + installationId,
+			const result = await deduplicator.executeWithDeduplication(
+				"i-" + installationId + "-" + jiraHost,
 				() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
 					nextTaskDelays.push(delay)
 				));
@@ -475,18 +467,15 @@ export const processInstallation =
 			switch (result) {
 				case DeduplicatorResult.E_OK:
 					logger.info("Job was executed by deduplicator");
-					maybeScheduleNextTask(queues.installation, await backfillQueueSupplier(), job.data, nextTaskDelays, logger);
+					maybeScheduleNextTask(await backfillQueueSupplier(), job.data, nextTaskDelays, logger);
 					break;
-				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER:
+				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 					logger.warn("Possible duplicate job was detected, rescheduling");
-					if (await booleanFlag(BooleanFlags.USE_BACKFILL_QUEUE_SUPPLIER, false, jiraHost)) {
-						const queue = await backfillQueueSupplier();
-						await queue.schedule(job.data, 60_000);
-					} else {
-						await queues.installation.add(job.data, {delay: 60_000});
-					}
+					const queue = await backfillQueueSupplier();
+					await queue.schedule(job.data, 60_000, logger);
 					break;
-				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB:
+				}
+				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
 					logger.warn("Duplicate job was detected, rescheduling");
 					// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
 					// Worker A - doing a long-running task
@@ -498,13 +487,10 @@ export const processInstallation =
 					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
 					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
 					// is finished.
-					if (await booleanFlag(BooleanFlags.USE_BACKFILL_QUEUE_SUPPLIER, false, jiraHost)) {
-						const queue = await backfillQueueSupplier();
-						await queue.schedule(job.data, Math.floor(60_000 + 60_000 * Math.random()));
-					} else {
-						await queues.installation.add(job.data, {delay: Math.floor(60_000 + 60_000 * Math.random())});
-					}
+					const queue = await backfillQueueSupplier();
+					await queue.schedule(job.data, Math.floor(60_000 + 60_000 * Math.random()), logger);
 					break;
+				}
 			}
 		}
 	}
