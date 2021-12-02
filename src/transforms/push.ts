@@ -10,7 +10,7 @@ import {JiraCommit} from "../interfaces/jira";
 import _ from "lodash";
 import {queues} from "../worker/queues";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import {booleanFlag, BooleanFlags, isBlocked} from "../config/feature-flags";
 import sqsQueues from "../sqs/queues";
 import {PushQueueMessagePayload} from "../sqs/push";
 
@@ -113,6 +113,11 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 		installationId,
 		jiraHost,
 	} = payload;
+
+	if (await isBlocked(installationId, rootLogger)) {
+		rootLogger.warn({ payload, installationId }, "blocking processing of push message because installationId is on the blocklist");
+		return;
+	}
 
 	const webhookId = payload.webhookId || "none";
 	const webhookReceived = payload.webhookReceived || undefined;
