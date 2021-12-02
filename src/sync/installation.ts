@@ -24,6 +24,7 @@ import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
 import {BackfillMessagePayload} from "../sqs/backfill";
+import {Hub} from "@sentry/types/dist/hub";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -425,15 +426,14 @@ export async function maybeScheduleNextTask(
 		}
 		const delay = nextTaskDelays.shift()!;
 		logger.info("Scheduling next job with a delay = " + delay);
-		await backfillQueue.schedule(jobData, delay);
+		await backfillQueue.schedule(jobData, delay, logger);
 	}
 }
 
 export interface BackfillQueue {
-	schedule: (message: BackfillMessagePayload, delayMsecs?: number) => Promise<void>;
+	schedule: (message: BackfillMessagePayload, delayMsecs?: number, logger?: LoggerWithTarget) => Promise<void>;
 }
 
-// TODO: type queues
 export const processInstallation =
 	(app: Application, backfillQueueSupplier: () => Promise<BackfillQueue>) => {
 		const inProgressStorage = new RedisInProgressStorageWithTimeout(new Redis(getRedisInfo("installations-in-progress")));
@@ -441,7 +441,7 @@ export const processInstallation =
 			inProgressStorage, 1_000
 		);
 
-		return async (job, rootLogger: LoggerWithTarget): Promise<void> => {
+		return async (job: {data: BackfillMessagePayload, sentry: Hub}, rootLogger: LoggerWithTarget): Promise<void> => {
 			const { installationId, jiraHost } = job.data;
 
 			const logger = rootLogger.child({ job });
@@ -472,7 +472,7 @@ export const processInstallation =
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 					logger.warn("Possible duplicate job was detected, rescheduling");
 					const queue = await backfillQueueSupplier();
-					await queue.schedule(job.data, 60_000);
+					await queue.schedule(job.data, 60_000, logger);
 					break;
 				}
 				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
@@ -488,7 +488,7 @@ export const processInstallation =
 					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
 					// is finished.
 					const queue = await backfillQueueSupplier();
-					await queue.schedule(job.data, Math.floor(60_000 + 60_000 * Math.random()));
+					await queue.schedule(job.data, Math.floor(60_000 + 60_000 * Math.random()), logger);
 					break;
 				}
 			}
