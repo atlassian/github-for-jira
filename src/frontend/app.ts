@@ -72,13 +72,6 @@ const csrfProtection = csrf(
 		: undefined
 );
 
-/*const saveSessionVariables = (req: Request, _: Response, next: NextFunction) => {
-	req.log.info("Setting session variables 'jiraHost'");
-	// set jirahost after token if no errors
-	req.session.jiraHost = req.query.xdm_e as string;
-	next();
-};*/
-
 export default (octokitApp: App): Express => {
 	const githubClientMiddleware = getGithubClientMiddleware(octokitApp);
 

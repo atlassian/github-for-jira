@@ -7,7 +7,7 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
-	const jiraHost = req.body?.jiraHost || req.query.xdm_e as string;
+	const jiraHost = req.body?.jiraHost || req.session.jiraHost;
 
 	if(!jiraHost) {
 		sendError(res, 401, "Unauthorised");
