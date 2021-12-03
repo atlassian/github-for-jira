@@ -1,35 +1,30 @@
 /* globals $, AP */
 const params = new URLSearchParams(window.location.search.substring(1));
-const appUrl = document.querySelector("meta[name=public-url]").getAttribute("content");
+
+function openChildWindow(url) {
+	const child = window.open(url);
+	const interval = setInterval(function () {
+		if (child.closed) {
+			clearInterval(interval);
+			AP.navigator.reload();
+		}
+	}, 100);
+
+	return child;
+}
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
 
-	const child = window.open("/session/github/configuration");
-	child.addEventListener("load", function() {
+	const child = openChildWindow("/session/github/configuration");
+	child.document.addEventListener("DOMContentLoaded", function() {
 		child.window.localStorage.setItem("jiraHost", params.get("xdm_e"))
 	}, true);
-
-	const interval = setInterval(function () {
-		if (child.closed) {
-			clearInterval(interval);
-			child.removeEventListener("load", onload);
-			AP.navigator.reload();
-		}
-	}, 100);
 });
 
 $(".configure-connection-link").click(function(event) {
 	event.preventDefault();
-	const installationLink = $(event.target).data("installation-link");
-	const child = window.open(installationLink);
-	const interval = setInterval(function() {
-		if (child.closed) {
-			clearInterval(interval);
-
-			AP.navigator.reload();
-		}
-	}, 100);
+	openChildWindow($(event.target).data("installation-link"));
 });
 
 $(".delete-connection-link").click(function(event) {
@@ -57,8 +52,9 @@ $(".sync-connection-link-OLD").click(function(event) {
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
 
-	$("#restart-backfill").prop("disabled", true);
-	$("#restart-backfill").attr("aria-disabled", "true");
+	const $el = $("#restart-backfill");
+	$el.prop("disabled", true);
+	$el.attr("aria-disabled", "true");
 
 	window.AP.context.getToken(function(token) {
 		$.ajax({
@@ -75,9 +71,8 @@ $(".sync-connection-link-OLD").click(function(event) {
 				AP.navigator.reload();
 			},
 			error: function(error) {
-				console.log(error);
-				$("#restart-backfill").prop("disabled", false);
-				$("#restart-backfill").attr("aria-disabled", "false");
+				$el.prop("disabled", false);
+				$el.attr("aria-disabled", "false");
 			}
 		});
 	});
@@ -89,8 +84,9 @@ $(".sync-connection-link").click(function(event) {
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
 
-	$("#restart-backfill").prop("disabled", true);
-	$("#restart-backfill").attr("aria-disabled", "true");
+	const $el = $("#restart-backfill");
+	$el.prop("disabled", true);
+	$el.attr("aria-disabled", "true");
 
 	window.AP.context.getToken(function(token) {
 		$.ajax({
@@ -104,13 +100,11 @@ $(".sync-connection-link").click(function(event) {
 				_csrf: csrfToken
 			},
 			success: function(data) {
-				console.log("success");
-				// AP.navigator.reload();
+				AP.navigator.reload();
 			},
 			error: function(error) {
-				console.log(error);
-				$("#restart-backfill").prop("disabled", false);
-				$("#restart-backfill").attr("aria-disabled", "false");
+				$el.prop("disabled", false);
+				$el.attr("aria-disabled", "false");
 			}
 		});
 	});
