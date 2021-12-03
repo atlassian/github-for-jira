@@ -83,7 +83,7 @@ export interface JiraDeployment {
 	displayName: string;
 	url: string;
 	description: string;
-	lastUpdated: string;
+	lastUpdated: Date;
 	state: string;
 	pipeline: {
 		id: string;

@@ -13,7 +13,7 @@ async function getLastSuccessfulDeployCommitSha(
 	repoName: string,
 	github: GitHubAPI,
 	deployments: Octokit.ReposListDeploymentsResponseItem[],
-	logger
+	logger?: LoggerWithTarget
 ): Promise<string> {
 
 	try {
@@ -51,12 +51,12 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 	logger?: LoggerWithTarget
 ): Promise<string | undefined> {
 
-	// Grab the last 100 deployments for this repo
+	// Grab the last 10 deployments for this repo
 	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> = await github.repos.listDeployments({
 		owner: owner,
 		repo: repoName,
 		environment: currentDeployEnv,
-		per_page: 100 // Default is 30, max we can request is 100
+		per_page: 10 // Default is 30, max we can request is 100
 	})
 
 	// Filter per current environment and exclude itself
@@ -184,7 +184,7 @@ export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeployment
 			displayName: deployment.task,
 			url: deployment_status.target_url || deployment.url,
 			description: deployment.description || deployment_status.description || deployment.task,
-			lastUpdated: deployment_status.updated_at,
+			lastUpdated: new Date(deployment_status.updated_at),
 			state: mapState(deployment_status.state),
 			pipeline: {
 				id: deployment.task,
