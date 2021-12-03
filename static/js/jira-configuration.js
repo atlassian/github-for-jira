@@ -18,7 +18,7 @@ $(".add-organization-link").click(function(event) {
 
 	const child = openChildWindow("/session/github/configuration");
 	child.document.addEventListener("DOMContentLoaded", function() {
-		child.window.localStorage.setItem("jiraHost", params.get("xdm_e"))
+		child.window.localStorage.setItem("jiraHost", params.get("xdm_e"));
 	}, true);
 });
 
