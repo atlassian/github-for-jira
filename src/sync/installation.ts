@@ -227,7 +227,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		logger
 	);
 
-	const newGithub = new GitHubClient(installationId);
+	const newGithub = new GitHubClient(installationId, logger);
 
 	const github = await getEnhancedGitHub(app, installationId);
 
