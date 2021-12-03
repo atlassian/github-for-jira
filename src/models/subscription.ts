@@ -1,11 +1,10 @@
 import Sequelize, { Op, WhereOptions } from "sequelize";
-import { Job } from "bull";
 import _ from "lodash";
 import logger from "../config/logger";
 import { queues } from "../worker/queues";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import sqsQueues from "../sqs/queues";
 import RepoSyncState from "./reposyncstate";
+import backfillQueueSupplier from '../backfill-queue-supplier';
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -187,26 +186,12 @@ export default class Subscription extends Sequelize.Model {
 		});
 	}
 
-	static async startNewSyncProcess(subscription: Subscription) {
-		//TODO Add a sync start logic
-		await sqsQueues.backfill.sendMessage({
-			installationId: subscription.gitHubInstallationId,
-			jiraHost: subscription.jiraHost
-		});
-	}
-
 	static async findOrStartSync(
 		subscription: Subscription,
 		syncType?: string
-	): Promise<Job> {
+	): Promise<void> {
 		const { gitHubInstallationId: installationId, jiraHost } = subscription;
 
-		if (await booleanFlag(BooleanFlags.NEW_BACKFILL_PROCESS_ENABLED, false, subscription.jiraHost)) {
-			await this.startNewSyncProcess(subscription);
-		}
-
-		// If repo sync state is empty
-		// start a sync job from scratch
 		if (!subscription.repoSyncState || syncType === "full") {
 			subscription.changed("repoSyncState", true);
 			await subscription.update({
@@ -219,13 +204,19 @@ export default class Subscription extends Sequelize.Model {
 				}
 			});
 			logger.info("Starting Jira sync");
-			return queues.discovery.add({ installationId, jiraHost });
+			await queues.discovery.add({ installationId, jiraHost });
+			return;
 		}
 
 		// Otherwise, just add a job to the queue for this installation
 		// This will automatically pick back up from where it left off
 		// if something got stuck
-		return queues.installation.add({ installationId, jiraHost });
+		if (await booleanFlag(BooleanFlags.USE_SQS_FOR_BACKFILL, false, jiraHost)) {
+			const backfillQueue = await backfillQueueSupplier.supply();
+			await backfillQueue.schedule({installationId, jiraHost}, 0, logger);
+		} else {
+			await queues.installation.add({ installationId, jiraHost });
+		}
 	}
 
 	/*
