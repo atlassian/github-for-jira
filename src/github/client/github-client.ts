@@ -112,8 +112,9 @@ export default class GitHubClient {
 	/**
 	 * Get a single pull request for the given repository.
 	 */
+	// TODO: add a unit test
 	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
-		return await this.get<Octokit.PullsGetResponse>(`/repos/:owner/:repo/pulls/:pullNumber`, {
+		return await this.get<Octokit.PullsGetResponse>(`/repos/:owner/:repo/pulls/:pullNumber`, {},  {
 			owner,
 			repo,
 			pullNumber
@@ -123,9 +124,21 @@ export default class GitHubClient {
 	/**
 	 * Get publicly available information for user with given username.
 	 */
+	// TODO: add a unit test
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
-		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/:username`, {
+		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/:username`, {}, {
 			username
+		});
+	}
+
+	/**
+	 * Get a single commit for the given repository.
+	 */
+	public getCommit = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> => {
+		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/:owner/:repo/commits/:ref`,  {}, {
+			owner,
+			repo,
+			ref
 		});
 	}
 
