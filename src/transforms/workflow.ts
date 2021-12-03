@@ -5,6 +5,7 @@ import { JiraBuildData, JiraPullRequest } from "../interfaces/jira";
 import { GitHubAPI } from "probot";
 import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { BuildsPayload } from "../config/interfaces";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
@@ -51,10 +52,12 @@ function mapPullRequests(pull_requests: GitHubPullRequest[]): JiraPullRequest[] 
 	));
 }
 
-// todo payload type??
+// TODO - WRITE TEST FOR  compareCommitsBetweenBaseAndHeadBranches
+// TODO - see if tests exist for this and see if they still pass, update if needed, or maybe write more
+// TODO - write build doc
 export default async (
 	githubClient: GitHubAPI,
-	payload: any,
+	payload: BuildsPayload,
 	jiraHost: string,
 	logger?: LoggerWithTarget
 ): Promise<JiraBuildData | undefined> => {
@@ -73,42 +76,38 @@ export default async (
 		updated_at
 	} = workflow_run;
 
-	// let issueKeys;
+	let issueKeys;
 
-	// // todo - figure out issue with FF
-	// // const supportBranchAndMergeWorkflowForBuildsFlagIsOn = await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS, false, jiraHost);
+	const supportBranchAndMergeWorkflowForBuildsFlagIsOn = await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS, true, jiraHost);
 
-	// if (pull_requests?.length > 0) {
-	// 	const compareCommitsPayload = {
-	// 		owner: repository.owner.login,
-	// 		repo: repository.name,
-	// 		base: pull_requests[0]?.base.ref,
-	// 		head: pull_requests[0]?.head.ref
-	// 	}
+	if (supportBranchAndMergeWorkflowForBuildsFlagIsOn && pull_requests?.length > 0) {
+		const compareCommitsPayload = {
+			owner: repository.owner.login,
+			repo: repository.name,
+			base: pull_requests[0]?.base.ref,
+			head: pull_requests[0]?.head.ref
+		}
 
-	// 	const allCommitMessages = await compareCommitsBetweenBaseAndHeadBranches(
-	// 		compareCommitsPayload,
-	// 		githubClient,
-	// 		logger
-	// 	);
+		const allCommitMessages = await compareCommitsBetweenBaseAndHeadBranches(
+			compareCommitsPayload,
+			githubClient,
+			logger
+		);
 
-	// 	issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${allCommitMessages}`) || [];
-	// } else {
-	// 	issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
-	// }
-	const issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
+		issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${allCommitMessages}`) || [];
+	} else {
+		issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
+	}
 
 	if (!issueKeys) {
 		return undefined;
 	}
 
-	logger?.info("ISSUE KEYS: ", issueKeys)
-
 	return {
 		product: "GitHub Actions",
 		builds: [{
 			schemaVersion: "1.0",
-			pipelineId: workflow.id,
+			pipelineId: workflow.id.toString(),
 			buildNumber: run_number,
 			updateSequenceNumber: Date.now(),
 			displayName: name,
