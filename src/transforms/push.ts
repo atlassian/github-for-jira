@@ -13,6 +13,7 @@ import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import {booleanFlag, BooleanFlags, isBlocked} from "../config/feature-flags";
 import sqsQueues from "../sqs/queues";
 import {PushQueueMessagePayload} from "../sqs/push";
+import GitHubClient from "../github/client/github-client";
 
 // TODO: define better types for this file
 
@@ -93,19 +94,21 @@ export async function enqueuePush(
 
 export function processPushJob(app: Application) {
 	return async (job: Job, logger: LoggerWithTarget): Promise<void> => {
-		let github;
+		let githubOld;
 		try {
-			github = await app.auth(job.data.installationId);
+			githubOld = await app.auth(job.data.installationId);
 		} catch (err) {
 			logger.error({ err, job }, "Could not authenticate");
 			return;
 		}
-		enhanceOctokit(github);
-		await processPush(github, job.data, logger);
+		enhanceOctokit(githubOld);
+
+		const github = new GitHubClient(job.data.installationId, logger);
+		await processPush(githubOld, github, job.data, logger);
 	};
 }
 
-export const processPush = async (github: GitHubAPI, payload, rootLogger: LoggerWithTarget) => {
+export const processPush = async (githubOld: GitHubAPI, github: GitHubClient, payload, rootLogger: LoggerWithTarget) => {
 	const {
 		repository,
 		repository: { owner, name: repo },
@@ -152,15 +155,18 @@ export const processPush = async (github: GitHubAPI, payload, rootLogger: Logger
 		const commits: JiraCommit[] = await Promise.all(
 			shas.map(async (sha): Promise<JiraCommit> => {
 				log.info("Calling GitHub to fetch commit info " + sha.id);
+				const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PUSH, false, subscription.jiraHost);
 				try {
 					const {
 						data,
 						data: {commit: githubCommit},
-					} = await github.repos.getCommit({
-						owner: owner.login,
-						repo,
-						ref: sha.id,
-					});
+					} = useNewGithubClient
+						? await github.getCommit(owner.login, repo, sha.id)
+						: await githubOld.repos.getCommit({
+							owner: owner.login,
+							repo,
+							ref: sha.id,
+						});
 
 					const {files, author, parents, sha: commitSha, html_url} = data;
 

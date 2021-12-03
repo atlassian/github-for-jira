@@ -31,6 +31,7 @@ export enum BooleanFlags {
 	PAYLOAD_SIZE_METRIC = "payload-size-metrics",
 	TRACE_LOGGING = "trace-logging",
 	USE_SQS_FOR_BACKFILL = "use-sqs-for-backfill",
+	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push"
 }
 
 export enum StringFlags {
