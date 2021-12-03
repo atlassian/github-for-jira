@@ -69,6 +69,30 @@ describe("GitHub Client", () => {
 			]);
 	}
 
+	function givenGitHubReturnsCommit(
+		owner: string,
+		repo: string,
+		ref: string,
+		expectedInstallationTokenInHeader?: string
+	) {
+		githubNock
+			.get(`/repos/${owner}/${repo}/commits/${ref}`)
+			.query({
+				installationId: /^.*$/
+			})
+			.matchHeader(
+				"Authorization",
+				expectedInstallationTokenInHeader
+					? `Bearer ${expectedInstallationTokenInHeader}`
+					: /^Bearer .+$/
+			)
+			.matchHeader("Accept", "application/vnd.github.v3+json")
+			.reply(200, [
+				{ number: 1 }, // we don't really care about the shape of this response because it's in GitHub's hands anyways
+			]);
+	}
+
+
 	it("lists pull requests", async () => {
 		const owner = "owner";
 		const repo = "repo";
@@ -92,14 +116,35 @@ describe("GitHub Client", () => {
 
 		expect(pullrequests).toBeTruthy();
 		expect(githubNock.pendingMocks()).toEqual([]);
-		verifyMetricsSent("200");
+		verifyMetricsSent('/repos/:owner/:repo/pulls', "200");
 	});
 
-	function verifyMetricsSent(status) {
+	it("fetches a commit", async () => {
+		const owner = "owner";
+		const repo = "repo";
+		const sha = "84fdc9346f43f829f88fb4b1d240b1aaaa5250da";
+
+		givenGitHubReturnsInstallationToken("installation token");
+		givenGitHubReturnsCommit(
+			owner,
+			repo,
+			sha,
+			"installation token"
+		);
+
+		const client = new GitHubClient(githubInstallationId, getLogger("test"));
+		const commit = await client.getCommit(owner, repo, sha);
+
+		expect(commit).toBeTruthy();
+		expect(githubNock.pendingMocks()).toEqual([]);
+		verifyMetricsSent('/repos/:owner/:repo/commits/:ref', "200");
+	});
+
+	function verifyMetricsSent(path: string, status) {
 		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", anything(), objectContaining({
 			client: "axios",
 			method: 'GET',
-			path: '/repos/:owner/:repo/pulls',
+			path,
 			status
 		}));
 	}
@@ -126,7 +171,7 @@ describe("GitHub Client", () => {
 		expect(error).toBeInstanceOf(RateLimitingError)
 		expect(error.rateLimitReset).toBe(4600)
 
-		verifyMetricsSent("rateLimiting");
+		verifyMetricsSent('/repos/:owner/:repo/pulls', "rateLimiting");
 
 	});
 
@@ -153,7 +198,7 @@ describe("GitHub Client", () => {
 		expect(error).toBeInstanceOf(RateLimitingError)
 		expect(error.rateLimitReset).toBe(2000)
 
-		verifyMetricsSent("rateLimiting");
+		verifyMetricsSent('/repos/:owner/:repo/pulls', "rateLimiting");
 
 	});
 
@@ -175,7 +220,7 @@ describe("GitHub Client", () => {
 
 		expect(error).toBeInstanceOf(BlockedIpError);
 		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist");
-		verifyMetricsSent("blockedIp");
+		verifyMetricsSent('/repos/:owner/:repo/pulls', "blockedIp");
 	});
 
 	it("should handle rate limit properly handled regardless of the response code", async () => {
@@ -201,7 +246,7 @@ describe("GitHub Client", () => {
 		expect(error).toBeInstanceOf(RateLimitingError)
 		expect(error.rateLimitReset).toBe(2000)
 
-		verifyMetricsSent("rateLimiting");
+		verifyMetricsSent('/repos/:owner/:repo/pulls', "rateLimiting");
 
 	});
 
@@ -227,6 +272,6 @@ describe("GitHub Client", () => {
 		expect(error).toBeInstanceOf(GithubClientError)
 		expect(error.status).toBe(404)
 
-		verifyMetricsSent("404");
+		verifyMetricsSent('/repos/:owner/:repo/pulls', "404");
 	});
 });
