@@ -30,6 +30,7 @@ export enum BooleanFlags {
 	PAYLOAD_SIZE_METRIC = "payload-size-metrics",
 	TRACE_LOGGING = "trace-logging",
 	USE_SQS_FOR_BACKFILL = "use-sqs-for-backfill",
+	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS = "support-branch-and-merge-workflows-for-builds",
 }
 
 export enum StringFlags {

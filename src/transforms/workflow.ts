@@ -1,7 +1,10 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { Context } from "probot/lib/context";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { GitHubPullRequest } from "../interfaces/github";
 import { JiraBuildData, JiraPullRequest } from "../interfaces/jira";
+import { GitHubAPI } from "probot";
+import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
@@ -48,27 +51,72 @@ function mapPullRequests(pull_requests: GitHubPullRequest[]): JiraPullRequest[] 
 	));
 }
 
-export default (context: Context): JiraBuildData | undefined => {
-	const { workflow_run, workflow } = context.payload;
-	const issueKeys = issueKeyParser().parse(`${workflow_run.head_branch}\n${workflow_run.head_commit.message}`);
+// todo payload type??
+export default async (
+	githubClient: GitHubAPI,
+	payload: any,
+	jiraHost: string,
+	logger?: LoggerWithTarget
+): Promise<JiraBuildData | undefined> => {
+	const { workflow_run, workflow } = payload;
+
+	const {
+		conclusion,
+		head_branch,
+		head_commit,
+		html_url,
+		name,
+		pull_requests,
+		repository,
+		run_number,
+		status,
+		updated_at
+	} = workflow_run;
+
+	// let issueKeys;
+
+	// // todo - figure out issue with FF
+	// // const supportBranchAndMergeWorkflowForBuildsFlagIsOn = await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS, false, jiraHost);
+
+	// if (pull_requests?.length > 0) {
+	// 	const compareCommitsPayload = {
+	// 		owner: repository.owner.login,
+	// 		repo: repository.name,
+	// 		base: pull_requests[0]?.base.ref,
+	// 		head: pull_requests[0]?.head.ref
+	// 	}
+
+	// 	const allCommitMessages = await compareCommitsBetweenBaseAndHeadBranches(
+	// 		compareCommitsPayload,
+	// 		githubClient,
+	// 		logger
+	// 	);
+
+	// 	issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${allCommitMessages}`) || [];
+	// } else {
+	// 	issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
+	// }
+	const issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
 
 	if (!issueKeys) {
 		return undefined;
 	}
+
+	logger?.info("ISSUE KEYS: ", issueKeys)
 
 	return {
 		product: "GitHub Actions",
 		builds: [{
 			schemaVersion: "1.0",
 			pipelineId: workflow.id,
-			buildNumber: workflow_run.run_number,
+			buildNumber: run_number,
 			updateSequenceNumber: Date.now(),
-			displayName: workflow_run.name,
-			url: workflow_run.html_url,
-			state: mapStatus(workflow_run.status, workflow_run.conclusion),
-			lastUpdated: workflow_run.updated_at,
+			displayName: name,
+			url: html_url,
+			state: mapStatus(status, conclusion),
+			lastUpdated: updated_at,
 			issueKeys,
-			references: workflow_run.pull_requests?.length ? mapPullRequests(workflow_run.pull_requests).slice(0, 5) : undefined // Optional information that links PRs. Min items: 1, Max items: 5
+			references: pull_requests?.length ? mapPullRequests(pull_requests).slice(0, 5) : undefined // Optional information that links PRs. Min items: 1, Max items: 5
 		}],
 	};
 };
