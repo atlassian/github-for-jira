@@ -1,7 +1,8 @@
-import { GithubClientError, RateLimitingError } from "./errors";
+import { BlockedIpError, GithubClientError, RateLimitingError } from "./errors";
 import Logger from "bunyan";
 import url from "url";
 import statsd from "../../config/statsd";
+import { metricError } from "../../config/metric-names";
 
 /**
  * Extract the path name from a URL.
@@ -63,12 +64,14 @@ export const instrumentFailedRequest = (metricName) =>
 	(error) => {
 		if(error instanceof RateLimitingError) {
 			sendResponseMetrics(error.cause?.response, metricName, "rateLimiting")
+		} else if(error instanceof BlockedIpError) {
+			sendResponseMetrics(error.cause?.response, metricName, "blockedIp");
+			statsd.increment(metricError.blockedByGitHubAllowlist);
 		} else if(error instanceof GithubClientError) {
 			sendResponseMetrics(error.cause?.response, metricName);
 		} else {
-			sendResponseMetrics(error.response, metricName)
+			sendResponseMetrics(error.response, metricName);
 		}
-
 		return Promise.reject(error);
 	};
 
@@ -86,6 +89,11 @@ export const handleFailedRequest = (logger: Logger) =>
 				logger.warn({ err: error }, "Rate limiting error");
 				const rateLimitReset: number = parseInt(rateLimitResetHeaderValue);
 				return Promise.reject(new RateLimitingError(rateLimitReset, 0, error, status));
+			}
+
+			if (status === 403 && response.data.message.includes("has an IP allow list enabled")) {
+				logger.error({ err: error }, "Blocked by GitHub allowlist");
+				return Promise.reject(new BlockedIpError(error, status));
 			}
 
 			if (status === 403) {

@@ -22,3 +22,8 @@ export class RateLimitingError extends GithubClientError {
 		this.rateLimitRemaining = rateLimitRemaining;
 	}
 }
+export class BlockedIpError extends GithubClientError {
+	constructor(error: AxiosError, status?: number) {
+		super("Blocked by GitHub allowlist", error, status);
+	}
+}

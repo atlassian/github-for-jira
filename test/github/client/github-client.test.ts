@@ -3,18 +3,19 @@
 
 import { getLogger } from "../../../src/config/logger";
 import GitHubClient from "../../../src/github/client/github-client";
-import statsd from '../../../src/config/statsd';
-import {GithubClientError, RateLimitingError} from "../../../src/github/client/errors";
+import statsd from "../../../src/config/statsd";
+import {BlockedIpError, GithubClientError, RateLimitingError} from "../../../src/github/client/errors";
 import anything = jasmine.anything;
 import objectContaining = jasmine.objectContaining;
 
 describe("GitHub Client", () => {
 	const appTokenExpirationDate = new Date(2021, 10, 25, 0, 0);
 	const githubInstallationId = 17979017;
-	let statsdHistogramSpy
+	let statsdHistogramSpy, statsdIncrementSpy;
 	beforeEach(() => {
 		// Lock Time
 		statsdHistogramSpy = jest.spyOn(statsd, "histogram");
+		statsdIncrementSpy = jest.spyOn(statsd, "increment");
 	});
 
 	afterEach(() => {
@@ -108,7 +109,7 @@ describe("GitHub Client", () => {
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/,
 		}).reply(
-			403, [{ number: 1 }],
+			403, { message: "API rate limit exceeded for xxx.xxx.xxx.xxx." },
 			{
 				"X-RateLimit-Remaining": "0",
 			}
@@ -154,6 +155,27 @@ describe("GitHub Client", () => {
 
 		verifyMetricsSent("rateLimiting");
 
+	});
+
+	it("should handle blocked IP error from Github when specified", async () => {
+		givenGitHubReturnsInstallationToken("installation token");
+		githubNock.get(`/repos/owner/repo/pulls`).query({
+			installationId: /^.*$/,
+		}).reply(
+			403, { message: "Org has an IP allow list enabled" }
+		);
+		Date.now = jest.fn(() => 1000000);
+		const client = new GitHubClient(githubInstallationId, getLogger("test"));
+		let error: any = undefined;
+		try {
+			await client.getPullRequests("owner", "repo", {});
+		} catch (e) {
+			error = e;
+		}
+
+		expect(error).toBeInstanceOf(BlockedIpError);
+		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist");
+		verifyMetricsSent("blockedIp");
 	});
 
 	it("should handle rate limit properly handled regardless of the response code", async () => {
