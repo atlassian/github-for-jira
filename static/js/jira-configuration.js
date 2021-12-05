@@ -1,5 +1,6 @@
 /* globals $, AP */
 const params = new URLSearchParams(window.location.search.substring(1));
+const jiraHost = params.get("xdm_e");
 
 function openChildWindow(url) {
 	const child = window.open(url);
@@ -18,7 +19,7 @@ $(".add-organization-link").click(function(event) {
 
 	const child = openChildWindow("/session/github/configuration");
 	child.document.addEventListener("DOMContentLoaded", function() {
-		child.window.localStorage.setItem("jiraHost", params.get("xdm_e"));
+		child.window.localStorage.setItem("jiraHost", jiraHost);
 	}, true);
 });
 
@@ -37,7 +38,7 @@ $(".delete-connection-link").click(function(event) {
 			data: {
 				installationId: $(event.target).data("installation-id"),
 				jwt: token,
-				jiraHost: params.get("xdm_e")
+				jiraHost: jiraHost
 			},
 			success: function(data) {
 				AP.navigator.reload();
