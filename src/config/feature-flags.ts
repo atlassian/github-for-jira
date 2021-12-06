@@ -3,6 +3,7 @@ import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import envVars from "./env";
 import crypto from "crypto";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
 const logger = getLogger("feature-flags");
 
@@ -30,6 +31,7 @@ export enum BooleanFlags {
 	PAYLOAD_SIZE_METRIC = "payload-size-metrics",
 	TRACE_LOGGING = "trace-logging",
 	USE_SQS_FOR_BACKFILL = "use-sqs-for-backfill",
+	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push"
 }
 
 export enum StringFlags {
@@ -68,3 +70,14 @@ export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jir
 
 export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHost?: string): Promise<string> =>
 	String(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+
+export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
+	try {
+		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
+		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
+		return blockedInstallations.includes(installationId);
+	} catch (e) {
+		logger.error({ err: e, installationId }, "Cannot define if isBlocked")
+		return false;
+	}
+};
