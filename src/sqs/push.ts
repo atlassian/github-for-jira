@@ -3,6 +3,7 @@ import enhanceOctokit from "../config/enhance-octokit";
 import {processPush} from "../transforms/push";
 import app from "../worker/app";
 import {wrapLogger} from "probot/lib/wrap-logger";
+import GitHubClient from "../github/client/github-client";
 
 export type PayloadRepository = {
 	id: number,
@@ -27,13 +28,14 @@ export const pushQueueMessageHandler : MessageHandler<PushQueueMessagePayload> =
 
 	const payload = context.payload;
 
-	let github;
+	let githubOld;
 	try {
-		github = await app.auth(payload.installationId);
+		githubOld = await app.auth(payload.installationId);
 	} catch (err) {
 		context.log.warn({ err, payload }, "Could not authenticate for the supplied InstallationId");
 		return;
 	}
-	enhanceOctokit(github);
-	await processPush(github, payload, wrapLogger(context.log));
+	enhanceOctokit(githubOld);
+	const github = new GitHubClient(payload.installationId, context.log);
+	await processPush(githubOld, github, payload, wrapLogger(context.log));
 }

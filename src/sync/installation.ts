@@ -17,7 +17,7 @@ import getCommits from "./commits";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import Queue from "bull";
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags, isBlocked } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import Redis from "ioredis";
@@ -168,17 +168,6 @@ const updateJobStatus = async (
 const getEnhancedGitHub = async (app: Application, installationId) =>
 	enhanceOctokit(await app.auth(installationId));
 
-const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
-	try {
-		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
-		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
-		return blockedInstallations.includes(installationId);
-	} catch (e) {
-		logger.error(e);
-		return false;
-	}
-};
-
 /**
  * Determines if an an error returned by the GitHub API means that we should retry it
  * with a smaller request (i.e. with fewer pages).
@@ -238,7 +227,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		logger
 	);
 
-	const newGithub = new GitHubClient(installationId);
+	const newGithub = new GitHubClient(installationId, logger);
 
 	const github = await getEnhancedGitHub(app, installationId);
 

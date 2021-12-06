@@ -3,8 +3,10 @@ import {jiraOctokitErrorHandler} from "../../../src/sqs/error-handlers";
 import {Context} from "../../../src/sqs/index";
 import {getLogger} from "../../../src/config/logger";
 import {JiraClientError} from "../../../src/jira/client/axios";
-import {RateLimitingError} from "../../../src/config/enhance-octokit";
+import {RateLimitingError as OldRateLimitingError} from "../../../src/config/enhance-octokit";
 import {Octokit} from "probot";
+import {RateLimitingError} from "../../../src/github/client/errors";
+import {AxiosError} from "axios";
 
 
 describe("jiraOktokitErrorHandler", () => {
@@ -104,8 +106,19 @@ describe("jiraOktokitErrorHandler", () => {
 		expect(statsdIncrementSpy).toBeCalledTimes(1);
 	});
 
+	it("Retryable with proper delay on Rate Limiting (old)", async () => {
+		const result = await jiraOctokitErrorHandler(new OldRateLimitingError(Math.floor(new Date("2020-01-01").getTime()/1000) + 100), createContext(1, false));
+		expect(result.retryable).toBe(true)
+		//Make sure delay is equal to recommended delay + 10 seconds
+		expect(result.retryDelaySec).toBe(110)
+		expect(statsdIncrementSpy).toBeCalledTimes(0);
+	});
+
 	it("Retryable with proper delay on Rate Limiting", async () => {
-		const result = await jiraOctokitErrorHandler(new RateLimitingError(Math.floor(new Date("2020-01-01").getTime()/1000) + 100), createContext(1, false));
+		const result = await jiraOctokitErrorHandler(new RateLimitingError(
+			Math.floor(new Date("2020-01-01").getTime()/1000) + 100,
+			0, {} as AxiosError
+		), createContext(1, false));
 		expect(result.retryable).toBe(true)
 		//Make sure delay is equal to recommended delay + 10 seconds
 		expect(result.retryDelaySec).toBe(110)
