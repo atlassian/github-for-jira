@@ -33,25 +33,21 @@ export default class Installation extends Sequelize.Model {
 	}
 
 	static async getForHost(host: string): Promise<Installation | null> {
-		const payload: any = {
+		return Installation.findOne( {
 			where: {
 				jiraHost: host,
 			},
 			order: [["id", "DESC"]]
-		}
-
-		return Installation.findOne(payload);
+		});
 	}
 
 	static async getAllForHost(host: string): Promise<Installation[]> {
-		const payload: any = {
+		return Installation.findAll({
 			where: {
 				jiraHost: host,
 			},
 			order: [["id", "DESC"]]
-		}
-
-		return Installation.findAll(payload);
+		});
 	}
 
 	/**
