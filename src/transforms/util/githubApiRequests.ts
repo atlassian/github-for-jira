@@ -8,6 +8,8 @@ interface CompareCommitsPayload {
 	head: string;
 }
 
+// Used to compare commits for builds and deployments so we can
+// obtain all issue keys referenced in commit messages.
 export const compareCommitsBetweenBaseAndHeadBranches = async (
 	payload: CompareCommitsPayload,
 	github: GitHubAPI,
@@ -15,8 +17,11 @@ export const compareCommitsBetweenBaseAndHeadBranches = async (
 ): Promise<string | undefined | void> => {
 	try {
 		const commitsDiff = await github.repos.compareCommits(payload);
-		logger?.info("COMMITS DIF: ", commitsDiff)
-		return commitsDiff.data?.commits?.map((c) => c.commit.message).join(" ");
+		const allCommitMessagesFromPullRequest = commitsDiff.data?.commits
+			?.map((c) => c.commit.message)
+			.join(" ");
+
+		return allCommitMessagesFromPullRequest;
 	} catch (err) {
 		logger?.error(
 			{ err, repo: payload.repo },

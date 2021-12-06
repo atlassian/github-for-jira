@@ -176,7 +176,7 @@ interface WorkflowRun {
 }
 
 interface Workflow {
-	id: number;
+	id: string;
 	node_id: string;
 	name: string;
 	path: string;
