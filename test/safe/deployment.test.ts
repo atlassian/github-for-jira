@@ -2,7 +2,6 @@
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
-import nock from "nock";
 
 describe("Deployment Webhook", () => {
 	let app: Application;
@@ -60,8 +59,8 @@ describe("Deployment Webhook", () => {
 							displayName: "deploy",
 							url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
 							description: "deploy",
-							lastUpdated: "2021-06-28T12:15:18Z",
-							state: "in_progress",
+							lastUpdated: "2021-06-28T12:15:18.000Z",
+							state: "successful",
 							pipeline:
 								{
 									id: "deploy",
@@ -85,8 +84,6 @@ describe("Deployment Webhook", () => {
 			Date.now = jest.fn(() => 12345678);
 
 			await expect(app.receive(fixture)).toResolve();
-			// Clean up all nock mocks
-			nock.cleanAll();
 		});
 	});
 });

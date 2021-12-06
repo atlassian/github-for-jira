@@ -4,7 +4,6 @@ import { mapEnvironment } from "../../../src/transforms/deployment";
 import transformDeployment from "../../../src/transforms/deployment";
 import {getLogger} from "../../../src/config/logger";
 import {GitHubAPI} from "probot";
-import nock from "nock"
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 
@@ -83,7 +82,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 	const owner = deployment_status.payload.repository.owner.login;
 	const repo = deployment_status.payload.repository.name;
 
-	beforeEach(async () => {
+	it("supports branch and merge workflows - FF TRUE", async () => {
 		// Mocking all GitHub API Calls
 		// Get commit
 		githubNock.get(`/repos/${owner}/${repo}/commits/${deployment_status.payload.deployment.sha}`)
@@ -95,21 +94,13 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			});
 
 		// List deployments
-		githubNock.get(`/repos/${owner}/${repo}/deployments?environment=Production&per_page=100`)
+		githubNock.get(`/repos/${owner}/${repo}/deployments?environment=Production&per_page=10`)
 			.reply(200,
 				[
 					{
 						id: 1,
 						environment: "Production",
 						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
-					},
-					{
-						id: 2,
-						environment: "test"
-					},
-					{
-						id: 3,
-						environment: " new test env"
 					}
 				]
 			);
@@ -127,50 +118,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				}
 			]);
 
-		// List deployments statuses
-		githubNock.get(`/repos/${owner}/${repo}/deployments/2/statuses?per_page=100`)
-			.reply(200, {
-				data: [
-					{
-						id: 1,
-						state: "pending"
-					},
-					{
-						id: 2,
-						state: "success"
-					}
-				]
-			});
-
-		// List deployments statuses
-		githubNock.get(`/repos/${owner}/${repo}/deployments/3/statuses?per_page=100`)
-			.reply(200, {
-				data: [
-					{
-						id: 1,
-						state: "pending"
-					},
-					{
-						id: 2,
-						state: "success"
-					}
-				]
-			});
-
-		// Get a deployment status
-		githubNock.get(`/repos/${owner}/${repo}/deployments/1/statuses/1`)
-			.reply(200, {
-				state: "success",
-				sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
-			});
-
-		// Get a deployment status
-		githubNock.get(`/repos/${owner}/${repo}/deployments/1/statuses/2`)
-			.reply(200, {
-				state: "pending",
-				sha: "6e87a40179eb7ecf5094b9c8d690db727472222"
-			});
-
 		// Compare commits
 		githubNock.get(`/repos/${owner}/${repo}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
 			.reply(200,{
@@ -187,9 +134,8 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					}
 				]}
 			);
-	});
 
-	it("supports branch and merge workflows - FF TRUE", async () => {
+
 		when(booleanFlag).calledWith(
 			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,
 			expect.anything(),
@@ -197,9 +143,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		).mockResolvedValue(true);
 
 		const jiraPayload = await transformDeployment(GitHubAPI(), deployment_status.payload, "testing.atlassian.net", getLogger("deploymentLogger"))
-
-		// Clean up all nock mocks
-		nock.cleanAll();
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
@@ -210,7 +153,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				displayName: "deploy",
 				url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
 				description: "deploy",
-				lastUpdated: "2021-06-28T12:15:18Z",
+				lastUpdated: new Date("2021-06-28T12:15:18.000Z"),
 				state: "successful",
 				pipeline: {
 					id: "deploy",
@@ -224,7 +167,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				},
 			}]
 		})
-		expect(githubNock.pendingMocks()).toEqual([]);
 	})
 
 	// TODO add test if FF is false
