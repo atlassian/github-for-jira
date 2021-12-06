@@ -23,7 +23,7 @@ describe("Jira Configuration Suite", () => {
 		subscriptions = [
 			{
 				gitHubInstallationId: 15,
-				jiraHost: "https://test-host.jira.com",
+				jiraHost,
 				destroy: jest.fn().mockResolvedValue(undefined),
 				syncWarning: "some warning",
 				updatedAt: "2018-04-18T15:42:13Z",
@@ -51,7 +51,7 @@ describe("Jira Configuration Suite", () => {
 
 		installation = {
 			id: 19,
-			jiraHost: subscriptions[0].jiraHost,
+			jiraHost,
 			clientKey: "abc123",
 			enabled: true,
 			secrets: "def234",
@@ -73,9 +73,6 @@ describe("Jira Configuration Suite", () => {
 	const mockRequest = (): any => ({
 		query: { xdm_e: "https://somejirasite.atlassian.net" },
 		csrfToken: jest.fn().mockReturnValue({}),
-		session: {
-			jiraHost: subscriptions[0].jiraHost,
-		},
 		log: {
 			info: jest.fn(),
 			warn: jest.fn(),
@@ -85,6 +82,7 @@ describe("Jira Configuration Suite", () => {
 
 	const mockResponse = (): any => ({
 		locals: {
+			jiraHost,
 			client: {
 				apps: {
 					getInstallation: jest.fn().mockReturnValue({ data: {} })

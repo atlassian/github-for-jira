@@ -111,7 +111,8 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: any, j
 };
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { jiraHost, githubToken } = req.session;
+	const { githubToken } = req.session;
+	const { jiraHost } = res.locals;
 	const log = req.log.child({ jiraHost });
 
 	if (!githubToken) {

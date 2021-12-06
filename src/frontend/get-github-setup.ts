@@ -13,7 +13,7 @@ import { getGitHubConfigurationUrl, getJiraMarketplaceUrl } from "../util/getUrl
 */
 export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
-	const { jiraHost } = req.session;
+	const { jiraHost } = res.locals;
 	if (req.headers.referer && jiraHost) {
 		return res.redirect(getGitHubConfigurationUrl(jiraHost));
 	}

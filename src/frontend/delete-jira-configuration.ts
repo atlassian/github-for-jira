@@ -6,9 +6,9 @@ import { Request, Response } from "express";
  * Handle the when a user deletes an entry in the UI
  */
 export default async (req: Request, res: Response): Promise<void> => {
-	const jiraHost = req.body.jiraHost;
+	const { jiraHost } = res.locals;
 	const installationId = Number(req.body.installationId);
-	if(!jiraHost) {
+	if (!jiraHost) {
 		req.log.error("Missing Jira Host");
 		res.status(401).send("Missing jiraHost in body");
 		return;
@@ -21,7 +21,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 		installationId
 	);
 
-	if(!subscription) {
+	if (!subscription) {
 		res.status(404).send("Cannot find Subscription");
 		return;
 	}

@@ -16,8 +16,10 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	const child = openChildWindow("/session/github/configuration");
-	child.window.jiraHost = jiraHost;
+	window.AP.context.getToken(function(token) {
+		const child = openChildWindow("/session/github/configuration");
+		child.window.jiraHost = jiraHost;
+	});
 });
 
 $(".configure-connection-link").click(function(event) {

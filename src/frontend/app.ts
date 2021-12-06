@@ -135,12 +135,13 @@ export default (octokitApp: App): Express => {
 		)
 	);
 
-	app.get(["/session", "/session/*"], (req: Request, res: Response, next:NextFunction) => {
-		if(!req.params[0]) {
+	app.get(["/session", "/session/*"], (req: Request, res: Response, next: NextFunction) => {
+		if (!req.params[0]) {
 			return next(new Error("Missing redirect url for session.  Needs to be in format `/session/:redirectUrl`"));
 		}
+
 		return res.render("session.hbs", {
-			title: "Logging you into GitHub...",
+			title: "Logging you into GitHub",
 			APP_URL: process.env.APP_URL,
 			redirectUrl: new URL(req.params[0], process.env.APP_URL).href,
 			nonce: res.locals.nonce
@@ -149,18 +150,15 @@ export default (octokitApp: App): Express => {
 
 	// Saves the jiraHost cookie to the secure session if available
 	app.use((req: Request, res: Response, next: NextFunction) => {
-		const jiraHost = req.cookies.jiraHost;
-		if (jiraHost) {
+		if (req.cookies.jiraHost) {
 			// Save jirahost to secure session
-			req.session.jiraHost = jiraHost;
+			req.session.jiraHost = req.cookies.jiraHost;
 			// delete jirahost from cookies.
 			res.clearCookie("jiraHost");
 		}
 
 		// Only save xdm_e query when on the post install url (iframe url)
-		if (req.path == postInstallUrl && req.method == "GET" && req.query.xdm_e) {
-			req.session.jiraHost = req.query.xdm_e as string;
-		}
+		res.locals.jiraHost = req.path == postInstallUrl && req.method == "GET" ? req.query.xdm_e as string : req.session.jiraHost || req.body?.jiraHost;
 		next();
 	});
 
@@ -177,8 +175,8 @@ export default (octokitApp: App): Express => {
 	app.get("/jira/atlassian-connect.json", getJiraConnect);
 
 	// Maintenance mode view
-	app.use(async (req, res, next) => {
-		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost)) {
+	app.use(async (req: Request, res: Response, next: NextFunction) => {
+		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, res.locals.jiraHost)) {
 			return getMaintenance(req, res);
 		}
 		next();
@@ -258,9 +256,9 @@ export default (octokitApp: App): Express => {
 	});
 
 	// Add Sentry Context
-	app.use((err: Error, req: Request, _: Response, next: NextFunction) => {
+	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 		Sentry.withScope((scope: Sentry.Scope): void => {
-			const jiraHost = req.session.jiraHost;
+			const jiraHost = res.locals.jiraHost;
 			if (jiraHost) {
 				scope.setTag("jiraHost", jiraHost);
 			}
@@ -300,7 +298,7 @@ export default (octokitApp: App): Express => {
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, true, req.session.jiraHost);
+		const newErrorPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_GITHUB_ERROR_PAGE, true, res.locals.jiraHost);
 		const errorPageVersion = newErrorPgFlagIsOn ? "github-error.hbs" : "github-error-OLD.hbs";
 
 		return res.status(errorStatusCode).render(errorPageVersion, {
