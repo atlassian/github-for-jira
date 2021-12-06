@@ -5,7 +5,7 @@ import { JiraBuildData, JiraPullRequest } from "../interfaces/jira";
 import { GitHubAPI } from "probot";
 import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { BuildsPayload } from "../config/interfaces";
+import { WorkflowPayload } from "../config/interfaces";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
@@ -37,19 +37,19 @@ function mapStatus(status: string, conclusion?: string): string {
 	}
 }
 
-function mapPullRequests(pull_requests: GitHubPullRequest[]): JiraPullRequest[] {
-	return pull_requests.map(pr => (
-		{
-			commit: {
-				id: pr.head.sha,
-				repositoryUri: pr.head.repo.url,
-			},
-			ref: {
-				name: pr.head.ref,
-				uri: `${pr.head.repo.url}/tree/${pr.head.ref}`,
-			},
-		}
-	));
+function mapPullRequests(
+	pull_requests: GitHubPullRequest[]
+): JiraPullRequest[] {
+	return pull_requests.map((pr) => ({
+		commit: {
+			id: pr.head.sha,
+			repositoryUri: pr.head.repo.url,
+		},
+		ref: {
+			name: pr.head.ref,
+			uri: `${pr.head.repo.url}/tree/${pr.head.ref}`,
+		},
+	}));
 }
 
 // TODO - WRITE TEST FOR  compareCommitsBetweenBaseAndHeadBranches
@@ -57,7 +57,7 @@ function mapPullRequests(pull_requests: GitHubPullRequest[]): JiraPullRequest[] 
 // TODO - write build doc
 export default async (
 	githubClient: GitHubAPI,
-	payload: BuildsPayload,
+	payload: WorkflowPayload,
 	jiraHost: string,
 	logger?: LoggerWithTarget
 ): Promise<JiraBuildData | undefined> => {
@@ -73,49 +73,61 @@ export default async (
 		repository,
 		run_number,
 		status,
-		updated_at
+		updated_at,
 	} = workflow_run;
 
-	let issueKeys;
+	logger?.info("WORKFLOW_RUN: ", workflow_run);
 
-	const supportBranchAndMergeWorkflowForBuildsFlagIsOn = await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS, true, jiraHost);
+	// let issueKeys;
 
-	if (supportBranchAndMergeWorkflowForBuildsFlagIsOn && pull_requests?.length > 0) {
-		const compareCommitsPayload = {
-			owner: repository.owner.login,
-			repo: repository.name,
-			base: pull_requests[0]?.base.ref,
-			head: pull_requests[0]?.head.ref
-		}
+	// const supportBranchAndMergeWorkflowForBuildsFlagIsOn = await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS, false, jiraHost);
+	const workflowHasPullRequest = pull_requests.length > 0;
+	// if (supportBranchAndMergeWorkflowForBuildsFlagIsOn && workflowHasPullRequest) {
+	// 	const { owner, name: repoName } = repository;
+	// 	const { base, head } = pull_requests[0];
 
-		const allCommitMessages = await compareCommitsBetweenBaseAndHeadBranches(
-			compareCommitsPayload,
-			githubClient,
-			logger
-		);
+	// 	const compareCommitsPayload = {
+	// 		owner: owner.login,
+	// 		repo: repoName,
+	// 		base: base.ref,
+	// 		head: head.ref
+	// 	}
 
-		issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${allCommitMessages}`) || [];
-	} else {
-		issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
-	}
+	// 	const allCommitMessages = await compareCommitsBetweenBaseAndHeadBranches(
+	// 		compareCommitsPayload,
+	// 		githubClient,
+	// 		logger
+	// 	);
 
+	// 	issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${allCommitMessages}`) || [];
+	// } else {
+	// }
+
+	const issueKeys =
+		issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
 	if (!issueKeys) {
 		return undefined;
 	}
 
+	logger?.info("ISSUE KEYS: ", issueKeys);
+
 	return {
 		product: "GitHub Actions",
-		builds: [{
-			schemaVersion: "1.0",
-			pipelineId: workflow.id.toString(),
-			buildNumber: run_number,
-			updateSequenceNumber: Date.now(),
-			displayName: name,
-			url: html_url,
-			state: mapStatus(status, conclusion),
-			lastUpdated: updated_at,
-			issueKeys,
-			references: pull_requests?.length ? mapPullRequests(pull_requests).slice(0, 5) : undefined // Optional information that links PRs. Min items: 1, Max items: 5
-		}],
+		builds: [
+			{
+				schemaVersion: "1.0",
+				pipelineId: workflow.id.toString(),
+				buildNumber: run_number,
+				updateSequenceNumber: Date.now(),
+				displayName: name,
+				url: html_url,
+				state: mapStatus(status, conclusion),
+				lastUpdated: updated_at,
+				issueKeys,
+				references: workflowHasPullRequest
+					? mapPullRequests(pull_requests).slice(0, 5)
+					: undefined, // Optional information that links PRs. Min items: 1, Max items: 5
+			},
+		],
 	};
 };

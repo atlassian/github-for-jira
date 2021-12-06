@@ -213,7 +213,7 @@ interface WorkflowInstallation {
 	node_id: string;
 }
 
-export interface BuildsPayload {
+export interface WorkflowPayload {
 	action: string;
 	workflow_run: WorkflowRun;
 	workflow: Workflow;

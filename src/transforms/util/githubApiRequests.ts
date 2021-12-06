@@ -15,6 +15,7 @@ export const compareCommitsBetweenBaseAndHeadBranches = async (
 ): Promise<string | undefined | void> => {
 	try {
 		const commitsDiff = await github.repos.compareCommits(payload);
+		logger?.info("COMMITS DIF: ", commitsDiff)
 		return commitsDiff.data?.commits?.map((c) => c.commit.message).join(" ");
 	} catch (err) {
 		logger?.error(
