@@ -1,6 +1,4 @@
-import { jiraTopleveldomainOptions } from "./validations";
 import { Request, Response } from "express";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import {
 	getJiraMarketplaceUrl,
 	getGitHubConfigurationUrl,
@@ -28,19 +26,11 @@ export default async (req: Request, res: Response): Promise<void> => {
 			? getJiraMarketplaceUrl(jiraHost)
 			: undefined;
 
-		if (await booleanFlag(BooleanFlags.NEW_SETUP_PAGE, true, jiraHost)) {
-			res.render("github-setup.hbs", {
-				csrfToken: req.csrfToken(),
-				nonce: res.locals.nonce,
-				jiraHost: jiraHost,
-				marketplaceUrl, // only used is jiraHost is present
-			});
-		} else {
-			res.render("github-setup-OLD.hbs", {
-				jiraTopleveldomainOptions: jiraTopleveldomainOptions(),
-				csrfToken: req.csrfToken(),
-				nonce: res.locals.nonce,
-			});
-		}
+		res.render("github-setup.hbs", {
+			csrfToken: req.csrfToken(),
+			nonce: res.locals.nonce,
+			jiraHost: jiraHost,
+			marketplaceUrl, // only used is jiraHost is present
+		});
 	}
 };
