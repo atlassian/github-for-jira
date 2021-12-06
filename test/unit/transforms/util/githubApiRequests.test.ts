@@ -20,7 +20,7 @@ describe("GitHub API Request Suite", () => {
 
 
 			expect(
-				compareCommitsBetweenBaseAndHeadBranches(payload, GitHubAPI())
+				compareCommitsBetweenBaseAndHeadBranches(payload, GitHubAPI(), logger)
 			).toEqual("bob");
 		});
 
@@ -33,3 +33,4 @@ describe("GitHub API Request Suite", () => {
 
 
 // test/unit/transforms/util/githubApiRequests.test.ts
+// test/safe/workflow.test.ts

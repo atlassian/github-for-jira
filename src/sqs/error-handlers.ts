@@ -1,9 +1,10 @@
 import {Context, ErrorHandler, ErrorHandlingResult} from "./index";
 import {JiraClientError} from "../jira/client/axios";
 import {Octokit} from "@octokit/rest";
-import {RateLimitingError} from "../config/enhance-octokit";
+import {RateLimitingError as OldRateLimitingError} from "../config/enhance-octokit";
 import {emitWebhookFailedMetrics} from "../util/webhooks";
 import {PushQueueMessagePayload} from "./push";
+import {RateLimitingError} from "../github/client/errors";
 
 /**
  * Sometimes we can get errors from Jira and GitHub which does not indicate a failured webhook. For example:
@@ -19,7 +20,7 @@ const RATE_LIMITING_DELAY_BUFFER_SEC = 10;
 const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
-export const jiraOctokitErrorHandler : ErrorHandler<any> = async (error: JiraClientError | Octokit.HookError | RateLimitingError | Error,
+export const jiraOctokitErrorHandler : ErrorHandler<any> = async (error: JiraClientError | Octokit.HookError | OldRateLimitingError | RateLimitingError | Error,
 	context: Context<any>) : Promise<ErrorHandlingResult> => {
 
 	const maybeResult = maybeHandleNonFailureCase(error, context);
@@ -58,6 +59,11 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 }
 
 function handleFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult {
+	if (error instanceof OldRateLimitingError) {
+		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
+		return {retryable: true, retryDelaySec: delaySec}
+	}
+
 	if (error instanceof RateLimitingError) {
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
 		return {retryable: true, retryDelaySec: delaySec}

@@ -3,8 +3,8 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { GitHubPullRequest } from "../interfaces/github";
 import { JiraBuildData, JiraPullRequest } from "../interfaces/jira";
 import { GitHubAPI } from "probot";
-import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+// import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
+// import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { WorkflowPayload } from "../config/interfaces";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
@@ -62,6 +62,7 @@ export default async (
 	logger?: LoggerWithTarget
 ): Promise<JiraBuildData | undefined> => {
 	const { workflow_run, workflow } = payload;
+	console.log("WORKFLOW_RUN: ", workflow_run);
 
 	const {
 		conclusion,
@@ -70,18 +71,17 @@ export default async (
 		html_url,
 		name,
 		pull_requests,
-		repository,
+		// repository,
 		run_number,
 		status,
 		updated_at,
 	} = workflow_run;
 
-	logger?.info("WORKFLOW_RUN: ", workflow_run);
-
 	// let issueKeys;
 
 	// const supportBranchAndMergeWorkflowForBuildsFlagIsOn = await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS, false, jiraHost);
 	const workflowHasPullRequest = pull_requests.length > 0;
+
 	// if (supportBranchAndMergeWorkflowForBuildsFlagIsOn && workflowHasPullRequest) {
 	// 	const { owner, name: repoName } = repository;
 	// 	const { base, head } = pull_requests[0];
@@ -101,10 +101,13 @@ export default async (
 
 	// 	issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${allCommitMessages}`) || [];
 	// } else {
+	// 	issueKeys =
+	// 	issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
 	// }
 
 	const issueKeys =
 		issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
+
 	if (!issueKeys) {
 		return undefined;
 	}
