@@ -1,7 +1,7 @@
 # GitHub Actions - Builds
 
 GitHub for Jira supports builds via [GitHub Actions workflow syntax](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions).
-To set this up, you will need to need to create a .github folder at the root of a given repository and then make a child directory
+To set this up, you will need to create a .github folder at the root of a given repository and then make a child directory
 called workflows. Inside of .github/workflows you will need to create a build.yml file. This is where you will specify the workflow for your builds.
 
 Following is an example of a build.yml file:
@@ -54,7 +54,9 @@ in the development panel in Jira.
 
 ![Builds data in Jira](./images/builds-data-jira-dev-panel.png)
 
-One important thing to note is the branches being targeted under `pull_requests` `branches`:
+#### Supporting Multiple Commits with Issue Keys
+
+One important thing to note in the above example is the branches being targeted under `pull_requests` `branches`:
 
 ```
 pull_request:
@@ -63,12 +65,13 @@ pull_request:
       - feature/**
 ```
 
-If you were to have the same block but only target main, for instance, you would only see builds related to the most recent
-commit message. This means that if a developer were to make multiple commits, perhaps on multiple branches, and
-reference different Jira issue keys on each branch, GitHub would only send our app the latest commit. In turn, this
+In order for the GitHub for Jira app to be able to compare two points in your git history (possible once a pull request is opened)
+we need a base branch and a head branch. When the app has both of these, we are able to make a request to GitHub to compare your
+commits. On the flipside, if you only listed `main`, for instance, there would be no way for the app to ask GitHub for a comparison.
+Instead, the best it can do is use the data GitHub sends in the response when the `workflow_run` event is triggered,
+which only includes the most recent commit. This means that if a developer were to make multiple commits, perhaps on multiple branches, and
+reference various Jira issue keys in each commit, GitHub would only send our app data about the latest commit. In turn, this
 would mean that we could only extract any issue keys from that single message. Although there may be numerous Jira issues
 involved, in this scenario, you would only see builds data for any issue keys from the latest commit message.
 
-In order for the GitHub for Jira app to be able to compare two points in your git history (possible once a pull request is opened),
-you'll need to be very specific about the branches you want to target. If any branch is created that isn't listed pull_requests branches
-block, the app won't be able to compare your commits and send the most accurrate data to Jira.
+When you list branches under `pull_request` you'll need to be very specific about the branches you want our app to target. If any branch is created that isn't listed here, the app won't be able to compare your commits and send the most accurrate data to Jira.
