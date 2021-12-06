@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import nock from "nock";
 import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
 import deleteJiraConfiguration from "../../../src/frontend/delete-jira-configuration";
@@ -14,13 +13,13 @@ describe("DELETE /jira/configuration", () => {
 	beforeEach(async () => {
 		subscription = {
 			githubInstallationId: 15,
-			jiraHost: "https://test-host.jira.com",
+			jiraHost,
 			destroy: jest.fn().mockResolvedValue(undefined)
 		};
 
 		installation = {
 			id: 19,
-			jiraHost: subscription.jiraHost,
+			jiraHost,
 			clientKey: "abc123",
 			enabled: true,
 			secrets: "def234",
@@ -33,7 +32,7 @@ describe("DELETE /jira/configuration", () => {
 	});
 
 	it("Delete Jira Configuration", async () => {
-		nock(subscription.jiraHost)
+		jiraNock
 			.delete("/rest/devinfo/0.10/bulkByProperties")
 			.query({ installationId: subscription.githubInstallationId })
 			.reply(200, "OK");
@@ -47,7 +46,7 @@ describe("DELETE /jira/configuration", () => {
 			}
 		};
 
-		const res = { sendStatus: jest.fn(), locals: { installation } };
+		const res = { sendStatus: jest.fn(), locals: { installation, jiraHost } };
 		await deleteJiraConfiguration(req as any, res as any);
 		expect(subscription.destroy).toHaveBeenCalled();
 		expect(res.sendStatus).toHaveBeenCalledWith(204);

@@ -30,9 +30,6 @@ describe("POST /github/subscription", () => {
 				installationId: gitHubInstallationId,
 				jiraHost
 			},
-			query: {
-				xdm_e: jiraHost
-			},
 			session: {
 				githubToken: "abc-token"
 			}
@@ -45,6 +42,7 @@ describe("POST /github/subscription", () => {
 			sendStatus: jest.fn(),
 			status: jest.fn(),
 			locals: {
+				jiraHost,
 				github: {
 					apps: {
 						listInstallationsForAuthenticatedUser: jest.fn().mockResolvedValue({
@@ -92,12 +90,16 @@ describe("POST /github/subscription", () => {
 					jiraHost
 				}
 			};
-			delete req.body[property];
-
 			const res = {
 				status: jest.fn(),
-				json: jest.fn()
+				json: jest.fn(),
+				locals: {
+					jiraHost
+				}
 			};
+
+			delete req.body[property];
+			delete res.locals[property];
 
 			res.status.mockReturnValue(res);
 
