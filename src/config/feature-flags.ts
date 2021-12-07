@@ -17,7 +17,6 @@ export enum BooleanFlags {
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
 	SIMPLER_PROCESSOR = "simpler-processor",
-	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
 	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
 	// When cleaning up the SEND_PUSH_TO_SQS feature flag, please also clean up the PRIORITIZE_PUSHES
