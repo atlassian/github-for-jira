@@ -49,7 +49,7 @@ jobs:
           sleep 60s
 ```
 
-Once you have a similar file in any of your repositories that are connected to our app, you will start to see builds data
+Once you have a similar file in any of your repositories that are connected to your Jira via the app, you will start to see builds data
 in the development panel in Jira.
 
 ![Builds data in Jira](./images/builds-data-jira-dev-panel.png)
@@ -69,8 +69,8 @@ When you open a pull request in a connected repository, the GitHub for Jira app 
 commits. On the flipside, if you only listed `main`, for instance, there would be no way for the app to ask GitHub for a comparison.
 Instead, the best it can do is use the data GitHub sends in the response when the `workflow_run` event is triggered,
 which only includes the most recent commit. This means that if a developer were to make multiple commits, perhaps on multiple branches, and
-reference various Jira issue keys in each commit, GitHub would only send our app data about the latest commit. In turn, this
+reference various Jira issue keys in each commit, GitHub would only send the data to Jira about the latest commit. In turn, this
 would mean that we could only extract any issue keys from that single message. Although there may be numerous Jira issues
 involved, in this scenario, you would only see builds data for any issue keys from the latest commit message.
 
-When you list branches under `pull_request` you'll need to be very specific about the branches you want our app to target. If any branch is created that isn't listed here, the app won't be able to compare your commits and send the most accurate data to Jira.
+When you list branches under `pull_request` you'll need to be very specific about the branches you want the app to target. If any branch is created that isn't listed here, the app won't be able to compare your commits and send the most accurate data to Jira.
