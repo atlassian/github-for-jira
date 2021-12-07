@@ -157,10 +157,12 @@ export default (octokitApp: App): Express => {
 			res.clearCookie("jiraHost");
 		}
 
-		if(req.path == postInstallUrl) {
+		if (req.path == postInstallUrl && req.method == "GET") {
 			// Only save xdm_e query when on the GET post install url (iframe url)
-			// For any other method, use the body
-			res.locals.jiraHost = req.method == "GET" ? req.query.xdm_e as string: req.body?.jiraHost;
+			res.locals.jiraHost = req.query.xdm_e as string;
+		} else if ((req.path == postInstallUrl && req.method != "GET") || req.path == "/jira/sync") {
+			// Only save the jiraHost from the body for specific routes that use it
+			res.locals.jiraHost = req.body?.jiraHost;
 		} else {
 			// Save jiraHost from session for any other URLs
 			res.locals.jiraHost = req.session.jiraHost;
