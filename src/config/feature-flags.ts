@@ -17,10 +17,7 @@ export enum BooleanFlags {
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
 	SIMPLER_PROCESSOR = "simpler-processor",
-	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
-	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
 	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
-	NEW_SETUP_PAGE = "new-setup-page",
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
 	// When cleaning up the SEND_PUSH_TO_SQS feature flag, please also clean up the PRIORITIZE_PUSHES
 	// feature flag, because it doesn't make sense with SQS any more.
@@ -28,7 +25,6 @@ export enum BooleanFlags {
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
 	NEW_REPO_SYNC_STATE = "new-repo-sync-state",
-	PAYLOAD_SIZE_METRIC = "payload-size-metrics",
 	TRACE_LOGGING = "trace-logging",
 	USE_SQS_FOR_BACKFILL = "use-sqs-for-backfill",
 	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push"

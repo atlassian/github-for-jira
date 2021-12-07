@@ -180,10 +180,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`got connected installations`);
 
-		const newConnectAnOrgPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, true, jiraHost);
-		const connectAnOrgPageVersion = newConnectAnOrgPgFlagIsOn ? "github-configuration.hbs" : "github-configuration-OLD.hbs";
-
-		res.render(connectAnOrgPageVersion, {
+		res.render("github-configuration.hbs", {
 			csrfToken: req.csrfToken(),
 			installations: connectedInstallations,
 			jiraHost: jiraHost,
