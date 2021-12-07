@@ -14,7 +14,7 @@ import deleteGitHubSubscription from "./delete-github-subscription";
 import getJiraConfiguration from "./get-jira-configuration";
 import deleteJiraConfiguration from "./delete-jira-configuration";
 import getGithubClientMiddleware from "./github-client-middleware";
-import getJiraConnect from "../jira/connect";
+import getJiraConnect, { postInstallUrl } from "../jira/connect";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
 import extractInstallationFromJiraCallback from "../jira/extract-installation-from-jira-callback";
@@ -34,6 +34,7 @@ import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
 import { registerHandlebarsPartials } from "../util/handlebars/partials";
 import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
 import { Errors } from "../config/errors";
+import cookieParser from "cookie-parser";
 
 // Adding session information to request
 declare global {
@@ -45,7 +46,6 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
-				[key: string]: unknown;
 			};
 		}
 	}
@@ -72,13 +72,6 @@ const csrfProtection = csrf(
 		: undefined
 );
 
-const saveSessionVariables = (req: Request, _: Response, next: NextFunction) => {
-	req.log.info("Setting session variables 'jiraHost'");
-	// set jirahost after token if no errors
-	req.session.jiraHost = req.query.xdm_e as string;
-	next();
-};
-
 export default (octokitApp: App): Express => {
 	const githubClientMiddleware = getGithubClientMiddleware(octokitApp);
 
@@ -91,6 +84,7 @@ export default (octokitApp: App): Express => {
 	// Parse URL-encoded bodies for Jira configuration requests
 	app.use(bodyParser.urlencoded({ extended: false }));
 	app.use(bodyParser.json());
+	app.use(cookieParser());
 
 	// We run behind ngrok.io so we need to trust the proxy always
 	// TODO: look into the security of this.  Maybe should only be done for local dev?
@@ -102,7 +96,8 @@ export default (octokitApp: App): Express => {
 			maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 			signed: true,
 			sameSite: "none",
-			secure: true
+			secure: true,
+			httpOnly: false
 		})
 	);
 
@@ -140,6 +135,42 @@ export default (octokitApp: App): Express => {
 		)
 	);
 
+	app.get(["/session", "/session/*"], (req: Request, res: Response, next: NextFunction) => {
+		if (!req.params[0]) {
+			return next(new Error("Missing redirect url for session.  Needs to be in format `/session/:redirectUrl`"));
+		}
+
+		return res.render("session.hbs", {
+			title: "Logging you into GitHub",
+			APP_URL: process.env.APP_URL,
+			redirectUrl: new URL(req.params[0], process.env.APP_URL).href,
+			nonce: res.locals.nonce
+		});
+	});
+
+	// Saves the jiraHost cookie to the secure session if available
+	app.use((req: Request, res: Response, next: NextFunction) => {
+		if (req.cookies.jiraHost) {
+			// Save jirahost to secure session
+			req.session.jiraHost = req.cookies.jiraHost;
+			// delete jirahost from cookies.
+			res.clearCookie("jiraHost");
+		}
+
+		if (req.path == postInstallUrl && req.method == "GET") {
+			// Only save xdm_e query when on the GET post install url (iframe url)
+			res.locals.jiraHost = req.query.xdm_e as string;
+		} else if ((req.path == postInstallUrl && req.method != "GET") || req.path == "/jira/sync") {
+			// Only save the jiraHost from the body for specific routes that use it
+			res.locals.jiraHost = req.body?.jiraHost;
+		} else {
+			// Save jiraHost from session for any other URLs
+			res.locals.jiraHost = req.session.jiraHost;
+		}
+
+		next();
+	});
+
 	app.use(githubClientMiddleware);
 
 	app.use("/", healthcheck);
@@ -153,8 +184,8 @@ export default (octokitApp: App): Express => {
 	app.get("/jira/atlassian-connect.json", getJiraConnect);
 
 	// Maintenance mode view
-	app.use(async (req, res, next) => {
-		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost)) {
+	app.use(async (req: Request, res: Response, next: NextFunction) => {
+		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, res.locals.jiraHost)) {
 			return getMaintenance(req, res);
 		}
 		next();
@@ -206,7 +237,6 @@ export default (octokitApp: App): Express => {
 		"/jira/configuration",
 		csrfProtection,
 		verifyJiraJwtTokenMiddleware,
-		saveSessionVariables,
 		getJiraConfiguration
 	);
 
@@ -220,7 +250,7 @@ export default (octokitApp: App): Express => {
 	// Set up event handlers
 
 	// TODO: remove enabled and disabled events once the descriptor is updated in marketplace
-	app.post("/jira/events/disabled",(_: Request, res: Response) => {
+	app.post("/jira/events/disabled", (_: Request, res: Response) => {
 		return res.sendStatus(204);
 	});
 	app.post("/jira/events/enabled", (_: Request, res: Response) => {
@@ -235,9 +265,9 @@ export default (octokitApp: App): Express => {
 	});
 
 	// Add Sentry Context
-	app.use((err: Error, req: Request, _: Response, next: NextFunction) => {
+	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 		Sentry.withScope((scope: Sentry.Scope): void => {
-			const jiraHost = req.session.jiraHost;
+			const jiraHost = res.locals.jiraHost;
 			if (jiraHost) {
 				scope.setTag("jiraHost", jiraHost);
 			}

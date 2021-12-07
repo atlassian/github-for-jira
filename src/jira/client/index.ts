@@ -142,11 +142,11 @@ async function getJiraClient(
 			},
 			// Add methods for handling installationId properties that exist in Jira
 			installation: {
-				exists: (gitHubInstallationId: string) =>
+				exists: (gitHubInstallationId: string | number) =>
 					instance.get(
 						`/rest/devinfo/0.10/existsByProperties?installationId=${gitHubInstallationId}`
 					),
-				delete: (gitHubInstallationId: string) =>
+				delete: (gitHubInstallationId: string | number) =>
 					instance.delete(
 						`/rest/devinfo/0.10/bulkByProperties?installationId=${gitHubInstallationId}`
 					)
