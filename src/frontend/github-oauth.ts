@@ -2,12 +2,11 @@ import crypto from "crypto";
 import url from "url";
 import express, { NextFunction, Request, RequestHandler, Response, Router } from "express";
 import axios from "axios";
-import { getJiraHostFromRedirectUrl } from "../util/getUrl";
 import { getLogger } from "../config/logger";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { Tracer } from "../config/tracer";
 
-const host = process.env.GHE_HOST || "github.com";
+const githubHost = process.env.GHE_HOST || "github.com";
 const logger = getLogger("github-oauth");
 
 export interface OAuthOptions {
@@ -35,7 +34,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 	async function login(req: Request, res: Response): Promise<void> {
 
 		const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-		const tracer = new Tracer(logger.child(opts), "login", traceLogsEnabled)
+		const tracer = new Tracer(logger.child(opts), "login", traceLogsEnabled);
 
 		// TODO: We really should be using an Auth library for this, like @octokit/github-auth
 		// Create unique state for each oauth request
@@ -47,7 +46,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		req.session[state] =
 			res.locals.redirect ||
 			`/github/configuration${url.parse(req.originalUrl).search || ""}`;
-		const redirectUrl = `https://${host}/login/oauth/authorize?client_id=${opts.githubClient}${
+		const redirectUrl = `https://${githubHost}/login/oauth/authorize?client_id=${opts.githubClient}${
 			opts.scopes?.length ? `&scope=${opts.scopes.join(" ")}` : ""
 		}&redirect_uri=${redirectURI}&state=${state}`;
 		req.log.info({
@@ -72,7 +71,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		} = req.query as Record<string, string>;
 
 		const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-		const tracer = new Tracer(logger.child(opts), "callback", traceLogsEnabled)
+		const tracer = new Tracer(logger.child(opts), "callback", traceLogsEnabled);
 
 		const timestampBefore = req.session["timestamp_before_oauth"] as number;
 		if (timestampBefore) {
@@ -99,13 +98,14 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 		if (!code) return next("Missing OAuth Code");
 
-		const jiraHost = getJiraHostFromRedirectUrl(redirectUrl, req.log);
+		const { jiraHost } = res.locals;
+
 		req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 		tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
 		try {
 			const response = await axios.get(
-				`https://${host}/login/oauth/access_token`,
+				`https://${githubHost}/login/oauth/access_token`,
 				{
 					params: {
 						client_id: opts.githubClient,
@@ -147,7 +147,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		router: router,
 		checkGithubAuth: async (req: Request, res: Response, next: NextFunction) => {
 			const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-			const tracer = new Tracer(logger.child(opts), "checkGithubAuth", traceLogsEnabled)
+			const tracer = new Tracer(logger.child(opts), "checkGithubAuth", traceLogsEnabled);
 
 			if (!req.session.githubToken) {
 				tracer.trace("found github token in session, calling login()");
