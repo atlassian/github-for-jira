@@ -111,7 +111,8 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: any, j
 };
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { jiraHost, githubToken } = req.session;
+	const { githubToken } = req.session;
+	const { jiraHost } = res.locals;
 	const log = req.log.child({ jiraHost });
 
 	if (!githubToken) {
@@ -180,10 +181,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`got connected installations`);
 
-		const newConnectAnOrgPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, true, jiraHost);
-		const connectAnOrgPageVersion = newConnectAnOrgPgFlagIsOn ? "github-configuration.hbs" : "github-configuration-OLD.hbs";
-
-		res.render(connectAnOrgPageVersion, {
+		res.render("github-configuration.hbs", {
 			csrfToken: req.csrfToken(),
 			installations: connectedInstallations,
 			jiraHost: jiraHost,
