@@ -65,8 +65,7 @@ pull_request:
       - feature/**
 ```
 
-In order for the GitHub for Jira app to be able to compare two points in your git history (possible once a pull request is opened)
-we need a base branch and a head branch. When the app has both of these, we are able to make a request to GitHub to compare your
+When you open a pull request in a connected repository, the GitHub for Jira app can compare two points in your git history is we have access to a base branch and a head branch. If the app has both of these, it can make a request to GitHub to compare your
 commits. On the flipside, if you only listed `main`, for instance, there would be no way for the app to ask GitHub for a comparison.
 Instead, the best it can do is use the data GitHub sends in the response when the `workflow_run` event is triggered,
 which only includes the most recent commit. This means that if a developer were to make multiple commits, perhaps on multiple branches, and
@@ -74,4 +73,4 @@ reference various Jira issue keys in each commit, GitHub would only send our app
 would mean that we could only extract any issue keys from that single message. Although there may be numerous Jira issues
 involved, in this scenario, you would only see builds data for any issue keys from the latest commit message.
 
-When you list branches under `pull_request` you'll need to be very specific about the branches you want our app to target. If any branch is created that isn't listed here, the app won't be able to compare your commits and send the most accurrate data to Jira.
+When you list branches under `pull_request` you'll need to be very specific about the branches you want our app to target. If any branch is created that isn't listed here, the app won't be able to compare your commits and send the most accurate data to Jira.
