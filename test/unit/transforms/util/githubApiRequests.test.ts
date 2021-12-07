@@ -26,7 +26,7 @@ describe("GitHub API Request Suite", () => {
 				require("../../../fixtures/api/pull-request-multiple-commits-diff.json")
 			);
 
-			const data = pullRequestCommits.data;
+			const { data } = pullRequestCommits;
 
 			githubNock
 				.get(
