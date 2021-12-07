@@ -105,6 +105,8 @@ export default async (
 		return undefined;
 	}
 
+	const maxPullRequestReferences = mapPullRequests(pull_requests).slice(0, 5);
+
 	return {
 		product: "GitHub Actions",
 		builds: [
@@ -119,8 +121,8 @@ export default async (
 				lastUpdated: updated_at,
 				issueKeys,
 				references: workflowHasPullRequest
-					? mapPullRequests(pull_requests).slice(0, 5)
-					: undefined, // Optional information that links PRs. Min items: 1, Max items: 5
+					? maxPullRequestReferences
+					: undefined, // Optional information that links PRs.
 			},
 		],
 	};
