@@ -13,7 +13,7 @@ interface CompareCommitsPayload {
 export const compareCommitsBetweenBaseAndHeadBranches = async (
 	payload: CompareCommitsPayload,
 	github: GitHubAPI,
-	logger?: LoggerWithTarget
+	logger: LoggerWithTarget
 ): Promise<string | undefined | void> => {
 	try {
 		const commitsDiff = await github.repos.compareCommits(payload);

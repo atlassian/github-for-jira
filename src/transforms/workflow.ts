@@ -56,7 +56,7 @@ export default async (
 	githubClient: GitHubAPI,
 	payload: WorkflowPayload,
 	jiraHost: string,
-	logger?: LoggerWithTarget
+	logger: LoggerWithTarget
 ): Promise<JiraBuildData | undefined> => {
 	const { workflow_run, workflow } = payload;
 
