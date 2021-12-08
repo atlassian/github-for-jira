@@ -1,4 +1,4 @@
-.githubError__container {
+.error-container {
     align-items: center;
     display: flex;
     flex-direction: column;
@@ -6,27 +6,27 @@
     justify-content: center;
     margin: auto;
     max-width: 570px;
-  }
+}
 
-  .githubError__errorImg {
+.error-errorImg {
     margin-bottom: 2em;
     width: 11.5em;
-  }
+}
 
-  .githubError__header {
+.error-header {
     /*  Override build.css */
     font-size: 1.3rem !important;
-  }
+}
 
-  .githubError__message {
+.error-message {
     margin: 1em auto;
     text-align: center;
-  }
+}
 
-  .githubError__link {
+a {
     color: #0052cc;
-  }
+}
 
-  .githubError__link:hover {
+a:hover {
     text-decoration: none;
-  }
+}

@@ -279,6 +279,17 @@ export default (octokitApp: App): Express => {
 			next(err);
 		});
 	});
+
+	// Error endpoints to test out different error pages
+	app.get(["/error", "/error/:message", "/error/:message/:name"], (req: Request, res: Response, next: NextFunction) => {
+		res.locals.showError = true;
+		const error = new Error(req.params.message);
+		if(req.params.name) {
+			error.name = req.params.name
+		}
+		next(error);
+	});
+
 	// The error handler must come after controllers and before other error middleware
 	app.use(Sentry.Handlers.errorHandler());
 
@@ -286,8 +297,14 @@ export default (octokitApp: App): Express => {
 	app.use(async (err: Error, req: Request, res: Response, next: NextFunction) => {
 		req.log.error({ payload: req.body, err, req, res }, "Error in frontend app.");
 
-		if (!isNodeProd()) {
+		if (!isNodeProd() && !res.locals.showError) {
 			return next(err);
+		}
+
+		// Check for IP Allowlist issue from Github to show the correct message
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		if (err.name == "HttpError" && err.message?.includes("organization has an IP allow list enabled")) {
+			err.message = Errors.IP_ALLOWLIST_MISCONFIGURED;
 		}
 
 		// TODO: move this somewhere else, enum?
@@ -298,7 +315,8 @@ export default (octokitApp: App): Express => {
 		};
 
 		const messages = {
-			[Errors.MISSING_JIRA_HOST]: "Session information missing - please enable all cookies in your browser settings."
+			[Errors.MISSING_JIRA_HOST]: "Session information missing - please enable all cookies in your browser settings.",
+			[Errors.IP_ALLOWLIST_MISCONFIGURED]: `The GitHub org you are trying to connect is currently blocking our requests. To configure the GitHub IP Allow List correctly, <a href="${envVars.GITHUB_REPO_URL}/blob/main/docs/ip-allowlist.md">please follow these instructions</a>.`
 		};
 
 		const errorStatusCode = errorCodes[err.message] || 500;
@@ -307,7 +325,7 @@ export default (octokitApp: App): Express => {
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		return res.status(errorStatusCode).render("github-error.hbs", {
+		return res.status(errorStatusCode).render("error.hbs", {
 			title: "GitHub + Jira integration",
 			message,
 			nonce: res.locals.nonce,
