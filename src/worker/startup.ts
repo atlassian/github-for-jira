@@ -17,6 +17,7 @@ import SentryScopeProxy from "../models/sentry-scope-proxy";
 import { getLogger } from "../config/logger";
 import { v4 as uuidv4 } from 'uuid'
 import backfillSupplier from '../backfill-queue-supplier';
+import { isNodeProd } from "../util/isNodeEnv";
 
 const CONCURRENT_WORKERS = process.env.CONCURRENT_WORKERS || 1;
 const logger = getLogger("worker");
@@ -93,6 +94,11 @@ const setDelayOnRateLimiting = (jobHandler) => async (job: Job, logger: LoggerWi
 };
 
 const sendQueueMetrics = async () => {
+	// Only send queue metrics in prod
+	if (!isNodeProd()) {
+		return;
+	}
+
 	for (const [queueName, queue] of Object.entries(queues)) {
 		logger.info("fetching queue metrics");
 
