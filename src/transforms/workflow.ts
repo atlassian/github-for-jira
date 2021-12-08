@@ -99,7 +99,7 @@ export default async (
 	} else {
 		issueKeys =
 		issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
-  }
+	}
 
 	if (!issueKeys) {
 		return undefined;
