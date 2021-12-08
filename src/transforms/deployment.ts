@@ -6,6 +6,7 @@ import {WebhookPayloadDeploymentStatus} from "@octokit/webhooks";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import {Octokit} from "@octokit/rest";
 import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
 async function getLastSuccessfulDeployCommitSha(
@@ -48,8 +49,8 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 	currentDeployId: number,
 	currentDeployEnv: string,
 	github: GitHubAPI,
-	logger?: LoggerWithTarget
-): Promise<string | undefined> {
+	logger: LoggerWithTarget
+): Promise<string | void | undefined> {
 
 	// Grab the last 10 deployments for this repo
 	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> = await github.repos.listDeployments({
@@ -70,14 +71,20 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 
 	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, github, filteredDeployments, logger);
 
-	const commitsDiff = await github.repos.compareCommits({
+	const compareCommitsPayload = {
 		owner: owner,
 		repo: repoName,
 		base: lastSuccessfullyDeployedCommit,
 		head: currentDeploySha
-	})
+	}
 
-	return commitsDiff.data?.commits?.map(c => c.commit.message).join(" ");
+	const allCommitMessages = await compareCommitsBetweenBaseAndHeadBranches(
+		compareCommitsPayload,
+		github,
+		logger
+	);
+
+	return allCommitMessages;
 }
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
@@ -139,7 +146,7 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger?: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 
