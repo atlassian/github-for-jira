@@ -423,9 +423,11 @@ export interface BackfillQueue {
 	schedule: (message: BackfillMessagePayload, delayMsecs?: number, logger?: LoggerWithTarget) => Promise<void>;
 }
 
+const redis = new Redis(getRedisInfo("installations-in-progress"));
+
 export const processInstallation =
 	(app: Application, backfillQueueSupplier: () => Promise<BackfillQueue>) => {
-		const inProgressStorage = new RedisInProgressStorageWithTimeout(new Redis(getRedisInfo("installations-in-progress")));
+		const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
 		const deduplicator = new Deduplicator(
 			inProgressStorage, 1_000
 		);
