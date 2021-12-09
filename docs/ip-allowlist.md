@@ -1,7 +1,6 @@
 # GitHub IP Allow List Configuration
 
-If your organization is using [GitHub's Organization IP Allow List](https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-allowed-ip-addresses-for-your-organization)
-, it might not be configured properly for this Github app to be able to communicate with your organization's GitHub API.
+If your organization is using [GitHub's Organization IP Allow List](https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-allowed-ip-addresses-for-your-organization), it needs to be configured properly for this Github app to be able to communicate with your organization's GitHub API.
 
 There are 2 methods to remedy this based on your company's security policy:
 
@@ -22,8 +21,8 @@ of the change.
 
 ### Simple Method
 
-As an admin your GitHub org page `https://github.com/<your org>`, press on the `Settings` tab, then in the sidebar 
-select the `Organization security` option.  Scroll down to the `IP allow list` section.  Both checkboxes `Enable IP 
+As an admin go to your GitHub org page `https://github.com/<your org>`, press on the `Settings` tab, then in the 
+sidebar select the `Organization security` option.  Scroll down to the `IP allow list` section.  Both checkboxes `Enable IP 
 allow list` and `Enable IP allow list configuration for installed GitHub Apps` should be selected and saved independently.
 
 ![](images/github-ip-allowlist.png)
