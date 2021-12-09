@@ -95,7 +95,6 @@ export default class GitHubClient {
 			},
 			urlParams,
 		});
-		//TODO: error handling
 		return response;
 	}
 
@@ -110,7 +109,6 @@ export default class GitHubClient {
 					installationId: this.githubInstallationId,
 				}
 			});
-		//TODO: error handling
 	}
 
 	/**
