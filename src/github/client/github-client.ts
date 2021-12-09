@@ -8,7 +8,7 @@ import { GetPullRequestParams } from "./types";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
-import {urlParamsMiddleware} from "../../util/axios/common-middleware";
+import { urlParamsMiddleware } from "../../util/axios/common-middleware";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -99,10 +99,24 @@ export default class GitHubClient {
 		return response;
 	}
 
+	private async graphql<T>(query: string): Promise<AxiosResponse> {
+		return await this.axios.post<T>("https://api.github.com/graphql",
+			{
+				query
+			},
+			{
+				...await this.installationAuthenticationHeaders(),
+				params: {
+					installationId: this.githubInstallationId,
+				}
+			});
+		//TODO: error handling
+	}
+
 	/**
 	 * Lists pull requests for the given repository.
 	 */
-	public async getPullRequests(owner:string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
+	public async getPullRequests(owner: string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
 		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/:owner/:repo/pulls`, pullRequestParams, {
 			owner,
 			repo
@@ -114,7 +128,7 @@ export default class GitHubClient {
 	 */
 	// TODO: add a unit test
 	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
-		return await this.get<Octokit.PullsGetResponse>(`/repos/:owner/:repo/pulls/:pullNumber`, {},  {
+		return await this.get<Octokit.PullsGetResponse>(`/repos/:owner/:repo/pulls/:pullNumber`, {}, {
 			owner,
 			repo,
 			pullNumber
@@ -135,11 +149,24 @@ export default class GitHubClient {
 	 * Get a single commit for the given repository.
 	 */
 	public getCommit = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> => {
-		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/:owner/:repo/commits/:ref`,  {}, {
+		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/:owner/:repo/commits/:ref`, {}, {
 			owner,
 			repo,
 			ref
 		});
+	}
+
+	public async getNumberOfReposForInstallation(): Promise<number> {
+		const response = await this.graphql(`
+			query {
+				viewer {
+					repositories {
+						totalCount
+					}
+				}
+			}`)
+
+		return response?.data?.viewer?.repositories?.totalCount as number;
 	}
 
 }
