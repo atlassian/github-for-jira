@@ -1,7 +1,7 @@
 {
   "name": "@atlassian/github-for-jira",
   "version": "0.0.0",
-  "description": "Github integration for Atlassian Jira",
+  "description": "GitHub integration for Atlassian Jira",
   "repository": "https://github.com/atlassian/github-for-jira.git",
   "engines": {
     "node": ">= 14.16 <15",
@@ -73,6 +73,7 @@
     "bull": "^3.12.1",
     "bunyan": "^1.8.15",
     "bunyan-format": "^0.2.1",
+    "cookie-parser": "^1.4.6",
     "cookie-session": "^2.0.0-rc.1",
     "csurf": "^1.11.0",
     "date-fns": "^1.29.0",

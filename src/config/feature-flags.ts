@@ -3,6 +3,7 @@ import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import envVars from "./env";
 import crypto from "crypto";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
 const logger = getLogger("feature-flags");
 
@@ -16,21 +17,22 @@ export enum BooleanFlags {
 	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	PROCESS_PUSHES_IMMEDIATELY = "process-pushes-immediately",
 	SIMPLER_PROCESSOR = "simpler-processor",
-	NEW_GITHUB_CONFIG_PAGE = "new-github-config-page",
-	NEW_CONNECT_AN_ORG_PAGE = "new-connect-an-org-page",
 	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
-	NEW_SETUP_PAGE = "new-setup-page",
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
-	USE_DEDUPLICATOR_FOR_BACKFILLING = "use-deduplicator-for-backfilling",
 	// When cleaning up the SEND_PUSH_TO_SQS feature flag, please also clean up the PRIORITIZE_PUSHES
 	// feature flag, because it doesn't make sense with SQS any more.
 	SEND_PUSH_TO_SQS = "send-push-events-to-sqs",
 	PRIORITIZE_PUSHES = "prioritize-pushes",
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
 	NEW_REPO_SYNC_STATE = "new-repo-sync-state",
-	PAYLOAD_SIZE_METRIC = "payload-size-metrics",
-	USE_BACKFILL_QUEUE_SUPPLIER = "use-backfill-queue-supplier",
+	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS = "support-branch-and-merge-workflows-for-deployments",
+	TRACE_LOGGING = "trace-logging",
+	USE_SQS_FOR_BACKFILL = "use-sqs-for-backfill",
+	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS = "support-branch-and-merge-workflows-for-builds",
+	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push",
+	USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS = "use-new-github-client-to-count-repos",
 	REPO_SYNC_STATE_AS_SOURCE = "repo-sync-state-as-source"
+
 }
 
 export enum StringFlags {
@@ -69,3 +71,14 @@ export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jir
 
 export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHost?: string): Promise<string> =>
 	String(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+
+export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
+	try {
+		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
+		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
+		return blockedInstallations.includes(installationId);
+	} catch (e) {
+		logger.error({ err: e, installationId }, "Cannot define if isBlocked")
+		return false;
+	}
+};

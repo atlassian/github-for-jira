@@ -6,17 +6,17 @@
 
 See
 - (Atlassian docs)[https://confluence.atlassian.com/adminjiracloud/connect-jira-cloud-to-github-814188429.html]
-- (Github docs)[https://help.github.com/articles/integrating-jira-with-your-organization-s-projects/]
+- (GitHub docs)[https://help.github.com/articles/integrating-jira-with-your-organization-s-projects/]
 
 ## Installation
 
 From within Jira Software, customers would need to
 
 1. go to the DVCS Accounts page within settings
-2. set up the Github connection via oAuth client ID and Code Secret
+2. set up the GitHub connection via oAuth client ID and Code Secret
 3. Sync all repos that were added.
 
-Note: The same method is used for Github & Github Enterprise, but an additional Host URL is required on installation. When using Atlassian Connect to host the Github application, it will need to deal with Github + Github EE itself. 
+Note: The same method is used for GitHub & GitHub Enterprise, but an additional Host URL is required on installation. When using Atlassian Connect to host the Github application, it will need to deal with Github + Github EE itself. 
 
 ![](https://user-images.githubusercontent.com/173/32561336-abd01cb6-c471-11e7-8719-13e165cd3dcd.png)
 

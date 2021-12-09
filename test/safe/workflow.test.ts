@@ -28,9 +28,6 @@ describe("Workflow Webhook", () => {
 	});
 
 	describe("workflow_run", () => {
-		beforeEach(() => {
-			jest.setTimeout(20000);
-		});
 		it("should update the Jira issue with the linked GitHub workflow_run", async () => {
 			const fixture = require("../fixtures/workflow-basic.json");
 

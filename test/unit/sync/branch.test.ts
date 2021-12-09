@@ -96,6 +96,11 @@ describe.skip("sync/branches", () => {
 			.reply(200, emptyNodesFixture);
 	}
 
+	const backfillQueue = {
+		schedule: jest.fn()
+	};
+	const queueSupplier = () => Promise.resolve(backfillQueue);
+
 	beforeEach(async () => {
 		const repoSyncStatus = {
 			installationId: installationId,
@@ -130,6 +135,10 @@ describe.skip("sync/branches", () => {
 		app = await createWebhookApp();
 	});
 
+	afterEach(() => {
+		backfillQueue.schedule.mockReset();
+	})
+
 	it("should sync to Jira when branch refs have jira references", async () => {
 		const job = createJob({
 			data: { installationId, jiraHost },
@@ -144,13 +153,8 @@ describe.skip("sync/branches", () => {
 			)
 			.reply(200);
 
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
-		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
 	});
 
 	it("should send data if issue keys are only present in commits", async () => {
@@ -169,13 +173,8 @@ describe.skip("sync/branches", () => {
 			)
 			.reply(200);
 
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
-		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
 	});
 
 	it("should send data if issue keys are only present in an associatd PR title", async () => {
@@ -228,13 +227,8 @@ describe.skip("sync/branches", () => {
 			})
 			.reply(200);
 
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
-		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
 	});
 
 	it("should not call Jira if no issue keys are found", async () => {
@@ -244,17 +238,11 @@ describe.skip("sync/branches", () => {
 		});
 		nockBranchRequest(branchNoIssueKeys);
 
-		const queues = {
-			installation: {
-				add: jest.fn()
-			}
-		};
-
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app, queues, jest.fn())(job, getLogger('test'))).toResolve();
-		expect(queues.installation.add).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});

@@ -1,14 +1,15 @@
 import format from "date-fns/format";
 import moment from "moment";
-import SubscriptionClass from "../models/subscription";
+import SubscriptionClass, { SyncStatus } from "../models/subscription";
 import { RepoSyncState, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { FailedInstallations } from "../config/interfaces";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import Logger from "bunyan";
 
-function mapSyncStatus(syncStatus: string): string {
+function mapSyncStatus(syncStatus: SyncStatus = SyncStatus.PENDING): string {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
@@ -19,7 +20,7 @@ function mapSyncStatus(syncStatus: string): string {
 	}
 }
 
-export async function getInstallation(client, subscription, reqLog?) {
+export async function getInstallation(client, subscription: SubscriptionClass, reqLog?: Logger) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
@@ -38,7 +39,7 @@ export async function getInstallation(client, subscription, reqLog?) {
 
 		return response.data;
 	} catch (err) {
-		reqLog.error(
+		reqLog?.error(
 			{ installationId: id, error: err, uninstalled: err.code === 404 },
 			"Failed connection"
 		);
@@ -93,7 +94,7 @@ export default async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const jiraHost = req.session.jiraHost;
+		const jiraHost = res.locals.jiraHost;
 
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
@@ -126,20 +127,10 @@ export default async (
 				repoSyncState: data.repoSyncState
 			}));
 
-		const newConfigPgFlagIsOn = await booleanFlag(
-			BooleanFlags.NEW_GITHUB_CONFIG_PAGE,
-			true,
-			jiraHost
-		);
-
-		const configPageVersion = newConfigPgFlagIsOn
-			? "jira-configuration.hbs"
-			: "jira-configuration-OLD.hbs";
-
 		const hasConnections =
 			connections.length > 0 || failedConnections.length > 0;
 
-		res.render(configPageVersion, {
+		res.render("jira-configuration.hbs", {
 			host: jiraHost,
 			connections,
 			failedConnections,

@@ -2,7 +2,7 @@ import { StatsCb, StatsD, Tags } from "hot-shots";
 import { getLogger } from "./logger";
 import { NextFunction, Request, Response } from "express";
 import { isNodeDev, isNodeTest } from "../util/isNodeEnv";
-import {metricHttpRequest} from "./metric-names";
+import { metricHttpRequest } from "./metric-names";
 
 export const globalTags = {
 	environment: isNodeTest() ? "test" : process.env.MICROS_ENV || "",
@@ -11,7 +11,7 @@ export const globalTags = {
 	region: process.env.MICROS_AWS_REGION || "us-west-1"
 };
 
-const RESPONSE_TIME_HISTOGRAM_BUCKETS =	"100_1000_2000_3000_5000_10000_30000_60000";
+const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 const logger = getLogger("config.statsd");
 
 const statsd = new StatsD({
@@ -55,27 +55,33 @@ export const elapsedTimeMetrics = (
 ) => {
 	const elapsedTimeInMs = hrtimer();
 	const method = req.method;
+	(req.log || logger).debug({
+		method: req.method,
+		path: req.path,
+		body: JSON.stringify(req.body),
+		query: req.query
+	}, `${method} request initialized for path ${req.path}`);
 
 	res.once("finish", () => {
-
-		const pathTag = req.baseUrl ? req.baseUrl + (req.route?.path || "*") : (req.route?.path || "/*");
 		const elapsedTime = elapsedTimeInMs();
-		const statusCode  = `${res.statusCode}`;
-		const tags = { path: pathTag, method,  statusCode};
-		(req.log || logger).debug(`Request executed in ${elapsedTime} with status ${statusCode} path ${pathTag}`)
+		const statusCode = `${res.statusCode}`;
+		const path = (req.baseUrl || "") + (req.route?.path || "/*");
+		const tags = { path, method, statusCode };
+		(req.log || logger).debug(`${method} request executed in ${elapsedTime} with status ${statusCode} path ${path}`);
 
 		//Count response time metric
 		statsd.histogram(metricHttpRequest.duration, elapsedTime, tags);
 
 		//Publish bucketed histogram metric for the call duration
 		statsd.histogram(metricHttpRequest.duration, elapsedTime,
-			{...tags,
+			{
+				...tags,
 				gsd_histogram: RESPONSE_TIME_HISTOGRAM_BUCKETS
 			}
 		);
 
 		//Count requests count
-		statsd.increment(metricHttpRequest.executed, tags)
+		statsd.increment(metricHttpRequest.executed, tags);
 	});
 
 	next();

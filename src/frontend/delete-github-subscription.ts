@@ -10,7 +10,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 		return;
 	}
 
-	if (!req.body.installationId || !req.body.jiraHost) {
+	if (!req.body.installationId || !res.locals.jiraHost) {
 		res.status(400)
 			.json({
 				err: "installationId and jiraHost must be provided to delete a subscription."
@@ -63,7 +63,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 				return;
 			}
 
-			const subscription = await Subscription.getSingleInstallation(req.body.jiraHost, req.body.installationId);
+			const subscription = await Subscription.getSingleInstallation(res.locals.jiraHost, req.body.installationId);
 			if(!subscription) {
 				req.log.warn({req, res}, "Cannot find Subscription");
 				res.status(404).send("Cannot find Subscription.");

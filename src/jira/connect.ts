@@ -4,6 +4,7 @@ import { EnvironmentEnum } from "../interfaces/common";
 
 const instance = process.env.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
+export const postInstallUrl = "/jira/configuration";
 
 export default async (_: Request, res: Response): Promise<void> => {
 	const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
@@ -82,7 +83,7 @@ export default async (_: Request, res: Response): Promise<void> => {
 					name: {
 						value: "GitHub Configuration"
 					},
-					url: "/jira/configuration",
+					url: postInstallUrl,
 					conditions: adminPageDisplayConditions
 				},
 				webSections: [

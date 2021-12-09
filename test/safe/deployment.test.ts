@@ -29,7 +29,7 @@ describe("Deployment Webhook", () => {
 
 	describe("deployment_status", () => {
 		it("should update the Jira issue with the linked GitHub deployment", async () => {
-			const fixture = require("../fixtures/deployment-basic.json");
+			const fixture = require("../fixtures/deployment_status-basic.json");
 			const sha = fixture.payload.deployment.sha;
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
@@ -59,8 +59,8 @@ describe("Deployment Webhook", () => {
 							displayName: "deploy",
 							url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
 							description: "deploy",
-							lastUpdated: "2021-06-28T12:15:18Z",
-							state: "in_progress",
+							lastUpdated: "2021-06-28T12:15:18.000Z",
+							state: "successful",
 							pipeline:
 								{
 									id: "deploy",

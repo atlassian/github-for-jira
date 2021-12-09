@@ -4,6 +4,7 @@ import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { getCurrentTime } from '../util/webhooks';
 import _ from "lodash";
+import GitHubClient from "./client/github-client";
 
 export default async (context: Context, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();
@@ -38,7 +39,9 @@ export default async (context: Context, jiraClient): Promise<void> => {
 	// If there's less than 20 commits (the number of commits the github API returns per call), just process it immediately
 	if(payload.commits?.length < 20 && await booleanFlag(BooleanFlags.PROCESS_PUSHES_IMMEDIATELY, true, jiraClient.baseURL)) {
 		context.log.info("Processing push straight away");
-		await processPush(context.github, createJobData(payload, jiraClient.baseURL), context.log);
+		// TODO: this path is not used, opportunistically adding this line to make TypeScript happy without much testing
+		const githubNew = new GitHubClient(payload.installation?.id, context.log);
+		await processPush(context.github, githubNew, createJobData(payload, jiraClient.baseURL), context.log);
 		return;
 	}
 
