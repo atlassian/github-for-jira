@@ -1,7 +1,7 @@
 {
   "name": "@atlassian/github-for-jira",
   "version": "0.0.0",
-  "description": "Github integration for Atlassian Jira",
+  "description": "GitHub integration for Atlassian Jira",
   "repository": "https://github.com/atlassian/github-for-jira.git",
   "engines": {
     "node": ">= 14.16 <15",

@@ -72,7 +72,7 @@ Once you've set up your GitHub app and cloned this repo, copy the content from `
 + `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing it. If you don't have one now, please set the value of this variable after going through the step 1 of "Configuring the Jira instance" section of this document.
 + `STORAGE_SECRET`: It needs to be set to a 32 char secret (anything else fails). You can generate one by running `openssl rand -hex 32` in your terminal and paste directly to your .env file.
-+ `INSTANCE_NAME`: Your Jira app name - will show as "Github (instance-name)"
++ `INSTANCE_NAME`: Your Jira app name - will show as "GitHub (instance-name)"
 + `WEBHOOK_PROXY_URL`: `https://DOMAIN/github/events`
 
 ### Running the app
@@ -102,7 +102,7 @@ Go to your Jira instance that you created earlier and do the following steps:
 
 ### Setting up the App
 
-In your Jira instance, in the `Manage Apps` section, click on your App's button, then click on `Get Started`.  This will bring you to the App's dashboard.  Click the `Add an Organization` button and follow the steps to install the App on Github and allow it permission to view your repos.
+In your Jira instance, in the `Manage Apps` section, click on your App's button, then click on `Get Started`.  This will bring you to the App's dashboard.  Click the `Add an Organization` button and follow the steps to install the App on GitHub and allow it permission to view your repos.
 
 After this is done, you should see your repos starting to sync in the App's dashboard.
 
@@ -130,4 +130,4 @@ That being said, here are the steps needed to create a Pull Request for us to re
 1. Commit and Push your changes - verify it passes all checks.
 1. Submit your pull request with a detailed message about what's changed.
 1. Wait for us to review and answer questions/make changes where requested.
-1. Once merged, celebrate with your drink of choice because you've just helped thousands (if not millions) of people get a better experience in both Jira and Github! :beers:
+1. Once merged, celebrate with your drink of choice because you've just helped thousands (if not millions) of people get a better experience in both Jira and GitHub! :beers:
