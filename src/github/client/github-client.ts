@@ -166,7 +166,7 @@ export default class GitHubClient {
 				}
 			}`)
 
-		return response?.data?.viewer?.repositories?.totalCount as number;
+		return response?.data?.data?.viewer?.repositories?.totalCount as number;
 	}
 
 }

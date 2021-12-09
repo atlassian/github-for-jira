@@ -18,7 +18,7 @@ function mapSyncStatus(syncStatus: string): string {
 	}
 }
 
-export async function getInstallation(client, subscription, reqLog?) {
+export async function 	getInstallation(client, subscription, reqLog?) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
