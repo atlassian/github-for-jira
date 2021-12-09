@@ -301,8 +301,8 @@ export default (octokitApp: App): Express => {
 			return next(err);
 		}
 
-		// Check for IP Allowlist issue from Github to show the correct message
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// Check for IP Allowlist error from Github and set the message explicitly
+		// to be shown to the user in the error page
 		if (err.name == "HttpError" && err.message?.includes("organization has an IP allow list enabled")) {
 			err.message = Errors.IP_ALLOWLIST_MISCONFIGURED;
 		}
