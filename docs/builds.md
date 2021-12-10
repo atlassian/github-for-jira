@@ -6,7 +6,7 @@ The GitHub for Jira app automatically processes "workflow runs" from any [GitHub
 
 To associate a workflow run with a Jira issue, **the app looks for Jira issue keys in all commit messages of a pull request**.
 
-Let's look how it works in a common feature branching example:
+Let's at a common feature branching example:
 
 ![Builds are associated by putting Jira issue keys into commit messages](./images/associating-builds.png)
 
