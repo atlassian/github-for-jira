@@ -12,7 +12,9 @@ Let's look how it works in a common feature branching example:
 
 We have two feature branches off the `main` branch. Say we have configured our GitHub Actions so that each commit on each of the feature branches (green dots) and each commit on the `main` branch (blue dots) triggers a workflow to build and test our codebase.
 
-If we use the Jira issue keys (`JIRA-*`) in the commit messages as shown in the diagram, we would see workflow run #1 in the Jira issues `JIRA-1` and `JIRA-2` and workflow run #2 in the Jira issues `JIRA-1`, `JIRA-10`, and `JIRA-11`.
+If we use the Jira issue keys (`JIRA-*`) in the commit messages as shown in the diagram, we would see workflow run #6 in the Jira issues `JIRA-1` and `JIRA-2` and workflow run #7 in the Jira issues `JIRA-1`, `JIRA-10`, and `JIRA-11`.
+
+Workflow run #2 would be associated with the Jira issue `JIRA-1` only. Workflow run #4 would be associated with both `JIRA-1` and `JIRA-2`, because they're both part of the same pull request.
 
 > :warning: It's important to note that the app only looks for Jira issue keys in commits that were part of a pull request. In the above example, all commits on the `feature-1` and `feature-2` branches are part of a respective pull request into the `main` branch. 
 > 
