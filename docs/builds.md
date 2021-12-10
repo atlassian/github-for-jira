@@ -4,7 +4,7 @@ The GitHub for Jira app automatically processes "workflow runs" from any [GitHub
 
 ![Builds data in Jira](./images/builds-data-jira-dev-panel.png)
 
-To associate a workflow run with a Jira issue, **the app looks for Jira issue keys in the commit messages of a pull request**.
+To associate a workflow run with a Jira issue, **the app looks for Jira issue keys in all commit messages of a pull request**.
 
 Let's look how it works in a common feature branching example:
 
