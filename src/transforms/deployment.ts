@@ -1,7 +1,91 @@
 import _ from "lodash";
-import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
-import { JiraDeploymentData } from "../interfaces/jira";
+import {JiraDeploymentData} from "../interfaces/jira";
+import {GitHubAPI} from "probot";
+import {WebhookPayloadDeploymentStatus} from "@octokit/webhooks";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import {Octokit} from "@octokit/rest";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
+
+// https://docs.github.com/en/rest/reference/repos#list-deployments
+async function getLastSuccessfulDeployCommitSha(
+	owner: string,
+	repoName: string,
+	github: GitHubAPI,
+	deployments: Octokit.ReposListDeploymentsResponseItem[],
+	logger?: LoggerWithTarget
+): Promise<string> {
+
+	try {
+		for (const deployment of deployments) {
+			// Get each deployment status for this environment so we can have their statuses' ids
+			const listDeploymentStatusResponse: Octokit.Response<Octokit.ReposListDeploymentStatusesResponse> = await github.repos.listDeploymentStatuses({
+				owner: owner,
+				repo: repoName,
+				deployment_id: deployment.id,
+				per_page: 100 // Default is 30, max we can request is 100
+			});
+
+			// Find the first successful one
+			const lastSuccessful: Octokit.ReposListDeploymentStatusesResponseItem | undefined = listDeploymentStatusResponse.data.find(deployment => deployment.state === "success");
+			if (lastSuccessful !== undefined) {
+				return deployment.sha;
+			}
+		}
+	} catch (e) {
+		logger?.error(`Failed to get deployment statuses.`);
+	}
+
+
+	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 100) then we'll return the last one from the array, even if it's a failed one.
+	return deployments[deployments.length - 1].sha;
+}
+
+async function getCommitMessagesSinceLastSuccessfulDeployment(
+	owner: string,
+	repoName: string,
+	currentDeploySha: string,
+	currentDeployId: number,
+	currentDeployEnv: string,
+	github: GitHubAPI,
+	logger: LoggerWithTarget
+): Promise<string | void | undefined> {
+
+	// Grab the last 10 deployments for this repo
+	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> = await github.repos.listDeployments({
+		owner: owner,
+		repo: repoName,
+		environment: currentDeployEnv,
+		per_page: 10 // Default is 30, max we can request is 100
+	})
+
+	// Filter per current environment and exclude itself
+	const filteredDeployments = deployments.data
+		.filter(deployment => deployment.id !== currentDeployId);
+
+	// If this is the very first successful deployment ever, return nothing because we won't have any commit sha to compare with the current one.
+	if (!filteredDeployments.length) {
+		return undefined;
+	}
+
+	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, github, filteredDeployments, logger);
+
+	const compareCommitsPayload = {
+		owner: owner,
+		repo: repoName,
+		base: lastSuccessfullyDeployedCommit,
+		head: currentDeploySha
+	}
+
+	const allCommitMessages = await compareCommitsBetweenBaseAndHeadBranches(
+		compareCommitsPayload,
+		github,
+		logger
+	);
+
+	return allCommitMessages;
+}
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
 // https://docs.github.com/en/rest/reference/repos#list-deployments
@@ -62,10 +146,32 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (context: Context): Promise<JiraDeploymentData | undefined> => {
-	const { github, payload: { deployment_status, deployment } } = context;
-	const { data: { commit: { message } } } = await github.repos.getCommit(context.repo({ ref: deployment.sha }));
-	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`) || [];
+export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+	const deployment = payload.deployment;
+	const deployment_status = payload.deployment_status;
+
+	const {data: {commit: {message}}} = await githubClient.repos.getCommit({
+		owner: payload.repository.owner.login,
+		repo: payload.repository.name,
+		ref: deployment.sha
+	});
+
+	let issueKeys;
+	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {
+		const allCommitsMessages = await getCommitMessagesSinceLastSuccessfulDeployment(
+			payload.repository.owner.login,
+			payload.repository.name,
+			deployment.sha,
+			deployment.id,
+			deployment_status.environment,
+			githubClient,
+			logger
+		);
+
+		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}\n${allCommitsMessages}`) || [];
+	} else {
+		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`) || [];
+	}
 
 	if (_.isEmpty(issueKeys)) {
 		return undefined;
@@ -73,7 +179,7 @@ export default async (context: Context): Promise<JiraDeploymentData | undefined>
 
 	const environment = mapEnvironment(deployment_status.environment);
 	if (environment === "unmapped") {
-		context.log(`Unmapped environment detected for deployment. Unmapped value is ${deployment_status}. Sending it as unmapped to Jira.`);
+		logger?.info(`Unmapped environment detected for deployment. Unmapped value is ${deployment_status}. Sending it as unmapped to Jira.`);
 	}
 
 	return {
@@ -83,14 +189,14 @@ export default async (context: Context): Promise<JiraDeploymentData | undefined>
 			updateSequenceNumber: deployment_status.id,
 			issueKeys,
 			displayName: deployment.task,
-			url: deployment_status.log_url || deployment_status.target_url || deployment.url,
+			url: deployment_status.target_url || deployment.url,
 			description: deployment.description || deployment_status.description || deployment.task,
-			lastUpdated: deployment_status.updated_at,
+			lastUpdated: new Date(deployment_status.updated_at),
 			state: mapState(deployment_status.state),
 			pipeline: {
 				id: deployment.task,
 				displayName: deployment.task,
-				url: deployment_status.log_url || deployment_status.target_url || deployment.url,
+				url: deployment_status.target_url || deployment.url,
 			},
 			environment: {
 				id: deployment_status.environment,
