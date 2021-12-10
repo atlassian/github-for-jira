@@ -16,9 +16,9 @@ If we use the Jira issue keys (`JIRA-*`) in the commit messages as shown in the 
 
 Workflow run #2 would be associated with the Jira issue `JIRA-1` only. Workflow run #4 would be associated with both `JIRA-1` and `JIRA-2`, because they're both part of the same pull request.
 
-> :warning: It's important to note that the app only looks for Jira issue keys in commits that were part of a pull request. In the above example, all commits on the `feature-1` and `feature-2` branches are part of a respective pull request into the `main` branch. 
-> 
-> **If you merge a branch into another branch without a pull request, only the last commit message on that branch will be searched for Jira issue keys**. 
+**IMPORTANT:** The app only looks for Jira issue keys in commits that were part of a pull request. In the above example, all commits on the `feature-1` and `feature-2` branches are part of a respective pull request into the `main` branch. 
+
+**If you merge a branch into another branch without a pull request, only the last commit message on that branch will be searched for Jira issue keys**. 
 
 To run your GitHub workflows on pull requests, make sure to include the branch name pattern of your pull request source branches in your GitHub workflow config like this:
 
