@@ -1,76 +1,29 @@
-# GitHub Actions - Builds
+# Showing GitHub Actions builds in Jira
 
-GitHub for Jira supports builds via [GitHub Actions workflow syntax](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions).
-To set this up, you will need to create a .github folder at the root of a given repository and then make a child directory
-called workflows. Inside of .github/workflows you will need to create a build.yml file. This is where you will specify the workflow for your builds.
-
-Following is an example of a build.yml file:
-
-```
-# This is a basic workflow to help you get started with Actions
-
-name: CI
-
-# Controls when the action will run.
-on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-      - feature/**
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
-          sleep 60s
-```
-
-Once you have a similar file in any of your repositories that are connected to your Jira via the app, you will start to see builds data
-in the development panel in Jira.
+The GitHub for Jira app automatically processes "workflow runs" from any [GitHub Action workflows](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions) you have defined in your GitHub repositories and shows them in the "Builds" tab of the development info panel of a Jira issue:
 
 ![Builds data in Jira](./images/builds-data-jira-dev-panel.png)
 
-#### Supporting Multiple Commits with Issue Keys
+To associate a workflow run with a Jira issue, **the app looks for Jira issue keys in the commit messages of a pull request**.
 
-One important thing to note in the above example is the branches being targeted under `pull_requests` `branches`:
+Let's look how it works in a common feature branching example:
 
-```
-pull_request:
+![Builds are associated by putting Jira issue keys into commit messages](./images/associating-builds.png)
+
+We have two feature branches off the `main` branch. Say we have configured our GitHub Actions so that each commit on each of the feature branches (green dots) and each commit on the `main` branch (blue dots) triggers a workflow to build and test our codebase.
+
+If we use the Jira issue keys (`JIRA-*`) in the commit messages as shown in the diagram, we would see workflow run #1 in the Jira issues `JIRA-1` and `JIRA-2` and workflow run #2 in the Jira issues `JIRA-1`, `JIRA-10`, and `JIRA-11`.
+
+> :warning: It's important to note that the app only looks for Jira issue keys in commits that were part of a pull request. In the above example, all commits on the `feature-1` and `feature-2` branches are part of a respective pull request into the `main` branch. 
+> 
+> **If you merge a branch into another branch without a pull request, only the last commit message on that branch will be searched for Jira issue keys**. 
+
+To run your GitHub workflows on pull requests, make sure to include the branch name pattern of your pull request source branches in your GitHub workflow config like this:
+
+```yaml
+on:
+  pull_request:
     branches:
       - main
-      - feature/**
+      - feature**
 ```
-
-When you open a pull request in a connected repository, the GitHub for Jira app can compare two points in your git history is we have access to a base branch and a head branch. If the app has both of these, it can make a request to GitHub to compare your
-commits. On the flipside, if you only listed `main`, for instance, there would be no way for the app to ask GitHub for a comparison.
-Instead, the best it can do is use the data GitHub sends in the response when the `workflow_run` event is triggered,
-which only includes the most recent commit. This means that if a developer were to make multiple commits, perhaps on multiple branches, and
-reference various Jira issue keys in each commit, GitHub would only send the data to Jira about the latest commit. In turn, this
-would mean that we could only extract any issue keys from that single message. Although there may be numerous Jira issues
-involved, in this scenario, you would only see builds data for any issue keys from the latest commit message.
-
-When you list branches under `pull_request` you'll need to be very specific about the branches you want the app to target. If any branch is created that isn't listed here, the app won't be able to compare your commits and send the most accurate data to Jira.
