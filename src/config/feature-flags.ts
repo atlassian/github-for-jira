@@ -20,8 +20,6 @@ export enum BooleanFlags {
 	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
 	// When cleaning up the SEND_PUSH_TO_SQS feature flag, please also clean up the PRIORITIZE_PUSHES
 	// feature flag, because it doesn't make sense with SQS any more.
-	SEND_PUSH_TO_SQS = "send-push-events-to-sqs",
-	PRIORITIZE_PUSHES = "prioritize-pushes",
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
 	NEW_REPO_SYNC_STATE = "new-repo-sync-state",
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS = "support-branch-and-merge-workflows-for-deployments",
