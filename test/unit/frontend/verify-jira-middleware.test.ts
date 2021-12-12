@@ -13,12 +13,13 @@ describe("#verifyJiraMiddleware", () => {
 	let res;
 	let next;
 	let installation;
-	let subscription;
 	const testSharedSecret = "test-secret";
 
 	beforeEach(async () => {
 		res = {
-			locals: {},
+			locals: {
+				jiraHost
+			},
 			status: jest.fn(),
 			json: jest.fn()
 		};
@@ -27,15 +28,9 @@ describe("#verifyJiraMiddleware", () => {
 		res.status.mockReturnValue(res)
 		res.json.mockReturnValue(res)
 
-		subscription = {
-			githubInstallationId: 15,
-			jiraHost: "https://test-host.jira.com",
-			destroy: jest.fn().mockResolvedValue(undefined)
-		};
-
 		installation = {
 			id: 19,
-			jiraHost: subscription.jiraHost,
+			jiraHost,
 			clientKey: "abc123",
 			enabled: true,
 			secrets: "def234",
@@ -56,7 +51,7 @@ describe("#verifyJiraMiddleware", () => {
 				jwt: jwtValue
 			},
 			session: {
-				jiraHost: subscription.jiraHost,
+				// jiraHost,
 				jwt: jwtValue
 			},
 			addLogFields: jest.fn(),
@@ -68,9 +63,6 @@ describe("#verifyJiraMiddleware", () => {
 		return {
 			body: {
 				jiraHost,
-			},
-			session: {
-				jiraHost: subscription.jiraHost
 			},
 			query: {
 				xdm_e: jiraHost,
@@ -93,7 +85,6 @@ describe("#verifyJiraMiddleware", () => {
 				jwt: jwtValue
 			},
 			session: {
-				jiraHost: subscription.jiraHost,
 				jwt: jwtValue
 			},
 			addLogFields: jest.fn(),
@@ -137,7 +128,7 @@ describe("#verifyJiraMiddleware", () => {
 			await verifyJiraContextJwtTokenMiddleware(req, res, next);
 
 			expect(addLogFieldsSpy).toHaveBeenCalledWith({
-				jiraHost: installation.jiraHost,
+				jiraHost,
 				jiraClientKey: "abc12***" // should be the shortened key
 			});
 		});
@@ -153,9 +144,6 @@ describe("#verifyJiraMiddleware", () => {
 			return {
 				body: {
 					jiraHost,
-				},
-				session: {
-					jiraHost: subscription.jiraHost
 				},
 				query: {
 					xdm_e: jiraHost,

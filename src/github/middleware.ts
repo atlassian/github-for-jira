@@ -78,10 +78,8 @@ export default (
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size
-		if (await booleanFlag(BooleanFlags.PAYLOAD_SIZE_METRIC, false)) {
-			emitWebhookPayloadMetrics(webhookEvent,
-				Buffer.byteLength(JSON.stringify(context.payload), "utf-8"));
-		}
+		emitWebhookPayloadMetrics(webhookEvent,
+			Buffer.byteLength(JSON.stringify(context.payload), "utf-8"));
 
 		const webhookReceived = getCurrentTime();
 		context.webhookReceived = webhookReceived;

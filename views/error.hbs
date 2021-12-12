@@ -4,35 +4,33 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
     <title>{{title}}</title>
-    <link rel="stylesheet" href="/public/css/github-error.css" media="all" />
     <link rel="stylesheet" href="/public/primer/build.css" media="all" />
+    <link rel="stylesheet" href="/public/css/error.css" media="all" />
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
   <body class="githubError">
-    <section class="githubError__container">
+    <section class="error-container">
       <img
-        class="githubError__errorImg"
+        class="error-errorImg"
         src="/public/assets/error.png"
         alt="Error"
       />
 
-      <h3 class="githubError__header">Looks like something went wrong!</h3>
+      <h3 class="error-header">Looks like something went wrong!</h3>
 
       {{#if message}}
-      <p class="githubError__message">{{message}}</p>
+      <p class="error-message">{{{message}}}</p>
       {{/if}}
-      <p class="githubError__message">
+      <p class="error-message">
         We track these errors automatically, but if the problem persists feel
         free to
         <a
-          class="githubError__link"
           href="https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product"
         >contact us</a>. In the meantime, try adding an organization again in
         Jira.
       </p>
 
       <a
-        class="githubError__link"
         href="{{githubRepoUrl}}/blob/main/README.md"
       >Learn how</a>
     </section>

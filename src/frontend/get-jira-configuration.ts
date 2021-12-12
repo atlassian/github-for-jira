@@ -5,7 +5,6 @@ import SubscriptionClass from "../models/subscription";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { FailedInstallations } from "../config/interfaces";
 
 function mapSyncStatus(syncStatus: string): string {
@@ -19,7 +18,7 @@ function mapSyncStatus(syncStatus: string): string {
 	}
 }
 
-export async function getInstallation(client, subscription, reqLog?) {
+export async function 	getInstallation(client, subscription, reqLog?) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
@@ -87,7 +86,7 @@ export default async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const jiraHost = req.session.jiraHost;
+		const jiraHost = res.locals.jiraHost;
 
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
@@ -120,20 +119,10 @@ export default async (
 				repoSyncState: data.repoSyncState,
 			}));
 
-		const newConfigPgFlagIsOn = await booleanFlag(
-			BooleanFlags.NEW_GITHUB_CONFIG_PAGE,
-			true,
-			jiraHost
-		);
-
-		const configPageVersion = newConfigPgFlagIsOn
-			? "jira-configuration.hbs"
-			: "jira-configuration-OLD.hbs";
-
 		const hasConnections =
 			connections.length > 0 || failedConnections.length > 0;
 
-		res.render(configPageVersion, {
+		res.render("jira-configuration.hbs", {
 			host: jiraHost,
 			connections,
 			failedConnections,
