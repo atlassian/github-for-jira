@@ -14,10 +14,7 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	EXPOSE_QUEUE_METRICS = "expose-queue-metrics",
 	SIMPLER_PROCESSOR = "simpler-processor",
-	NEW_GITHUB_ERROR_PAGE = "new-git-hub-error-page",
-	NEW_BACKFILL_PROCESS_ENABLED = "new-backfill-process-enabled",
 	// When cleaning up the SEND_PUSH_TO_SQS feature flag, please also clean up the PRIORITIZE_PUSHES
 	// feature flag, because it doesn't make sense with SQS any more.
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
