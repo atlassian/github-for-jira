@@ -6,11 +6,8 @@ import { getLogger } from "../../src/config/logger";
 import { Installation, Subscription } from "../../src/models";
 import { Application } from "probot";
 import { start, stop } from "../../src/worker/startup";
-import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
-import { when } from "jest-when";
 import waitUntil from "../utils/waitUntil";
 import sqsQueues from "../../src/sqs/queues";
-import _ from "lodash";
 
 jest.mock("../../src/config/feature-flags");
 
@@ -526,37 +523,7 @@ describe("Push Webhook", () => {
 			return event;
 		}
 
-		/**
-		 * Tests webhook processing through redis
-		 */
-		it("should send bulk update event to Jira when push webhook received through redis queue", async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.SEND_PUSH_TO_SQS,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(false);
-
-			const event = createPushEventAndMockRestRequestsForItsProcessing();
-			await expect(app.receive(event)).toResolve();
-
-			await waitUntil(async () => {
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(githubNock.pendingMocks()).toEqual([]);
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(jiraNock.pendingMocks()).toEqual([]);
-			});
-		});
-
-		/**
-		 * Tests webhook processing through sqs
-		 */
 		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.SEND_PUSH_TO_SQS,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(true);
-
 			const event = createPushEventAndMockRestRequestsForItsProcessing();
 
 			await expect(app.receive(event)).toResolve();
