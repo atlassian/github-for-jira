@@ -137,12 +137,9 @@ router.use(
 	}
 );
 
-router.get(
-	"/",
-	(_: Request, res: Response): void => {
-		res.send({});
-	}
-);
+router.get("/", (_: Request, res: Response): void => {
+	res.send({});
+});
 
 router.get(
 	"/:installationId/:jiraHost/repoSyncState.json",

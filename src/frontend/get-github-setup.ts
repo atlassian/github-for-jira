@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getGitHubConfigurationUrl, getJiraMarketplaceUrl } from "../util/getUrl";
+import { getGitHubConfigurationUrl, getJiraMarketplaceUrl } from "../util/get-url";
 
 /*
 	Handles redirects for both the installation flow from Jira and
