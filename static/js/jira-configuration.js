@@ -133,37 +133,27 @@ window.onclick = function(event) {
 	}
 };
 
-$(".ugly-button-test").click(function(event) {
+$(".ugly-button-test").click(function (event) {
 	event.preventDefault();
+	const csrfToken = document.getElementById("_csrf").value;
 
-// 	$.ajax({
-// 		url: "http://github.internal.atlassian.com/",
-// 		type: 'GET',
-// 		dataType: 'json', // added data type
-// 		success: function(res) {
-// 				console.log(res);
-// 				alert('SUCCESS: ', JSON.stringify(res));
-// 		},
-// 		error: function(error) {
-// 			console.error("ERROR: ", error)
-// 			alert(error)
-// 		}
-// });
-
-	$.ajax({
-		url: 'http://github.internal.atlassian.com',
-		type: 'GET',
-		data: {
-			 format: 'json'
-		},
-		error: function(error) {
-			console.error("ERROR: ", error)
-			alert(JSON.stringify(error))
-		},
-		dataType: 'jsonp',
-		success: function(data) {
-			console.log("SUCCESS", data);
-			alert('SUCCESS: ', JSON.stringify(data));
-		}
+	window.AP.context.getToken(function (token) {
+		$.ajax({
+			type: "POST",
+			url: "/jira/ghe/spike",
+			data: {
+				installationId: 21055629,
+				jiraHost: "https://rachellerathbone.atlassian.net",
+				jwt: token,
+				_csrf: csrfToken,
+			},
+			success: function (data) {
+				console.log("SUCCESS: ", data);
+			},
+			error: function (error) {
+				console.error("ERROR: ", error);
+			},
+		});
 	});
 });
+

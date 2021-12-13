@@ -35,6 +35,7 @@ import { registerHandlebarsPartials } from "../util/handlebars/partials";
 import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
 import { Errors } from "../config/errors";
 import cookieParser from "cookie-parser";
+import axios from "axios";
 
 // Adding session information to request
 declare global {
@@ -71,6 +72,24 @@ const csrfProtection = csrf(
 		}
 		: undefined
 );
+
+const gheSpikeTest = async (req: Request, res: Response) => {
+	try {
+		const response = await axios.get(
+			`http://github.internal.atlassian.com/login`,
+			{
+				responseType: "json"
+			}
+		);
+
+		res.send({
+			response: response.data,
+			status: 200
+		});
+	} catch (e) {
+		req.log.error("ERROR: ", e)
+	}
+};
 
 export default (octokitApp: App): Express => {
 	const githubClientMiddleware = getGithubClientMiddleware(octokitApp);
@@ -247,6 +266,9 @@ export default (octokitApp: App): Express => {
 	);
 
 	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, retrySync);
+
+	app.post("/jira/ghe/spike", gheSpikeTest);
+
 	// Set up event handlers
 
 	// TODO: remove enabled and disabled events once the descriptor is updated in marketplace
