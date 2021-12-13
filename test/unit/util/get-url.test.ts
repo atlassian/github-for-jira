@@ -3,7 +3,7 @@ import envVars from "../../../src/config/env";
 import { getJiraAppUrl, getJiraMarketplaceUrl } from "../../../src/util/get-url";
 
 describe("Get URL Utils", () => {
-	describe("getGitHubConfigurationUrl", () => {
+	describe("getJiraAppUrl", () => {
 		let instanceName:string;
 		beforeEach(() => instanceName = envVars.INSTANCE_NAME);
 		afterEach(() => envVars.INSTANCE_NAME = instanceName);
