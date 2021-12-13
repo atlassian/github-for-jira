@@ -205,12 +205,12 @@ workers:
       max: 5
       metrics: &CpuMemAndQueuesScalingRules
         complexScalingRule:
-          EvaluationPeriods: 1
+          EvaluationPeriods: 3
           Threshold:
             Lower: 30
             Upper: 80
           Metrics:
-            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/375)*100])"
+            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/80)*100])"
               Id: "combinedCpuRamAndQueues"
               Label: "Scaling based on Queue Sizes and CPU and Memory consumption"
             - MetricStat:
@@ -241,6 +241,17 @@ workers:
                 Stat: Maximum
               Id: pushQueueMessages
               ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: ApproximateNumberOfMessagesVisible
+                  Namespace: AWS/SQS
+                  Dimensions:
+                    - LogicalQueueName: 'backfill'
+                Period: 60
+                Stat: Maximum
+              Id: backfillQueueMessages
+              ReturnData: false
+
 
 environmentOverrides:
   ddev:
