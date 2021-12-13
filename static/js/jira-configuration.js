@@ -132,3 +132,38 @@ window.onclick = function(event) {
 		syncStatusModal.style.display = "none";
 	}
 };
+
+$(".ugly-button-test").click(function(event) {
+	event.preventDefault();
+
+// 	$.ajax({
+// 		url: "http://github.internal.atlassian.com/",
+// 		type: 'GET',
+// 		dataType: 'json', // added data type
+// 		success: function(res) {
+// 				console.log(res);
+// 				alert('SUCCESS: ', JSON.stringify(res));
+// 		},
+// 		error: function(error) {
+// 			console.error("ERROR: ", error)
+// 			alert(error)
+// 		}
+// });
+
+	$.ajax({
+		url: 'http://github.internal.atlassian.com',
+		type: 'GET',
+		data: {
+			 format: 'json'
+		},
+		error: function(error) {
+			console.error("ERROR: ", error)
+			alert(JSON.stringify(error))
+		},
+		dataType: 'jsonp',
+		success: function(data) {
+			console.log("SUCCESS", data);
+			alert('SUCCESS: ', JSON.stringify(data));
+		}
+	});
+});
