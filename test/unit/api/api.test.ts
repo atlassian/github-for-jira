@@ -2,13 +2,13 @@
 import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
 import nock from "nock";
-import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
 import { mockModels } from "../../utils/models";
 import api from "../../../src/api";
 import { EnvironmentEnum } from "../../../src/interfaces/common";
 import { getLogger } from "../../../src/config/logger";
 import getAxiosInstance from "../../../src/jira/client/axios";
+import { Installation, Subscription } from "../../../src/models";
 
 jest.mock("../../../src/models");
 jest.mock("../../../src/jira/client/axios");
