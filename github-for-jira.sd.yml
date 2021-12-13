@@ -287,19 +287,6 @@ environmentOverrides:
           min: 1
           max: 5
           metrics: *CpuMemAndQueuesScalingRules
-    resources:
-      - type: globaledge
-        name: proxy
-        attributes:
-          ip_whitelist:
-            - public
-          routes:
-            - match: # Blackhole IP that keeps spamming us
-                prefix: /
-                external_address_header_match:
-                  - 94.156.174.137
-              route:
-                cluster: blackhole # Deny by sending traffic to blackhole
     alarms:
       overrides:
         LatencyHigh: null
