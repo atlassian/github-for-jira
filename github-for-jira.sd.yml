@@ -43,7 +43,7 @@ links:
   source:
     url: git@bitbucket.org:atlassian/github-jira-integration.git
 
-cleanup: true
+cleanup: false
 
 #serviceProxy:
 #  enabled: true
@@ -254,7 +254,6 @@ environmentOverrides:
 #          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
 #    links:
 #      remoteDebug: true
-
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
@@ -277,6 +276,19 @@ environmentOverrides:
           min: 1
           max: 5
           metrics: *CpuMemAndQueuesScalingRules
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          ip_whitelist:
+            - public
+          routes:
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
     alarms:
       overrides:
         LatencyHigh: null
