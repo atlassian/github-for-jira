@@ -211,8 +211,8 @@ workers:
             Upper: 80
           Metrics:
             - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/375)*100])"
-              Id: "combinedCpuRam"
-              Label: "Scaling based on CPU and Memory consumption"
+              Id: "combinedCpuRamAndQueues"
+              Label: "Scaling based on Queue Sizes and CPU and Memory consumption"
             - MetricStat:
                 Metric:
                   # Dimensions can be ignored here due to defaulting
