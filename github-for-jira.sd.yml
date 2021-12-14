@@ -43,7 +43,7 @@ links:
   source:
     url: git@bitbucket.org:atlassian/github-jira-integration.git
 
-cleanup: true
+cleanup: false
 
 #serviceProxy:
 #  enabled: true
@@ -203,8 +203,55 @@ workers:
       instance: t2.small
       min: 1
       max: 5
-      #TODO Replace with queue size metrics when we switch to SQS
-      metrics: *CpuMemScalingRules
+      metrics: &CpuMemAndQueuesScalingRules
+        complexScalingRule:
+          EvaluationPeriods: 3
+          Threshold:
+            Lower: 30
+            Upper: 80
+          Metrics:
+            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/80)*100])"
+              Id: "combinedCpuRamAndQueues"
+              Label: "Scaling based on Queue Sizes and CPU and Memory consumption"
+            - MetricStat:
+                Metric:
+                  # Dimensions can be ignored here due to defaulting
+                  MetricName: CPUUtilization
+                  Namespace: AWS/EC2
+                Period: 60
+                Stat: Maximum
+              Id: cpuUsage
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  # Dimensions can be ignored here due to defaulting
+                  MetricName: MemoryUtilization
+                  Namespace: System/Linux
+                Period: 60
+                Stat: Maximum
+              Id: memoryUsage
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: ApproximateNumberOfMessagesVisible
+                  Namespace: AWS/SQS
+                  Dimensions:
+                    - LogicalQueueName: 'push'
+                Period: 60
+                Stat: Maximum
+              Id: pushQueueMessages
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: ApproximateNumberOfMessagesVisible
+                  Namespace: AWS/SQS
+                  Dimensions:
+                    - LogicalQueueName: 'backfill'
+                Period: 60
+                Stat: Maximum
+              Id: backfillQueueMessages
+              ReturnData: false
+
 
 environmentOverrides:
   ddev:
@@ -218,7 +265,6 @@ environmentOverrides:
 #          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
 #    links:
 #      remoteDebug: true
-
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
@@ -240,7 +286,7 @@ environmentOverrides:
           instance: t2.small
           min: 1
           max: 5
-          metrics: *CpuMemScalingRules
+          metrics: *CpuMemAndQueuesScalingRules
     alarms:
       overrides:
         LatencyHigh: null
@@ -331,7 +377,7 @@ environmentOverrides:
           instance: t3.medium
           min: 1
           max: 5
-          metrics: *CpuMemScalingRules
+          metrics: *CpuMemAndQueuesScalingRules
     resources:
       - name: rds
         type: dedicated-rds
@@ -376,7 +422,7 @@ environmentOverrides:
           instance: c5.2xlarge
           min: 3
           max: 4 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
-          metrics: *CpuMemScalingRules
+          metrics: *CpuMemAndQueuesScalingRules
     alarms:
       overrides:
         LatencyHigh: null
