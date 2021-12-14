@@ -19,6 +19,8 @@ services:
     container_name: ngrok
     ports: [ "4040:4040" ]
     command: ngrok http app:8080
+    volumes:
+      - ~/.ngrok2:/home/ngrok/.ngrok2
 
   localstack:
     container_name: localstack

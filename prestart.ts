@@ -43,6 +43,12 @@ const waitForTunnel = async () => {
 			envContents = envContents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/events`);
 			fs.writeFileSync(envFilePath, envContents);
 			console.info(`Updated .env file to use ngrok domain ${ngrokDomain}.`);
+
+			const ngrokFilePath = "~/.ngrok2/ngrok.yml";
+			if (!fs.existsSync(path.resolve(ngrokFilePath))) {
+				console.error(`Missing ngrok authtoken file '${ngrokFilePath}'. Please create it following the steps in the CONTRIBUTING.md file.`);
+				process.exit(1);
+			}
 		} catch (e) {
 			console.info(`'${envFilePath}' not found, skipping...`);
 		}

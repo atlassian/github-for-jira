@@ -75,6 +75,10 @@ Once you've set up your GitHub app and cloned this repo, copy the content from `
 + `INSTANCE_NAME`: Your Jira app name - will show as "GitHub (instance-name)"
 + `WEBHOOK_PROXY_URL`: `https://DOMAIN/github/events`
 
+### Setting up ngrok
+
+For your app to work, you must have your ngrok authtoken saved somewhere as ngrok doesn't allow HTML content to be tunnelled using an unauthenticated connection since Dec 10 2021.  To do this, simply [login/signup to ngrok](https://dashboard.ngrok.com/get-started/setup), copy the authtoken shown to you and run `echo "authtoken: <your authtoken>" > ~/.ngrok2/ngrok.yml` or `ngrok authtoken <your authtoken>` to save it.  This file will automatically be mounted to the ngrok docker container and be used for authentication.
+
 ### Running the app
 
 The first time you run the app, simply run:
