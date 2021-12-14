@@ -5,9 +5,13 @@ import SubscriptionClass from "../models/subscription";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { FailedInstallations } from "../config/interfaces";
+import { FailedAppInstallation } from "../config/interfaces";
+import { GitHubAPI } from "probot";
+import Logger from "bunyan";
+import { Octokit } from "@octokit/rest";
+import _ from "lodash";
 
-function mapSyncStatus(syncStatus: string): string {
+function mapSyncStatus(syncStatus?: string): string | undefined {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
@@ -18,38 +22,51 @@ function mapSyncStatus(syncStatus: string): string {
 	}
 }
 
-export async function 	getInstallation(client, subscription, reqLog?) {
+interface AppInstallation extends Octokit.AppsGetInstallationResponse {
+	syncStatus?: string;
+	syncWarning?: string;
+	subscriptionUpdatedAt: DateFormat;
+	totalNumberOfRepos: number;
+	numberOfSyncedRepos: number;
+	jiraHost: string;
+}
+
+export async function getInstallations(client: GitHubAPI, subscription: SubscriptionClass, reqLog?: Logger): Promise<AppInstallation> {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
-		response.data.syncStatus = mapSyncStatus(subscription.syncStatus);
-		response.data.syncWarning = subscription.syncWarning;
-		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
-		response.data.totalNumberOfRepos = Object.keys(
-			subscription.repoSyncState?.repos || {}
-		).length;
-		response.data.numberOfSyncedRepos =
-			subscription.repoSyncState?.numberOfSyncedRepos || 0;
-		response.data.jiraHost = subscription.jiraHost;
-
-		return response.data;
+		return {
+			...response.data,
+			syncStatus: mapSyncStatus(subscription.syncStatus),
+			syncWarning: subscription.syncWarning,
+			subscriptionUpdatedAt: formatDate(subscription.updatedAt),
+			totalNumberOfRepos: Object.keys(
+				subscription.repoSyncState?.repos || {}
+			).length,
+			numberOfSyncedRepos:
+				subscription.repoSyncState?.numberOfSyncedRepos || 0,
+			jiraHost: subscription.jiraHost
+		};
 	} catch (err) {
-		reqLog.error(
+		reqLog?.error(
 			{ installationId: id, error: err, uninstalled: err.code === 404 },
 			"Failed connection"
 		);
 		statsd.increment(metricError.failedConnection);
 
-		return { error: err, id, deleted: err.code === 404 };
+		return Promise.reject({ error: err, id, deleted: err.code === 404 });
 	}
 }
 
-const formatDate = function (date) {
-	return {
-		relative: moment(date).fromNow(),
-		absolute: format(date, "MMMM D, YYYY h:mm a"),
-	};
-};
+interface DateFormat {
+	relative: string;
+	absolute: string;
+}
+
+const formatDate = (date) => ({
+	relative: moment(date).fromNow(),
+	absolute: format(date, "MMMM D, YYYY h:mm a")
+});
 
 interface FailedConnections {
 	id: number;
@@ -58,12 +75,12 @@ interface FailedConnections {
 }
 
 export const getFailedConnections = (
-	installations: FailedInstallations[],
+	installations: (AppInstallation | FailedAppInstallation)[],
 	subscriptions: SubscriptionClass[]
 ): FailedConnections[] => {
 	return installations
-		.filter((response) => !!response.error)
-		.map((failedConnection: FailedInstallations) => {
+		.filter((response):response is FailedAppInstallation => !!(response as FailedAppInstallation).error)
+		.map((failedConnection) => {
 			const sub = subscriptions.find(
 				(subscription: SubscriptionClass) =>
 					failedConnection.id === subscription.gitHubInstallationId
@@ -75,7 +92,7 @@ export const getFailedConnections = (
 			return {
 				id: failedConnection.id,
 				deleted: failedConnection.deleted,
-				orgName,
+				orgName
 			};
 		});
 };
@@ -98,38 +115,35 @@ export default async (
 
 		const { client } = res.locals;
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
-		const installations = await Promise.all(
-			subscriptions.map((subscription) =>
-				getInstallation(client, subscription, req.log)
-			)
-		);
+		const installations = await Promise.allSettled(
+			subscriptions.map((subscription) => getInstallations(client, subscription, req.log)));
+
+
+		const connections = _.groupBy(installations, "status");
 
 		const failedConnections = getFailedConnections(
 			installations,
 			subscriptions
 		);
 
-		const connections = installations
+		const successfulConnections = installations
 			.filter((response) => !response.error)
 			.map((data) => ({
 				...data,
 				isGlobalInstall: data.repository_selection === "all",
 				installedAt: formatDate(data.updated_at),
 				syncState: data.syncState,
-				repoSyncState: data.repoSyncState,
+				repoSyncState: data.repoSyncState
 			}));
-
-		const hasConnections =
-			connections.length > 0 || failedConnections.length > 0;
 
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
 			connections,
 			failedConnections,
-			hasConnections,
+			hasConnections: !!installations.length,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
+			nonce: res.locals.nonce
 		});
 
 		req.log.info("Jira configuration rendered successfully.");

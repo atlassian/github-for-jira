@@ -31,7 +31,7 @@ interface FailedInstallationError {
 	documentation_url: string;
 }
 
-export interface FailedInstallations {
+export interface FailedAppInstallation {
 	error: FailedInstallationError;
 	id: number;
 	deleted: boolean;

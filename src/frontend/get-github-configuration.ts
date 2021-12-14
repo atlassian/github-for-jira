@@ -2,7 +2,7 @@ import { Installation, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import enhanceOctokit from "../config/enhance-octokit";
 import app from "../worker/app";
-import { getInstallation } from "./get-jira-configuration";
+import { getInstallations } from "./get-jira-configuration";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
@@ -44,7 +44,7 @@ const installationConnectedStatus = async (
 	const subscriptions = await Subscription.getAllForHost(sessionJiraHost);
 
 	const installationsWithSubscriptions = await Promise.all(
-		subscriptions.map((subscription) => getInstallation(client, subscription, reqLog))
+		subscriptions.map((subscription) => getInstallations(client, subscription, reqLog))
 	);
 
 	const connectedStatuses = getConnectedStatus(
@@ -71,7 +71,7 @@ async function getInstallationsWithAdmin(jiraHost: string,
 			type: installation.target_type
 		});
 
-		if(await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS, true, jiraHost)){
+		if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS, true, jiraHost)) {
 			const githubClient = new GitHubClient(installation.id, log);
 			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
 
@@ -84,7 +84,7 @@ async function getInstallationsWithAdmin(jiraHost: string,
 				numberOfRepos: numberOfRepos || 0,
 				admin
 			});
-		}else {
+		} else {
 
 			const authedApp = await app.auth(installation.id);
 			enhanceOctokit(authedApp);
@@ -106,14 +106,12 @@ async function getInstallationsWithAdmin(jiraHost: string,
 	return installationsWithAdmin;
 }
 
-const getAllInstallations = async (client, logger, jiraHost) => {
+const getAllInstallations = async (client: GitHubAPI, logger: Logger, jiraHost: string) => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	return Promise.all(
-		subscriptions.map((subscription) =>
-			getInstallation(client, subscription, logger)
-		)
+		subscriptions.map((subscription) => getInstallations(client, subscription, logger))
 	);
-}
+};
 
 const removeFailedConnectionsFromDb = async (req: Request, installations: any, jiraHost: string): Promise<void> => {
 	await Promise.all(installations
@@ -122,7 +120,7 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: any, j
 			try {
 				const payload = {
 					installationId: connection.id,
-					host: jiraHost,
+					host: jiraHost
 				};
 				await Subscription.uninstall(payload);
 			} catch (err) {
@@ -163,8 +161,8 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 	tracer.trace(`got login name: ${login}`);
 
 	// Remove any failed installations before a user attempts to reconnect
-	const allInstallations = await getAllInstallations(client, log, jiraHost)
-	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost)
+	const allInstallations = await getAllInstallations(client, log, jiraHost);
+	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost);
 
 	tracer.trace(`removed failed installations`);
 
