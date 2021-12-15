@@ -102,6 +102,11 @@ export type ErrorHandlingResult = {
 	retryable: boolean;
 
 	/**
+	 * Indicates if it was a failure
+	 */
+	isError: boolean;
+
+	/**
 	 * Number in seconds of the retry delay
 	 */
 	retryDelaySec ?: number;

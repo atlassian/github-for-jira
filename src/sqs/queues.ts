@@ -2,7 +2,7 @@ import envVars from "../config/env";
 import {SqsQueue} from "./index";
 import {BackfillMessagePayload, backfillQueueMessageHandlerFactory} from "./backfill";
 import {PushQueueMessagePayload, pushQueueMessageHandler} from "./push";
-import {jiraOctokitErrorHandler} from './error-handlers';
+import {jiraOctokitErrorHandler, webhookMetricWrapper} from './error-handlers';
 import backfillQueueSupplier from "../backfill-queue-supplier";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
@@ -24,7 +24,7 @@ const sqsQueues = {
 		queueRegion: envVars.SQS_PUSH_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
-		maxAttempts: 5}, pushQueueMessageHandler,	jiraOctokitErrorHandler),
+		maxAttempts: 5}, pushQueueMessageHandler,	webhookMetricWrapper(jiraOctokitErrorHandler, "push")),
 
 
 	start: () => {

@@ -50,7 +50,7 @@ describe("SqsQueue tests", () => {
 			queue.start();
 
 			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
-				return {retryable: false};
+				return {retryable: false, isError: true};
 			})
 		});
 
@@ -194,7 +194,7 @@ describe("SqsQueue tests", () => {
 				expect(context.payload.msg).toBe(testPayload.msg)
 				expect(error.message).toBe(testErrorMessage)
 				receivedTime.errorHandlingCounter++;
-				return {retryable: true, retryDelaySec: 1}
+				return {retryable: true, retryDelaySec: 1, isError: true}
 			})
 
 			await queue.sendMessage(testPayload);
@@ -215,7 +215,7 @@ describe("SqsQueue tests", () => {
 			});
 
 			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
-				return {retryable: false};
+				return {retryable: false, isError: true};
 			})
 
 			await queue.sendMessage(testPayload);
@@ -299,7 +299,7 @@ describe("SqsQueue tests", () => {
 			});
 
 			mockErrorHandler.mockImplementation((_error: Error, _context: Context<TestMessage>): ErrorHandlingResult => {
-				return {retryable: receiveCounter.receivesCounter < 3, retryDelaySec: 0}
+				return {retryable: receiveCounter.receivesCounter < 3, retryDelaySec: 0, isError: true}
 			})
 
 			await queue.sendMessage(testPayload);
