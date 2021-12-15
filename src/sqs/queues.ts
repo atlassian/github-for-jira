@@ -2,8 +2,9 @@ import envVars from "../config/env";
 import {SqsQueue} from "./index";
 import {BackfillMessagePayload, backfillQueueMessageHandlerFactory} from "./backfill";
 import {PushQueueMessagePayload, pushQueueMessageHandler} from "./push";
-import {jiraOctokitErrorHandler, webhookMetricWrapper} from './error-handlers';
+import {jiraOctokitErrorHandler, webhookMetricWrapper} from "./error-handlers";
 import backfillQueueSupplier from "../backfill-queue-supplier";
+import {DiscoveryMessagePayload} from "./discovery";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 
@@ -26,6 +27,18 @@ const sqsQueues = {
 		timeoutSec: 60,
 		maxAttempts: 5}, pushQueueMessageHandler,	webhookMetricWrapper(jiraOctokitErrorHandler, "push")),
 
+	discovery: new SqsQueue<DiscoveryMessagePayload>({ queueName: "discovery",
+		queueUrl: envVars.SQS_DISCOVERY_QUEUE_URL,
+		queueRegion: envVars.SQS_DISCOVERY_QUEUE_REGION,
+		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
+		timeoutSec: 10*60,
+		maxAttempts: 3
+	},
+	async () => {
+		//TODO Implement
+	},
+	async () => ({retryable: true, isError: true})
+	),
 
 	start: () => {
 		backfillQueueSupplier.setSQSQueue(sqsQueues.backfill);
