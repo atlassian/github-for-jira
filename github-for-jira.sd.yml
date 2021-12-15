@@ -287,6 +287,19 @@ environmentOverrides:
           min: 1
           max: 5
           metrics: *CpuMemAndQueuesScalingRules
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          ip_whitelist:
+            - public
+          routes:
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
     alarms:
       overrides:
         LatencyHigh: null
@@ -297,7 +310,6 @@ environmentOverrides:
         WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
         WebServerMemoryAlarmHigh: null
         WebServerServiceRespawnAlarm: null
-        HighSeverityAlarmWhenTooManyBackend5xxErrors: null
 
   staging:
     config:
@@ -353,7 +365,6 @@ environmentOverrides:
               ReturnData: false
     alarms:
       overrides:
-        HighSeverityAlarmWhenTooManyBackend5xxErrors: null
         LatencyHigh: null
 #TODO Uncomment when we stop doing hourly deployments
 #        ElbResponseTimeAlert:
@@ -442,15 +453,6 @@ environmentOverrides:
 #          Period: 180
 #          ComparisonOperator: GreaterThanThreshold
 #          Statistic: Average
-        HighSeverityAlarmWhenTooManyBackend5xxErrors:
-          MetricName: HTTPCode_Target_5XX_Count
-          Namespace: AWS/ApplicationELB
-          Priority: Low
-          Threshold: 500
-          EvaluationPeriods: 1
-          Period: 300
-          ComparisonOperator: GreaterThanOrEqualToThreshold
-          Statistic: Sum
     resources:
       - type: redisx
         name: cache
