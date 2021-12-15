@@ -169,9 +169,6 @@ alarms:
       Period: 120
       ComparisonOperator: GreaterThanThreshold
       Statistic: Average
-    HighSeverityAlarmWhenTooManyELB5xxErrors: null
-    LowSeverityAlarmWhenTooManyBackend5xxErrors: null
-    LowSeverityAlarmWhenTooManyELB5xxErrors: null
 
 config:
   environmentVariables:
@@ -310,6 +307,9 @@ environmentOverrides:
         WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
         WebServerMemoryAlarmHigh: null
         WebServerServiceRespawnAlarm: null
+        HighSeverityAlarmWhenTooManyELB5xxErrors: null
+        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
+        LowSeverityAlarmWhenTooManyELB5xxErrors: null
 
   staging:
     config:
@@ -366,6 +366,9 @@ environmentOverrides:
     alarms:
       overrides:
         LatencyHigh: null
+        HighSeverityAlarmWhenTooManyELB5xxErrors: null
+        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
+        LowSeverityAlarmWhenTooManyELB5xxErrors: null
 #TODO Uncomment when we stop doing hourly deployments
 #        ElbResponseTimeAlert:
 #          Namespace: AWS/ApplicationELB
@@ -430,6 +433,9 @@ environmentOverrides:
           metrics: *CpuMemAndQueuesScalingRules
     alarms:
       overrides:
+        HighSeverityAlarmWhenTooManyELB5xxErrors: null
+        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
+        LowSeverityAlarmWhenTooManyELB5xxErrors: null
         LatencyHigh: null
 #TODO Uncomment when we stop doing hourly deployments
 #        ElbResponseTimeAlert:
