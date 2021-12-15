@@ -98,10 +98,11 @@ export default class GitHubClient {
 		return response;
 	}
 
-	private async graphql<T>(query: string): Promise<AxiosResponse> {
-		return await this.axios.post<T>("https://api.github.com/graphql",
+	public async graphql<T>(query: string, variables: any): Promise<AxiosResponse<T>> {
+		const response = await this.axios.post<T>("https://api.github.com/graphql",
 			{
-				query
+				query,
+				variables
 			},
 			{
 				...await this.installationAuthenticationHeaders(),
@@ -109,6 +110,7 @@ export default class GitHubClient {
 					installationId: this.githubInstallationId,
 				}
 			});
+		return response;
 	}
 
 	/**
@@ -155,14 +157,14 @@ export default class GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql(`
+		const response = await this.graphql<AxiosResponse>(`
 			query {
 				viewer {
 					repositories {
 						totalCount
 					}
 				}
-			}`)
+			}`, {});
 
 		return response?.data?.data?.viewer?.repositories?.totalCount as number;
 	}
