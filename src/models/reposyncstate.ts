@@ -1,6 +1,5 @@
-import Sequelize, { CountOptions, Op } from "sequelize";
+import Sequelize, { CountOptions, DestroyOptions, FindOptions, Op } from "sequelize";
 import Subscription, { Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
-import { DestroyOptions, FindOptions } from "sequelize/types/lib/model";
 import _ from "lodash";
 
 export default class RepoSyncState extends Sequelize.Model {

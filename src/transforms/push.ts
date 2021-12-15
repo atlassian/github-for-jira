@@ -3,12 +3,11 @@ import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
 import enhanceOctokit from "../config/enhance-octokit";
 import {Application, GitHubAPI} from "probot";
-import {Job, JobOptions} from "bull";
+import {Job} from "bull";
 import {getJiraAuthor} from "../util/jira";
 import {emitWebhookProcessedMetrics} from "../util/webhooks";
 import {JiraCommit} from "../interfaces/jira";
 import _ from "lodash";
-import {queues} from "../worker/queues";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import {booleanFlag, BooleanFlags, isBlocked} from "../config/feature-flags";
 import sqsQueues from "../sqs/queues";
@@ -82,14 +81,9 @@ export const createJobData = (payload, jiraHost: string) : PushQueueMessagePaylo
 
 export async function enqueuePush(
 	payload: unknown,
-	jiraHost: string,
-	options?: JobOptions
+	jiraHost: string
 ) {
-	if(await booleanFlag(BooleanFlags.SEND_PUSH_TO_SQS, false, jiraHost)) {
-		return sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
-	} else {
-		return queues.push.add(createJobData(payload, jiraHost), options);
-	}
+	return sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
 }
 
 export function processPushJob(app: Application) {
