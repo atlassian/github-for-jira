@@ -12,7 +12,7 @@ export type KeyLocator = (installationId: InstallationId) => string;
 /**
  * By default, we just look for a key in the `PRIVATE_KEY` env var.
  */
-const defaultKeyLocator: KeyLocator = () => {
+export const cloudKeyLocator: KeyLocator = () => {
 	return PrivateKey.findPrivateKey() || ""
 }
 
@@ -33,7 +33,7 @@ export default class AppTokenHolder {
 
 	constructor(keyLocator?: KeyLocator) {
 		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
-		this.privateKeyLocator = keyLocator || defaultKeyLocator;
+		this.privateKeyLocator = keyLocator || cloudKeyLocator;
 	}
 
 	public static getInstance(): AppTokenHolder {

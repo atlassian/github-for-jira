@@ -9,6 +9,7 @@ import { getCloudInstallationId, InstallationId } from "../../../src/github/clie
 import nock from "nock";
 import anything = jasmine.anything;
 import objectContaining = jasmine.objectContaining;
+import AppTokenHolder  from "../../../src/github/client/app-token-holder";
 
 describe("GitHub Client", () => {
 	const appTokenExpirationDate = new Date(2021, 10, 25, 0, 0);
@@ -300,7 +301,22 @@ describe("GitHub Client", () => {
 			gheNock
 		);
 
-		const client = new GitHubClient(new InstallationId("http://github.mydomain.com", 4711, githubInstallationId), getLogger("test"));
+		const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
+			switch (installationId.githubBaseUrl) {
+				case "https://api.github.com":
+					return "cloud private key";
+				case "http://github.mydomain.com":
+					return "GHE private key";
+				default:
+					throw new Error("unknown github instance!");
+			}
+		});
+
+		const client = new GitHubClient(
+			new InstallationId("http://github.mydomain.com", 4711, githubInstallationId),
+			getLogger("test"),
+			appTokenHolder
+		);
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
 			page,
