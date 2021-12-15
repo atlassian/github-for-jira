@@ -25,7 +25,7 @@ export default class GitHubClient {
 	constructor(
 		githubInstallationId: number,
 		logger: Logger,
-		baseURL = "https://api.github.com"
+		baseURL = "https://rachelle-local.public.atlastunnel.com/github/events"
 	) {
 		this.logger = logger || getLogger("github.client.axios");
 		this.axios = axios.create({

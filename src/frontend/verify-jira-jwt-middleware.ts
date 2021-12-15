@@ -7,7 +7,8 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
-	const { jiraHost } = res.locals;
+	// const { jiraHost } = res.locals;
+	const jiraHost = "https://rachellerathbone.atlassian.net";
 
 	if (!jiraHost) {
 		sendError(res, 401, "Unauthorised");

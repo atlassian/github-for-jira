@@ -41,6 +41,7 @@ export default async (context: Context, jiraClient): Promise<void> => {
 		context.log.info("Processing push straight away");
 		// TODO: this path is not used, opportunistically adding this line to make TypeScript happy without much testing
 		const githubNew = new GitHubClient(payload.installation?.id, context.log);
+
 		await processPush(context.github, githubNew, createJobData(payload, jiraClient.baseURL), context.log);
 		return;
 	}

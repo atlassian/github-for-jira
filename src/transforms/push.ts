@@ -178,7 +178,6 @@ export const processPush = async (githubOld: GitHubAPI, github: GitHubClient, pa
 					// merge commits will have 2 or more parents, depending how many are in the sequence
 					const isMergeCommit = parents?.length > 1;
 
-					console.info("GitHub call succeeded");
 					return {
 						hash: commitSha,
 						message,

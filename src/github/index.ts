@@ -4,6 +4,7 @@ import middleware from "./middleware";
 import pullRequest from "./pull-request";
 import workflow from "./workflow";
 import deployment from "./deployment";
+import pushEvent from "./push-event";
 import push from "./push";
 import { createBranch, deleteBranch } from "./branch";
 import webhookTimeout from "../middleware/webhook-timeout";
@@ -27,6 +28,11 @@ export default (robot: Application) => {
 
 		statsd.increment(metricWebhooks.webhookEvent, tags);
 	});
+
+	robot.on(
+		["installation.created"],
+		webhookTimeout(pushEvent)
+	);
 
 	robot.on(
 		["issue_comment.created", "issue_comment.edited"],

@@ -35,6 +35,7 @@ import { registerHandlebarsPartials } from "../util/handlebars/partials";
 import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
 import { Errors } from "../config/errors";
 import cookieParser from "cookie-parser";
+import pushEvent from '../github/push-event';
 
 // Adding session information to request
 declare global {
@@ -54,6 +55,8 @@ declare global {
 const throwError = (msg: string) => {
 	throw new Error(msg);
 };
+
+
 
 const oauth = GithubOAuth({
 	githubClient: process.env.GITHUB_CLIENT_ID || throwError("Missing GITHUB_CLIENT_ID"),
@@ -247,6 +250,8 @@ export default (octokitApp: App): Express => {
 	);
 
 	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, retrySync);
+
+	app.post("/event/push", verifyJiraContextJwtTokenMiddleware, pushEvent);
 	// Set up event handlers
 
 	// TODO: remove enabled and disabled events once the descriptor is updated in marketplace

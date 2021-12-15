@@ -78,11 +78,45 @@ $(".sync-connection-link-OLD").click(function(event) {
 	});
 });
 
+$(".push-event").click(function(event) {
+	event.preventDefault();
+	const installationId = 21055629
+	const jiraHost = "https://rachellerathbone.atlassian.net"
+	const csrfToken = document.getElementById("_csrf").value;
+
+	console.log(csrfToken)
+
+	window.AP.context.getToken(function(token) {
+		$.ajax({
+			type: "POST",
+			url: "/event/push",
+			data: {
+				installationId,
+				jiraHost,
+				syncType: "full",
+				jwt: token,
+				_csrf: csrfToken
+			},
+			success: function(data) {
+				console.log(data)
+			},
+			error: function(error) {
+				console.error(error)
+			}
+		});
+	});
+});
+
 $(".sync-connection-link").click(function(event) {
 	event.preventDefault();
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
+
+	https://rachellerathbone.atlassian.net
+	console.log(jiraHost)
+	21055629
+	console.log(installationId)
 
 	const $el = $("#restart-backfill");
 	$el.prop("disabled", true);
