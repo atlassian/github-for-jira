@@ -1,14 +1,13 @@
-import format from "date-fns/format";
-import moment from "moment";
+// import format from "date-fns/format";
+// import moment from "moment";
 import { Subscription } from "../models";
 import SubscriptionClass from "../models/subscription";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { FailedAppInstallation } from "../config/interfaces";
+import { AppInstallation, FailedAppInstallation } from "../config/interfaces";
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
-import { Octokit } from "@octokit/rest";
 import _ from "lodash";
 
 function mapSyncStatus(syncStatus?: string): string | undefined {
@@ -22,16 +21,25 @@ function mapSyncStatus(syncStatus?: string): string | undefined {
 	}
 }
 
-interface AppInstallation extends Octokit.AppsGetInstallationResponse {
-	syncStatus?: string;
-	syncWarning?: string;
-	subscriptionUpdatedAt: DateFormat;
-	totalNumberOfRepos: number;
-	numberOfSyncedRepos: number;
-	jiraHost: string;
+export interface InstallationResults {
+	fulfilled: AppInstallation[];
+	rejected: FailedAppInstallation[];
+	total: number;
 }
 
-export async function getInstallations(client: GitHubAPI, subscription: SubscriptionClass, reqLog?: Logger): Promise<AppInstallation> {
+export const getInstallations = async (client: GitHubAPI, subscriptions: SubscriptionClass[], log?: Logger): Promise<InstallationResults> => {
+	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(client, sub, log)));
+	const connections = _.groupBy(installations, "status") as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
+	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
+	const rejected = connections.rejected?.map(v => v.reason as FailedAppInstallation) || [];
+	return {
+		fulfilled,
+		rejected,
+		total: fulfilled.length + rejected.length
+	};
+};
+
+const getInstallation = async (client: GitHubAPI, subscription: SubscriptionClass, log?: Logger): Promise<AppInstallation> => {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
@@ -39,7 +47,6 @@ export async function getInstallations(client: GitHubAPI, subscription: Subscrip
 			...response.data,
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
-			subscriptionUpdatedAt: formatDate(subscription.updatedAt),
 			totalNumberOfRepos: Object.keys(
 				subscription.repoSyncState?.repos || {}
 			).length,
@@ -48,7 +55,7 @@ export async function getInstallations(client: GitHubAPI, subscription: Subscrip
 			jiraHost: subscription.jiraHost
 		};
 	} catch (err) {
-		reqLog?.error(
+		log?.error(
 			{ installationId: id, error: err, uninstalled: err.code === 404 },
 			"Failed connection"
 		);
@@ -56,46 +63,17 @@ export async function getInstallations(client: GitHubAPI, subscription: Subscrip
 
 		return Promise.reject({ error: err, id, deleted: err.code === 404 });
 	}
-}
+};
 
-interface DateFormat {
-	relative: string;
-	absolute: string;
-}
-
-const formatDate = (date) => ({
-	relative: moment(date).fromNow(),
-	absolute: format(date, "MMMM D, YYYY h:mm a")
-});
-
-interface FailedConnections {
+interface FailedConnection {
 	id: number;
 	deleted: boolean;
-	orgName: string | undefined;
+	orgName?: string;
 }
 
-export const getFailedConnections = (
-	installations: (AppInstallation | FailedAppInstallation)[],
-	subscriptions: SubscriptionClass[]
-): FailedConnections[] => {
-	return installations
-		.filter((response):response is FailedAppInstallation => !!(response as FailedAppInstallation).error)
-		.map((failedConnection) => {
-			const sub = subscriptions.find(
-				(subscription: SubscriptionClass) =>
-					failedConnection.id === subscription.gitHubInstallationId
-			);
-			const repos = sub?.repoSyncState?.repos || {};
-			const repoId = Object.keys(repos);
-			const orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
-
-			return {
-				id: failedConnection.id,
-				deleted: failedConnection.deleted,
-				orgName
-			};
-		});
-};
+interface SuccessfulConnection extends AppInstallation {
+	isGlobalInstall: boolean;
+}
 
 export default async (
 	req: Request,
@@ -115,32 +93,32 @@ export default async (
 
 		const { client } = res.locals;
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
-		const installations = await Promise.allSettled(
-			subscriptions.map((subscription) => getInstallations(client, subscription, req.log)));
+		const installations = await getInstallations(client, subscriptions, req.log);
 
+		const failedConnections: FailedConnection[] = installations.rejected?.map((installation) => {
+			const sub = subscriptions.find((sub: SubscriptionClass) => installation.id === sub.gitHubInstallationId);
+			const repos = sub?.repoSyncState?.repos || {};
+			const repoId = Object.keys(repos);
+			const orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
 
-		const connections = _.groupBy(installations, "status");
+			return {
+				id: installation.id,
+				deleted: installation.deleted,
+				orgName
+			};
+		});
 
-		const failedConnections = getFailedConnections(
-			installations,
-			subscriptions
-		);
-
-		const successfulConnections = installations
-			.filter((response) => !response.error)
-			.map((data) => ({
-				...data,
-				isGlobalInstall: data.repository_selection === "all",
-				installedAt: formatDate(data.updated_at),
-				syncState: data.syncState,
-				repoSyncState: data.repoSyncState
+		const successfulConnections: SuccessfulConnection[] = installations.fulfilled
+			.map((installation) => ({
+				...installation,
+				isGlobalInstall: installation.repository_selection === "all"
 			}));
 
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
-			connections,
+			successfulConnections,
 			failedConnections,
-			hasConnections: !!installations.length,
+			hasConnections: !!installations.total,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce

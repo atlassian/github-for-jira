@@ -4,7 +4,7 @@ import logger from "../config/logger";
 import { queues } from "../worker/queues";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import RepoSyncState from "./reposyncstate";
-import backfillQueueSupplier from '../backfill-queue-supplier';
+import backfillQueueSupplier from "../backfill-queue-supplier";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -303,7 +303,7 @@ export default class Subscription extends Sequelize.Model {
 }
 
 export interface SubscriptionPayload {
-	installationId: string;
+	installationId: number;
 	host: string;
 }
 export interface SubscriptionInstallPayload extends SubscriptionPayload {
