@@ -20,7 +20,10 @@ services:
     ports: [ "4040:4040" ]
     command: ngrok http app:8080
     volumes:
-      - ~/.ngrok2:/home/ngrok/.ngrok2
+      - type: bind
+        source: ~/.ngrok2/ngrok.yml
+        target: /home/ngrok/.ngrok2/ngrok.yml
+        read_only: true
 
   localstack:
     container_name: localstack
