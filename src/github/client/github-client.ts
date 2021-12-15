@@ -98,7 +98,7 @@ export default class GitHubClient {
 		return response;
 	}
 
-	public async graphql<T>(query: string, variables: any): Promise<AxiosResponse<T>> {
+	public async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<T>> {
 		const response = await this.axios.post<T>("https://api.github.com/graphql",
 			{
 				query,
@@ -164,7 +164,7 @@ export default class GitHubClient {
 						totalCount
 					}
 				}
-			}`, {});
+			}`);
 
 		return response?.data?.data?.viewer?.repositories?.totalCount as number;
 	}
