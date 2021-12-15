@@ -9,8 +9,14 @@ export class InstallationId {
 	readonly appId: number;
 	readonly installationId: number;
 
-	constructor(githubUrl: string, appId: number, installationId: number) {
-		this.githubBaseUrl = githubUrl;
+	/**
+	 * @param githubBaseUrl the base URL of the API of the GitHub server we want to connect with (cloud or on-premise).
+	 * @param appId the numeric ID of the GitHub app on that server that we want to connect with.
+	 * @param installationId the numeric ID of the installation of that app in whose name we want to make calls to
+	 * the GitHub API.
+	 */
+	constructor(githubBaseUrl: string, appId: number, installationId: number) {
+		this.githubBaseUrl = githubBaseUrl;
 		this.appId = appId;
 		this.installationId = installationId;
 	}
