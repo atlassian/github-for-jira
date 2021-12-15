@@ -456,6 +456,17 @@ environmentOverrides:
         name: cache
         attributes:
           size: 5000
+        alarms:
+          AlarmOnNumConnections:
+            MetricName: CurrConnections
+            Description: "The number of client connections is too high. Please follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1453195358/HOWTO+Investigate+Redis+Issues"
+            Threshold: 10000
+            EvaluationPeriods: 3
+            Period: 120
+            Priority: Low
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+            Unit: Count
 
       - name: database
         type: postgres-db
