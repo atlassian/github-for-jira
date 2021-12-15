@@ -293,7 +293,7 @@ environmentOverrides:
         attributes:
           ip_whitelist:
             - public
-          routes:
+          routes: &blackholeSpammingIPs
             - match: # Blackhole IP that keeps spamming us
                 prefix: /
                 external_address_header_match:
@@ -405,13 +405,7 @@ environmentOverrides:
             - github.stg.atlassian.com
           ip_whitelist:
             - public
-          routes:
-            - match: # Blackhole IP that keeps spamming us
-                prefix: /
-                external_address_header_match:
-                  - 94.156.174.137
-              route:
-                cluster: blackhole # Deny by sending traffic to blackhole
+          routes: *blackholeSpammingIPs
 
   prod:
     config:
@@ -494,10 +488,4 @@ environmentOverrides:
             - github.atlassian.com
           ip_whitelist:
             - public
-          routes:
-            - match: # Blackhole IP that keeps spamming us
-                prefix: /
-                external_address_header_match:
-                  - 94.156.174.137
-              route:
-                cluster: blackhole # Deny by sending traffic to blackhole
+          routes: *blackholeSpammingIPs
