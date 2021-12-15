@@ -18,12 +18,7 @@ services:
     image: wernight/ngrok
     container_name: ngrok
     ports: [ "4040:4040" ]
-    command: ngrok http app:8080
-    volumes:
-      - type: bind
-        source: ~/.ngrok2/ngrok.yml
-        target: /home/ngrok/.ngrok2/ngrok.yml
-        read_only: true
+    command: ngrok http --authtoken $NGROK_AUTHTOKEN app:8080
 
   localstack:
     container_name: localstack
