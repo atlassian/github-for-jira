@@ -44,11 +44,13 @@ const sqsQueues = {
 		backfillQueueSupplier.setSQSQueue(sqsQueues.backfill);
 		sqsQueues.backfill.start();
 		sqsQueues.push.start();
+		sqsQueues.discovery.start();
 	},
 
 	stop: () => {
 		sqsQueues.backfill.stop();
 		sqsQueues.push.stop();
+		sqsQueues.discovery.stop();
 	}
 }
 
