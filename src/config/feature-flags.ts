@@ -24,7 +24,8 @@ export enum BooleanFlags {
 	USE_SQS_FOR_BACKFILL = "use-sqs-for-backfill",
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS = "support-branch-and-merge-workflows-for-builds",
 	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push",
-	USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS = "use-new-github-client-to-count-repos"
+	USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS = "use-new-github-client-to-count-repos",
+	CALL_IS_ADMIN_AS_APP = "call-is-admin-as-app"
 }
 
 export enum StringFlags {
