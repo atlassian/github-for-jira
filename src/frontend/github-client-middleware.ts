@@ -3,8 +3,9 @@ import { NextFunction, Request, RequestHandler, Response } from "express";
 import { App } from "@octokit/app";
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
-export default (octokitApp: App): RequestHandler => (req: Request, res: Response, next: NextFunction): void => {
+export default (octokitApp: App): RequestHandler => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	if (req.session.githubToken) {
 		res.locals.github = GithubAPI({
 			auth: req.session.githubToken
@@ -16,7 +17,14 @@ export default (octokitApp: App): RequestHandler => (req: Request, res: Response
 	res.locals.client = GithubAPI({
 		auth: octokitApp.getSignedJsonWebToken()
 	});
-	res.locals.isAdmin = isAdmin(res.locals.github, req.log);
+
+	if (res.locals.jiraHost && await booleanFlag(BooleanFlags.CALL_IS_ADMIN_AS_APP, true, res.locals.jiraHost)){
+		req.log.info(`using app-authenticated github client for jira host ${res.locals.jiraHost}`);
+		res.locals.isAdmin = isAdmin(res.locals.client, req.log);
+	} else {
+		req.log.info(`using user-authenticated github client for jira host ${res.locals.jiraHost}`);
+		res.locals.isAdmin = isAdmin(res.locals.github, req.log);
+	}
 
 	next();
 };
@@ -42,7 +50,7 @@ export const isAdmin = (githubClient: GitHubAPI, logger: Logger) =>
 
 			return role === "admin";
 		} catch (err) {
-			logger.warn({err, org, username}, `could not determine admin status of user ${username} in org ${org}`);
+			logger.warn({ err, org, username }, `could not determine admin status of user ${username} in org ${org}`);
 			return false;
 		}
 	};
