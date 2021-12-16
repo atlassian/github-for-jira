@@ -99,12 +99,13 @@ export type ErrorHandlingResult = {
 	/**
 	 * Indicates if the message should be deleted or retried
 	 */
-	retryable: boolean;
+	retryable?: boolean;
 
 	/**
-	 * Indicates if it was a failure
+	 * Indicates if the error should be treated like a message processing failure.
+	 * If it is set to "false" we consider message being processed successfully.
 	 */
-	isError: boolean;
+	isFailure: boolean;
 
 	/**
 	 * Number in seconds of the retry delay
@@ -351,13 +352,18 @@ export class SqsQueue<MessagePayload> {
 			await this.deleteMessage(message, log)
 		} catch (err) {
 
-			statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
-			log.error({err}, "Error while executing SQS message")
-
 			try {
 				const errorHandlingResult = await this.errorHandler(err, context);
-				if (!errorHandlingResult.retryable) {
-					log.info("Deleting the message because it is not retryable")
+
+				if(errorHandlingResult.isFailure) {
+					log.error({err}, "Error while executing SQS message")
+					statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
+				} else {
+					log.info({err}, "Expected exception while executing SQS message. Not an error, deleting the message.")
+				}
+
+				if (!errorHandlingResult.retryable || !errorHandlingResult.isFailure) {
+					log.info("Deleting the message because the error is not retryable or not a failure")
 					await this.deleteMessage(message, log)
 				} else if (errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts) {
 					log.info("Deleting the message because it has reached the maximum amount of retries")
@@ -366,8 +372,8 @@ export class SqsQueue<MessagePayload> {
 					log.info(`Delaying the retry for ${errorHandlingResult.retryDelaySec} seconds`)
 					await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
 				}
-			} catch (err) {
-				log.error({err}, "Error while performing error handling");
+			} catch (errorHandlingException) {
+				log.error({err: errorHandlingException, originalError: err}, "Error while performing error handling");
 			}
 		}
 	}

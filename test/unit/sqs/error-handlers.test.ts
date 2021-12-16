@@ -51,7 +51,7 @@ describe("error-handlers", () => {
 
 			expect(result.retryable).toBe(true)
 			expect(result.retryDelaySec).toBe(3 * 60)
-			expect(result.isError).toBe(true);
+			expect(result.isFailure).toBe(true);
 		});
 
 		it("Exponential backoff works", async () => {
@@ -60,7 +60,7 @@ describe("error-handlers", () => {
 
 			expect(result.retryable).toBe(true)
 			expect(result.retryDelaySec).toBe(27 * 60)
-			expect(result.isError).toBe(true);
+			expect(result.isFailure).toBe(true);
 		});
 
 		function getJiraClientError(code: number) {
@@ -75,28 +75,28 @@ describe("error-handlers", () => {
 
 			const result = await jiraOctokitErrorHandler(getJiraClientError(401), createContext(1, true));
 			expect(result.retryable).toBe(false)
-			expect(result.isError).toBe(false);
+			expect(result.isFailure).toBe(false);
 		});
 
 		it("Unretryable and not an error on Jira 403", async () => {
 
 			const result = await jiraOctokitErrorHandler(getJiraClientError(403), createContext(1, true));
 			expect(result.retryable).toBe(false)
-			expect(result.isError).toBe(false);
+			expect(result.isFailure).toBe(false);
 		});
 
 		it("Unretryable and not an error on Jira 404", async () => {
 
 			const result = await jiraOctokitErrorHandler(getJiraClientError(404), createContext(1, true));
 			expect(result.retryable).toBe(false)
-			expect(result.isError).toBe(false);
+			expect(result.isFailure).toBe(false);
 		});
 
 		it("Retryable and error on Jira 500", async () => {
 
 			const result = await jiraOctokitErrorHandler(getJiraClientError(500), createContext(1, true));
 			expect(result.retryable).toBe(true)
-			expect(result.isError).toBe(true);
+			expect(result.isFailure).toBe(true);
 		});
 
 		it("Retryable with proper delay on Rate Limiting (old)", async () => {
@@ -104,7 +104,7 @@ describe("error-handlers", () => {
 			expect(result.retryable).toBe(true)
 			//Make sure delay is equal to recommended delay + 10 seconds
 			expect(result.retryDelaySec).toBe(110)
-			expect(result.isError).toBe(true);
+			expect(result.isFailure).toBe(true);
 		});
 
 		it("Retryable with proper delay on Rate Limiting", async () => {
@@ -115,7 +115,7 @@ describe("error-handlers", () => {
 			expect(result.retryable).toBe(true)
 			//Make sure delay is equal to recommended delay + 10 seconds
 			expect(result.retryDelaySec).toBe(110)
-			expect(result.isError).toBe(true);
+			expect(result.isFailure).toBe(true);
 		});
 
 		it("Unretryable and not an error on OctokitError 401", async () => {
@@ -124,7 +124,7 @@ describe("error-handlers", () => {
 
 			const result = await jiraOctokitErrorHandler(error, createContext(1, true));
 			expect(result.retryable).toBe(false)
-			expect(result.isError).toBe(false);
+			expect(result.isFailure).toBe(false);
 		});
 
 		it("Unretryable and error on OctokitError 500", async () => {
@@ -133,7 +133,7 @@ describe("error-handlers", () => {
 
 			const result = await jiraOctokitErrorHandler(error, createContext(1, true));
 			expect(result.retryable).toBe(true)
-			expect(result.isError).toBe(true);
+			expect(result.isFailure).toBe(true);
 		});
 	});
 
@@ -142,7 +142,7 @@ describe("error-handlers", () => {
 
 		it("Doesn't sent metric for a non-error case when not retryable", async () => {
 
-			const mockedResponse: ErrorHandlingResult = {retryable: false, isError: false};
+			const mockedResponse: ErrorHandlingResult = {retryable: false, isFailure: false};
 			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
 			const result = await handlerUnderTest(new Error(), createContext(1, false));
@@ -152,7 +152,7 @@ describe("error-handlers", () => {
 
 		it("Doesn't sent metric for a non-error case when lastAttempt", async () => {
 
-			const mockedResponse: ErrorHandlingResult = {retryable: true, isError: false};
+			const mockedResponse: ErrorHandlingResult = {retryable: true, isFailure: false};
 			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
 			const result = await handlerUnderTest(new Error(), createContext(3, true));
@@ -162,7 +162,7 @@ describe("error-handlers", () => {
 
 		it("Doesn't sent metric for an error when retryable but not last attempt", async () => {
 
-			const mockedResponse: ErrorHandlingResult = {retryable: true, isError: true};
+			const mockedResponse: ErrorHandlingResult = {retryable: true, isFailure: true};
 			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
 			const result = await handlerUnderTest(new Error(), createContext(2, false));
@@ -172,7 +172,7 @@ describe("error-handlers", () => {
 
 		it("Sends metric for an error case when not retryable", async () => {
 
-			const mockedResponse: ErrorHandlingResult = {retryable: false, isError: true};
+			const mockedResponse: ErrorHandlingResult = {retryable: false, isFailure: true};
 			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
 			const result = await handlerUnderTest(new Error(), createContext(1, false));
@@ -182,7 +182,7 @@ describe("error-handlers", () => {
 
 		it("Sends metric for a non-error case when lastAttempt", async () => {
 
-			const mockedResponse: ErrorHandlingResult = {retryable: true, isError: true};
+			const mockedResponse: ErrorHandlingResult = {retryable: true, isFailure: true};
 			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
 			const result = await handlerUnderTest(new Error(), createContext(3, true));

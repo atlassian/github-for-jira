@@ -1,5 +1,5 @@
 import envVars from "../config/env";
-import {SqsQueue} from "./index";
+import {ErrorHandlingResult, SqsQueue} from "./index";
 import {BackfillMessagePayload, backfillQueueMessageHandlerFactory} from "./backfill";
 import {PushQueueMessagePayload, pushQueueMessageHandler} from "./push";
 import {jiraOctokitErrorHandler, webhookMetricWrapper} from "./error-handlers";
@@ -37,7 +37,7 @@ const sqsQueues = {
 	async () => {
 		//TODO Implement
 	},
-	async () => ({retryable: true, isError: true})
+	async () : Promise<ErrorHandlingResult> => ({retryable: true, isFailure: true})
 	),
 
 	start: () => {
