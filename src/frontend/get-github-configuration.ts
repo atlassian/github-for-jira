@@ -152,8 +152,8 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 	tracer.trace(`found jira host: ${jiraHost}`);
 
-	const github: GitHubAPI = res.locals.github;
-	const client: GitHubAPI = res.locals.client;
+	const github: GitHubAPI = res.locals.github; // user-authenticated GitHub client
+	const client: GitHubAPI = res.locals.client; // app-authenticated GitHub client
 	const isAdmin = res.locals.isAdmin;
 
 	tracer.trace(`isAdmin: ${isAdmin}`);

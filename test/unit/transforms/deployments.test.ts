@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 // eslint-disable-next-line import/no-duplicates
-import { mapEnvironment } from "../../../src/transforms/deployment";
-import transformDeployment from "../../../src/transforms/deployment";
+import transformDeployment, { mapEnvironment } from "../../../src/transforms/deployment";
 import {getLogger} from "../../../src/config/logger";
 import {GitHubAPI} from "probot";
 import { when } from "jest-when";
