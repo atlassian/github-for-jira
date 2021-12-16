@@ -143,6 +143,14 @@ type ListenerContext = {
 
 const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
 
+function isNotAFailure(errorHandlingResult: ErrorHandlingResult) {
+	return !errorHandlingResult.isFailure;
+}
+
+function isNotRetryable(errorHandlingResult: ErrorHandlingResult) {
+	return !errorHandlingResult.retryable;
+}
+
 /**
  * Class which represents an SQS client for a single SQS queue.
  *
@@ -351,31 +359,48 @@ export class SqsQueue<MessagePayload> {
 			this.sendProcessedMetrics(messageProcessingDuration);
 			await this.deleteMessage(message, log)
 		} catch (err) {
-
-			try {
-				const errorHandlingResult = await this.errorHandler(err, context);
-
-				if(errorHandlingResult.isFailure) {
-					log.error({err}, "Error while executing SQS message")
-					statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
-				} else {
-					log.info({err}, "Expected exception while executing SQS message. Not an error, deleting the message.")
-				}
-
-				if (!errorHandlingResult.retryable || !errorHandlingResult.isFailure) {
-					log.info("Deleting the message because the error is not retryable or not a failure")
-					await this.deleteMessage(message, log)
-				} else if (errorHandlingResult.skipDlq && context.receiveCount >= this.maxAttempts) {
-					log.info("Deleting the message because it has reached the maximum amount of retries")
-					await this.deleteMessage(message, log)
-				} else if (errorHandlingResult.retryDelaySec !== undefined /*zero seconds delay is also supported*/) {
-					log.info(`Delaying the retry for ${errorHandlingResult.retryDelaySec} seconds`)
-					await this.changeVisabilityTimeout(message, errorHandlingResult.retryDelaySec, log);
-				}
-			} catch (errorHandlingException) {
-				log.error({err: errorHandlingException, originalError: err}, "Error while performing error handling");
-			}
+			await this.handleSqsMessageExecutionError(err, context, log, message);
 		}
+	}
+
+	private async handleSqsMessageExecutionError(err, context: Context<MessagePayload>, log: LoggerWithTarget, message: SQS.Message) {
+		try {
+			const errorHandlingResult = await this.errorHandler(err, context);
+
+			if (errorHandlingResult.isFailure) {
+				log.error({err}, "Error while executing SQS message")
+				statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
+			} else {
+				log.info({err}, "Expected exception while executing SQS message. Not an error, deleting the message.")
+			}
+
+			if (isNotAFailure(errorHandlingResult)) {
+				log.info("Deleting the message because the error is not a failure")
+				await this.deleteMessage(message, log)
+			} else if (isNotRetryable(errorHandlingResult)) {
+				log.info("Deleting the message because the error is not retryable")
+				await this.deleteMessage(message, log)
+			} else if (errorHandlingResult.skipDlq && this.isMessageReachedRetryLimit(context)) {
+				log.info("Deleting the message because it has reached the maximum amount of retries")
+				await this.deleteMessage(message, log)
+			} else {
+				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, message, log);
+			}
+		} catch (errorHandlingException) {
+			log.error({err: errorHandlingException, originalError: err}, "Error while performing error handling");
+		}
+	}
+
+	private async changeVisibilityTimeoutIfNeeded(errorHandlingResult : ErrorHandlingResult, message: Message, log: Logger) {
+		const retryDelaySec = errorHandlingResult.retryDelaySec;
+		if (retryDelaySec !== undefined /*zero seconds delay is also supported*/) {
+			log.info(`Delaying the retry for ${retryDelaySec} seconds`)
+			await this.changeVisabilityTimeout(message, retryDelaySec, log);
+		}
+	}
+
+	private isMessageReachedRetryLimit(context: Context<MessagePayload>) {
+		return context.receiveCount >= this.maxAttempts;
 	}
 
 	private async changeVisabilityTimeout(message: Message, timeout: number, logger: Logger): Promise<void> {
