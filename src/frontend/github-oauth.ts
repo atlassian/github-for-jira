@@ -6,6 +6,8 @@ import { getLogger } from "../config/logger";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { Tracer } from "../config/tracer";
 import envVars from "../config/env";
+import GithubApi from "../config/github-api";
+import { Errors } from "../config/errors";
 
 const logger = getLogger("github-oauth");
 
@@ -165,16 +167,18 @@ export default (opts: OAuthOptions): GithubOAuth => {
 
 				// Everything's good, set it to res.locals
 				res.locals.githubToken = githubToken;
+				// TODO: Not a great place to put this, but it'll do for now
+				res.locals.github = GithubApi({ auth: githubToken });
 				return next();
 			} catch (e) {
-				// If its a GET call, we can redirect to login and try again
-				if(req.method == "GET") {
+				// If its a GET request, we can redirect to login and try again
+				if (req.method == "GET") {
 					res.locals.redirect = req.originalUrl;
 					return login(req, res);
 				}
 
-				// For any other call, it should just error
-				return res.status(401).send("Github token is not valid");
+				// For any other requests, it should just error
+				return res.status(401).send(Errors.MISSING_GITHUB_TOKEN);
 			}
 		}
 	};
