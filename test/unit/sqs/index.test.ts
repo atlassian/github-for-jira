@@ -3,6 +3,9 @@ import { v4 as uuidv4 } from "uuid";
 import envVars from "../../../src/config/env";
 import DoneCallback = jest.DoneCallback;
 import waitUntil from "../../utils/waitUntil";
+import statsd from "../../../src/config/statsd";
+import {sqsQueueMetrics} from "../../../src/config/metric-names";
+import anything = jasmine.anything;
 
 
 const TEST_QUEUE_URL = envVars.SQS_BACKFILL_QUEUE_URL;
@@ -44,17 +47,21 @@ describe("SqsQueue tests", () => {
 
 	describe("Normal execution tests", () => {
 
+		let statsdIncrementSpy;
+
 		beforeEach(() => {
+			statsdIncrementSpy = jest.spyOn(statsd, "increment");
 			queue = createSqsQueue(10);
 			queue.sqs.purgeQueue();
 			queue.start();
 
 			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
-				return {retryable: false};
+				return {retryable: false, isFailure: true};
 			})
 		});
 
 		afterEach(async () => {
+			statsdIncrementSpy.mockRestore();
 			queue.stop();
 			queue.sqs.purgeQueue();
 			await queue.waitUntilListenerStopped();
@@ -194,7 +201,7 @@ describe("SqsQueue tests", () => {
 				expect(context.payload.msg).toBe(testPayload.msg)
 				expect(error.message).toBe(testErrorMessage)
 				receivedTime.errorHandlingCounter++;
-				return {retryable: true, retryDelaySec: 1}
+				return {retryable: true, retryDelaySec: 1, isFailure: true}
 			})
 
 			await queue.sendMessage(testPayload);
@@ -215,7 +222,7 @@ describe("SqsQueue tests", () => {
 			});
 
 			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
-				return {retryable: false};
+				return {retryable: false, isFailure: true};
 			})
 
 			await queue.sendMessage(testPayload);
@@ -223,6 +230,36 @@ describe("SqsQueue tests", () => {
 			await waitUntil(async () => {
 				expect(queueDeletionSpy).toBeCalledTimes(1)
 			})
+
+			expect(statsdIncrementSpy).toBeCalledWith(sqsQueueMetrics.failed, anything());
+		});
+
+
+		it("Message deleted from the queue when error is not a failure and failure metric not sent", async () => {
+
+			const testPayload = generatePayload();
+
+			const queueDeletionSpy = jest.spyOn(queue.sqs, "deleteMessage");
+
+			const expected : {ReceiptHandle?: string} = {ReceiptHandle: ""};
+
+			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
+				expected.ReceiptHandle = context.message.ReceiptHandle;
+
+				throw new Error("Something bad happened");
+			});
+
+			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
+				return {isFailure: false};
+			})
+
+			await queue.sendMessage(testPayload);
+
+			await waitUntil(async () => {
+				expect(queueDeletionSpy).toBeCalledTimes(1)
+			})
+
+			expect(statsdIncrementSpy).not.toBeCalledWith(sqsQueueMetrics.failed, anything());
 		});
 
 	});
@@ -299,7 +336,7 @@ describe("SqsQueue tests", () => {
 			});
 
 			mockErrorHandler.mockImplementation((_error: Error, _context: Context<TestMessage>): ErrorHandlingResult => {
-				return {retryable: receiveCounter.receivesCounter < 3, retryDelaySec: 0}
+				return {retryable: receiveCounter.receivesCounter < 3, retryDelaySec: 0, isFailure: true}
 			})
 
 			await queue.sendMessage(testPayload);

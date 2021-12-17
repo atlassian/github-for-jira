@@ -25,6 +25,7 @@ export enum BooleanFlags {
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS = "support-branch-and-merge-workflows-for-builds",
 	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push",
 	USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS = "use-new-github-client-to-count-repos",
+	REPO_SYNC_STATE_AS_SOURCE = "repo-sync-state-as-source",
 	CALL_IS_ADMIN_AS_APP = "call-is-admin-as-app"
 }
 

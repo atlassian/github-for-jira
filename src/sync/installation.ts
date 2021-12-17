@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, {
-	Repositories,
-	Repository,
-	RepositoryData,
-	SyncStatus,
-	TaskStatus
-} from "../models/subscription";
-import { Subscription } from "../models";
+import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus, TaskStatus } from "../models/subscription";
+import { RepoSyncState, Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
@@ -51,7 +45,7 @@ type TaskType = "pull" | "commit" | "branch";
 const taskTypes = Object.keys(tasks) as TaskType[];
 
 // TODO: why are we ignoring failed status as completed?
-const taskStatusCompleted: TaskStatus[] = ["complete", "failed"]
+const taskStatusCompleted: TaskStatus[] = ["complete", "failed"];
 const isAllTasksStatusesCompleted = (...statuses: (TaskStatus | undefined)[]): boolean =>
 	statuses.every(status => !!status && taskStatusCompleted.includes(status));
 
@@ -81,10 +75,17 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	);
 
 const getNextTask = async (subscription: SubscriptionClass): Promise<Task | undefined> => {
-	const repos = subscription?.repoSyncState?.repos || {};
-	await updateNumberOfReposSynced(repos, subscription);
+	let sorted: [string, RepositoryData][];
+	if (await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false, subscription.jiraHost)) {
+		const repos = await RepoSyncState.findAllFromSubscription(subscription, {order: [["repoUpdatedAt", "DESC"]]})
+		sorted = repos.map(repo => [repo.repoId.toString(), repo.toRepositoryData()]);
+	} else {
+		const repos = subscription?.repoSyncState?.repos || {};
+		await updateNumberOfReposSynced(repos, subscription);
+		sorted = sortedRepos(repos);
+	}
 
-	for (const [repositoryId, repoData] of sortedRepos(repos)) {
+	for (const [repositoryId, repoData] of sorted) {
 		const task = taskTypes.find(
 			(taskType) => repoData[getStatusKey(taskType)] === undefined || repoData[getStatusKey(taskType)] === "pending"
 		);
@@ -130,7 +131,7 @@ const updateJobStatus = async (
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
 		// Include job and task in any micros env logs, exclude from local
-		const loggerObj = process.env.MICROS_ENV ? { job, task } : {}
+		const loggerObj = process.env.MICROS_ENV ? { job, task } : {};
 		logger.info(loggerObj, "Organization has been deleted. Other active syncs will continue.");
 		return;
 	}
@@ -483,5 +484,5 @@ export const processInstallation =
 					break;
 				}
 			}
-		}
-	}
+		};
+	};
