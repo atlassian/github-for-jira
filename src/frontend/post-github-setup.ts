@@ -1,7 +1,8 @@
 import axios from "axios";
 import { validJiraDomains } from "./validations";
 import { Request, Response } from "express";
-import { getJiraMarketplaceUrl } from "../util/get-url";
+import { getJiraAppUrl, getJiraMarketplaceUrl } from "../util/get-url";
+import { Installation } from "../models";
 
 interface SetupPagePayload {
 	error: string;
@@ -25,30 +26,36 @@ const renderGitHubSetupPageVersion = (
 	res.render("github-setup.hbs", gitHubSetupPagePayload)
 };
 
-const validateJiraSite = (
-	jiraSiteUrl: string,
+const validateJiraSite = async (
+	jiraHost: string,
 	domain: string,
 	req: Request,
 	res: Response
-): void => {
-	// Check that the entered domain is valid by making a request to the status endpoint
-	axios(`${jiraSiteUrl}/status`, {
-		method: "GET",
-		headers: {
-			"content-type": "application/json",
-		},
-	})
-		.then((response) => {
-			// If Jira site is valid, response returns a state of RUNNING
-			if (response?.data?.state === "RUNNING") {
-				res.redirect(getJiraMarketplaceUrl(jiraSiteUrl));
-			}
-		})
-		.catch((error) => {
-			// If Jira site is not valid, it returns a 404
-			req.log.error({ error }, "Invalid Jira site entered.");
-			renderGitHubSetupPageVersion(domain, req, res);
+): Promise<void> => {
+
+	// Check to see if we already have an installation of the app
+	if(await Installation.getForHost(jiraHost)) {
+		// If so, redirect to the app itself
+		return res.redirect(getJiraAppUrl(jiraHost));
+	}
+
+	try {
+		// Check that the entered domain is valid by making a request to the status endpoint
+		await axios(`${jiraHost}/status`, {
+			method: "GET",
+			headers: {
+				"content-type": "application/json",
+			},
 		});
+
+		// if 200 returns, it's valid and can redirect to the marketplace
+		// for the user to install the app
+		return res.redirect(getJiraMarketplaceUrl(jiraHost));
+	}catch(err) {
+		// If Jira site is not valid, it returns a 404
+		req.log.error(err, "Invalid Jira site entered.");
+		renderGitHubSetupPageVersion(domain, req, res);
+	}
 };
 
 export default async (req: Request, res: Response): Promise<void> => {
@@ -65,5 +72,5 @@ export default async (req: Request, res: Response): Promise<void> => {
 		return renderGitHubSetupPageVersion(domain, req, res);
 	}
 
-	validateJiraSite(jiraSiteUrl, domain, req, res);
+	await validateJiraSite(jiraSiteUrl, domain, req, res);
 };

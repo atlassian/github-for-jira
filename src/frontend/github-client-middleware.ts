@@ -15,7 +15,7 @@ export default (octokitApp: App): RequestHandler => async (req: Request, res: Re
 		auth: octokitApp.getSignedJsonWebToken()
 	});
 
-	if (await booleanFlag(BooleanFlags.CALL_IS_ADMIN_AS_APP, true, jiraHost)) {
+	if (await booleanFlag(BooleanFlags.CALL_IS_ADMIN_AS_APP, false, jiraHost)) {
 		req.log.info(`using app-authenticated github client for jira host ${jiraHost}`);
 		res.locals.isAdmin = isAdmin(res.locals.client, req.log);
 	} else {

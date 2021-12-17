@@ -3,10 +3,17 @@
 const domainRegexp = /^\w(?:[\w-]{0,61}\w)?$/;
 const jiraTopleveldomains = ["atlassian.net", "jira.com"];
 
-export const validJiraDomains = (jiraDomain: string, jiraTopleveldomain: string): boolean =>
-	!!jiraDomain && !!jiraTopleveldomain &&
-	domainRegexp.test(jiraDomain) &&
-	jiraTopleveldomains.includes(jiraTopleveldomain);
+export const validJiraDomains = (jiraDomain: string, jiraTopleveldomain: string): boolean => {
+	try {
+		return !!jiraDomain && !!jiraTopleveldomain &&
+			domainRegexp.test(jiraDomain) &&
+			jiraTopleveldomains.includes(jiraTopleveldomain) &&
+			!!new URL(jiraDomain);
+	} catch (e) {
+		return false;
+	}
+};
+
 export interface JiraTopleveldomain {
 	value: string;
 	selected: boolean;
