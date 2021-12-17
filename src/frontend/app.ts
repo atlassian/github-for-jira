@@ -46,7 +46,6 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
-				githubTokenExpiry?: number;
 			};
 		}
 	}
@@ -169,12 +168,6 @@ export default (octokitApp: App): Express => {
 			res.locals.jiraHost = req.session.jiraHost;
 		}
 
-		// Only set githubToken if it hasn't expired yet.  If it has and not available,
-		// it should try to login again through checkGithubAuth function.
-		if(req.session.githubToken && (req.session.githubTokenExpiry || 0) > Date.now()) {
-			res.locals.githubToken = req.session.githubToken;
-		}
-
 		next();
 	});
 
@@ -224,6 +217,7 @@ export default (octokitApp: App): Express => {
 	app.post(
 		"/github/configuration",
 		csrfProtection,
+		oauth.checkGithubAuth,
 		postGitHubConfiguration
 	);
 
@@ -236,6 +230,7 @@ export default (octokitApp: App): Express => {
 	app.post(
 		"/github/subscription",
 		csrfProtection,
+		oauth.checkGithubAuth,
 		deleteGitHubSubscription
 	);
 

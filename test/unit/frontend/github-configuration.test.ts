@@ -75,6 +75,16 @@ describe("Frontend", () => {
 
 	describe("GitHub Configuration", () => {
 
+		beforeEach(() => {
+			// This is for github token validation check
+			// make it optional as we don't need to test that specifically
+			githubNock
+				.get("/")
+				.optionally()
+				.matchHeader("Authorization", /^Bearer .+$/)
+				.reply(200);
+		})
+
 		describe("#post", () => {
 			it("should return a 401 if no GitHub token present in session", () =>
 				supertest(frontendApp)
@@ -113,7 +123,6 @@ describe("Frontend", () => {
 					.set(
 						"Cookie",
 						getCookieHeader({
-							githubTokenExpiry: Date.now() + 60000,
 							githubToken: "test-github-token",
 							jiraHost: "test-jira-host"
 						})
@@ -140,7 +149,6 @@ describe("Frontend", () => {
 					.set(
 						"Cookie",
 						getCookieHeader({
-							githubTokenExpiry: Date.now() + 60000,
 							githubToken: "test-github-token",
 							jiraHost: "test-jira-host"
 						})
@@ -155,7 +163,6 @@ describe("Frontend", () => {
 					.set(
 						"Cookie",
 						getCookieHeader({
-							githubTokenExpiry: Date.now() + 60000,
 							githubToken: "test-github-token",
 							jiraHost: "test-jira-host"
 						})
@@ -187,7 +194,6 @@ describe("Frontend", () => {
 					.set(
 						"Cookie",
 						getCookieHeader({
-							githubTokenExpiry: Date.now() + 60000,
 							githubToken: "test-github-token",
 							jiraHost
 						})

@@ -121,17 +121,13 @@ export default (opts: OAuthOptions): GithubOAuth => {
 				}
 			);
 
-			const githubToken = response.data.access_token;
+			// Saving it to session be used later
+			req.session.githubToken = response.data.access_token;
 
-			if (!githubToken) {
+			if (!req.session.githubToken) {
 				tracer.trace(`didn't get access token from GitHub`);
 				return next(new Error("Missing Access Token from Github OAuth Flow."));
 			}
-
-			// Saving it to session be used later
-			req.session.githubToken = githubToken;
-			// Set expiry to 50 minutes
-			req.session.githubTokenExpiry = Date.now() + 50 * 60 * 1000;
 
 			tracer.trace(`got access token from GitHub, redirecting to ${redirectUrl}`);
 
@@ -154,7 +150,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 			const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 			const tracer = new Tracer(logger.child(opts), "checkGithubAuth", traceLogsEnabled);
 			try {
-				const { githubToken } = res.locals;
+				const { githubToken } = req.session;
 				if (!githubToken) {
 					tracer.trace("github token missing, calling login()");
 					throw "Missing github token";
@@ -166,10 +162,19 @@ export default (opts: OAuthOptions): GithubOAuth => {
 						Authorization: `Bearer ${githubToken}`
 					}
 				});
+
+				// Everything's good, set it to res.locals
+				res.locals.githubToken = githubToken;
 				return next();
 			} catch (e) {
-				res.locals.redirect = req.originalUrl;
-				return login(req, res);
+				// If its a GET call, we can redirect to login and try again
+				if(req.method == "GET") {
+					res.locals.redirect = req.originalUrl;
+					return login(req, res);
+				}
+
+				// For any other call, it should just error
+				return res.status(401).send("Github token is not valid");
 			}
 		}
 	};
