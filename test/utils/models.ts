@@ -30,7 +30,8 @@ export const mockModels = {
 		install: {} as any,
 		getSingleInstallation: {
 			id: 1,
-			jiraHost: process.env.ATLASSIAN_URL
+			jiraHost: process.env.ATLASSIAN_URL,
+			gitHubInstallationId: 1234
 		} as any,
 		findOrStartSync: {
 			id: 1,
