@@ -1,4 +1,4 @@
-import Logger from 'bunyan';
+import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
@@ -20,7 +20,7 @@ export default class GitHubClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	private readonly githubInstallationId: number;
-	private logger: Logger;
+	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: number,

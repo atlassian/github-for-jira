@@ -6,23 +6,22 @@ import Logger from "bunyan";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default (octokitApp: App): RequestHandler => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	if (req.session.githubToken) {
-		res.locals.github = GithubAPI({
-			auth: req.session.githubToken
-		});
-	} else {
-		res.locals.github = GithubAPI();
-	}
+	const {githubToken, jiraHost} = res.locals;
+
+	// If githubToken isn't set, this GithubAPI will be unauthed
+	res.locals.github = GithubAPI({
+		auth: githubToken
+	});
 
 	res.locals.client = GithubAPI({
 		auth: octokitApp.getSignedJsonWebToken()
 	});
 
-	if (res.locals.jiraHost && await booleanFlag(BooleanFlags.CALL_IS_ADMIN_AS_APP, true, res.locals.jiraHost)){
-		req.log.info(`using app-authenticated github client for jira host ${res.locals.jiraHost}`);
+	if (await booleanFlag(BooleanFlags.CALL_IS_ADMIN_AS_APP, true, jiraHost)){
+		req.log.info(`using app-authenticated github client for jira host ${jiraHost}`);
 		res.locals.isAdmin = isAdmin(res.locals.client, req.log);
 	} else {
-		req.log.info(`using user-authenticated github client for jira host ${res.locals.jiraHost}`);
+		req.log.info(`using user-authenticated github client for jira host ${jiraHost}`);
 		res.locals.isAdmin = isAdmin(res.locals.github, req.log);
 	}
 

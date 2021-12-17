@@ -64,7 +64,7 @@ describe("Frontend", () => {
 
 		frontendApp = express();
 		frontendApp.use((request, _, next) => {
-			request.log = getLogger('test');
+			request.log = getLogger("test");
 			next();
 		});
 		frontendApp.use(FrontendApp({
@@ -74,6 +74,7 @@ describe("Frontend", () => {
 	});
 
 	describe("GitHub Configuration", () => {
+
 		describe("#post", () => {
 			it("should return a 401 if no GitHub token present in session", () =>
 				supertest(frontendApp)
@@ -112,6 +113,7 @@ describe("Frontend", () => {
 					.set(
 						"Cookie",
 						getCookieHeader({
+							githubTokenExpiry: Date.now() + 60000,
 							githubToken: "test-github-token",
 							jiraHost: "test-jira-host"
 						})
@@ -138,6 +140,7 @@ describe("Frontend", () => {
 					.set(
 						"Cookie",
 						getCookieHeader({
+							githubTokenExpiry: Date.now() + 60000,
 							githubToken: "test-github-token",
 							jiraHost: "test-jira-host"
 						})
@@ -152,6 +155,7 @@ describe("Frontend", () => {
 					.set(
 						"Cookie",
 						getCookieHeader({
+							githubTokenExpiry: Date.now() + 60000,
 							githubToken: "test-github-token",
 							jiraHost: "test-jira-host"
 						})
@@ -183,6 +187,7 @@ describe("Frontend", () => {
 					.set(
 						"Cookie",
 						getCookieHeader({
+							githubTokenExpiry: Date.now() + 60000,
 							githubToken: "test-github-token",
 							jiraHost
 						})

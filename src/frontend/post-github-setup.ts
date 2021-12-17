@@ -10,11 +10,11 @@ interface SetupPagePayload {
 	csrfToken: string;
 }
 
-const renderGitHubSetupPageVersion = async (
+const renderGitHubSetupPageVersion = (
 	domain: string,
 	req: Request,
 	res: Response
-) => {
+):void => {
 	const gitHubSetupPagePayload: SetupPagePayload = {
 		error: "The entered Jira Cloud site is not valid.",
 		domain,
@@ -41,11 +41,7 @@ const validateJiraSite = (
 		.then((response) => {
 			// If Jira site is valid, response returns a state of RUNNING
 			if (response?.data?.state === "RUNNING") {
-				res.redirect(
-					req.session.githubToken
-						? getJiraMarketplaceUrl(jiraSiteUrl)
-						: "/github/login"
-				);
+				res.redirect(getJiraMarketplaceUrl(jiraSiteUrl));
 			}
 		})
 		.catch((error) => {
@@ -56,8 +52,7 @@ const validateJiraSite = (
 };
 
 export default async (req: Request, res: Response): Promise<void> => {
-	const { jiraDomain, jiraDomainMain, jiraDomainModal } =
-		req.body;
+	const { jiraDomain, jiraDomainMain, jiraDomainModal } = req.body;
 
 	const domain = jiraDomain || jiraDomainMain || jiraDomainModal;
 	const topLevelDomain = "atlassian.net";
@@ -65,12 +60,9 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 	req.log.info(`Received github setup page request for jira ${jiraSiteUrl}`);
 
-	const siteUrlIncludesProtocol = !validJiraDomains(domain, topLevelDomain)
-
-	if (siteUrlIncludesProtocol) {
+	if (!validJiraDomains(domain, topLevelDomain)) {
 		res.status(400);
-
-		renderGitHubSetupPageVersion(domain, req, res);
+		return renderGitHubSetupPageVersion(domain, req, res);
 	}
 
 	validateJiraSite(jiraSiteUrl, domain, req, res);

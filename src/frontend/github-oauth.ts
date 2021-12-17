@@ -5,8 +5,8 @@ import axios from "axios";
 import { getLogger } from "../config/logger";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { Tracer } from "../config/tracer";
+import envVars from "../config/env";
 
-const githubHost = process.env.GHE_HOST || "github.com";
 const logger = getLogger("github-oauth");
 
 export interface OAuthOptions {
@@ -46,7 +46,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		req.session[state] =
 			res.locals.redirect ||
 			`/github/configuration${url.parse(req.originalUrl).search || ""}`;
-		const redirectUrl = `https://${githubHost}/login/oauth/authorize?client_id=${opts.githubClient}${
+		const redirectUrl = `https://${envVars.GITHUB_DOMAIN}/login/oauth/authorize?client_id=${opts.githubClient}${
 			opts.scopes?.length ? `&scope=${opts.scopes.join(" ")}` : ""
 		}&redirect_uri=${redirectURI}&state=${state}`;
 		req.log.info({
@@ -105,7 +105,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 
 		try {
 			const response = await axios.get(
-				`https://${githubHost}/login/oauth/access_token`,
+				`https://${envVars.GITHUB_DOMAIN}/login/oauth/access_token`,
 				{
 					params: {
 						client_id: opts.githubClient,
@@ -121,12 +121,17 @@ export default (opts: OAuthOptions): GithubOAuth => {
 				}
 			);
 
-			req.session.githubToken = response.data.access_token;
+			const githubToken = response.data.access_token;
 
-			if (!req.session.githubToken) {
+			if (!githubToken) {
 				tracer.trace(`didn't get access token from GitHub`);
 				return next(new Error("Missing Access Token from Github OAuth Flow."));
 			}
+
+			// Saving it to session be used later
+			req.session.githubToken = githubToken;
+			// Set expiry to 50 minutes
+			req.session.githubTokenExpiry = Date.now() + 50 * 60 * 1000;
 
 			tracer.trace(`got access token from GitHub, redirecting to ${redirectUrl}`);
 
@@ -148,14 +153,24 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		checkGithubAuth: async (req: Request, res: Response, next: NextFunction) => {
 			const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 			const tracer = new Tracer(logger.child(opts), "checkGithubAuth", traceLogsEnabled);
+			try {
+				const { githubToken } = res.locals;
+				if (!githubToken) {
+					tracer.trace("github token missing, calling login()");
+					throw "Missing github token";
+				}
+				tracer.trace("found github token in session. validating token with API.");
 
-			if (!req.session.githubToken) {
-				tracer.trace("found github token in session, calling login()");
+				await axios.get(`https://api.${envVars.GITHUB_DOMAIN}`, {
+					headers: {
+						Authorization: `Bearer ${githubToken}`
+					}
+				});
+				return next();
+			} catch (e) {
 				res.locals.redirect = req.originalUrl;
 				return login(req, res);
 			}
-			tracer.trace("found github token in session");
-			return next();
 		}
 	};
 };

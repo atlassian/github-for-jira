@@ -6,7 +6,9 @@ import { Request, Response } from "express";
  * Handle the when a user adds a repo to this installation
  */
 export default async (req: Request, res: Response): Promise<void> => {
-	if (!req.session.githubToken || !res.locals.jiraHost) {
+	const {github, githubToken, jiraHost } = res.locals;
+
+	if (!githubToken || !jiraHost) {
 		res.sendStatus(401);
 		return;
 	}
@@ -23,7 +25,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 	// Check if the user that posted this has access to the installation ID they're requesting
 	try {
-		const { data: { installations } } = await res.locals.github.apps.listInstallationsForAuthenticatedUser();
+		const { data: { installations } } = await github.apps.listInstallationsForAuthenticatedUser();
 
 		const userInstallation = installations.find(installation => installation.id === Number(req.body.installationId));
 
@@ -37,8 +39,8 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 		// If the installation is an Org, the user needs to be an admin for that Org
 		if (userInstallation.target_type === "Organization") {
-			const { data: { login } } = await res.locals.github.users.getAuthenticated();
-			const { data: { role } } = await res.locals.github.orgs.getMembership({
+			const { data: { login } } = await github.users.getAuthenticated();
+			const { data: { role } } = await github.orgs.getMembership({
 				org: userInstallation.account.login,
 				username: login
 			});
@@ -55,7 +57,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 		await Subscription.install({
 			clientKey: getHashedKey(req.body.clientKey),
 			installationId: req.body.installationId,
-			host: res.locals.jiraHost
+			host: jiraHost
 		});
 
 		res.sendStatus(200);
