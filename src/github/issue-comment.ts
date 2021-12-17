@@ -31,6 +31,7 @@ export default async (
 		comment_id: comment.id,
 	});
 
+	console.log("HERE: ", editedComment)
 	context.log(`Updating comment in GitHub with ID ${comment.id}`);
 
 	const githubResponse = await context.github.issues.updateComment(

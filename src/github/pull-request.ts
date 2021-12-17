@@ -5,6 +5,8 @@ import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import _ from "lodash";
 
+import getJiraClient from "../jira/client";
+
 export default async (
 	context: CustomContext,
 	jiraClient,
@@ -22,6 +24,7 @@ export default async (
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: any = {};
+
 	try {
 		reviews = await context.github.pulls.listReviews({
 			owner: owner,
@@ -97,11 +100,17 @@ export default async (
 		return;
 	}
 
-	const baseUrl = jiraClient.baseUrl || "none";
+	const jiraClientFake = await getJiraClient(
+		"https://rachellerathbone.atlassian.net",
+		2,
+		context.log
+	);
+
+	const baseUrl = "https://rachellerathbone.atlassian.net" || "none";
 
 	context.log(logPayload, `Sending pull request update to Jira ${baseUrl}`);
 
-	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+	const jiraResponse = await jiraClientFake.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(

@@ -1,9 +1,10 @@
-import {Context, MessageHandler} from "./index"
+import { Context, MessageHandler } from "./index"
 import enhanceOctokit from "../config/enhance-octokit";
-import {processPush} from "../transforms/push";
+import { processPush } from "../transforms/push";
 import app from "../worker/app";
-import {wrapLogger} from "probot/lib/wrap-logger";
+import { wrapLogger } from "probot/lib/wrap-logger";
 import GitHubClient from "../github/client/github-client";
+import { getCloudInstallationId } from "../github/client/installation-id";
 
 export type PayloadRepository = {
 	id: number,
@@ -22,7 +23,7 @@ export type PushQueueMessagePayload = {
 	webhookReceived?: Date,
 }
 
-export const pushQueueMessageHandler : MessageHandler<PushQueueMessagePayload> = async (context : Context<PushQueueMessagePayload>) => {
+export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
 
 	context.log.info("Handling push message from the SQS queue")
 
@@ -36,6 +37,7 @@ export const pushQueueMessageHandler : MessageHandler<PushQueueMessagePayload> =
 		return;
 	}
 	enhanceOctokit(githubOld);
-	const github = new GitHubClient(payload.installationId, context.log);
+	const installationId = getCloudInstallationId(payload.installationId);
+	const github = new GitHubClient(installationId, context.log);
 	await processPush(githubOld, github, payload, wrapLogger(context.log));
 }

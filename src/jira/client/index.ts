@@ -188,10 +188,13 @@ async function getJiraClient(
 							truncatedBranches: getTruncatedIssuekeys(data.branches)
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
+
+						console.log("HERE subscription")
 						const subscription = await Subscription.getSingleInstallation(
 							jiraHost,
 							gitHubInstallationId
 						);
+						console.log("HERE subscription", subscription)
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
 

@@ -36,8 +36,10 @@
           <button
             class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary add-organization-link"
           >Connect GitHub organization</button>
+           <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+
            <button
-            class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary push-event"
+            class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary ghe-spike"
           >Connect GHE</button>
         {{/if}}
       </header>
@@ -315,8 +317,10 @@
               class="ak-button ak-button__appearance-primary add-organization-link"
             >Connect GitHub organization</button>
           </div>
+          <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+
            <button
-            class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary push-event"
+            class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary ghe-spike"
           >Connect GHE</button>
         {{/if}}
       </section>

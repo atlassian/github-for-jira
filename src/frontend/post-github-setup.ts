@@ -1,7 +1,7 @@
 import axios from "axios";
 import { validJiraDomains } from "./validations";
 import { Request, Response } from "express";
-import { getJiraMarketplaceUrl } from "../util/getUrl";
+import { getJiraMarketplaceUrl } from "../util/get-url";
 
 interface SetupPagePayload {
 	error: string;

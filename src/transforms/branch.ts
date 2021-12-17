@@ -4,7 +4,7 @@ import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../util/jira";
 import _ from "lodash";
 
-async function getLastCommit(context: Context, issueKeys: string[]) {
+export async function getLastCommit(context: Context, issueKeys: string[]) {
 	const { github, payload: { ref } } = context;
 
 	const {

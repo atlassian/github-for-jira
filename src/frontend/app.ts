@@ -35,7 +35,6 @@ import { registerHandlebarsPartials } from "../util/handlebars/partials";
 import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
 import { Errors } from "../config/errors";
 import cookieParser from "cookie-parser";
-import pushEvent from '../github/push-event';
 
 // Adding session information to request
 declare global {
@@ -251,7 +250,7 @@ export default (octokitApp: App): Express => {
 
 	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, retrySync);
 
-	app.post("/event/push", verifyJiraContextJwtTokenMiddleware, pushEvent);
+	app.post("/ghe/spike", verifyJiraContextJwtTokenMiddleware);
 	// Set up event handlers
 
 	// TODO: remove enabled and disabled events once the descriptor is updated in marketplace

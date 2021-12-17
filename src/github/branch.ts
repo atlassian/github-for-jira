@@ -8,6 +8,7 @@ export const createBranch = async (
 	context: CustomContext,
 	jiraClient
 ): Promise<void> => {
+	context.log.info("BRANCH EVENT 1")
 	const jiraPayload = await transformBranch(context);
 
 	if (!jiraPayload) {

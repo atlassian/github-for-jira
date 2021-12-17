@@ -78,27 +78,22 @@ $(".sync-connection-link-OLD").click(function(event) {
 	});
 });
 
-$(".push-event").click(function(event) {
+$(".ghe-spike").click(function(event) {
 	event.preventDefault();
-	const installationId = 21055629
-	const jiraHost = "https://rachellerathbone.atlassian.net"
-	const csrfToken = document.getElementById("_csrf").value;
-
-	console.log(csrfToken)
 
 	window.AP.context.getToken(function(token) {
 		$.ajax({
 			type: "POST",
-			url: "/event/push",
+			url: "/ghe/spike",
 			data: {
-				installationId,
-				jiraHost,
+				installationId: 21055629,
+				jiraHost: "https://rachellerathbone.atlassian.net",
 				syncType: "full",
 				jwt: token,
-				_csrf: csrfToken
+				_csrf: document.getElementById("_csrf").value
 			},
 			success: function(data) {
-				console.log(data)
+				console.log(token)
 			},
 			error: function(error) {
 				console.error(error)
@@ -112,11 +107,6 @@ $(".sync-connection-link").click(function(event) {
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
-
-	https://rachellerathbone.atlassian.net
-	console.log(jiraHost)
-	21055629
-	console.log(installationId)
 
 	const $el = $("#restart-backfill");
 	$el.prop("disabled", true);
@@ -134,7 +124,8 @@ $(".sync-connection-link").click(function(event) {
 				_csrf: csrfToken
 			},
 			success: function(data) {
-				AP.navigator.reload();
+				// AP.navigator.reload();
+				console.log(token)
 			},
 			error: function(error) {
 				$el.prop("disabled", false);
