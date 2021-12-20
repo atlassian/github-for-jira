@@ -203,6 +203,9 @@ export default class Subscription extends Sequelize.Model {
 					repos: {}
 				}
 			});
+			if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, subscription.jiraHost)) {
+				await RepoSyncState.resetSyncFromSubscription(subscription);
+			}
 			logger.info("Starting Jira sync");
 			await queues.discovery.add({ installationId, jiraHost });
 			return;
@@ -239,7 +242,7 @@ export default class Subscription extends Sequelize.Model {
 		await this.save();
 
 		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, this.jiraHost)) {
-			await RepoSyncState.updateFromJson(this, this.repoSyncState);
+			await RepoSyncState.updateFromRepoJson(this, this.repoSyncState);
 		}
 
 		return this;

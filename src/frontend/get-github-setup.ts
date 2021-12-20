@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getGitHubConfigurationUrl, getJiraMarketplaceUrl } from "../util/get-url";
+import { getJiraAppUrl, getJiraMarketplaceUrl } from "../util/get-url";
 
 /*
 	Handles redirects for both the installation flow from Jira and
@@ -13,7 +13,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
 	const { jiraHost } = res.locals;
 	if (req.headers.referer && jiraHost) {
-		return res.redirect(getGitHubConfigurationUrl(jiraHost));
+		return res.redirect(getJiraAppUrl(jiraHost));
 	}
 	const marketplaceUrl = jiraHost ? getJiraMarketplaceUrl(jiraHost) : undefined;
 
