@@ -165,14 +165,18 @@ export default (opts: OAuthOptions): GithubOAuth => {
 					}
 				});
 
+				req.log.debug(`Github token is valid, continuing...`);
+
 				// Everything's good, set it to res.locals
 				res.locals.githubToken = githubToken;
 				// TODO: Not a great place to put this, but it'll do for now
 				res.locals.github = GithubApi({ auth: githubToken });
 				return next();
 			} catch (e) {
+				req.log.debug(`Github token is not valid.`);
 				// If its a GET request, we can redirect to login and try again
 				if (req.method == "GET") {
+					req.log.debug(`Trying to get new Github token...`);
 					res.locals.redirect = req.originalUrl;
 					return login(req, res);
 				}
