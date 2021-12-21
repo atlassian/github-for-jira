@@ -6,7 +6,7 @@ import RedisStore from "rate-limit-redis";
 import Redis from "ioredis";
 import BodyParser from "body-parser";
 import GithubAPI from "../config/github-api";
-import { Installation, Subscription } from "../models";
+import { Installation, RepoSyncState, Subscription } from "../models";
 import verifyInstallation from "../jira/verify-installation";
 import logMiddleware from "../middleware/frontend-log-middleware";
 import JiraClient from "../models/jira-client";
@@ -18,6 +18,7 @@ import { getLogger } from "../config/logger";
 import { Job, Queue } from "bull";
 import { WhereOptions } from "sequelize";
 import getJiraClient from "../jira/client";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -168,7 +169,11 @@ router.get(
 				return;
 			}
 
-			res.json(subscription.repoSyncState);
+			if(await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false)) {
+				res.json(await RepoSyncState.toRepoJson(subscription));
+			} else {
+				res.json(subscription.repoSyncState);
+			}
 		} catch (err) {
 			res.status(500).json(err);
 		}
@@ -382,23 +387,18 @@ router.post(
 	bodyParser,
 	check("installationId").isInt(),
 	returnOnValidationError,
-	async (req: Request, response: Response): Promise<void> => {
+	async (req: Request, res: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const installation = await Installation.findByPk(installationId);
-
 		const isValid = await verifyInstallation(installation, req.log)();
-		const respondWith = (message) =>
-			response.json({
-				message,
-				installation: {
-					enabled: isValid,
-					id: installation.id,
-					jiraHost: installation.jiraHost
-				}
-			});
-		respondWith(
-			isValid ? "Verification successful" : "Verification failed"
-		);
+		res.json({
+			message: isValid ? "Verification successful" : "Verification failed",
+			installation: {
+				enabled: isValid,
+				id: installation.id,
+				jiraHost: installation.jiraHost
+			}
+		})
 	}
 );
 
