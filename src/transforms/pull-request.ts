@@ -7,6 +7,7 @@ import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
 import { getGithubUser } from "../services/github/user";
 import { JiraAuthor } from "../interfaces/jira";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -49,10 +50,10 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 // TODO: define arguments and return
 export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 	const { title: prTitle, head, body } = pullRequest;
+
 	// This is the same thing we do in sync, concatenating these values
-	const issueKeys = issueKeyParser().parse(
-		`${prTitle}\n${head.ref}\n${body}`
-	);
+	const textToSearch = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? `${prTitle}\n${head.ref}\n${body}}` : `${prTitle}\n${head.ref}`
+	const issueKeys = issueKeyParser().parse(textToSearch);
 
 	const logPayload = {
 		prTitle: prTitle || "none",
