@@ -46,7 +46,7 @@ const sqsQueues = {
 	),
 
 	deployment: new SqsQueue<DeploymentMessagePayload>({
-		queueName: "discovery",
+		queueName: "deployment",
 		queueUrl: envVars.SQS_DEPLOYMENT_QUEUE_URL,
 		queueRegion: envVars.SQS_DEPLOYMENT_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
