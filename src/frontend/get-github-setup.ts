@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { getJiraAppUrl, getJiraMarketplaceUrl } from "../util/get-url";
+import { Installation } from "../models";
 
 /*
 	Handles redirects for both the installation flow from Jira and
@@ -12,15 +13,14 @@ import { getJiraAppUrl, getJiraMarketplaceUrl } from "../util/get-url";
 export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
 	const { jiraHost } = res.locals;
-	if (req.headers.referer && jiraHost) {
+	if (jiraHost && await Installation.getForHost(jiraHost)) {
 		return res.redirect(getJiraAppUrl(jiraHost));
 	}
-	const marketplaceUrl = jiraHost ? getJiraMarketplaceUrl(jiraHost) : undefined;
 
 	res.render("github-setup.hbs", {
 		csrfToken: req.csrfToken(),
 		nonce: res.locals.nonce,
 		jiraHost,
-		marketplaceUrl // only used is jiraHost is present
+		marketplaceUrl: getJiraMarketplaceUrl(jiraHost) // only used is jiraHost is present
 	});
 };
