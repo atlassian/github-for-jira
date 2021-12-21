@@ -371,17 +371,17 @@ export class SqsQueue<MessagePayload> {
 				log.error({err}, "Error while executing SQS message")
 				statsd.increment(sqsQueueMetrics.failed, this.metricsTags)
 			} else {
-				log.info({err}, "Expected exception while executing SQS message. Not an error, deleting the message.")
+				log.warn({err}, "Expected exception while executing SQS message. Not an error, deleting the message.")
 			}
 
 			if (isNotAFailure(errorHandlingResult)) {
 				log.info("Deleting the message because the error is not a failure")
 				await this.deleteMessage(message, log)
 			} else if (isNotRetryable(errorHandlingResult)) {
-				log.info("Deleting the message because the error is not retryable")
+				log.warn("Deleting the message because the error is not retryable")
 				await this.deleteMessage(message, log)
 			} else if (errorHandlingResult.skipDlq && this.isMessageReachedRetryLimit(context)) {
-				log.info("Deleting the message because it has reached the maximum amount of retries")
+				log.warn("Deleting the message because it has reached the maximum amount of retries")
 				await this.deleteMessage(message, log)
 			} else {
 				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, message, log);
