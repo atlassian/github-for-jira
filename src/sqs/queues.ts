@@ -5,7 +5,7 @@ import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
 import { jiraOctokitErrorHandler, webhookMetricWrapper } from "./error-handlers";
 import backfillQueueSupplier from "../backfill-queue-supplier";
 import { DiscoveryMessagePayload } from "./discovery";
-import { DeploymentMessagePayload } from "./deployment";
+import { DeploymentMessagePayload, deploymentQueueMessageHandler } from "./deployment";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 
@@ -29,7 +29,9 @@ const sqsQueues = {
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
 		maxAttempts: 5
-	}, pushQueueMessageHandler, webhookMetricWrapper(jiraOctokitErrorHandler, "push")),
+	},
+	pushQueueMessageHandler,
+	webhookMetricWrapper(jiraOctokitErrorHandler, "push")),
 
 	discovery: new SqsQueue<DiscoveryMessagePayload>({
 		queueName: "discovery",
@@ -53,10 +55,8 @@ const sqsQueues = {
 		timeoutSec: 60,
 		maxAttempts: 5
 	},
-	async () => {
-		//TODO Implement
-	},
-	async (): Promise<ErrorHandlingResult> => ({ retryable: true, isFailure: true })
+	deploymentQueueMessageHandler,
+	webhookMetricWrapper(jiraOctokitErrorHandler, "deployment")
 	),
 
 	start: () => {
@@ -64,12 +64,14 @@ const sqsQueues = {
 		sqsQueues.backfill.start();
 		sqsQueues.push.start();
 		sqsQueues.discovery.start();
+		sqsQueues.deployment.start();
 	},
 
 	stop: () => {
 		sqsQueues.backfill.stop();
 		sqsQueues.push.stop();
 		sqsQueues.discovery.stop();
+		sqsQueues.deployment.stop();
 	}
 }
 
