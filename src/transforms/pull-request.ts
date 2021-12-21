@@ -48,10 +48,10 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 
 // TODO: define arguments and return
 export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
-	const { title: prTitle, head } = pullRequest;
+	const { title: prTitle, head, body } = pullRequest;
 	// This is the same thing we do in sync, concatenating these values
 	const issueKeys = issueKeyParser().parse(
-		`${prTitle}\n${pullRequest.head.ref}`
+		`${prTitle}\n${head.ref}\n${body}`
 	);
 
 	const logPayload = {
