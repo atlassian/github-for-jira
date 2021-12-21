@@ -28,14 +28,24 @@ export const jiraOctokitErrorHandler : ErrorHandler<any> = async (error: JiraCli
 		return maybeResult;
 	}
 
-	const errorHandlingResult = handleFailureCase(error, context);
+	return handleFailureCase(error, context);
+}
 
-	if (!errorHandlingResult.retryable || context.lastAttempt ) {
-		context.log.error({error}, "Webhook push processing failed and won't be retried anymore");
-		emitWebhookFailedMetrics("push")
+
+/**
+ * Error handler which sents failed webhook metric if the retry limit is reached
+ */
+export function webhookMetricWrapper(delegate: ErrorHandler<any>, webhookName: string) {
+	return async (error, context) => {
+		const errorHandlingResult = await delegate(error, context);
+
+		if (errorHandlingResult.isFailure && (!errorHandlingResult.retryable || context.lastAttempt)) {
+			context.log.error({error}, "Webhook push processing failed and won't be retried anymore");
+			emitWebhookFailedMetrics(webhookName)
+		}
+
+		return errorHandlingResult;
 	}
-
-	return errorHandlingResult;
 }
 
 function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult | undefined {
@@ -43,7 +53,7 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 		error.status &&
 		UNRETRYABLE_STATUS_CODES.includes(error.status)) {
 		context.log.warn(`Received ${error.status} from Jira. Unretryable. Discarding the message`);
-		return {retryable: false}
+		return {retryable: false, isFailure: false}
 	}
 
 	//If error is Octokit.HookError, then we need to check the response status
@@ -52,7 +62,7 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 	const maybeErrorWithStatus : any = error;
 	if (maybeErrorWithStatus.status && UNRETRYABLE_STATUS_CODES.includes(maybeErrorWithStatus.status)) {
 		context.log.warn({err: maybeErrorWithStatus}, `Received error with ${maybeErrorWithStatus.status} status. Unretryable. Discarding the message`);
-		return {retryable: false}
+		return {retryable: false, isFailure: false}
 	}
 
 	return undefined;
@@ -61,15 +71,15 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 function handleFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult {
 	if (error instanceof OldRateLimitingError) {
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
-		return {retryable: true, retryDelaySec: delaySec}
+		return {retryable: true, retryDelaySec: delaySec, isFailure: true}
 	}
 
 	if (error instanceof RateLimitingError) {
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
-		return {retryable: true, retryDelaySec: delaySec}
+		return {retryable: true, retryDelaySec: delaySec, isFailure: true}
 	}
 
 	//In case if error is unknown we should use exponential backoff
 	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
-	return {retryable: true, retryDelaySec: delaySec}
+	return {retryable: true, retryDelaySec: delaySec, isFailure: true}
 }

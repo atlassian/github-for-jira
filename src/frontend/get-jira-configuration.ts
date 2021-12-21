@@ -1,13 +1,15 @@
 import format from "date-fns/format";
 import moment from "moment";
-import { Subscription } from "../models";
-import SubscriptionClass from "../models/subscription";
+import SubscriptionClass, { SyncStatus } from "../models/subscription";
+import { RepoSyncState, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { FailedInstallations } from "../config/interfaces";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import Logger from "bunyan";
 
-function mapSyncStatus(syncStatus: string): string {
+function mapSyncStatus(syncStatus: SyncStatus = SyncStatus.PENDING): string {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
@@ -18,23 +20,26 @@ function mapSyncStatus(syncStatus: string): string {
 	}
 }
 
-export async function 	getInstallation(client, subscription, reqLog?) {
+export async function getInstallation(client, subscription: SubscriptionClass, reqLog?: Logger) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
 		response.data.syncStatus = mapSyncStatus(subscription.syncStatus);
 		response.data.syncWarning = subscription.syncWarning;
 		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
-		response.data.totalNumberOfRepos = Object.keys(
-			subscription.repoSyncState?.repos || {}
-		).length;
-		response.data.numberOfSyncedRepos =
-			subscription.repoSyncState?.numberOfSyncedRepos || 0;
+		if (await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false, subscription.jiraHost)) {
+			response.data.totalNumberOfRepos = await RepoSyncState.countFromSubscription(subscription);
+			response.data.numberOfSyncedRepos = await RepoSyncState.countSyncedReposFromSubscription(subscription);
+		} else {
+			response.data.totalNumberOfRepos = Object.keys(subscription.repoSyncState?.repos || {}).length;
+			response.data.numberOfSyncedRepos = subscription.repoSyncState?.numberOfSyncedRepos || 0;
+		}
+
 		response.data.jiraHost = subscription.jiraHost;
 
 		return response.data;
 	} catch (err) {
-		reqLog.error(
+		reqLog?.error(
 			{ installationId: id, error: err, uninstalled: err.code === 404 },
 			"Failed connection"
 		);
@@ -44,10 +49,10 @@ export async function 	getInstallation(client, subscription, reqLog?) {
 	}
 }
 
-const formatDate = function (date) {
+const formatDate = function(date) {
 	return {
 		relative: moment(date).fromNow(),
-		absolute: format(date, "MMMM D, YYYY h:mm a"),
+		absolute: format(date, "MMMM D, YYYY h:mm a")
 	};
 };
 
@@ -57,27 +62,30 @@ interface FailedConnections {
 	orgName: string | undefined;
 }
 
-export const getFailedConnections = (
+export const getFailedConnections = async (
 	installations: FailedInstallations[],
 	subscriptions: SubscriptionClass[]
-): FailedConnections[] => {
-	return installations
+): Promise<FailedConnections[]> => {
+	return Promise.all(installations
 		.filter((response) => !!response.error)
-		.map((failedConnection: FailedInstallations) => {
-			const sub = subscriptions.find(
-				(subscription: SubscriptionClass) =>
-					failedConnection.id === subscription.gitHubInstallationId
-			);
-			const repos = sub?.repoSyncState?.repos || {};
-			const repoId = Object.keys(repos);
-			const orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
+		.map(async (failedConnection: FailedInstallations) => {
+			const sub = subscriptions.find(sub => failedConnection.id === sub.gitHubInstallationId);
+			let orgName;
+			if (sub && await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false, sub.jiraHost)) {
+				const repo = await RepoSyncState.findOneFromSubscription(sub);
+				orgName = repo.repoOwner;
+			} else {
+				const repos = sub?.repoSyncState?.repos || {};
+				const repoId = Object.keys(repos);
+				orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
+			}
 
 			return {
 				id: failedConnection.id,
 				deleted: failedConnection.deleted,
-				orgName,
+				orgName
 			};
-		});
+		}));
 };
 
 export default async (
@@ -104,7 +112,7 @@ export default async (
 			)
 		);
 
-		const failedConnections = getFailedConnections(
+		const failedConnections = await getFailedConnections(
 			installations,
 			subscriptions
 		);
@@ -116,7 +124,7 @@ export default async (
 				isGlobalInstall: data.repository_selection === "all",
 				installedAt: formatDate(data.updated_at),
 				syncState: data.syncState,
-				repoSyncState: data.repoSyncState,
+				repoSyncState: data.repoSyncState
 			}));
 
 		const hasConnections =
@@ -129,7 +137,7 @@ export default async (
 			hasConnections,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
+			nonce: res.locals.nonce
 		});
 
 		req.log.info("Jira configuration rendered successfully.");

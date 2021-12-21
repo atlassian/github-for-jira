@@ -1,5 +1,6 @@
-import Sequelize, { Op } from "sequelize";
-import Subscription, { RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
+import Sequelize, { CountOptions, DestroyOptions, FindOptions, Op } from "sequelize";
+import Subscription, { Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
+import _ from "lodash";
 
 export default class RepoSyncState extends Sequelize.Model {
 	id: number;
@@ -31,23 +32,92 @@ export default class RepoSyncState extends Sequelize.Model {
 	updatedAt: Date;
 	createdAt: Date;
 
-	static async findAllFromSubscription(subscription: Subscription): Promise<RepoSyncState[]> {
-		return RepoSyncState.findAll({
+	get status(): TaskStatus {
+		const statuses = [this.pullStatus, this.branchStatus, this.commitStatus];
+		if (statuses.some(s => s === "failed")) {
+			return "failed";
+		}
+
+		if (statuses.every(s => s === "complete")) {
+			return "complete";
+		}
+
+		return "pending";
+	}
+
+	static async countSyncedReposFromSubscription(subscription: Subscription): Promise<number> {
+		return RepoSyncState.countFromSubscription(subscription, {
+			where: {
+				pullStatus: "complete",
+				branchStatus: "complete",
+				commitStatus: "complete"
+			}
+		});
+	}
+
+	static async countFailedReposFromSubscription(subscription: Subscription): Promise<number> {
+		return RepoSyncState.countFromSubscription(subscription, {
+			where: {
+				[Op.or]: {
+					pullStatus: "failed",
+					branchStatus: "failed",
+					commitStatus: "failed"
+				}
+			}
+		});
+	}
+
+	static async countFromSubscription(subscription: Subscription, options: CountOptions = {}): Promise<number> {
+		return RepoSyncState.count(_.merge(options, {
+			where: {
+				subscriptionId: subscription.id
+			}
+		}));
+	}
+
+	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
+		return RepoSyncState.findAll(_.merge(options, {
+			where: {
+				subscriptionId: subscription.id
+			}
+		}));
+	}
+
+	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState> {
+		return RepoSyncState.findOne(_.merge(options, {
+			where: {
+				subscriptionId: subscription.id
+			},
+			order: [["repoUpdatedAt", "DESC"]]
+		} as FindOptions));
+	}
+
+	static async deleteFromSubscription(subscription: Subscription, options: DestroyOptions = {}): Promise<number> {
+		return RepoSyncState.destroy(_.merge(options, {
+			where: {
+				subscriptionId: subscription.id
+			}
+		}));
+	}
+
+	// Nullify statuses and cursors to start anew
+	static async resetSyncFromSubscription(subscription: Subscription): Promise<[number, RepoSyncState[]]> {
+		return RepoSyncState.update({
+			repoUpdatedAt: null,
+			branchStatus: null,
+			branchCursor: null,
+			commitStatus: null,
+			commitCursor: null,
+			pullStatus: null,
+			pullCursor: null
+		}, {
 			where: {
 				subscriptionId: subscription.id
 			}
 		});
 	}
 
-	static async deleteAllFromSubscription(subscription: Subscription): Promise<number> {
-		return RepoSyncState.destroy({
-			where: {
-				subscriptionId: subscription.id
-			}
-		});
-	}
-
-	static async updateFromJson(subscription: Subscription, json: RepoSyncStateObject = {}): Promise<RepoSyncState[]> {
+	static async updateFromRepoJson(subscription: Subscription, json: RepoSyncStateObject = {}): Promise<RepoSyncState[]> {
 		const repoIds = Object.keys(json.repos || {});
 
 		// Get states that are already in DB
@@ -60,8 +130,7 @@ export default class RepoSyncState extends Sequelize.Model {
 			}
 		});
 
-
-		return RepoSyncState.sequelize?.transaction(async (transaction) =>{
+		return RepoSyncState.sequelize?.transaction(async (transaction) => {
 			// Delete all repos that's not in repoSyncState anymore
 			await RepoSyncState.destroy({
 				where: {
@@ -76,15 +145,28 @@ export default class RepoSyncState extends Sequelize.Model {
 			return Promise.all(
 				repoIds.map(id => {
 					const repo = json.repos?.[id];
-					const model = states.find(s => s.repoId === Number(id)) || RepoSyncState.buildFromRepoJson(subscription, repo);
-					return model?.setFromRepoJson(repo).save({ transaction });
+					const model = states.find(s => s.repoId === Number(id)) || RepoSyncState.buildFromRepositoryData(subscription, repo);
+					return model?.setFromRepositoryData(repo).save({ transaction });
 				})
-			)
+			);
 		});
 	}
 
-	static buildFromRepoJson(subscription: Subscription, repo?: RepositoryData): RepoSyncState | undefined {
-		const repoId = repo?.repository?.id;
+	static async toRepoJson(subscription: Subscription): Promise<RepoSyncStateObject> {
+		const repos = await RepoSyncState.findAllFromSubscription(subscription);
+		return {
+			installationId: subscription.gitHubInstallationId,
+			jiraHost: subscription.jiraHost,
+			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
+			repos: repos.reduce<Repositories>((acc, repo) => {
+				acc[repo.repoId] = repo.toRepositoryData();
+				return acc;
+			}, {})
+		};
+	}
+
+	static buildFromRepositoryData(subscription: Subscription, repo?: RepositoryData): RepoSyncState | undefined {
+		const repoId = Number(repo?.repository?.id);
 		if (!repoId) {
 			return undefined;
 		}
@@ -98,9 +180,23 @@ export default class RepoSyncState extends Sequelize.Model {
 		});
 	}
 
-	setFromRepoJson(repo?: RepositoryData): RepoSyncState {
+	static async updateRepoForSubscription(subscription: Subscription, repo?: RepositoryData): Promise<RepoSyncState | undefined> {
+		const repoId = Number(repo?.repository?.id);
+		if (!repoId) {
+			return undefined;
+		}
+		const model: RepoSyncState | undefined = await RepoSyncState.findOne({
+			where: {
+				subscriptionId: subscription.id,
+				repoId
+			}
+		});
+		return model?.setFromRepositoryData(repo)?.save();
+	}
+
+	setFromRepositoryData(repo?: RepositoryData): RepoSyncState {
 		if (repo) {
-			this.repoUpdatedAt = new Date(repo.repository?.updated_at || Date.now());
+			this.repoUpdatedAt = new Date(repo.repository?.updated_at ?? Date.now());
 			this.branchStatus = repo.branchStatus;
 			this.branchCursor = repo.lastBranchCursor;
 			this.commitStatus = repo.commitStatus;
@@ -111,17 +207,25 @@ export default class RepoSyncState extends Sequelize.Model {
 		return this;
 	}
 
-	static async updateRepoForSubscription(subscription: Subscription, repo?: RepositoryData): Promise<RepoSyncState | undefined> {
-		const repoId = repo?.repository?.id;
-		if (!repoId) {
-			return undefined;
-		}
-		const model: RepoSyncState | undefined = await RepoSyncState.findOne({
-			where: {
-				subscriptionId: subscription.id,
-				repoId
-			}
+	toRepositoryData(): RepositoryData {
+		return _.pickBy({
+			repository: {
+				id: this.repoId.toString(),
+				name: this.repoName,
+				full_name: this.repoFullName,
+				owner: {
+					login: this.repoOwner
+				},
+				html_url: this.repoUrl,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				updated_at: (this.repoUpdatedAt ?? new Date(0)) as any
+			},
+			pullStatus: this.pullStatus,
+			lastPullCursor: this.pullCursor ? Number(this.pullCursor) : undefined,
+			commitStatus: this.commitStatus,
+			lastCommitCursor: this.commitCursor,
+			branchStatus: this.branchStatus,
+			lastBranchCursor: this.branchCursor
 		});
-		return model?.setFromRepoJson(repo)?.save();
 	}
 }
