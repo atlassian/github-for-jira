@@ -8,7 +8,7 @@ import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
-export default async (context: CustomContext, jiraClient, githubInstallationId: number): Promise<void> => {
+export default async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
 	if (await booleanFlag(BooleanFlags.USE_SQS_FOR_DEPLOYMENT, false, jiraClient.baseURL)) {
 		await sqsQueues.deployment.sendMessage({
