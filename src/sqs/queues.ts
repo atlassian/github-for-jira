@@ -1,9 +1,8 @@
 import envVars from "../config/env";
 import { ErrorHandlingResult, SqsQueue } from "./index";
-import { BackfillMessagePayload, backfillQueueMessageHandlerFactory } from "./backfill";
+import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
 import { jiraOctokitErrorHandler, webhookMetricWrapper } from "./error-handlers";
-import backfillQueueSupplier from "../backfill-queue-supplier";
 import { DiscoveryMessagePayload } from "./discovery";
 import { DeploymentMessagePayload, deploymentQueueMessageHandler } from "./deployment";
 
@@ -18,7 +17,7 @@ const sqsQueues = {
 		timeoutSec: 10 * 60,
 		maxAttempts: 3
 	},
-	backfillQueueMessageHandlerFactory(() => backfillQueueSupplier.supply()),
+	backfillQueueMessageHandler,
 	jiraOctokitErrorHandler
 	),
 
@@ -60,7 +59,6 @@ const sqsQueues = {
 	),
 
 	start: () => {
-		backfillQueueSupplier.setSQSQueue(sqsQueues.backfill);
 		sqsQueues.backfill.start();
 		sqsQueues.push.start();
 		sqsQueues.discovery.start();
