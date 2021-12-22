@@ -81,14 +81,14 @@ describe("Pull Request Webhook", () => {
 			]);
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-			body: "[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123",
+			body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test-atlassian-instance.net/browse/TEST-124",
 			id: "test-pull-request-id"
 		}).reply(200);
 
 		jiraNock
-			.get("/rest/api/latest/issue/TEST-123?fields=summary")
+			.get("/rest/api/latest/issue/TEST-124?fields=summary")
 			.reply(200, {
-				key: "TEST-123",
+				key: "TEST-124",
 				fields: {
 					summary: "Example Issue"
 				}
@@ -350,9 +350,9 @@ describe("Pull Request Webhook", () => {
 				]);
 
 			jiraNock
-				.get("/rest/api/latest/issue/TEST-123?fields=summary")
+				.get("/rest/api/latest/issue/TEST-124?fields=summary")
 				.reply(200, {
-					key: "TEST-123",
+					key: "TEST-124",
 					fields: {
 						summary: "Example Issue"
 					}
@@ -452,7 +452,7 @@ describe("Pull Request Webhook", () => {
 
 			githubNock
 				.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-					body: "[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123",
+					body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test-atlassian-instance.net/browse/TEST-124",
 					id: "test-pull-request-id"
 				})
 				.reply(200);
@@ -514,13 +514,13 @@ describe("Pull Request Webhook", () => {
 				]);
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-				body: "[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123",
+				body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test-atlassian-instance.net/browse/TEST-124",
 				id: "test-pull-request-id"
 			}).reply(200);
 
-			jiraNock.get("/rest/api/latest/issue/TEST-123?fields=summary")
+			jiraNock.get("/rest/api/latest/issue/TEST-124?fields=summary")
 				.reply(200, {
-					key: "TEST-123",
+					key: "TEST-124",
 					fields: {
 						summary: "Example Issue"
 					}
@@ -585,7 +585,7 @@ describe("Pull Request Webhook", () => {
 				});
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-				body: "[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123",
+				body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test-atlassian-instance.net/browse/TEST-124",
 				id: "test-pull-request-id"
 			}).reply(200);
 
@@ -632,9 +632,9 @@ describe("Pull Request Webhook", () => {
 					}
 				]);
 
-			jiraNock.get("/rest/api/latest/issue/TEST-123?fields=summary")
+			jiraNock.get("/rest/api/latest/issue/TEST-124?fields=summary")
 				.reply(200, {
-					key: "TEST-123",
+					key: "TEST-124",
 					fields: {
 						summary: "Example Issue"
 					}
