@@ -8,8 +8,8 @@ import {sqsQueueMetrics} from "../../../src/config/metric-names";
 import anything = jasmine.anything;
 
 
-const TEST_QUEUE_URL = envVars.SQS_BACKFILL_QUEUE_URL;
-const TEST_QUEUE_REGION = envVars.SQS_BACKFILL_QUEUE_REGION;
+const TEST_QUEUE_URL = envVars.SQS_TEST_QUEUE_URL;
+const TEST_QUEUE_REGION = envVars.SQS_TEST_QUEUE_REGION;
 const TEST_QUEUE_NAME = "test";
 
 type TestMessage = { msg: string }
