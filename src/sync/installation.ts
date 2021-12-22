@@ -421,10 +421,6 @@ export async function maybeScheduleNextTask(
 	}
 }
 
-export interface BackfillQueue {
-	schedule: (message: BackfillMessagePayload, delayMsecs?: number, logger?: LoggerWithTarget) => Promise<void>;
-}
-
 const redis = new Redis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
