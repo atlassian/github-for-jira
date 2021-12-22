@@ -1,4 +1,4 @@
-import { jiraMatchingIssuesKeysBulkResponse, githubRequestUserLoginResponse, githubPullReviewsResponse, jiraMultipleJiraBulkResponse } from './nock-response';
+import { jiraMatchingIssuesKeysBulkResponse, githubRequestUserLoginResponse, githubPullReviewsResponse, jiraMultipleJiraBulkResponse } from "./nock-response";
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
@@ -95,7 +95,7 @@ describe("multiple Jira instances", () => {
 			.reply(200, githubPullReviewsResponse);
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-			body: "[TEST-123] body of the test pull request.\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123",
+			body: `[TEST-123] body of the test pull request.\n\n[TEST-123]: ${jiraHost}/browse/TEST-123`,
 			id: "test-pull-request-id"
 		}).reply(200);
 

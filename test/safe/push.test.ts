@@ -84,7 +84,7 @@ describe("Push Webhook", () => {
 						{ id: "test-commit-id-1", issueKeys: ["TEST-123", "TEST-246"] },
 						{ id: "test-commit-id-2", issueKeys: ["TEST-345"] }
 					],
-					jiraHost: "https://test-atlassian-instance.net",
+					jiraHost,
 					installationId: event.payload.installation.id
 				}, { removeOnFail: true, removeOnComplete: true }
 			);
