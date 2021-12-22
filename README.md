@@ -135,8 +135,10 @@ If an issue body contains a valid Jira issue key on your instance, the integrati
 
 This makes it so Jira issues can be linked inside a comment without it interrupting the flow of the comment as a whole.
 
-### See GitHub CI/CD data in Jira
-GitHub Actions is a feature from GitHub for automation such as CI/CD. If you’re setting this up for the first time, follow [GitHub Actions Documentation - GitHub Docs](https://docs.github.com/en/actions). If you already have GitHub Actions and want to see CI/CD data from GitHub in Jira, include the Jira issue key in your commit message, branch name, or PR.
+### See GitHub builds and deployments in Jira
+GitHub Actions workflows and deployments will automatically be sent to your connected Jira instances so that they will be visible in Jira issues. If you’re setting this up for the first time, follow [GitHub Actions Documentation - GitHub Docs](https://docs.github.com/en/actions). If you already have GitHub Actions and want to see CI/CD data from GitHub in Jira, include the Jira issue key in your commit message, branch name, or PR title.
+
+Also see our guides for [builds](./docs/builds.md) and [deployments](./docs/deployments.md).
 
 ### How the integration works
 When a workflow (e.g. GitHub Action) or development event (e.g. pull request, commit, branch) runs, the app receives a webhook from GitHub. The app then extract the issue key from the respective branch/commit/PR and send this information to Jira.
