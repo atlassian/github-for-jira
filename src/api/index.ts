@@ -19,6 +19,7 @@ import { Job, Queue } from "bull";
 import { WhereOptions } from "sequelize";
 import getJiraClient from "../jira/client";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import {findOrStartSync} from "../sync/sync-utils";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -202,7 +203,7 @@ router.post(
 				return;
 			}
 
-			await Subscription.findOrStartSync(subscription, resetType);
+			await findOrStartSync(subscription, resetType);
 
 			res.status(202).json({
 				message: `Successfully (re)started sync for ${githubInstallationId}`
@@ -235,7 +236,7 @@ router.post(
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
-			Subscription.findOrStartSync(subscription, syncType)
+			findOrStartSync(subscription, syncType)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));

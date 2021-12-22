@@ -8,6 +8,12 @@ import express from "express";
 
 jest.mock("../../../src/models");
 
+jest.mock("../../../src/sync/sync-utils", () => {
+	return {
+		findOrStartSync: jest.fn()
+	}
+});
+
 describe("Frontend", () => {
 	let frontendApp;
 	let installation;
@@ -61,6 +67,7 @@ describe("Frontend", () => {
 
 		mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
 		mocked(Installation.getForHost).mockResolvedValue(installation);
+		mocked(Subscription.install).mockResolvedValue(subscription);
 
 		frontendApp = express();
 		frontendApp.use((request, _, next) => {
