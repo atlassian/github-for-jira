@@ -6,7 +6,7 @@ import { processDeployment } from "../github/deployment";
 export type DeploymentMessagePayload = {
 	jiraHost: string,
 	installationId: number,
-	webhookReceived: Date,
+	webhookReceived: number,
 	webhookId: string,
 
 	// The original webhook payload from GitHub. We don't need to worry about the SQS size limit because metrics show
@@ -26,7 +26,7 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 		github,
 		messagePayload.webhookId,
 		messagePayload.webhookPayload,
-		messagePayload.webhookReceived,
+		new Date(messagePayload.webhookReceived),
 		messagePayload.jiraHost,
 		messagePayload.installationId,
 		context.log);
