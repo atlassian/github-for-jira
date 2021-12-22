@@ -6,6 +6,7 @@ import waitUntil from "../../utils/waitUntil";
 import statsd from "../../../src/config/statsd";
 import {sqsQueueMetrics} from "../../../src/config/metric-names";
 import anything = jasmine.anything;
+import {getLogger} from "../../../src/config/logger";
 
 
 const TEST_QUEUE_URL = envVars.SQS_TEST_QUEUE_URL;
@@ -20,6 +21,7 @@ function delay(time) {
 
 //We have to disable this rule here hence there is no way to have a proper test for sqs queue with await here
 /* eslint-disable jest/no-done-callback */
+const testLogger = getLogger("sqstest");
 describe("SqsQueue tests", () => {
 
 	const mockRequestHandler = jest.fn();
@@ -50,6 +52,9 @@ describe("SqsQueue tests", () => {
 		let statsdIncrementSpy;
 
 		beforeEach(() => {
+
+			testLogger.info("Running test: [" + expect.getState().currentTestName + "]")
+
 			statsdIncrementSpy = jest.spyOn(statsd, "increment");
 			queue = createSqsQueue(10);
 			queue.sqs.purgeQueue();
@@ -65,6 +70,7 @@ describe("SqsQueue tests", () => {
 			queue.stop();
 			queue.sqs.purgeQueue();
 			await queue.waitUntilListenerStopped();
+			testLogger.info("Finished test cleanup for [" + expect.getState().currentTestName + "]")
 		});
 
 		it("Message gets received", (done: DoneCallback) => {
