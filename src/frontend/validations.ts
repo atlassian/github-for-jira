@@ -8,8 +8,3 @@ export const validJiraDomains = (jiraDomain: string, jiraTopleveldomain: string)
 	!!jiraDomain && !!jiraTopleveldomain &&
 		domainRegexp.test(jiraDomain) &&
 		jiraTopleveldomains.includes(jiraTopleveldomain);
-
-export interface JiraTopleveldomain {
-	value: string;
-	selected: boolean;
-}

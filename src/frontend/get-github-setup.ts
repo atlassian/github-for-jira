@@ -13,7 +13,7 @@ import { Installation } from "../models";
 export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
 	const { jiraHost } = res.locals;
-	if (jiraHost && await Installation.getForHost(jiraHost)) {
+	if (jiraHost && !!(await Installation.getForHost(jiraHost))) {
 		return res.redirect(getJiraAppUrl(jiraHost));
 	}
 

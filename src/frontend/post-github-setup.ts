@@ -4,39 +4,17 @@ import { Request, Response } from "express";
 import { getJiraAppUrl, getJiraMarketplaceUrl } from "../util/get-url";
 import { Installation } from "../models";
 
-interface SetupPagePayload {
-	error: string;
-	domain: string;
-	nonce: string;
-	csrfToken: string;
-}
-
-const renderGitHubSetupPageVersion = (
-	domain: string,
-	req: Request,
-	res: Response
-):void => {
-	const gitHubSetupPagePayload: SetupPagePayload = {
-		error: "The entered Jira Cloud site is not valid.",
-		domain,
-		nonce: res.locals.nonce,
-		csrfToken: req.csrfToken(),
-	};
-
-	res.render("github-setup.hbs", gitHubSetupPagePayload)
-};
-
 const validateJiraSite = async (
-	jiraHost: string,
-	domain: string,
 	req: Request,
-	res: Response
+	res: Response,
+	jiraHost: string
 ): Promise<void> => {
 
 	// Check to see if we already have an installation of the app
 	if(await Installation.getForHost(jiraHost)) {
 		// If so, redirect to the app itself
-		return res.redirect(getJiraAppUrl(jiraHost));
+		res.send({redirect: getJiraAppUrl(jiraHost)});
+		return;
 	}
 
 	try {
@@ -50,11 +28,13 @@ const validateJiraSite = async (
 
 		// if 200 returns, it's valid and can redirect to the marketplace
 		// for the user to install the app
-		return res.redirect(getJiraMarketplaceUrl(jiraHost));
+		res.send({redirect: getJiraMarketplaceUrl(jiraHost)});
+		return;
 	}catch(err) {
 		// If Jira site is not valid, it returns a 404
 		req.log.error(err, "Invalid Jira site entered.");
-		renderGitHubSetupPageVersion(domain, req, res);
+		res.status(400).send({error: "The entered Jira Cloud site is not valid.", url: jiraHost});
+		return;
 	}
 };
 
@@ -63,14 +43,14 @@ export default async (req: Request, res: Response): Promise<void> => {
 
 	const domain = jiraDomain || jiraDomainMain || jiraDomainModal;
 	const topLevelDomain = "atlassian.net";
-	const jiraSiteUrl = `https://${domain}.${topLevelDomain}`;
+	const jiraHost = `https://${domain}.${topLevelDomain}`;
 
-	req.log.info(`Received github setup page request for jira ${jiraSiteUrl}`);
+	req.log.info(`Received github setup page request for jira ${jiraHost}`);
 
 	if (!validJiraDomains(domain, topLevelDomain)) {
-		res.status(400);
-		return renderGitHubSetupPageVersion(domain, req, res);
+		res.status(400).send({error: "The entered Jira Cloud site is not valid.", url: jiraHost});
+		return;
 	}
 
-	await validateJiraSite(jiraSiteUrl, domain, req, res);
+	await validateJiraSite(req, res, jiraHost);
 };
