@@ -19,6 +19,7 @@ import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
 import {BackfillMessagePayload} from "../sqs/backfill";
 import {Hub} from "@sentry/types/dist/hub";
+import sqsQueues from "../sqs/queues";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -214,7 +215,7 @@ export const isNotFoundError = (
 };
 
 // TODO: type queues
-async function doProcessInstallation(app, job, installationId: number, jiraHost: string, logger: LoggerWithTarget, scheduleNextTask: (delay) => void): Promise<void> {
+async function doProcessInstallation(app, job, installationId: number, jiraHost: string, logger: LoggerWithTarget, scheduleNextTask: (delayMs) => void): Promise<void> {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId
@@ -404,19 +405,19 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export async function maybeScheduleNextTask(
-	backfillQueue: BackfillQueue,
 	jobData: BackfillMessagePayload,
-	nextTaskDelays: Array<number>,
+	nextTaskDelaysMs: Array<number>,
 	logger: LoggerWithTarget
 ) {
-	if (nextTaskDelays.length > 0) {
-		nextTaskDelays.sort().reverse();
-		if (nextTaskDelays.length > 1) {
+	if (nextTaskDelaysMs.length > 0) {
+		nextTaskDelaysMs.sort().reverse();
+		if (nextTaskDelaysMs.length > 1) {
 			logger.warn("Multiple next jobs were scheduled, scheduling one with the highest priority");
 		}
-		const delay = nextTaskDelays.shift()!;
-		logger.info("Scheduling next job with a delay = " + delay);
-		await backfillQueue.schedule(jobData, delay, logger);
+		const delayMs = nextTaskDelaysMs.shift()!;
+		logger.info("Scheduling next job with a delay = " + delayMs);
+
+		await sqsQueues.backfill.sendMessage(jobData, (delayMs || 0) / 1000, logger);
 	}
 }
 
@@ -426,8 +427,9 @@ export interface BackfillQueue {
 
 const redis = new Redis(getRedisInfo("installations-in-progress"));
 
+const RETRY_DELAY_BASE_SEC = 60;
 export const processInstallation =
-	(app: Application, backfillQueueSupplier: () => Promise<BackfillQueue>) => {
+	(app: Application) => {
 		const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
 		const deduplicator = new Deduplicator(
 			inProgressStorage, 1_000
@@ -448,23 +450,22 @@ export const processInstallation =
 				jiraHost
 			});
 
-			const nextTaskDelays: Array<number> = [];
+			const nextTaskDelaysMs: Array<number> = [];
 
 			const result = await deduplicator.executeWithDeduplication(
 				"i-" + installationId + "-" + jiraHost,
 				() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
-					nextTaskDelays.push(delay)
+					nextTaskDelaysMs.push(delay)
 				));
 
 			switch (result) {
 				case DeduplicatorResult.E_OK:
 					logger.info("Job was executed by deduplicator");
-					maybeScheduleNextTask(await backfillQueueSupplier(), job.data, nextTaskDelays, logger);
+					maybeScheduleNextTask(job.data, nextTaskDelaysMs, logger);
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 					logger.warn("Possible duplicate job was detected, rescheduling");
-					const queue = await backfillQueueSupplier();
-					await queue.schedule(job.data, 60_000, logger);
+					await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC, logger);
 					break;
 				}
 				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
@@ -479,8 +480,7 @@ export const processInstallation =
 					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
 					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
 					// is finished.
-					const queue = await backfillQueueSupplier();
-					await queue.schedule(job.data, Math.floor(60_000 + 60_000 * Math.random()), logger);
+					await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC*Math.random(), logger);
 					break;
 				}
 			}
