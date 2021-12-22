@@ -16,7 +16,7 @@
       "number": 1,
       "state": "open",
       "title": "[TEST-123] [TEST-222] Test pull request.",
-      "body": "[TEST-123] [TEST-222] body of the test pull request.",
+      "body": "[TEST-124] [TEST-223] body of the test pull request.",
       "comments": "test-pull-request-comment-count",
       "html_url": "test-pull-request-url",
       "head": {
