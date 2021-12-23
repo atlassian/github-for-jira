@@ -7,7 +7,6 @@ import { setupApp } from "../../src/configure-robot";
 
 export const createApplication = () => {
 	const app = new Application({
-		githubToken: "test",
 		app: new App({
 			id: 12257,
 			privateKey: findPrivateKey() || ""

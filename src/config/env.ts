@@ -50,6 +50,7 @@ const envVars: EnvVars = {
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
 	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira",
+	GITHUB_HOSTNAME: process.env.GHE_HOST || "github.com"
 } as EnvVars;
 
 // TODO: Make envvars dynamic
@@ -97,6 +98,7 @@ export interface EnvVars {
 	GIT_COMMIT_DATE?: string;
 	GIT_BRANCH_NAME?: string;
 	GITHUB_REPO_URL: string;
+	GITHUB_HOSTNAME: string;
 	DEPLOYMENT_DATE: string;
 	BULL_QUEUE_PREFIX?: string;
 

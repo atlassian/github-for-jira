@@ -81,7 +81,7 @@ describe("Pull Request Webhook", () => {
 			]);
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-			body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test-atlassian-instance.net/browse/TEST-124",
+			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
 			id: "test-pull-request-id"
 		}).reply(200);
 
@@ -454,7 +454,7 @@ describe("Pull Request Webhook", () => {
 
 			githubNock
 				.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-					body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test-atlassian-instance.net/browse/TEST-124",
+					body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
 					id: "test-pull-request-id"
 				})
 				.reply(200);
@@ -516,7 +516,7 @@ describe("Pull Request Webhook", () => {
 				]);
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-				body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test-atlassian-instance.net/browse/TEST-124",
+				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
 				id: "test-pull-request-id"
 			}).reply(200);
 
@@ -587,7 +587,7 @@ describe("Pull Request Webhook", () => {
 				});
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-				body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test-atlassian-instance.net/browse/TEST-124",
+				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
 				id: "test-pull-request-id"
 			}).reply(200);
 

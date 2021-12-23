@@ -68,7 +68,7 @@ Object {
   ],
   "failedConnections": Array [],
   "hasConnections": true,
-  "host": "https://test-atlassian-instance.net",
+  "host": "https://test-atlassian-instance.atlassian.net",
   "installationId": "1234",
   "repoSyncState": "http://127.0.0.1/api/1234/repoSyncState.json",
 }
@@ -78,7 +78,7 @@ exports[`API Endpoints repoSyncState should return 404 if no installation is fou
 
 exports[`API Endpoints repoSyncState should return the repoSyncState information for an existing installation 1`] = `
 Object {
-  "jiraHost": "https://test-atlassian-instance.net",
+  "jiraHost": "https://test-atlassian-instance.atlassian.net",
   "numberOfSyncedRepos": 1,
   "repos": Object {
     "1": Object {
