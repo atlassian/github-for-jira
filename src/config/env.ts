@@ -40,8 +40,6 @@ const getProxyFromEnvironment = (): string | undefined => {
 };
 
 const envVars: EnvVars = {
-	SQS_TEST_QUEUE_URL: "http://127.0.0.1:4566/000000000000/test-sqs-client",
-	SQS_TEST_QUEUE_REGION: "us-west-1",
 	...process.env,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
