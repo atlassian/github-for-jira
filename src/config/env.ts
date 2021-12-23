@@ -18,6 +18,8 @@ const requiredEnvVars = [
 	"SQS_PUSH_QUEUE_REGION",
 	"SQS_DISCOVERY_QUEUE_URL",
 	"SQS_DISCOVERY_QUEUE_REGION",
+	"SQS_DEPLOYMENT_QUEUE_URL",
+	"SQS_DEPLOYMENT_QUEUE_REGION",
 	"MICROS_AWS_REGION",
 ];
 
@@ -47,6 +49,8 @@ const envVars: EnvVars = {
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
 	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira",
+	SQS_TEST_QUEUE_URL: "http://127.0.0.1:4566/000000000000/test-sqs-client",
+	SQS_TEST_QUEUE_REGION: "us-west-1",
 	GITHUB_DOMAIN: process.env.GHE_HOST || "github.com"
 } as EnvVars;
 
@@ -68,6 +72,8 @@ export interface EnvVars {
 	SQS_PUSH_QUEUE_REGION: string;
 	SQS_DISCOVERY_QUEUE_URL: string;
 	SQS_DISCOVERY_QUEUE_REGION: string;
+	SQS_DEPLOYMENT_QUEUE_URL: string;
+	SQS_DEPLOYMENT_QUEUE_REGION: string;
 
 	APP_ID: string;
 	APP_URL: string;
@@ -100,6 +106,8 @@ export interface EnvVars {
 	ATLASSIAN_SECRET?: string;
 	AWS_ACCESS_KEY_ID?: string;
 	AWS_SECRET_ACCESS_KEY?: string;
+	SQS_TEST_QUEUE_URL: string;
+	SQS_TEST_QUEUE_REGION: string;
 
 	// Micros Lifecycle Env Vars
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;

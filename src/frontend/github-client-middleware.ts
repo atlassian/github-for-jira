@@ -3,11 +3,8 @@ import { NextFunction, Request, RequestHandler, Response } from "express";
 import { App } from "@octokit/app";
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default (octokitApp: App): RequestHandler => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { jiraHost } = res.locals;
-
 	// If githubToken isn't set, this GithubAPI will be unauthed
 	res.locals.github = GithubAPI();
 
@@ -15,13 +12,7 @@ export default (octokitApp: App): RequestHandler => async (req: Request, res: Re
 		auth: octokitApp.getSignedJsonWebToken()
 	});
 
-	if (await booleanFlag(BooleanFlags.CALL_IS_ADMIN_AS_APP, false, jiraHost)) {
-		req.log.info(`using app-authenticated github client for jira host ${jiraHost}`);
-		res.locals.isAdmin = isAdmin(res.locals.client, req.log);
-	} else {
-		req.log.info(`using user-authenticated github client for jira host ${jiraHost}`);
-		res.locals.isAdmin = isAdmin(res.locals.github, req.log);
-	}
+	res.locals.isAdmin = isAdmin(res.locals.github, req.log);
 
 	next();
 };
