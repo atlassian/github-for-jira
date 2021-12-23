@@ -2,8 +2,8 @@ import envVars from "../config/env";
 import { ErrorHandlingResult, SqsQueue } from "./index";
 import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
-import { jiraOctokitErrorHandler, webhookMetricWrapper } from "./error-handlers";
-import { DiscoveryMessagePayload } from "./discovery";
+import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
+import {DiscoveryMessagePayload, discoveryQueueMessageHandler} from "./discovery";
 import { DeploymentMessagePayload } from "./deployment";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
@@ -18,7 +18,7 @@ const sqsQueues = {
 		maxAttempts: 3
 	},
 	backfillQueueMessageHandler,
-	jiraOctokitErrorHandler
+	jiraAndGitHubErrorsHandler
 	),
 
 	push: new SqsQueue<PushQueueMessagePayload>({
@@ -28,7 +28,7 @@ const sqsQueues = {
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
 		maxAttempts: 5
-	}, pushQueueMessageHandler, webhookMetricWrapper(jiraOctokitErrorHandler, "push")),
+	}, pushQueueMessageHandler, webhookMetricWrapper(jiraAndGitHubErrorsHandler, "push")),
 
 	discovery: new SqsQueue<DiscoveryMessagePayload>({
 		queueName: "discovery",
@@ -38,10 +38,8 @@ const sqsQueues = {
 		timeoutSec: 10 * 60,
 		maxAttempts: 3
 	},
-	async () => {
-		//TODO Implement
-	},
-	async (): Promise<ErrorHandlingResult> => ({ retryable: true, isFailure: true })
+	discoveryQueueMessageHandler,
+	jiraAndGitHubErrorsHandler
 	),
 
 	deployment: new SqsQueue<DeploymentMessagePayload>({

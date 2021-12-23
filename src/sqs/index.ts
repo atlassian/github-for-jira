@@ -194,7 +194,7 @@ export class SqsQueue<MessagePayload> {
 	 * @param delaySec Delay in seconds after which the message will be ready to be processed
 	 * @param log Logger to be used to log message sending status
 	 */
-	public async sendMessage(payload: MessagePayload, delaySec = 0, log: Logger = this.log) {
+	public async sendMessage(payload: MessagePayload, delaySec = 0, log: Logger | LoggerWithTarget = this.log) {
 		const params: SendMessageRequest = {
 			MessageBody: JSON.stringify(payload),
 			QueueUrl: this.queueUrl,

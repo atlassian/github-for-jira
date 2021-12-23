@@ -59,7 +59,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 			host: res.locals.jiraHost
 		});
 
-		await findOrStartSync(subscription);
+		await findOrStartSync(subscription, req.log);
 
 
 		res.sendStatus(200);
