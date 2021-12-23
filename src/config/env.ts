@@ -74,6 +74,8 @@ export interface EnvVars {
 	SQS_DISCOVERY_QUEUE_REGION: string;
 	SQS_DEPLOYMENT_QUEUE_URL: string;
 	SQS_DEPLOYMENT_QUEUE_REGION: string;
+	SQS_BRANCH_QUEUE_URL: string;
+	SQS_BRANCH_QUEUE_REGION: string;
 
 	APP_ID: string;
 	APP_URL: string;
