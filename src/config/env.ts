@@ -39,8 +39,9 @@ const getProxyFromEnvironment = (): string | undefined => {
 	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
 };
 
-// TODO: Make envvars dynamic
 const envVars: EnvVars = {
+	SQS_TEST_QUEUE_URL: "http://127.0.0.1:4566/000000000000/test-sqs-client",
+	SQS_TEST_QUEUE_REGION: "us-west-1",
 	...process.env,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
@@ -49,10 +50,9 @@ const envVars: EnvVars = {
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
 	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira",
-	SQS_TEST_QUEUE_URL: "http://127.0.0.1:4566/000000000000/test-sqs-client",
-	SQS_TEST_QUEUE_REGION: "us-west-1",
 } as EnvVars;
 
+// TODO: Make envvars dynamic
 // Check to see if all required environment variables are set
 const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
 if (missingVars.length) {
