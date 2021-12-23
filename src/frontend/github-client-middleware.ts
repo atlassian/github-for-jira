@@ -5,13 +5,8 @@ import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 
 export default (octokitApp: App): RequestHandler => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	if (req.session.githubToken) {
-		res.locals.github = GithubAPI({
-			auth: req.session.githubToken
-		});
-	} else {
-		res.locals.github = GithubAPI();
-	}
+	// If githubToken isn't set, this GithubAPI will be unauthed
+	res.locals.github = GithubAPI();
 
 	res.locals.client = GithubAPI({
 		auth: octokitApp.getSignedJsonWebToken()

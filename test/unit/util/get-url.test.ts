@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import envVars from "../../../src/config/env";
-import { getJiraAppUrl, getJiraMarketplaceUrl } from "../../../src/util/get-url";
+import { getJiraAppUrl, getJiraMarketplaceUrl } from "../../../src/util/jira-utils";
 
 describe("Get URL Utils", () => {
 	describe("getJiraAppUrl", () => {
@@ -26,8 +26,8 @@ describe("Get URL Utils", () => {
 
 	describe("getJiraMarketplaceUrl", () => {
 		it("should return the correct default URL", ()=> {
-			expect(getJiraMarketplaceUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/com.atlassian.jira.emcee/discover#!/discover/app/com.github.integration.production`)
-			expect(getJiraMarketplaceUrl("https://foo.com")).toEqual(`https://foo.com/plugins/servlet/ac/com.atlassian.jira.emcee/discover#!/discover/app/com.github.integration.production`)
+			expect(getJiraMarketplaceUrl(jiraHost)).toEqual(`${jiraHost}/jira/marketplace/discover/app/com.github.integration.production`)
+			expect(getJiraMarketplaceUrl("https://foo.com")).toEqual(`https://foo.com/jira/marketplace/discover/app/com.github.integration.production`)
 		});
 
 		it("should return empty string if missing jiraHost", () => {
