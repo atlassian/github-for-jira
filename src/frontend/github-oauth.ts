@@ -5,8 +5,10 @@ import axios from "axios";
 import { getLogger } from "../config/logger";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { Tracer } from "../config/tracer";
+import envVars from "../config/env";
+import GithubApi from "../config/github-api";
+import { Errors } from "../config/errors";
 
-const githubHost = process.env.GHE_HOST || "github.com";
 const logger = getLogger("github-oauth");
 
 export interface OAuthOptions {
@@ -46,7 +48,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		req.session[state] =
 			res.locals.redirect ||
 			`/github/configuration${url.parse(req.originalUrl).search || ""}`;
-		const redirectUrl = `https://${githubHost}/login/oauth/authorize?client_id=${opts.githubClient}${
+		const redirectUrl = `https://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${opts.githubClient}${
 			opts.scopes?.length ? `&scope=${opts.scopes.join(" ")}` : ""
 		}&redirect_uri=${redirectURI}&state=${state}`;
 		req.log.info({
@@ -105,7 +107,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 
 		try {
 			const response = await axios.get(
-				`https://${githubHost}/login/oauth/access_token`,
+				`https://${envVars.GITHUB_HOSTNAME}/login/oauth/access_token`,
 				{
 					params: {
 						client_id: opts.githubClient,
@@ -121,6 +123,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 				}
 			);
 
+			// Saving it to session be used later
 			req.session.githubToken = response.data.access_token;
 
 			if (!req.session.githubToken) {
@@ -146,16 +149,39 @@ export default (opts: OAuthOptions): GithubOAuth => {
 	return {
 		router: router,
 		checkGithubAuth: async (req: Request, res: Response, next: NextFunction) => {
-			const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-			const tracer = new Tracer(logger.child(opts), "checkGithubAuth", traceLogsEnabled);
+			try {
+				const { githubToken } = req.session;
+				if (!githubToken) {
+					req.log.info("github token missing, calling login()");
+					throw "Missing github token";
+				}
+				req.log.debug("found github token in session. validating token with API.");
 
-			if (!req.session.githubToken) {
-				tracer.trace("found github token in session, calling login()");
-				res.locals.redirect = req.originalUrl;
-				return login(req, res);
+				await axios.get(`https://api.${envVars.GITHUB_HOSTNAME}`, {
+					headers: {
+						Authorization: `Bearer ${githubToken}`
+					}
+				});
+
+				req.log.debug(`Github token is valid, continuing...`);
+
+				// Everything's good, set it to res.locals
+				res.locals.githubToken = githubToken;
+				// TODO: Not a great place to put this, but it'll do for now
+				res.locals.github = GithubApi({ auth: githubToken });
+				return next();
+			} catch (e) {
+				req.log.debug(`Github token is not valid.`);
+				// If it's a GET request, we can redirect to login and try again
+				if (req.method == "GET") {
+					req.log.info(`Trying to get new Github token...`);
+					res.locals.redirect = req.originalUrl;
+					return login(req, res);
+				}
+
+				// For any other requests, it should just error
+				return res.status(401).send(Errors.MISSING_GITHUB_TOKEN);
 			}
-			tracer.trace("found github token in session");
-			return next();
 		}
 	};
 };

@@ -49,8 +49,7 @@ const envVars: EnvVars = {
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
 	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira",
-	SQS_TEST_QUEUE_URL: "http://127.0.0.1:4566/000000000000/test-sqs-client",
-	SQS_TEST_QUEUE_REGION: "us-west-1",
+	GITHUB_HOSTNAME: process.env.GHE_HOST || "github.com"
 } as EnvVars;
 
 // Check to see if all required environment variables are set
@@ -97,6 +96,7 @@ export interface EnvVars {
 	GIT_COMMIT_DATE?: string;
 	GIT_BRANCH_NAME?: string;
 	GITHUB_REPO_URL: string;
+	GITHUB_HOSTNAME: string;
 	DEPLOYMENT_DATE: string;
 	BULL_QUEUE_PREFIX?: string;
 
