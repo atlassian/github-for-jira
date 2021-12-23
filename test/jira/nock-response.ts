@@ -66,13 +66,13 @@ export const jiraMatchingIssuesKeysBulkResponse = {
 						fileCount: 0,
 						hash: "test-pull-request-sha",
 						id: "test-pull-request-sha",
-						issueKeys: ["TEST-123", "TEST-222", "TEST-321"],
+						issueKeys: ["TEST-123", "TEST-222", "TEST-321", "TEST-124", "TEST-223"],
 						message: "n/a",
 						updateSequenceId: 12345678,
 						url: "test-pull-request-head-url/commit/test-pull-request-sha"
 					},
 					id: "TEST-321-test-pull-request-head-ref",
-					issueKeys: ["TEST-123", "TEST-222", "TEST-321"],
+					issueKeys: ["TEST-123", "TEST-222", "TEST-321", "TEST-124", "TEST-223"],
 					name: "TEST-321-test-pull-request-head-ref",
 					url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
 					updateSequenceId: 12345678
@@ -90,7 +90,7 @@ export const jiraMatchingIssuesKeysBulkResponse = {
 					destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 					displayId: "#1",
 					id: 1,
-					issueKeys: ["TEST-123", "TEST-222", "TEST-321"],
+					issueKeys: ["TEST-123", "TEST-222", "TEST-321", "TEST-124", "TEST-223"],
 					lastUpdate: "test-pull-request-update-time",
 					reviewers: [
 						{
@@ -136,13 +136,13 @@ export const jiraMultipleJiraBulkResponse = {
 						fileCount: 0,
 						hash: "test-pull-request-sha",
 						id: "test-pull-request-sha",
-						issueKeys: ["TEST-123", "TEST-321"],
+						issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 						message: "n/a",
 						updateSequenceId: 12345678,
 						url: "test-pull-request-head-url/commit/test-pull-request-sha"
 					},
 					id: "TEST-321-test-pull-request-head-ref",
-					issueKeys: ["TEST-123", "TEST-321"],
+					issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 					name: "TEST-321-test-pull-request-head-ref",
 					url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
 					updateSequenceId: 12345678
@@ -160,7 +160,7 @@ export const jiraMultipleJiraBulkResponse = {
 					destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 					displayId: "#1",
 					id: 1,
-					issueKeys: ["TEST-123", "TEST-321"],
+					issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 					lastUpdate: "test-pull-request-update-time",
 					reviewers: [
 						{

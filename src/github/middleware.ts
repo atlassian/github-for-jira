@@ -71,7 +71,7 @@ function extractWebhookEventNameFromContext(context: CustomContext<any>): string
 
 // TODO: fix typings
 export default (
-	callback: (context: CustomContext, jiraClient: JiraClient, util: any) => Promise<void>
+	callback: (context: CustomContext, jiraClient: JiraClient, util: any, githubInstallationId: number) => Promise<void>
 ) => {
 	return withSentry(async (context: CustomContext) => {
 		enhanceOctokit(context.github);
@@ -208,7 +208,7 @@ export default (
 			const util = getJiraUtil(jiraClient);
 
 			try {
-				await callback(context, jiraClient, util);
+				await callback(context, jiraClient, util, gitHubInstallationId);
 			} catch (err) {
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
 				if(!isWarning) {

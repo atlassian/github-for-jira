@@ -1,10 +1,10 @@
 import envVars from "../config/env";
-import { ErrorHandlingResult, SqsQueue } from "./index";
+import { SqsQueue } from "./index";
 import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
 import {DiscoveryMessagePayload, discoveryQueueMessageHandler} from "./discovery";
-import { DeploymentMessagePayload } from "./deployment";
+import { DeploymentMessagePayload, deploymentQueueMessageHandler } from "./deployment";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 
@@ -50,22 +50,22 @@ const sqsQueues = {
 		timeoutSec: 60,
 		maxAttempts: 5
 	},
-	async () => {
-		//TODO Implement
-	},
-	async (): Promise<ErrorHandlingResult> => ({ retryable: true, isFailure: true })
+	deploymentQueueMessageHandler,
+	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "deployment")
 	),
 
 	start: () => {
 		sqsQueues.backfill.start();
 		sqsQueues.push.start();
 		sqsQueues.discovery.start();
+		sqsQueues.deployment.start();
 	},
 
 	stop: () => {
 		sqsQueues.backfill.stop();
 		sqsQueues.push.stop();
 		sqsQueues.discovery.stop();
+		sqsQueues.deployment.stop();
 	}
 }
 
