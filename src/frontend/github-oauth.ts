@@ -48,7 +48,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		req.session[state] =
 			res.locals.redirect ||
 			`/github/configuration${url.parse(req.originalUrl).search || ""}`;
-		const redirectUrl = `https://${envVars.GITHUB_DOMAIN}/login/oauth/authorize?client_id=${opts.githubClient}${
+		const redirectUrl = `https://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${opts.githubClient}${
 			opts.scopes?.length ? `&scope=${opts.scopes.join(" ")}` : ""
 		}&redirect_uri=${redirectURI}&state=${state}`;
 		req.log.info({
@@ -107,7 +107,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 
 		try {
 			const response = await axios.get(
-				`https://${envVars.GITHUB_DOMAIN}/login/oauth/access_token`,
+				`https://${envVars.GITHUB_HOSTNAME}/login/oauth/access_token`,
 				{
 					params: {
 						client_id: opts.githubClient,
@@ -149,17 +149,15 @@ export default (opts: OAuthOptions): GithubOAuth => {
 	return {
 		router: router,
 		checkGithubAuth: async (req: Request, res: Response, next: NextFunction) => {
-			const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-			const tracer = new Tracer(logger.child(opts), "checkGithubAuth", traceLogsEnabled);
 			try {
 				const { githubToken } = req.session;
 				if (!githubToken) {
-					tracer.trace("github token missing, calling login()");
+					req.log.info("github token missing, calling login()");
 					throw "Missing github token";
 				}
-				tracer.trace("found github token in session. validating token with API.");
+				req.log.debug("found github token in session. validating token with API.");
 
-				await axios.get(`https://api.${envVars.GITHUB_DOMAIN}`, {
+				await axios.get(`https://api.${envVars.GITHUB_HOSTNAME}`, {
 					headers: {
 						Authorization: `Bearer ${githubToken}`
 					}
@@ -174,9 +172,9 @@ export default (opts: OAuthOptions): GithubOAuth => {
 				return next();
 			} catch (e) {
 				req.log.debug(`Github token is not valid.`);
-				// If its a GET request, we can redirect to login and try again
+				// If it's a GET request, we can redirect to login and try again
 				if (req.method == "GET") {
-					req.log.debug(`Trying to get new Github token...`);
+					req.log.info(`Trying to get new Github token...`);
 					res.locals.redirect = req.originalUrl;
 					return login(req, res);
 				}
