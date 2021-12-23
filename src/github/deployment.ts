@@ -11,7 +11,6 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 export default async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
 	if (await booleanFlag(BooleanFlags.USE_SQS_FOR_DEPLOYMENT, false, jiraClient.baseURL)) {
-		console.log("SCHEDULING MESSAGE");
 		await sqsQueues.deployment.sendMessage({
 			jiraHost: jiraClient.baseURL,
 			installationId: githubInstallationId,
@@ -90,8 +89,6 @@ export const processDeployment = async (
 			rejectedDeployments: result.rejectedDeployments
 		}, "Jira API rejected deployment!");
 	}
-
-	console.log(`WEBHOOK RECEIVED: ${webhookReceivedDate.getTime()}`)
 
 	emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),
