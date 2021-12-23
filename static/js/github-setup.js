@@ -19,26 +19,26 @@ const hasProtocol = (str) =>
 
 $(document).ready(() => {
 	// Handle form submit
-	$("#jira-instance-form").on("submit", (event) => {
+	$(".githubSetup__form").on("submit", (event) => {
 		event.preventDefault();
 		// TODO do something here to show user that form is being submitted
-		fetch(event.target.action, {
-			method: "POST",
-			body: new FormData(event.target)
-		})
-			.then((res) => res.json())
-			.then((body) => {
-				if(body.error) {
-					return Promise.reject(body);
+		$.post(
+			event.target.action,
+			Object.fromEntries(new FormData(event.target).entries())
+		)
+			.done(function(body) {
+				if (body.error) {
+					throw body;
 				}
 
 				// Redirecting the user to the correct jira instance
 				// Should probably redo this with query strings and just redoing the GET request
 				document.location.href = body.redirect;
 			})
-			.catch((error) => {
-				// TODO handle error
+			.fail(function(response) {
+				// Handle failure
 			});
+		;
 	});
 
 	// Handle events for main form
