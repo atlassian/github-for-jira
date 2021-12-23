@@ -94,7 +94,6 @@ describe("Pull Request Webhook", () => {
 				}
 			});
 
-
 		jiraNock.post("/rest/devinfo/0.10/bulk", {
 			preventTransitions: false,
 			repositories: [
@@ -115,13 +114,13 @@ describe("Pull Request Webhook", () => {
 								fileCount: 0,
 								hash: "test-pull-request-sha",
 								id: "test-pull-request-sha",
-								issueKeys: ["TEST-123", "TEST-321"],
+								issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 								message: "n/a",
 								updateSequenceId: 12345678,
 								url: "test-pull-request-head-url/commit/test-pull-request-sha"
 							},
 							id: "TEST-321-test-pull-request-head-ref",
-							issueKeys: ["TEST-123", "TEST-321"],
+							issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 							name: "TEST-321-test-pull-request-head-ref",
 							url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
 							updateSequenceId: 12345678
@@ -139,7 +138,7 @@ describe("Pull Request Webhook", () => {
 							destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 							displayId: "#1",
 							id: 1,
-							issueKeys: ["TEST-123", "TEST-321"],
+							issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 							lastUpdate: "test-pull-request-update-time",
 							reviewers: [
 								{
@@ -385,7 +384,8 @@ describe("Pull Request Webhook", () => {
 												issueKeys:
 													[
 														"TEST-123",
-														"TEST-321"
+														"TEST-321",
+														"TEST-124"
 													],
 												message: "n/a",
 												updateSequenceId: 12345678,
@@ -395,7 +395,8 @@ describe("Pull Request Webhook", () => {
 										issueKeys:
 											[
 												"TEST-123",
-												"TEST-321"
+												"TEST-321",
+												"TEST-124"
 											],
 										name: "TEST-321-test-pull-request-head-ref",
 										url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
@@ -419,7 +420,8 @@ describe("Pull Request Webhook", () => {
 										issueKeys:
 											[
 												"TEST-123",
-												"TEST-321"
+												"TEST-321",
+												"TEST-124"
 											],
 										lastUpdate: "test-pull-request-update-time",
 										reviewers:
@@ -544,7 +546,7 @@ describe("Pull Request Webhook", () => {
 								destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 								displayId: "#1",
 								id: 1,
-								issueKeys: ["TEST-123", "TEST-321"],
+								issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 								lastUpdate: "test-pull-request-update-time",
 								reviewers: [
 									{
@@ -667,7 +669,8 @@ describe("Pull Request Webhook", () => {
 												issueKeys:
 													[
 														"TEST-123",
-														"TEST-321"
+														"TEST-321",
+														"TEST-124"
 													],
 												message: "n/a",
 												updateSequenceId: 12345678,
@@ -677,7 +680,8 @@ describe("Pull Request Webhook", () => {
 										issueKeys:
 											[
 												"TEST-123",
-												"TEST-321"
+												"TEST-321",
+												"TEST-124"
 											],
 										name: "TEST-321-test-pull-request-head-ref",
 										url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
@@ -701,7 +705,8 @@ describe("Pull Request Webhook", () => {
 										issueKeys:
 											[
 												"TEST-123",
-												"TEST-321"
+												"TEST-321",
+												"TEST-124"
 											],
 										lastUpdate: "test-pull-request-update-time",
 										reviewers:
