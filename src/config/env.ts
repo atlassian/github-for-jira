@@ -49,8 +49,6 @@ const envVars: EnvVars = {
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
 	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira",
-	SQS_TEST_QUEUE_URL: "http://127.0.0.1:4566/000000000000/test-sqs-client",
-	SQS_TEST_QUEUE_REGION: "us-west-1",
 	GITHUB_DOMAIN: process.env.GHE_HOST || "github.com"
 } as EnvVars;
 

@@ -47,28 +47,6 @@ describe("Github Setup", () => {
 					expect(res.status).toBe(200);
 					expect(res.headers["content-type"]).toContain("text/html");
 				}));
-
-		it("should redirect automatically if jiraHost is set and corresponding Installation exists", async () => {
-			await Installation.create({
-				jiraHost,
-				clientKey: "abc123",
-				secrets: "def234",
-				sharedSecret: "ghi345"
-			});
-
-			return supertest(frontendApp)
-				.get("/github/setup")
-				.set(
-					"Cookie",
-					getSignedCookieHeader({
-						jiraHost
-					})
-				)
-				.expect(res => {
-					expect(res.status).toBe(302);
-					expect(res.headers.location).toBe(`${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page`)
-				});
-		});
 	});
 
 	describe("#POST", () => {
@@ -95,6 +73,10 @@ describe("Github Setup", () => {
 				sharedSecret: "sharedSecret",
 				clientKey: "clientKey"
 			});
+
+			jiraNock
+				.get("/status")
+				.reply(200);
 
 			return supertest(frontendApp)
 				.post("/github/setup")
