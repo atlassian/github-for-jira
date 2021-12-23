@@ -1,10 +1,7 @@
 import Sequelize, { Op, WhereOptions } from "sequelize";
 import _ from "lodash";
-import logger from "../config/logger";
-import { queues } from "../worker/queues";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import RepoSyncState from "./reposyncstate";
-import backfillQueueSupplier from '../backfill-queue-supplier';
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -172,8 +169,6 @@ export default class Subscription extends Sequelize.Model {
 			}
 		});
 
-		await Subscription.findOrStartSync(subscription);
-
 		return subscription;
 	}
 
@@ -184,42 +179,6 @@ export default class Subscription extends Sequelize.Model {
 				jiraHost: payload.host
 			}
 		});
-	}
-
-	static async findOrStartSync(
-		subscription: Subscription,
-		syncType?: string
-	): Promise<void> {
-		const { gitHubInstallationId: installationId, jiraHost } = subscription;
-
-		if (!subscription.repoSyncState || syncType === "full") {
-			subscription.changed("repoSyncState", true);
-			await subscription.update({
-				syncStatus: "PENDING",
-				syncWarning: "",
-				repoSyncState: {
-					installationId,
-					jiraHost,
-					repos: {}
-				}
-			});
-			if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, subscription.jiraHost)) {
-				await RepoSyncState.resetSyncFromSubscription(subscription);
-			}
-			logger.info("Starting Jira sync");
-			await queues.discovery.add({ installationId, jiraHost });
-			return;
-		}
-
-		// Otherwise, just add a job to the queue for this installation
-		// This will automatically pick back up from where it left off
-		// if something got stuck
-		if (await booleanFlag(BooleanFlags.USE_SQS_FOR_BACKFILL, false, jiraHost)) {
-			const backfillQueue = await backfillQueueSupplier.supply();
-			await backfillQueue.schedule({installationId, jiraHost}, 0, logger);
-		} else {
-			await queues.installation.add({ installationId, jiraHost });
-		}
 	}
 
 	/*

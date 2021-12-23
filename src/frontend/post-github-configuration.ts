@@ -1,6 +1,7 @@
 import { Subscription } from "../models";
 import { getHashedKey } from "../models/installation";
 import { Request, Response } from "express";
+import {findOrStartSync} from "../sync/sync-utils";
 
 /**
  * Handle the when a user adds a repo to this installation
@@ -52,11 +53,14 @@ export default async (req: Request, res: Response): Promise<void> => {
 			}
 		}
 
-		await Subscription.install({
+		const subscription = await Subscription.install({
 			clientKey: getHashedKey(req.body.clientKey),
 			installationId: req.body.installationId,
 			host: res.locals.jiraHost
 		});
+
+		await findOrStartSync(subscription);
+
 
 		res.sendStatus(200);
 	} catch (err) {
