@@ -1,5 +1,5 @@
 import envVars from "../config/env";
-import { SqsQueue } from "./index";
+import {ErrorHandlingResult, SqsQueue} from "./index";
 import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
