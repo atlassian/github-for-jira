@@ -3,7 +3,6 @@ import { NextFunction, Request, Response } from "express";
 import enhanceOctokit from "../config/enhance-octokit";
 import app from "../worker/app";
 import { getInstallation } from "./get-jira-configuration";
-import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { Errors } from "../config/errors";
@@ -28,10 +27,7 @@ const getConnectedStatus = (
 
 const mergeByLogin = (installationsWithAdmin: any, connectedStatuses: any) =>
 	connectedStatuses ? installationsWithAdmin.map((installation) => ({
-		...connectedStatuses.find(
-			(connection) =>
-				connection.account.login === installation.account.login && connection
-		),
+		...connectedStatuses.find((connection) => connection.account.login === installation.account.login),
 		...installation
 	})) : installationsWithAdmin;
 
@@ -151,11 +147,11 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 	tracer.trace(`found jira host: ${jiraHost}`);
 
-	const github: GitHubAPI = res.locals.github; // user-authenticated GitHub client
-	const client: GitHubAPI = res.locals.client; // app-authenticated GitHub client
-	const isAdmin = res.locals.isAdmin;
-
-	tracer.trace(`isAdmin: ${isAdmin}`);
+	const {
+		github, // user-authenticated GitHub client
+		client, // app-authenticated GitHub client
+		isAdmin
+	} = res.locals;
 
 	const { data: { login } } = await github.users.getAuthenticated();
 

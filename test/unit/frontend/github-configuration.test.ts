@@ -5,6 +5,10 @@ import FrontendApp from "../../../src/frontend/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "../util/cookies";
+import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
+import { when } from "jest-when";
+
+jest.mock("../../../src/config/feature-flags");
 
 describe("Github Configuration", () => {
 	let frontendApp: Application;
@@ -31,13 +35,13 @@ describe("Github Configuration", () => {
 	};
 
 	beforeEach(async () => {
-		sub = Subscription.create({
+		sub = await Subscription.create({
 			gitHubInstallationId: 15,
 			jiraHost,
 			jiraClientKey: "myClientKey"
 		});
 
-		Installation.create({
+		await Installation.create({
 			jiraHost,
 			clientKey: "abc123",
 			secrets: "def234",
@@ -50,7 +54,7 @@ describe("Github Configuration", () => {
 			next();
 		});
 		frontendApp.use(FrontendApp({
-			getSignedJsonWebToken: () => "",
+			getSignedJsonWebToken: () => "token",
 			getInstallationAccessToken: async () => "access-token"
 		}));
 	});
@@ -113,7 +117,7 @@ describe("Github Configuration", () => {
 				.matchHeader("Authorization", /^Bearer .+$/)
 				.reply(403);
 
-			return supertest(frontendApp)
+			await supertest(frontendApp)
 				.post("/github/configuration")
 				.set(
 					"Cookie",
@@ -126,9 +130,14 @@ describe("Github Configuration", () => {
 		});
 	});
 
-	// TODO: try to figure out why this keeps giving a JSON web token decode error
-	describe.skip("#GET", () => {
+	describe("#GET", () => {
 		it("should return 200 when calling with valid Github Token", async () => {
+
+			// Don't use new github client for now - need better to test with it
+			when(booleanFlag)
+				.calledWith(BooleanFlags.USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS, true, jiraHost)
+				.mockResolvedValue(false);
+
 			// This is for github token validation check
 			githubNock
 				.get("/")
@@ -148,7 +157,19 @@ describe("Github Configuration", () => {
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
-				.reply(200, { login: "test-user" });
+				.twice()
+				.reply(200, {
+					"id": 1,
+					"account": {
+						"login": "octocat",
+						"id": 1,
+						"type": "User",
+					},
+					"html_url": "https://github.com/organizations/github/settings/installations/1",
+					"target_type": "Organization",
+					"created_at": "2017-07-08T16:18:44-04:00",
+					"updated_at": "2017-07-08T16:18:44-04:00",
+				});
 
 			githubNock
 				.get(`/user/installations`)
@@ -174,7 +195,25 @@ describe("Github Configuration", () => {
 					html_url: "https://github.com/apps/jira"
 				});
 
-			return supertest(frontendApp)
+			githubNock
+				.get("/installation/repositories")
+				.query({ per_page: 100 })
+				.reply(200, {
+					"total_count": 1,
+					"repositories": [
+						{
+							"id": 123456789,
+							"name": "bar",
+							"full_name": "foo/bar",
+							"owner": {
+								"login": "foo",
+								"type": "User"
+							}
+						}
+					]
+				});
+
+			await supertest(frontendApp)
 				.get("/github/configuration")
 				.set(
 					"Cookie",
@@ -210,7 +249,7 @@ describe("Github Configuration", () => {
 				)
 				.expect(401));
 
-		it("should return a 401 if the user doesn't have access to the requested installation ID", () => {
+		it("should return a 401 if the user doesn't have access to the requested installation ID", async () => {
 			// This is for github token validation check
 			githubNock
 				.get("/")
@@ -220,7 +259,8 @@ describe("Github Configuration", () => {
 			githubNock
 				.get("/user/installations")
 				.reply(200, userInstallationsResponse);
-			return supertest(frontendApp)
+
+			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({
 					installationId: 2

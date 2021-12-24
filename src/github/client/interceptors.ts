@@ -24,10 +24,10 @@ export const setRequestStartTime = (config) => {
 };
 
 //TODO Move to util/axios/common-middleware.ts and use with Jira Client
-const sendResponseMetrics = (response, metricName: string, status?: string | number) => {
-	status = `${status || response.status}`;
+const sendResponseMetrics = (metricName: string, response?:any, status?: string | number) => {
+	status = `${status || response?.status}`;
 	const requestDurationMs = Number(
-		Date.now() - (response.config?.requestStartTime || 0)
+		Date.now() - (response?.config?.requestStartTime || 0)
 	);
 
 	// using client tag to separate GH client from Octokit
@@ -63,12 +63,12 @@ export const instrumentRequest = (metricName) =>
 export const instrumentFailedRequest = (metricName) =>
 	(error) => {
 		if(error instanceof RateLimitingError) {
-			sendResponseMetrics(error.cause?.response, metricName, "rateLimiting")
+			sendResponseMetrics(metricName, error.cause?.response, "rateLimiting")
 		} else if(error instanceof BlockedIpError) {
-			sendResponseMetrics(error.cause?.response, metricName, "blockedIp");
+			sendResponseMetrics(metricName, error.cause?.response, "blockedIp");
 			statsd.increment(metricError.blockedByGitHubAllowlist);
 		} else if(error instanceof GithubClientError) {
-			sendResponseMetrics(error.cause?.response, metricName);
+			sendResponseMetrics(metricName, error.cause?.response);
 		} else {
 			sendResponseMetrics(error.response, metricName);
 		}

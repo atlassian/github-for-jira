@@ -6,7 +6,6 @@ import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
 import { FailedInstallations } from "../config/interfaces";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import Logger from "bunyan";
 
 function mapSyncStatus(syncStatus: SyncStatus = SyncStatus.PENDING): string {
@@ -27,14 +26,8 @@ export async function getInstallation(client, subscription: SubscriptionClass, r
 		response.data.syncStatus = mapSyncStatus(subscription.syncStatus);
 		response.data.syncWarning = subscription.syncWarning;
 		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
-		if (await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false, subscription.jiraHost)) {
-			response.data.totalNumberOfRepos = await RepoSyncState.countFromSubscription(subscription);
-			response.data.numberOfSyncedRepos = await RepoSyncState.countSyncedReposFromSubscription(subscription);
-		} else {
-			response.data.totalNumberOfRepos = Object.keys(subscription.repoSyncState?.repos || {}).length;
-			response.data.numberOfSyncedRepos = subscription.repoSyncState?.numberOfSyncedRepos || 0;
-		}
-
+		response.data.totalNumberOfRepos = await RepoSyncState.countFromSubscription(subscription);
+		response.data.numberOfSyncedRepos = await RepoSyncState.countSyncedReposFromSubscription(subscription);
 		response.data.jiraHost = subscription.jiraHost;
 
 		return response.data;
@@ -70,15 +63,8 @@ export const getFailedConnections = async (
 		.filter((response) => !!response.error)
 		.map(async (failedConnection: FailedInstallations) => {
 			const sub = subscriptions.find(sub => failedConnection.id === sub.gitHubInstallationId);
-			let orgName;
-			if (sub && await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false, sub.jiraHost)) {
-				const repo = await RepoSyncState.findOneFromSubscription(sub);
-				orgName = repo.repoOwner;
-			} else {
-				const repos = sub?.repoSyncState?.repos || {};
-				const repoId = Object.keys(repos);
-				orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
-			}
+			const repo = sub && await RepoSyncState.findOneFromSubscription(sub);
+			const orgName = repo?.repoOwner;
 
 			return {
 				id: failedConnection.id,
@@ -123,8 +109,7 @@ export default async (
 				...data,
 				isGlobalInstall: data.repository_selection === "all",
 				installedAt: formatDate(data.updated_at),
-				syncState: data.syncState,
-				repoSyncState: data.repoSyncState
+				syncState: data.syncState
 			}));
 
 		const hasConnections =

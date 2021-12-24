@@ -18,8 +18,7 @@ import { getLogger } from "../config/logger";
 import { Job, Queue } from "bull";
 import { WhereOptions } from "sequelize";
 import getJiraClient from "../jira/client";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import {findOrStartSync} from "../sync/sync-utils";
+import { findOrStartSync } from "../sync/sync-utils";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -170,11 +169,7 @@ router.get(
 				return;
 			}
 
-			if(await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false)) {
-				res.json(await RepoSyncState.toRepoJson(subscription));
-			} else {
-				res.json(subscription.repoSyncState);
-			}
+			res.json(await RepoSyncState.toRepoJson(subscription));
 		} catch (err) {
 			res.status(500).json(err);
 		}
@@ -399,7 +394,7 @@ router.post(
 				id: installation.id,
 				jiraHost: installation.jiraHost
 			}
-		})
+		});
 	}
 );
 
@@ -447,9 +442,7 @@ router.get(
 				connections,
 				failedConnections,
 				hasConnections: connections.length > 0 || failedConnections.length > 0,
-				repoSyncState: `${req.protocol}://${req.get(
-					"host"
-				)}/api/${installationId}/repoSyncState.json`
+				repoSyncState: `${req.protocol}://${req.get("host")}/api/${installationId}/repoSyncState.json`
 			});
 		} catch (err) {
 			req.log.error({ installationId, err }, "Error getting installation");

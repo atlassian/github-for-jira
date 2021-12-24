@@ -18,13 +18,11 @@ export enum BooleanFlags {
 	// When cleaning up the SEND_PUSH_TO_SQS feature flag, please also clean up the PRIORITIZE_PUSHES
 	// feature flag, because it doesn't make sense with SQS any more.
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
-	NEW_REPO_SYNC_STATE = "new-repo-sync-state",
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS = "support-branch-and-merge-workflows-for-deployments",
 	TRACE_LOGGING = "trace-logging",
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS = "support-branch-and-merge-workflows-for-builds",
 	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push",
 	USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS = "use-new-github-client-to-count-repos",
-	REPO_SYNC_STATE_AS_SOURCE = "repo-sync-state-as-source",
 	USE_SQS_FOR_DEPLOYMENT = "use-sqs-for-deployment",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body"
 }

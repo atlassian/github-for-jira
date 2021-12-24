@@ -1,18 +1,29 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { getFailedConnections, getInstallation } from "../../../src/frontend/get-jira-configuration";
 import { GitHubAPI } from "probot";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { RepoSyncState, Subscription } from "../../../src/models";
 import SubscriptionClass from "../../../src/models/subscription";
 
-jest.mock("../../../src/config/feature-flags");
-
 describe("getFailedConnections", () => {
-	const noSubscriptions = require("../../fixtures/get-jira-configuration/no-subscriptions");
-	const singleSubscription = require("../../fixtures/get-jira-configuration/single-subscription");
-	const multipleSubscriptions = require("../../fixtures/get-jira-configuration/multiple-subscriptions");
-	const subscriptionWithNoRepos = require("../../fixtures/get-jira-configuration/subscription-with-no-repos");
+	const noSubscriptions = require("../../fixtures/get-jira-configuration/no-subscriptions.json");
+	const singleSubscription = require("../../fixtures/get-jira-configuration/single-subscription.json");
+	const multipleSubscriptions = require("../../fixtures/get-jira-configuration/multiple-subscriptions.json");
+	const subscriptionWithNoRepos = require("../../fixtures/get-jira-configuration/subscription-with-no-repos.json");
+
+	beforeEach(async () => {
+		await RepoSyncState.create({
+			subscriptionId: 12345678,
+			repoId: 1,
+			repoName: "test-repo-name",
+			repoOwner: "integrations",
+			repoFullName: "integrations/test-repo-name",
+			repoUrl: "test-repo-url",
+		});
+	});
+
+	afterEach(async () => {
+		await RepoSyncState.destroy({ truncate: true });
+	});
 
 	it("should return no failed connections if there are no installations", async () => {
 		const noInstallations = require("../../fixtures/get-jira-configuration/no-installations");
@@ -29,36 +40,53 @@ describe("getFailedConnections", () => {
 	});
 
 	it("should return a single failed connection if 1 connection fails", async () => {
-		const singleFailedInstallation = require("../../fixtures/get-jira-configuration/single-failed-installation");
+		const singleFailedInstallation = require("../../fixtures/get-jira-configuration/single-failed-installation.json");
 		const result = await getFailedConnections(singleFailedInstallation, singleSubscription);
 		expect(result).toHaveLength(1);
-		expect(result).toEqual([{ deleted: true, id: 12345678, orgName: "fake-name" }]);
+		expect(result).toEqual([{ deleted: true, id: 12345678, orgName: "integrations" }]);
 	});
 
 	it("should return a single failed connection if 1 connection fails and 1 succeeds", async () => {
 		const singleFailedAndSingleSuccessdulInstallation = require("../../fixtures/get-jira-configuration/single-successful-and-single-failed-installations");
 		const result = await getFailedConnections(singleFailedAndSingleSuccessdulInstallation, singleSubscription);
 		expect(result).toHaveLength(1);
-		expect(result).toEqual([{ deleted: true, id: 12345678, orgName: "fake-name" }]);
+		expect(result).toEqual([{ deleted: true, id: 12345678, orgName: "integrations" }]);
 	});
 
 	it("should return a multiple failed connections if there is more than 1 failed connection", async () => {
 		const multipleFailedInstallations = require("../../fixtures/get-jira-configuration/multiple-failed-installations");
+		await RepoSyncState.create({
+			subscriptionId: 23456789,
+			repoId: 2,
+			repoName: "test-repo-name",
+			repoOwner: "integrations2",
+			repoFullName: "integrations/test-repo-name",
+			repoUrl: "test-repo-url",
+		});
 		const result = await getFailedConnections(multipleFailedInstallations, multipleSubscriptions);
 		expect(result).toHaveLength(2);
 		expect(result).toEqual([
-			{ deleted: true, id: 12345678, orgName: "fake-name" },
-			{ deleted: true, id: 23456789, orgName: "fake-name-two" }
+			{ deleted: true, id: 12345678, orgName: "integrations" },
+			{ deleted: true, id: 23456789, orgName: "integrations2" }
 		]);
 	});
 
 	it("should return a multiple failed connections if there are multiple successful and failed connections", async () => {
 		const multipleFailedAndSuccessfulInstallations = require("../../fixtures/get-jira-configuration/muliple-successful-and-multiple-failed-installations");
+
+		await RepoSyncState.create({
+			subscriptionId: 23456789,
+			repoId: 2,
+			repoName: "test-repo-name",
+			repoOwner: "integrations2",
+			repoFullName: "integrations/test-repo-name",
+			repoUrl: "test-repo-url",
+		});
 		const result = await getFailedConnections(multipleFailedAndSuccessfulInstallations, multipleSubscriptions);
 		expect(result).toHaveLength(2);
 		expect(result).toEqual([
-			{ deleted: true, id: 12345678, orgName: "fake-name" },
-			{ deleted: true, id: 23456789, orgName: "fake-name-two" }
+			{ deleted: true, id: 12345678, orgName: "integrations" },
+			{ deleted: true, id: 23456789, orgName: "integrations2" }
 		]);
 	});
 
@@ -67,35 +95,6 @@ describe("getFailedConnections", () => {
 		const result = await getFailedConnections(singleFailedInstallation, subscriptionWithNoRepos);
 		expect(result).toHaveLength(1);
 		expect(result).toEqual([{ deleted: true, id: 12345678, orgName: undefined }]);
-	});
-
-	describe("RepoSyncState table", () => {
-		afterEach(async () => {
-			await RepoSyncState.destroy({ truncate: true });
-		});
-
-		it("should return failed connections from new RepoSyncState table", async () => {
-			const singleFailedInstallation = require("../../fixtures/get-jira-configuration/single-failed-installation");
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.REPO_SYNC_STATE_AS_SOURCE,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(true);
-
-			await RepoSyncState.create({
-				subscriptionId: 12345678,
-				repoId: 1,
-				repoName: "github-for-jira",
-				repoOwner: "atlassian",
-				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira",
-				repoUpdatedAt: new Date(0)
-			});
-			const result = await getFailedConnections(singleFailedInstallation, singleSubscription);
-			expect(result).toHaveLength(1);
-			expect(result).toEqual([{ deleted: true, id: 12345678, orgName: "atlassian" }]);
-		});
 	});
 });
 
@@ -117,45 +116,32 @@ describe("getInstallation", () => {
 		subscription = await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
-			syncStatus: "ACTIVE",
-			repoSyncState: {
-				installationId: gitHubInstallationId,
-				jiraHost,
-				numberOfSyncedRepos: 1,
-				repos: {
-					"1": {
-						pullStatus: "complete",
-						branchStatus: "complete",
-						commitStatus: "complete",
-						lastBranchCursor: "foo",
-						lastCommitCursor: "bar",
-						lastPullCursor: 12,
-						repository: {
-							id: "1",
-							name: "github-for-jira",
-							full_name: "atlassian/github-for-jira",
-							html_url: "github.com/atlassian/github-for-jira",
-							owner: {
-								login: "atlassian"
-							},
-							updated_at: new Date(0)
-						}
-					},
-					"2": {
-						branchStatus: "failed",
-						repository: {
-							id: "2",
-							name: "github-for-jira",
-							full_name: "atlassian/github-for-jira",
-							html_url: "github.com/atlassian/github-for-jira",
-							owner: {
-								login: "atlassian"
-							},
-							updated_at: new Date(0)
-						}
-					}
-				}
-			}
+			syncStatus: "ACTIVE"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: subscription.id,
+			repoId: 1,
+			repoName: "github-for-jira",
+			repoOwner: "atlassian",
+			repoFullName: "atlassian/github-for-jira",
+			repoUrl: "github.com/atlassian/github-for-jira",
+			pullStatus: "complete",
+			branchStatus: "complete",
+			commitStatus: "complete",
+			branchCursor: "foo",
+			commitCursor: "bar",
+			pullCursor: "blarg"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: subscription.id,
+			repoId: 2,
+			repoName: "github-for-jira",
+			repoOwner: "atlassian",
+			repoFullName: "atlassian/github-for-jira",
+			repoUrl: "github.com/atlassian/github-for-jira",
+			branchStatus: "failed"
 		});
 
 		githubNock
@@ -190,12 +176,7 @@ describe("getInstallation", () => {
 	});
 
 	it("Should get installation from Repo Sync State table", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.REPO_SYNC_STATE_AS_SOURCE,
-			expect.anything()
-		).mockResolvedValue(true);
-
-		await RepoSyncState.create({
+		/*await RepoSyncState.create({
 			subscriptionId: subscription.id,
 			repoId: 1,
 			repoName: "github-for-jira",
@@ -220,7 +201,7 @@ describe("getInstallation", () => {
 			repoUrl: "github.com/atlassian/github-for-jira",
 			branchStatus: "failed",
 			repoUpdatedAt: new Date(0)
-		});
+		});*/
 
 		const result = await getInstallation(GitHubAPI(), subscription);
 		expect(result).toMatchObject(match);
