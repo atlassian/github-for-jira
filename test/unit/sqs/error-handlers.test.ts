@@ -1,5 +1,5 @@
 import statsd from "../../../src/config/statsd";
-import {jiraOctokitErrorHandler, webhookMetricWrapper} from "../../../src/sqs/error-handlers";
+import {jiraAndGitHubErrorsHandler, webhookMetricWrapper} from "../../../src/sqs/error-handlers";
 import {Context, ErrorHandlingResult} from "../../../src/sqs/index";
 import {getLogger} from "../../../src/config/logger";
 import {JiraClientError} from "../../../src/jira/client/axios";
@@ -47,7 +47,7 @@ describe("error-handlers", () => {
 
 		it("Returns normal retry when error is unknown", async () => {
 
-			const result = await jiraOctokitErrorHandler(new Error(), createContext(1, false));
+			const result = await jiraAndGitHubErrorsHandler(new Error(), createContext(1, false));
 
 			expect(result.retryable).toBe(true)
 			expect(result.retryDelaySec).toBe(3 * 60)
@@ -56,7 +56,7 @@ describe("error-handlers", () => {
 
 		it("Exponential backoff works", async () => {
 
-			const result = await jiraOctokitErrorHandler(new Error(), createContext(3, false));
+			const result = await jiraAndGitHubErrorsHandler(new Error(), createContext(3, false));
 
 			expect(result.retryable).toBe(true)
 			expect(result.retryDelaySec).toBe(27 * 60)
@@ -73,34 +73,34 @@ describe("error-handlers", () => {
 
 		it("Unretryable and not an error on Jira 401", async () => {
 
-			const result = await jiraOctokitErrorHandler(getJiraClientError(401), createContext(1, true));
+			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(401), createContext(1, true));
 			expect(result.retryable).toBe(false)
 			expect(result.isFailure).toBe(false);
 		});
 
 		it("Unretryable and not an error on Jira 403", async () => {
 
-			const result = await jiraOctokitErrorHandler(getJiraClientError(403), createContext(1, true));
+			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(403), createContext(1, true));
 			expect(result.retryable).toBe(false)
 			expect(result.isFailure).toBe(false);
 		});
 
 		it("Unretryable and not an error on Jira 404", async () => {
 
-			const result = await jiraOctokitErrorHandler(getJiraClientError(404), createContext(1, true));
+			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(404), createContext(1, true));
 			expect(result.retryable).toBe(false)
 			expect(result.isFailure).toBe(false);
 		});
 
 		it("Retryable and error on Jira 500", async () => {
 
-			const result = await jiraOctokitErrorHandler(getJiraClientError(500), createContext(1, true));
+			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(500), createContext(1, true));
 			expect(result.retryable).toBe(true)
 			expect(result.isFailure).toBe(true);
 		});
 
 		it("Retryable with proper delay on Rate Limiting (old)", async () => {
-			const result = await jiraOctokitErrorHandler(new OldRateLimitingError(Math.floor(new Date("2020-01-01").getTime() / 1000) + 100), createContext(1, false));
+			const result = await jiraAndGitHubErrorsHandler(new OldRateLimitingError(Math.floor(new Date("2020-01-01").getTime() / 1000) + 100), createContext(1, false));
 			expect(result.retryable).toBe(true)
 			//Make sure delay is equal to recommended delay + 10 seconds
 			expect(result.retryDelaySec).toBe(110)
@@ -108,7 +108,7 @@ describe("error-handlers", () => {
 		});
 
 		it("Retryable with proper delay on Rate Limiting", async () => {
-			const result = await jiraOctokitErrorHandler(new RateLimitingError(
+			const result = await jiraAndGitHubErrorsHandler(new RateLimitingError(
 				Math.floor(new Date("2020-01-01").getTime() / 1000) + 100,
 				0, {} as AxiosError
 			), createContext(1, false));
@@ -122,7 +122,7 @@ describe("error-handlers", () => {
 
 			const error: Octokit.HookError = {...new Error("Err"), status: 401, headers: {}}
 
-			const result = await jiraOctokitErrorHandler(error, createContext(1, true));
+			const result = await jiraAndGitHubErrorsHandler(error, createContext(1, true));
 			expect(result.retryable).toBe(false)
 			expect(result.isFailure).toBe(false);
 		});
@@ -131,7 +131,7 @@ describe("error-handlers", () => {
 
 			const error: Octokit.HookError = {...new Error("Err"), status: 500, headers: {}}
 
-			const result = await jiraOctokitErrorHandler(error, createContext(1, true));
+			const result = await jiraAndGitHubErrorsHandler(error, createContext(1, true));
 			expect(result.retryable).toBe(true)
 			expect(result.isFailure).toBe(true);
 		});

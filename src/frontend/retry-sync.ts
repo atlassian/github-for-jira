@@ -18,7 +18,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			res.status(404).send("Subscription not found, cannot resync.");
 			return;
 		}
-		await findOrStartSync(subscription, syncType);
+		await findOrStartSync(subscription, req.log, syncType);
 
 		res.sendStatus(202);
 	} catch (error) {
