@@ -23,6 +23,7 @@ export enum BooleanFlags {
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS = "support-branch-and-merge-workflows-for-builds",
 	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push",
 	USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS = "use-new-github-client-to-count-repos",
+	USE_SQS_FOR_DISCOVERY_QUEUE = "use-sqs-for-discovery-queue",
 	USE_SQS_FOR_DEPLOYMENT = "use-sqs-for-deployment",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body"
 }
