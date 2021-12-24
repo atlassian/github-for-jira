@@ -1,6 +1,5 @@
 import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 import RepoSyncState from "../models/reposyncstate";
-import {getLogger} from "../config/logger";
 import {queues} from "../worker/queues";
 import sqsQueues from "../sqs/queues";
 import Subscription from "../models/subscription";
@@ -13,7 +12,6 @@ export async function findOrStartSync(
 	logger: LoggerWithTarget | Logger,
 	syncType?: string
 ): Promise<void> {
-	logger = logger || getLogger("sync-utils");
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
 
 	if (!subscription.repoSyncState || syncType === "full") {
