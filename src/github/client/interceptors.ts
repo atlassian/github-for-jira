@@ -50,7 +50,7 @@ export const instrumentRequest = (metricName) =>
 		if(!response) {
 			return;
 		}
-		return sendResponseMetrics(response, metricName);
+		return sendResponseMetrics(metricName, response);
 	};
 
 /**
@@ -70,7 +70,7 @@ export const instrumentFailedRequest = (metricName) =>
 		} else if(error instanceof GithubClientError) {
 			sendResponseMetrics(metricName, error.cause?.response);
 		} else {
-			sendResponseMetrics(error.response, metricName);
+			sendResponseMetrics(metricName, error.response);
 		}
 		return Promise.reject(error);
 	};
