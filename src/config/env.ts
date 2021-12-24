@@ -20,6 +20,8 @@ const requiredEnvVars = [
 	"SQS_DISCOVERY_QUEUE_REGION",
 	"SQS_DEPLOYMENT_QUEUE_URL",
 	"SQS_DEPLOYMENT_QUEUE_REGION",
+	"SQS_BRANCH_QUEUE_URL",
+	"SQS_BRANCH_QUEUE_REGION",
 	"MICROS_AWS_REGION",
 ];
 
@@ -39,7 +41,6 @@ const getProxyFromEnvironment = (): string | undefined => {
 	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
 };
 
-// TODO: Make envvars dynamic
 const envVars: EnvVars = {
 	...process.env,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
@@ -52,6 +53,7 @@ const envVars: EnvVars = {
 	GITHUB_HOSTNAME: process.env.GHE_HOST || "github.com"
 } as EnvVars;
 
+// TODO: Make envvars dynamic
 // Check to see if all required environment variables are set
 const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
 if (missingVars.length) {
@@ -72,6 +74,8 @@ export interface EnvVars {
 	SQS_DISCOVERY_QUEUE_REGION: string;
 	SQS_DEPLOYMENT_QUEUE_URL: string;
 	SQS_DEPLOYMENT_QUEUE_REGION: string;
+	SQS_BRANCH_QUEUE_URL: string;
+	SQS_BRANCH_QUEUE_REGION: string;
 
 	APP_ID: string;
 	APP_URL: string;
