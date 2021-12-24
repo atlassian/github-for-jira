@@ -20,7 +20,7 @@ const RATE_LIMITING_DELAY_BUFFER_SEC = 10;
 const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
-export const jiraOctokitErrorHandler : ErrorHandler<any> = async (error: JiraClientError | Octokit.HookError | OldRateLimitingError | RateLimitingError | Error,
+export const jiraAndGitHubErrorsHandler : ErrorHandler<any> = async (error: JiraClientError | Octokit.HookError | OldRateLimitingError | RateLimitingError | Error,
 	context: Context<any>) : Promise<ErrorHandlingResult> => {
 
 	const maybeResult = maybeHandleNonFailureCase(error, context);
@@ -56,9 +56,10 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 		return {retryable: false, isFailure: false}
 	}
 
-	//If error is Octokit.HookError, then we need to check the response status
+	//If error is Octokit.HookError or GithubClientError, then we need to check the response status
 	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a calss, so we'll just rely on status
-	//TODO Add error handling for the new GitHub client when it will be done
+	//New GitHub Client error (GithubClientError) also has status parameter, so it will be covered by the following check too
+	//TODO When we get rid of Octokit completely add check if (error instanceof GithubClientError) before the following code
 	const maybeErrorWithStatus : any = error;
 	if (maybeErrorWithStatus.status && UNRETRYABLE_STATUS_CODES.includes(maybeErrorWithStatus.status)) {
 		context.log.warn({err: maybeErrorWithStatus}, `Received error with ${maybeErrorWithStatus.status} status. Unretryable. Discarding the message`);

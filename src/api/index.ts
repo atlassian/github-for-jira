@@ -203,7 +203,7 @@ router.post(
 				return;
 			}
 
-			await findOrStartSync(subscription, resetType);
+			await findOrStartSync(subscription, req.log, resetType);
 
 			res.status(202).json({
 				message: `Successfully (re)started sync for ${githubInstallationId}`
@@ -236,7 +236,7 @@ router.post(
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
-			findOrStartSync(subscription, syncType)
+			findOrStartSync(subscription, req.log, syncType)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));

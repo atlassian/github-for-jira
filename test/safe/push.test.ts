@@ -9,8 +9,6 @@ import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
 import sqsQueues from "../../src/sqs/queues";
 
-jest.mock("../../src/config/feature-flags");
-
 const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
 
 describe("Push Webhook", () => {
