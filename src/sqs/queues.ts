@@ -5,6 +5,7 @@ import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
 import {DiscoveryMessagePayload, discoveryQueueMessageHandler} from "./discovery";
 import { DeploymentMessagePayload, deploymentQueueMessageHandler } from "./deployment";
+import { BranchMessagePayload } from "./branch";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 
@@ -52,6 +53,20 @@ const sqsQueues = {
 	},
 	deploymentQueueMessageHandler,
 	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "deployment")
+	),
+
+	branch: new SqsQueue<BranchMessagePayload>({
+		queueName: "branch",
+		queueUrl: envVars.SQS_BRANCH_QUEUE_URL,
+		queueRegion: envVars.SQS_BRANCH_QUEUE_REGION,
+		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
+		timeoutSec: 60,
+		maxAttempts: 5
+	},
+	async () => {
+		//TODO Implement
+	},
+	async (): Promise<ErrorHandlingResult> => ({ retryable: true, isFailure: true })
 	),
 
 	start: () => {
