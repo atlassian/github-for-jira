@@ -1,9 +1,9 @@
 import envVars from "../config/env";
-import {ErrorHandlingResult, SqsQueue} from "./index";
+import { SqsQueue } from "./index";
 import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
-import {DiscoveryMessagePayload, discoveryQueueMessageHandler} from "./discovery";
+import { DiscoveryMessagePayload, discoveryQueueMessageHandler } from "./discovery";
 import { DeploymentMessagePayload, deploymentQueueMessageHandler } from "./deployment";
 import { BranchMessagePayload, branchQueueMessageHandler } from "./branch";
 
@@ -64,7 +64,7 @@ const sqsQueues = {
 		maxAttempts: 5
 	},
 	branchQueueMessageHandler,
-	webhookMetricWrapper(jiraOctokitErrorHandler, "create")
+	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "create")
 	),
 
 	start: () => {
