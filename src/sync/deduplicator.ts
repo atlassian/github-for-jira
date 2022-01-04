@@ -1,5 +1,6 @@
 import {Redis} from "ioredis";
 import { v4 as uuidv4 } from "uuid";
+import { getLogger } from "../config/logger";
 
 /**
  *
@@ -28,6 +29,8 @@ import { v4 as uuidv4 } from "uuid";
  * and should be rescheduled instead.
  *
  */
+
+const logger = getLogger('bgvozdevdebugging');
 
 
 type InProgressStorage = {
@@ -90,12 +93,16 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 	}
 
 	hasInProgressFlag(jobKey: string, invalidatingTimestamp: number): Promise<string | null> {
+		logger.info("hasInProgressFlag called " + jobKey + " " + invalidatingTimestamp);
 		return this.redis.get(jobKey).then(json => {
+			logger.info("hasInProgressFlag found redis item " + json);
 			if (!json) {
 				return null;
 			}
 			const flag = JSON.parse(json) as Flag;
+			logger.info("hasInProgressFlag parsed redis item ");
 			const isStaled = (new Date().getTime() - flag.timestamp) >= invalidatingTimestamp;
+			logger.info("hasInProgressFlag concluded isStalled=" + isStaled + ", " + flag.timestamp);
 			if (isStaled) {
 				return null;
 			}
@@ -104,6 +111,7 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 	}
 
 	async removeInProgressFlag(jobKey: string): Promise<void> {
+		logger.info("removeInProgressFlag " + jobKey);
 		await this.redis.unlink(jobKey);
 	}
 
@@ -114,22 +122,28 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 		};
 		// We don't want to pollute redis, autoexpire after the flag is not being updated
 		const REDIS_CLEANUP_TIMEOUT = 24 * 3600 * 1000;
+		logger.info("setInProgressFlag " + jobKey + " " + JSON.stringify(flag));
 		await this.redis.set(jobKey, JSON.stringify(flag), 'px', REDIS_CLEANUP_TIMEOUT);
 	}
 
 	async isJobRunnerLive(jobKey: string, jobRunnerId: string, jobRunnerFlagUpdateTimeoutMsecs: number): Promise<boolean> {
 		const flagOld = await this.redis.get(jobKey);
+		logger.info("isJobRunnerLive " + jobKey + " " + jobRunnerId + " " + jobRunnerFlagUpdateTimeoutMsecs);
 		if (!flagOld) {
 			// Cannot tell, might have finished already (race condition)
+			logger.info("isJobRunnerLive cannot tell, might be race");
 			return false;
 		}
+		logger.info("isJobRunnerLive flagOld=" + flagOld);
 		const flagOldParsed = JSON.parse(flagOld) as Flag;
 		if (flagOldParsed.jobRunnerId !== jobRunnerId) {
-			// Cannot tell, other node might haved pick up the job and updated the flag
+			// Cannot tell, other node might have pick up the job and updated the flag
+			logger.info("isJobRunnerLive cannot tell, other node might have picked up");
 			return false;
 		}
 
 		if (jobRunnerFlagUpdateTimeoutMsecs > 5_000) {
+			logger.info("isJobRunnerLive one should not block execution for too long");
 			throw new Error("One shouldn't block the execution for too long!");
 		}
 		await sleep(jobRunnerFlagUpdateTimeoutMsecs * 2);
@@ -137,8 +151,10 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 		const flagNew = await this.redis.get(jobKey);
 		if (!flagNew) {
 			// Cannot tell, might have been deleted by Redis during auto-expiration
+			logger.info("isJobRunnerLive cannot tell, might have been deleted by Redis during auto-expiration");
 			return false;
 		}
+		logger.info("isJobRunnerLive flagNew=" + flagNew);
 		const flagNewParsed = JSON.parse(flagNew) as Flag;
 		// The only condition when we can say for sure that something is processing the job
 		return flagNewParsed.jobRunnerId === jobRunnerId && flagOldParsed.timestamp < flagNewParsed.timestamp;
