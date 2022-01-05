@@ -89,7 +89,7 @@ export type MessageHandler<MessagePayload> = (context: Context<MessagePayload>) 
 export type ErrorHandler<MessagePayload> = (error: Error, context: Context<MessagePayload>) => Promise<ErrorHandlingResult>;
 
 /**
- * Trivial error handler which classifies all errros as retryable
+ * Trivial error handler which classifies all errors as retryable
  */
 export const defaultErrorHandler = async () => ({retryable: true});
 
