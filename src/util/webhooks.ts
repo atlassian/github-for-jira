@@ -25,7 +25,7 @@ export const emitWebhookProcessedMetrics = (
 		// only send logs if time of webhookReceived occurred before the currentTime
 		// and if webhookReceivedTime is not null/undefined
 		if (webhookReceivedTime <= currentTime) {
-			const timeToProcessWebhookEvent = getCurrentTime() - webhookReceivedTime;
+			const timeToProcessWebhookEvent = currentTime - webhookReceivedTime;
 
 			contextLogger.info(
 				{ webhookName },
@@ -62,7 +62,7 @@ export const emitWebhookProcessedMetrics = (
 		} else {
 			contextLogger?.error(
 				{ webhookReceivedTime },
-				"Failed to send timeToProcessWebhookEvent metric. webhookReceivedTime is not a number."
+				`Failed to send timeToProcessWebhookEvent metric. webhookReceivedTime: ${webhookReceivedTime}; current time: ${currentTime}.`
 			);
 			return undefined;
 		}

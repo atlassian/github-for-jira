@@ -1,7 +1,7 @@
 
 import {processInstallation} from "../../../src/sync/installation";
 import {mocked} from "ts-jest/utils";
-import {BackfillMessagePayload, backfillQueueMessageHandlerFactory} from "../../../src/sqs/backfill";
+import {BackfillMessagePayload, backfillQueueMessageHandler} from "../../../src/sqs/backfill";
 import {Context} from "../../../src/sqs";
 import {getLogger} from "../../../src/config/logger";
 import * as Sentry from "@sentry/node";
@@ -48,7 +48,7 @@ describe('backfill', () => {
 		const mockedProcessor = jest.fn();
 		mocked(processInstallation).mockReturnValue(mockedProcessor);
 		mockedProcessor.mockRejectedValue(new Error("something went horribly wrong"));
-		await backfillQueueMessageHandlerFactory(jest.fn())(BACKFILL_MESSAGE_CONTEXT).catch(e => console.warn(e));
+		await backfillQueueMessageHandler(BACKFILL_MESSAGE_CONTEXT).catch(e => console.warn(e));
 		expect(sentryCaptureExceptionMock).toBeCalled();
 	});
 });

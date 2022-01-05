@@ -43,7 +43,7 @@ describe("Issue Webhook", () => {
 
 				githubNock
 					.patch("/repos/test-repo-owner/test-repo-name/issues/123456789", {
-						body: "Test example issue with linked Jira issue: [TEST-123]\n\n[TEST-123]: https://test-atlassian-instance.net/browse/TEST-123",
+						body: `Test example issue with linked Jira issue: [TEST-123]\n\n[TEST-123]: ${jiraHost}/browse/TEST-123`,
 						id: "test-issue-id"
 					})
 					.reply(200, {

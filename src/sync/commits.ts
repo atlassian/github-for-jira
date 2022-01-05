@@ -1,14 +1,14 @@
 import transformCommit from "../transforms/commit";
 import { getCommits as getCommitsQuery, getDefaultRef } from "./queries";
 import { GitHubAPI } from "probot";
-import { getLogger } from "../config/logger";
 import { Repository } from "../models/subscription";
 import GitHubClient from "../github/client/github-client";
-
-const logger = getLogger("sync.commits");
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 // TODO: better typings
-export default async (github: GitHubAPI, _newGithub: GitHubClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+export default async (logger: LoggerWithTarget, github: GitHubAPI, _newGithub: GitHubClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+	logger.info("Syncing commits: started");
+
 	// TODO: fix typings for graphql
 	const data = (await github.graphql(getDefaultRef, {
 		owner: repository.owner.login,
@@ -53,6 +53,8 @@ export default async (github: GitHubAPI, _newGithub: GitHubClient, _jiraHost: st
 	// if the repository is empty, commitsData.repository.ref is null
 	const edges = commitsData.repository?.ref?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
+
+	logger.info("Syncing commits: finished");
 
 	return {
 		edges,

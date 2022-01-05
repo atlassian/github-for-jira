@@ -89,6 +89,15 @@ resources:
         - PII/IndirectConfidential # name of GitHub org
 
   - type: sqs
+    name: discovery
+    attributes:
+      MaxReceiveCount: 3
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 602 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails.
+      dataType:
+        - UGC/Label                # name of Jira site
+
+  - type: sqs
     name: push
     attributes:
       MaxReceiveCount: 5
@@ -96,6 +105,28 @@ resources:
       VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
       dataType:
         - UGC/Label                # name of GitHub org
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+
+  - type: sqs
+    name: deployment
+    attributes:
+      MaxReceiveCount: 5
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
+      dataType:
+        - UGC/Label                # name of GitHub org, URL/name of Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+
+  - type: sqs
+    name: branch
+    attributes:
+      MaxReceiveCount: 5
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
+      dataType:
+        - UGC/Label                # name of GitHub org, URL/name of Jira site
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
 
@@ -169,6 +200,7 @@ alarms:
       Period: 120
       ComparisonOperator: GreaterThanThreshold
       Statistic: Average
+    HighSeverityAlarmWhenTooManyBackend5xxErrors: null
     HighSeverityAlarmWhenTooManyELB5xxErrors: null
     LowSeverityAlarmWhenTooManyBackend5xxErrors: null
     LowSeverityAlarmWhenTooManyELB5xxErrors: null
@@ -287,6 +319,19 @@ environmentOverrides:
           min: 1
           max: 5
           metrics: *CpuMemAndQueuesScalingRules
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          ip_whitelist:
+            - public
+          routes: &blackholeSpammingIPs
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
     alarms:
       overrides:
         LatencyHigh: null
@@ -297,7 +342,6 @@ environmentOverrides:
         WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
         WebServerMemoryAlarmHigh: null
         WebServerServiceRespawnAlarm: null
-        HighSeverityAlarmWhenTooManyBackend5xxErrors: null
 
   staging:
     config:
@@ -353,7 +397,6 @@ environmentOverrides:
               ReturnData: false
     alarms:
       overrides:
-        HighSeverityAlarmWhenTooManyBackend5xxErrors: null
         LatencyHigh: null
 #TODO Uncomment when we stop doing hourly deployments
 #        ElbResponseTimeAlert:
@@ -394,13 +437,7 @@ environmentOverrides:
             - github.stg.atlassian.com
           ip_whitelist:
             - public
-          routes:
-            - match: # Blackhole IP that keeps spamming us
-                prefix: /
-                external_address_header_match:
-                  - 94.156.174.137
-              route:
-                cluster: blackhole # Deny by sending traffic to blackhole
+          routes: *blackholeSpammingIPs
 
   prod:
     config:
@@ -442,15 +479,6 @@ environmentOverrides:
 #          Period: 180
 #          ComparisonOperator: GreaterThanThreshold
 #          Statistic: Average
-        HighSeverityAlarmWhenTooManyBackend5xxErrors:
-          MetricName: HTTPCode_Target_5XX_Count
-          Namespace: AWS/ApplicationELB
-          Priority: Low
-          Threshold: 500
-          EvaluationPeriods: 1
-          Period: 300
-          ComparisonOperator: GreaterThanOrEqualToThreshold
-          Statistic: Sum
     resources:
       - type: redisx
         name: cache
@@ -492,10 +520,4 @@ environmentOverrides:
             - github.atlassian.com
           ip_whitelist:
             - public
-          routes:
-            - match: # Blackhole IP that keeps spamming us
-                prefix: /
-                external_address_header_match:
-                  - 94.156.174.137
-              route:
-                cluster: blackhole # Deny by sending traffic to blackhole
+          routes: *blackholeSpammingIPs

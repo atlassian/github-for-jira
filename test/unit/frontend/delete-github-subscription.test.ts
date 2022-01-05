@@ -29,9 +29,6 @@ describe("POST /github/subscription", () => {
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost
-			},
-			session: {
-				githubToken: "abc-token"
 			}
 		};
 
@@ -43,6 +40,7 @@ describe("POST /github/subscription", () => {
 			status: jest.fn(),
 			locals: {
 				jiraHost,
+				githubToken: "abc-token",
 				github: {
 					apps: {
 						listInstallationsForAuthenticatedUser: jest.fn().mockResolvedValue({
@@ -73,7 +71,8 @@ describe("POST /github/subscription", () => {
 		};
 
 		const res = {
-			sendStatus: jest.fn()
+			sendStatus: jest.fn(),
+			locals: {}
 		};
 
 		await deleteSubscription(req as any, res as any);
@@ -84,7 +83,6 @@ describe("POST /github/subscription", () => {
 		"missing body.%s",
 		async (property) => {
 			const req = {
-				session: { githubToken: "example-token" },
 				body: {
 					installationId: "an installation id",
 					jiraHost
@@ -94,7 +92,8 @@ describe("POST /github/subscription", () => {
 				status: jest.fn(),
 				json: jest.fn(),
 				locals: {
-					jiraHost
+					jiraHost,
+					githubToken: "example-token"
 				}
 			};
 

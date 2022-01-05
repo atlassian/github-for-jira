@@ -1,6 +1,6 @@
 import statsd from "../../../src/config/statsd";
-import {jiraOctokitErrorHandler} from "../../../src/sqs/error-handlers";
-import {Context} from "../../../src/sqs/index";
+import {jiraAndGitHubErrorsHandler, webhookMetricWrapper} from "../../../src/sqs/error-handlers";
+import {Context, ErrorHandlingResult} from "../../../src/sqs/index";
 import {getLogger} from "../../../src/config/logger";
 import {JiraClientError} from "../../../src/jira/client/axios";
 import {RateLimitingError as OldRateLimitingError} from "../../../src/config/enhance-octokit";
@@ -8,8 +8,7 @@ import {Octokit} from "probot";
 import {RateLimitingError} from "../../../src/github/client/errors";
 import {AxiosError} from "axios";
 
-
-describe("jiraOktokitErrorHandler", () => {
+describe("error-handlers", () => {
 
 	let statsdIncrementSpy = jest.spyOn(statsd, "histogram");
 
@@ -44,102 +43,151 @@ describe("jiraOktokitErrorHandler", () => {
 			receiveCount, lastAttempt, log: getLogger("test"), message: {}, payload: mockPayload
 		})
 
+	describe("jiraOktokitErrorHandler", () => {
 
-	it("Returns normal retry when error is unknown", async () => {
+		it("Returns normal retry when error is unknown", async () => {
 
-		const result = await jiraOctokitErrorHandler(new Error(), createContext(1, false));
+			const result = await jiraAndGitHubErrorsHandler(new Error(), createContext(1, false));
 
-		expect(result.retryable).toBe(true)
-		expect(result.retryDelaySec).toBe(3*60)
-		expect(statsdIncrementSpy).toBeCalledTimes(0);
+			expect(result.retryable).toBe(true)
+			expect(result.retryDelaySec).toBe(3 * 60)
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Exponential backoff works", async () => {
+
+			const result = await jiraAndGitHubErrorsHandler(new Error(), createContext(3, false));
+
+			expect(result.retryable).toBe(true)
+			expect(result.retryDelaySec).toBe(27 * 60)
+			expect(result.isFailure).toBe(true);
+		});
+
+		function getJiraClientError(code: number) {
+			return new JiraClientError("err", {
+				message: "",
+				name: "",
+				config: {}, isAxiosError: true, toJSON: () => ({})
+			}, code);
+		}
+
+		it("Unretryable and not an error on Jira 401", async () => {
+
+			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(401), createContext(1, true));
+			expect(result.retryable).toBe(false)
+			expect(result.isFailure).toBe(false);
+		});
+
+		it("Unretryable and not an error on Jira 403", async () => {
+
+			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(403), createContext(1, true));
+			expect(result.retryable).toBe(false)
+			expect(result.isFailure).toBe(false);
+		});
+
+		it("Unretryable and not an error on Jira 404", async () => {
+
+			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(404), createContext(1, true));
+			expect(result.retryable).toBe(false)
+			expect(result.isFailure).toBe(false);
+		});
+
+		it("Retryable and error on Jira 500", async () => {
+
+			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(500), createContext(1, true));
+			expect(result.retryable).toBe(true)
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Retryable with proper delay on Rate Limiting (old)", async () => {
+			const result = await jiraAndGitHubErrorsHandler(new OldRateLimitingError(Math.floor(new Date("2020-01-01").getTime() / 1000) + 100), createContext(1, false));
+			expect(result.retryable).toBe(true)
+			//Make sure delay is equal to recommended delay + 10 seconds
+			expect(result.retryDelaySec).toBe(110)
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Retryable with proper delay on Rate Limiting", async () => {
+			const result = await jiraAndGitHubErrorsHandler(new RateLimitingError(
+				Math.floor(new Date("2020-01-01").getTime() / 1000) + 100,
+				0, {} as AxiosError
+			), createContext(1, false));
+			expect(result.retryable).toBe(true)
+			//Make sure delay is equal to recommended delay + 10 seconds
+			expect(result.retryDelaySec).toBe(110)
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Unretryable and not an error on OctokitError 401", async () => {
+
+			const error: Octokit.HookError = {...new Error("Err"), status: 401, headers: {}}
+
+			const result = await jiraAndGitHubErrorsHandler(error, createContext(1, true));
+			expect(result.retryable).toBe(false)
+			expect(result.isFailure).toBe(false);
+		});
+
+		it("Unretryable and error on OctokitError 500", async () => {
+
+			const error: Octokit.HookError = {...new Error("Err"), status: 500, headers: {}}
+
+			const result = await jiraAndGitHubErrorsHandler(error, createContext(1, true));
+			expect(result.retryable).toBe(true)
+			expect(result.isFailure).toBe(true);
+		});
 	});
 
-	it("Exponential backoff works", async () => {
 
-		const result = await jiraOctokitErrorHandler(new Error(), createContext(3, false));
+	describe("webhookMetricWrapper", () => {
 
-		expect(result.retryable).toBe(true)
-		expect(result.retryDelaySec).toBe(27*60)
-		expect(statsdIncrementSpy).toBeCalledTimes(0);
-	});
+		it("Doesn't sent metric for a non-error case when not retryable", async () => {
 
-	it("Sends metrics when it was last attempt", async () => {
+			const mockedResponse: ErrorHandlingResult = {retryable: false, isFailure: false};
+			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
-		await jiraOctokitErrorHandler(new Error(), createContext(1, true));
+			const result = await handlerUnderTest(new Error(), createContext(1, false));
+			expect(result).toBe(mockedResponse)
+			expect(statsdIncrementSpy).toBeCalledTimes(0);
+		});
 
-		expect(statsdIncrementSpy).toBeCalledTimes(1);
-	});
+		it("Doesn't sent metric for a non-error case when lastAttempt", async () => {
 
-	function getJiraClientError(code: number) {
-		return new JiraClientError("err", {
-			message: "",
-			name: "",
-			config: {}, isAxiosError: true, toJSON: () => ({})
-		}, code);
-	}
+			const mockedResponse: ErrorHandlingResult = {retryable: true, isFailure: false};
+			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
-	it("Unretryable and no failure metric on Jira 401", async () => {
+			const result = await handlerUnderTest(new Error(), createContext(3, true));
+			expect(result).toBe(mockedResponse)
+			expect(statsdIncrementSpy).toBeCalledTimes(0);
+		});
 
-		const result = await jiraOctokitErrorHandler(getJiraClientError(401), createContext(1, true));
-		expect(result.retryable).toBe(false)
-		expect(statsdIncrementSpy).toBeCalledTimes(0);
-	});
+		it("Doesn't sent metric for an error when retryable but not last attempt", async () => {
 
-	it("Unretryable and no failure metric on Jira 403", async () => {
+			const mockedResponse: ErrorHandlingResult = {retryable: true, isFailure: true};
+			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
-		const result = await jiraOctokitErrorHandler(getJiraClientError(403), createContext(1, true));
-		expect(result.retryable).toBe(false)
-		expect(statsdIncrementSpy).toBeCalledTimes(0);
-	});
+			const result = await handlerUnderTest(new Error(), createContext(2, false));
+			expect(result).toBe(mockedResponse)
+			expect(statsdIncrementSpy).toBeCalledTimes(0);
+		});
 
-	it("Unretryable and no failure metric on Jira 404", async () => {
+		it("Sends metric for an error case when not retryable", async () => {
 
-		const result = await jiraOctokitErrorHandler(getJiraClientError(404), createContext(1, true));
-		expect(result.retryable).toBe(false)
-		expect(statsdIncrementSpy).toBeCalledTimes(0);
-	});
+			const mockedResponse: ErrorHandlingResult = {retryable: false, isFailure: true};
+			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
-	it("Retryable and no failure metric sent on Jira 500", async () => {
+			const result = await handlerUnderTest(new Error(), createContext(1, false));
+			expect(result).toBe(mockedResponse)
+			expect(statsdIncrementSpy).toBeCalledTimes(1);
+		});
 
-		const result = await jiraOctokitErrorHandler(getJiraClientError(500), createContext(1, true));
-		expect(result.retryable).toBe(true)
-		expect(statsdIncrementSpy).toBeCalledTimes(1);
-	});
+		it("Sends metric for a non-error case when lastAttempt", async () => {
 
-	it("Retryable with proper delay on Rate Limiting (old)", async () => {
-		const result = await jiraOctokitErrorHandler(new OldRateLimitingError(Math.floor(new Date("2020-01-01").getTime()/1000) + 100), createContext(1, false));
-		expect(result.retryable).toBe(true)
-		//Make sure delay is equal to recommended delay + 10 seconds
-		expect(result.retryDelaySec).toBe(110)
-		expect(statsdIncrementSpy).toBeCalledTimes(0);
-	});
+			const mockedResponse: ErrorHandlingResult = {retryable: true, isFailure: true};
+			const handlerUnderTest = webhookMetricWrapper(async () => mockedResponse, "test")
 
-	it("Retryable with proper delay on Rate Limiting", async () => {
-		const result = await jiraOctokitErrorHandler(new RateLimitingError(
-			Math.floor(new Date("2020-01-01").getTime()/1000) + 100,
-			0, {} as AxiosError
-		), createContext(1, false));
-		expect(result.retryable).toBe(true)
-		//Make sure delay is equal to recommended delay + 10 seconds
-		expect(result.retryDelaySec).toBe(110)
-		expect(statsdIncrementSpy).toBeCalledTimes(0);
-	});
-
-	it("Unretryable and no failure metric on OctokitError 401", async () => {
-
-		const error : Octokit.HookError = {...new Error("Err"), status: 401, headers: {}}
-
-		const result = await jiraOctokitErrorHandler(error, createContext(1, true));
-		expect(result.retryable).toBe(false)
-		expect(statsdIncrementSpy).toBeCalledTimes(0);
-	});
-
-	it("Retryable and emits failure metrics on OctokitError 500", async () => {
-
-		const error : Octokit.HookError = {...new Error("Err"), status: 500, headers: {}}
-
-		const result = await jiraOctokitErrorHandler(error, createContext(1, true));
-		expect(result.retryable).toBe(true)
-		expect(statsdIncrementSpy).toBeCalledTimes(1);
-	});
+			const result = await handlerUnderTest(new Error(), createContext(3, true));
+			expect(result).toBe(mockedResponse)
+			expect(statsdIncrementSpy).toBeCalledTimes(1);
+		});
+	})
 });

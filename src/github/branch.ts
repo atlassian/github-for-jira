@@ -3,12 +3,15 @@ import issueKeyParser from "jira-issue-key-parser";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import _ from "lodash";
+import {WebhookPayloadCreate, WebhookPayloadDelete} from "@octokit/webhooks";
 
 export const createBranch = async (
 	context: CustomContext,
 	jiraClient
 ): Promise<void> => {
-	const jiraPayload = await transformBranch(context);
+
+	const webhookPayload: WebhookPayloadCreate = context.payload;
+	const jiraPayload = await transformBranch(context.github, webhookPayload);
 
 	if (!jiraPayload) {
 		context.log(
@@ -33,8 +36,9 @@ export const createBranch = async (
 	);
 };
 
-export const deleteBranch = async (context, jiraClient): Promise<void> => {
-	const issueKeys = issueKeyParser().parse(context.payload.ref);
+export const deleteBranch = async (context: CustomContext, jiraClient): Promise<void> => {
+	const payload: WebhookPayloadDelete = context.payload;
+	const issueKeys = issueKeyParser().parse(payload.ref);
 
 	if (_.isEmpty(issueKeys)) {
 		context.log(
@@ -49,8 +53,8 @@ export const deleteBranch = async (context, jiraClient): Promise<void> => {
 	);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
-		context.payload.repository?.id,
-		context.payload.ref
+		`${payload.repository?.id}`,
+		payload.ref
 	);
 	const { webhookReceived, name, log } = context;
 

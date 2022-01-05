@@ -43,7 +43,7 @@ async function getJiraClient(
 
 	// TODO: need to create actual class for this
 	const client = {
-		baseURL: instance.defaults.baseURL,
+		baseURL: installation.jiraHost,
 		issues: {
 			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
 				instance.get("/rest/api/latest/issue/:issue_id", {
