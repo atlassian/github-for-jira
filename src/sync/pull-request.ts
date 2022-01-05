@@ -3,19 +3,17 @@ import url from "url";
 import transformPullRequest from "./transforms/pull-request";
 import statsd from "../config/statsd";
 import { GitHubAPI } from "probot";
-import { getLogger } from "../config/logger";
 import { metricHttpRequest } from "../config/metric-names";
 import { Repository } from "../models/subscription";
 import GitHubClient from "../github/client/github-client";
 import { getGithubUser, getGithubUserNew } from "../services/github/user";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-
-const logger = getLogger("sync.pull-request");
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
 
 /**
  * Find the next page number from the response headers.
  */
-export const getNextPage = (headers: Headers = {}): number | undefined => {
+export const getNextPage = (logger: LoggerWithTarget, headers: Headers = {}): number | undefined => {
 	const nextUrl = ((headers.link || "").match(/<([^>]+)>;\s*rel="next"/) ||
 		[])[1];
 	if (!nextUrl) {
@@ -38,6 +36,7 @@ interface Headers {
 }
 
 export default async function(
+	logger: LoggerWithTarget,
 	github: GitHubAPI,
 	newGithub: GitHubClient,
 	jiraHost: string,
@@ -45,6 +44,7 @@ export default async function(
 	cursor?: string | number,
 	perPage?: number
 ) {
+	logger.info("Syncing PRs: started");
 	let status: number;
 	let headers: Headers = {};
 	let edges;
@@ -89,7 +89,7 @@ export default async function(
 	)();
 
 	// Force us to go to a non-existant page if we're past the max number of pages
-	const nextPage = getNextPage(headers) || cursor + 1;
+	const nextPage = getNextPage(logger, headers) || cursor + 1;
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
@@ -115,6 +115,8 @@ export default async function(
 			})
 		)
 	).filter((value) => !!value);
+
+	logger.info("Syncing PRs: finished");
 
 	return {
 		edges,
