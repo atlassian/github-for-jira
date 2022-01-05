@@ -13,6 +13,7 @@ import {booleanFlag, BooleanFlags, isBlocked} from "../config/feature-flags";
 import sqsQueues from "../sqs/queues";
 import {PushQueueMessagePayload} from "../sqs/push";
 import GitHubClient from "../github/client/github-client";
+import { getCloudInstallationId } from "../github/client/installation-id";
 
 // TODO: define better types for this file
 
@@ -97,7 +98,7 @@ export function processPushJob(app: Application) {
 		}
 		enhanceOctokit(githubOld);
 
-		const github = new GitHubClient(job.data.installationId, logger);
+		const github = new GitHubClient(getCloudInstallationId(job.data.installationId), logger);
 		await processPush(githubOld, github, job.data, logger);
 	};
 }
