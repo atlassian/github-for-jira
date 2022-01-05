@@ -198,7 +198,6 @@ export default (octokitApp: App): Express => {
 	app.get(
 		"/github/setup",
 		csrfProtection,
-		oauth.checkGithubAuth,
 		getGitHubSetup
 	);
 
@@ -218,6 +217,7 @@ export default (octokitApp: App): Express => {
 	app.post(
 		"/github/configuration",
 		csrfProtection,
+		oauth.checkGithubAuth,
 		postGitHubConfiguration
 	);
 
@@ -230,6 +230,7 @@ export default (octokitApp: App): Express => {
 	app.post(
 		"/github/subscription",
 		csrfProtection,
+		oauth.checkGithubAuth,
 		deleteGitHubSubscription
 	);
 

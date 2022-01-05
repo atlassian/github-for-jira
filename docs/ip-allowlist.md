@@ -1,7 +1,6 @@
 # GitHub IP Allow List Configuration
 
-If your organization is using [GitHub's Organization IP Allow List](https://docs.github.
-com/en/organizations/keeping-your-organization-secure/managing-allowed-ip-addresses-for-your-organization), it needs to
+If your organization is using [GitHub's Organization IP Allow List](https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-allowed-ip-addresses-for-your-organization), it needs to
 be configured properly for this GitHub app to be able to communicate with your organization's GitHub API.
 
 There are 2 methods to remedy this based on your company's security policy:
@@ -61,5 +60,4 @@ For simplicity, here's the list of CIDR ranges, but it might not be up to date:
 
 ## If problems persist
 
-Feel free to [contact Atlassian support](https://support.atlassian.com/contact/#/?
-inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product) for guidance and extra help.
+Feel free to [contact Atlassian support](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product) for guidance and extra help.

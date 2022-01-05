@@ -9,8 +9,6 @@ import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
 import sqsQueues from "../../src/sqs/queues";
 
-jest.mock("../../src/config/feature-flags");
-
 const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
 
 describe("Push Webhook", () => {
@@ -84,7 +82,7 @@ describe("Push Webhook", () => {
 						{ id: "test-commit-id-1", issueKeys: ["TEST-123", "TEST-246"] },
 						{ id: "test-commit-id-2", issueKeys: ["TEST-345"] }
 					],
-					jiraHost: "https://test-atlassian-instance.net",
+					jiraHost,
 					installationId: event.payload.installation.id
 				}, { removeOnFail: true, removeOnComplete: true }
 			);

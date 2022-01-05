@@ -1,4 +1,4 @@
-import { jiraMatchingIssuesKeysBulkResponse, githubRequestUserLoginResponse, githubPullReviewsResponse, jiraMultipleJiraBulkResponse } from './nock-response';
+import { jiraMatchingIssuesKeysBulkResponse, githubRequestUserLoginResponse, githubPullReviewsResponse, jiraMultipleJiraBulkResponse } from "./nock-response";
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
@@ -8,7 +8,7 @@ import nock from "nock";
 describe("multiple Jira instances", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
-	const jira2Host = "https://test2-atlassian-instance.net";
+	const jira2Host = "https://test2-atlassian-instance.atlassian.net";
 	const jira2Nock = nock(jira2Host);
 	beforeEach(async () => {
 		app = await createWebhookApp();
@@ -51,7 +51,7 @@ describe("multiple Jira instances", () => {
 			.reply(200, githubPullReviewsResponse);
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-			body: "[TEST-124] [TEST-223] body of the test pull request.\n\n[TEST-223]: https://test2-atlassian-instance.net/browse/TEST-223",
+			body: `[TEST-124] [TEST-223] body of the test pull request.\n\n[TEST-223]: ${jira2Host}/browse/TEST-223`,
 			id: "test-pull-request-id"
 		}).reply(200);
 
@@ -95,13 +95,13 @@ describe("multiple Jira instances", () => {
 			.reply(200, githubPullReviewsResponse);
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-			body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test-atlassian-instance.net/browse/TEST-124",
+			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
 			id: "test-pull-request-id"
 		}).reply(200);
 
 		githubNock
 			.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-				body: "[TEST-124] body of the test pull request.\n\n[TEST-124]: https://test2-atlassian-instance.net/browse/TEST-124",
+				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jira2Host}/browse/TEST-124`,
 				id: "test-pull-request-id"
 			}).reply(200)
 

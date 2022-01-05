@@ -1,13 +1,14 @@
 import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 import RepoSyncState from "../models/reposyncstate";
-import logger from "../config/logger";
-import {queues} from "../worker/queues";
 import sqsQueues from "../sqs/queues";
 import Subscription from "../models/subscription";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import Logger from 'bunyan';
 
 
 export async function findOrStartSync(
 	subscription: Subscription,
+	logger: LoggerWithTarget | Logger,
 	syncType?: string
 ): Promise<void> {
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
@@ -27,7 +28,7 @@ export async function findOrStartSync(
 			await RepoSyncState.resetSyncFromSubscription(subscription);
 		}
 		logger.info("Starting Jira sync");
-		await queues.discovery.add({ installationId, jiraHost });
+		await sqsQueues.discovery.sendMessage({installationId, jiraHost}, 0, logger)
 		return;
 	}
 

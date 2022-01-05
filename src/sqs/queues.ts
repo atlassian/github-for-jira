@@ -1,10 +1,11 @@
 import envVars from "../config/env";
-import { ErrorHandlingResult, SqsQueue } from "./index";
+import {ErrorHandlingResult, SqsQueue} from "./index";
 import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
-import { jiraOctokitErrorHandler, webhookMetricWrapper } from "./error-handlers";
-import { DiscoveryMessagePayload } from "./discovery";
-import { DeploymentMessagePayload } from "./deployment";
+import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
+import {DiscoveryMessagePayload, discoveryQueueMessageHandler} from "./discovery";
+import { DeploymentMessagePayload, deploymentQueueMessageHandler } from "./deployment";
+import { BranchMessagePayload } from "./branch";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 
@@ -18,7 +19,7 @@ const sqsQueues = {
 		maxAttempts: 3
 	},
 	backfillQueueMessageHandler,
-	jiraOctokitErrorHandler
+	jiraAndGitHubErrorsHandler
 	),
 
 	push: new SqsQueue<PushQueueMessagePayload>({
@@ -28,7 +29,7 @@ const sqsQueues = {
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
 		maxAttempts: 5
-	}, pushQueueMessageHandler, webhookMetricWrapper(jiraOctokitErrorHandler, "push")),
+	}, pushQueueMessageHandler, webhookMetricWrapper(jiraAndGitHubErrorsHandler, "push")),
 
 	discovery: new SqsQueue<DiscoveryMessagePayload>({
 		queueName: "discovery",
@@ -38,16 +39,26 @@ const sqsQueues = {
 		timeoutSec: 10 * 60,
 		maxAttempts: 3
 	},
-	async () => {
-		//TODO Implement
-	},
-	async (): Promise<ErrorHandlingResult> => ({ retryable: true, isFailure: true })
+	discoveryQueueMessageHandler,
+	jiraAndGitHubErrorsHandler
 	),
 
 	deployment: new SqsQueue<DeploymentMessagePayload>({
 		queueName: "deployment",
 		queueUrl: envVars.SQS_DEPLOYMENT_QUEUE_URL,
 		queueRegion: envVars.SQS_DEPLOYMENT_QUEUE_REGION,
+		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
+		timeoutSec: 60,
+		maxAttempts: 5
+	},
+	deploymentQueueMessageHandler,
+	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "deployment")
+	),
+
+	branch: new SqsQueue<BranchMessagePayload>({
+		queueName: "branch",
+		queueUrl: envVars.SQS_BRANCH_QUEUE_URL,
+		queueRegion: envVars.SQS_BRANCH_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
 		maxAttempts: 5
@@ -62,12 +73,14 @@ const sqsQueues = {
 		sqsQueues.backfill.start();
 		sqsQueues.push.start();
 		sqsQueues.discovery.start();
+		sqsQueues.deployment.start();
 	},
 
 	stop: () => {
 		sqsQueues.backfill.stop();
 		sqsQueues.push.stop();
 		sqsQueues.discovery.stop();
+		sqsQueues.deployment.stop();
 	}
 }
 

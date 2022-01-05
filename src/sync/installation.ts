@@ -33,6 +33,7 @@ const tasks: TaskProcessors = {
 interface TaskProcessors {
 	[task: string]:
 		(
+			logger: LoggerWithTarget,
 			github: GitHubAPI,
 			newGithub: GitHubClient,
 			jiraHost: string,
@@ -271,14 +272,14 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
 
 			// just try with one page size
-			return await processor(github, newGithub, jiraHost, repository, cursor, 20);
+			return await processor(logger, github, newGithub, jiraHost, repository, cursor, 20);
 
 		} else {
 
 			for (const perPage of [20, 10, 5, 1]) {
 				// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 				try {
-					return await processor(github, newGithub, jiraHost, repository, cursor, perPage);
+					return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
 				} catch (err) {
 					logger.error({
 						err,
@@ -433,53 +434,57 @@ export const processInstallation =
 		);
 
 		return async (job: { data: BackfillMessagePayload, sentry: Hub }, rootLogger: LoggerWithTarget): Promise<void> => {
-			const { installationId, jiraHost } = job.data;
+			const {installationId, jiraHost} = job.data;
+			const logger = rootLogger.child({job});
 
-			const logger = rootLogger.child({ job });
+			try {
 
-			if (await isBlocked(installationId, logger)) {
-				logger.warn({ job }, "blocking installation job");
-				return;
-			}
-
-			job.sentry.setUser({
-				gitHubInstallationId: installationId,
-				jiraHost
-			});
-
-			const nextTaskDelaysMs: Array<number> = [];
-
-			const result = await deduplicator.executeWithDeduplication(
-				"i-" + installationId + "-" + jiraHost,
-				() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
-					nextTaskDelaysMs.push(delay)
-				));
-
-			switch (result) {
-				case DeduplicatorResult.E_OK:
-					logger.info("Job was executed by deduplicator");
-					maybeScheduleNextTask(job.data, nextTaskDelaysMs, logger);
-					break;
-				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
-					logger.warn("Possible duplicate job was detected, rescheduling");
-					await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC, logger);
-					break;
+				if (await isBlocked(installationId, logger)) {
+					logger.warn({job}, "blocking installation job");
+					return;
 				}
-				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
-					logger.warn("Duplicate job was detected, rescheduling");
-					// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
-					// Worker A - doing a long-running task
-					// Redis/SQS - reports that the task execution takes too long and sends it to another worker
-					// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
-					// Worker A dies (e.g. node is rotated).
-					// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
-					//
-					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
-					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
-					// is finished.
-					await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC*Math.random(), logger);
-					break;
+
+				job.sentry.setUser({
+					gitHubInstallationId: installationId,
+					jiraHost
+				});
+
+				const nextTaskDelaysMs: Array<number> = [];
+
+				const result = await deduplicator.executeWithDeduplication(
+					"i-" + installationId + "-" + jiraHost,
+					() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
+						nextTaskDelaysMs.push(delay)
+					));
+
+				switch (result) {
+					case DeduplicatorResult.E_OK:
+						logger.info("Job was executed by deduplicator");
+						maybeScheduleNextTask(job.data, nextTaskDelaysMs, logger);
+						break;
+					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
+						logger.warn("Possible duplicate job was detected, rescheduling");
+						await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC, logger);
+						break;
+					}
+					case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
+						logger.warn("Duplicate job was detected, rescheduling");
+						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
+						// Worker A - doing a long-running task
+						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
+						// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
+						// Worker A dies (e.g. node is rotated).
+						// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
+						//
+						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
+						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
+						// is finished.
+						await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
+						break;
+					}
 				}
+			} catch (err) {
+				logger.warn({ err }, "Process installation failed");
 			}
 		};
 	};

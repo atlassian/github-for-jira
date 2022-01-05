@@ -2,11 +2,11 @@ import { Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	if (!req.session.githubToken) {
+	const { github, client, isAdmin, githubToken } = res.locals;
+	if (!githubToken) {
 		return next(new Error("Unauthorized"));
 	}
 
-	const { github, client, isAdmin } = res.locals;
 	const installationId = Number(req.params.installationId);
 
 	try {
