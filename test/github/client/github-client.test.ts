@@ -229,12 +229,12 @@ describe("GitHub Client", () => {
 		verifyMetricsSent("/repos/:owner/:repo/pulls", "blockedIp");
 	});
 
-	it("should handle rate limit properly handled regardless of the response code", async () => {
+	it("should handle rate limit on 403", async () => {
 		givenGitHubReturnsInstallationToken("installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/,
 		}).reply(
-			500, [{ number: 1 }],
+			403, [{ number: 1 }],
 			{
 				"X-RateLimit-Remaining": "0",
 				"X-RateLimit-Reset": "2000"
