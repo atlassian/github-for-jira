@@ -1,7 +1,5 @@
 import { Installation, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
-import enhanceOctokit from "../config/enhance-octokit";
-import app from "../worker/app";
 import { getInstallation } from "./get-jira-configuration";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
@@ -55,8 +53,7 @@ const installationConnectedStatus = async (
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
-async function getInstallationsWithAdmin(jiraHost: string,
-	log: Logger,
+async function getInstallationsWithAdmin(log: Logger,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[],
 	login: string,
 	isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> {
@@ -71,37 +68,18 @@ async function getInstallationsWithAdmin(jiraHost: string,
 			type: installation.target_type
 		});
 
-		if(await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS, true, jiraHost)){
-			const githubClient = new GitHubClient(installation.id, log);
-			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
+		const githubClient = new GitHubClient(installation.id, log);
+		const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
 
-			const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
+		const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 
-			log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
+		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
 
-			installationsWithAdmin.push({
-				...installation,
-				numberOfRepos: numberOfRepos || 0,
-				admin
-			});
-		}else {
-
-			const authedApp = await app.auth(installation.id);
-			enhanceOctokit(authedApp);
-
-			const repositories = authedApp.paginate(
-				authedApp.apps.listRepos.endpoint.merge({ per_page: 100 }),
-				(res) => res.data
-			);
-
-			const [admin, numberOfRepos] = await Promise.all([checkAdmin, repositories]);
-
-			installationsWithAdmin.push({
-				...installation,
-				numberOfRepos: numberOfRepos.length || 0,
-				admin
-			});
-		}
+		installationsWithAdmin.push({
+			...installation,
+			numberOfRepos: numberOfRepos || 0,
+			admin
+		});
 	}
 	return installationsWithAdmin;
 }
@@ -185,7 +163,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(jiraHost, log, installations, login, isAdmin);
+		const installationsWithAdmin = await getInstallationsWithAdmin(log, installations, login, isAdmin);
 
 		tracer.trace(`got user's installations with admin status from GitHub`);
 
