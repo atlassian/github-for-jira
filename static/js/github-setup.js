@@ -3,13 +3,13 @@ const newJiraSiteModal = document.getElementById("new-jira-site-modal");
 const cancelNewJiraSiteBtn = document.getElementById("modal-close");
 
 if (newJiraSiteBtn) {
-	newJiraSiteBtn.onclick = function () {
+	newJiraSiteBtn.onclick = function() {
 		newJiraSiteModal.style.display = "block";
 	};
 }
 
 if (cancelNewJiraSiteBtn) {
-	cancelNewJiraSiteBtn.onclick = function () {
+	cancelNewJiraSiteBtn.onclick = function() {
 		newJiraSiteModal.style.display = "none";
 	};
 }
@@ -18,6 +18,29 @@ const hasProtocol = (str) =>
 	str.includes("http://") || str.includes("https://") || str.includes("www.");
 
 $(document).ready(() => {
+	// Handle form submit
+	$(".githubSetup__form").on("submit", (event) => {
+		event.preventDefault();
+		// TODO do something here to show user that form is being submitted
+		$.post(
+			event.target.action,
+			Object.fromEntries(new FormData(event.target).entries())
+		)
+			.done(function(body) {
+				if (body.error) {
+					throw body;
+				}
+
+				// Redirecting the user to the correct jira instance
+				// Should probably redo this with query strings and just redoing the GET request
+				document.location.href = body.redirect;
+			})
+			.fail(function(response) {
+				// Handle failure
+			});
+		;
+	});
+
 	// Handle events for main form
 	$(".inputMain").on("input", () => {
 		const jiraDomainMain = $("#jiraDomainMain").val();

@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, {
-	Repositories,
-	Repository,
-	RepositoryData,
-	SyncStatus,
-	TaskStatus
-} from "../models/subscription";
-import { Subscription } from "../models";
+import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus, TaskStatus } from "../models/subscription";
+import { RepoSyncState, Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
@@ -25,6 +19,8 @@ import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
 import {BackfillMessagePayload} from "../sqs/backfill";
 import {Hub} from "@sentry/types/dist/hub";
+import sqsQueues from "../sqs/queues";
+import { getCloudInstallationId } from "../github/client/installation-id";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -37,6 +33,7 @@ const tasks: TaskProcessors = {
 interface TaskProcessors {
 	[task: string]:
 		(
+			logger: LoggerWithTarget,
 			github: GitHubAPI,
 			newGithub: GitHubClient,
 			jiraHost: string,
@@ -51,7 +48,7 @@ type TaskType = "pull" | "commit" | "branch";
 const taskTypes = Object.keys(tasks) as TaskType[];
 
 // TODO: why are we ignoring failed status as completed?
-const taskStatusCompleted: TaskStatus[] = ["complete", "failed"]
+const taskStatusCompleted: TaskStatus[] = ["complete", "failed"];
 const isAllTasksStatusesCompleted = (...statuses: (TaskStatus | undefined)[]): boolean =>
 	statuses.every(status => !!status && taskStatusCompleted.includes(status));
 
@@ -81,10 +78,17 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	);
 
 const getNextTask = async (subscription: SubscriptionClass): Promise<Task | undefined> => {
-	const repos = subscription?.repoSyncState?.repos || {};
-	await updateNumberOfReposSynced(repos, subscription);
+	let sorted: [string, RepositoryData][];
+	if (await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false, subscription.jiraHost)) {
+		const repos = await RepoSyncState.findAllFromSubscription(subscription, {order: [["repoUpdatedAt", "DESC"]]})
+		sorted = repos.map(repo => [repo.repoId.toString(), repo.toRepositoryData()]);
+	} else {
+		const repos = subscription?.repoSyncState?.repos || {};
+		await updateNumberOfReposSynced(repos, subscription);
+		sorted = sortedRepos(repos);
+	}
 
-	for (const [repositoryId, repoData] of sortedRepos(repos)) {
+	for (const [repositoryId, repoData] of sorted) {
 		const task = taskTypes.find(
 			(taskType) => repoData[getStatusKey(taskType)] === undefined || repoData[getStatusKey(taskType)] === "pending"
 		);
@@ -130,7 +134,7 @@ const updateJobStatus = async (
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
 		// Include job and task in any micros env logs, exclude from local
-		const loggerObj = process.env.MICROS_ENV ? { job, task } : {}
+		const loggerObj = process.env.MICROS_ENV ? { job, task } : {};
 		logger.info(loggerObj, "Organization has been deleted. Other active syncs will continue.");
 		return;
 	}
@@ -213,7 +217,7 @@ export const isNotFoundError = (
 };
 
 // TODO: type queues
-async function doProcessInstallation(app, job, installationId: number, jiraHost: string, logger: LoggerWithTarget, scheduleNextTask: (delay) => void): Promise<void> {
+async function doProcessInstallation(app, job, installationId: number, jiraHost: string, logger: LoggerWithTarget, scheduleNextTask: (delayMs) => void): Promise<void> {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId
@@ -227,7 +231,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		logger
 	);
 
-	const newGithub = new GitHubClient(installationId, logger);
+	const newGithub = new GitHubClient(getCloudInstallationId(installationId), logger);
 
 	const github = await getEnhancedGitHub(app, installationId);
 
@@ -268,14 +272,14 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
 
 			// just try with one page size
-			return await processor(github, newGithub, jiraHost, repository, cursor, 20);
+			return await processor(logger, github, newGithub, jiraHost, repository, cursor, 20);
 
 		} else {
 
 			for (const perPage of [20, 10, 5, 1]) {
 				// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 				try {
-					return await processor(github, newGithub, jiraHost, repository, cursor, perPage);
+					return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
 				} catch (err) {
 					logger.error({
 						err,
@@ -403,85 +407,84 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export async function maybeScheduleNextTask(
-	backfillQueue: BackfillQueue,
 	jobData: BackfillMessagePayload,
-	nextTaskDelays: Array<number>,
+	nextTaskDelaysMs: Array<number>,
 	logger: LoggerWithTarget
 ) {
-	if (nextTaskDelays.length > 0) {
-		nextTaskDelays.sort().reverse();
-		if (nextTaskDelays.length > 1) {
+	if (nextTaskDelaysMs.length > 0) {
+		nextTaskDelaysMs.sort().reverse();
+		if (nextTaskDelaysMs.length > 1) {
 			logger.warn("Multiple next jobs were scheduled, scheduling one with the highest priority");
 		}
-		const delay = nextTaskDelays.shift()!;
-		logger.info("Scheduling next job with a delay = " + delay);
-		await backfillQueue.schedule(jobData, delay, logger);
-	}
-}
+		const delayMs = nextTaskDelaysMs.shift()!;
+		logger.info("Scheduling next job with a delay = " + delayMs);
 
-export interface BackfillQueue {
-	schedule: (message: BackfillMessagePayload, delayMsecs?: number, logger?: LoggerWithTarget) => Promise<void>;
+		await sqsQueues.backfill.sendMessage(jobData, (delayMs || 0) / 1000, logger);
+	}
 }
 
 const redis = new Redis(getRedisInfo("installations-in-progress"));
 
+const RETRY_DELAY_BASE_SEC = 60;
 export const processInstallation =
-	(app: Application, backfillQueueSupplier: () => Promise<BackfillQueue>) => {
+	(app: Application) => {
 		const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
 		const deduplicator = new Deduplicator(
 			inProgressStorage, 1_000
 		);
 
-		return async (job: {data: BackfillMessagePayload, sentry: Hub}, rootLogger: LoggerWithTarget): Promise<void> => {
-			const { installationId, jiraHost } = job.data;
+		return async (job: { data: BackfillMessagePayload, sentry: Hub }, rootLogger: LoggerWithTarget): Promise<void> => {
+			const {installationId, jiraHost} = job.data;
+			const logger = rootLogger.child({job});
 
-			const logger = rootLogger.child({ job });
+			try {
 
-			if (await isBlocked(installationId, logger)) {
-				logger.warn({ job }, "blocking installation job");
-				return;
-			}
-
-			job.sentry.setUser({
-				gitHubInstallationId: installationId,
-				jiraHost
-			});
-
-			const nextTaskDelays: Array<number> = [];
-
-			const result = await deduplicator.executeWithDeduplication(
-				"i-" + installationId + "-" + jiraHost,
-				() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
-					nextTaskDelays.push(delay)
-				));
-
-			switch (result) {
-				case DeduplicatorResult.E_OK:
-					logger.info("Job was executed by deduplicator");
-					maybeScheduleNextTask(await backfillQueueSupplier(), job.data, nextTaskDelays, logger);
-					break;
-				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
-					logger.warn("Possible duplicate job was detected, rescheduling");
-					const queue = await backfillQueueSupplier();
-					await queue.schedule(job.data, 60_000, logger);
-					break;
+				if (await isBlocked(installationId, logger)) {
+					logger.warn({job}, "blocking installation job");
+					return;
 				}
-				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
-					logger.warn("Duplicate job was detected, rescheduling");
-					// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
-					// Worker A - doing a long-running task
-					// Redis/SQS - reports that the task execution takes too long and sends it to another worker
-					// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
-					// Worker A dies (e.g. node is rotated).
-					// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
-					//
-					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
-					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
-					// is finished.
-					const queue = await backfillQueueSupplier();
-					await queue.schedule(job.data, Math.floor(60_000 + 60_000 * Math.random()), logger);
-					break;
+
+				job.sentry.setUser({
+					gitHubInstallationId: installationId,
+					jiraHost
+				});
+
+				const nextTaskDelaysMs: Array<number> = [];
+
+				const result = await deduplicator.executeWithDeduplication(
+					"i-" + installationId + "-" + jiraHost,
+					() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
+						nextTaskDelaysMs.push(delay)
+					));
+
+				switch (result) {
+					case DeduplicatorResult.E_OK:
+						logger.info("Job was executed by deduplicator");
+						maybeScheduleNextTask(job.data, nextTaskDelaysMs, logger);
+						break;
+					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
+						logger.warn("Possible duplicate job was detected, rescheduling");
+						await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC, logger);
+						break;
+					}
+					case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
+						logger.warn("Duplicate job was detected, rescheduling");
+						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
+						// Worker A - doing a long-running task
+						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
+						// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
+						// Worker A dies (e.g. node is rotated).
+						// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
+						//
+						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
+						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
+						// is finished.
+						await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
+						break;
+					}
 				}
+			} catch (err) {
+				logger.warn({ err }, "Process installation failed");
 			}
-		}
-	}
+		};
+	};

@@ -1,6 +1,7 @@
 import { Subscription } from "../models";
 import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
+import {findOrStartSync} from "../sync/sync-utils";
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, syncType } = req.body;
@@ -17,7 +18,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			res.status(404).send("Subscription not found, cannot resync.");
 			return;
 		}
-		await Subscription.findOrStartSync(subscription, syncType);
+		await findOrStartSync(subscription, req.log, syncType);
 
 		res.sendStatus(202);
 	} catch (error) {
