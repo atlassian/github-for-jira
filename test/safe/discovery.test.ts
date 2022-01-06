@@ -8,7 +8,6 @@ import app from "../../src/worker/app";
 import {discovery} from "../../src/sync/discovery";
 import {getLogger} from "../../src/config/logger";
 import waitUntil from "../utils/waitUntil";
-import {queues} from "../../src/worker/queues";
 
 jest.mock("../../src/config/feature-flags");
 
@@ -116,21 +115,6 @@ describe("Discovery Queue Test", () => {
 
 		});
 	});
-
-	it("Discovery redis queue processes the message", async () => {
-
-
-		mockGitHubReposResponses();
-
-		await queues.discovery.add({installationId: TEST_INSTALLATION_ID, jiraHost});
-
-		await waitUntil(async () => {
-
-			await verify2RepositoriesInTheStateAndBackfillMessageSent();
-
-		});
-	});
-
 
 	it("Discovery queue listener works correctly", async () => {
 
