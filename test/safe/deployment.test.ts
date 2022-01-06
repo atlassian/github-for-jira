@@ -50,7 +50,6 @@ describe("Deployment Webhook", () => {
 
 		it("should queue and process a deployment event", async () => {
 
-			// delete this whole test with FF cleanup
 			when(booleanFlag).calledWith(
 				BooleanFlags.USE_SQS_FOR_DEPLOYMENT,
 				expect.anything(),

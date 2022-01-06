@@ -25,6 +25,7 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push",
 	REPO_SYNC_STATE_AS_SOURCE = "repo-sync-state-as-source",
 	USE_SQS_FOR_DEPLOYMENT = "use-sqs-for-deployment",
+	USE_SQS_FOR_BRANCH = "use-sqs-for-branch",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body"
 }
 
