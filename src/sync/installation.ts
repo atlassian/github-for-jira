@@ -22,8 +22,6 @@ import {Hub} from "@sentry/types/dist/hub";
 import sqsQueues from "../sqs/queues";
 import { getCloudInstallationId } from "../github/client/installation-id";
 
-export const INSTALLATION_LOGGER_NAME = "sync.installation";
-
 const tasks: TaskProcessors = {
 	pull: getPullRequests,
 	branch: getBranches,
