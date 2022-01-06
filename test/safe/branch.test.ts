@@ -38,15 +38,6 @@ describe("Branch Webhook", () => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
-
-		githubNock.post(`/app/installations/1234/access_tokens`)
-			.optionally()
-			.reply(200, {
-				expires_at: Date.now() + 3600,
-				permissions: {},
-				repositories: {},
-				token: "token"
-			})
 	});
 
 	afterEach(async () => {
@@ -67,6 +58,14 @@ describe("Branch Webhook", () => {
 
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
+
+			githubNock.post(`/app/installations/1234/access_tokens`)
+				.reply(200, {
+					expires_at: Date.now() + 3600,
+					permissions: {},
+					repositories: {},
+					token: "token"
+				})
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
