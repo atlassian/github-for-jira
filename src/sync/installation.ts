@@ -20,6 +20,7 @@ import GitHubClient from "../github/client/github-client";
 import {BackfillMessagePayload} from "../sqs/backfill";
 import {Hub} from "@sentry/types/dist/hub";
 import sqsQueues from "../sqs/queues";
+import { getCloudInstallationId } from "../github/client/installation-id";
 
 export const INSTALLATION_LOGGER_NAME = "sync.installation";
 
@@ -230,7 +231,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		logger
 	);
 
-	const newGithub = new GitHubClient(installationId, logger);
+	const newGithub = new GitHubClient(getCloudInstallationId(installationId), logger);
 
 	const github = await getEnhancedGitHub(app, installationId);
 
@@ -432,7 +433,7 @@ export const processInstallation =
 			inProgressStorage, 1_000
 		);
 
-		return async (job: {data: BackfillMessagePayload, sentry: Hub}, rootLogger: LoggerWithTarget): Promise<void> => {
+		return async (job: { data: BackfillMessagePayload, sentry: Hub }, rootLogger: LoggerWithTarget): Promise<void> => {
 			const {installationId, jiraHost} = job.data;
 			const logger = rootLogger.child({job});
 

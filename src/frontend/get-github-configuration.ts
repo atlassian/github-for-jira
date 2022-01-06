@@ -8,6 +8,7 @@ import { Errors } from "../config/errors";
 import { Tracer } from "../config/tracer";
 import GitHubClient from "../github/client/github-client";
 import Logger from "bunyan";
+import { getCloudInstallationId } from "../github/client/installation-id";
 
 const getConnectedStatus = (
 	installationsWithSubscriptions: any,
@@ -68,7 +69,7 @@ async function getInstallationsWithAdmin(log: Logger,
 			type: installation.target_type
 		});
 
-		const githubClient = new GitHubClient(installation.id, log);
+		const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
 		const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
 
 		const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
