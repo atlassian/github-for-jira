@@ -162,9 +162,17 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
 
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
+		}
+
 		tracer.trace(`got user's installations from GitHub`);
 
 		const installationsWithAdmin = await getInstallationsWithAdmin(log, installations, login, isAdmin);
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
+		}
 
 		tracer.trace(`got user's installations with admin status from GitHub`);
 
@@ -172,12 +180,20 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`got user's authenticated apps from GitHub`);
 
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: getAuthenticated: ${JSON.stringify(info)}`);
+		}
+
 		const connectedInstallations = await installationConnectedStatus(
 			jiraHost,
 			client,
 			installationsWithAdmin,
 			log
 		);
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: connectedInstallations: ${JSON.stringify(connectedInstallations)}`);
+		}
 
 		tracer.trace(`got connected installations`);
 
