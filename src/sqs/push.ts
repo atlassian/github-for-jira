@@ -1,5 +1,7 @@
 import { Context, MessageHandler } from "./index"
+import enhanceOctokit from "../config/enhance-octokit";
 import { processPush } from "../transforms/push";
+import app from "../worker/app";
 import { wrapLogger } from "probot/lib/wrap-logger";
 import GitHubClient from "../github/client/github-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
@@ -9,7 +11,7 @@ export type PayloadRepository = {
 	name: string,
 	full_name: string,
 	html_url: string,
-	owner: {name: string, login: string},
+	owner: string,
 }
 
 export type PushQueueMessagePayload = {
@@ -18,7 +20,7 @@ export type PushQueueMessagePayload = {
 	jiraHost: string,
 	installationId: number,
 	webhookId: string,
-	webhookReceived?: number,
+	webhookReceived?: Date,
 }
 
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
@@ -27,7 +29,15 @@ export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = 
 
 	const payload = context.payload;
 
+	let githubOld;
+	try {
+		githubOld = await app.auth(payload.installationId);
+	} catch (err) {
+		context.log.warn({ err, payload }, "Could not authenticate for the supplied InstallationId");
+		return;
+	}
+	enhanceOctokit(githubOld);
 	const installationId = getCloudInstallationId(payload.installationId);
 	const github = new GitHubClient(installationId, context.log);
-	await processPush(github, payload, wrapLogger(context.log));
+	await processPush(githubOld, github, payload, wrapLogger(context.log));
 }
