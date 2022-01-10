@@ -14,6 +14,16 @@ describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
+	const mockGitHubAuthRequest = () => {
+		githubNock.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+			.reply(200, {
+				expires_at: Date.now() + 3600,
+				permissions: {},
+				repositories: {},
+				token: "token"
+			});
+	}
+
 	beforeAll(async () => {
 		//Start worker node for queues processing
 		await start();
@@ -59,13 +69,7 @@ describe("Branch Webhook", () => {
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
-			githubNock.post(`/app/installations/1234/access_tokens`)
-				.reply(200, {
-					expires_at: Date.now() + 3600,
-					permissions: {},
-					repositories: {},
-					token: "token"
-				})
+			mockGitHubAuthRequest();
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
@@ -132,10 +136,8 @@ describe("Branch Webhook", () => {
 			await expect(app.receive(fixture)).toResolve();
 
 			await waitUntil(async () => {
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(githubNock.pendingMocks()).toEqual([]);
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(jiraNock.pendingMocks()).toEqual([]);
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
 			});
 		});
 
@@ -170,6 +172,8 @@ describe("Branch Webhook", () => {
 
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
+
+			// mockGitHubAuthRequest();
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
@@ -234,6 +238,11 @@ describe("Branch Webhook", () => {
 			Date.now = jest.fn(() => 12345678);
 
 			await expect(app.receive(fixture)).toResolve();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
 		});
 
 		it("should not update Jira issue if there are no issue Keys in the branch name", async () => {

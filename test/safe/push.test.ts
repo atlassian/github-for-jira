@@ -527,10 +527,8 @@ describe("Push Webhook", () => {
 			await expect(app.receive(event)).toResolve();
 
 			await waitUntil(async () => {
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(githubNock.pendingMocks()).toEqual([]);
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(jiraNock.pendingMocks()).toEqual([]);
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
 			});
 		});
 	});

@@ -121,7 +121,6 @@ describe("GitHub Client", () => {
 		});
 
 		expect(pullrequests).toBeTruthy();
-		expect(githubNock.pendingMocks()).toEqual([]);
 		verifyMetricsSent("/repos/:owner/:repo/pulls", "200");
 	});
 
@@ -142,7 +141,6 @@ describe("GitHub Client", () => {
 		const commit = await client.getCommit(owner, repo, sha);
 
 		expect(commit).toBeTruthy();
-		expect(githubNock.pendingMocks()).toEqual([]);
 		verifyMetricsSent("/repos/:owner/:repo/commits/:ref", "200");
 	});
 
@@ -323,7 +321,6 @@ describe("GitHub Client", () => {
 		});
 
 		expect(pullrequests).toBeTruthy();
-		expect(gheNock.pendingMocks()).toEqual([]);
 		verifyMetricsSent("/repos/:owner/:repo/pulls", "200");
 	});
 
