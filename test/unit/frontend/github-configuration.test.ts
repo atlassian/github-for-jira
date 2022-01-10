@@ -7,6 +7,7 @@ import express, { Application } from "express";
 import { getSignedCookieHeader } from "../util/cookies";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { when } from "jest-when";
+import { ViewerRepositoryCountQuery } from "../../../src/github/client/github-queries";
 
 jest.mock("../../../src/config/feature-flags");
 
@@ -133,7 +134,7 @@ describe("Github Configuration", () => {
 	describe("#GET", () => {
 		it("should return 200 when calling with valid Github Token", async () => {
 
-			// Don't use new github client for now - need better to test with it
+			// Don't use new github client for now - need better way to test with it
 			when(booleanFlag)
 				.calledWith(BooleanFlags.USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS, true, jiraHost)
 				.mockResolvedValue(false);
@@ -163,12 +164,12 @@ describe("Github Configuration", () => {
 					"account": {
 						"login": "octocat",
 						"id": 1,
-						"type": "User",
+						"type": "User"
 					},
 					"html_url": "https://github.com/organizations/github/settings/installations/1",
 					"target_type": "Organization",
 					"created_at": "2017-07-08T16:18:44-04:00",
-					"updated_at": "2017-07-08T16:18:44-04:00",
+					"updated_at": "2017-07-08T16:18:44-04:00"
 				});
 
 			githubNock
@@ -196,22 +197,18 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get("/installation/repositories")
-				.query({ per_page: 100 })
+				.post("/graphql", { query: ViewerRepositoryCountQuery })
+				.query(true)
 				.reply(200, {
-					"total_count": 1,
-					"repositories": [
-						{
-							"id": 123456789,
-							"name": "bar",
-							"full_name": "foo/bar",
-							"owner": {
-								"login": "foo",
-								"type": "User"
+					data: {
+						viewer: {
+							repositories: {
+								totalCount: 1
 							}
 						}
-					]
+					}
 				});
+
 
 			await supertest(frontendApp)
 				.get("/github/configuration")

@@ -10,6 +10,7 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/common-middleware";
 import { InstallationId } from "./installation-id";
+import { ViewerRepositoryCountQuery } from "./github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -156,14 +157,7 @@ export default class GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql(`
-			query {
-				viewer {
-					repositories {
-						totalCount
-					}
-				}
-			}`)
+		const response = await this.graphql(ViewerRepositoryCountQuery);
 
 		return response?.data?.data?.viewer?.repositories?.totalCount as number;
 	}
