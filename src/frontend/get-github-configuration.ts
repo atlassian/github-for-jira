@@ -167,6 +167,10 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			log.info(`verbose logging: listInstallationsForAuthenticatedUser.headers: ${JSON.stringify(headers)}`);
 		}
 
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
+		}
+
 		tracer.trace(`got user's installations from GitHub`);
 
 		const installationsWithAdmin = await getInstallationsWithAdmin(log, installations, login, isAdmin);
