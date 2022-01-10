@@ -160,7 +160,12 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 
-		const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
+		const { data: { installations }, headers } = (await github.apps.listInstallationsForAuthenticatedUser());
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser.headers: ${JSON.stringify(headers)}`);
+		}
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
