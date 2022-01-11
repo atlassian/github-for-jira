@@ -168,6 +168,8 @@ describe("Branch Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(false);
 
+			mockGitHubAuthRequest();
+
 			const fixture = require("../fixtures/branch-basic.json");
 
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
