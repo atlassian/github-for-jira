@@ -10,8 +10,8 @@ import '../../../src/config/feature-flags';
 
 import {Application} from "probot";
 import {getLogger} from "../../../src/config/logger";
-import createJob from "../../setup/create-job";
 import sqsQueues from "../../../src/sqs/queues";
+import {Hub} from "@sentry/types/dist/hub";
 
 const TEST_LOGGER = getLogger('test');
 
@@ -37,6 +37,11 @@ jest.mock("../../../src/models");
 describe("sync/installation", () => {
 
 	const JOB_DATA = {installationId: 1, jiraHost: "http://foo"};
+
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	const sentry: Hub = { setUser: jest.fn() } as Hub;
+
 	let mockBackfillQueueSendMessage;
 
 
@@ -93,18 +98,14 @@ describe("sync/installation", () => {
 		// @ts-ignore
 		const app: Application = jest.fn() as Application;
 
-		const job = createJob({
-			data: JOB_DATA
-		});
-
 		test('should process the installation with deduplication', async () => {
-			await processInstallation(app)(job, TEST_LOGGER);
+			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 		});
 
 		test('should reschedule the job if deduplicator is unsure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
-			await processInstallation(app)(job, TEST_LOGGER);
+			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 			expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(JOB_DATA);
 			expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(60);
@@ -113,7 +114,7 @@ describe("sync/installation", () => {
 
 		test('should also reschedule the job if deduplicator is sure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
-			await processInstallation(app)(job, TEST_LOGGER);
+			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockBackfillQueueSendMessage.mock.calls.length).toEqual(1);
 		});
 	});
