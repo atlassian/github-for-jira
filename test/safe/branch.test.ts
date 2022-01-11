@@ -16,7 +16,9 @@ describe("Branch Webhook", () => {
 	const gitHubInstallationId = 1234;
 
 	const mockGitHubAuthRequest = () => {
-		githubNock.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+		githubNock
+			.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+			.optionally()
 			.reply(200, {
 				expires_at: Date.now() + 3600,
 				permissions: {},
@@ -167,6 +169,8 @@ describe("Branch Webhook", () => {
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(false);
+
+			mockGitHubAuthRequest();
 
 			const fixture = require("../fixtures/branch-basic.json");
 
