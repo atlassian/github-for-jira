@@ -10,9 +10,22 @@ import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
 
+
 describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
+
+	const mockGitHubAuthRequest = () => {
+		githubNock.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+			.optionally()
+			.reply(200, {
+				expires_at: Date.now() + 3600,
+				permissions: {},
+				repositories: {},
+				token: "token"
+			});
+	}
+
 
 	beforeAll(async () => {
 		//Start worker node for queues processing
@@ -28,6 +41,7 @@ describe("Branch Webhook", () => {
 	beforeEach(async () => {
 		app = await createWebhookApp();
 		const clientKey = "client-key";
+		mockGitHubAuthRequest();
 		await Installation.create({
 			clientKey,
 			sharedSecret: "shared-secret",
@@ -59,14 +73,7 @@ describe("Branch Webhook", () => {
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
-			githubNock.post(`/app/installations/1234/access_tokens`)
-				.reply(200, {
-					expires_at: Date.now() + 3600,
-					permissions: {},
-					repositories: {},
-					token: "token"
-				})
-
+			mockGitHubAuthRequest();
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
 					ref: `refs/${ref}`,
@@ -159,6 +166,8 @@ describe("Branch Webhook", () => {
 	describe("Create Branch (with disabled FF - delete this test with FF cleanup)", () => {
 		it("should update Jira issue with link to a branch on GitHub", async () => {
 
+			mockGitHubAuthRequest();
+
 			// delete this whole test with FF cleanup
 			when(booleanFlag).calledWith(
 				BooleanFlags.USE_SQS_FOR_BRANCH,
@@ -234,6 +243,13 @@ describe("Branch Webhook", () => {
 			Date.now = jest.fn(() => 12345678);
 
 			await expect(app.receive(fixture)).toResolve();
+
+			await waitUntil(async () => {
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(githubNock.pendingMocks()).toEqual([]);
+				// eslint-disable-next-line jest/no-standalone-expect
+				expect(jiraNock.pendingMocks()).toEqual([]);
+			});
 		});
 
 		it("should not update Jira issue if there are no issue Keys in the branch name", async () => {
