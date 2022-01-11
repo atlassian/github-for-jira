@@ -15,15 +15,15 @@ describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
-	const mockGitHubAuthRequest = () => {
-		githubNock.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+	const mockGitHubAuthRequest = () =>
+		githubNock
+			.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 			.reply(200, {
 				expires_at: Date.now() + 3600,
 				permissions: {},
 				repositories: {},
 				token: "token"
 			});
-	}
 
 	beforeAll(async () => {
 		//Start worker node for queues processing
@@ -147,6 +147,11 @@ describe("Branch Webhook", () => {
 
 			await expect(app.receive(fixture)).toResolve();
 			expect(getLastCommit).not.toBeCalled();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
 		});
 
 		it("should exit early if ref_type is not a branch", async () => {
@@ -155,6 +160,11 @@ describe("Branch Webhook", () => {
 
 			await expect(app.receive(fixture)).toResolve();
 			expect(parseSmartCommit).not.toBeCalled();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
 		});
 	});
 
@@ -167,8 +177,6 @@ describe("Branch Webhook", () => {
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(false);
-
-			mockGitHubAuthRequest();
 
 			const fixture = require("../fixtures/branch-basic.json");
 
@@ -251,6 +259,11 @@ describe("Branch Webhook", () => {
 
 			await expect(app.receive(fixture)).toResolve();
 			expect(getLastCommit).not.toBeCalled();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
 		});
 
 		it("should exit early if ref_type is not a branch", async () => {
@@ -259,6 +272,11 @@ describe("Branch Webhook", () => {
 
 			await expect(app.receive(fixture)).toResolve();
 			expect(parseSmartCommit).not.toBeCalled();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
 		});
 	});
 
@@ -271,6 +289,11 @@ describe("Branch Webhook", () => {
 
 			Date.now = jest.fn(() => 12345678);
 			await expect(app.receive(fixture)).toResolve();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
 		});
 	});
 });
