@@ -50,7 +50,7 @@ export default class InstallationTokenCache {
 		return token;
 	}
 
-	public clear() {
+	public clear():void {
 		this.installationTokenCache.reset();
 	}
 }

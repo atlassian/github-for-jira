@@ -79,4 +79,8 @@ export default class AppTokenHolder {
 			expirationDate
 		);
 	}
+
+	public clear():void {
+		this.appTokenCache.reset();
+	}
 }

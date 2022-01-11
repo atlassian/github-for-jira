@@ -7,7 +7,6 @@ import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 import { start, stop } from "../../src/worker/startup";
 import sqsQueues from "../../src/sqs/queues";
 import waitUntil from "../utils/waitUntil";
-import InstallationTokenCache from "../../src/github/client/installation-token-cache";
 
 jest.mock("../../src/config/feature-flags");
 
@@ -53,7 +52,6 @@ describe("Branch Webhook", () => {
 	});
 
 	afterEach(async () => {
-		InstallationTokenCache.getInstance().clear();
 		await Installation.destroy({ truncate: true });
 		await Subscription.destroy({ truncate: true });
 	});
