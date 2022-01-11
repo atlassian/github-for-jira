@@ -22,9 +22,7 @@ export enum BooleanFlags {
 	TRACE_LOGGING = "trace-logging",
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS = "support-branch-and-merge-workflows-for-builds",
 	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push",
-	USE_SQS_FOR_DEPLOYMENT = "use-sqs-for-deployment",
 	USE_SQS_FOR_BRANCH = "use-sqs-for-branch",
-	USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS = "use-new-github-client-to-count-repos",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging"
 }

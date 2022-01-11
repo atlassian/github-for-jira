@@ -173,8 +173,6 @@ describe("Branch Webhook", () => {
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
-			// mockGitHubAuthRequest();
-
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
 					ref: `refs/${ref}`,

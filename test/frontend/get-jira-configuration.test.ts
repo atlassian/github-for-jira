@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import getJiraConfiguration from "../../src/frontend/get-jira-configuration";
 import { Installation, RepoSyncState, Subscription } from "../../src/models";
-// import InstallationClass from "../../src/models/installation";
 import SubscriptionClass from "../../src/models/subscription";
 
 describe("Jira Configuration Suite", () => {
 	let subscription: SubscriptionClass;
-	// let installation: InstallationClass;
 
 	beforeEach(async () => {
 		subscription = await Subscription.create({

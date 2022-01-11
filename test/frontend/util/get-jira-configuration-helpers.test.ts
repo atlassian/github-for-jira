@@ -107,7 +107,6 @@ describe("getInstallation", () => {
 		match = {
 			syncStatus: "IN PROGRESS",
 			syncWarning: null,
-			// subscriptionUpdatedAt: new Date(0), // Not testing this as it's using moment
 			totalNumberOfRepos: 2,
 			numberOfSyncedRepos: 1,
 			jiraHost
@@ -176,33 +175,6 @@ describe("getInstallation", () => {
 	});
 
 	it("Should get installation from Repo Sync State table", async () => {
-		/*await RepoSyncState.create({
-			subscriptionId: subscription.id,
-			repoId: 1,
-			repoName: "github-for-jira",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/github-for-jira",
-			repoUrl: "github.com/atlassian/github-for-jira",
-			pullStatus: "complete",
-			branchStatus: "complete",
-			commitStatus: "complete",
-			branchCursor: "foo",
-			commitCursor: "bar",
-			pullCursor: "12",
-			repoUpdatedAt: new Date(0)
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscription.id,
-			repoId: 1,
-			repoName: "github-for-jira",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/github-for-jira",
-			repoUrl: "github.com/atlassian/github-for-jira",
-			branchStatus: "failed",
-			repoUpdatedAt: new Date(0)
-		});*/
-
 		const result = await getInstallation(GitHubAPI(), subscription);
 		expect(result).toMatchObject(match);
 	});

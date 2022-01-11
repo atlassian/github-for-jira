@@ -5,8 +5,6 @@ import FrontendApp from "../../../src/frontend/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "../util/cookies";
-import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
-import { when } from "jest-when";
 import { ViewerRepositoryCountQuery } from "../../../src/github/client/github-queries";
 
 jest.mock("../../../src/config/feature-flags");
@@ -133,12 +131,6 @@ describe("Github Configuration", () => {
 
 	describe("#GET", () => {
 		it("should return 200 when calling with valid Github Token", async () => {
-
-			// Don't use new github client for now - need better way to test with it
-			when(booleanFlag)
-				.calledWith(BooleanFlags.USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS, true, jiraHost)
-				.mockResolvedValue(false);
-
 			// This is for github token validation check
 			githubNock
 				.get("/")
