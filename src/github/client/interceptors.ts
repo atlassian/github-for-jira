@@ -25,6 +25,7 @@ export const setRequestStartTime = (config) => {
 };
 
 //TODO Move to util/axios/common-middleware.ts and use with Jira Client
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sendResponseMetrics = (metricName: string, response?:any, status?: string | number) => {
 	status = `${status || response?.status}`;
 	const requestDurationMs = Number(
@@ -34,8 +35,8 @@ const sendResponseMetrics = (metricName: string, response?:any, status?: string 
 	// using client tag to separate GH client from Octokit
 	const tags = {
 		client: "axios",
-		method: response.config?.method?.toUpperCase(),
-		path: extractPath(response.config?.originalUrl),
+		method: response?.config?.method?.toUpperCase(),
+		path: extractPath(response?.config?.originalUrl),
 		status: status
 	};
 

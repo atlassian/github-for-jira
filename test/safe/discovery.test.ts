@@ -54,7 +54,7 @@ describe("Discovery Queue Test", () => {
 
 		githubNock
 			.post("/app/installations/1234/access_tokens")
-			.optionally()
+			.optionally() // TODO: need to remove optionally and make it explicit
 			.reply(200, {
 				token: "token",
 				expires_at: new Date().getTime() + 1_000_000
