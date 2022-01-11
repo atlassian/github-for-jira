@@ -49,4 +49,8 @@ export default class InstallationTokenCache {
 
 		return token;
 	}
+
+	public clear() {
+		this.installationTokenCache.reset();
+	}
 }
