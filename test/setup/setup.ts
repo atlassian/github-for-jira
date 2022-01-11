@@ -5,6 +5,8 @@ import "./matchers/nock";
 import "./matchers/to-promise";
 import statsd from "../../src/config/statsd";
 import { sequelize } from "../../src/models/sequelize";
+import InstallationTokenCache from "../../src/github/client/installation-token-cache";
+import AppTokenHolder from "../../src/github/client/app-token-holder";
 
 resetEnvVars();
 
@@ -48,6 +50,8 @@ afterEach(() => {
 		// eslint-disable-next-line jest/no-standalone-expect
 		expect(nock).toBeDone();
 	} finally {
+		InstallationTokenCache.getInstance().clear(); // Clear Installation token cache
+		AppTokenHolder.getInstance().clear(); // Clear App token cache
 		nock.cleanAll(); // removes HTTP mocks
 		jest.resetAllMocks(); // Removes jest mocks
 	}

@@ -111,10 +111,8 @@ describe("Deployment Webhook", () => {
 			await expect(app.receive(fixture)).toResolve();
 
 			await waitUntil(async () => {
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(githubNock.pendingMocks()).toEqual([]);
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(jiraNock.pendingMocks()).toEqual([]);
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
 			});
 		});
 

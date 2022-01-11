@@ -6,16 +6,12 @@ import Logger from "bunyan";
 export default (octokitApp: App): RequestHandler => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	// If githubToken isn't set, this GithubAPI will be unauthed
 	res.locals.github = GithubAPI();
-
 	res.locals.client = GithubAPI({
 		auth: octokitApp.getSignedJsonWebToken()
 	});
-
 	res.locals.isAdmin = isAdmin(res, req.log);
-
 	next();
 };
-
 
 // TODO: change function name as we're not looking for admin, but those that can install app in orga
 export const isAdmin = (res: Response, logger: Logger) =>

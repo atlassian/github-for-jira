@@ -3,7 +3,7 @@ import express, { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import api from "../../src/api";
 import SubscriptionModel from "../../src/models/subscription";
-import { Subscription } from "../../src/models";
+import { RepoSyncState, Subscription } from "../../src/models";
 import { wrapLogger } from "probot/lib/wrap-logger";
 
 describe("api/index", () => {
@@ -13,9 +13,6 @@ describe("api/index", () => {
 			gitHubInstallationId: 123,
 			jiraHost: "http://blah.com",
 			jiraClientKey: "myClientKey",
-			repoSyncState: {
-				installationId: 123
-			},
 		});
 
 		githubNock
@@ -34,6 +31,7 @@ describe("api/index", () => {
 
 	afterEach(async () => {
 		await Subscription.destroy({ truncate: true });
+		await RepoSyncState.destroy({ truncate: true });
 	});
 
 	const createApp = async () => {
@@ -57,7 +55,7 @@ describe("api/index", () => {
 			.get(`/api/${sub.gitHubInstallationId}/${encodeURIComponent(sub.jiraHost)}/repoSyncState.json`)
 			.set("Authorization", "Bearer xxx")
 			.then((response) => {
-				expect(response.text).toStrictEqual("{\"installationId\":123}");
+				expect(response.text).toStrictEqual("{\"installationId\":123,\"jiraHost\":\"http://blah.com\",\"numberOfSyncedRepos\":0,\"repos\":{}}");
 			});
 	});
 

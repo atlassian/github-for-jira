@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus, TaskStatus } from "../models/subscription";
+import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus } from "../models/subscription";
 import { RepoSyncState, Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
@@ -17,8 +17,8 @@ import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } f
 import Redis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
-import {BackfillMessagePayload} from "../sqs/backfill";
-import {Hub} from "@sentry/types/dist/hub";
+import { BackfillMessagePayload } from "../sqs/backfill";
+import { Hub } from "@sentry/types/dist/hub";
 import sqsQueues from "../sqs/queues";
 import { getCloudInstallationId } from "../github/client/installation-id";
 
@@ -45,29 +45,6 @@ type TaskType = "pull" | "commit" | "branch";
 
 const taskTypes = Object.keys(tasks) as TaskType[];
 
-// TODO: why are we ignoring failed status as completed?
-const taskStatusCompleted: TaskStatus[] = ["complete", "failed"];
-const isAllTasksStatusesCompleted = (...statuses: (TaskStatus | undefined)[]): boolean =>
-	statuses.every(status => !!status && taskStatusCompleted.includes(status));
-
-const updateNumberOfReposSynced = async (
-	repos: Repositories,
-	subscription: SubscriptionClass
-): Promise<void> => {
-	const repoIds = Object.keys(repos || {});
-	if (!repoIds.length) {
-		return;
-	}
-
-	const syncedRepos = repoIds.filter((id: string) => {
-		// all 3 statuses need to be complete for a repo to be fully synced
-		const { pullStatus, branchStatus, commitStatus } = repos[id];
-		return isAllTasksStatusesCompleted(pullStatus, branchStatus, commitStatus);
-	});
-
-	await subscription.updateNumberOfSyncedRepos(syncedRepos.length);
-};
-
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
 		(a, b) =>
@@ -76,15 +53,8 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	);
 
 const getNextTask = async (subscription: SubscriptionClass): Promise<Task | undefined> => {
-	let sorted: [string, RepositoryData][];
-	if (await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false, subscription.jiraHost)) {
-		const repos = await RepoSyncState.findAllFromSubscription(subscription, {order: [["repoUpdatedAt", "DESC"]]})
-		sorted = repos.map(repo => [repo.repoId.toString(), repo.toRepositoryData()]);
-	} else {
-		const repos = subscription?.repoSyncState?.repos || {};
-		await updateNumberOfReposSynced(repos, subscription);
-		sorted = sortedRepos(repos);
-	}
+	const repos = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
+	const sorted: [string, RepositoryData][] = repos.map(repo => [repo.repoId.toString(), repo.toRepositoryData()]);
 
 	for (const [repositoryId, repoData] of sorted) {
 		const task = taskTypes.find(
@@ -376,7 +346,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		) {
 			// Too much server processing time, wait 60 seconds and try again
 			logger.warn({ job, task: nextTask }, "Abuse detection triggered. Retrying in 60 seconds");
-			scheduleNextTask(60_000)
+			scheduleNextTask(60_000);
 			return;
 		}
 

@@ -113,7 +113,7 @@ describe("Push Webhook", () => {
 
 			githubNock
 				.post("/app/installations/1234/access_tokens")
-				.optionally()
+				.optionally() // TODO: need to remove optionally and make it explicit
 				.reply(200, {
 					token: "token",
 					expires_at: new Date().getTime() + 1_000_000
@@ -473,7 +473,7 @@ describe("Push Webhook", () => {
 
 			githubNock
 				.post("/app/installations/1234/access_tokens")
-				.optionally()
+				.optionally() // TODO: need to remove optionally and make it explicit
 				.reply(200, {
 					token: "token",
 					expires_at: new Date().getTime()
@@ -543,10 +543,8 @@ describe("Push Webhook", () => {
 			await expect(app.receive(event)).toResolve();
 
 			await waitUntil(async () => {
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(githubNock.pendingMocks()).toEqual([]);
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(jiraNock.pendingMocks()).toEqual([]);
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
 			});
 		});
 	});

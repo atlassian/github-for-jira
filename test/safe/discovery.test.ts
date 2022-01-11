@@ -1,8 +1,6 @@
 import {Installation, RepoSyncState, Subscription} from "../../src/models";
 import {start, stop} from "../../src/worker/startup";
 import sqsQueues from "../../src/sqs/queues";
-import {booleanFlag, BooleanFlags} from "../../src/config/feature-flags";
-import {when} from "jest-when";
 import {createWebhookApp} from "../utils/probot";
 import app from "../../src/worker/app";
 import {discovery} from "../../src/sync/discovery";
@@ -29,26 +27,11 @@ describe("Discovery Queue Test", () => {
 			gitHubInstallationId: TEST_INSTALLATION_ID,
 			jiraClientKey: clientKey
 		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.REPO_SYNC_STATE_AS_SOURCE,
-			expect.anything(),
-			expect.anything(),
-		).mockResolvedValue(true);
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.NEW_REPO_SYNC_STATE,
-			expect.anything(),
-			expect.anything(),
-		).mockResolvedValue(true);
 	});
 
 	afterEach(async () => {
-
 		await Installation.destroy({truncate: true})
-
 		await Subscription.destroy({truncate: true})
-
 	});
 
 	let originalBackfillQueueSendMessageFunction;
@@ -71,7 +54,7 @@ describe("Discovery Queue Test", () => {
 
 		githubNock
 			.post("/app/installations/1234/access_tokens")
-			.optionally()
+			.optionally() // TODO: need to remove optionally and make it explicit
 			.reply(200, {
 				token: "token",
 				expires_at: new Date().getTime() + 1_000_000
