@@ -66,7 +66,7 @@
     "@types/supertest": "^2.0.11",
     "atlassian-jwt": "^2.0.0",
     "aws-sdk": "^2.999.0",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "body-parser": "^1.18.3",
     "bottleneck": "^2.19.5",
     "bunyan": "^1.8.15",
