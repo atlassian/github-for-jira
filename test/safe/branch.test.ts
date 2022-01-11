@@ -15,7 +15,7 @@ describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
-	const mockGitHubAuthRequest = () => {
+	const mockGitHubAuthRequest = () =>
 		githubNock
 			.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 			.optionally()
