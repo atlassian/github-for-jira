@@ -21,7 +21,6 @@ export enum BooleanFlags {
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS = "support-branch-and-merge-workflows-for-deployments",
 	TRACE_LOGGING = "trace-logging",
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS = "support-branch-and-merge-workflows-for-builds",
-	USE_NEW_GITHUB_CLIENT_FOR_PUSH = "use-new-github-client-for-push",
 	USE_SQS_FOR_BRANCH = "use-sqs-for-branch",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging"

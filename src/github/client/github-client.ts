@@ -92,7 +92,6 @@ export default class GitHubClient {
 		const response = await this.axios.get<T>(url, {
 			...await this.installationAuthenticationHeaders(),
 			params: {
-				installationId: this.githubInstallationId,
 				...params,
 			},
 			urlParams,
@@ -107,9 +106,6 @@ export default class GitHubClient {
 			},
 			{
 				...await this.installationAuthenticationHeaders(),
-				params: {
-					installationId: this.githubInstallationId,
-				}
 			});
 	}
 

@@ -10,6 +10,7 @@ import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
 
+
 describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
@@ -70,7 +71,6 @@ describe("Branch Webhook", () => {
 			const sha = "test-branch-ref-sha";
 
 			mockGitHubAuthRequest();
-
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
 					ref: `refs/${ref}`,
