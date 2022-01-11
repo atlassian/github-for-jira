@@ -10,6 +10,7 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/common-middleware";
 import { InstallationId } from "./installation-id";
+import { ViewerRepositoryCountQuery } from "./github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -91,7 +92,6 @@ export default class GitHubClient {
 		const response = await this.axios.get<T>(url, {
 			...await this.installationAuthenticationHeaders(),
 			params: {
-				installationId: this.githubInstallationId,
 				...params,
 			},
 			urlParams,
@@ -99,7 +99,7 @@ export default class GitHubClient {
 		return response;
 	}
 
-	public async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<T>> {
+	public async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse> {
 		const response = await this.axios.post<T>("https://api.github.com/graphql",
 			{
 				query,
@@ -107,9 +107,6 @@ export default class GitHubClient {
 			},
 			{
 				...await this.installationAuthenticationHeaders(),
-				params: {
-					installationId: this.githubInstallationId,
-				}
 			});
 		return response;
 	}
@@ -158,14 +155,7 @@ export default class GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql<AxiosResponse>(`
-			query {
-				viewer {
-					repositories {
-						totalCount
-					}
-				}
-			}`);
+		const response = await this.graphql(ViewerRepositoryCountQuery);
 
 		return response?.data?.data?.viewer?.repositories?.totalCount as number;
 	}

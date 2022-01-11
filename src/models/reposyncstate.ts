@@ -180,17 +180,17 @@ export default class RepoSyncState extends Sequelize.Model {
 		});
 	}
 
-	static async updateRepoForSubscription(subscription: Subscription, repo?: RepositoryData): Promise<RepoSyncState | undefined> {
-		const repoId = Number(repo?.repository?.id);
-		if (!repoId) {
-			return undefined;
-		}
+	// TODO: need to redo this in a better fashion after repoSyncState column is deleted
+	static async updateRepoForSubscription(subscription: Subscription, repoId: number, key: keyof RepositoryData, value: unknown): Promise<RepoSyncState | undefined> {
 		const model: RepoSyncState | undefined = await RepoSyncState.findOne({
 			where: {
 				subscriptionId: subscription.id,
 				repoId
 			}
 		});
+		const repo = _.merge(model?.toRepositoryData() || {}, {
+			[key]: value
+		})
 		return model?.setFromRepositoryData(repo)?.save();
 	}
 

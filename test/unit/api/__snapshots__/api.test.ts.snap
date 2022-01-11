@@ -76,33 +76,6 @@ Object {
 
 exports[`API Endpoints repoSyncState should return 404 if no installation is found 1`] = `Object {}`;
 
-exports[`API Endpoints repoSyncState should return the repoSyncState information for an existing installation 1`] = `
-Object {
-  "jiraHost": "https://test-atlassian-instance.atlassian.net",
-  "numberOfSyncedRepos": 1,
-  "repos": Object {
-    "1": Object {
-      "branchStatus": "complete",
-      "commitStatus": "complete",
-      "lastBranchCursor": "foo",
-      "lastCommitCursor": "bar",
-      "lastPullCursor": 12,
-      "pullStatus": "complete",
-      "repository": Object {
-        "full_name": "atlassian/github-for-jira",
-        "html_url": "github.com/atlassian/github-for-jira",
-        "id": "1",
-        "name": "github-for-jira",
-        "owner": Object {
-          "login": "atlassian",
-        },
-        "updated_at": "1970-01-01T00:00:00.000Z",
-      },
-    },
-  },
-}
-`;
-
 exports[`API Endpoints sync should reset repoSyncState if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
 
 exports[`API Endpoints sync should return 404 if no installation is found 1`] = `"Not Found"`;
