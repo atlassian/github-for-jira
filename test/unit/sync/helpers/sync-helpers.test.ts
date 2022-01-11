@@ -1,4 +1,4 @@
-import { mockJob, mockNextTask, mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "../../../mocks/errorResponses";
+import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "../../../mocks/errorResponses";
 /* eslint-disable @typescript-eslint/no-var-requires */
 import {
 	sortedRepos,
@@ -22,8 +22,6 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockNotFoundErrorOctokitRequest,
-					mockJob,
-					mockNextTask,
 					getLogger('test')
 				)
 			).toBeTruthy();
@@ -34,8 +32,6 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockNotFoundErrorOctokitGraphql,
-					mockJob,
-					mockNextTask,
 					getLogger('test')
 				)
 			).toBeTruthy();
@@ -45,8 +41,6 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockOtherOctokitRequestErrors,
-					mockJob,
-					mockNextTask,
 					getLogger('test')
 				)
 			).toBeFalsy();
@@ -54,8 +48,6 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockOtherOctokitGraphqlErrors,
-					mockJob,
-					mockNextTask,
 					getLogger('test')
 				)
 			).toBeFalsy();
@@ -63,8 +55,6 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockOtherError,
-					mockJob,
-					mockNextTask,
 					getLogger('test')
 				)
 			).toBeFalsy();
@@ -72,8 +62,6 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					null,
-					mockJob,
-					mockNextTask,
 					getLogger('test')
 				)
 			).toBeFalsy();
@@ -81,8 +69,6 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					"",
-					mockJob,
-					mockNextTask,
 					getLogger('test')
 				)
 			).toBeFalsy();
