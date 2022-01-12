@@ -1,10 +1,11 @@
 import transformBranches from "./transforms/branch";
-import { getBranches as getBranchesQuery } from "./queries";
 import { GitHubAPI } from "probot";
 import { Repository } from "../models/subscription";
+import { Repository as OctokitRepository} from "@octokit/graphql-schema";
 import GitHubClient from "../github/client/github-client";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import {getBranches as getBranchesQuery} from "../github/client/github-queries";
 
 // TODO: better typings
 export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: GitHubClient, jiraHost: string, repository:Repository, cursor?:string | number, perPage?:number) => {
@@ -12,17 +13,24 @@ export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: Gi
 	logger.info("Syncing branches: started");
 
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES, false, jiraHost);
-	const client = useNewGHClient ? newGithub : github;
 
-	const results = ((await client.graphql(getBranchesQuery, {
-		owner: repository.owner.login,
-		repo: repository.name,
-		per_page: perPage,
-		cursor
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	})) as any);
+	let edges;
+	if(useNewGHClient) {
+		const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string)
+		edges = result?.refs?.edges || [];
+	} else {
 
-	const { edges } = results.repository.refs;
+		const results = ((await github.graphql(getBranchesQuery, {
+			owner: repository.owner.login,
+			repo: repository.name,
+			per_page: perPage,
+			cursor
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		})) as { repository: OctokitRepository});
+
+		edges = results.repository?.refs?.edges || [];
+	}
+
 	const branches = edges.map(({ node: item }) => item);
 
 	logger.info("Syncing branches: finished");
