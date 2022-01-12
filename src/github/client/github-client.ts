@@ -11,6 +11,7 @@ import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/common-middleware";
 import { InstallationId } from "./installation-id";
 import { ViewerRepositoryCountQuery } from "./github-queries";
+import { Repository } from "@octokit/graphql-schema";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -99,10 +100,11 @@ export default class GitHubClient {
 		return response;
 	}
 
-	private async graphql<T>(query: string): Promise<AxiosResponse> {
-		return await this.axios.post<T>("https://api.github.com/graphql",
+	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse> {
+		return  await this.axios.post<T>("https://api.github.com/graphql",
 			{
-				query
+				query,
+				variables
 			},
 			{
 				...await this.installationAuthenticationHeaders(),
@@ -156,6 +158,18 @@ export default class GitHubClient {
 		const response = await this.graphql(ViewerRepositoryCountQuery);
 
 		return response?.data?.data?.viewer?.repositories?.totalCount as number;
+	}
+
+
+	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string) : Promise<Repository> {
+		const response = await this.graphql(ViewerRepositoryCountQuery,
+			{
+				owner: owner,
+				repo: repoName,
+				per_page: perPage,
+				cursor
+			});
+		return response?.data?.data.repository as Repository;
 	}
 
 }
