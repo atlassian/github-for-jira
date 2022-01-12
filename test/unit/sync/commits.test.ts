@@ -1,19 +1,18 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../fixtures/api/graphql/commit-queries";
-import createJob from "../../setup/create-job";
 import { Subscription } from "../../../src/models";
 import { processInstallation } from "../../../src/sync/installation";
 import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
 import { createApplication } from "../../utils/probot";
 import nock from "nock";
-import {getLogger} from "../../../src/config/logger";
+import { getLogger } from "../../../src/config/logger";
+import { Hub } from "@sentry/types/dist/hub";
 
 jest.mock("../../../src/models");
 
 describe.skip("sync/commits", () => {
 	let installationId;
-	let delay;
 	let app: Application;
 
 	const defaultBranchFixture = require("../../fixtures/api/graphql/default-branch.json");
@@ -25,6 +24,10 @@ describe.skip("sync/commits", () => {
 	const backfillQueue = {
 		schedule: jest.fn()
 	};
+
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	const sentry: Hub = { setUser: jest.fn() } as Hub;
 
 	beforeEach(async () => {
 		// TODO: move this into utils to easily construct mock data
@@ -45,7 +48,6 @@ describe.skip("sync/commits", () => {
 				}
 			}
 		};
-		delay = process.env.LIMITER_PER_INSTALLATION = "2000";
 
 		installationId = 1234;
 		Date.now = jest.fn(() => 12345678);
@@ -53,7 +55,6 @@ describe.skip("sync/commits", () => {
 		mocked(Subscription.getSingleInstallation).mockResolvedValue({
 			jiraHost,
 			id: 1,
-			repoSyncState: repoSyncStatus,
 			get: () => repoSyncStatus,
 			set: () => repoSyncStatus,
 			save: () => Promise.resolve({}),
@@ -68,10 +69,7 @@ describe.skip("sync/commits", () => {
 	});
 
 	it("should sync to Jira when Commit Nodes have jira references", async () => {
-		const job = createJob({
-			data: { installationId, jiraHost },
-			opts: { delay }
-		});
+		const data = { installationId, jiraHost };
 
 		githubNock
 			.post("/graphql")
@@ -113,15 +111,12 @@ describe.skip("sync/commits", () => {
 			}
 		}).reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(data);
 	});
 
 	it("should send Jira all commits that have Issue Keys", async () => {
-		const job = createJob({
-			data: { installationId, jiraHost },
-			opts: { delay }
-		});
+		const data = { installationId, jiraHost };
 
 		githubNock
 			.post("/graphql", getDefaultBranch)
@@ -197,15 +192,12 @@ describe.skip("sync/commits", () => {
 			}
 		}).reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(data);
 	});
 
 	it("should default to master branch if defaultBranchRef is null", async () => {
-		const job = createJob({
-			data: { installationId, jiraHost },
-			opts: { delay }
-		});
+		const data = { installationId, jiraHost };
 
 		githubNock
 			.post("/graphql", getDefaultBranch)
@@ -247,15 +239,12 @@ describe.skip("sync/commits", () => {
 			}
 		}).reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(data);
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
-		const job = createJob({
-			data: { installationId, jiraHost },
-			opts: { delay }
-		});
+		const data = { installationId, jiraHost };
 
 		githubNock
 			.post("/graphql", getDefaultBranch)
@@ -268,14 +257,14 @@ describe.skip("sync/commits", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(data);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});
 
 	it("should not call Jira if no data is returned", async () => {
-		const job = createJob({ data: { installationId, jiraHost } });
+		const data = { installationId, jiraHost };
 
 		githubNock
 			.post("/graphql", getDefaultBranch)
@@ -288,8 +277,8 @@ describe.skip("sync/commits", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(data);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});

@@ -55,6 +55,8 @@ Object {
 
 exports[`API Authentication should return 404 if no token is provided 1`] = `Object {}`;
 
+exports[`API Endpoints Repo Sync State should return 404 if no installation is found 1`] = `Object {}`;
+
 exports[`API Endpoints installation should return 404 if no installation is found 1`] = `Object {}`;
 
 exports[`API Endpoints installation should return information for an existing installation 1`] = `
@@ -70,13 +72,11 @@ Object {
   "hasConnections": true,
   "host": "https://test-atlassian-instance.atlassian.net",
   "installationId": "1234",
-  "repoSyncState": "http://127.0.0.1/api/1234/repoSyncState.json",
+  "syncStateUrl": "http://127.0.0.1/api/1234/https%3A%2F%2Ftest-atlassian-instance.atlassian.net/syncstate",
 }
 `;
 
-exports[`API Endpoints repoSyncState should return 404 if no installation is found 1`] = `Object {}`;
-
-exports[`API Endpoints sync should reset repoSyncState if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+exports[`API Endpoints sync should reset sync state if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
 
 exports[`API Endpoints sync should return 404 if no installation is found 1`] = `"Not Found"`;
 

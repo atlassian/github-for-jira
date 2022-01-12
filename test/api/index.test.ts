@@ -50,9 +50,9 @@ describe("api/index", () => {
 		return app;
 	};
 
-	test("GET repoSyncState.json", async () => {
+	test("GET syncstate", async () => {
 		await supertest(await createApp())
-			.get(`/api/${sub.gitHubInstallationId}/${encodeURIComponent(sub.jiraHost)}/repoSyncState.json`)
+			.get(`/api/${sub.gitHubInstallationId}/${encodeURIComponent(sub.jiraHost)}/syncstate`)
 			.set("Authorization", "Bearer xxx")
 			.then((response) => {
 				expect(response.text).toStrictEqual("{\"installationId\":123,\"jiraHost\":\"http://blah.com\",\"numberOfSyncedRepos\":0,\"repos\":{}}");
