@@ -9,11 +9,11 @@ import {getLogger} from "../../../../src/config/logger";
 jest.mock("../../../../src/models");
 
 describe("Sync helpers suite", () => {
-	const repoSyncState = require("../../../fixtures/repo-sync-state.json");
-	const sortedReposFunc = require("../../../fixtures/sorted-repos.json");
+	const unsortedReposJson = require("../../../fixtures/repositories.json");
+	const sortedReposJson = require("../../../fixtures/sorted-repos.json");
 
 	it("sortedRepos should sort repos by updated_at", () => {
-		expect(sortedRepos(repoSyncState)).toEqual(sortedReposFunc);
+		expect(sortedRepos(unsortedReposJson)).toEqual(sortedReposJson);
 	});
 
 	describe("handleNotFoundErrors", () => {
@@ -22,7 +22,7 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockNotFoundErrorOctokitRequest,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeTruthy();
 		});
@@ -32,7 +32,7 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockNotFoundErrorOctokitGraphql,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeTruthy();
 		});
@@ -41,35 +41,35 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockOtherOctokitRequestErrors,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 
 			expect(
 				isNotFoundError(
 					mockOtherOctokitGraphqlErrors,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 
 			expect(
 				isNotFoundError(
 					mockOtherError,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 
 			expect(
 				isNotFoundError(
 					null,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 
 			expect(
 				isNotFoundError(
 					"",
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 		});

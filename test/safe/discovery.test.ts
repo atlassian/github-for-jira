@@ -79,9 +79,9 @@ describe("Discovery Queue Test", () => {
 		console.log("Checking for subscription ID" + subscription.id)
 
 
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		const states = await RepoSyncState.findAllFromSubscription(subscription);
 
-		expect(repoSyncStates.length).toBe(2);
+		expect(states.length).toBe(2);
 
 	}
 

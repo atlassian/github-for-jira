@@ -75,30 +75,6 @@ describe("API", () => {
 			gitHubInstallationId,
 			jiraHost,
 			jiraClientKey: "client-key",
-			repoSyncState: {
-				jiraHost,
-				numberOfSyncedRepos: 1,
-				repos: {
-					"1": {
-						pullStatus: "complete",
-						branchStatus: "complete",
-						commitStatus: "complete",
-						lastBranchCursor: "foo",
-						lastCommitCursor: "bar",
-						lastPullCursor: 12,
-						repository: {
-							id: "1",
-							name: "github-for-jira",
-							full_name: "atlassian/github-for-jira",
-							html_url: "github.com/atlassian/github-for-jira",
-							owner: {
-								login: "atlassian"
-							},
-							updated_at: new Date(0)
-						}
-					}
-				}
-			}
 		});
 	});
 
@@ -276,7 +252,7 @@ describe("API", () => {
 			});
 		});
 
-		describe("repoSyncState", () => {
+		describe("Repo Sync State", () => {
 			beforeEach(async () => {
 				await RepoSyncState.create({
 					subscriptionId: subscription.id,
@@ -301,7 +277,7 @@ describe("API", () => {
 
 			it("should return 404 if no installation is found", async () => {
 				return supertest(app)
-					.get(`/api/${invalidId}/repoSyncState.json`)
+					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
 					.send(`jiraHost=${jiraHost}`)
@@ -311,9 +287,9 @@ describe("API", () => {
 					});
 			});
 
-			it("should return the repoSyncState information for an existing installation", async () => {
+			it("should return the sync state for an existing installation", async () => {
 				return supertest(app)
-					.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/repoSyncState.json`)
+					.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
 					.expect(200)
@@ -370,7 +346,7 @@ describe("API", () => {
 					});
 			});
 
-			it("should reset repoSyncState if asked to", async () => {
+			it("should reset sync state if asked to", async () => {
 				return supertest(app)
 					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Authorization", "Bearer xxx")
@@ -380,7 +356,6 @@ describe("API", () => {
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
-						// td.verify(Subscription.findOrStartSync(subscription, "full"));
 					});
 			});
 		});
