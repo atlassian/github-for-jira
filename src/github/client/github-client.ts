@@ -100,8 +100,8 @@ export default class GitHubClient {
 		return response;
 	}
 
-	public async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse> {
-		const response = await this.axios.post<T>("https://api.github.com/graphql",
+	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse> {
+		return  await this.axios.post<T>("https://api.github.com/graphql",
 			{
 				query,
 				variables
@@ -109,7 +109,6 @@ export default class GitHubClient {
 			{
 				...await this.installationAuthenticationHeaders(),
 			});
-		return response;
 	}
 
 	/**
