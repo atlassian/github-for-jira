@@ -28,6 +28,17 @@ module.exports = {
       FROM "Subscriptions";
     `);
 
-
+		await queryInterface.sequelize.query(`
+      CREATE VIEW analytics.Installations AS (
+        SELECT
+          id,
+          "jiraHost" AS jira_host,
+          "createdAt" as created_at,
+          "updatedAt" as updated_at,
+          enabled
+        FROM
+          "Installations"
+      )
+    `);
 	}
 };
