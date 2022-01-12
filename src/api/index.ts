@@ -139,7 +139,7 @@ router.get("/", (_: Request, res: Response): void => {
 });
 
 router.get(
-	"/:installationId/:jiraHost/repoSyncState.json",
+	"/:installationId/:jiraHost/syncstate",
 	check("installationId").isInt(),
 	check("jiraHost").isString(),
 	returnOnValidationError,
@@ -374,7 +374,7 @@ router.get(
 				connections,
 				failedConnections,
 				hasConnections: connections.length > 0 || failedConnections.length > 0,
-				repoSyncState: `${req.protocol}://${req.get("host")}/api/${installationId}/repoSyncState.json`
+				syncStateUrl: `${req.protocol}://${req.get("host")}/api/${installationId}/${encodeURIComponent(jiraHost)}/syncstate`
 			});
 		} catch (err) {
 			req.log.error({ installationId, err }, "Error getting installation");

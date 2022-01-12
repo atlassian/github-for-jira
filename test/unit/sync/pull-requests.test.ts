@@ -44,7 +44,6 @@ describe.skip("sync/pull-request", () => {
 			.mockResolvedValue({
 				jiraHost,
 				id: 1,
-				repoSyncState: repoSyncStatus,
 				get: () => repoSyncStatus,
 				set: () => repoSyncStatus,
 				save: () => Promise.resolve({}),

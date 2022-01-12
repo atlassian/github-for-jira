@@ -169,11 +169,6 @@ describe("getInstallation", () => {
 		await RepoSyncState.destroy({ truncate: true });
 	});
 
-	it("Should get installation from repoSyncState", async () => {
-		const result = await getInstallation(GitHubAPI(), subscription);
-		expect(result).toMatchObject(match);
-	});
-
 	it("Should get installation from Repo Sync State table", async () => {
 		const result = await getInstallation(GitHubAPI(), subscription);
 		expect(result).toMatchObject(match);

@@ -53,7 +53,6 @@ describe.skip("sync/commits", () => {
 		mocked(Subscription.getSingleInstallation).mockResolvedValue({
 			jiraHost,
 			id: 1,
-			repoSyncState: repoSyncStatus,
 			get: () => repoSyncStatus,
 			set: () => repoSyncStatus,
 			save: () => Promise.resolve({}),
@@ -113,7 +112,7 @@ describe.skip("sync/commits", () => {
 			}
 		}).reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app)(job, getLogger("test"))).toResolve();
 		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
 	});
 
@@ -197,7 +196,7 @@ describe.skip("sync/commits", () => {
 			}
 		}).reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app)(job, getLogger("test"))).toResolve();
 		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
@@ -247,7 +246,7 @@ describe.skip("sync/commits", () => {
 			}
 		}).reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app)(job, getLogger("test"))).toResolve();
 		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
 	});
 
@@ -268,7 +267,7 @@ describe.skip("sync/commits", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app)(job, getLogger("test"))).toResolve();
 		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
@@ -288,7 +287,7 @@ describe.skip("sync/commits", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(job, getLogger('test'))).toResolve();
+		await expect(processInstallation(app)(job, getLogger("test"))).toResolve();
 		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
