@@ -22,10 +22,7 @@ export const backfillQueueMessageHandler:MessageHandler<BackfillMessagePayload> 
 
 	try {
 		const processor = await processInstallation(app);
-		await processor({
-			data: context.payload,
-			sentry: sentry
-		}, context.log);
+		await processor(context.payload, sentry, context.log);
 	} catch (err) {
 		sentry.setExtra("job", {
 			id: context.message.MessageId,

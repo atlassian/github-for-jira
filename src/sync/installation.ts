@@ -10,7 +10,6 @@ import getBranches from "./branches";
 import getCommits from "./commits";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "../config/metric-names";
-import Queue from "bull";
 import { booleanFlag, BooleanFlags, isBlocked } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
@@ -85,14 +84,14 @@ const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
 const updateJobStatus = async (
-	job: Queue.Job,
+	data: BackfillMessagePayload,
 	edges: any[] | undefined,
 	task: TaskType,
 	repositoryId: string,
 	logger: LoggerWithTarget,
 	scheduleNextTask: (delay) => void
 ) => {
-	const { installationId, jiraHost } = job.data;
+	const { installationId, jiraHost } = data;
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
@@ -101,15 +100,13 @@ const updateJobStatus = async (
 
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
-		// Include job and task in any micros env logs, exclude from local
-		const loggerObj = process.env.MICROS_ENV ? { job, task } : {};
-		logger.info(loggerObj, "Organization has been deleted. Other active syncs will continue.");
+		logger.info("Organization has been deleted. Other active syncs will continue.");
 		return;
 	}
 
 	const status = edges?.length ? "pending" : "complete";
 
-	logger.info({ job, task, status }, "Updating job status");
+	logger.info({ status }, "Updating job status");
 
 	await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status);
 
@@ -122,17 +119,17 @@ const updateJobStatus = async (
 	} else if (!(await getNextTask(subscription))) {
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
 		const endTime = Date.now();
-		const startTime = job.data?.startTime || 0;
-		const timeDiff = endTime - Date.parse(startTime);
+		const startTime = data?.startTime || 0;
+		const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
 		if (startTime) {
 			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
 			// startTime will be passed in when this sync job is queued from the discovery
 			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff);
 		}
 
-		logger.info({ job, task, startTime, endTime, timeDiff }, "Sync status is complete");
+		logger.info({ startTime, endTime, timeDiff }, "Sync status is complete");
 	} else {
-		logger.info({ job, task }, "Sync status is pending");
+		logger.info("Sync status is pending");
 		scheduleNextTask(0);
 	}
 };
@@ -166,8 +163,6 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 // - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
 export const isNotFoundError = (
 	err: any,
-	job: any,
-	nextTask: Task,
 	logger: LoggerWithTarget
 ): boolean | undefined => {
 	const isNotFoundErrorType =
@@ -176,16 +171,13 @@ export const isNotFoundError = (
 	const isNotFoundError = isNotFoundErrorType?.length > 0 || err?.status === 404;
 
 	isNotFoundError &&
-	logger.info(
-		{ job, task: nextTask },
-		"Repository deleted after discovery, skipping initial sync"
-	);
+	logger.info("Repository deleted after discovery, skipping initial sync");
 
 	return isNotFoundError;
 };
 
 // TODO: type queues
-async function doProcessInstallation(app, job, installationId: number, jiraHost: string, logger: LoggerWithTarget, scheduleNextTask: (delayMs) => void): Promise<void> {
+async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: LoggerWithTarget, scheduleNextTask: (delayMs) => void): Promise<void> {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId
@@ -208,7 +200,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 	if (!nextTask) {
 		await subscription.update({ syncStatus: "COMPLETE" });
 		statsd.increment(metricSyncStatus.complete);
-		logger.info({ job, task: nextTask }, "Sync complete");
+		logger.info("Sync complete");
 		return;
 	}
 
@@ -232,7 +224,8 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		});
 	}
 
-	logger.info({ job, task: nextTask }, "Starting task");
+	//TODO ARC-582 log task only if detailed logging enabled
+	logger.info({ task: nextTask }, "Starting task");
 
 	const processor = tasks[task];
 
@@ -251,7 +244,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 				} catch (err) {
 					logger.error({
 						err,
-						job,
+						payload: data,
 						github,
 						repository,
 						cursor,
@@ -282,15 +275,15 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 				});
 			} catch (err) {
 				if (err?.response?.status === 400) {
-					job.sentry.setExtra(
+					sentry.setExtra(
 						"Response body",
 						err.response.data.errorMessages
 					);
-					job.sentry.setExtra("Jira payload", err.response.data.jiraPayload);
+					sentry.setExtra("Jira payload", err.response.data.jiraPayload);
 				}
 
 				if (err.request) {
-					job.sentry.setExtra("Request", {
+					sentry.setExtra("Request", {
 						host: err.request.domain,
 						path: err.request.path,
 						method: err.request.method
@@ -298,7 +291,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 				}
 
 				if (err.response) {
-					job.sentry.setExtra("Response", {
+					sentry.setExtra("Response", {
 						status: err.response.status,
 						statusText: err.response.statusText,
 						body: err.response.body
@@ -310,7 +303,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		}
 
 		await updateJobStatus(
-			job,
+			data,
 			edges,
 			task,
 			repositoryId,
@@ -326,7 +319,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 
 		if (delay) {
 			// if not NaN or 0
-			logger.info({ delay, job, task: nextTask }, `Delaying job for ${delay}ms`);
+			logger.info({ delay }, `Delaying job for ${delay}ms`);
 			scheduleNextTask(delay);
 			return;
 		}
@@ -334,7 +327,7 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 		if (String(err).includes("connect ETIMEDOUT")) {
 			// There was a network connection issue.
 			// Add the job back to the queue with a 5 second delay
-			logger.warn({ job, task: nextTask }, "ETIMEDOUT error, retrying in 5 seconds");
+			logger.warn("ETIMEDOUT error, retrying in 5 seconds");
 			scheduleNextTask(5_000);
 			return;
 		}
@@ -345,22 +338,22 @@ async function doProcessInstallation(app, job, installationId: number, jiraHost:
 			)
 		) {
 			// Too much server processing time, wait 60 seconds and try again
-			logger.warn({ job, task: nextTask }, "Abuse detection triggered. Retrying in 60 seconds");
+			logger.warn("Abuse detection triggered. Retrying in 60 seconds");
 			scheduleNextTask(60_000);
 			return;
 		}
 
 		// Continue sync when a 404/NOT_FOUND is returned
-		if (isNotFoundError(err, job, nextTask, logger)) {
+		if (isNotFoundError(err, logger)) {
 			const edgesLeft = []; // No edges left to process since the repository doesn't exist
-			await updateJobStatus(job, edgesLeft, task, repositoryId, logger, scheduleNextTask);
+			await updateJobStatus(data, edgesLeft, task, repositoryId, logger, scheduleNextTask);
 			return;
 		}
 
 
 		// TODO: add the jiraHost to the logger with logger.child()
 		const host = subscription.jiraHost || "none";
-		logger.warn({ job, task: nextTask, err, jiraHost: host }, "Task failed, continuing with next task");
+		logger.warn({ err, jiraHost: host }, "Task failed, continuing with next task");
 
 		// marking the current task as failed
 		await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
@@ -401,18 +394,17 @@ export const processInstallation =
 			inProgressStorage, 1_000
 		);
 
-		return async (job: { data: BackfillMessagePayload, sentry: Hub }, rootLogger: LoggerWithTarget): Promise<void> => {
-			const {installationId, jiraHost} = job.data;
-			const logger = rootLogger.child({job});
+		return async (data: BackfillMessagePayload, sentry: Hub, logger: LoggerWithTarget): Promise<void> => {
+			const {installationId, jiraHost} = data;
 
 			try {
 
 				if (await isBlocked(installationId, logger)) {
-					logger.warn({job}, "blocking installation job");
+					logger.warn("blocking installation job");
 					return;
 				}
 
-				job.sentry.setUser({
+				sentry.setUser({
 					gitHubInstallationId: installationId,
 					jiraHost
 				});
@@ -421,18 +413,18 @@ export const processInstallation =
 
 				const result = await deduplicator.executeWithDeduplication(
 					"i-" + installationId + "-" + jiraHost,
-					() => doProcessInstallation(app, job, installationId, jiraHost, logger, (delay: number) =>
+					() => doProcessInstallation(app, data, sentry, installationId, jiraHost, logger, (delay: number) =>
 						nextTaskDelaysMs.push(delay)
 					));
 
 				switch (result) {
 					case DeduplicatorResult.E_OK:
 						logger.info("Job was executed by deduplicator");
-						maybeScheduleNextTask(job.data, nextTaskDelaysMs, logger);
+						maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
 						break;
 					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 						logger.warn("Possible duplicate job was detected, rescheduling");
-						await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC, logger);
+						await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC, logger);
 						break;
 					}
 					case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
@@ -447,7 +439,7 @@ export const processInstallation =
 						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
 						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
 						// is finished.
-						await sqsQueues.backfill.sendMessage(job.data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
+						await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
 						break;
 					}
 				}
