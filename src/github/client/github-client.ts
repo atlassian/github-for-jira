@@ -100,8 +100,8 @@ export default class GitHubClient {
 		return response;
 	}
 
-	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse> {
-		return  await this.axios.post<T>("https://api.github.com/graphql",
+	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<{data: T}>> {
+		return  await this.axios.post<{data: T}>("https://api.github.com/graphql",
 			{
 				query,
 				variables
@@ -155,21 +155,21 @@ export default class GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql(ViewerRepositoryCountQuery);
+		const response = await this.graphql<{viewer: {repositories: {totalCount: number}}}>(ViewerRepositoryCountQuery);
 
-		return response?.data?.data?.viewer?.repositories?.totalCount as number;
+		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
 
 	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string) : Promise<Repository> {
-		const response = await this.graphql(ViewerRepositoryCountQuery,
+		const response = await this.graphql<{repository: Repository}>(ViewerRepositoryCountQuery,
 			{
 				owner: owner,
 				repo: repoName,
 				per_page: perPage,
 				cursor
 			});
-		return response?.data?.data.repository as Repository;
+		return response?.data?.data.repository;
 	}
 
 }
