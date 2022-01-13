@@ -10,7 +10,31 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/common-middleware";
 import { InstallationId } from "./installation-id";
-import {GetBranchesResponse, ViewerRepositoryCountQuery} from "./github-queries";
+import {GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery} from "./github-queries";
+
+/**
+ * The response type for GitHub GraphQL calls.
+ * Was copied from @octokit/graphql to avoid adding a dependency on Octokit Graphql client
+ */
+declare type GraphQlQueryResponse<ResponseData> = {
+	data: ResponseData;
+	errors?: [
+		{
+			message: string;
+			path: [string];
+			extensions: {
+				[key: string]: any;
+			};
+			locations: [
+				{
+					line: number;
+					column: number;
+				}
+			];
+		}
+	];
+};
+
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -99,8 +123,8 @@ export default class GitHubClient {
 		return response;
 	}
 
-	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<{data: T}>> {
-		return  await this.axios.post<{data: T}>("https://api.github.com/graphql",
+	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
+		return  await this.axios.post<GraphQlQueryResponse<T>>("https://api.github.com/graphql",
 			{
 				query,
 				variables
@@ -161,7 +185,7 @@ export default class GitHubClient {
 
 
 	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string) : Promise<GetBranchesResponse> {
-		const response = await this.graphql<GetBranchesResponse>(ViewerRepositoryCountQuery,
+		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,
 			{
 				owner: owner,
 				repo: repoName,

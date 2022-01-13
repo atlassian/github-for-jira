@@ -5,7 +5,7 @@ import { Repository as OctokitRepository} from "@octokit/graphql-schema";
 import GitHubClient from "../github/client/github-client";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import {GetBranchesQuery as getBranchesQuery} from "../github/client/github-queries";
+import { GetBranchesQuery } from "../github/client/github-queries";
 
 // TODO: better typings
 export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: GitHubClient, jiraHost: string, repository:Repository, cursor?:string | number, perPage?:number) => {
@@ -18,7 +18,7 @@ export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: Gi
 	if(useNewGHClient) {
 		result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string)
 	} else {
-		result = ((await github.graphql(getBranchesQuery, {
+		result = ((await github.graphql(GetBranchesQuery, {
 			owner: repository.owner.login,
 			repo: repository.name,
 			per_page: perPage,
