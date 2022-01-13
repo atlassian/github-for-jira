@@ -10,8 +10,7 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/common-middleware";
 import { InstallationId } from "./installation-id";
-import { ViewerRepositoryCountQuery } from "./github-queries";
-import { Repository } from "@octokit/graphql-schema";
+import {GetBranchesResponse, ViewerRepositoryCountQuery} from "./github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -161,15 +160,15 @@ export default class GitHubClient {
 	}
 
 
-	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string) : Promise<Repository> {
-		const response = await this.graphql<{repository: Repository}>(ViewerRepositoryCountQuery,
+	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string) : Promise<GetBranchesResponse> {
+		const response = await this.graphql<GetBranchesResponse>(ViewerRepositoryCountQuery,
 			{
 				owner: owner,
 				repo: repoName,
 				per_page: perPage,
 				cursor
 			});
-		return response?.data?.data.repository;
+		return response?.data?.data;
 	}
 
 }

@@ -5,7 +5,7 @@ import { Repository as OctokitRepository} from "@octokit/graphql-schema";
 import GitHubClient from "../github/client/github-client";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import {getBranches as getBranchesQuery} from "../github/client/github-queries";
+import {GetBranchesQuery as getBranchesQuery} from "../github/client/github-queries";
 
 // TODO: better typings
 export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: GitHubClient, jiraHost: string, repository:Repository, cursor?:string | number, perPage?:number) => {
@@ -14,13 +14,11 @@ export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: Gi
 
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES, false, jiraHost);
 
-	let edges;
+	let result;
 	if(useNewGHClient) {
-		const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string)
-		edges = result?.refs?.edges || [];
+		result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string)
 	} else {
-
-		const results = ((await github.graphql(getBranchesQuery, {
+		result = ((await github.graphql(getBranchesQuery, {
 			owner: repository.owner.login,
 			repo: repository.name,
 			per_page: perPage,
@@ -28,8 +26,9 @@ export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: Gi
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		})) as { repository: OctokitRepository});
 
-		edges = results.repository?.refs?.edges || [];
 	}
+
+	const edges = result?.repository?.refs?.edges || [];
 
 	const branches = edges.map(({ node: item }) => item);
 

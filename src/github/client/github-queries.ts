@@ -1,3 +1,5 @@
+import {Repository} from "@octokit/graphql-schema";
+
 export const ViewerRepositoryCountQuery = `
 query {
 	viewer {
@@ -71,7 +73,8 @@ export const getCommits = (includeChangedFiles?: boolean) => `query ($owner: Str
     }
   }`;
 
-export const getBranches = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export type GetBranchesResponse = {repository: Repository};
+export const GetBranchesQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
         edges {
