@@ -3,18 +3,8 @@
 const domainRegexp = /^\w(?:[\w-]{0,61}\w)?$/;
 const jiraTopleveldomains = ["atlassian.net", "jira.com"];
 
+// TODO: this should only take a single input of the whole domain like test.atlassian.net which we can parse and validate from there.
 export const validJiraDomains = (jiraDomain: string, jiraTopleveldomain: string): boolean =>
 	!!jiraDomain && !!jiraTopleveldomain &&
-	domainRegexp.test(jiraDomain) &&
-	jiraTopleveldomains.includes(jiraTopleveldomain);
-
-export const jiraTopleveldomainOptions = (jiraTopleveldomain?: string): JiraTopleveldomain[] =>
-	jiraTopleveldomains.map(value => ({
-		value,
-		selected: value === jiraTopleveldomain
-	}));
-
-export interface JiraTopleveldomain {
-	value: string;
-	selected: boolean;
-}
+		domainRegexp.test(jiraDomain) &&
+		jiraTopleveldomains.includes(jiraTopleveldomain);

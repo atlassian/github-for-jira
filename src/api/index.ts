@@ -6,22 +6,19 @@ import RedisStore from "rate-limit-redis";
 import Redis from "ioredis";
 import BodyParser from "body-parser";
 import GithubAPI from "../config/github-api";
-import { Installation, Subscription } from "../models";
+import { Installation, RepoSyncState, Subscription } from "../models";
 import verifyInstallation from "../jira/verify-installation";
 import logMiddleware from "../middleware/frontend-log-middleware";
 import JiraClient from "../models/jira-client";
 import uninstall from "../jira/uninstall";
 import { serializeJiraInstallation, serializeSubscription } from "./serializers";
 import getRedisInfo from "../config/redis-info";
-import { queues } from "../worker/queues";
-import { getLogger } from "../config/logger";
-import { Job, Queue } from "bull";
 import { WhereOptions } from "sequelize";
 import getJiraClient from "../jira/client";
+import { findOrStartSync } from "../sync/sync-utils";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
-const logger = getLogger("api");
 
 async function getInstallation(client, subscription) {
 	const id = subscription.gitHubInstallationId;
@@ -137,15 +134,12 @@ router.use(
 	}
 );
 
-router.get(
-	"/",
-	(_: Request, res: Response): void => {
-		res.send({});
-	}
-);
+router.get("/", (_: Request, res: Response): void => {
+	res.send({});
+});
 
 router.get(
-	"/:installationId/:jiraHost/repoSyncState.json",
+	"/:installationId/:jiraHost/syncstate",
 	check("installationId").isInt(),
 	check("jiraHost").isString(),
 	returnOnValidationError,
@@ -171,7 +165,7 @@ router.get(
 				return;
 			}
 
-			res.json(subscription.repoSyncState);
+			res.json(await RepoSyncState.toRepoJson(subscription));
 		} catch (err) {
 			res.status(500).json(err);
 		}
@@ -200,7 +194,7 @@ router.post(
 				return;
 			}
 
-			await Subscription.findOrStartSync(subscription, resetType);
+			await findOrStartSync(subscription, req.log, resetType);
 
 			res.status(202).json({
 				message: `Successfully (re)started sync for ${githubInstallationId}`
@@ -233,7 +227,7 @@ router.post(
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
-			Subscription.findOrStartSync(subscription, syncType)
+			findOrStartSync(subscription, req.log, syncType)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));
@@ -243,80 +237,16 @@ router.post(
 router.post(
 	"/dedupInstallationQueue",
 	bodyParser,
-	async (req: Request, res: Response): Promise<void> => {
-
-		const limit = req.body?.limit || 10000;
-		const jobs = await queues.installation.getJobs(["active", "delayed", "waiting", "paused"]);
-		const foundJobIds = new Set<string>();
-		const duplicateJobs: Job[] = [];
-
-		// collecting duplicate jobs per installation
-		for (const job of jobs) {
-
-			// we only want to deduplicate a certain number of jobs
-			if (duplicateJobs.length >= limit) {
-				break;
-			}
-
-			// getJobs() sometimes seems to include a "null" job in the array
-			if (!job) {
-				continue;
-			}
-
-			if (foundJobIds.has(`${job.data.installationId}${job.data.jiraHost}`)) {
-				duplicateJobs.push(job);
-			} else {
-				foundJobIds.add(`${job.data.installationId}${job.data.jiraHost}`);
-			}
-		}
-
-		// removing duplicate jobs
-		await Promise.all(duplicateJobs.map((job: Job) => {
-			logger.info({ job }, "removing duplicate job");
-			job.remove();
-		}));
-
-		res.send(`${duplicateJobs.length} duplicate jobs killed with fire.`);
+	async (_: Request, res: Response): Promise<void> => {
+		res.send(`This endpoint doesn't do anything useful anymore`);
 	}
 );
 
 router.post(
 	"/requeue",
 	bodyParser,
-	async (request: Request, res: Response): Promise<void> => {
-
-		const queueName = request.body.queue;   // "installation", "push", "metrics", or "discovery"
-		const jobTypes = request.body.jobTypes || ["active", "delayed", "waiting", "paused"];
-
-		if (!jobTypes.length) {
-			res.status(400);
-			res.send("please specify the jobTypes field (available job types: [\"active\", \"delayed\", \"waiting\", \"paused\"])");
-			return;
-		}
-
-		const queue: Queue = queues[queueName];
-
-		if (!queue) {
-			res.status(400);
-			res.send(`queue ${queueName} does not exist (available queues: "installation", "push", "metrics", or "discovery"`);
-			return;
-		}
-
-		// This remove all jobs from the queue. This way,
-		// the whole queue will be drained and all jobs will be readded.
-		const jobs = await queue.getJobs(jobTypes);
-
-		await Promise.all(jobs.map(async (job: Job) => {
-			try {
-				await job.remove();
-				await queue.add(job.data);
-				logger.info({ job: job }, "requeued job");
-			} catch (e) {
-				// do nothing
-			}
-		}));
-
-		res.send(`${jobs.length} jobs discarded and re-added.`);
+	async (_: Request, res: Response): Promise<void> => {
+		res.send(`This endpoint doesn't do anything useful anymore`);
 	}
 );
 
@@ -385,23 +315,18 @@ router.post(
 	bodyParser,
 	check("installationId").isInt(),
 	returnOnValidationError,
-	async (req: Request, response: Response): Promise<void> => {
+	async (req: Request, res: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const installation = await Installation.findByPk(installationId);
-
 		const isValid = await verifyInstallation(installation, req.log)();
-		const respondWith = (message) =>
-			response.json({
-				message,
-				installation: {
-					enabled: isValid,
-					id: installation.id,
-					jiraHost: installation.jiraHost
-				}
-			});
-		respondWith(
-			isValid ? "Verification successful" : "Verification failed"
-		);
+		res.json({
+			message: isValid ? "Verification successful" : "Verification failed",
+			installation: {
+				enabled: isValid,
+				id: installation.id,
+				jiraHost: installation.jiraHost
+			}
+		});
 	}
 );
 
@@ -449,9 +374,7 @@ router.get(
 				connections,
 				failedConnections,
 				hasConnections: connections.length > 0 || failedConnections.length > 0,
-				repoSyncState: `${req.protocol}://${req.get(
-					"host"
-				)}/api/${installationId}/repoSyncState.json`
+				syncStateUrl: `${req.protocol}://${req.get("host")}/api/${installationId}/${encodeURIComponent(jiraHost)}/syncstate`
 			});
 		} catch (err) {
 			req.log.error({ installationId, err }, "Error getting installation");

@@ -1,5 +1,12 @@
-import _ from "lodash";
-import { mapEnvironment } from "../../../src/transforms/deployment";
+/* eslint-disable @typescript-eslint/no-var-requires */
+// eslint-disable-next-line import/no-duplicates
+import transformDeployment, { mapEnvironment } from "../../../src/transforms/deployment";
+import {getLogger} from "../../../src/config/logger";
+import {GitHubAPI} from "probot";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
+
+jest.mock("../../../src/config/feature-flags");
 
 describe("deployment environment mapping", () => {
 	test("classifies known environments correctly", () => {
@@ -66,4 +73,100 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("internet")).toBe("unmapped");
 		expect(mapEnvironment("製造")).toBe("unmapped");
 	});
+});
+
+describe("transform GitHub webhook payload to Jira payload", () => {
+
+	const deployment_status = require("../../fixtures/deployment_status-basic.json");
+	const owner = deployment_status.payload.repository.owner.login;
+	const repo = deployment_status.payload.repository.name;
+
+	it("supports branch and merge workflows - FF TRUE", async () => {
+		// Mocking all GitHub API Calls
+		// Get commit
+		githubNock.get(`/repos/${owner}/${repo}/commits/${deployment_status.payload.deployment.sha}`)
+			.reply(200, {
+				...owner,
+				commit: {
+					message: "testing"
+				}
+			});
+
+		// List deployments
+		githubNock.get(`/repos/${owner}/${repo}/deployments?environment=Production&per_page=10`)
+			.reply(200,
+				[
+					{
+						id: 1,
+						environment: "Production",
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+					}
+				]
+			);
+
+		// List deployments statuses
+		githubNock.get(`/repos/${owner}/${repo}/deployments/1/statuses?per_page=100`)
+			.reply(200, [
+				{
+					id: 1,
+					state: "pending"
+				},
+				{
+					id: 2,
+					state: "success"
+				}
+			]);
+
+		// Compare commits
+		githubNock.get(`/repos/${owner}/${repo}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+			.reply(200,{
+				commits: [
+					{
+						commit: {
+							message: "ABC-1"
+						}
+					},
+					{
+						commit: {
+							message: "ABC-2"
+						}
+					}
+				]}
+			);
+
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
+
+		const jiraPayload = await transformDeployment(GitHubAPI(), deployment_status.payload, "testing.atlassian.net", getLogger("deploymentLogger"))
+
+		expect(jiraPayload).toMatchObject({
+			deployments: [{
+				schemaVersion: "1.0",
+				deploymentSequenceNumber: 1234,
+				updateSequenceNumber: 123456,
+				issueKeys: ["ABC-1", "ABC-2"],
+				displayName: "deploy",
+				url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
+				description: "deploy",
+				lastUpdated: new Date("2021-06-28T12:15:18.000Z"),
+				state: "successful",
+				pipeline: {
+					id: "deploy",
+					displayName: "deploy",
+					url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
+				},
+				environment: {
+					id: "Production",
+					displayName: "Production",
+					type: "production",
+				},
+			}]
+		})
+	})
+
+	// TODO add test if FF is false
 });

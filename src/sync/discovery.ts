@@ -4,10 +4,11 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import sqsQueues from "../sqs/queues";
 
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 
-export const discovery = (app: Application, queues) => async (job, logger: LoggerWithTarget) => {
+export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
 	const github = await app.auth(installationId);
@@ -51,8 +52,7 @@ export const discovery = (app: Application, queues) => async (job, logger: Logge
 			repos
 		});
 
-		// Create job
-		queues.installation.add({ installationId, jiraHost, startTime });
+		await sqsQueues.backfill.sendMessage({installationId, jiraHost, startTime: startTime.toISOString()}, 0, logger);
 	} catch (err) {
 		logger.error({ job, err }, "Discovery error");
 	}

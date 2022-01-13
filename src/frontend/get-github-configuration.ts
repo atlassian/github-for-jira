@@ -1,13 +1,13 @@
 import { Installation, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
-import enhanceOctokit from "../config/enhance-octokit";
-import app from "../worker/app";
 import { getInstallation } from "./get-jira-configuration";
-import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { Errors } from "../config/errors";
 import { Tracer } from "../config/tracer";
+import GitHubClient from "../github/client/github-client";
+import Logger from "bunyan";
+import { getCloudInstallationId } from "../github/client/installation-id";
 
 const getConnectedStatus = (
 	installationsWithSubscriptions: any,
@@ -26,10 +26,7 @@ const getConnectedStatus = (
 
 const mergeByLogin = (installationsWithAdmin: any, connectedStatuses: any) =>
 	connectedStatuses ? installationsWithAdmin.map((installation) => ({
-		...connectedStatuses.find(
-			(connection) =>
-				connection.account.login === installation.account.login && connection
-		),
+		...connectedStatuses.find((connection) => connection.account.login === installation.account.login),
 		...installation
 	})) : installationsWithAdmin;
 
@@ -53,7 +50,10 @@ const installationConnectedStatus = async (
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
-async function getInstallationsWithAdmin(installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[], login: string, isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> {
+async function getInstallationsWithAdmin(log: Logger,
+	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[],
+	login: string,
+	isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> {
 	const installationsWithAdmin: InstallationWithAdmin[] = [];
 
 	for (const installation of installations) {
@@ -65,19 +65,16 @@ async function getInstallationsWithAdmin(installations: Octokit.AppsListInstalla
 			type: installation.target_type
 		});
 
-		const authedApp = await app.auth(installation.id);
-		enhanceOctokit(authedApp);
+		const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
+		const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
 
-		const repositories = authedApp.paginate(
-			authedApp.apps.listRepos.endpoint.merge({ per_page: 100 }),
-			(res) => res.data
-		);
+		const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 
-		const [admin, numberOfRepos] = await Promise.all([checkAdmin, repositories]);
+		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
 
 		installationsWithAdmin.push({
 			...installation,
-			numberOfRepos: numberOfRepos.length || 0,
+			numberOfRepos: numberOfRepos || 0,
 			admin
 		});
 	}
@@ -111,7 +108,7 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: any, j
 };
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { jiraHost, githubToken } = req.session;
+	const { jiraHost, githubToken } = res.locals;
 	const log = req.log.child({ jiraHost });
 
 	if (!githubToken) {
@@ -129,11 +126,11 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 	tracer.trace(`found jira host: ${jiraHost}`);
 
-	const github: GitHubAPI = res.locals.github;
-	const client: GitHubAPI = res.locals.client;
-	const isAdmin = res.locals.isAdmin;
-
-	tracer.trace(`isAdmin: ${isAdmin}`);
+	const {
+		github, // user-authenticated GitHub client
+		client, // app-authenticated GitHub client
+		isAdmin
+	} = res.locals;
 
 	const { data: { login } } = await github.users.getAuthenticated();
 
@@ -159,11 +156,24 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 
-		const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
+		const { data: { installations }, headers } = (await github.apps.listInstallationsForAuthenticatedUser());
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser.headers: ${JSON.stringify(headers)}`);
+		}
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
+		}
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(installations, login, isAdmin);
+		const installationsWithAdmin = await getInstallationsWithAdmin(log, installations, login, isAdmin);
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
+		}
 
 		tracer.trace(`got user's installations with admin status from GitHub`);
 
@@ -171,19 +181,24 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`got user's authenticated apps from GitHub`);
 
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: getAuthenticated: ${JSON.stringify(info)}`);
+		}
+
 		const connectedInstallations = await installationConnectedStatus(
 			jiraHost,
 			client,
 			installationsWithAdmin,
-			req.log
+			log
 		);
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: connectedInstallations: ${JSON.stringify(connectedInstallations)}`);
+		}
 
 		tracer.trace(`got connected installations`);
 
-		const newConnectAnOrgPgFlagIsOn = await booleanFlag(BooleanFlags.NEW_CONNECT_AN_ORG_PAGE, true, jiraHost);
-		const connectAnOrgPageVersion = newConnectAnOrgPgFlagIsOn ? "github-configuration.hbs" : "github-configuration-OLD.hbs";
-
-		res.render(connectAnOrgPageVersion, {
+		res.render("github-configuration.hbs", {
 			csrfToken: req.csrfToken(),
 			installations: connectedInstallations,
 			jiraHost: jiraHost,

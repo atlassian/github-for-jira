@@ -5,10 +5,11 @@ import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../../src/models";
 import { Application } from "probot";
 import { createWebhookApp } from "../../utils/probot";
-import createJob from "../../setup/create-job";
 import { processInstallation } from "../../../src/sync/installation";
 import nock from "nock";
 import {getLogger} from "../../../src/config/logger";
+import {Hub} from "@sentry/types/dist/hub";
+import {BackfillMessagePayload} from "../../../src/sqs/backfill";
 
 jest.mock("../../../src/models");
 
@@ -21,6 +22,10 @@ describe.skip("sync/branches", () => {
 	const branchCommitsHaveKeys = require("../../fixtures/api/graphql/branch-commits-have-keys.json");
 	const associatedPRhasKeys = require("../../fixtures/api/graphql/branch-associated-pr-has-keys.json");
 	const branchNoIssueKeys = require("../../fixtures/api/graphql/branch-no-issue-keys.json");
+
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	const sentry: Hub = { setUser: jest.fn() } as Hub;
 
 	function makeExpectedResponse({ branchName }) {
 		const issueKeys = issueKeyParser().parse(branchName) || [];
@@ -99,7 +104,6 @@ describe.skip("sync/branches", () => {
 	const backfillQueue = {
 		schedule: jest.fn()
 	};
-	const queueSupplier = () => Promise.resolve(backfillQueue);
 
 	beforeEach(async () => {
 		const repoSyncStatus = {
@@ -140,10 +144,7 @@ describe.skip("sync/branches", () => {
 	})
 
 	it("should sync to Jira when branch refs have jira references", async () => {
-		const job = createJob({
-			data: { installationId, jiraHost },
-			opts: { delay }
-		});
+		const data : BackfillMessagePayload = {installationId, jiraHost};
 		nockBranchRequest(branchNodesFixture);
 
 		jiraNock
@@ -153,15 +154,12 @@ describe.skip("sync/branches", () => {
 			)
 			.reply(200);
 
-		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
+		await expect(processInstallation(app)(data, sentry, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(data);
 	});
 
 	it("should send data if issue keys are only present in commits", async () => {
-		const job = createJob({
-			data: { installationId, jiraHost },
-			opts: { delay }
-		});
+		const data = { installationId, jiraHost };
 		nockBranchRequest(branchCommitsHaveKeys);
 
 		jiraNock
@@ -173,15 +171,12 @@ describe.skip("sync/branches", () => {
 			)
 			.reply(200);
 
-		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
+		await expect(processInstallation(app)(data, sentry, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(data, delay);
 	});
 
 	it("should send data if issue keys are only present in an associatd PR title", async () => {
-		const job = createJob({
-			data: { installationId, jiraHost },
-			opts: { delay }
-		});
+		const data = { installationId, jiraHost };
 		nockBranchRequest(associatedPRhasKeys);
 
 		jiraNock
@@ -227,22 +222,19 @@ describe.skip("sync/branches", () => {
 			})
 			.reply(200);
 
-		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
+		await expect(processInstallation(app)(data, sentry, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(data, delay);
 	});
 
 	it("should not call Jira if no issue keys are found", async () => {
-		const job = createJob({
-			data: { installationId, jiraHost },
-			opts: { delay }
-		});
+		const data = { installationId, jiraHost };
 		nockBranchRequest(branchNoIssueKeys);
 
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app, queueSupplier)(job, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(job.data, job.opts.delay);
+		await expect(processInstallation(app)(data, sentry, getLogger('test'))).toResolve();
+		expect(backfillQueue.schedule).toHaveBeenCalledWith(data, delay);
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});

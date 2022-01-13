@@ -11,14 +11,10 @@ integration is an open-source project, built and maintained by [Atlassian](https
 For general support inquiries, [please contact the Atlassian Support team](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=jira-software).  For technical issues, [please create a new issue](https://github.com/atlassian/github-for-jira/issues/new).
 
 ## Table of Contents
-- [GitHub For Jira](#github-for-jira)
-  - [About](#about)
-  - [Support](#support)
-  - [Table of Contents](#table-of-contents)
   - [Install app](#install-app)
     - [Requirements](#requirements)
     - [Install from Jira Cloud site](#install-from-jira-cloud-site)
-  - [Install from Atlassian Marketplace](#install-from-atlassian-marketplace)
+    - [Install from Atlassian Marketplace](#install-from-atlassian-marketplace)
     - [Install from GitHub Marketplace](#install-from-github-marketplace)
   - [Configure app](#configure-app)
     - [Connect your GitHub organization to Jira](#connect-your-github-organization-to-jira)
@@ -34,9 +30,11 @@ For general support inquiries, [please contact the Atlassian Support team](https
   - [Send data and use the integration](#send-data-and-use-the-integration)
     - [See GitHub development information in Jira](#see-github-development-information-in-jira)
     - [See Jira issues in GitHub](#see-jira-issues-in-github)
-    - [See GitHub CI/CD data in Jira](#see-github-cicd-data-in-jira)
+    - [See GitHub builds and deployments in Jira](#see-github-builds-and-deployments-in-jira)
     - [How the integration works](#how-the-integration-works)
   - [Migrate from the DVCS Connector](#migrate-from-the-dvcs-connector)
+  - [Enterprise Features](#enterprise-features)
+    - [IP Allow List](#ip-allow-list)
   - [Need help?](#need-help)
   - [Contribute](#contribute)
   - [License](#license)
@@ -166,8 +164,10 @@ If an issue body contains a valid Jira issue key on your instance, the integrati
 
 This makes it so Jira issues can be linked inside a comment without it interrupting the flow of the comment as a whole.
 
-### See GitHub CI/CD data in Jira
-GitHub Actions is a feature from GitHub for automation such as CI/CD. If you’re setting this up for the first time, follow [GitHub Actions Documentation - GitHub Docs](https://docs.github.com/en/actions). If you already have GitHub Actions and want to see CI/CD data from Github in Jira, include the Jira issue key in your commit message, branch name, or PR.
+### See GitHub builds and deployments in Jira
+GitHub Actions workflows and deployments will automatically be sent to your connected Jira instances so that they will be visible in Jira issues. If you’re setting this up for the first time, follow [GitHub Actions Documentation - GitHub Docs](https://docs.github.com/en/actions). If you already have GitHub Actions and want to see CI/CD data from GitHub in Jira, include the Jira issue key in your commit message, branch name, or PR title.
+
+Also see our guides for [builds](./docs/builds.md) and [deployments](./docs/deployments.md).
 
 ### How the integration works
 When a workflow (e.g. GitHub Action) or development event (e.g. pull request, commit, branch) runs, the app receives a webhook from GitHub. The app then extract the issue key from the respective branch/commit/PR and send this information to Jira.
@@ -178,6 +178,13 @@ Existing users of Jira's built-in DVCS connector that meet the [requirements](#r
 1. Sign in to your Jira Cloud account.
 2. From the left sidebar in Jira, select **Jira Settings > Applications > DVCS accounts**.
 3. Follow the prompt to upgrade your GitHub connection.
+
+## Enterprise Features
+
+### IP Allow List
+
+GitHub has the ability to limit who can communicate with your organization's GitHub API which we now fully support.
+To enable this feature or to debug any issues, please refer to our [GitHub IP Allow List documentation](./docs/ip-allowlist.md).
 
 ## Need help?
 Take a look through the troubleshooting steps in our [support guide](./SUPPORT.md).

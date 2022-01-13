@@ -71,17 +71,15 @@ function extractWebhookEventNameFromContext(context: CustomContext<any>): string
 
 // TODO: fix typings
 export default (
-	callback: (context: CustomContext, jiraClient: JiraClient, util: any) => Promise<void>
+	callback: (context: CustomContext, jiraClient: JiraClient, util: any, githubInstallationId: number) => Promise<void>
 ) => {
 	return withSentry(async (context: CustomContext) => {
 		enhanceOctokit(context.github);
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size
-		if (await booleanFlag(BooleanFlags.PAYLOAD_SIZE_METRIC, false)) {
-			emitWebhookPayloadMetrics(webhookEvent,
-				Buffer.byteLength(JSON.stringify(context.payload), "utf-8"));
-		}
+		emitWebhookPayloadMetrics(webhookEvent,
+			Buffer.byteLength(JSON.stringify(context.payload), "utf-8"));
 
 		const webhookReceived = getCurrentTime();
 		context.webhookReceived = webhookReceived;
@@ -210,7 +208,7 @@ export default (
 			const util = getJiraUtil(jiraClient);
 
 			try {
-				await callback(context, jiraClient, util);
+				await callback(context, jiraClient, util, gitHubInstallationId);
 			} catch (err) {
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
 				if(!isWarning) {
