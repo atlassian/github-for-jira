@@ -1,7 +1,12 @@
 {
   "development": {
     "dialect": "postgres",
-    "use_env_variable": "DATABASE_URL"
+    "use_env_variable": "DATABASE_URL",
+		"pool": {
+			"max": 15,
+			"min": 0,
+			"idle": 1000
+		}
   },
   "test": {
     "dialect": "postgres",

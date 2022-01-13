@@ -44,7 +44,6 @@ SubscriptionModel.init({
 	gitHubInstallationId: DataTypes.INTEGER,
 	jiraHost: DataTypes.STRING,
 	selectedRepositories: DataTypes.ARRAY(DataTypes.INTEGER),
-	repoSyncState: DataTypes.JSONB,
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
 	jiraClientKey: DataTypes.STRING,

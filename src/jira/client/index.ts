@@ -43,7 +43,7 @@ async function getJiraClient(
 
 	// TODO: need to create actual class for this
 	const client = {
-		baseURL: instance.defaults.baseURL,
+		baseURL: installation.jiraHost,
 		issues: {
 			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
 				instance.get("/rest/api/latest/issue/:issue_id", {
@@ -142,11 +142,11 @@ async function getJiraClient(
 			},
 			// Add methods for handling installationId properties that exist in Jira
 			installation: {
-				exists: (gitHubInstallationId: string) =>
+				exists: (gitHubInstallationId: string | number) =>
 					instance.get(
 						`/rest/devinfo/0.10/existsByProperties?installationId=${gitHubInstallationId}`
 					),
-				delete: (gitHubInstallationId: string) =>
+				delete: (gitHubInstallationId: string | number) =>
 					instance.delete(
 						`/rest/devinfo/0.10/bulkByProperties?installationId=${gitHubInstallationId}`
 					)

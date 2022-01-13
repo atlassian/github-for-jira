@@ -29,12 +29,6 @@ describe("POST /github/subscription", () => {
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost
-			},
-			query: {
-				xdm_e: jiraHost
-			},
-			session: {
-				githubToken: "abc-token"
 			}
 		};
 
@@ -45,6 +39,8 @@ describe("POST /github/subscription", () => {
 			sendStatus: jest.fn(),
 			status: jest.fn(),
 			locals: {
+				jiraHost,
+				githubToken: "abc-token",
 				github: {
 					apps: {
 						listInstallationsForAuthenticatedUser: jest.fn().mockResolvedValue({
@@ -75,7 +71,8 @@ describe("POST /github/subscription", () => {
 		};
 
 		const res = {
-			sendStatus: jest.fn()
+			sendStatus: jest.fn(),
+			locals: {}
 		};
 
 		await deleteSubscription(req as any, res as any);
@@ -86,18 +83,22 @@ describe("POST /github/subscription", () => {
 		"missing body.%s",
 		async (property) => {
 			const req = {
-				session: { githubToken: "example-token" },
 				body: {
 					installationId: "an installation id",
 					jiraHost
 				}
 			};
-			delete req.body[property];
-
 			const res = {
 				status: jest.fn(),
-				json: jest.fn()
+				json: jest.fn(),
+				locals: {
+					jiraHost,
+					githubToken: "example-token"
+				}
 			};
+
+			delete req.body[property];
+			delete res.locals[property];
 
 			res.status.mockReturnValue(res);
 

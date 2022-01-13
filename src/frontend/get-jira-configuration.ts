@@ -1,14 +1,14 @@
 import format from "date-fns/format";
 import moment from "moment";
-import { Subscription } from "../models";
-import SubscriptionClass from "../models/subscription";
+import SubscriptionClass, { SyncStatus } from "../models/subscription";
+import { RepoSyncState, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { FailedInstallations } from "../config/interfaces";
+import Logger from "bunyan";
 
-function mapSyncStatus(syncStatus: string): string {
+function mapSyncStatus(syncStatus: SyncStatus = SyncStatus.PENDING): string {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
@@ -19,23 +19,20 @@ function mapSyncStatus(syncStatus: string): string {
 	}
 }
 
-export async function getInstallation(client, subscription, reqLog?) {
+export async function getInstallation(client, subscription: SubscriptionClass, reqLog?: Logger) {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
 		response.data.syncStatus = mapSyncStatus(subscription.syncStatus);
 		response.data.syncWarning = subscription.syncWarning;
 		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
-		response.data.totalNumberOfRepos = Object.keys(
-			subscription.repoSyncState?.repos || {}
-		).length;
-		response.data.numberOfSyncedRepos =
-			subscription.repoSyncState?.numberOfSyncedRepos || 0;
+		response.data.totalNumberOfRepos = await RepoSyncState.countFromSubscription(subscription);
+		response.data.numberOfSyncedRepos = await RepoSyncState.countSyncedReposFromSubscription(subscription);
 		response.data.jiraHost = subscription.jiraHost;
 
 		return response.data;
 	} catch (err) {
-		reqLog.error(
+		reqLog?.error(
 			{ installationId: id, error: err, uninstalled: err.code === 404 },
 			"Failed connection"
 		);
@@ -45,10 +42,10 @@ export async function getInstallation(client, subscription, reqLog?) {
 	}
 }
 
-const formatDate = function (date) {
+const formatDate = function(date) {
 	return {
 		relative: moment(date).fromNow(),
-		absolute: format(date, "MMMM D, YYYY h:mm a"),
+		absolute: format(date, "MMMM D, YYYY h:mm a")
 	};
 };
 
@@ -58,27 +55,23 @@ interface FailedConnections {
 	orgName: string | undefined;
 }
 
-export const getFailedConnections = (
+export const getFailedConnections = async (
 	installations: FailedInstallations[],
 	subscriptions: SubscriptionClass[]
-): FailedConnections[] => {
-	return installations
+): Promise<FailedConnections[]> => {
+	return Promise.all(installations
 		.filter((response) => !!response.error)
-		.map((failedConnection: FailedInstallations) => {
-			const sub = subscriptions.find(
-				(subscription: SubscriptionClass) =>
-					failedConnection.id === subscription.gitHubInstallationId
-			);
-			const repos = sub?.repoSyncState?.repos || {};
-			const repoId = Object.keys(repos);
-			const orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
+		.map(async (failedConnection: FailedInstallations) => {
+			const sub = subscriptions.find(sub => failedConnection.id === sub.gitHubInstallationId);
+			const repo = sub && await RepoSyncState.findOneFromSubscription(sub);
+			const orgName = repo?.repoOwner;
 
 			return {
 				id: failedConnection.id,
 				deleted: failedConnection.deleted,
-				orgName,
+				orgName
 			};
-		});
+		}));
 };
 
 export default async (
@@ -87,7 +80,7 @@ export default async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const jiraHost = req.session.jiraHost;
+		const jiraHost = res.locals.jiraHost;
 
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
@@ -105,7 +98,7 @@ export default async (
 			)
 		);
 
-		const failedConnections = getFailedConnections(
+		const failedConnections = await getFailedConnections(
 			installations,
 			subscriptions
 		);
@@ -116,31 +109,20 @@ export default async (
 				...data,
 				isGlobalInstall: data.repository_selection === "all",
 				installedAt: formatDate(data.updated_at),
-				syncState: data.syncState,
-				repoSyncState: data.repoSyncState,
+				syncState: data.syncState
 			}));
-
-		const newConfigPgFlagIsOn = await booleanFlag(
-			BooleanFlags.NEW_GITHUB_CONFIG_PAGE,
-			true,
-			jiraHost
-		);
-
-		const configPageVersion = newConfigPgFlagIsOn
-			? "jira-configuration.hbs"
-			: "jira-configuration-OLD.hbs";
 
 		const hasConnections =
 			connections.length > 0 || failedConnections.length > 0;
 
-		res.render(configPageVersion, {
+		res.render("jira-configuration.hbs", {
 			host: jiraHost,
 			connections,
 			failedConnections,
 			hasConnections,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
+			nonce: res.locals.nonce
 		});
 
 		req.log.info("Jira configuration rendered successfully.");

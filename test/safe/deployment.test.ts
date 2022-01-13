@@ -2,10 +2,26 @@
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
+import { start, stop } from "../../src/worker/startup";
+import sqsQueues from "../../src/sqs/queues";
+import waitUntil from "../utils/waitUntil";
+
+jest.mock("../../src/config/feature-flags");
 
 describe("Deployment Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
+
+	beforeAll(async () => {
+		//Start worker node for queues processing
+		await start();
+	});
+
+	afterAll(async () => {
+		//Stop worker node
+		await stop();
+		await sqsQueues.deployment.waitUntilListenerStopped();
+	});
 
 	beforeEach(async () => {
 		app = await createWebhookApp();
@@ -20,6 +36,7 @@ describe("Deployment Webhook", () => {
 			clientKey: "client-key",
 			sharedSecret: "shared-secret"
 		});
+
 	});
 
 	afterEach(async () => {
@@ -28,9 +45,19 @@ describe("Deployment Webhook", () => {
 	});
 
 	describe("deployment_status", () => {
-		it("should update the Jira issue with the linked GitHub deployment", async () => {
-			const fixture = require("../fixtures/deployment-basic.json");
+
+		it("should queue and process a deployment event", async () => {
+
+			const fixture = require("../fixtures/deployment_status-basic.json");
 			const sha = fixture.payload.deployment.sha;
+
+			githubNock.post(`/app/installations/1234/access_tokens`)
+				.reply(200, {
+					expires_at: Date.now() + 3600,
+					permissions: {},
+					repositories: {},
+					token: "token"
+				})
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
 				.reply(200, {
@@ -59,8 +86,8 @@ describe("Deployment Webhook", () => {
 							displayName: "deploy",
 							url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
 							description: "deploy",
-							lastUpdated: "2021-06-28T12:15:18Z",
-							state: "in_progress",
+							lastUpdated: "2021-06-28T12:15:18.000Z",
+							state: "successful",
 							pipeline:
 								{
 									id: "deploy",
@@ -81,9 +108,13 @@ describe("Deployment Webhook", () => {
 					}
 			}).reply(200);
 
-			Date.now = jest.fn(() => 12345678);
-
 			await expect(app.receive(fixture)).toResolve();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
 		});
+
 	});
 });

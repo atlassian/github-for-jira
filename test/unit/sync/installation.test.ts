@@ -10,6 +10,10 @@ import '../../../src/config/feature-flags';
 
 import {Application} from "probot";
 import {getLogger} from "../../../src/config/logger";
+import sqsQueues from "../../../src/sqs/queues";
+import {Hub} from "@sentry/types/dist/hub";
+
+const TEST_LOGGER = getLogger('test');
 
 const mockedExecuteWithDeduplication = jest.fn();
 jest.mock('../../../src/sync/deduplicator', () => {
@@ -21,24 +25,33 @@ jest.mock('../../../src/sync/deduplicator', () => {
 	}
 });
 
+
+jest.mock('../../../src/sqs/queues', () => {
+	return {
+		backfill: {sendMessage: jest.fn()}
+	}
+});
+
 jest.mock("../../../src/models");
 
 describe("sync/installation", () => {
 
 	const JOB_DATA = {installationId: 1, jiraHost: "http://foo"};
 
-	const backfillQueue = {
-		schedule: jest.fn()
-	}
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	const sentry: Hub = { setUser: jest.fn() } as Hub;
 
-	const backfillQueueSchedule: jest.Mock = backfillQueue.schedule as jest.Mock;
+	let mockBackfillQueueSendMessage;
+
 
 	beforeEach(() => {
 		mockedExecuteWithDeduplication.mockReset();
 	});
 
 	afterEach(() => {
-		(backfillQueue.schedule as jest.Mock).mockReset();
+		mockBackfillQueueSendMessage = sqsQueues.backfill.sendMessage as jest.Mock;
+		mockBackfillQueueSendMessage.mockReset();
 	});
 
 	describe("isRetryableWithSmallerRequest()", () => {
@@ -85,49 +98,41 @@ describe("sync/installation", () => {
 		// @ts-ignore
 		const app: Application = jest.fn() as Application;
 
-		const job = {
-			data: {
-				installationId: 1,
-				jiraHost: 'https://blah.atlassian.com'
-			},
-			sentry: {
-				setUser: jest.fn()
-			}
-		};
-		const logger = getLogger('test');
-
 		test('should process the installation with deduplication', async () => {
-			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, logger);
+			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 		});
 
 		test('should reschedule the job if deduplicator is unsure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
-			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, logger);
-			expect(backfillQueueSchedule.mock.calls).toEqual([[job.data, 60_000]]);
+			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
+			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
+			expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(JOB_DATA);
+			expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(60);
+			expect(mockBackfillQueueSendMessage.mock.calls[0][2].warn).toBeDefined();
 		});
 
 		test('should also reschedule the job if deduplicator is sure', async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
-			await processInstallation(app, () => Promise.resolve(backfillQueue))(job, logger);
-			expect(backfillQueueSchedule.mock.calls.length).toEqual(1);
+			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
+			expect(mockBackfillQueueSendMessage.mock.calls.length).toEqual(1);
 		});
 	});
 
 	describe('maybeScheduleNextTask', () => {
 		test('does nothing if there is no next task', () => {
-			maybeScheduleNextTask(backfillQueue, JOB_DATA, [], getLogger('test'));
-			expect(backfillQueueSchedule.mock.calls).toHaveLength(0);
+			maybeScheduleNextTask(JOB_DATA, [], TEST_LOGGER);
+			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(0);
 		});
 
 		test('when multiple tasks, picks the one with the highest delay', async () => {
-			await maybeScheduleNextTask(backfillQueue, JOB_DATA, [30, 60, 0], getLogger('test'));
-			expect(backfillQueueSchedule.mock.calls).toEqual([[JOB_DATA, 60]]);
+			await maybeScheduleNextTask(JOB_DATA, [30_000, 60_000, 0], TEST_LOGGER);
+			expect(mockBackfillQueueSendMessage.mock.calls).toEqual([[JOB_DATA, 60, TEST_LOGGER]]);
 		});
 
 		test('not passing delay to queue when not provided', async () => {
-			await maybeScheduleNextTask(backfillQueue, JOB_DATA, [0], getLogger('test'));
-			expect(backfillQueueSchedule.mock.calls).toEqual([[JOB_DATA, 0]]);
+			await maybeScheduleNextTask(JOB_DATA, [0], TEST_LOGGER);
+			expect(mockBackfillQueueSendMessage.mock.calls).toEqual([[JOB_DATA, 0, TEST_LOGGER]]);
 		});
 	});
 });

@@ -3,10 +3,21 @@ import AuthToken, { ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 
 //TODO: Remove Probot dependency to find privateKey
 import * as PrivateKey from "probot/lib/private-key";
-import envVars from "../../config/env";
+import LRUCache from "lru-cache";
+import { InstallationId } from "./installation-id";
+
+
+export type KeyLocator = (installationId: InstallationId) => string;
 
 /**
- * Holds the GitHub app's token to authenticate as a GitHub app and refreshes it as needed.
+ * By default, we just look for a key in the `PRIVATE_KEY` env var.
+ */
+export const cloudKeyLocator: KeyLocator = () => {
+	return PrivateKey.findPrivateKey() || ""
+}
+
+/**
+ * Holds app tokens for all GitHub apps that are connected and creates new tokens if necessary.
  *
  * An app token allows access to GitHub's /app API only. It does not allow access to a GitHub org's data.
  *
@@ -15,15 +26,14 @@ import envVars from "../../config/env";
  */
 export default class AppTokenHolder {
 
-	private readonly key: string;
-	private readonly appId: string;
-	private currentToken: AuthToken;
+	private readonly privateKeyLocator: KeyLocator;
+	private readonly appTokenCache: LRUCache<string, AuthToken>;
 
 	private static instance: AppTokenHolder;
 
-	constructor() {
-		this.key = PrivateKey.findPrivateKey() || "";
-		this.appId = envVars.APP_ID;
+	constructor(keyLocator?: KeyLocator) {
+		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
+		this.privateKeyLocator = keyLocator || cloudKeyLocator;
 	}
 
 	public static getInstance(): AppTokenHolder {
@@ -37,17 +47,21 @@ export default class AppTokenHolder {
 	/**
 	 * Gets the current app token or creates a new one if the old is about to expire.
 	 */
-	public getAppToken(): AuthToken {
-		if (!this.currentToken || this.currentToken.isAboutToExpire()) {
-			this.currentToken = AppTokenHolder.createAppJwt(this.key, this.appId);
+	public getAppToken(appId: InstallationId): AuthToken {
+		let currentToken = this.appTokenCache.get(appId.toString());
+
+		if (!currentToken || currentToken.isAboutToExpire()) {
+			const key = this.privateKeyLocator(appId);
+			currentToken = AppTokenHolder.createAppJwt(key, appId.appId);
+			this.appTokenCache.set(appId.toString(), currentToken);
 		}
-		return this.currentToken;
+		return currentToken;
 	}
 
 	/**
 	 * Generates a JWT using the private key of the GitHub app to authorize against the GitHub API.
 	 */
-	private static createAppJwt(key: string, appId: string): AuthToken {
+	private static createAppJwt(key: string, appId: number): AuthToken {
 
 		const expirationDate = new Date(Date.now() + TEN_MINUTES);
 
@@ -57,12 +71,16 @@ export default class AppTokenHolder {
 			// expiration date, GitHub allows max 10 minutes
 			exp: Math.floor(expirationDate.getTime() / 1000),
 			// issuer is the GitHub app ID
-			iss: appId
+			iss: appId.toString()
 		}
 
 		return new AuthToken(
 			encodeAsymmetric(jwtPayload, key, AsymmetricAlgorithm.RS256),
 			expirationDate
 		);
+	}
+
+	public clear():void {
+		this.appTokenCache.reset();
 	}
 }

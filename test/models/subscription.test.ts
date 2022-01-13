@@ -1,71 +1,96 @@
 import SubscriptionClass from "../../src/models/subscription";
-import { Subscription } from "../../src/models";
-import { mocked } from "ts-jest/utils";
-import { booleanFlag } from "../../src/config/feature-flags";
-
-jest.mock("../../src/config/feature-flags");
+import { RepoSyncState, Subscription } from "../../src/models";
 
 describe("Subscription", () => {
 	let sub: SubscriptionClass;
 
 	beforeEach(async () => {
-		mocked(booleanFlag).mockResolvedValue(true);
 		sub = await Subscription.create({
 			gitHubInstallationId: 123,
-			jiraHost: "http://blah.com",
+			jiraHost,
 			jiraClientKey: "myClientKey",
-			repoSyncState: undefined,
-			updatedAt: new Date(),
-			createdAt: new Date()
 		});
 	});
 
 	afterEach(async () => {
 		await Subscription.destroy({ truncate: true });
+		await RepoSyncState.destroy({ truncate: true });
 	});
 
 	describe("updateSyncState", () => {
-		test("updates the state", async () => {
-			const REPO_SYNC_STATE = {
-				installationId: 123
-			};
-			await sub.updateSyncState(REPO_SYNC_STATE);
-			expect((await Subscription.findOne()).repoSyncState).toStrictEqual(REPO_SYNC_STATE);
-		});
-	});
-
-	describe("updateNumberOfSyncedRepos", () => {
-		test("updates when absent", async () => {
-			await sub.updateNumberOfSyncedRepos(3);
-			expect(sub.repoSyncState?.numberOfSyncedRepos).toStrictEqual(3);
-			expect((await Subscription.findOne()).repoSyncState.numberOfSyncedRepos).toStrictEqual(3);
-		});
-
-		test("updates changes when exists", async () => {
+		it("should return empty repos object when updating state with no repos", async () => {
 			await sub.updateSyncState({
-				numberOfSyncedRepos: 123
+				installationId: 123
 			});
-			await sub.updateNumberOfSyncedRepos(3);
-
-			expect(sub.repoSyncState?.numberOfSyncedRepos).toStrictEqual(3);
-			await sub.reload();
-			expect(sub.repoSyncState?.numberOfSyncedRepos).toStrictEqual(3);
+			expect(await RepoSyncState.toRepoJson(sub)).toEqual({
+				installationId: 123,
+				jiraHost,
+				numberOfSyncedRepos: 0,
+				repos: {},
+			});
 		});
 
-		test("Should update the number of synced repos in column as well as JSON", async () => {
-			const num = 100;
-			await sub.updateNumberOfSyncedRepos(num);
-			expect(sub.repoSyncState?.numberOfSyncedRepos).toEqual(num);
-			expect(sub.numberOfSyncedRepos).toEqual(num);
+		it("should return same repos as what's updated", async () => {
+			const repos = {
+				"1": {
+					repository: {
+						id: "1",
+						name: "bar",
+						full_name: "foo/bar",
+						owner: { login: "foo" },
+						html_url: "foo.com",
+						updated_at: 123456789
+					}
+				}
+			};
+			await sub.updateSyncState({
+				installationId: 123,
+				repos
+			});
+			expect(await RepoSyncState.toRepoJson(sub)).toMatchObject({
+				installationId: 123,
+				jiraHost,
+				numberOfSyncedRepos: 0,
+				repos: {
+					"1": {
+						repository: {
+							id: "1",
+							name: "bar",
+							full_name: "foo/bar",
+							owner: { login: "foo" },
+							html_url: "foo.com",
+							updated_at: new Date(123456789)
+						}
+					}
+				}
+			});
 		});
 	});
 
 	describe("updateRepoSyncStateItem", () => {
 		test("populates the value", async () => {
-			await sub.updateRepoSyncStateItem("hello", "branchStatus", "pending");
-			expect(sub.repoSyncState).toStrictEqual({
+			await RepoSyncState.create({
+				subscriptionId: sub.id,
+				repoId: 1,
+				repoName: "test-repo-name",
+				repoOwner: "integrations",
+				repoFullName: "integrations/test-repo-name",
+				repoUrl: "test-repo-url",
+			});
+			await sub.updateRepoSyncStateItem("1", "branchStatus", "pending");
+			expect(await RepoSyncState.toRepoJson(sub)).toMatchObject({
+				installationId: sub.gitHubInstallationId,
+				jiraHost,
+				numberOfSyncedRepos: 0,
 				repos: {
-					hello: {
+					"1": {
+						repository:{
+							id: "1",
+							name: "test-repo-name",
+							full_name: "integrations/test-repo-name",
+							owner: { login: "integrations" },
+							html_url: "test-repo-url",
+						},
 						branchStatus: "pending"
 					}
 				}
@@ -77,21 +102,40 @@ describe("Subscription", () => {
 			await sub.updateSyncState({
 				repos: {
 					[repoId]: {
+						repository: {
+							id: repoId,
+							name: "bar",
+							full_name: "foo/bar",
+							owner: { login: "foo" },
+							html_url: "foo.com",
+							updated_at: 123456789
+						},
 						branchStatus: "pending"
 					}
 				}
-			} as any);
+			});
 
 			await sub.updateRepoSyncStateItem(repoId, "branchStatus", "complete");
-			expect(sub.repoSyncState?.repos?.[repoId]?.branchStatus).toStrictEqual("complete");
-			expect(sub.repoSyncState).toStrictEqual({
+			const result = await RepoSyncState.toRepoJson(sub);
+			expect(result.repos?.[repoId]?.branchStatus).toBe("complete");
+			expect(result).toMatchObject({
+				installationId: sub.gitHubInstallationId,
+				jiraHost,
+				numberOfSyncedRepos: 0,
 				repos: {
 					[repoId]: {
+						repository: {
+							id: repoId,
+							name: "bar",
+							full_name: "foo/bar",
+							owner: { login: "foo" },
+							html_url: "foo.com",
+							updated_at: new Date(123456789)
+						},
 						branchStatus: "complete"
 					}
 				}
 			});
 		});
 	});
-
 });

@@ -1,20 +1,6 @@
 import { emitWebhookPayloadMetrics, emitWebhookProcessedMetrics } from "../../../src/util/webhooks";
 import statsd from "../../../src/config/statsd";
 
-let dateNowSpy;
-
-const currentTime = 2000;
-
-beforeAll(() => {
-	// Lock Time
-	dateNowSpy = jest.spyOn(Date, "now").mockImplementation(() => currentTime);
-});
-
-afterAll(() => {
-	// Unlock Time
-	dateNowSpy.mockRestore();
-});
-
 describe("Webhooks suite", () => {
 	const mockInfoLog = jest.fn();
 	const mockErrorLog = jest.fn();
@@ -22,6 +8,19 @@ describe("Webhooks suite", () => {
 		info: mockInfoLog,
 		error: mockErrorLog,
 	};
+
+	let dateNowSpy;
+	const currentTime = 2000;
+
+	beforeAll(() => {
+		// Lock Time
+		dateNowSpy = jest.spyOn(Date, "now").mockImplementation(() => currentTime);
+	});
+
+	afterAll(() => {
+		// Unlock Time
+		dateNowSpy.mockRestore();
+	});
 
 	describe("emitWebhookProcessingTimeMetrics", () => {
 		it("should calculate processing time for webhook events", () => {

@@ -1,30 +1,49 @@
+import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
 import { GetPullRequestParams } from "./types";
-	
+import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
+import { metricHttpRequest } from "../../config/metric-names";
+import { getLogger } from "../../config/logger";
+import { urlParamsMiddleware } from "../../util/axios/common-middleware";
+import { InstallationId } from "./installation-id";
+import { ViewerRepositoryCountQuery } from "./github-queries";
+
 /**
  * A GitHub client that supports authentication as a GitHub app.
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
 export default class GitHubClient {
-
 	private readonly axios: AxiosInstance;
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
-	private readonly githubInstallationId: number;
+	private readonly githubInstallationId: InstallationId;
+	private readonly logger: Logger;
 
 	constructor(
-		githubInstallationId: number,
-		baseURL = "https://api.github.com"
+		githubInstallationId: InstallationId,
+		logger: Logger,
+		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
+		this.logger = logger || getLogger("github.client.axios");
 		this.axios = axios.create({
-			baseURL
+			baseURL: githubInstallationId.githubBaseUrl
 		});
-		this.appTokenHolder = AppTokenHolder.getInstance();
+		this.axios.interceptors.request.use(urlParamsMiddleware)
+		this.axios.interceptors.request.use(setRequestStartTime);
+		this.axios.interceptors.response.use(
+			undefined,
+			handleFailedRequest(this.logger)
+		);
+		this.axios.interceptors.response.use(
+			instrumentRequest(metricHttpRequest.github),
+			instrumentFailedRequest(metricHttpRequest.github)
+		);
+		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 	}
@@ -33,7 +52,7 @@ export default class GitHubClient {
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestConfig> {
-		const appToken = this.appTokenHolder.getAppToken();
+		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
 				Accept: "application/vnd.github.v3+json",
@@ -47,8 +66,8 @@ export default class GitHubClient {
 	 */
 	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
 		const installationToken = await this.installationTokenCache.getInstallationToken(
-			this.githubInstallationId,
-			() => this.createInstallationToken(this.githubInstallationId));
+			this.githubInstallationId.installationId,
+			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
 				Accept: "application/vnd.github.v3+json",
@@ -69,37 +88,74 @@ export default class GitHubClient {
 		return new AuthToken(tokenResponse.token, new Date(tokenResponse.expires_at));
 	}
 
-	private async get<T>(url, params = {}): Promise<AxiosResponse<T>> {
+	private async get<T>(url, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
 		const response = await this.axios.get<T>(url, {
 			...await this.installationAuthenticationHeaders(),
-			params: { 
-				installationId: this.githubInstallationId,
-				...params
-			}
+			params: {
+				...params,
+			},
+			urlParams,
 		});
-		//TODO: error handling
 		return response;
+	}
+
+	private async graphql<T>(query: string): Promise<AxiosResponse> {
+		return await this.axios.post<T>("https://api.github.com/graphql",
+			{
+				query
+			},
+			{
+				...await this.installationAuthenticationHeaders(),
+			});
 	}
 
 	/**
 	 * Lists pull requests for the given repository.
 	 */
-	public async getPullRequests(owner:string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
-		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/${owner}/${repo}/pulls`, pullRequestParams);
+	public async getPullRequests(owner: string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
+		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/:owner/:repo/pulls`, pullRequestParams, {
+			owner,
+			repo
+		});
 	}
 
 	/**
 	 * Get a single pull request for the given repository.
 	 */
+	// TODO: add a unit test
 	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
-		return await this.get<Octokit.PullsGetResponse>(`/repos/${owner}/${repo}/pulls/${pullNumber}`);
+		return await this.get<Octokit.PullsGetResponse>(`/repos/:owner/:repo/pulls/:pullNumber`, {}, {
+			owner,
+			repo,
+			pullNumber
+		});
 	}
 
 	/**
 	 * Get publicly available information for user with given username.
 	 */
+	// TODO: add a unit test
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
-		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/${username}`);
+		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/:username`, {}, {
+			username
+		});
+	}
+
+	/**
+	 * Get a single commit for the given repository.
+	 */
+	public getCommit = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> => {
+		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/:owner/:repo/commits/:ref`, {}, {
+			owner,
+			repo,
+			ref
+		});
+	}
+
+	public async getNumberOfReposForInstallation(): Promise<number> {
+		const response = await this.graphql(ViewerRepositoryCountQuery);
+
+		return response?.data?.data?.viewer?.repositories?.totalCount as number;
 	}
 
 }

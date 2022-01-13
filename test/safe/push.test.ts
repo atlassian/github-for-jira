@@ -1,19 +1,25 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import nock from "nock";
-import { createJobData, processPushJob } from "../../src/transforms/push";
+import { createJobData } from "../../src/transforms/push";
 import { createWebhookApp } from "../utils/probot";
 import { getLogger } from "../../src/config/logger";
 import { Installation, Subscription } from "../../src/models";
 import { Application } from "probot";
 import { start, stop } from "../../src/worker/startup";
-import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
-import { when } from "jest-when";
 import waitUntil from "../utils/waitUntil";
 import sqsQueues from "../../src/sqs/queues";
+import {pushQueueMessageHandler, PushQueueMessagePayload} from "../../src/sqs/push";
+import {Context} from "../../src/sqs/index";
+import {Message} from "aws-sdk/clients/sqs";
 
-jest.mock("../../src/config/feature-flags");
+const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
+	payload: createJobData(payload, jiraHost),
+	log: getLogger("test"),
+	message: {} as Message,
+	receiveCount: 1,
+	lastAttempt: false
+});
 
-const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
 
 describe("Push Webhook", () => {
 
@@ -34,6 +40,8 @@ describe("Push Webhook", () => {
 			jiraClientKey: clientKey
 		});
 	});
+
+
 
 	afterEach(async () => {
 		await Installation.destroy({ truncate: true });
@@ -86,7 +94,7 @@ describe("Push Webhook", () => {
 						{ id: "test-commit-id-1", issueKeys: ["TEST-123", "TEST-246"] },
 						{ id: "test-commit-id-2", issueKeys: ["TEST-345"] }
 					],
-					jiraHost: "https://test-atlassian-instance.net",
+					jiraHost,
 					installationId: event.payload.installation.id
 				}, { removeOnFail: true, removeOnComplete: true }
 			);
@@ -102,6 +110,14 @@ describe("Push Webhook", () => {
 				jiraHost,
 				jiraClientKey: "myClientKey"
 			});
+
+			githubNock
+				.post("/app/installations/1234/access_tokens")
+				.optionally() // TODO: need to remove optionally and make it explicit
+				.reply(200, {
+					token: "token",
+					expires_at: new Date().getTime() + 1_000_000
+				});
 		});
 
 		afterEach(async () => {
@@ -110,7 +126,6 @@ describe("Push Webhook", () => {
 
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, jiraHost);
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
@@ -171,12 +186,11 @@ describe("Push Webhook", () => {
 				}
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(event.payload, jiraHost))).toResolve();
 		});
 
 		it("should only send 10 files if push contains more than 10 files changed", async () => {
 			const event = require("../fixtures/push-multiple.json");
-			const job = createJob(event.payload, jiraHost);
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
@@ -284,7 +298,7 @@ describe("Push Webhook", () => {
 				}
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(event.payload, jiraHost))).toResolve();
 		});
 
 		it("should not run a command without a Jira issue", async () => {
@@ -312,7 +326,6 @@ describe("Push Webhook", () => {
 
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, jiraHost);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-merge-commit.json"));
@@ -371,12 +384,11 @@ describe("Push Webhook", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(event.payload, jiraHost))).toResolve();
 		});
 
 		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, jiraHost);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-non-merge-commit"));
@@ -435,43 +447,40 @@ describe("Push Webhook", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(event.payload, jiraHost))).toResolve();
 		});
 	});
 
 	describe("end 2 end tests with queue", () => {
-
-		const mockGithubAccessToken = () => {
-			githubNock
-				.post("/app/installations/1234/access_tokens")
-				.optionally()
-				.reply(200, {
-					token: "token",
-					expires_at: new Date().getTime()
-				});
-		}
-
 		beforeEach(async () => {
 			Date.now = jest.fn(() => 12345678);
 		});
 
-		beforeAll( async () => {
+		beforeAll(async () => {
 			Date.now = jest.fn(() => 12345678);
 			//Start worker node for queues processing
 			await start();
-		})
+		});
 
 		afterAll(async () => {
 			//Stop worker node
 			await stop();
 			await sqsQueues.push.waitUntilListenerStopped();
-		})
+		});
 
-
-		function createPushEventAndMockRestReqeustsForItsProcessing() {
+		function createPushEventAndMockRestRequestsForItsProcessing() {
 			const event = require("../fixtures/push-no-username.json");
 
-			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+			githubNock
+				.post("/app/installations/1234/access_tokens")
+				.optionally() // TODO: need to remove optionally and make it explicit
+				.reply(200, {
+					token: "token",
+					expires_at: new Date().getTime()
+				});
+
+			githubNock
+				.get(`/repos/test-repo-owner/test-repo-name/commits/commit-no-username`)
 				.reply(200, require("../fixtures/push-non-merge-commit"));
 
 			// flag property should not be present
@@ -482,140 +491,61 @@ describe("Push Webhook", () => {
 						name: "test-repo-name",
 						url: "test-repo-url",
 						id: "test-repo-id",
-						commits: [
-							{
-								hash: "commit-no-username",
-								message: "[TEST-123] Test commit.",
-								author: {
-									name: "test-commit-name",
-									email: "test-email@example.com",
+						commits: [{
+							hash: "commit-no-username",
+							message: "[TEST-123] Test commit.",
+							author: {
+								name: "test-commit-name",
+								email: "test-email@example.com"
+							},
+							authorTimestamp: "test-commit-date",
+							displayId: "commit",
+							fileCount: 3,
+							files: [
+								{
+									path: "test-modified",
+									changeType: "MODIFIED",
+									linesAdded: 10,
+									linesRemoved: 2,
+									url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
 								},
-								authorTimestamp: "test-commit-date",
-								displayId: "commit",
-								fileCount: 3,
-								files: [
-									{
-										path: "test-modified",
-										changeType: "MODIFIED",
-										linesAdded: 10,
-										linesRemoved: 2,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
-									},
-									{
-										path: "test-added",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-removal",
-										changeType: "DELETED",
-										linesAdded: 0,
-										linesRemoved: 4,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
-									}
-								],
-								id: "commit-no-username",
-								issueKeys: ["TEST-123"],
-								url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
-								updateSequenceId: 12345678
-							}
-						],
+								{
+									path: "test-added",
+									changeType: "ADDED",
+									linesAdded: 4,
+									linesRemoved: 0,
+									url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
+								},
+								{
+									path: "test-removal",
+									changeType: "DELETED",
+									linesAdded: 0,
+									linesRemoved: 4,
+									url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
+								}
+							],
+							id: "commit-no-username",
+							issueKeys: ["TEST-123"],
+							url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
+							updateSequenceId: 12345678
+						}],
 						updateSequenceId: 12345678
 					}
 				],
-				properties: {installationId: 1234}
+				properties: { installationId: 1234 }
 			}).reply(200);
 			return event;
 		}
 
-		/**
-		 * Tests when we process pushes immediately without using the queue
-		 */
-		it("should send bulk update event to Jira when push webhook received and queue is not involved", async () => {
+		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
+			const event = createPushEventAndMockRestRequestsForItsProcessing();
 
-			when(booleanFlag).calledWith(
-				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(true);
+			await expect(app.receive(event)).toResolve();
 
-			const event = createPushEventAndMockRestReqeustsForItsProcessing();
-
-			await app.receive(event);
-
-			// eslint-disable-next-line jest/no-standalone-expect
-			expect(githubNock.pendingMocks()).toEqual([]);
-			// eslint-disable-next-line jest/no-standalone-expect
-			expect(jiraNock.pendingMocks()).toEqual([]);
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
 		});
-
-		/**
-		 * Tests webhook processing through redis
-		 */
-		it("should send bulk update event to Jira when push webhook received and sent through redis queue", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(false);
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.SEND_PUSH_TO_SQS,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(false);
-
-			mockGithubAccessToken();
-
-			const event = createPushEventAndMockRestReqeustsForItsProcessing();
-
-			await app.receive(event);
-
-			await waitUntil( async () => {
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(githubNock.pendingMocks()).toEqual([]);
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(jiraNock.pendingMocks()).toEqual([]);
-			})
-
-		});
-
-
-		/**
-		 * Tests webhook processing through sqs
-		 */
-		it("should send bulk update event to Jira when push webhook received and sent through sqs queue", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.PROCESS_PUSHES_IMMEDIATELY,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(false);
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.SEND_PUSH_TO_SQS,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(true);
-
-			mockGithubAccessToken();
-
-			const event = createPushEventAndMockRestReqeustsForItsProcessing();
-
-			await app.receive(event);
-
-			await waitUntil( async () => {
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(githubNock.pendingMocks()).toEqual([]);
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(jiraNock.pendingMocks()).toEqual([]);
-			})
-
-		});
-
 	});
-
 });
