@@ -36,7 +36,6 @@ interface FailedInstallationError {
 export interface AppInstallation extends Octokit.AppsGetInstallationResponse {
 	syncStatus?: string;
 	syncWarning?: string;
-	// subscriptionUpdatedAt: DateFormat;
 	totalNumberOfRepos: number;
 	numberOfSyncedRepos: number;
 	jiraHost: string;

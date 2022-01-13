@@ -1,4 +1,4 @@
-import SubscriptionClass from "../models/subscription";
+import SubscriptionClass, { SyncStatus } from "../models/subscription";
 import { RepoSyncState, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
@@ -8,7 +8,7 @@ import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import _ from "lodash";
 
-function mapSyncStatus(syncStatus?: string): string | undefined {
+const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
