@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import issueKeyParser from "jira-issue-key-parser";
-import { branchesNoLastCursor, branchesWithLastCursor } from "../../fixtures/api/graphql/branch-queries";
+import { branchesNoLastCursor } from "../../fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
-import { Subscription } from "../../../src/models";
+import {Installation, RepoSyncState, Subscription} from "../../../src/models";
 import { Application } from "probot";
 import { createWebhookApp } from "../../utils/probot";
 import { processInstallation } from "../../../src/sync/installation";
@@ -10,15 +10,20 @@ import nock from "nock";
 import {getLogger} from "../../../src/config/logger";
 import {Hub} from "@sentry/types/dist/hub";
 import {BackfillMessagePayload} from "../../../src/sqs/backfill";
+import sqsQueues from "../../../src/sqs/queues";
 
-jest.mock("../../../src/models");
+jest.mock("../../../src/sqs/queues", () => {
+	return {
+		backfill: {sendMessage: jest.fn()}
+	}
+});
 
-describe.skip("sync/branches", () => {
+
+describe("sync/branches", () => {
 	const installationId = 1234;
-	let delay;
+
 	let app: Application;
 	const branchNodesFixture = require("../../fixtures/api/graphql/branch-ref-nodes.json");
-	const emptyNodesFixture = require("../../fixtures/api/graphql/branch-empty-nodes.json");
 	const branchCommitsHaveKeys = require("../../fixtures/api/graphql/branch-commits-have-keys.json");
 	const associatedPRhasKeys = require("../../fixtures/api/graphql/branch-associated-pr-has-keys.json");
 	const branchNoIssueKeys = require("../../fixtures/api/graphql/branch-no-issue-keys.json");
@@ -27,7 +32,7 @@ describe.skip("sync/branches", () => {
 	// @ts-ignore
 	const sentry: Hub = { setUser: jest.fn() } as Hub;
 
-	function makeExpectedResponse({ branchName }) {
+	function makeExpectedResponse(branchName) {
 		const issueKeys = issueKeyParser().parse(branchName) || [];
 
 		return {
@@ -45,6 +50,7 @@ describe.skip("sync/branches", () => {
 							lastCommit: {
 								author: {
 									avatar: "https://camo.githubusercontent.com/test-avatar",
+									email: "test-author-email@example.com",
 									name: "test-author-name"
 								},
 								authorTimestamp: "test-authored-date",
@@ -81,7 +87,7 @@ describe.skip("sync/branches", () => {
 							updateSequenceId: 12345678
 						}
 					],
-					id: "test-repo-id",
+					id: "1",
 					name: "test-repo-name",
 					url: "test-repo-url",
 					updateSequenceId: 12345678
@@ -93,55 +99,77 @@ describe.skip("sync/branches", () => {
 		};
 	}
 
+
 	function nockBranchRequest(fixture) {
+
 		githubNock
 			.post("/graphql", branchesNoLastCursor)
-			.reply(200, fixture)
-			.post("/graphql", branchesWithLastCursor)
-			.reply(200, emptyNodesFixture);
+			.query(true)
+			.reply(200, fixture);
 	}
 
-	const backfillQueue = {
-		schedule: jest.fn()
-	};
+	let mockBackfillQueueSendMessage;
 
 	beforeEach(async () => {
-		const repoSyncStatus = {
-			installationId: installationId,
-			jiraHost: "tcbyrd.atlassian.net",
-			repos: {
-				"test-repo-id": {
-					repository: {
-						name: "test-repo-name",
-						owner: { login: "integrations" },
-						html_url: "test-repo-url",
-						id: "test-repo-id"
-					},
-					pullStatus: "complete",
-					branchStatus: "pending",
-					commitStatus: "complete"
-				}
-			}
-		};
-		delay = process.env.LIMITER_PER_INSTALLATION = "2000";
+		mockBackfillQueueSendMessage = sqsQueues.backfill.sendMessage as jest.Mock;
+		mockBackfillQueueSendMessage.mockReset();
 
 		Date.now = jest.fn(() => 12345678);
 
-		mocked(Subscription.getSingleInstallation).mockResolvedValue({
+		await Installation.create({
+			gitHubInstallationId: installationId,
 			jiraHost,
-			id: 1,
-			get: () => repoSyncStatus,
-			set: () => repoSyncStatus,
-			save: () => Promise.resolve({}),
-			update: () => Promise.resolve({})
-		} as any);
+			sharedSecret: "secret",
+			clientKey: "client-key"
+		});
+
+		const subscription = await Subscription.create({gitHubInstallationId: installationId,
+			jiraHost,
+			syncStatus: "ACTIVE"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: subscription.id,
+			repoId: 1,
+			repoName: "test-repo-name",
+			repoOwner: "integrations",
+			repoFullName: "test-repo-name",
+			repoUrl: "test-repo-url",
+			branchStatus: "pending",
+			commitStatus: "complete",
+			pullStatus: "complete",
+			updatedAt: new Date(),
+			createdAt: new Date()
+		});
+
+		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 
 		app = await createWebhookApp();
+
+		githubNock
+			.post("/app/installations/1234/access_tokens")
+			.optionally() // TODO: need to remove optionally and make it explicit
+			.reply(200, {
+				token: "token",
+				expires_at: new Date().getTime() + 1_000_000
+			});
 	});
 
-	afterEach(() => {
-		backfillQueue.schedule.mockReset();
+
+
+	afterEach(async () => {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		sqsQueues.backfill.sendMessage.mockReset();
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
+		await RepoSyncState.destroy({truncate: true});
 	})
+
+	const verifyMessageSent = (data: BackfillMessagePayload) => {
+		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
+		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
+	}
 
 	it("should sync to Jira when branch refs have jira references", async () => {
 		const data : BackfillMessagePayload = {installationId, jiraHost};
@@ -150,12 +178,12 @@ describe.skip("sync/branches", () => {
 		jiraNock
 			.post(
 				"/rest/devinfo/0.10/bulk",
-				makeExpectedResponse({ branchName: "TES-321-branch-name" })
+				makeExpectedResponse("TES-321-branch-name" )
 			)
 			.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(data);
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		verifyMessageSent(data)
 	});
 
 	it("should send data if issue keys are only present in commits", async () => {
@@ -165,14 +193,12 @@ describe.skip("sync/branches", () => {
 		jiraNock
 			.post(
 				"/rest/devinfo/0.10/bulk",
-				makeExpectedResponse({
-					branchName: "dev"
-				})
+				makeExpectedResponse("dev")
 			)
 			.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(data, delay);
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		verifyMessageSent(data)
 	});
 
 	it("should send data if issue keys are only present in an associatd PR title", async () => {
@@ -192,13 +218,14 @@ describe.skip("sync/branches", () => {
 								lastCommit: {
 									author: {
 										avatar: "https://camo.githubusercontent.com/test-avatar",
+										email: "test-author-email@example.com",
 										name: "test-author-name"
 									},
 									authorTimestamp: "test-authored-date",
 									displayId: "test-o",
 									fileCount: 0,
 									hash: "test-oid",
-									issueKeys: ["PULL-123"],
+									issueKeys: [],
 									id: "test-oid",
 									message: "test-commit-message",
 									url: "test-repo-url/commit/test-sha",
@@ -210,7 +237,7 @@ describe.skip("sync/branches", () => {
 							}
 						],
 						commits: [],
-						id: "test-repo-id",
+						id: "1",
 						name: "test-repo-name",
 						url: "test-repo-url",
 						updateSequenceId: 12345678
@@ -222,8 +249,8 @@ describe.skip("sync/branches", () => {
 			})
 			.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(data, delay);
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		verifyMessageSent(data)
 	});
 
 	it("should not call Jira if no issue keys are found", async () => {
@@ -233,8 +260,8 @@ describe.skip("sync/branches", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger('test'))).toResolve();
-		expect(backfillQueue.schedule).toHaveBeenCalledWith(data, delay);
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		verifyMessageSent(data)
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});
