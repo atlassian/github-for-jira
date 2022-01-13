@@ -1,10 +1,6 @@
 import Sequelize, { Op, WhereOptions } from "sequelize";
 import _ from "lodash";
-import logger from "../config/logger";
-import { queues } from "../worker/queues";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import RepoSyncState from "./reposyncstate";
-import backfillQueueSupplier from "../backfill-queue-supplier";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -58,7 +54,6 @@ export default class Subscription extends Sequelize.Model {
 	gitHubInstallationId: number;
 	jiraHost: string;
 	selectedRepositories?: number[];
-	repoSyncState?: RepoSyncStateObject;
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
 	jiraClientKey: string;
@@ -172,8 +167,6 @@ export default class Subscription extends Sequelize.Model {
 			}
 		});
 
-		await Subscription.findOrStartSync(subscription);
-
 		return subscription;
 	}
 
@@ -184,42 +177,6 @@ export default class Subscription extends Sequelize.Model {
 				jiraHost: payload.host
 			}
 		});
-	}
-
-	static async findOrStartSync(
-		subscription: Subscription,
-		syncType?: string
-	): Promise<void> {
-		const { gitHubInstallationId: installationId, jiraHost } = subscription;
-
-		if (!subscription.repoSyncState || syncType === "full") {
-			subscription.changed("repoSyncState", true);
-			await subscription.update({
-				syncStatus: "PENDING",
-				syncWarning: "",
-				repoSyncState: {
-					installationId,
-					jiraHost,
-					repos: {}
-				}
-			});
-			if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, subscription.jiraHost)) {
-				await RepoSyncState.resetSyncFromSubscription(subscription);
-			}
-			logger.info("Starting Jira sync");
-			await queues.discovery.add({ installationId, jiraHost });
-			return;
-		}
-
-		// Otherwise, just add a job to the queue for this installation
-		// This will automatically pick back up from where it left off
-		// if something got stuck
-		if (await booleanFlag(BooleanFlags.USE_SQS_FOR_BACKFILL, false, jiraHost)) {
-			const backfillQueue = await backfillQueueSupplier.supply();
-			await backfillQueue.schedule({installationId, jiraHost}, 0, logger);
-		} else {
-			await queues.installation.add({ installationId, jiraHost });
-		}
 	}
 
 	/*
@@ -237,66 +194,13 @@ export default class Subscription extends Sequelize.Model {
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
 	// https://github.com/sequelize/sequelize/issues/4387
 	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
-		this.repoSyncState = _.merge(this.repoSyncState, updatedState);
-		this.changed("repoSyncState", true);
-		await this.save();
-
-		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, this.jiraHost)) {
-			await RepoSyncState.updateFromRepoJson(this, this.repoSyncState);
-		}
-
+		const state = _.merge(await RepoSyncState.toRepoJson(this), updatedState);
+		await RepoSyncState.updateFromRepoJson(this, state);
 		return this;
 	}
 
-	async updateNumberOfSyncedRepos(value: number): Promise<Subscription> {
-		if (!this.repoSyncState) {
-			this.repoSyncState = {};
-			this.changed("repoSyncState", true);
-			await this.save();
-		}
-
-		this.repoSyncState.numberOfSyncedRepos = value;
-		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", '{numberOfSyncedRepos}', ':cnt', true) WHERE id = :id`,
-			{
-				replacements: {
-					cnt: value,
-					id: (this as any).id
-				}
-			}
-		);
-
-		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, this.jiraHost)) {
-			this.numberOfSyncedRepos = value;
-			await this.save();
-		}
-
-		return this;
-	}
-
-	async updateRepoSyncStateItem(repositoryId: string, key: keyof RepositoryData, value: string) {
-		this.repoSyncState = _.merge(this.repoSyncState, {
-			repos: {
-				[repositoryId]: {
-					[key]: value
-				}
-			}
-		});
-
-		await this.sequelize.query(
-			`UPDATE "Subscriptions" SET "updatedAt" = NOW(), "repoSyncState" = jsonb_set("repoSyncState", :path, :value, true) WHERE id = :id`,
-			{
-				replacements: {
-					path: `{repos,${repositoryId},${key}}`,
-					value: JSON.stringify(value),
-					id: (this as any).id
-				}
-			}
-		);
-
-		if (await booleanFlag(BooleanFlags.NEW_REPO_SYNC_STATE, false, this.jiraHost)) {
-			await RepoSyncState.updateRepoForSubscription(this, this.repoSyncState.repos?.[repositoryId]);
-		}
+	async updateRepoSyncStateItem(repositoryId: string, key: keyof RepositoryData, value: unknown) {
+		await RepoSyncState.updateRepoForSubscription(this, Number(repositoryId), key, value);
 		return this;
 	}
 
@@ -309,6 +213,7 @@ export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
 }
+
 export interface SubscriptionInstallPayload extends SubscriptionPayload {
 	clientKey: string;
 }

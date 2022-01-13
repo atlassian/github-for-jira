@@ -1,37 +1,20 @@
 import GithubAPI from "../config/github-api";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import { App } from "@octokit/app";
-import { GitHubAPI } from "probot";
 import Logger from "bunyan";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default (octokitApp: App): RequestHandler => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	if (req.session.githubToken) {
-		res.locals.github = GithubAPI({
-			auth: req.session.githubToken
-		});
-	} else {
-		res.locals.github = GithubAPI();
-	}
-
+	// If githubToken isn't set, this GithubAPI will be unauthed
+	res.locals.github = GithubAPI();
 	res.locals.client = GithubAPI({
 		auth: octokitApp.getSignedJsonWebToken()
 	});
-
-	if (res.locals.jiraHost && await booleanFlag(BooleanFlags.CALL_IS_ADMIN_AS_APP, true, res.locals.jiraHost)){
-		req.log.info(`using app-authenticated github client for jira host ${res.locals.jiraHost}`);
-		res.locals.isAdmin = isAdmin(res.locals.client, req.log);
-	} else {
-		req.log.info(`using user-authenticated github client for jira host ${res.locals.jiraHost}`);
-		res.locals.isAdmin = isAdmin(res.locals.github, req.log);
-	}
-
+	res.locals.isAdmin = isAdmin(res, req.log);
 	next();
 };
 
-
 // TODO: change function name as we're not looking for admin, but those that can install app in orga
-export const isAdmin = (githubClient: GitHubAPI, logger: Logger) =>
+export const isAdmin = (res: Response, logger: Logger) =>
 	async (args: { org: string, username: string, type: string }): Promise<boolean> => {
 		const { org, username, type } = args;
 
@@ -44,7 +27,7 @@ export const isAdmin = (githubClient: GitHubAPI, logger: Logger) =>
 		try {
 			const {
 				data: { role }
-			} = await githubClient.orgs.getMembership({ org, username });
+			} = await res.locals.github.orgs.getMembership({ org, username });
 
 			logger.info(`isAdmin: User ${username} has ${role} role for org ${org}`);
 

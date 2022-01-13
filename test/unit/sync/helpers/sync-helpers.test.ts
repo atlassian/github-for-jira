@@ -1,4 +1,4 @@
-import { mockJob, mockNextTask, mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "../../../mocks/errorResponses";
+import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "../../../mocks/errorResponses";
 /* eslint-disable @typescript-eslint/no-var-requires */
 import {
 	sortedRepos,
@@ -9,11 +9,11 @@ import {getLogger} from "../../../../src/config/logger";
 jest.mock("../../../../src/models");
 
 describe("Sync helpers suite", () => {
-	const repoSyncState = require("../../../fixtures/repo-sync-state.json");
-	const sortedReposFunc = require("../../../fixtures/sorted-repos.json");
+	const unsortedReposJson = require("../../../fixtures/repositories.json");
+	const sortedReposJson = require("../../../fixtures/sorted-repos.json");
 
 	it("sortedRepos should sort repos by updated_at", () => {
-		expect(sortedRepos(repoSyncState)).toEqual(sortedReposFunc);
+		expect(sortedRepos(unsortedReposJson)).toEqual(sortedReposJson);
 	});
 
 	describe("handleNotFoundErrors", () => {
@@ -22,9 +22,7 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockNotFoundErrorOctokitRequest,
-					mockJob,
-					mockNextTask,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeTruthy();
 		});
@@ -34,9 +32,7 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockNotFoundErrorOctokitGraphql,
-					mockJob,
-					mockNextTask,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeTruthy();
 		});
@@ -45,45 +41,35 @@ describe("Sync helpers suite", () => {
 			expect(
 				isNotFoundError(
 					mockOtherOctokitRequestErrors,
-					mockJob,
-					mockNextTask,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 
 			expect(
 				isNotFoundError(
 					mockOtherOctokitGraphqlErrors,
-					mockJob,
-					mockNextTask,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 
 			expect(
 				isNotFoundError(
 					mockOtherError,
-					mockJob,
-					mockNextTask,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 
 			expect(
 				isNotFoundError(
 					null,
-					mockJob,
-					mockNextTask,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 
 			expect(
 				isNotFoundError(
 					"",
-					mockJob,
-					mockNextTask,
-					getLogger('test')
+					getLogger("test")
 				)
 			).toBeFalsy();
 		});

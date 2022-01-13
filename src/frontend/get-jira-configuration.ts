@@ -7,7 +7,6 @@ import { AppInstallation, FailedAppInstallation } from "../config/interfaces";
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import _ from "lodash";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 function mapSyncStatus(syncStatus?: string): string | undefined {
 	switch (syncStatus) {
@@ -42,28 +41,16 @@ const getInstallation = async (client: GitHubAPI, subscription: SubscriptionClas
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
-		if (await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false, subscription.jiraHost)) {
-			return {
-				...response.data,
-				syncStatus: mapSyncStatus(subscription.syncStatus),
-				syncWarning: subscription.syncWarning,
-				totalNumberOfRepos: await RepoSyncState.countFromSubscription(subscription),
-				numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
-				jiraHost: subscription.jiraHost
-			};
-		} else {
-			return {
-				...response.data,
-				syncStatus: mapSyncStatus(subscription.syncStatus),
-				syncWarning: subscription.syncWarning,
-				totalNumberOfRepos: Object.keys(
-					subscription.repoSyncState?.repos || {}
-				).length,
-				numberOfSyncedRepos:
-					subscription.repoSyncState?.numberOfSyncedRepos || 0,
-				jiraHost: subscription.jiraHost
-			};
-		}
+
+		return {
+			...response.data,
+			syncStatus: mapSyncStatus(subscription.syncStatus),
+			syncWarning: subscription.syncWarning,
+			totalNumberOfRepos: await RepoSyncState.countFromSubscription(subscription),
+			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
+			jiraHost: subscription.jiraHost
+		};
+
 	} catch (err) {
 		log?.error(
 			{ installationId: id, error: err, uninstalled: err.code === 404 },
@@ -106,22 +93,13 @@ export default async (
 		const installations = await getInstallations(client, subscriptions, req.log);
 
 		const failedConnections: FailedConnection[] = await Promise.all(
-			installations.rejected?.map(async (installation) => {
+			installations.rejected.map(async (installation) => {
 				const sub = subscriptions.find((sub: SubscriptionClass) => installation.id === sub.gitHubInstallationId);
-				let orgName;
-				if (sub && await booleanFlag(BooleanFlags.REPO_SYNC_STATE_AS_SOURCE, false, sub.jiraHost)) {
-					const repo = await RepoSyncState.findOneFromSubscription(sub);
-					orgName = repo.repoOwner;
-				} else {
-					const repos = sub?.repoSyncState?.repos || {};
-					const repoId = Object.keys(repos);
-					orgName = repos[repoId[0]]?.repository?.owner.login || undefined;
-				}
-
+				const repo = sub && await RepoSyncState.findOneFromSubscription(sub);
 				return {
 					id: installation.id,
 					deleted: installation.deleted,
-					orgName
+					orgName: repo?.repoOwner
 				};
 			}));
 

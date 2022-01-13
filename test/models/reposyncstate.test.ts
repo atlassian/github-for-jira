@@ -16,7 +16,6 @@ describe("RepoSyncState", () => {
 			gitHubInstallationId: 123,
 			jiraHost,
 			jiraClientKey: "myClientKey",
-			repoSyncState: undefined
 		});
 
 		repo = {

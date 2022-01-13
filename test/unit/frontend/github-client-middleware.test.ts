@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { isAdmin } from "../../../src/frontend/github-client-middleware";
 import GitHubAPI from "../../../src/config/github-api";
 import logger from "../../../src/config/logger";
@@ -6,7 +7,7 @@ describe("GitHub client middleware", () => {
 	let adminFunction;
 
 	beforeEach(async () => {
-		adminFunction = isAdmin(GitHubAPI(), logger);
+		adminFunction = isAdmin({locals: {github: GitHubAPI()}} as any, logger);
 	});
 
 	it("isAdmin returns true if user is admin of a given organization", async () => {

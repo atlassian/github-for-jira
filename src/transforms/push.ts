@@ -1,22 +1,17 @@
 import {Subscription} from "../models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
-import enhanceOctokit from "../config/enhance-octokit";
-import {Application, GitHubAPI} from "probot";
-import {Job} from "bull";
 import {getJiraAuthor} from "../util/jira";
 import {emitWebhookProcessedMetrics} from "../util/webhooks";
 import {JiraCommit} from "../interfaces/jira";
 import _ from "lodash";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import {booleanFlag, BooleanFlags, isBlocked} from "../config/feature-flags";
+import {isBlocked} from "../config/feature-flags";
 import sqsQueues from "../sqs/queues";
 import {PushQueueMessagePayload} from "../sqs/push";
 import GitHubClient from "../github/client/github-client";
 
 // TODO: define better types for this file
-
-export const PUSH_LOGGER_NAME = "transforms.push";
 
 const mapFile = (
 	githubFile,
@@ -86,23 +81,7 @@ export async function enqueuePush(
 	return sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
 }
 
-export function processPushJob(app: Application) {
-	return async (job: Job, logger: LoggerWithTarget): Promise<void> => {
-		let githubOld;
-		try {
-			githubOld = await app.auth(job.data.installationId);
-		} catch (err) {
-			logger.error({ err, job }, "Could not authenticate");
-			return;
-		}
-		enhanceOctokit(githubOld);
-
-		const github = new GitHubClient(job.data.installationId, logger);
-		await processPush(githubOld, github, job.data, logger);
-	};
-}
-
-export const processPush = async (githubOld: GitHubAPI, github: GitHubClient, payload, rootLogger: LoggerWithTarget) => {
+export const processPush = async (github: GitHubClient, payload: PushQueueMessagePayload, rootLogger: LoggerWithTarget) => {
 	const {
 		repository,
 		repository: { owner, name: repo },
@@ -149,18 +128,11 @@ export const processPush = async (githubOld: GitHubAPI, github: GitHubClient, pa
 		const commits: JiraCommit[] = await Promise.all(
 			shas.map(async (sha): Promise<JiraCommit> => {
 				log.info("Calling GitHub to fetch commit info " + sha.id);
-				const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PUSH, false, subscription.jiraHost);
 				try {
 					const {
 						data,
 						data: {commit: githubCommit},
-					} = useNewGithubClient
-						? await github.getCommit(owner.login, repo, sha.id)
-						: await githubOld.repos.getCommit({
-							owner: owner.login,
-							repo,
-							ref: sha.id,
-						});
+					} = await github.getCommit(owner.login, repo, sha.id);
 
 					const {files, author, parents, sha: commitSha, html_url} = data;
 
@@ -172,7 +144,7 @@ export const processPush = async (githubOld: GitHubAPI, github: GitHubClient, pa
 					// merge commits will have 2 or more parents, depending how many are in the sequence
 					const isMergeCommit = parents?.length > 1;
 
-					console.info("GitHub call succeeded");
+					log.info("GitHub call succeeded");
 					return {
 						hash: commitSha,
 						message,
@@ -190,7 +162,7 @@ export const processPush = async (githubOld: GitHubAPI, github: GitHubClient, pa
 						flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined,
 					}
 				} catch (err) {
-					console.warn({ err },"Failed to fetch data from GitHub");
+					log.warn({ err },"Failed to fetch data from GitHub");
 					throw err;
 				}
 			})

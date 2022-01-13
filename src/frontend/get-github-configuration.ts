@@ -1,7 +1,5 @@
 import { Installation, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
-import enhanceOctokit from "../config/enhance-octokit";
-import app from "../worker/app";
 import { getInstallations, InstallationResults } from "./get-jira-configuration";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
@@ -10,6 +8,7 @@ import { Errors } from "../config/errors";
 import { Tracer } from "../config/tracer";
 import GitHubClient from "../github/client/github-client";
 import Logger from "bunyan";
+import { getCloudInstallationId } from "../github/client/installation-id";
 import { AppInstallation } from "../config/interfaces";
 
 interface ConnectedStatus {
@@ -55,7 +54,6 @@ const installationConnectedStatus = async (
 };
 
 const getInstallationsWithAdmin = async (
-	jiraHost: string,
 	log: Logger,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[],
 	login: string,
@@ -71,37 +69,18 @@ const getInstallationsWithAdmin = async (
 			type: installation.target_type
 		});
 
-		if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_TO_COUNT_REPOS, true, jiraHost)) {
-			const githubClient = new GitHubClient(installation.id, log);
-			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
+		const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
+		const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
 
-			const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
+		const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 
-			log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
+		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
 
-			installationsWithAdmin.push({
-				...installation,
-				numberOfRepos: numberOfRepos || 0,
-				admin
-			});
-		} else {
-
-			const authedApp = await app.auth(installation.id);
-			enhanceOctokit(authedApp);
-
-			const repositories = authedApp.paginate(
-				authedApp.apps.listRepos.endpoint.merge({ per_page: 100 }),
-				(res) => res.data
-			);
-
-			const [admin, numberOfRepos] = await Promise.all([checkAdmin, repositories]);
-
-			installationsWithAdmin.push({
-				...installation,
-				numberOfRepos: numberOfRepos.length || 0,
-				admin
-			});
-		}
+		installationsWithAdmin.push({
+			...installation,
+			numberOfRepos: numberOfRepos || 0,
+			admin
+		});
 	}
 	return installationsWithAdmin;
 }
@@ -122,8 +101,7 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: Instal
 };
 
 export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { githubToken } = req.session;
-	const { jiraHost } = res.locals;
+	const { jiraHost, githubToken } = res.locals;
 	const log = req.log.child({ jiraHost });
 
 	if (!githubToken) {
@@ -141,11 +119,11 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 	tracer.trace(`found jira host: ${jiraHost}`);
 
-	const github: GitHubAPI = res.locals.github; // user-authenticated GitHub client
-	const client: GitHubAPI = res.locals.client; // app-authenticated GitHub client
-	const isAdmin = res.locals.isAdmin;
-
-	tracer.trace(`isAdmin: ${isAdmin}`);
+	const {
+		github, // user-authenticated GitHub client
+		client, // app-authenticated GitHub client
+		isAdmin
+	} = res.locals;
 
 	const { data: { login } } = await github.users.getAuthenticated();
 
@@ -172,11 +150,24 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 
-		const { data: { installations } } = (await github.apps.listInstallationsForAuthenticatedUser());
+		const { data: { installations }, headers } = (await github.apps.listInstallationsForAuthenticatedUser());
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser.headers: ${JSON.stringify(headers)}`);
+		}
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
+		}
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(jiraHost, log, installations, login, isAdmin);
+		const installationsWithAdmin = await getInstallationsWithAdmin(log, installations, login, isAdmin);
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
+		}
 
 		tracer.trace(`got user's installations with admin status from GitHub`);
 
@@ -184,12 +175,20 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`got user's authenticated apps from GitHub`);
 
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: getAuthenticated: ${JSON.stringify(info)}`);
+		}
+
 		const connectedInstallations = await installationConnectedStatus(
 			jiraHost,
 			client,
 			installationsWithAdmin,
 			log
 		);
+
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+			log.info(`verbose logging: connectedInstallations: ${JSON.stringify(connectedInstallations)}`);
+		}
 
 		tracer.trace(`got connected installations`);
 

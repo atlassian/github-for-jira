@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import nock from "nock";
-import { createJobData, processPushJob } from "../../src/transforms/push";
+import { createJobData } from "../../src/transforms/push";
 import { createWebhookApp } from "../utils/probot";
 import { getLogger } from "../../src/config/logger";
 import { Installation, Subscription } from "../../src/models";
@@ -8,10 +8,18 @@ import { Application } from "probot";
 import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
 import sqsQueues from "../../src/sqs/queues";
+import {pushQueueMessageHandler, PushQueueMessagePayload} from "../../src/sqs/push";
+import {Context} from "../../src/sqs/index";
+import {Message} from "aws-sdk/clients/sqs";
 
-jest.mock("../../src/config/feature-flags");
+const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
+	payload: createJobData(payload, jiraHost),
+	log: getLogger("test"),
+	message: {} as Message,
+	receiveCount: 1,
+	lastAttempt: false
+});
 
-const createJob = (payload, jiraHost: string) => ({ data: createJobData(payload, jiraHost) } as any);
 
 describe("Push Webhook", () => {
 
@@ -32,6 +40,8 @@ describe("Push Webhook", () => {
 			jiraClientKey: clientKey
 		});
 	});
+
+
 
 	afterEach(async () => {
 		await Installation.destroy({ truncate: true });
@@ -84,7 +94,7 @@ describe("Push Webhook", () => {
 						{ id: "test-commit-id-1", issueKeys: ["TEST-123", "TEST-246"] },
 						{ id: "test-commit-id-2", issueKeys: ["TEST-345"] }
 					],
-					jiraHost: "https://test-atlassian-instance.net",
+					jiraHost,
 					installationId: event.payload.installation.id
 				}, { removeOnFail: true, removeOnComplete: true }
 			);
@@ -100,6 +110,14 @@ describe("Push Webhook", () => {
 				jiraHost,
 				jiraClientKey: "myClientKey"
 			});
+
+			githubNock
+				.post("/app/installations/1234/access_tokens")
+				.optionally() // TODO: need to remove optionally and make it explicit
+				.reply(200, {
+					token: "token",
+					expires_at: new Date().getTime() + 1_000_000
+				});
 		});
 
 		afterEach(async () => {
@@ -108,7 +126,6 @@ describe("Push Webhook", () => {
 
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, jiraHost);
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
@@ -169,12 +186,11 @@ describe("Push Webhook", () => {
 				}
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(event.payload, jiraHost))).toResolve();
 		});
 
 		it("should only send 10 files if push contains more than 10 files changed", async () => {
 			const event = require("../fixtures/push-multiple.json");
-			const job = createJob(event.payload, jiraHost);
 
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
@@ -282,7 +298,7 @@ describe("Push Webhook", () => {
 				}
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(event.payload, jiraHost))).toResolve();
 		});
 
 		it("should not run a command without a Jira issue", async () => {
@@ -310,7 +326,6 @@ describe("Push Webhook", () => {
 
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, jiraHost);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-merge-commit.json"));
@@ -369,12 +384,11 @@ describe("Push Webhook", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(event.payload, jiraHost))).toResolve();
 		});
 
 		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
 			const event = require("../fixtures/push-no-username.json");
-			const job = createJob(event.payload, jiraHost);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-non-merge-commit"));
@@ -433,7 +447,7 @@ describe("Push Webhook", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processPushJob(app)(job, getLogger("test"))).toResolve();
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(event.payload, jiraHost))).toResolve();
 		});
 	});
 
@@ -459,7 +473,7 @@ describe("Push Webhook", () => {
 
 			githubNock
 				.post("/app/installations/1234/access_tokens")
-				.optionally()
+				.optionally() // TODO: need to remove optionally and make it explicit
 				.reply(200, {
 					token: "token",
 					expires_at: new Date().getTime()
@@ -529,10 +543,8 @@ describe("Push Webhook", () => {
 			await expect(app.receive(event)).toResolve();
 
 			await waitUntil(async () => {
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(githubNock.pendingMocks()).toEqual([]);
-				// eslint-disable-next-line jest/no-standalone-expect
-				expect(jiraNock.pendingMocks()).toEqual([]);
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
 			});
 		});
 	});

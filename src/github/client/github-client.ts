@@ -1,4 +1,4 @@
-import Logger from 'bunyan';
+import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
@@ -9,6 +9,8 @@ import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setReq
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/common-middleware";
+import { InstallationId } from "./installation-id";
+import { ViewerRepositoryCountQuery } from "./github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -19,17 +21,17 @@ export default class GitHubClient {
 	private readonly axios: AxiosInstance;
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
-	private readonly githubInstallationId: number;
-	private logger: Logger;
+	private readonly githubInstallationId: InstallationId;
+	private readonly logger: Logger;
 
 	constructor(
-		githubInstallationId: number,
+		githubInstallationId: InstallationId,
 		logger: Logger,
-		baseURL = "https://api.github.com"
+		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.client.axios");
 		this.axios = axios.create({
-			baseURL
+			baseURL: githubInstallationId.githubBaseUrl
 		});
 		this.axios.interceptors.request.use(urlParamsMiddleware)
 		this.axios.interceptors.request.use(setRequestStartTime);
@@ -41,7 +43,7 @@ export default class GitHubClient {
 			instrumentRequest(metricHttpRequest.github),
 			instrumentFailedRequest(metricHttpRequest.github)
 		);
-		this.appTokenHolder = AppTokenHolder.getInstance();
+		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 	}
@@ -50,7 +52,7 @@ export default class GitHubClient {
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestConfig> {
-		const appToken = this.appTokenHolder.getAppToken();
+		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
 				Accept: "application/vnd.github.v3+json",
@@ -64,8 +66,8 @@ export default class GitHubClient {
 	 */
 	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
 		const installationToken = await this.installationTokenCache.getInstallationToken(
-			this.githubInstallationId,
-			() => this.createInstallationToken(this.githubInstallationId));
+			this.githubInstallationId.installationId,
+			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
 				Accept: "application/vnd.github.v3+json",
@@ -90,7 +92,6 @@ export default class GitHubClient {
 		const response = await this.axios.get<T>(url, {
 			...await this.installationAuthenticationHeaders(),
 			params: {
-				installationId: this.githubInstallationId,
 				...params,
 			},
 			urlParams,
@@ -105,9 +106,6 @@ export default class GitHubClient {
 			},
 			{
 				...await this.installationAuthenticationHeaders(),
-				params: {
-					installationId: this.githubInstallationId,
-				}
 			});
 	}
 
@@ -155,14 +153,7 @@ export default class GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql(`
-			query {
-				viewer {
-					repositories {
-						totalCount
-					}
-				}
-			}`)
+		const response = await this.graphql(ViewerRepositoryCountQuery);
 
 		return response?.data?.data?.viewer?.repositories?.totalCount as number;
 	}

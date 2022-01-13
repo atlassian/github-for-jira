@@ -3,7 +3,6 @@ import bformat from "bunyan-format";
 import filteringHttpLogsStream from "../util/filteringHttpLogsStream";
 import { LoggerWithTarget, wrapLogger } from "probot/lib/wrap-logger";
 import { Request } from "express";
-import { Job } from "bull";
 
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
@@ -29,12 +28,6 @@ const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 	remoteAddress: req.socket.remoteAddress,
 	remotePort: req.socket.remotePort,
 	body: req.body
-};
-
-const jobSerializer = (job: Job) => job && {
-	...job,
-	// Removing potentially extremely large amount of data from logs
-	data: undefined,
 };
 
 const errorSerializer = (err) => (!err || !err.stack) ? err : {
@@ -67,7 +60,6 @@ const logger = wrapLogger(Logger.createLogger(
 			err: errorSerializer,
 			res: Logger.stdSerializers.res,
 			req: requestSerializer,
-			job: jobSerializer,
 		}
 	}
 ));

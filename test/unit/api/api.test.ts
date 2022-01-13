@@ -7,8 +7,6 @@ import SubscriptionClass from "../../../src/models/subscription";
 import api from "../../../src/api";
 import { getLogger } from "../../../src/config/logger";
 import getAxiosInstance from "../../../src/jira/client/axios";
-import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
-import { when } from "jest-when";
 import { mocked } from "ts-jest/utils";
 
 jest.mock("../../../src/config/feature-flags");
@@ -19,8 +17,8 @@ describe("API", () => {
 	let locals;
 	const invalidId = 99999999;
 	const gitHubInstallationId = 1234;
-	let installation:InstallationClass;
-	let subscription:SubscriptionClass;
+	let installation: InstallationClass;
+	let subscription: SubscriptionClass;
 
 	const successfulAuthResponseWrite = {
 		data: {
@@ -77,36 +75,12 @@ describe("API", () => {
 			gitHubInstallationId,
 			jiraHost,
 			jiraClientKey: "client-key",
-			repoSyncState: {
-				jiraHost,
-				numberOfSyncedRepos: 1,
-				repos: {
-					"1": {
-						pullStatus: "complete",
-						branchStatus: "complete",
-						commitStatus: "complete",
-						lastBranchCursor: "foo",
-						lastCommitCursor: "bar",
-						lastPullCursor: 12,
-						repository: {
-							id: "1",
-							name: "github-for-jira",
-							full_name: "atlassian/github-for-jira",
-							html_url: "github.com/atlassian/github-for-jira",
-							owner: {
-								login: "atlassian"
-							},
-							updated_at: new Date(0)
-						}
-					},
-				}
-			}
 		});
 	});
 
 	afterEach(async () => {
-		await Installation.destroy({truncate: true});
-		await Subscription.destroy({truncate: true});
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("Authentication", () => {
@@ -278,10 +252,32 @@ describe("API", () => {
 			});
 		});
 
-		describe("repoSyncState", () => {
+		describe("Repo Sync State", () => {
+			beforeEach(async () => {
+				await RepoSyncState.create({
+					subscriptionId: subscription.id,
+					repoId: 1,
+					repoName: "github-for-jira",
+					repoOwner: "atlassian",
+					repoFullName: "atlassian/github-for-jira",
+					repoUrl: "github.com/atlassian/github-for-jira",
+					branchStatus: "complete",
+					branchCursor: "foo",
+					commitStatus: "complete",
+					commitCursor: "bar",
+					pullStatus: "complete",
+					pullCursor: "12",
+					repoUpdatedAt: new Date(0)
+				});
+			});
+
+			afterEach(async () => {
+				await RepoSyncState.destroy({ truncate: true });
+			});
+
 			it("should return 404 if no installation is found", async () => {
 				return supertest(app)
-					.get(`/api/${invalidId}/repoSyncState.json`)
+					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
 					.send(`jiraHost=${jiraHost}`)
@@ -291,78 +287,38 @@ describe("API", () => {
 					});
 			});
 
-			it("should return the repoSyncState information for an existing installation", async () => {
+			it("should return the sync state for an existing installation", async () => {
 				return supertest(app)
-					.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/repoSyncState.json`)
+					.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
 					.expect(200)
 					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-
-			describe("RepoSyncState as Source", () => {
-				beforeEach(async () => {
-					await RepoSyncState.create({
-						subscriptionId: subscription.id,
-						repoId: 1,
-						repoName: "github-for-jira",
-						repoOwner: "atlassian",
-						repoFullName: "atlassian/github-for-jira",
-						repoUrl: "github.com/atlassian/github-for-jira",
-						branchStatus: "complete",
-						branchCursor: "foo",
-						commitStatus: "complete",
-						commitCursor: "bar",
-						pullStatus: "complete",
-						pullCursor: "12",
-						repoUpdatedAt: new Date(0)
-					});
-				});
-
-				afterEach(async () => {
-					await RepoSyncState.destroy({truncate: true});
-				});
-
-				it("should return the repoSyncState information for an existing installation", async () => {
-					when(booleanFlag).calledWith(
-						BooleanFlags.REPO_SYNC_STATE_AS_SOURCE,
-						expect.anything()
-					).mockResolvedValue(true);
-
-					return supertest(app)
-						.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/repoSyncState.json`)
-						.set("Authorization", "Bearer xxx")
-						.set("host", "127.0.0.1")
-						.expect(200)
-						.then((response) => {
-							expect(response.body).toMatchObject({
-								jiraHost,
-								numberOfSyncedRepos: 1,
-								repos: {
-									"1": {
-										pullStatus: "complete",
-										branchStatus: "complete",
-										commitStatus: "complete",
-										lastBranchCursor: "foo",
-										lastCommitCursor: "bar",
-										lastPullCursor: 12,
-										repository: {
-											id: "1",
-											name: "github-for-jira",
-											full_name: "atlassian/github-for-jira",
-											html_url: "github.com/atlassian/github-for-jira",
-											owner: {
-												login: "atlassian"
-											},
-											updated_at: new Date(0).toISOString()
-										}
-									},
+						expect(response.body).toMatchObject({
+							jiraHost,
+							numberOfSyncedRepos: 1,
+							repos: {
+								"1": {
+									pullStatus: "complete",
+									branchStatus: "complete",
+									commitStatus: "complete",
+									lastBranchCursor: "foo",
+									lastCommitCursor: "bar",
+									lastPullCursor: 12,
+									repository: {
+										id: "1",
+										name: "github-for-jira",
+										full_name: "atlassian/github-for-jira",
+										html_url: "github.com/atlassian/github-for-jira",
+										owner: {
+											login: "atlassian"
+										},
+										updated_at: new Date(0).toISOString()
+									}
 								}
-							});
+							}
 						});
-				});
+					});
 			});
 		});
 
@@ -390,7 +346,7 @@ describe("API", () => {
 					});
 			});
 
-			it("should reset repoSyncState if asked to", async () => {
+			it("should reset sync state if asked to", async () => {
 				return supertest(app)
 					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Authorization", "Bearer xxx")
@@ -400,7 +356,6 @@ describe("API", () => {
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
-						// td.verify(Subscription.findOrStartSync(subscription, "full"));
 					});
 			});
 		});

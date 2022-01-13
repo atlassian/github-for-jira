@@ -4,12 +4,11 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import backfillQueueSupplier from '../backfill-queue-supplier';
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import sqsQueues from "../sqs/queues";
 
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 
-export const discovery = (app: Application, queues) => async (job, logger: LoggerWithTarget) => {
+export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
 	const github = await app.auth(installationId);
@@ -53,12 +52,7 @@ export const discovery = (app: Application, queues) => async (job, logger: Logge
 			repos
 		});
 
-		if (await booleanFlag(BooleanFlags.USE_SQS_FOR_BACKFILL, false, jiraHost)) {
-			const backfillQueue = await backfillQueueSupplier.supply();
-			await backfillQueue.schedule({installationId, jiraHost, startTime: startTime.toISOString()}, 0, logger);
-		} else {
-			await queues.installation.add({ installationId, jiraHost, startTime });
-		}
+		await sqsQueues.backfill.sendMessage({installationId, jiraHost, startTime: startTime.toISOString()}, 0, logger);
 	} catch (err) {
 		logger.error({ job, err }, "Discovery error");
 	}
