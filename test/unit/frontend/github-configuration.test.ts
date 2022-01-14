@@ -213,6 +213,73 @@ describe("Github Configuration", () => {
 				)
 				.expect(200);
 		});
+
+		it("should return 200 even when organization is IP blocked", async () => {
+			// This is for github token validation check
+			githubNock
+				.get("/")
+				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
+				.reply(200);
+
+			githubNock
+				.get("/user")
+				.reply(200, { login: "test-user" });
+
+			githubNock
+				.post(`/app/installations/${sub.gitHubInstallationId}/access_tokens`)
+				.reply(200, {
+					token: "token",
+					expires_at: new Date().getTime() + 999999
+				});
+
+			githubNock
+				.get(`/app/installations/${sub.gitHubInstallationId}`)
+				.reply(403, {
+					message: "Although you appear to have the correct authorization credentials, the `Fusion-Arc` organization has an IP allow list enabled, and 13.52.4.51 is not permitted to access this resource."
+				});
+
+			githubNock
+				.get("/user/installations")
+				.reply(200, {
+					installations: [{
+						id: sub.gitHubInstallationId,
+						account: {
+							login: "test-org"
+						},
+						target_type: "Organization"
+					}]
+				});
+
+			githubNock
+				.get("/orgs/test-org/memberships/test-user")
+				.reply(200, {
+					role: "admin"
+				});
+
+			githubNock
+				.get("/app")
+				.reply(200, {
+					html_url: "https://github.com/apps/jira"
+				});
+
+			githubNock
+				.post("/graphql", { query: ViewerRepositoryCountQuery })
+				.query(true)
+				.reply(403,  {
+					message: "Although you appear to have the correct authorization credentials, the `Fusion-Arc` organization has an IP allow list enabled, and 13.52.4.51 is not permitted to access this resource."
+				});
+
+			await supertest(frontendApp)
+				.get("/github/configuration")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+						githubToken: "token"
+					})
+				)
+				.expect(200);
+		});
 	});
 
 	describe("#POST", () => {

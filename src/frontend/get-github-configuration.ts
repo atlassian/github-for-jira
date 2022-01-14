@@ -69,21 +69,24 @@ const getInstallationsWithAdmin = async (
 			type: installation.target_type
 		});
 
-		const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
-		const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
+		try {
+			const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
+			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
+			const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 
-		const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
+			log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
 
-		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
-
-		installationsWithAdmin.push({
-			...installation,
-			numberOfRepos: numberOfRepos || 0,
-			admin
-		});
+			installationsWithAdmin.push({
+				...installation,
+				numberOfRepos: numberOfRepos || 0,
+				admin
+			});
+		} catch (err) {
+			log.warn({err, installationId: installation.id, org: installation.account.login}, "Cannot check admin or get number of repos per org")
+		}
 	}
 	return installationsWithAdmin;
-}
+};
 
 const removeFailedConnectionsFromDb = async (req: Request, installations: InstallationResults, jiraHost: string): Promise<void> => {
 	await Promise.all(installations.rejected
@@ -153,12 +156,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		const { data: { installations }, headers } = (await github.apps.listInstallationsForAuthenticatedUser());
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
-			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
-			log.info(`verbose logging: listInstallationsForAuthenticatedUser.headers: ${JSON.stringify(headers)}`);
-		}
-
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
-			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
+			log.info({ installations, headers }, `verbose logging: listInstallationsForAuthenticatedUser`);
 		}
 
 		tracer.trace(`got user's installations from GitHub`);
@@ -176,7 +174,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		tracer.trace(`got user's authenticated apps from GitHub`);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
-			log.info(`verbose logging: getAuthenticated: ${JSON.stringify(info)}`);
+			log.info({ info }, `verbose logging: getAuthenticated`);
 		}
 
 		const connectedInstallations = await installationConnectedStatus(
@@ -187,7 +185,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
-			log.info(`verbose logging: connectedInstallations: ${JSON.stringify(connectedInstallations)}`);
+			log.info({ connectedInstallations }, `verbose logging: connectedInstallations`);
 		}
 
 		tracer.trace(`got connected installations`);
