@@ -41,8 +41,7 @@ function mapBranch(branch, repository) {
 			fileCount: branch.target.changedFiles || 0,
 			hash: branch.target.oid,
 			id: branch.target.oid,
-			// Use only one set of keys for the last commit in order of most specific to least specific
-			issueKeys: commitKeys || branchKeys || pullRequestKeys,
+			issueKeys: commitKeys,
 			message: branch.target.message,
 			url: branch.target.url || undefined,
 			updateSequenceId: Date.now()
