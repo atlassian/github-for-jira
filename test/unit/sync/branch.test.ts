@@ -11,6 +11,8 @@ import {getLogger} from "../../../src/config/logger";
 import {Hub} from "@sentry/types/dist/hub";
 import {BackfillMessagePayload} from "../../../src/sqs/backfill";
 import sqsQueues from "../../../src/sqs/queues";
+import {when} from "jest-when";
+import {booleanFlag, BooleanFlags} from "../../../src/config/feature-flags";
 
 jest.mock("../../../src/sqs/queues", () => {
 	return {
@@ -18,6 +20,7 @@ jest.mock("../../../src/sqs/queues", () => {
 	}
 });
 
+jest.mock("../../../src/config/feature-flags");
 
 describe("sync/branches", () => {
 	const installationId = 1234;
@@ -171,98 +174,127 @@ describe("sync/branches", () => {
 		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
 	}
 
-	it("should sync to Jira when branch refs have jira references", async () => {
-		const data : BackfillMessagePayload = {installationId, jiraHost};
-		nockBranchRequest(branchNodesFixture);
+	const branchSyncTests = () => {
+		it("should sync to Jira when branch refs have jira references", async () => {
+			const data: BackfillMessagePayload = {installationId, jiraHost};
+			nockBranchRequest(branchNodesFixture);
 
-		jiraNock
-			.post(
-				"/rest/devinfo/0.10/bulk",
-				makeExpectedResponse("TES-321-branch-name" )
-			)
-			.reply(200);
+			jiraNock
+				.post(
+					"/rest/devinfo/0.10/bulk",
+					makeExpectedResponse("TES-321-branch-name")
+				)
+				.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data)
-	});
+			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			verifyMessageSent(data)
+		});
 
-	it("should send data if issue keys are only present in commits", async () => {
-		const data = { installationId, jiraHost };
-		nockBranchRequest(branchCommitsHaveKeys);
+		it("should send data if issue keys are only present in commits", async () => {
+			const data = {installationId, jiraHost};
+			nockBranchRequest(branchCommitsHaveKeys);
 
-		jiraNock
-			.post(
-				"/rest/devinfo/0.10/bulk",
-				makeExpectedResponse("dev")
-			)
-			.reply(200);
+			jiraNock
+				.post(
+					"/rest/devinfo/0.10/bulk",
+					makeExpectedResponse("dev")
+				)
+				.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data)
-	});
+			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			verifyMessageSent(data)
+		});
 
-	it("should send data if issue keys are only present in an associatd PR title", async () => {
-		const data = { installationId, jiraHost };
-		nockBranchRequest(associatedPRhasKeys);
+		it("should send data if issue keys are only present in an associatd PR title", async () => {
+			const data = {installationId, jiraHost};
+			nockBranchRequest(associatedPRhasKeys);
 
-		jiraNock
-			.post("/rest/devinfo/0.10/bulk", {
-				preventTransitions: true,
-				repositories: [
-					{
-						branches: [
-							{
-								createPullRequestUrl: "test-repo-url/pull/new/dev",
-								id: "dev",
-								issueKeys: ["PULL-123"],
-								lastCommit: {
-									author: {
-										avatar: "https://camo.githubusercontent.com/test-avatar",
-										email: "test-author-email@example.com",
-										name: "test-author-name"
+			jiraNock
+				.post("/rest/devinfo/0.10/bulk", {
+					preventTransitions: true,
+					repositories: [
+						{
+							branches: [
+								{
+									createPullRequestUrl: "test-repo-url/pull/new/dev",
+									id: "dev",
+									issueKeys: ["PULL-123"],
+									lastCommit: {
+										author: {
+											avatar: "https://camo.githubusercontent.com/test-avatar",
+											email: "test-author-email@example.com",
+											name: "test-author-name"
+										},
+										authorTimestamp: "test-authored-date",
+										displayId: "test-o",
+										fileCount: 0,
+										hash: "test-oid",
+										issueKeys: [],
+										id: "test-oid",
+										message: "test-commit-message",
+										url: "test-repo-url/commit/test-sha",
+										updateSequenceId: 12345678
 									},
-									authorTimestamp: "test-authored-date",
-									displayId: "test-o",
-									fileCount: 0,
-									hash: "test-oid",
-									issueKeys: [],
-									id: "test-oid",
-									message: "test-commit-message",
-									url: "test-repo-url/commit/test-sha",
+									name: "dev",
+									url: "test-repo-url/tree/dev",
 									updateSequenceId: 12345678
-								},
-								name: "dev",
-								url: "test-repo-url/tree/dev",
-								updateSequenceId: 12345678
-							}
-						],
-						commits: [],
-						id: "1",
-						name: "test-repo-name",
-						url: "test-repo-url",
-						updateSequenceId: 12345678
+								}
+							],
+							commits: [],
+							id: "1",
+							name: "test-repo-name",
+							url: "test-repo-url",
+							updateSequenceId: 12345678
+						}
+					],
+					properties: {
+						installationId: installationId
 					}
-				],
-				properties: {
-					installationId: installationId
-				}
-			})
-			.reply(200);
+				})
+				.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data)
+			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			verifyMessageSent(data)
+		});
+
+		it("should not call Jira if no issue keys are found", async () => {
+			const data = {installationId, jiraHost};
+			nockBranchRequest(branchNoIssueKeys);
+
+			const interceptor = jiraNock.post(/.*/);
+			const scope = interceptor.reply(200);
+
+			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			verifyMessageSent(data)
+			expect(scope).not.toBeDone();
+			nock.removeInterceptor(interceptor);
+		});
+	}
+
+	describe("New GH Client feature flag is OFF", () => {
+
+		beforeEach(() => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(false);
+		})
+
+		branchSyncTests();
 	});
 
-	it("should not call Jira if no issue keys are found", async () => {
-		const data = { installationId, jiraHost };
-		nockBranchRequest(branchNoIssueKeys);
+	describe("New GH Client feature flag is ON", () => {
 
-		const interceptor = jiraNock.post(/.*/);
-		const scope = interceptor.reply(200);
+		beforeEach(() => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(true);
+		})
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data)
-		expect(scope).not.toBeDone();
-		nock.removeInterceptor(interceptor);
+		branchSyncTests();
 	});
+
 });
