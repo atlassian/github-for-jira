@@ -41,7 +41,7 @@ describe("Jira Configuration Suite", () => {
 	});
 
 	const mockRequest = (): any => ({
-		query: { xdm_e: "https://somejirasite.atlassian.net" },
+		query: { xdm_e: jiraHost },
 		csrfToken: jest.fn().mockReturnValue({}),
 		log: {
 			info: jest.fn(),
@@ -67,6 +67,9 @@ describe("Jira Configuration Suite", () => {
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
 		await getJiraConfiguration(mockRequest(), response, jest.fn());
-		expect(response.render.mock.calls[0][1].connections[0].totalNumberOfRepos).toBe(1);
+		const data = response.render.mock.calls[0][1];
+		expect(data.hasConnections).toBe(true);
+		expect(data.failedConnections.length).toBe(0);
+		expect(data.successfulConnections.length).toBe(1);
 	});
 });

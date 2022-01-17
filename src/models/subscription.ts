@@ -210,7 +210,7 @@ export default class Subscription extends Sequelize.Model {
 }
 
 export interface SubscriptionPayload {
-	installationId: string;
+	installationId: number;
 	host: string;
 }
 

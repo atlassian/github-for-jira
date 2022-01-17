@@ -30,7 +30,7 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 		}
 
 		if (error.status === 403 && error.stack?.includes("has an IP allow list enabled")) {
-			logger.error({ err: error }, "blocked by GitHub allowlist!");
+			logger.warn({ err: error }, "blocked by GitHub allowlist!");
 			statsd.increment(metricError.blockedByGitHubAllowlist);
 		}
 

@@ -58,13 +58,13 @@ describe("test installation model", () => {
 		// Setup two subscriptions for this host
 		await Subscription.install({
 			host: installation.jiraHost,
-			installationId: "1234",
+			installationId: 1234,
 			clientKey: installation.clientKey
 		});
 
 		await Subscription.install({
 			host: installation.jiraHost,
-			installationId: "2345",
+			installationId: 2345,
 			clientKey: installation.clientKey
 		});
 	});
@@ -250,7 +250,7 @@ describe("test installation model", () => {
 
 			const installations = await Installation.getAllForHost(jiraHost);
 			expect(installations.length).toEqual(5);
-			
+
 			installations.forEach((installation) => {
 				// both installations should have the same host.
 				expect(installation.jiraHost).toBe(jiraHost);

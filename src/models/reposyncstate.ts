@@ -131,7 +131,7 @@ export default class RepoSyncState extends Sequelize.Model {
 		});
 
 		return RepoSyncState.sequelize?.transaction(async (transaction) => {
-			// Delete all repos that's not in repoSyncState anymore
+			// Delete all repos that's not in state anymore
 			await RepoSyncState.destroy({
 				where: {
 					subscriptionId: subscription.id,
@@ -180,7 +180,7 @@ export default class RepoSyncState extends Sequelize.Model {
 		});
 	}
 
-	// TODO: need to redo this in a better fashion after repoSyncState column is deleted
+	// TODO: need to redo this in a better fashion
 	static async updateRepoForSubscription(subscription: Subscription, repoId: number, key: keyof RepositoryData, value: unknown): Promise<RepoSyncState | undefined> {
 		const model: RepoSyncState | undefined = await RepoSyncState.findOne({
 			where: {

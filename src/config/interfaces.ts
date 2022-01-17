@@ -1,3 +1,5 @@
+import { Octokit } from "@octokit/rest";
+
 interface FailedInstallationsRequestHeaders {
 	accept: string;
 	"user-agent": string;
@@ -26,12 +28,20 @@ interface FailedInstallationRequest {
 
 interface FailedInstallationError {
 	status: number;
-	headers: any;
+	headers: Record<string, string>;
 	request: FailedInstallationRequest;
 	documentation_url: string;
 }
 
-export interface FailedInstallations {
+export interface AppInstallation extends Octokit.AppsGetInstallationResponse {
+	syncStatus?: string;
+	syncWarning?: string;
+	totalNumberOfRepos: number;
+	numberOfSyncedRepos: number;
+	jiraHost: string;
+}
+
+export interface FailedAppInstallation {
 	error: FailedInstallationError;
 	id: number;
 	deleted: boolean;
