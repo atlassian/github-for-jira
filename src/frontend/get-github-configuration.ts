@@ -90,6 +90,8 @@ const getInstallationsWithAdmin = async (
 
 const removeFailedConnectionsFromDb = async (req: Request, installations: InstallationResults, jiraHost: string): Promise<void> => {
 	await Promise.all(installations.rejected
+		// Only uninstall deleted installations
+		.filter(failedInstallation => failedInstallation.deleted)
 		.map(async (failedInstallation) => {
 			try {
 				await Subscription.uninstall({
