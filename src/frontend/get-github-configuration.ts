@@ -1,6 +1,7 @@
 import { Installation, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
-import { getInstallation } from "./get-jira-configuration";
+import { getInstallations, InstallationResults } from "./get-jira-configuration";
+import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { Errors } from "../config/errors";
@@ -8,52 +9,55 @@ import { Tracer } from "../config/tracer";
 import GitHubClient from "../github/client/github-client";
 import Logger from "bunyan";
 import { getCloudInstallationId } from "../github/client/installation-id";
+import { AppInstallation } from "../config/interfaces";
+
+interface ConnectedStatus {
+	syncStatus?: string;
+	account: Octokit.AppsGetInstallationResponseAccount;
+}
 
 const getConnectedStatus = (
-	installationsWithSubscriptions: any,
-	sessionJiraHost: string
-) => {
-	return (
-		installationsWithSubscriptions.length > 0 &&
-		installationsWithSubscriptions
-			// An org may have multiple subscriptions to Jira instances. Confirm a match.
-			.filter((subscription) => sessionJiraHost === subscription.jiraHost)
-			.map((subscription) =>
-				(({ syncStatus, account }) => ({ syncStatus, account }))(subscription)
-			)
-	);
-};
+	installationsWithSubscriptions: AppInstallation[],
+	jiraHost: string
+): ConnectedStatus[] =>
+	installationsWithSubscriptions
+		// An org may have multiple subscriptions to Jira instances. Confirm a match.
+		.filter((installation) => jiraHost === installation.jiraHost)
+		.map((installation) => ({
+			syncStatus: installation.syncStatus,
+			account: installation.account
+		}));
 
-const mergeByLogin = (installationsWithAdmin: any, connectedStatuses: any) =>
-	connectedStatuses ? installationsWithAdmin.map((installation) => ({
-		...connectedStatuses.find((connection) => connection.account.login === installation.account.login),
+interface MergedInstallation extends InstallationWithAdmin {
+	syncStatus?: string;
+}
+
+const mergeByLogin = (installationsWithAdmin: InstallationWithAdmin[], connectedStatuses: ConnectedStatus[]): MergedInstallation[] =>
+	connectedStatuses.length ? installationsWithAdmin.map((installation) => ({
+		...connectedStatuses.find(
+			(connection) => connection.account.login === installation.account.login
+		),
 		...installation
 	})) : installationsWithAdmin;
 
 const installationConnectedStatus = async (
-	sessionJiraHost: string,
-	client: any,
-	installationsWithAdmin: any,
-	reqLog: any
-) => {
-	const subscriptions = await Subscription.getAllForHost(sessionJiraHost);
-
-	const installationsWithSubscriptions = await Promise.all(
-		subscriptions.map((subscription) => getInstallation(client, subscription, reqLog))
-	);
-
-	const connectedStatuses = getConnectedStatus(
-		installationsWithSubscriptions,
-		sessionJiraHost
-	);
+	jiraHost: string,
+	client: GitHubAPI,
+	installationsWithAdmin: InstallationWithAdmin[],
+	reqLog: Logger
+): Promise<MergedInstallation[]> => {
+	const subscriptions = await Subscription.getAllForHost(jiraHost);
+	const installationsWithSubscriptions = await getInstallations(client, subscriptions, reqLog);
+	const connectedStatuses = getConnectedStatus(installationsWithSubscriptions.fulfilled, jiraHost);
 
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
-async function getInstallationsWithAdmin(log: Logger,
+const getInstallationsWithAdmin = async (
+	log: Logger,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[],
 	login: string,
-	isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> {
+	isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> => {
 	const installationsWithAdmin: InstallationWithAdmin[] = [];
 
 	for (const installation of installations) {
@@ -65,41 +69,35 @@ async function getInstallationsWithAdmin(log: Logger,
 			type: installation.target_type
 		});
 
-		const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
-		const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
+		try {
+			const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
+			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
+			const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 
-		const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
+			log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
 
-		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
-
-		installationsWithAdmin.push({
-			...installation,
-			numberOfRepos: numberOfRepos || 0,
-			admin
-		});
+			installationsWithAdmin.push({
+				...installation,
+				numberOfRepos: numberOfRepos || 0,
+				admin
+			});
+		} catch (err) {
+			log.warn({err, installationId: installation.id, org: installation.account.login}, "Cannot check admin or get number of repos per org")
+		}
 	}
 	return installationsWithAdmin;
-}
+};
 
-const getAllInstallations = async (client, logger, jiraHost) => {
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	return Promise.all(
-		subscriptions.map((subscription) =>
-			getInstallation(client, subscription, logger)
-		)
-	);
-}
-
-const removeFailedConnectionsFromDb = async (req: Request, installations: any, jiraHost: string): Promise<void> => {
-	await Promise.all(installations
-		.filter((response) => !!response.error)
-		.map(async (connection) => {
+const removeFailedConnectionsFromDb = async (req: Request, installations: InstallationResults, jiraHost: string): Promise<void> => {
+	await Promise.all(installations.rejected
+		// Only uninstall deleted installations
+		.filter(failedInstallation => failedInstallation.deleted)
+		.map(async (failedInstallation) => {
 			try {
-				const payload = {
-					installationId: connection.id,
-					host: jiraHost,
-				};
-				await Subscription.uninstall(payload);
+				await Subscription.uninstall({
+					installationId: failedInstallation.id,
+					host: jiraHost
+				});
 			} catch (err) {
 				const deleteSubscriptionError = `Failed to delete subscription: ${err}`;
 				req.log.error(deleteSubscriptionError);
@@ -137,8 +135,9 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 	tracer.trace(`got login name: ${login}`);
 
 	// Remove any failed installations before a user attempts to reconnect
-	const allInstallations = await getAllInstallations(client, log, jiraHost)
-	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost)
+	const subscriptions = await Subscription.getAllForHost(jiraHost);
+	const allInstallations = await getInstallations(client, subscriptions, log);
+	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost);
 
 	tracer.trace(`removed failed installations`);
 
@@ -159,12 +158,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		const { data: { installations }, headers } = (await github.apps.listInstallationsForAuthenticatedUser());
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
-			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
-			log.info(`verbose logging: listInstallationsForAuthenticatedUser.headers: ${JSON.stringify(headers)}`);
-		}
-
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
-			log.info(`verbose logging: listInstallationsForAuthenticatedUser: ${JSON.stringify(installations)}`);
+			log.info({ installations, headers }, `verbose logging: listInstallationsForAuthenticatedUser`);
 		}
 
 		tracer.trace(`got user's installations from GitHub`);
@@ -182,7 +176,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		tracer.trace(`got user's authenticated apps from GitHub`);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
-			log.info(`verbose logging: getAuthenticated: ${JSON.stringify(info)}`);
+			log.info({ info }, `verbose logging: getAuthenticated`);
 		}
 
 		const connectedInstallations = await installationConnectedStatus(
@@ -193,7 +187,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 		);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
-			log.info(`verbose logging: connectedInstallations: ${JSON.stringify(connectedInstallations)}`);
+			log.info({ connectedInstallations }, `verbose logging: connectedInstallations`);
 		}
 
 		tracer.trace(`got connected installations`);
