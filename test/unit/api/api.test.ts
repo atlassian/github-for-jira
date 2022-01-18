@@ -4,7 +4,7 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import { Installation, RepoSyncState, Subscription } from "../../../src/models";
 import InstallationClass from "../../../src/models/installation";
 import SubscriptionClass from "../../../src/models/subscription";
-import api from "../../../src/api";
+import api from "../../../src/routes/api";
 import { getLogger } from "../../../src/config/logger";
 import getAxiosInstance from "../../../src/jira/client/axios";
 import { mocked } from "ts-jest/utils";

@@ -1,7 +1,7 @@
-import { validJiraDomains } from "./validations";
+import { validJiraDomains } from "../../../frontend/validations";
 import { Request, Response } from "express";
-import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../util/jira-utils";
-import { Installation } from "../models";
+import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../../../util/jira-utils";
+import { Installation } from "../../../models";
 
 const validateJiraSite = async (
 	req: Request,
@@ -23,7 +23,7 @@ const validateJiraSite = async (
 	res.json({ redirect: installation ? getJiraAppUrl(jiraHost) : getJiraMarketplaceUrl(jiraHost) });
 };
 
-export default async (req: Request, res: Response): Promise<void> => {
+export const GithubSetupPost = async (req: Request, res: Response): Promise<void> => {
 	const { jiraDomain, jiraDomainMain, jiraDomainModal } = req.body;
 
 	const domain = jiraDomain || jiraDomainMain || jiraDomainModal;

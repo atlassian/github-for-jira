@@ -4,25 +4,25 @@ import path from "path";
 import cookieSession from "cookie-session";
 import csrf from "csurf";
 import * as Sentry from "@sentry/node";
-import GithubOAuth from "./github-oauth";
-import getGitHubSetup from "./get-github-setup";
-import postGitHubSetup from "./post-github-setup";
-import getGitHubConfiguration from "./get-github-configuration";
-import postGitHubConfiguration from "./post-github-configuration";
-import getGitHubSubscriptions from "./get-github-subscriptions";
-import deleteGitHubSubscription from "./delete-github-subscription";
-import getJiraConfiguration from "./get-jira-configuration";
-import deleteJiraConfiguration from "./delete-jira-configuration";
+import GithubOAuth from "../routes/github/github-oauth";
+import getGitHubSetup from "../routes/github/setup/get-github-setup";
+import postGitHubSetup from "../routes/github/setup/post-github-setup";
+import getGitHubConfiguration from "../routes/github/configuration/get-github-configuration";
+import postGitHubConfiguration from "../routes/github/configuration/post-github-configuration";
+import getGitHubSubscriptions from "../routes/github/subscription/get-github-subscriptions";
+import deleteGitHubSubscription from "../routes/github/subscription/delete-github-subscription";
+import getJiraConfiguration from "../routes/jira/configuration/get-jira-configuration";
+import deleteJiraConfiguration from "../routes/jira/configuration/delete-jira-configuration";
 import getGithubClientMiddleware from "./github-client-middleware";
 import getJiraConnect, { postInstallUrl } from "../jira/connect";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
 import extractInstallationFromJiraCallback from "../jira/extract-installation-from-jira-callback";
-import retrySync from "./retry-sync";
-import getMaintenance from "./get-maintenance";
-import api from "../api";
-import healthcheck from "./healthcheck";
-import version from "./version";
+import retrySync from "../routes/jira/retry-sync";
+import getMaintenance from "../routes/maintenance/get-maintenance";
+import api from "../routes/api";
+import healthcheck from "../routes/healthcheck/healthcheck";
+import version from "../routes/version/version";
 import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
 import statsd from "../config/statsd";
@@ -241,14 +241,6 @@ export default (octokitApp: App): Express => {
 		getJiraConfiguration
 	);
 
-	app.delete(
-		"/jira/configuration",
-		verifyJiraContextJwtTokenMiddleware,
-		deleteJiraConfiguration
-	);
-
-	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, retrySync);
-	// Set up event handlers
 
 	// TODO: remove enabled and disabled events once the descriptor is updated in marketplace
 	app.post("/jira/events/disabled", (_: Request, res: Response) => {

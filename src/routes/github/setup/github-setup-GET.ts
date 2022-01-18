@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../util/jira-utils";
-import { Installation } from "../models";
+import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../../../util/jira-utils";
+import { Installation } from "../../../models";
 
 /*
 	Handles redirects for both the installation flow from Jira and
@@ -10,7 +10,7 @@ import { Installation } from "../models";
 			- If we have the users Jira host, redirect to marketplace.
 			- Otherwise, render the setup page.
 */
-export default async (req: Request, res: Response): Promise<void> => {
+export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
 	const { jiraHost } = res.locals;
 

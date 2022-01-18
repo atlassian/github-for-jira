@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import express, { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
-import api from "../../src/api";
+import api from "../../src/routes/api";
 import SubscriptionModel from "../../src/models/subscription";
 import { RepoSyncState, Subscription } from "../../src/models";
 import { wrapLogger } from "probot/lib/wrap-logger";

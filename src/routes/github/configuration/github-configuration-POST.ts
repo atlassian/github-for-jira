@@ -1,12 +1,12 @@
-import { Subscription } from "../models";
-import { getHashedKey } from "../models/installation";
+import { Subscription } from "../../../models";
+import { getHashedKey } from "../../../models/installation";
 import { Request, Response } from "express";
-import {findOrStartSync} from "../sync/sync-utils";
+import {findOrStartSync} from "../../../sync/sync-utils";
 
 /**
  * Handle the when a user adds a repo to this installation
  */
-export default async (req: Request, res: Response): Promise<void> => {
+export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
 	const {github, githubToken, jiraHost } = res.locals;
 
 	if (!githubToken || !jiraHost) {

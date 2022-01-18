@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import getJiraConfiguration from "../../src/frontend/get-jira-configuration";
+import getJiraConfiguration from "../../src/routes/jira/configuration/get-jira-configuration";
 import { Installation, RepoSyncState, Subscription } from "../../src/models";
 import SubscriptionClass from "../../src/models/subscription";
 

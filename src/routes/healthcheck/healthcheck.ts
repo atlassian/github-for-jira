@@ -1,10 +1,10 @@
 import Redis from "ioredis";
-import getRedisInfo from "../config/redis-info";
+import getRedisInfo from "../../config/redis-info";
 import express, { Response } from "express";
-import { getLogger } from "../config/logger";
-import { sequelize } from "../models/sequelize";
+import { getLogger } from "../../config/logger";
+import { sequelize } from "../../models/sequelize";
 
-const router = express.Router();
+export const HealthcheckRouter = express.Router();
 const cache = new Redis(getRedisInfo("ping"));
 
 /**
@@ -12,7 +12,7 @@ const cache = new Redis(getRedisInfo("ping"));
  *
  * It's a race between the setTimeout and our ping + authenticate.
  */
-router.get("/deepcheck", async (_, res: Response) => {
+HealthcheckRouter.get("/deepcheck", async (_, res: Response) => {
 	const logger = getLogger("deepcheck");
 	const timeout = 5000;
 
@@ -42,9 +42,7 @@ router.get("/deepcheck", async (_, res: Response) => {
  * /healtcheck endpoint to check that the app started properly
  */
 const healthcheckLogger = getLogger("healthcheck");
-router.get("/healthcheck", async (_, res: Response) => {
+HealthcheckRouter.get("/healthcheck", async (_, res: Response) => {
 	healthcheckLogger.info("Successfully called /healthcheck.");
 	return res.status(200).send("OK");
 });
-
-export default router;

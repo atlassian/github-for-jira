@@ -1,5 +1,5 @@
 import express, { Application } from "express";
-import version from "../../src/frontend/version";
+import version from "../../src/routes/version/version";
 import supertest from "supertest";
 import envVars from "../../src/config/env";
 

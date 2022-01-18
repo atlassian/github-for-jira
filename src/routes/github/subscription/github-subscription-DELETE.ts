@@ -1,7 +1,7 @@
-import { Subscription } from "../models";
+import { Subscription } from "../../../models";
 import { Request, Response } from "express";
 
-export default async (req: Request, res: Response): Promise<void> => {
+export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
 	const { github, githubToken, jiraHost } = res.locals;
 	if (!githubToken) {
 		res.sendStatus(401);

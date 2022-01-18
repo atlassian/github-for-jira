@@ -1,9 +1,9 @@
-import SubscriptionClass, { SyncStatus } from "../models/subscription";
-import { RepoSyncState, Subscription } from "../models";
+import SubscriptionClass, { SyncStatus } from "../../../models/subscription";
+import { RepoSyncState, Subscription } from "../../../models";
 import { NextFunction, Request, Response } from "express";
-import statsd from "../config/statsd";
-import { metricError } from "../config/metric-names";
-import { AppInstallation, FailedAppInstallation } from "../config/interfaces";
+import statsd from "../../../config/statsd";
+import { metricError } from "../../../config/metric-names";
+import { AppInstallation, FailedAppInstallation } from "../../../config/interfaces";
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import _ from "lodash";
@@ -72,7 +72,7 @@ interface SuccessfulConnection extends AppInstallation {
 	isGlobalInstall: boolean;
 }
 
-export default async (
+export const JiraConfigurationGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
