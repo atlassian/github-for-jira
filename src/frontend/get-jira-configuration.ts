@@ -1,14 +1,14 @@
-import format from "date-fns/format";
-import moment from "moment";
 import SubscriptionClass, { SyncStatus } from "../models/subscription";
 import { RepoSyncState, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
 import { metricError } from "../config/metric-names";
-import { FailedInstallations } from "../config/interfaces";
+import { AppInstallation, FailedAppInstallation } from "../config/interfaces";
+import { GitHubAPI } from "probot";
 import Logger from "bunyan";
+import _ from "lodash";
 
-function mapSyncStatus(syncStatus: SyncStatus = SyncStatus.PENDING): string {
+const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
@@ -19,60 +19,58 @@ function mapSyncStatus(syncStatus: SyncStatus = SyncStatus.PENDING): string {
 	}
 }
 
-export async function getInstallation(client, subscription: SubscriptionClass, reqLog?: Logger) {
+export interface InstallationResults {
+	fulfilled: AppInstallation[];
+	rejected: FailedAppInstallation[];
+	total: number;
+}
+
+export const getInstallations = async (client: GitHubAPI, subscriptions: SubscriptionClass[], log?: Logger): Promise<InstallationResults> => {
+	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(client, sub, log)));
+	const connections = _.groupBy(installations, "status") as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
+	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
+	const rejected = connections.rejected?.map(v => v.reason as FailedAppInstallation) || [];
+	return {
+		fulfilled,
+		rejected,
+		total: fulfilled.length + rejected.length
+	};
+};
+
+const getInstallation = async (client: GitHubAPI, subscription: SubscriptionClass, log?: Logger): Promise<AppInstallation> => {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
-		response.data.syncStatus = mapSyncStatus(subscription.syncStatus);
-		response.data.syncWarning = subscription.syncWarning;
-		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
-		response.data.totalNumberOfRepos = await RepoSyncState.countFromSubscription(subscription);
-		response.data.numberOfSyncedRepos = await RepoSyncState.countSyncedReposFromSubscription(subscription);
-		response.data.jiraHost = subscription.jiraHost;
 
-		return response.data;
+		return {
+			...response.data,
+			syncStatus: mapSyncStatus(subscription.syncStatus),
+			syncWarning: subscription.syncWarning,
+			totalNumberOfRepos: await RepoSyncState.countFromSubscription(subscription),
+			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
+			jiraHost: subscription.jiraHost
+		};
+
 	} catch (err) {
-		reqLog?.error(
+		log?.error(
 			{ installationId: id, error: err, uninstalled: err.code === 404 },
 			"Failed connection"
 		);
 		statsd.increment(metricError.failedConnection);
 
-		return { error: err, id, deleted: err.code === 404 };
+		return Promise.reject({ error: err, id, deleted: err.code === 404 });
 	}
-}
-
-const formatDate = function(date) {
-	return {
-		relative: moment(date).fromNow(),
-		absolute: format(date, "MMMM D, YYYY h:mm a")
-	};
 };
 
-interface FailedConnections {
+interface FailedConnection {
 	id: number;
 	deleted: boolean;
-	orgName: string | undefined;
+	orgName?: string;
 }
 
-export const getFailedConnections = async (
-	installations: FailedInstallations[],
-	subscriptions: SubscriptionClass[]
-): Promise<FailedConnections[]> => {
-	return Promise.all(installations
-		.filter((response) => !!response.error)
-		.map(async (failedConnection: FailedInstallations) => {
-			const sub = subscriptions.find(sub => failedConnection.id === sub.gitHubInstallationId);
-			const repo = sub && await RepoSyncState.findOneFromSubscription(sub);
-			const orgName = repo?.repoOwner;
-
-			return {
-				id: failedConnection.id,
-				deleted: failedConnection.deleted,
-				orgName
-			};
-		}));
-};
+interface SuccessfulConnection extends AppInstallation {
+	isGlobalInstall: boolean;
+}
 
 export default async (
 	req: Request,
@@ -92,34 +90,30 @@ export default async (
 
 		const { client } = res.locals;
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
-		const installations = await Promise.all(
-			subscriptions.map((subscription) =>
-				getInstallation(client, subscription, req.log)
-			)
-		);
+		const installations = await getInstallations(client, subscriptions, req.log);
 
-		const failedConnections = await getFailedConnections(
-			installations,
-			subscriptions
-		);
-
-		const connections = installations
-			.filter((response) => !response.error)
-			.map((data) => ({
-				...data,
-				isGlobalInstall: data.repository_selection === "all",
-				installedAt: formatDate(data.updated_at),
-				syncState: data.syncState
+		const failedConnections: FailedConnection[] = await Promise.all(
+			installations.rejected.map(async (installation) => {
+				const sub = subscriptions.find((sub: SubscriptionClass) => installation.id === sub.gitHubInstallationId);
+				const repo = sub && await RepoSyncState.findOneFromSubscription(sub);
+				return {
+					id: installation.id,
+					deleted: installation.deleted,
+					orgName: repo?.repoOwner
+				};
 			}));
 
-		const hasConnections =
-			connections.length > 0 || failedConnections.length > 0;
+		const successfulConnections: SuccessfulConnection[] = installations.fulfilled
+			.map((installation) => ({
+				...installation,
+				isGlobalInstall: installation.repository_selection === "all"
+			}));
 
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
-			connections,
+			successfulConnections,
 			failedConnections,
-			hasConnections,
+			hasConnections: !!installations.total,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce

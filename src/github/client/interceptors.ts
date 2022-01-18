@@ -2,7 +2,8 @@ import {BlockedIpError, GithubClientError, rateLimitErrorFromResponse, RateLimit
 import Logger from "bunyan";
 import url from "url";
 import statsd from "../../config/statsd";
-import {metricError} from "../../config/metric-names";
+import { metricError } from "../../config/metric-names";
+import { AxiosResponse } from "axios";
 
 /**
  * Extract the path name from a URL.
@@ -79,7 +80,7 @@ export const instrumentFailedRequest = (metricName) =>
 
 export const handleFailedRequest = (logger: Logger) =>
 	(error) => {
-		const response = error.response;
+		const response = error.response as AxiosResponse;
 		if(response) {
 			const status = response?.status;
 			const errorMessage = `Error executing Axios Request ` + error.message;
@@ -91,8 +92,8 @@ export const handleFailedRequest = (logger: Logger) =>
 				return Promise.reject(rateLimitingError);
 			}
 
-			if (status === 403 && response.data.message.includes("has an IP allow list enabled")) {
-				logger.error({ err: error }, "Blocked by GitHub allowlist");
+			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
+				logger.warn({ err: error }, "Blocked by GitHub allowlist");
 				return Promise.reject(new BlockedIpError(error, status));
 			}
 

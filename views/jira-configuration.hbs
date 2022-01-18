@@ -106,7 +106,7 @@
             <div class="jiraConfiguration__syncRetryModalOverlay"></div>
           </div>
 
-          {{#if connections}}
+          {{#if successfulConnections}}
             <table class="jiraConfiguration__table aui">
               <thead class="jiraConfiguration__table__head">
                 <tr>
@@ -122,7 +122,7 @@
               </thead>
 
               <tbody>
-                {{#each connections}}
+                {{#each successfulConnections}}
                   <tr>
                     {{! Organization }}
                     <td class="jiraConfiguration__table__cell">
