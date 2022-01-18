@@ -150,8 +150,7 @@ describe("sync/branches", () => {
 		app = await createWebhookApp();
 
 		githubNock
-			.post("/app/installations/1234/access_tokens")
-			.optionally() // TODO: need to remove optionally and make it explicit
+			.post(`/app/installations/${installationId}/access_tokens`)
 			.reply(200, {
 				token: "token",
 				expires_at: new Date().getTime() + 1_000_000

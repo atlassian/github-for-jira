@@ -18,7 +18,6 @@ describe("Branch Webhook", () => {
 	const mockGitHubAuthRequest = () =>
 		githubNock
 			.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
-			.optionally()
 			.reply(200, {
 				expires_at: Date.now() + 3600,
 				permissions: {},

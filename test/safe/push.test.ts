@@ -23,6 +23,7 @@ const createMessageProcessingContext = (payload, jiraHost: string): Context<Push
 
 describe("Push Webhook", () => {
 
+	const installationId = 1234;
 	const realDateNow = Date.now.bind(global.Date);
 
 	let app: Application;
@@ -36,7 +37,7 @@ describe("Push Webhook", () => {
 		});
 		await Subscription.create({
 			jiraHost,
-			gitHubInstallationId: 1234,
+			gitHubInstallationId: installationId,
 			jiraClientKey: clientKey
 		});
 	});
@@ -112,8 +113,7 @@ describe("Push Webhook", () => {
 			});
 
 			githubNock
-				.post("/app/installations/1234/access_tokens")
-				.optionally() // TODO: need to remove optionally and make it explicit
+				.post(`/app/installations/${installationId}/access_tokens`)
 				.reply(200, {
 					token: "token",
 					expires_at: new Date().getTime() + 1_000_000
@@ -472,8 +472,7 @@ describe("Push Webhook", () => {
 			const event = require("../fixtures/push-no-username.json");
 
 			githubNock
-				.post("/app/installations/1234/access_tokens")
-				.optionally() // TODO: need to remove optionally and make it explicit
+				.post(`/app/installations/${installationId}/access_tokens`)
 				.reply(200, {
 					token: "token",
 					expires_at: new Date().getTime()

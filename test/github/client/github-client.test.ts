@@ -35,7 +35,6 @@ describe("GitHub Client", () => {
 	) {
 		(githubMock || githubNock)
 			.post(`/app/installations/${githubInstallationId}/access_tokens`)
-			.optionally() // TODO: need to remove optionally and make it explicit
 			.matchHeader(
 				"Authorization",
 				expectedAppTokenInHeader

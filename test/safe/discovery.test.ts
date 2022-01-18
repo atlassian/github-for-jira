@@ -11,7 +11,7 @@ jest.mock("../../src/config/feature-flags");
 
 describe("Discovery Queue Test", () => {
 
-	const TEST_INSTALLATION_ID = 1234;
+	const installationId = 1234;
 
 	beforeEach(async () => {
 		await createWebhookApp();
@@ -24,7 +24,7 @@ describe("Discovery Queue Test", () => {
 
 		await Subscription.create({
 			jiraHost,
-			gitHubInstallationId: TEST_INSTALLATION_ID,
+			gitHubInstallationId: installationId,
 			jiraClientKey: clientKey
 		});
 	});
@@ -53,8 +53,7 @@ describe("Discovery Queue Test", () => {
 	const mockGitHubReposResponses = () => {
 
 		githubNock
-			.post("/app/installations/1234/access_tokens")
-			.optionally() // TODO: need to remove optionally and make it explicit
+			.post(`/app/installations/${installationId}/access_tokens`)
 			.reply(200, {
 				token: "token",
 				expires_at: new Date().getTime() + 1_000_000
@@ -70,7 +69,7 @@ describe("Discovery Queue Test", () => {
 
 		expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
 
-		const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID);
+		const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
 
 		if (!subscription) {
 			throw "Subsription should not be null"
@@ -90,7 +89,7 @@ describe("Discovery Queue Test", () => {
 
 		mockGitHubReposResponses();
 
-		await sqsQueues.discovery.sendMessage({installationId: TEST_INSTALLATION_ID, jiraHost});
+		await sqsQueues.discovery.sendMessage({installationId: installationId, jiraHost});
 
 		await waitUntil(async () => {
 
@@ -103,7 +102,7 @@ describe("Discovery Queue Test", () => {
 
 		mockGitHubReposResponses();
 
-		await discovery(app)({data: {installationId: TEST_INSTALLATION_ID, jiraHost}}, getLogger("test"))
+		await discovery(app)({data: {installationId: installationId, jiraHost}}, getLogger("test"))
 
 		await verify2RepositoriesInTheStateAndBackfillMessageSent();
 	});

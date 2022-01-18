@@ -51,7 +51,7 @@ describe("Deployment Webhook", () => {
 			const fixture = require("../fixtures/deployment_status-basic.json");
 			const sha = fixture.payload.deployment.sha;
 
-			githubNock.post(`/app/installations/1234/access_tokens`)
+			githubNock.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 				.reply(200, {
 					expires_at: Date.now() + 3600,
 					permissions: {},
