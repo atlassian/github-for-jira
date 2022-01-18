@@ -123,7 +123,7 @@ export default class GitHubClient {
 				return Promise.reject(rateLimitErrorFromResponse(response));
 			}
 
-			throw new GraphQLError(graphqlErrors[0].message, graphqlErrors);
+			return Promise.reject(new GraphQLError(graphqlErrors[0].message, graphqlErrors));
 		}
 
 		return  response;
