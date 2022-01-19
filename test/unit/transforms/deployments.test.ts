@@ -3,8 +3,6 @@
 import transformDeployment, { mapEnvironment } from "../../../src/transforms/deployment";
 import {getLogger} from "../../../src/config/logger";
 import {GitHubAPI} from "probot";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 
 jest.mock("../../../src/config/feature-flags");
 
@@ -134,14 +132,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				]}
 			);
 
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-
-		const jiraPayload = await transformDeployment(GitHubAPI(), deployment_status.payload, "testing.atlassian.net", getLogger("deploymentLogger"))
+		const jiraPayload = await transformDeployment(GitHubAPI(), deployment_status.payload, getLogger("deploymentLogger"))
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
