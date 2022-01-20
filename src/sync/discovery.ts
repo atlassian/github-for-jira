@@ -3,12 +3,13 @@ import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import sqsQueues from "../sqs/queues";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { sqsQueues } from "../sqs/queues";
+import { DiscoveryMessagePayload } from "../sqs/discovery";
 
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 
-export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
+export const discovery = (app: Application) => async (job: { data: DiscoveryMessagePayload }, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
 	const github = await app.auth(installationId);
@@ -29,8 +30,8 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 			installationId
 		);
 
-		if(!subscription) {
-			logger.info({jiraHost, installationId}, "Subscription has been removed, ignoring job.");
+		if (!subscription) {
+			logger.info({ jiraHost, installationId }, "Subscription has been removed, ignoring job.");
 			return;
 		}
 
@@ -52,7 +53,7 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 			repos
 		});
 
-		await sqsQueues.backfill.sendMessage({installationId, jiraHost, startTime: startTime.toISOString()}, 0, logger);
+		await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: startTime.toISOString() }, 0, logger);
 	} catch (err) {
 		logger.error({ job, err }, "Discovery error");
 	}

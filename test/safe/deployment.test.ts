@@ -3,7 +3,7 @@ import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
 import { start, stop } from "../../src/worker/startup";
-import sqsQueues from "../../src/sqs/queues";
+import { sqsQueues } from "../../src/sqs/queues";
 import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
@@ -20,7 +20,7 @@ describe("Deployment Webhook", () => {
 	afterAll(async () => {
 		//Stop worker node
 		await stop();
-		await sqsQueues.deployment.waitUntilListenerStopped();
+		await sqsQueues.purge();
 	});
 
 	beforeEach(async () => {
@@ -51,13 +51,7 @@ describe("Deployment Webhook", () => {
 			const fixture = require("../fixtures/deployment_status-basic.json");
 			const sha = fixture.payload.deployment.sha;
 
-			githubNock.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
-				.reply(200, {
-					expires_at: Date.now() + 3600,
-					permissions: {},
-					repositories: {},
-					token: "token"
-				})
+			githubAccessTokenNock(gitHubInstallationId);
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
 				.reply(200, {

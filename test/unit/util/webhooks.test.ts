@@ -6,20 +6,14 @@ describe("Webhooks suite", () => {
 	const mockErrorLog = jest.fn();
 	const mockContextLogger = {
 		info: mockInfoLog,
-		error: mockErrorLog,
+		error: mockErrorLog
 	};
 
-	let dateNowSpy;
 	const currentTime = 2000;
 
 	beforeAll(() => {
 		// Lock Time
-		dateNowSpy = jest.spyOn(Date, "now").mockImplementation(() => currentTime);
-	});
-
-	afterAll(() => {
-		// Unlock Time
-		dateNowSpy.mockRestore();
+		jest.spyOn(Date, "now").mockImplementation(() => currentTime);
 	});
 
 	describe("emitWebhookProcessingTimeMetrics", () => {
@@ -47,7 +41,7 @@ describe("Webhooks suite", () => {
 				{
 					gsd_histogram: "1000_10000_30000_60000_120000_300000_600000_3000000",
 					name: "workflow_run",
-					status: "202",
+					status: "202"
 				}
 			);
 
@@ -57,7 +51,7 @@ describe("Webhooks suite", () => {
 				{
 					gsd_histogram: "1000_10000_30000_60000_120000_300000_600000_3000000",
 					name: "workflow_run",
-					status: "202",
+					status: "202"
 				}
 			);
 		});
@@ -103,7 +97,7 @@ describe("Webhooks suite", () => {
 	});
 
 	describe("emitWebhookPayloadMetrics", () => {
-		it("should push metrics for payload size", ()=> {
+		it("should push metrics for payload size", () => {
 			const statsdSpy = jest.spyOn(statsd, "histogram");
 			const webhookName = "workflow_run";
 			const payloadSize = 0;

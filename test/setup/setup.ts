@@ -19,11 +19,16 @@ function resetEnvVars() {
 	};
 }
 
+type AccessTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
+
 declare global {
 	let jiraHost: string;
 	let jiraNock: nock.Scope;
 	let githubNock: nock.Scope;
 	let gheNock: nock.Scope;
+	let gheUrl: string;
+	let githubAccessTokenNock: AccessTokenNockFunc;
+	let gheAccessTokenNock: AccessTokenNockFunc;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
@@ -31,16 +36,36 @@ declare global {
 			jiraNock: nock.Scope;
 			githubNock: nock.Scope;
 			gheNock: nock.Scope;
+			gheUrl: string;
+			githubAccessTokenNock: AccessTokenNockFunc;
+			gheAccessTokenNock: AccessTokenNockFunc;
 		}
 	}
 }
+
+const accessToken = (scope: nock.Scope): AccessTokenNockFunc =>
+	(installationId: number | string, returnToken = "token", expires = Date.now() + 3600, expectedAuthToken?: string) => {
+		scope
+			.post(`/app/installations/${installationId}/access_tokens`)
+			.matchHeader(
+				"Authorization",
+				expectedAuthToken ? `bearer ${expectedAuthToken}` : /^(bearer|token) .+$/i
+			)
+			.reply(200, {
+				token: returnToken,
+				expires_at: expires
+			})
+	};
 
 beforeEach(() => {
 	resetEnvVars();
 	global.jiraHost = process.env.ATLASSIAN_URL || "";
 	global.jiraNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
-	global.gheNock = nock("http://github.mydomain.com");
+	global.gheUrl = "https://github.mydomain.com";
+	global.gheNock = nock(global.gheUrl);
+	global.githubAccessTokenNock = accessToken(githubNock);
+	global.gheAccessTokenNock = accessToken(gheNock);
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting
@@ -54,6 +79,8 @@ afterEach(() => {
 		AppTokenHolder.getInstance().clear(); // Clear App token cache
 		nock.cleanAll(); // removes HTTP mocks
 		jest.resetAllMocks(); // Removes jest mocks
+		jest.useRealTimers(); // Resets timers
+		// jest.resetModules(); // clears NPM require cache
 	}
 });
 

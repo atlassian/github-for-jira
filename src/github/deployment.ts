@@ -2,7 +2,7 @@ import transformDeployment from "../transforms/deployment";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import getJiraClient, { DeploymentsResult } from "../jira/client";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";

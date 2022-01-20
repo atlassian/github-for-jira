@@ -30,7 +30,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 	const topLevelDomain = "atlassian.net";
 	const jiraHost = `https://${domain}.${topLevelDomain}`;
 
-	req.log.info(`Received github setup page request for jira ${jiraHost}`);
+	req.log.info(`Received github setup page request`);
 
 	if (!validJiraDomains(domain, topLevelDomain)) {
 		res.status(400).send({ error: "The entered Jira Cloud site is not valid.", url: jiraHost });

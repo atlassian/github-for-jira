@@ -10,18 +10,12 @@ import {AxiosError} from "axios";
 
 describe("error-handlers", () => {
 
-	let statsdIncrementSpy = jest.spyOn(statsd, "histogram");
+	let statsdIncrementSpy:jest.SpyInstance;
 
 	beforeEach(() => {
 		// Lock Time
 		statsdIncrementSpy = jest.spyOn(statsd, "increment");
 		jest.useFakeTimers("modern").setSystemTime(new Date("2020-01-01").getTime());
-	});
-
-	afterEach(() => {
-		// Unlock Time
-		statsdIncrementSpy.mockRestore();
-		jest.useRealTimers();
 	});
 
 	const mockPayload = {

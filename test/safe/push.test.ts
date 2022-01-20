@@ -7,10 +7,10 @@ import { Installation, Subscription } from "../../src/models";
 import { Application } from "probot";
 import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
-import sqsQueues from "../../src/sqs/queues";
-import {pushQueueMessageHandler, PushQueueMessagePayload} from "../../src/sqs/push";
-import {Context} from "../../src/sqs/index";
-import {Message} from "aws-sdk/clients/sqs";
+import { sqsQueues } from "../../src/sqs/queues";
+import { pushQueueMessageHandler, PushQueueMessagePayload } from "../../src/sqs/push";
+import { Context } from "../../src/sqs/index";
+import { Message } from "aws-sdk/clients/sqs";
 
 const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
 	payload: createJobData(payload, jiraHost),
@@ -19,7 +19,6 @@ const createMessageProcessingContext = (payload, jiraHost: string): Context<Push
 	receiveCount: 1,
 	lastAttempt: false
 });
-
 
 describe("Push Webhook", () => {
 
@@ -41,7 +40,6 @@ describe("Push Webhook", () => {
 			jiraClientKey: clientKey
 		});
 	});
-
 
 
 	afterEach(async () => {
@@ -111,13 +109,6 @@ describe("Push Webhook", () => {
 				jiraHost,
 				jiraClientKey: "myClientKey"
 			});
-
-			githubNock
-				.post(`/app/installations/${installationId}/access_tokens`)
-				.reply(200, {
-					token: "token",
-					expires_at: new Date().getTime() + 1_000_000
-				});
 		});
 
 		afterEach(async () => {
@@ -126,7 +117,7 @@ describe("Push Webhook", () => {
 
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
-
+			githubAccessTokenNock(installationId);
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/api/commit-no-username.json"));
@@ -191,7 +182,7 @@ describe("Push Webhook", () => {
 
 		it("should only send 10 files if push contains more than 10 files changed", async () => {
 			const event = require("../fixtures/push-multiple.json");
-
+			githubAccessTokenNock(installationId);
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
 				.reply(200, require("../fixtures/more-than-10-files.json"));
@@ -303,15 +294,14 @@ describe("Push Webhook", () => {
 
 		it("should not run a command without a Jira issue", async () => {
 			const fixture = require("../fixtures/push-no-issues.json");
-			const interceptor = jiraNock.post(/.*/);
-			const scope = interceptor.reply(200);
+			jiraNock.post(/.*/).reply(200);
 
 			await expect(app.receive(fixture)).toResolve();
-			expect(scope).not.toBeDone();
-			nock.removeInterceptor(interceptor);
+			expect(jiraNock).not.toBeDone();
+			nock.cleanAll();
 		});
 
-		it("should not send anything to Jira if there's", async () => {
+		it("should not send anything to Jira if there's no issue key", async () => {
 			const fixture = require("../fixtures/push-no-issuekey-commits.json");
 			// match any post calls for jira and github
 			jiraNock.post(/.*/).reply(200);
@@ -326,7 +316,7 @@ describe("Push Webhook", () => {
 
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
 			const event = require("../fixtures/push-no-username.json");
-
+			githubAccessTokenNock(installationId);
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-merge-commit.json"));
 
@@ -389,7 +379,7 @@ describe("Push Webhook", () => {
 
 		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
 			const event = require("../fixtures/push-no-username.json");
-
+			githubAccessTokenNock(installationId);
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-non-merge-commit"));
 
@@ -465,18 +455,11 @@ describe("Push Webhook", () => {
 		afterAll(async () => {
 			//Stop worker node
 			await stop();
-			await sqsQueues.push.waitUntilListenerStopped();
+			await sqsQueues.purge();
 		});
 
 		function createPushEventAndMockRestRequestsForItsProcessing() {
 			const event = require("../fixtures/push-no-username.json");
-
-			githubNock
-				.post(`/app/installations/${installationId}/access_tokens`)
-				.reply(200, {
-					token: "token",
-					expires_at: new Date().getTime()
-				});
 
 			githubNock
 				.get(`/repos/test-repo-owner/test-repo-name/commits/commit-no-username`)
@@ -537,10 +520,9 @@ describe("Push Webhook", () => {
 		}
 
 		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
+			githubAccessTokenNock(installationId);
 			const event = createPushEventAndMockRestRequestsForItsProcessing();
-
 			await expect(app.receive(event)).toResolve();
-
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();

@@ -1,15 +1,16 @@
 import hbs from "hbs";
 import * as fs from "fs";
+import * as path from "path";
 
-export const registerHandlebarsPartials = (rootPath: string) => {
-	const partials = ["githubSetupForm", "githubSetupFormError"];
-
-	partials.forEach((partial) => {
-		hbs.registerPartial(
-			partial,
-			fs.readFileSync(`${rootPath}/views/partials/${partial}.hbs`, {
-				encoding: "utf8",
-			})
-		);
-	});
+export const registerHandlebarsPartials = (partialPath: string) => {
+	fs.readdirSync(partialPath)
+		?.filter(file => file.endsWith(".hbs"))
+		.forEach(file => {
+			hbs.registerPartial(
+				file.replace(/\.hbs$/, ""), // removes extension of file
+				fs.readFileSync(path.resolve(partialPath, file), {
+					encoding: "utf8"
+				})
+			);
+		});
 };

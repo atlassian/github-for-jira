@@ -3,7 +3,7 @@ import { getCloudInstallationId } from "../../../src/github/client/installation-
 
 describe("AppTokenHolder", () => {
 
-	beforeAll(() => {
+	beforeEach(() => {
 		jest.useFakeTimers("modern");
 	});
 

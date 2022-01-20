@@ -2,55 +2,73 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { branchesNoLastCursor } from "../../fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
-import {Installation, RepoSyncState, Subscription} from "../../../src/models";
+import { Installation, RepoSyncState, Subscription } from "../../../src/models";
 import { Application } from "probot";
 import { createWebhookApp } from "../../utils/probot";
 import { processInstallation } from "../../../src/sync/installation";
 import nock from "nock";
-import {getLogger} from "../../../src/config/logger";
-import {Hub} from "@sentry/types/dist/hub";
-import {BackfillMessagePayload} from "../../../src/sqs/backfill";
-import sqsQueues from "../../../src/sqs/queues";
-import {when} from "jest-when";
-import {booleanFlag, BooleanFlags} from "../../../src/config/feature-flags";
+import { getLogger } from "../../../src/config/logger";
+import { Hub } from "@sentry/types/dist/hub";
+import { BackfillMessagePayload } from "../../../src/sqs/backfill";
+import { sqsQueues } from "../../../src/sqs/queues";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 
-jest.mock("../../../src/sqs/queues", () => {
-	return {
-		backfill: {sendMessage: jest.fn()}
-	}
-});
-
+jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
 
-describe("sync/branches", () => {
-	const installationId = 1234;
+describe
+	.each([true, false])("sync/branches - New GH Client feature flag is '%s'", (useNewGithubClient) => {
+		const installationId = 1234;
 
-	let app: Application;
-	const branchNodesFixture = require("../../fixtures/api/graphql/branch-ref-nodes.json");
-	const branchCommitsHaveKeys = require("../../fixtures/api/graphql/branch-commits-have-keys.json");
-	const associatedPRhasKeys = require("../../fixtures/api/graphql/branch-associated-pr-has-keys.json");
-	const branchNoIssueKeys = require("../../fixtures/api/graphql/branch-no-issue-keys.json");
+		let app: Application;
+		const branchNodesFixture = require("../../fixtures/api/graphql/branch-ref-nodes.json");
+		const branchCommitsHaveKeys = require("../../fixtures/api/graphql/branch-commits-have-keys.json");
+		const associatedPRhasKeys = require("../../fixtures/api/graphql/branch-associated-pr-has-keys.json");
+		const branchNoIssueKeys = require("../../fixtures/api/graphql/branch-no-issue-keys.json");
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	const sentry: Hub = { setUser: jest.fn() } as Hub;
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		const sentry: Hub = { setUser: jest.fn() } as Hub;
 
-	function makeExpectedResponse(branchName) {
-		const issueKeys = issueKeyParser().parse(branchName) || [];
+		function makeExpectedResponse(branchName) {
+			const issueKeys = issueKeyParser().parse(branchName) || [];
 
-		return {
-			preventTransitions: true,
-			repositories: [
-				{
-					branches: [
-						{
-							createPullRequestUrl: `test-repo-url/pull/new/${branchName}`,
-							id: branchName,
-							issueKeys: ["TES-123"]
-								.concat(issueKeys)
-								.reverse()
-								.filter((key) => !!key),
-							lastCommit: {
+			return {
+				preventTransitions: true,
+				repositories: [
+					{
+						branches: [
+							{
+								createPullRequestUrl: `test-repo-url/pull/new/${branchName}`,
+								id: branchName,
+								issueKeys: ["TES-123"]
+									.concat(issueKeys)
+									.reverse()
+									.filter((key) => !!key),
+								lastCommit: {
+									author: {
+										avatar: "https://camo.githubusercontent.com/test-avatar",
+										email: "test-author-email@example.com",
+										name: "test-author-name"
+									},
+									authorTimestamp: "test-authored-date",
+									displayId: "test-o",
+									fileCount: 0,
+									hash: "test-oid",
+									id: "test-oid",
+									issueKeys: ["TES-123"],
+									message: "TES-123 test-commit-message",
+									url: "test-repo-url/commit/test-sha",
+									updateSequenceId: 12345678
+								},
+								name: branchName,
+								url: `test-repo-url/tree/${branchName}`,
+								updateSequenceId: 12345678
+							}
+						],
+						commits: [
+							{
 								author: {
 									avatar: "https://camo.githubusercontent.com/test-avatar",
 									email: "test-author-email@example.com",
@@ -63,119 +81,95 @@ describe("sync/branches", () => {
 								id: "test-oid",
 								issueKeys: ["TES-123"],
 								message: "TES-123 test-commit-message",
+								timestamp: "test-authored-date",
 								url: "test-repo-url/commit/test-sha",
 								updateSequenceId: 12345678
-							},
-							name: branchName,
-							url: `test-repo-url/tree/${branchName}`,
-							updateSequenceId: 12345678
-						}
-					],
-					commits: [
-						{
-							author: {
-								avatar: "https://camo.githubusercontent.com/test-avatar",
-								email: "test-author-email@example.com",
-								name: "test-author-name"
-							},
-							authorTimestamp: "test-authored-date",
-							displayId: "test-o",
-							fileCount: 0,
-							hash: "test-oid",
-							id: "test-oid",
-							issueKeys: ["TES-123"],
-							message: "TES-123 test-commit-message",
-							timestamp: "test-authored-date",
-							url: "test-repo-url/commit/test-sha",
-							updateSequenceId: 12345678
-						}
-					],
-					id: "1",
-					name: "test-repo-name",
-					url: "test-repo-url",
-					updateSequenceId: 12345678
+							}
+						],
+						id: "1",
+						name: "test-repo-name",
+						url: "test-repo-url",
+						updateSequenceId: 12345678
+					}
+				],
+				properties: {
+					installationId: installationId
 				}
-			],
-			properties: {
-				installationId: installationId
-			}
-		};
-	}
+			};
+		}
 
 
-	function nockBranchRequest(fixture) {
+		function nockBranchRequest(fixture) {
 
-		githubNock
-			.post("/graphql", branchesNoLastCursor)
-			.query(true)
-			.reply(200, fixture);
-	}
+			githubNock
+				.post("/graphql", branchesNoLastCursor)
+				.query(true)
+				.reply(200, fixture);
+		}
 
-	let mockBackfillQueueSendMessage;
+		const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
 
-	beforeEach(async () => {
-		mockBackfillQueueSendMessage = sqsQueues.backfill.sendMessage as jest.Mock;
-		mockBackfillQueueSendMessage.mockReset();
+		beforeEach(async () => {
+			Date.now = jest.fn(() => 12345678);
 
-		Date.now = jest.fn(() => 12345678);
-
-		await Installation.create({
-			gitHubInstallationId: installationId,
-			jiraHost,
-			sharedSecret: "secret",
-			clientKey: "client-key"
-		});
-
-		const subscription = await Subscription.create({gitHubInstallationId: installationId,
-			jiraHost,
-			syncStatus: "ACTIVE"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscription.id,
-			repoId: 1,
-			repoName: "test-repo-name",
-			repoOwner: "integrations",
-			repoFullName: "test-repo-name",
-			repoUrl: "test-repo-url",
-			branchStatus: "pending",
-			commitStatus: "complete",
-			pullStatus: "complete",
-			updatedAt: new Date(),
-			createdAt: new Date()
-		});
-
-		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
-
-		app = await createWebhookApp();
-
-		githubNock
-			.post(`/app/installations/${installationId}/access_tokens`)
-			.reply(200, {
-				token: "token",
-				expires_at: new Date().getTime() + 1_000_000
+			await Installation.create({
+				gitHubInstallationId: installationId,
+				jiraHost,
+				sharedSecret: "secret",
+				clientKey: "client-key"
 			});
-	});
+
+			const subscription = await Subscription.create({
+				gitHubInstallationId: installationId,
+				jiraHost,
+				syncStatus: "ACTIVE"
+			});
+
+			await RepoSyncState.create({
+				subscriptionId: subscription.id,
+				repoId: 1,
+				repoName: "test-repo-name",
+				repoOwner: "integrations",
+				repoFullName: "test-repo-name",
+				repoUrl: "test-repo-url",
+				branchStatus: "pending",
+				commitStatus: "complete",
+				pullStatus: "complete",
+				updatedAt: new Date(),
+				createdAt: new Date()
+			});
+
+			mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
+
+			app = await createWebhookApp();
+
+			if(useNewGithubClient) {
+				githubAccessTokenNock(installationId);
+			}
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(useNewGithubClient);
+		});
 
 
+		afterEach(async () => {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			await Installation.destroy({ truncate: true });
+			await Subscription.destroy({ truncate: true });
+			await RepoSyncState.destroy({ truncate: true });
+		});
 
-	afterEach(async () => {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		sqsQueues.backfill.sendMessage.mockReset();
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-		await RepoSyncState.destroy({truncate: true});
-	})
+		const verifyMessageSent = (data: BackfillMessagePayload) => {
+			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
+			expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
+		};
 
-	const verifyMessageSent = (data: BackfillMessagePayload) => {
-		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
-		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
-	}
-
-	const branchSyncTests = () => {
 		it("should sync to Jira when branch refs have jira references", async () => {
-			const data: BackfillMessagePayload = {installationId, jiraHost};
+			const data: BackfillMessagePayload = { installationId, jiraHost };
 			nockBranchRequest(branchNodesFixture);
 
 			jiraNock
@@ -186,11 +180,11 @@ describe("sync/branches", () => {
 				.reply(200);
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data)
+			verifyMessageSent(data);
 		});
 
 		it("should send data if issue keys are only present in commits", async () => {
-			const data = {installationId, jiraHost};
+			const data = { installationId, jiraHost };
 			nockBranchRequest(branchCommitsHaveKeys);
 
 			jiraNock
@@ -201,11 +195,11 @@ describe("sync/branches", () => {
 				.reply(200);
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data)
+			verifyMessageSent(data);
 		});
 
 		it("should send data if issue keys are only present in an associatd PR title", async () => {
-			const data = {installationId, jiraHost};
+			const data = { installationId, jiraHost };
 			nockBranchRequest(associatedPRhasKeys);
 
 			jiraNock
@@ -253,47 +247,18 @@ describe("sync/branches", () => {
 				.reply(200);
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data)
+			verifyMessageSent(data);
 		});
 
 		it("should not call Jira if no issue keys are found", async () => {
-			const data = {installationId, jiraHost};
+			const data = { installationId, jiraHost };
 			nockBranchRequest(branchNoIssueKeys);
 
-			const interceptor = jiraNock.post(/.*/);
-			const scope = interceptor.reply(200);
+			jiraNock.post(/.*/).reply(200);
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data)
-			expect(scope).not.toBeDone();
-			nock.removeInterceptor(interceptor);
+			verifyMessageSent(data);
+			expect(jiraNock).not.toBeDone();
+			nock.cleanAll();
 		});
-	}
-
-	describe("New GH Client feature flag is OFF", () => {
-
-		beforeEach(() => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(false);
-		})
-
-		branchSyncTests();
 	});
-
-	describe("New GH Client feature flag is ON", () => {
-
-		beforeEach(() => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(true);
-		})
-
-		branchSyncTests();
-	});
-
-});

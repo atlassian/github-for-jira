@@ -27,7 +27,7 @@ mocked(Sentry.Hub).mockImplementation(() => ({
 	captureException: sentryCaptureExceptionMock,
 } as Sentry.Hub))
 
-describe('backfill', () => {
+describe("backfill", () => {
 	const BACKFILL_MESSAGE_CONTEXT: Context<BackfillMessagePayload> = {
 		payload: {
 			installationId: 123,
@@ -35,7 +35,7 @@ describe('backfill', () => {
 		},
 		message: {
 		},
-		log: getLogger('test'),
+		log: getLogger("test"),
 		receiveCount: 1,
 		lastAttempt: false
 	}
@@ -44,7 +44,7 @@ describe('backfill', () => {
 		sentryCaptureExceptionMock.mockReset();
 	});
 
-	test('sentry captures exception', async () => {
+	test("sentry captures exception", async () => {
 		const mockedProcessor = jest.fn();
 		mocked(processInstallation).mockReturnValue(mockedProcessor);
 		mockedProcessor.mockRejectedValue(new Error("something went horribly wrong"));

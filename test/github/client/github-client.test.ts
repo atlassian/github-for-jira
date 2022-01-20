@@ -14,39 +14,12 @@ import anything = jasmine.anything;
 import objectContaining = jasmine.objectContaining;
 
 describe("GitHub Client", () => {
-	const appTokenExpirationDate = new Date(2021, 10, 25, 0, 0);
 	const githubInstallationId = 17979017;
-	let statsdHistogramSpy, statsdIncrementSpy;
+	let statsdHistogramSpy: jest.SpyInstance, statsdIncrementSpy: jest.SpyInstance;
 	beforeEach(() => {
-		// Lock Time
 		statsdHistogramSpy = jest.spyOn(statsd, "histogram");
 		statsdIncrementSpy = jest.spyOn(statsd, "increment");
 	});
-
-	afterEach(() => {
-		// Unlock Time
-		statsdHistogramSpy.mockRestore();
-	});
-
-	function givenGitHubReturnsInstallationToken(
-		installationToken: string,
-		githubMock?: nock.Scope,
-		expectedAppTokenInHeader?: string
-	) {
-		(githubMock || githubNock)
-			.post(`/app/installations/${githubInstallationId}/access_tokens`)
-			.matchHeader(
-				"Authorization",
-				expectedAppTokenInHeader
-					? `Bearer ${expectedAppTokenInHeader}`
-					: /^Bearer .+$/
-			)
-			.matchHeader("Accept", "application/vnd.github.v3+json")
-			.reply(200, {
-				expires_at: appTokenExpirationDate.toISOString(),
-				token: installationToken
-			});
-	}
 
 	function givenGitHubReturnsPullrequests(
 		owner: string,
@@ -106,7 +79,7 @@ describe("GitHub Client", () => {
 		const pageSize = 5;
 		const page = 1;
 
-		givenGitHubReturnsInstallationToken("installation token");
+		githubAccessTokenNock(githubInstallationId, "installation token");
 		givenGitHubReturnsPullrequests(
 			owner,
 			repo,
@@ -130,7 +103,7 @@ describe("GitHub Client", () => {
 		const repo = "repo";
 		const sha = "84fdc9346f43f829f88fb4b1d240b1aaaa5250da";
 
-		givenGitHubReturnsInstallationToken("installation token");
+		githubAccessTokenNock(githubInstallationId, "installation token");
 		givenGitHubReturnsCommit(
 			owner,
 			repo,
@@ -155,7 +128,7 @@ describe("GitHub Client", () => {
 	}
 
 	it("should handle rate limit error from Github when X-RateLimit-Reset not specified", async () => {
-		givenGitHubReturnsInstallationToken("installation token");
+		githubAccessTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -181,7 +154,7 @@ describe("GitHub Client", () => {
 	});
 
 	it("should handle rate limit error from Github when X-RateLimit-Reset specified", async () => {
-		givenGitHubReturnsInstallationToken("installation token");
+		githubAccessTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -208,7 +181,7 @@ describe("GitHub Client", () => {
 	});
 
 	it("should handle blocked IP error from Github when specified", async () => {
-		givenGitHubReturnsInstallationToken("installation token");
+		githubAccessTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -229,7 +202,7 @@ describe("GitHub Client", () => {
 	});
 
 	it("should handle rate limit on 403", async () => {
-		givenGitHubReturnsInstallationToken("installation token");
+		githubAccessTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -256,7 +229,7 @@ describe("GitHub Client", () => {
 	});
 
 	it("should transform error properly on 404", async () => {
-		givenGitHubReturnsInstallationToken("installation token");
+		githubAccessTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -290,7 +263,7 @@ describe("GitHub Client", () => {
 		const pageSize = 5;
 		const page = 1;
 
-		givenGitHubReturnsInstallationToken("installation token", gheNock);
+		gheAccessTokenNock(githubInstallationId, "installation token");
 		givenGitHubReturnsPullrequests(
 			owner,
 			repo,
@@ -302,7 +275,7 @@ describe("GitHub Client", () => {
 
 		const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
 			switch (installationId.githubBaseUrl) {
-				case "http://github.mydomain.com":
+				case gheUrl:
 					return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
 				default:
 					throw new Error("unknown github instance!");
@@ -310,7 +283,7 @@ describe("GitHub Client", () => {
 		});
 
 		const client = new GitHubClient(
-			new InstallationId("http://github.mydomain.com", 4711, githubInstallationId),
+			new InstallationId(gheUrl, 4711, githubInstallationId),
 			getLogger("test"),
 			appTokenHolder
 		);

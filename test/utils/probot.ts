@@ -2,7 +2,6 @@ import { Application, GitHubAPI } from "probot";
 import { App } from "@octokit/app";
 import { findPrivateKey } from "probot/lib/private-key";
 import { caching } from "cache-manager";
-
 import { setupApp } from "../../src/configure-robot";
 
 export const createApplication = () => {
@@ -12,8 +11,8 @@ export const createApplication = () => {
 			privateKey: findPrivateKey() || ""
 		}),
 		cache: caching({
-			store: "memory",
-			ttl: 60 * 60 // 1 hour
+			store: "none", // disable probot caching in tests
+			ttl: 0
 		}),
 		throttleOptions: {
 			enabled: false

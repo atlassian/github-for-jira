@@ -5,7 +5,7 @@ import { CustomContext } from "./middleware";
 import _ from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import getJiraClient from "../jira/client";
@@ -81,7 +81,7 @@ export const processBranch = async (
 	}
 
 	logger.info(
-		`Sending jira update for create branch event for hostname: ${jiraHost}`
+		`Sending jira update for create branch`
 	);
 
 	const jiraClient = await getJiraClient(

@@ -5,7 +5,7 @@ import { Application } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 import { start, stop } from "../../src/worker/startup";
-import sqsQueues from "../../src/sqs/queues";
+import { sqsQueues } from "../../src/sqs/queues";
 import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
@@ -15,16 +15,6 @@ describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
-	const mockGitHubAuthRequest = () =>
-		githubNock
-			.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
-			.reply(200, {
-				expires_at: Date.now() + 3600,
-				permissions: {},
-				repositories: {},
-				token: "token"
-			});
-
 	beforeAll(async () => {
 		//Start worker node for queues processing
 		await start();
@@ -33,7 +23,7 @@ describe("Branch Webhook", () => {
 	afterAll(async () => {
 		//Stop worker node
 		await stop();
-		await sqsQueues.deployment.waitUntilListenerStopped();
+		await sqsQueues.purge();
 	});
 
 	beforeEach(async () => {
@@ -70,7 +60,7 @@ describe("Branch Webhook", () => {
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
-			mockGitHubAuthRequest();
+			githubAccessTokenNock(gitHubInstallationId);
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
 					ref: `refs/${ref}`,
@@ -177,8 +167,6 @@ describe("Branch Webhook", () => {
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(false);
-
-			mockGitHubAuthRequest();
 
 			const fixture = require("../fixtures/branch-basic.json");
 

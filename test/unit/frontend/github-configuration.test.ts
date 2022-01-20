@@ -140,12 +140,7 @@ describe("Github Configuration", () => {
 				.get("/user")
 				.reply(200, { login: "test-user" });
 
-			githubNock
-				.post(`/app/installations/${sub.gitHubInstallationId}/access_tokens`)
-				.reply(200, {
-					token: "token",
-					expires_at: new Date().getTime() + 999999
-				});
+			githubAccessTokenNock(sub.gitHubInstallationId);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
@@ -223,12 +218,7 @@ describe("Github Configuration", () => {
 				.get("/user")
 				.reply(200, { login: "test-user" });
 
-			githubNock
-				.post(`/app/installations/${sub.gitHubInstallationId}/access_tokens`)
-				.reply(200, {
-					token: "token",
-					expires_at: new Date().getTime() + 999999
-				});
+			githubAccessTokenNock(sub.gitHubInstallationId);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)

@@ -64,10 +64,6 @@ describe.skip("sync/commits", () => {
 		app = createApplication();
 	});
 
-	afterEach(() => {
-		backfillQueue.schedule.mockReset();
-	});
-
 	it("should sync to Jira when Commit Nodes have jira references", async () => {
 		const data = { installationId, jiraHost };
 

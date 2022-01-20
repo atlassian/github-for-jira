@@ -8,7 +8,6 @@ import {sqsQueueMetrics} from "../../../src/config/metric-names";
 import anything = jasmine.anything;
 import {getLogger} from "../../../src/config/logger";
 
-
 const TEST_QUEUE_URL = envVars.SQS_TEST_QUEUE_URL;
 const TEST_QUEUE_REGION = envVars.SQS_TEST_QUEUE_REGION;
 const TEST_QUEUE_NAME = "test";
@@ -57,7 +56,6 @@ describe("SqsQueue tests", () => {
 
 			statsdIncrementSpy = jest.spyOn(statsd, "increment");
 			queue = createSqsQueue(10);
-			queue.sqs.purgeQueue();
 			queue.start();
 
 			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
@@ -66,10 +64,8 @@ describe("SqsQueue tests", () => {
 		});
 
 		afterEach(async () => {
-			statsdIncrementSpy.mockRestore();
-			queue.stop();
-			queue.sqs.purgeQueue();
-			await queue.waitUntilListenerStopped();
+			await queue.stop();
+			await queue.purgeQueue();
 			testLogger.info("Finished test cleanup for [" + expect.getState().currentTestName + "]")
 		});
 
@@ -94,14 +90,9 @@ describe("SqsQueue tests", () => {
 				done();
 			});
 
-			queue.stop();
-
-			//delaying to make sure all asynchronous invocations inside the queue will be finished and it will stop
-			await queue.waitUntilListenerStopped();
-
+			await queue.stop();
 			queue.start();
-
-			queue.sendMessage(testPayload);
+			await queue.sendMessage(testPayload);
 		});
 
 		it("Message received with delay", (done: DoneCallback) => {
@@ -274,14 +265,12 @@ describe("SqsQueue tests", () => {
 
 		beforeEach(() => {
 			queue = createSqsQueue(1);
-			queue.sqs.purgeQueue();
 			queue.start();
 		});
 
 		afterEach(async () => {
-			queue.stop();
-			queue.sqs.purgeQueue();
-			await queue.waitUntilListenerStopped();
+			await queue.stop();
+			await queue.purgeQueue();
 		});
 
 		it("Timeout works", async (done: DoneCallback) => {
@@ -348,5 +337,4 @@ describe("SqsQueue tests", () => {
 			await queue.sendMessage(testPayload);
 		});
 	});
-
 });

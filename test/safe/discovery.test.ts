@@ -1,10 +1,10 @@
-import {Installation, RepoSyncState, Subscription} from "../../src/models";
-import {start, stop} from "../../src/worker/startup";
-import sqsQueues from "../../src/sqs/queues";
-import {createWebhookApp} from "../utils/probot";
+import { Installation, RepoSyncState, Subscription } from "../../src/models";
+import { start, stop } from "../../src/worker/startup";
+import { sqsQueues } from "../../src/sqs/queues";
+import { createWebhookApp } from "../utils/probot";
 import app from "../../src/worker/app";
-import {discovery} from "../../src/sync/discovery";
-import {getLogger} from "../../src/config/logger";
+import { discovery } from "../../src/sync/discovery";
+import { getLogger } from "../../src/config/logger";
 import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
@@ -27,85 +27,51 @@ describe("Discovery Queue Test", () => {
 			gitHubInstallationId: installationId,
 			jiraClientKey: clientKey
 		});
-	});
-
-	afterEach(async () => {
-		await Installation.destroy({truncate: true})
-		await Subscription.destroy({truncate: true})
-	});
-
-	let originalBackfillQueueSendMessageFunction;
-
-	beforeAll(async () => {
-		//Start worker node for queues processing
-		await start();
-		originalBackfillQueueSendMessageFunction = sqsQueues.backfill.sendMessage;
 		sqsQueues.backfill.sendMessage = jest.fn();
-	});
-
-	afterAll(async () => {
-		sqsQueues.backfill.sendMessage = originalBackfillQueueSendMessageFunction;
-		//Stop worker node
-		await stop();
-		await sqsQueues.discovery.waitUntilListenerStopped();
-	});
-
-	const mockGitHubReposResponses = () => {
-
-		githubNock
-			.post(`/app/installations/${installationId}/access_tokens`)
-			.reply(200, {
-				token: "token",
-				expires_at: new Date().getTime() + 1_000_000
-			});
 
 		githubNock.get("/installation/repositories?per_page=100")
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			.reply(200, require("../fixtures/list-repositories.json"));
-	}
+	});
 
+	afterEach(async () => {
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
+		await sqsQueues.purge();
+	});
+
+	beforeAll(async () => {
+		//Start worker node for queues processing
+		await start();
+	});
+
+	afterAll(async () => {
+		//Stop worker node
+		await stop();
+	});
 
 	async function verify2RepositoriesInTheStateAndBackfillMessageSent() {
-
 		expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
-
 		const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
 
 		if (!subscription) {
-			throw "Subsription should not be null"
+			throw "Subsription should not be null";
 		}
 
-		console.log("Checking for subscription ID" + subscription.id)
-
-
+		console.log("Checking for subscription ID" + subscription.id);
 		const states = await RepoSyncState.findAllFromSubscription(subscription);
-
 		expect(states.length).toBe(2);
-
 	}
 
 	it("Discovery sqs queue processes the message", async () => {
-
-
-		mockGitHubReposResponses();
-
-		await sqsQueues.discovery.sendMessage({installationId: installationId, jiraHost});
-
-		await waitUntil(async () => {
-
-			await verify2RepositoriesInTheStateAndBackfillMessageSent();
-
-		});
+		githubAccessTokenNock(installationId);
+		await sqsQueues.discovery.sendMessage({ installationId: installationId, jiraHost });
+		await waitUntil(async () => verify2RepositoriesInTheStateAndBackfillMessageSent());
 	});
 
-	it("Discovery queue listener works correctly", async () => {
-
-		mockGitHubReposResponses();
-
-		await discovery(app)({data: {installationId: installationId, jiraHost}}, getLogger("test"))
-
+	it("Discovery queue message handler works correctly", async () => {
+		// githubAccessTokenNock(installationId);
+		await discovery(app)({ data: { installationId: installationId, jiraHost } }, getLogger("test"));
 		await verify2RepositoriesInTheStateAndBackfillMessageSent();
 	});
-
-
 });

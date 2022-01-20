@@ -13,9 +13,8 @@ export default (installation: Installation, log: Logger) => {
 				log.info(`Installation id=${installation.id} enabled on Jira`);
 				return true;
 			} else {
-				const message = `Unable to verify Jira installation: ${installation.jiraHost} responded with ${result.status}`;
-				log.warn(message);
-				Sentry.captureMessage(message);
+				log.warn({jiraHost: installation.jiraHost, response: result}, `Unable to verify Jira installation`);
+				Sentry.captureMessage(`Unable to verify Jira installation: ${installation.jiraHost} responded with ${result.status}`);
 				return false;
 			}
 		} catch (err) {

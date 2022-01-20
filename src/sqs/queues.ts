@@ -9,7 +9,7 @@ import { BranchMessagePayload, branchQueueMessageHandler } from "./branch";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 
-const sqsQueues = {
+export const sqsQueues = {
 	backfill: new SqsQueue<BackfillMessagePayload>({
 		queueName: "backfill",
 		queueUrl: envVars.SQS_BACKFILL_QUEUE_URL,
@@ -75,13 +75,19 @@ const sqsQueues = {
 		sqsQueues.branch.start();
 	},
 
-	stop: () => {
-		sqsQueues.backfill.stop();
-		sqsQueues.push.stop();
-		sqsQueues.discovery.stop();
-		sqsQueues.deployment.stop();
-		sqsQueues.branch.stop();
-	}
-}
+	stop: async () => Promise.all([
+		sqsQueues.backfill.stop(),
+		sqsQueues.push.stop(),
+		sqsQueues.discovery.stop(),
+		sqsQueues.deployment.stop(),
+		sqsQueues.branch.stop(),
+	]),
 
-export default sqsQueues
+	purge: async () => Promise.all([
+		sqsQueues.backfill.purgeQueue(),
+		sqsQueues.push.purgeQueue(),
+		sqsQueues.discovery.purgeQueue(),
+		sqsQueues.deployment.purgeQueue(),
+		sqsQueues.branch.purgeQueue(),
+	])
+};
