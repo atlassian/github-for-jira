@@ -6,15 +6,14 @@ import * as PrivateKey from "probot/lib/private-key";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
 
-
 export type KeyLocator = (installationId: InstallationId) => string;
 
 /**
  * By default, we just look for a key in the `PRIVATE_KEY` env var.
  */
 export const cloudKeyLocator: KeyLocator = () => {
-	return PrivateKey.findPrivateKey() || ""
-}
+	return PrivateKey.findPrivateKey() || "";
+};
 
 /**
  * Holds app tokens for all GitHub apps that are connected and creates new tokens if necessary.
@@ -28,12 +27,12 @@ export default class AppTokenHolder {
 
 	private readonly privateKeyLocator: KeyLocator;
 	private readonly appTokenCache: LRUCache<string, AuthToken>;
-
 	private static instance: AppTokenHolder;
 
 	constructor(keyLocator?: KeyLocator) {
-		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
+		this.appTokenCache = new LRUCache();
 		this.privateKeyLocator = keyLocator || cloudKeyLocator;
+		this.enable();
 	}
 
 	public static getInstance(): AppTokenHolder {
@@ -72,7 +71,7 @@ export default class AppTokenHolder {
 			exp: Math.floor(expirationDate.getTime() / 1000),
 			// issuer is the GitHub app ID
 			iss: appId.toString()
-		}
+		};
 
 		return new AuthToken(
 			encodeAsymmetric(jwtPayload, key, AsymmetricAlgorithm.RS256),
@@ -80,7 +79,16 @@ export default class AppTokenHolder {
 		);
 	}
 
-	public clear():void {
+	public clear(): void {
+		this.appTokenCache.reset();
+	}
+
+	public enable(): void {
+		this.appTokenCache.max = 1000;
+	}
+
+	public disable(): void {
+		this.appTokenCache.max = 0;
 		this.appTokenCache.reset();
 	}
 }

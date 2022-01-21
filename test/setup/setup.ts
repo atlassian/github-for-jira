@@ -66,6 +66,10 @@ beforeEach(() => {
 	global.gheNock = nock(global.gheUrl);
 	global.githubAccessTokenNock = accessToken(githubNock);
 	global.gheAccessTokenNock = accessToken(gheNock);
+
+	// Disable caches for each test
+	InstallationTokenCache.getInstance().disable();
+	AppTokenHolder.getInstance().disable();
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting
@@ -75,8 +79,10 @@ afterEach(() => {
 		// eslint-disable-next-line jest/no-standalone-expect
 		expect(nock).toBeDone();
 	} finally {
-		InstallationTokenCache.getInstance().clear(); // Clear Installation token cache
-		AppTokenHolder.getInstance().clear(); // Clear App token cache
+		// re-enable caches
+		InstallationTokenCache.getInstance().enable();
+		AppTokenHolder.getInstance().enable();
+
 		nock.cleanAll(); // removes HTTP mocks
 		jest.resetAllMocks(); // Removes jest mocks
 		jest.useRealTimers(); // Resets timers

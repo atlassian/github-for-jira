@@ -521,6 +521,7 @@ describe("Push Webhook", () => {
 
 		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
 			githubAccessTokenNock(installationId);
+			githubAccessTokenNock(installationId);
 			const event = createPushEventAndMockRestRequestsForItsProcessing();
 			await expect(app.receive(event)).toResolve();
 			await waitUntil(async () => {

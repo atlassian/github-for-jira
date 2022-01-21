@@ -18,13 +18,14 @@ export default class InstallationTokenCache {
 	 * @param maxTokens the max number of tokens that should be in the cache at any time. If the size of the cache is about to go above this
 	 * number, the least recently used tokens are evicted from the cache.
 	 */
-	constructor(maxTokens: number) {
-		this.installationTokenCache = new LRUCache<number, AuthToken>({ max: maxTokens });
+	constructor() {
+		this.installationTokenCache = new LRUCache<number, AuthToken>();
+		this.enable();
 	}
 
 	public static getInstance(): InstallationTokenCache {
 		if (!InstallationTokenCache.instance) {
-			InstallationTokenCache.instance = new InstallationTokenCache(1000);
+			InstallationTokenCache.instance = new InstallationTokenCache();
 		}
 		return InstallationTokenCache.instance;
 	}
@@ -51,6 +52,15 @@ export default class InstallationTokenCache {
 	}
 
 	public clear():void {
+		this.installationTokenCache.reset();
+	}
+
+	public enable(): void {
+		this.installationTokenCache.max = 1000;
+	}
+
+	public disable(): void {
+		this.installationTokenCache.max = 0;
 		this.installationTokenCache.reset();
 	}
 }
