@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import issueKeyParser from "jira-issue-key-parser";
 import { branchesNoLastCursor } from "../../fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
 import { Installation, RepoSyncState, Subscription } from "../../../src/models";
@@ -13,6 +12,7 @@ import { BackfillMessagePayload } from "../../../src/sqs/backfill";
 import { sqsQueues } from "../../../src/sqs/queues";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
+import issueKeyParser from "jira-issue-key-parser";
 
 jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
@@ -31,44 +31,19 @@ describe
 		// @ts-ignore
 		const sentry: Hub = { setUser: jest.fn() } as Hub;
 
-		function makeExpectedResponse(branchName) {
-			const issueKeys = issueKeyParser().parse(branchName) || [];
-
-			return {
-				preventTransitions: true,
-				repositories: [
-					{
-						branches: [
-							{
-								createPullRequestUrl: `test-repo-url/pull/new/${branchName}`,
-								id: branchName,
-								issueKeys: ["TES-123"]
-									.concat(issueKeys)
-									.reverse()
-									.filter((key) => !!key),
-								lastCommit: {
-									author: {
-										avatar: "https://camo.githubusercontent.com/test-avatar",
-										email: "test-author-email@example.com",
-										name: "test-author-name"
-									},
-									authorTimestamp: "test-authored-date",
-									displayId: "test-o",
-									fileCount: 0,
-									hash: "test-oid",
-									id: "test-oid",
-									issueKeys: ["TES-123"],
-									message: "TES-123 test-commit-message",
-									url: "test-repo-url/commit/test-sha",
-									updateSequenceId: 12345678
-								},
-								name: branchName,
-								url: `test-repo-url/tree/${branchName}`,
-								updateSequenceId: 12345678
-							}
-						],
-						commits: [
-							{
+		const makeExpectedResponse = (branchName) => ({
+			preventTransitions: true,
+			repositories: [
+				{
+					branches: [
+						{
+							createPullRequestUrl: `test-repo-url/pull/new/${branchName}`,
+							id: branchName,
+							issueKeys: ["TES-123"]
+								.concat(issueKeyParser().parse(branchName) || [])
+								.reverse()
+								.filter((key) => !!key),
+							lastCommit: {
 								author: {
 									avatar: "https://camo.githubusercontent.com/test-avatar",
 									email: "test-author-email@example.com",
@@ -81,31 +56,49 @@ describe
 								id: "test-oid",
 								issueKeys: ["TES-123"],
 								message: "TES-123 test-commit-message",
-								timestamp: "test-authored-date",
 								url: "test-repo-url/commit/test-sha",
 								updateSequenceId: 12345678
-							}
-						],
-						id: "1",
-						name: "test-repo-name",
-						url: "test-repo-url",
-						updateSequenceId: 12345678
-					}
-				],
-				properties: {
-					installationId: installationId
+							},
+							name: branchName,
+							url: `test-repo-url/tree/${branchName}`,
+							updateSequenceId: 12345678
+						}
+					],
+					commits: [
+						{
+							author: {
+								avatar: "https://camo.githubusercontent.com/test-avatar",
+								email: "test-author-email@example.com",
+								name: "test-author-name"
+							},
+							authorTimestamp: "test-authored-date",
+							displayId: "test-o",
+							fileCount: 0,
+							hash: "test-oid",
+							id: "test-oid",
+							issueKeys: ["TES-123"],
+							message: "TES-123 test-commit-message",
+							timestamp: "test-authored-date",
+							url: "test-repo-url/commit/test-sha",
+							updateSequenceId: 12345678
+						}
+					],
+					id: "1",
+					name: "test-repo-name",
+					url: "test-repo-url",
+					updateSequenceId: 12345678
 				}
-			};
-		}
+			],
+			properties: {
+				installationId: installationId
+			}
+		});
 
-
-		function nockBranchRequest(fixture) {
-
+		const nockBranchRequest = (fixture) =>
 			githubNock
 				.post("/graphql", branchesNoLastCursor)
 				.query(true)
 				.reply(200, fixture);
-		}
 
 		const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
 
@@ -143,7 +136,7 @@ describe
 
 			app = await createWebhookApp();
 
-			if(useNewGithubClient) {
+			if (useNewGithubClient) {
 				githubAccessTokenNock(installationId);
 			}
 

@@ -30,9 +30,8 @@ export default class AppTokenHolder {
 	private static instance: AppTokenHolder;
 
 	constructor(keyLocator?: KeyLocator) {
-		this.appTokenCache = new LRUCache();
+		this.appTokenCache = new LRUCache({ max: 1000 });
 		this.privateKeyLocator = keyLocator || cloudKeyLocator;
-		this.enable();
 	}
 
 	public static getInstance(): AppTokenHolder {
@@ -41,7 +40,6 @@ export default class AppTokenHolder {
 		}
 		return AppTokenHolder.instance;
 	}
-
 
 	/**
 	 * Gets the current app token or creates a new one if the old is about to expire.
@@ -77,18 +75,5 @@ export default class AppTokenHolder {
 			encodeAsymmetric(jwtPayload, key, AsymmetricAlgorithm.RS256),
 			expirationDate
 		);
-	}
-
-	public clear(): void {
-		this.appTokenCache.reset();
-	}
-
-	public enable(): void {
-		this.appTokenCache.max = 1000;
-	}
-
-	public disable(): void {
-		this.appTokenCache.max = 0;
-		this.appTokenCache.reset();
 	}
 }

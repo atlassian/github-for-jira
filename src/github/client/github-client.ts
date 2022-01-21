@@ -8,7 +8,6 @@ import { GetPullRequestParams } from "./types";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
-import { urlParamsMiddleware } from "../../util/axios/common-middleware";
 import { InstallationId } from "./installation-id";
 import {GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery} from "./github-queries";
 
@@ -57,7 +56,6 @@ export default class GitHubClient {
 		this.axios = axios.create({
 			baseURL: githubInstallationId.githubBaseUrl
 		});
-		this.axios.interceptors.request.use(urlParamsMiddleware)
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.response.use(
 			undefined,
@@ -112,13 +110,10 @@ export default class GitHubClient {
 		return new AuthToken(tokenResponse.token, new Date(tokenResponse.expires_at));
 	}
 
-	private async get<T>(url, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+	private async get<T>(url, params = {}): Promise<AxiosResponse<T>> {
 		const response = await this.axios.get<T>(url, {
 			...await this.installationAuthenticationHeaders(),
-			params: {
-				...params,
-			},
-			urlParams,
+			params
 		});
 		return response;
 	}
@@ -138,10 +133,7 @@ export default class GitHubClient {
 	 * Lists pull requests for the given repository.
 	 */
 	public async getPullRequests(owner: string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
-		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/:owner/:repo/pulls`, pullRequestParams, {
-			owner,
-			repo
-		});
+		return this.get<Octokit.PullsListResponseItem[]>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls`, pullRequestParams);
 	}
 
 	/**
@@ -149,11 +141,7 @@ export default class GitHubClient {
 	 */
 	// TODO: add a unit test
 	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
-		return await this.get<Octokit.PullsGetResponse>(`/repos/:owner/:repo/pulls/:pullNumber`, {}, {
-			owner,
-			repo,
-			pullNumber
-		});
+		return  this.get<Octokit.PullsGetResponse>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${pullNumber}`);
 	}
 
 	/**
@@ -161,22 +149,16 @@ export default class GitHubClient {
 	 */
 	// TODO: add a unit test
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
-		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/:username`, {}, {
-			username
-		});
+		return this.get<Octokit.UsersGetByUsernameResponse>(`/users/${encodeURIComponent(username)}`);
 	}
 
 	/**
 	 * Get a single commit for the given repository.
 	 */
-	public getCommit = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> => {
-		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/:owner/:repo/commits/:ref`, {}, {
-			owner,
-			repo,
-			ref
-		});
+	public async getCommit(owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> {
+		return this.get<Octokit.ReposGetCommitResponse>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits/${encodeURIComponent(ref)}`);
 	}
-
+		
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{viewer: {repositories: {totalCount: number}}}>(ViewerRepositoryCountQuery);
 

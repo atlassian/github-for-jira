@@ -29,7 +29,7 @@ async function getJiraClient(
 	gitHubInstallationId: number,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> {
-	const logger = log.child({jiraHost, gitHubInstallationId});
+	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
@@ -45,12 +45,9 @@ async function getJiraClient(
 	const client = {
 		baseURL: installation.jiraHost,
 		issues: {
-			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
-				instance.get("/rest/api/latest/issue/:issue_id", {
-					urlParams: {
-						...query,
-						issue_id: issueId
-					}
+			get: (issueId: string, params = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
+				instance.get(`/rest/api/latest/issue/${issueId}`, {
+					params
 				}),
 			getAll: async (issueIds: string[], query?: { fields: string }): Promise<JiraIssue[]> => {
 				const responses = await Promise.all<AxiosResponse<JiraIssue> | undefined>(
@@ -72,39 +69,22 @@ async function getJiraClient(
 			comments: {
 				// eslint-disable-next-line camelcase
 				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/:issue_id/comment", {
-						urlParams: {
-							issue_id
-						}
-					}),
+					instance.get(`/rest/api/latest/issue/${issue_id}/comment`),
 				// eslint-disable-next-line camelcase
-				addForIssue: (issue_id: string, payload) =>
-					instance.post("/rest/api/latest/issue/:issue_id/comment", payload, {
-						urlParams: {
-							issue_id
-						}
-					})
+				addForIssue: (issue_id: string, payload: unknown) =>
+					instance.post(`/rest/api/latest/issue/${issue_id}/comment`, payload)
 			},
 			transitions: {
 				// eslint-disable-next-line camelcase
 				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/:issue_id/transitions", {
-						urlParams: {
-							issue_id
-						}
-					}),
+					instance.get(`/rest/api/latest/issue/${issue_id}/transitions`),
 				// eslint-disable-next-line camelcase
 				updateForIssue: (issue_id: string, transition_id: string) =>
 					instance.post(
-						"/rest/api/latest/issue/:issue_id/transitions",
+						`/rest/api/latest/issue/${issue_id}/transitions`,
 						{
 							transition: {
 								id: transition_id
-							}
-						},
-						{
-							urlParams: {
-								issue_id
 							}
 						}
 					)
@@ -112,68 +92,63 @@ async function getJiraClient(
 			worklogs: {
 				// eslint-disable-next-line camelcase
 				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/:issue_id/worklog", {
-						urlParams: {
-							issue_id
-						}
-					}),
+					instance.get(`/rest/api/latest/issue/${issue_id}/worklog`),
 				// eslint-disable-next-line camelcase
 				addForIssue: (issue_id: string, payload) =>
-					instance.post("/rest/api/latest/issue/:issue_id/worklog", payload, {
-						urlParams: {
-							issue_id
-						}
-					})
+					instance.post(`/rest/api/latest/issue/${issue_id}/worklog`, payload)
 			}
 		},
 		devinfo: {
 			branch: {
 				delete: (repositoryId: string, branchRef: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/:repositoryId/branch/:branchJiraId",
+						`/rest/devinfo/0.10/repository/${repositoryId}/branch/${getJiraId(branchRef)}`,
 						{
-							urlParams: {
-								_updateSequenceId: Date.now().toString(),
-								repositoryId,
-								branchJiraId: getJiraId(branchRef)
+							params: {
+								_updateSequenceId: Date.now().toString()
 							}
 						}
 					)
 			},
 			// Add methods for handling installationId properties that exist in Jira
 			installation: {
-				exists: (gitHubInstallationId: string | number) =>
+				exists: (installationId: string | number) =>
 					instance.get(
-						`/rest/devinfo/0.10/existsByProperties?installationId=${gitHubInstallationId}`
+						`/rest/devinfo/0.10/existsByProperties`,
+						{
+							params: {
+								installationId
+							}
+						}
 					),
-				delete: (gitHubInstallationId: string | number) =>
+				delete: (installationId: string | number) =>
 					instance.delete(
-						`/rest/devinfo/0.10/bulkByProperties?installationId=${gitHubInstallationId}`
+						`/rest/devinfo/0.10/bulkByProperties`,
+						{
+							params: {
+								installationId
+							}
+						}
 					)
 			},
 			pullRequest: {
 				delete: (repositoryId: string, pullRequestId: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/:repositoryId/pull_request/:pullRequestId",
+						`/rest/devinfo/0.10/repository/${repositoryId}/pull_request/${pullRequestId}`,
 						{
-							urlParams: {
-								_updateSequenceId: Date.now().toString(),
-								repositoryId,
-								pullRequestId
+							params: {
+								_updateSequenceId: Date.now().toString()
 							}
 						}
 					)
 			},
 			repository: {
 				get: (repositoryId: string) =>
-					instance.get("/rest/devinfo/0.10/repository/:repositoryId", {
-						urlParams: { repositoryId }
-					}),
+					instance.get(`/rest/devinfo/0.10/repository/${repositoryId}`),
 				delete: (repositoryId: string) =>
-					instance.delete("/rest/devinfo/0.10/repository/:repositoryId", {
-						urlParams: {
-							_updateSequenceId: Date.now().toString(),
-							repositoryId
+					instance.delete(`/rest/devinfo/0.10/repository/${repositoryId}`, {
+						params: {
+							_updateSequenceId: Date.now().toString()
 						}
 					}),
 				update: async (data, options?: { preventTransitions: boolean }) => {
@@ -336,13 +311,13 @@ const truncateIssueKeys = (repositoryObj) => {
 };
 
 interface IssueKeyObject {
-	issueKeys?: string[]
+	issueKeys?: string[];
 }
 
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
-	data.reduce((acc:IssueKeyObject[], value:IssueKeyObject) => {
+	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
 		// Filter out anything that doesn't have issue keys or are not over the limit
-		if(value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
+		if (value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
 			// Create copy of object and add the issue keys that are truncated
 			acc.push({
 				...value,
@@ -380,7 +355,7 @@ const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc, logger?) => {
 	}
 
 	if (!repositoryObj.commits && !repositoryObj.branches) {
-		logger?.warn("No branches or commits found. Cannot update.")
+		logger?.warn("No branches or commits found. Cannot update.");
 	}
 };
 

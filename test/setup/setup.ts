@@ -5,8 +5,10 @@ import "./matchers/nock";
 import "./matchers/to-promise";
 import statsd from "../../src/config/statsd";
 import { sequelize } from "../../src/models/sequelize";
-import InstallationTokenCache from "../../src/github/client/installation-token-cache";
-import AppTokenHolder from "../../src/github/client/app-token-holder";
+import { sqsQueues } from "../../src/sqs/queues";
+
+// Mocking lru-cache to disable it completely while doing tests
+jest.mock("lru-cache");
 
 resetEnvVars();
 
@@ -49,13 +51,18 @@ const accessToken = (scope: nock.Scope): AccessTokenNockFunc =>
 			.post(`/app/installations/${installationId}/access_tokens`)
 			.matchHeader(
 				"Authorization",
-				expectedAuthToken ? `bearer ${expectedAuthToken}` : /^(bearer|token) .+$/i
+				expectedAuthToken ? `Bearer ${expectedAuthToken}` : /^(Bearer|token) .+$/i
 			)
 			.reply(200, {
 				token: returnToken,
 				expires_at: expires
-			})
+			});
 	};
+
+beforeAll(async () => {
+	// purge all queues before starting in case there's a message in there.
+	await sqsQueues.purge();
+})
 
 beforeEach(() => {
 	resetEnvVars();
@@ -66,10 +73,6 @@ beforeEach(() => {
 	global.gheNock = nock(global.gheUrl);
 	global.githubAccessTokenNock = accessToken(githubNock);
 	global.gheAccessTokenNock = accessToken(gheNock);
-
-	// Disable caches for each test
-	InstallationTokenCache.getInstance().disable();
-	AppTokenHolder.getInstance().disable();
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting
@@ -79,10 +82,6 @@ afterEach(() => {
 		// eslint-disable-next-line jest/no-standalone-expect
 		expect(nock).toBeDone();
 	} finally {
-		// re-enable caches
-		InstallationTokenCache.getInstance().enable();
-		AppTokenHolder.getInstance().enable();
-
 		nock.cleanAll(); // removes HTTP mocks
 		jest.resetAllMocks(); // Removes jest mocks
 		jest.useRealTimers(); // Resets timers

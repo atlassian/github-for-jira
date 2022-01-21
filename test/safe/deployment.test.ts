@@ -12,17 +12,6 @@ describe("Deployment Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
-	beforeAll(async () => {
-		//Start worker node for queues processing
-		await start();
-	});
-
-	afterAll(async () => {
-		//Stop worker node
-		await stop();
-		await sqsQueues.purge();
-	});
-
 	beforeEach(async () => {
 		app = await createWebhookApp();
 
@@ -37,11 +26,17 @@ describe("Deployment Webhook", () => {
 			sharedSecret: "shared-secret"
 		});
 
+		//Start worker node for queues processing
+		await start();
 	});
 
 	afterEach(async () => {
+		//Stop worker node
+		await stop();
+
 		await Installation.destroy({ truncate: true });
 		await Subscription.destroy({ truncate: true });
+		await sqsQueues.purge();
 	});
 
 	describe("deployment_status", () => {

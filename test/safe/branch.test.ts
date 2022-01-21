@@ -15,17 +15,6 @@ describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
-	beforeAll(async () => {
-		//Start worker node for queues processing
-		await start();
-	});
-
-	afterAll(async () => {
-		//Stop worker node
-		await stop();
-		await sqsQueues.purge();
-	});
-
 	beforeEach(async () => {
 		app = await createWebhookApp();
 		const clientKey = "client-key";
@@ -39,11 +28,18 @@ describe("Branch Webhook", () => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
+
+		//Start worker node for queues processing
+		await start();
 	});
 
 	afterEach(async () => {
+		//Stop worker node
+		await stop();
+
 		await Installation.destroy({ truncate: true });
 		await Subscription.destroy({ truncate: true });
+		await sqsQueues.purge();
 	});
 
 	describe("Create Branch", () => {

@@ -32,22 +32,17 @@ describe("Discovery Queue Test", () => {
 		githubNock.get("/installation/repositories?per_page=100")
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			.reply(200, require("../fixtures/list-repositories.json"));
-	});
 
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-		await sqsQueues.purge();
-	});
-
-	beforeAll(async () => {
 		//Start worker node for queues processing
 		await start();
 	});
 
-	afterAll(async () => {
+	afterEach(async () => {
 		//Stop worker node
 		await stop();
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
+		await sqsQueues.purge();
 	});
 
 	async function verify2RepositoriesInTheStateAndBackfillMessageSent() {

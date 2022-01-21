@@ -1,5 +1,6 @@
 import AppTokenHolder from "../../../src/github/client/app-token-holder";
 import { getCloudInstallationId } from "../../../src/github/client/installation-id";
+jest.unmock("lru-cache");
 
 describe("AppTokenHolder", () => {
 
@@ -7,11 +8,9 @@ describe("AppTokenHolder", () => {
 		jest.useFakeTimers("modern");
 	});
 
-	afterAll(() => {
-		jest.useRealTimers();
-	})
-
 	it("Re-generates expired tokens", async () => {
+		// Re-enable lru-cache as we're testing caching
+		jest.unmock("lru-cache");
 		const appTokenHolder = new AppTokenHolder();
 
 		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
@@ -28,5 +27,4 @@ describe("AppTokenHolder", () => {
 		const token3 = appTokenHolder.getAppToken(getCloudInstallationId(4711));
 		expect(token3).not.toEqual(token1);
 	});
-
 });

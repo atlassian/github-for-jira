@@ -12,6 +12,7 @@ export default class InstallationTokenCache {
 	private readonly installationTokenCache: LRUCache<number, AuthToken>;
 
 	private static instance: InstallationTokenCache;
+
 	/**
 	 * Creates a new InstallationTokenCache. This cache should be shared between all GitHub clients so that the clients don't
 	 * have to re-generate a new installation token for every request they make (which is expensive, because it includes a call to GitHub).
@@ -19,8 +20,7 @@ export default class InstallationTokenCache {
 	 * number, the least recently used tokens are evicted from the cache.
 	 */
 	constructor() {
-		this.installationTokenCache = new LRUCache<number, AuthToken>();
-		this.enable();
+		this.installationTokenCache = new LRUCache<number, AuthToken>({ max: 1000 });
 	}
 
 	public static getInstance(): InstallationTokenCache {
@@ -49,18 +49,5 @@ export default class InstallationTokenCache {
 		}
 
 		return token;
-	}
-
-	public clear():void {
-		this.installationTokenCache.reset();
-	}
-
-	public enable(): void {
-		this.installationTokenCache.max = 1000;
-	}
-
-	public disable(): void {
-		this.installationTokenCache.max = 0;
-		this.installationTokenCache.reset();
 	}
 }

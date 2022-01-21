@@ -6,17 +6,9 @@ import statsd from "../../config/statsd";
 import { getLogger } from "../../config/logger";
 import { metricHttpRequest } from "../../config/metric-names";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
-import {urlParamsMiddleware} from "../../util/axios/common-middleware";
 
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
-
-// TODO: type hack to fix custom implementation of URL templating vars
-declare module "axios" {
-	interface AxiosRequestConfig {
-		urlParams?: Record<string, string>;
-	}
-}
 
 /**
  * Middleware to create a custom JWT for a request.
@@ -248,7 +240,6 @@ export default (
 	);
 
 	instance.interceptors.request.use(getAuthMiddleware(secret));
-	instance.interceptors.request.use(urlParamsMiddleware);
 
 	instance.interceptors.response.use(
 		getSuccessMiddleware(logger),

@@ -442,24 +442,24 @@ describe("Push Webhook", () => {
 	});
 
 	describe("end 2 end tests with queue", () => {
-		beforeEach(async () => {
-			Date.now = jest.fn(() => 12345678);
-		});
 
-		beforeAll(async () => {
-			Date.now = jest.fn(() => 12345678);
+		beforeEach(async () => {
+			jest.useFakeTimers("modern");
+			jest.setSystemTime(12345678);
 			//Start worker node for queues processing
 			await start();
 		});
 
-		afterAll(async () => {
+		afterEach(async () => {
 			//Stop worker node
 			await stop();
 			await sqsQueues.purge();
-		});
+		})
 
-		function createPushEventAndMockRestRequestsForItsProcessing() {
+		const createPushEventAndMockRestRequestsForItsProcessing = () => {
 			const event = require("../fixtures/push-no-username.json");
+
+			githubAccessTokenNock(installationId);
 
 			githubNock
 				.get(`/repos/test-repo-owner/test-repo-name/commits/commit-no-username`)
@@ -520,11 +520,10 @@ describe("Push Webhook", () => {
 		}
 
 		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
-			githubAccessTokenNock(installationId);
-			githubAccessTokenNock(installationId);
 			const event = createPushEventAndMockRestRequestsForItsProcessing();
 			await expect(app.receive(event)).toResolve();
 			await waitUntil(async () => {
+				console.log(`Active Mocks: \n${githubNock.activeMocks().join("\n")}`);
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
 			});
