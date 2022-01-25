@@ -168,52 +168,33 @@
 
                     {{! Backfill status }}
                     <td class="jiraConfiguration__table__cell">
-                      {{#if syncWarning}}
-                        <a
-                          href="#trigger"
-                          data-ak-tooltip="{{syncWarning}}"
-                          data-ak-tooltip-position="top"
-                          class="jiraConfiguration__table__syncWarningLink"
-                        >
-                          <span
-                            id="{{id}}-status"
-                            class="jiraConfiguration__table__{{toLowerCase
-                                (replaceSpaceWithHyphen syncStatus)
-                              }}
-                              jiraConfiguration__table__syncStatus"
+                      <span
+                        id="{{id}}-status"
+                        class="jiraConfiguration__table__{{toLowerCase
+                            (replaceSpaceWithHyphen syncStatus)
+                          }}
+                          jiraConfiguration__table__syncStatus"
+                      >
+                        {{syncStatus}}
+                      </span>
+                      {{#if (inProgressOrPendingSync syncStatus)}}
+                        <div class="jiraConfiguration__loaderContainer">
+                          <aui-spinner size="small"></aui-spinner>
+                        </div>
+                      {{/if}}
+                      {{#if (failedSync syncStatus)}}
+                        <div class="jiraConfiguration__retryContainer">
+                          <button
+                            class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
+                            data-jira-host="{{ ../host }}"
+                            data-installation-id="{{ id }}"
+                            id="restart-backfill"
                           >
-                            {{syncStatus}}
-                          </span>*
-                        </a>
-                      {{else}}
-                        <span
-                          id="{{id}}-status"
-                          class="jiraConfiguration__table__{{toLowerCase
-                              (replaceSpaceWithHyphen syncStatus)
-                            }}
-                            jiraConfiguration__table__syncStatus"
-                        >
-                          {{syncStatus}}
-                        </span>
-                        {{#if (inProgressOrPendingSync syncStatus)}}
-                          <div class="jiraConfiguration__loaderContainer">
-                            <aui-spinner size="small"></aui-spinner>
-                          </div>
-                        {{/if}}
-                        {{#if (failedSync syncStatus)}}
-                          <div class="jiraConfiguration__retryContainer">
-                            <button
-                              class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
-                              data-jira-host="{{ ../host }}"
-                              data-installation-id="{{ id }}"
-                              id="restart-backfill"
-                            >
-                              &#x21bb;
-                            </button>
-                            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                            <div class="jiraConfiguration__retryMsg">Retry</div>
-                          </div>
-                        {{/if}}
+                            &#x21bb;
+                          </button>
+                          <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                          <div class="jiraConfiguration__retryMsg">Retry</div>
+                        </div>
                       {{/if}}
                     </td>
 
