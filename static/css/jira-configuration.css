@@ -186,15 +186,19 @@
   padding-right: 0.2em !important;
 }
 
-.jiraConfiguration__table__cell__settings__ellipsis:hover,
+.jiraConfiguration__table__cell__settings > .jiraConfiguration__table__cell__settings__ellipsis:hover,
 .aui-button.active:not(.aui-button-link) {
-  background-color: #263858 !important;
-  color: #fff !important;
+  background-color: #091E4208;
 }
 
-.jiraConfiguration__table__cell__settings__ellipsis::before {
-  /* override aui styling */
-  content: none !important;
+.jiraConfiguration__table__cell__settings > .jiraConfiguration__table__cell__settings__ellipsis.bob,
+.aui-button.active:not(.aui-button-link) {
+  background-color: #263858;
+  color: #fff;
+}
+
+.jiraConfiguration__table__cell__settings > .jiraConfiguration__table__cell__settings__ellipsis::before {
+  content: none;
 }
 
 .aui-dropdown2 {

@@ -219,7 +219,11 @@
 
                     {{! Settings }}
                     <td class="jiraConfiguration__table__cell__settings">
-                      <button
+                      <button class="aui-button aui-dropdown2-trigger" aria-controls="settings-dropdown-{{id}}">
+                        ...
+                      </button>
+
+                      {{!-- <button
                         class="jiraConfiguration__table__cell__settings__ellipsis aui-button aui-dropdown2-trigger"
                         aria-controls="settings-dropdown-{{id}}"
                         data-aui-alignment-container="#alignment-container"
@@ -227,7 +231,7 @@
                         <span
                           class="jiraConfiguration__table__cell__settings__ellipsisSpan"
                         >...</span>
-                      </button>
+                      </button> --}}
 
                       <aui-dropdown-menu id="settings-dropdown-{{id}}">
                         <h6
