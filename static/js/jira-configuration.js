@@ -134,11 +134,11 @@ window.onclick = function(event) {
 };
 
 
-$(".jiraConfiguration__table__cell__settings__ellipsis").click(() => {
-	console.log("HERE")
-	$(".jiraConfiguration__table__cell__settings__ellipsis").addClass(
-		"bob"
-	);
-	$(".jiraConfiguration__table__cell__settings__ellipsis").css({"background-color" : "blue !important"});
-	console.log("NOW HERE")
-});
+// $(".jiraConfiguration__table__cell__settings__ellipsis").click(() => {
+// 	console.log("HERE")
+// 	$(".jiraConfiguration__table__cell__settings__ellipsis").addClass(
+// 		"bob"
+// 	);
+// 	$(".jiraConfiguration__table__cell__settings__ellipsis").css({"background-color" : "blue !important"});
+// 	console.log("NOW HERE")
+// });
