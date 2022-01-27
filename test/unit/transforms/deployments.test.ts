@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-// eslint-disable-next-line import/no-duplicates
+jest.mock("../../../src/config/feature-flags");
+
 import transformDeployment, { mapEnvironment } from "../../../src/transforms/deployment";
 import {getLogger} from "../../../src/config/logger";
 import {GitHubAPI} from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
-
-jest.mock("../../../src/config/feature-flags");
 
 describe("deployment environment mapping", () => {
 	test("classifies known environments correctly", () => {
@@ -133,7 +132,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					}
 				]}
 			);
-
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,

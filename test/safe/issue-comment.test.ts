@@ -3,7 +3,7 @@ import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
 
-describe("Issue Comment Webhook", () => {
+describe.skip("Issue Comment Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
@@ -20,11 +20,6 @@ describe("Issue Comment Webhook", () => {
 			clientKey: "client-key",
 			sharedSecret: "shared-secret"
 		});
-	});
-
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("issue_comment", () => {

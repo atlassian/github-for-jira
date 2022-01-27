@@ -187,9 +187,7 @@ const instrumentRequest = (response) => {
 	if(!response) {
 		return;
 	}
-	const requestDurationMs = Number(
-		Date.now() - (response.config?.requestStartTime || 0)
-	);
+	const requestDurationMs = Date.now() - (response.config?.requestStartTime || 0);
 	const tags = {
 		method: response.config?.method?.toUpperCase(),
 		path: extractPath(response.config?.originalUrl),

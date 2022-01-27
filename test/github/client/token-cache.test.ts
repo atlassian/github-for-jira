@@ -9,16 +9,12 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 	const date = new Date(2021, 10, 25, 10, 0);
 	const in10Minutes = new Date(date.getTime() + TEN_MINUTES);
 
-	beforeEach(() => {
-		jest.useFakeTimers("modern");
-	});
-
 	it("should not cache any tokens when testing InstallationTokenCache", async () => {
 		const installationTokenCache = new InstallationTokenCache();
 		const initialInstallationToken = new AuthToken("initial installation token", in10Minutes);
 		const generateInitialInstallationToken = jest.fn().mockImplementation(() => Promise.resolve(initialInstallationToken));
 
-		jest.setSystemTime(date);
+		mockSystemTime(date);
 		const token1 = await installationTokenCache.getInstallationToken(githubInstallationId, generateInitialInstallationToken);
 		const token2 = await installationTokenCache.getInstallationToken(githubInstallationId, generateInitialInstallationToken);
 		expect(token1).toEqual(initialInstallationToken);
@@ -31,7 +27,7 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 		const keyLocator = jest.fn().mockReturnValue(PrivateKey.findPrivateKey());
 		const appTokenHolder = new AppTokenHolder(keyLocator);
 
-		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
+		mockSystemTime(new Date(2021, 10, 25, 10, 0));
 		const token1 = appTokenHolder.getAppToken(getCloudInstallationId(4711));
 		expect(token1).toBeTruthy();
 		const token2 = appTokenHolder.getAppToken(getCloudInstallationId(4711));

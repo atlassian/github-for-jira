@@ -5,7 +5,6 @@ import { getInstallations } from "../../../src/frontend/get-jira-configuration";
 import GithubApi from "../../../src/config/github-api";
 import { GitHubAPI } from "probot";
 
-
 describe("getInstallations", () => {
 	let sub: SubscriptionClass;
 	const client = GithubApi();
@@ -16,11 +15,6 @@ describe("getInstallations", () => {
 			jiraHost,
 			jiraClientKey: "myClientKey"
 		});
-	});
-
-	afterEach(async () => {
-		await Subscription.destroy({ truncate: true });
-		await RepoSyncState.destroy({ truncate: true });
 	});
 
 	it("should return no success or failed connections if no subscriptions given", async () => {

@@ -12,11 +12,6 @@ describe("Subscription", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Subscription.destroy({ truncate: true });
-		await RepoSyncState.destroy({ truncate: true });
-	});
-
 	describe("updateSyncState", () => {
 		it("should return empty repos object when updating state with no repos", async () => {
 			await sub.updateSyncState({

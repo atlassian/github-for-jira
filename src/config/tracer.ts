@@ -7,7 +7,7 @@ export class Tracer {
 
 	constructor(log: Logger, name: string, logsEnabled: boolean) {
 		this.logger = log.child({ tracer: name });
-		this.startTimestamp = new Date().getTime();
+		this.startTimestamp = Date.now();
 		this.logsEnabled = logsEnabled;
 	}
 
@@ -17,8 +17,5 @@ export class Tracer {
 		}
 	}
 
-	private getElapsedMs() {
-		const now = new Date().getTime();
-		return now - this.startTimestamp;
-	}
+	private getElapsedMs = () => Date.now() - this.startTimestamp
 }

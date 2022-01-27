@@ -34,12 +34,6 @@ describe("Jira Configuration Suite", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Subscription.destroy({ truncate: true });
-		await Installation.destroy({ truncate: true });
-		await RepoSyncState.destroy({ truncate: true });
-	});
-
 	const mockRequest = (): any => ({
 		query: { xdm_e: jiraHost },
 		csrfToken: jest.fn().mockReturnValue({}),

@@ -50,6 +50,10 @@ const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags, defaultVal
 	try {
 		await launchdarklyClient.waitForInitialization();
 		const user = createLaunchdarklyUser(jiraHost);
+		if(launchdarklyClient.isOffline()) {
+			logger.info(`LD in offline mode, returning default value of '${defaultValue}' for flag '${flag}'`);
+			return defaultValue;
+		}
 		return launchdarklyClient.variation(flag, user, defaultValue);
 	} catch (err) {
 		logger.error({ flag, err }, "Error resolving value for feature flag");

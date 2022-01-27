@@ -1,3 +1,6 @@
+jest.mock("../../../src/models");
+jest.mock("../../../src/util/webhooks");
+
 import { mocked } from "ts-jest/utils";
 import { Installation, Subscription } from "../../../src/models";
 import GitHubAPI from "../../../src/config/github-api";
@@ -8,12 +11,9 @@ import Logger from "bunyan";
 import {Writable} from "stream";
 import { emitWebhookFailedMetrics } from "../../../src/util/webhooks";
 
-jest.mock("../../../src/models");
-jest.mock("../../../src/util/webhooks");
-
 describe("Probot event middleware", () => {
 	let context;
-	let loggedStuff = '';
+	let loggedStuff = "";
 	beforeEach(async () => {
 		context = {
 			payload: {
@@ -22,7 +22,7 @@ describe("Probot event middleware", () => {
 			},
 			github: GitHubAPI(),
 			log: wrapLogger(Logger.createLogger({
-				name: 'test',
+				name: "test",
 				stream: new Writable({
 					write: function (chunk, _, next) {
 						loggedStuff += chunk.toString();
@@ -100,7 +100,7 @@ describe("Probot event middleware", () => {
 		context.log = context.log.child({foo: 123});
 		await middleware(jest.fn())(context);
 		context.log.info("test");
-		expect(loggedStuff).toContain('foo');
+		expect(loggedStuff).toContain("foo");
 		expect(loggedStuff).toContain(123);
 	});
 });

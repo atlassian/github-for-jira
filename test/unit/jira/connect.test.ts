@@ -3,8 +3,6 @@ import express, { Express } from "express";
 import setupFrontend from "../../../src/frontend/app";
 import {getLogger} from "../../../src/config/logger";
 
-jest.mock("../../../src/config/feature-flags");
-
 describe("Connect", () => {
 	let app: Express;
 

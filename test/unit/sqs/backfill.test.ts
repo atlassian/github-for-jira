@@ -1,3 +1,5 @@
+jest.mock("../../../src/sync/installation");
+jest.mock("@sentry/node");
 
 import {processInstallation} from "../../../src/sync/installation";
 import {mocked} from "ts-jest/utils";
@@ -5,10 +7,6 @@ import {BackfillMessagePayload, backfillQueueMessageHandler} from "../../../src/
 import {Context} from "../../../src/sqs";
 import {getLogger} from "../../../src/config/logger";
 import * as Sentry from "@sentry/node";
-
-jest.mock("../../../src/sync/installation");
-
-jest.mock("@sentry/node");
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore

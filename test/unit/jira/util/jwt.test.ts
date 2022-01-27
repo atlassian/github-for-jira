@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+jest.mock("../../../../src/jira/util/queryAtlassianConnectPublicKey");
+jest.mock("../../../../src/models");
+
 import {
 	TokenType,
 	verifyAsymmetricJwtTokenMiddleware,
@@ -8,10 +11,6 @@ import logger from "../../../../src/config/logger"
 import {AsymmetricAlgorithm, encodeAsymmetric, encodeSymmetric} from "atlassian-jwt";
 import queryAtlassianConnectPublicKey from "../../../../src/jira/util/queryAtlassianConnectPublicKey";
 import {when} from "jest-when";
-
-jest.mock("../../../../src/jira/util/queryAtlassianConnectPublicKey");
-jest.mock("../../../../src/models");
-
 
 const testRequestMethod = "GET"
 const testRequestPath = "/jira/configuration";

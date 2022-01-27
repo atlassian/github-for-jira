@@ -1,21 +1,5 @@
-import {
-	isRetryableWithSmallerRequest,
-	maybeScheduleNextTask,
-	processInstallation
-} from "../../../src/sync/installation";
-
-import {DeduplicatorResult} from "../../../src/sync/deduplicator";
-
-import "../../../src/config/feature-flags";
-
-import {Application} from "probot";
-import {getLogger} from "../../../src/config/logger";
-import { sqsQueues } from "../../../src/sqs/queues";
-import {Hub} from "@sentry/types/dist/hub";
-import { mocked } from "ts-jest/utils";
-
-const TEST_LOGGER = getLogger("test");
-
+jest.mock("../../../src/sqs/queues");
+jest.mock("../../../src/models");
 const mockedExecuteWithDeduplication = jest.fn();
 jest.mock("../../../src/sync/deduplicator", () => {
 	return {
@@ -23,15 +7,23 @@ jest.mock("../../../src/sync/deduplicator", () => {
 		Deduplicator: function() {
 			return { executeWithDeduplication: mockedExecuteWithDeduplication };
 		}
-	}
+	};
 });
 
-jest.mock("../../../src/sqs/queues");
-jest.mock("../../../src/models");
+import { isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "../../../src/sync/installation";
+import { DeduplicatorResult } from "../../../src/sync/deduplicator";
+import "../../../src/config/feature-flags";
+import { Application } from "probot";
+import { getLogger } from "../../../src/config/logger";
+import { sqsQueues } from "../../../src/sqs/queues";
+import { Hub } from "@sentry/types/dist/hub";
+import { mocked } from "ts-jest/utils";
+
+const TEST_LOGGER = getLogger("test");
 
 describe("sync/installation", () => {
 
-	const JOB_DATA = {installationId: 1, jiraHost: "http://foo"};
+	const JOB_DATA = { installationId: 1, jiraHost: "http://foo" };
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore

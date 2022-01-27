@@ -369,15 +369,15 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export async function maybeScheduleNextTask(
 	jobData: BackfillMessagePayload,
-	nextTaskDelaysMs: Array<number>,
+	nextTaskDelaysMs: number[],
 	logger: LoggerWithTarget
 ) {
-	if (nextTaskDelaysMs.length > 0) {
+	if (nextTaskDelaysMs.length) {
 		nextTaskDelaysMs.sort().reverse();
 		if (nextTaskDelaysMs.length > 1) {
 			logger.warn("Multiple next jobs were scheduled, scheduling one with the highest priority");
 		}
-		const delayMs = nextTaskDelaysMs.shift()!;
+		const delayMs = nextTaskDelaysMs.shift();
 		logger.info("Scheduling next job with a delay = " + delayMs);
 
 		await sqsQueues.backfill.sendMessage(jobData, (delayMs || 0) / 1000, logger);
@@ -387,64 +387,60 @@ export async function maybeScheduleNextTask(
 const redis = new Redis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
-export const processInstallation =
-	(app: Application) => {
-		const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
-		const deduplicator = new Deduplicator(
-			inProgressStorage, 1_000
-		);
+export const processInstallation = (app: Application) => {
+	const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
+	const deduplicator = new Deduplicator(inProgressStorage, 1_000);
 
-		return async (data: BackfillMessagePayload, sentry: Hub, logger: LoggerWithTarget): Promise<void> => {
-			const {installationId, jiraHost} = data;
+	return async (data: BackfillMessagePayload, sentry: Hub, logger: LoggerWithTarget): Promise<void> => {
+		const { installationId, jiraHost } = data;
 
-			try {
-
-				if (await isBlocked(installationId, logger)) {
-					logger.warn("blocking installation job");
-					return;
-				}
-
-				sentry.setUser({
-					gitHubInstallationId: installationId,
-					jiraHost
-				});
-
-				const nextTaskDelaysMs: Array<number> = [];
-
-				const result = await deduplicator.executeWithDeduplication(
-					"i-" + installationId + "-" + jiraHost,
-					() => doProcessInstallation(app, data, sentry, installationId, jiraHost, logger, (delay: number) =>
-						nextTaskDelaysMs.push(delay)
-					));
-
-				switch (result) {
-					case DeduplicatorResult.E_OK:
-						logger.info("Job was executed by deduplicator");
-						maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
-						break;
-					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
-						logger.warn("Possible duplicate job was detected, rescheduling");
-						await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC, logger);
-						break;
-					}
-					case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
-						logger.warn("Duplicate job was detected, rescheduling");
-						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
-						// Worker A - doing a long-running task
-						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
-						// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
-						// Worker A dies (e.g. node is rotated).
-						// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
-						//
-						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
-						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
-						// is finished.
-						await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
-						break;
-					}
-				}
-			} catch (err) {
-				logger.warn({ err }, "Process installation failed");
+		try {
+			if (await isBlocked(installationId, logger)) {
+				logger.warn("blocking installation job");
+				return;
 			}
-		};
+
+			sentry.setUser({
+				gitHubInstallationId: installationId,
+				jiraHost
+			});
+
+			const nextTaskDelaysMs: Array<number> = [];
+
+			const result = await deduplicator.executeWithDeduplication(
+				"i-" + installationId + "-" + jiraHost,
+				() => doProcessInstallation(app, data, sentry, installationId, jiraHost, logger, (delay: number) =>
+					nextTaskDelaysMs.push(delay)
+				));
+
+			switch (result) {
+				case DeduplicatorResult.E_OK:
+					logger.info("Job was executed by deduplicator");
+					await maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
+					break;
+				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
+					logger.warn("Possible duplicate job was detected, rescheduling");
+					await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC, logger);
+					break;
+				}
+				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
+					logger.warn("Duplicate job was detected, rescheduling");
+					// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
+					// Worker A - doing a long-running task
+					// Redis/SQS - reports that the task execution takes too long and sends it to another worker
+					// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
+					// Worker A dies (e.g. node is rotated).
+					// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
+					//
+					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
+					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
+					// is finished.
+					await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
+					break;
+				}
+			}
+		} catch (err) {
+			logger.warn({ err }, "Process installation failed");
+		}
 	};
+};

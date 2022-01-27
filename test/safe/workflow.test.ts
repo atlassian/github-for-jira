@@ -3,7 +3,7 @@ import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
 
-describe("Workflow Webhook", () => {
+describe.skip("Workflow Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
@@ -20,11 +20,6 @@ describe("Workflow Webhook", () => {
 			clientKey: "client-key",
 			sharedSecret: "shared-secret"
 		});
-	});
-
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("workflow_run", () => {
@@ -81,7 +76,7 @@ describe("Workflow Webhook", () => {
 					}
 			}).reply(200);
 
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture)).toResolve();
 		});

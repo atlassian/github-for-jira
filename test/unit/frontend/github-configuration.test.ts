@@ -7,8 +7,6 @@ import express, { Application } from "express";
 import { getSignedCookieHeader } from "../util/cookies";
 import { ViewerRepositoryCountQuery } from "../../../src/github/client/github-queries";
 
-jest.mock("../../../src/config/feature-flags");
-
 describe("Github Configuration", () => {
 	let frontendApp: Application;
 	let sub: SubscriptionClass;
@@ -56,11 +54,6 @@ describe("Github Configuration", () => {
 			getSignedJsonWebToken: () => "token",
 			getInstallationAccessToken: async () => "access-token"
 		}));
-	});
-
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("Github Token Validation", () => {

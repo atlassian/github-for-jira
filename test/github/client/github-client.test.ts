@@ -10,8 +10,6 @@ import nock from "nock";
 import AppTokenHolder from "../../../src/github/client/app-token-holder";
 import fs from "fs";
 import envVars from "../../../src/config/env";
-import anything = jasmine.anything;
-import objectContaining = jasmine.objectContaining;
 
 describe("GitHub Client", () => {
 	const githubInstallationId = 17979017;
@@ -119,7 +117,7 @@ describe("GitHub Client", () => {
 	});
 
 	function verifyMetricsSent(path: string, status) {
-		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", anything(), objectContaining({
+		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", expect.anything(), expect.objectContaining({
 			client: "axios",
 			method: "GET",
 			path,
@@ -137,7 +135,7 @@ describe("GitHub Client", () => {
 				"X-RateLimit-Remaining": "0"
 			}
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
@@ -164,7 +162,7 @@ describe("GitHub Client", () => {
 				"X-RateLimit-Reset": "2000"
 			}
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
@@ -187,7 +185,7 @@ describe("GitHub Client", () => {
 		}).reply(
 			403, { message: "Org has an IP allow list enabled" }
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
@@ -212,7 +210,7 @@ describe("GitHub Client", () => {
 				"X-RateLimit-Reset": "2000"
 			}
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
@@ -238,7 +236,7 @@ describe("GitHub Client", () => {
 				"X-RateLimit-Remaining": "0"
 			}
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {

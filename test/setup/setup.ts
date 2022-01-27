@@ -1,3 +1,7 @@
+// Mocking lru-cache to disable it completely while doing tests
+jest.mock("lru-cache");
+jest.mock("../../src/config/feature-flags");
+
 import nock from "nock";
 import env from "../../src/config/env";
 import "./matchers/to-have-sent-metrics";
@@ -5,10 +9,9 @@ import "./matchers/nock";
 import "./matchers/to-promise";
 import statsd from "../../src/config/statsd";
 import { sequelize } from "../../src/models/sequelize";
+import { Installation, RepoSyncState, Subscription } from "../../src/models";
 import { sqsQueues } from "../../src/sqs/queues";
 
-// Mocking lru-cache to disable it completely while doing tests
-jest.mock("lru-cache");
 
 resetEnvVars();
 
@@ -21,7 +24,11 @@ function resetEnvVars() {
 	};
 }
 
+let dateNowMock: jest.SpyInstance | undefined;
+
 type AccessTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
+type MockSystemTimeFunc = (time: string | number | Date) => void;
+// type MockFeatureFlagFunc = (flag: BooleanFlags | StringFlags) => void;
 
 declare global {
 	let jiraHost: string;
@@ -31,6 +38,8 @@ declare global {
 	let gheUrl: string;
 	let githubAccessTokenNock: AccessTokenNockFunc;
 	let gheAccessTokenNock: AccessTokenNockFunc;
+	let mockSystemTime: MockSystemTimeFunc;
+	// let mockFeatureFlag: MockFeatureFlagFunc;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
@@ -41,6 +50,7 @@ declare global {
 			gheUrl: string;
 			githubAccessTokenNock: AccessTokenNockFunc;
 			gheAccessTokenNock: AccessTokenNockFunc;
+			mockSystemTime: MockSystemTimeFunc;
 		}
 	}
 }
@@ -59,10 +69,24 @@ const accessToken = (scope: nock.Scope): AccessTokenNockFunc =>
 			});
 	};
 
+const clearDbState = async () => Promise.all([
+	Subscription.destroy({ truncate: true }),
+	Installation.destroy({ truncate: true }),
+	RepoSyncState.destroy({ truncate: true })
+]);
+
+const clearState = async () => Promise.all([
+	// sqsQueues.purge(),
+	clearDbState()
+]);
+
 beforeAll(async () => {
-	// purge all queues before starting in case there's a message in there.
-	await sqsQueues.purge();
-})
+	// clear state of queues and DB before starting anything
+	// This is in case you're forcefully exiting test which doesn't run afterEach
+	await clearState();
+	const messageCount = await sqsQueues.getMessageCount();
+	console.log(`Queue message count: ${JSON.stringify(messageCount, null, 4)}`);
+});
 
 beforeEach(() => {
 	resetEnvVars();
@@ -73,19 +97,35 @@ beforeEach(() => {
 	global.gheNock = nock(global.gheUrl);
 	global.githubAccessTokenNock = accessToken(githubNock);
 	global.gheAccessTokenNock = accessToken(gheNock);
+	global.mockSystemTime = (time: string | number | Date = jest.getRealSystemTime()) => {
+		if(!dateNowMock) {
+			dateNowMock = jest.spyOn(Date, "now");
+		}
+		dateNowMock.mockImplementation(() => ({now: () => new Date(time).getTime()}));
+	}
+
+	// jest.spyOn(featureFlags, "booleanFlag")
+
+	// jest.useFakeTimers(); // Set fake timers/Date object
+	// jest.setSystemTime(jest.getRealSystemTime()); // set time to now
+
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting
 // Needs to be in it's own aftereach so that the expect doesn't stop it from cleaning up afterwards
-afterEach(() => {
+afterEach(async () => {
 	try {
 		// eslint-disable-next-line jest/no-standalone-expect
 		expect(nock).toBeDone();
 	} finally {
+		await clearState();
+		dateNowMock?.mockRestore();
+		dateNowMock = undefined;
 		nock.cleanAll(); // removes HTTP mocks
 		jest.resetAllMocks(); // Removes jest mocks
+		jest.restoreAllMocks(); // Removes jest mocks
+		jest.clearAllTimers(); // Invalidate all timers
 		jest.useRealTimers(); // Resets timers
-		// jest.resetModules(); // clears NPM require cache
 	}
 });
 

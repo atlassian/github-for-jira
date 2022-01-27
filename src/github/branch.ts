@@ -20,39 +20,38 @@ export const createBranch = async (
 	const webhookPayload: WebhookPayloadCreate = context.payload;
 
 	if (await booleanFlag(BooleanFlags.USE_SQS_FOR_BRANCH, false, jiraClient.baseURL)) {
-		await sqsQueues.branch.sendMessage({
+		context.log.info("Sending create branch webhook to sqs");
+		return sqsQueues.branch.sendMessage({
 			jiraHost: jiraClient.baseURL,
 			installationId: githubInstallationId,
-			webhookReceived: new Date().getTime(),
+			webhookReceived: Date.now(),
 			webhookId: context.id,
 			webhookPayload
-		})
-	} else {
-
-		const jiraPayload = await transformBranch(context.github, webhookPayload);
-
-		if (!jiraPayload) {
-			context.log(
-				{ noop: "no_jira_payload_create_branch" },
-				"Halting further execution for createBranch since jiraPayload is empty"
-			);
-			return;
-		}
-
-		context.log(
-			`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`
-		);
-
-		const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
-		const { webhookReceived, name, log } = context;
-
-		webhookReceived && emitWebhookProcessedMetrics(
-			webhookReceived,
-			name,
-			log,
-			jiraResponse?.status
-		);
+		});
 	}
+
+	const jiraPayload = await transformBranch(context.github, webhookPayload);
+
+	if (!jiraPayload) {
+		context.log(
+			"Halting further execution for createBranch since jiraPayload is empty"
+		);
+		return;
+	}
+
+	context.log(
+		`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`
+	);
+
+	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+	const { webhookReceived, name, log } = context;
+
+	webhookReceived && emitWebhookProcessedMetrics(
+		webhookReceived,
+		name,
+		log,
+		jiraResponse?.status
+	);
 };
 
 export const processBranch = async (
@@ -69,7 +68,7 @@ export const processBranch = async (
 	const logger = rootLogger.child({
 		webhookId: webhookId,
 		installationId,
-		webhookReceived: webhookReceivedDate,
+		webhookReceived: webhookReceivedDate
 	});
 
 	if (!jiraPayload) {
@@ -98,7 +97,7 @@ export const processBranch = async (
 		logger,
 		jiraResponse?.status
 	);
-}
+};
 
 export const deleteBranch = async (context: CustomContext, jiraClient): Promise<void> => {
 	const payload: WebhookPayloadDelete = context.payload;

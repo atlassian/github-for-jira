@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
+jest.mock("../../../src/models");
+
 import { commitsNoLastCursor, commitsWithLastCursor, getDefaultBranch } from "../../fixtures/api/graphql/commit-queries";
 import { Subscription } from "../../../src/models";
 import { processInstallation } from "../../../src/sync/installation";
@@ -8,8 +10,6 @@ import { createApplication } from "../../utils/probot";
 import nock from "nock";
 import { getLogger } from "../../../src/config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-
-jest.mock("../../../src/models");
 
 describe.skip("sync/commits", () => {
 	let installationId;
@@ -50,7 +50,7 @@ describe.skip("sync/commits", () => {
 		};
 
 		installationId = 1234;
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		mocked(Subscription.getSingleInstallation).mockResolvedValue({
 			jiraHost,

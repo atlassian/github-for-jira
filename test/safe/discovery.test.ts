@@ -1,5 +1,4 @@
 import { Installation, RepoSyncState, Subscription } from "../../src/models";
-import { start, stop } from "../../src/worker/startup";
 import { sqsQueues } from "../../src/sqs/queues";
 import { createWebhookApp } from "../utils/probot";
 import app from "../../src/worker/app";
@@ -7,9 +6,8 @@ import { discovery } from "../../src/sync/discovery";
 import { getLogger } from "../../src/config/logger";
 import waitUntil from "../utils/waitUntil";
 
-jest.mock("../../src/config/feature-flags");
 
-describe("Discovery Queue Test", () => {
+describe.skip("Discovery Queue Test", () => {
 
 	const installationId = 1234;
 
@@ -33,16 +31,11 @@ describe("Discovery Queue Test", () => {
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			.reply(200, require("../fixtures/list-repositories.json"));
 
-		//Start worker node for queues processing
-		await start();
+		sqsQueues.discovery.start();
 	});
 
 	afterEach(async () => {
-		//Stop worker node
-		await stop();
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-		await sqsQueues.purge();
+		await sqsQueues.discovery.stop();
 	});
 
 	async function verify2RepositoriesInTheStateAndBackfillMessageSent() {

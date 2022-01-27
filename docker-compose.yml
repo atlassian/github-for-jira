@@ -22,7 +22,7 @@ services:
 
   localstack:
     container_name: localstack
-    image: localstack/localstack
+    image: localstack/localstack:latest
     environment:
       - DEFAULT_REGION=us-west-1
       - SERVICES=sqs

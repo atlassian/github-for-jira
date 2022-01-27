@@ -1,7 +1,7 @@
+jest.mock("launchdarkly-node-server-sdk");
+
 import LaunchDarkly, { LDClient } from "launchdarkly-node-server-sdk";
 import { mocked } from "ts-jest/utils";
-
-jest.mock("launchdarkly-node-server-sdk");
 
 describe("Feature Flag", () => {
 

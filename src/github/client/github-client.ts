@@ -158,7 +158,7 @@ export default class GitHubClient {
 	public async getCommit(owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> {
 		return this.get<Octokit.ReposGetCommitResponse>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits/${encodeURIComponent(ref)}`);
 	}
-		
+
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{viewer: {repositories: {totalCount: number}}}>(ViewerRepositoryCountQuery);
 

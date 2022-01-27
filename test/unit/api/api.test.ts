@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+jest.mock("../../../src/jira/client/axios");
+
 import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
 import { Installation, RepoSyncState, Subscription } from "../../../src/models";
@@ -8,9 +10,6 @@ import api from "../../../src/api";
 import { getLogger } from "../../../src/config/logger";
 import getAxiosInstance from "../../../src/jira/client/axios";
 import { mocked } from "ts-jest/utils";
-
-jest.mock("../../../src/config/feature-flags");
-jest.mock("../../../src/jira/client/axios");
 
 describe("API", () => {
 	let app: Application;
@@ -76,11 +75,6 @@ describe("API", () => {
 			jiraHost,
 			jiraClientKey: "client-key",
 		});
-	});
-
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("Authentication", () => {
@@ -269,10 +263,6 @@ describe("API", () => {
 					pullCursor: "12",
 					repoUpdatedAt: new Date(0)
 				});
-			});
-
-			afterEach(async () => {
-				await RepoSyncState.destroy({ truncate: true });
 			});
 
 			it("should return 404 if no installation is found", async () => {

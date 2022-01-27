@@ -209,7 +209,7 @@ export class SqsQueue<MessagePayload> {
 		//This checks if the previous listener was stopped or never created. However it could be that the
 		//previous listener is stopped, but still processing its last message
 		if (this.listenerContext && !this.listenerContext.stopped) {
-			this.log.error("Queue is already running");
+			this.log.warn("Queue is already running");
 			return;
 		}
 
@@ -229,7 +229,7 @@ export class SqsQueue<MessagePayload> {
 	 */
 	public async stop() {
 		if (!this.listenerContext || this.listenerContext.stopped) {
-			this.log.error("Queue is already stopped");
+			this.log.warn("Queue is already stopped");
 			return;
 		}
 		this.listenerContext.log.info("Stopping the queue");
@@ -243,6 +243,11 @@ export class SqsQueue<MessagePayload> {
 	 */
 	public async purgeQueue() {
 		return this.sqs.purgeQueue({ QueueUrl: this.queueUrl }).promise();
+	}
+
+	public async getMessageCount():Promise<number> {
+		const response = await this.sqs.getQueueAttributes({QueueUrl: this.queueUrl, AttributeNames:["ApproximateNumberOfMessages"]}).promise();
+		return Number(response.Attributes?.ApproximateNumberOfMessages || 0);
 	}
 
 	/**
@@ -297,7 +302,7 @@ export class SqsQueue<MessagePayload> {
 		};
 
 		try {
-			//Get messages from the queue with long polling enabled
+			// Get messages from the queue with long polling enabled
 			const result = await this.sqs.receiveMessage(params)
 				.promise();
 
@@ -351,7 +356,7 @@ export class SqsQueue<MessagePayload> {
 		log.info(`SQS message received. Receive count: ${receiveCount}`);
 
 		try {
-			const messageProcessingStartTime = new Date().getTime();
+			const messageProcessingStartTime = Date.now();
 
 			// Change message visibility timeout to the max processing time
 			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
@@ -363,7 +368,7 @@ export class SqsQueue<MessagePayload> {
 
 			await Promise.race([this.messageHandler(context), timeoutPromise]);
 
-			const messageProcessingDuration = new Date().getTime() - messageProcessingStartTime;
+			const messageProcessingDuration = Date.now() - messageProcessingStartTime;
 			this.sendProcessedMetrics(messageProcessingDuration);
 			await this.deleteMessage(message, log);
 		} catch (err) {

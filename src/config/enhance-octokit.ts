@@ -54,8 +54,7 @@ const instrumentRequests = (octokit: GitHubAPI) => {
 			if (error || Number(responseStatus) < 200 || Number(responseStatus) >= 400) {
 				logger.warn({ req: request, err: error }, `Octokit error: failed request '${options.method} ${options.url}'`);
 			}
-			const elapsed = Date.now() - requestStart;
-			statsd.histogram(metricHttpRequest.github, elapsed, {
+			statsd.histogram(metricHttpRequest.github, Date.now() - requestStart, {
 				path: extractPath(options.url),
 				method: options.method,
 				status: responseStatus?.toString() || "none"

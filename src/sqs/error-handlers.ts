@@ -72,16 +72,16 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 
 function handleFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult {
 	if (error instanceof OldRateLimitingError) {
-		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
+		const delaySec = Math.ceil(error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000));
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true }
 	}
 
 	if (error instanceof RateLimitingError) {
-		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
+		const delaySec = Math.ceil(error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000));
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true }
 	}
 
 	//In case if error is unknown we should use exponential backoff
-	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
+	const delaySec = Math.ceil(EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount));
 	return { retryable: true, retryDelaySec: delaySec, isFailure: true }
 }

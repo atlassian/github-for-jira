@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+jest.mock("../../src/config/feature-flags");
+
 import SubscriptionClass, { RepositoryData } from "../../src/models/subscription";
 import { RepoSyncState, Subscription } from "../../src/models";
 import { mocked } from "ts-jest/utils";
 import { booleanFlag } from "../../src/config/feature-flags";
-
-jest.mock("../../src/config/feature-flags");
 
 describe("RepoSyncState", () => {
 	let sub: SubscriptionClass;
@@ -27,13 +27,6 @@ describe("RepoSyncState", () => {
 			repoUrl: "github.com/atlassian/github-for-jira"
 		};
 
-	});
-
-	afterEach(async () => {
-		await Promise.all([
-			RepoSyncState.destroy({ truncate: true }),
-			sub.destroy()
-		]);
 	});
 
 	describe("countSyncedReposFromSubscription", () => {

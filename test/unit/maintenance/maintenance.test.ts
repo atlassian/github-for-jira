@@ -1,3 +1,5 @@
+jest.mock("../../../src/config/feature-flags");
+
 import supertest from "supertest";
 import express, { Express } from "express";
 import healthcheck from "../../../src/frontend/healthcheck";
@@ -5,8 +7,6 @@ import setupFrontend from "../../../src/frontend/app";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { when } from "jest-when";
 import {getLogger} from "../../../src/config/logger";
-
-jest.mock("../../../src/config/feature-flags");
 
 describe("Maintenance", () => {
 	let app: Express;
@@ -23,7 +23,7 @@ describe("Maintenance", () => {
 		whenMaintenanceMode(true);
 		app = express();
 		app.use((request, _, next) => {
-			request.log = getLogger('test');
+			request.log = getLogger("test");
 			next();
 		});
 	});

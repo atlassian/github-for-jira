@@ -1,11 +1,11 @@
+jest.mock("../../../src/jira/client/axios");
+
 import verifyInstallation from "../../../src/jira/verify-installation";
 import {getLogger} from "../../../src/config/logger";
 import InstallationClass from "../../../src/models/installation";
 import {Installation} from "../../../src/models";
 import getAxiosInstance from "../../../src/jira/client/axios";
 import {mocked} from "ts-jest/utils";
-
-jest.mock("../../../src/jira/client/axios");
 
 describe("verify-installation", () => {
 	let installation: InstallationClass;
@@ -35,10 +35,6 @@ describe("verify-installation", () => {
 			"get": () => Promise.reject(error)
 		});
 	}
-
-	afterEach(async () => {
-		await installation.destroy();
-	})
 
 	test("returns true when Jira responds with 200", async () => {
 		mockJiraResponse(200);

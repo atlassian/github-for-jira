@@ -12,7 +12,7 @@ export default async (context: CustomContext, jiraClient, _util, githubInstallat
 		jiraHost: jiraClient.baseURL,
 		installationId: githubInstallationId,
 		webhookPayload: context.payload,
-		webhookReceived: new Date().getTime(),
+		webhookReceived: Date.now(),
 		webhookId: context.id
 	});
 };

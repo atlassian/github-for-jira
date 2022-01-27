@@ -1,12 +1,12 @@
-import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "../../../mocks/errorResponses";
 /* eslint-disable @typescript-eslint/no-var-requires */
+jest.mock("../../../../src/models");
+
+import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "../../../mocks/errorResponses";
 import {
 	sortedRepos,
 	isNotFoundError,
 } from "../../../../src/sync/installation";
 import {getLogger} from "../../../../src/config/logger";
-
-jest.mock("../../../../src/models");
 
 describe("Sync helpers suite", () => {
 	const unsortedReposJson = require("../../../fixtures/repositories.json");

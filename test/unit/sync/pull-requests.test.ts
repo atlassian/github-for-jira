@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
+jest.mock("../../../src/models");
 
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../../src/models";
@@ -9,8 +10,6 @@ import { RepoSyncStateObject } from "../../../src/models/subscription";
 import { createWebhookApp } from "../../utils/probot";
 import {getLogger} from "../../../src/config/logger";
 import {Hub} from "@sentry/types/dist/hub";
-
-jest.mock("../../../src/models");
 
 describe.skip("sync/pull-request", () => {
 	const installationId = 1234;
@@ -42,7 +41,7 @@ describe.skip("sync/pull-request", () => {
 			}
 		};
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		mocked(Subscription.getSingleInstallation)
 			.mockResolvedValue({

@@ -3,7 +3,7 @@ import express, { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import api from "../../src/api";
 import SubscriptionModel from "../../src/models/subscription";
-import { RepoSyncState, Subscription } from "../../src/models";
+import { Subscription } from "../../src/models";
 import { wrapLogger } from "probot/lib/wrap-logger";
 
 describe("api/index", () => {
@@ -29,11 +29,6 @@ describe("api/index", () => {
 			})
 	});
 
-	afterEach(async () => {
-		await Subscription.destroy({ truncate: true });
-		await RepoSyncState.destroy({ truncate: true });
-	});
-
 	const createApp = async () => {
 		const app = express();
 		app.use((req: Request, res: Response, next: NextFunction) => {
@@ -50,7 +45,7 @@ describe("api/index", () => {
 		return app;
 	};
 
-	test("GET syncstate", async () => {
+	it("should GET syncstate", async () => {
 		await supertest(await createApp())
 			.get(`/api/${sub.gitHubInstallationId}/${encodeURIComponent(sub.jiraHost)}/syncstate`)
 			.set("Authorization", "Bearer xxx")
