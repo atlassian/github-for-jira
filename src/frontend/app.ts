@@ -297,9 +297,9 @@ export default (octokitApp: App): Express => {
 
 	// Error catcher - Batter up!
 	app.use(async (err: Error, req: Request, res: Response, next: NextFunction) => {
-		const errorId = uuidv4();
+		const errorReference = uuidv4();
 
-		req.log.error({ payload: req.body, errorId, err, req, res }, "Error in frontend app.")
+		req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend app.")
 
 		if (!isNodeProd() && !res.locals.showError) {
 			return next(err);
@@ -331,7 +331,7 @@ export default (octokitApp: App): Express => {
 
 		return res.status(errorStatusCode).render("error.hbs", {
 			title: "GitHub + Jira integration",
-			errorId,
+			errorReference,
 			message,
 			nonce: res.locals.nonce,
 			githubRepoUrl: envVars.GITHUB_REPO_URL
