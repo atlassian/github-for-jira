@@ -376,6 +376,6 @@ as the left panel navigation in Jira hijacks some of the screen */
 
   .jiraConfiguration__table__cell__settings
     > .jiraConfiguration__table__cell__settings__ellipsis {
-    right: 0.2em !important;
+    right: 0.2em;
   }
 }
