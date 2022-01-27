@@ -3,7 +3,6 @@ import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
 import { start, stop } from "../../src/worker/startup";
-import sqsQueues from "../../src/sqs/queues";
 import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
@@ -13,14 +12,11 @@ describe("Deployment Webhook", () => {
 	const gitHubInstallationId = 1234;
 
 	beforeAll(async () => {
-		//Start worker node for queues processing
 		await start();
 	});
 
 	afterAll(async () => {
-		//Stop worker node
 		await stop();
-		await sqsQueues.deployment.waitUntilListenerStopped();
 	});
 
 	beforeEach(async () => {

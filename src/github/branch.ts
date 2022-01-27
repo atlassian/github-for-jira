@@ -5,7 +5,7 @@ import { CustomContext } from "./middleware";
 import _ from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import getJiraClient from "../jira/client";
@@ -23,7 +23,7 @@ export const createBranch = async (
 		await sqsQueues.branch.sendMessage({
 			jiraHost: jiraClient.baseURL,
 			installationId: githubInstallationId,
-			webhookReceived: new Date().getTime(),
+			webhookReceived: Date.now(),
 			webhookId: context.id,
 			webhookPayload
 		})

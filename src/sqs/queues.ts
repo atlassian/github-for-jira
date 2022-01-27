@@ -6,10 +6,12 @@ import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handle
 import { DiscoveryMessagePayload, discoveryQueueMessageHandler } from "./discovery";
 import { DeploymentMessagePayload, deploymentQueueMessageHandler } from "./deployment";
 import { BranchMessagePayload, branchQueueMessageHandler } from "./branch";
+import { getLogger } from "../config/logger";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
+const logger = getLogger("sqs-queues");
 
-const sqsQueues = {
+export const sqsQueues = {
 	backfill: new SqsQueue<BackfillMessagePayload>({
 		queueName: "backfill",
 		queueUrl: envVars.SQS_BACKFILL_QUEUE_URL,
@@ -68,20 +70,46 @@ const sqsQueues = {
 	),
 
 	start: () => {
+		logger.info("Starting queues");
 		sqsQueues.backfill.start();
 		sqsQueues.push.start();
 		sqsQueues.discovery.start();
 		sqsQueues.deployment.start();
 		sqsQueues.branch.start();
+		logger.info("All queues started");
 	},
 
-	stop: () => {
-		sqsQueues.backfill.stop();
-		sqsQueues.push.stop();
-		sqsQueues.discovery.stop();
-		sqsQueues.deployment.stop();
-		sqsQueues.branch.stop();
-	}
-}
+	stop: async () => {
+		logger.info("Stopping queues");
+		await Promise.all([
+			sqsQueues.backfill.stop(),
+			sqsQueues.push.stop(),
+			sqsQueues.discovery.stop(),
+			sqsQueues.deployment.stop(),
+			sqsQueues.branch.stop()
+		]);
+		logger.info("All queues stopped");
+	},
 
-export default sqsQueues
+	purge: async () => {
+		logger.info("Purging queues");
+		await Promise.all([
+			sqsQueues.backfill.purgeQueue(),
+			sqsQueues.push.purgeQueue(),
+			sqsQueues.discovery.purgeQueue(),
+			sqsQueues.deployment.purgeQueue(),
+			sqsQueues.branch.purgeQueue()
+		]);
+		logger.info("All queues purged");
+	},
+
+	getMessageCount: async () => {
+		return {
+			branch: await sqsQueues.branch.getMessageCount(),
+			push: await sqsQueues.push.getMessageCount(),
+			discovery: await sqsQueues.discovery.getMessageCount(),
+			backfill: await sqsQueues.backfill.getMessageCount(),
+			deployment: await sqsQueues.deployment.getMessageCount()
+		};
+	}
+};

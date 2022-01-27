@@ -5,11 +5,9 @@ import { Application } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 import { start, stop } from "../../src/worker/startup";
-import sqsQueues from "../../src/sqs/queues";
 import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
-
 
 describe("Branch Webhook", () => {
 	let app: Application;
@@ -27,14 +25,11 @@ describe("Branch Webhook", () => {
 			});
 
 	beforeAll(async () => {
-		//Start worker node for queues processing
 		await start();
 	});
 
 	afterAll(async () => {
-		//Stop worker node
 		await stop();
-		await sqsQueues.deployment.waitUntilListenerStopped();
 	});
 
 	beforeEach(async () => {

@@ -10,16 +10,11 @@ import nock from "nock";
 import {getLogger} from "../../../src/config/logger";
 import {Hub} from "@sentry/types/dist/hub";
 import {BackfillMessagePayload} from "../../../src/sqs/backfill";
-import sqsQueues from "../../../src/sqs/queues";
+import { sqsQueues } from "../../../src/sqs/queues";
 import {when} from "jest-when";
 import {booleanFlag, BooleanFlags} from "../../../src/config/feature-flags";
 
-jest.mock("../../../src/sqs/queues", () => {
-	return {
-		backfill: {sendMessage: jest.fn()}
-	}
-});
-
+jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
 
 describe("sync/branches", () => {
@@ -114,8 +109,7 @@ describe("sync/branches", () => {
 	let mockBackfillQueueSendMessage;
 
 	beforeEach(async () => {
-		mockBackfillQueueSendMessage = sqsQueues.backfill.sendMessage as jest.Mock;
-		mockBackfillQueueSendMessage.mockReset();
+		mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
 
 		Date.now = jest.fn(() => 12345678);
 
@@ -154,7 +148,7 @@ describe("sync/branches", () => {
 			.optionally() // TODO: need to remove optionally and make it explicit
 			.reply(200, {
 				token: "token",
-				expires_at: new Date().getTime() + 1_000_000
+				expires_at: Date.now() + 1_000_000
 			});
 	});
 

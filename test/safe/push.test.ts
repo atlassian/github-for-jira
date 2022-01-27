@@ -7,10 +7,9 @@ import { Installation, Subscription } from "../../src/models";
 import { Application } from "probot";
 import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
-import sqsQueues from "../../src/sqs/queues";
-import {pushQueueMessageHandler, PushQueueMessagePayload} from "../../src/sqs/push";
-import {Context} from "../../src/sqs/index";
-import {Message} from "aws-sdk/clients/sqs";
+import { pushQueueMessageHandler, PushQueueMessagePayload } from "../../src/sqs/push";
+import { Context } from "../../src/sqs/index";
+import { Message } from "aws-sdk/clients/sqs";
 
 const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
 	payload: createJobData(payload, jiraHost),
@@ -40,7 +39,6 @@ describe("Push Webhook", () => {
 			jiraClientKey: clientKey
 		});
 	});
-
 
 
 	afterEach(async () => {
@@ -116,7 +114,7 @@ describe("Push Webhook", () => {
 				.optionally() // TODO: need to remove optionally and make it explicit
 				.reply(200, {
 					token: "token",
-					expires_at: new Date().getTime() + 1_000_000
+					expires_at: Date.now() + 1_000_000
 				});
 		});
 
@@ -458,14 +456,11 @@ describe("Push Webhook", () => {
 
 		beforeAll(async () => {
 			Date.now = jest.fn(() => 12345678);
-			//Start worker node for queues processing
 			await start();
 		});
 
 		afterAll(async () => {
-			//Stop worker node
 			await stop();
-			await sqsQueues.push.waitUntilListenerStopped();
 		});
 
 		function createPushEventAndMockRestRequestsForItsProcessing() {
@@ -476,7 +471,7 @@ describe("Push Webhook", () => {
 				.optionally() // TODO: need to remove optionally and make it explicit
 				.reply(200, {
 					token: "token",
-					expires_at: new Date().getTime()
+					expires_at: Date.now()
 				});
 
 			githubNock

@@ -72,12 +72,12 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 
 function handleFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult {
 	if (error instanceof OldRateLimitingError) {
-		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
+		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true }
 	}
 
 	if (error instanceof RateLimitingError) {
-		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
+		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true }
 	}
 

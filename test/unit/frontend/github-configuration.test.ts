@@ -144,7 +144,7 @@ describe("Github Configuration", () => {
 				.post(`/app/installations/${sub.gitHubInstallationId}/access_tokens`)
 				.reply(200, {
 					token: "token",
-					expires_at: new Date().getTime() + 999999
+					expires_at: Date.now() + 999999
 				});
 
 			githubNock
@@ -227,7 +227,7 @@ describe("Github Configuration", () => {
 				.post(`/app/installations/${sub.gitHubInstallationId}/access_tokens`)
 				.reply(200, {
 					token: "token",
-					expires_at: new Date().getTime() + 999999
+					expires_at: Date.now() + 999999
 				});
 
 			githubNock
