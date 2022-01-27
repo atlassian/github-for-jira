@@ -10,7 +10,7 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/common-middleware";
 import { InstallationId } from "./installation-id";
-import {GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery} from "./github-queries";
+import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
 
 /**
  * The response type for GitHub GraphQL calls.
@@ -124,7 +124,7 @@ export default class GitHubClient {
 	}
 
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		return  await this.axios.post<GraphQlQueryResponse<T>>("https://api.github.com/graphql",
+		return await this.axios.post<GraphQlQueryResponse<T>>("https://api.github.com/graphql",
 			{
 				query,
 				variables
@@ -160,7 +160,7 @@ export default class GitHubClient {
 	 * Get publicly available information for user with given username.
 	 */
 	// TODO: add a unit test
-	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
+	public async getUserByUsername(username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> {
 		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/:username`, {}, {
 			username
 		});
@@ -169,7 +169,7 @@ export default class GitHubClient {
 	/**
 	 * Get a single commit for the given repository.
 	 */
-	public getCommit = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> => {
+	public async getCommit(owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> {
 		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/:owner/:repo/commits/:ref`, {}, {
 			owner,
 			repo,
@@ -178,13 +178,13 @@ export default class GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql<{viewer: {repositories: {totalCount: number}}}>(ViewerRepositoryCountQuery);
+		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
 
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
 
-	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string) : Promise<GetBranchesResponse> {
+	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string): Promise<GetBranchesResponse> {
 		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,
 			{
 				owner: owner,
@@ -193,6 +193,32 @@ export default class GitHubClient {
 				cursor
 			});
 		return response?.data?.data;
+	}
+
+	public async isAdmin(orgName: string, userName: string, orgType: string): Promise<boolean> {
+		// If this is a user installation, the "admin" is the user that owns the repo
+		if (orgType === "User") {
+			return orgName === userName;
+		}
+
+		// Otherwise this is an organization installation and we need to ask GitHub for the role of the logged in user
+		try {
+
+			const membership = await this.get<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>(`/orgs/:org/memberships/:user`, {}, {
+				org: orgName,
+				user: userName
+			});
+
+			this.logger.info(`isAdmin: User ${userName} has ${membership.data.role} role for org ${orgName}`);
+			return membership.data.role === "admin";
+		} catch (err) {
+			this.logger.warn({
+				err,
+				orgName,
+				userName
+			}, `could not determine admin status of user ${userName} in org ${orgName}`);
+			return false;
+		}
 	}
 
 }

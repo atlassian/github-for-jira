@@ -56,23 +56,24 @@ const installationConnectedStatus = async (
 const getInstallationsWithAdmin = async (
 	log: Logger,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[],
-	login: string,
-	isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> => {
+	login: string
+): Promise<InstallationWithAdmin[]> => {
 	const installationsWithAdmin: InstallationWithAdmin[] = [];
 
 	for (const installation of installations) {
+		const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
+
 		// See if we can get the membership for this user
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
-		const checkAdmin = isAdmin({
-			org: installation.account.login,
-			username: login,
-			type: installation.target_type
-		});
+		const checkAdminPromise = githubClient.isAdmin(
+			installation.account.login,
+			login,
+			installation.target_type);
+
+		const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
 
 		try {
-			const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
-			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
-			const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
+			const [admin, numberOfRepos] = await Promise.all([checkAdminPromise, numberOfReposPromise]);
 
 			log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
 
@@ -82,7 +83,11 @@ const getInstallationsWithAdmin = async (
 				admin
 			});
 		} catch (err) {
-			log.warn({err, installationId: installation.id, org: installation.account.login}, "Cannot check admin or get number of repos per org")
+			log.warn({
+				err,
+				installationId: installation.id,
+				org: installation.account.login
+			}, "Cannot check admin or get number of repos per org")
 		}
 	}
 	return installationsWithAdmin;
@@ -127,7 +132,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 	const {
 		github, // user-authenticated GitHub client
 		client, // app-authenticated GitHub client
-		isAdmin
 	} = res.locals;
 
 	const { data: { login } } = await github.users.getAuthenticated();
@@ -163,7 +167,7 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(log, installations, login, isAdmin);
+		const installationsWithAdmin = await getInstallationsWithAdmin(log, installations, login);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
