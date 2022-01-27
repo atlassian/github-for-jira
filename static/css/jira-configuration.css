@@ -100,21 +100,15 @@
   cursor: pointer;
 }
 
-.jiraConfiguration__table__cell,
-.jiraConfiguration__table__cell__settings {
-  /* override aui styling */
-  border-bottom: none !important;
-  border-top: none !important;
-  padding: 0.8em 0 !important;
-}
-
-.jiraConfiguration__table__syncWarningLink {
-  color: #586069 !important;
-}
-
-.jiraConfiguration__table__syncWarningLink:hover {
-  color: #0366d6 !important;
-  text-decoration: none;
+.jiraConfiguration__table__body
+  > .jiraConfiguration__table__row
+  > .jiraConfiguration__table__cell,
+.jiraConfiguration__table__body
+  > .jiraConfiguration__table__row
+  > .jiraConfiguration__table__cell__settings {
+  border-bottom: none;
+  border-top: none;
+  padding: 0.8em 0;
 }
 
 .jiraConfiguration__retryContainer {
@@ -151,13 +145,15 @@
   display: block;
 }
 
-.jiraConfiguration__table__cell__settings {
-  /* override aui styling */
-  padding: 0 !important;
-  text-align: right !important;
+.jiraConfiguration__table__body
+  > .jiraConfiguration__table__row
+  > .jiraConfiguration__table__cell__settings {
+  padding: 0;
+  text-align: right;
 }
 
-.jiraConfiguration__table__cell__settings__ellipsis {
+.jiraConfiguration__table__cell__settings
+  > .jiraConfiguration__table__cell__settings__ellipsis {
   background-color: #fff;
   border: none;
   box-shadow: none;
@@ -166,7 +162,7 @@
   height: 1em;
   margin: 0.1em 0.4em;
   position: relative;
-  right: 0 !important;
+  right: 0;
   top: 0em;
   width: 1em;
 }
@@ -177,30 +173,27 @@
   top: -0.5em;
 }
 
-.aui-dropdown2-trigger:not(.aui-dropdown2-trigger-arrowless) {
-  /* override aui styling */
-  padding-right: 0.2em !important;
+.jiraConfiguration__table__cell__settings
+  > .aui-dropdown2-trigger:not(.aui-dropdown2-trigger-arrowless) {
+  padding-right: 0.2em;
 }
 
-.jiraConfiguration__table__cell__settings > .jiraConfiguration__table__cell__settings__ellipsis:hover,
+.jiraConfiguration__table__cell__settings
+  > .jiraConfiguration__table__cell__settings__ellipsis:hover,
 .aui-button.active:not(.aui-button-link) {
-  background-color: #091E4208;
+  background-color: #091e4208;
 }
 
-.jiraConfiguration__table__cell__settings > .jiraConfiguration__table__cell__settings__ellipsis.bob,
+.jiraConfiguration__table__cell__settings
+  > .jiraConfiguration__table__cell__settings__ellipsis.bob,
 .aui-button.active:not(.aui-button-link) {
   background-color: #263858;
   color: #fff;
 }
 
-.jiraConfiguration__table__cell__settings > .jiraConfiguration__table__cell__settings__ellipsis::before {
+.jiraConfiguration__table__cell__settings
+  > .jiraConfiguration__table__cell__settings__ellipsis::before {
   content: none;
-}
-
-.aui-dropdown2 {
-  /* override aui styling */
-  margin-top: 0 !important;
-  padding: 1em 0;
 }
 
 .jiraConfiguration__table__cell__settings__headerItem {
@@ -211,31 +204,32 @@
   font-size: 0.8rem;
 }
 
-.jiraConfiguration__table__cell__settings__header {
-  margin-bottom: 0.3em;
+.aui-dropdown2 > .jiraConfiguration__table__cell__settings__header {
+  margin: 0.7em auto 0.3em;
 }
 
-.jiraConfiguration__table__cell__settings__dropdownItems {
-  /* override aui styling */
-  margin-top: 0 !important;
+.aui-dropdown2 > .jiraConfiguration__table__cell__settings__dropdownItems {
+  margin-top: 0;
 }
 
-.jiraConfiguration__table__cell__settings__dropdownItem {
-  /* override aui styling */
+.aui-dropdown2-item-group
+  > .jiraConfiguration__table__cell__settings__dropdownItem {
   cursor: pointer;
-  padding: 0.6em 1em !important;
+  padding: 0.6em 1em;
 }
 
-.jiraConfiguration__table__cell__settings__dropdownItem:hover {
-  background-color: #e9edf0 !important;
+.aui-dropdown2-item-group
+  > .jiraConfiguration__table__cell__settings__dropdownItem:hover {
+  background-color: #e9edf0;
 }
 
-.jiraConfiguration__table__cell__settings__dropdownItem:active,
-.jiraConfiguration__table__cell__settings__dropdownItem:focus {
-  /* override aui styling */
-  background-color: #ecedf0 !important;
-  box-shadow: none !important;
-  color: #455570 !important;
+.aui-dropdown2-item-group
+  > .jiraConfiguration__table__cell__settings__dropdownItem:active,
+.aui-dropdown2-item-group
+  > .jiraConfiguration__table__cell__settings__dropdownItem:focus {
+  background-color: #ecedf0;
+  box-shadow: none;
+  color: #455570;
 }
 
 .sync-connection-link.restart-backfill-button {
@@ -380,7 +374,8 @@ as the left panel navigation in Jira hijacks some of the screen */
     padding: 2em;
   }
 
-  .jiraConfiguration__table__cell__settings__ellipsis {
+  .jiraConfiguration__table__cell__settings
+    > .jiraConfiguration__table__cell__settings__ellipsis {
     right: 0.2em !important;
   }
 }
