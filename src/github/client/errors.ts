@@ -19,12 +19,11 @@ export class RateLimitingError extends GithubClientError {
 	 * The value of the x-ratelimit-reset header, i.e. the epoch seconds when the rate limit is refreshed.
 	 */
 	rateLimitReset: number;
-	rateLimitRemaining: number;
 
-	constructor(resetEpochSeconds: number, rateLimitRemaining: number, status?: number, cause?: AxiosError) {
-		super("Rate limiting error", status, cause);
-		this.rateLimitReset = resetEpochSeconds;
-		this.rateLimitRemaining = rateLimitRemaining;
+	constructor(response: AxiosResponse, cause?: AxiosError) {
+		super("Rate limiting error", response.status, cause);
+		const rateLimitResetHeaderValue: string = response.headers?.["x-ratelimit-reset"];
+		this.rateLimitReset =  parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
 	}
 }
 
@@ -37,8 +36,7 @@ export class BlockedIpError extends GithubClientError {
 /**
  * Type for errors section in GraphQL response
  */
-export type GraphQLErrors = [
-	{
+export type GraphQLError = {
 		message: string;
 		type: string;
 		path?: [string];
@@ -51,16 +49,15 @@ export type GraphQLErrors = [
 				column: number;
 			}
 		];
-	}
-];
+	};
 
-export class GraphQLError extends GithubClientError {
+export class GithubClientGraphQLError extends GithubClientError {
 
 	/**
 	 * errors section from the GraplQL response
 	 */
-	errors: GraphQLErrors;
-	constructor(message: string, errors: GraphQLErrors) {
+	errors: GraphQLError[];
+	constructor(message: string, errors: GraphQLError[]) {
 		super(message);
 		this.errors = errors;
 	}
@@ -68,9 +65,3 @@ export class GraphQLError extends GithubClientError {
 }
 
 const ONE_HOUR_IN_SECONDS = 60 * 60;
-
-export const rateLimitErrorFromResponse = (response: AxiosResponse, cause?: AxiosError): RateLimitingError => {
-	const rateLimitResetHeaderValue: string = response.headers?.["x-ratelimit-reset"];
-	const rateLimitReset: number = parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
-	return new RateLimitingError(rateLimitReset, 0, response.status, cause);
-}

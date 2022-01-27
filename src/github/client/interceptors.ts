@@ -1,9 +1,9 @@
-import {BlockedIpError, GithubClientError, rateLimitErrorFromResponse, RateLimitingError} from "./errors";
+import {BlockedIpError, GithubClientError, RateLimitingError} from "./errors";
 import Logger from "bunyan";
 import url from "url";
 import statsd from "../../config/statsd";
-import { metricError } from "../../config/metric-names";
-import { AxiosResponse } from "axios";
+import {metricError} from "../../config/metric-names";
+import {AxiosResponse} from "axios";
 
 /**
  * Extract the path name from a URL.
@@ -88,8 +88,7 @@ export const handleFailedRequest = (logger: Logger) =>
 			const rateLimitRemainingHeaderValue:string = response.headers?.["x-ratelimit-remaining"];
 			if(status === 403 && rateLimitRemainingHeaderValue == "0") {
 				logger.warn({ err: error }, "Rate limiting error");
-				const rateLimitingError = rateLimitErrorFromResponse(response, error);
-				return Promise.reject(rateLimitingError);
+				return Promise.reject(new RateLimitingError(response, error));
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {

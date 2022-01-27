@@ -11,11 +11,11 @@ import {getLogger} from "../../config/logger";
 import {urlParamsMiddleware} from "../../util/axios/common-middleware";
 import {InstallationId} from "./installation-id";
 import {GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery} from "./github-queries";
-import {GraphQLError, GraphQLErrors, rateLimitErrorFromResponse} from "./errors";
+import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
-	errors?: GraphQLErrors;
+	errors?: GraphQLError[];
 };
 
 
@@ -117,13 +117,15 @@ export default class GitHubClient {
 			});
 
 		const graphqlErrors = response.data.errors;
-		if(graphqlErrors && graphqlErrors.length > 0) {
+		if(graphqlErrors?.length) {
 
-			if (graphqlErrors[0].type == "RATE_LIMITED") {
-				return Promise.reject(rateLimitErrorFromResponse(response));
+
+			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
+				return Promise.reject(new RateLimitingError(response));
 			}
 
-			return Promise.reject(new GraphQLError(graphqlErrors[0].message, graphqlErrors));
+			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` :"");
+			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage , graphqlErrors));
 		}
 
 		return  response;

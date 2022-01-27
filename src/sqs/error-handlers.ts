@@ -24,12 +24,17 @@ const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 export const jiraAndGitHubErrorsHandler : ErrorHandler<any> = async (error: JiraClientError | Octokit.HookError | OldRateLimitingError | RateLimitingError | Error,
 	context: Context<any>) : Promise<ErrorHandlingResult> => {
 
-	const maybeResult = maybeHandleNonFailureCase(error, context);
+	const maybeResult = maybeHandleNonFailureCase(error, context)
+		|| maybeHandleRateLimitingError(error)
+		|| maybeHandleNonRetryableResponseCode(error, context);
+
 	if (maybeResult) {
 		return maybeResult;
 	}
 
-	return handleFailureCase(error, context);
+	//In case if error is unknown we should use exponential backoff
+	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
+	return { retryable: true, retryDelaySec: delaySec, isFailure: true }
 }
 
 
@@ -57,6 +62,10 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 		return { retryable: false, isFailure: false }
 	}
 
+	return undefined;
+}
+
+function maybeHandleNonRetryableResponseCode(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult | undefined {
 	//If error is Octokit.HookError or GithubClientError, then we need to check the response status
 	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a calss, so we'll just rely on status
 	//New GitHub Client error (GithubClientError) also has status parameter, so it will be covered by the following check too
@@ -66,11 +75,10 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 		context.log.warn({ err: maybeErrorWithStatus }, `Received error with ${maybeErrorWithStatus.status} status. Unretryable. Discarding the message`);
 		return { retryable: false, isFailure: false }
 	}
-
 	return undefined;
 }
 
-function handleFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult {
+function maybeHandleRateLimitingError(error: Error): ErrorHandlingResult | undefined {
 	if (error instanceof OldRateLimitingError) {
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (new Date().getTime() / 1000);
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true }
@@ -81,7 +89,5 @@ function handleFailureCase(error: Error, context: Context<PushQueueMessagePayloa
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true }
 	}
 
-	//In case if error is unknown we should use exponential backoff
-	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
-	return { retryable: true, retryDelaySec: delaySec, isFailure: true }
+	return undefined;
 }
