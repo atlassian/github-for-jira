@@ -1,11 +1,11 @@
 import _ from "lodash";
 import issueKeyParser from "jira-issue-key-parser";
-import {JiraDeploymentData} from "../interfaces/jira";
-import {GitHubAPI} from "probot";
-import {WebhookPayloadDeploymentStatus} from "@octokit/webhooks";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import {Octokit} from "@octokit/rest";
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import { JiraDeploymentData } from "../interfaces/jira";
+import { GitHubAPI } from "probot";
+import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { Octokit } from "@octokit/rest";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
@@ -150,7 +150,7 @@ export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeployment
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 
-	const {data: {commit: {message}}} = await githubClient.repos.getCommit({
+	const { data: { commit: { message } } } = await githubClient.repos.getCommit({
 		owner: payload.repository.owner.login,
 		repo: payload.repository.name,
 		ref: deployment.sha
@@ -179,7 +179,10 @@ export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeployment
 
 	const environment = mapEnvironment(deployment_status.environment);
 	if (environment === "unmapped") {
-		logger?.info(`Unmapped environment detected for deployment. Unmapped value is ${deployment_status}. Sending it as unmapped to Jira.`);
+		logger?.info({
+			environment: deployment_status.environment,
+			description: deployment.description
+		}, "Unmapped environment detected.");
 	}
 
 	return {

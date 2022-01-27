@@ -4,7 +4,7 @@ import { emitWebhookProcessedMetrics } from "../util/webhooks";
 
 export default async (context: CustomContext, jiraClient): Promise<void> => {
 	const { github, payload, log: logger } = context;
-	const jiraPayload = await transformWorkflow(github, payload, jiraClient.baseURL, logger);
+	const jiraPayload = await transformWorkflow(github, payload, logger);
 
 	if (!jiraPayload) {
 		logger.info(
