@@ -7,10 +7,10 @@
   width: 500px;
 }
 
-.githubSetup__inputLabel {
-  color: #172b4d !important;
-  font-size: 1.2rem !important;
-  font-weight: 500 !important;
+.githubSetup__form__fieldGroup > .githubSetup__inputLabel {
+  color: #172b4d;
+  font-size: 1.2rem;
+  font-weight: 500;
 }
 
 .githubSetup__form__inputContainer {
@@ -19,16 +19,16 @@
   margin: 1em auto 0.5em;
 }
 
-.githubSetup__form__input,
-.githubSetup__form__inputError {
-  -webkit-text-fill-color: #262b31 !important;
-  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
-  background-color: #fff !important;
+.githubSetup__form__inputContainer > .githubSetup__form__input,
+.githubSetup__form > .githubSetup__form__inputError {
+  -webkit-text-fill-color: #262b31;
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+  background-color: #fff;
   border-radius: 3.01px;
-  box-shadow: 0 0 0 1000px #fff inset !important;
-  box-sizing: border-box !important;
-  color: #262b31 !important;
-  font-size: inherit !important;
+  box-shadow: 0 0 0 1000px #fff inset;
+  box-sizing: border-box;
+  color: #262b31;
+  font-size: inherit;
   height: 2.14285714em;
   line-height: 1.42857143;
   margin-right: 0.5em;
@@ -38,28 +38,28 @@
   vertical-align: initial;
 }
 
-.githubSetup__form__input,
-.githubSetup__form__input:hover,
-.githubSetup__form__input:active,
-.githubSetup__form__input:focus,
-.githubSetup__form__input:focus-within,
-.githubSetup__form__input:focus-visible,
-.githubSetup__form__input:target {
-  border: 2px solid #4c9aff !important;
+.githubSetup__form__inputContainer > .githubSetup__form__input,
+.githubSetup__form__inputContainer > .githubSetup__form__input:hover,
+.githubSetup__form__inputContainer > .githubSetup__form__input:active,
+.githubSetup__form__inputContainer > .githubSetup__form__input:focus,
+.githubSetup__form__inputContainer > .githubSetup__form__input:focus-within,
+.githubSetup__form__inputContainer > .githubSetup__form__input:focus-visible,
+.githubSetup__form__inputContainer > .githubSetup__form__input:target {
+  border: 2px solid #4c9aff;
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
-.githubSetup__form__inputError,
-.githubSetup__form__inputError:hover,
-.githubSetup__form__inputError:active,
-.githubSetup__form__inputError:focus,
-.githubSetup__form__inputError:focus-within,
-.githubSetup__form__inputError:focus-visible,
-.githubSetup__form__inputError:target,
-.githubSetup__form__inputError:visited {
-  border: 2px solid #de350b !important;
-  border-color: #de350b !important;
-  outline: none !important;
+.githubSetup__form > .githubSetup__form__inputError,
+.githubSetup__form > .githubSetup__form__inputError:hover,
+.githubSetup__form > .githubSetup__form__inputError:active,
+.githubSetup__form > .githubSetup__form__inputError:focus,
+.githubSetup__form > .githubSetup__form__inputError:focus-within,
+.githubSetup__form > .githubSetup__form__inputError:focus-visible,
+.githubSetup__form > .githubSetup__form__inputError:target,
+.githubSetup__form > .githubSetup__form__inputError:visited {
+  border: 2px solid #de350b;
+  border-color: #de350b;
+  outline: none;
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
