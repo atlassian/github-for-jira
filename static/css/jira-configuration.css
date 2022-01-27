@@ -69,10 +69,9 @@
   line-height: 1.6;
 }
 
-.jiraConfiguration__table {
+.jiraConfiguration_content > .jiraConfiguration__table {
   color: #172b4d;
-  /* override aui styling */
-  margin-top: 2.5em !important;
+  margin-top: 2.5em;
   table-layout: fixed;
   width: 100%;
 }
@@ -82,19 +81,18 @@
   font-size: 0.8rem;
 }
 
-.jiraConfiguration__table__head__title {
+.jiraConfiguration__table__head_row > .jiraConfiguration__table__head__title {
   font-weight: normal;
-  /* override aui styling */
-  padding: 0.3em 0 !important;
+  padding: 0.3em 0;
 }
 
 .jiraConfiguration__table__head__title:not(:last-child) {
   width: 30%;
 }
 
-.jiraConfiguration__table__head__title:last-child {
-  /* override aui styling */
-  padding-right: 1em !important;
+.jiraConfiguration__table__head_row
+  > .jiraConfiguration__table__head__title:last-child {
+  padding-right: 1em;
   text-align: right;
 }
 
