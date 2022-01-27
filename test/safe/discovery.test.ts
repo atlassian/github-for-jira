@@ -12,6 +12,7 @@ jest.mock("../../src/config/feature-flags");
 describe("Discovery Queue Test", () => {
 
 	const TEST_INSTALLATION_ID = 1234;
+	let sendMessageSpy: jest.SpyInstance;
 
 	beforeEach(async () => {
 		await createWebhookApp();
@@ -27,28 +28,20 @@ describe("Discovery Queue Test", () => {
 			gitHubInstallationId: TEST_INSTALLATION_ID,
 			jiraClientKey: clientKey
 		});
+
+		await sqsQueues.purge();
+		await start();
+
+		sendMessageSpy = jest.spyOn(sqsQueues.backfill, "sendMessage");
 	});
 
 	afterEach(async () => {
 		await Installation.destroy({ truncate: true });
 		await Subscription.destroy({ truncate: true });
-	});
-
-	let originalBackfillQueueSendMessageFunction;
-
-	beforeAll(async () => {
-		await start();
-		originalBackfillQueueSendMessageFunction = sqsQueues.backfill.sendMessage;
-		sqsQueues.backfill.sendMessage = jest.fn();
-	});
-
-	afterAll(async () => {
-		sqsQueues.backfill.sendMessage = originalBackfillQueueSendMessageFunction;
 		await stop();
 	});
 
 	const mockGitHubReposResponses = () => {
-
 		githubNock
 			.post("/app/installations/1234/access_tokens")
 			.optionally() // TODO: need to remove optionally and make it explicit
@@ -62,48 +55,25 @@ describe("Discovery Queue Test", () => {
 			.reply(200, require("../fixtures/list-repositories.json"));
 	};
 
-
 	async function verify2RepositoriesInTheStateAndBackfillMessageSent() {
-
-		expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
-
+		expect(sendMessageSpy).toBeCalledTimes(1);
 		const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID);
-
-		if (!subscription) {
-			throw "Subsription should not be null";
-		}
-
-		console.log("Checking for subscription ID" + subscription.id);
-
-
-		const states = await RepoSyncState.findAllFromSubscription(subscription);
-
+		expect(subscription).toBeTruthy();
+		const states = await RepoSyncState.findAllFromSubscription(subscription!);
 		expect(states.length).toBe(2);
-
 	}
 
 	it("Discovery sqs queue processes the message", async () => {
-
-
 		mockGitHubReposResponses();
-
 		await sqsQueues.discovery.sendMessage({ installationId: TEST_INSTALLATION_ID, jiraHost });
-
 		await waitUntil(async () => {
-
 			await verify2RepositoriesInTheStateAndBackfillMessageSent();
-
 		});
 	});
 
 	it("Discovery queue listener works correctly", async () => {
-
 		mockGitHubReposResponses();
-
 		await discovery(app)({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
-
 		await verify2RepositoriesInTheStateAndBackfillMessageSent();
 	});
-
-
 });

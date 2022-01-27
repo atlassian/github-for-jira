@@ -54,6 +54,7 @@ afterEach(() => {
 		AppTokenHolder.getInstance().clear(); // Clear App token cache
 		nock.cleanAll(); // removes HTTP mocks
 		jest.resetAllMocks(); // Removes jest mocks
+		jest.restoreAllMocks();
 	}
 });
 
