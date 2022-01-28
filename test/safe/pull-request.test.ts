@@ -22,11 +22,6 @@ describe("Pull Request Webhook", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Subscription.destroy({ truncate: true });
-		await Installation.destroy({ truncate: true });
-	});
-
 	it("should have reviewers on pull request action", async () => {
 		const fixture = require("../fixtures/pull-request-basic.json");
 

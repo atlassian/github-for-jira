@@ -31,8 +31,6 @@ describe.skip("Deployment Webhook", () => {
 	});
 
 	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
 		await stop();
 	});
 

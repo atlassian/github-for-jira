@@ -36,8 +36,6 @@ describe.skip("Discovery Queue Test", () => {
 	});
 
 	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
 		await stop();
 	});
 

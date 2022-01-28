@@ -21,10 +21,6 @@ describe("Github Setup", () => {
 		}));
 	});
 
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-	});
-
 	describe("#GET", () => {
 		it("should return HTML when jiraHost is missing", async () =>
 			supertest(frontendApp)

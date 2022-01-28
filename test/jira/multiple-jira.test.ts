@@ -35,11 +35,6 @@ describe("multiple Jira instances", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Subscription.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-	});
-
 	it("should not linkify issue keys for jira instance that has matching issues", async () => {
 		const fixture = require("../fixtures/pull-request-multiple-invalid-issue-key.json");
 		githubNock.get("/users/test-pull-request-user-login")

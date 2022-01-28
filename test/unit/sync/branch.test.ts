@@ -2,17 +2,17 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { branchesNoLastCursor } from "../../fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
-import {Installation, RepoSyncState, Subscription} from "../../../src/models";
+import { Installation, RepoSyncState, Subscription } from "../../../src/models";
 import { Application } from "probot";
 import { createWebhookApp } from "../../utils/probot";
 import { processInstallation } from "../../../src/sync/installation";
 import nock from "nock";
-import {getLogger} from "../../../src/config/logger";
-import {Hub} from "@sentry/types/dist/hub";
-import {BackfillMessagePayload} from "../../../src/sqs/backfill";
+import { getLogger } from "../../../src/config/logger";
+import { Hub } from "@sentry/types/dist/hub";
+import { BackfillMessagePayload } from "../../../src/sqs/backfill";
 import { sqsQueues } from "../../../src/sqs/queues";
-import {when} from "jest-when";
-import {booleanFlag, BooleanFlags} from "../../../src/config/feature-flags";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 
 jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
@@ -120,7 +120,8 @@ describe("sync/branches", () => {
 			clientKey: "client-key"
 		});
 
-		const subscription = await Subscription.create({gitHubInstallationId: installationId,
+		const subscription = await Subscription.create({
+			gitHubInstallationId: installationId,
 			jiraHost,
 			syncStatus: "ACTIVE"
 		});
@@ -153,24 +154,19 @@ describe("sync/branches", () => {
 	});
 
 
-
 	afterEach(async () => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		sqsQueues.backfill.sendMessage.mockReset();
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-		await RepoSyncState.destroy({truncate: true});
-	})
+		mocked(sqsQueues.backfill.sendMessage).mockReset();
+	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload) => {
 		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
-	}
+	};
 
 	const branchSyncTests = () => {
 		it("should sync to Jira when branch refs have jira references", async () => {
-			const data: BackfillMessagePayload = {installationId, jiraHost};
+			const data: BackfillMessagePayload = { installationId, jiraHost };
 			nockBranchRequest(branchNodesFixture);
 
 			jiraNock
@@ -181,11 +177,11 @@ describe("sync/branches", () => {
 				.reply(200);
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data)
+			verifyMessageSent(data);
 		});
 
 		it("should send data if issue keys are only present in commits", async () => {
-			const data = {installationId, jiraHost};
+			const data = { installationId, jiraHost };
 			nockBranchRequest(branchCommitsHaveKeys);
 
 			jiraNock
@@ -196,11 +192,11 @@ describe("sync/branches", () => {
 				.reply(200);
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data)
+			verifyMessageSent(data);
 		});
 
 		it("should send data if issue keys are only present in an associatd PR title", async () => {
-			const data = {installationId, jiraHost};
+			const data = { installationId, jiraHost };
 			nockBranchRequest(associatedPRhasKeys);
 
 			jiraNock
@@ -248,22 +244,22 @@ describe("sync/branches", () => {
 				.reply(200);
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data)
+			verifyMessageSent(data);
 		});
 
 		it("should not call Jira if no issue keys are found", async () => {
-			const data = {installationId, jiraHost};
+			const data = { installationId, jiraHost };
 			nockBranchRequest(branchNoIssueKeys);
 
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data)
+			verifyMessageSent(data);
 			expect(scope).not.toBeDone();
 			nock.removeInterceptor(interceptor);
 		});
-	}
+	};
 
 	describe("New GH Client feature flag is OFF", () => {
 
@@ -273,7 +269,7 @@ describe("sync/branches", () => {
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(false);
-		})
+		});
 
 		branchSyncTests();
 	});
@@ -286,7 +282,7 @@ describe("sync/branches", () => {
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(true);
-		})
+		});
 
 		branchSyncTests();
 	});

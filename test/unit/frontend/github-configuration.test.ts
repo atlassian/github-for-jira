@@ -58,11 +58,6 @@ describe("Github Configuration", () => {
 		}));
 	});
 
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-	});
-
 	describe("Github Token Validation", () => {
 		it("should return redirect to github oauth flow for GET request if token is missing", async () =>
 			supertest(frontendApp)

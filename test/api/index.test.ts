@@ -3,7 +3,7 @@ import express, { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import api from "../../src/api";
 import SubscriptionModel from "../../src/models/subscription";
-import { RepoSyncState, Subscription } from "../../src/models";
+import { Subscription } from "../../src/models";
 import { wrapLogger } from "probot/lib/wrap-logger";
 
 describe("api/index", () => {
@@ -27,11 +27,6 @@ describe("api/index", () => {
 					}
 				}
 			})
-	});
-
-	afterEach(async () => {
-		await Subscription.destroy({ truncate: true });
-		await RepoSyncState.destroy({ truncate: true });
 	});
 
 	const createApp = async () => {

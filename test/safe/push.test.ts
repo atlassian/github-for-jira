@@ -41,8 +41,6 @@ describe("Push Webhook", () => {
 
 
 	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
 		//We have to restore Date.now to avoid errors in SQS Client.
 		//SQS Client uses Date.now and fails if it is "undefined"
 		//Hence we mock Date with jest, it will be returning undefined when we clean all mocks
@@ -115,10 +113,6 @@ describe("Push Webhook", () => {
 					token: "token",
 					expires_at: Date.now() + 1_000_000
 				});
-		});
-
-		afterEach(async () => {
-			await Subscription.destroy({ truncate: true });
 		});
 
 		it("should update the Jira issue when no username is present", async () => {

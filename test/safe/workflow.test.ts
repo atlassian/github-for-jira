@@ -22,11 +22,6 @@ describe("Workflow Webhook", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-	});
-
 	describe("workflow_run", () => {
 		it("should update the Jira issue with the linked GitHub workflow_run", async () => {
 			const fixture = require("../fixtures/workflow-basic.json");

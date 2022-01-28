@@ -36,10 +36,6 @@ describe("verify-installation", () => {
 		});
 	}
 
-	afterEach(async () => {
-		await installation.destroy();
-	})
-
 	test("returns true when Jira responds with 200", async () => {
 		mockJiraResponse(200);
 		expect(await verifyInstallation(installation, getLogger("test"))()).toBeTruthy();
