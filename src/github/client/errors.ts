@@ -3,11 +3,13 @@ import { AxiosError } from "axios";
 export class GithubClientError extends Error {
 	status?: number;
 	cause: AxiosError;
+	githubRequestId: string;
 	constructor(message: string, cause: AxiosError, status?: number) {
 		super(message);
 		this.status = status;
 		this.cause = { ...cause, config: {} };
-		this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack
+		this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
+		this.githubRequestId = cause.response?.headers["x-github-request-id"];
 	}
 }
 
