@@ -63,32 +63,45 @@ const getInstallationsWithAdmin = async (
 	for (const installation of installations) {
 		const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
 
-		// See if we can get the membership for this user
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
-		const checkAdminPromise = githubClient.isAdmin(
-			installation.account.login,
-			login,
-			installation.target_type);
+		const getAdminStatus = async (): Promise<boolean> => {
+			try {
+				return githubClient.isAdmin(
+					installation.account.login,
+					login,
+					installation.target_type);
+			} catch (err) {
+				log.warn({
+					err,
+					installationId: installation.id,
+					org: installation.account.login
+				}, "Could not check admin status! Falling back to 'true' to unblock the user!");
+				return true;
+			}
+		};
 
-		const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
-
-		try {
-			const [admin, numberOfRepos] = await Promise.all([checkAdminPromise, numberOfReposPromise]);
-
-			log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
-
-			installationsWithAdmin.push({
-				...installation,
-				numberOfRepos: numberOfRepos || 0,
-				admin
-			});
-		} catch (err) {
-			log.warn({
-				err,
-				installationId: installation.id,
-				org: installation.account.login
-			}, "Cannot check admin or get number of repos per org")
+		const getNumberOfRepos = async (): Promise<number> => {
+			try {
+				return githubClient.getNumberOfReposForInstallation();
+			} catch (err) {
+				log.warn({
+					err,
+					installationId: installation.id,
+					org: installation.account.login
+				}, "Could not get number of repos! Falling back to 0!");
+				return 0;
+			}
 		}
+
+		const [admin, numberOfRepos] = await Promise.all([getAdminStatus(), getNumberOfRepos()]);
+
+		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
+
+		installationsWithAdmin.push({
+			...installation,
+			numberOfRepos: numberOfRepos || 0,
+			admin
+		});
 	}
 	return installationsWithAdmin;
 };
