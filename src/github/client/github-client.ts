@@ -107,7 +107,7 @@ export default class GitHubClient {
 	}
 
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		const response = await this.axios.post<GraphQlQueryResponse<T>>("https://api.github.com/graphql",
+		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.githubInstallationId.githubBaseUrl +"/graphql",
 			{
 				query,
 				variables
