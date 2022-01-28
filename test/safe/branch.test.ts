@@ -13,17 +13,6 @@ describe.skip("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
-	const mockGitHubAuthRequest = () =>
-		githubNock
-			.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
-			.optionally()
-			.reply(200, {
-				expires_at: Date.now() + 3600,
-				permissions: {},
-				repositories: {},
-				token: "token"
-			});
-
 	beforeEach(async () => {
 		app = await createWebhookApp();
 		const clientKey = "client-key";
@@ -58,7 +47,7 @@ describe.skip("Branch Webhook", () => {
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
-			mockGitHubAuthRequest();
+			githubAccessTokenNock(gitHubInstallationId);
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
 					ref: `refs/${ref}`,
@@ -166,7 +155,7 @@ describe.skip("Branch Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(false);
 
-			mockGitHubAuthRequest();
+			githubAccessTokenNock(gitHubInstallationId);
 
 			const fixture = require("../fixtures/branch-basic.json");
 

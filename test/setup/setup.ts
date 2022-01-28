@@ -8,6 +8,31 @@ import { sequelize } from "../../src/models/sequelize";
 // in other others because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
 
+type AccessTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
+
+declare global {
+	let jiraHost: string;
+	let jiraNock: nock.Scope;
+	let githubNock: nock.Scope;
+	let gheNock: nock.Scope;
+	let gheUrl: string;
+	let githubAccessTokenNock: AccessTokenNockFunc;
+	let gheAccessTokenNock: AccessTokenNockFunc;
+	// eslint-disable-next-line @typescript-eslint/no-namespace
+	namespace NodeJS {
+		interface Global {
+			jiraHost: string;
+			jiraNock: nock.Scope;
+			githubNock: nock.Scope;
+			gheNock: nock.Scope;
+			gheUrl: string;
+			githubAccessTokenNock: AccessTokenNockFunc;
+			gheAccessTokenNock: AccessTokenNockFunc;
+		}
+	}
+}
+
+
 const resetEnvVars = () => {
 	// Assign defaults to process.env, but don't override existing values if they
 	// are already set in the environment.
@@ -21,21 +46,19 @@ const clearState = async () => Promise.all([
 	sequelize.truncate({ truncate: true })
 ]);
 
-declare global {
-	let jiraHost: string;
-	let jiraNock: nock.Scope;
-	let githubNock: nock.Scope;
-	let gheNock: nock.Scope;
-	// eslint-disable-next-line @typescript-eslint/no-namespace
-	namespace NodeJS {
-		interface Global {
-			jiraHost: string;
-			jiraNock: nock.Scope;
-			githubNock: nock.Scope;
-			gheNock: nock.Scope;
-		}
-	}
-}
+const accessToken = (scope: nock.Scope): AccessTokenNockFunc =>
+	(installationId: number | string, returnToken = "token", expires = Date.now() + 3600, expectedAuthToken?: string) => {
+		scope
+			.post(`/app/installations/${installationId}/access_tokens`)
+			.matchHeader(
+				"Authorization",
+				expectedAuthToken ? `Bearer ${expectedAuthToken}` : /^(Bearer|token) .+$/i
+			)
+			.reply(200, {
+				token: returnToken,
+				expires_at: expires
+			});
+	};
 
 beforeAll(async () => {
 	resetEnvVars();
@@ -46,7 +69,10 @@ beforeEach(() => {
 	global.jiraHost = process.env.ATLASSIAN_URL || "";
 	global.jiraNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
-	global.gheNock = nock("http://github.mydomain.com");
+	global.gheUrl = "https://github.mydomain.com";
+	global.gheNock = nock(global.gheUrl);
+	global.githubAccessTokenNock = accessToken(githubNock);
+	global.gheAccessTokenNock = accessToken(gheNock);
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting

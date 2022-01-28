@@ -40,13 +40,7 @@ describe.skip("Discovery Queue Test", () => {
 	});
 
 	const mockGitHubReposResponses = () => {
-		githubNock
-			.post("/app/installations/1234/access_tokens")
-			.optionally() // TODO: need to remove optionally and make it explicit
-			.reply(200, {
-				token: "token",
-				expires_at: Date.now() + 1_000_000
-			});
+		githubAccessTokenNock(1234);
 
 		githubNock.get("/installation/repositories?per_page=100")
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
