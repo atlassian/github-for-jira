@@ -178,9 +178,17 @@ export default class GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
+		try {
+			const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
 
-		return response?.data?.data?.viewer?.repositories?.totalCount;
+			return response?.data?.data?.viewer?.repositories?.totalCount;
+		} catch (err) {
+			this.logger.warn({
+				err,
+				installation: this.githubInstallationId
+			}, `could not determine number of repos for installation ${this.githubInstallationId.installationId}`);
+			return 0;
+		}
 	}
 
 
