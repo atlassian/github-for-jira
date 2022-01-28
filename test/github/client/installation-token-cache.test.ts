@@ -1,5 +1,6 @@
 import InstallationTokenCache from "../../../src/github/client/installation-token-cache";
 import AuthToken, { ONE_MINUTE, TEN_MINUTES } from "../../../src/github/client/auth-token";
+jest.unmock("lru-cache");
 
 describe("InstallationTokenCache", () => {
 

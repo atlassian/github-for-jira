@@ -360,7 +360,7 @@ export class SqsQueue<MessagePayload> {
 
 			// Change message visibility timeout to the max processing time
 			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
-			await this.changeVisabilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, log);
+			await this.changeVisibilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, log);
 
 			const timeoutPromise = new Promise((_, reject) =>
 				setTimeout(() => reject(new SqsTimeoutError()), this.timeoutSec * 1000)
@@ -408,7 +408,7 @@ export class SqsQueue<MessagePayload> {
 		const retryDelaySec = errorHandlingResult.retryDelaySec;
 		if (retryDelaySec !== undefined /*zero seconds delay is also supported*/) {
 			log.info(`Delaying the retry for ${retryDelaySec} seconds`);
-			await this.changeVisabilityTimeout(message, retryDelaySec, log);
+			await this.changeVisibilityTimeout(message, retryDelaySec, log);
 		}
 	}
 
@@ -416,10 +416,14 @@ export class SqsQueue<MessagePayload> {
 		return context.receiveCount >= this.maxAttempts;
 	}
 
-	private async changeVisabilityTimeout(message: Message, timeout: number, logger: Logger): Promise<void> {
-
+	private async changeVisibilityTimeout(message: Message, timeout: number, logger: Logger): Promise<void> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`);
+			return;
+		}
+
+		if(!Number.isInteger(timeout) || timeout < 0) {
+			logger.error(`Timeout needs to be a positive integer.`);
 			return;
 		}
 

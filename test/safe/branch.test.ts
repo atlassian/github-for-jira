@@ -9,7 +9,7 @@ import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
 
-describe("Branch Webhook", () => {
+describe.skip("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
@@ -37,7 +37,6 @@ describe("Branch Webhook", () => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
-		// await sqsQueues.purge();
 		await start();
 	});
 

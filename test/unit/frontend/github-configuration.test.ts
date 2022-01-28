@@ -282,18 +282,24 @@ describe("Github Configuration", () => {
 	});
 
 	describe("#POST", () => {
-		it("should return a 401 if no GitHub token present in session", () =>
-			supertest(frontendApp)
+		it("should return a 401 if no GitHub token present in session", async () => {
+			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({})
 				.set(
 					"Cookie",
 					getSignedCookieHeader({ jiraHost })
 				)
-				.expect(401));
+				.expect(401);
+		});
 
-		it("should return a 401 if no Jira host present in session", () =>
-			supertest(frontendApp)
+		it("should return a 401 if no Jira host present in session", async () => {
+			githubNock
+				.get("/")
+				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
+				.reply(200);
+
+			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({})
 				.set(
@@ -302,7 +308,8 @@ describe("Github Configuration", () => {
 						githubToken: "test-github-token"
 					})
 				)
-				.expect(401));
+				.expect(401);
+		});
 
 		it("should return a 401 if the user doesn't have access to the requested installation ID", async () => {
 			// This is for github token validation check

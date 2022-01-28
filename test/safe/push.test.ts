@@ -19,7 +19,6 @@ const createMessageProcessingContext = (payload, jiraHost: string): Context<Push
 	lastAttempt: false
 });
 
-
 describe("Push Webhook", () => {
 
 	const realDateNow = Date.now.bind(global.Date);
