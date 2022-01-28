@@ -178,17 +178,8 @@ export default class GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		try {
-			const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
-
-			return response?.data?.data?.viewer?.repositories?.totalCount;
-		} catch (err) {
-			this.logger.warn({
-				err,
-				installation: this.githubInstallationId
-			}, `could not determine number of repos for installation ${this.githubInstallationId.installationId}`);
-			return 0;
-		}
+		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
+		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
 
@@ -210,23 +201,13 @@ export default class GitHubClient {
 		}
 
 		// Otherwise this is an organization installation and we need to ask GitHub for the role of the logged in user
-		try {
+		const membership = await this.get<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>(`/orgs/:org/memberships/:user`, {}, {
+			org: orgName,
+			user: userName
+		});
 
-			const membership = await this.get<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>(`/orgs/:org/memberships/:user`, {}, {
-				org: orgName,
-				user: userName
-			});
-
-			this.logger.info(`isAdmin: User ${userName} has ${membership.data.role} role for org ${orgName}`);
-			return membership.data.role === "admin";
-		} catch (err) {
-			this.logger.warn({
-				err,
-				orgName,
-				userName
-			}, `could not determine admin status of user ${userName} in org ${orgName}`);
-			return false;
-		}
+		this.logger.info(`isAdmin: User ${userName} has ${membership.data.role} role for org ${orgName}`);
+		return membership.data.role === "admin";
 	}
 
 }
