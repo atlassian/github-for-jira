@@ -66,7 +66,7 @@ const getInstallationsWithAdmin = async (
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
 		const getAdminStatus = async (): Promise<boolean> => {
 			try {
-				return githubClient.isAdmin(
+				return await githubClient.isAdmin(
 					installation.account.login,
 					login,
 					installation.target_type);
@@ -82,7 +82,7 @@ const getInstallationsWithAdmin = async (
 
 		const getNumberOfRepos = async (): Promise<number> => {
 			try {
-				return githubClient.getNumberOfReposForInstallation();
+				return await githubClient.getNumberOfReposForInstallation();
 			} catch (err) {
 				log.warn({
 					err,
