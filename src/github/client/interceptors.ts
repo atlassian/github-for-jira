@@ -1,9 +1,9 @@
-import { BlockedIpError, GithubClientError, RateLimitingError } from "./errors";
+import {BlockedIpError, GithubClientError, RateLimitingError} from "./errors";
 import Logger from "bunyan";
 import url from "url";
 import statsd from "../../config/statsd";
-import { metricError } from "../../config/metric-names";
-import { AxiosResponse } from "axios";
+import {metricError} from "../../config/metric-names";
+import {AxiosResponse} from "axios";
 
 /**
  * Extract the path name from a URL.
@@ -12,7 +12,6 @@ const extractPath = (someUrl = ""): string =>
 	url.parse(someUrl).pathname || "";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS =	"100_1000_2000_3000_5000_10000_30000_60000";
-const ONE_HOUR_IN_SECONDS = 60 * 60;
 
 /**
  * Enrich the config object to include the time that the request started.
@@ -86,12 +85,10 @@ export const handleFailedRequest = (logger: Logger) =>
 			const status = response?.status;
 			const errorMessage = `Error executing Axios Request ` + error.message;
 
-			const rateLimitResetHeaderValue:string = response.headers?.["x-ratelimit-reset"];
 			const rateLimitRemainingHeaderValue:string = response.headers?.["x-ratelimit-remaining"];
 			if(status === 403 && rateLimitRemainingHeaderValue == "0") {
 				logger.warn({ err: error }, "Rate limiting error");
-				const rateLimitReset: number = parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
-				return Promise.reject(new RateLimitingError(rateLimitReset, 0, error, status));
+				return Promise.reject(new RateLimitingError(response, error));
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
@@ -102,7 +99,7 @@ export const handleFailedRequest = (logger: Logger) =>
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
 			isWarning? logger.warn(errorMessage) : logger.error({err: error}, errorMessage);
-			return Promise.reject(new GithubClientError(errorMessage, error, status));
+			return Promise.reject(new GithubClientError(errorMessage, status, error));
 		}
 		return Promise.reject(error);
 	}

@@ -1,38 +1,21 @@
 import Logger from "bunyan";
-import { Octokit } from "@octokit/rest";
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import {Octokit} from "@octokit/rest";
+import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse} from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
-import { GetPullRequestParams } from "./types";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
-import { metricHttpRequest } from "../../config/metric-names";
-import { getLogger } from "../../config/logger";
-import { urlParamsMiddleware } from "../../util/axios/common-middleware";
-import { InstallationId } from "./installation-id";
+import {GetPullRequestParams} from "./types";
+import {handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime} from "./interceptors";
+import {metricHttpRequest} from "../../config/metric-names";
+import {getLogger} from "../../config/logger";
+import {urlParamsMiddleware} from "../../util/axios/common-middleware";
+import {InstallationId} from "./installation-id";
 import {GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery} from "./github-queries";
+import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
 
-/**
- * The response type for GitHub GraphQL calls.
- * Was copied from @octokit/graphql to avoid adding a dependency on Octokit Graphql client
- */
-declare type GraphQlQueryResponse<ResponseData> = {
+type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
-	errors?: [
-		{
-			message: string;
-			path: [string];
-			extensions: {
-				[key: string]: any;
-			};
-			locations: [
-				{
-					line: number;
-					column: number;
-				}
-			];
-		}
-	];
+	errors?: GraphQLError[];
 };
 
 
@@ -124,7 +107,7 @@ export default class GitHubClient {
 	}
 
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		return  await this.axios.post<GraphQlQueryResponse<T>>("https://api.github.com/graphql",
+		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.githubInstallationId.githubBaseUrl +"/graphql",
 			{
 				query,
 				variables
@@ -132,6 +115,20 @@ export default class GitHubClient {
 			{
 				...await this.installationAuthenticationHeaders(),
 			});
+
+		const graphqlErrors = response.data.errors;
+		if(graphqlErrors?.length) {
+
+
+			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
+				return Promise.reject(new RateLimitingError(response));
+			}
+
+			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` :"");
+			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage , graphqlErrors));
+		}
+
+		return  response;
 	}
 
 	/**

@@ -19,8 +19,8 @@
   height: 100vh;
 }
 
-.gitHubConfiguration__header {
-  font-weight: 500 !important;
+.gitHubConfiguration > .gitHubConfiguration__header {
+  font-weight: 500;
 }
 
 .gitHubConfiguration__wrapper {
@@ -109,8 +109,8 @@
   margin: 0;
 }
 
-.gitHubConfiguration__orgContent__numberOfRepos {
-  margin: auto 0.5em !important;
+.gitHubConfiguration__orgContent__repoAccess > .gitHubConfiguration__orgContent__numberOfRepos {
+  margin: auto 0.5em;
 }
 
 .gitHubConfiguration__orgContent__connectedMsg,
@@ -178,9 +178,9 @@
   display: block;
 }
 
-.gitHubConfiguration__orgContent__connectedMsg {
+.gitHubConfiguration__orgContent__connect > .gitHubConfiguration__orgContent__connectedMsg {
   font-style: italic;
-  margin: 0 0.5em !important;
+  margin: 0 0.5em;
 }
 
 .gitHubConfiguration__orgContent__settingsContainer,

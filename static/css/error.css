@@ -13,9 +13,8 @@
     width: 11.5em;
 }
 
-.error-header {
-    /*  Override build.css */
-    font-size: 1.3rem !important;
+.error-container > .error-header {
+    font-size: 1.3rem;
 }
 
 .error-message {
