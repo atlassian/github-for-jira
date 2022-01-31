@@ -287,7 +287,10 @@ describe("Branch Webhook", () => {
 		it("should call the devinfo delete API when a branch is deleted", async () => {
 			const fixture = require("../fixtures/branch-delete.json");
 			jiraNock
-				.delete("/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref?_updateSequenceId=12345678")
+				.delete("/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref")
+				.query({
+					_updateSequenceId: 12345678
+				})
 				.reply(200);
 
 			Date.now = jest.fn(() => 12345678);
