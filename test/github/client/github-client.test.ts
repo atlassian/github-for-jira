@@ -143,7 +143,7 @@ describe("GitHub Client", () => {
 				"X-RateLimit-Remaining": "0"
 			}
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
@@ -170,7 +170,7 @@ describe("GitHub Client", () => {
 				"X-RateLimit-Reset": "2000"
 			}
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
@@ -193,7 +193,7 @@ describe("GitHub Client", () => {
 		}).reply(
 			403, { message: "Org has an IP allow list enabled" }
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
@@ -218,7 +218,7 @@ describe("GitHub Client", () => {
 				"X-RateLimit-Reset": "2000"
 			}
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
@@ -244,7 +244,7 @@ describe("GitHub Client", () => {
 				"X-RateLimit-Remaining": "0"
 			}
 		);
-		Date.now = jest.fn(() => 1000000);
+		mockSystemTime(1000000);
 		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {

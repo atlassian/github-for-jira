@@ -73,7 +73,7 @@ describe("multiple Jira instances", () => {
 
 		jiraNock.post("/rest/devinfo/0.10/bulk", jiraMatchingIssuesKeysBulkResponse).reply(200);
 		jira2Nock.post("/rest/devinfo/0.10/bulk", jiraMatchingIssuesKeysBulkResponse).reply(200);
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});
@@ -120,7 +120,7 @@ describe("multiple Jira instances", () => {
 		jiraNock.post("/rest/devinfo/0.10/bulk", jiraMultipleJiraBulkResponse).reply(200)
 		jira2Nock.post("/rest/devinfo/0.10/bulk", jiraMultipleJiraBulkResponse).reply(200);
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});

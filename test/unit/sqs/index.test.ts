@@ -22,7 +22,7 @@ function delay(time) {
 //We have to disable this rule here hence there is no way to have a proper test for sqs queue with await here
 /* eslint-disable jest/no-done-callback */
 const testLogger = getLogger("sqstest");
-describe.skip("SqsQueue tests", () => {
+describe("SqsQueue tests", () => {
 
 	const mockRequestHandler = jest.fn();
 
@@ -51,13 +51,12 @@ describe.skip("SqsQueue tests", () => {
 
 		let statsdIncrementSpy;
 
-		beforeEach(() => {
-
+		beforeEach(async () => {
 			testLogger.info("Running test: [" + expect.getState().currentTestName + "]")
 
 			statsdIncrementSpy = jest.spyOn(statsd, "increment");
 			queue = createSqsQueue(10);
-			queue.sqs.purgeQueue();
+			await queue.sqs.purgeQueue();
 			queue.start();
 
 			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
@@ -73,7 +72,6 @@ describe.skip("SqsQueue tests", () => {
 		});
 
 		it("Message gets received", (done: DoneCallback) => {
-
 			const testPayload = generatePayload();
 
 			mockRequestHandler.mockImplementation((context: Context<TestMessage>) => {

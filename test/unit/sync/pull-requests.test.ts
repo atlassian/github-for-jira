@@ -42,7 +42,7 @@ describe.skip("sync/pull-request", () => {
 			}
 		};
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		mocked(Subscription.getSingleInstallation)
 			.mockResolvedValue({

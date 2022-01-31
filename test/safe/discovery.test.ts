@@ -1,5 +1,4 @@
 import { Installation, RepoSyncState, Subscription } from "../../src/models";
-// import { start, stop } from "../../src/worker/startup";
 import { sqsQueues } from "../../src/sqs/queues";
 import { createWebhookApp } from "../utils/probot";
 import app from "../../src/worker/app";
@@ -39,8 +38,6 @@ describe("Discovery Queue Test", () => {
 	});
 
 	afterEach(async () => {
-		// await stop();
-
 		await sqsQueues.discovery.stop();
 		await sqsQueues.discovery.purgeQueue();
 	});

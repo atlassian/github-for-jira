@@ -4,7 +4,6 @@ import { Installation, Subscription } from "../../src/models";
 import { Application } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
-// import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
 import { sqsQueues } from "../../src/sqs/queues";
 
@@ -31,13 +30,10 @@ describe("Branch Webhook", () => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
-		// await start();
 		sqsQueues.branch.start();
 	});
 
 	afterEach(async () => {
-		// await stop();
-
 		await sqsQueues.branch.stop();
 		await sqsQueues.branch.purgeQueue();
 	});
@@ -232,7 +228,7 @@ describe("Branch Webhook", () => {
 				}
 			}).reply(200);
 
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture)).toResolve();
 
@@ -277,7 +273,7 @@ describe("Branch Webhook", () => {
 				.reply(200);
 
 			jest.spyOn(Date, "now").mockImplementation(() => 12345678);
-			// Date.now = jest.fn(() => 12345678);
+			// mockSystemTime(12345678);
 			await expect(app.receive(fixture)).toResolve();
 
 			await waitUntil(async () => {

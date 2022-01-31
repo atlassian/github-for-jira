@@ -4,11 +4,13 @@ import "./matchers/to-have-sent-metrics";
 import "./matchers/nock";
 import "./matchers/to-promise";
 import { sequelize } from "../../src/models/sequelize";
+import { mocked } from "ts-jest/utils";
 // WARNING: Be very careful what you import here as it might affect test
 // in other others because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
 
 type AccessTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
+type MockSystemTimeFunc = (time: number | string | Date) => void;
 
 declare global {
 	let jiraHost: string;
@@ -18,6 +20,7 @@ declare global {
 	let gheUrl: string;
 	let githubAccessTokenNock: AccessTokenNockFunc;
 	let gheAccessTokenNock: AccessTokenNockFunc;
+	let mockSystemTime: MockSystemTimeFunc;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
@@ -28,6 +31,7 @@ declare global {
 			gheUrl: string;
 			githubAccessTokenNock: AccessTokenNockFunc;
 			gheAccessTokenNock: AccessTokenNockFunc;
+			mockSystemTime: MockSystemTimeFunc;
 		}
 	}
 }
@@ -73,6 +77,10 @@ beforeEach(() => {
 	global.gheNock = nock(global.gheUrl);
 	global.githubAccessTokenNock = accessToken(githubNock);
 	global.gheAccessTokenNock = accessToken(gheNock);
+	global.mockSystemTime = (time: number | string | Date) => {
+		const mock = jest.isMockFunction(Date.now) ? mocked(Date.now) : jest.spyOn(Date, "now");
+		mock.mockReturnValue(new Date(time).getTime());
+	};
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting

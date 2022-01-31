@@ -159,7 +159,7 @@ describe("Pull Request Webhook", () => {
 			properties: { installationId: 1234 }
 		}).reply(200);
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});
@@ -217,7 +217,7 @@ describe("Pull Request Webhook", () => {
 			.query({ _updateSequenceId: 12345678 })
 			.reply(200);
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});
@@ -225,7 +225,7 @@ describe("Pull Request Webhook", () => {
 	it("should not update the Jira issue if the source repo of a pull_request was deleted", async () => {
 		const fixture = require("../fixtures/pull-request-null-repo.json");
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});
@@ -284,7 +284,7 @@ describe("Pull Request Webhook", () => {
 				html_url: "test-pull-request-author-url"
 			});
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});
@@ -455,7 +455,7 @@ describe("Pull Request Webhook", () => {
 				})
 				.reply(200);
 
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture[0])).toResolve();
 		});
@@ -568,7 +568,7 @@ describe("Pull Request Webhook", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture[1])).toResolve();
 		});
@@ -733,7 +733,7 @@ describe("Pull Request Webhook", () => {
 					}
 			}).reply(200);
 
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture[2])).toResolve();
 		});

@@ -76,7 +76,7 @@ describe("Workflow Webhook", () => {
 					}
 			}).reply(200);
 
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture)).toResolve();
 		});

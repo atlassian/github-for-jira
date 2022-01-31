@@ -2,7 +2,6 @@
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
-// import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
 import { sqsQueues } from "../../src/sqs/queues";
 
@@ -30,13 +29,10 @@ describe("Deployment Webhook", () => {
 			sharedSecret: "shared-secret"
 		});
 
-		// await sqsQueues.purge();
-		// await start();
 		await sqsQueues.deployment.start();
 	});
 
 	afterEach(async () => {
-		// await stop();
 		await sqsQueues.deployment.stop();
 		await sqsQueues.deployment.purgeQueue();
 	});

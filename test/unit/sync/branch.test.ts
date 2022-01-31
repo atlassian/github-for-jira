@@ -104,7 +104,7 @@ describe/*.each([true, false])*/("sync/branches - New GH Client feature flag is 
 	const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
 
 	beforeEach(async () => {
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await Installation.create({
 			gitHubInstallationId: installationId,
