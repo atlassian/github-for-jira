@@ -14,7 +14,7 @@ describe("Webhooks suite", () => {
 	const currentTime = 2000;
 
 	beforeEach(() => {
-		jest.spyOn(Date, "now").mockImplementation(() => currentTime);
+		mockSystemTime(currentTime);
 	});
 
 	describe("emitWebhookProcessingTimeMetrics", () => {

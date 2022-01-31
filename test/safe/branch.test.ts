@@ -114,7 +114,7 @@ describe("Branch Webhook", () => {
 				}
 			}).reply(200);
 
-			jest.spyOn(Date, "now").mockImplementation(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture)).toResolve();
 
@@ -160,8 +160,6 @@ describe("Branch Webhook", () => {
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(false);
-
-			// githubAccessTokenNock(gitHubInstallationId);
 
 			const fixture = require("../fixtures/branch-basic.json");
 
@@ -240,6 +238,7 @@ describe("Branch Webhook", () => {
 
 		it.skip("should not update Jira issue if there are no issue Keys in the branch name", async () => {
 			const fixture = require("../fixtures/branch-no-issues.json");
+			// TODO: This test makes no sense - getLastCommit cannot be called from here...
 			const getLastCommit = jest.fn();
 
 			await expect(app.receive(fixture)).toResolve();
@@ -253,6 +252,7 @@ describe("Branch Webhook", () => {
 
 		it.skip("should exit early if ref_type is not a branch", async () => {
 			const fixture = require("../fixtures/branch-invalid-ref_type.json");
+			// TODO: This test makes no sense - parseSmartCommit cannot be called from here...
 			const parseSmartCommit = jest.fn();
 
 			await expect(app.receive(fixture)).toResolve();
@@ -272,8 +272,8 @@ describe("Branch Webhook", () => {
 				.delete("/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref?_updateSequenceId=12345678")
 				.reply(200);
 
-			jest.spyOn(Date, "now").mockImplementation(() => 12345678);
-			// mockSystemTime(12345678);
+			mockSystemTime(12345678);
+
 			await expect(app.receive(fixture)).toResolve();
 
 			await waitUntil(async () => {
