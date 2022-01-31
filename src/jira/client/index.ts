@@ -47,8 +47,8 @@ async function getJiraClient(
 		issues: {
 			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
 				instance.get("/rest/api/latest/issue/:issue_id", {
+					params: query,
 					urlParams: {
-						...query,
 						issue_id: issueId
 					}
 				}),
@@ -132,8 +132,10 @@ async function getJiraClient(
 					instance.delete(
 						"/rest/devinfo/0.10/repository/:repositoryId/branch/:branchJiraId",
 						{
-							urlParams: {
+							params: {
 								_updateSequenceId: Date.now().toString(),
+							},
+							urlParams: {
 								repositoryId,
 								branchJiraId: getJiraId(branchRef)
 							}
@@ -156,8 +158,10 @@ async function getJiraClient(
 					instance.delete(
 						"/rest/devinfo/0.10/repository/:repositoryId/pull_request/:pullRequestId",
 						{
-							urlParams: {
+							params: {
 								_updateSequenceId: Date.now().toString(),
+							},
+							urlParams: {
 								repositoryId,
 								pullRequestId
 							}
@@ -171,8 +175,10 @@ async function getJiraClient(
 					}),
 				delete: (repositoryId: string) =>
 					instance.delete("/rest/devinfo/0.10/repository/:repositoryId", {
-						urlParams: {
+						params: {
 							_updateSequenceId: Date.now().toString(),
+						},
+						urlParams: {
 							repositoryId
 						}
 					}),

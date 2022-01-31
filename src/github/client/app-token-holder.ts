@@ -13,8 +13,8 @@ export type KeyLocator = (installationId: InstallationId) => string;
  * By default, we just look for a key in the `PRIVATE_KEY` env var.
  */
 export const cloudKeyLocator: KeyLocator = () => {
-	return PrivateKey.findPrivateKey() || ""
-}
+	return PrivateKey.findPrivateKey() || "";
+};
 
 /**
  * Holds app tokens for all GitHub apps that are connected and creates new tokens if necessary.
@@ -72,7 +72,7 @@ export default class AppTokenHolder {
 			exp: Math.floor(expirationDate.getTime() / 1000),
 			// issuer is the GitHub app ID
 			iss: appId.toString()
-		}
+		};
 
 		return new AuthToken(
 			encodeAsymmetric(jwtPayload, key, AsymmetricAlgorithm.RS256),
@@ -80,7 +80,7 @@ export default class AppTokenHolder {
 		);
 	}
 
-	public clear():void {
+	public clear(): void {
 		this.appTokenCache.reset();
 	}
 }

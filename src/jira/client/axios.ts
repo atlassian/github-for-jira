@@ -6,17 +6,10 @@ import statsd from "../../config/statsd";
 import { getLogger } from "../../config/logger";
 import { metricHttpRequest } from "../../config/metric-names";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
-import {urlParamsMiddleware} from "../../util/axios/common-middleware";
+import { urlParamsMiddleware } from "../../util/axios/url-params";
 
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
-
-// TODO: type hack to fix custom implementation of URL templating vars
-declare module "axios" {
-	interface AxiosRequestConfig {
-		urlParams?: Record<string, string>;
-	}
-}
 
 /**
  * Middleware to create a custom JWT for a request.
@@ -61,14 +54,14 @@ function getAuthMiddleware(secret: string) {
  */
 export class JiraClientError extends Error {
 	status?: number;
-	cause: AxiosError
+	cause: AxiosError;
 
-	constructor(message: string, cause: AxiosError, status?:number) {
+	constructor(message: string, cause: AxiosError, status?: number) {
 		super(message);
-		this.status = status
+		this.status = status;
 
 		//Remove config from the cause to prevent large payloads from being logged
-		this.cause = {...cause, config: {}};
+		this.cause = { ...cause, config: {} };
 	}
 }
 
@@ -111,9 +104,9 @@ function getErrorMiddleware(logger: Logger) {
 			// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
 			// Log exception only if it is error, because AxiosError contains the request payload
 			if (isWarning) {
-				logger.warn(errorMessage)
+				logger.warn(errorMessage);
 			} else {
-				logger.error({err: error}, errorMessage)
+				logger.error({ err: error }, errorMessage);
 			}
 
 			return Promise.reject(new JiraClientError(errorMessage, error, status));
@@ -192,7 +185,7 @@ export const extractPath = (someUrl = ""): string =>
  * @returns {import("axios").AxiosResponse} The response object.
  */
 const instrumentRequest = (response) => {
-	if(!response) {
+	if (!response) {
 		return;
 	}
 	const requestDurationMs = Number(

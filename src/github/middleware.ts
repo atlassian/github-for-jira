@@ -130,7 +130,6 @@ export default (
 		if (isFromIgnoredRepo(context.payload)) {
 			context.log(
 				{
-					noop: "ignored_repo",
 					installation_id: context.payload?.installation?.id,
 					repository_id: context.payload?.repository?.id,
 				},
@@ -173,7 +172,8 @@ export default (
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(
-					`Maintenance mode ENABLED for jira host ${jiraHost} - Ignoring event of type ${webhookEvent}`
+					{jiraHost, webhookEvent},
+					`Maintenance mode ENABLED - Ignoring event`
 				);
 				continue;
 			}
@@ -200,8 +200,8 @@ export default (
 			if (!jiraClient) {
 				// Don't call callback if we have no jiraClient
 				context.log.error(
-					{ noop: "no_jira_client" },
-					`No enabled installation found for ${jiraHost}.`
+					{ jiraHost },
+					`No enabled installation found.`
 				);
 				continue;
 			}
@@ -213,15 +213,15 @@ export default (
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
 				if(!isWarning) {
 					context.log.error(
-						{ err },
-						`Error processing the event for Jira hostname '${jiraHost}'`
+						{ err, jiraHost },
+						`Error processing the event`
 					);
 					emitWebhookFailedMetrics(webhookEvent);
 					context.sentry?.captureException(err);
 				} else {
 					context.log.warn(
-						{ err },
-						`Warning: failed to process event for the Jira hostname '${jiraHost}'`
+						{ err, jiraHost },
+						`Warning: failed to process event`
 					);
 				}
 			}
