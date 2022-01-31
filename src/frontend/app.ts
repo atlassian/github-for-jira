@@ -35,6 +35,7 @@ import { registerHandlebarsPartials } from "../util/handlebars/partials";
 import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
 import { Errors } from "../config/errors";
 import cookieParser from "cookie-parser";
+import { v4 as uuidv4 } from "uuid";
 
 // Adding session information to request
 declare global {
@@ -296,7 +297,9 @@ export default (octokitApp: App): Express => {
 
 	// Error catcher - Batter up!
 	app.use(async (err: Error, req: Request, res: Response, next: NextFunction) => {
-		req.log.error({ payload: req.body, err, req, res }, "Error in frontend app.");
+		const errorReference = uuidv4();
+
+		req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend app.")
 
 		if (!isNodeProd() && !res.locals.showError) {
 			return next(err);
@@ -328,6 +331,7 @@ export default (octokitApp: App): Express => {
 
 		return res.status(errorStatusCode).render("error.hbs", {
 			title: "GitHub + Jira integration",
+			errorReference,
 			message,
 			nonce: res.locals.nonce,
 			githubRepoUrl: envVars.GITHUB_REPO_URL
