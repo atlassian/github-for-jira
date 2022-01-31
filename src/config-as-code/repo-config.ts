@@ -1,4 +1,4 @@
-export type Config = {
+export type RepoConfig = {
 	deployments: {
 		environmentMapping: {
 			development: string[];
