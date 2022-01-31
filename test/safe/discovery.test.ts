@@ -1,5 +1,5 @@
 import { Installation, RepoSyncState, Subscription } from "../../src/models";
-import { start, stop } from "../../src/worker/startup";
+// import { start, stop } from "../../src/worker/startup";
 import { sqsQueues } from "../../src/sqs/queues";
 import { createWebhookApp } from "../utils/probot";
 import app from "../../src/worker/app";
@@ -9,10 +9,14 @@ import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
 
-describe.skip("Discovery Queue Test", () => {
+describe("Discovery Queue Test", () => {
 
 	const TEST_INSTALLATION_ID = 1234;
 	let sendMessageSpy: jest.SpyInstance;
+
+	beforeAll(async () => {
+		await sqsQueues.branch.purgeQueue();
+	});
 
 	beforeEach(async () => {
 		await createWebhookApp();
@@ -29,14 +33,16 @@ describe.skip("Discovery Queue Test", () => {
 			jiraClientKey: clientKey
 		});
 
-		await sqsQueues.purge();
-		await start();
+		await sqsQueues.discovery.start();
 
 		sendMessageSpy = jest.spyOn(sqsQueues.backfill, "sendMessage");
 	});
 
 	afterEach(async () => {
-		await stop();
+		// await stop();
+
+		await sqsQueues.discovery.stop();
+		await sqsQueues.discovery.purgeQueue();
 	});
 
 	const mockGitHubReposResponses = () => {

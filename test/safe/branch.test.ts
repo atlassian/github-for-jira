@@ -4,14 +4,19 @@ import { Installation, Subscription } from "../../src/models";
 import { Application } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
-import { start, stop } from "../../src/worker/startup";
+// import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
+import { sqsQueues } from "../../src/sqs/queues";
 
 jest.mock("../../src/config/feature-flags");
 
-describe.skip("Branch Webhook", () => {
+describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
+
+	beforeAll(async () => {
+		await sqsQueues.branch.purgeQueue();
+	});
 
 	beforeEach(async () => {
 		app = await createWebhookApp();
@@ -26,11 +31,15 @@ describe.skip("Branch Webhook", () => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
-		await start();
+		// await start();
+		sqsQueues.branch.start();
 	});
 
 	afterEach(async () => {
-		await stop();
+		// await stop();
+
+		await sqsQueues.branch.stop();
+		await sqsQueues.branch.purgeQueue();
 	});
 
 	describe("Create Branch", () => {
@@ -47,6 +56,7 @@ describe.skip("Branch Webhook", () => {
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
+			githubAccessTokenNock(gitHubInstallationId);
 			githubAccessTokenNock(gitHubInstallationId);
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
 				.reply(200, {
@@ -155,7 +165,7 @@ describe.skip("Branch Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(false);
 
-			githubAccessTokenNock(gitHubInstallationId);
+			// githubAccessTokenNock(gitHubInstallationId);
 
 			const fixture = require("../fixtures/branch-basic.json");
 

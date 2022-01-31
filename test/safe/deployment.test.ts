@@ -2,15 +2,19 @@
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
-import { start, stop } from "../../src/worker/startup";
+// import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
 import { sqsQueues } from "../../src/sqs/queues";
 
 jest.mock("../../src/config/feature-flags");
 
-describe.skip("Deployment Webhook", () => {
+describe("Deployment Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
+
+	beforeAll(async () => {
+		await sqsQueues.branch.purgeQueue();
+	});
 
 	beforeEach(async () => {
 		app = await createWebhookApp();
@@ -26,12 +30,15 @@ describe.skip("Deployment Webhook", () => {
 			sharedSecret: "shared-secret"
 		});
 
-		await sqsQueues.purge();
-		await start();
+		// await sqsQueues.purge();
+		// await start();
+		await sqsQueues.deployment.start();
 	});
 
 	afterEach(async () => {
-		await stop();
+		// await stop();
+		await sqsQueues.deployment.stop();
+		await sqsQueues.deployment.purgeQueue();
 	});
 
 	describe("deployment_status", () => {
