@@ -121,7 +121,7 @@
                 </tr>
               </thead>
 
-              <tbody class="jiraConfiguration__table">
+              <tbody class="jiraConfiguration__table__body">
                 {{#each successfulConnections}}
                   <tr class="jiraConfiguration__table__row">
                     {{! Organization }}
@@ -203,7 +203,6 @@
                       <button
                         class="jiraConfiguration__table__cell__settings__ellipsis aui-button aui-dropdown2-trigger"
                         aria-controls="settings-dropdown-{{id}}"
-                        data-aui-alignment-container="#alignment-container"
                       >
                         <span
                           class="jiraConfiguration__table__cell__settings__ellipsisSpan"

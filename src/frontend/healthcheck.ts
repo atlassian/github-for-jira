@@ -43,7 +43,7 @@ router.get("/deepcheck", async (_, res: Response) => {
  */
 const healthcheckLogger = getLogger("healthcheck");
 router.get("/healthcheck", async (_, res: Response) => {
-	healthcheckLogger.info("Successfully called /healthcheck.");
+	healthcheckLogger.debug("Successfully called /healthcheck.");
 	return res.status(200).send("OK");
 });
 

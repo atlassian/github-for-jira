@@ -20,6 +20,8 @@ import { BackfillMessagePayload } from "../sqs/backfill";
 import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
 import { getCloudInstallationId } from "../github/client/installation-id";
+import { RateLimitingError } from "../github/client/errors";
+import { RateLimitingError as OldRateLimitingError} from "../config/enhance-octokit";
 
 const tasks: TaskProcessors = {
 	pull: getPullRequests,
@@ -314,56 +316,66 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`]);
 
 	} catch (err) {
-		const rateLimit = Number(err?.headers?.["x-ratelimit-reset"]);
-		const delay = Math.max(Date.now() - rateLimit * 1000, 0);
-
-		if (delay) {
-			// if not NaN or 0
-			logger.info({ delay }, `Delaying job for ${delay}ms`);
-			scheduleNextTask(delay);
-			return;
-		}
-
-		if (String(err).includes("connect ETIMEDOUT")) {
-			// There was a network connection issue.
-			// Add the job back to the queue with a 5 second delay
-			logger.warn("ETIMEDOUT error, retrying in 5 seconds");
-			scheduleNextTask(5_000);
-			return;
-		}
-
-		if (
-			String(err.message).includes(
-				"You have triggered an abuse detection mechanism"
-			)
-		) {
-			// Too much server processing time, wait 60 seconds and try again
-			logger.warn("Abuse detection triggered. Retrying in 60 seconds");
-			scheduleNextTask(60_000);
-			return;
-		}
-
-		// Continue sync when a 404/NOT_FOUND is returned
-		if (isNotFoundError(err, logger)) {
-			const edgesLeft = []; // No edges left to process since the repository doesn't exist
-			await updateJobStatus(data, edgesLeft, task, repositoryId, logger, scheduleNextTask);
-			return;
-		}
-
-
-		// TODO: add the jiraHost to the logger with logger.child()
-		const host = subscription.jiraHost || "none";
-		logger.warn({ err, jiraHost: host }, "Task failed, continuing with next task");
-
-		// marking the current task as failed
-		await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
-
-		statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
-
-		// queueing the job again to pick up the next task
-		scheduleNextTask(0);
-
+		await handleBackfillError(err, logger, scheduleNextTask, data, task, repositoryId, subscription, nextTask);
 	}
+}
+
+const handleBackfillError = async (err,
+	logger: LoggerWithTarget,
+	scheduleNextTask: (delayMs) => void, data: BackfillMessagePayload,
+	task: "pull" | "commit" | "branch",
+	repositoryId: string,
+	subscription: SubscriptionClass,
+	nextTask: Task) : Promise<void> => {
+
+	const rateLimit = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) ? err.rateLimitReset : Number(err?.headers?.["x-ratelimit-reset"]);
+	const delay = Math.max(rateLimit * 1000 - Date.now(), 0);
+
+	if (delay) {
+		// if not NaN or 0
+		logger.info({delay}, `Delaying job for ${delay}ms`);
+		scheduleNextTask(delay);
+		return;
+	}
+
+	if (String(err).includes("connect ETIMEDOUT")) {
+		// There was a network connection issue.
+		// Add the job back to the queue with a 5 second delay
+		logger.warn("ETIMEDOUT error, retrying in 5 seconds");
+		scheduleNextTask(5_000);
+		return;
+	}
+
+	if (
+		String(err.message).includes(
+			"You have triggered an abuse detection mechanism"
+		)
+	) {
+		// Too much server processing time, wait 60 seconds and try again
+		logger.warn("Abuse detection triggered. Retrying in 60 seconds");
+		scheduleNextTask(60_000);
+		return;
+	}
+
+	// Continue sync when a 404/NOT_FOUND is returned
+	if (isNotFoundError(err, logger)) {
+		const edgesLeft = []; // No edges left to process since the repository doesn't exist
+		await updateJobStatus(data, edgesLeft, task, repositoryId, logger, scheduleNextTask);
+		return;
+	}
+
+
+	// TODO: add the jiraHost to the logger with logger.child()
+	const host = subscription.jiraHost || "none";
+	logger.warn({err, jiraHost: host}, "Task failed, continuing with next task");
+
+	// marking the current task as failed
+	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
+
+	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
+
+	// queueing the job again to pick up the next task
+	scheduleNextTask(0);
 }
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
@@ -380,7 +392,7 @@ export async function maybeScheduleNextTask(
 		const delayMs = nextTaskDelaysMs.shift()!;
 		logger.info("Scheduling next job with a delay = " + delayMs);
 
-		await sqsQueues.backfill.sendMessage(jobData, (delayMs || 0) / 1000, logger);
+		await sqsQueues.backfill.sendMessage(jobData, Math.ceil((delayMs || 0) / 1000), logger);
 	}
 }
 

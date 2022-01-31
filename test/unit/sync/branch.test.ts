@@ -18,7 +18,7 @@ jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
 
 
-describe/*.each([true, false])*/("sync/branches - New GH Client feature flag is '%s'", () => {
+describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'", () => {
 	const installationId = 1234;
 	const useNewGithubClient = true;
 
@@ -95,6 +95,23 @@ describe/*.each([true, false])*/("sync/branches - New GH Client feature flag is 
 		}
 	});
 
+	function nockGitHubGraphQlRateLimit(rateLimitReset: string) {
+		githubNock
+			.post("/graphql", branchesNoLastCursor)
+			.query(true)
+			.reply(200, {
+				"errors": [
+					{
+						"type": "RATE_LIMITED",
+						"message": "API rate limit exceeded for user ID 42425541."
+					}
+				]
+			}, {
+				"X-RateLimit-Reset": rateLimitReset,
+				"X-RateLimit-Remaining": "10"
+			});
+	}
+
 	const nockBranchRequest = (fixture) =>
 		githubNock
 			.post("/graphql", branchesNoLastCursor)
@@ -148,9 +165,10 @@ describe/*.each([true, false])*/("sync/branches - New GH Client feature flag is 
 		).mockResolvedValue(useNewGithubClient);
 	});
 
-	const verifyMessageSent = (data: BackfillMessagePayload) => {
+	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
 		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
+		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
 	};
 
 	it("should sync to Jira when branch refs have jira references", async () => {
@@ -183,7 +201,7 @@ describe/*.each([true, false])*/("sync/branches - New GH Client feature flag is 
 		verifyMessageSent(data);
 	});
 
-	it("should send data if issue keys are only present in an associatd PR title", async () => {
+	it("should send data if issue keys are only present in an associated PR title", async () => {
 		const data = { installationId, jiraHost };
 		nockBranchRequest(associatedPRhasKeys);
 
@@ -246,4 +264,13 @@ describe/*.each([true, false])*/("sync/branches - New GH Client feature flag is 
 		expect(jiraNock).not.toBeDone();
 		nock.cleanAll();
 	});
+
+	if (useNewGithubClient) {
+		it("should reschedule message with delay if there is rate limit", async () => {
+			const data = { installationId, jiraHost };
+			nockGitHubGraphQlRateLimit("12360");
+			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			verifyMessageSent(data, 15);
+		});
+	}
 });
