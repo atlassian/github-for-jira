@@ -80,12 +80,12 @@ describe("sync/installation", () => {
 		// @ts-ignore
 		const app: Application = jest.fn() as Application;
 
-		test("should process the installation with deduplication", async () => {
+		it("should process the installation with deduplication", async () => {
 			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 		});
 
-		test("should reschedule the job if deduplicator is unsure", async () => {
+		it("should reschedule the job if deduplicator is unsure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
 			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
@@ -94,7 +94,7 @@ describe("sync/installation", () => {
 			expect(mockBackfillQueueSendMessage.mock.calls[0][2].warn).toBeDefined();
 		});
 
-		test("should also reschedule the job if deduplicator is sure", async () => {
+		it("should also reschedule the job if deduplicator is sure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
 			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockBackfillQueueSendMessage.mock.calls.length).toEqual(1);
@@ -102,17 +102,17 @@ describe("sync/installation", () => {
 	});
 
 	describe("maybeScheduleNextTask", () => {
-		test("does nothing if there is no next task", () => {
+		it("does nothing if there is no next task", () => {
 			maybeScheduleNextTask(JOB_DATA, [], TEST_LOGGER);
 			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(0);
 		});
 
-		test("when multiple tasks, picks the one with the highest delay", async () => {
+		it("when multiple tasks, picks the one with the highest delay", async () => {
 			await maybeScheduleNextTask(JOB_DATA, [30_000, 60_000, 0], TEST_LOGGER);
 			expect(mockBackfillQueueSendMessage.mock.calls).toEqual([[JOB_DATA, 60, TEST_LOGGER]]);
 		});
 
-		test("not passing delay to queue when not provided", async () => {
+		it("not passing delay to queue when not provided", async () => {
 			await maybeScheduleNextTask(JOB_DATA, [0], TEST_LOGGER);
 			expect(mockBackfillQueueSendMessage.mock.calls).toEqual([[JOB_DATA, 0, TEST_LOGGER]]);
 		});

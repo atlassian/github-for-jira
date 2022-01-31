@@ -17,9 +17,8 @@ const logger = getLogger("url-params");
  * @returns {import("axios").AxiosRequestConfig} The enriched axios request config.
  */
 export const urlParamsMiddleware = (config: AxiosRequestConfig) => {
-	const { url } = config;
-	config.originalUrl = url;
-	if (!url?.length) {
+	config.originalUrl = config.url;
+	if (!config.url?.length) {
 		return config;
 	}
 
@@ -28,12 +27,12 @@ export const urlParamsMiddleware = (config: AxiosRequestConfig) => {
 		.forEach(([k, v]) => {
 			const key = `:${k}`;
 			const value = encodeURIComponent(v.toString());
-			if (!value || !url.includes(key)) {
+			if (!value || !config.url?.includes(key)) {
 				logger.error({ key, value, config }, "URL Param doesn't exist in url path - ignoring");
 				return;
 			}
 
-			config.url = url.replace(key, value);
+			config.url = config.url?.replace(key, value);
 		});
 
 	return config;

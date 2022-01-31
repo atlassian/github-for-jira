@@ -213,7 +213,8 @@ describe("Pull Request Webhook", () => {
 			]);
 
 		jiraNock
-			.delete(`/rest/devinfo/0.10/repository/${repository.id}/pull_request/${pullRequest.number}?_updateSequenceId=12345678`)
+			.delete(`/rest/devinfo/0.10/repository/${repository.id}/pull_request/${pullRequest.number}`)
+			.query({ _updateSequenceId: 12345678 })
 			.reply(200);
 
 		Date.now = jest.fn(() => 12345678);

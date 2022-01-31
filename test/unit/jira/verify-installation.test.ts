@@ -36,17 +36,17 @@ describe("verify-installation", () => {
 		});
 	}
 
-	test("returns true when Jira responds with 200", async () => {
+	it("returns true when Jira responds with 200", async () => {
 		mockJiraResponse(200);
 		expect(await verifyInstallation(installation, getLogger("test"))()).toBeTruthy();
 	});
 
-	test("returns false when Jira responds with 401", async () => {
+	it("returns false when Jira responds with 401", async () => {
 		mockJiraResponse(401);
 		expect(await verifyInstallation(installation, getLogger("test"))()).toBeFalsy();
 	});
 
-	test("returns false when Jira client throws an exception", async () => {
+	it("returns false when Jira client throws an exception", async () => {
 		mockJiraResponseException(new Error("boom"));
 		expect(await verifyInstallation(installation, getLogger("test"))()).toBeFalsy();
 	});

@@ -45,7 +45,7 @@ describe("api/index", () => {
 		return app;
 	};
 
-	test("GET syncstate", async () => {
+	it("should GET syncstate", async () => {
 		await supertest(await createApp())
 			.get(`/api/${sub.gitHubInstallationId}/${encodeURIComponent(sub.jiraHost)}/syncstate`)
 			.set("Authorization", "Bearer xxx")
@@ -53,5 +53,4 @@ describe("api/index", () => {
 				expect(response.text).toStrictEqual("{\"installationId\":123,\"jiraHost\":\"http://blah.com\",\"numberOfSyncedRepos\":0,\"repos\":{}}");
 			});
 	});
-
 });

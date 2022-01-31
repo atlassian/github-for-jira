@@ -29,7 +29,7 @@ async function getJiraClient(
 	gitHubInstallationId: number,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> {
-	const logger = log.child({jiraHost, gitHubInstallationId});
+	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
@@ -133,7 +133,7 @@ async function getJiraClient(
 						"/rest/devinfo/0.10/repository/:repositoryId/branch/:branchJiraId",
 						{
 							params: {
-								_updateSequenceId: Date.now().toString(),
+								_updateSequenceId: Date.now()
 							},
 							urlParams: {
 								repositoryId,
@@ -146,12 +146,20 @@ async function getJiraClient(
 			installation: {
 				exists: (gitHubInstallationId: string | number) =>
 					instance.get(
-						`/rest/devinfo/0.10/existsByProperties?installationId=${gitHubInstallationId}`
+						`/rest/devinfo/0.10/existsByProperties`,
+						{
+							params: {
+								installationId: gitHubInstallationId
+							}
+						}
 					),
 				delete: (gitHubInstallationId: string | number) =>
-					instance.delete(
-						`/rest/devinfo/0.10/bulkByProperties?installationId=${gitHubInstallationId}`
-					)
+					instance.delete(`/rest/devinfo/0.10/bulkByProperties`,
+						{
+							params: {
+								installationId: gitHubInstallationId
+							}
+						})
 			},
 			pullRequest: {
 				delete: (repositoryId: string, pullRequestId: string) =>
@@ -159,7 +167,7 @@ async function getJiraClient(
 						"/rest/devinfo/0.10/repository/:repositoryId/pull_request/:pullRequestId",
 						{
 							params: {
-								_updateSequenceId: Date.now().toString(),
+								_updateSequenceId: Date.now()
 							},
 							urlParams: {
 								repositoryId,
@@ -176,7 +184,7 @@ async function getJiraClient(
 				delete: (repositoryId: string) =>
 					instance.delete("/rest/devinfo/0.10/repository/:repositoryId", {
 						params: {
-							_updateSequenceId: Date.now().toString(),
+							_updateSequenceId: Date.now()
 						},
 						urlParams: {
 							repositoryId
@@ -342,13 +350,13 @@ const truncateIssueKeys = (repositoryObj) => {
 };
 
 interface IssueKeyObject {
-	issueKeys?: string[]
+	issueKeys?: string[];
 }
 
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
-	data.reduce((acc:IssueKeyObject[], value:IssueKeyObject) => {
+	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
 		// Filter out anything that doesn't have issue keys or are not over the limit
-		if(value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
+		if (value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
 			// Create copy of object and add the issue keys that are truncated
 			acc.push({
 				...value,
@@ -386,7 +394,7 @@ const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc, logger?) => {
 	}
 
 	if (!repositoryObj.commits && !repositoryObj.branches) {
-		logger?.warn("No branches or commits found. Cannot update.")
+		logger?.warn("No branches or commits found. Cannot update.");
 	}
 };
 
