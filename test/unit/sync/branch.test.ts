@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import issueKeyParser from "jira-issue-key-parser";
-import { branchesNoLastCursor } from "../../fixtures/api/graphql/branch-queries";
-import { mocked } from "ts-jest/utils";
+import {branchesNoLastCursor} from "../../fixtures/api/graphql/branch-queries";
+import {mocked} from "ts-jest/utils";
 import {Installation, RepoSyncState, Subscription} from "../../../src/models";
-import { Application } from "probot";
-import { createWebhookApp } from "../../utils/probot";
-import { processInstallation } from "../../../src/sync/installation";
+import {Application} from "probot";
+import {createWebhookApp} from "../../utils/probot";
+import {processInstallation} from "../../../src/sync/installation";
 import nock from "nock";
 import {getLogger} from "../../../src/config/logger";
 import {Hub} from "@sentry/types/dist/hub";
@@ -102,6 +102,23 @@ describe("sync/branches", () => {
 		};
 	}
 
+	function nockGitHubGraphQlRateLimit(rateLimitReset: string) {
+
+		githubNock
+			.post("/graphql", branchesNoLastCursor)
+			.query(true)
+			.reply(200, {
+				"errors": [
+					{
+						"type": "RATE_LIMITED",
+						"message": "API rate limit exceeded for user ID 42425541."
+					}
+				]
+			}, 	{
+				"X-RateLimit-Reset": rateLimitReset,
+				"X-RateLimit-Remaining": "10"
+			});
+	}
 
 	function nockBranchRequest(fixture) {
 
@@ -169,9 +186,10 @@ describe("sync/branches", () => {
 		await RepoSyncState.destroy({truncate: true});
 	})
 
-	const verifyMessageSent = (data: BackfillMessagePayload) => {
+	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
 		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
+		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
 	}
 
 	const branchSyncTests = () => {
@@ -268,6 +286,13 @@ describe("sync/branches", () => {
 			verifyMessageSent(data)
 			expect(scope).not.toBeDone();
 			nock.removeInterceptor(interceptor);
+		});
+
+		it("should reschedule message with delay if there is rate limit", async () => {
+			const data = {installationId, jiraHost};
+			nockGitHubGraphQlRateLimit("12360");
+			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			verifyMessageSent(data, 15)
 		});
 	}
 
