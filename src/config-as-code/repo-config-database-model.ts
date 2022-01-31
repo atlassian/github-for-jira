@@ -3,9 +3,12 @@ import { sequelize } from "../models/sequelize";
 import { RepoConfig } from "./repo-config";
 
 export default class RepoConfigDatabaseModel extends Sequelize.Model {
+	id: number;
 	githubInstallationId: number;
 	repoId: number;
 	config: string;
+	createdAt: Date;
+	updatedAt: Date;
 
 	static async saveOrUpdate(
 		githubInstallationId: number,
@@ -13,7 +16,7 @@ export default class RepoConfigDatabaseModel extends Sequelize.Model {
 		config: RepoConfig
 	): Promise<RepoConfig | null> {
 
-		const existingConfig: RepoConfigDatabaseModel = RepoConfigDatabaseModel.findOne({
+		const existingConfig: RepoConfigDatabaseModel = await RepoConfigDatabaseModel.findOne({
 			where: {
 				githubInstallationId: githubInstallationId,
 				repoId: repoId
@@ -22,10 +25,10 @@ export default class RepoConfigDatabaseModel extends Sequelize.Model {
 
 		if (existingConfig) {
 			existingConfig.config = JSON.stringify(config);
-			existingConfig.save();
+			await existingConfig.save();
 			return this.toDomainModel(existingConfig);
 		} else {
-			const newConfig = RepoConfigDatabaseModel.create({
+			const newConfig = await RepoConfigDatabaseModel.create({
 				githubInstallationId: githubInstallationId,
 				repoId: repoId,
 				config: JSON.stringify(config)
@@ -38,7 +41,7 @@ export default class RepoConfigDatabaseModel extends Sequelize.Model {
 		githubInstallationId: number,
 		repoId: number
 	): Promise<RepoConfig | null> {
-		const model: RepoConfigDatabaseModel = RepoConfigDatabaseModel.findOne({
+		const model: RepoConfigDatabaseModel = await RepoConfigDatabaseModel.findOne({
 			where: {
 				githubInstallationId: githubInstallationId,
 				repoId: repoId
@@ -56,12 +59,19 @@ export default class RepoConfigDatabaseModel extends Sequelize.Model {
 }
 
 RepoConfigDatabaseModel.init({
-	githubInstallationId: {
+	id: {
 		type: DataTypes.INTEGER,
 		primaryKey: true,
 		allowNull: false,
-		autoIncrement: false
+		autoIncrement: true
 	},
+	githubInstallationId: DataTypes.INTEGER,
 	repoId: DataTypes.INTEGER,
 	config: DataTypes.JSON,
-}, { sequelize });
+	createdAt: DataTypes.DATE,
+	updatedAt: DataTypes.DATE
+}, {
+	tableName: "RepoConfigs",
+	sequelize
+});
+
