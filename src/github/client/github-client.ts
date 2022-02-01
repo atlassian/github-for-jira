@@ -180,7 +180,6 @@ export default class GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-
 	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string) : Promise<GetBranchesResponse> {
 		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,
 			{
@@ -192,4 +191,14 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
+	/**
+	 * Get the repositiry contents from PATH
+	 */
+	public async getRepositoryContent(owner: string, repo: string, path: string) : Promise<AxiosResponse<Octokit.GitGetBlobResponse>>  {
+		return await this.get<Octokit.GitGetBlobResponse>(`/repos/:owner/:repo/contents/:path`, {}, {
+			owner,
+			repo,
+			path
+		});
+	}
 }
