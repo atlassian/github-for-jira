@@ -1,17 +1,17 @@
 import Logger from "bunyan";
-import {Octokit} from "@octokit/rest";
-import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse} from "axios";
+import { Octokit } from "@octokit/rest";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
-import {GetPullRequestParams} from "./types";
-import {handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime} from "./interceptors";
-import {metricHttpRequest} from "../../config/metric-names";
-import {getLogger} from "../../config/logger";
-import {urlParamsMiddleware} from "../../util/axios/common-middleware";
-import {InstallationId} from "./installation-id";
-import {GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery} from "./github-queries";
-import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
+import { GetPullRequestParams } from "./types";
+import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
+import { metricHttpRequest } from "../../config/metric-names";
+import { getLogger } from "../../config/logger";
+import { urlParamsMiddleware } from "../../util/axios/common-middleware";
+import { InstallationId } from "./installation-id";
+import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
+import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
@@ -106,7 +106,7 @@ export default class GitHubClient {
 	}
 
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.githubInstallationId.githubBaseUrl +"/graphql",
+		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.githubInstallationId.githubBaseUrl + "/graphql",
 			{
 				query,
 				variables
@@ -116,18 +116,18 @@ export default class GitHubClient {
 			});
 
 		const graphqlErrors = response.data.errors;
-		if(graphqlErrors?.length) {
+		if (graphqlErrors?.length) {
 
 
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
 
-			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` :"");
-			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage , graphqlErrors));
+			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
+			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
 		}
 
-		return  response;
+		return response;
 	}
 
 	/**
@@ -174,12 +174,12 @@ export default class GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql<{viewer: {repositories: {totalCount: number}}}>(ViewerRepositoryCountQuery);
+		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
 
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string) : Promise<GetBranchesResponse> {
+	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string): Promise<GetBranchesResponse> {
 		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,
 			{
 				owner: owner,
@@ -191,13 +191,23 @@ export default class GitHubClient {
 	}
 
 	/**
-	 * Get the repositiry contents from PATH
+	 * Get a file at a given path from a repository.
+	 * Returns null if the file does not exist.
 	 */
-	public async getRepositoryContent(owner: string, repo: string, path: string) : Promise<AxiosResponse<Octokit.ReposGetContentsResponse>>  {
-		return await this.get<Octokit.ReposGetContentsResponse>(`/repos/:owner/:repo/contents/:path`, {}, {
-			owner,
-			repo,
-			path
-		});
+	public async getRepositoryContent(owner: string, repo: string, path: string): Promise<AxiosResponse<Octokit.ReposGetContentsResponse> | null> {
+		try {
+			return await this.get<Octokit.ReposGetContentsResponse>(`/repos/:owner/:repo/contents/:path`, {}, {
+				owner,
+				repo,
+				path
+			});
+		} catch (err) {
+			if (err.status == 404) {
+				// the file is not found, we return null instead of throwing an error that the caller would have to catch
+				return null;
+			} else {
+				throw err;
+			}
+		}
 	}
 }
