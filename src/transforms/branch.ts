@@ -5,6 +5,12 @@ import _ from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { GitHubAPI } from "probot";
 
+//// todo-jk outside this script...
+// https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/using-query-parameters-to-create-a-pull-request
+const createPullRequestUrl = (baseUrl: string, title?: string) => {
+	return `${baseUrl}/pull/new/${title}`;
+}
+
 async function getLastCommit(github: GitHubAPI, webhookPayload: WebhookPayloadCreate, issueKeys: string[]) {
 
 	const {
@@ -50,6 +56,23 @@ export default async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) =
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
 
+	console.log({
+		id: repository.id,
+		name: repository.full_name,
+		url: repository.html_url,
+		branches: [
+			{
+				createPullRequestUrl: createPullRequestUrl("test", "other"),//`${repository.html_url}/pull/new/${ref}`,
+				lastCommit,
+				id: getJiraId(ref),
+				issueKeys,
+				name: ref,
+				url: `${repository.html_url}/tree/${ref}`,
+				updateSequenceId: Date.now()
+			}
+		],
+		updateSequenceId: Date.now()
+	})
 	// TODO: type this return
 	return {
 		id: repository.id,
@@ -57,7 +80,7 @@ export default async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) =
 		url: repository.html_url,
 		branches: [
 			{
-				createPullRequestUrl: `${repository.html_url}/pull/new/${ref}`,
+				createPullRequestUrl: createPullRequestUrl("test", "other"),//`${repository.html_url}/pull/new/${ref}`,
 				lastCommit,
 				id: getJiraId(ref),
 				issueKeys,
