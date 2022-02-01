@@ -1,14 +1,43 @@
+import "./config/env"; // Important to be before other dependencies
+import "./config/proxy"; // Important to be before other dependencies
 import throng from "throng";
-import { start } from "./worker/main";
+import {isNodeProd} from "./util/isNodeEnv";
+import {listenToMicrosLifecycle} from "./services/micros/lifecycle";
+import {ClusterCommand, sendCommandToCluster} from "./services/cluster/send-command";
+import {probot} from "./worker/app";
+import {initializeSentry} from "./config/sentry";
+import {listenForClusterCommand} from "./services/cluster/listen-command";
+import {start, stop} from "./worker/startup";
 
-const isProd = process.env.NODE_ENV === "production";
+const initialize = () => {
+	initializeSentry();
+	// starts healthcheck/deepcheck or else deploy will fail
+	probot.start();
+}
 
-// TODO: this should work in dev/production and should be `workers = process.env.NODE_ENV === 'production' ? undefined : 1`
-if (isProd) {
+if (isNodeProd()) {
+	// Production clustering (one process per core)
+	// Read more about Node clustering: https://nodejs.org/api/cluster.html
 	throng({
+		worker: () => {
+			initialize();
+			listenForClusterCommand(ClusterCommand.start, start);
+			listenForClusterCommand(ClusterCommand.stop, stop);
+		},
+		master: () => {
+			// Listen to micros lifecycle event to know when to start/stop
+			listenToMicrosLifecycle(
+				// When 'active' event is triggered, start queue processing
+				() => sendCommandToCluster(ClusterCommand.start),
+				// When 'inactive' event is triggered, stop queue processing
+				() => sendCommandToCluster(ClusterCommand.stop)
+			);
+		},
 		lifetime: Infinity
-	}, start);
+	});
 } else {
+	initialize();
+	// Dev/test single process, no need for clustering or lifecycle events
 	start();
 }
 

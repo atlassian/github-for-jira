@@ -1,27 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
-import nock from "nock";
 import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
-import deleteConfig from "../../../src/frontend/delete-jira-configuration";
+import deleteJiraConfiguration from "../../../src/frontend/delete-jira-configuration";
+import { getLogger } from "../../../src/config/logger";
 
 jest.mock("../../../src/models");
 
 describe("DELETE /jira/configuration", () => {
 	let installation;
 	let subscription;
-	let deleteJiraConfiguration;
 
 	beforeEach(async () => {
 		subscription = {
 			githubInstallationId: 15,
-			jiraHost: "https://test-host.jira.com",
+			jiraHost,
 			destroy: jest.fn().mockResolvedValue(undefined)
 		};
 
 		installation = {
 			id: 19,
-			jiraHost: subscription.jiraHost,
+			jiraHost,
 			clientKey: "abc123",
 			enabled: true,
 			secrets: "def234",
@@ -31,30 +29,24 @@ describe("DELETE /jira/configuration", () => {
 
 		mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
 		mocked(Installation.getForHost).mockResolvedValue(installation);
-
-		deleteJiraConfiguration = await deleteConfig;
 	});
 
 	it("Delete Jira Configuration", async () => {
-		await testTracking();
-
-		nock(subscription.jiraHost)
+		jiraNock
 			.delete("/rest/devinfo/0.10/bulkByProperties")
 			.query({ installationId: subscription.githubInstallationId })
 			.reply(200, "OK");
 
+		// TODO: use supertest for this
 		const req = {
-			log: { debug: jest.fn(), error: jest.fn(), info: jest.fn() },
-			body: { installationId: subscription.githubInstallationId },
-			query: {
-				xdm_e: subscription.jiraHost
-			},
-			session: {
+			log: getLogger("request"),
+			body: {
+				installationId: subscription.githubInstallationId,
 				jiraHost: subscription.jiraHost
 			}
 		};
 
-		const res = { sendStatus: jest.fn(), locals: { installation } };
+		const res = { sendStatus: jest.fn(), locals: { installation, jiraHost } };
 		await deleteJiraConfiguration(req as any, res as any);
 		expect(subscription.destroy).toHaveBeenCalled();
 		expect(res.sendStatus).toHaveBeenCalledWith(204);

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Connect Frontend Atlassian Connect should return Atlassian Connect with signed-install:true when feature flag is on 1`] = `
+exports[`Connect Frontend Atlassian Connect should return correct connect app descriptor 1`] = `
 Object {
   "apiMigrations": Object {
     "gdpr": false,
@@ -12,6 +12,7 @@ Object {
   },
   "description": "Connect your code and your project with ease.",
   "lifecycle": Object {
+<<<<<<< HEAD
     "disabled": "/jira/events/disabled",
     "enabled": "/jira/events/enabled",
     "installed": "/jira/events/installed",
@@ -121,6 +122,8 @@ Object {
   "lifecycle": Object {
     "disabled": "/jira/events/disabled",
     "enabled": "/jira/events/enabled",
+=======
+>>>>>>> main
     "installed": "/jira/events/installed",
     "uninstalled": "/jira/events/uninstalled",
   },

@@ -1,0 +1,31 @@
+.error-container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    margin: auto;
+    max-width: 570px;
+}
+
+.error-errorImg {
+    margin-bottom: 2em;
+    width: 11.5em;
+}
+
+.error-container > .error-header {
+    font-size: 1.3rem;
+}
+
+.error-message {
+    margin: 1em auto;
+    text-align: center;
+}
+
+a {
+    color: #0052cc;
+}
+
+a:hover {
+    text-decoration: none;
+}

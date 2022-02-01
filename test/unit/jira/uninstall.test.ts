@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
 import { getHashedKey } from "../../../src/models/installation";
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "../../../src/models";
@@ -42,8 +41,6 @@ describe("Webhook: /events/uninstalled", () => {
 	});
 
 	it("Existing Installation", async () => {
-		await testTracking();
-
 		const req = { log: { info: jest.fn() } } as any;
 		const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
@@ -54,8 +51,6 @@ describe("Webhook: /events/uninstalled", () => {
 	});
 
 	it("Existing Installation, no Subscriptions", async () => {
-		await testTracking();
-
 		const req = { log: { info: jest.fn() } } as any;
 		const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 

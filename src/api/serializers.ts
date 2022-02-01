@@ -12,9 +12,10 @@ export const serializeSubscription = (subscription: Subscription): SerializedSub
 	syncStatus: subscription.syncStatus
 });
 
-interface SerializedInstallation extends Pick<Installation, "clientKey" | "enabled"> {
+interface SerializedInstallation extends Pick<Installation, "clientKey"> {
 	host: string;
 	authorized: boolean;
+	enabled: boolean;
 	gitHubInstallations: SerializedSubscription[];
 }
 
@@ -24,7 +25,7 @@ export const serializeJiraInstallation = async (jiraInstallation: Installation, 
 	return {
 		clientKey: jiraInstallation.clientKey,
 		host: jiraInstallation.jiraHost,
-		enabled: jiraInstallation.enabled,
+		enabled: true,
 		authorized: (await jiraClient.isAuthorized()),
 		gitHubInstallations: (await jiraInstallation.subscriptions()).map((subscription) => serializeSubscription(subscription))
 	};

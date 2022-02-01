@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
-import envVars, { EnvironmentEnum } from "../config/env";
+import envVars from "../config/env";
+import { EnvironmentEnum } from "../interfaces/common";
 
 const instance = process.env.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
+export const postInstallUrl = "/jira/configuration";
 
 export default async (_: Request, res: Response): Promise<void> => {
 	const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
@@ -28,9 +30,7 @@ export default async (_: Request, res: Response): Promise<void> => {
 			baseUrl: envVars.APP_URL,
 			lifecycle: {
 				installed: "/jira/events/installed",
-				uninstalled: "/jira/events/uninstalled",
-				enabled: "/jira/events/enabled",
-				disabled: "/jira/events/disabled"
+				uninstalled: "/jira/events/uninstalled"
 			},
 			vendor: {
 				name: "Atlassian",
@@ -91,7 +91,7 @@ export default async (_: Request, res: Response): Promise<void> => {
 					name: {
 						value: "GitHub Configuration"
 					},
-					url: "/jira/configuration",
+					url: postInstallUrl,
 					conditions: adminPageDisplayConditions
 				},
 				webSections: [

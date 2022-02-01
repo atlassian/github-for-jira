@@ -9,7 +9,7 @@ import { overrideProbotLoggingMethods } from "../config/logger";
 
 export const probot = createProbot({
 	id: Number(process.env.APP_ID),
-	cert: findPrivateKey(),
+	cert: findPrivateKey() || undefined,
 
 	// These aren't needed by worker process
 	secret: undefined,
@@ -18,6 +18,7 @@ export const probot = createProbot({
 	webhookProxy: undefined
 });
 
+// TODO: remove probot from here, just use express
 const App = async (app: Application): Promise<Application> => {
 	const router = app.route();
 	router.use("/", healthcheck);

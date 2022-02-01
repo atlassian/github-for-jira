@@ -13,7 +13,7 @@ describe("AxiosErrorDecorator", () => {
 		beforeEach(async () => {
 			nock("https://www.example.com")
 				.get("/foo/bar")
-				.reply(403, null, { "X-Request-Id": "abcdef" });
+				.reply(403, undefined, { "X-Request-Id": "abcdef" });
 			const error = await axios
 				.get("https://www.example.com/foo/bar")
 				.catch((error) => Promise.resolve(error));
@@ -27,7 +27,6 @@ describe("AxiosErrorDecorator", () => {
 			expect(decoratedEvent.extra.response).toEqual({
 				status: 403,
 				headers: {
-					"content-type": "application/json",
 					"x-request-id": "abcdef"
 				}
 			});
@@ -36,14 +35,13 @@ describe("AxiosErrorDecorator", () => {
 		it("adds request data", () => {
 			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
 
-			expect(decoratedEvent.extra.request).toEqual({
+			expect(decoratedEvent.extra.request).toMatchObject({
 				method: "GET",
 				path: "/foo/bar",
 				host: "www.example.com",
 				headers: {
 					accept: "application/json, text/plain, */*",
 					host: "www.example.com",
-					"user-agent": "axios/0.21.1"
 				}
 			});
 		});
@@ -66,7 +64,7 @@ describe("AxiosErrorDecorator", () => {
 		beforeEach(async () => {
 			nock("https://www.example.com")
 				.get("/foo/bar?hi=hello")
-				.reply(403, null, { "X-Request-Id": "abcdef" });
+				.reply(403, undefined, { "X-Request-Id": "abcdef", "Content-Type": "application/json" });
 			const error = await axios
 				.get("https://www.example.com/foo/bar", { params: { hi: "hello" } })
 				.catch((error) => Promise.resolve(error));

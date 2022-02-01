@@ -49,7 +49,7 @@ it('checks tags too', async () => {
 */
 import diff from "jest-diff";
 
-const parseStatsdMessage = (stastsdMessage) => {
+const parseStatsdMessage = (stastsdMessage: string): StatsDMessage => {
 	const [metric, type, tagsString] = stastsdMessage.split("|");
 	const [name, value] = metric.split(":");
 	const tags = {};
@@ -67,6 +67,13 @@ const parseStatsdMessage = (stastsdMessage) => {
 	};
 };
 
+interface StatsDMessage {
+	name: string;
+	value: number;
+	type: string;
+	tags: Record<string, string>;
+}
+
 declare global {
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace jest {
@@ -83,7 +90,7 @@ expect.extend({
 	toHaveSentMetrics(...expectedMetrics: any[]) {
 		statsd.mockBuffer = [];
 		const actualMetrics = statsd.mockBuffer.map((message) => parseStatsdMessage(message));
-		const matchingMetrics = [];
+		const matchingMetrics: StatsDMessage[] = [];
 
 		expectedMetrics.forEach((expectedMetric) => actualMetrics.find((actualMetric) => {
 			const matchingName = actualMetric.name === expectedMetric.name;

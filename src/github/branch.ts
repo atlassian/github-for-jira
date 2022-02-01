@@ -1,28 +1,110 @@
 import transformBranch from "../transforms/branch";
-import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
+import { emitWebhookProcessedMetrics } from "../util/webhooks";
+import { CustomContext } from "./middleware";
+import _ from "lodash";
+import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import sqsQueues from "../sqs/queues";
+import { GitHubAPI } from "probot";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import getJiraClient from "../jira/client";
 
-export const createBranch = async (context: Context, jiraClient): Promise<void> => {
-	const jiraPayload = await transformBranch(context);
+export const createBranch = async (
+	context: CustomContext,
+	jiraClient,
+	_util,
+	githubInstallationId: number
+): Promise<void> => {
+
+	const webhookPayload: WebhookPayloadCreate = context.payload;
+
+	if (await booleanFlag(BooleanFlags.USE_SQS_FOR_BRANCH, false, jiraClient.baseURL)) {
+		await sqsQueues.branch.sendMessage({
+			jiraHost: jiraClient.baseURL,
+			installationId: githubInstallationId,
+			webhookReceived: new Date().getTime(),
+			webhookId: context.id,
+			webhookPayload
+		})
+	} else {
+
+		const jiraPayload = await transformBranch(context.github, webhookPayload);
+
+		if (!jiraPayload) {
+			context.log(
+				{ noop: "no_jira_payload_create_branch" },
+				"Halting further execution for createBranch since jiraPayload is empty"
+			);
+			return;
+		}
+
+		context.log(
+			`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`
+		);
+
+		const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+		const { webhookReceived, name, log } = context;
+
+		webhookReceived && emitWebhookProcessedMetrics(
+			webhookReceived,
+			name,
+			log,
+			jiraResponse?.status
+		);
+	}
+};
+
+export const processBranch = async (
+	github: GitHubAPI,
+	webhookId: string,
+	webhookPayload: WebhookPayloadCreate,
+	webhookReceivedDate: Date,
+	jiraHost: string,
+	installationId: number,
+	rootLogger: LoggerWithTarget
+) => {
+	const jiraPayload = await transformBranch(github, webhookPayload);
+
+	const logger = rootLogger.child({
+		webhookId: webhookId,
+		installationId,
+		webhookReceived: webhookReceivedDate,
+	});
 
 	if (!jiraPayload) {
-		context.log(
+		logger.info(
 			{ noop: "no_jira_payload_create_branch" },
 			"Halting further execution for createBranch since jiraPayload is empty"
 		);
 		return;
 	}
 
-	context.log(`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`)
+	logger.info(
+		`Sending jira update for create branch event for hostname: ${jiraHost}`
+	);
 
-	await jiraClient.devinfo.repository.update(jiraPayload);
-};
+	const jiraClient = await getJiraClient(
+		jiraHost,
+		installationId,
+		logger
+	);
 
-export const deleteBranch = async (context, jiraClient): Promise<void> => {
-	const issueKeys = issueKeyParser().parse(context.payload.ref);
+	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 
-	if (isEmpty(issueKeys)) {
+	emitWebhookProcessedMetrics(
+		webhookReceivedDate.getTime(),
+		"create",
+		logger,
+		jiraResponse?.status
+	);
+}
+
+export const deleteBranch = async (context: CustomContext, jiraClient): Promise<void> => {
+	const payload: WebhookPayloadDelete = context.payload;
+	const issueKeys = issueKeyParser().parse(payload.ref);
+
+	if (_.isEmpty(issueKeys)) {
 		context.log(
 			{ noop: "no_issue_keys" },
 			"Halting further execution for deleteBranch since issueKeys is empty"
@@ -30,10 +112,20 @@ export const deleteBranch = async (context, jiraClient): Promise<void> => {
 		return undefined;
 	}
 
-	context.log(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`)
+	context.log(
+		`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`
+	);
 
-	await jiraClient.devinfo.branch.delete(
-		context.payload.repository?.id,
-		context.payload.ref
+	const jiraResponse = await jiraClient.devinfo.branch.delete(
+		`${payload.repository?.id}`,
+		payload.ref
+	);
+	const { webhookReceived, name, log } = context;
+
+	webhookReceived && emitWebhookProcessedMetrics(
+		webhookReceived,
+		name,
+		log,
+		jiraResponse?.status
 	);
 };

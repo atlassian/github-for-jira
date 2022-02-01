@@ -5,6 +5,8 @@ import "./matchers/nock";
 import "./matchers/to-promise";
 import statsd from "../../src/config/statsd";
 import { sequelize } from "../../src/models/sequelize";
+import InstallationTokenCache from "../../src/github/client/installation-token-cache";
+import AppTokenHolder from "../../src/github/client/app-token-holder";
 
 resetEnvVars();
 
@@ -21,33 +23,38 @@ declare global {
 	let jiraHost: string;
 	let jiraNock: nock.Scope;
 	let githubNock: nock.Scope;
+	let gheNock: nock.Scope;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
 			jiraHost: string;
 			jiraNock: nock.Scope;
 			githubNock: nock.Scope;
+			gheNock: nock.Scope;
 		}
 	}
 }
 
 beforeEach(() => {
 	resetEnvVars();
-	global.jiraHost = process.env.ATLASSIAN_URL;
-	global.jiraNock = nock(process.env.ATLASSIAN_URL);
+	global.jiraHost = process.env.ATLASSIAN_URL || "";
+	global.jiraNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
+	global.gheNock = nock("http://github.mydomain.com");
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting
 // Needs to be in it's own aftereach so that the expect doesn't stop it from cleaning up afterwards
 afterEach(() => {
-	// eslint-disable-next-line jest/no-standalone-expect
-	expect(nock).toBeDone();
-});
-
-afterEach(() => {
-	nock.cleanAll(); // removes HTTP mocks
-	jest.resetAllMocks(); // Removes jest mocks
+	try {
+		// eslint-disable-next-line jest/no-standalone-expect
+		expect(nock).toBeDone();
+	} finally {
+		InstallationTokenCache.getInstance().clear(); // Clear Installation token cache
+		AppTokenHolder.getInstance().clear(); // Clear App token cache
+		nock.cleanAll(); // removes HTTP mocks
+		jest.resetAllMocks(); // Removes jest mocks
+	}
 });
 
 afterAll(async () => {

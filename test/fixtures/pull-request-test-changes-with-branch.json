@@ -29,8 +29,11 @@
           "html_url": "TES-3-test-pull-request-head-url"
         },
         "ref": "TES-3-test-pull-request-head-ref",
-        "sha": "test-pull-request-sha"
-      },
+        "sha": "test-pull-request-sha",
+				"user": {
+					"login": "test-pull-request-user-login"
+				}
+			},
       "base": {
         "repo": {
           "html_url": "test-pull-request-base-url"

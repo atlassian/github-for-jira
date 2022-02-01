@@ -1,5 +1,3 @@
-import { ActionFromSubscription, ActionSource, ActionType } from "../proto/v0/action";
-import { submitProto } from "../tracking";
 import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { Request, Response } from "express";
@@ -8,24 +6,29 @@ import { Request, Response } from "express";
  * Handle the when a user deletes an entry in the UI
  */
 export default async (req: Request, res: Response): Promise<void> => {
-	const jiraHost = req.session.jiraHost;
+	const { jiraHost } = res.locals;
+	const installationId = Number(req.body.installationId);
+	if (!jiraHost) {
+		req.log.error("Missing Jira Host");
+		res.status(401).send("Missing jiraHost in body");
+		return;
+	}
 
-	req.log.info({ installationId: req.body.installationId }, "Received delete jira configuration request");
-
-	const jiraClient = await getJiraClient(jiraHost, null, req.log);
-	(await jiraClient) &&
-	jiraClient.devinfo.installation.delete(req.body.installationId);
+	req.log.info({ installationId }, "Received delete jira configuration request");
 
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		req.body.installationId
+		installationId
 	);
-	const action = ActionFromSubscription(subscription, res.locals.installation);
-	action.type = ActionType.DESTROYED;
-	action.actionSource = ActionSource.WEB_CONSOLE;
 
+	if (!subscription) {
+		res.status(404).send("Cannot find Subscription");
+		return;
+	}
+
+	const jiraClient = await getJiraClient(jiraHost, installationId, req.log);
+	await jiraClient.devinfo.installation.delete(installationId);
 	await subscription.destroy();
-	await submitProto(action);
 
 	res.sendStatus(204);
 };

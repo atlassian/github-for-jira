@@ -1,82 +1,120 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { createWebhookApp } from "../utils/probot";
+import { Application } from "probot";
+import { Installation, Subscription } from "../../src/models";
+import { start, stop } from "../../src/worker/startup";
+import sqsQueues from "../../src/sqs/queues";
+import waitUntil from "../utils/waitUntil";
 
-describe("GitHub Actions", () => {
-	let app;
-	beforeEach(async () => (app = await createWebhookApp()));
+jest.mock("../../src/config/feature-flags");
+
+describe("Deployment Webhook", () => {
+	let app: Application;
+	const gitHubInstallationId = 1234;
+
+	beforeAll(async () => {
+		//Start worker node for queues processing
+		await start();
+	});
+
+	afterAll(async () => {
+		//Stop worker node
+		await stop();
+		await sqsQueues.deployment.waitUntilListenerStopped();
+	});
+
+	beforeEach(async () => {
+		app = await createWebhookApp();
+
+		await Subscription.create({
+			gitHubInstallationId,
+			jiraHost
+		});
+
+		await Installation.create({
+			jiraHost,
+			clientKey: "client-key",
+			sharedSecret: "shared-secret"
+		});
+
+	});
+
+	afterEach(async () => {
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
+	});
 
 	describe("deployment_status", () => {
-		it("should update the Jira issue with the linked GitHub deployment", async () => {
-			const fixture = require("../fixtures/deployment-basic.json");
 
-			githubNock
-				.get("/users/test-workflow-run-user-login")
+		it("should queue and process a deployment event", async () => {
+
+			const fixture = require("../fixtures/deployment_status-basic.json");
+			const sha = fixture.payload.deployment.sha;
+
+			githubNock.post(`/app/installations/1234/access_tokens`)
 				.reply(200, {
-					login: "test-deployment-status-author-login",
-					avatar_url: "test-deployment-status-author-avatar",
-					html_url: "test-deployment-status-author-url",
-				});
-
-			jiraNock.get("/rest/api/latest/issue/TEST-123?fields=summary")
-				.reply(200, {
-					key: "TEST-123",
-					fields: {
-						summary: "Example Issue",
-					},
-				});
-
-			githubNock
-				.patch("/repos/test-repo-owner/test-repo-name/deployments/1", {
-					deployment_id: "test-deployment-status-id",
+					expires_at: Date.now() + 3600,
+					permissions: {},
+					repositories: {},
+					token: "token"
 				})
-				.reply(200);
 
-			jiraNock.post("/rest/devinfo/0.10/bulk", {
-				preventTransitions: false,
-				repositories: [
-					{
-						name: "example/test-repo-name",
-						url: "test-repo-url",
-						id: "test-repo-id",
-						deployments: [
-							{
-								id: 123456,
-								state: "pending",
-								creator: {
-									login: "TestUser[bot]",
-									type: "Bot",
-								},
-								description: "",
-								environment: "Production",
-								target_url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
-								created_at: "2021-06-28T12:15:18Z",
-								updated_at: "2021-06-28T12:15:18Z",
-								deployment: {
-									id: 1234,
-									task: "deploy",
-									original_environment: "Production",
-									environment: "Production",
-									description: "",
-									created_at: "2021-06-28T12:15:18Z",
-									updated_at: "2021-06-28T12:15:18Z",
-									creator: {
-										login: "test-user[bot]",
-										type: "Bot",
-									},
-								},
-							},
-						],
-						updateSequenceId: 12345678,
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
+				.reply(200, {
+					commit: {
+						author: {
+							name: "test-branch-author-name",
+							email: "test-branch-author-name@github.com",
+							date: "test-branch-author-date"
+						},
+						message: "[TEST-123] test-commit-message"
 					},
-				],
-				properties: {
-					installationId: 1234,
-				},
+					html_url: `test-repo-url/commits/${sha}`
+				});
+
+			jiraNock.post("/rest/deployments/0.1/bulk", {
+				deployments:
+					[
+						{
+							schemaVersion: "1.0",
+							deploymentSequenceNumber: 1234,
+							updateSequenceNumber: 123456,
+							issueKeys:
+								[
+									"TEST-123"
+								],
+							displayName: "deploy",
+							url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
+							description: "deploy",
+							lastUpdated: "2021-06-28T12:15:18.000Z",
+							state: "successful",
+							pipeline:
+								{
+									id: "deploy",
+									displayName: "deploy",
+									url: "test-repo-url/commit/885bee1-commit-id-1c458/checks"
+								},
+							environment:
+								{
+									id: "Production",
+									displayName: "Production",
+									type: "production"
+								}
+						}
+					],
+				properties:
+					{
+						gitHubInstallationId: 1234
+					}
 			}).reply(200);
 
-			Date.now = jest.fn(() => 12345678);
-
 			await expect(app.receive(fixture)).toResolve();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
 		});
+
 	});
 });

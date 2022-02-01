@@ -1,21 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
-import Logger from "bunyan";
-import nock from "nock";
-import { Installation, Subscription } from "../../../src/models";
-import { mocked } from "ts-jest/utils";
-import { mockModels } from "../../utils/models";
+import { Installation, RepoSyncState, Subscription } from "../../../src/models";
+import InstallationClass from "../../../src/models/installation";
+import SubscriptionClass from "../../../src/models/subscription";
 import api from "../../../src/api";
-import { EnvironmentEnum } from "../../../src/config/env";
+import { getLogger } from "../../../src/config/logger";
+import getAxiosInstance from "../../../src/jira/client/axios";
+import { mocked } from "ts-jest/utils";
 
-jest.mock("../../../src/models");
+jest.mock("../../../src/config/feature-flags");
+jest.mock("../../../src/jira/client/axios");
 
 describe("API", () => {
 	let app: Application;
 	let locals;
 	const invalidId = 99999999;
-	const installationId = 1234;
+	const gitHubInstallationId = 1234;
+	let installation: InstallationClass;
+	let subscription: SubscriptionClass;
 
 	const successfulAuthResponseWrite = {
 		data: {
@@ -43,12 +46,8 @@ describe("API", () => {
 		const app = express();
 		app.use((req: Request, res: Response, next: NextFunction) => {
 			res.locals = locals || {};
-			req.log = new Logger({
-				name: "api.test.ts",
-				level: "debug",
-				stream: process.stdout
-			});
-			req.session = { jiraHost: process.env.ATLASSIAN_URL };
+			req.log = getLogger("test");
+			req.session = { jiraHost };
 			next();
 		});
 		app.use("/api", api);
@@ -64,6 +63,24 @@ describe("API", () => {
 			}
 		};
 		app = await createApp();
+
+		installation = await Installation.create({
+			gitHubInstallationId,
+			jiraHost,
+			sharedSecret: "secret",
+			clientKey: "client-key"
+		});
+
+		subscription = await Subscription.create({
+			gitHubInstallationId,
+			jiraHost,
+			jiraClientKey: "client-key",
+		});
+	});
+
+	afterEach(async () => {
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("Authentication", () => {
@@ -177,7 +194,34 @@ describe("API", () => {
 		});
 	});
 
-	describe.skip("Endpoints", () => {
+	describe("Endpoints", () => {
+		function mockJiraResponse(status: number) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			mocked(getAxiosInstance).mockReturnValue({
+				"get": () => Promise.resolve<any>({
+					status
+				})
+			});
+		}
+
+		describe("verify", () => {
+			beforeEach(async () => {
+				mockJiraResponse(200);
+			});
+
+			it("should return 'Installation already enabled'", () => {
+				return supertest(app)
+					.post(`/api/jira/${installation.id}/verify`)
+					.set("Authorization", "Bearer xxx")
+					.expect(200)
+					.expect("Content-Type", /json/)
+					.then((response) => {
+						expect(response.body.message).toMatchSnapshot();
+					});
+			});
+		});
+
 		beforeEach(() => {
 			githubNock
 				.post("/graphql")
@@ -186,8 +230,6 @@ describe("API", () => {
 
 		describe("installation", () => {
 			it("should return 404 if no installation is found", async () => {
-				mocked(Subscription.getAllForInstallation).mockResolvedValue([]);
-
 				return supertest(app)
 					.get(`/api/${invalidId}`)
 					.set("Authorization", "Bearer xxx")
@@ -198,18 +240,11 @@ describe("API", () => {
 			});
 
 			it("should return information for an existing installation", async () => {
-				mocked(Subscription.getAllForInstallation).mockResolvedValue([
-					{
-						jiraHost: process.env.ATLASSIAN_URL,
-						gitHubInstallationId: installationId
-					}
-				] as any);
-
 				return supertest(app)
-					.get(`/api/${installationId}`)
+					.get(`/api/${gitHubInstallationId}`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send("jiraHost=https://test-atlassian-instance.net")
+					.send(`jiraHost=${jiraHost}`)
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -217,33 +252,72 @@ describe("API", () => {
 			});
 		});
 
-		describe("repoSyncState", () => {
-			it("should return 404 if no installation is found", async () => {
-				mocked(Subscription.getSingleInstallation).mockResolvedValue(null);
+		describe("Repo Sync State", () => {
+			beforeEach(async () => {
+				await RepoSyncState.create({
+					subscriptionId: subscription.id,
+					repoId: 1,
+					repoName: "github-for-jira",
+					repoOwner: "atlassian",
+					repoFullName: "atlassian/github-for-jira",
+					repoUrl: "github.com/atlassian/github-for-jira",
+					branchStatus: "complete",
+					branchCursor: "foo",
+					commitStatus: "complete",
+					commitCursor: "bar",
+					pullStatus: "complete",
+					pullCursor: "12",
+					repoUpdatedAt: new Date(0)
+				});
+			});
 
+			afterEach(async () => {
+				await RepoSyncState.destroy({ truncate: true });
+			});
+
+			it("should return 404 if no installation is found", async () => {
 				return supertest(app)
-					.get(`/api/${invalidId}/repoSyncState.json`)
+					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("Authorization", "Bearer xxx")
+					.set("host", "127.0.0.1")
+					.send(`jiraHost=${jiraHost}`)
 					.expect(404)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
 					});
 			});
 
-			it("should return the repoSyncState information for an existing installation", async () => {
-				mocked(Subscription.getSingleInstallation).mockResolvedValue(
-					mockModels.Subscription.getSingleInstallation
-				);
-
+			it("should return the sync state for an existing installation", async () => {
 				return supertest(app)
-					.get(
-						`/api/${installationId}/repoSyncState.json?jiraHost=https://test-atlassian-instance.net`
-					)
+					.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
 					.expect(200)
 					.then((response) => {
-						expect(response.body).toMatchSnapshot();
+						expect(response.body).toMatchObject({
+							jiraHost,
+							numberOfSyncedRepos: 1,
+							repos: {
+								"1": {
+									pullStatus: "complete",
+									branchStatus: "complete",
+									commitStatus: "complete",
+									lastBranchCursor: "foo",
+									lastCommitCursor: "bar",
+									lastPullCursor: 12,
+									repository: {
+										id: "1",
+										name: "github-for-jira",
+										full_name: "atlassian/github-for-jira",
+										html_url: "github.com/atlassian/github-for-jira",
+										owner: {
+											login: "atlassian"
+										},
+										updated_at: new Date(0).toISOString()
+									}
+								}
+							}
+						});
 					});
 			});
 		});
@@ -261,169 +335,27 @@ describe("API", () => {
 			});
 
 			it("should trigger the sync or start function", async () => {
-				mocked(Subscription.getSingleInstallation).mockResolvedValue(
-					mockModels.Subscription.getSingleInstallation
-				);
 				return supertest(app)
-					.post(`/api/${installationId}/sync`)
+					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
+					.send(`jiraHost=${jiraHost}`)
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
-						// td.verify(Subscription.findOrStartSync(subscription, null));
 					});
 			});
 
-			it("should reset repoSyncState if asked to", async () => {
-				mocked(Subscription.getSingleInstallation).mockResolvedValue(
-					mockModels.Subscription.getSingleInstallation
-				);
+			it("should reset sync state if asked to", async () => {
 				return supertest(app)
-					.post(`/api/${installationId}/sync`)
+					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
+					.send(`jiraHost=${jiraHost}`)
 					.send("resetType=full")
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
-						// td.verify(Subscription.findOrStartSync(subscription, "full"));
-					});
-			});
-		});
-
-		describe("verify", () => {
-			beforeEach(() => {
-				mocked(Installation.findByPk).mockResolvedValue(
-					mockModels.Installation.findByPk
-				);
-			});
-
-			it("should return 'Installation already enabled'", () => {
-				return supertest(app)
-					.post(`/api/jira/${installationId}/verify`)
-					.set("Authorization", "Bearer xxx")
-					.expect(200)
-					.expect("Content-Type", /json/)
-					.then((response) => expect(response.body.message).toMatchSnapshot());
-			});
-		});
-
-		describe.skip("undo and complete - prod", () => {
-			beforeEach(() => {
-				process.env.NODE_ENV = EnvironmentEnum.production;
-			});
-
-			afterEach(() => {
-				process.env.NODE_ENV = EnvironmentEnum.test;
-			});
-
-			it("should return 404 if no installation is found", async () => {
-				return supertest(app)
-					.post(`/api/${invalidId}/migrate/undo`)
-					.set("Authorization", "Bearer xxx")
-					.send("jiraHost=https://unknownhost.atlassian.net")
-					.expect(404)
-					.then((response) => {
-						expect(response.text).toMatchSnapshot();
-					});
-			});
-
-			/**
-			 * We should be testing that instance.post (by mocking axios) has been called.
-			 * However, current implementation of tests causes state to override test internals.
-			 * TODO: after ticket #ARC-200 is completed, update this test.
-			 */
-			it("should migrate an installation", () => {
-				const update = jest.fn();
-				mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
-				jiraNock
-					.post("/rest/devinfo/0.10/github/migrationComplete")
-					.reply(200);
-				return supertest(app)
-					.post(`/api/${installationId}/migrate`)
-					.set("Authorization", "Bearer xxx")
-					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
-					.expect(200)
-					.then((response) => {
-						expect(response.text).toMatchSnapshot();
-						expect(update).toMatchSnapshot();
-					});
-			});
-
-			/**
-			 * We should be testing that instance.post (by mocking axios) has been called.
-			 * However, current implementation of tests causes state to override test internals.
-			 * TODO: after ticket #ARC-200 is completed, update this test.
-			 */
-			it("should undo a migration", async () => {
-				const update = jest.fn();
-				mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
-				jiraNock
-					.post("/rest/devinfo/0.10/github/undoMigration")
-					.reply(200);
-				return supertest(app)
-					.post(`/api/${installationId}/migrate/undo`)
-					.set("Authorization", "Bearer xxx")
-					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
-					.expect(200)
-					.then((response) => {
-						expect(response.text).toMatchSnapshot();
-						expect(update).toMatchSnapshot();
-					});
-			});
-		});
-
-		describe("undo and complete - nonprod", () => {
-			/**
-			 * We should be testing that instance.post (by mocking axios) has not been called.
-			 * However, current implementation of tests causes state to override test internals.
-			 * TODO: after ticket #ARC-200 is completed, update this test.
-			 */
-			it("should not migrate an installation", async () => {
-				const update = jest.fn();
-				mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
-				const interceptor = jiraNock.post("/rest/devinfo/0.10/github/migrationComplete");
-				const scope = interceptor.reply(200);
-				return supertest(app)
-					.post(`/api/${installationId}/migrate`)
-					.set("Authorization", "Bearer xxx")
-					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
-					.expect(200)
-					.then((response) => {
-						expect(response.text).toMatchSnapshot();
-						expect(update).toMatchSnapshot();
-						expect(scope).not.toBeDone();
-						nock.removeInterceptor(interceptor);
-					});
-			});
-
-			/**
-			 * We should be testing that instance.post (by mocking axios) has not been called.
-			 * However, current implementation of tests causes state to override test internals.
-			 * TODO: after ticket #ARC-200 is completed, update this test.
-			 */
-			it("should not undo a migration", async () => {
-				const update = jest.fn();
-				mocked(Subscription.getSingleInstallation).mockResolvedValue({ update } as any);
-				const interceptor = githubNock.post("/rest/devinfo/0.10/github/undoMigration");
-				const scope = interceptor.reply(200);
-				return supertest(app)
-					.post(`/api/${installationId}/migrate/undo`)
-					.set("Authorization", "Bearer xxx")
-					.set("host", "127.0.0.1")
-					.send(`jiraHost=${process.env.ATLASSIAN_URL}`)
-					.expect(200)
-					.then((response) => {
-						expect(response.text).toMatchSnapshot();
-						expect(update).toMatchSnapshot();
-						expect(scope).not.toBeDone();
-						nock.removeInterceptor(interceptor);
 					});
 			});
 		});

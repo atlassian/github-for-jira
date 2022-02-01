@@ -42,7 +42,7 @@ describe("code_scanning_alert transform", () => {
 	it("manual code_scanning_alert maps to multiple Jira issue keys", async () => {
 		const payload = {...codeScanningPayload, action: "closed_by_user"};
 		const remoteLinks = await transformCodeScanningAlert(buildContext(payload));
-		expect(remoteLinks.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"])
+		expect(remoteLinks?.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"])
 	})
 
 	it("code_scanning_alert truncates to a shorter description if too long", async () => {
@@ -51,7 +51,7 @@ describe("code_scanning_alert transform", () => {
 			alert: {...codeScanningPayload.alert, rule: {...codeScanningPayload.alert.rule, description: "A".repeat(300)}}
 		};
 		const remoteLinks = await transformCodeScanningAlert(buildContext(payload));
-		expect(remoteLinks.remoteLinks[0].description).toHaveLength(255);
+		expect(remoteLinks?.remoteLinks[0].description).toHaveLength(255);
 	})
 
 	it("code_scanning_alert with pr reference queries Pull Request title", async () => {
@@ -66,6 +66,6 @@ describe("code_scanning_alert transform", () => {
 			status: 200
 		});
 		const remoteLinks = await transformCodeScanningAlert(context);
-		expect(remoteLinks.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
+		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
 	})
 })

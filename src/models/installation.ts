@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import Sequelize from "sequelize";
-import Subscription from "./subscription";
+import { Subscription } from "./index";
+import SubscriptionClass from "./subscription";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
@@ -8,9 +9,8 @@ if (!process.env.STORAGE_SECRET) {
 }
 
 export const getHashedKey = (clientKey: string): string => {
-	const keyHash = crypto.createHmac("sha256", process.env.STORAGE_SECRET);
+	const keyHash = crypto.createHmac("sha256", process.env.STORAGE_SECRET || "");
 	keyHash.update(clientKey);
-
 	return keyHash.digest("hex");
 };
 
@@ -20,7 +20,8 @@ export default class Installation extends Sequelize.Model {
 	secrets: string;
 	sharedSecret: string;
 	clientKey: string;
-	enabled: boolean;
+	updatedAt: Date;
+	createdAt: Date;
 
 	static async getForClientKey(
 		clientKey: string
@@ -33,20 +34,20 @@ export default class Installation extends Sequelize.Model {
 	}
 
 	static async getForHost(host: string): Promise<Installation | null> {
-		return Installation.findOne({
+		return Installation.findOne( {
 			where: {
-				jiraHost: host,
-				enabled: true
-			}
+				jiraHost: host
+			},
+			order: [["id", "DESC"]]
 		});
 	}
 
-	static async getPendingHost(jiraHost: string): Promise<Installation | null> {
-		return Installation.findOne({
+	static async getAllForHost(host: string): Promise<Installation[]> {
+		return Installation.findAll({
 			where: {
-				jiraHost,
-				enabled: false
-			}
+				jiraHost: host
+			},
+			order: [["id", "DESC"]]
 		});
 	}
 
@@ -71,7 +72,6 @@ export default class Installation extends Sequelize.Model {
 			await installation
 				.update({
 					sharedSecret: payload.sharedSecret,
-					enabled: false,
 					jiraHost: payload.host
 				})
 				.then(async (record) => {
@@ -88,30 +88,14 @@ export default class Installation extends Sequelize.Model {
 				});
 		}
 
-		await installation.update({
-			enabled: false
-		});
-
 		return installation;
-	}
-
-	async enable(): Promise<void> {
-		await this.update({
-			enabled: true
-		});
-	}
-
-	async disable(): Promise<void> {
-		await this.update({
-			enabled: false
-		});
 	}
 
 	async uninstall(): Promise<void> {
 		await this.destroy();
 	}
 
-	async subscriptions(): Promise<Subscription[]> {
+	async subscriptions(): Promise<SubscriptionClass[]> {
 		return Subscription.getAllForClientKey(this.clientKey);
 	}
 }

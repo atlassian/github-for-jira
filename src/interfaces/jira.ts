@@ -6,7 +6,7 @@ export interface JiraPullRequest {
 	ref: {
 		name: string;
 		uri: string;
-	}
+	};
 }
 
 export interface JiraBuild {
@@ -28,22 +28,43 @@ export interface JiraBuildData {
 }
 
 export interface JiraCommit {
-	author: {
-		avatar?: string;
-		email: string;
-		name: string;
-		url?: string;
-	};
-	authorTimestamp: number;
+	author: JiraAuthor;
+	authorTimestamp: string;
 	displayId: string;
 	fileCount: number;
 	hash: string;
 	id: string;
 	issueKeys: string[];
 	message: string;
-	timestamp: number;
 	url: string;
 	updateSequenceId: number;
+
+	files?: JiraCommitFile[];
+	flags?: string[];
+}
+
+export interface JiraIssue {
+	id: string;
+	self: string;
+	key: string;
+	fields:{
+		summary: string;
+	};
+}
+
+export interface JiraCommitFile {
+	path: string;
+	changeType: string;
+	linesAdded?: string[];
+	linesRemoved?: string[];
+	url: string;
+}
+
+export interface JiraAuthor {
+	avatar?: string;
+	email: string;
+	name: string;
+	url?: string;
 }
 
 export interface JiraCommitData {
@@ -62,7 +83,7 @@ export interface JiraDeployment {
 	displayName: string;
 	url: string;
 	description: string;
-	lastUpdated: number;
+	lastUpdated: Date;
 	state: string;
 	pipeline: {
 		id: string;

@@ -1,8 +1,13 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
 import { getJiraId } from "../jira/util/id";
 import _ from "lodash";
 import { Octokit } from "@octokit/rest";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { getJiraAuthor } from "../util/jira";
+import { GitHubAPI } from "probot";
+import { getGithubUser } from "../services/github/user";
+import { JiraAuthor } from "../interfaces/jira";
+import {booleanFlag, BooleanFlags} from "../config/feature-flags";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -12,29 +17,30 @@ function mapStatus(status: string, merged_at?: string) {
 	return "UNKNOWN";
 }
 
+interface Review extends JiraAuthor {
+	approvalStatus: string;
+}
+
 // TODO: define arguments and return
-function mapReviews(reviews) {
-	reviews = reviews || [];
+function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 	const sortedReviews = _.orderBy(reviews, "submitted_at", "desc");
-	const usernames = {};
+	const usernames: Record<string, Review> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
-	return sortedReviews.reduce((acc, review) => {
+	return sortedReviews.reduce((acc: Review[], review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
-		const user = review?.user;
-		if (!usernames[user?.login]) {
-			usernames[user?.login] = {
-				name: user?.login || undefined,
-				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED",
-				url: user?.html_url || undefined,
-				avatar: user?.avatar_url || undefined
+		const author = review?.user;
+		if (!usernames[author?.login]) {
+			usernames[author?.login] = {
+				...getJiraAuthor(author),
+				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
 			};
-			acc.push(usernames[user?.login]);
+			acc.push(usernames[author?.login]);
 			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
 		} else if (
-			usernames[user?.login].approvalStatus !== "APPROVED" &&
+			usernames[author?.login].approvalStatus !== "APPROVED" &&
 			review.state === "APPROVED"
 		) {
-			usernames[user?.login].approvalStatus = "APPROVED";
+			usernames[author?.login].approvalStatus = "APPROVED";
 		}
 		// Returns the reviews' array with unique users
 		return acc;
@@ -42,18 +48,27 @@ function mapReviews(reviews) {
 }
 
 // TODO: define arguments and return
-export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse) => {
+export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
+	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
-	const issueKeys = issueKeyParser().parse(
-		`${pullRequest.title}\n${pullRequest.head.ref}`
-	);
+	const textToSearch = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? `${prTitle}\n${head.ref}\n${body}}` : `${prTitle}\n${pullRequest.head.ref}`
+	const issueKeys = issueKeyParser().parse(textToSearch);
 
-	if (isEmpty(issueKeys) || !pullRequest?.head?.repo) {
+	const logPayload = {
+		prTitle: prTitle || "none",
+		repoName: head?.repo.name || "none",
+		prRef: pullRequest.head.ref || "none"
+	}
+
+	if (_.isEmpty(issueKeys) || !head?.repo) {
+		log?.info(logPayload, "Ignoring pullrequest hence it has no issue keys or repo");
 		return undefined;
 	}
 
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
+
+	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
 
 	return {
 		id: pullRequest.base.repo.id,
@@ -68,9 +83,8 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 					{
 						createPullRequestUrl: `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
-							author: {
-								name: pullRequest.head?.user?.login || undefined
-							},
+							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
+							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
 							fileCount: 0,
@@ -90,11 +104,8 @@ export default (pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsLi
 				],
 		pullRequests: [
 			{
-				author: {
-					avatar: pullRequest.user?.avatar_url || undefined,
-					name: pullRequest.user?.login || undefined,
-					url: pullRequest.user?.html_url || undefined
-				},
+				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
+				author: getJiraAuthor(pullRequest.user, await getGithubUser(github, pullRequest.user?.login)),
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
 				displayId: `#${pullRequest.number}`,

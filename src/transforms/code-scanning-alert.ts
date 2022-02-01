@@ -52,7 +52,7 @@ const transformStatusToAppearance = (status: string): JiraRemoteLinkStatusAppear
 	}
 }
 
-export default (context: Context): Promise<JiraRemoteLinkData> => {
+export default (context: Context): Promise<JiraRemoteLinkData | undefined> => {
 	const {action, alert, ref, repository} = context.payload;
 
 	// Grab branch names or PR titles
@@ -68,7 +68,7 @@ export default (context: Context): Promise<JiraRemoteLinkData> => {
 
 	return Promise.all(entityTitlesPromises).then(entityTitles => {
 		const parser = issueKeyParser();
-		const issueKeys = [].concat(...entityTitles.map((entityTitle) => parser.parse(entityTitle)));
+		const issueKeys = entityTitles.flatMap((entityTitle) => parser.parse(entityTitle) ?? []);
 		if (issueKeys.length === 0) {
 			return undefined;
 		}

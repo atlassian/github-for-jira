@@ -1,27 +1,30 @@
 import { getJiraId } from "../jira/util/id";
-import { Context } from "probot/lib/context";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
+import { getJiraAuthor } from "../util/jira";
+import _ from "lodash";
+import { WebhookPayloadCreate } from "@octokit/webhooks";
+import { GitHubAPI } from "probot";
 
-async function getLastCommit(context: Context, issueKeys: string[]) {
-	const {
-		github,
-		payload: { ref }
-	} = context;
+async function getLastCommit(github: GitHubAPI, webhookPayload: WebhookPayloadCreate, issueKeys: string[]) {
 
 	const {
-		data: {
-			object: { sha }
-		}
-	} = await github.git.getRef(context.repo({ ref: `heads/${ref}` }));
+		data: { object: { sha } }
+	} = await github.git.getRef({
+		owner: webhookPayload.repository.owner.login,
+		repo: webhookPayload.repository.name,
+		ref: `heads/${webhookPayload.ref}`
+	});
+
 	const {
-		data: { commit, html_url: url }
-	} = await github.repos.getCommit(context.repo({ sha }));
+		data: { commit, author, html_url: url }
+	} = await github.repos.getCommit({
+		owner: webhookPayload.repository.owner.login,
+		repo: webhookPayload.repository.name,
+		ref: sha
+	});
 
 	return {
-		author: {
-			name: commit.author.name
-		},
+		author: getJiraAuthor(author, commit.author),
 		authorTimestamp: commit.author.date,
 		displayId: sha.substring(0, 6),
 		fileCount: 0,
@@ -34,19 +37,18 @@ async function getLastCommit(context: Context, issueKeys: string[]) {
 	};
 }
 
-// TODO: type this payload better
-export default async (context: Context) => {
-	if (context.payload.ref_type !== "branch") return undefined;
+export default async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) => {
+	if (webhookPayload.ref_type !== "branch") return undefined;
 
-	const { ref, repository } = context.payload;
+	const { ref, repository } = webhookPayload;
 
-	const issueKeys = issueKeyParser().parse(ref);
+	const issueKeys = issueKeyParser().parse(ref) || [];
 
-	if (isEmpty(issueKeys)) {
+	if (_.isEmpty(issueKeys)) {
 		return undefined;
 	}
 
-	const lastCommit = await getLastCommit(context, issueKeys);
+	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
 
 	// TODO: type this return
 	return {

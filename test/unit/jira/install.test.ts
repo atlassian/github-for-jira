@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
 import install from "../../../src/jira/install";
 import { mocked } from "ts-jest/utils";
 import { Installation } from "../../../src/models";
@@ -33,7 +32,6 @@ describe("Webhook: /events/installed", () => {
 	});
 
 	it("Install", async () => {
-		await testTracking();
 		const req = { log: { info: jest.fn() }, body };
 		const res = { sendStatus: jest.fn(), on: jest.fn() };
 

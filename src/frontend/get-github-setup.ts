@@ -1,29 +1,30 @@
-import { jiraDomainOptions } from "./validations";
-import { NextFunction, Request, Response } from "express";
-import { getGitHubConfigurationUrl } from "../util/getUrl";
+import { Request, Response } from "express";
+import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../util/jira-utils";
+import { Installation } from "../models";
 
 /*
-When this request is made: Installing from Jira Marketplace - GitHub org does not have Jira installed.
-Redirects users back to github/configuration to install their Jira instance in GitHub org/s.
-If the installation was done from Jira Marketplace, the app is already installed.
+	Handles redirects for both the installation flow from Jira and
+	the installation flow from GH.
+	- From Jira: user has already installed the app and is redirected to the connect an org pg
+	- From GH:
+			- If we have the users Jira host, redirect to marketplace.
+			- Otherwise, render the setup page.
 */
-export default (req: Request, res: Response, next: NextFunction): void => {
-
+export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
+	const { jiraHost } = res.locals;
 
-	if (req.session.jiraHost) {
-		const { host: githubHost, session } = req;
-		const { jwt, jiraHost } = session;
+	let redirectUrl = getJiraMarketplaceUrl(jiraHost);
 
-		const urlArgs = { githubHost, jwt, jiraHost };
-
-		return res.redirect(getGitHubConfigurationUrl(urlArgs));
+	// If we know enough about user and site, redirect to the app
+	if (jiraHost && await jiraSiteExists(jiraHost) && await Installation.getForHost(jiraHost)) {
+		redirectUrl = getJiraAppUrl(jiraHost);
 	}
 
 	res.render("github-setup.hbs", {
-		jiraDomainOptions: jiraDomainOptions(),
 		csrfToken: req.csrfToken(),
-		nonce: res.locals.nonce
+		nonce: res.locals.nonce,
+		jiraHost,
+		redirectUrl
 	});
-	next();
 };

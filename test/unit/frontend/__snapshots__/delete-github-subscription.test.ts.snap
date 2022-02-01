@@ -1,17 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`POST /github/subscription Delete Jira Configuration 1`] = `"jira.v0.Action"`;
-
-exports[`POST /github/subscription Delete Jira Configuration 2`] = `
-Object {
-  "actionSource": "web_console",
-  "association": "subscription",
-  "installationId": 19,
-  "jiraHostname": "https://test-host.jira.com",
-  "type": "destroyed",
-}
-`;
-
 exports[`POST /github/subscription missing body.installationId 1`] = `
 Array [
   Object {

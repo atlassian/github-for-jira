@@ -2,18 +2,13 @@ import { Subscription } from "../models";
 import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
-import { SyncStatus } from "../models/subscription";
-import { getLogger } from "../config/logger";
+import { Repositories, SyncStatus } from "../models/subscription";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import sqsQueues from "../sqs/queues";
 
-const jobOpts = {
-	removeOnComplete: true,
-	removeOnFail: true,
-	attempts: 3
-};
+export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 
-const logger = getLogger("sync.discovery");
-
-export const discovery = (app: Application, queues) => async (job) => {
+export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
 	const github = await app.auth(installationId);
@@ -25,14 +20,20 @@ export const discovery = (app: Application, queues) => async (job) => {
 			(res) => res.data.repositories
 		);
 		logger.info(
-			{installationId},
-			`${repositories.length} Repositories found for installationId=${installationId}`
+			{ job },
+			`${repositories.length} Repositories found`
 		);
 
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
 			installationId
 		);
+
+		if(!subscription) {
+			logger.info({jiraHost, installationId}, "Subscription has been removed, ignoring job.");
+			return;
+		}
+
 		if (repositories.length === 0) {
 			await subscription.update({
 				syncStatus: SyncStatus.COMPLETE
@@ -42,7 +43,7 @@ export const discovery = (app: Application, queues) => async (job) => {
 
 		// Store the repository object to prevent doing an additional query in each job
 		// Also, with an object per repository we can calculate which repos are synched or not
-		const repos = repositories.reduce((obj, repo) => {
+		const repos: Repositories = repositories.reduce((obj, repo) => {
 			obj[repo.id] = { repository: getRepositorySummary(repo) };
 			return obj;
 		}, {});
@@ -51,9 +52,8 @@ export const discovery = (app: Application, queues) => async (job) => {
 			repos
 		});
 
-		// Create job
-		queues.installation.add({ installationId, jiraHost, startTime }, jobOpts);
+		await sqsQueues.backfill.sendMessage({installationId, jiraHost, startTime: startTime.toISOString()}, 0, logger);
 	} catch (err) {
-		logger.error(err, "Discovery error");
+		logger.error({ job, err }, "Discovery error");
 	}
 };

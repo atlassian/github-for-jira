@@ -1,85 +1,58 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { mocked } from "ts-jest/utils";
 import getJiraConfiguration from "../../src/frontend/get-jira-configuration";
-import { Installation, Subscription } from "../../src/models";
-
-jest.mock("../../src/models");
+import { Installation, RepoSyncState, Subscription } from "../../src/models";
+import SubscriptionClass from "../../src/models/subscription";
 
 describe("Jira Configuration Suite", () => {
-	let consoleSpy: jest.SpyInstance;
-	let subscriptions;
-	let installation;
+	let subscription: SubscriptionClass;
 
-	beforeAll(() => {
-		// Create a spy on console (console.error in this case) and provide some mocked implementation
-		// In mocking global objects it's usually better than simple `jest.fn()`
-		// because you can `unmock` it in clean way doing `mockRestore`
-		// eslint-disable-next-line @typescript-eslint/no-empty-function
-		consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {
+	beforeEach(async () => {
+		subscription = await Subscription.create({
+			gitHubInstallationId: 15,
+			jiraHost,
+			jiraClientKey: "clientKey",
+			syncWarning: "some warning"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: subscription.id,
+			repoId: 1,
+			repoName: "test-repo-name",
+			repoOwner: "integrations",
+			repoFullName: "integrations/test-repo-name",
+			repoUrl: "test-repo-url",
+			pullStatus: "pending",
+			branchStatus: "complete",
+			commitStatus: "complete"
+		});
+
+		await Installation.create({
+			jiraHost,
+			clientKey: "abc123",
+			secrets: "def234",
+			sharedSecret: "ghi345"
 		});
 	});
 
-	beforeEach(async () => {
-		subscriptions = [
-			{
-				gitHubInstallationId: 15,
-				jiraHost: "https://test-host.jira.com",
-				destroy: jest.fn().mockResolvedValue(undefined),
-				hasInProgressSyncFailed: jest.fn().mockResolvedValue(undefined),
-				syncWarning: "some warning",
-				updatedAt: "2018-04-18T15:42:13Z",
-				repoSyncState: {
-					installationId: 12345678,
-					jiraHost: "https://test-host.jira.com",
-					repos: {
-						"test-repo-id": {
-							repository: {
-								name: "test-repo-name",
-								full_name: "test-repo-name",
-								owner: { login: "integrations" },
-								html_url: "test-repo-url",
-								id: "test-repo-id",
-								updated_at: 123456789
-							},
-							pullStatus: "pending",
-							branchStatus: "complete",
-							commitStatus: "complete"
-						}
-					}
-				}
-			}
-		];
-
-		installation = {
-			id: 19,
-			jiraHost: subscriptions[0].jiraHost,
-			clientKey: "abc123",
-			enabled: true,
-			secrets: "def234",
-			sharedSecret: "ghi345",
-			subscriptions: jest.fn().mockResolvedValue([])
-		};
-
-		mocked(Installation.getForHost).mockImplementation(() => installation);
-		mocked(Subscription.getAllForHost).mockResolvedValue(subscriptions);
+	afterEach(async () => {
+		await Subscription.destroy({ truncate: true });
+		await Installation.destroy({ truncate: true });
+		await RepoSyncState.destroy({ truncate: true });
 	});
 
-	// Restore mock after all tests are done, so it won't affect other test suites
-	afterAll(() => consoleSpy.mockRestore());
-
-	// Clear mock (all calls etc) after each test.
-	// It's needed when you're using console somewhere in the tests so you have clean mock each time
-	afterEach(() => consoleSpy.mockClear());
-
 	const mockRequest = (): any => ({
-		query: { xdm_e: "https://somejirasite.atlassian.net" },
-		session: { jiraHost: subscriptions[0].jiraHost },
+		query: { xdm_e: jiraHost },
 		csrfToken: jest.fn().mockReturnValue({}),
-		log: jest.fn().mockReturnValue({})
+		log: {
+			info: jest.fn(),
+			warn: jest.fn(),
+			error: jest.fn()
+		}
 	});
 
 	const mockResponse = (): any => ({
 		locals: {
+			jiraHost,
 			client: {
 				apps: {
 					getInstallation: jest.fn().mockReturnValue({ data: {} })
@@ -91,8 +64,12 @@ describe("Jira Configuration Suite", () => {
 		send: jest.fn().mockReturnValue({})
 	});
 
-	it("should return success message after page is rendered", async () =>
-		await expect(
-			getJiraConfiguration(mockRequest(), mockResponse(), jest.fn())
-		).toResolve());
+	it("should return success message after page is rendered", async () => {
+		const response = mockResponse();
+		await getJiraConfiguration(mockRequest(), response, jest.fn());
+		const data = response.render.mock.calls[0][1];
+		expect(data.hasConnections).toBe(true);
+		expect(data.failedConnections.length).toBe(0);
+		expect(data.successfulConnections.length).toBe(1);
+	});
 });

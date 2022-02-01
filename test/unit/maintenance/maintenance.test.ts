@@ -4,6 +4,7 @@ import healthcheck from "../../../src/frontend/healthcheck";
 import setupFrontend from "../../../src/frontend/app";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { when } from "jest-when";
+import {getLogger} from "../../../src/config/logger";
 
 jest.mock("../../../src/config/feature-flags");
 
@@ -15,12 +16,16 @@ describe("Maintenance", () => {
 			BooleanFlags.MAINTENANCE_MODE,
 			expect.anything(),
 			jiraHost
-		).mockResolvedValue(value);
+		).mockResolvedValue(Promise.resolve(value));
 
 	beforeEach(() => {
 		// Defaults maintenance mode to true
 		whenMaintenanceMode(true);
 		app = express();
+		app.use((request, _, next) => {
+			request.log = getLogger('test');
+			next();
+		});
 	});
 
 	describe("Healthcheck", () => {
@@ -41,8 +46,8 @@ describe("Maintenance", () => {
 	describe("Frontend", () => {
 		beforeEach(() => {
 			app.use("/", setupFrontend({
-				getSignedJsonWebToken: () => undefined,
-				getInstallationAccessToken: () => undefined
+				getSignedJsonWebToken: () => "",
+				getInstallationAccessToken: async () => ""
 			}));
 		});
 

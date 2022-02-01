@@ -6,14 +6,16 @@ import RedisStore from "rate-limit-redis";
 import Redis from "ioredis";
 import BodyParser from "body-parser";
 import GithubAPI from "../config/github-api";
-import { Installation, Subscription } from "../models";
+import { Installation, RepoSyncState, Subscription } from "../models";
 import verifyInstallation from "../jira/verify-installation";
-import logMiddleware from "../middleware/log-middleware";
+import logMiddleware from "../middleware/frontend-log-middleware";
 import JiraClient from "../models/jira-client";
 import uninstall from "../jira/uninstall";
 import { serializeJiraInstallation, serializeSubscription } from "./serializers";
 import getRedisInfo from "../config/redis-info";
-import { elapsedTimeMetrics } from "../config/statsd";
+import { WhereOptions } from "sequelize";
+import getJiraClient from "../jira/client";
+import { findOrStartSync } from "../sync/sync-utils";
 
 const router = express.Router();
 const bodyParser = BodyParser.urlencoded({ extended: false });
@@ -60,7 +62,7 @@ const viewerPermissionQuery = `{
 
 router.use(rateLimit({
 	store: new RedisStore({
-		client: new Redis(getRedisInfo("express-rate-limit").redisOptions)
+		client: new Redis(getRedisInfo("express-rate-limit"))
 	}),
 	windowMs: 60 * 1000, // 1 minutes
 	max: 60 // limit each IP to 60 requests per windowMs
@@ -132,35 +134,38 @@ router.use(
 	}
 );
 
-router.get(
-	"/",
-	elapsedTimeMetrics,
-	(_: Request, res: Response): void => {
-		res.send({});
-	}
-);
+router.get("/", (_: Request, res: Response): void => {
+	res.send({});
+});
 
 router.get(
-	"/:installationId/repoSyncState.json",
+	"/:installationId/:jiraHost/syncstate",
 	check("installationId").isInt(),
+	check("jiraHost").isString(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
+		const jiraHost = req.params.jiraHost;
+
+		if (!jiraHost || !githubInstallationId) {
+			const msg = "Missing Jira Host or Installation ID";
+			req.log.warn({ req, res }, msg);
+			res.status(400).send(msg);
+			return;
+		}
 
 		try {
 			const subscription = await Subscription.getSingleInstallation(
-				req.session.jiraHost,
+				jiraHost,
 				githubInstallationId
 			);
 
 			if (!subscription) {
-				res.sendStatus(404);
+				res.status(404).send(`No Subscription found for jiraHost "${jiraHost}" and installationId "${githubInstallationId}"`);
 				return;
 			}
 
-			const data = subscription.repoSyncState;
-			res.json(data);
+			res.json(await RepoSyncState.toRepoJson(subscription));
 		} catch (err) {
 			res.status(500).json(err);
 		}
@@ -172,7 +177,6 @@ router.post(
 	bodyParser,
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
 		req.log.info(req.body);
@@ -190,7 +194,7 @@ router.post(
 				return;
 			}
 
-			await Subscription.findOrStartSync(subscription, resetType);
+			await findOrStartSync(subscription, req.log, resetType);
 
 			res.status(202).json({
 				message: `Successfully (re)started sync for ${githubInstallationId}`
@@ -206,7 +210,6 @@ router.post(
 router.post(
 	"/resync",
 	bodyParser,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
@@ -218,14 +221,32 @@ router.post(
 		const limit = Number(req.body.limit) || undefined;
 		// Needed for 'pagination'
 		const offset = Number(req.body.offset) || 0;
+		// only resync installations whose "updatedAt" date is older than x seconds
+		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
 
-		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit);
+		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
-			Subscription.findOrStartSync(subscription, syncType)
+			findOrStartSync(subscription, req.log, syncType)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));
+	}
+);
+
+router.post(
+	"/dedupInstallationQueue",
+	bodyParser,
+	async (_: Request, res: Response): Promise<void> => {
+		res.send(`This endpoint doesn't do anything useful anymore`);
+	}
+);
+
+router.post(
+	"/requeue",
+	bodyParser,
+	async (_: Request, res: Response): Promise<void> => {
+		res.send(`This endpoint doesn't do anything useful anymore`);
 	}
 );
 
@@ -237,11 +258,10 @@ router.get(
 			check("clientKeyOrJiraHost").isURL(),
 			check("clientKeyOrJiraHost").isHexadecimal()
 		]),
-		returnOnValidationError,
-		elapsedTimeMetrics
+		returnOnValidationError
 	],
 	async (req: Request, res: Response): Promise<void> => {
-		const where = req.params.clientKeyOrJiraHost.startsWith("http")
+		const where: WhereOptions = req.params.clientKeyOrJiraHost.startsWith("http")
 			? { jiraHost: req.params.clientKeyOrJiraHost }
 			: { clientKey: req.params.clientKeyOrJiraHost };
 		const jiraInstallations = await Installation.findAll({ where });
@@ -260,7 +280,6 @@ router.post(
 	bodyParser,
 	check("clientKey").isHexadecimal(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (request: Request, response: Response): Promise<void> => {
 		response.locals.installation = await Installation.findOne({
 			where: { clientKey: request.params.clientKey }
@@ -296,29 +315,18 @@ router.post(
 	bodyParser,
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
-	async (req: Request, response: Response): Promise<void> => {
+	async (req: Request, res: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const installation = await Installation.findByPk(installationId);
-
-		const respondWith = (message) =>
-			response.json({
-				message,
-				installation: {
-					enabled: installation.enabled,
-					id: installation.id,
-					jiraHost: installation.jiraHost
-				}
-			});
-
-		if (installation.enabled) {
-			respondWith("Installation already enabled");
-			return;
-		}
-		await verifyInstallation(installation, req.log)();
-		respondWith(
-			installation.enabled ? "Verification successful" : "Verification failed"
-		);
+		const isValid = await verifyInstallation(installation, req.log)();
+		res.json({
+			message: isValid ? "Verification successful" : "Verification failed",
+			installation: {
+				enabled: isValid,
+				id: installation.id,
+				jiraHost: installation.jiraHost
+			}
+		});
 	}
 );
 
@@ -326,7 +334,6 @@ router.get(
 	"/:installationId",
 	check("installationId").isInt(),
 	returnOnValidationError,
-	elapsedTimeMetrics,
 	async (req: Request, res: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const { client } = res.locals;
@@ -357,7 +364,7 @@ router.get(
 				}));
 
 			const failedConnections = installations.filter((response) => {
-				req.log.error({...response}, "Failed installation");
+				req.log.error({ ...response }, "Failed installation");
 				return response.error;
 			});
 
@@ -367,12 +374,48 @@ router.get(
 				connections,
 				failedConnections,
 				hasConnections: connections.length > 0 || failedConnections.length > 0,
-				repoSyncState: `${req.protocol}://${req.get(
-					"host"
-				)}/api/${installationId}/repoSyncState.json`
+				syncStateUrl: `${req.protocol}://${req.get("host")}/api/${installationId}/${encodeURIComponent(jiraHost)}/syncstate`
 			});
 		} catch (err) {
-			req.log.error({installationId, err}, "Error getting installation");
+			req.log.error({ installationId, err }, "Error getting installation");
+			res.status(500).json(err);
+		}
+	}
+);
+
+router.delete(
+	"/deleteInstallation/:installationId/:jiraHost",
+	check("installationId").isInt(),
+	check("jiraHost").isString(),
+	returnOnValidationError,
+	async (req: Request, res: Response): Promise<void> => {
+		const githubInstallationId = req.params.installationId;
+		const jiraHost = req.params.jiraHost;
+
+		if (!jiraHost || !githubInstallationId) {
+			const msg = "Missing Jira Host or Installation ID";
+			req.log.warn({ req, res }, msg);
+			res.status(400).send(msg);
+			return;
+		}
+
+		const subscription = await Subscription.getSingleInstallation(
+			jiraHost,
+			Number(githubInstallationId)
+		);
+
+		if (!subscription) {
+			req.log.info("no subscription");
+			res.sendStatus(404);
+			return;
+		}
+
+		try {
+			const jiraClient = await getJiraClient(jiraHost, Number(githubInstallationId), req.log);
+			req.log.info(`Deleting dev info for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
+			await jiraClient.devinfo.installation.delete(githubInstallationId);
+			res.status(200).send(`devinfo deleted for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
+		} catch (err) {
 			res.status(500).json(err);
 		}
 	}

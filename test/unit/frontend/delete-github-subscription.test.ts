@@ -1,100 +1,68 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import testTracking from "../../setup/tracking";
-import nock from "nock";
 import { Installation, Subscription } from "../../../src/models";
-import { mocked } from "ts-jest/utils";
 import deleteSubscription from "../../../src/frontend/delete-github-subscription";
-import { isDisabled, setIsDisabled } from "../../../src/tracking";
-
-jest.mock("../../../src/models");
 
 describe("POST /github/subscription", () => {
-	let installation;
-	let subscription;
-	let origDisabledState;
-	let deleteGitHubSubscription;
+	const gitHubInstallationId = 15;
 
 	beforeEach(async () => {
-		subscription = {
-			githubInstallationId: 15,
-			jiraHost: "https://test-host.jira.com",
-			destroy: jest.fn().mockResolvedValue(undefined)
-		};
+		await Subscription.create({
+			gitHubInstallationId,
+			jiraHost
+		});
 
-		installation = {
-			id: 19,
-			jiraHost: subscription.jiraHost,
-			clientKey: "abc123",
-			enabled: true,
-			secrets: "def234",
-			sharedSecret: "ghi345",
-			subscriptions: jest.fn().mockResolvedValue([])
-		};
-
-		mocked(Subscription.getSingleInstallation).mockResolvedValue(subscription);
-		mocked(Subscription.install).mockResolvedValue(subscription);
-		mocked(Installation.getForHost).mockResolvedValue(installation);
-
-		deleteGitHubSubscription = await deleteSubscription;
-
-		origDisabledState = isDisabled();
-		setIsDisabled(false);
+		await Installation.create({
+			jiraHost,
+			clientKey: "client-key",
+			sharedSecret: "shared-secret"
+		});
 	});
 
-	afterEach(() => {
-		setIsDisabled(origDisabledState);
+	afterEach(async () => {
+		await Installation.destroy({ truncate: true });
+		await Subscription.destroy({ truncate: true });
 	});
 
 	it("Delete Jira Configuration", async () => {
-		await testTracking();
-
-		nock(subscription.jiraHost)
-			.delete("/rest/devinfo/0.10/bulkByProperties")
-			.query({ installationId: subscription.githubInstallationId })
-			.reply(200, "OK");
-
 		const req = {
 			log: { error: jest.fn(), info: jest.fn() },
 			body: {
-				installationId: subscription.githubInstallationId,
-				jiraHost: subscription.jiraHost
-			},
-			query: {
-				xdm_e: subscription.jiraHost
-			},
-			session: {
-				githubToken: "abc-token"
+				installationId: gitHubInstallationId,
+				jiraHost
 			}
 		};
 
 		const login = "test-user";
-		const listInstallations = jest.fn().mockResolvedValue({
-			data: {
-				installations: [
-					{
-						id: subscription.githubInstallationId,
-						target_type: "User",
-						account: { login }
-					}
-				]
-			}
-		});
 
 		const getAuthenticated = jest.fn().mockResolvedValue({ data: { login } });
 		const res = {
 			sendStatus: jest.fn(),
 			status: jest.fn(),
 			locals: {
+				jiraHost,
+				githubToken: "abc-token",
 				github: {
-					apps: { listInstallationsForAuthenticatedUser: listInstallations },
+					apps: {
+						listInstallationsForAuthenticatedUser: jest.fn().mockResolvedValue({
+							data: {
+								installations: [
+									{
+										id: gitHubInstallationId,
+										target_type: "User",
+										account: { login }
+									}
+								]
+							}
+						})
+					},
 					users: { getAuthenticated }
 				}
 			}
 		};
 
-		await deleteGitHubSubscription(req as any, res as any);
-		expect(subscription.destroy).toHaveBeenCalled();
+		await deleteSubscription(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(202);
+		expect(await Subscription.count()).toEqual(0);
 	});
 
 	it("Missing githubToken", async () => {
@@ -103,10 +71,11 @@ describe("POST /github/subscription", () => {
 		};
 
 		const res = {
-			sendStatus: jest.fn()
+			sendStatus: jest.fn(),
+			locals: {}
 		};
 
-		await deleteGitHubSubscription(req as any, res as any);
+		await deleteSubscription(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
 	});
 
@@ -114,22 +83,26 @@ describe("POST /github/subscription", () => {
 		"missing body.%s",
 		async (property) => {
 			const req = {
-				session: { githubToken: "example-token" },
 				body: {
 					installationId: "an installation id",
-					jiraHost: "https://jira-host"
+					jiraHost
 				}
 			};
-			delete req.body[property];
-
 			const res = {
 				status: jest.fn(),
-				json: jest.fn()
+				json: jest.fn(),
+				locals: {
+					jiraHost,
+					githubToken: "example-token"
+				}
 			};
+
+			delete req.body[property];
+			delete res.locals[property];
 
 			res.status.mockReturnValue(res);
 
-			await deleteGitHubSubscription(req as any, res as any);
+			await deleteSubscription(req as any, res as any);
 			expect(res.status).toHaveBeenCalledWith(400);
 			expect(res.json.mock.calls[0]).toMatchSnapshot([
 				{

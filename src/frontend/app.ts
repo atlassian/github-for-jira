@@ -4,36 +4,38 @@ import path from "path";
 import cookieSession from "cookie-session";
 import csrf from "csurf";
 import * as Sentry from "@sentry/node";
-import hbs from "hbs";
 import GithubOAuth from "./github-oauth";
 import getGitHubSetup from "./get-github-setup";
 import postGitHubSetup from "./post-github-setup";
 import getGitHubConfiguration from "./get-github-configuration";
 import postGitHubConfiguration from "./post-github-configuration";
-import listGitHubInstallations from "./list-github-installations";
 import getGitHubSubscriptions from "./get-github-subscriptions";
 import deleteGitHubSubscription from "./delete-github-subscription";
 import getJiraConfiguration from "./get-jira-configuration";
 import deleteJiraConfiguration from "./delete-jira-configuration";
 import getGithubClientMiddleware from "./github-client-middleware";
-import getJiraConnect from "../jira/connect";
-import postJiraDisable from "../jira/disable";
-import postJiraEnable from "../jira/enable";
+import getJiraConnect, { postInstallUrl } from "../jira/connect";
 import postJiraInstall from "../jira/install";
 import postJiraUninstall from "../jira/uninstall";
-import { authenticateInstallCallback, authenticateJiraEvent, authenticateUninstallCallback } from "../jira/authenticate";
 import extractInstallationFromJiraCallback from "../jira/extract-installation-from-jira-callback";
 import retrySync from "./retry-sync";
 import getMaintenance from "./get-maintenance";
 import api from "../api";
 import healthcheck from "./healthcheck";
-import logMiddleware from "../middleware/log-middleware";
+import version from "./version";
+import logMiddleware from "../middleware/frontend-log-middleware";
 import { App } from "@octokit/app";
-import statsd, { elapsedTimeMetrics } from "../config/statsd";
+import statsd from "../config/statsd";
+import envVars from "../config/env";
 import { metricError } from "../config/metric-names";
-import { EnvironmentEnum } from "../config/env";
-import { verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
+import { authenticateInstallCallback, authenticateUninstallCallback, verifyJiraContextJwtTokenMiddleware, verifyJiraJwtTokenMiddleware } from "./verify-jira-jwt-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { isNodeProd, isNodeTest } from "../util/isNodeEnv";
+import { registerHandlebarsPartials } from "../util/handlebars/partials";
+import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
+import { Errors } from "../config/errors";
+import cookieParser from "cookie-parser";
+import { v4 as uuidv4 } from "uuid";
 
 // Adding session information to request
 declare global {
@@ -45,24 +47,26 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
-				jwt?: string;
-				[key: string]: unknown;
 			};
 		}
 	}
 }
 
+const throwError = (msg: string) => {
+	throw new Error(msg);
+};
+
 const oauth = GithubOAuth({
-	githubClient: process.env.GITHUB_CLIENT_ID,
-	githubSecret: process.env.GITHUB_CLIENT_SECRET,
-	baseURL: process.env.APP_URL,
+	githubClient: process.env.GITHUB_CLIENT_ID || throwError("Missing GITHUB_CLIENT_ID"),
+	githubSecret: process.env.GITHUB_CLIENT_SECRET || throwError("Missing GITHUB_CLIENT_SECRET"),
+	baseURL: process.env.APP_URL || throwError("Missing APP_URL"),
 	loginURI: "/github/login",
 	callbackURI: "/github/callback"
 });
 
 // setup route middlewares
 const csrfProtection = csrf(
-	process.env.NODE_ENV === EnvironmentEnum.test
+	isNodeTest()
 		? {
 			ignoreMethods: ["GET", "HEAD", "OPTIONS", "POST", "PUT"]
 		}
@@ -81,6 +85,7 @@ export default (octokitApp: App): Express => {
 	// Parse URL-encoded bodies for Jira configuration requests
 	app.use(bodyParser.urlencoded({ extended: false }));
 	app.use(bodyParser.json());
+	app.use(cookieParser());
 
 	// We run behind ngrok.io so we need to trust the proxy always
 	// TODO: look into the security of this.  Maybe should only be done for local dev?
@@ -88,47 +93,23 @@ export default (octokitApp: App): Express => {
 
 	app.use(
 		cookieSession({
-			keys: [process.env.GITHUB_CLIENT_SECRET],
+			keys: [process.env.GITHUB_CLIENT_SECRET || throwError("Missing GITHUB_CLIENT_SECRET")],
 			maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 			signed: true,
 			sameSite: "none",
-			secure: true
+			secure: true,
+			httpOnly: false
 		})
 	);
 
 	app.use(logMiddleware);
 
-	// TODO: move all view/static/public/handlebars helper things in it's own folder
 	app.set("view engine", "hbs");
 	app.set("views", path.join(rootPath, "views"));
 
-	// Handlebars helpers
-	hbs.registerHelper("toLowerCase", (str) => str.toLowerCase());
+	registerHandlebarsPartials(rootPath);
 
-	hbs.registerHelper("replaceSpaceWithHyphen", (str) => str.replace(/ /g, "-"));
-
-	hbs.registerHelper(
-		"ifAllReposSynced",
-		(numberOfSyncedRepos, totalNumberOfRepos) =>
-			numberOfSyncedRepos === totalNumberOfRepos
-				? totalNumberOfRepos
-				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
-	);
-
-	hbs.registerHelper("repoAccessType", (repository_selection) =>
-		repository_selection === "all" ? "All repos" : "Only select repos"
-	);
-
-	hbs.registerHelper("isNotConnected", (syncStatus) => syncStatus == null);
-
-	hbs.registerHelper(
-		"inProgressSync",
-		(syncStatus) => syncStatus === "IN PROGRESS"
-	);
-
-	hbs.registerHelper("connectedStatus", (syncStatus) =>
-		syncStatus === "COMPLETE" ? "Connected" : "Connect"
-	);
+	registerHandlebarsHelpers();
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
 	app.use(
@@ -148,10 +129,46 @@ export default (octokitApp: App): Express => {
 		)
 	);
 
-	// Check to see if jira host has been passed to any routes and save it to session
-	app.use((req: Request, _: Response, next: NextFunction): void => {
-		req.session.jwt = (req.query.jwt as string) || req.session.jwt;
-		req.session.jiraHost = (req.query.xdm_e as string) || req.session.jiraHost;
+	app.use(
+		"/public/aui",
+		express.static(
+			path.join(rootPath, "node_modules/@atlassian/aui/dist/aui")
+		)
+	);
+
+	app.get(["/session", "/session/*"], (req: Request, res: Response, next: NextFunction) => {
+		if (!req.params[0]) {
+			return next(new Error("Missing redirect url for session.  Needs to be in format `/session/:redirectUrl`"));
+		}
+
+		return res.render("session.hbs", {
+			title: "Logging you into GitHub",
+			APP_URL: process.env.APP_URL,
+			redirectUrl: new URL(req.params[0], process.env.APP_URL).href,
+			nonce: res.locals.nonce
+		});
+	});
+
+	// Saves the jiraHost cookie to the secure session if available
+	app.use((req: Request, res: Response, next: NextFunction) => {
+		if (req.cookies.jiraHost) {
+			// Save jirahost to secure session
+			req.session.jiraHost = req.cookies.jiraHost;
+			// delete jirahost from cookies.
+			res.clearCookie("jiraHost");
+		}
+
+		if (req.path == postInstallUrl && req.method == "GET") {
+			// Only save xdm_e query when on the GET post install url (iframe url)
+			res.locals.jiraHost = req.query.xdm_e as string;
+		} else if ((req.path == postInstallUrl && req.method != "GET") || req.path == "/jira/sync") {
+			// Only save the jiraHost from the body for specific routes that use it
+			res.locals.jiraHost = req.body?.jiraHost;
+		} else {
+			// Save jiraHost from session for any other URLs
+			res.locals.jiraHost = req.session.jiraHost;
+		}
+
 		next();
 	});
 
@@ -168,27 +185,26 @@ export default (octokitApp: App): Express => {
 	app.get("/jira/atlassian-connect.json", getJiraConnect);
 
 	// Maintenance mode view
-	app.use(async (req, res, next) => {
-		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, req.session.jiraHost)) {
+	app.use(async (req: Request, res: Response, next: NextFunction) => {
+		if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, res.locals.jiraHost)) {
 			return getMaintenance(req, res);
 		}
 		next();
 	});
+
+	app.get("/version", version);
 
 	app.get("/maintenance", csrfProtection, getMaintenance);
 
 	app.get(
 		"/github/setup",
 		csrfProtection,
-		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		getGitHubSetup
 	);
 
 	app.post(
 		"/github/setup",
 		csrfProtection,
-		elapsedTimeMetrics,
 		postGitHubSetup
 	);
 
@@ -196,36 +212,26 @@ export default (octokitApp: App): Express => {
 		"/github/configuration",
 		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
 		getGitHubConfiguration
 	);
 
 	app.post(
 		"/github/configuration",
 		csrfProtection,
-		elapsedTimeMetrics,
-		postGitHubConfiguration
-	);
-
-	app.get(
-		"/github/installations",
-		csrfProtection,
 		oauth.checkGithubAuth,
-		elapsedTimeMetrics,
-		listGitHubInstallations
+		postGitHubConfiguration
 	);
 
 	app.get(
 		"/github/subscriptions/:installationId",
 		csrfProtection,
-		elapsedTimeMetrics,
 		getGitHubSubscriptions
 	);
 
 	app.post(
 		"/github/subscription",
 		csrfProtection,
-		elapsedTimeMetrics,
+		oauth.checkGithubAuth,
 		deleteGitHubSubscription
 	);
 
@@ -233,34 +239,39 @@ export default (octokitApp: App): Express => {
 		"/jira/configuration",
 		csrfProtection,
 		verifyJiraJwtTokenMiddleware,
-		elapsedTimeMetrics,
 		getJiraConfiguration
 	);
 
 	app.delete(
 		"/jira/configuration",
 		verifyJiraContextJwtTokenMiddleware,
-		elapsedTimeMetrics,
 		deleteJiraConfiguration
 	);
 
-	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, elapsedTimeMetrics, retrySync);
+	app.post("/jira/sync", verifyJiraContextJwtTokenMiddleware, retrySync);
 	// Set up event handlers
-	app.post("/jira/events/disabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraDisable);
-	app.post("/jira/events/enabled", extractInstallationFromJiraCallback, authenticateJiraEvent, postJiraEnable);
-	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
-	app.post("/jira/events/uninstalled", extractInstallationFromJiraCallback, authenticateUninstallCallback, postJiraUninstall);
 
+	// TODO: remove enabled and disabled events once the descriptor is updated in marketplace
+	app.post("/jira/events/disabled", (_: Request, res: Response) => {
+		return res.sendStatus(204);
+	});
+	app.post("/jira/events/enabled", (_: Request, res: Response) => {
+		return res.sendStatus(204);
+	});
+
+	app.post("/jira/events/installed", authenticateInstallCallback, postJiraInstall);
+	app.post("/jira/events/uninstalled", authenticateUninstallCallback, extractInstallationFromJiraCallback, postJiraUninstall);
 	app.get("/", async (_: Request, res: Response) => {
 		const { data: info } = await res.locals.client.apps.getAuthenticated({});
 		return res.redirect(info.external_url);
 	});
 
 	// Add Sentry Context
-	app.use((err: Error, req: Request, _: Response, next: NextFunction) => {
+	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 		Sentry.withScope((scope: Sentry.Scope): void => {
-			if (req.session.jiraHost) {
-				scope.setTag("jiraHost", req.session.jiraHost);
+			const jiraHost = res.locals.jiraHost;
+			if (jiraHost) {
+				scope.setTag("jiraHost", jiraHost);
 			}
 
 			if (req.body) {
@@ -270,15 +281,34 @@ export default (octokitApp: App): Express => {
 			next(err);
 		});
 	});
+
+	// Error endpoints to test out different error pages
+	app.get(["/error", "/error/:message", "/error/:message/:name"], (req: Request, res: Response, next: NextFunction) => {
+		res.locals.showError = true;
+		const error = new Error(req.params.message);
+		if(req.params.name) {
+			error.name = req.params.name
+		}
+		next(error);
+	});
+
 	// The error handler must come after controllers and before other error middleware
 	app.use(Sentry.Handlers.errorHandler());
 
 	// Error catcher - Batter up!
-	app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-		req.log.error({ err, req, res }, "Error in frontend app.");
+	app.use(async (err: Error, req: Request, res: Response, next: NextFunction) => {
+		const errorReference = uuidv4();
 
-		if (process.env.NODE_ENV !== EnvironmentEnum.production) {
+		req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend app.")
+
+		if (!isNodeProd() && !res.locals.showError) {
 			return next(err);
+		}
+
+		// Check for IP Allowlist error from Github and set the message explicitly
+		// to be shown to the user in the error page
+		if (err.name == "HttpError" && err.message?.includes("organization has an IP allow list enabled")) {
+			err.message = Errors.IP_ALLOWLIST_MISCONFIGURED;
 		}
 
 		// TODO: move this somewhere else, enum?
@@ -288,15 +318,23 @@ export default (octokitApp: App): Express => {
 			"Not Found": 404
 		};
 
-		const errorStatusCode = errorCodes[err.message] || 500;
+		const messages = {
+			[Errors.MISSING_JIRA_HOST]: "Session information missing - please enable all cookies in your browser settings.",
+			[Errors.IP_ALLOWLIST_MISCONFIGURED]: `The GitHub org you are trying to connect is currently blocking our requests. To configure the GitHub IP Allow List correctly, <a href="${envVars.GITHUB_REPO_URL}/blob/main/docs/ip-allowlist.md">please follow these instructions</a>.`
+		};
 
+		const errorStatusCode = errorCodes[err.message] || 500;
+		const message = messages[err.message];
 		const tags = [`status: ${errorStatusCode}`];
 
 		statsd.increment(metricError.githubErrorRendered, tags);
 
-		return res.status(errorStatusCode).render("github-error.hbs", {
+		return res.status(errorStatusCode).render("error.hbs", {
 			title: "GitHub + Jira integration",
-			nonce: res.locals.nonce
+			errorReference,
+			message,
+			nonce: res.locals.nonce,
+			githubRepoUrl: envVars.GITHUB_REPO_URL
 		});
 	});
 

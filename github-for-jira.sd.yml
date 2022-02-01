@@ -6,11 +6,25 @@ notifications:
   email: fusion-arc@atlassian.com
 
 compose:
+  pgbouncer:
+    image: docker.atl-paas.net/sox/micros/pgbouncer
+    tag: 1.15.0
+    command: [ "database" ]
+    environment:
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_DEFAULT_POOL_SIZE: 15 # Max scale up:
+                                      #   (10 web servers + 6 workers) * 15 pool size  = 240 connections
+                                      # Normal business:
+                                      #   (5 web servers + 3 workers) * 15 pool size = 120 connections
+      PGBOUNCER_SERVER_IDLE_TIMEOUT: 60
+      PGBOUNCER_MAX_CLIENT_CONN: 2000
   microservice:
     image: ${DOCKER_IMAGE_NAME}
     tag: ${DOCKER_IMAGE_TAG}
     ports:
       - 8080:8080
+    links:
+      - pgbouncer
 
 computeClassification:
   dataType:
@@ -29,17 +43,90 @@ links:
   source:
     url: git@bitbucket.org:atlassian/github-jira-integration.git
 
-cleanup: true
+cleanup: false
+
+#serviceProxy:
+#  enabled: true
+#  ingress:
+#    authentication:
+#      enabled: true
+#
+#  plugins:
+#    auth:
+#      authentication:
+#        plugins:
+#          - type: asap
+#      authorization:
+#        plugins:
+#          - type: poco
+
+lifecycleEvents:
+  source: queue
+  # Number of seconds between the termination message and when the instance is terminated.
+  timeout: 30
 
 resources:
-  - type: redis
-    name: bottleneck
+  - type: redisx
+    name: cache
     attributes:
-      snapshotRetention: 0
-      config:
-        maxmemory-policy: allkeys-lru
+      version: 6.x
+      size: 500
+      clusterModeEnabled: false
+      transitEncryptionEnabled: true
       dataType:
         - UGC/Label                # name of GitHub org / Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+
+  - type: sqs
+    name: backfill
+    attributes:
+      MaxReceiveCount: 3
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 602 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails.
+      dataType:
+        - UGC/Label                # name of GitHub org
+        - PII/IndirectConfidential # name of GitHub org
+
+  - type: sqs
+    name: discovery
+    attributes:
+      MaxReceiveCount: 3
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 602 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails.
+      dataType:
+        - UGC/Label                # name of Jira site
+
+  - type: sqs
+    name: push
+    attributes:
+      MaxReceiveCount: 5
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
+      dataType:
+        - UGC/Label                # name of GitHub org
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+
+  - type: sqs
+    name: deployment
+    attributes:
+      MaxReceiveCount: 5
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
+      dataType:
+        - UGC/Label                # name of GitHub org, URL/name of Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+
+  - type: sqs
+    name: branch
+    attributes:
+      MaxReceiveCount: 5
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
+      dataType:
+        - UGC/Label                # name of GitHub org, URL/name of Jira site
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
 
@@ -51,6 +138,8 @@ resources:
         - PII/IndirectConfidential # name of GitHub org
       parameters:
         DBType: postgres125
+        CustomParameters:
+          log_min_duration_statement: 5000
 
   - name: database
     type: postgres-db
@@ -111,7 +200,10 @@ alarms:
       Period: 120
       ComparisonOperator: GreaterThanThreshold
       Statistic: Average
-
+    HighSeverityAlarmWhenTooManyBackend5xxErrors: null
+    HighSeverityAlarmWhenTooManyELB5xxErrors: null
+    LowSeverityAlarmWhenTooManyBackend5xxErrors: null
+    LowSeverityAlarmWhenTooManyELB5xxErrors: null
 
 config:
   environmentVariables:
@@ -119,6 +211,12 @@ config:
     NODE_OPTIONS: "--no-deprecation"
     LOG_LEVEL: info
     PORT: "8080"
+    CONCURRENT_WORKERS: "40"
+    PG_DATABASE_BOUNCER: pgbouncer
+    GIT_COMMIT_SHA: ${GIT_COMMIT_SHA}
+    GIT_COMMIT_DATE: ${GIT_COMMIT_DATE}
+    GIT_BRANCH_NAME: ${GIT_BRANCH_NAME}
+    DEPLOYMENT_DATE: ${DEPLOYMENT_DATE}
     # These secret environment variables need to be stashed with "atlas micros stash" for each environment:
     # GITHUB_CLIENT_SECRET: GitHub app's client secret
     # PRIVATE_KEY: contents of your (*.pem) generated in the GitHub app
@@ -126,26 +224,79 @@ config:
     # SENTRY_DSN: client key required to connect to Sentry
     # WEBHOOK_SECRET: the webhook secret configured in the GitHub app
 
+loadBalancer:
+  type: ALB
+  single: true
+  slowStart: 180
+
 workers:
   - name: Worker
     scaling:
       instance: t2.small
       min: 1
       max: 5
-      #TODO Replace with queue size metrics when we switch to SQS
-      metrics: *CpuMemScalingRules
+      metrics: &CpuMemAndQueuesScalingRules
+        complexScalingRule:
+          EvaluationPeriods: 3
+          Threshold:
+            Lower: 30
+            Upper: 80
+          Metrics:
+            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/80)*100])"
+              Id: "combinedCpuRamAndQueues"
+              Label: "Scaling based on Queue Sizes and CPU and Memory consumption"
+            - MetricStat:
+                Metric:
+                  # Dimensions can be ignored here due to defaulting
+                  MetricName: CPUUtilization
+                  Namespace: AWS/EC2
+                Period: 60
+                Stat: Maximum
+              Id: cpuUsage
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  # Dimensions can be ignored here due to defaulting
+                  MetricName: MemoryUtilization
+                  Namespace: System/Linux
+                Period: 60
+                Stat: Maximum
+              Id: memoryUsage
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: ApproximateNumberOfMessagesVisible
+                  Namespace: AWS/SQS
+                  Dimensions:
+                    - LogicalQueueName: 'push'
+                Period: 60
+                Stat: Maximum
+              Id: pushQueueMessages
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: ApproximateNumberOfMessagesVisible
+                  Namespace: AWS/SQS
+                  Dimensions:
+                    - LogicalQueueName: 'backfill'
+                Period: 60
+                Stat: Maximum
+              Id: backfillQueueMessages
+              ReturnData: false
+
 
 environmentOverrides:
   ddev:
-    loadBalancer:
-      type: ELB # needed for remote debugging, default is "ALB"
-    compose:
-      microservice:
-        ports:
-          - 8080:8080
-          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
-    links:
-      remoteDebug: true
+#  Uncomment lines 140-149 if you want remote debugging in ddev
+#    loadBalancer:
+#      type: ELB # needed for remote debugging, default is "ALB"
+#    compose:
+#      microservice:
+#        ports:
+#          - 8080:8080
+#          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
+#    links:
+#      remoteDebug: true
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
@@ -167,14 +318,25 @@ environmentOverrides:
           instance: t2.small
           min: 1
           max: 5
-          metrics: *CpuMemScalingRules
+          metrics: *CpuMemAndQueuesScalingRules
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          ip_whitelist:
+            - public
+          routes: &blackholeSpammingIPs
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
     alarms:
       overrides:
         LatencyHigh: null
         HealthyHostCount: null
         UnHealthyHostCount: null
-        LowSeverityAlarmWhenTooManyELB5xxErrors: null
-        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
         WebServerAlarmWhenLowCPUCredits: null
         WebServerDiskSpaceUtilizationAlarmHigh: null
         WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
@@ -224,7 +386,7 @@ environmentOverrides:
                 Metric:
                   Dimensions:
                     - Name: LoadBalancer
-                      Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
+                      Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
                     - Name: TargetGroup
                       Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
                   MetricName: TargetResponseTime
@@ -235,33 +397,38 @@ environmentOverrides:
               ReturnData: false
     alarms:
       overrides:
-        LowSeverityAlarmWhenTooManyELB5xxErrors: null
-        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
-        HighSeverityAlarmWhenTooManyELB5xxErrors: null
-        HighSeverityAlarmWhenTooManyBackend5xxErrors: null
-        ElbResponseTimeAlert:
-          Namespace: AWS/ApplicationELB
-          MetricName: TargetResponseTime
-          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
-          Dimensions:
-            - Name: LoadBalancer
-              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
-            - Name: TargetGroup
-              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-          Threshold: 5
-          Priority: Low
-          EvaluationPeriods: 3
-          Period: 60
-          ComparisonOperator: GreaterThanThreshold
-          Statistic: Average
+        LatencyHigh: null
+#TODO Uncomment when we stop doing hourly deployments
+#        ElbResponseTimeAlert:
+#          Namespace: AWS/ApplicationELB
+#          MetricName: TargetResponseTime
+#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+#          Dimensions:
+#            - Name: LoadBalancer
+#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+#            - Name: TargetGroup
+#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+#          Threshold: 5
+#          Priority: Low
+#          EvaluationPeriods: 5
+#          Period: 180
+#          ComparisonOperator: GreaterThanThreshold
+#          Statistic: Average
     workers:
       - name: Worker
         scaling:
           instance: t3.medium
           min: 1
           max: 5
-          metrics: *CpuMemScalingRules
+          metrics: *CpuMemAndQueuesScalingRules
     resources:
+      - name: rds
+        type: dedicated-rds
+        attributes:
+          parameters:
+            # Adding read replica in staging as it's not enabled by default so we can read state
+            ReadReplica: true
+
       - type: globaledge
         name: proxy
         attributes:
@@ -270,13 +437,7 @@ environmentOverrides:
             - github.stg.atlassian.com
           ip_whitelist:
             - public
-          routes:
-            - match: # Blackhole IP that keeps spamming us
-                prefix: /
-                external_address_header_match:
-                  - 94.156.174.137
-              route:
-                cluster: blackhole # Deny by sending traffic to blackhole
+          routes: *blackholeSpammingIPs
 
   prod:
     config:
@@ -290,57 +451,66 @@ environmentOverrides:
     scaling:
       instance: c5.2xlarge
       min: 5
-      max: 10
+      max: 10 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
       metrics: *CpuMemAlbScalingRules
     workers:
       - name: Worker
         scaling:
           instance: c5.2xlarge
           min: 3
-          max: 10
-          metrics: *CpuMemScalingRules
+          max: 4 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          metrics: *CpuMemAndQueuesScalingRules
     alarms:
       overrides:
-        ElbResponseTimeAlert:
-          Namespace: AWS/ApplicationELB
-          MetricName: TargetResponseTime
-          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
-          Dimensions:
-            - Name: LoadBalancer
-              Value: { "Fn::GetAtt": [ "ALB", "LoadBalancerFullName" ] }
-            - Name: TargetGroup
-              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-          Threshold: 5
-          Priority: Low
-          EvaluationPeriods: 3
-          Period: 60
-          ComparisonOperator: GreaterThanThreshold
-          Statistic: Average
-        LowSeverityAlarmWhenTooManyELB5xxErrors: null
-        LowSeverityAlarmWhenTooManyBackend5xxErrors: null
-        HighSeverityAlarmWhenTooManyELB5xxErrors: null
-        HighSeverityAlarmWhenTooManyBackend5xxErrors:
-          MetricName: HTTPCode_Target_5XX_Count
-          Namespace: AWS/ApplicationELB
-          Priority: Low
-          Threshold: 500
-          EvaluationPeriods: 1
-          Period: 300
-          ComparisonOperator: GreaterThanOrEqualToThreshold
-          Statistic: Sum
+        LatencyHigh: null
+#TODO Uncomment when we stop doing hourly deployments
+#        ElbResponseTimeAlert:
+#          Namespace: AWS/ApplicationELB
+#          MetricName: TargetResponseTime
+#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+#          Dimensions:
+#            - Name: LoadBalancer
+#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+#            - Name: TargetGroup
+#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+#          Threshold: 5
+#          Priority: Low
+#          EvaluationPeriods: 5
+#          Period: 180
+#          ComparisonOperator: GreaterThanThreshold
+#          Statistic: Average
     resources:
+      - type: redisx
+        name: cache
+        attributes:
+          size: 5000
+        alarms:
+          AlarmOnNumConnections:
+            MetricName: CurrConnections
+            Description: "The number of client connections is too high. Please follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1453195358/HOWTO+Investigate+Redis+Issues"
+            Threshold: 10000
+            EvaluationPeriods: 3
+            Period: 120
+            Priority: Low
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+            Unit: Count
+
       - name: database
         type: postgres-db
         attributes:
-          connectionLimit: 300
+          connectionLimit: 240 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
 
       - name: rds
         type: dedicated-rds
         attributes:
           parameters:
-            DBInstanceClass: db.m5.large
-            AllocatedStorage: 10 # 10 GB
-            ConnectionAlarm: 250
+            DBInstanceClass: db.r5.4xlarge
+            AllocatedStorage: 40 # GB
+            MaxAllocatedStorage: 100
+            ConnectionAlarm: 500 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 + N (cause two stacks can work
+                                 # together during the deploy)
+            TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
 
       - type: globaledge
         name: proxy
@@ -350,10 +520,4 @@ environmentOverrides:
             - github.atlassian.com
           ip_whitelist:
             - public
-          routes:
-            - match: # Blackhole IP that keeps spamming us
-                prefix: /
-                external_address_header_match:
-                  - 94.156.174.137
-              route:
-                cluster: blackhole # Deny by sending traffic to blackhole
+          routes: *blackholeSpammingIPs

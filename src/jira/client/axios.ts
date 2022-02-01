@@ -6,6 +6,7 @@ import statsd from "../../config/statsd";
 import { getLogger } from "../../config/logger";
 import { metricHttpRequest } from "../../config/metric-names";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
+import {urlParamsMiddleware} from "../../util/axios/common-middleware";
 
 const instance = process.env.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
@@ -37,7 +38,7 @@ function getAuthMiddleware(secret: string) {
 					iss,
 					qsh: createQueryStringHash({
 						method: config.method,
-						pathname,
+						pathname: pathname || undefined,
 						query
 					})
 				},
@@ -53,6 +54,22 @@ function getAuthMiddleware(secret: string) {
 			};
 		}
 	);
+}
+
+/**
+ * Wrapper for AxiosError, which includes error status
+ */
+export class JiraClientError extends Error {
+	status?: number;
+	cause: AxiosError
+
+	constructor(message: string, cause: AxiosError, status?:number) {
+		super(message);
+		this.status = status
+
+		//Remove config from the cause to prevent large payloads from being logged
+		this.cause = {...cause, config: {}};
+	}
 }
 
 export const getJiraErrorMessages = (status: number) => {
@@ -84,16 +101,22 @@ function getErrorMiddleware(logger: Logger) {
 		 * @returns {Promise<Error>} The rejected promise
 		 */
 		(error: AxiosError): Promise<Error> => {
-			if (error?.response) {
-				const status = error.response.status;
 
-				// truncating the detail message returned from Jira to 200 characters
-				const errorMessage = getJiraErrorMessages(status);
-				// Creating an object that isn't of type Error as bunyan handles it differently
-				// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
-				(status >= 300 && status < 500 ? logger.warn : logger.error)(error, errorMessage);
+			const status = error?.response?.status;
+
+			const errorMessage = "Error executing Axios Request " + (status ? getJiraErrorMessages(status) : error.message || "");
+
+			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
+
+			// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
+			// Log exception only if it is error, because AxiosError contains the request payload
+			if (isWarning) {
+				logger.warn(errorMessage)
+			} else {
+				logger.error({err: error}, errorMessage)
 			}
-			return Promise.reject(error);
+
+			return Promise.reject(new JiraClientError(errorMessage, error, status));
 		});
 }
 
@@ -126,44 +149,6 @@ function getSuccessMiddleware(logger: Logger) {
 	);
 }
 
-/**
- * Enrich the Axios Request Config with a URL object.
- */
-
-// TODO: non-standard and probably should be done through string interpolation
-function getUrlMiddleware() {
-	return (
-		/**
-		 * @param {import("axios").AxiosRequestConfig} config - The outgoing request configuration.
-		 * @returns {import("axios").AxiosRequestConfig} The enriched axios request config.
-		 */
-		(config) => {
-			// eslint-disable-next-line prefer-const
-			let { query, pathname, ...rest } = url.parse(config.url, true);
-			config.urlParams = config.urlParams || {};
-
-			for (const param in config.urlParams) {
-				if (pathname.includes(`:${param}`)) {
-					pathname = pathname.replace(`:${param}`, config.urlParams[param]);
-				} else {
-					query[param] = config.urlParams[param];
-				}
-			}
-
-			config.urlParams.baseUrl = config.baseURL;
-
-			return {
-				...config,
-				originalUrl: config.url,
-				url: url.format({
-					...rest,
-					pathname,
-					query
-				})
-			};
-		}
-	);
-}
 
 /*
  * The Atlassian API uses JSON Web Tokens (JWT) for authentication along with
@@ -198,7 +183,7 @@ const setRequestStartTime = (config) => {
  *
  */
 export const extractPath = (someUrl = ""): string =>
-	url.parse(someUrl).pathname;
+	url.parse(someUrl).pathname || "";
 
 /**
  * Submit statsd metrics on successful requests.
@@ -219,7 +204,7 @@ const instrumentRequest = (response) => {
 		status: response.status
 	};
 
-	statsd.histogram(metricHttpRequest().jira, requestDurationMs, tags);
+	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
 
 	return response;
 };
@@ -230,10 +215,9 @@ const instrumentRequest = (response) => {
  * @param {import("axios").AxiosError} error - The Axios error response object.
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-const instrumentFailedRequest = (logger) => {
+const instrumentFailedRequest = () => {
 	return (error) => {
 		instrumentRequest(error?.response);
-		logger.error(error, "Error during Axios request");
 		return Promise.reject(error);
 	};
 };
@@ -254,17 +238,17 @@ export default (
 	logger = logger || getLogger("jira.client.axios");
 	const instance = axios.create({
 		baseURL,
-		timeout: +process.env.JIRA_TIMEOUT || 30000
+		timeout: Number(process.env.JIRA_TIMEOUT) || 30000
 	});
 
 	instance.interceptors.request.use(setRequestStartTime);
 	instance.interceptors.response.use(
 		instrumentRequest,
-		instrumentFailedRequest(logger)
+		instrumentFailedRequest()
 	);
 
 	instance.interceptors.request.use(getAuthMiddleware(secret));
-	instance.interceptors.request.use(getUrlMiddleware());
+	instance.interceptors.request.use(urlParamsMiddleware);
 
 	instance.interceptors.response.use(
 		getSuccessMiddleware(logger),

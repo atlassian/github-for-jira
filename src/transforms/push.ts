@@ -1,38 +1,44 @@
-import { Subscription } from "../models";
+import {Subscription} from "../models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
-import { isEmpty } from "../jira/util/isEmpty";
-import { queues } from "../worker/main";
-import enhanceOctokit from "../config/enhance-octokit";
-import { Application } from "probot";
-import { getLogger } from "../config/logger";
-import { JobOptions } from "bull";
+import {getJiraAuthor} from "../util/jira";
+import {emitWebhookProcessedMetrics} from "../util/webhooks";
+import {JiraCommit} from "../interfaces/jira";
+import _ from "lodash";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import {isBlocked} from "../config/feature-flags";
+import sqsQueues from "../sqs/queues";
+import {PushQueueMessagePayload} from "../sqs/push";
+import GitHubClient from "../github/client/github-client";
 
 // TODO: define better types for this file
 
-const logger = getLogger("transforms.push");
-
-const mapFile = (githubFile:any, repoName: string, repoOwner: string, commitHash: string) => {
+const mapFile = (
+	githubFile,
+	repoName: string,
+	repoOwner: string,
+	commitHash: string
+) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
 	const mapStatus = {
 		added: "ADDED",
 		removed: "DELETED",
-		modified: "MODIFIED"
+		modified: "MODIFIED",
 	};
 
-	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`
+	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
 
 	return {
 		path: githubFile.filename,
 		changeType: mapStatus[githubFile.status] || "UNKNOWN",
 		linesAdded: githubFile.additions,
 		linesRemoved: githubFile.deletions,
-		url: githubFile.blob_url || fallbackUrl
+		url: githubFile.blob_url || fallbackUrl,
 	};
-}
+};
 
-export function createJobData(payload, jiraHost: string) {
+export const createJobData = (payload, jiraHost: string) : PushQueueMessagePayload => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 
@@ -41,14 +47,14 @@ export function createJobData(payload, jiraHost: string) {
 		name,
 		full_name,
 		html_url,
-		owner
+		owner,
 	};
 
-	const shas = [];
+	const shas: { id: string, issueKeys: string[] }[] = [];
 	for (const commit of payload.commits) {
-		const issueKeys = issueKeyParser().parse(commit.message);
+		const issueKeys = issueKeyParser().parse(commit.message) || [];
 
-		if (isEmpty(issueKeys)) {
+		if (_.isEmpty(issueKeys)) {
 			// Don't add this commit to the queue since it doesn't have issue keys
 			continue;
 		}
@@ -57,77 +63,80 @@ export function createJobData(payload, jiraHost: string) {
 		// Creates an array of shas for the job processor to work on
 		shas.push({ id: commit.id, issueKeys });
 	}
+
 	return {
 		repository,
 		shas,
 		jiraHost,
 		installationId: payload.installation.id,
-		webhookId: payload.webhookId || "none"
+		webhookId: payload.webhookId || "none",
+		webhookReceived: payload.webhookReceived || undefined,
 	};
 }
 
-export async function enqueuePush(payload: unknown, jiraHost: string, options?: JobOptions) {
-	await queues.push.add(
-		createJobData(payload, jiraHost),
-		{
-			removeOnFail: true,
-			removeOnComplete: true,
-			...options
-		});
+export async function enqueuePush(
+	payload: unknown,
+	jiraHost: string
+) {
+	return sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
 }
 
-export function processPush(app: Application) {
-	return async (job): Promise<void> => {
-		let log = logger;
-		try {
-			const {
-				repository,
-				repository: { owner, name: repo },
-				shas,
-				installationId,
-				jiraHost
-			} = job.data;
+export const processPush = async (github: GitHubClient, payload: PushQueueMessagePayload, rootLogger: LoggerWithTarget) => {
+	const {
+		repository,
+		repository: { owner, name: repo },
+		shas,
+		installationId,
+		jiraHost,
+	} = payload;
 
-			const webhookId = job.data.webhookId || "none";
+	if (await isBlocked(installationId, rootLogger)) {
+		rootLogger.warn({ payload, installationId }, "blocking processing of push message because installationId is on the blocklist");
+		return;
+	}
 
-			log = logger.child({webhookId: webhookId,
-				repoName: repo,
-				orgName: owner.name })
+	const webhookId = payload.webhookId || "none";
+	const webhookReceived = payload.webhookReceived || undefined;
 
-			log.info({ installationId }, "Processing push");
+	const log = rootLogger.child({
+		webhookId: webhookId,
+		repoName: repo,
+		orgName: owner.name,
+		installationId,
+		webhookReceived,
+	});
 
-			const subscription = await Subscription.getSingleInstallation(
-				jiraHost,
-				installationId
-			);
+	log.info("Processing push");
 
-			if (!subscription) return;
+	try {
+		const subscription = await Subscription.getSingleInstallation(
+			jiraHost,
+			installationId
+		);
 
-			const jiraClient = await getJiraClient(
-				subscription.jiraHost,
-				installationId,
-				log
-			);
-			const github = await app.auth(installationId);
-			enhanceOctokit(github);
+		if (!subscription) {
+			log.info("No subscription was found, stop processing the push");
+			return;
+		}
 
-			const commits = await Promise.all(
-				shas.map(async (sha) => {
+		const jiraClient = await getJiraClient(
+			subscription.jiraHost,
+			installationId,
+			log
+		);
+
+		const commits: JiraCommit[] = await Promise.all(
+			shas.map(async (sha): Promise<JiraCommit> => {
+				log.info("Calling GitHub to fetch commit info " + sha.id);
+				try {
 					const {
 						data,
-						data: { commit: githubCommit }
-					} = await github.repos.getCommit({
-						owner: owner.login,
-						repo,
-						ref: sha.id
-					});
+						data: {commit: githubCommit},
+					} = await github.getCommit(owner.login, repo, sha.id);
 
-					const { files, author, parents, sha: commitSha, html_url } = data;
+					const {files, author, parents, sha: commitSha, html_url} = data;
 
-					const { author: githubCommitAuthor, message } = githubCommit;
-
-					// Not all commits have a github author, so create username only if author exists
-					const username = author ? author.login : undefined;
+					const {author: githubCommitAuthor, message} = githubCommit;
 
 					// Jira only accepts a max of 10 files for each commit, so don't send all of them
 					const filesToSend = files.slice(0, 10);
@@ -135,50 +144,64 @@ export function processPush(app: Application) {
 					// merge commits will have 2 or more parents, depending how many are in the sequence
 					const isMergeCommit = parents?.length > 1;
 
+					log.info("GitHub call succeeded");
 					return {
 						hash: commitSha,
 						message,
-						author: {
-							avatar: username
-								? `https://github.com/${username}.png`
-								: undefined,
-							email: githubCommitAuthor.email,
-							name: githubCommitAuthor.name,
-							url: username ? `https://github.com/${username}` : undefined
-						},
+						author: getJiraAuthor(author, githubCommitAuthor),
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
-						files: filesToSend.map(file => mapFile(file, repo, owner.name, sha.id)),
+						files: filesToSend.map((file) =>
+							mapFile(file, repo, owner.name, sha.id)
+						),
 						id: commitSha,
 						issueKeys: sha.issueKeys,
 						url: html_url,
 						updateSequenceId: Date.now(),
-						flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
-					};
-				})
-			);
+						flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined,
+					}
+				} catch (err) {
+					log.warn({ err },"Failed to fetch data from GitHub");
+					throw err;
+				}
+			})
+		);
 
-			// Jira accepts up to 400 commits per request
-			// break the array up into chunks of 400
-			const chunks = [];
-			while (commits.length) {
-				chunks.push(commits.splice(0, 400));
-			}
+		// Jira accepts up to 400 commits per request
+		// break the array up into chunks of 400
+		const chunks: JiraCommit[][] = [];
 
-			for (const chunk of chunks) {
-				const jiraPayload = {
-					name: repository.name,
-					url: repository.html_url,
-					id: repository.id,
-					commits: chunk,
-					updateSequenceId: Date.now()
-				};
-
-				await jiraClient.devinfo.repository.update(jiraPayload);
-			}
-		} catch (error) {
-			log.error(error, "Failed to process push");
+		while (commits.length) {
+			chunks.push(commits.splice(0, 400));
 		}
-	};
-}
+
+		for (const chunk of chunks) {
+			const jiraPayload = {
+				name: repository.name,
+				url: repository.html_url,
+				id: repository.id,
+				commits: chunk,
+				updateSequenceId: Date.now(),
+			};
+
+			log.info("Sending data to Jira");
+			try {
+				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+
+				webhookReceived && emitWebhookProcessedMetrics(
+					webhookReceived,
+					"push",
+					log,
+					jiraResponse?.status
+				);
+			} catch (err) {
+				log.warn({ err }, "Failed to send data to Jira");
+				throw err;
+			}
+		}
+		log.info("Push has succeeded");
+	} catch (err) {
+		log.warn({ err }, "Push has failed");
+	}
+};

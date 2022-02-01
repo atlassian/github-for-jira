@@ -1,91 +1,119 @@
-import format from "date-fns/format";
-import moment from "moment";
-import { Subscription } from "../models";
+import SubscriptionClass, { SyncStatus } from "../models/subscription";
+import { RepoSyncState, Subscription } from "../models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "../config/statsd";
-import { metricSyncStatus } from "../config/metric-names";
-import { getLogger } from "../config/logger";
-import * as Sentry from "@sentry/node";
+import { metricError } from "../config/metric-names";
+import { AppInstallation, FailedAppInstallation } from "../config/interfaces";
+import { GitHubAPI } from "probot";
+import Logger from "bunyan";
+import _ from "lodash";
 
-const logger = getLogger("get.jira.configuration");
-
-const syncStatus = (syncStatus) =>
-	syncStatus === "ACTIVE" ? "IN PROGRESS" : syncStatus;
-
-const sendFailedStatusMetrics = (installationId: string): void => {
-	const syncError = "No updates in the last 15 minutes"
-	logger.warn({installationId, error: syncError}, "Sync failed");
-
-	Sentry.setExtra("Installation FAILED", syncError);
-	Sentry.captureException(syncError);
-
-	statsd.increment(metricSyncStatus.failed);
-}
-
-export async function getInstallation(client, subscription) {
-	const id = subscription.gitHubInstallationId;
-	try {
-		const response = await client.apps.getInstallation({ installation_id: id });
-		response.data.syncStatus = subscription.hasInProgressSyncFailed()
-			? "FAILED"
-			: syncStatus(subscription.syncStatus);
-		response.data.syncWarning = subscription.syncWarning;
-		response.data.subscriptionUpdatedAt = formatDate(subscription.updatedAt);
-		response.data.totalNumberOfRepos = Object.keys(
-			subscription.repoSyncState?.repos || {}
-		).length;
-		response.data.numberOfSyncedRepos =
-			subscription.repoSyncState?.numberOfSyncedRepos || 0;
-		response.data.jiraHost = subscription.jiraHost;
-
-		response.data.syncStatus === "FAILED" && sendFailedStatusMetrics(id);
-
-		return response.data;
-	} catch (err) {
-		return { error: err, id, deleted: err.code === 404 };
+const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
+	switch (syncStatus) {
+		case "ACTIVE":
+			return "IN PROGRESS";
+		case "COMPLETE":
+			return "FINISHED";
+		default:
+			return syncStatus;
 	}
 }
 
-const formatDate = function(date) {
+export interface InstallationResults {
+	fulfilled: AppInstallation[];
+	rejected: FailedAppInstallation[];
+	total: number;
+}
+
+export const getInstallations = async (client: GitHubAPI, subscriptions: SubscriptionClass[], log?: Logger): Promise<InstallationResults> => {
+	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(client, sub, log)));
+	const connections = _.groupBy(installations, "status") as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
+	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
+	const rejected = connections.rejected?.map(v => v.reason as FailedAppInstallation) || [];
 	return {
-		relative: moment(date).fromNow(),
-		absolute: format(date, "MMMM D, YYYY h:mm a")
+		fulfilled,
+		rejected,
+		total: fulfilled.length + rejected.length
 	};
 };
 
-export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const getInstallation = async (client: GitHubAPI, subscription: SubscriptionClass, log?: Logger): Promise<AppInstallation> => {
+	const id = subscription.gitHubInstallationId;
 	try {
-		const jiraHost = req.session.jiraHost;
+		const response = await client.apps.getInstallation({ installation_id: id });
+
+		return {
+			...response.data,
+			syncStatus: mapSyncStatus(subscription.syncStatus),
+			syncWarning: subscription.syncWarning,
+			totalNumberOfRepos: await RepoSyncState.countFromSubscription(subscription),
+			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
+			jiraHost: subscription.jiraHost
+		};
+
+	} catch (err) {
+		log?.error(
+			{ installationId: id, error: err, uninstalled: err.code === 404 },
+			"Failed connection"
+		);
+		statsd.increment(metricError.failedConnection);
+
+		return Promise.reject({ error: err, id, deleted: err.code === 404 });
+	}
+};
+
+interface FailedConnection {
+	id: number;
+	deleted: boolean;
+	orgName?: string;
+}
+
+interface SuccessfulConnection extends AppInstallation {
+	isGlobalInstall: boolean;
+}
+
+export default async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> => {
+	try {
+		const jiraHost = res.locals.jiraHost;
+
+		if (!jiraHost) {
+			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
+			res.status(404).send(`Missing Jira Host '${jiraHost}'`);
+			return;
+		}
 
 		req.log.info("Received jira configuration page request");
 
 		const { client } = res.locals;
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
-		const installations = await Promise.all(
-			subscriptions.map((subscription) =>
-				getInstallation(client, subscription)
-			)
-		);
+		const installations = await getInstallations(client, subscriptions, req.log);
 
-		const connections = installations
-			.filter((response) => !response.error)
-			.map((data) => ({
-				...data,
-				isGlobalInstall: data.repository_selection === "all",
-				installedAt: formatDate(data.updated_at),
-				syncState: data.syncState,
-				repoSyncState: data.repoSyncState
+		const failedConnections: FailedConnection[] = await Promise.all(
+			installations.rejected.map(async (installation) => {
+				const sub = subscriptions.find((sub: SubscriptionClass) => installation.id === sub.gitHubInstallationId);
+				const repo = sub && await RepoSyncState.findOneFromSubscription(sub);
+				return {
+					id: installation.id,
+					deleted: installation.deleted,
+					orgName: repo?.repoOwner
+				};
 			}));
 
-		const failedConnections = installations.filter(
-			(response) => !!response.error
-		);
+		const successfulConnections: SuccessfulConnection[] = installations.fulfilled
+			.map((installation) => ({
+				...installation,
+				isGlobalInstall: installation.repository_selection === "all"
+			}));
 
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
-			connections,
+			successfulConnections,
 			failedConnections,
-			hasConnections: connections.length > 0 || failedConnections.length > 0,
+			hasConnections: !!installations.total,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce
