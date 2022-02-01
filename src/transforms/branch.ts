@@ -56,13 +56,6 @@ export default async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) =
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
 
-	console.log("SHOW ME THE RETURN");
-	console.log("SHOW ME THE RETURN");
-	console.log("SHOW ME THE RETURN");
-	console.log("SHOW ME THE RETURN");
-	console.log("SHOW ME THE RETURN");
-	console.log("SHOW ME THE RETURN");
-	console.log("SHOW ME THE RETURN");
 	console.log({
 		id: repository.id,
 		name: repository.full_name,

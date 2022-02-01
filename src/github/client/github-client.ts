@@ -193,8 +193,8 @@ export default class GitHubClient {
 	/**
 	 * Get the repositiry contents from PATH
 	 */
-	public async getRepositoryContent(owner: string, repo: string, path: string) : Promise<AxiosResponse<Octokit.GitGetBlobResponse>>  {
-		return await this.get<Octokit.GitGetBlobResponse>(`/repos/:owner/:repo/contents/:path`, {}, {
+	public async getRepositoryContent(owner: string, repo: string, path: string) : Promise<AxiosResponse<Octokit.ReposGetContentsResponse>>  {
+		return await this.get<Octokit.ReposGetContentsResponse>(`/repos/:owner/:repo/contents/:path`, {}, {
 			owner,
 			repo,
 			path
