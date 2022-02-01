@@ -18,7 +18,6 @@ type GraphQlQueryResponse<ResponseData> = {
 	errors?: GraphQLError[];
 };
 
-
 /**
  * A GitHub client that supports authentication as a GitHub app.
  *
