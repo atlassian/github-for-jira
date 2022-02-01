@@ -11,6 +11,7 @@ import { getLogger } from "../config/logger";
 const LONG_POLLING_INTERVAL_SEC = 3;
 const logger = getLogger("sqs-queues");
 
+// TODO: Make this a class
 export const sqsQueues = {
 	backfill: new SqsQueue<BackfillMessagePayload>({
 		queueName: "backfill",
@@ -90,26 +91,4 @@ export const sqsQueues = {
 		]);
 		logger.info("All queues stopped");
 	},
-
-	purge: async () => {
-		logger.info("Purging queues");
-		await Promise.all([
-			sqsQueues.backfill.purgeQueue(),
-			sqsQueues.push.purgeQueue(),
-			sqsQueues.discovery.purgeQueue(),
-			sqsQueues.deployment.purgeQueue(),
-			sqsQueues.branch.purgeQueue()
-		]);
-		logger.info("All queues purged");
-	},
-
-	getMessageCount: async () => {
-		return {
-			branch: await sqsQueues.branch.getMessageCount(),
-			push: await sqsQueues.push.getMessageCount(),
-			discovery: await sqsQueues.discovery.getMessageCount(),
-			backfill: await sqsQueues.backfill.getMessageCount(),
-			deployment: await sqsQueues.deployment.getMessageCount()
-		};
-	}
 };
