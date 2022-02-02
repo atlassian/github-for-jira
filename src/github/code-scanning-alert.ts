@@ -4,7 +4,7 @@ import logger from "../config/logger";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default async (context: Context, jiraClient): Promise<void> => {
-	if (!booleanFlag(BooleanFlags.SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS, false, jiraClient.baseUrl)) {
+	if (!(await booleanFlag(BooleanFlags.SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS, false, jiraClient.baseUrl))) {
 		return;
 	}
 
