@@ -50,7 +50,7 @@ describe.skip("sync/commits", () => {
 		};
 
 		installationId = 1234;
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		mocked(Subscription.getSingleInstallation).mockResolvedValue({
 			jiraHost,

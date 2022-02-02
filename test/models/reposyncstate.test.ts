@@ -29,13 +29,6 @@ describe("RepoSyncState", () => {
 
 	});
 
-	afterEach(async () => {
-		await Promise.all([
-			RepoSyncState.destroy({ truncate: true }),
-			sub.destroy()
-		]);
-	});
-
 	describe("countSyncedReposFromSubscription", () => {
 		it("Should count no repos", async () => {
 			let result = await RepoSyncState.countSyncedReposFromSubscription(sub);

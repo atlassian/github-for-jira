@@ -2,9 +2,8 @@
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
-import { start, stop } from "../../src/worker/startup";
-import sqsQueues from "../../src/sqs/queues";
 import waitUntil from "../utils/waitUntil";
+import { sqsQueues } from "../../src/sqs/queues";
 
 jest.mock("../../src/config/feature-flags");
 
@@ -13,14 +12,7 @@ describe("Deployment Webhook", () => {
 	const gitHubInstallationId = 1234;
 
 	beforeAll(async () => {
-		//Start worker node for queues processing
-		await start();
-	});
-
-	afterAll(async () => {
-		//Stop worker node
-		await stop();
-		await sqsQueues.deployment.waitUntilListenerStopped();
+		await sqsQueues.deployment.purgeQueue();
 	});
 
 	beforeEach(async () => {
@@ -37,11 +29,12 @@ describe("Deployment Webhook", () => {
 			sharedSecret: "shared-secret"
 		});
 
+		await sqsQueues.deployment.start();
 	});
 
 	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
+		await sqsQueues.deployment.stop();
+		await sqsQueues.deployment.purgeQueue();
 	});
 
 	describe("deployment_status", () => {
@@ -51,13 +44,7 @@ describe("Deployment Webhook", () => {
 			const fixture = require("../fixtures/deployment_status-basic.json");
 			const sha = fixture.payload.deployment.sha;
 
-			githubNock.post(`/app/installations/1234/access_tokens`)
-				.reply(200, {
-					expires_at: Date.now() + 3600,
-					permissions: {},
-					repositories: {},
-					token: "token"
-				})
+			githubAccessTokenNock(1234);
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
 				.reply(200, {

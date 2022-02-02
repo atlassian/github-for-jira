@@ -10,7 +10,7 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params";
 import { InstallationId } from "./installation-id";
-import {GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery} from "./github-queries";
+import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
 import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
