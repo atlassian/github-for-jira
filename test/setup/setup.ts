@@ -6,11 +6,11 @@ import "./matchers/to-promise";
 import { sequelize } from "../../src/models/sequelize";
 import { mocked } from "ts-jest/utils";
 // WARNING: Be very careful what you import here as it might affect test
-// in other others because of dependency tree.  Keep imports to a minimum.
+// in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
 
 type AccessTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
-type MockSystemTimeFunc = (time: number | string | Date) => void;
+type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
 
 declare global {
 	let jiraHost: string;
@@ -80,6 +80,7 @@ beforeEach(() => {
 	global.mockSystemTime = (time: number | string | Date) => {
 		const mock = jest.isMockFunction(Date.now) ? mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());
+		return mock;
 	};
 });
 
@@ -102,8 +103,4 @@ afterAll(async () => {
 	// TODO: probably missing things like redis and other things that need to close down
 	// Close connection when tests are done
 	await sequelize.close();
-	// stop only if setup did run. If using jest --watch and no tests are matched
-	// we need to not execute the require() because it will fail
-	// TODO: fix wrong typing for statsd
-	// statsd.close(() => undefined);
 });
