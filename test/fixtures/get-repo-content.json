@@ -1,0 +1,18 @@
+{
+	"type": "file",
+	"encoding": "base64",
+	"size": 5362,
+	"name": "config.yml",
+	"path": ".jira/config.yml",
+	"content": "ZGVwbG95bWVudHM6CiAgZW52aXJvbm1lbnRNYXBwaW5nOgogICAgZGV2ZWxvcG1lbnQ6CiAgICAgIC0gImRldiIKICAgICAgLSAiZGV2ZWxvcG1lbnQtLioiCiAgICB0ZXN0aW5nOgogICAgICAtICJ0ZXN0IgogICAgICAtICIuKi10ZXN0IgogICAgc3RhZ2luZzoKICAgICAgLSAic3RhZ2UiCiAgICBwcm9kdWN0aW9uOgogICAgICAtICJwcm9kIg==",
+	"sha": "3d21ec53a331a6f037a91c368710b99387d012c1",
+	"url": "https://api.github.com/repos/octokit/octokit.rb/contents/.jira/config.yml",
+	"git_url": "https://api.github.com/repos/octokit/octokit.rb/git/blobs/3d21ec53a331a6f037a91c368710b99387d012c1",
+	"html_url": "https://github.com/octokit/octokit.rb/blob/master/.jira/config.yml",
+	"download_url": "https://raw.githubusercontent.com/octokit/octokit.rb/master/.jira/config.yml",
+	"_links": {
+		"git": "https://api.github.com/repos/octokit/octokit.rb/git/blobs/3d21ec53a331a6f037a91c368710b99387d012c1",
+		"self": "https://api.github.com/repos/octokit/octokit.rb/contents/.jira/config.yml",
+		"html": "https://github.com/octokit/octokit.rb/blob/master/.jira/config.yml"
+	}
+}
