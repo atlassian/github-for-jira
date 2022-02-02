@@ -131,7 +131,8 @@ const isEnvironment = (envNames: string[], environment: string): boolean => {
 	return envNamesPattern.test(_.deburr(environment));
 };
 
-export async function mapEnvironment(environment: string, deploymentsConfig?: RepoConfig | null): Promise<string> {
+export function mapEnvironment(environment: string, deploymentsConfig?: RepoConfig | null): string {
+	const deploymentConfigEnvironmentMapping = deploymentsConfig?.deployments.environmentMapping;
 	const deploymentEnvironmentMapping = {
 		development: ["development", "dev", "trunk"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
@@ -139,14 +140,7 @@ export async function mapEnvironment(environment: string, deploymentsConfig?: Re
 		production: ["production", "prod", "prd", "live"],
 	};
 
-	let environmentMapping;
-
-	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
-		const deploymentConfigEnvironmentMapping = deploymentsConfig?.deployments.environmentMapping;
-		environmentMapping = deploymentsConfig ? deploymentConfigEnvironmentMapping : deploymentEnvironmentMapping
-	} else {
-		environmentMapping = deploymentEnvironmentMapping;
-	}
+	const environmentMapping = deploymentsConfig ? deploymentConfigEnvironmentMapping : deploymentEnvironmentMapping
 
 	const jiraEnv =
 		environmentMapping &&
@@ -216,9 +210,11 @@ export default async (
 		return undefined;
 	}
 
+	const deploymentConfigFlagEnabled = await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false);
+
 	let mappedDeploymentEnvironment;
 
-	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
+	if (deploymentConfigFlagEnabled) {
 		const deploymentsConfig = await RepoConfigDatabaseModel.getForRepo(githubInstallationId, repositoryId);
 		mappedDeploymentEnvironment = mapEnvironment(deploymentStatusEnvironment, deploymentsConfig);
 	} else {

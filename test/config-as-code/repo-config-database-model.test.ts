@@ -23,8 +23,6 @@ const existingRepoConfig: RepoConfig = {
 	},
 };
 
-// {\"deployments\":{\"environmentMapping\":{\"development\":[\"devRegex\"],\"testing\":[\"testingRegex\"],\"staging\":[\"stagingRegex\"],\"production\":[\"productionRegex\"]}}}
-
 describe("RepoConfigDatabaseModel", () => {
 	afterEach(async () => {
 		await Promise.all([RepoConfigDatabaseModel.destroy({ truncate: true })]);

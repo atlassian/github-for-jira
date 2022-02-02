@@ -5,16 +5,11 @@ import {getLogger} from "../../../src/config/logger";
 import {GitHubAPI} from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
+import { mocked } from "ts-jest/utils";
 
 jest.mock("../../../src/config/feature-flags");
 
 describe("deployment environment mapping - with Jira deployment config", () => {
-	when(booleanFlag).calledWith(
-		BooleanFlags.CONFIG_AS_CODE,
-		expect.anything(),
-		expect.anything()
-	).mockResolvedValue(true);
-
 	const deploymentConfig = {
 		"deployments": {
 			"environmentMapping": {
@@ -26,8 +21,12 @@ describe("deployment environment mapping - with Jira deployment config", () => {
 		}
 	}
 
+	beforeEach(async () => {
+		mocked(booleanFlag).mockResolvedValue(true);
+	});
+
 	// eslint-disable-next-line jest/no-focused-tests
-	test("classifies known environments correctly", () => {
+	test("classifies known environments correctly", async  () => {
 		// Development
 		expect(mapEnvironment("development", deploymentConfig)).toBe("development");
 		expect(mapEnvironment("dev", deploymentConfig)).toBe("development");
@@ -73,71 +72,69 @@ describe("deployment environment mapping - with Jira deployment config", () => {
 });
 
 describe("deployment environment mapping - without Jira deployment config", () => {
-	const deploymentConfig = null;
-
 	test("classifies known environments correctly", () => {
 		// Development
-		expect(mapEnvironment("development", deploymentConfig)).toBe("development");
-		expect(mapEnvironment("dev", deploymentConfig)).toBe("development");
-		expect(mapEnvironment("trunk", deploymentConfig)).toBe("development");
+		expect(mapEnvironment("development")).toBe("development");
+		expect(mapEnvironment("dev")).toBe("development");
+		expect(mapEnvironment("trunk")).toBe("development");
 
 		// Testing
-		expect(mapEnvironment("testing", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("test", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("tests", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("tst", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("integration", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("integ", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("intg", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("int", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("acceptance", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("accept", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("acpt", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("qa", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("qc", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("control", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("quality", deploymentConfig)).toBe("testing");
+		expect(mapEnvironment("testing")).toBe("testing");
+		expect(mapEnvironment("test")).toBe("testing");
+		expect(mapEnvironment("tests")).toBe("testing");
+		expect(mapEnvironment("tst")).toBe("testing");
+		expect(mapEnvironment("integration")).toBe("testing");
+		expect(mapEnvironment("integ")).toBe("testing");
+		expect(mapEnvironment("intg")).toBe("testing");
+		expect(mapEnvironment("int")).toBe("testing");
+		expect(mapEnvironment("acceptance")).toBe("testing");
+		expect(mapEnvironment("accept")).toBe("testing");
+		expect(mapEnvironment("acpt")).toBe("testing");
+		expect(mapEnvironment("qa")).toBe("testing");
+		expect(mapEnvironment("qc")).toBe("testing");
+		expect(mapEnvironment("control")).toBe("testing");
+		expect(mapEnvironment("quality")).toBe("testing");
 
 		// Staging
-		expect(mapEnvironment("staging", deploymentConfig)).toBe("staging");
-		expect(mapEnvironment("stage", deploymentConfig)).toBe("staging");
-		expect(mapEnvironment("stg", deploymentConfig)).toBe("staging");
-		expect(mapEnvironment("preprod", deploymentConfig)).toBe("staging");
-		expect(mapEnvironment("model", deploymentConfig)).toBe("staging");
-		expect(mapEnvironment("internal", deploymentConfig)).toBe("staging");
+		expect(mapEnvironment("staging")).toBe("staging");
+		expect(mapEnvironment("stage")).toBe("staging");
+		expect(mapEnvironment("stg")).toBe("staging");
+		expect(mapEnvironment("preprod")).toBe("staging");
+		expect(mapEnvironment("model")).toBe("staging");
+		expect(mapEnvironment("internal")).toBe("staging");
 
 		// Production
-		expect(mapEnvironment("production", deploymentConfig)).toBe("production");
-		expect(mapEnvironment("prod", deploymentConfig)).toBe("production");
-		expect(mapEnvironment("prd", deploymentConfig)).toBe("production");
-		expect(mapEnvironment("live", deploymentConfig)).toBe("production");
+		expect(mapEnvironment("production")).toBe("production");
+		expect(mapEnvironment("prod")).toBe("production");
+		expect(mapEnvironment("prd")).toBe("production");
+		expect(mapEnvironment("live")).toBe("production");
 	});
 
 	test("classifies known environments with prefixes and/or postfixes correctly", () => {
-		expect(mapEnvironment("prod-east", deploymentConfig)).toBe("production");
-		expect(mapEnvironment("prod_east", deploymentConfig)).toBe("production");
-		expect(mapEnvironment("east-staging", deploymentConfig)).toBe("staging");
-		expect(mapEnvironment("qa:1", deploymentConfig)).toBe("testing");
-		expect(mapEnvironment("mary-dev:1", deploymentConfig)).toBe("development");
-		expect(mapEnvironment("スパイク・スピーゲル-dev:1", deploymentConfig)).toBe("development");
-		expect(mapEnvironment("trunk alpha", deploymentConfig)).toBe("development");
-		expect(mapEnvironment("production(us-east)", deploymentConfig)).toBe("production");
-		expect(mapEnvironment("prd (eu-central)", deploymentConfig)).toBe("production");
+		expect(mapEnvironment("prod-east")).toBe("production");
+		expect(mapEnvironment("prod_east")).toBe("production");
+		expect(mapEnvironment("east-staging")).toBe("staging");
+		expect(mapEnvironment("qa:1")).toBe("testing");
+		expect(mapEnvironment("mary-dev:1")).toBe("development");
+		expect(mapEnvironment("スパイク・スピーゲル-dev:1")).toBe("development");
+		expect(mapEnvironment("trunk alpha")).toBe("development");
+		expect(mapEnvironment("production(us-east)")).toBe("production");
+		expect(mapEnvironment("prd (eu-central)")).toBe("production");
 	});
 
 	test("ignores case", () => {
-		expect(mapEnvironment("Staging", deploymentConfig)).toBe("staging");
-		expect(mapEnvironment("PROD-east", deploymentConfig)).toBe("production");
+		expect(mapEnvironment("Staging")).toBe("staging");
+		expect(mapEnvironment("PROD-east")).toBe("production");
 	});
 
 	test("ignores diacritics", () => {
-		expect(mapEnvironment("stàging", deploymentConfig)).toBe("staging");
+		expect(mapEnvironment("stàging")).toBe("staging");
 	});
 
 	test("classifies unknown environment names as 'unmapped'", () => {
-		expect(mapEnvironment("banana-east", deploymentConfig)).toBe("unmapped");
-		expect(mapEnvironment("internet", deploymentConfig)).toBe("unmapped");
-		expect(mapEnvironment("製造", deploymentConfig)).toBe("unmapped");
+		expect(mapEnvironment("banana-east")).toBe("unmapped");
+		expect(mapEnvironment("internet")).toBe("unmapped");
+		expect(mapEnvironment("製造")).toBe("unmapped");
 	});
 });
 
