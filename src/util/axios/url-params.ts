@@ -23,8 +23,11 @@ export const urlParamsMiddleware = (config: AxiosRequestConfig) => {
 	}
 
 	Object.entries(config.urlParams || {})
-		.filter(([k, v]) => !!k && !!v?.toString)
 		.forEach(([k, v]) => {
+			if(!k || !v?.toString) {
+				logger.error({ k, v, config }, "Cannot use undefined or unstringable key or value for URL Params");
+				return;
+			}
 			const key = `:${k}`;
 			const value = encodeURIComponent(v.toString());
 			if (!value || !config.url?.includes(key)) {
