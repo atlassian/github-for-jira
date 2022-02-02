@@ -7,6 +7,8 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
+import RepoConfigDatabaseModel from '../config-as-code/repo-config-database-model';
+import { RepoConfig } from '../config-as-code/repo-config';
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
 async function getLastSuccessfulDeployCommitSha(
@@ -115,21 +117,21 @@ function mapState(state: string): string {
 // https://docs.github.com/en/actions/reference/environments
 // GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
 // Jira: Can be one of unmapped, development, testing, staging, production
-export function mapEnvironment(environment: string): string {
-	const isEnvironment = (envNames: string[]): boolean => {
-		// Matches any of the input names exactly
-		const exactMatch = envNames.join("|");
-		// Matches separators within environment names, e.g. "-" in "prod-east" or ":" in "test:mary"
-		const separator = "[^a-z0-9]";
-		// Matches an optional prefix, followed by one of the input names, followed by an optional suffix.
-		// This lets us match variants, e.g. "prod-east" and "prod-west" are considered variants of "prod".
-		const envNamesPattern = RegExp(
-			`^(.*${separator})?(${exactMatch})(${separator}.*)?$`,
-			"i"
-		);
-		return envNamesPattern.test(_.deburr(environment));
-	};
+const isEnvironment = (envNames: string[], environment: string, logger?): boolean => {
+	// Matches any of the input names exactly
+	const exactMatch = envNames.join("|");
+	// Matches separators within environment names, e.g. "-" in "prod-east" or ":" in "test:mary"
+	const separator = "[^a-z0-9]";
+	// Matches an optional prefix, followed by one of the input names, followed by an optional suffix.
+	// This lets us match variants, e.g. "prod-east" and "prod-west" are considered variants of "prod".
+	const envNamesPattern = RegExp(
+		`^(.*${separator})?(${exactMatch})(${separator}.*)?$`,
+		"i"
+	);
+	return envNamesPattern.test(_.deburr(environment));
+};
 
+export function mapEnvironment(environment: string): string {
 	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
@@ -137,7 +139,7 @@ export function mapEnvironment(environment: string): string {
 		production: ["production", "prod", "prd", "live"],
 	};
 
-	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key]));
+	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key], environment));
 
 	if (!jiraEnv) {
 		return "unmapped";
@@ -146,24 +148,71 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
-	const deployment = payload.deployment;
-	const deployment_status = payload.deployment_status;
+export const mapConfiguationEnvironment = (
+	deploymentsConfig: RepoConfig | null,
+	deploymentStatusEnvironment: string,
+	logger?: LoggerWithTarget
+) => {
+	const environmentMapping = deploymentsConfig?.deployments.environmentMapping;
+
+	// TODO - after config-as-code FF is removed move the following block out of here and mapEnvironment - separate function they can both call
+	const jiraEnv =
+		environmentMapping &&
+		Object.keys(environmentMapping).find((key) =>
+			isEnvironment(environmentMapping[key.toLowerCase()], deploymentStatusEnvironment.toLowerCase(), logger)
+		);
+
+	if (!jiraEnv) {
+		return "unmapped";
+	}
+
+	return jiraEnv;
+}
+
+export default async (
+	githubClient: GitHubAPI,
+	payload: WebhookPayloadDeploymentStatus,
+	githubInstallationId: number,
+	jiraHost: string,
+	logger: LoggerWithTarget
+): Promise<JiraDeploymentData | undefined> => {
+	const { deployment, deployment_status, repository } = payload
+	const { owner, id: repositoryId, name } = repository
+
+	const {
+		environment: deploymentStatusEnvironment,
+		id: deploymentStatusId,
+		target_url: deploymentStatusTargetUrl,
+		description: deploymentStatusDescription,
+		updated_at: deploymentStatusUpdatedAt,
+		state: deploymentStatusState,
+	} = deployment_status
+
+	const {
+		sha: deploymentSha,
+		id: deploymentId,
+		task: deploymentTask,
+		url: deploymentUrl,
+		description: deploymentDescription
+	} = deployment
+
+
 
 	const { data: { commit: { message } } } = await githubClient.repos.getCommit({
-		owner: payload.repository.owner.login,
-		repo: payload.repository.name,
-		ref: deployment.sha
+		owner: owner.login,
+		repo: name,
+		ref: deploymentSha
 	});
 
 	let issueKeys;
+
 	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {
 		const allCommitsMessages = await getCommitMessagesSinceLastSuccessfulDeployment(
-			payload.repository.owner.login,
-			payload.repository.name,
-			deployment.sha,
-			deployment.id,
-			deployment_status.environment,
+			owner.login,
+			name,
+			deploymentSha,
+			deploymentId,
+			deploymentStatusEnvironment,
 			githubClient,
 			logger
 		);
@@ -177,34 +226,39 @@ export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeployment
 		return undefined;
 	}
 
-	const environment = mapEnvironment(deployment_status.environment);
-	if (environment === "unmapped") {
+	const deploymentsConfig = await RepoConfigDatabaseModel.getForRepo(githubInstallationId, repositoryId);
+	const mappedDeploymentEnvironment = mapEnvironment(deploymentStatusEnvironment);
+	const mappedConfigEnvironment = mapConfiguationEnvironment(deploymentsConfig, deploymentStatusEnvironment, logger);
+
+	logger.info("mappedConfigEnvironment: ", mappedConfigEnvironment)
+
+	if (mappedDeploymentEnvironment === "unmapped") {
 		logger?.info({
-			environment: deployment_status.environment,
-			description: deployment.description
+			environment: deploymentStatusEnvironment,
+			description: deploymentDescription
 		}, "Unmapped environment detected.");
 	}
 
 	return {
 		deployments: [{
 			schemaVersion: "1.0",
-			deploymentSequenceNumber: deployment.id,
-			updateSequenceNumber: deployment_status.id,
+			deploymentSequenceNumber: deploymentId,
+			updateSequenceNumber: deploymentStatusId,
 			issueKeys,
-			displayName: deployment.task,
-			url: deployment_status.target_url || deployment.url,
-			description: deployment.description || deployment_status.description || deployment.task,
-			lastUpdated: new Date(deployment_status.updated_at),
-			state: mapState(deployment_status.state),
+			displayName: deploymentTask,
+			url: deploymentStatusTargetUrl || deploymentUrl,
+			description: deploymentDescription || deploymentStatusDescription || deploymentTask,
+			lastUpdated: new Date(deploymentStatusUpdatedAt),
+			state: mapState(deploymentStatusState),
 			pipeline: {
-				id: deployment.task,
-				displayName: deployment.task,
-				url: deployment_status.target_url || deployment.url,
+				id: deploymentTask,
+				displayName: deploymentTask,
+				url: deploymentStatusTargetUrl || deploymentUrl,
 			},
 			environment: {
-				id: deployment_status.environment,
-				displayName: deployment_status.environment,
-				type: environment,
+				id: deploymentStatusEnvironment,
+				displayName: deploymentStatusEnvironment,
+				type: mappedDeploymentEnvironment,
 			},
 		}],
 	};

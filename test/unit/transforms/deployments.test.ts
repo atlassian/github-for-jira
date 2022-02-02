@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 // eslint-disable-next-line import/no-duplicates
-import transformDeployment, { mapEnvironment } from "../../../src/transforms/deployment";
+import transformDeployment, { mapEnvironment, mapConfiguationEnvironment } from "../../../src/transforms/deployment";
 import {getLogger} from "../../../src/config/logger";
 import {GitHubAPI} from "probot";
 import { when } from "jest-when";
@@ -72,6 +72,73 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("banana-east")).toBe("unmapped");
 		expect(mapEnvironment("internet")).toBe("unmapped");
 		expect(mapEnvironment("製造")).toBe("unmapped");
+	});
+});
+
+describe("deployment configuration environment mapping", () => {
+	test("classifies known environments correctly", () => {
+		// Development
+		expect(mapConfiguationEnvironment("development")).toBe("development");
+		expect(mapConfiguationEnvironment("dev")).toBe("development");
+		expect(mapConfiguationEnvironment("trunk")).toBe("development");
+
+		// Testing
+		expect(mapConfiguationEnvironment("testing")).toBe("testing");
+		expect(mapConfiguationEnvironment("test")).toBe("testing");
+		expect(mapConfiguationEnvironment("tests")).toBe("testing");
+		expect(mapConfiguationEnvironment("tst")).toBe("testing");
+		expect(mapConfiguationEnvironment("integration")).toBe("testing");
+		expect(mapConfiguationEnvironment("integ")).toBe("testing");
+		expect(mapConfiguationEnvironment("intg")).toBe("testing");
+		expect(mapConfiguationEnvironment("int")).toBe("testing");
+		expect(mapConfiguationEnvironment("acceptance")).toBe("testing");
+		expect(mapConfiguationEnvironment("accept")).toBe("testing");
+		expect(mapConfiguationEnvironment("acpt")).toBe("testing");
+		expect(mapConfiguationEnvironment("qa")).toBe("testing");
+		expect(mapConfiguationEnvironment("qc")).toBe("testing");
+		expect(mapConfiguationEnvironment("control")).toBe("testing");
+		expect(mapConfiguationEnvironment("quality")).toBe("testing");
+
+		// Staging
+		expect(mapConfiguationEnvironment("staging")).toBe("staging");
+		expect(mapConfiguationEnvironment("stage")).toBe("staging");
+		expect(mapConfiguationEnvironment("stg")).toBe("staging");
+		expect(mapConfiguationEnvironment("preprod")).toBe("staging");
+		expect(mapConfiguationEnvironment("model")).toBe("staging");
+		expect(mapConfiguationEnvironment("internal")).toBe("staging");
+
+		// Production
+		expect(mapConfiguationEnvironment("production")).toBe("production");
+		expect(mapConfiguationEnvironment("prod")).toBe("production");
+		expect(mapConfiguationEnvironment("prd")).toBe("production");
+		expect(mapConfiguationEnvironment("live")).toBe("production");
+	});
+
+	test("classifies known environments with prefixes and/or postfixes correctly", () => {
+		expect(mapConfiguationEnvironment("prod-east")).toBe("production");
+		expect(mapConfiguationEnvironment("prod_east")).toBe("production");
+		expect(mapConfiguationEnvironment("east-staging")).toBe("staging");
+		expect(mapConfiguationEnvironment("qa:1")).toBe("testing");
+		expect(mapConfiguationEnvironment("mary-dev:1")).toBe("development");
+		expect(mapConfiguationEnvironment("スパイク・スピーゲル-dev:1")).toBe("development");
+		expect(mapConfiguationEnvironment("trunk alpha")).toBe("development");
+		expect(mapConfiguationEnvironment("production(us-east)")).toBe("production");
+		expect(mapConfiguationEnvironment("prd (eu-central)")).toBe("production");
+	});
+
+	test("ignores case", () => {
+		expect(mapConfiguationEnvironment("Staging")).toBe("staging");
+		expect(mapConfiguationEnvironment("PROD-east")).toBe("production");
+	});
+
+	test("ignores diacritics", () => {
+		expect(mapConfiguationEnvironment("stàging")).toBe("staging");
+	});
+
+	test("classifies unknown environment names as 'unmapped'", () => {
+		expect(mapConfiguationEnvironment("banana-east")).toBe("unmapped");
+		expect(mapConfiguationEnvironment("internet")).toBe("unmapped");
+		expect(mapConfiguationEnvironment("製造")).toBe("unmapped");
 	});
 });
 

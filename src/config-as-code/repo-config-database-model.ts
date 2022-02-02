@@ -54,7 +54,7 @@ export default class RepoConfigDatabaseModel extends Sequelize.Model {
 	}
 
 	private static toDomainModel(databaseModel: RepoConfigDatabaseModel): RepoConfig {
-		return JSON.parse(databaseModel.config) as RepoConfig;
+		return databaseModel.config as unknown as RepoConfig;
 	}
 }
 
