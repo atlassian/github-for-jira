@@ -1,13 +1,14 @@
 import AppTokenHolder from "../../../src/github/client/app-token-holder";
 import { getCloudInstallationId } from "../../../src/github/client/installation-id";
+jest.unmock("lru-cache");
 
 describe("AppTokenHolder", () => {
 
-	beforeAll(() => {
+	beforeEach(() => {
 		jest.useFakeTimers("modern");
 	});
 
-	afterAll(() => {
+	afterEach(() => {
 		jest.useRealTimers();
 	})
 

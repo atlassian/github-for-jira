@@ -1,5 +1,6 @@
 import InstallationTokenCache from "../../../src/github/client/installation-token-cache";
 import AuthToken, { ONE_MINUTE, TEN_MINUTES } from "../../../src/github/client/auth-token";
+jest.unmock("lru-cache");
 
 describe("InstallationTokenCache", () => {
 
@@ -24,7 +25,7 @@ describe("InstallationTokenCache", () => {
 		const generateFreshInstallationToken = jest.fn().mockImplementation(() => Promise.resolve(freshInstallationToken));
 
 		const githubInstallationId = 123456;
-		const installationTokenCache = new InstallationTokenCache(1000);
+		const installationTokenCache = new InstallationTokenCache();
 
 		jest.setSystemTime(now);
 		const token1 = await installationTokenCache.getInstallationToken(githubInstallationId, generateInitialInstallationToken)

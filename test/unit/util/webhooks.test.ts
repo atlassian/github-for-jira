@@ -7,19 +7,14 @@ describe("Webhooks suite", () => {
 	const mockContextLogger = {
 		info: mockInfoLog,
 		error: mockErrorLog,
-	};
+		warn: jest.fn(),
+		debug: jest.fn()
+	} as any;
 
-	let dateNowSpy;
 	const currentTime = 2000;
 
-	beforeAll(() => {
-		// Lock Time
-		dateNowSpy = jest.spyOn(Date, "now").mockImplementation(() => currentTime);
-	});
-
-	afterAll(() => {
-		// Unlock Time
-		dateNowSpy.mockRestore();
+	beforeEach(() => {
+		mockSystemTime(currentTime);
 	});
 
 	describe("emitWebhookProcessingTimeMetrics", () => {
@@ -81,7 +76,7 @@ describe("Webhooks suite", () => {
 			it("if webhookReceived is undefined", () => {
 				expect(
 					emitWebhookProcessedMetrics(
-						0,
+						undefined as any,
 						"workflow_run",
 						mockContextLogger,
 						undefined
@@ -92,7 +87,7 @@ describe("Webhooks suite", () => {
 			it("if webhookReceived is null", () => {
 				expect(
 					emitWebhookProcessedMetrics(
-						0,
+						null as any,
 						"workflow_run",
 						mockContextLogger,
 						undefined

@@ -1,10 +1,9 @@
-import {Installation, RepoSyncState, Subscription} from "../../src/models";
-import {start, stop} from "../../src/worker/startup";
-import sqsQueues from "../../src/sqs/queues";
-import {createWebhookApp} from "../utils/probot";
+import { Installation, RepoSyncState, Subscription } from "../../src/models";
+import { sqsQueues } from "../../src/sqs/queues";
+import { createWebhookApp } from "../utils/probot";
 import app from "../../src/worker/app";
-import {discovery} from "../../src/sync/discovery";
-import {getLogger} from "../../src/config/logger";
+import { discovery } from "../../src/sync/discovery";
+import { getLogger } from "../../src/config/logger";
 import waitUntil from "../utils/waitUntil";
 
 jest.mock("../../src/config/feature-flags");
@@ -12,6 +11,11 @@ jest.mock("../../src/config/feature-flags");
 describe("Discovery Queue Test", () => {
 
 	const TEST_INSTALLATION_ID = 1234;
+	let sendMessageSpy: jest.SpyInstance;
+
+	beforeAll(async () => {
+		await sqsQueues.branch.purgeQueue();
+	});
 
 	beforeEach(async () => {
 		await createWebhookApp();
@@ -27,86 +31,44 @@ describe("Discovery Queue Test", () => {
 			gitHubInstallationId: TEST_INSTALLATION_ID,
 			jiraClientKey: clientKey
 		});
+
+		await sqsQueues.discovery.start();
+
+		sendMessageSpy = jest.spyOn(sqsQueues.backfill, "sendMessage");
 	});
 
 	afterEach(async () => {
-		await Installation.destroy({truncate: true})
-		await Subscription.destroy({truncate: true})
-	});
-
-	let originalBackfillQueueSendMessageFunction;
-
-	beforeAll(async () => {
-		//Start worker node for queues processing
-		await start();
-		originalBackfillQueueSendMessageFunction = sqsQueues.backfill.sendMessage;
-		sqsQueues.backfill.sendMessage = jest.fn();
-	});
-
-	afterAll(async () => {
-		sqsQueues.backfill.sendMessage = originalBackfillQueueSendMessageFunction;
-		//Stop worker node
-		await stop();
-		await sqsQueues.discovery.waitUntilListenerStopped();
+		await sqsQueues.discovery.stop();
+		await sqsQueues.discovery.purgeQueue();
 	});
 
 	const mockGitHubReposResponses = () => {
-
-		githubNock
-			.post("/app/installations/1234/access_tokens")
-			.optionally() // TODO: need to remove optionally and make it explicit
-			.reply(200, {
-				token: "token",
-				expires_at: new Date().getTime() + 1_000_000
-			});
+		githubAccessTokenNock(1234);
 
 		githubNock.get("/installation/repositories?per_page=100")
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			.reply(200, require("../fixtures/list-repositories.json"));
-	}
-
+	};
 
 	async function verify2RepositoriesInTheStateAndBackfillMessageSent() {
-
-		expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
-
+		expect(sendMessageSpy).toBeCalledTimes(1);
 		const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID);
-
-		if (!subscription) {
-			throw "Subsription should not be null"
-		}
-
-		console.log("Checking for subscription ID" + subscription.id)
-
-
-		const states = await RepoSyncState.findAllFromSubscription(subscription);
-
+		expect(subscription).toBeTruthy();
+		const states = await RepoSyncState.findAllFromSubscription(subscription!);
 		expect(states.length).toBe(2);
-
 	}
 
 	it("Discovery sqs queue processes the message", async () => {
-
-
 		mockGitHubReposResponses();
-
-		await sqsQueues.discovery.sendMessage({installationId: TEST_INSTALLATION_ID, jiraHost});
-
+		await sqsQueues.discovery.sendMessage({ installationId: TEST_INSTALLATION_ID, jiraHost });
 		await waitUntil(async () => {
-
 			await verify2RepositoriesInTheStateAndBackfillMessageSent();
-
 		});
 	});
 
 	it("Discovery queue listener works correctly", async () => {
-
 		mockGitHubReposResponses();
-
-		await discovery(app)({data: {installationId: TEST_INSTALLATION_ID, jiraHost}}, getLogger("test"))
-
+		await discovery(app)({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
 		await verify2RepositoriesInTheStateAndBackfillMessageSent();
 	});
-
-
 });

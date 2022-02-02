@@ -1,5 +1,6 @@
 import statsd from "../config/statsd";
 import { metricWebhooks } from "../config/metric-names";
+import Logger from "bunyan";
 
 export const getCurrentTime = () => Date.now();
 
@@ -16,7 +17,7 @@ export const getCurrentTime = () => Date.now();
 export const emitWebhookProcessedMetrics = (
 	webhookReceivedTime: number,
 	webhookName: string,
-	contextLogger: any,
+	contextLogger: Logger,
 	status?: number
 ): number | undefined | void => {
 	const currentTime = getCurrentTime();
@@ -24,7 +25,7 @@ export const emitWebhookProcessedMetrics = (
 	try {
 		// only send logs if time of webhookReceived occurred before the currentTime
 		// and if webhookReceivedTime is not null/undefined
-		if (webhookReceivedTime <= currentTime) {
+		if (Number.isInteger(webhookReceivedTime) && webhookReceivedTime <= currentTime) {
 			const timeToProcessWebhookEvent = currentTime - webhookReceivedTime;
 
 			contextLogger.info(

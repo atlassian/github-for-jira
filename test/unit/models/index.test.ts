@@ -71,14 +71,6 @@ describe("test installation model", () => {
 
 	afterEach(async () => {
 		process.env.STORAGE_SECRET = storageSecret;
-		// Clean up the database
-		await Installation.destroy({
-			truncate: true
-		});
-
-		await Subscription.destroy({
-			truncate: true
-		});
 	});
 
 	it("installs app when it receives an install payload from jira", async () => {
