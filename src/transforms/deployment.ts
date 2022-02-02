@@ -117,7 +117,7 @@ function mapState(state: string): string {
 // https://docs.github.com/en/actions/reference/environments
 // GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
 // Jira: Can be one of unmapped, development, testing, staging, production
-const isEnvironment = (envNames: string[], environment: string, logger?): boolean => {
+const isEnvironment = (envNames: string[], environment: string): boolean => {
 	// Matches any of the input names exactly
 	const exactMatch = envNames.join("|");
 	// Matches separators within environment names, e.g. "-" in "prod-east" or ":" in "test:mary"
@@ -131,35 +131,21 @@ const isEnvironment = (envNames: string[], environment: string, logger?): boolea
 	return envNamesPattern.test(_.deburr(environment));
 };
 
-export function mapEnvironment(environment: string): string {
-	const environmentMapping = {
+export function mapEnvironment(environment: string, deploymentsConfig: RepoConfig | null): string {
+	const deploymentConfigEnvironmentMapping = deploymentsConfig?.deployments.environmentMapping;
+	const deploymentEnvironmentMapping = {
 		development: ["development", "dev", "trunk"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
 		production: ["production", "prod", "prd", "live"],
 	};
 
-	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key], environment));
+	const environmentMapping = deploymentsConfig ? deploymentConfigEnvironmentMapping : deploymentEnvironmentMapping
 
-	if (!jiraEnv) {
-		return "unmapped";
-	}
-
-	return jiraEnv;
-}
-
-export const mapConfiguationEnvironment = (
-	deploymentsConfig: RepoConfig | null,
-	deploymentStatusEnvironment: string,
-	logger?: LoggerWithTarget
-) => {
-	const environmentMapping = deploymentsConfig?.deployments.environmentMapping;
-
-	// TODO - after config-as-code FF is removed move the following block out of here and mapEnvironment - separate function they can both call
 	const jiraEnv =
 		environmentMapping &&
-		Object.keys(environmentMapping).find((key) =>
-			isEnvironment(environmentMapping[key.toLowerCase()], deploymentStatusEnvironment.toLowerCase(), logger)
+		Object.keys(environmentMapping).find(key =>
+			isEnvironment(environmentMapping[key.toLowerCase()], environment.toLowerCase())
 		);
 
 	if (!jiraEnv) {
@@ -196,8 +182,6 @@ export default async (
 		description: deploymentDescription
 	} = deployment
 
-
-
 	const { data: { commit: { message } } } = await githubClient.repos.getCommit({
 		owner: owner.login,
 		repo: name,
@@ -227,10 +211,7 @@ export default async (
 	}
 
 	const deploymentsConfig = await RepoConfigDatabaseModel.getForRepo(githubInstallationId, repositoryId);
-	const mappedDeploymentEnvironment = mapEnvironment(deploymentStatusEnvironment);
-	const mappedConfigEnvironment = mapConfiguationEnvironment(deploymentsConfig, deploymentStatusEnvironment, logger);
-
-	logger.info("mappedConfigEnvironment: ", mappedConfigEnvironment)
+	const mappedDeploymentEnvironment = mapEnvironment(deploymentStatusEnvironment, deploymentsConfig);
 
 	if (mappedDeploymentEnvironment === "unmapped") {
 		logger?.info({
