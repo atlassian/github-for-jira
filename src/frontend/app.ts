@@ -105,10 +105,10 @@ export default (octokitApp: App): Express => {
 	app.use(logMiddleware);
 
 	app.set("view engine", "hbs");
-	app.set("views", path.join(rootPath, "views"));
+	const viewPath = path.resolve(rootPath, "views")
+	app.set("views", viewPath);
 
-	registerHandlebarsPartials(rootPath);
-
+	registerHandlebarsPartials(path.resolve(viewPath, "partials"));
 	registerHandlebarsHelpers();
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
