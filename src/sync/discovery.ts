@@ -90,15 +90,17 @@ const discoverRepos = async (app: Application, job: DiscoveryMessagePayload, log
 		// schedule a message for each repo to check for the config file
 		if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
 			for (const repo of repositories) {
-				await sqsQueues.discovery.sendMessage({
+				const payload = {
 					installationId,
 					jiraHost,
 					repo: {
 						id: repo.id,
-						owner: repo.owner.name,
+						owner: repo.owner.login,
 						name: repo.name
 					}
-				});
+				};
+				logger.info({ payload, repo }, "scheduling repo discovery message")
+				await sqsQueues.discovery.sendMessage(payload);
 			}
 		}
 

@@ -6,7 +6,7 @@ export default class RepoConfigDatabaseModel extends Sequelize.Model {
 	id: number;
 	githubInstallationId: number;
 	repoId: number;
-	config: string;
+	config: RepoConfig;
 	createdAt: Date;
 	updatedAt: Date;
 
@@ -24,14 +24,14 @@ export default class RepoConfigDatabaseModel extends Sequelize.Model {
 		});
 
 		if (existingConfig) {
-			existingConfig.config = JSON.stringify(config);
+			existingConfig.config = config;
 			await existingConfig.save();
 			return this.toDomainModel(existingConfig);
 		} else {
 			const newConfig = await RepoConfigDatabaseModel.create({
 				githubInstallationId: githubInstallationId,
 				repoId: repoId,
-				config: JSON.stringify(config)
+				config: config
 			});
 			return this.toDomainModel(newConfig);
 		}
@@ -54,7 +54,7 @@ export default class RepoConfigDatabaseModel extends Sequelize.Model {
 	}
 
 	private static toDomainModel(databaseModel: RepoConfigDatabaseModel): RepoConfig {
-		return databaseModel.config as unknown as RepoConfig;
+		return databaseModel.config;
 	}
 }
 
