@@ -131,8 +131,7 @@ const isEnvironment = (envNames: string[], environment: string): boolean => {
 	return envNamesPattern.test(_.deburr(environment));
 };
 
-export function mapEnvironment(environment: string, deploymentsConfig: RepoConfig | null): string {
-	const deploymentConfigEnvironmentMapping = deploymentsConfig?.deployments.environmentMapping;
+export async function mapEnvironment(environment: string, deploymentsConfig?: RepoConfig | null): Promise<string> {
 	const deploymentEnvironmentMapping = {
 		development: ["development", "dev", "trunk"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
@@ -140,7 +139,14 @@ export function mapEnvironment(environment: string, deploymentsConfig: RepoConfi
 		production: ["production", "prod", "prd", "live"],
 	};
 
-	const environmentMapping = deploymentsConfig ? deploymentConfigEnvironmentMapping : deploymentEnvironmentMapping
+	let environmentMapping;
+
+	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
+		const deploymentConfigEnvironmentMapping = deploymentsConfig?.deployments.environmentMapping;
+		environmentMapping = deploymentsConfig ? deploymentConfigEnvironmentMapping : deploymentEnvironmentMapping
+	} else {
+		environmentMapping = deploymentEnvironmentMapping;
+	}
 
 	const jiraEnv =
 		environmentMapping &&
@@ -210,8 +216,14 @@ export default async (
 		return undefined;
 	}
 
-	const deploymentsConfig = await RepoConfigDatabaseModel.getForRepo(githubInstallationId, repositoryId);
-	const mappedDeploymentEnvironment = mapEnvironment(deploymentStatusEnvironment, deploymentsConfig);
+	let mappedDeploymentEnvironment;
+
+	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
+		const deploymentsConfig = await RepoConfigDatabaseModel.getForRepo(githubInstallationId, repositoryId);
+		mappedDeploymentEnvironment = mapEnvironment(deploymentStatusEnvironment, deploymentsConfig);
+	} else {
+		mappedDeploymentEnvironment = mapEnvironment(deploymentStatusEnvironment);
+	}
 
 	if (mappedDeploymentEnvironment === "unmapped") {
 		logger?.info({

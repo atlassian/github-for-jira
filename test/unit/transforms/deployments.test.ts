@@ -9,6 +9,12 @@ import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 jest.mock("../../../src/config/feature-flags");
 
 describe("deployment environment mapping - with Jira deployment config", () => {
+	when(booleanFlag).calledWith(
+		BooleanFlags.CONFIG_AS_CODE,
+		expect.anything(),
+		expect.anything()
+	).mockResolvedValue(true);
+
 	const deploymentConfig = {
 		"deployments": {
 			"environmentMapping": {
@@ -19,7 +25,6 @@ describe("deployment environment mapping - with Jira deployment config", () => {
 			}
 		}
 	}
-
 
 	// eslint-disable-next-line jest/no-focused-tests
 	test("classifies known environments correctly", () => {
