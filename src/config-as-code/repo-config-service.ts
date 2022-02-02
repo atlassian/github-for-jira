@@ -23,7 +23,7 @@ const getRepoConfigFromGitHub = async (githubInstallationId: number, owner: stri
 	}
 
 	const contentString = Buffer.from(response.data.content, "base64").toString("ascii");
-	logger.debug(`Converted ${response.data.content} to ${contentString}`);
+	logger.info(`Converted ${response.data.content} to ${contentString}`);
 	return contentString;
 }
 
@@ -39,7 +39,7 @@ const convertYamlToRepoConfig = (input: string): RepoConfig => {
  * Saves a JSON blob to the RepoConfig database with installationId and RepoId
  */
 const saveRepoConfigToDB = async (githubInstallationId: number, repoId: number, config: RepoConfig): Promise<RepoConfig | null> => {
-	logger.debug({githubInstallationId, repoId, config}, "saving repo config to Database");
+	logger.info({ githubInstallationId, repoId, config }, "saving repo config to Database");
 	return await RepoConfigDatabaseModel.saveOrUpdate(githubInstallationId, repoId, config)
 }
 
@@ -52,6 +52,11 @@ export const processRepoConfig = async (githubInstallationId: number, owner: str
 		const config: RepoConfig = convertYamlToRepoConfig(buffer);
 		return await saveRepoConfigToDB(githubInstallationId, repoId, config);
 	}
-	logger.info({ githubInstallationId, repo, repoId, owner }, "could not find repo config or config is empty - expected .jira/config.yml")
+	logger.info({
+		githubInstallationId,
+		repo,
+		repoId,
+		owner
+	}, "could not find repo config or config is empty - expected .jira/config.yml")
 	return null;
 }

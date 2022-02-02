@@ -204,6 +204,7 @@ export default class GitHubClient {
 		} catch (err) {
 			if (err.status == 404) {
 				// the file is not found, we return null instead of throwing an error that the caller would have to catch
+				this.logger.info({ owner, repo, path }, "404 - could not find repo content")
 				return null;
 			} else {
 				throw err;
