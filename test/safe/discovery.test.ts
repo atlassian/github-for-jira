@@ -103,7 +103,7 @@ describe("Discovery Queue Test", () => {
 
 		mockGitHubReposResponses();
 
-		await discovery(app)({data: {installationId: TEST_INSTALLATION_ID, jiraHost}}, getLogger("test"))
+		await discovery(app)({installationId: TEST_INSTALLATION_ID, jiraHost}, getLogger("test"))
 
 		await verify2RepositoriesInTheStateAndBackfillMessageSent();
 	});

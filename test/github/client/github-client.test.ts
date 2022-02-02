@@ -100,6 +100,30 @@ describe("GitHub Client", () => {
 			]);
 	}
 
+	function givenGitHubReturnsContents(
+		owner: string,
+		repo: string,
+		path: string,
+		expectedInstallationTokenInHeader?: string,
+		githubMock?: nock.Scope
+	) {
+		(githubMock || githubNock)
+			.get(`/repos/${owner}/${repo}/contents/${path}`)
+			.query({
+				installationId: /^.*$/
+			})
+			.matchHeader(
+				"Authorization",
+				expectedInstallationTokenInHeader
+					? `Bearer ${expectedInstallationTokenInHeader}`
+					: /^Bearer .+$/
+			)
+			.matchHeader("Accept", "application/vnd.github.v3+json")
+			.reply(200, [
+				{ cat: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
+			]);
+	}
+
 
 	it("lists pull requests", async () => {
 		const owner = "owner";
@@ -322,6 +346,48 @@ describe("GitHub Client", () => {
 
 		expect(pullrequests).toBeTruthy();
 		verifyMetricsSent("/repos/:owner/:repo/pulls", "200");
+	});
+
+	it("Fetch contents from given path", async () => {
+		const owner = "owner";
+		const repo = "repo";
+		const path = "test";
+
+		givenGitHubReturnsInstallationToken("installation token");
+		givenGitHubReturnsContents(
+			owner,
+			repo,
+			path,
+			"installation token"
+		);
+
+		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
+		const contents = await client.getRepositoryContent(owner, repo, path);
+
+		expect(contents).toBeTruthy();
+		verifyMetricsSent("/repos/:owner/:repo/contents/:path", "200");
+	});
+
+	it("getRepositoryContent() - expect null when github returns 404", async () => {
+		const owner = "owner";
+		const repo = "repo";
+		const path = "test";
+
+		givenGitHubReturnsInstallationToken("installation token");
+		githubNock
+			.get(`/repos/${owner}/${repo}/contents/${path}`)
+			.reply(
+				404, [{ number: 1 }],
+				{
+					"X-RateLimit-Remaining": "0"
+				}
+			);
+
+		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
+		const contents = await client.getRepositoryContent(owner, repo, path);
+
+		expect(contents).toBeNull();
+		verifyMetricsSent("/repos/:owner/:repo/contents/:path", "404");
 	});
 
 });
