@@ -1,8 +1,13 @@
 import transformCodeScanningAlert from "../transforms/code-scanning-alert";
 import { Context } from "probot/lib/context";
 import logger from "../config/logger";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export default async (context: Context, jiraClient): Promise<void> => {
+	if (!booleanFlag(BooleanFlags.SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS, false, jiraClient.baseUrl)) {
+		return;
+	}
+
 	const jiraPayload = await transformCodeScanningAlert(context);
 
 	if (!jiraPayload) {
