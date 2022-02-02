@@ -240,9 +240,8 @@ export default (
 		instrumentFailedRequest()
 	);
 
-	// URL params need to be before auth to get the correct path
-	instance.interceptors.request.use(urlParamsMiddleware);
 	instance.interceptors.request.use(getAuthMiddleware(secret));
+	instance.interceptors.request.use(urlParamsMiddleware);
 
 	instance.interceptors.response.use(
 		getSuccessMiddleware(logger),
