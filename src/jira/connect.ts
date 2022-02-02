@@ -84,7 +84,7 @@ export default async (_: Request, res: Response): Promise<void> => {
 						value: "GitHub"
 					},
 					logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-					homeUrl: "https://github.com/features/security"
+					homeUrl: "https://github.com"
 				},
 				postInstallPage: {
 					key: "github-post-install-page",
