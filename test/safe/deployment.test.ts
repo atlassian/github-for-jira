@@ -12,7 +12,7 @@ describe("Deployment Webhook", () => {
 	const gitHubInstallationId = 1234;
 
 	beforeAll(async () => {
-		await sqsQueues.branch.purgeQueue();
+		await sqsQueues.deployment.purgeQueue();
 	});
 
 	beforeEach(async () => {

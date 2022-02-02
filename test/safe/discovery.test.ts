@@ -69,8 +69,6 @@ describe("Discovery Queue Test", () => {
 	it("Discovery queue listener works correctly", async () => {
 		mockGitHubReposResponses();
 		await discovery(app)({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
-		await waitUntil(async () => {
-			await verify2RepositoriesInTheStateAndBackfillMessageSent();
-		});
+		await verify2RepositoriesInTheStateAndBackfillMessageSent();
 	});
 });
