@@ -1,9 +1,9 @@
 import hbs from "hbs";
 
 export const registerHandlebarsHelpers = () => {
-	hbs.registerHelper("toLowerCase", (str) => str.toLowerCase());
+	hbs.registerHelper("toLowerCase", (str?: string) => str?.toString().toLowerCase());
 
-	hbs.registerHelper("replaceSpaceWithHyphen", (str) => str.replace(/ /g, "-"));
+	hbs.registerHelper("replaceSpaceWithHyphen", (str?: string) => str?.toString().replace(/ /g, "-"));
 
 	hbs.registerHelper(
 		"ifAllReposSynced",
