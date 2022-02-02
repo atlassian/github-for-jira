@@ -18,9 +18,8 @@ jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
 
 
-describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'", () => {
+describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'", (useNewGithubClient) => {
 	const installationId = 1234;
-	const useNewGithubClient = true;
 
 	let app: Application;
 	const branchNodesFixture = require("../../fixtures/api/graphql/branch-ref-nodes.json");
@@ -28,9 +27,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 	const associatedPRhasKeys = require("../../fixtures/api/graphql/branch-associated-pr-has-keys.json");
 	const branchNoIssueKeys = require("../../fixtures/api/graphql/branch-no-issue-keys.json");
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	const sentry: Hub = { setUser: jest.fn() } as Hub;
+	const sentry: Hub = { setUser: jest.fn() } as any;
 
 	const makeExpectedResponse = (branchName) => ({
 		preventTransitions: true,
