@@ -7,6 +7,8 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
+import { mapEnvironmentWithRepoConfig } from "../config-as-code/repo-config";
+import RepoConfigDatabaseModel from "../config-as-code/repo-config-database-model";
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
 async function getLastSuccessfulDeployCommitSha(
@@ -115,7 +117,7 @@ function mapState(state: string): string {
 // https://docs.github.com/en/actions/reference/environments
 // GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
 // Jira: Can be one of unmapped, development, testing, staging, production
-export function mapEnvironment(environment: string): string {
+export function mapEnvironmentWithDefaultMapping(environment: string): string {
 	const isEnvironment = (envNames: string[]): boolean => {
 		// Matches any of the input names exactly
 		const exactMatch = envNames.join("|");
@@ -131,10 +133,42 @@ export function mapEnvironment(environment: string): string {
 	};
 
 	const environmentMapping = {
-		development: ["development", "dev", "trunk"],
-		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
-		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
-		production: ["production", "prod", "prd", "live"],
+		development: [
+			"development",
+			"dev",
+			"trunk"
+		],
+		testing: [
+			"testing",
+			"test",
+			"tests",
+			"tst",
+			"integration",
+			"integ",
+			"intg",
+			"int",
+			"acceptance",
+			"accept",
+			"acpt",
+			"qa",
+			"qc",
+			"control",
+			"quality"
+		],
+		staging: [
+			"staging",
+			"stage",
+			"stg",
+			"preprod",
+			"model",
+			"internal"
+		],
+		production: [
+			"production",
+			"prod",
+			"prd",
+			"live"
+		],
 	};
 
 	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key]));
@@ -146,9 +180,14 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
-	const deployment = payload.deployment;
-	const deployment_status = payload.deployment_status;
+export default async (
+	githubClient: GitHubAPI,
+	payload: WebhookPayloadDeploymentStatus,
+	githubInstallationId: number,
+	jiraHost: string,
+	logger: LoggerWithTarget
+): Promise<JiraDeploymentData | undefined> => {
+	const { deployment, deployment_status, repository } = payload;
 
 	const { data: { commit: { message } } } = await githubClient.repos.getCommit({
 		owner: payload.repository.owner.login,
@@ -177,7 +216,20 @@ export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeployment
 		return undefined;
 	}
 
-	const environment = mapEnvironment(deployment_status.environment);
+	const useConfigAsCode = await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost);
+
+	let environment;
+	if (useConfigAsCode) {
+		const repoConfig = await RepoConfigDatabaseModel.getForRepo(githubInstallationId, repository.id);
+		if (repoConfig) {
+			environment = mapEnvironmentWithRepoConfig(deployment_status.environment, repoConfig);
+		} else {
+			environment = mapEnvironmentWithDefaultMapping(deployment_status.environment);
+		}
+	} else {
+		environment = mapEnvironmentWithDefaultMapping(deployment_status.environment);
+	}
+
 	if (environment === "unmapped") {
 		logger?.info({
 			environment: deployment_status.environment,
@@ -208,4 +260,5 @@ export default async (githubClient: GitHubAPI, payload: WebhookPayloadDeployment
 			},
 		}],
 	};
-};
+}
+;

@@ -97,9 +97,6 @@ describe("Discovery Queue Test", () => {
 			throw "Subsription should not be null"
 		}
 
-		console.log("Checking for subscription ID" + subscription.id)
-
-
 		const states = await RepoSyncState.findAllFromSubscription(subscription);
 
 		expect(states.length).toBe(2);

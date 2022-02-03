@@ -34,7 +34,7 @@ export const processDeployment = async (
 
 	logger.info("processing deployment message!");
 
-	const jiraPayload = await transformDeployment(github, webhookPayload, jiraHost, logger);
+	const jiraPayload = await transformDeployment(github, webhookPayload, installationId, jiraHost, logger);
 
 	if (!jiraPayload) {
 		logger.info(
