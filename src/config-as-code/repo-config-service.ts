@@ -7,8 +7,8 @@ import RepoConfigDatabaseModel from "./repo-config-database-model";
 
 const logger = getLogger("services.config-as-code");
 const CONFIG_PATH = ".jira/config.yml";
-const MAX_ENVIROMENT_TESTS = 5;
-const MAX_FILE_SIZE_BYTES = 1024;
+const MAX_PATTERNS_PER_ENVIRONMENT = 10;
+const MAX_FILE_SIZE_BYTES = 10 * 1024;
 
 /**
  * Tests if filesize is greater than maximum - MAX_FILE_SIZE_BYTES
@@ -18,12 +18,12 @@ export const isFileTooBig = (fileSize: number): boolean => {
 }
 
 /**
- * Iterates through environment tests and returns true if any environemnt contains too many tests
+ * Iterates through environment tests and returns true if any environment contains too many tests
  */
-export const hasTooManyEnvironmentMappingTests = (config: RepoConfig): boolean => {
+export const hasTooManyPatternsPerEnvironment = (config: RepoConfig): boolean => {
 	const environmentMapping = config.deployments.environmentMapping;
 	return Object.keys(environmentMapping).some(key => {
-		return environmentMapping[key].length > MAX_ENVIROMENT_TESTS
+		return environmentMapping[key].length > MAX_PATTERNS_PER_ENVIRONMENT
 	});
 }
 
@@ -33,7 +33,7 @@ export const hasTooManyEnvironmentMappingTests = (config: RepoConfig): boolean =
 export const getRepoConfigFromGitHub = async (githubInstallationId: number, owner: string, repo: string): Promise<string | null> => {
 	const client = new GitHubClient(getCloudInstallationId(githubInstallationId), logger);
 	const response = await client.getRepositoryContent(owner, repo, CONFIG_PATH);
-	
+
 	if (response == null) {
 		return null;
 	}
@@ -42,7 +42,7 @@ export const getRepoConfigFromGitHub = async (githubInstallationId: number, owne
 		return null;
 	}
 
-	if(!isFileTooBig(response.data.size)) {
+	if (!isFileTooBig(response.data.size)) {
 		throw new Error(`file size is too large, max file size: ${MAX_FILE_SIZE_BYTES} bytes`)
 	}
 
@@ -70,8 +70,8 @@ export const convertYamlToRepoConfig = (input: string): RepoConfig => {
 		}
 	}
 
-	if(hasTooManyEnvironmentMappingTests(output)) {
-		throw new Error(`Too many enviroment mapping tests, maximum test per environemnt: ${MAX_ENVIROMENT_TESTS}`)
+	if (hasTooManyPatternsPerEnvironment(output)) {
+		throw new Error(`Too many enviroment mapping tests, maximum test per environemnt: ${MAX_PATTERNS_PER_ENVIRONMENT}`)
 	}
 	return output;
 }
@@ -80,7 +80,7 @@ export const convertYamlToRepoConfig = (input: string): RepoConfig => {
  * Saves a JSON blob to the RepoConfig database with installationId and RepoId
  */
 export const saveRepoConfigToDB = async (githubInstallationId: number, repoId: number, config: RepoConfig): Promise<RepoConfig | null> => {
-	logger.info({githubInstallationId, repoId, config}, "saving repo config to Database");
+	logger.info({ githubInstallationId, repoId, config }, "saving repo config to Database");
 	return await RepoConfigDatabaseModel.saveOrUpdate(githubInstallationId, repoId, config)
 }
 
