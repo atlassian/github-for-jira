@@ -33,12 +33,12 @@ describe("RepoConfigDatabaseModel", () => {
 			// insert a new record
 			await RepoConfigDatabaseModel.saveOrUpdate(42, 4711, newRepoConfig);
 			const result = await RepoConfigDatabaseModel.getForRepo(42, 4711);
-			expect(result).toEqual(JSON.stringify(newRepoConfig));
+			expect(result).toEqual(newRepoConfig);
 
 			// update the existing record
 			await RepoConfigDatabaseModel.saveOrUpdate(42, 4711, existingRepoConfig);
 			const updatedResult = await RepoConfigDatabaseModel.getForRepo(42, 4711);
-			expect(updatedResult).toEqual(JSON.stringify(existingRepoConfig));
+			expect(updatedResult).toEqual(existingRepoConfig);
 		});
 	});
 });
