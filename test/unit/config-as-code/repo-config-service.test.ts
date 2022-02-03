@@ -1,5 +1,3 @@
-
-
 import { convertYamlToRepoConfig, saveRepoConfigToDB, hasTooManyPatternsPerEnvironment, isFileTooBig, getRepoConfigFromGitHub } from "../../../src/config-as-code/repo-config-service";
 
 import RepoConfigDatabaseModel from "../../../src/config-as-code/repo-config-database-model";
@@ -15,7 +13,7 @@ jest.mock("../../../src/github/client/github-client", () => {
 })
 
 jest.mock("../../../src/config-as-code/repo-config-database-model", () => ({
-	saveOrUpdate: jest.fn().mockReturnValue('works')
+	saveOrUpdate: jest.fn().mockReturnValue("works")
 }));
 
 jest.mock("../../../src/github/client/installation-id", () => ({
@@ -72,7 +70,7 @@ describe("config-as-code/repo-config-service", () => {
 		const GH_INSTALLATION_ID = 12345;
 		const REPO_ID = 10;
 		it("expect to call saveUpate database with correct arguments", async () => {
-			saveRepoConfigToDB(GH_INSTALLATION_ID, REPO_ID, VALID_CONFIG_OBJECT);
+			await saveRepoConfigToDB(GH_INSTALLATION_ID, REPO_ID, VALID_CONFIG_OBJECT);
 			expect(RepoConfigDatabaseModel.saveOrUpdate).toHaveBeenCalledWith(GH_INSTALLATION_ID, REPO_ID, VALID_CONFIG_OBJECT);
 		});
 	})

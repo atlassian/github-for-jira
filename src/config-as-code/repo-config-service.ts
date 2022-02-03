@@ -42,8 +42,8 @@ export const getRepoConfigFromGitHub = async (githubInstallationId: number, owne
 		return null;
 	}
 
-	if (!isFileTooBig(response.data.size)) {
-		throw new Error(`file size is too large, max file size: ${MAX_FILE_SIZE_BYTES} bytes`)
+	if (isFileTooBig(response.data.size)) {
+		throw new Error(`file size ${response.data.size} is too large, max file size is ${MAX_FILE_SIZE_BYTES} bytes`)
 	}
 
 	const contentString = Buffer.from(response.data.content, "base64").toString("ascii");
@@ -98,6 +98,6 @@ export const processRepoConfig = async (githubInstallationId: number, owner: str
 		repo,
 		repoId,
 		owner
-	}, "could not find repo config or config is empty - expected .jira/config.yml")
+	}, "could not find file .jira/config.yml for this repository")
 	return null;
 }
