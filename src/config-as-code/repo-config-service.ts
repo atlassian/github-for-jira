@@ -22,8 +22,8 @@ export const isFileTooBig = (fileSize: number): boolean => {
  */
 export const isTooManyEnvironmentMappingTests = (config: RepoConfig): boolean => {
 	const environmentMapping = config.deployments.environmentMapping;
-	return !Object.keys(environmentMapping).every(key => {
-		return environmentMapping[key].length <= MAX_ENVIROMENT_TESTS
+	return Object.keys(environmentMapping).some(key => {
+		return environmentMapping[key].length > MAX_ENVIROMENT_TESTS
 	});
 }
 
