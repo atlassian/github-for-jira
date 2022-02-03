@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import axios, { AxiosError, AxiosInstance } from "axios";
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 
 import url from "url";
 import statsd from "../../config/statsd";
@@ -16,38 +16,30 @@ const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
  *
  * @param {string} secret - The key to use to sign the JWT
  */
-function getAuthMiddleware(secret: string) {
-	return (
-		/**
-		 * @param {import("axios").AxiosRequestConfig} config - The config for the outgoing request.
-		 * @returns {import("axios").AxiosRequestConfig} Updated axios config with authentication token.
-		 */
-		(config) => {
-			const { query, pathname } = url.parse(config.url, true);
+const getAuthMiddleware = (secret: string, instance: AxiosInstance) =>
+	(config: AxiosRequestConfig): AxiosRequestConfig => {
+		// Generate full URI based on current config
+		const uri = instance.getUri(config);
+		// parse the URI and get query/path
+		const { query, pathname } = url.parse(uri, true);
 
-			const jwtToken = encodeSymmetric(
-				{
-					...getExpirationInSeconds(),
-					iss,
-					qsh: createQueryStringHash({
-						method: config.method,
-						pathname: pathname || undefined,
-						query
-					})
-				},
-				secret
-			);
+		const jwtToken = encodeSymmetric(
+			{
+				...getExpirationInSeconds(),
+				iss,
+				qsh: createQueryStringHash({
+					method: config.method || "GET", // method can be undefined, defaults to GET
+					pathname: pathname || undefined,
+					query
+				})
+			},
+			secret
+		);
 
-			return {
-				...config,
-				headers: {
-					...config.headers,
-					Authorization: `JWT ${jwtToken}`
-				}
-			};
-		}
-	);
-}
+		// Set authorization headers
+		config.headers = (config.headers || {}).Authorization = `JWT ${jwtToken}`;
+		return config;
+	};
 
 /**
  * Wrapper for AxiosError, which includes error status
@@ -85,62 +77,57 @@ export const getJiraErrorMessages = (status: number) => {
 /**
  * Middleware to enhance failed requests in Jira.
  */
-function getErrorMiddleware(logger: Logger) {
-	return (
-		/**
-		 * Potentially enrich the promise's rejection.
-		 *
-		 * @param {import("axios").AxiosError} error - The error response from Axios
-		 * @returns {Promise<Error>} The rejected promise
-		 */
-		(error: AxiosError): Promise<Error> => {
+const getErrorMiddleware = (logger: Logger) =>
+	/**
+	 * Potentially enrich the promise's rejection.
+	 *
+	 * @param {import("axios").AxiosError} error - The error response from Axios
+	 * @returns {Promise<Error>} The rejected promise
+	 */
+	(error: AxiosError): Promise<Error> => {
 
-			const status = error?.response?.status;
+		const status = error?.response?.status;
 
-			const errorMessage = "Error executing Axios Request " + (status ? getJiraErrorMessages(status) : error.message || "");
+		const errorMessage = "Error executing Axios Request " + (status ? getJiraErrorMessages(status) : error.message || "");
 
-			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
+		const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
-			// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
-			// Log exception only if it is error, because AxiosError contains the request payload
-			if (isWarning) {
-				logger.warn(errorMessage);
-			} else {
-				logger.error({ err: error }, errorMessage);
-			}
+		// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
+		// Log exception only if it is error, because AxiosError contains the request payload
+		if (isWarning) {
+			logger.warn(errorMessage);
+		} else {
+			logger.error({ err: error }, errorMessage);
+		}
 
-			return Promise.reject(new JiraClientError(errorMessage, error, status));
-		});
-}
+		return Promise.reject(new JiraClientError(errorMessage, error, status));
+	};
 
 /**
  * Middleware to enhance successful requests in Jira.
  *
  * @param {import("probot").Logger} logger - The probot logger instance
  */
-function getSuccessMiddleware(logger: Logger) {
-	return (
-		/**
-		 * DEBUG log the response info from Jira
-		 *
-		 * @param {import("axios").AxiosResponse} response - The response from axios
-		 * @returns {import("axios").AxiosResponse} The axios response
-		 */
-		(response) => {
-			logger.debug(
-				{
-					params: response.config.urlParams
-				},
-				`Jira request: ${response.config.method.toUpperCase()} ${
-					response.config.originalUrl
-				} - ${response.status} ${response.statusText}
+const getSuccessMiddleware = (logger: Logger) =>
+	/**
+	 * DEBUG log the response info from Jira
+	 *
+	 * @param {import("axios").AxiosResponse} response - The response from axios
+	 * @returns {import("axios").AxiosResponse} The axios response
+	 */
+	(response) => {
+		logger.debug(
+			{
+				params: response.config.urlParams
+			},
+			`Jira request: ${response.config.method.toUpperCase()} ${
+				response.config.originalUrl
+			} - ${response.status} ${response.statusText}
 				Response data: ${JSON.stringify(response.data)}`
-			);
+		);
 
-			return response;
-		}
-	);
-}
+		return response;
+	};
 
 
 /*
@@ -151,14 +138,14 @@ function getSuccessMiddleware(logger: Logger) {
  * more than three minutes after the IAT. Since our tokens are per-request and
  * short-lived, we use a timeout of 30 seconds.
  */
-function getExpirationInSeconds() {
+const getExpirationInSeconds = () => {
 	const nowInSeconds = Math.floor(Date.now() / 1000);
 
 	return {
 		iat: nowInSeconds,
 		exp: nowInSeconds + 30
 	};
-}
+};
 
 /**
  * Enrich the config object to include the time that the request started.
@@ -242,12 +229,17 @@ export default (
 
 	// URL params need to be before auth to get the correct path
 	instance.interceptors.request.use(urlParamsMiddleware);
-	instance.interceptors.request.use(getAuthMiddleware(secret));
+
+	// This has to be the last request middleware as it uses the "finished" url
+	// to generate the JWT token for Jira API
+	instance.interceptors.request.use(getAuthMiddleware(secret, instance));
 
 	instance.interceptors.response.use(
 		getSuccessMiddleware(logger),
 		getErrorMiddleware(logger)
 	);
+
+	instance.getUri();
 
 	return instance;
 };
