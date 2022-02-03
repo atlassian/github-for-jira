@@ -8,9 +8,15 @@ import { Application } from "probot";
 import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
 import sqsQueues from "../../src/sqs/queues";
-import {pushQueueMessageHandler, PushQueueMessagePayload} from "../../src/sqs/push";
-import {Context} from "../../src/sqs/index";
-import {Message} from "aws-sdk/clients/sqs";
+import { pushQueueMessageHandler, PushQueueMessagePayload } from "../../src/sqs/push";
+import { Context } from "../../src/sqs/index";
+import { Message } from "aws-sdk/clients/sqs";
+import { fileRemoved, fileTouched } from "../../src/config-as-code/repo-config-service";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
+
+jest.mock("../../src/config-as-code/repo-config-service");
+jest.mock("../../src/config/feature-flags");
 
 const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
 	payload: createJobData(payload, jiraHost),
@@ -40,7 +46,6 @@ describe("Push Webhook", () => {
 			jiraClientKey: clientKey
 		});
 	});
-
 
 
 	afterEach(async () => {
@@ -546,6 +551,48 @@ describe("Push Webhook", () => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
 			});
+		});
+
+		it("should send 'fileTouched' and 'fileRemoved' events for each file contained in a push", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.CONFIG_AS_CODE,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(true);
+
+			const event = createPushEventAndMockRestRequestsForItsProcessing();
+
+			await expect(app.receive(event)).toResolve();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
+
+			expect(fileTouched).toBeCalledTimes(2);
+			expect(fileRemoved).toBeCalledTimes(1);
+		});
+
+		it("should NOT send 'fileTouched' and 'fileRemoved' events for each file contained in a push if CONFIG_AS_CODE is disabled", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.CONFIG_AS_CODE,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(false);
+
+			const event = createPushEventAndMockRestRequestsForItsProcessing();
+
+			await expect(app.receive(event)).toResolve();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
+
+			expect(fileTouched).toBeCalledTimes(0);
+			expect(fileRemoved).toBeCalledTimes(0);
 		});
 	});
 });

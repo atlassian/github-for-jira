@@ -54,6 +54,8 @@ export default async (context: Context, jiraClient): Promise<void> => {
 					removedFileName);
 			}
 		}
+	}else{
+		context.log("config-as-code: FF disabled");
 	}
 
 	if (!payload.commits?.length) {
