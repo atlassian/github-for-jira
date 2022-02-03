@@ -4,6 +4,10 @@ import { Context } from "probot/lib/context";
 import { getCurrentTime } from "../util/webhooks";
 import _ from "lodash";
 
+
+import { processRepoConfig } from "../config-as-code/repo-config-service";
+
+
 export default async (context: Context, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();
 
@@ -25,6 +29,18 @@ export default async (context: Context, jiraClient): Promise<void> => {
 			.filter((commit) => !!commit),
 		installation: context.payload?.installation
 	};
+
+
+
+	console.log('FIURE IT UP');
+	console.log('FIURE IT UP');
+	console.log('FIURE IT UP');
+	console.log('FIURE IT UP');
+	console.log('FIURE IT UP');
+
+
+	await processRepoConfig(context.payload?.installation.id, context.payload?.repository.owner.name, context.payload?.repository.name, context.payload?.repository.id);
+
 
 	if (!payload.commits?.length) {
 		context.log(
