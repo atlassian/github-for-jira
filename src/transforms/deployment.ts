@@ -133,10 +133,42 @@ export function mapEnvironmentWithDefaultMapping(environment: string): string {
 	};
 
 	const environmentMapping = {
-		development: ["development", "dev", "trunk"],
-		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
-		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
-		production: ["production", "prod", "prd", "live"],
+		development: [
+			"development",
+			"dev",
+			"trunk"
+		],
+		testing: [
+			"testing",
+			"test",
+			"tests",
+			"tst",
+			"integration",
+			"integ",
+			"intg",
+			"int",
+			"acceptance",
+			"accept",
+			"acpt",
+			"qa",
+			"qc",
+			"control",
+			"quality"
+		],
+		staging: [
+			"staging",
+			"stage",
+			"stg",
+			"preprod",
+			"model",
+			"internal"
+		],
+		production: [
+			"production",
+			"prod",
+			"prd",
+			"live"
+		],
 	};
 
 	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key]));
