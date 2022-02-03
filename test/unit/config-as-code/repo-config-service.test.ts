@@ -1,6 +1,6 @@
 
 
-import { convertYamlToRepoConfig, saveRepoConfigToDB, hasTooManyEnvironmentMappingTests, isFileTooBig, getRepoConfigFromGitHub } from "../../../src/config-as-code/repo-config-service";
+import { convertYamlToRepoConfig, saveRepoConfigToDB, hasTooManyPatternsPerEnvironment, isFileTooBig, getRepoConfigFromGitHub } from "../../../src/config-as-code/repo-config-service";
 
 import RepoConfigDatabaseModel from "../../../src/config-as-code/repo-config-database-model";
 import { RepoConfig } from "../../../src/config-as-code/repo-config";
@@ -9,7 +9,7 @@ const mockGetRepositoryContent = jest.fn().mockResolvedValue({ data: 1 });
 jest.mock("../../../src/github/client/github-client", () => {
 	return jest.fn().mockImplementation(() => {
 		return {
-			getRepositoryContent: mockGetRepositoryContent 
+			getRepositoryContent: mockGetRepositoryContent
 		}
 	})
 })
@@ -34,7 +34,7 @@ const VALID_CONFIG_OBJECT: RepoConfig = {
 };
 
 describe("config-as-code/repo-config-service", () => {
-	
+
 	describe("isFileTooBig()", () => {
 		it("returns true if number exceeds maximum", async () => {
 			expect(isFileTooBig(10000000000)).toBeTruthy();
@@ -47,13 +47,13 @@ describe("config-as-code/repo-config-service", () => {
 
 	describe("hasTooManyEnvironmentMappingTests()", () => {
 		it("a small set of environment mapping tests should be false", async () => {
-			expect(hasTooManyEnvironmentMappingTests(VALID_CONFIG_OBJECT)).toBeFalsy();
+			expect(hasTooManyPatternsPerEnvironment(VALID_CONFIG_OBJECT)).toBeFalsy();
 		});
 
 		it("too many environment mapping tests should be true", async () => {
 			const MOCK_CONFIG = JSON.parse(JSON.stringify(VALID_CONFIG_OBJECT));
 			MOCK_CONFIG.deployments.environmentMapping.development = ["TEST1","TEST1","TEST1","TEST1","TEST1","TEST1","TEST1","TEST1"];
-			expect(hasTooManyEnvironmentMappingTests(MOCK_CONFIG)).toBeTruthy();
+			expect(hasTooManyPatternsPerEnvironment(MOCK_CONFIG)).toBeTruthy();
 		});
 	})
 
@@ -80,7 +80,7 @@ describe("config-as-code/repo-config-service", () => {
 	describe("convertYamlToRepoConfig()", () => {
 
 		it("valid yaml to json conversion", async () => {
-			const MOCK_VALID_YAML = 
+			const MOCK_VALID_YAML =
 `deployments:
   environmentMapping:
     development:
@@ -95,7 +95,7 @@ describe("config-as-code/repo-config-service", () => {
 			expect(config).toMatchObject(VALID_CONFIG_OBJECT);
 		});
 		it("should strip off any non valid attributes", async () => {
-			const MOCK_EXTRA_YAML = 
+			const MOCK_EXTRA_YAML =
 `deployments:
   environmentMapping:
     development:
