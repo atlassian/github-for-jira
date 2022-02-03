@@ -128,3 +128,10 @@ export const updateRepoConfig = async (githubInstallationId: number, owner: stri
 	}, `could not find config file ${CONFIG_PATH} for this repository`)
 	return null;
 }
+
+/**
+ * Removes all repo configs from the database for the given installation ID.
+ */
+export const removeRepoConfig = async (githubInstallationId: number) => {
+	await RepoConfigDatabaseModel.deleteForInstallation(githubInstallationId);
+}

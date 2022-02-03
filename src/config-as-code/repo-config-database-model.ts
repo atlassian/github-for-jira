@@ -56,22 +56,29 @@ export default class RepoConfigDatabaseModel extends Sequelize.Model {
 	static async deleteForRepo(
 		githubInstallationId: number,
 		repoId: number
-	): Promise<RepoConfig | null> {
-		const model: RepoConfigDatabaseModel = await RepoConfigDatabaseModel.destroy({
+	) {
+		await RepoConfigDatabaseModel.destroy({
 			where: {
 				githubInstallationId: githubInstallationId,
 				repoId: repoId
 			}
 		});
+	}
 
-		return model
-			? this.toDomainModel(model)
-			: null;
+	static async deleteForInstallation(
+		githubInstallationId: number
+	) {
+		await RepoConfigDatabaseModel.destroy({
+			where: {
+				githubInstallationId: githubInstallationId,
+			}
+		});
 	}
 
 	private static toDomainModel(databaseModel: RepoConfigDatabaseModel): RepoConfig {
 		return databaseModel.config;
 	}
+
 }
 
 RepoConfigDatabaseModel.init({
