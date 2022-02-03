@@ -20,7 +20,7 @@ export const isFileTooBig = (fileSize: number): boolean => {
 /**
  * Iterates through environment tests and returns true if any environemnt contains too many tests
  */
-export const isTooManyEnvironmentMappingTests = (config: RepoConfig): boolean => {
+export const hasTooManyEnvironmentMappingTests = (config: RepoConfig): boolean => {
 	const environmentMapping = config.deployments.environmentMapping;
 	return Object.keys(environmentMapping).some(key => {
 		return environmentMapping[key].length > MAX_ENVIROMENT_TESTS
@@ -70,7 +70,7 @@ export const convertYamlToRepoConfig = (input: string): RepoConfig => {
 		}
 	}
 
-	if(isTooManyEnvironmentMappingTests(output)) {
+	if(hasTooManyEnvironmentMappingTests(output)) {
 		throw new Error(`Too many enviroment mapping tests, maximum test per environemnt: ${MAX_ENVIROMENT_TESTS}`)
 	}
 	return output;
