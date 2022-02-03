@@ -5,9 +5,13 @@ import "./matchers/nock";
 import "./matchers/to-promise";
 import { sequelize } from "../../src/models/sequelize";
 import { mocked } from "ts-jest/utils";
+import Redis from "ioredis";
+import getRedisInfo from "../../src/config/redis-info";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
+
+const redis = new Redis(getRedisInfo("test"));
 
 type AccessTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
 type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
@@ -67,6 +71,9 @@ const accessToken = (scope: nock.Scope): AccessTokenNockFunc =>
 beforeAll(async () => {
 	resetEnvVars();
 	await clearState();
+	// clear redis keys
+	await redis.flushall();
+	redis.disconnect();
 });
 
 beforeEach(() => {
