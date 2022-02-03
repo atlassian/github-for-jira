@@ -30,7 +30,7 @@ export const urlParamsMiddleware = (config: AxiosRequestConfig) => {
 			}
 			const key = `:${k}`;
 			const value = encodeURIComponent(v.toString());
-			if (!value || !config.url?.includes(key)) {
+			if (!value.length || !config.url?.includes(key)) {
 				logger.error({ key, value, config }, "URL Param doesn't exist in url path - ignoring");
 				return;
 			}

@@ -28,7 +28,7 @@ const getAuthMiddleware = (secret: string, instance: AxiosInstance) =>
 				...getExpirationInSeconds(),
 				iss,
 				qsh: createQueryStringHash({
-					method: config.method || "GET", // method can be undefined, defaults to GET
+					method: config.method?.toUpperCase() || "GET", // method can be undefined, defaults to GET
 					pathname: pathname || undefined,
 					query
 				})
@@ -37,7 +37,8 @@ const getAuthMiddleware = (secret: string, instance: AxiosInstance) =>
 		);
 
 		// Set authorization headers
-		config.headers = (config.headers || {}).Authorization = `JWT ${jwtToken}`;
+		config.headers = config.headers || {};
+		config.headers.Authorization = `JWT ${jwtToken}`;
 		return config;
 	};
 
@@ -221,18 +222,23 @@ export default (
 		timeout: Number(process.env.JIRA_TIMEOUT) || 30000
 	});
 
+	// *** IMPORTANT: Interceptors are executed in reverse order. ***
+	// the last one specified is the first to executed.
+
 	instance.interceptors.request.use(setRequestStartTime);
+
+	// This has to be the before any middleware that might change the URL
+	// to generate the JWT token for Jira API correctly
+	instance.interceptors.request.use(getAuthMiddleware(secret, instance));
+
+	// URL params need to be at the bottom, after auth middle,
+	// to generate the correct path before creating a JWT token based on it.
+	instance.interceptors.request.use(urlParamsMiddleware);
+
 	instance.interceptors.response.use(
 		instrumentRequest,
 		instrumentFailedRequest()
 	);
-
-	// URL params need to be before auth to get the correct path
-	instance.interceptors.request.use(urlParamsMiddleware);
-
-	// This has to be the last request middleware as it uses the "finished" url
-	// to generate the JWT token for Jira API
-	instance.interceptors.request.use(getAuthMiddleware(secret, instance));
 
 	instance.interceptors.response.use(
 		getSuccessMiddleware(logger),
