@@ -52,6 +52,28 @@ export const getRepoConfigFromGitHub = async (githubInstallationId: number, owne
 }
 
 /**
+ * Call this function when a file in the repository has been updated. If it's the config-as-code file, it will load
+ * the file from the repository and update the config in the database.
+ */
+export const fileTouched = async (githubInstallationId: number, owner: string, repo: string, repoId: number, filename: string) => {
+	if (filename != CONFIG_PATH) {
+		return;
+	}
+	await updateRepoConfig(githubInstallationId, owner, repo, repoId);
+}
+
+/**
+ * Checks if the given file is the config-as-code file and removes the repo config from the database if it is.
+ */
+export const fileRemoved = async (githubInstallationId: number, repoId: number, filename: string) => {
+	if (filename != CONFIG_PATH) {
+		return;
+	}
+	logger.info({ githubInstallationId, repoId }, `removing repo config because ${CONFIG_PATH} was deleted`);
+	await RepoConfigDatabaseModel.deleteForRepo(githubInstallationId, repoId);
+}
+
+/**
  * Converts incoming YAML string to JSON (RepoConfig)
  */
 export const convertYamlToRepoConfig = (input: string): RepoConfig => {
@@ -80,17 +102,22 @@ export const convertYamlToRepoConfig = (input: string): RepoConfig => {
  * Saves a JSON blob to the RepoConfig database with installationId and RepoId
  */
 export const saveRepoConfigToDB = async (githubInstallationId: number, repoId: number, config: RepoConfig): Promise<RepoConfig | null> => {
-	logger.info({ githubInstallationId, repoId, config }, "saving repo config to Database");
 	return await RepoConfigDatabaseModel.saveOrUpdate(githubInstallationId, repoId, config)
 }
 
 /**
  * Attempts to find ./jira/config.yaml on main branch, parse it from YAML to JSON, then commit it to RepoConfig database.
  */
-export const processRepoConfig = async (githubInstallationId: number, owner: string, repo: string, repoId: number): Promise<RepoConfig | null> => {
+export const updateRepoConfig = async (githubInstallationId: number, owner: string, repo: string, repoId: number): Promise<RepoConfig | null> => {
 	const buffer = await getRepoConfigFromGitHub(githubInstallationId, owner, repo);
 	if (buffer) {
 		const config: RepoConfig = convertYamlToRepoConfig(buffer);
+		logger.info({
+			githubInstallationId,
+			repo,
+			repoId,
+			owner
+		}, `updating repo config from ${CONFIG_PATH}`);
 		return await saveRepoConfigToDB(githubInstallationId, repoId, config);
 	}
 	logger.info({
@@ -98,6 +125,6 @@ export const processRepoConfig = async (githubInstallationId: number, owner: str
 		repo,
 		repoId,
 		owner
-	}, "could not find file .jira/config.yml for this repository")
+	}, `could not find config file ${CONFIG_PATH} for this repository`)
 	return null;
 }

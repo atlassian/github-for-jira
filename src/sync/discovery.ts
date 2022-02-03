@@ -7,7 +7,7 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import sqsQueues from "../sqs/queues";
 import { DiscoveryMessagePayload } from "../sqs/discovery";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { processRepoConfig } from "../config-as-code/repo-config-service";
+import { updateRepoConfig } from "../config-as-code/repo-config-service";
 
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 
@@ -32,7 +32,7 @@ const discoverRepoConfig = async (job: DiscoveryMessagePayload, logger: LoggerWi
 			return;
 		}
 
-		await processRepoConfig(job.installationId, job.repo.owner, job.repo.name, job.repo.id);
+		await updateRepoConfig(job.installationId, job.repo.owner, job.repo.name, job.repo.id);
 	} catch (err) {
 		logger.error({ job, err }, "Error during discovery of single repository.");
 	}
