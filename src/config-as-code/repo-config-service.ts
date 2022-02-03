@@ -6,36 +6,98 @@ import { RepoConfig } from "./repo-config";
 import RepoConfigDatabaseModel from "./repo-config-database-model";
 
 const logger = getLogger("services.config-as-code");
-const CONFIG_PATH = "./jira/config.yml";
+const CONFIG_PATH = ".jira/config.yml";
+const MAX_ENVIROMENT_TESTS = 5;
+const MAX_FILE_SIZE_BYTES = 1024;
 
-const getRepoConfigFromGitHub = async (githubInstallationId: number, owner: string, repo: string): Promise<string | null> => {
+/**
+ * Tests if filesize is greater than maximum - MAX_FILE_SIZE_BYTES
+ */
+export const isFileTooBig = (fileSize: number): boolean => {
+	return fileSize > MAX_FILE_SIZE_BYTES;
+}
+
+/**
+ * Iterates through environment tests and returns true if any environemnt contains too many tests
+ */
+export const isTooManyArguments = (config: RepoConfig): boolean => {
+	const environmentMapping = config.deployments.environmentMapping;
+	return !Object.keys(environmentMapping).every(key => {
+		return environmentMapping[key].length <= MAX_ENVIROMENT_TESTS
+	});
+}
+
+/**
+ * Fetches contents from CONFIG_PATH using guthub api, transforms its from base64 to ascii and returns the transformed string.
+ */
+export const getRepoConfigFromGitHub = async (githubInstallationId: number, owner: string, repo: string): Promise<string | null> => {
 	const client = new GitHubClient(getCloudInstallationId(githubInstallationId), logger);
 	const response = await client.getRepositoryContent(owner, repo, CONFIG_PATH);
-	if(response.data === undefined || Array.isArray(response.data) || response.data.content === undefined) {
+	
+	if (response == null) {
 		return null;
 	}
-	const contentString = Buffer.from(response.data.content, "base64").toString("ascii"); 
-	logger.debug(`Converted ${response.data.content} to ${contentString}`);
+
+	if (response.data === undefined || Array.isArray(response.data) || response.data.content === undefined) {
+		return null;
+	}
+
+	if(!isFileTooBig(response.data.size)) {
+		throw new Error(`file size is too large, max file size: ${MAX_FILE_SIZE_BYTES} bytes`)
+	}
+
+	const contentString = Buffer.from(response.data.content, "base64").toString("ascii");
+	logger.info(`Converted ${response.data.content} to ${contentString}`);
 	return contentString;
 }
 
-const convertYamlToRepoConfig = (input: string): RepoConfig => {
-	return YAML.parse(input)
+/**
+ * Converts incoming YAML string to JSON (RepoConfig)
+ */
+export const convertYamlToRepoConfig = (input: string): RepoConfig => {
+
+	const config: RepoConfig = YAML.parse(input);
+
+	// Trim the input data to only include the required attributes
+	const output = {
+		deployments: {
+			environmentMapping: {
+				development: config.deployments.environmentMapping.development,
+				testing: config.deployments.environmentMapping.testing,
+				staging: config.deployments.environmentMapping.staging,
+				production: config.deployments.environmentMapping.production,
+			}
+		}
+	}
+
+	if(isTooManyArguments(output)) {
+		throw new Error(`Too many enviroment mapping tests, maximum test per environemnt: ${MAX_ENVIROMENT_TESTS}`)
+	}
+	return output;
 }
 
-// save the json blob to the DB with installationId and RepoId
-const saveRepoConfigToDB = async (githubInstallationId: number, repoId: number, config: RepoConfig): Promise<RepoConfig | null> => {
-	logger.debug(`saving repo config to Databse ---- intstallationId:${githubInstallationId}, repoId:${repoId}, config${config}`);
-	return await RepoConfigDatabaseModel.saveOrUpdate( githubInstallationId, repoId, config )
+/**
+ * Saves a JSON blob to the RepoConfig database with installationId and RepoId
+ */
+export const saveRepoConfigToDB = async (githubInstallationId: number, repoId: number, config: RepoConfig): Promise<RepoConfig | null> => {
+	logger.info({githubInstallationId, repoId, config}, "saving repo config to Database");
+	return await RepoConfigDatabaseModel.saveOrUpdate(githubInstallationId, repoId, config)
 }
 
-// Attempt to find ./jira/config.yaml on main branch, parse it from yaml to JSON, then commit it to database.
+/**
+ * Attempts to find ./jira/config.yaml on main branch, parse it from YAML to JSON, then commit it to RepoConfig database.
+ */
 export const processRepoConfig = async (githubInstallationId: number, owner: string, repo: string, repoId: number): Promise<RepoConfig | null> => {
 	const buffer = await getRepoConfigFromGitHub(githubInstallationId, owner, repo);
-	if(buffer) {
-		const config : RepoConfig = convertYamlToRepoConfig(buffer);
+	if (buffer) {
+		const config: RepoConfig = convertYamlToRepoConfig(buffer);
 		return await saveRepoConfigToDB(githubInstallationId, repoId, config);
-	} 
-	logger.info("could not find repo config ---- intstallationId:${githubInstallationId}, repo:${repo}, repoId:${repoId}, owner${owner}")
+	}
+	logger.info({
+		githubInstallationId,
+		repo,
+		repoId,
+		owner
+	}, "could not find repo config or config is empty - expected .jira/config.yml")
 	return null;
 }
