@@ -239,7 +239,5 @@ export default (
 		getErrorMiddleware(logger)
 	);
 
-	instance.getUri();
-
 	return instance;
 };
