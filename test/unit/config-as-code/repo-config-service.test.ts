@@ -1,6 +1,6 @@
 
 
-import { convertYamlToRepoConfig, saveRepoConfigToDB, isTooManyArguments, isFileTooBig, getRepoConfigFromGitHub } from "../../../src/config-as-code/repo-config-service";
+import { convertYamlToRepoConfig, saveRepoConfigToDB, isTooManyEnvironmentMappingTests, isFileTooBig, getRepoConfigFromGitHub } from "../../../src/config-as-code/repo-config-service";
 
 import RepoConfigDatabaseModel from "../../../src/config-as-code/repo-config-database-model";
 import { RepoConfig } from "../../../src/config-as-code/repo-config";
@@ -45,15 +45,15 @@ describe("config-as-code/repo-config-service", () => {
 		});
 	})
 
-	describe("isTooManyArguments()", () => {
+	describe("isTooManyEnvironmentMappingTests()", () => {
 		it("a small set of environment mapping tests should be false", async () => {
-			expect(isTooManyArguments(VALID_CONFIG_OBJECT)).toBeFalsy();
+			expect(isTooManyEnvironmentMappingTests(VALID_CONFIG_OBJECT)).toBeFalsy();
 		});
 
 		it("too many environment mapping tests should be true", async () => {
 			const MOCK_CONFIG = JSON.parse(JSON.stringify(VALID_CONFIG_OBJECT));
 			MOCK_CONFIG.deployments.environmentMapping.development = ["TEST1","TEST1","TEST1","TEST1","TEST1","TEST1","TEST1","TEST1"];
-			expect(isTooManyArguments(MOCK_CONFIG)).toBeTruthy();
+			expect(isTooManyEnvironmentMappingTests(MOCK_CONFIG)).toBeTruthy();
 		});
 	})
 
