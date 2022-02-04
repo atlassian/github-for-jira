@@ -1,9 +1,13 @@
 import hbs from "hbs";
+import { isPlainObject } from "lodash";
+
+export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
+export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
 
 export const registerHandlebarsHelpers = () => {
-	hbs.registerHelper("toLowerCase", (str?: string) => str?.toString().toLowerCase());
+	hbs.registerHelper("toLowerCase", toLowercaseHelper);
 
-	hbs.registerHelper("replaceSpaceWithHyphen", (str?: string) => str?.toString().replace(/ /g, "-"));
+	hbs.registerHelper("replaceSpaceWithHyphen", replaceSpaceWithHyphenHelper);
 
 	hbs.registerHelper(
 		"ifAllReposSynced",
@@ -13,7 +17,7 @@ export const registerHandlebarsHelpers = () => {
 				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
 	);
 
-	hbs.registerHelper("repoAccessType", (repository_selection) =>
+	hbs.registerHelper("repoAccessType", (repository_selection: string) =>
 		repository_selection === "all" ? "All repos" : "Only select repos"
 	);
 
