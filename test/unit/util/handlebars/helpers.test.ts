@@ -18,7 +18,7 @@ describe("Handlebar Helpers", () => {
 			expect(toLowercaseHelper("FOO")).toEqual("foo");
 			expect(toLowercaseHelper("BaR")).toEqual("bar");
 			expect(toLowercaseHelper(10943 as any)).toEqual("10943");
-			expect(toLowercaseHelper(new Date(0) as any)).toMatch("thu jan 01 1970 10:00:00");
+			expect(toLowercaseHelper(new Date(0) as any)).toMatch("thu jan 01 1970");
 		});
 	});
 
@@ -37,7 +37,7 @@ describe("Handlebar Helpers", () => {
 			expect(replaceSpaceWithHyphenHelper("FOO bar")).toEqual("FOO-bar");
 			expect(replaceSpaceWithHyphenHelper("baR")).toEqual("baR");
 			expect(replaceSpaceWithHyphenHelper(10943 as any)).toEqual("10943");
-			expect(replaceSpaceWithHyphenHelper(new Date(0) as any)).toMatch("Thu-Jan-01-1970-10:00:00");
+			expect(replaceSpaceWithHyphenHelper(new Date(0) as any)).toMatch("Thu-Jan-01-1970");
 		});
 	});
 });
