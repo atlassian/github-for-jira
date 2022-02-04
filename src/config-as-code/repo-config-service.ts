@@ -46,7 +46,7 @@ export const getRepoConfigFromGitHub = async (githubInstallationId: number, owne
 		throw new Error(`file size ${response.data.size} is too large, max file size is ${MAX_FILE_SIZE_BYTES} bytes`)
 	}
 
-	const contentString = Buffer.from(response.data.content, "base64").toString("ascii");
+	const contentString = Buffer.from(response.data.content, "base64").toString("utf-8");
 	logger.info(`Converted ${response.data.content} to ${contentString}`);
 	return contentString;
 }
