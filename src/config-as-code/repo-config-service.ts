@@ -80,6 +80,10 @@ export const convertYamlToRepoConfig = (input: string): RepoConfig => {
 
 	const config: RepoConfig = YAML.parse(input);
 
+	if(!config?.deployments?.environmentMapping) {
+		throw new Error(`Invalid .jira/config.yml structure`);
+	}
+
 	// Trim the input data to only include the required attributes
 	const output = {
 		deployments: {
