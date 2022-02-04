@@ -4,7 +4,7 @@ import SubscriptionClass from "../../../src/models/subscription";
 import FrontendApp from "../../../src/frontend/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
-import { getSignedCookieHeader } from "../util/cookies";
+import { getSignedCookieHeader } from "../../utils/cookies";
 import { ViewerRepositoryCountQuery } from "../../../src/github/client/github-queries";
 
 jest.mock("../../../src/config/feature-flags");
