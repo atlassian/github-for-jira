@@ -3,7 +3,7 @@ import { Installation } from "../../../src/models";
 import FrontendApp from "../../../src/frontend/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
-import { getSignedCookieHeader } from "../util/cookies";
+import { getSignedCookieHeader } from "../../utils/cookies";
 import envVars from "../../../src/config/env";
 
 describe("Github Setup", () => {
