@@ -1,46 +1,12 @@
 import Logger from "bunyan";
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosInstance } from "axios";
 
 import url from "url";
 import statsd from "../../config/statsd";
 import { getLogger } from "../../config/logger";
 import { metricHttpRequest } from "../../config/metric-names";
-import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
-import { urlParamsMiddleware } from "../../util/axios/url-params";
-
-const instance = process.env.INSTANCE_NAME;
-const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
-
-/**
- * Middleware to create a custom JWT for a request.
- *
- * @param {string} secret - The key to use to sign the JWT
- */
-const getAuthMiddleware = (secret: string, instance: AxiosInstance) =>
-	(config: AxiosRequestConfig): AxiosRequestConfig => {
-		// Generate full URI based on current config
-		const uri = instance.getUri(config);
-		// parse the URI and get query/path
-		const { query, pathname } = url.parse(uri, true);
-
-		const jwtToken = encodeSymmetric(
-			{
-				...getExpirationInSeconds(),
-				iss,
-				qsh: createQueryStringHash({
-					method: config.method?.toUpperCase() || "GET", // method can be undefined, defaults to GET
-					pathname: pathname || undefined,
-					query
-				})
-			},
-			secret
-		);
-
-		// Set authorization headers
-		config.headers = config.headers || {};
-		config.headers.Authorization = `JWT ${jwtToken}`;
-		return config;
-	};
+import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
+import { jiraAuthMiddleware } from "../../util/axios/jira-auth-middleware";
 
 /**
  * Wrapper for AxiosError, which includes error status
@@ -130,24 +96,6 @@ const getSuccessMiddleware = (logger: Logger) =>
 		return response;
 	};
 
-
-/*
- * The Atlassian API uses JSON Web Tokens (JWT) for authentication along with
- * Query String Hashing (QSH) to prevent URL tampering. IAT, or issued-at-time,
- * is a Unix-style timestamp of when the token was issued. EXP, or expiration
- * time, is a Unix-style timestamp of when the token expires and must be no
- * more than three minutes after the IAT. Since our tokens are per-request and
- * short-lived, we use a timeout of 30 seconds.
- */
-const getExpirationInSeconds = () => {
-	const nowInSeconds = Math.floor(Date.now() / 1000);
-
-	return {
-		iat: nowInSeconds,
-		exp: nowInSeconds + 30
-	};
-};
-
 /**
  * Enrich the config object to include the time that the request started.
  *
@@ -229,7 +177,7 @@ export default (
 
 	// This has to be the before any middleware that might change the URL
 	// to generate the JWT token for Jira API correctly
-	instance.interceptors.request.use(getAuthMiddleware(secret, instance));
+	instance.interceptors.request.use(jiraAuthMiddleware(secret, instance));
 
 	// URL params need to be at the bottom, after auth middle,
 	// to generate the correct path before creating a JWT token based on it.

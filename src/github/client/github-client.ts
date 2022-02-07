@@ -8,7 +8,7 @@ import { GetPullRequestParams } from "./types";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
-import { urlParamsMiddleware } from "../../util/axios/url-params";
+import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
 import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
@@ -40,8 +40,8 @@ export default class GitHubClient {
 		this.axios = axios.create({
 			baseURL: githubInstallationId.githubBaseUrl
 		});
-		this.axios.interceptors.request.use(urlParamsMiddleware);
 		this.axios.interceptors.request.use(setRequestStartTime);
+		this.axios.interceptors.request.use(urlParamsMiddleware);
 		this.axios.interceptors.response.use(
 			undefined,
 			handleFailedRequest(this.logger)
@@ -132,7 +132,7 @@ export default class GitHubClient {
 	 * Lists pull requests for the given repository.
 	 */
 	public async getPullRequests(owner: string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
-		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/:owner/:repo/pulls`, pullRequestParams, {
+		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/{owner}/{repo}/pulls`, pullRequestParams, {
 			owner,
 			repo
 		});
@@ -143,7 +143,7 @@ export default class GitHubClient {
 	 */
 	// TODO: add a unit test
 	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
-		return await this.get<Octokit.PullsGetResponse>(`/repos/:owner/:repo/pulls/:pullNumber`, {}, {
+		return await this.get<Octokit.PullsGetResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}`, {}, {
 			owner,
 			repo,
 			pullNumber
@@ -155,7 +155,7 @@ export default class GitHubClient {
 	 */
 	// TODO: add a unit test
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
-		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/:username`, {}, {
+		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
 			username
 		});
 	};
@@ -164,7 +164,7 @@ export default class GitHubClient {
 	 * Get a single commit for the given repository.
 	 */
 	public getCommit = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> => {
-		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/:owner/:repo/commits/:ref`, {}, {
+		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/{owner}/{repo}/commits/{ref}`, {}, {
 			owner,
 			repo,
 			ref
