@@ -46,7 +46,7 @@ async function getJiraClient(
 		baseURL: installation.jiraHost,
 		issues: {
 			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
-				instance.get("/rest/api/latest/issue/:issue_id", {
+				instance.get("/rest/api/latest/issue/{issue_id}", {
 					params: query,
 					urlParams: {
 						issue_id: issueId
@@ -72,14 +72,14 @@ async function getJiraClient(
 			comments: {
 				// eslint-disable-next-line camelcase
 				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/:issue_id/comment", {
+					instance.get("/rest/api/latest/issue/{issue_id}/comment", {
 						urlParams: {
 							issue_id
 						}
 					}),
 				// eslint-disable-next-line camelcase
 				addForIssue: (issue_id: string, payload) =>
-					instance.post("/rest/api/latest/issue/:issue_id/comment", payload, {
+					instance.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
 						urlParams: {
 							issue_id
 						}
@@ -88,7 +88,7 @@ async function getJiraClient(
 			transitions: {
 				// eslint-disable-next-line camelcase
 				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/:issue_id/transitions", {
+					instance.get("/rest/api/latest/issue/{issue_id}/transitions", {
 						urlParams: {
 							issue_id
 						}
@@ -96,7 +96,7 @@ async function getJiraClient(
 				// eslint-disable-next-line camelcase
 				updateForIssue: (issue_id: string, transition_id: string) =>
 					instance.post(
-						"/rest/api/latest/issue/:issue_id/transitions",
+						"/rest/api/latest/issue/{issue_id}/transitions",
 						{
 							transition: {
 								id: transition_id
@@ -112,14 +112,14 @@ async function getJiraClient(
 			worklogs: {
 				// eslint-disable-next-line camelcase
 				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/:issue_id/worklog", {
+					instance.get("/rest/api/latest/issue/{issue_id}/worklog", {
 						urlParams: {
 							issue_id
 						}
 					}),
 				// eslint-disable-next-line camelcase
 				addForIssue: (issue_id: string, payload) =>
-					instance.post("/rest/api/latest/issue/:issue_id/worklog", payload, {
+					instance.post("/rest/api/latest/issue/{issue_id}/worklog", payload, {
 						urlParams: {
 							issue_id
 						}
@@ -130,7 +130,7 @@ async function getJiraClient(
 			branch: {
 				delete: (repositoryId: string, branchRef: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/:repositoryId/branch/:branchJiraId",
+						"/rest/devinfo/0.10/repository/{repositoryId}/branch/{branchJiraId}",
 						{
 							params: {
 								_updateSequenceId: Date.now()
@@ -164,7 +164,7 @@ async function getJiraClient(
 			pullRequest: {
 				delete: (repositoryId: string, pullRequestId: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/:repositoryId/pull_request/:pullRequestId",
+						"/rest/devinfo/0.10/repository/{repositoryId}/pull_request/{pullRequestId}",
 						{
 							params: {
 								_updateSequenceId: Date.now()
@@ -178,11 +178,11 @@ async function getJiraClient(
 			},
 			repository: {
 				get: (repositoryId: string) =>
-					instance.get("/rest/devinfo/0.10/repository/:repositoryId", {
+					instance.get("/rest/devinfo/0.10/repository/{repositoryId}", {
 						urlParams: { repositoryId }
 					}),
 				delete: (repositoryId: string) =>
-					instance.delete("/rest/devinfo/0.10/repository/:repositoryId", {
+					instance.delete("/rest/devinfo/0.10/repository/{repositoryId}", {
 						params: {
 							_updateSequenceId: Date.now()
 						},

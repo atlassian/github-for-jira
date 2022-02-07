@@ -1,17 +1,11 @@
-import {BlockedIpError, GithubClientError, RateLimitingError} from "./errors";
+import { BlockedIpError, GithubClientError, RateLimitingError } from "./errors";
 import Logger from "bunyan";
-import url from "url";
 import statsd from "../../config/statsd";
-import {metricError} from "../../config/metric-names";
-import {AxiosResponse} from "axios";
+import { metricError } from "../../config/metric-names";
+import { AxiosResponse } from "axios";
+import { extractPath } from "../../jira/client/axios";
 
-/**
- * Extract the path name from a URL.
- */
-const extractPath = (someUrl = ""): string =>
-	url.parse(someUrl).pathname || "";
-
-const RESPONSE_TIME_HISTOGRAM_BUCKETS =	"100_1000_2000_3000_5000_10000_30000_60000";
+const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
 /**
  * Enrich the config object to include the time that the request started.
@@ -26,7 +20,7 @@ export const setRequestStartTime = (config) => {
 
 //TODO Move to util/axios/common-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sendResponseMetrics = (metricName: string, response?:any, status?: string | number) => {
+const sendResponseMetrics = (metricName: string, response?: any, status?: string | number) => {
 	status = `${status || response?.status}`;
 	const requestDurationMs = Number(
 		Date.now() - (response?.config?.requestStartTime || 0)
@@ -44,12 +38,12 @@ const sendResponseMetrics = (metricName: string, response?:any, status?: string 
 	tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
 	statsd.histogram(metricName, requestDurationMs, tags);
 	return response;
-}
+};
 
 
 export const instrumentRequest = (metricName) =>
 	(response) => {
-		if(!response) {
+		if (!response) {
 			return;
 		}
 		return sendResponseMetrics(metricName, response);
@@ -64,12 +58,12 @@ export const instrumentRequest = (metricName) =>
  */
 export const instrumentFailedRequest = (metricName) =>
 	(error) => {
-		if(error instanceof RateLimitingError) {
-			sendResponseMetrics(metricName, error.cause?.response, "rateLimiting")
-		} else if(error instanceof BlockedIpError) {
+		if (error instanceof RateLimitingError) {
+			sendResponseMetrics(metricName, error.cause?.response, "rateLimiting");
+		} else if (error instanceof BlockedIpError) {
 			sendResponseMetrics(metricName, error.cause?.response, "blockedIp");
 			statsd.increment(metricError.blockedByGitHubAllowlist);
-		} else if(error instanceof GithubClientError) {
+		} else if (error instanceof GithubClientError) {
 			sendResponseMetrics(metricName, error.cause?.response);
 		} else {
 			sendResponseMetrics(metricName, error.response);
@@ -81,12 +75,12 @@ export const instrumentFailedRequest = (metricName) =>
 export const handleFailedRequest = (logger: Logger) =>
 	(error) => {
 		const response = error.response as AxiosResponse;
-		if(response) {
+		if (response) {
 			const status = response?.status;
 			const errorMessage = `Error executing Axios Request ` + error.message;
 
-			const rateLimitRemainingHeaderValue:string = response.headers?.["x-ratelimit-remaining"];
-			if(status === 403 && rateLimitRemainingHeaderValue == "0") {
+			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
+			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
 				logger.warn({ err: error }, "Rate limiting error");
 				return Promise.reject(new RateLimitingError(response, error));
 			}
@@ -98,8 +92,8 @@ export const handleFailedRequest = (logger: Logger) =>
 
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
-			isWarning? logger.warn(errorMessage) : logger.error({err: error}, errorMessage);
+			isWarning ? logger.warn(errorMessage) : logger.error({ err: error }, errorMessage);
 			return Promise.reject(new GithubClientError(errorMessage, status, error));
 		}
 		return Promise.reject(error);
-	}
+	};

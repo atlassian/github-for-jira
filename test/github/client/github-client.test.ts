@@ -101,7 +101,7 @@ describe("GitHub Client", () => {
 		});
 
 		expect(pullrequests).toBeTruthy();
-		verifyMetricsSent("/repos/:owner/:repo/pulls", "200");
+		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "200");
 	});
 
 	it("fetches a commit", async () => {
@@ -121,7 +121,7 @@ describe("GitHub Client", () => {
 		const commit = await client.getCommit(owner, repo, sha);
 
 		expect(commit).toBeTruthy();
-		verifyMetricsSent("/repos/:owner/:repo/commits/:ref", "200");
+		verifyMetricsSent("/repos/{owner}/{repo}/commits/{ref}", "200");
 	});
 
 	function verifyMetricsSent(path: string, status) {
@@ -155,7 +155,7 @@ describe("GitHub Client", () => {
 		expect(error).toBeInstanceOf(RateLimitingError);
 		expect(error.rateLimitReset).toBe(4600);
 
-		verifyMetricsSent("/repos/:owner/:repo/pulls", "rateLimiting");
+		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
 
 	});
 
@@ -182,7 +182,7 @@ describe("GitHub Client", () => {
 		expect(error).toBeInstanceOf(RateLimitingError);
 		expect(error.rateLimitReset).toBe(2000);
 
-		verifyMetricsSent("/repos/:owner/:repo/pulls", "rateLimiting");
+		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
 
 	});
 
@@ -204,7 +204,7 @@ describe("GitHub Client", () => {
 
 		expect(error).toBeInstanceOf(BlockedIpError);
 		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist");
-		verifyMetricsSent("/repos/:owner/:repo/pulls", "blockedIp");
+		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "blockedIp");
 	});
 
 	it("should handle rate limit on 403", async () => {
@@ -230,7 +230,7 @@ describe("GitHub Client", () => {
 		expect(error).toBeInstanceOf(RateLimitingError);
 		expect(error.rateLimitReset).toBe(2000);
 
-		verifyMetricsSent("/repos/:owner/:repo/pulls", "rateLimiting");
+		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
 
 	});
 
@@ -256,7 +256,7 @@ describe("GitHub Client", () => {
 		expect(error).toBeInstanceOf(GithubClientError);
 		expect(error.status).toBe(404);
 
-		verifyMetricsSent("/repos/:owner/:repo/pulls", "404");
+		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "404");
 	});
 
 	/**
@@ -299,7 +299,7 @@ describe("GitHub Client", () => {
 		});
 
 		expect(pullrequests).toBeTruthy();
-		verifyMetricsSent("/repos/:owner/:repo/pulls", "200");
+		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "200");
 	});
 
 });

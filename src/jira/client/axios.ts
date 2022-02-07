@@ -112,7 +112,7 @@ const setRequestStartTime = (config) => {
  *
  */
 export const extractPath = (someUrl = ""): string =>
-	url.parse(someUrl).pathname || "";
+	decodeURIComponent(url.parse(someUrl).pathname || "");
 
 /**
  * Submit statsd metrics on successful requests.
