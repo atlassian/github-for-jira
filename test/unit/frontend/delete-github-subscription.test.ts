@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation, Subscription } from "../../../src/models";
-import deleteSubscription from "../../../src/frontend/delete-github-subscription";
+import deleteSubscription from "../../../src/routes/github/subscription/delete-github-subscription";
 
 describe("POST /github/subscription", () => {
 	const gitHubInstallationId = 15;

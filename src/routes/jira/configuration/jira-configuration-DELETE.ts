@@ -1,11 +1,11 @@
-import { Subscription } from "../models";
-import getJiraClient from "../jira/client";
+import { Subscription } from "../../../models";
+import getJiraClient from "../../../jira/client";
 import { Request, Response } from "express";
 
 /**
  * Handle the when a user deletes an entry in the UI
  */
-export default async (req: Request, res: Response): Promise<void> => {
+export const JiraConfigurationDelete = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost } = res.locals;
 	const installationId = Number(req.body.installationId);
 	if (!jiraHost) {

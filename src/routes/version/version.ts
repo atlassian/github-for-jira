@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import envVars from "../config/env";
+import envVars from "../../config/env";
 
-export default (_: Request, res: Response) => {
+export const VersionGet = (_: Request, res: Response) => {
 	res.send({
 		branch: envVars.GIT_BRANCH_NAME,
 		branchUrl: `${envVars.GITHUB_REPO_URL}/tree/${envVars.GIT_BRANCH_NAME}`,

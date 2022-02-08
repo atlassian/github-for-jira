@@ -1,7 +1,9 @@
-import JiraClient from "../models/jira-client";
-import Subscription from "../models/subscription";
-import Installation from "../models/installation";
+import JiraClient from "../../models/jira-client";
+import Subscription from "../../models/subscription";
+import Installation from "../../models/installation";
 import Logger from "bunyan";
+import { NextFunction, Request, Response } from "express";
+import { validationResult } from "express-validator";
 
 type SerializedSubscription = Pick<Subscription, "gitHubInstallationId" | "jiraHost" | "createdAt" | "updatedAt" | "syncStatus">;
 export const serializeSubscription = (subscription: Subscription): SerializedSubscription => ({
@@ -30,3 +32,18 @@ export const serializeJiraInstallation = async (jiraInstallation: Installation, 
 		gitHubInstallations: (await jiraInstallation.subscriptions()).map((subscription) => serializeSubscription(subscription))
 	};
 };
+
+/**
+ * Finds the validation errors in this request and wraps them in an object with handy functions
+ */
+export const returnOnValidationError = (
+	req: Request,
+	res: Response,
+	next: NextFunction
+): void => {
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		res.status(422).json({ errors: errors.array() });
+	}
+	next();
+}

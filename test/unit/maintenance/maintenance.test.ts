@@ -1,6 +1,6 @@
 import supertest from "supertest";
 import express, { Express } from "express";
-import healthcheck from "../../../src/frontend/healthcheck";
+import healthcheck from "../../../src/routes/healthcheck/healthcheck";
 import setupFrontend from "../../../src/frontend/app";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { when } from "jest-when";
@@ -23,7 +23,7 @@ describe("Maintenance", () => {
 		whenMaintenanceMode(true);
 		app = express();
 		app.use((request, _, next) => {
-			request.log = getLogger('test');
+			request.log = getLogger("test");
 			next();
 		});
 	});

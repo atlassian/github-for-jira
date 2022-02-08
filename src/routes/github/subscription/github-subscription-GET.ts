@@ -1,7 +1,7 @@
-import { Subscription } from "../models";
+import { Subscription } from "../../../models";
 import { NextFunction, Request, Response } from "express";
 
-export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { github, client, isAdmin, githubToken } = res.locals;
 	if (!githubToken) {
 		return next(new Error("Unauthorized"));

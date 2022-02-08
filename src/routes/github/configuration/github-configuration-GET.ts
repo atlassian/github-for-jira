@@ -1,15 +1,15 @@
-import { Installation, Subscription } from "../models";
+import { Installation, Subscription } from "../../../models";
 import { NextFunction, Request, Response } from "express";
-import { getInstallations, InstallationResults } from "./get-jira-configuration";
+import { getInstallations, InstallationResults } from "../../jira/configuration/jira-configuration-GET";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { Errors } from "../config/errors";
-import { Tracer } from "../config/tracer";
-import GitHubClient from "../github/client/github-client";
+import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
+import { Errors } from "../../../config/errors";
+import { Tracer } from "../../../config/tracer";
+import GitHubClient from "../../../github/client/github-client";
 import Logger from "bunyan";
-import { getCloudInstallationId } from "../github/client/installation-id";
-import { AppInstallation } from "../config/interfaces";
+import { getCloudInstallationId } from "../../../github/client/installation-id";
+import { AppInstallation } from "../../../config/interfaces";
 
 interface ConnectedStatus {
 	syncStatus?: string;
@@ -105,7 +105,7 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: Instal
 		}));
 };
 
-export default async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const GithubConfigurationGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost, githubToken } = res.locals;
 	const log = req.log.child({ jiraHost });
 
