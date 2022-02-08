@@ -8,7 +8,7 @@ import { GitHubAPI } from "probot";
 import { getGithubUser } from "../services/github/user";
 import { JiraAuthor } from "../interfaces/jira";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { generateCreatePullRequestUrl } from "./util/gitHubPullRequestLinkGenerator";
+import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";

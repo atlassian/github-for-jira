@@ -4,7 +4,7 @@ import { getJiraAuthor } from "../util/jira";
 import _ from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { GitHubAPI } from "probot";
-import { generateCreatePullRequestUrl } from "./util/gitHubPullRequestLinkGenerator";
+import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
 
 async function getLastCommit(github: GitHubAPI, webhookPayload: WebhookPayloadCreate, issueKeys: string[]) {
 

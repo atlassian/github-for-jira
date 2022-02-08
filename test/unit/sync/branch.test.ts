@@ -17,7 +17,6 @@ import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
 
-
 describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'", (useNewGithubClient) => {
 	const installationId = 1234;
 
@@ -35,7 +34,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 			{
 				branches: [
 					{
-						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123-${branchName}`,
+						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123%20-%20${branchName}`,
 						id: branchName,
 						issueKeys: ["TES-123"]
 							.concat(issueKeyParser().parse(branchName) || [])
@@ -169,19 +168,17 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 	};
 
 	// TODO - WHYYYY
-	it.skip("should sync to Jira when branch refs have jira references", async () => {
+	it("should sync to Jira when branch refs have jira references", async () => {
 		const data: BackfillMessagePayload = { installationId, jiraHost };
 		nockBranchRequest(branchNodesFixture);
 
 		jiraNock
 			.post(
 				"/rest/devinfo/0.10/bulk",
-				makeExpectedResponse("TES-321-branch-name")
+				makeExpectedResponse("test-branch-name")
 			)
 			.reply(200);
 
-		console.log("DATAAA");
-		console.log(data);
 		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 	});
@@ -212,7 +209,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 					{
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123-dev",
+								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123%20-%20dev",
 								id: "dev",
 								issueKeys: ["PULL-123"],
 								lastCommit: {

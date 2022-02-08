@@ -96,7 +96,7 @@ describe("Pull Request Webhook", () => {
 					url: "test-pull-request-base-url",
 					branches: [
 						{
-							createPullRequestUrl: "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+							createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref",
 							lastCommit: {
 								author: {
 									avatar: "https://github.com/ghost.png",
@@ -362,7 +362,7 @@ describe("Pull Request Webhook", () => {
 							branches:
 								[
 									{
-										createPullRequestUrl: "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+										createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref",
 										lastCommit:
 											{
 												author:
@@ -647,7 +647,7 @@ describe("Pull Request Webhook", () => {
 							branches:
 								[
 									{
-										createPullRequestUrl: "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+										createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref",
 										lastCommit:
 											{
 												author:
