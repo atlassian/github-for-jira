@@ -20,7 +20,13 @@
 		"noImplicitAny": false,
 		"noImplicitThis": false,
 		"esModuleInterop": true,
-		"outDir": "build"
+		"outDir": "build",
+		"baseUrl": ".",
+		"paths": {
+			"routes": [
+				"src/routes"
+			]
+		}
 	},
 	"include": [
 		"src/**/*",
