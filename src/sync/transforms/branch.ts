@@ -31,10 +31,8 @@ function mapBranch(branch, repository) {
 		return undefined;
 	}
 
-	console.log("allKeys");
-	console.log(allKeys);
 	return {
-		createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, branch.name, allKeys),//`${repository.html_url}/pull/new/${branch.name}`,
+		createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, branch.name, allKeys),
 		id: getJiraId(branch.name),
 		issueKeys: allKeys,
 		lastCommit: {

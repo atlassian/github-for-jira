@@ -167,7 +167,6 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
 	};
 
-	// TODO - WHYYYY
 	it("should sync to Jira when branch refs have jira references", async () => {
 		const data: BackfillMessagePayload = { installationId, jiraHost };
 		nockBranchRequest(branchNodesFixture);
