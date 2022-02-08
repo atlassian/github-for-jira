@@ -1,13 +1,14 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { getJiraId } from "../jira/util/id";
 import _ from "lodash";
+import { getJiraId } from "../jira/util/id";
 import { Octokit } from "@octokit/rest";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
 import { getGithubUser } from "../services/github/user";
 import { JiraAuthor } from "../interfaces/jira";
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { generateCreatePullRequestUrl } from "./util/gitHubPullRequestLinkGenerator";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -81,7 +82,7 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 				? []
 				: [
 					{
-						createPullRequestUrl: `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
+						createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys),  //`${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
 							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),

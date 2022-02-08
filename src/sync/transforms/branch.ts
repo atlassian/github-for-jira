@@ -2,6 +2,7 @@ import { getJiraId } from "../../jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../../util/jira";
 import _ from "lodash";
+import { generateCreatePullRequestUrl } from "../../transforms/util/gitHubPullRequestLinkGenerator";
 
 // TODO: better typing in file
 /**
@@ -30,8 +31,10 @@ function mapBranch(branch, repository) {
 		return undefined;
 	}
 
+	console.log("allKeys");
+	console.log(allKeys);
 	return {
-		createPullRequestUrl: `${repository.html_url}/pull/new/${branch.name}`,
+		createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, branch.name, allKeys),//`${repository.html_url}/pull/new/${branch.name}`,
 		id: getJiraId(branch.name),
 		issueKeys: allKeys,
 		lastCommit: {
