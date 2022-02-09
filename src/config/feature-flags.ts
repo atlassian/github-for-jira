@@ -28,6 +28,10 @@ export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations"
 }
 
+export enum NumberFlags {
+	GITHUB_CLIENT_TIMEOUT = "github-client-timeout"
+}
+
 const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 	if (!jiraHost) {
 		return {
@@ -43,7 +47,7 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 	};
 };
 
-const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags, defaultValue: boolean | string, jiraHost?: string): Promise<boolean | string> => {
+const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: boolean | string | number, jiraHost?: string): Promise<boolean | string | number> => {
 	try {
 		await launchdarklyClient.waitForInitialization();
 		const user = createLaunchdarklyUser(jiraHost);
@@ -60,6 +64,11 @@ export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jir
 
 export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHost?: string): Promise<string> =>
 	String(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+
+export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
+	Number(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+
+
 
 export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
 	try {

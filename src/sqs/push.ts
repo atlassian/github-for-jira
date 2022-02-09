@@ -28,6 +28,6 @@ export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = 
 	const payload = context.payload;
 
 	const installationId = getCloudInstallationId(payload.installationId);
-	const github = new GitHubClient(installationId, context.log);
+	const github = await GitHubClient.build(installationId, context.log);
 	await processPush(github, payload, wrapLogger(context.log));
 }

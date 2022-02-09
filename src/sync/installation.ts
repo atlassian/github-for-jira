@@ -193,7 +193,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		logger
 	);
 
-	const newGithub = new GitHubClient(getCloudInstallationId(installationId), logger);
+	const newGithub = await GitHubClient.build(getCloudInstallationId(installationId), logger);
 
 	const github = await getEnhancedGitHub(app, installationId);
 

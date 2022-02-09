@@ -14,6 +14,14 @@ export class GithubClientError extends Error {
 	}
 }
 
+export class GithubClientTimeoutError extends GithubClientError {
+
+	constructor(cause?: AxiosError) {
+		super("Timeout", undefined, cause);
+	}
+
+}
+
 export class RateLimitingError extends GithubClientError {
 	/**
 	 * The value of the x-ratelimit-reset header, i.e. the epoch seconds when the rate limit is refreshed.

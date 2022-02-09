@@ -1,4 +1,4 @@
-import { BlockedIpError, GithubClientError, RateLimitingError } from "./errors";
+import {BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError} from "./errors";
 import Logger from "bunyan";
 import statsd from "../../config/statsd";
 import { metricError } from "../../config/metric-names";
@@ -63,6 +63,8 @@ export const instrumentFailedRequest = (metricName) =>
 		} else if (error instanceof BlockedIpError) {
 			sendResponseMetrics(metricName, error.cause?.response, "blockedIp");
 			statsd.increment(metricError.blockedByGitHubAllowlist);
+		} else if (error instanceof GithubClientTimeoutError) {
+			sendResponseMetrics(metricName, error.cause?.response, "timeout");
 		} else if (error instanceof GithubClientError) {
 			sendResponseMetrics(metricName, error.cause?.response);
 		} else {
@@ -75,6 +77,12 @@ export const instrumentFailedRequest = (metricName) =>
 export const handleFailedRequest = (logger: Logger) =>
 	(error) => {
 		const response = error.response as AxiosResponse;
+
+		if (response?.status === 408 || error.code === "ECONNABORTED") {
+			logger.warn({ err: error }, "Request timed out");
+			return Promise.reject(new GithubClientTimeoutError(error));
+		}
+
 		if (response) {
 			const status = response?.status;
 			const errorMessage = `Error executing Axios Request ` + error.message;
@@ -95,5 +103,6 @@ export const handleFailedRequest = (logger: Logger) =>
 			isWarning ? logger.warn(errorMessage) : logger.error({ err: error }, errorMessage);
 			return Promise.reject(new GithubClientError(errorMessage, status, error));
 		}
+
 		return Promise.reject(error);
 	};

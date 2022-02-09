@@ -70,7 +70,7 @@ const getInstallationsWithAdmin = async (
 		});
 
 		try {
-			const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
+			const githubClient = await GitHubClient.build(getCloudInstallationId(installation.id), log);
 			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
 			const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 

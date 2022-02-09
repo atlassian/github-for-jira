@@ -12,6 +12,7 @@ import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
 import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
+import {numberFlag, NumberFlags} from "../../config/feature-flags";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
@@ -31,15 +32,32 @@ export default class GitHubClient {
 	private readonly githubInstallationId: InstallationId;
 	private readonly logger: Logger;
 
-	constructor(
+	public static async build(githubInstallationId: InstallationId,
+		logger: Logger,
+		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()) : Promise<GitHubClient> {
+		const timeout = await numberFlag(NumberFlags.GITHUB_CLIENT_TIMEOUT, 30000);
+		return new GitHubClient(githubInstallationId, logger, appTokenHolder, timeout);
+	}
+
+	private constructor(
 		githubInstallationId: InstallationId,
 		logger: Logger,
-		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
+		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance(),
+		timeout: number
 	) {
 		this.logger = logger || getLogger("github.client.axios");
-		this.axios = axios.create({
-			baseURL: githubInstallationId.githubBaseUrl
-		});
+
+
+		const clientConfig: AxiosRequestConfig = {
+			baseURL: githubInstallationId.githubBaseUrl,
+		};
+
+		if(timeout) {
+			clientConfig.timeout = timeout
+		}
+
+		this.axios = axios.create(clientConfig);
+
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(urlParamsMiddleware);
 		this.axios.interceptors.response.use(
