@@ -11,19 +11,25 @@ export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
-	const github = await app.auth(installationId);
-	enhanceOctokit(github);
+	const github = await app.auth(installationId); // use GHclient here
+	enhanceOctokit(github);// whats this
 
 	try {
 		const repositories = await github.paginate(
-			github.apps.listRepos.endpoint.merge({ per_page: 100 }),
-			(res) => res.data.repositories
+			github.apps.listRepos.endpoint.merge({ per_page: 1 }),
+			(res) => {
+				console.log("PAGINATE CALLED");
+				console.log(res);
+				return res.data.repositories;
+			}
 		);
 		logger.info(
 			{ job },
 			`${repositories.length} Repositories found`
 		);
 
+		console.log("WHAT THE REPO CALLED");
+		console.log(repositories);
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
 			installationId

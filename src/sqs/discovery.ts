@@ -8,5 +8,7 @@ export type DiscoveryMessagePayload = {
 }
 
 export const discoveryQueueMessageHandler : MessageHandler<DiscoveryMessagePayload> = async (context) => {
+	console.log("QUEUE TRYING")
+	console.log(context.payload)
 	await discovery(app)({data: context.payload}, context.log);
 }
