@@ -23,7 +23,7 @@ export const setRequestStartTime = (config) => {
  * Sets the timeout to the request based on the github-client-timeout feature flag
  */
 export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
-	const timeout = await numberFlag(NumberFlags.GITHUB_CLIENT_TIMEOUT, 30000);
+	const timeout = await numberFlag(NumberFlags.GITHUB_CLIENT_TIMEOUT, 60000);
 	//Check if timeout is set already explicitly in the call
 	if(!config.timeout && timeout) {
 		config.timeout = timeout;
