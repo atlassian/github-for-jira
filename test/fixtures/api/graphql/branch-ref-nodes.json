@@ -13,7 +13,7 @@
                   }
                 ]
               },
-              "name": "test-branch-name",
+              "name": "branch-with-issue-key-in-the-last-commit",
               "target": {
                 "author": {
                   "avatarUrl": "https://camo.githubusercontent.com/test-avatar",

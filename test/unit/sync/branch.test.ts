@@ -174,7 +174,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 		jiraNock
 			.post(
 				"/rest/devinfo/0.10/bulk",
-				makeExpectedResponse("test-branch-name")
+				makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
 			)
 			.reply(200);
 

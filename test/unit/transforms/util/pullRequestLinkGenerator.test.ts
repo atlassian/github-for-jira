@@ -6,8 +6,7 @@ describe("pullRequestLinkGenerator()", () => {
 		const BASE_URL = "github";
 		const NAME = "branch-7";
 		const ISSUE_KEYS = ["TEST-222"];
-		const ISSUE_KEYS_FLAT = "TEST-222"
-		const EXPECTED_RESULT = `github/compare/${NAME}?title=${ISSUE_KEYS_FLAT}%20-%20${NAME}`;
+		const EXPECTED_RESULT = `github/compare/branch-7?title=TEST-222%20-%20branch-7`;
 
 		expect(generateCreatePullRequestUrl(BASE_URL, NAME, ISSUE_KEYS)).toBe(EXPECTED_RESULT);
 	});
@@ -16,8 +15,7 @@ describe("pullRequestLinkGenerator()", () => {
 		const BASE_URL = "github";
 		const NAME = "branch-7";
 		const ISSUE_KEYS = ["TEST-222", "TEST-111"];
-		const ISSUE_KEYS_FLAT = "TEST-222%20TEST-111"
-		const EXPECTED_RESULT = `github/compare/${NAME}?title=${ISSUE_KEYS_FLAT}%20-%20${NAME}`;
+		const EXPECTED_RESULT = `github/compare/branch-7?title=TEST-222%20TEST-111%20-%20branch-7`;
 
 		expect(generateCreatePullRequestUrl(BASE_URL, NAME, ISSUE_KEYS)).toBe(EXPECTED_RESULT);
 	});
@@ -26,7 +24,7 @@ describe("pullRequestLinkGenerator()", () => {
 		const BASE_URL = "github";
 		const NAME = "branch-7";
 		const ISSUE_KEYS = [];
-		const EXPECTED_RESULT = `github/compare/${NAME}?title=${NAME}`;
+		const EXPECTED_RESULT = `github/compare/branch-7?title=branch-7`;
 
 		expect(generateCreatePullRequestUrl(BASE_URL, NAME, ISSUE_KEYS)).toBe(EXPECTED_RESULT);
 	});
