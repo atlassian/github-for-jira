@@ -68,8 +68,6 @@ export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHo
 export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
 	Number(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
 
-
-
 export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");

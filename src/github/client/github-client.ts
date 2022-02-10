@@ -24,7 +24,6 @@ type GraphQlQueryResponse<ResponseData> = {
 	errors?: GraphQLError[];
 };
 
-
 /**
  * A GitHub client that supports authentication as a GitHub app.
  *
@@ -43,7 +42,6 @@ export default class GitHubClient {
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.client.axios");
-
 
 		const clientConfig: AxiosRequestConfig = {
 			baseURL: githubInstallationId.githubBaseUrl,
