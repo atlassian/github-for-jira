@@ -9,6 +9,7 @@ import GitHubClient from "../github/client/github-client";
 import { getGithubUser, getGithubUserNew } from "../services/github/user";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import {AxiosResponseHeaders} from "axios";
 
 /**
  * Find the next page number from the response headers.
@@ -31,7 +32,7 @@ export const getNextPage = (logger: LoggerWithTarget, headers: Headers = {}): nu
 	return nextPage;
 };
 
-interface Headers {
+type Headers = AxiosResponseHeaders & {
 	link?: string;
 }
 
@@ -46,7 +47,7 @@ export default async function(
 ) {
 	logger.info("Syncing PRs: started");
 	let status: number;
-	let headers = {};
+	let headers: Headers = {};
 	let edges;
 
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);
