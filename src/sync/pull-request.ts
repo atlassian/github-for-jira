@@ -46,7 +46,7 @@ export default async function(
 ) {
 	logger.info("Syncing PRs: started");
 	let status: number;
-	let headers: Headers = {};
+	let headers = {};
 	let edges;
 
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);

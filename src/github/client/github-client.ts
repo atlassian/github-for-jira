@@ -5,14 +5,19 @@ import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
 import { GetPullRequestParams } from "./types";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
+import {
+	handleFailedRequest,
+	instrumentFailedRequest,
+	instrumentRequest,
+	setRequestStartTime,
+	setRequestTimeout
+} from "./interceptors";
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
 import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
-import {numberFlag, NumberFlags} from "../../config/feature-flags";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
@@ -32,33 +37,25 @@ export default class GitHubClient {
 	private readonly githubInstallationId: InstallationId;
 	private readonly logger: Logger;
 
-	public static async build(githubInstallationId: InstallationId,
-		logger: Logger,
-		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()) : Promise<GitHubClient> {
-		const timeout = await numberFlag(NumberFlags.GITHUB_CLIENT_TIMEOUT, 30000);
-		return new GitHubClient(githubInstallationId, logger, appTokenHolder, timeout);
-	}
-
-	private constructor(
+	constructor(
 		githubInstallationId: InstallationId,
 		logger: Logger,
-		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance(),
-		timeout: number
+		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.client.axios");
 
 
 		const clientConfig: AxiosRequestConfig = {
 			baseURL: githubInstallationId.githubBaseUrl,
+			transitional: {
+				clarifyTimeoutError: true
+			}
 		};
-
-		if(timeout) {
-			clientConfig.timeout = timeout
-		}
 
 		this.axios = axios.create(clientConfig);
 
 		this.axios.interceptors.request.use(setRequestStartTime);
+		this.axios.interceptors.request.use(setRequestTimeout);
 		this.axios.interceptors.request.use(urlParamsMiddleware);
 		this.axios.interceptors.response.use(
 			undefined,

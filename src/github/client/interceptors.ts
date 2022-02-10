@@ -2,8 +2,9 @@ import {BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitin
 import Logger from "bunyan";
 import statsd from "../../config/statsd";
 import { metricError } from "../../config/metric-names";
-import { AxiosResponse } from "axios";
+import {AxiosRequestConfig, AxiosResponse} from "axios";
 import { extractPath } from "../../jira/client/axios";
+import {numberFlag, NumberFlags} from "../../config/feature-flags";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -17,6 +18,17 @@ export const setRequestStartTime = (config) => {
 	config.requestStartTime = new Date();
 	return config;
 };
+
+/**
+ * Sets the timeout to the request based on the github-client-timeout feature flag
+ */
+export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
+	const timeout = await numberFlag(NumberFlags.GITHUB_CLIENT_TIMEOUT, 30000);
+	if(timeout) {
+		config.timeout = timeout;
+	}
+	return config;
+}
 
 //TODO Move to util/axios/common-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,7 +90,7 @@ export const handleFailedRequest = (logger: Logger) =>
 	(error) => {
 		const response = error.response as AxiosResponse;
 
-		if (response?.status === 408 || error.code === "ECONNABORTED") {
+		if (response?.status === 408 || error.code === "ETIMEDOUT") {
 			logger.warn({ err: error }, "Request timed out");
 			return Promise.reject(new GithubClientTimeoutError(error));
 		}

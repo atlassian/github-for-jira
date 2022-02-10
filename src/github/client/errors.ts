@@ -15,11 +15,9 @@ export class GithubClientError extends Error {
 }
 
 export class GithubClientTimeoutError extends GithubClientError {
-
 	constructor(cause?: AxiosError) {
 		super("Timeout", undefined, cause);
 	}
-
 }
 
 export class RateLimitingError extends GithubClientError {
