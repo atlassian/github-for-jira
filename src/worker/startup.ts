@@ -1,5 +1,5 @@
 import { probot } from "./app";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "../config/logger";
 const logger = getLogger("worker");
 
@@ -26,7 +26,7 @@ export async function stop() {
 	// TODO: change this to `probot.close()` once we update probot to latest version
 	probot.httpServer?.close();
 
-	sqsQueues.stop();
+	await sqsQueues.stop();
 
 	running = false;
 }

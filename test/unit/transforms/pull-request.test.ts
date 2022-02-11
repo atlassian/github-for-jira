@@ -9,7 +9,7 @@ describe("pull_request transform", () => {
 		const fixture = pullRequestList[0];
 		fixture.title = "[TES-123] Branch payload Test";
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
@@ -59,7 +59,7 @@ describe("pull_request transform", () => {
 		const fixture = pullRequestList[1];
 		fixture.title = "[TES-123] Branch payload Test";
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {

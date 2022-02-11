@@ -6,7 +6,7 @@ import {JiraClientError} from "../../../src/jira/client/axios";
 import {RateLimitingError as OldRateLimitingError} from "../../../src/config/enhance-octokit";
 import {Octokit} from "probot";
 import {RateLimitingError} from "../../../src/github/client/errors";
-import {AxiosError} from "axios";
+import {AxiosResponse, AxiosResponseHeaders} from "axios";
 
 describe("error-handlers", () => {
 
@@ -108,10 +108,9 @@ describe("error-handlers", () => {
 		});
 
 		it("Retryable with proper delay on Rate Limiting", async () => {
-			const result = await jiraAndGitHubErrorsHandler(new RateLimitingError(
-				Math.floor(new Date("2020-01-01").getTime() / 1000) + 100,
-				0, {} as AxiosError
-			), createContext(1, false));
+			const headers : AxiosResponseHeaders = {"x-ratelimit-reset":  `${Math.floor(new Date("2020-01-01").getTime() / 1000) + 100}`};
+			const mockedResponse = {status: 403, headers: headers} as AxiosResponse;
+			const result = await jiraAndGitHubErrorsHandler(new RateLimitingError(mockedResponse), createContext(1, false));
 			expect(result.retryable).toBe(true)
 			//Make sure delay is equal to recommended delay + 10 seconds
 			expect(result.retryDelaySec).toBe(110)

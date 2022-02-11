@@ -4,7 +4,6 @@ import { GitHubPullRequest } from "../interfaces/github";
 import { JiraBuildData, JiraPullRequest } from "../interfaces/jira";
 import { GitHubAPI } from "probot";
 import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { WorkflowPayload } from "../config/interfaces";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
@@ -55,7 +54,6 @@ function mapPullRequests(
 export default async (
 	githubClient: GitHubAPI,
 	payload: WorkflowPayload,
-	jiraHost: string,
 	logger: LoggerWithTarget
 ): Promise<JiraBuildData | undefined> => {
 	const { workflow_run, workflow } = payload;
@@ -75,10 +73,9 @@ export default async (
 
 	let issueKeys;
 
-	const supportBranchAndMergeWorkflowForBuildsFlagIsOn = await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS, false, jiraHost);
 	const workflowHasPullRequest = pull_requests.length > 0;
 
-	if (supportBranchAndMergeWorkflowForBuildsFlagIsOn && workflowHasPullRequest) {
+	if (workflowHasPullRequest) {
 		const { owner, name: repoName } = repository;
 		const { base, head } = pull_requests[0];
 

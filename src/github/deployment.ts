@@ -2,7 +2,7 @@ import transformDeployment from "../transforms/deployment";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import getJiraClient, { DeploymentsResult } from "../jira/client";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -12,7 +12,7 @@ export default async (context: CustomContext, jiraClient, _util, githubInstallat
 		jiraHost: jiraClient.baseURL,
 		installationId: githubInstallationId,
 		webhookPayload: context.payload,
-		webhookReceived: new Date().getTime(),
+		webhookReceived: Date.now(),
 		webhookId: context.id
 	});
 };

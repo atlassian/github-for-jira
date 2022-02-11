@@ -20,11 +20,6 @@ describe("Test getting a jira client", () => {
 		client = await getJiraClient(jiraHost, gitHubInstallationId);
 	});
 
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-	});
-
 	it("Installation exists", async () => {
 		expect(client).toMatchSnapshot();
 	});

@@ -18,11 +18,6 @@ describe("POST /github/subscription", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-	});
-
 	it("Delete Jira Configuration", async () => {
 		const req = {
 			log: { error: jest.fn(), info: jest.fn() },

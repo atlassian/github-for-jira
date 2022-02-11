@@ -35,6 +35,7 @@ import { registerHandlebarsPartials } from "../util/handlebars/partials";
 import { registerHandlebarsHelpers } from "../util/handlebars/helpers";
 import { Errors } from "../config/errors";
 import cookieParser from "cookie-parser";
+import { v4 as uuidv4 } from "uuid";
 
 // Adding session information to request
 declare global {
@@ -104,10 +105,10 @@ export default (octokitApp: App): Express => {
 	app.use(logMiddleware);
 
 	app.set("view engine", "hbs");
-	app.set("views", path.join(rootPath, "views"));
+	const viewPath = path.resolve(rootPath, "views")
+	app.set("views", viewPath);
 
-	registerHandlebarsPartials(rootPath);
-
+	registerHandlebarsPartials(path.resolve(viewPath, "partials"));
 	registerHandlebarsHelpers();
 
 	app.use("/public", express.static(path.join(rootPath, "static")));
@@ -224,6 +225,7 @@ export default (octokitApp: App): Express => {
 	app.get(
 		"/github/subscriptions/:installationId",
 		csrfProtection,
+		oauth.checkGithubAuth,
 		getGitHubSubscriptions
 	);
 
@@ -296,7 +298,9 @@ export default (octokitApp: App): Express => {
 
 	// Error catcher - Batter up!
 	app.use(async (err: Error, req: Request, res: Response, next: NextFunction) => {
-		req.log.error({ payload: req.body, err, req, res }, "Error in frontend app.");
+		const errorReference = uuidv4();
+
+		req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend app.")
 
 		if (!isNodeProd() && !res.locals.showError) {
 			return next(err);
@@ -328,6 +332,7 @@ export default (octokitApp: App): Express => {
 
 		return res.status(errorStatusCode).render("error.hbs", {
 			title: "GitHub + Jira integration",
+			errorReference,
 			message,
 			nonce: res.locals.nonce,
 			githubRepoUrl: envVars.GITHUB_REPO_URL

@@ -19,6 +19,9 @@ export const backfillQueueMessageHandler:MessageHandler<BackfillMessagePayload> 
 	sentry.configureScope((scope) =>
 		scope.addEventProcessor(SentryScopeProxy.processEvent)
 	);
+	
+	const {installationId, jiraHost} = context.payload;
+	context.log = context.log.child({installationId, jiraHost});
 
 	try {
 		const processor = await processInstallation(app);

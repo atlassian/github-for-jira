@@ -15,11 +15,8 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	SIMPLER_PROCESSOR = "simpler-processor",
-	// When cleaning up the SEND_PUSH_TO_SQS feature flag, please also clean up the PRIORITIZE_PUSHES
-	// feature flag, because it doesn't make sense with SQS any more.
 	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
 	TRACE_LOGGING = "trace-logging",
-	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_BUILDS = "support-branch-and-merge-workflows-for-builds",
 	USE_SQS_FOR_BRANCH = "use-sqs-for-branch",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
@@ -28,6 +25,10 @@ export enum BooleanFlags {
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations"
+}
+
+export enum NumberFlags {
+	GITHUB_CLIENT_TIMEOUT = "github-client-timeout"
 }
 
 const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
@@ -45,7 +46,7 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 	};
 };
 
-const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags, defaultValue: boolean | string, jiraHost?: string): Promise<boolean | string> => {
+const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: boolean | string | number, jiraHost?: string): Promise<boolean | string | number> => {
 	try {
 		await launchdarklyClient.waitForInitialization();
 		const user = createLaunchdarklyUser(jiraHost);
@@ -62,6 +63,9 @@ export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jir
 
 export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHost?: string): Promise<string> =>
 	String(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+
+export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
+	Number(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
 
 export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
 	try {
