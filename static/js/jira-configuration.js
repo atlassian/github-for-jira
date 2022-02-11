@@ -82,6 +82,8 @@ $(".sync-connection-link").click(function(event) {
 	event.preventDefault();
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
+	const organization = $(event.target).data("organization");
+
 	const csrfToken = document.getElementById("_csrf").value;
 
 	const $el = $("#restart-backfill");
@@ -95,6 +97,7 @@ $(".sync-connection-link").click(function(event) {
 			data: {
 				installationId,
 				jiraHost,
+				organization,
 				syncType: "full",
 				jwt: token,
 				_csrf: csrfToken

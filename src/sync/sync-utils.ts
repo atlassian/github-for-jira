@@ -7,7 +7,7 @@ import Logger from "bunyan";
 export async function findOrStartSync(
 	subscription: Subscription,
 	logger: LoggerWithTarget | Logger,
-	syncType?: string
+	syncType: "full" | "partial"
 ): Promise<void> {
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
 	const count = await RepoSyncState.countFromSubscription(subscription)
@@ -17,7 +17,6 @@ export async function findOrStartSync(
 		await sqsQueues.discovery.sendMessage({installationId, jiraHost}, 0, logger)
 		return;
 	}
-
 
 	// Otherwise, just add a job to the queue for this installation
 	// This will automatically pick back up from where it left off

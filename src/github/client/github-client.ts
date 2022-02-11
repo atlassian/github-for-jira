@@ -10,8 +10,9 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
+import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, GetRepositoriesQuery, GetRepositoriesResponse } from "./github-queries";
 import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
+import { Repository } from "@octokit/graphql-schema";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
@@ -72,6 +73,7 @@ export default class GitHubClient {
 	 * Use this config in a request to authenticate with an installation token for the githubInstallationId.
 	 */
 	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
+
 		const installationToken = await this.installationTokenCache.getInstallationToken(
 			this.githubInstallationId.installationId,
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
@@ -173,6 +175,20 @@ export default class GitHubClient {
 			ref
 		});
 	};
+
+	/**
+	 * Lists all repositories per organization.
+	 */
+	public async getRepositories(perPage?: number): Promise<Repository[]> {
+		const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery,
+			{
+				per_page: perPage
+			});
+		console.log("getRepositories() - Response.data");
+		console.log(response.data);
+
+		return response?.data?.data?.viewer?.repositories?.nodes;
+	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);

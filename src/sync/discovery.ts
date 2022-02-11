@@ -3,8 +3,11 @@ import { getRepositorySummary } from "./jobs";
 import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { sqsQueues } from "../sqs/queues";
+
+import GitHubClient from "../github/client/github-client";
+import { getCloudInstallationId } from "../github/client/installation-id";
 
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 
@@ -14,22 +17,34 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 	const github = await app.auth(installationId); // use GHclient here
 	enhanceOctokit(github);// whats this
 
+	// todo add eslint rule for { spaces }
+
 	try {
-		const repositories = await github.paginate(
+
+		const repositoriesOld = await github.paginate(
 			github.apps.listRepos.endpoint.merge({ per_page: 1 }),
 			(res) => {
-				console.log("PAGINATE CALLED");
-				console.log(res);
 				return res.data.repositories;
 			}
 		);
+
+		// NEW GH CLIENT ==========================================================================
+		// ============= ==========================================================================
+		const gh = new GitHubClient(getCloudInstallationId(installationId), logger);
+		const repositories = await gh.getRepositories(100);
+		// ========================================================================================
+		// ========================================================================================
+
 		logger.info(
 			{ job },
-			`${repositories.length} Repositories found`
+			`${repositoriesOld.length} Repositories found - Octokit`
 		);
 
-		console.log("WHAT THE REPO CALLED");
-		console.log(repositories);
+		logger.info(
+			{ job },
+			`${repositories.length} Repositories found - Github client`
+		);
+
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
 			installationId
@@ -49,10 +64,27 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 
 		// Store the repository object to prevent doing an additional query in each job
 		// Also, with an object per repository we can calculate which repos are synched or not
-		const repos: Repositories = repositories.reduce((obj, repo) => {
+		const reposOld: Repositories = repositoriesOld.reduce((obj, repo) => {
 			obj[repo.id] = { repository: getRepositorySummary(repo) };
 			return obj;
 		}, {});
+
+
+		const repos: Repositories = repositories.reduce((obj, repository) => {
+			obj[repository.id] = { repository };
+			return obj;
+		}, {});
+
+		logger.info(
+			{ repos: reposOld },
+			"Repositories - Octokit"
+		);
+
+		logger.info(
+			{ repos },
+			"Repositories - Github client"
+		);
+
 		await subscription.updateSyncState({
 			numberOfSyncedRepos: 0,
 			repos

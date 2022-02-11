@@ -1,7 +1,7 @@
 import { Subscription } from "../models";
 import { getHashedKey } from "../models/installation";
 import { Request, Response } from "express";
-import {findOrStartSync} from "../sync/sync-utils";
+import { findOrStartSync } from "../sync/sync-utils";
 
 /**
  * Handle the when a user adds a repo to this installation
@@ -61,8 +61,13 @@ export default async (req: Request, res: Response): Promise<void> => {
 			host: jiraHost
 		});
 
-		await findOrStartSync(subscription, req.log);
+		console.log('VERSION 2 - post config');
+		console.log(req.body);
+		console.log('VERSION 2 - post config part 2');
+		console.log(userInstallation.account.login);
+		const syncType = "full";
 
+		await findOrStartSync(subscription, req.log, syncType);
 
 		res.sendStatus(200);
 	} catch (err) {

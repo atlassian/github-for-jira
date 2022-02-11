@@ -9,6 +9,31 @@ query {
 	}
 }`
 
+export type GetRepositoriesResponse = {
+  viewer: {
+    repositories: {
+      nodes: Repository[]
+    }
+  }
+};
+
+export const GetRepositoriesQuery = `query ($per_page: Int!) {
+  viewer {
+    repositories(first: $per_page) {
+      nodes {
+        id: databaseId
+        name
+        full_name: nameWithOwner
+        owner {
+          login
+        }
+        html_url: url
+        updated_at: updatedAt
+      }
+    }
+  }
+}`
+
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo){
       pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
