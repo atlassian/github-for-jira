@@ -14,10 +14,8 @@ export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
-	const github = await app.auth(installationId); // use GHclient here
-	enhanceOctokit(github);// whats this
-
-	// todo add eslint rule for { spaces }
+	const github = await app.auth(installationId);
+	enhanceOctokit(github);
 
 	try {
 
@@ -29,10 +27,9 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 		);
 
 		// NEW GH CLIENT ==========================================================================
-		// ============= ==========================================================================
 		const gh = new GitHubClient(getCloudInstallationId(installationId), logger);
 		const repositories = await gh.getRepositories(100);
-		// ========================================================================================
+		// need to implenent iterator... e.g. handle 1000 repos
 		// ========================================================================================
 
 		logger.info(

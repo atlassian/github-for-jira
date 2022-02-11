@@ -7,7 +7,7 @@ import Logger from "bunyan";
 export async function findOrStartSync(
 	subscription: Subscription,
 	logger: LoggerWithTarget | Logger,
-	syncType: "full" | "partial"
+	syncType?: "full" | "partial"
 ): Promise<void> {
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
 	const count = await RepoSyncState.countFromSubscription(subscription)

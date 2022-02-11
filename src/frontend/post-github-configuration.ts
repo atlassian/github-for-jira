@@ -61,13 +61,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 			host: jiraHost
 		});
 
-		console.log('VERSION 2 - post config');
-		console.log(req.body);
-		console.log('VERSION 2 - post config part 2');
-		console.log(userInstallation.account.login);
-		const syncType = "full";
-
-		await findOrStartSync(subscription, req.log, syncType);
+		await findOrStartSync(subscription, req.log);
 
 		res.sendStatus(200);
 	} catch (err) {

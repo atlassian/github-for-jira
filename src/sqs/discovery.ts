@@ -4,8 +4,7 @@ import { discovery } from "../sync/discovery";
 
 export type DiscoveryMessagePayload = {
 	installationId: number,
-	jiraHost: string,
-	organization?: string
+	jiraHost: string
 }
 
 export const discoveryQueueMessageHandler : MessageHandler<DiscoveryMessagePayload> = async (context) => {

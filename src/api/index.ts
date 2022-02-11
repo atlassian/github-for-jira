@@ -178,12 +178,6 @@ router.post(
 	check("installationId").isInt(),
 	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
-		console.log('VERSION 1');
-		console.log('VERSION 1');
-		console.log('VERSION 1');
-		console.log('VERSION 1');
-		console.log('VERSION 1');
-		
 		const githubInstallationId = Number(req.params.installationId);
 		req.log.info(req.body);
 		const { jiraHost, resetType } = req.body;
@@ -217,12 +211,6 @@ router.post(
 	"/resync",
 	bodyParser,
 	async (req: Request, res: Response): Promise<void> => {
-		console.log('VERSION B1');
-		console.log('VERSION B1');
-		console.log('VERSION B1');
-		console.log('VERSION B1');
-		console.log('VERSION B1');
-		
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
 		// Defaults to anything not completed
@@ -238,11 +226,8 @@ router.post(
 
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
-		await Promise.all(subscriptions.map((subscription) => {
-			console.log("subscription9999");
-			console.log(subscription);
-			return findOrStartSync(subscription, req.log, syncType)
-		}
+		await Promise.all(subscriptions.map((subscription) =>
+			findOrStartSync(subscription, req.log, syncType)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));
