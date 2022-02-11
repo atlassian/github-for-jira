@@ -12,6 +12,7 @@ import { ApiJiraRouter } from "./jira/api-jira-router";
 import { LogMiddleware } from "../../middleware/frontend-log-middleware";
 import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
+import { ApiInstallationDelete } from "./installation/api-installation-delete";
 
 export const ApiRouter = Router();
 
@@ -147,3 +148,12 @@ ApiRouter.post(
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
+
+// TODO: remove once move to DELETE /:installationId/:jiraHost
+ApiRouter.delete(
+	"/deleteInstallation/:installationId/:jiraHost",
+	param("installationId").isInt(),
+	param("jiraHost").isString(),
+	returnOnValidationError,
+	ApiInstallationDelete
+);
