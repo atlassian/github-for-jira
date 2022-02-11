@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import express, { Express } from "express";
-import healthcheck from "../../../src/routes/healthcheck/healthcheck";
-import setupFrontend from "../../../src/frontend/app";
+import { HealthcheckRouter } from "../../../src/routes/healthcheck/healthcheck-router";
+import { getFrontendApp } from "../../../src/app";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { when } from "jest-when";
 import {getLogger} from "../../../src/config/logger";
@@ -29,7 +29,7 @@ describe("Maintenance", () => {
 	});
 
 	describe("Healthcheck", () => {
-		beforeEach(() => app.use("/", healthcheck));
+		beforeEach(() => app.use(HealthcheckRouter));
 
 		it("should still work in maintenance mode", () =>
 			supertest(app)
@@ -45,7 +45,7 @@ describe("Maintenance", () => {
 
 	describe("Frontend", () => {
 		beforeEach(() => {
-			app.use("/", setupFrontend({
+			app.use(getFrontendApp({
 				getSignedJsonWebToken: () => "",
 				getInstallationAccessToken: async () => ""
 			}));

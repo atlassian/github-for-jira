@@ -35,7 +35,6 @@ describe("jwt", () => {
 		session: {
 			jiraHost: "https://test.atlassian.net"
 		},
-		addLogFields: jest.fn(),
 		log: logger
 	}
 

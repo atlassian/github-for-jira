@@ -4,7 +4,7 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import { Installation, RepoSyncState, Subscription } from "../../../src/models";
 import InstallationClass from "../../../src/models/installation";
 import SubscriptionClass from "../../../src/models/subscription";
-import api from "../../../src/routes/api";
+import { ApiRouter } from "../../../src/routes/api/api-router";
 import { getLogger } from "../../../src/config/logger";
 import getAxiosInstance from "../../../src/jira/client/axios";
 import { mocked } from "ts-jest/utils";
@@ -50,7 +50,7 @@ describe("API", () => {
 			req.session = { jiraHost };
 			next();
 		});
-		app.use("/api", api);
+		app.use("/api", ApiRouter);
 		return app;
 	};
 
@@ -239,7 +239,7 @@ describe("API", () => {
 					.get(`/api/${gitHubInstallationId}`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${jiraHost}`)
+					.send({jiraHost})
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -271,7 +271,7 @@ describe("API", () => {
 					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${jiraHost}`)
+					.send({jiraHost})
 					.expect(404)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -318,7 +318,8 @@ describe("API", () => {
 				return supertest(app)
 					.post(`/api/${invalidId}/sync`)
 					.set("Authorization", "Bearer xxx")
-					.send("jiraHost=https://unknownhost.atlassian.net")
+					.set("Content-Type", "application/json")
+					.send({jiraHost: "https://unknownhost.atlassian.net"})
 					.expect(404)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -329,8 +330,9 @@ describe("API", () => {
 				return supertest(app)
 					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Authorization", "Bearer xxx")
+					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${jiraHost}`)
+					.send({jiraHost})
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -341,9 +343,9 @@ describe("API", () => {
 				return supertest(app)
 					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Authorization", "Bearer xxx")
+					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${jiraHost}`)
-					.send("resetType=full")
+					.send({jiraHost, resetType: "full"})
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();

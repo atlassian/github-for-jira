@@ -1,8 +1,11 @@
-import express from "express";
-import { JiraConfigurationGet } from "./jira-configuration-GET";
-import { JiraConfigurationDelete } from "./jira-configuration-DELETE";
+import { Router } from "express";
+import { JiraConfigurationGet } from "./jira-configuration-get";
+import { JiraConfigurationDelete } from "./jira-configuration-delete";
+import { csrfMiddleware } from "../../../middleware/csrf-middleware";
+import { JiraJwtTokenMiddleware } from "../../../middleware/jira-jwt-middleware";
 
-export const JiraConfigurationRouter = express.Router();
+export const JiraConfigurationRouter = Router();
 
-JiraConfigurationRouter.get("/", JiraConfigurationGet);
-JiraConfigurationRouter.delete("/", JiraConfigurationDelete);
+JiraConfigurationRouter.route("/")
+	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConfigurationGet)
+	.delete(JiraConfigurationDelete);

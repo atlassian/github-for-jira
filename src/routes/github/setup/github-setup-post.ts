@@ -1,4 +1,4 @@
-import { validJiraDomains } from "../../../frontend/validations";
+import { validJiraDomains } from "../../../util/validations";
 import { Request, Response } from "express";
 import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../../../util/jira-utils";
 import { Installation } from "../../../models";

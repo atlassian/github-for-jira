@@ -25,6 +25,21 @@
 		"paths": {
 			"routes": [
 				"src/routes"
+			],
+			"middleware": [
+				"src/middleware"
+			],
+			"utils": [
+				"src/util"
+			],
+			"config": [
+				"src/config"
+			],
+			"interfaces": [
+				"src/interfaces"
+			],
+			"services": [
+				"src/services"
 			]
 		}
 	},

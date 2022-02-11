@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
-import deleteJiraConfiguration from "../../../src/routes/jira/configuration/delete-jira-configuration";
+import { JiraConfigurationDelete } from "../../../src/routes/jira/configuration/jira-configuration-delete";
 import { getLogger } from "../../../src/config/logger";
 
 jest.mock("../../../src/models");
@@ -47,7 +47,7 @@ describe("DELETE /jira/configuration", () => {
 		};
 
 		const res = { sendStatus: jest.fn(), locals: { installation, jiraHost } };
-		await deleteJiraConfiguration(req as any, res as any);
+		await JiraConfigurationDelete(req as any, res as any);
 		expect(subscription.destroy).toHaveBeenCalled();
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 	});

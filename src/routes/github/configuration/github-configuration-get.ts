@@ -1,6 +1,6 @@
 import { Installation, Subscription } from "../../../models";
 import { NextFunction, Request, Response } from "express";
-import { getInstallations, InstallationResults } from "../../jira/configuration/jira-configuration-GET";
+import { getInstallations, InstallationResults } from "../../jira/configuration/jira-configuration-get";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
@@ -171,7 +171,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		tracer.trace(`got user's installations with admin status from GitHub`);
 
-		const { data: info } = (await client.apps.getAuthenticated());
+		const { data: info } = await client.apps.getAuthenticated();
 
 		tracer.trace(`got user's authenticated apps from GitHub`);
 

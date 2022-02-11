@@ -9,6 +9,19 @@
 		"project": "tsconfig.json",
 		"sourceType": "module"
 	},
+	"settings": {
+		"import/parsers": {
+			"@typescript-eslint/parser": [
+				".ts",
+				".tsx"
+			]
+		},
+		"import/resolver": {
+			"typescript": {
+				"alwaysTryTypes": true
+			}
+		}
+	},
 	"plugins": [
 		"@typescript-eslint",
 		"jest",
@@ -36,6 +49,7 @@
 		],
 		"indent": ["error", "tab", {
 			"SwitchCase": 1
-		}]
+		}],
+		"@import/no-unresolved": "off"
 	}
 }

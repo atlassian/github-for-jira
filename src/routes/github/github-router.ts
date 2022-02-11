@@ -1,18 +1,32 @@
-import express from "express";
-import { GithubConfigurationGet } from "./configuration/github-configuration-GET";
-import { GithubConfigurationPost } from "./configuration/github-configuration-POST";
-import { GithubSetupGet } from "./setup/github-setup-GET";
-import { GithubSetupPost } from "./setup/github-setup-POST";
-import { GithubSubscriptionGet } from "./subscription/github-subscription-GET";
-import { GithubSubscriptionDelete } from "./subscription/github-subscription-DELETE";
+import { Router } from "express";
+import { GithubConfigurationGet } from "./configuration/github-configuration-get";
+import { GithubConfigurationPost } from "./configuration/github-configuration-post";
+import { GithubSetupGet } from "./setup/github-setup-get";
+import { GithubSetupPost } from "./setup/github-setup-post";
+import { GithubSubscriptionGet } from "./subscription/github-subscription-get";
+import { GithubSubscriptionDelete } from "./subscription/github-subscription-delete";
+import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
+import { csrfMiddleware } from "../../middleware/csrf-middleware";
 
-export const GithubRouter = express.Router();
+export const GithubRouter = Router();
 
-GithubRouter.get("/configuration", GithubConfigurationGet);
-GithubRouter.post("/configuration", GithubConfigurationPost);
+// OAuth Routes
+GithubRouter.use(GithubOAuthRouter);
 
-GithubRouter.get("/setup", GithubSetupGet);
-GithubRouter.post("/setup", GithubSetupPost);
+// CSRF Protection Middleware for all following routes
+GithubRouter.use(csrfMiddleware);
 
-GithubRouter.get("/subscription", GithubSubscriptionGet);
-GithubRouter.delete("/subscription", GithubSubscriptionDelete);
+GithubRouter.route("/setup")
+	.get(GithubSetupGet)
+	.post(GithubSetupPost);
+
+// All following routes need Github Auth
+GithubRouter.use(GithubAuthMiddleware);
+
+GithubRouter.route("/configuration")
+	.get(GithubConfigurationGet)
+	.post(GithubConfigurationPost);
+
+GithubRouter.route("/subscription")
+	.get(GithubSubscriptionGet)
+	.delete(GithubSubscriptionDelete);

@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import { Installation, Subscription } from "../../../src/models";
 import SubscriptionClass from "../../../src/models/subscription";
-import FrontendApp from "../../../src/frontend/app";
+import { getFrontendApp } from "../../../src/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "../../utils/cookies";
@@ -52,7 +52,7 @@ describe("Github Configuration", () => {
 			request.log = getLogger("test");
 			next();
 		});
-		frontendApp.use(FrontendApp({
+		frontendApp.use(getFrontendApp({
 			getSignedJsonWebToken: () => "token",
 			getInstallationAccessToken: async () => "access-token"
 		}));
@@ -249,7 +249,7 @@ describe("Github Configuration", () => {
 			githubNock
 				.post("/graphql", { query: ViewerRepositoryCountQuery })
 				.query(true)
-				.reply(403,  {
+				.reply(403, {
 					message: "Although you appear to have the correct authorization credentials, the `Fusion-Arc` organization has an IP allow list enabled, and 13.52.4.51 is not permitted to access this resource."
 				});
 

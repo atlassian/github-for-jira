@@ -1,17 +1,44 @@
+import express, { Express, NextFunction, Request, Response, Router } from "express";
+import path from "path";
+import getGithubClientMiddleware from "./middleware/github-client-middleware";
+import { App } from "@octokit/app";
+import { registerHandlebarsPartials } from "./util/handlebars/partials";
+import { registerHandlebarsHelpers } from "./util/handlebars/helpers";
+import crypto from "crypto";
+import { Application } from "probot";
+import statsd, { elapsedTimeMetrics } from "./config/statsd";
+import IORedis from "ioredis";
+import getRedisInfo from "./config/redis-info";
+import rateLimit from "express-rate-limit";
+import RedisStore from "rate-limit-redis";
+import { metricError } from "./config/metric-names";
 import sslify from "express-sslify";
 import helmet from "helmet";
-import getFrontendApp from "./app";
-import { Application } from "probot";
-import { Express, NextFunction, Request, Response, Router } from "express";
-import crypto from "crypto";
-import Redis from "ioredis";
-import getRedisInfo from "../config/redis-info";
-import RateLimit from "express-rate-limit";
-import RedisStore from "rate-limit-redis";
-import statsd, { elapsedTimeMetrics } from "../config/statsd";
-import { metricError } from "../config/metric-names";
+import { RootRouter } from "./routes/router";
 
-function secureHeaders(router: Router, frontendApp: Express) {
+export const getFrontendApp = (octokitApp: App): Express => {
+	const app = express();
+
+	// We run behind ngrok.io so we need to trust the proxy always
+	// TODO: look into the security of this.  Maybe should only be done for local dev?
+	app.set("trust proxy", true);
+	app.set("case sensitive routing", false);
+	app.set("view engine", "hbs");
+	const viewPath = path.resolve(process.cwd(), "views");
+	app.set("views", viewPath);
+	registerHandlebarsPartials(path.resolve(viewPath, "partials"));
+	registerHandlebarsHelpers();
+
+	// Add github client middleware which uses the octokit app
+	app.use(getGithubClientMiddleware(octokitApp));
+
+	// Add all routes
+	app.use(RootRouter);
+
+	return app;
+};
+
+const secureHeaders = (router: Router, frontendApp: Express) => {
 	router.use((_: Request, res: Response, next: NextFunction): void => {
 		res.locals.nonce = crypto.randomBytes(16).toString("hex");
 		next();
@@ -62,19 +89,17 @@ function secureHeaders(router: Router, frontendApp: Express) {
 	router.use(helmet.hidePoweredBy());
 }
 
-export default (app: Application): void => {
+export const setupFrontend = (app: Application): void => {
 	const router = app.route();
 	router.use(elapsedTimeMetrics);
 
 	if (process.env.USE_RATE_LIMITING === "true") {
-		const client = new Redis(getRedisInfo("rate-limiter"));
-		const limiter = RateLimit({
+		const client = new IORedis(getRedisInfo("rate-limiter"));
+		const limiter = rateLimit({
 			store: new RedisStore({
 				client
 			}),
-			skip(_) {
-				return false;
-			},
+			skip: () => false,
 			handler(_, res) {
 				// We don't include path in this metric as the bots scanning us generate many of them
 				statsd.increment(metricError.expressRateLimited);

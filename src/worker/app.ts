@@ -4,7 +4,7 @@
 
 import { Application, createProbot } from "probot";
 import { findPrivateKey } from "probot/lib/private-key";
-import healthcheck from "../routes/healthcheck/healthcheck";
+import { HealthcheckRouter } from "../routes/healthcheck/healthcheck-router";
 import { overrideProbotLoggingMethods } from "../config/logger";
 
 export const probot = createProbot({
@@ -21,7 +21,7 @@ export const probot = createProbot({
 // TODO: remove probot from here, just use express
 const App = async (app: Application): Promise<Application> => {
 	const router = app.route();
-	router.use("/", healthcheck);
+	router.use(HealthcheckRouter);
 	return app;
 };
 

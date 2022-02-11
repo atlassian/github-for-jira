@@ -1,18 +1,16 @@
-import express, { Request, Response } from "express";
-import { check } from "express-validator";
-import BodyParser from "body-parser";
+import { Request, Response, Router } from "express";
+import { param } from "express-validator";
 import { RepoSyncState, Subscription } from "../../../models";
 import { returnOnValidationError } from "../api-utils";
 import getJiraClient from "../../../jira/client";
 import { findOrStartSync } from "../../../sync/sync-utils";
 import format from "date-fns/format";
 
-export const ApiInstallationRouter = express.Router();
-const bodyParser = BodyParser.urlencoded({ extended: false });
+export const ApiInstallationRouter = Router({mergeParams: true});
 
 ApiInstallationRouter.get(
 	"/:jiraHost/syncstate",
-	check("jiraHost").isString(),
+	param("jiraHost").isString(),
 	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
@@ -45,11 +43,9 @@ ApiInstallationRouter.get(
 
 ApiInstallationRouter.post(
 	"/sync",
-	bodyParser,
-	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = Number(req.params.installationId);
-		req.log.info(req.body);
+		req.log.debug({body: req.body}, "Sync body");
 		const { jiraHost, resetType } = req.body;
 
 		try {
@@ -78,15 +74,12 @@ ApiInstallationRouter.post(
 
 ApiInstallationRouter.get(
 	"/",
-	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
 		const { installationId } = req.params;
 		const { client } = res.locals;
 
 		try {
-			const subscriptions = await Subscription.getAllForInstallation(
-				Number(installationId)
-			);
+			const subscriptions = await Subscription.getAllForInstallation(Number(installationId));
 
 			if (!subscriptions.length) {
 				res.sendStatus(404);
@@ -137,7 +130,7 @@ ApiInstallationRouter.get(
 
 ApiInstallationRouter.delete(
 	"/:jiraHost",
-	check("jiraHost").isString(),
+	param("jiraHost").isString(),
 	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
 		const githubInstallationId = req.params.installationId;

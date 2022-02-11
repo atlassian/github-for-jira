@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { RepoSyncState, Subscription } from "../../../src/models";
 import SubscriptionClass from "../../../src/models/subscription";
-import { getInstallations } from "../../../src/routes/jira/configuration/get-jira-configuration";
+import { getInstallations } from "../../../src/routes/jira/configuration/jira-configuration-get";
 import GithubApi from "../../../src/config/github-api";
 import { GitHubAPI } from "probot";
 

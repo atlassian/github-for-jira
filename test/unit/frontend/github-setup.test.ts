@@ -1,6 +1,6 @@
 import supertest from "supertest";
 import { Installation } from "../../../src/models";
-import FrontendApp from "../../../src/frontend/app";
+import { getFrontendApp } from "../../../src/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "../../utils/cookies";
@@ -15,7 +15,7 @@ describe("Github Setup", () => {
 			request.log = getLogger("test");
 			next();
 		});
-		frontendApp.use(FrontendApp({
+		frontendApp.use(getFrontendApp({
 			getSignedJsonWebToken: () => "",
 			getInstallationAccessToken: async () => "access-token"
 		}));

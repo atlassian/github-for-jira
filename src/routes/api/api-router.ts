@@ -1,19 +1,19 @@
-import express, { NextFunction, Request, Response } from "express";
-import { check } from "express-validator";
+import { NextFunction, Request, Response, Router } from "express";
+import { param } from "express-validator";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
-import Redis from "ioredis";
-import BodyParser from "body-parser";
+import IORedis from "ioredis";
 import GithubAPI from "../../config/github-api";
 import { Subscription } from "../../models";
-import logMiddleware from "../../middleware/frontend-log-middleware";
-import {  serializeSubscription } from "./api-utils";
+import { returnOnValidationError, serializeSubscription } from "./api-utils";
 import getRedisInfo from "../../config/redis-info";
 import { findOrStartSync } from "../../sync/sync-utils";
 import { ApiJiraRouter } from "./jira/api-jira-router";
+import { LogMiddleware } from "../../middleware/frontend-log-middleware";
+import { ApiInstallationRouter } from "./installation/api-installation-router";
+import { json, urlencoded } from "body-parser";
 
-export const ApiRouter = express.Router();
-const bodyParser = BodyParser.urlencoded({ extended: false });
+export const ApiRouter = Router();
 
 const viewerPermissionQuery = `{
   viewer {
@@ -29,15 +29,18 @@ function validAdminPermission(viewer) {
 	return viewer.organization?.viewerCanAdminister || false;
 }
 
+// TODO: remove this duplication because of the horrible way to do logs through requests
+ApiRouter.use(urlencoded({ extended: false }));
+ApiRouter.use(json());
+ApiRouter.use(LogMiddleware);
+
 ApiRouter.use(rateLimit({
 	store: new RedisStore({
-		client: new Redis(getRedisInfo("express-rate-limit"))
+		client: new IORedis(getRedisInfo("express-rate-limit"))
 	}),
 	windowMs: 60 * 1000, // 1 minutes
 	max: 60 // limit each IP to 60 requests per windowMs
 }));
-
-ApiRouter.use(logMiddleware);
 
 // All routes require a PAT to belong to someone on staff
 // This middleware will take the token and make a request to GraphQL
@@ -68,7 +71,7 @@ ApiRouter.use(
 				})
 			).data;
 
-			req.addLogFields({ login: data && data.viewer && data.viewer.login });
+			req.addLogFields({ login: data?.viewer?.login });
 
 			if (errors) {
 				res.status(401).json({ errors, viewerPermissionQuery });
@@ -77,7 +80,11 @@ ApiRouter.use(
 
 			if (!validAdminPermission(data.viewer)) {
 				req.log.info(
-					`User attempted to access staff routes: login=${data.viewer.login}, viewerCanAdminister=${data.viewer.organization?.viewerCanAdminister}`
+					{
+						login: data.viewer.login,
+						isAdmin: data.viewer.organization?.viewerCanAdminister
+					},
+					`User attempted to access admin API routes.`
 				);
 				res.status(401).json({
 					error: "Unauthorized",
@@ -86,8 +93,12 @@ ApiRouter.use(
 				return;
 			}
 
-			req.log.info(
-				`Staff routes accessed: login=${data.viewer.login}, viewerCanAdminister=${data.viewer.organization?.viewerCanAdminister}`
+			req.log.info({
+				req,
+				login: data.viewer.login,
+				isAdmin: data.viewer.organization?.viewerCanAdminister
+			},
+			"Admin API routes accessed"
 			);
 
 			next();
@@ -110,7 +121,6 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 // RESYNC ALL INSTANCES
 ApiRouter.post(
 	"/resync",
-	bodyParser,
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
@@ -135,5 +145,5 @@ ApiRouter.post(
 	}
 );
 
-ApiRouter.use("/:installationId", check("installationId").isInt(), ApiJiraRouter);
 ApiRouter.use("/jira", ApiJiraRouter);
+ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

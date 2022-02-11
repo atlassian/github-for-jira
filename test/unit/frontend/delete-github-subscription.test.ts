@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Installation, Subscription } from "../../../src/models";
-import deleteSubscription from "../../../src/routes/github/subscription/delete-github-subscription";
+import { GithubSubscriptionDelete } from "../../../src/routes/github/subscription/github-subscription-delete";
 
 describe("POST /github/subscription", () => {
 	const gitHubInstallationId = 15;
@@ -55,7 +55,7 @@ describe("POST /github/subscription", () => {
 			}
 		};
 
-		await deleteSubscription(req as any, res as any);
+		await GithubSubscriptionDelete(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(202);
 		expect(await Subscription.count()).toEqual(0);
 	});
@@ -70,7 +70,7 @@ describe("POST /github/subscription", () => {
 			locals: {}
 		};
 
-		await deleteSubscription(req as any, res as any);
+		await GithubSubscriptionDelete(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
 	});
 
@@ -97,7 +97,7 @@ describe("POST /github/subscription", () => {
 
 			res.status.mockReturnValue(res);
 
-			await deleteSubscription(req as any, res as any);
+			await GithubSubscriptionDelete(req as any, res as any);
 			expect(res.status).toHaveBeenCalledWith(400);
 			expect(res.json.mock.calls[0]).toMatchSnapshot([
 				{

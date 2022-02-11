@@ -1,11 +1,11 @@
-import Redis from "ioredis";
+import IORedis from "ioredis";
 import getRedisInfo from "../../config/redis-info";
-import express, { Response } from "express";
+import { Response, Router } from "express";
 import { getLogger } from "../../config/logger";
 import { sequelize } from "../../models/sequelize";
 
-export const HealthcheckRouter = express.Router();
-const cache = new Redis(getRedisInfo("ping"));
+export const HealthcheckRouter = Router();
+const cache = new IORedis(getRedisInfo("ping"));
 
 /**
  * /deepcheck endpoint to checks to see that all our connections are OK

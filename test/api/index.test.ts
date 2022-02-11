@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import express, { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
-import api from "../../src/routes/api";
+import { ApiRouter } from "../../src/routes/api/api-router";
 import SubscriptionModel from "../../src/models/subscription";
 import { Subscription } from "../../src/models";
 import { wrapLogger } from "probot/lib/wrap-logger";
@@ -41,7 +41,7 @@ describe("api/index", () => {
 			req.session = { jiraHost: "http://blah.com" };
 			next();
 		});
-		app.use("/api", api);
+		app.use("/api", ApiRouter);
 		return app;
 	};
 

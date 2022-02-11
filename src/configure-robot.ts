@@ -1,12 +1,11 @@
 import {Application, Probot} from "probot";
-import setupFrontend from "./frontend";
 import setupGitHub from "./github";
 import {overrideProbotLoggingMethods} from "./config/logger";
+import { setupFrontend } from "./app";
 
 export async function setupApp(app: Application): Promise<Application> {
 	setupGitHub(app);
 	setupFrontend(app);
-
 	return app;
 }
 

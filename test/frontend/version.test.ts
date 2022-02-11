@@ -1,5 +1,5 @@
 import express, { Application } from "express";
-import version from "../../src/routes/version/version";
+import { VersionGet } from "../../src/routes/version/version-get";
 import supertest from "supertest";
 import envVars from "../../src/config/env";
 
@@ -7,7 +7,7 @@ describe("/version", () => {
 	let app: Application;
 	beforeEach(async () => {
 		app = express();
-		app.use("/version", version);
+		app.get("/version", VersionGet);
 	});
 
 	it("should return 200 with relevant git branch and commit details", async () => {

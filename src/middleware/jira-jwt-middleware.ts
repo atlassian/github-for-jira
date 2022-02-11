@@ -36,9 +36,9 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 		next);
 };
 
-export const verifyJiraJwtTokenMiddleware = verifyJiraJwtMiddleware(TokenType.normal);
+export const JiraJwtTokenMiddleware = verifyJiraJwtMiddleware(TokenType.normal);
+export const JiraContextJwtTokenMiddleware = verifyJiraJwtMiddleware(TokenType.context);
 
-export const verifyJiraContextJwtTokenMiddleware = verifyJiraJwtMiddleware(TokenType.context);
 export const authenticateJiraEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	verifySymmetricJwtTokenMiddleware(res.locals.installation.sharedSecret, TokenType.normal, req, res, next);
 };
