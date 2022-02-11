@@ -16,7 +16,8 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	window.AP.context.getToken(function(token) {
+
+	window.AP.context.getToken(function() {
 		const child = openChildWindow("/session/github/configuration");
 		child.window.jiraHost = jiraHost;
 	});
@@ -41,38 +42,6 @@ $(".delete-connection-link").click(function(event) {
 			},
 			success: function(data) {
 				AP.navigator.reload();
-			}
-		});
-	});
-});
-
-$(".sync-connection-link-OLD").click(function(event) {
-	event.preventDefault();
-	const installationId = $(event.target).data("installation-id");
-	const jiraHost = $(event.target).data("jira-host");
-	const csrfToken = document.getElementById("_csrf").value;
-
-	const $el = $("#restart-backfill");
-	$el.prop("disabled", true);
-	$el.attr("aria-disabled", "true");
-
-	window.AP.context.getToken(function(token) {
-		$.ajax({
-			type: "POST",
-			url: `/jira/sync`,
-			data: {
-				installationId: installationId,
-				jiraHost: jiraHost,
-				syncType: document.getElementById(`${installationId}-sync-type`).value,
-				jwt: token,
-				_csrf: csrfToken
-			},
-			success: function(data) {
-				AP.navigator.reload();
-			},
-			error: function(error) {
-				$el.prop("disabled", false);
-				$el.attr("aria-disabled", "false");
 			}
 		});
 	});

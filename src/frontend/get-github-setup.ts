@@ -14,6 +14,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
 	const { jiraHost } = res.locals;
 
+	const installationId = req.originalUrl.split("=")[1].split("&")[0]
 	let redirectUrl = getJiraMarketplaceUrl(jiraHost);
 
 	// If we know enough about user and site, redirect to the app
@@ -21,10 +22,21 @@ export default async (req: Request, res: Response): Promise<void> => {
 		redirectUrl = getJiraAppUrl(jiraHost);
 	}
 
+	let installation;
+
+	if (jiraHost) {
+		installation = await Installation.getForHost(jiraHost);
+	}
+
+	const hasJiraHost = !!jiraHost;
+
 	res.render("github-setup.hbs", {
 		csrfToken: req.csrfToken(),
 		nonce: res.locals.nonce,
 		jiraHost,
-		redirectUrl
+		redirectUrl,
+		hasJiraHost,
+		clientKey: installation?.clientKey,
+		id: installationId
 	});
 };

@@ -67,6 +67,20 @@
               <a class="githubSetup__marketplaceUrl" href={{redirectUrl}}>
                 {{jiraHost}}
               </a>
+              <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
+               <input
+                type="hidden"
+                id="clientKey"
+                name="clientKey"
+                value="{{clientKey}}"
+              />
+              <button
+                class="gitHubConfiguration__orgContent__connectBtn aui-button install-link"
+                data-installation-id="{{id}}"
+                type="submit"
+              >
+                Connect
+              </button>
             </div>
           </div>
 
