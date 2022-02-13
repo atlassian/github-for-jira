@@ -114,6 +114,7 @@ const setRequestStartTime = (config) => {
 export const extractPath = (someUrl = ""): string =>
 	decodeURIComponent(url.parse(someUrl).pathname || "");
 
+const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 /**
  * Submit statsd metrics on successful requests.
  *
@@ -133,6 +134,8 @@ const instrumentRequest = (response) => {
 		status: response.status
 	};
 
+	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
+	tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
 	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
 
 	return response;
