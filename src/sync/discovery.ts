@@ -26,6 +26,15 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 			}
 		);
 
+
+
+		// Iterate thru request to get all repos
+		// 
+		// feature flag to use for USE_NEW_GH_CLIENT_FOR_DISCOVERY_QUEUE
+		// create new LD
+		// 
+		// try admin endpoint ..... 
+
 		// NEW GH CLIENT ==========================================================================
 		const gh = new GitHubClient(getCloudInstallationId(installationId), logger);
 		const repositories = await gh.getRepositories(100);
