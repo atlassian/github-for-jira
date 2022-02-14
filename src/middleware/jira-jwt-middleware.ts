@@ -1,6 +1,6 @@
 import { Installation } from "../models";
 import { NextFunction, Request, Response } from "express";
-import { sendError, TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
+import { sendError, TokenType, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
 
 const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	req: Request,
@@ -42,5 +42,3 @@ export const JiraContextJwtTokenMiddleware = verifyJiraJwtMiddleware(TokenType.c
 export const authenticateJiraEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	verifySymmetricJwtTokenMiddleware(res.locals.installation.sharedSecret, TokenType.normal, req, res, next);
 };
-export const authenticateUninstallCallback = verifyAsymmetricJwtTokenMiddleware;
-export const authenticateInstallCallback = verifyAsymmetricJwtTokenMiddleware;
