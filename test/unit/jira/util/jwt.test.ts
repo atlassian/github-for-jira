@@ -12,9 +12,6 @@ import {when} from "jest-when";
 jest.mock("../../../../src/jira/util/queryAtlassianConnectPublicKey");
 jest.mock("../../../../src/models");
 
-
-const testRequestMethod = "GET"
-const testRequestPath = "/jira/configuration";
 const testQueryParams = {
 	xdm_e: "https://kabakumov.atlassian.net",
 	xdm_c: "channel-com.github.integration.konstantin__github-post-install-page",
@@ -30,8 +27,8 @@ describe("jwt", () => {
 
 	const baseRequest = {
 		query: testQueryParams,
-		method: testRequestMethod,
-		path: testRequestPath,
+		method: "GET",
+		path: "/jira/configuration",
 		session: {
 			jiraHost: "https://test.atlassian.net"
 		},
@@ -51,13 +48,13 @@ describe("jwt", () => {
 				...testQueryParams,
 				jwt: jwtValue
 			},
-			method: testRequestMethod,
-			path: testRequestPath,
+			method: "GET",
+			path: "/configuration",
+			originalUrl: "/jira/configuration",
 		};
 	}
 
 	const next = jest.fn()
-
 
 	let res;
 
