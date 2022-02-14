@@ -75,7 +75,7 @@ function decodeAsymmetricToken(token: string, publicKey: string, noVerify: boole
 
 
 function verifyQsh(qsh: string, req: Request): boolean {
-	const requestInAtlassianJwtFormat = {...req, pathname: req.path}
+	const requestInAtlassianJwtFormat = {...req, pathname: req.originalUrl}
 	let expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, false, BASE_URL);
 	let signatureHashVerified = qsh === expectedHash;
 
