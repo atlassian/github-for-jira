@@ -146,9 +146,6 @@ ApiRouter.post(
 	}
 );
 
-ApiRouter.use("/jira", ApiJiraRouter);
-ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
-
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost",
@@ -157,3 +154,6 @@ ApiRouter.delete(
 	returnOnValidationError,
 	ApiInstallationDelete
 );
+
+ApiRouter.use("/jira", ApiJiraRouter);
+ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

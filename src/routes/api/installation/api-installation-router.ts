@@ -8,13 +8,6 @@ import { ApiInstallationGet } from "./api-installation-get";
 
 export const ApiInstallationRouter = Router({mergeParams: true});
 
-ApiInstallationRouter.get(
-	"/:jiraHost/syncstate",
-	param("jiraHost").isString(),
-	returnOnValidationError,
-	ApiInstallationSyncstateGet
-);
-
 ApiInstallationRouter.post(
 	"/sync",
 	ApiInstallationSyncPost
@@ -23,6 +16,13 @@ ApiInstallationRouter.post(
 ApiInstallationRouter.get(
 	"/",
 	ApiInstallationGet
+);
+
+ApiInstallationRouter.get(
+	"/:jiraHost/syncstate",
+	param("jiraHost").isString(),
+	returnOnValidationError,
+	ApiInstallationSyncstateGet
 );
 
 ApiInstallationRouter.delete(

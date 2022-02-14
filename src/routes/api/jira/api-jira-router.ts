@@ -7,6 +7,20 @@ import { ApiJiraVerifyPost } from "./api-jira-verify-post";
 
 export const ApiJiraRouter = Router();
 
+ApiJiraRouter.post(
+	"/:installationId/verify",
+	param("installationId").isInt(),
+	returnOnValidationError,
+	ApiJiraVerifyPost
+);
+
+ApiJiraRouter.post(
+	"/:clientKey/uninstall",
+	param("clientKey").isHexadecimal(),
+	returnOnValidationError,
+	ApiJiraUninstallPost
+);
+
 ApiJiraRouter.get(
 	"/:clientKeyOrJiraHost",
 	[
@@ -17,18 +31,4 @@ ApiJiraRouter.get(
 		returnOnValidationError
 	],
 	ApiJiraGet
-);
-
-ApiJiraRouter.post(
-	"/:clientKey/uninstall",
-	param("clientKey").isHexadecimal(),
-	returnOnValidationError,
-	ApiJiraUninstallPost
-);
-
-ApiJiraRouter.post(
-	"/:installationId/verify",
-	param("installationId").isInt(),
-	returnOnValidationError,
-	ApiJiraVerifyPost
 );

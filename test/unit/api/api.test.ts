@@ -6,11 +6,8 @@ import InstallationClass from "../../../src/models/installation";
 import SubscriptionClass from "../../../src/models/subscription";
 import { ApiRouter } from "../../../src/routes/api/api-router";
 import { getLogger } from "../../../src/config/logger";
-import getAxiosInstance from "../../../src/jira/client/axios";
-import { mocked } from "ts-jest/utils";
 
 jest.mock("../../../src/config/feature-flags");
-jest.mock("../../../src/jira/client/axios");
 
 describe("API", () => {
 	let app: Application;
@@ -190,22 +187,19 @@ describe("API", () => {
 	});
 
 	describe("Endpoints", () => {
-		function mockJiraResponse(status: number) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			mocked(getAxiosInstance).mockReturnValue({
-				"get": () => Promise.resolve<any>({
-					status
-				})
-			});
-		}
+
+		beforeEach(() => {
+			githubNock
+				.post("/graphql")
+				.reply(200, successfulAuthResponseWrite);
+		});
 
 		describe("verify", () => {
-			beforeEach(async () => {
-				mockJiraResponse(200);
-			});
-
 			it("should return 'Installation already enabled'", () => {
+				jiraNock
+					.get("/rest/devinfo/0.10/existsByProperties?fakeProperty=1")
+					.reply(200);
+
 				return supertest(app)
 					.post(`/api/jira/${installation.id}/verify`)
 					.set("Authorization", "Bearer xxx")
@@ -215,12 +209,6 @@ describe("API", () => {
 						expect(response.body.message).toMatchSnapshot();
 					});
 			});
-		});
-
-		beforeEach(() => {
-			githubNock
-				.post("/graphql")
-				.reply(200, successfulAuthResponseWrite);
 		});
 
 		describe("installation", () => {
@@ -352,5 +340,36 @@ describe("API", () => {
 					});
 			});
 		});
+
+		describe("Delete Installation", () => {
+			beforeEach(() => {
+				jiraNock
+					.delete("/rest/devinfo/0.10/bulkByProperties")
+					.query({installationId: gitHubInstallationId})
+					.reply(200);
+			});
+
+			it("Should work with old delete installation route", () => {
+				return supertest(app)
+					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
+					.set("Authorization", "Bearer xxx")
+					.set("host", "127.0.0.1")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toMatchSnapshot();
+					});
+			});
+
+			it("Should work with new delete installation route", () => {
+				return supertest(app)
+					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
+					.set("Authorization", "Bearer xxx")
+					.set("host", "127.0.0.1")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toMatchSnapshot();
+					});
+			});
+		})
 	});
 });
