@@ -179,15 +179,31 @@ export default class GitHubClient {
 	/**
 	 * Lists all repositories per organization.
 	 */
-	public async getRepositories(perPage?: number): Promise<Repository[]> {
-		const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery,
-			{
-				per_page: perPage
-			});
-		console.log("getRepositories() - Response.data");
-		console.log(response.data);
+	public async getAllRepositories(): Promise<Repository[]> {
+		const perPage = 1;
+		let hasNextPage = true;
+		let cursor: string | number | undefined;
+		let edges: any[] = []; // todo proper typeing
 
-		return response?.data?.data?.viewer?.repositories?.nodes;
+		console.log("TRY 8");
+		while(hasNextPage) {
+			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery,
+				{
+					per_page: perPage,
+					cursor
+				});
+			console.log("called graphql() ===> Response.data");
+			console.log(response.data);
+
+			edges = [...edges, ...response?.data?.data?.viewer?.repositories?.edges];
+			cursor = response?.data?.data?.viewer?.repositories?.pageInfo.endCursor;
+			hasNextPage = response?.data?.data?.viewer?.repositories?.pageInfo.hasNextPage;
+				
+		}
+		const nodes: Repository[] = edges.map(edge => edge.node);
+		console.log("IM RETURNING THIS");
+		console.log(nodes)
+		return nodes;
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {

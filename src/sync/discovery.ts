@@ -37,7 +37,7 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 
 		// NEW GH CLIENT ==========================================================================
 		const gh = new GitHubClient(getCloudInstallationId(installationId), logger);
-		const repositories = await gh.getRepositories(100);
+		const repositories = await gh.getAllRepositories();
 		// need to implenent iterator... e.g. handle 1000 repos
 		// ========================================================================================
 

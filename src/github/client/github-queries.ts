@@ -12,23 +12,32 @@ query {
 export type GetRepositoriesResponse = {
   viewer: {
     repositories: {
-      nodes: Repository[]
+      pageInfo,
+      edges: [
+        node: Repository
+      ]
     }
   }
 };
 
-export const GetRepositoriesQuery = `query ($per_page: Int!) {
+export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
   viewer {
-    repositories(first: $per_page) {
-      nodes {
-        id: databaseId
-        name
-        full_name: nameWithOwner
-        owner {
-          login
+    repositories(first: $per_page, after: $cursor) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      edges {
+        node {
+          id: databaseId
+          name
+          full_name: nameWithOwner
+          owner {
+            login
+          }
+          html_url: url
+          updated_at: updatedAt
         }
-        html_url: url
-        updated_at: updatedAt
       }
     }
   }
