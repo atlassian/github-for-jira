@@ -82,7 +82,7 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 				? []
 				: [
 					{
-						createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys || undefined), 
+						createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys), 
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
 							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
