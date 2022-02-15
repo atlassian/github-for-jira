@@ -107,10 +107,6 @@ $('.install-link').click(function (event) {
 	const csrfToken = document.getElementById('_csrf').value;
 	const clientKey = document.getElementById('clientKey').value;
 
-	console.log("1", installationId)
-	console.log("2", csrfToken)
-	console.log("3", clientKey)
-
   $.post('/github/configuration', {
     installationId,
     _csrf: csrfToken,
