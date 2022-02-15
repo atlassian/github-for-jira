@@ -146,10 +146,22 @@ async function getJiraClient(
 					instance.get(
 						`/rest/devinfo/0.10/existsByProperties?installationId=${gitHubInstallationId}`
 					),
-				delete: (gitHubInstallationId: string | number) =>
-					instance.delete(
-						`/rest/devinfo/0.10/bulkByProperties?installationId=${gitHubInstallationId}`
-					)
+				delete: async (gitHubInstallationId: string | number) =>
+					Promise.all([
+
+						// We are sending devinfo events with the property "installationId", so we delete by this property.
+						instance.delete(
+							`/rest/devinfo/0.10/bulkByProperties?installationId=${gitHubInstallationId}`
+						),
+
+						// We are sending builds and deployments with the property "gitHubInstallationId", so we delete by this property.
+						instance.delete(
+							`/rest/builds/0.1/bulkByProperties?gitHubInstallationId=${gitHubInstallationId}`
+						),
+						instance.delete(
+							`/rest/deployments/0.1/bulkByProperties?gitHubInstallationId=${gitHubInstallationId}`
+						),
+					])
 			},
 			pullRequest: {
 				delete: (repositoryId: string, pullRequestId: string) =>

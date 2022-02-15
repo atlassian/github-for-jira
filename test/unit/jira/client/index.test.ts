@@ -58,4 +58,22 @@ describe("Test getting a jira client", () => {
 		await subscription.reload();
 		expect(subscription.syncWarning).toEqual("Exceeded issue key reference limit. Some issues may not be linked.");
 	});
+
+	it("Should delete devinfo, builds, and deployments", async () => {
+		jiraNock.delete(`/rest/devinfo/0.10/bulkByProperties`).query({
+			installationId: "12345"
+		}).reply(202);
+
+		jiraNock.delete(`/rest/builds/0.1/bulkByProperties`).query({
+			gitHubInstallationId: "12345"
+		}).reply(202);
+
+		jiraNock.delete(`/rest/deployments/0.1/bulkByProperties`).query({
+			gitHubInstallationId: "12345"
+		}).reply(202);
+
+		await client.devinfo.installation.delete(12345);
+
+		// no assertion necessary; nock will complain if one of the mocked endpoints is not called
+	});
 });
