@@ -16,7 +16,6 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-
 	window.AP.context.getToken(function() {
 		const child = openChildWindow("/session/github/configuration");
 		child.window.jiraHost = jiraHost;

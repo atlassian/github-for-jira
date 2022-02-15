@@ -12,7 +12,7 @@ import { Installation } from "../models";
 */
 export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
-	const { jiraHost, isAdmin } = res.locals;
+	const { jiraHost } = res.locals;
 
 	const installationId = req.originalUrl.split("=")[1].split("&")[0]
 	let redirectUrl = getJiraMarketplaceUrl(jiraHost);
@@ -20,16 +20,9 @@ export default async (req: Request, res: Response): Promise<void> => {
 	const {	github, client } = res.locals;
 
 	const { data: { installations } } = await github.apps.listInstallationsForAuthenticatedUser();
-	const { data: { login } } = await github.users.getAuthenticated();
 	const { data: info } = await client.apps.getAuthenticated();
 
 	const installation = installations.filter((item) => item.id === Number(installationId));
-
-	const admin = await isAdmin({
-		org: installation[0]?.account?.login,
-		username: login,
-		type: installation[0]?.target_type || ""
-	});
 
 	// If we know enough about user and site, redirect to the app
 	if (jiraHost && await jiraSiteExists(jiraHost) && await Installation.getForHost(jiraHost)) {
@@ -54,7 +47,6 @@ export default async (req: Request, res: Response): Promise<void> => {
 		orgName: installation[0]?.account?.login,
 		avatar: installation[0]?.account?.avatar_url,
 		html_url: info.html_url,
-		admin,
 		id: installationId // can't use this is they switch (reset id and send to marketplace)
 	});
 };
