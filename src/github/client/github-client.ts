@@ -43,14 +43,12 @@ export default class GitHubClient {
 	) {
 		this.logger = logger || getLogger("github.client.axios");
 
-		const clientConfig: AxiosRequestConfig = {
+		this.axios = axios.create({
 			baseURL: githubInstallationId.githubBaseUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
-		};
-
-		this.axios = axios.create(clientConfig);
+		});
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);

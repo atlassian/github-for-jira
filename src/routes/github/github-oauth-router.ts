@@ -33,9 +33,9 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 
 	// Find callback URL based on current url of this route
-	const callbackURI = new URL(`${req.url}/..${callbackPath}`, baseURL).toString();
+	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
 
-	const redirectUrl = `https://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${scopes.join(" ")}&redirect_uri=${callbackURI}&state=${state}`;
+	const redirectUrl = `https://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 	req.log.info({
 		redirectUrl,
 		postLoginUrl: req.session[state]

@@ -3,10 +3,9 @@ import { GithubConfigurationGet } from "./configuration/github-configuration-get
 import { GithubConfigurationPost } from "./configuration/github-configuration-post";
 import { GithubSetupGet } from "./setup/github-setup-get";
 import { GithubSetupPost } from "./setup/github-setup-post";
-import { GithubSubscriptionGet } from "./subscription/github-subscription-get";
-import { GithubSubscriptionDelete } from "./subscription/github-subscription-delete";
 import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
 import { csrfMiddleware } from "../../middleware/csrf-middleware";
+import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
 
 export const GithubRouter = Router();
 
@@ -27,6 +26,5 @@ GithubRouter.route("/configuration")
 	.get(GithubConfigurationGet)
 	.post(GithubConfigurationPost);
 
-GithubRouter.route("/subscription")
-	.get(GithubSubscriptionGet)
-	.delete(GithubSubscriptionDelete);
+// TODO: remove optional "s" once we change the frontend to use the proper delete method
+GithubRouter.use("/subscriptions?", GithubSubscriptionRouter);
