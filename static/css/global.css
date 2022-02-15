@@ -109,7 +109,8 @@ a:focus {
 }
 
 .gitHubConfiguration__orgContent__edit,
-.jiraConfiguration__table__edit {
+.jiraConfiguration__table__edit,
+.githubSetup__githubOrgConfirmation__edit {
   color: #43526e;
 }
 

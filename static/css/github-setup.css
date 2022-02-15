@@ -2,6 +2,26 @@
   color: #586069;
 }
 
+.githubSetup__githubOrgConfirmation__container {
+  text-align: center;
+}
+
+.githubSetup__githubOrgConfirmation__label {
+  /* TODO - get hex */
+  color: #6B778B;
+}
+
+.githubSetup__githubOrgConfirmation__selectedOrgContainer {
+  display: flex;
+  justify-content: space-evenly;
+  margin: 1em auto 0;
+  width: 40%;
+}
+
+.githubSetup__githubOrgConfirmation__orgName {
+  font-weight: bold;
+}
+
 .githubSetup__container {
   margin: 6em auto;
   width: 500px;
@@ -24,6 +44,7 @@
   -webkit-text-fill-color: #262b31;
   -webkit-box-shadow: 0 0 0 1000px #fff inset;
   background-color: #fff;
+  border: 2px solid #4c9aff;
   border-radius: 3.01px;
   box-shadow: 0 0 0 1000px #fff inset;
   box-sizing: border-box;
@@ -38,6 +59,7 @@
   vertical-align: initial;
 }
 
+.githubSetup__form__input,
 .githubSetup__form__inputContainer > .githubSetup__form__input,
 .githubSetup__form__inputContainer > .githubSetup__form__input:hover,
 .githubSetup__form__inputContainer > .githubSetup__form__input:active,
@@ -77,13 +99,18 @@
 }
 
 .githubSetup__table {
-  padding: 0.4em 0;
+  padding: 0.8em 0;
 }
 
 .githubSetup__table__row {
-  align-items: center;
   display: flex;
   padding: 2.5em auto;
+}
+
+.githubSetup__table__row__jiraHostContainer {
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
 }
 
 .githubSetup__table__logo {
