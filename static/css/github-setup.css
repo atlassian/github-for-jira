@@ -7,8 +7,7 @@
 }
 
 .githubSetup__githubOrgConfirmation__label {
-  /* TODO - get hex */
-  color: #6B778C;
+  color: #6b778b;
 }
 
 .githubSetup__githubOrgConfirmation__selectedOrgContainer {
@@ -59,7 +58,6 @@
   vertical-align: initial;
 }
 
-.githubSetup__form__input,
 .githubSetup__form__inputContainer > .githubSetup__form__input,
 .githubSetup__form__inputContainer > .githubSetup__form__input:hover,
 .githubSetup__form__inputContainer > .githubSetup__form__input:active,

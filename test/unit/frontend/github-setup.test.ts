@@ -15,12 +15,10 @@ describe("Github Setup", () => {
 			request.log = getLogger("test");
 			next();
 		});
-		frontendApp.use(
-			FrontendApp({
-				getSignedJsonWebToken: () => "",
-				getInstallationAccessToken: async () => "access-token",
-			})
-		);
+		frontendApp.use(FrontendApp({
+			getSignedJsonWebToken: () => "",
+			getInstallationAccessToken: async () => "access-token"
+		}));
 	});
 
 	describe("#GET", () => {
@@ -75,19 +73,19 @@ describe("Github Setup", () => {
 
 	describe("#POST", () => {
 		it("should return a 200 with the redirect url to marketplace if a valid domain is given", async () => {
-			jiraNock.get("/status").reply(200);
+			jiraNock
+				.get("/status")
+				.reply(200);
 
 			return supertest(frontendApp)
 				.post("/github/setup")
 				.send({
-					jiraDomain: envVars.INSTANCE_NAME,
+					jiraDomain: envVars.INSTANCE_NAME
 				})
-				.expect((res) => {
+				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.body.redirect).toBe(
-						`${jiraHost}/jira/marketplace/discover/app/com.github.integration.production`
-					);
-				});
+					expect(res.body.redirect).toBe(`${jiraHost}/jira/marketplace/discover/app/com.github.integration.production`);
+				})
 		});
 
 		it("should return a 200 with the redirect url to the app if a valid domain is given and an installation already exists", async () => {
@@ -95,32 +93,35 @@ describe("Github Setup", () => {
 				jiraHost,
 				secrets: "secret",
 				sharedSecret: "sharedSecret",
-				clientKey: "clientKey",
+				clientKey: "clientKey"
 			});
 
-			jiraNock.get("/status").reply(200);
+			jiraNock
+				.get("/status")
+				.reply(200);
 
 			return supertest(frontendApp)
 				.post("/github/setup")
 				.send({
-					jiraDomain: envVars.INSTANCE_NAME,
+					jiraDomain: envVars.INSTANCE_NAME
 				})
-				.expect((res) => {
+				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.body.redirect).toBe(
-						`${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page`
-					);
-				});
+					expect(res.body.redirect).toBe(`${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page`);
+				})
 		});
 
 		it("should return a 400 if no domain is given", () =>
-			supertest(frontendApp).post("/github/setup").send({}).expect(400));
+			supertest(frontendApp)
+				.post("/github/setup")
+				.send({})
+				.expect(400));
 
 		it("should return a 400 if an empty domain is given", () =>
 			supertest(frontendApp)
 				.post("/github/setup")
 				.send({
-					jiraDomain: "",
+					jiraDomain: ""
 				})
 				.expect(400));
 	});
