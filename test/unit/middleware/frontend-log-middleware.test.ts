@@ -7,12 +7,12 @@ import {wrapLogger} from "probot/lib/wrap-logger";
 describe("frontend-log-middleware", () => {
 	const request: { log: Logger | undefined } = { log: undefined }
 	const response: any = { once: jest.fn() }
-	let loggedStuff = '';
+	let loggedStuff = "";
 
 	beforeEach(() => {
-		loggedStuff = '';
+		loggedStuff = "";
 		request.log = wrapLogger(Logger.createLogger({
-			name: 'test',
+			name: "test",
 			stream: new Writable({
 				write: function(chunk, _, next) {
 					loggedStuff += chunk.toString();
@@ -22,12 +22,12 @@ describe("frontend-log-middleware", () => {
 		}));
 	})
 
-	test("preserves old fields", async () => {
+	it("preserves old fields", async () => {
 		request.log = request.log!.child({foo: 123});
 		await new Promise((resolve => {
 			logMiddleware(request as Request, response as Response, () => {
-				request.log!.info('hello');
-				expect(loggedStuff).toContain('foo');
+				request.log!.info("hello");
+				expect(loggedStuff).toContain("foo");
 				expect(loggedStuff).toContain(123);
 				resolve(0);
 			});

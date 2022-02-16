@@ -412,7 +412,7 @@ router.delete(
 
 		try {
 			const jiraClient = await getJiraClient(jiraHost, Number(githubInstallationId), req.log);
-			req.log.info(`Deleting dev info for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
+			req.log.info({jiraHost, githubInstallationId}, `Deleting dev info`);
 			await jiraClient.devinfo.installation.delete(githubInstallationId);
 			res.status(200).send(`devinfo deleted for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
 		} catch (err) {

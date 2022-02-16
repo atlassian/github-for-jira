@@ -107,7 +107,7 @@ export default class Subscription extends Sequelize.Model {
 
 		if (inactiveForSeconds) {
 
-			const xSecondsAgo = new Date(new Date().getTime() - (inactiveForSeconds * 1000));
+			const xSecondsAgo = new Date(Date.now() - (inactiveForSeconds * 1000));
 
 			andFilter.push({
 				updatedAt: {

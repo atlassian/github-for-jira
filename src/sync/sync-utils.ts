@@ -1,8 +1,8 @@
 import RepoSyncState from "../models/reposyncstate";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 import Subscription from "../models/subscription";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import Logger from 'bunyan';
+import Logger from "bunyan";
 
 export async function findOrStartSync(
 	subscription: Subscription,

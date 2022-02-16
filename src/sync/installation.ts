@@ -18,7 +18,7 @@ import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { Hub } from "@sentry/types/dist/hub";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import { RateLimitingError } from "../github/client/errors";
 import { RateLimitingError as OldRateLimitingError} from "../config/enhance-octokit";

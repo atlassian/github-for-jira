@@ -18,11 +18,6 @@ describe("getInstallations", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Subscription.destroy({ truncate: true });
-		await RepoSyncState.destroy({ truncate: true });
-	});
-
 	it("should return no success or failed connections if no subscriptions given", async () => {
 		expect(await getInstallations(client, [])).toEqual({
 			fulfilled: [],

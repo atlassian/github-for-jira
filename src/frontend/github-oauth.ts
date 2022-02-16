@@ -42,7 +42,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 		// Create unique state for each oauth request
 		const state = crypto.randomBytes(8).toString("hex");
 
-		req.session["timestamp_before_oauth"] = new Date().getTime();
+		req.session["timestamp_before_oauth"] = Date.now();
 
 		// Save the redirect that may have been specified earlier into session to be retrieved later
 		req.session[state] =
@@ -77,7 +77,7 @@ export default (opts: OAuthOptions): GithubOAuth => {
 
 		const timestampBefore = req.session["timestamp_before_oauth"] as number;
 		if (timestampBefore) {
-			const timestampAfter = new Date().getTime();
+			const timestampAfter = Date.now();
 			tracer.trace(`callback called after spending ${timestampAfter - timestampBefore} ms on GitHub servers`);
 		}
 

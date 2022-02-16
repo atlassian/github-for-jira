@@ -5,12 +5,11 @@ import { createWebhookApp } from "../utils/probot";
 import { getLogger } from "../../src/config/logger";
 import { Installation, Subscription } from "../../src/models";
 import { Application } from "probot";
-import { start, stop } from "../../src/worker/startup";
 import waitUntil from "../utils/waitUntil";
-import sqsQueues from "../../src/sqs/queues";
-import {pushQueueMessageHandler, PushQueueMessagePayload} from "../../src/sqs/push";
-import {Context} from "../../src/sqs/index";
-import {Message} from "aws-sdk/clients/sqs";
+import { pushQueueMessageHandler, PushQueueMessagePayload } from "../../src/sqs/push";
+import { Context } from "../../src/sqs/index";
+import { Message } from "aws-sdk/clients/sqs";
+import { sqsQueues } from "../../src/sqs/queues";
 
 const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
 	payload: createJobData(payload, jiraHost),
@@ -20,10 +19,7 @@ const createMessageProcessingContext = (payload, jiraHost: string): Context<Push
 	lastAttempt: false
 });
 
-
 describe("Push Webhook", () => {
-
-	const realDateNow = Date.now.bind(global.Date);
 
 	let app: Application;
 	beforeEach(async () => {
@@ -41,92 +37,21 @@ describe("Push Webhook", () => {
 		});
 	});
 
-
-
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-		//We have to restore Date.now to avoid errors in SQS Client.
-		//SQS Client uses Date.now and fails if it is "undefined"
-		//Hence we mock Date with jest, it will be returning undefined when we clean all mocks
-		//Some async operations might still be running (like message deletion) even after the test is finished.
-		//TODO Instead stop the queue every time after each test. However it would be possible only when we get rid of Redis because bull queues are not restartable
-		global.Date.now = realDateNow;
-	});
-
-	// TODO: figure out how to tests with queue
-	describe.skip("add to push queue", () => {
-		beforeEach(() => {
-			process.env.REDIS_URL = "redis://test";
-		});
-
-		it("should add push event to the queue if Jira issue keys are present", async () => {
-			const event = require("../fixtures/push-basic.json");
-
-			await expect(app.receive(event)).toResolve();
-
-			// TODO: find a way to test queues
-			const queues = [];
-			expect(queues.push).toBeCalledWith(
-				{
-					repository: event.payload.repository,
-					shas: [{ id: "test-commit-id", issueKeys: ["TEST-123"] }],
-					jiraHost,
-					installationId: event.payload.installation.id
-				}, { removeOnFail: true, removeOnComplete: true }
-			);
-		});
-
-		it("should not add push event to the queue if there are no Jira issue keys present", async () => {
-			const event = require("../fixtures/push-no-issues.json");
-			await app.receive(event);
-		});
-
-		it("should handle payloads where only some commits have issue keys", async () => {
-			const event = require("../fixtures/push-mixed.json");
-			await app.receive(event);
-			// TODO: fix this queues.
-			const queues = [];
-			expect(queues.push).toBeCalledWith(
-				{
-					repository: event.payload.repository,
-					shas: [
-						{ id: "test-commit-id-1", issueKeys: ["TEST-123", "TEST-246"] },
-						{ id: "test-commit-id-2", issueKeys: ["TEST-345"] }
-					],
-					jiraHost,
-					installationId: event.payload.installation.id
-				}, { removeOnFail: true, removeOnComplete: true }
-			);
-		});
-	});
-
 	describe("process push payloads", () => {
 
 		beforeEach(async () => {
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 			await Subscription.create({
 				gitHubInstallationId: 1234,
 				jiraHost,
 				jiraClientKey: "myClientKey"
 			});
-
-			githubNock
-				.post("/app/installations/1234/access_tokens")
-				.optionally() // TODO: need to remove optionally and make it explicit
-				.reply(200, {
-					token: "token",
-					expires_at: new Date().getTime() + 1_000_000
-				});
-		});
-
-		afterEach(async () => {
-			await Subscription.destroy({ truncate: true });
 		});
 
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
 
+			githubAccessTokenNock(1234);
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/api/commit-no-username.json"));
@@ -192,6 +117,7 @@ describe("Push Webhook", () => {
 		it("should only send 10 files if push contains more than 10 files changed", async () => {
 			const event = require("../fixtures/push-multiple.json");
 
+			githubAccessTokenNock(1234);
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
 				.reply(200, require("../fixtures/more-than-10-files.json"));
@@ -327,6 +253,7 @@ describe("Push Webhook", () => {
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
 			const event = require("../fixtures/push-no-username.json");
 
+			githubAccessTokenNock(1234);
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-merge-commit.json"));
 
@@ -390,6 +317,7 @@ describe("Push Webhook", () => {
 		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
 			const event = require("../fixtures/push-no-username.json");
 
+			githubAccessTokenNock(1234);
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-non-merge-commit"));
 
@@ -452,36 +380,28 @@ describe("Push Webhook", () => {
 	});
 
 	describe("end 2 end tests with queue", () => {
-		beforeEach(async () => {
-			Date.now = jest.fn(() => 12345678);
-		});
-
 		beforeAll(async () => {
-			Date.now = jest.fn(() => 12345678);
-			//Start worker node for queues processing
-			await start();
+			await sqsQueues.branch.purgeQueue();
 		});
 
-		afterAll(async () => {
-			//Stop worker node
-			await stop();
-			await sqsQueues.push.waitUntilListenerStopped();
+		beforeEach(async () => {
+			mockSystemTime(12345678);
+			await sqsQueues.push.start();
 		});
 
-		function createPushEventAndMockRestRequestsForItsProcessing() {
+		afterEach(async () => {
+			await sqsQueues.push.stop();
+			await sqsQueues.push.purgeQueue();
+		});
+
+		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
 			const event = require("../fixtures/push-no-username.json");
 
-			githubNock
-				.post("/app/installations/1234/access_tokens")
-				.optionally() // TODO: need to remove optionally and make it explicit
-				.reply(200, {
-					token: "token",
-					expires_at: new Date().getTime()
-				});
+			githubAccessTokenNock(1234);
 
 			githubNock
 				.get(`/repos/test-repo-owner/test-repo-name/commits/commit-no-username`)
-				.reply(200, require("../fixtures/push-non-merge-commit"));
+				.reply(200, require("../fixtures/push-non-merge-commit.json"));
 
 			// flag property should not be present
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
@@ -534,11 +454,6 @@ describe("Push Webhook", () => {
 				],
 				properties: { installationId: 1234 }
 			}).reply(200);
-			return event;
-		}
-
-		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
-			const event = createPushEventAndMockRestRequestsForItsProcessing();
 
 			await expect(app.receive(event)).toResolve();
 
