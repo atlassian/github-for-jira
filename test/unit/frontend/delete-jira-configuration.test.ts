@@ -39,12 +39,12 @@ describe("DELETE /jira/configuration", () => {
 
 		jiraNock
 			.delete("/rest/builds/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: "15" })
+			.query({ gitHubInstallationId: subscription.githubInstallationId })
 			.reply(200, "OK");
 
 		jiraNock
 			.delete("/rest/deployments/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: "15" })
+			.query({ gitHubInstallationId: subscription.githubInstallationId })
 			.reply(200, "OK");
 
 		// TODO: use supertest for this
