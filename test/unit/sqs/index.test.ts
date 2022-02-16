@@ -51,13 +51,12 @@ describe("SqsQueue tests", () => {
 
 		let statsdIncrementSpy;
 
-		beforeEach(() => {
-
+		beforeEach(async () => {
 			testLogger.info("Running test: [" + expect.getState().currentTestName + "]")
 
 			statsdIncrementSpy = jest.spyOn(statsd, "increment");
 			queue = createSqsQueue(10);
-			queue.sqs.purgeQueue();
+			await queue.sqs.purgeQueue();
 			queue.start();
 
 			mockErrorHandler.mockImplementation(() : ErrorHandlingResult => {
@@ -67,14 +66,12 @@ describe("SqsQueue tests", () => {
 
 		afterEach(async () => {
 			statsdIncrementSpy.mockRestore();
-			queue.stop();
-			queue.sqs.purgeQueue();
-			await queue.waitUntilListenerStopped();
+			await queue.stop();
+			await queue.sqs.purgeQueue();
 			testLogger.info("Finished test cleanup for [" + expect.getState().currentTestName + "]")
 		});
 
 		it("Message gets received", (done: DoneCallback) => {
-
 			const testPayload = generatePayload();
 
 			mockRequestHandler.mockImplementation((context: Context<TestMessage>) => {
@@ -94,11 +91,9 @@ describe("SqsQueue tests", () => {
 				done();
 			});
 
-			queue.stop();
+			await queue.stop();
 
 			//delaying to make sure all asynchronous invocations inside the queue will be finished and it will stop
-			await queue.waitUntilListenerStopped();
-
 			queue.start();
 
 			queue.sendMessage(testPayload);
@@ -279,9 +274,8 @@ describe("SqsQueue tests", () => {
 		});
 
 		afterEach(async () => {
-			queue.stop();
-			queue.sqs.purgeQueue();
-			await queue.waitUntilListenerStopped();
+			await queue.stop();
+			await queue.sqs.purgeQueue();
 		});
 
 		it("Timeout works", async (done: DoneCallback) => {

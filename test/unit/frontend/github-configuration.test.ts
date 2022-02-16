@@ -4,7 +4,7 @@ import SubscriptionClass from "../../../src/models/subscription";
 import FrontendApp from "../../../src/frontend/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
-import { getSignedCookieHeader } from "../util/cookies";
+import { getSignedCookieHeader } from "../../utils/cookies";
 import { ViewerRepositoryCountQuery } from "../../../src/github/client/github-queries";
 
 jest.mock("../../../src/config/feature-flags");
@@ -56,11 +56,6 @@ describe("Github Configuration", () => {
 			getSignedJsonWebToken: () => "token",
 			getInstallationAccessToken: async () => "access-token"
 		}));
-	});
-
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
 	});
 
 	describe("Github Token Validation", () => {
@@ -140,12 +135,7 @@ describe("Github Configuration", () => {
 				.get("/user")
 				.reply(200, { login: "test-user" });
 
-			githubNock
-				.post(`/app/installations/${sub.gitHubInstallationId}/access_tokens`)
-				.reply(200, {
-					token: "token",
-					expires_at: new Date().getTime() + 999999
-				});
+			githubAccessTokenNock(sub.gitHubInstallationId);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
@@ -223,12 +213,7 @@ describe("Github Configuration", () => {
 				.get("/user")
 				.reply(200, { login: "test-user" });
 
-			githubNock
-				.post(`/app/installations/${sub.gitHubInstallationId}/access_tokens`)
-				.reply(200, {
-					token: "token",
-					expires_at: new Date().getTime() + 999999
-				});
+			githubAccessTokenNock(sub.gitHubInstallationId);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
@@ -282,18 +267,24 @@ describe("Github Configuration", () => {
 	});
 
 	describe("#POST", () => {
-		it("should return a 401 if no GitHub token present in session", () =>
-			supertest(frontendApp)
+		it("should return a 401 if no GitHub token present in session", async () => {
+			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({})
 				.set(
 					"Cookie",
 					getSignedCookieHeader({ jiraHost })
 				)
-				.expect(401));
+				.expect(401);
+		});
 
-		it("should return a 401 if no Jira host present in session", () =>
-			supertest(frontendApp)
+		it("should return a 401 if no Jira host present in session", async () => {
+			githubNock
+				.get("/")
+				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
+				.reply(200);
+
+			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({})
 				.set(
@@ -302,7 +293,8 @@ describe("Github Configuration", () => {
 						githubToken: "test-github-token"
 					})
 				)
-				.expect(401));
+				.expect(401);
+		});
 
 		it("should return a 401 if the user doesn't have access to the requested installation ID", async () => {
 			// This is for github token validation check

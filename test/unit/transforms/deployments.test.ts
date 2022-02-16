@@ -9,7 +9,7 @@ import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 jest.mock("../../../src/config/feature-flags");
 
 describe("deployment environment mapping", () => {
-	test("classifies known environments correctly", () => {
+	it("classifies known environments correctly", () => {
 		// Development
 		expect(mapEnvironment("development")).toBe("development");
 		expect(mapEnvironment("dev")).toBe("development");
@@ -47,7 +47,7 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("live")).toBe("production");
 	});
 
-	test("classifies known environments with prefixes and/or postfixes correctly", () => {
+	it("classifies known environments with prefixes and/or postfixes correctly", () => {
 		expect(mapEnvironment("prod-east")).toBe("production");
 		expect(mapEnvironment("prod_east")).toBe("production");
 		expect(mapEnvironment("east-staging")).toBe("staging");
@@ -59,16 +59,16 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("prd (eu-central)")).toBe("production");
 	});
 
-	test("ignores case", () => {
+	it("ignores case", () => {
 		expect(mapEnvironment("Staging")).toBe("staging");
 		expect(mapEnvironment("PROD-east")).toBe("production");
 	});
 
-	test("ignores diacritics", () => {
+	it("ignores diacritics", () => {
 		expect(mapEnvironment("stàging")).toBe("staging");
 	});
 
-	test("classifies unknown environment names as 'unmapped'", () => {
+	it("classifies unknown environment names as 'unmapped'", () => {
 		expect(mapEnvironment("banana-east")).toBe("unmapped");
 		expect(mapEnvironment("internet")).toBe("unmapped");
 		expect(mapEnvironment("製造")).toBe("unmapped");

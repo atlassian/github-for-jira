@@ -5,7 +5,7 @@ import { CustomContext } from "./middleware";
 import _ from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import getJiraClient from "../jira/client";
@@ -23,10 +23,10 @@ export const createBranch = async (
 		await sqsQueues.branch.sendMessage({
 			jiraHost: jiraClient.baseURL,
 			installationId: githubInstallationId,
-			webhookReceived: new Date().getTime(),
+			webhookReceived: Date.now(),
 			webhookId: context.id,
 			webhookPayload
-		})
+		});
 	} else {
 
 		const jiraPayload = await transformBranch(context.github, webhookPayload);
@@ -69,7 +69,7 @@ export const processBranch = async (
 	const logger = rootLogger.child({
 		webhookId: webhookId,
 		installationId,
-		webhookReceived: webhookReceivedDate,
+		webhookReceived: webhookReceivedDate
 	});
 
 	if (!jiraPayload) {
@@ -81,7 +81,7 @@ export const processBranch = async (
 	}
 
 	logger.info(
-		`Sending jira update for create branch event for hostname: ${jiraHost}`
+		`Sending jira update for create branch event`
 	);
 
 	const jiraClient = await getJiraClient(
@@ -98,7 +98,7 @@ export const processBranch = async (
 		logger,
 		jiraResponse?.status
 	);
-}
+};
 
 export const deleteBranch = async (context: CustomContext, jiraClient): Promise<void> => {
 	const payload: WebhookPayloadDelete = context.payload;

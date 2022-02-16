@@ -7,7 +7,7 @@ import {JiraCommit} from "../interfaces/jira";
 import _ from "lodash";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
 import {isBlocked} from "../config/feature-flags";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 import {PushQueueMessagePayload} from "../sqs/push";
 import GitHubClient from "../github/client/github-client";
 

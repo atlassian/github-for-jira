@@ -12,7 +12,7 @@ export const createApplication = () => {
 			privateKey: findPrivateKey() || ""
 		}),
 		cache: caching({
-			store: "memory",
+			store: "none", // Remove all caching for probot during tests
 			ttl: 60 * 60 // 1 hour
 		}),
 		throttleOptions: {
