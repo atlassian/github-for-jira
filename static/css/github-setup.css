@@ -12,13 +12,20 @@
 
 .githubSetup__githubOrgConfirmation__selectedOrgContainer {
   display: flex;
-  justify-content: space-evenly;
-  margin: 1em auto 0;
+  justify-content: center;
+  margin: 1.5em auto 0;
   width: 40%;
 }
 
+.githubSetup__githubOrgConfirmation__avatar {
+  border-radius: 2px;
+  margin-right: 0.4em;
+  transform: scale(1.2);
+}
+
 .githubSetup__githubOrgConfirmation__orgName {
-  font-weight: bold;
+  font-weight: 500;
+  margin-left: 0.4em;
 }
 
 .githubSetup__container {

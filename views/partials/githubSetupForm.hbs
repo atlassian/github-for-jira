@@ -6,9 +6,13 @@
   <input type="hidden" name="_csrf" value="{{csrfToken}}" />
 
   <div class="githubSetup__form__fieldGroup">
-    <label class="githubSetup__inputLabel" for="{{id}}">
+    <legend class="githubSetup__inputLabel" for="{{id}}">
 			What is your Jira Cloud site?
-		</label>
+		</legend>
+    <label>
+      You will be redirected to the marketplace on your Jira Cloud site to install the
+      GitHub for Jira app
+    </label>
     <div class="githubSetup__form__inputContainer">
       <input
         class="githubSetup__form__input {{className}}"
