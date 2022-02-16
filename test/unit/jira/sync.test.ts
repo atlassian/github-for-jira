@@ -5,12 +5,14 @@ import { RootRouter } from "../../../src/routes/router";
 import supertest from "supertest";
 import { sqsQueues } from "../../../src/sqs/queues";
 import { getLogger } from "../../../src/config/logger";
+import { encodeSymmetric } from "atlassian-jwt";
 
 jest.mock("../../../src/sqs/queues");
 
 describe("sync", () => {
 	let app: Express;
 	let installation: InstallationClass;
+	let jwt:string;
 
 	beforeEach(async () => {
 		installation = await Installation.install({
@@ -31,11 +33,20 @@ describe("sync", () => {
 			next();
 		});
 		app.use(RootRouter);
+
+		jwt = encodeSymmetric({
+			qsh: "context-qsh",
+			iss: jiraHost
+		}, installation.sharedSecret);
 	});
 
 	it("should return 200 on correct post for /jira/sync", async () => {
 		return supertest(app)
 			.post("/jira/sync")
+			.query({
+				jwt,
+				xdm_e: jiraHost
+			})
 			.send({
 				installationId: installation.id,
 				jiraHost,

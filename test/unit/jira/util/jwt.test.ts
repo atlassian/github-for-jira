@@ -63,7 +63,7 @@ describe("jwt", () => {
 			},
 			method: "GET",
 			path: "/configuration",
-			originalUrl: "/jira/configuration"
+			baseUrl: "/jira"
 		};
 	};
 
