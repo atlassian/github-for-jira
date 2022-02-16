@@ -5,61 +5,60 @@ import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { sqsQueues } from "../sqs/queues";
-import GitHubClient from "../github/client/github-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
-import { bool } from "aws-sdk/clients/signer";
-import { Repository } from "@octokit/graphql-schema";
+// import GitHubClient from "../github/client/github-client";
+// import { getCloudInstallationId } from "../github/client/installation-id";
+// import { Repository } from "@octokit/graphql-schema";
 
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 
-const getAllRepositories = async (github, hasNextPage: bool, cursor?: string, repositories: Repository[] = []): Promise<Repositories> => {
-	if (!hasNextPage) {
-		return repositories.reduce((obj, repository) => {
-			obj[repository.id] = { repository };
-			return obj;
-		}, {});
-	}
+// const getAllRepositories = async (github, hasNextPage: bool, cursor?: string, repositories: Repository[] = []): Promise<Repositories> => {
+// 	if (!hasNextPage) {
+// 		return repositories.reduce((obj, repository) => {
+// 			obj[repository.id] = { repository };
+// 			return obj;
+// 		}, {});
+// 	}
 
-	const result = await github.getRepositoriesPage(1, cursor);
-	const edges = result?.viewer?.repositories?.edges || [];
-	const nodes = edges.map(({ node: item }) => item);
-	const repos = [...repositories, ...nodes];
+// 	const result = await github.getRepositoriesPage(1, cursor);
+// 	const edges = result?.viewer?.repositories?.edges || [];
+// 	const nodes = edges.map(({ node: item }) => item);
+// 	const repos = [...repositories, ...nodes];
 
-	return getAllRepositories(github, result?.viewer?.repositories?.pageInfo?.hasNextPage, result?.viewer?.repositories?.pageInfo?.endCursor, repos);
-}
+// 	return getAllRepositories(github, result?.viewer?.repositories?.pageInfo?.hasNextPage, result?.viewer?.repositories?.pageInfo?.endCursor, repos);
+// }
 
-export const discovery = async (job, logger: LoggerWithTarget) => {
-	const startTime = new Date().toISOString();
-	const { jiraHost, installationId } = job.data;
+// export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
+// 	const startTime = new Date().toISOString();
+// 	const { jiraHost, installationId } = job.data;
 
-	const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
+// 	const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
 
-	// Return early if no subscription
-	if (!subscription) {
-		logger.info({ jiraHost, installationId }, "Subscription has been removed, ignoring job.");
-		return;
-	}
+// 	// Return early if no subscription
+// 	if (!subscription) {
+// 		logger.info({ jiraHost, installationId }, "Subscription has been removed, ignoring job.");
+// 		return;
+// 	}
 
-	const github =  new GitHubClient(getCloudInstallationId(installationId), logger);
-	const repos = await getAllRepositories(github, true);
+// 	const github =  new GitHubClient(getCloudInstallationId(installationId), logger);
+// 	const repos = await getAllRepositories(github, true);
 
-	// todo the update sync state might be able to derive 0 of 0 is complete????
-	if (Object.keys(repos).length === 0) {
-		await subscription.update({
-			syncStatus: SyncStatus.COMPLETE
-		});
-		return;
-	}
+// 	// todo the update sync state might be able to derive 0 of 0 is complete????
+// 	if (Object.keys(repos).length === 0) {
+// 		await subscription.update({
+// 			syncStatus: SyncStatus.COMPLETE
+// 		});
+// 		return;
+// 	}
 
-	await subscription.updateSyncState({
-		numberOfSyncedRepos: 0,
-		repos
-	});
+// 	await subscription.updateSyncState({
+// 		numberOfSyncedRepos: 0,
+// 		repos
+// 	});
 
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime }, 0, logger);
-};
+// 	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime }, 0, logger);
+// };
 
-export const discoveryOld = (app: Application) => async (job, logger: LoggerWithTarget) => {
+export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
 	const github = await app.auth(installationId);

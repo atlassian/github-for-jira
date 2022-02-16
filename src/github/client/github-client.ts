@@ -12,8 +12,6 @@ import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, GetRepositoriesQuery, GetRepositoriesResponse } from "./github-queries";
 import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
-import { Repository } from "@octokit/graphql-schema";
-import { RepoSyncState } from "../../models";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
@@ -183,8 +181,6 @@ export default class GitHubClient {
 				per_page: perPage,
 				cursor
 			});
-			console.log("What the response");
-			console.log(response?.data?.data);
 
 		return response?.data?.data;
 	}
