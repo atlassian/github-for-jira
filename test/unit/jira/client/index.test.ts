@@ -55,15 +55,15 @@ describe("Test getting a jira client", () => {
 	});
 
 	it("Should delete devinfo, builds, and deployments", async () => {
-		jiraNock.delete(`/rest/devinfo/0.10/bulkByProperties`).query({
+		jiraNock.delete("/rest/devinfo/0.10/bulkByProperties").query({
 			installationId: "12345"
 		}).reply(202);
 
-		jiraNock.delete(`/rest/builds/0.1/bulkByProperties`).query({
+		jiraNock.delete("/rest/builds/0.1/bulkByProperties").query({
 			gitHubInstallationId: "12345"
 		}).reply(202);
 
-		jiraNock.delete(`/rest/deployments/0.1/bulkByProperties`).query({
+		jiraNock.delete("/rest/deployments/0.1/bulkByProperties").query({
 			gitHubInstallationId: "12345"
 		}).reply(202);
 
