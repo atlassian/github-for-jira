@@ -153,13 +153,39 @@ async function getJiraClient(
 							}
 						}
 					),
-				delete: (gitHubInstallationId: string | number) =>
-					instance.delete(`/rest/devinfo/0.10/bulkByProperties`,
-						{
-							params: {
-								installationId: gitHubInstallationId
+				delete: async (gitHubInstallationId: string | number) =>
+					Promise.all([
+
+						// We are sending devinfo events with the property "installationId", so we delete by this property.
+						instance.delete(
+							"/rest/devinfo/0.10/bulkByProperties",
+							{
+								params: {
+									installationId: gitHubInstallationId
+								}
 							}
-						})
+						),
+
+						// We are sending build events with the property "gitHubInstallationId", so we delete by this property.
+						instance.delete(
+							"/rest/builds/0.1/bulkByProperties",
+							{
+								params: {
+									gitHubInstallationId
+								}
+							}
+						),
+
+						// We are sending deployments events with the property "gitHubInstallationId", so we delete by this property.
+						instance.delete(
+							"/rest/deployments/0.1/bulkByProperties",
+							{
+								params: {
+									gitHubInstallationId
+								}
+							}
+						),
+					])
 			},
 			pullRequest: {
 				delete: (repositoryId: string, pullRequestId: string) =>

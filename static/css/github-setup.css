@@ -33,6 +33,14 @@
   width: 500px;
 }
 
+.githubSetup__form__header {
+  font-size: 1.4rem;
+}
+
+.githubSetup__formInfo {
+  margin: 1em auto;
+}
+
 .githubSetup__form__fieldGroup > .githubSetup__inputLabel {
   color: #172b4d;
   font-size: 1.2rem;
@@ -42,7 +50,7 @@
 .githubSetup__form__inputContainer {
   align-items: center;
   display: flex;
-  margin: 1em auto 0.5em;
+  margin: 0.5em auto 0.5em;
 }
 
 .githubSetup__form__inputContainer > .githubSetup__form__input,
@@ -50,7 +58,7 @@
   -webkit-text-fill-color: #262b31;
   -webkit-box-shadow: 0 0 0 1000px #fff inset;
   background-color: #fff;
-  border: 2px solid #4c9aff;
+  border: 2px solid #dfe1e6;
   border-radius: 3.01px;
   box-shadow: 0 0 0 1000px #fff inset;
   box-sizing: border-box;
@@ -72,7 +80,7 @@
 .githubSetup__form__inputContainer > .githubSetup__form__input:focus-within,
 .githubSetup__form__inputContainer > .githubSetup__form__input:focus-visible,
 .githubSetup__form__inputContainer > .githubSetup__form__input:target {
-  border: 2px solid #4c9aff;
+  border: 2px solid #dfe1e6;
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
@@ -177,6 +185,7 @@
   align-items: center;
   display: flex;
   justify-content: flex-end;
+  margin-top: 2em;
 }
 
 .githubSetup__form__errorMessage__container {

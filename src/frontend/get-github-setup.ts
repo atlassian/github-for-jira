@@ -5,24 +5,29 @@ import { Installation } from "../models";
 /*
 	Handles redirects for both the installation flow from Jira and
 	the installation flow from GH.
-	- From Jira: user has already installed the app and is redirected to the connect an org pg
+	- From Jira: user has already installed but wants to connect to an org not listed. Ater selecting an org in GH and giving repo permissions:
+		- they use the jiraHost we have in the cookie, connect, and are redirected to the GH config page
+		- they choose to enter an alternate jiraHost and are redirected to marketplace
 	- From GH:
-			- If we have the users Jira host, redirect to marketplace.
-			- Otherwise, render the setup page.
+		- If we have the users Jira host, redirect to marketplace.
+		- Otherwise, render the setup page (POST).
 */
 export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
 	const { jiraHost } = res.locals;
-
-	const installationId = req.originalUrl.split("=")[1].split("&")[0]
-	let redirectUrl = getJiraMarketplaceUrl(jiraHost);
-
 	const {	github, client } = res.locals;
 
 	const { data: { installations } } = await github.apps.listInstallationsForAuthenticatedUser();
 	const { data: info } = await client.apps.getAuthenticated();
 
+	const installationId = req.query.installation_id;
 	const installation = installations.filter((item) => item.id === Number(installationId));
+
+	if (installation.length === 0) {
+		throw new Error(`Error retrieving installation:${installationId}. App not installed on org.`);
+	}
+
+	let redirectUrl = getJiraMarketplaceUrl(jiraHost);
 
 	// If we know enough about user and site, redirect to the app
 	if (jiraHost && await jiraSiteExists(jiraHost) && await Installation.getForHost(jiraHost)) {
@@ -36,6 +41,8 @@ export default async (req: Request, res: Response): Promise<void> => {
 	}
 
 	const hasJiraHost = !!jiraHost;
+	const { account } = installation[0];
+	const { login, avatar_url } = account;
 
 	res.render("github-setup.hbs", {
 		csrfToken: req.csrfToken(),
@@ -44,9 +51,9 @@ export default async (req: Request, res: Response): Promise<void> => {
 		redirectUrl,
 		hasJiraHost,
 		clientKey: jiraInstallation?.clientKey,
-		orgName: installation[0]?.account?.login,
-		avatar: installation[0]?.account?.avatar_url,
+		orgName: login,
+		avatar: avatar_url,
 		html_url: info.html_url,
-		id: installationId // can't use this is they switch (reset id and send to marketplace)
+		id: installationId
 	});
 };

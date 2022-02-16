@@ -1,55 +1,57 @@
-<form
-  class="githubSetup__form aui"
-  method="post"
-  action="/github/setup"
->
-  <input type="hidden" name="_csrf" value="{{csrfToken}}" />
+<div class="githubSetup__form__container">
+  <h3 class="githubSetup__form__header">
+		What is your Jira Cloud site?
+	</h3>
+  <p class="githubSetup__formInfo">
+    You will be redirected to the marketplace on your Jira Cloud site to install the
+    GitHub for Jira app
+  </p>
+  <form
+    class="githubSetup__form aui"
+    method="post"
+    action="/github/setup"
+  >
+    <input type="hidden" name="_csrf" value="{{csrfToken}}" />
 
-  <div class="githubSetup__form__fieldGroup">
-    <legend class="githubSetup__inputLabel" for="{{id}}">
-			What is your Jira Cloud site?
-		</legend>
-    <label>
-      You will be redirected to the marketplace on your Jira Cloud site to install the
-      GitHub for Jira app
-    </label>
-    <div class="githubSetup__form__inputContainer">
-      <input
-        class="githubSetup__form__input {{className}}"
-        type="text"
-        id="{{id}}"
-        name="{{id}}"
-        placeholder="Site name"
-        aria-label="Jira site"
-        value="{{jiraDomain}}"
-        autofocus
-      />
-      <span class="githubSetup__form__jiraSiteSuffix">
-        .atlassian.net
-      </span>
+    <div class="githubSetup__form__fieldGroup">
+      <div class="githubSetup__form__inputContainer">
+        <input
+          class="githubSetup__form__input {{className}}"
+          type="text"
+          id="{{id}}"
+          name="{{id}}"
+          placeholder="Site name"
+          aria-label="Jira site"
+          value="{{jiraDomain}}"
+          autofocus
+        />
+        <span class="githubSetup__form__jiraSiteSuffix">
+          .atlassian.net
+        </span>
+      </div>
     </div>
-  </div>
 
-  {{> githubSetupFormError errorMessage="Do not include http or https in the site name" hiddenClass="hidden" }}
+    {{> githubSetupFormError errorMessage="Do not include http or https in the site name" hiddenClass="hidden" }}
 
-  {{#if error}}
-     {{> githubSetupFormError errorMessage=error hiddenClass="" }}
-  {{/if}}
-
-  <div class="githubSetup__form__modalButtons">
-    {{#if (isModal id)}}
-      <p class="githubSetup__form__cancelBtn" id="modal-close">
-        Cancel
-      </p>
+    {{#if error}}
+       {{> githubSetupFormError errorMessage=error hiddenClass="" }}
     {{/if}}
-    <button
-      class="githubSetup__form__submitBtn aui-button aui-button-primary"
-      type="submit"
-      id="{{id}}SubmitBtn"
-      aria-disabled="true"
-      disabled
-    >
-      Continue
-    </button>
-  </div>
-</form>
+
+    <div class="githubSetup__form__modalButtons">
+      {{#if (isModal id)}}
+        <p class="githubSetup__form__cancelBtn" id="modal-close">
+          Cancel
+        </p>
+      {{/if}}
+      <button
+        class="githubSetup__form__submitBtn aui-button aui-button-primary"
+        type="submit"
+        id="{{id}}SubmitBtn"
+        aria-disabled="true"
+        disabled
+      >
+        Continue
+      </button>
+    </div>
+  </form>
+</div>
