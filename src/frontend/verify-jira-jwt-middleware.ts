@@ -14,7 +14,11 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 		return;
 	}
 
+	console.log('jiraHost')
+	console.log(jiraHost)
 	const installation = await Installation.getForHost(jiraHost);
+	console.log('installation')
+	console.log(installation)
 
 	if (!installation) {
 		return next(new Error("Not Found"));

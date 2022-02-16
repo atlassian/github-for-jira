@@ -5,50 +5,74 @@ import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { sqsQueues } from "../sqs/queues";
-
 import GitHubClient from "../github/client/github-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
+import { bool } from "aws-sdk/clients/signer";
+import { Repository } from "@octokit/graphql-schema";
 
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 
-export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
+const getAllRepositories = async (github, hasNextPage: bool, cursor?: string, repositories: Repository[] = []): Promise<Repositories> => {
+	if (!hasNextPage) {
+		return repositories.reduce((obj, repository) => {
+			obj[repository.id] = { repository };
+			return obj;
+		}, {});
+	}
+
+	const result = await github.getRepositoriesPage(1, cursor);
+	const edges = result?.viewer?.repositories?.edges || [];
+	const nodes = edges.map(({ node: item }) => item);
+	const repos = [...repositories, ...nodes];
+
+	return getAllRepositories(github, result?.viewer?.repositories?.pageInfo?.hasNextPage, result?.viewer?.repositories?.pageInfo?.endCursor, repos);
+}
+
+export const discovery = async (job, logger: LoggerWithTarget) => {
+	const startTime = new Date().toISOString();
+	const { jiraHost, installationId } = job.data;
+
+	const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
+
+	// Return early if no subscription
+	if (!subscription) {
+		logger.info({ jiraHost, installationId }, "Subscription has been removed, ignoring job.");
+		return;
+	}
+
+	const github =  new GitHubClient(getCloudInstallationId(installationId), logger);
+	const repos = await getAllRepositories(github, true);
+
+	// todo the update sync state might be able to derive 0 of 0 is complete????
+	if (Object.keys(repos).length === 0) {
+		await subscription.update({
+			syncStatus: SyncStatus.COMPLETE
+		});
+		return;
+	}
+
+	await subscription.updateSyncState({
+		numberOfSyncedRepos: 0,
+		repos
+	});
+
+	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime }, 0, logger);
+};
+
+export const discoveryOld = (app: Application) => async (job, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
 	const github = await app.auth(installationId);
 	enhanceOctokit(github);
 
 	try {
-
-		const repositoriesOld = await github.paginate(
-			github.apps.listRepos.endpoint.merge({ per_page: 1 }),
-			(res) => {
-				return res.data.repositories;
-			}
+		const repositories = await github.paginate(
+			github.apps.listRepos.endpoint.merge({ per_page: 100 }),
+			(res) => res.data.repositories
 		);
-
-
-
-		// Iterate thru request to get all repos
-		// 
-		// feature flag to use for USE_NEW_GH_CLIENT_FOR_DISCOVERY_QUEUE
-		// create new LD
-		// 
-		// try admin endpoint ..... 
-
-		// NEW GH CLIENT ==========================================================================
-		const gh = new GitHubClient(getCloudInstallationId(installationId), logger);
-		const repositories = await gh.getAllRepositories();
-		// need to implenent iterator... e.g. handle 1000 repos
-		// ========================================================================================
-
 		logger.info(
 			{ job },
-			`${repositoriesOld.length} Repositories found - Octokit`
-		);
-
-		logger.info(
-			{ job },
-			`${repositories.length} Repositories found - Github client`
+			`${repositories.length} Repositories found`
 		);
 
 		const subscription = await Subscription.getSingleInstallation(
@@ -70,27 +94,10 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 
 		// Store the repository object to prevent doing an additional query in each job
 		// Also, with an object per repository we can calculate which repos are synched or not
-		const reposOld: Repositories = repositoriesOld.reduce((obj, repo) => {
+		const repos: Repositories = repositories.reduce((obj, repo) => {
 			obj[repo.id] = { repository: getRepositorySummary(repo) };
 			return obj;
 		}, {});
-
-
-		const repos: Repositories = repositories.reduce((obj, repository) => {
-			obj[repository.id] = { repository };
-			return obj;
-		}, {});
-
-		logger.info(
-			{ repos: reposOld },
-			"Repositories - Octokit"
-		);
-
-		logger.info(
-			{ repos },
-			"Repositories - Github client"
-		);
-
 		await subscription.updateSyncState({
 			numberOfSyncedRepos: 0,
 			repos

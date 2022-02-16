@@ -9,13 +9,14 @@ query {
 	}
 }`
 
+type RepositoryNode = {
+  node: Repository
+}
 export type GetRepositoriesResponse = {
   viewer: {
     repositories: {
       pageInfo,
-      edges: [
-        node: Repository
-      ]
+      edges: RepositoryNode[]
     }
   }
 };

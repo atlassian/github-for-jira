@@ -1,6 +1,6 @@
 import Logger from "bunyan";
-import {Octokit} from "@octokit/rest";
-import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse} from "axios";
+import { Octokit } from "@octokit/rest";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
@@ -11,8 +11,9 @@ import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, GetRepositoriesQuery, GetRepositoriesResponse } from "./github-queries";
-import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
+import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 import { Repository } from "@octokit/graphql-schema";
+import { RepoSyncState } from "../../models";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
@@ -176,34 +177,16 @@ export default class GitHubClient {
 		});
 	};
 
-	/**
-	 * Lists all repositories per organization.
-	 */
-	public async getAllRepositories(): Promise<Repository[]> {
-		const perPage = 1;
-		let hasNextPage = true;
-		let cursor: string | number | undefined;
-		let edges: any[] = []; // todo proper typeing
+	public async getRepositoriesPage(perPage: number, cursor?: string): Promise<GetRepositoriesResponse> {
+		const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery,
+			{
+				per_page: perPage,
+				cursor
+			});
+			console.log("What the response");
+			console.log(response?.data?.data);
 
-		console.log("TRY 8");
-		while(hasNextPage) {
-			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery,
-				{
-					per_page: perPage,
-					cursor
-				});
-			console.log("called graphql() ===> Response.data");
-			console.log(response.data);
-
-			edges = [...edges, ...response?.data?.data?.viewer?.repositories?.edges];
-			cursor = response?.data?.data?.viewer?.repositories?.pageInfo.endCursor;
-			hasNextPage = response?.data?.data?.viewer?.repositories?.pageInfo.hasNextPage;
-				
-		}
-		const nodes: Repository[] = edges.map(edge => edge.node);
-		console.log("IM RETURNING THIS");
-		console.log(nodes)
-		return nodes;
+		return response?.data?.data;
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
@@ -211,7 +194,6 @@ export default class GitHubClient {
 
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
-
 
 	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string): Promise<GetBranchesResponse> {
 		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,
