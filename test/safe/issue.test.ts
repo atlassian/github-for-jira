@@ -22,11 +22,6 @@ describe("Issue Webhook", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-	});
-
 	describe("issue", () => {
 		describe("created", () => {
 			it("should update the GitHub issue with a linked Jira ticket", async () => {

@@ -78,11 +78,6 @@ describe("API", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
-		await Subscription.destroy({ truncate: true });
-	});
-
 	describe("Authentication", () => {
 		it("should return 404 if no token is provided", () => {
 			return supertest(app)
@@ -269,10 +264,6 @@ describe("API", () => {
 					pullCursor: "12",
 					repoUpdatedAt: new Date(0)
 				});
-			});
-
-			afterEach(async () => {
-				await RepoSyncState.destroy({ truncate: true });
 			});
 
 			it("should return 404 if no installation is found", async () => {

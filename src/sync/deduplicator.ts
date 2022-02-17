@@ -95,7 +95,7 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 				return null;
 			}
 			const flag = JSON.parse(json) as Flag;
-			const isStaled = (new Date().getTime() - flag.timestamp) >= invalidatingTimestamp;
+			const isStaled = (Date.now() - flag.timestamp) >= invalidatingTimestamp;
 			if (isStaled) {
 				return null;
 			}
@@ -110,11 +110,11 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 	async setInProgressFlag(jobKey: string, jobRunnerId: string): Promise<void> {
 		const flag: Flag = {
 			jobRunnerId: jobRunnerId,
-			timestamp: new Date().getTime()
+			timestamp: Date.now()
 		};
 		// We don't want to pollute redis, autoexpire after the flag is not being updated
 		const REDIS_CLEANUP_TIMEOUT = 24 * 3600 * 1000;
-		await this.redis.set(jobKey, JSON.stringify(flag), 'px', REDIS_CLEANUP_TIMEOUT);
+		await this.redis.set(jobKey, JSON.stringify(flag), "px", REDIS_CLEANUP_TIMEOUT);
 	}
 
 	async isJobRunnerLive(jobKey: string, jobRunnerId: string, jobRunnerFlagUpdateTimeoutMsecs: number): Promise<boolean> {
@@ -178,7 +178,7 @@ export class Deduplicator {
 	 *  													 flag was removed.
 	 */
 	async executeWithDeduplication(jobKey: string, jobRunner: () => Promise<void>): Promise<DeduplicatorResult> {
-		const jobRunnerId = 'jobRunnerId-' + uuidv4();
+		const jobRunnerId = "jobRunnerId-" + uuidv4();
 
 		const inProgressFlagWorkerId = await this.inProgressStorage.hasInProgressFlag(jobKey, this.jobRunnerFlagUpdateTimeoutMsecs * 10);
 		if (inProgressFlagWorkerId) {

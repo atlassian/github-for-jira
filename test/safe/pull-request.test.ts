@@ -22,11 +22,6 @@ describe("Pull Request Webhook", () => {
 		});
 	});
 
-	afterEach(async () => {
-		await Subscription.destroy({ truncate: true });
-		await Installation.destroy({ truncate: true });
-	});
-
 	it("should have reviewers on pull request action", async () => {
 		const fixture = require("../fixtures/pull-request-basic.json");
 
@@ -164,7 +159,7 @@ describe("Pull Request Webhook", () => {
 			properties: { installationId: 1234 }
 		}).reply(200);
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});
@@ -218,10 +213,11 @@ describe("Pull Request Webhook", () => {
 			]);
 
 		jiraNock
-			.delete(`/rest/devinfo/0.10/repository/${repository.id}/pull_request/${pullRequest.number}?_updateSequenceId=12345678`)
+			.delete(`/rest/devinfo/0.10/repository/${repository.id}/pull_request/${pullRequest.number}`)
+			.query({ _updateSequenceId: 12345678 })
 			.reply(200);
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});
@@ -229,7 +225,7 @@ describe("Pull Request Webhook", () => {
 	it("should not update the Jira issue if the source repo of a pull_request was deleted", async () => {
 		const fixture = require("../fixtures/pull-request-null-repo.json");
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});
@@ -288,7 +284,7 @@ describe("Pull Request Webhook", () => {
 				html_url: "test-pull-request-author-url"
 			});
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(app.receive(fixture)).toResolve();
 	});
@@ -459,7 +455,7 @@ describe("Pull Request Webhook", () => {
 				})
 				.reply(200);
 
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture[0])).toResolve();
 		});
@@ -572,7 +568,7 @@ describe("Pull Request Webhook", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture[1])).toResolve();
 		});
@@ -737,7 +733,7 @@ describe("Pull Request Webhook", () => {
 					}
 			}).reply(200);
 
-			Date.now = jest.fn(() => 12345678);
+			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture[2])).toResolve();
 		});

@@ -4,7 +4,7 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
 import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import sqsQueues from "../sqs/queues";
+import { sqsQueues } from "../sqs/queues";
 
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 

@@ -3,7 +3,7 @@ import { Installation } from "../../../src/models";
 import FrontendApp from "../../../src/frontend/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
-import { getSignedCookieHeader } from "../util/cookies";
+import { getSignedCookieHeader } from "../../utils/cookies";
 import envVars from "../../../src/config/env";
 
 describe("Github Setup", () => {
@@ -19,10 +19,6 @@ describe("Github Setup", () => {
 			getSignedJsonWebToken: () => "",
 			getInstallationAccessToken: async () => "access-token"
 		}));
-	});
-
-	afterEach(async () => {
-		await Installation.destroy({ truncate: true });
 	});
 
 	describe("#GET", () => {

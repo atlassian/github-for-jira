@@ -26,7 +26,7 @@ describe("pull_request transform", () => {
 
 		fixture.pullRequest.user = null;
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		const data = await transformPullRequest(fixture, pullRequest, null);
 
@@ -97,7 +97,7 @@ describe("pull_request transform", () => {
 			}
 		};
 
-		Date.now = jest.fn(() => 12345678);
+		mockSystemTime(12345678);
 
 		await expect(transformPullRequest(
 			fixture,
