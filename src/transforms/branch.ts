@@ -39,7 +39,7 @@ async function getLastCommit(github: GitHubAPI, webhookPayload: WebhookPayloadCr
 	};
 }
 
-export default async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) => {
+export const transformBranch = async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) => {
 	if (webhookPayload.ref_type !== "branch") return undefined;
 
 	const { ref, repository } = webhookPayload;
