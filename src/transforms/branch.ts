@@ -5,6 +5,7 @@ import _ from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { GitHubAPI } from "probot";
 import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 async function getLastCommit(github: GitHubAPI, webhookPayload: WebhookPayloadCreate, issueKeys: string[]) {
 
@@ -50,6 +51,7 @@ export default async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) =
 	}
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
+	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false);
 
 	// TODO: type this return
 	return {
@@ -58,7 +60,7 @@ export default async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) =
 		url: repository.html_url,
 		branches: [
 			{
-				createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, ref, issueKeys), 
+				createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(repository.html_url, ref, issueKeys) : "", 
 				lastCommit,
 				id: getJiraId(ref),
 				issueKeys,
