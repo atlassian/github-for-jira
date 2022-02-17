@@ -10,14 +10,6 @@ import GitHubClient from "../github/client/github-client";
 import Logger from "bunyan";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import { AppInstallation } from "../config/interfaces";
-import { analyticsClient } from "@atlassiansox/analytics-node-client";
-
-const instance = process.env.INSTANCE_NAME;
-
-const analyticsNodeClient = analyticsClient({
-	env: "dev", // prod, stg or dev
-	product: "jira", // required
-});
 
 interface ConnectedStatus {
 	syncStatus?: string;
@@ -208,24 +200,6 @@ export default async (req: Request, res: Response, next: NextFunction): Promise<
 			info,
 			clientKey: installation.clientKey,
 			login
-		});
-
-		// Send screen event to Redash.
-		await analyticsNodeClient.sendScreenEvent({
-			userId: client.userId,
-			userIdType: "atlassianAccount",
-			tenantIdType: "cloudId",
-			tenantId: installation.clientKey,
-			name: "viewed githubConfigurationScreen",
-			screenEvent: {
-				origin: "web",
-				platform: "web",
-				attributes: {
-					jiraHost: jiraHost,
-					connectedOrgCount: connectedInstallations.length,
-					appKey: `com.github.integration${instance ? `.${instance}` : ""}`
-				}
-			}
 		});
 
 		tracer.trace(`rendered page`);

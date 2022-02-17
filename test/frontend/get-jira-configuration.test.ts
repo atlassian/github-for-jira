@@ -3,6 +3,10 @@ import getJiraConfiguration from "../../src/frontend/get-jira-configuration";
 import { Installation, RepoSyncState, Subscription } from "../../src/models";
 import SubscriptionClass from "../../src/models/subscription";
 
+jest.mock("../../src/frontend/analytics-client");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { sendAnalytics } = require("../../src/frontend/analytics-client");
+
 describe("Jira Configuration Suite", () => {
 	let subscription: SubscriptionClass;
 
@@ -71,5 +75,6 @@ describe("Jira Configuration Suite", () => {
 		expect(data.hasConnections).toBe(true);
 		expect(data.failedConnections.length).toBe(0);
 		expect(data.successfulConnections.length).toBe(1);
+		expect(sendAnalytics).toHaveBeenCalledTimes(1);
 	});
 });
