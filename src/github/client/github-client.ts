@@ -184,7 +184,6 @@ export default class GitHubClient {
 				per_page: perPage,
 				cursor
 			});
-
 		return response?.data?.data;
 	}
 

@@ -15,6 +15,9 @@ const MAX_PAGE_SIZE_REPOSITORY = 100;
 
 const getAllRepositories = async (github, hasNextPage: boolean, cursor?: string, repositories: Repository[] = []): Promise<Repository[]> => {
 	if (!hasNextPage) {
+
+		console.log("retruning FET ALL")
+		console.log(repositories)
 		return repositories;
 	}
 
@@ -22,7 +25,7 @@ const getAllRepositories = async (github, hasNextPage: boolean, cursor?: string,
 	const edges = result?.viewer?.repositories?.edges || [];
 	const nodes = edges.map(({ node: item }) => item);
 	const repos = [...repositories, ...nodes];
-
+	console.log("CALLING FET ALL")
 	return getAllRepositories(github, result?.viewer?.repositories?.pageInfo?.hasNextPage, result?.viewer?.repositories?.pageInfo?.endCursor, repos);
 }
 
@@ -51,6 +54,10 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 
 	try {
 		const repositories = await getRepositories(app, installationId, jiraHost, logger);
+
+		console.log("GOTEM");
+		console.log(await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY, true, jiraHost));
+		console.log(repositories);
 
 		logger.info(
 			{ job },
