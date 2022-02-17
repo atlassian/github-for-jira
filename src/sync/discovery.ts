@@ -29,13 +29,11 @@ const getAllRepositories = async (github, hasNextPage: boolean, cursor?: string,
 // To tidy up, you can replace the call of this function with the true condition block
 const getRepositories = async (app, installationId, jiraHost, logger) => {
 	if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY, true, jiraHost)) {
-		console.log("I USED NEW GHC");
 		const github = new GitHubClient(getCloudInstallationId(installationId), logger);
 		const repositories = await getAllRepositories(github, true);
 		return repositories;
 	}
 
-	console.log("I USED OCTOKIT");
 	const github = await app.auth(installationId);
 	enhanceOctokit(github);
 
@@ -52,9 +50,6 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 
 	try {
 		const repositories = await getRepositories(app, installationId, jiraHost, logger);
-
-		console.log("repositories");
-		console.log(repositories);
 
 		logger.info(
 			{ job },
