@@ -71,7 +71,7 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
 
-	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false);
+	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
 
 	return {
 		id: pullRequest.base.repo.id,
