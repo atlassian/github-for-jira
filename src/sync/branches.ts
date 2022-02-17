@@ -36,8 +36,7 @@ export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: Gi
 	logger.info("Syncing branches: finished");
 
 	const jiraPayload = await transformBranches({ branches, repository, useNewGHPrUrl });
-	console.log("GOTIT3");
-	console.log(jiraPayload);
+
 	return {
 		edges,
 		jiraPayload 

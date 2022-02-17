@@ -23,17 +23,6 @@ const mapBranch = (branch, repository, useNewGHPrUrl) => {
 	const allKeys = _.union(branchKeys, pullRequestKeys, commitKeys)
 		.filter((key) => !!key);
 
-
-	const allKeysOriginal = branchKeys
-		.concat(pullRequestKeys)
-		.concat(commitKeys)
-		.filter((key) => !!key);
-
-	console.log("allKeysOriginal")
-	console.log(allKeysOriginal)
-	console.log("allKeys")
-	console.log(allKeys)
-
 	if (!allKeys.length) {
 		// If we get here, no issue keys were found anywhere they might be found
 		return undefined;
