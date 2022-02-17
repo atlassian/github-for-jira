@@ -1,4 +1,4 @@
-import {Repository} from "@octokit/graphql-schema";
+import { Repository } from "@octokit/graphql-schema";
 
 export const ViewerRepositoryCountQuery = `
 query {
@@ -12,6 +12,7 @@ query {
 type RepositoryNode = {
   node: Repository
 }
+
 export type GetRepositoriesResponse = {
   viewer: {
     repositories: {

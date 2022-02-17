@@ -175,6 +175,9 @@ export default class GitHubClient {
 		});
 	};
 
+	/**
+	 * Get a page of repositories.
+	 */
 	public async getRepositoriesPage(perPage: number, cursor?: string): Promise<GetRepositoriesResponse> {
 		const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery,
 			{

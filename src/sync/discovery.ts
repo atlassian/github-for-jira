@@ -5,70 +5,53 @@ import { Application } from "probot";
 import { Repositories, SyncStatus } from "../models/subscription";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { sqsQueues } from "../sqs/queues";
-// import GitHubClient from "../github/client/github-client";
-// import { getCloudInstallationId } from "../github/client/installation-id";
-// import { Repository } from "@octokit/graphql-schema";
+import GitHubClient from "../github/client/github-client";
+import { getCloudInstallationId } from "../github/client/installation-id";
+import { Repository } from "@octokit/graphql-schema";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
+const MAX_PAGE_SIZE_REPOSITORY = 100;
 
-// const getAllRepositories = async (github, hasNextPage: bool, cursor?: string, repositories: Repository[] = []): Promise<Repositories> => {
-// 	if (!hasNextPage) {
-// 		return repositories.reduce((obj, repository) => {
-// 			obj[repository.id] = { repository };
-// 			return obj;
-// 		}, {});
-// 	}
+const getAllRepositories = async (github, hasNextPage: boolean, cursor?: string, repositories: Repository[] = []): Promise<Repository[]> => {
+	if (!hasNextPage) {
+		return repositories;
+	}
 
-// 	const result = await github.getRepositoriesPage(1, cursor);
-// 	const edges = result?.viewer?.repositories?.edges || [];
-// 	const nodes = edges.map(({ node: item }) => item);
-// 	const repos = [...repositories, ...nodes];
+	const result = await github.getRepositoriesPage(MAX_PAGE_SIZE_REPOSITORY, cursor);
+	const edges = result?.viewer?.repositories?.edges || [];
+	const nodes = edges.map(({ node: item }) => item);
+	const repos = [...repositories, ...nodes];
 
-// 	return getAllRepositories(github, result?.viewer?.repositories?.pageInfo?.hasNextPage, result?.viewer?.repositories?.pageInfo?.endCursor, repos);
-// }
+	return getAllRepositories(github, result?.viewer?.repositories?.pageInfo?.hasNextPage, result?.viewer?.repositories?.pageInfo?.endCursor, repos);
+}
 
-// export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
-// 	const startTime = new Date().toISOString();
-// 	const { jiraHost, installationId } = job.data;
+// This is a temporary function to assit the feature flag USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY
+// To tidy up, you can replace the call of this function with the true condition block
+const getRepositories = async (app, installationId, jiraHost, logger) => {
+	if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY, true, jiraHost)) {
+		const github = new GitHubClient(getCloudInstallationId(installationId), logger);
+		const repositories = await getAllRepositories(github, true);
+		return repositories;
+	}
 
-// 	const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
+	const github = await app.auth(installationId);
+	enhanceOctokit(github);
 
-// 	// Return early if no subscription
-// 	if (!subscription) {
-// 		logger.info({ jiraHost, installationId }, "Subscription has been removed, ignoring job.");
-// 		return;
-// 	}
-
-// 	const github =  new GitHubClient(getCloudInstallationId(installationId), logger);
-// 	const repos = await getAllRepositories(github, true);
-
-// 	// todo the update sync state might be able to derive 0 of 0 is complete????
-// 	if (Object.keys(repos).length === 0) {
-// 		await subscription.update({
-// 			syncStatus: SyncStatus.COMPLETE
-// 		});
-// 		return;
-// 	}
-
-// 	await subscription.updateSyncState({
-// 		numberOfSyncedRepos: 0,
-// 		repos
-// 	});
-
-// 	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime }, 0, logger);
-// };
+	const repositories = await github.paginate(
+		github.apps.listRepos.endpoint.merge({ per_page: 100 }),
+		(res) => res.data.repositories
+	);
+	return repositories;
+}
 
 export const discovery = (app: Application) => async (job, logger: LoggerWithTarget) => {
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
-	const github = await app.auth(installationId);
-	enhanceOctokit(github);
 
 	try {
-		const repositories = await github.paginate(
-			github.apps.listRepos.endpoint.merge({ per_page: 100 }),
-			(res) => res.data.repositories
-		);
+		const repositories = await getRepositories(app, installationId, jiraHost, logger);
+
 		logger.info(
 			{ job },
 			`${repositories.length} Repositories found`
@@ -97,6 +80,7 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 			obj[repo.id] = { repository: getRepositorySummary(repo) };
 			return obj;
 		}, {});
+
 		await subscription.updateSyncState({
 			numberOfSyncedRepos: 0,
 			repos
