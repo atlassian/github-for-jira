@@ -51,6 +51,7 @@ export default async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) =
 	}
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
+
 	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false);
 
 	// TODO: type this return
@@ -60,7 +61,7 @@ export default async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) =
 		url: repository.html_url,
 		branches: [
 			{
-				createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(repository.html_url, ref, issueKeys) : "", 
+				createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(repository.html_url, ref, issueKeys) : `${repository.html_url}/pull/new/${ref}`, 
 				lastCommit,
 				id: getJiraId(ref),
 				issueKeys,

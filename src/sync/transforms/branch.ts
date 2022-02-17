@@ -14,17 +14,25 @@ import { generateCreatePullRequestUrl } from "../../transforms/util/pullRequestL
  *  - Title of the associated Pull Request
  *  - Messages from up to the last 100 commits in that branch
  */
-function mapBranch(branch, repository) {
+const mapBranch = (branch, repository, useNewGHPrUrl) => {
 	const branchKeys = issueKeyParser().parse(branch.name) || [];
 	const pullRequestKeys = issueKeyParser().parse(
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
 	) || [];
 	const commitKeys = issueKeyParser().parse(branch.target.message) || [];
+	const allKeys = _.union(branchKeys, pullRequestKeys, commitKeys)
+		.filter((key) => !!key);
 
-	const allKeys = branchKeys
+
+	const allKeysOriginal = branchKeys
 		.concat(pullRequestKeys)
 		.concat(commitKeys)
 		.filter((key) => !!key);
+
+	console.log("allKeysOriginal")
+	console.log(allKeysOriginal)
+	console.log("allKeys")
+	console.log(allKeys)
 
 	if (!allKeys.length) {
 		// If we get here, no issue keys were found anywhere they might be found
@@ -32,7 +40,7 @@ function mapBranch(branch, repository) {
 	}
 
 	return {
-		createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, branch.name, allKeys),
+		createPullRequestUrl: useNewGHPrUrl ? generateCreatePullRequestUrl(repository.html_url, branch.name, allKeys) : `${repository.html_url}/pull/new/${branch.name}`,
 		id: getJiraId(branch.name),
 		issueKeys: allKeys,
 		lastCommit: {
@@ -58,7 +66,7 @@ function mapBranch(branch, repository) {
  * of commits we got from the GraphQL response and maps the data
  * to the structure needed for the DevInfo API
  */
-function mapCommit(commit) {
+const mapCommit = (commit) => {
 	const issueKeys = issueKeyParser().parse(commit.message);
 
 	if (_.isEmpty(issueKeys)) {
@@ -81,10 +89,10 @@ function mapCommit(commit) {
 }
 
 // TODO: add typings
-export default (payload) => {
+export const transformBranches = async (payload) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
-		.map((branch) => mapBranch(branch, payload.repository))
+		.map( (branch) => mapBranch(branch, payload.repository, payload.useNewGHPrUrl))
 		.filter((branch) => !!branch);
 
 	// TODO: use reduce instead of map/filter

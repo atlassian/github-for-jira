@@ -159,6 +159,12 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(useNewGithubClient);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
 	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
