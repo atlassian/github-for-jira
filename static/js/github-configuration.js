@@ -40,7 +40,6 @@ $('.logout-link').click(function (event) {
 })
 
 $(".sync-connection-link").click(function (event) {
-	// todo include Org here JK
 	event.preventDefault();
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
@@ -55,7 +54,6 @@ $(".sync-connection-link").click(function (event) {
 		data: {
 			installationId,
 			jiraHost,
-			organization,
 			syncType: "full",
 			_csrf: csrfToken,
 		},
