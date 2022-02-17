@@ -81,7 +81,7 @@ const mapCommit = (commit) => {
 export const transformBranches = async (payload) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
-		.map( (branch) => mapBranch(branch, payload.repository, payload.useNewGHPrUrl))
+		.map((branch) => mapBranch(branch, payload.repository, payload.useNewGHPrUrl))
 		.filter((branch) => !!branch);
 
 	// TODO: use reduce instead of map/filter
