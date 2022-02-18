@@ -113,7 +113,6 @@ $('.install-link').click(function (event) {
     clientKey
   }, function (data) {
     if (data.err) {
-			// hide most of form and display error.
       return console.log(data.err)
     }
     window.close()

@@ -21,7 +21,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 	const installation = installations.find((item) => item.id === Number(installationId));
 
 	if (!installation) {
-		throw new Error(`Error retrieving installation:${installationId}. App not installed on org.`);
+		throw new Error(`Error retrieving installation:${installationId}. You do not permissions to access this org or it does not exist.`);
 	}
 
 	let redirectUrl = getJiraMarketplaceUrl(jiraHost);
