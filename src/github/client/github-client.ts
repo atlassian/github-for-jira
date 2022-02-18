@@ -187,6 +187,22 @@ export default class GitHubClient {
 		});
 	};
 
+	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
+		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
+			{environment,
+				per_page},
+			{owner,
+				repo});
+	}
+
+	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number) : Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {
+		return await this.get<Octokit.ReposListDeploymentStatusesResponse>(`/repos/{owner}/{repo}/deployments/{deployment_id}/statuses`,
+			{per_page},
+			{owner,
+				repo,
+				deployment_id});
+	}
+
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
 
