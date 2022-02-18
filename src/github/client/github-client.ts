@@ -111,9 +111,17 @@ export default class GitHubClient {
 		return new AuthToken(tokenResponse.token, new Date(tokenResponse.expires_at));
 	}
 
-	private async get<T>(url, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+	private async getAsInstallation<T>(url, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
 		return this.axios.get<T>(url, {
 			...await this.installationAuthenticationHeaders(),
+			params,
+			urlParams
+		});
+	}
+
+	private async getAsApp<T>(url, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+		return this.axios.get<T>(url, {
+			...await this.appAuthenticationHeaders(),
 			params,
 			urlParams
 		});
@@ -148,7 +156,7 @@ export default class GitHubClient {
 	 * Lists pull requests for the given repository.
 	 */
 	public async getPullRequests(owner: string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
-		return await this.get<Octokit.PullsListResponseItem[]>(`/repos/{owner}/{repo}/pulls`, pullRequestParams, {
+		return await this.getAsInstallation<Octokit.PullsListResponseItem[]>(`/repos/{owner}/{repo}/pulls`, pullRequestParams, {
 			owner,
 			repo
 		});
@@ -159,7 +167,7 @@ export default class GitHubClient {
 	 */
 	// TODO: add a unit test
 	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
-		return await this.get<Octokit.PullsGetResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}`, {}, {
+		return await this.getAsInstallation<Octokit.PullsGetResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}`, {}, {
 			owner,
 			repo,
 			pullNumber
@@ -171,7 +179,7 @@ export default class GitHubClient {
 	 */
 	// TODO: add a unit test
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
-		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
+		return await this.getAsInstallation<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
 			username
 		});
 	};
@@ -180,7 +188,7 @@ export default class GitHubClient {
 	 * Get a single commit for the given repository.
 	 */
 	public getCommit = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> => {
-		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/{owner}/{repo}/commits/{ref}`, {}, {
+		return await this.getAsInstallation<Octokit.ReposGetCommitResponse>(`/repos/{owner}/{repo}/commits/{ref}`, {}, {
 			owner,
 			repo,
 			ref
@@ -205,4 +213,8 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
+	public listInstallationsForAuthenticatedUser = async (): Promise<AxiosResponse<Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[]>> => {
+		const response = await this.getAsApp<Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[]>(`/app/installations`, {}, {});
+		return response;
+	};
 }

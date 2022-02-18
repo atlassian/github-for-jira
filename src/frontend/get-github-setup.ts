@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../util/jira-utils";
 import { Installation } from "../models";
-
+import GitHubClient from "../github/client/github-client";
+import { getCloudInstallationId } from "../github/client/installation-id";
 /*
 	Handles redirects for both the installation flow from Jira and
 	the installation flow from GH.
@@ -14,13 +15,12 @@ import { Installation } from "../models";
 */
 export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
-	const { jiraHost } = res.locals;
-	const {	github, client } = res.locals;
+	const { jiraHost, client } = res.locals;
+	const installationId = Number(req.query.installation_id);
+	const github = new GitHubClient(getCloudInstallationId(installationId), req.log);
+	const { data: installations } = await github.listInstallationsForAuthenticatedUser();
 
-	const { data: { installations } } = await github.apps.listInstallationsForAuthenticatedUser();
 	const { data: info } = await client.apps.getAuthenticated();
-
-	const installationId = req.query.installation_id;
 	const installation = installations.filter((item) => item.id === Number(installationId));
 
 	if (installation.length === 0) {
