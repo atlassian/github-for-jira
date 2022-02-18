@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
 import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../util/jira-utils";
 import { Installation } from "../models";
-import GitHubClient from "../github/client/github-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
+
 /*
 	Handles redirects for both the installation flow from Jira and
 	the installation flow from GH.
@@ -15,22 +14,15 @@ import { getCloudInstallationId } from "../github/client/installation-id";
 */
 export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
-	const { jiraHost, client, github: oldGitHub } = res.locals;
-
-	const installationId = 17381973;
-	// const installationId = Number(req.query.installation_id);
-	const github = new GitHubClient(getCloudInstallationId(installationId), req.log);
-	req.log.info("HERE")
-	const { data: { installations: oldInstallations } } = await oldGitHub.apps.listInstallationsForAuthenticatedUser();
-	const { data: installations } = await github.listInstallationsForAuthenticatedUser(installationId);
-
-	req.log.info("installations: ", installations, "OLD:" , oldInstallations)
+	const { jiraHost, github, client } = res.locals;
+	const { data: { installations } } = await github.apps.listInstallationsForAuthenticatedUser();
 	const { data: info } = await client.apps.getAuthenticated();
-	// const installation = installations.data.find((item) => item.id === Number(installationId));
+	const installationId = req.query.installation_id;
+	const installation = installations.find((item) => item.id === Number(installationId));
 
-	// if (!installation) {
-	// 	throw new Error(`Error retrieving installation:${installationId}. App not installed on org.`);
-	// }
+	if (!installation) {
+		throw new Error(`Error retrieving installation:${installationId}. App not installed on org.`);
+	}
 
 	let redirectUrl = getJiraMarketplaceUrl(jiraHost);
 
@@ -46,8 +38,8 @@ export default async (req: Request, res: Response): Promise<void> => {
 	}
 
 	const hasJiraHost = !!jiraHost;
-	// const { account } = installation;
-	// const { login, avatar_url } = account;
+	const { account } = installation;
+	const { login, avatar_url } = account;
 
 	res.render("github-setup.hbs", {
 		csrfToken: req.csrfToken(),
@@ -56,9 +48,9 @@ export default async (req: Request, res: Response): Promise<void> => {
 		redirectUrl,
 		hasJiraHost,
 		clientKey: jiraInstallation?.clientKey,
-		// orgName: login,
-		// avatar: avatar_url,
+		orgName: login,
+		avatar: avatar_url,
 		html_url: info.html_url,
-		// id: installationId
+		id: installationId
 	});
 };
