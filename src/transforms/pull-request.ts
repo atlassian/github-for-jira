@@ -54,7 +54,7 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 
 	// This is the same thing we do in sync, concatenating these values
 	const textToSearch = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? `${prTitle}\n${head.ref}\n${body}}` : `${prTitle}\n${pullRequest.head.ref}`
-	const issueKeys = issueKeyParser().parse(textToSearch);
+	const issueKeys = issueKeyParser().parse(textToSearch) || [];
 
 	const logPayload = {
 		prTitle: prTitle || "none",

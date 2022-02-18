@@ -1,7 +1,7 @@
 import { getJiraId } from "../../jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../../util/jira";
-import _ from "lodash";
+import { union, isEmpty } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pullRequestLinkGenerator";
 
 // TODO: better typing in file
@@ -20,7 +20,7 @@ const mapBranch = (branch, repository, useNewGHPrUrl) => {
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
 	) || [];
 	const commitKeys = issueKeyParser().parse(branch.target.message) || [];
-	const allKeys = _.union(branchKeys, pullRequestKeys, commitKeys)
+	const allKeys = union(branchKeys, pullRequestKeys, commitKeys)
 		.filter((key) => !!key);
 
 	if (!allKeys.length) {
@@ -58,7 +58,7 @@ const mapBranch = (branch, repository, useNewGHPrUrl) => {
 const mapCommit = (commit) => {
 	const issueKeys = issueKeyParser().parse(commit.message);
 
-	if (_.isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
 
@@ -78,10 +78,10 @@ const mapCommit = (commit) => {
 }
 
 // TODO: add typings
-export const transformBranches = async (payload) => {
+export const transformBranches = async (payload, useNewGHPrUrl: boolean) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
-		.map((branch) => mapBranch(branch, payload.repository, payload.useNewGHPrUrl))
+		.map((branch) => mapBranch(branch, payload.repository, useNewGHPrUrl))
 		.filter((branch) => !!branch);
 
 	// TODO: use reduce instead of map/filter
