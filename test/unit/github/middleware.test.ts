@@ -101,6 +101,6 @@ describe("Probot event middleware", () => {
 		await middleware(jest.fn())(context);
 		context.log.info("test");
 		expect(loggedStuff).toContain("foo");
-		expect(loggedStuff).toContain(123);
+		expect(loggedStuff).toContain("123");
 	});
 });
