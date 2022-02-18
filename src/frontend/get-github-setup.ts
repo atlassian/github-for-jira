@@ -15,17 +15,22 @@ import { getCloudInstallationId } from "../github/client/installation-id";
 */
 export default async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
-	const { jiraHost, client } = res.locals;
-	const installationId = Number(req.query.installation_id);
+	const { jiraHost, client, github: oldGitHub } = res.locals;
+
+	const installationId = 17381973;
+	// const installationId = Number(req.query.installation_id);
 	const github = new GitHubClient(getCloudInstallationId(installationId), req.log);
-	const { data: installations } = await github.listInstallationsForAuthenticatedUser();
+	req.log.info("HERE")
+	const { data: { installations: oldInstallations } } = await oldGitHub.apps.listInstallationsForAuthenticatedUser();
+	const { data: installations } = await github.listInstallationsForAuthenticatedUser(installationId);
 
+	req.log.info("installations: ", installations, "OLD:" , oldInstallations)
 	const { data: info } = await client.apps.getAuthenticated();
-	const installation = installations.filter((item) => item.id === Number(installationId));
+	// const installation = installations.data.find((item) => item.id === Number(installationId));
 
-	if (installation.length === 0) {
-		throw new Error(`Error retrieving installation:${installationId}. App not installed on org.`);
-	}
+	// if (!installation) {
+	// 	throw new Error(`Error retrieving installation:${installationId}. App not installed on org.`);
+	// }
 
 	let redirectUrl = getJiraMarketplaceUrl(jiraHost);
 
@@ -41,8 +46,8 @@ export default async (req: Request, res: Response): Promise<void> => {
 	}
 
 	const hasJiraHost = !!jiraHost;
-	const { account } = installation[0];
-	const { login, avatar_url } = account;
+	// const { account } = installation;
+	// const { login, avatar_url } = account;
 
 	res.render("github-setup.hbs", {
 		csrfToken: req.csrfToken(),
@@ -51,9 +56,9 @@ export default async (req: Request, res: Response): Promise<void> => {
 		redirectUrl,
 		hasJiraHost,
 		clientKey: jiraInstallation?.clientKey,
-		orgName: login,
-		avatar: avatar_url,
+		// orgName: login,
+		// avatar: avatar_url,
 		html_url: info.html_url,
-		id: installationId
+		// id: installationId
 	});
 };

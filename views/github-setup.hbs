@@ -52,22 +52,25 @@
 
     <section class="githubSetup__container">
       {{#if jiraHost}}
-        <div class="githubSetup__githubOrgConfirmation__container">
-          <p class="githubSetup__githubOrgConfirmation__label">
-            Select Jira Cloud site to connect to your GitHub organization
-          </p>
-          <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
-            <img
-              class="githubSetup__githubOrgConfirmation__avatar"
-              src="{{avatar}}"
-              height="24"
-              width="24"
-              data-installation-id="{{id}}"
-            />
-            <span
-              class="githubSetup__githubOrgConfirmation__orgName"
-            >{{orgName}}</span>
+        <div class="githubSetup__githubOrgConfirmation__outerContainer">
+          <div class="githubSetup__githubOrgConfirmation__container">
+            <p class="githubSetup__githubOrgConfirmation__label">
+              Select Jira Cloud site to connect to your GitHub organization
+            </p>
+            {{!-- <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
+              <img
+                class="githubSetup__githubOrgConfirmation__avatar"
+                src="{{avatar}}"
+                height="24"
+                width="24"
+                data-installation-id="{{id}}"
+              />
+              <span
+                class="githubSetup__githubOrgConfirmation__orgName"
+              >{{orgName}}</span>
+            </div> --}}
           </div>
+
         </div>
 
         <div class="githubSetup__jiraHostWrapper">

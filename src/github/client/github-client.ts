@@ -213,8 +213,10 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
-	public listInstallationsForAuthenticatedUser = async (): Promise<AxiosResponse<Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[]>> => {
-		const response = await this.getAsApp<Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[]>(`/app/installations`, {}, {});
+	public listInstallationsForAuthenticatedUser = async (installationId): Promise<AxiosResponse<Octokit.[]>> => {
+		const response = await this.getAsApp<Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[]>(`/user/installations`, {}, {
+			installationId
+		});
 		return response;
 	};
 }
