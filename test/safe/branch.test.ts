@@ -88,7 +88,7 @@ describe("Branch Webhook", () => {
 						id: "test-repo-id",
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123%20-%20TES-123-test-ref",
+								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123%20-%20TES-123-test-ref&quick_pull=1",
 								lastCommit: {
 									author: {
 										name: "test-branch-author-name",
@@ -205,7 +205,7 @@ describe("Branch Webhook", () => {
 						id: "test-repo-id",
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123%20-%20TES-123-test-ref",
+								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123%20-%20TES-123-test-ref&quick_pull=1",
 								lastCommit: {
 									author: {
 										name: "test-branch-author-name",

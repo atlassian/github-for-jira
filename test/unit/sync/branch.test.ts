@@ -34,7 +34,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 			{
 				branches: [
 					{
-						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123%20-%20${branchName}`,
+						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123%20-%20${branchName}&quick_pull=1`,
 						id: branchName,
 						issueKeys: ["TES-123"]
 							.concat(issueKeyParser().parse(branchName) || [])
@@ -214,7 +214,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 					{
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123%20-%20dev",
+								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123%20-%20dev&quick_pull=1",
 								id: "dev",
 								issueKeys: ["PULL-123"],
 								lastCommit: {

@@ -105,7 +105,7 @@ describe("pull_request transform", () => {
 			branches: [
 				{
 					createPullRequestUrl:
-						"https://github.com/integrations/test/compare/use-the-force?title=TES-123%20-%20use-the-force",
+						"https://github.com/integrations/test/compare/use-the-force?title=TES-123%20-%20use-the-force&quick_pull=1",
 					id: "use-the-force",
 					issueKeys: ["TES-123"],
 					lastCommit: {

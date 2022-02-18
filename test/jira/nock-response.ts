@@ -53,7 +53,7 @@ export const jiraMatchingIssuesKeysBulkResponse = {
 			url: "test-pull-request-base-url",
 			branches: [
 				{
-					createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-222%20TEST-321%20TEST-124%20TEST-223%20-%20TEST-321-test-pull-request-head-ref",
+					createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-222%20TEST-321%20TEST-124%20TEST-223%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
 					lastCommit: {
 						author: {
 							avatar: "https://github.com/ghost.png",
@@ -123,7 +123,7 @@ export const jiraMultipleJiraBulkResponse = {
 			url: "test-pull-request-base-url",
 			branches: [
 				{
-					createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref",
+					createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
 					lastCommit: {
 						author: {
 							avatar: "https://github.com/ghost.png",
