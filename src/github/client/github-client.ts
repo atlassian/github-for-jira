@@ -72,7 +72,6 @@ export default class GitHubClient {
 	 * Use this config in a request to authenticate with an installation token for the githubInstallationId.
 	 */
 	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
-
 		const installationToken = await this.installationTokenCache.getInstallationToken(
 			this.githubInstallationId.installationId,
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
