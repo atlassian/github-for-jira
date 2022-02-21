@@ -48,45 +48,42 @@ export const discovery = (app: Application) => async (job, logger: LoggerWithTar
 	const startTime = new Date();
 	const { jiraHost, installationId } = job.data;
 
-	try {
-		const repositories = await getRepositories(app, installationId, jiraHost, logger);
+	const repositories = await getRepositories(app, installationId, jiraHost, logger);
 
-		logger.info(
-			{ job },
-			`${repositories.length} Repositories found`
-		);
+	logger.info(
+		{ job },
+		`${repositories.length} Repositories found`
+	);
 
-		const subscription = await Subscription.getSingleInstallation(
-			jiraHost,
-			installationId
-		);
+	const subscription = await Subscription.getSingleInstallation(
+		jiraHost,
+		installationId
+	);
 
-		if(!subscription) {
-			logger.info({jiraHost, installationId}, "Subscription has been removed, ignoring job.");
-			return;
-		}
-
-		if (repositories.length === 0) {
-			await subscription.update({
-				syncStatus: SyncStatus.COMPLETE
-			});
-			return;
-		}
-
-		// Store the repository object to prevent doing an additional query in each job
-		// Also, with an object per repository we can calculate which repos are synched or not
-		const repos: Repositories = repositories.reduce((obj, repo) => {
-			obj[repo.id] = { repository: getRepositorySummary(repo) };
-			return obj;
-		}, {});
-
-		await subscription.updateSyncState({
-			numberOfSyncedRepos: 0,
-			repos
-		});
-
-		await sqsQueues.backfill.sendMessage({installationId, jiraHost, startTime: startTime.toISOString()}, 0, logger);
-	} catch (err) {
-		logger.error({ job, err }, "Discovery error");
+	if(!subscription) {
+		logger.info({jiraHost, installationId}, "Subscription has been removed, ignoring job.");
+		return;
 	}
+
+	if (repositories.length === 0) {
+		await subscription.update({
+			syncStatus: SyncStatus.COMPLETE
+		});
+		return;
+	}
+
+	// Store the repository object to prevent doing an additional query in each job
+	// Also, with an object per repository we can calculate which repos are synched or not
+	const repos: Repositories = repositories.reduce((obj, repo) => {
+		obj[repo.id] = { repository: getRepositorySummary(repo) };
+		return obj;
+	}, {});
+
+	await subscription.updateSyncState({
+		numberOfSyncedRepos: 0,
+		repos
+	});
+
+	await sqsQueues.backfill.sendMessage({installationId, jiraHost, startTime: startTime.toISOString()}, 0, logger);
+
 };
