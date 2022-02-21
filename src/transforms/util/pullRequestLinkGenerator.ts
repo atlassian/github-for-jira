@@ -6,6 +6,7 @@ export const generateCreatePullRequestUrl = (baseUrl: string, name: string, issu
 	const keys = issueKeys?.length ? `${issueKeys.join(" ")} - ` : "";
 	const title = encodeURIComponent(keys + name);
 	const branchName = encodeURIComponent(name);
-	const url = `${baseUrl}/compare/${branchName}?title=${title}&quick_pull=1`
+	const base = encodeURIComponent(baseUrl);
+	const url = `${base}/compare/${branchName}?title=${title}&quick_pull=1`
 	return url;
 }
