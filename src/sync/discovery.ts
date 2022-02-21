@@ -13,20 +13,9 @@ import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 const MAX_PAGE_SIZE_REPOSITORY = 100;
 
-// const getAllRepositories = async (github, hasNextPage: boolean, cursor?: string, repositories: Repository[] = []): Promise<Repository[]> => {
-// 	if (!hasNextPage) {
-// 		return repositories;
-// 	}
-
-// 	const result = await github.getRepositoriesPage(MAX_PAGE_SIZE_REPOSITORY, cursor);
-// 	const edges = result?.viewer?.repositories?.edges || [];
-// 	const nodes = edges.map(({ node: item }) => item);
-// 	const repos = [...repositories, ...nodes];
-// 	return getAllRepositories(github, result?.viewer?.repositories?.pageInfo?.hasNextPage, result?.viewer?.repositories?.pageInfo?.endCursor, repos);
-// }
 const getAllRepositories = async (github): Promise<Repository[]> => {
 	const repositories: Repository[] = []
-	let cursor = "";
+	let cursor = null;
 	let hasNextPage = true;
 
 	while (hasNextPage) {
@@ -39,7 +28,7 @@ const getAllRepositories = async (github): Promise<Repository[]> => {
 			hasNextPage = result?.viewer?.repositories?.pageInfo?.hasNextPage;
 		} catch (err) {
 			hasNextPage = false;
-			throw new Error("Error requesting repositories from GitHub Client");
+			throw new Error(err);
 		}
 	}
 	return repositories;
