@@ -13,16 +13,36 @@ import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 export const DISCOVERY_LOGGER_NAME = "sync.discovery";
 const MAX_PAGE_SIZE_REPOSITORY = 100;
 
-const getAllRepositories = async (github, hasNextPage: boolean, cursor?: string, repositories: Repository[] = []): Promise<Repository[]> => {
-	if (!hasNextPage) {
-		return repositories;
-	}
+// const getAllRepositories = async (github, hasNextPage: boolean, cursor?: string, repositories: Repository[] = []): Promise<Repository[]> => {
+// 	if (!hasNextPage) {
+// 		return repositories;
+// 	}
 
-	const result = await github.getRepositoriesPage(MAX_PAGE_SIZE_REPOSITORY, cursor);
-	const edges = result?.viewer?.repositories?.edges || [];
-	const nodes = edges.map(({ node: item }) => item);
-	const repos = [...repositories, ...nodes];
-	return getAllRepositories(github, result?.viewer?.repositories?.pageInfo?.hasNextPage, result?.viewer?.repositories?.pageInfo?.endCursor, repos);
+// 	const result = await github.getRepositoriesPage(MAX_PAGE_SIZE_REPOSITORY, cursor);
+// 	const edges = result?.viewer?.repositories?.edges || [];
+// 	const nodes = edges.map(({ node: item }) => item);
+// 	const repos = [...repositories, ...nodes];
+// 	return getAllRepositories(github, result?.viewer?.repositories?.pageInfo?.hasNextPage, result?.viewer?.repositories?.pageInfo?.endCursor, repos);
+// }
+const getAllRepositories = async (github): Promise<Repository[]> => {
+	const repositories: Repository[] = []
+	let cursor = "";
+	let hasNextPage = true;
+
+	while (hasNextPage) {
+		try {
+			const result = await github.getRepositoriesPage(MAX_PAGE_SIZE_REPOSITORY, cursor);
+			const edges = result?.viewer?.repositories?.edges || [];
+			const nodes = edges.map(({ node: item }) => item);
+			repositories.push(...nodes);
+			cursor = result?.viewer?.repositories?.pageInfo?.endCursor;
+			hasNextPage = result?.viewer?.repositories?.pageInfo?.hasNextPage;
+		} catch (err) {
+			hasNextPage = false;
+			throw new Error("Error requesting repositories from GitHub Client");
+		}
+	}
+	return repositories;
 }
 
 // This is a temporary function to assit the feature flag USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY
@@ -30,7 +50,8 @@ const getAllRepositories = async (github, hasNextPage: boolean, cursor?: string,
 const getRepositories = async (app, installationId, jiraHost, logger) => {
 	if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY, true, jiraHost)) {
 		const github = new GitHubClient(getCloudInstallationId(installationId), logger);
-		const repositories = await getAllRepositories(github, true);
+		const repositories = await getAllRepositories(github);
+		// const repositories = await getAllRepositories(github, true);
 		return repositories;
 	}
 
