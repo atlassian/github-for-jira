@@ -18,7 +18,9 @@ type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<nu
 
 declare global {
 	let jiraHost: string;
+	let jiraStaginHost: string;
 	let jiraNock: nock.Scope;
+	let jiraStagingNock: nock.Scope;
 	let githubNock: nock.Scope;
 	let gheNock: nock.Scope;
 	let gheUrl: string;
@@ -29,7 +31,9 @@ declare global {
 	namespace NodeJS {
 		interface Global {
 			jiraHost: string;
+			jiraStaginHost: string;
 			jiraNock: nock.Scope;
+			jiraStagingNock: nock.Scope;
 			githubNock: nock.Scope;
 			gheNock: nock.Scope;
 			gheUrl: string;
@@ -77,8 +81,10 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-	global.jiraHost = process.env.ATLASSIAN_URL || "";
+	global.jiraHost = process.env.ATLASSIAN_URL || `https://${process.env.INSTANCE_NAME}.atlassian.net`;
+	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${process.env.INSTANCE_NAME}.jira-dev.com`;
 	global.jiraNock = nock(global.jiraHost);
+	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
 	global.gheUrl = "https://github.mydomain.com";
 	global.gheNock = nock(global.gheUrl);
