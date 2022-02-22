@@ -35,11 +35,11 @@
       />
     </div>
 
-    <h2 class="f2 text-center text-normal gitHubSetup__header">Jira Cloud
-      configuration</h2>
+    <h2 class="f2 text-center text-normal gitHubSetup__header">
+      Connect a GitHub organization to your Jira site
+    </h2>
     {{#if jiraHost}}
-      <p class="text-center text-normal gitHubSetup__subHeader">Which site would
-        you like to connect?</p>
+      <p class="text-center text-normal gitHubSetup__subHeader">Confirm your connection</p>
     {{/if}}
 
     <section class="githubSetup__newJiraSiteModal" id="new-jira-site-modal">
@@ -52,6 +52,27 @@
 
     <section class="githubSetup__container">
       {{#if jiraHost}}
+        <div class="githubSetup__githubOrgConfirmation__outerContainer">
+          <div class="githubSetup__githubOrgConfirmation__container">
+            <p class="githubSetup__githubOrgConfirmation__label">
+              Select Jira Cloud site to connect to your GitHub organization
+            </p>
+            <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
+              <img
+                class="githubSetup__githubOrgConfirmation__avatar"
+                src="{{avatar}}"
+                height="24"
+                width="24"
+                data-installation-id="{{id}}"
+              />
+              <span
+                class="githubSetup__githubOrgConfirmation__orgName"
+              >{{orgName}}</span>
+            </div>
+          </div>
+
+        </div>
+
         <div class="githubSetup__jiraHostWrapper">
           <div class="githubSetup__headerWrapper">
             <p class="tableHeader__label org__cell">Jira site</p>
@@ -59,14 +80,30 @@
 
           <div class="githubSetup__table">
             <div class="githubSetup__table__row clearfix">
-              <img
-                  class="githubSetup__table__logo"
-                  src="/public/assets/jira-software-logo.png"
-                  alt="Jira software logo"
-              />
-              <a class="githubSetup__marketplaceUrl" href={{redirectUrl}}>
-                {{jiraHost}}
-              </a>
+              <div class="githubSetup__table__row__jiraHostContainer">
+                <img
+                    class="githubSetup__table__logo"
+                    src="/public/assets/jira-software-logo.png"
+                    alt="Jira software logo"
+                />
+                <p class="githubSetup__marketplaceUrl">
+                  {{jiraHost}}
+                </p>
+                <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
+                 <input
+                  type="hidden"
+                  id="clientKey"
+                  name="clientKey"
+                  value="{{clientKey}}"
+                />
+              </div>
+              <button
+                class="githubSetup__orgContent__connectBtn aui-button install-link"
+                data-installation-id="{{id}}"
+                type="submit"
+              >
+                Connect
+              </button>
             </div>
           </div>
 

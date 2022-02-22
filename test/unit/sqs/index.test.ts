@@ -22,11 +22,8 @@ const testLogger = getLogger("sqstest");
 describe("SqsQueue tests", () => {
 
 	const mockRequestHandler = jest.fn();
-
 	const mockErrorHandler = jest.fn();
-
 	const testMaxQueueAttempts = 3;
-
 	const generatePayload = (): TestMessage => ({ msg: uuidv4() });
 
 	const createSqsQueue = (timeout: number, maxAttempts: number = testMaxQueueAttempts) => {
@@ -170,59 +167,55 @@ describe("SqsQueue tests", () => {
 			queue.sendMessage(testPayload);
 		});
 
-		it("Retries with the correct delay", (done: jest.DoneCallback) => {
+		describe.each([1, 1.2])("Timeout tests", (timeout) => {
+			it(`Retries with the correct delay for timeout ${timeout}`, (done: jest.DoneCallback) => {
 
-			const testErrorMessage = "Something bad happened";
-			const testPayload = generatePayload();
-			const receivedTime = { time: Date.now(), receivesCounter: 0, errorHandlingCounter: 0 };
+				const testErrorMessage = "Something bad happened";
+				const testPayload = generatePayload();
+				const receivedTime = { time: Date.now(), receivesCounter: 0, errorHandlingCounter: 0 };
 
-			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
+				mockRequestHandler.mockImplementation((context: Context<TestMessage>) => {
 
-				if (receivedTime.receivesCounter == 0) {
-					receivedTime.receivesCounter++;
-					context.log.info("Throwing error on first processing");
-					throw new Error("Something bad happened");
-				}
+					if (receivedTime.receivesCounter == 0) {
+						receivedTime.receivesCounter++;
+						context.log.info("Throwing error on first processing");
+						throw new Error("Something bad happened");
+					}
 
-				expect(receivedTime.receivesCounter).toBe(1);
-				expect(receivedTime.errorHandlingCounter).toBe(1);
+					expect(receivedTime.receivesCounter).toBe(1);
+					expect(receivedTime.errorHandlingCounter).toBe(1);
 
-				const currentTime = Date.now();
-				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
-				done();
-				return;
+					const currentTime = Date.now();
+					expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
+					expect(currentTime - receivedTime.time).toBeLessThanOrEqual(5000);
+					done();
+					return;
+				});
+
+				mockErrorHandler.mockImplementation((error: Error, context: Context<TestMessage>): ErrorHandlingResult => {
+					expect(context.payload.msg).toBe(testPayload.msg);
+					expect(error.message).toBe(testErrorMessage);
+					receivedTime.errorHandlingCounter++;
+					return { retryable: true, retryDelaySec: timeout, isFailure: true };
+				});
+
+				queue.sendMessage(testPayload);
 			});
-
-			mockErrorHandler.mockImplementation((error: Error, context: Context<TestMessage>): ErrorHandlingResult => {
-				expect(context.payload.msg).toBe(testPayload.msg);
-				expect(error.message).toBe(testErrorMessage);
-				receivedTime.errorHandlingCounter++;
-				return { retryable: true, retryDelaySec: 1, isFailure: true };
-			});
-
-			queue.sendMessage(testPayload);
 		});
 
+
 		it("Message deleted from the queue when unretryable", async () => {
-
 			const testPayload = generatePayload();
-
 			const queueDeletionSpy = jest.spyOn(queue.sqs, "deleteMessage");
-
 			const expected: { ReceiptHandle?: string } = { ReceiptHandle: "" };
 
 			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 				expected.ReceiptHandle = context.message.ReceiptHandle;
-
 				throw new Error("Something bad happened");
 			});
 
-			mockErrorHandler.mockImplementation((): ErrorHandlingResult => {
-				return { retryable: false, isFailure: true };
-			});
-
+			mockErrorHandler.mockReturnValue({ retryable: false, isFailure: true });
 			await queue.sendMessage(testPayload);
-
 			await waitUntil(async () => {
 				expect(queueDeletionSpy).toBeCalledTimes(1);
 			});
@@ -232,29 +225,21 @@ describe("SqsQueue tests", () => {
 
 
 		it("Message deleted from the queue when error is not a failure and failure metric not sent", async () => {
-
 			const testPayload = generatePayload();
-
 			const queueDeletionSpy = jest.spyOn(queue.sqs, "deleteMessage");
-
 			const expected: { ReceiptHandle?: string } = { ReceiptHandle: "" };
 
 			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 				expected.ReceiptHandle = context.message.ReceiptHandle;
-
 				throw new Error("Something bad happened");
 			});
 
-			mockErrorHandler.mockImplementation((): ErrorHandlingResult => {
-				return { isFailure: false };
-			});
+			mockErrorHandler.mockReturnValue({ isFailure: false });
 
 			await queue.sendMessage(testPayload);
-
 			await waitUntil(async () => {
 				expect(queueDeletionSpy).toBeCalledTimes(1);
 			});
-
 			expect(statsdIncrementSpy).not.toBeCalledWith(sqsQueueMetrics.failed, expect.anything());
 		});
 
@@ -264,7 +249,6 @@ describe("SqsQueue tests", () => {
 
 		beforeEach(() => {
 			queue = createSqsQueue(1);
-			queue.sqs.purgeQueue();
 			queue.start();
 		});
 
@@ -307,7 +291,7 @@ describe("SqsQueue tests", () => {
 			const testPayload = generatePayload();
 			const receiveCounter = { receivesCounter: 0 };
 
-			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
+			mockRequestHandler.mockImplementation((context: Context<TestMessage>) => {
 				/* eslint-disable jest/no-conditional-expect */
 				try {
 					if (receiveCounter.receivesCounter == 0) {
@@ -330,12 +314,13 @@ describe("SqsQueue tests", () => {
 				throw new Error("Something bad happened");
 			});
 
-			mockErrorHandler.mockImplementation((_error: Error, _context: Context<TestMessage>): ErrorHandlingResult => {
-				return { retryable: receiveCounter.receivesCounter < 3, retryDelaySec: 0, isFailure: true };
+			mockErrorHandler.mockReturnValue({
+				retryable: receiveCounter.receivesCounter < 3,
+				retryDelaySec: 0,
+				isFailure: true
 			});
 
 			queue.sendMessage(testPayload);
 		});
 	});
-
 });

@@ -53,7 +53,8 @@ export type QueueSettings = {
 	readonly longPollingIntervalSec?: number,
 
 	/**
-	 * Timeout for processing a single message in seconds
+	 * Timeout for processing a single message in seconds.
+	 * If non-integer value passed then the timeout will be rounded to the closest integer
 	 */
 	readonly timeoutSec: number;
 
@@ -422,15 +423,15 @@ export class SqsQueue<MessagePayload> {
 			return;
 		}
 
-		if(!Number.isInteger(timeout) || timeout < 0) {
-			logger.error(`Timeout needs to be a positive integer.`);
+		if(timeout < 0) {
+			logger.error(`Timeout needs to be a positive number.`);
 			return;
 		}
 
 		const params: ChangeMessageVisibilityRequest = {
 			QueueUrl: this.queueUrl,
 			ReceiptHandle: message.ReceiptHandle,
-			VisibilityTimeout: timeout
+			VisibilityTimeout: Math.round(timeout)
 		};
 		try {
 			await this.sqs.changeMessageVisibility(params).promise();
