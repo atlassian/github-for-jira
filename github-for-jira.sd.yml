@@ -13,7 +13,7 @@ compose:
     environment:
       PGBOUNCER_POOL_MODE: transaction
       PGBOUNCER_DEFAULT_POOL_SIZE: 15 # Max scale up:
-                                      #   (10 web servers + 6 workers) * 15 pool size  = 240 connections
+                                      #   (15 web servers + 15 workers) * 15 pool size  = 450 connections (See postgres-db connections limit)
                                       # Normal business:
                                       #   (5 web servers + 3 workers) * 15 pool size = 120 connections
       PGBOUNCER_SERVER_IDLE_TIMEOUT: 60
@@ -455,7 +455,7 @@ environmentOverrides:
     scaling:
       instance: c5.2xlarge
       min: 5
-      max: 10 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+      max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
       metrics: *CpuMemAlbScalingRules
     links:
       runOnce:
@@ -466,7 +466,7 @@ environmentOverrides:
         scaling:
           instance: c5.2xlarge
           min: 3
-          max: 4 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
           metrics: *CpuMemAndQueuesScalingRules
     alarms:
       overrides:
@@ -507,7 +507,8 @@ environmentOverrides:
       - name: database
         type: postgres-db
         attributes:
-          connectionLimit: 240 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          connectionLimit: 675 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE.
+            # Should be set to Max Connections can be used by nodes + some room if we have to scale even more manually. PGBOUNCER_DEFAULT_POOL_SIZE*N*1.5
 
       - name: rds
         type: dedicated-rds
@@ -516,7 +517,7 @@ environmentOverrides:
             DBInstanceClass: db.r5.4xlarge
             AllocatedStorage: 40 # GB
             MaxAllocatedStorage: 100
-            ConnectionAlarm: 500 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 + N (cause two stacks can work
+            ConnectionAlarm: 900 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 * N (cause two stacks can work
                                  # together during the deploy)
             TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
 
