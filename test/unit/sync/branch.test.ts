@@ -17,7 +17,6 @@ import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
 
-
 describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'", (useNewGithubClient) => {
 	const installationId = 1234;
 
@@ -35,7 +34,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 			{
 				branches: [
 					{
-						createPullRequestUrl: `test-repo-url/pull/new/${branchName}`,
+						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123%20-%20${branchName}&quick_pull=1`,
 						id: branchName,
 						issueKeys: ["TES-123"]
 							.concat(issueKeyParser().parse(branchName) || [])
@@ -160,6 +159,12 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(useNewGithubClient);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
 	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
@@ -175,7 +180,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 		jiraNock
 			.post(
 				"/rest/devinfo/0.10/bulk",
-				makeExpectedResponse("TES-321-branch-name")
+				makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
 			)
 			.reply(200);
 
@@ -209,7 +214,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 					{
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/pull/new/dev",
+								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123%20-%20dev&quick_pull=1",
 								id: "dev",
 								issueKeys: ["PULL-123"],
 								lastCommit: {

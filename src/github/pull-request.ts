@@ -1,4 +1,4 @@
-import transformPullRequest from "../transforms/pull-request";
+import { transformPullRequest } from "../transforms/pull-request";
 import issueKeyParser from "jira-issue-key-parser";
 
 import { emitWebhookProcessedMetrics } from "../util/webhooks";

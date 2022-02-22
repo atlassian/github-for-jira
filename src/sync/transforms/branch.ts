@@ -1,7 +1,8 @@
 import { getJiraId } from "../../jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../../util/jira";
-import _ from "lodash";
+import { union, isEmpty } from "lodash";
+import { generateCreatePullRequestUrl } from "../../transforms/util/pullRequestLinkGenerator";
 
 // TODO: better typing in file
 /**
@@ -13,16 +14,13 @@ import _ from "lodash";
  *  - Title of the associated Pull Request
  *  - Messages from up to the last 100 commits in that branch
  */
-function mapBranch(branch, repository) {
+const mapBranch = (branch, repository, useNewGHPrUrl) => {
 	const branchKeys = issueKeyParser().parse(branch.name) || [];
 	const pullRequestKeys = issueKeyParser().parse(
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
 	) || [];
 	const commitKeys = issueKeyParser().parse(branch.target.message) || [];
-
-	const allKeys = branchKeys
-		.concat(pullRequestKeys)
-		.concat(commitKeys)
+	const allKeys = union(branchKeys, pullRequestKeys, commitKeys)
 		.filter((key) => !!key);
 
 	if (!allKeys.length) {
@@ -31,7 +29,7 @@ function mapBranch(branch, repository) {
 	}
 
 	return {
-		createPullRequestUrl: `${repository.html_url}/pull/new/${branch.name}`,
+		createPullRequestUrl: useNewGHPrUrl ? generateCreatePullRequestUrl(repository.html_url, branch.name, allKeys) : `${repository.html_url}/pull/new/${branch.name}`,
 		id: getJiraId(branch.name),
 		issueKeys: allKeys,
 		lastCommit: {
@@ -57,10 +55,10 @@ function mapBranch(branch, repository) {
  * of commits we got from the GraphQL response and maps the data
  * to the structure needed for the DevInfo API
  */
-function mapCommit(commit) {
+const mapCommit = (commit) => {
 	const issueKeys = issueKeyParser().parse(commit.message);
 
-	if (_.isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
 
@@ -80,10 +78,10 @@ function mapCommit(commit) {
 }
 
 // TODO: add typings
-export default (payload) => {
+export const transformBranches = async (payload, useNewGHPrUrl: boolean) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
-		.map((branch) => mapBranch(branch, payload.repository))
+		.map((branch) => mapBranch(branch, payload.repository, useNewGHPrUrl))
 		.filter((branch) => !!branch);
 
 	// TODO: use reduce instead of map/filter
