@@ -86,7 +86,6 @@ describe("SqsQueue tests", () => {
 			});
 
 			queue.stop()
-				//delaying to make sure all asynchronous invocations inside the queue will be finished and it will stop
 				.then(() => queue.start())
 				.then(() => queue.sendMessage(testPayload));
 		});
