@@ -1,13 +1,14 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { getJiraId } from "../jira/util/id";
 import _ from "lodash";
+import { getJiraId } from "../jira/util/id";
 import { Octokit } from "@octokit/rest";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
 import { getGithubUser } from "../services/github/user";
 import { JiraAuthor } from "../interfaces/jira";
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -48,12 +49,12 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 }
 
 // TODO: define arguments and return
-export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
+export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
 	const textToSearch = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? `${prTitle}\n${head.ref}\n${body}}` : `${prTitle}\n${pullRequest.head.ref}`
-	const issueKeys = issueKeyParser().parse(textToSearch);
+	const issueKeys = issueKeyParser().parse(textToSearch) || [];
 
 	const logPayload = {
 		prTitle: prTitle || "none",
@@ -70,6 +71,8 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
 
+	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
+
 	return {
 		id: pullRequest.base.repo.id,
 		name: pullRequest.base.repo.full_name,
@@ -81,7 +84,7 @@ export default async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, 
 				? []
 				: [
 					{
-						createPullRequestUrl: `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
+						createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys) : `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`, 
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
 							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),

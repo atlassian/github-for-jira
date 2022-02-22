@@ -22,7 +22,8 @@ export enum BooleanFlags {
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
 	USE_NEW_GITHUB_CLIENT_FOR_BRANCHES = "use-new-github-client-for-branches",
-	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments"
+	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
+	USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT = "use-new-github-pull-request-url-format"
 }
 
 export enum StringFlags {

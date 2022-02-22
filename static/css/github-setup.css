@@ -2,9 +2,43 @@
   color: #586069;
 }
 
+.githubSetup__githubOrgConfirmation__container {
+  text-align: center;
+}
+
+.githubSetup__githubOrgConfirmation__label {
+  color: #6b778b;
+}
+
+.githubSetup__githubOrgConfirmation__selectedOrgContainer {
+  display: flex;
+  justify-content: center;
+  margin: 1.5em auto 0;
+  width: 40%;
+}
+
+.githubSetup__githubOrgConfirmation__avatar {
+  border-radius: 2px;
+  margin-right: 0.4em;
+  transform: scale(1.2);
+}
+
+.githubSetup__githubOrgConfirmation__orgName {
+  font-weight: 500;
+  margin-left: 0.4em;
+}
+
 .githubSetup__container {
   margin: 6em auto;
   width: 500px;
+}
+
+.githubSetup__form__header {
+  font-size: 1.4rem;
+}
+
+.githubSetup__formInfo {
+  margin: 1em auto;
 }
 
 .githubSetup__form__fieldGroup > .githubSetup__inputLabel {
@@ -16,7 +50,7 @@
 .githubSetup__form__inputContainer {
   align-items: center;
   display: flex;
-  margin: 1em auto 0.5em;
+  margin: 0.5em auto 0.5em;
 }
 
 .githubSetup__form__inputContainer > .githubSetup__form__input,
@@ -24,6 +58,7 @@
   -webkit-text-fill-color: #262b31;
   -webkit-box-shadow: 0 0 0 1000px #fff inset;
   background-color: #fff;
+  border: 2px solid #dfe1e6;
   border-radius: 3.01px;
   box-shadow: 0 0 0 1000px #fff inset;
   box-sizing: border-box;
@@ -45,7 +80,7 @@
 .githubSetup__form__inputContainer > .githubSetup__form__input:focus-within,
 .githubSetup__form__inputContainer > .githubSetup__form__input:focus-visible,
 .githubSetup__form__inputContainer > .githubSetup__form__input:target {
-  border: 2px solid #4c9aff;
+  border: 2px solid #dfe1e6;
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
@@ -77,13 +112,18 @@
 }
 
 .githubSetup__table {
-  padding: 0.4em 0;
+  padding: 0.8em 0;
 }
 
 .githubSetup__table__row {
-  align-items: center;
   display: flex;
   padding: 2.5em auto;
+}
+
+.githubSetup__table__row__jiraHostContainer {
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
 }
 
 .githubSetup__table__logo {
@@ -145,6 +185,7 @@
   align-items: center;
   display: flex;
   justify-content: flex-end;
+  margin-top: 2em;
 }
 
 .githubSetup__form__errorMessage__container {
