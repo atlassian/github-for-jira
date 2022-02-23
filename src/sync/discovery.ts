@@ -6,9 +6,11 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { sqsQueues } from "../sqs/queues";
 import GitHubClient from "../github/client/github-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
+import { DiscoveryMessagePayload } from "../sqs/discovery";
 
-export const DISCOVERY_LOGGER_NAME = "sync.discovery";
-
+/*
+* Mapping the response data into a map by repo.id as required by subscription.updateSyncState.
+*/
 const mapRepositories = (repositories: Repository[]): Repositories => {
 	return repositories.reduce((obj, repo) => {
 		obj[repo.id] = { repository: getRepositorySummary(repo) };
@@ -16,33 +18,45 @@ const mapRepositories = (repositories: Repository[]): Repositories => {
 	}, {});
 };
 
-const resetNumberOfSyncedRepos = async (subscription: Subscription) => {
+/*
+* Reset the sync count to zero.
+*/
+const resetSyncedReposCount = async (subscription: Subscription): Promise<void> => {
 	await subscription.updateSyncState({ numberOfSyncedRepos: 0 });
 };
 
-const updateSyncState = async (subscription: Subscription, repositories: Repository[]) => {
+/*
+* Update the sync status of a batch of repos.
+*/
+const updateSyncState = async (subscription: Subscription, repositories: Repository[]): Promise<void> => {
 	const repos = mapRepositories(repositories);
 	await subscription.updateSyncState({
 		repos
 	});
 };
 
-const checkHeaderForNextPage = (headers) => {
+/*
+* Checking the header atttribute link(type string[]) for a entry that contains "rel=next", this indicates more pages available.
+*/
+const checkHeaderForNextPage = (headers): boolean => {
 	const links = headers?.link?.split(",");
 	const regex = /(rel="next")/g;
 	const hasNextPage = links?.find(elem => elem.match(regex));
 	return hasNextPage;
 };
 
-const syncRepositories = async (github, subscription: Subscription, installationId: number, jiraHost: string, logger: LoggerWithTarget): Promise<void> => {
+/*
+* Continuosuly call the GitHub repo to fetch a page of repositories at a time and update there sync status until no more pages.
+*/
+const syncRepositories = async (github, subscription: Subscription, logger: LoggerWithTarget): Promise<void> => {
 	let page = 0;
 	let hasNextPage = true;
-	await resetNumberOfSyncedRepos(subscription);
+	await resetSyncedReposCount(subscription);
 	while (hasNextPage) {
 		try {
 			const { data, headers } = await github.getRepositoriesPage(page);
 			await updateSyncState(subscription, data.repositories);
-			logger.info({ installationId, jiraHost }, `${data.repositories.length} Repositories syncing`);
+			logger.info(`${data.repositories.length} Repositories syncing`);
 			hasNextPage = checkHeaderForNextPage(headers);
 			page++;
 		} catch (err) {
@@ -52,9 +66,12 @@ const syncRepositories = async (github, subscription: Subscription, installation
 	}
 };
 
-export const discovery = async (job, logger: LoggerWithTarget) => {
+/*
+* Use the github client to request all repositories and update the sync state per repo, send a bacnkfill queue message once complete.
+*/
+export const discovery = async (data: DiscoveryMessagePayload, logger: LoggerWithTarget): Promise<void> => {
 	const startTime = new Date();
-	const { jiraHost, installationId } = job.data;
+	const { jiraHost, installationId } = data;
 	const github = new GitHubClient(getCloudInstallationId(installationId), logger);
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
@@ -66,7 +83,7 @@ export const discovery = async (job, logger: LoggerWithTarget) => {
 		return;
 	}
 
-	await syncRepositories(github, subscription, installationId, jiraHost, logger);
+	await syncRepositories(github, subscription, logger);
 	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: startTime.toISOString() }, 0, logger);
 };
 

@@ -10,8 +10,12 @@ export type DiscoveryMessagePayload = {
 
 export const discoveryQueueMessageHandler : MessageHandler<DiscoveryMessagePayload> = async (context) => {
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY, false, context?.payload?.jiraHost);
+	context.log = context.log.child({
+		jiraHost: context?.payload?.jiraHost,
+		installationId: context?.payload?.installationId
+	})
 	if(useNewGHClient) {
-		await discovery({ data: context.payload }, context.log);
+		await discovery(context.payload, context.log);
 		return;
 	}
 	await discoveryOctoKit(app)({ data: context.payload }, context.log);

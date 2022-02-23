@@ -128,7 +128,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 
 	it("Discovery queue listener works correctly", async () => {
 		mockGitHubReposResponses();
-		await discovery({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
+		await discovery({ installationId: TEST_INSTALLATION_ID, jiraHost }, getLogger("test"));
 		expect(sendMessageSpy).toBeCalledTimes(1);
 		const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID);
 		expect(subscription).toBeTruthy();
