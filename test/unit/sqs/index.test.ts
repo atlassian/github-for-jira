@@ -103,7 +103,7 @@ describe("SqsQueue tests", () => {
 
 		describe.each([1, 1.8])("Timeout tests", (timeout) => {
 			it(`Retries with the correct delay for timeout ${timeout}s`, async () => {
-				mockRequestHandler.mockRejectedValueOnce("Something bad happened")
+				mockRequestHandler.mockRejectedValueOnce("Something bad happened");
 				mockErrorHandler.mockReturnValue({ retryable: true, retryDelaySec: timeout, isFailure: true });
 				const time = Date.now();
 				await queue.sendMessage(payload);
@@ -143,18 +143,29 @@ describe("SqsQueue tests", () => {
 
 		it("Receive Count and Max Attempts are populated correctly", async () => {
 			mockRequestHandler.mockRejectedValue("Something bad happened");
-			mockErrorHandler.mockReturnValue({
-				retryable: mockRequestHandler.mock.calls.length < 3,
-				retryDelaySec: 0,
-				isFailure: true
-			});
+			mockErrorHandler
+				.mockReturnValueOnce({
+					retryable: true,
+					retryDelaySec: 0,
+					isFailure: true
+				})
+				.mockReturnValueOnce({
+					retryable: true,
+					retryDelaySec: 0,
+					isFailure: true
+				})
+				.mockReturnValueOnce({
+					retryable: false,
+					retryDelaySec: 0,
+					isFailure: true
+				});
 
 			await queue.sendMessage(payload);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveReturnedTimes(3));
+			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(3));
 			expect(mockRequestHandler).lastCalledWith(expect.objectContaining({
 				receiveCount: 3,
 				lastAttempt: true
-			}))
+			}));
 		});
 	});
 });
