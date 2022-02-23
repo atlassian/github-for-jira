@@ -5,7 +5,13 @@ import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
 import { GetPullRequestParams } from "./types";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime } from "./interceptors";
+import {
+	handleFailedRequest,
+	instrumentFailedRequest,
+	instrumentRequest,
+	setRequestStartTime,
+	setRequestTimeout
+} from "./interceptors";
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
@@ -36,10 +42,18 @@ export default class GitHubClient {
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.client.axios");
-		this.axios = axios.create({
-			baseURL: githubInstallationId.githubBaseUrl
-		});
+
+		const clientConfig: AxiosRequestConfig = {
+			baseURL: githubInstallationId.githubBaseUrl,
+			transitional: {
+				clarifyTimeoutError: true
+			}
+		};
+
+		this.axios = axios.create(clientConfig);
+
 		this.axios.interceptors.request.use(setRequestStartTime);
+		this.axios.interceptors.request.use(setRequestTimeout);
 		this.axios.interceptors.request.use(urlParamsMiddleware);
 		this.axios.interceptors.response.use(
 			undefined,
@@ -180,6 +194,21 @@ export default class GitHubClient {
 			perPage: 100,
 			page
 		});
+
+	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
+		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
+			{environment,
+				per_page},
+			{owner,
+				repo});
+	}
+
+	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number) : Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {
+		return await this.get<Octokit.ReposListDeploymentStatusesResponse>(`/repos/{owner}/{repo}/deployments/{deployment_id}/statuses`,
+			{per_page},
+			{owner,
+				repo,
+				deployment_id});
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {

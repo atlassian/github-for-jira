@@ -6,6 +6,8 @@ import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import {isBlocked} from "../config/feature-flags";
+import GitHubClient from "./client/github-client";
 
 export default async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -19,6 +21,7 @@ export default async (context: CustomContext, jiraClient, _util, githubInstallat
 
 export const processDeployment = async (
 	github: GitHubAPI,
+	newGitHubClient: GitHubClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadDeploymentStatus,
 	webhookReceivedDate: Date,
@@ -32,9 +35,14 @@ export const processDeployment = async (
 		webhookReceived: webhookReceivedDate,
 	});
 
+	if (await isBlocked(installationId, logger)) {
+		logger.warn("blocking processing of push message because installationId is on the blocklist");
+		return;
+	}
+
 	logger.info("processing deployment message!");
 
-	const jiraPayload = await transformDeployment(github, webhookPayload, jiraHost, logger);
+	const jiraPayload = await transformDeployment(github, newGitHubClient, webhookPayload, jiraHost, logger);
 
 	if (!jiraPayload) {
 		logger.info(

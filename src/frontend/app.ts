@@ -199,6 +199,7 @@ export default (octokitApp: App): Express => {
 	app.get(
 		"/github/setup",
 		csrfProtection,
+		oauth.checkGithubAuth,
 		getGitHubSetup
 	);
 
@@ -225,6 +226,7 @@ export default (octokitApp: App): Express => {
 	app.get(
 		"/github/subscriptions/:installationId",
 		csrfProtection,
+		oauth.checkGithubAuth,
 		getGitHubSubscriptions
 	);
 

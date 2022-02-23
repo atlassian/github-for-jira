@@ -22,11 +22,17 @@ export enum BooleanFlags {
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
 	USE_NEW_GITHUB_CLIENT_FOR_BRANCHES = "use-new-github-client-for-branches",
-	USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY = "use-new-github-client-for-discovery"
+	USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY = "use-new-github-client-for-discovery",
+	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
+	USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT = "use-new-github-pull-request-url-format"
 }
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations"
+}
+
+export enum NumberFlags {
+	GITHUB_CLIENT_TIMEOUT = "github-client-timeout"
 }
 
 const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
@@ -44,7 +50,7 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 	};
 };
 
-const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags, defaultValue: boolean | string, jiraHost?: string): Promise<boolean | string> => {
+const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: boolean | string | number, jiraHost?: string): Promise<boolean | string | number> => {
 	try {
 		await launchdarklyClient.waitForInitialization();
 		const user = createLaunchdarklyUser(jiraHost);
@@ -61,6 +67,9 @@ export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jir
 
 export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHost?: string): Promise<string> =>
 	String(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+
+export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
+	Number(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
 
 export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
 	try {
