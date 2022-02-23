@@ -165,7 +165,7 @@ resources:
         MetricName: ApproximateNumberOfMessagesVisible
         Namespace: AWS/SQS
         Description: "Message count for deployment queue too high! Follow the runbook: <insert_runbook_url_here>"
-        Threshold: 10
+        Threshold: 400
         Priority: High
         Dimensions:
           - Name: QueueName
@@ -190,7 +190,7 @@ resources:
         MetricName: ApproximateNumberOfMessagesVisible
         Namespace: AWS/SQS
         Description: "Message count for branch queue too high! Follow the runbook: <insert_runbook_url_here>"
-        Threshold: 20
+        Threshold: 400
         Priority: High
         Dimensions:
           - Name: QueueName
