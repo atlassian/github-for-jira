@@ -204,6 +204,22 @@ alarms:
     HighSeverityAlarmWhenTooManyELB5xxErrors: null
     LowSeverityAlarmWhenTooManyBackend5xxErrors: null
     LowSeverityAlarmWhenTooManyELB5xxErrors: null
+  eventsQueueSize:
+    MetricName: ApproximateNumberOfMessagesVisible
+    Namespace: AWS/SQS
+    Description: "Lots of messages in the events queue. Follow the runbook: TBD"
+    # Threshold is 10 because messages generally process fairly quickly but sometimes
+    # we'll have 10 or less that end up waiting on the queue for a short duration
+    Threshold: 10
+    Priority: High
+    Dimensions:
+    - Name: QueueName
+      Value: {"Ref": "QueueName"}
+    EvaluationPeriods: 5
+    Period: 120
+    ComparisonOperator: GreaterThanThreshold
+    Statistic: Maximum
+    Unit: Count
 
 config:
   environmentVariables:
