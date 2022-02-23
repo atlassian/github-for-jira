@@ -312,7 +312,7 @@ workers:
             Lower: 30
             Upper: 80
           Metrics:
-            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/80)*100])"
+            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/20)*100, (branchQueueMessages/250)*100, (deploymentQueueMessages/250)*100])"
               Id: "combinedCpuRamAndQueues"
               Label: "Scaling based on Queue Sizes and CPU and Memory consumption"
             - MetricStat:
@@ -352,6 +352,26 @@ workers:
                 Period: 60
                 Stat: Maximum
               Id: backfillQueueMessages
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: ApproximateNumberOfMessagesVisible
+                  Namespace: AWS/SQS
+                  Dimensions:
+                    - LogicalQueueName: 'branch'
+                Period: 60
+                Stat: Maximum
+              Id: branchQueueMessages
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: ApproximateNumberOfMessagesVisible
+                  Namespace: AWS/SQS
+                  Dimensions:
+                    - LogicalQueueName: 'deployment'
+                Period: 60
+                Stat: Maximum
+              Id: deploymentQueueMessages
               ReturnData: false
 
 
