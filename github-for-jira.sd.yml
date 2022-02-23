@@ -87,6 +87,20 @@ resources:
       dataType:
         - UGC/Label                # name of GitHub org
         - PII/IndirectConfidential # name of GitHub org
+    alarms:
+      AlarmOnTooManyMessages:
+        MetricName: ApproximateNumberOfMessagesVisible
+        Namespace: AWS/SQS
+        Description: "Message count for backfill queue too high! Follow the runbook: <insert_runbook_url_here>"
+        Threshold: 20
+        Priority: High
+        Dimensions:
+          - Name: QueueName
+            Value: { "Ref": "QueueName" }
+        EvaluationPeriods: 1
+        Period: 300
+        ComparisonOperator: GreaterThanThreshold
+        Statistic: Maximum
 
   - type: sqs
     name: discovery
@@ -96,6 +110,20 @@ resources:
       VisibilityTimeout: 602 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails.
       dataType:
         - UGC/Label                # name of Jira site
+    alarms:
+      AlarmOnTooManyMessages:
+        MetricName: ApproximateNumberOfMessagesVisible
+        Namespace: AWS/SQS
+        Description: "Message count for discovery queue too high! Follow the runbook: <insert_runbook_url_here>"
+        Threshold: 5
+        Priority: High
+        Dimensions:
+          - Name: QueueName
+            Value: { "Ref": "QueueName" }
+        EvaluationPeriods: 1
+        Period: 300
+        ComparisonOperator: GreaterThanThreshold
+        Statistic: Maximum
 
   - type: sqs
     name: push
@@ -107,6 +135,20 @@ resources:
         - UGC/Label                # name of GitHub org
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+    alarms:
+      AlarmOnTooManyMessages:
+        MetricName: ApproximateNumberOfMessagesVisible
+        Namespace: AWS/SQS
+        Description: "Message count for push queue too high! Follow the runbook: <insert_runbook_url_here>"
+        Threshold: 400
+        Priority: High
+        Dimensions:
+          - Name: QueueName
+            Value: { "Ref": "QueueName" }
+        EvaluationPeriods: 1
+        Period: 300
+        ComparisonOperator: GreaterThanThreshold
+        Statistic: Maximum
 
   - type: sqs
     name: deployment
@@ -118,6 +160,20 @@ resources:
         - UGC/Label                # name of GitHub org, URL/name of Jira site
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+    alarms:
+      AlarmOnTooManyMessages:
+        MetricName: ApproximateNumberOfMessagesVisible
+        Namespace: AWS/SQS
+        Description: "Message count for deployment queue too high! Follow the runbook: <insert_runbook_url_here>"
+        Threshold: 10
+        Priority: High
+        Dimensions:
+          - Name: QueueName
+            Value: { "Ref": "QueueName" }
+        EvaluationPeriods: 1
+        Period: 300
+        ComparisonOperator: GreaterThanThreshold
+        Statistic: Maximum
 
   - type: sqs
     name: branch
@@ -129,6 +185,20 @@ resources:
         - UGC/Label                # name of GitHub org, URL/name of Jira site
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+    alarms:
+      AlarmOnTooManyMessages:
+        MetricName: ApproximateNumberOfMessagesVisible
+        Namespace: AWS/SQS
+        Description: "Message count for branch queue too high! Follow the runbook: <insert_runbook_url_here>"
+        Threshold: 20
+        Priority: High
+        Dimensions:
+          - Name: QueueName
+            Value: { "Ref": "QueueName" }
+        EvaluationPeriods: 1
+        Period: 300
+        ComparisonOperator: GreaterThanThreshold
+        Statistic: Maximum
 
   - name: rds
     type: dedicated-rds
@@ -204,22 +274,6 @@ alarms:
     HighSeverityAlarmWhenTooManyELB5xxErrors: null
     LowSeverityAlarmWhenTooManyBackend5xxErrors: null
     LowSeverityAlarmWhenTooManyELB5xxErrors: null
-  eventsQueueSize:
-    MetricName: ApproximateNumberOfMessagesVisible
-    Namespace: AWS/SQS
-    Description: "Lots of messages in the events queue. Follow the runbook: TBD"
-    # Threshold is 10 because messages generally process fairly quickly but sometimes
-    # we'll have 10 or less that end up waiting on the queue for a short duration
-    Threshold: 10
-    Priority: High
-    Dimensions:
-    - Name: QueueName
-      Value: {"Ref": "QueueName"}
-    EvaluationPeriods: 5
-    Period: 120
-    ComparisonOperator: GreaterThanThreshold
-    Statistic: Maximum
-    Unit: Count
 
 config:
   environmentVariables:
