@@ -14,6 +14,7 @@ export interface RepoSyncStateObject {
 	jiraHost?: string;
 	numberOfSyncedRepos?: number;
 	repos?: Repositories;
+	page?: number;
 }
 
 interface SyncStatusCount {
@@ -194,6 +195,14 @@ export default class Subscription extends Sequelize.Model {
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
 	// https://github.com/sequelize/sequelize/issues/4387
 	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
+
+		// if (!updatedState?.repos) {
+		// 	await this.update({
+		// 		syncStatus: SyncStatus.COMPLETE
+		// 	});
+		// 	return this;
+		// }
+
 		const state = _.merge(await RepoSyncState.toRepoJson(this), updatedState);
 		await RepoSyncState.updateFromRepoJson(this, state);
 		return this;

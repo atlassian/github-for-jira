@@ -10,14 +10,13 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, GetRepositoriesQuery, GetRepositoriesResponse } from "./github-queries";
+import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
 import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
 	errors?: GraphQLError[];
 };
-
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -119,7 +118,6 @@ export default class GitHubClient {
 		const graphqlErrors = response.data.errors;
 		if(graphqlErrors?.length) {
 
-
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
@@ -177,13 +175,11 @@ export default class GitHubClient {
 	/**
 	 * Get a page of repositories.
 	 */
-	public async getRepositoriesPage(perPage: number, cursor?: string): Promise<GetRepositoriesResponse> {
-		const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery,
-			{
-				per_page: perPage,
-				cursor
-			});
-		return response?.data?.data;
+	public getRepositoriesPage = async (page: number): Promise<AxiosResponse<Octokit.AppsListReposResponse>> => {
+		return await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
+			perPage: 100,
+			page
+		});
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {

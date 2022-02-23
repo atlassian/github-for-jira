@@ -3,7 +3,7 @@ import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import envVars from "./env";
 import crypto from "crypto";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 const logger = getLogger("feature-flags");
 
@@ -68,7 +68,7 @@ export const isBlocked = async (installationId: number, logger: LoggerWithTarget
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
 		return blockedInstallations.includes(installationId);
 	} catch (e) {
-		logger.error({ err: e, installationId }, "Cannot define if isBlocked")
+		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
 	}
 };

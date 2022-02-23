@@ -2,51 +2,13 @@ import { Installation, RepoSyncState, Subscription } from "../../src/models";
 import { sqsQueues } from "../../src/sqs/queues";
 import { createWebhookApp } from "../utils/probot";
 import app from "../../src/worker/app";
-import { discovery } from "../../src/sync/discovery";
+import { discovery, discoveryOctoKit } from "../../src/sync/discovery";
 import { getLogger } from "../../src/config/logger";
 import waitUntil from "../utils/waitUntil";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 
 jest.mock("../../src/config/feature-flags");
-
-const mockGitHubClientResponse = {
-	"data": {
-		"viewer": {
-			"repositories": {
-				"pageInfo": {
-					"endCursor": "Y3Vyccccc353OnYyOpHOGyQXZg==",
-					"hasNextPage": false
-				},
-				"edges": [{
-					"node": {
-						"id": 222222,
-						"name": "test-repo",
-						"full_name": "myrepo/test-repo",
-						"owner": {
-							"login": "myrepo"
-						},
-						"html_url": "https://github.com/myrepo/test-repo",
-						"updated_at": "2014-09-22T11:16:46.000Z"
-					}
-				},
-				{
-					"node": {
-						"id": 9999999,
-						"name": "deployment-test",
-						"full_name": "myrepo/deployment-test",
-						"owner": {
-							"login": "myrepo"
-						},
-						"html_url": "https://github.com/myrepo/deployment-test",
-						"updated_at": "2022-02-03T22:31:15.000Z"
-					}
-				}
-				]
-			}
-		}
-	}
-}
 
 describe("Discovery Queue Test - Ocktokit", () => {
 	const TEST_INSTALLATION_ID = 1234;
@@ -108,11 +70,10 @@ describe("Discovery Queue Test - Ocktokit", () => {
 	// eslint-disable-next-line jest/expect-expect
 	it("Discovery queue listener works correctly", async () => {
 		mockGitHubReposResponses();
-		await discovery(app)({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
+		await discoveryOctoKit(app)({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
 		await verify2RepositoriesInTheStateAndBackfillMessageSent();
 	});
 });
-
 
 describe("Discovery Queue Test - GitHub Client", () => {
 	const TEST_INSTALLATION_ID = 1234;
@@ -155,9 +116,11 @@ describe("Discovery Queue Test - GitHub Client", () => {
 
 	const mockGitHubReposResponses = () => {
 		githubAccessTokenNock(TEST_INSTALLATION_ID);
+		const linkLastPage = "<https://api.github.com/installation/repositories?per_page=1&page=2>; rel=\"prev\", <https://api.github.com/installation/repositories?per_page=1&page=2>; rel=\"first\"";
 		githubNock
-			.post("/graphql")
-			.reply(200, mockGitHubClientResponse);
+			.get("/installation/repositories?per_page=100&page=0")
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
+			.reply(200, require("../fixtures/list-repositories.json"), { "link": linkLastPage });
 	};
 
 	async function verify2RepositoriesInTheStateAndBackfillMessageSent() {
@@ -180,7 +143,8 @@ describe("Discovery Queue Test - GitHub Client", () => {
 	// eslint-disable-next-line jest/expect-expect
 	it("Discovery queue listener works correctly", async () => {
 		mockGitHubReposResponses();
-		await discovery(app)({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
+		await discovery({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
 		await verify2RepositoriesInTheStateAndBackfillMessageSent();
 	});
+
 });
