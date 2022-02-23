@@ -194,6 +194,7 @@ export default class GitHubClient {
 			perPage: 100,
 			page
 		});
+	}
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
