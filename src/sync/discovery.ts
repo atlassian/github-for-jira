@@ -49,7 +49,7 @@ const checkHeaderForNextPage = (headers): boolean => {
 * Continuosuly call the GitHub repo to fetch a page of repositories at a time and update there sync status until no more pages.
 */
 const syncRepositories = async (github, subscription: Subscription, logger: LoggerWithTarget): Promise<void> => {
-	let page = 0;
+	let page = 1;
 	let hasNextPage = true;
 	await resetSyncedReposCount(subscription);
 	while (hasNextPage) {
