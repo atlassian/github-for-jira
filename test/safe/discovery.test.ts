@@ -123,28 +123,26 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			.reply(200, require("../fixtures/list-repositories.json"), { "link": linkLastPage });
 	};
 
-	async function verify2RepositoriesInTheStateAndBackfillMessageSent() {
+	it("Discovery sqs queue processes the message", async () => {
+		mockGitHubReposResponses();
+		await sqsQueues.discovery.sendMessage({ installationId: TEST_INSTALLATION_ID, jiraHost });
+		await waitUntil(async () => {
+			expect(sendMessageSpy).toBeCalledTimes(1);
+			const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID);
+			expect(subscription).toBeTruthy();
+			const states = await RepoSyncState.findAllFromSubscription(subscription!);
+			expect(states.length).toBe(2);
+		});
+	});
+
+	it("Discovery queue listener works correctly", async () => {
+		mockGitHubReposResponses();
+		await discovery({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
 		expect(sendMessageSpy).toBeCalledTimes(1);
 		const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID);
 		expect(subscription).toBeTruthy();
 		const states = await RepoSyncState.findAllFromSubscription(subscription!);
 		expect(states.length).toBe(2);
-	}
-
-	// eslint-disable-next-line jest/expect-expect
-	it("Discovery sqs queue processes the message", async () => {
-		mockGitHubReposResponses();
-		await sqsQueues.discovery.sendMessage({ installationId: TEST_INSTALLATION_ID, jiraHost });
-		await waitUntil(async () => {
-			await verify2RepositoriesInTheStateAndBackfillMessageSent();
-		});
-	});
-
-	// eslint-disable-next-line jest/expect-expect
-	it("Discovery queue listener works correctly", async () => {
-		mockGitHubReposResponses();
-		await discovery({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
-		await verify2RepositoriesInTheStateAndBackfillMessageSent();
 	});
 
 });
