@@ -27,7 +27,7 @@ const updateSyncState = async (subscription: Subscription, repositories: Reposit
 	});
 };
 
-const checkHeaderForNextPage = (headers): boolean => {
+const checkHeaderForNextPage = (headers) => {
 	const links = headers?.link?.split(",");
 	const regex = /(rel="next")/g;
 	const hasNextPage = links?.find(elem => elem.match(regex));

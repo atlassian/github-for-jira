@@ -1,3 +1,4 @@
+/* eslint-disable jest/expect-expect */
 import { Installation, RepoSyncState, Subscription } from "../../src/models";
 import { sqsQueues } from "../../src/sqs/queues";
 import { createWebhookApp } from "../utils/probot";
@@ -13,10 +14,6 @@ jest.mock("../../src/config/feature-flags");
 describe("Discovery Queue Test - Ocktokit", () => {
 	const TEST_INSTALLATION_ID = 1234;
 	let sendMessageSpy: jest.SpyInstance;
-
-	beforeAll(async () => {
-		await sqsQueues.branch.purgeQueue();
-	});
 
 	beforeEach(async () => {
 		await createWebhookApp();
@@ -58,7 +55,6 @@ describe("Discovery Queue Test - Ocktokit", () => {
 		expect(states.length).toBe(2);
 	}
 
-	// eslint-disable-next-line jest/expect-expect
 	it("Discovery sqs queue processes the message", async () => {
 		mockGitHubReposResponses();
 		await sqsQueues.discovery.sendMessage({ installationId: TEST_INSTALLATION_ID, jiraHost });
@@ -67,7 +63,6 @@ describe("Discovery Queue Test - Ocktokit", () => {
 		});
 	});
 
-	// eslint-disable-next-line jest/expect-expect
 	it("Discovery queue listener works correctly", async () => {
 		mockGitHubReposResponses();
 		await discoveryOctoKit(app)({ data: { installationId: TEST_INSTALLATION_ID, jiraHost } }, getLogger("test"));
@@ -78,10 +73,6 @@ describe("Discovery Queue Test - Ocktokit", () => {
 describe("Discovery Queue Test - GitHub Client", () => {
 	const TEST_INSTALLATION_ID = 1234;
 	let sendMessageSpy: jest.SpyInstance;
-
-	beforeAll(async () => {
-		await sqsQueues.branch.purgeQueue();
-	});
 
 	beforeEach(async () => {
 		await createWebhookApp();
