@@ -8,7 +8,9 @@ import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import _ from "lodash";
 import {sendAnalytics} from "./analytics-client";
-import {AnalyticsVariablesEnum} from "../interfaces/common";
+import {
+	AnalyticsEventTypesEnum, AnalyticsScreenEventsEnum,
+} from "../interfaces/common";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -121,7 +123,7 @@ export default async (
 			nonce: res.locals.nonce
 		});
 
-		sendAnalytics(AnalyticsVariablesEnum.ScreenEvent, { name: AnalyticsVariablesEnum.GitHubConfigScreenEventName, jiraHost, connectedOrgCount: installations.total })
+		sendAnalytics(AnalyticsEventTypesEnum.ScreenEvent, { name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName, jiraHost, connectedOrgCount: installations.total })
 
 		req.log.info("Jira configuration rendered successfully.");
 	} catch (error) {

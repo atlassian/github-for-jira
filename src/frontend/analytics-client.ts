@@ -1,24 +1,25 @@
 import {getLogger} from "../config/logger";
 import { omit } from "lodash";
 import { optionalRequire } from "optional-require";
-import {AnalyticsVariablesEnum} from "../interfaces/common";
+import {AnalyticsConfigEnum} from "../interfaces/common";
+import {isNodeProd} from "../util/isNodeEnv";
+
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
 const logger = getLogger("analytics")
-
 const instance = process.env.INSTANCE_NAME;
 const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 function sendAnalytics(eventType: "trait")
 function sendAnalytics(eventType: "screen", attributes:{name:string} & Record<string,unknown>)
 function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string,unknown>)
-async function sendAnalytics(eventType: string, attributes?: Record<string, unknown>): Promise<any> {
-	if(!analyticsClient){
+function sendAnalytics(eventType: string, attributes?: Record<string, unknown>): void {
+	if(!analyticsClient && !isNodeProd()){
 		return;
 	}
 
 	const analyticsNodeClient = analyticsClient({
-		env: AnalyticsVariablesEnum.ProdEnv, // prod, stg or dev
-		product: AnalyticsVariablesEnum.Product, // required - do not change - https://hello.atlassian.net/browse/DE-8853
+		env: AnalyticsConfigEnum.ProdEnv,
+		product: AnalyticsConfigEnum.Product
 	});
 
 	const baseAttributes = {
@@ -27,6 +28,8 @@ async function sendAnalytics(eventType: string, attributes?: Record<string, unkn
 		tenantIdType: "cloudId",
 		tenantId: "NONE",
 	}
+
+	attributes!.appKey = appKey;
 
 	switch (eventType) {
 		case "screen":
@@ -46,10 +49,7 @@ async function sendAnalytics(eventType: string, attributes?: Record<string, unkn
 			wrapPromises(analyticsNodeClient.sendUIEvent({
 				...baseAttributes,
 				uiEvent: {
-					attributes: {
-						...omit(attributes, "name"),
-						appKey
-					}
+					attributes: attributes
 				}
 			}))
 			break;
@@ -57,10 +57,7 @@ async function sendAnalytics(eventType: string, attributes?: Record<string, unkn
 			wrapPromises(analyticsNodeClient.sendTrackEvent({
 				...baseAttributes,
 				trackEvent: {
-					attributes: {
-						...omit(attributes, "name"),
-						appKey
-					}
+					attributes: attributes
 				}
 			}))
 			break;
@@ -75,10 +72,7 @@ async function sendAnalytics(eventType: string, attributes?: Record<string, unkn
 			wrapPromises(analyticsNodeClient.sendOperationalEvent({
 				...baseAttributes,
 				operationalEvent: {
-					attributes: {
-						...omit(attributes, "name"),
-						appKey
-					}
+					attributes: attributes
 				}
 			}))
 			break;
