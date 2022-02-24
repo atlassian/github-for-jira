@@ -6,7 +6,7 @@ import { metricError } from "../config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "../config/interfaces";
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
-import { groupBy } from "lodash";
+import _ from "lodash";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -27,8 +27,7 @@ export interface InstallationResults {
 
 export const getInstallations = async (client: GitHubAPI, subscriptions: SubscriptionClass[], log?: Logger): Promise<InstallationResults> => {
 	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(client, sub, log)));
-	// Had to add "unknown" in between type as lodash types is incorrect for
-	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
+	const connections = _.groupBy(installations, "status") as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
 	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
 	const rejected = connections.rejected?.map(v => v.reason as FailedAppInstallation) || [];
 	return {
