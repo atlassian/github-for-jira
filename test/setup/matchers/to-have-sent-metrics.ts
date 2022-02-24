@@ -47,7 +47,7 @@ it('checks tags too', async () => {
 })
 
 */
-import { diff } from "jest-diff";
+import diff from "jest-diff";
 
 const parseStatsdMessage = (stastsdMessage: string): StatsDMessage => {
 	const [metric, type, tagsString] = stastsdMessage.split("|");

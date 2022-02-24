@@ -100,13 +100,13 @@ export default async function(
 	const pullRequests = (
 		await Promise.all(
 			edges.map(async (pull) => {
-				const prDetails = useNewGHClient ? (await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)) :
+				const prDetails = useNewGHClient ? (await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)).data :
 					(await github?.pulls?.get({
 						owner: repository.owner.login, repo: repository.name,pull_number: pull.number
-					}));
+					})).data;
 				const ghUser = useNewGHClient ?
-					await getGithubUserNew(newGithub, prDetails?.data.user.login) :
-					await getGithubUser(github, prDetails?.data.user.login);
+					await getGithubUserNew(newGithub, prDetails.user.login) :
+					await getGithubUser(github, prDetails.user.login);
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
 					prDetails,

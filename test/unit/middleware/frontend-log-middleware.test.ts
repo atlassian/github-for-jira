@@ -28,7 +28,7 @@ describe("frontend-log-middleware", () => {
 			logMiddleware(request as Request, response as Response, () => {
 				request.log!.info("hello");
 				expect(loggedStuff).toContain("foo");
-				expect(loggedStuff).toContain("123");
+				expect(loggedStuff).toContain(123);
 				resolve(0);
 			});
 		}))
