@@ -175,38 +175,44 @@ describe("SqsQueue tests", () => {
 			await queue.sendMessage(testPayload);
 		});
 
-		it("Retries with the correct delay", async (done: DoneCallback) => {
 
-			const testErrorMessage = "Something bad happened";
-			const testPayload = generatePayload();
-			const receivedTime = {time: Date.now(), receivesCounter: 0, errorHandlingCounter: 0};
+		describe.each([1, 1.2])("Timeout tests", (timeout) => {
+			it(`Retries with the correct delay for timeout ${timeout}`, async (done: DoneCallback) => {
 
-			mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
+				const testErrorMessage = "Something bad happened";
+				const testPayload = generatePayload();
+				const receivedTime = {time: Date.now(), receivesCounter: 0, errorHandlingCounter: 0};
 
-				if (receivedTime.receivesCounter == 0) {
-					receivedTime.receivesCounter++;
-					context.log.info("Throwing error on first processing");
-					throw new Error("Something bad happened");
-				}
+				mockRequestHandler.mockImplementation(async (context: Context<TestMessage>) => {
 
-				expect(receivedTime.receivesCounter).toBe(1);
-				expect(receivedTime.errorHandlingCounter).toBe(1);
+					if (receivedTime.receivesCounter == 0) {
+						receivedTime.receivesCounter++;
+						context.log.info("Throwing error on first processing");
+						throw new Error("Something bad happened");
+					}
 
-				const currentTime = Date.now();
-				expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
-				done();
-				return;
+					expect(receivedTime.receivesCounter).toBe(1);
+					expect(receivedTime.errorHandlingCounter).toBe(1);
+
+					const currentTime = Date.now();
+					expect(currentTime - receivedTime.time).toBeGreaterThanOrEqual(1000);
+					expect(currentTime - receivedTime.time).toBeLessThanOrEqual(5000);
+					done();
+					return;
+				});
+
+
+				mockErrorHandler.mockImplementation((error: Error, context: Context<TestMessage>) : ErrorHandlingResult => {
+					expect(context.payload.msg).toBe(testPayload.msg)
+					expect(error.message).toBe(testErrorMessage)
+					receivedTime.errorHandlingCounter++;
+					return {retryable: true, retryDelaySec: timeout, isFailure: true}
+				})
+
+				await queue.sendMessage(testPayload);
 			});
-
-			mockErrorHandler.mockImplementation((error: Error, context: Context<TestMessage>) : ErrorHandlingResult => {
-				expect(context.payload.msg).toBe(testPayload.msg)
-				expect(error.message).toBe(testErrorMessage)
-				receivedTime.errorHandlingCounter++;
-				return {retryable: true, retryDelaySec: 1, isFailure: true}
-			})
-
-			await queue.sendMessage(testPayload);
 		});
+
 
 		it("Message deleted from the queue when unretryable", async () => {
 

@@ -1,4 +1,4 @@
-import transformBranch from "../transforms/branch";
+import { transformBranch } from "../transforms/branch";
 import issueKeyParser from "jira-issue-key-parser";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";

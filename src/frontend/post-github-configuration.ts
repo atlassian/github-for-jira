@@ -7,7 +7,7 @@ import {findOrStartSync} from "../sync/sync-utils";
  * Handle the when a user adds a repo to this installation
  */
 export default async (req: Request, res: Response): Promise<void> => {
-	const {github, githubToken, jiraHost } = res.locals;
+	const { github, githubToken, jiraHost } = res.locals;
 
 	if (!githubToken || !jiraHost) {
 		res.sendStatus(401);
@@ -62,7 +62,6 @@ export default async (req: Request, res: Response): Promise<void> => {
 		});
 
 		await findOrStartSync(subscription, req.log);
-
 
 		res.sendStatus(200);
 	} catch (err) {
