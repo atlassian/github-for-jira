@@ -191,7 +191,7 @@ export default class GitHubClient {
 	 */
 	public getRepositoriesPage = async (page: number): Promise<AxiosResponse<Octokit.AppsListReposResponse>> => {
 		return await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
-			perPage: 1,
+			perPage: 100,
 			page
 		});
 	}

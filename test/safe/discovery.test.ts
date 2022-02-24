@@ -109,7 +109,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 		githubAccessTokenNock(TEST_INSTALLATION_ID);
 		const linkLastPage = "<https://api.github.com/installation/repositories?per_page=1&page=2>; rel=\"prev\", <https://api.github.com/installation/repositories?per_page=1&page=2>; rel=\"first\"";
 		githubNock
-			.get("/installation/repositories?per_page=100&page=0")
+			.get("/installation/repositories?per_page=100&page=1")
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			.reply(200, require("../fixtures/list-repositories.json"), { "link": linkLastPage });
 	};
