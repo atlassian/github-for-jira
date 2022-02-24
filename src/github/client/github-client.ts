@@ -24,6 +24,8 @@ type GraphQlQueryResponse<ResponseData> = {
 	errors?: GraphQLError[];
 };
 
+export type PaginatedAxiosResponse<T> = { hasNextPage:boolean; } & AxiosResponse<T>;
+
 /**
  * A GitHub client that supports authentication as a GitHub app.
  *
@@ -189,11 +191,16 @@ export default class GitHubClient {
 	/**
 	 * Get a page of repositories.
 	 */
-	public getRepositoriesPage = async (page = 1): Promise<AxiosResponse<Octokit.AppsListReposResponse>> => {
-		return await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
+	public getRepositoriesPage = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
+		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
 			perPage: 100,
 			page
 		});
+		const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
+		return {
+			...response,
+			hasNextPage
+		}
 	}
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {

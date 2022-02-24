@@ -40,17 +40,17 @@ const updateSyncState = async (subscription: Subscription, repositories: Reposit
 */
 const syncRepositories = async (github, subscription: Subscription, logger: LoggerWithTarget): Promise<void> => {
 	let page = 1;
-	let go = true;
+	let requestNextPage = true;
 	await resetSyncedReposCount(subscription);
-	while (go) {
+	while (requestNextPage) {
 		try {
 			const { data, hasNextPage } = await github.getRepositoriesPage(page);
-			go = hasNextPage;
+			requestNextPage = hasNextPage;
 			await updateSyncState(subscription, data.repositories);
 			logger.info(`${data.repositories.length} Repositories syncing`);
 			page++;
 		} catch (err) {
-			go = false;
+			requestNextPage = false;
 			throw new Error(err);
 		}
 	}
@@ -60,7 +60,7 @@ const syncRepositories = async (github, subscription: Subscription, logger: Logg
 * Use the github client to request all repositories and update the sync state per repo, send a bacnkfill queue message once complete.
 */
 export const discovery = async (data: DiscoveryMessagePayload, logger: LoggerWithTarget): Promise<void> => {
-	const startTime = new Date();
+	const startTime = new Date().toISOString() ;
 	const { jiraHost, installationId } = data;
 	const github = new GitHubClient(getCloudInstallationId(installationId), logger);
 	const subscription = await Subscription.getSingleInstallation(
@@ -74,7 +74,7 @@ export const discovery = async (data: DiscoveryMessagePayload, logger: LoggerWit
 	}
 
 	await syncRepositories(github, subscription, logger);
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: startTime.toISOString() }, 0, logger);
+	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime }, 0, logger);
 };
 
 export const discoveryOctoKit = (app: Application) => async (job, logger: LoggerWithTarget) => {

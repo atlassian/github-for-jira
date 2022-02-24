@@ -200,6 +200,7 @@ export default class Subscription extends Sequelize.Model {
 			await this.update({
 				syncStatus: SyncStatus.COMPLETE
 			});
+			return this;
 		}
 
 		const state = _.merge(await RepoSyncState.toRepoJson(this), updatedState);
