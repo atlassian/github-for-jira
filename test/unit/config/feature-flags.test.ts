@@ -1,5 +1,5 @@
 import LaunchDarkly, { LDClient } from "launchdarkly-node-server-sdk";
-import { mocked } from "ts-jest";
+import { mocked } from "ts-jest/utils";
 
 jest.mock("launchdarkly-node-server-sdk");
 

@@ -183,12 +183,12 @@ export default class Subscription extends Sequelize.Model {
 	 * Returns array with sync status counts. [ { syncStatus: 'COMPLETED', count: 123 }, ...]
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
-		const [results] = await this.sequelize?.query(
+		const results = await this.sequelize?.query(
 			`SELECT "syncStatus", COUNT(*)
 			 FROM "Subscriptions"
 			 GROUP BY "syncStatus"`
 		);
-		return results as SyncStatusCount[];
+		return results[0] as SyncStatusCount[];
 	}
 
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
