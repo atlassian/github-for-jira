@@ -196,7 +196,7 @@ export default class Subscription extends Sequelize.Model {
 	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
 
 		// Zero repos, means zero syncs required so set COMPLETE.
-		if (!updatedState?.repos) {
+		if(!Object.keys(updatedState?.repos || {}).length) {
 			await this.update({
 				syncStatus: SyncStatus.COMPLETE
 			});

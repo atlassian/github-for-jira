@@ -36,31 +36,21 @@ const updateSyncState = async (subscription: Subscription, repositories: Reposit
 };
 
 /*
-* Checking the header atttribute link(type string[]) for a entry that contains "rel=next", this indicates more pages available.
-*/
-const checkHeaderForNextPage = (headers): boolean => {
-	const links = headers?.link?.split(",");
-	const regex = /(rel="next")/g;
-	const hasNextPage = links?.find(elem => elem.match(regex));
-	return hasNextPage;
-};
-
-/*
 * Continuosuly call the GitHub repo to fetch a page of repositories at a time and update there sync status until no more pages.
 */
 const syncRepositories = async (github, subscription: Subscription, logger: LoggerWithTarget): Promise<void> => {
 	let page = 1;
-	let hasNextPage = true;
+	let go = true;
 	await resetSyncedReposCount(subscription);
-	while (hasNextPage) {
+	while (go) {
 		try {
-			const { data, headers } = await github.getRepositoriesPage(page);
+			const { data, hasNextPage } = await github.getRepositoriesPage(page);
+			go = hasNextPage;
 			await updateSyncState(subscription, data.repositories);
 			logger.info(`${data.repositories.length} Repositories syncing`);
-			hasNextPage = checkHeaderForNextPage(headers);
 			page++;
 		} catch (err) {
-			hasNextPage = false;
+			go = false;
 			throw new Error(err);
 		}
 	}
