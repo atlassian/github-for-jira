@@ -16,7 +16,7 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
+import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, getCommitsQuery, getCommitsResponse } from "./github-queries";
 import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
@@ -209,7 +209,6 @@ export default class GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-
 	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string): Promise<GetBranchesResponse> {
 		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,
 			{
@@ -221,4 +220,14 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
+	public async getCommitsPage(includeChangedFiles: boolean, owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
+		const response = await this.graphql<getCommitsResponse>(getCommitsQuery(includeChangedFiles),
+			{
+				owner: owner,
+				repo: repoName,
+				per_page: perPage,
+				cursor
+			});
+		return response?.data?.data;
+	}
 }

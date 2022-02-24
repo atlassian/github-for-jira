@@ -7,7 +7,7 @@ import enhanceOctokit from "../config/enhance-octokit";
 import statsd from "../config/statsd";
 import getPullRequests from "./pull-request";
 import getBranches from "./branches";
-import getCommits from "./commits";
+import { getCommits } from "./commits";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import { booleanFlag, BooleanFlags, isBlocked } from "../config/feature-flags";

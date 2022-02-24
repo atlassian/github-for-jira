@@ -1,4 +1,4 @@
-import {Repository} from "@octokit/graphql-schema";
+import {Commit, Repository} from "@octokit/graphql-schema";
 
 export const ViewerRepositoryCountQuery = `
 query {
@@ -42,7 +42,8 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
     }
   }`;
 
-export const getCommits = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
+export type getCommitsResponse = {commits: Commit};
+export const getCommitsQuery = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
     repository(owner: $owner, name: $repo){
       ref(qualifiedName: $default_ref) {
         target {
