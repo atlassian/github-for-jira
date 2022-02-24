@@ -11,6 +11,16 @@ import { Hub } from "@sentry/types/dist/hub";
 
 jest.mock("../../../src/models");
 
+// import { when } from "jest-when";
+// import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
+
+// jest.mock("../../src/config/feature-flags");
+
+// 			when(booleanFlag).calledWith(
+// 				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+// 				expect.anything()
+// 			).mockResolvedValue(true);
+
 describe.skip("sync/commits", () => {
 	let installationId;
 	let app: Application;

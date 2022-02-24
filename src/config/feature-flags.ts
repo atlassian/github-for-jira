@@ -3,7 +3,7 @@ import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import envVars from "./env";
 import crypto from "crypto";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 const logger = getLogger("feature-flags");
 
@@ -23,6 +23,7 @@ export enum BooleanFlags {
 	VERBOSE_LOGGING = "verbose-logging",
 	USE_NEW_GITHUB_CLIENT_FOR_BRANCHES = "use-new-github-client-for-branches",
 	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
+	USE_NEW_GITHUB_CLIENT_FOR_BACKFILL = "use-new-github-client-for-backfill_z7ps8",
 	USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT = "use-new-github-pull-request-url-format"
 }
 
@@ -76,7 +77,7 @@ export const isBlocked = async (installationId: number, logger: LoggerWithTarget
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
 		return blockedInstallations.includes(installationId);
 	} catch (e) {
-		logger.error({ err: e, installationId }, "Cannot define if isBlocked")
+		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
 	}
 };

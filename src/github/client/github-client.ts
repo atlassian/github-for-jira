@@ -1,6 +1,6 @@
 import Logger from "bunyan";
-import {Octokit} from "@octokit/rest";
-import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse} from "axios";
+import { Octokit } from "@octokit/rest";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
@@ -16,8 +16,8 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, getCommitsQuery, getCommitsResponse } from "./github-queries";
-import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
+import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, getCommitsQuery, getCommitsResponse, getDefaultRefQuery, getDefaultRefResponse } from "./github-queries";
+import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
@@ -132,7 +132,6 @@ export default class GitHubClient {
 		const graphqlErrors = response.data.errors;
 		if(graphqlErrors?.length) {
 
-
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
@@ -189,18 +188,16 @@ export default class GitHubClient {
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
-			{environment,
-				per_page},
-			{owner,
-				repo});
+			{ environment, per_page },
+			{ owner, repo }
+		);
 	}
 
 	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number) : Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentStatusesResponse>(`/repos/{owner}/{repo}/deployments/{deployment_id}/statuses`,
-			{per_page},
-			{owner,
-				repo,
-				deployment_id});
+			{ per_page },
+			{ owner, repo, deployment_id }
+		);
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
@@ -212,7 +209,7 @@ export default class GitHubClient {
 	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string): Promise<GetBranchesResponse> {
 		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,
 			{
-				owner: owner,
+				owner,
 				repo: repoName,
 				per_page: perPage,
 				cursor
@@ -220,14 +217,25 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
-	public async getCommitsPage(includeChangedFiles: boolean, owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
+	public async getCommitsPage(includeChangedFiles: boolean, owner: string, repoName: string, defaultRef: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
 		const response = await this.graphql<getCommitsResponse>(getCommitsQuery(includeChangedFiles),
 			{
-				owner: owner,
+				owner,
 				repo: repoName,
 				per_page: perPage,
+				default_ref: defaultRef,
 				cursor
 			});
 		return response?.data?.data;
 	}
+
+	public async getDefaultRef(owner: string, repoName: string): Promise<getDefaultRefResponse> {
+		const response = await this.graphql<getDefaultRefResponse>(getDefaultRefQuery,
+			{
+				owner,
+				repo: repoName
+			});
+		return response?.data?.data;
+	}
+
 }

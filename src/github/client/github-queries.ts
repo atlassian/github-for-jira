@@ -1,4 +1,4 @@
-import {Commit, Repository} from "@octokit/graphql-schema";
+import { Repository } from "@octokit/graphql-schema";
 
 export const ViewerRepositoryCountQuery = `
 query {
@@ -7,7 +7,7 @@ query {
 			totalCount
 		}
 	}
-}`
+}`;
 
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo){
@@ -42,7 +42,18 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
     }
   }`;
 
-export type getCommitsResponse = {commits: Commit};
+export type getCommitsResponse = {
+  repository: {
+    ref: {
+      target: {
+        history: {
+          edges
+        }
+      }
+    }
+  }
+};
+
 export const getCommitsQuery = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
     repository(owner: $owner, name: $repo){
       ref(qualifiedName: $default_ref) {
@@ -123,7 +134,14 @@ export const GetBranchesQuery = `query ($owner: String!, $repo: String!, $per_pa
     }
   }`;
 
-export const getDefaultRef = `query ($owner: String!, $repo: String!) {
+export type getDefaultRefResponse = {
+  repository: {
+    defaultBranchRef: {
+      name: string
+    }
+  }
+};
+export const getDefaultRefQuery = `query ($owner: String!, $repo: String!) {
     repository(owner: $owner, name: $repo) {
         defaultBranchRef {
           name
