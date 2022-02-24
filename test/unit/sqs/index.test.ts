@@ -74,7 +74,7 @@ describe("SqsQueue tests", () => {
 		it("Message received with delay", async () => {
 			const startTime = Date.now();
 			await queue.sendMessage(payload, 1);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveReturnedTimes(1));
+			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(1));
 			expect(Date.now() - startTime).toBeGreaterThanOrEqual(1000);
 		});
 
@@ -82,7 +82,7 @@ describe("SqsQueue tests", () => {
 			await queue.sendMessage(payload);
 			const time = Date.now();
 			await delay(1000);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveReturnedTimes(1));
+			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(1));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
 		});
@@ -96,7 +96,7 @@ describe("SqsQueue tests", () => {
 				queue.sendMessage(payload),
 				queue.sendMessage(payload)
 			]);
-			await waitUntil(async () => expect(mockRequestHandler).toHaveReturnedTimes(2));
+			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(2));
 			await expect(mockRequestHandler).toHaveResolved();
 			expect(Date.now() - time).toBeGreaterThanOrEqual(2000);
 		});
@@ -107,7 +107,7 @@ describe("SqsQueue tests", () => {
 				mockErrorHandler.mockReturnValue({ retryable: true, retryDelaySec: timeout, isFailure: true });
 				const time = Date.now();
 				await queue.sendMessage(payload);
-				await waitUntil(async () => expect(mockRequestHandler).toHaveReturnedTimes(2));
+				await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(2));
 				await expect(mockRequestHandler).toHaveResolvedTimes(1);
 				expect(Date.now() - time).toBeGreaterThanOrEqual(timeout * 1000);
 			});
@@ -119,7 +119,7 @@ describe("SqsQueue tests", () => {
 			mockErrorHandler.mockReturnValue({ retryable: false, isFailure: true });
 			await queue.sendMessage(payload);
 			await waitUntil(async () => {
-				expect(mockErrorHandler).toHaveReturnedTimes(1);
+				expect(mockErrorHandler).toHaveBeenCalledTimes(1);
 				expect(queueDeletionSpy).toBeCalledTimes(1);
 			});
 			expect(statsdIncrementSpy).toBeCalledWith(sqsQueueMetrics.failed, expect.anything());
