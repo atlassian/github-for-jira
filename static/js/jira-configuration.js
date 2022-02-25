@@ -51,8 +51,8 @@ $(".sync-connection-link").click(function(event) {
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
-
 	const $el = $("#restart-backfill");
+
 	$el.prop("disabled", true);
 	$el.attr("aria-disabled", "true");
 
