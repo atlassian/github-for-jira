@@ -31,8 +31,8 @@ describe("Github Setup", () => {
 			});
 		});
 
-		it("should return redirect to github oauth flow for GET request if token is missing", async () =>
-			supertest(frontendApp)
+		it("should return redirect to github oauth flow for GET request if token is missing", async () => {
+			await supertest(frontendApp)
 				.get("/github/setup")
 				.set(
 					"Cookie",
@@ -45,7 +45,8 @@ describe("Github Setup", () => {
 					expect(res.headers.location).toContain(
 						"github.com/login/oauth/authorize"
 					);
-				}));
+				})
+		});
 
 		it("should return redirect to github oauth flow for GET request if token is invalid", async () => {
 			githubNock
@@ -53,7 +54,7 @@ describe("Github Setup", () => {
 				.matchHeader("Authorization", /^Bearer .+$/)
 				.reply(403);
 
-			return supertest(frontendApp)
+			await supertest(frontendApp)
 				.get("/github/setup")
 				.set(
 					"Cookie",
@@ -77,7 +78,7 @@ describe("Github Setup", () => {
 				.get("/status")
 				.reply(200);
 
-			return supertest(frontendApp)
+			await supertest(frontendApp)
 				.post("/github/setup")
 				.send({
 					jiraDomain: envVars.INSTANCE_NAME
@@ -100,7 +101,7 @@ describe("Github Setup", () => {
 				.get("/status")
 				.reply(200);
 
-			return supertest(frontendApp)
+			await supertest(frontendApp)
 				.post("/github/setup")
 				.send({
 					jiraDomain: envVars.INSTANCE_NAME

@@ -347,6 +347,16 @@ describe("API", () => {
 					.delete("/rest/devinfo/0.10/bulkByProperties")
 					.query({installationId: gitHubInstallationId})
 					.reply(200);
+
+				jiraNock
+					.delete("/rest/builds/0.1/bulkByProperties")
+					.query({gitHubInstallationId})
+					.reply(200);
+
+				jiraNock
+					.delete("/rest/deployments/0.1/bulkByProperties")
+					.query({gitHubInstallationId})
+					.reply(200);
 			});
 
 			it("Should work with old delete installation route", () => {
