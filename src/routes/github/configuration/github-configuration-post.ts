@@ -1,13 +1,13 @@
 import { Subscription } from "../../../models";
 import { getHashedKey } from "../../../models/installation";
 import { Request, Response } from "express";
-import {findOrStartSync} from "../../../sync/sync-utils";
+import { findOrStartSync } from "../../../sync/sync-utils";
 
 /**
  * Handle the when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
-	const {github, githubToken, jiraHost } = res.locals;
+	const { github, githubToken, jiraHost } = res.locals;
 
 	if (!githubToken || !jiraHost) {
 		res.sendStatus(401);
@@ -62,7 +62,6 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		});
 
 		await findOrStartSync(subscription, req.log);
-
 
 		res.sendStatus(200);
 	} catch (err) {

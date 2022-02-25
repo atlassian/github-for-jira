@@ -183,17 +183,25 @@ export default class Subscription extends Sequelize.Model {
 	 * Returns array with sync status counts. [ { syncStatus: 'COMPLETED', count: 123 }, ...]
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
-		const [results] = await this.sequelize?.query(
+		const results = await this.sequelize?.query(
 			`SELECT "syncStatus", COUNT(*)
 			 FROM "Subscriptions"
 			 GROUP BY "syncStatus"`
 		);
-		return results as SyncStatusCount[];
+		return results[0] as SyncStatusCount[];
 	}
 
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
 	// https://github.com/sequelize/sequelize/issues/4387
 	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
+
+		// Zero repos, means zero syncs required so set COMPLETE.
+		if(!Object.keys(updatedState?.repos || {}).length) {
+			await this.update({
+				syncStatus: SyncStatus.COMPLETE
+			});
+		}
+
 		const state = _.merge(await RepoSyncState.toRepoJson(this), updatedState);
 		await RepoSyncState.updateFromRepoJson(this, state);
 		return this;

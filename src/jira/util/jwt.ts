@@ -235,4 +235,3 @@ export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Resp
 		sendError(res, 401, "Unauthorized")
 	}
 }
-

@@ -1,7 +1,7 @@
 import { Subscription } from "../../models";
 import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
-import {findOrStartSync} from "../../sync/sync-utils";
+import { findOrStartSync } from "../../sync/sync-utils";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, syncType } = req.body;

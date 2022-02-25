@@ -3,6 +3,7 @@ import { RepoSyncState, Subscription } from "../../src/models";
 
 describe("Subscription", () => {
 	let sub: SubscriptionClass;
+	let updateSpy: jest.SpyInstance;
 
 	beforeEach(async () => {
 		sub = await Subscription.create({
@@ -10,6 +11,7 @@ describe("Subscription", () => {
 			jiraHost,
 			jiraClientKey: "myClientKey",
 		});
+		updateSpy = jest.spyOn(sub, "update");
 	});
 
 	describe("updateSyncState", () => {
@@ -23,6 +25,11 @@ describe("Subscription", () => {
 				numberOfSyncedRepos: 0,
 				repos: {},
 			});
+		});
+
+		it("should complete sync status if no repos are provided", async () => {
+			await sub.updateSyncState({});
+			expect(updateSpy).toBeCalledWith({"syncStatus": "COMPLETE"});
 		});
 
 		it("should return same repos as what's updated", async () => {

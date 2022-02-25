@@ -4,20 +4,20 @@ import logger from "../../../../src/config/logger";
 import { AsymmetricAlgorithm, encodeAsymmetric, encodeSymmetric } from "atlassian-jwt";
 import queryAtlassianConnectPublicKey from "../../../../src/jira/util/queryAtlassianConnectPublicKey";
 import { when } from "jest-when";
+import { Request, Response } from "express";
+import Mock = jest.Mock;
 
 jest.mock("../../../../src/jira/util/queryAtlassianConnectPublicKey");
 jest.mock("../../../../src/models");
 
-const testQueryParams = {
-	xdm_e: "https://kabakumov.atlassian.net",
-	xdm_c: "channel-com.github.integration.konstantin__github-post-install-page",
-	cp: "",
-	xdm_deprecated_addon_key_do_not_use: "com.github.integration.konstantin",
-	lic: "none",
-	cv: "1001.0.0-SNAPSHOT"
-};
-
 describe("jwt", () => {
+	let testQueryParams: Record<string, string>;
+	let res: Response;
+	let baseRequest: Request;
+
+	let next:Mock;
+	const testSecret = "testSecret";
+
 	// Query string hash corresponding to the request parameters above
 	const testQsh = "345c5da1c34c5126155b18ff4522446c89cc017debe4878bfa6056cacd5245ae";
 
@@ -38,42 +38,29 @@ describe("jwt", () => {
 	).toString("ascii");
 	const testKid = "1234435235352";
 
-	const baseRequest = {
-		query: testQueryParams,
-		method: "GET",
-		path: "/jira/configuration",
-		session: {
-			jiraHost: "https://test.atlassian.net"
+	const buildRequestWithNoToken = () => baseRequest;
+
+	const buildRequest = (jwtValue: string) => ({
+		...baseRequest,
+		query: {
+			...testQueryParams,
+			jwt: jwtValue
 		},
-		log: logger
-	};
+		method: "GET",
+		path: "/configuration",
+		baseUrl: "/jira"
+	});
 
-	const buildRequestWithNoToken = (): any => {
-		return {
-			...baseRequest
-		};
-	};
-
-	const buildRequest = (jwtValue: string) => {
-		return {
-			...baseRequest,
-			query: {
-				...testQueryParams,
-				jwt: jwtValue
-			},
-			method: "GET",
-			path: "/configuration",
-			baseUrl: "/jira"
-		};
-	};
-
-	const next = jest.fn();
-
-	let res;
-
-	const testSecret = "testSecret";
+	const buildRequestWithJwt = (secret = "secret", qsh: string): any =>
+		buildRequest(
+			encodeSymmetric({
+				qsh: qsh,
+				iss: "jira"
+			}, secret)
+		);
 
 	beforeEach(async () => {
+		next = jest.fn();
 		// TODO: need to create a route with express Router and use supertest to actually
 		// test the real flow instead of mocking everything based on the assumption that
 		// we know exactly how express is going to behave
@@ -81,19 +68,30 @@ describe("jwt", () => {
 			locals: {},
 			status: jest.fn().mockReturnValue(res),
 			json: jest.fn().mockReturnValue(res)
+		} as any;
+
+		// TODO: need to remove all references to 'kabakumov' in this file, just use jiraHost instead
+		testQueryParams = {
+			xdm_e: "https://kabakumov.atlassian.net",
+			xdm_c: "channel-com.github.integration.konstantin__github-post-install-page",
+			cp: "",
+			xdm_deprecated_addon_key_do_not_use: "com.github.integration.konstantin",
+			lic: "none",
+			cv: "1001.0.0-SNAPSHOT"
 		};
+
+		baseRequest = {
+			query: testQueryParams,
+			method: "GET",
+			path: "/jira/configuration",
+			session: {
+				jiraHost: "https://test.atlassian.net"
+			},
+			log: logger
+		} as any;
 	});
 
 	describe("#verifySymmetricJwtTokenMiddleware", () => {
-
-		const buildRequestWithJwt = (secret = "secret", qsh: string): any => {
-			const jwtValue = encodeSymmetric({
-				qsh: qsh,
-				iss: "jira"
-			}, secret);
-
-			return buildRequest(jwtValue);
-		};
 
 		describe("Normal Token", () => {
 			it("should pass when token is valid", async () => {
@@ -275,7 +273,7 @@ describe("jwt", () => {
 
 		it("should pass when token is valid for Staging Jira Instance", async () => {
 			const req = buildRequestWithJwt(testQsh);
-			req.body = { baseUrl: "https://kabakumov2.jira-dev.com/jira/your-work" };
+			req.body = { baseUrl:  "https://kabakumov2.jira-dev.com/jira/your-work" };
 			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);
