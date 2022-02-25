@@ -1,6 +1,8 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../../util/jira";
 import _ from "lodash";
+import { Octokit } from "@octokit/rest";
+import { Repository } from "../../models/subscription";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {
@@ -11,7 +13,12 @@ function mapStatus({ state, merged_at }): string {
 	return "UNKNOWN";
 }
 
-export default async (payload, prDetails, ghUser) => {
+interface Payload {
+	pullRequest: Octokit.PullsListResponseItem;
+	repository: Repository;
+}
+
+export default async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghUser?: Octokit.UsersGetByUsernameResponse) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
 	const issueKeys = issueKeyParser().parse(
@@ -22,26 +29,25 @@ export default async (payload, prDetails, ghUser) => {
 		return undefined;
 	}
 
-	const prGet = prDetails;
 	return {
 		id: repository.id,
 		name: repository.full_name,
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
-				author: getJiraAuthor(prGet.user, ghUser),
-				commentCount: prGet.comments || 0,
-				destinationBranch: `${repository.html_url}/tree/${prGet.base?.ref || ""}`,
-				displayId: `#${prGet.number}`,
-				id: prGet.number,
+				author: getJiraAuthor(prDetails.user, ghUser),
+				commentCount: prDetails.comments || 0,
+				destinationBranch: `${repository.html_url}/tree/${prDetails.base?.ref || ""}`,
+				displayId: `#${prDetails.number}`,
+				id: prDetails.number,
 				issueKeys,
-				lastUpdate: prGet.updated_at,
-				sourceBranch: `${prGet.head?.ref || ""}`,
-				sourceBranchUrl: `${repository.html_url}/tree/${prGet.head?.ref || ""}`,
-				status: mapStatus(prGet),
-				timestamp: prGet.updated_at,
-				title: prGet.title,
-				url: prGet.html_url,
+				lastUpdate: prDetails.updated_at,
+				sourceBranch: `${prDetails.head?.ref || ""}`,
+				sourceBranchUrl: `${repository.html_url}/tree/${prDetails.head?.ref || ""}`,
+				status: mapStatus(prDetails),
+				timestamp: prDetails.updated_at,
+				title: prDetails.title,
+				url: prDetails.html_url,
 				updateSequenceId: Date.now()
 			}
 		],

@@ -159,7 +159,7 @@ export default class GitHubClient {
 	 * Get a single pull request for the given repository.
 	 */
 	// TODO: add a unit test
-	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
+	public async getPullRequest(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
 		return await this.get<Octokit.PullsGetResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}`, {}, {
 			owner,
 			repo,
