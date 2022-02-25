@@ -1,4 +1,4 @@
-import { PullRequestState, PullRequestSort, SortDirection } from "./../github/client/types";
+import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/types";
 import url from "url";
 import transformPullRequest from "./transforms/pull-request";
 import statsd from "../config/statsd";
@@ -8,8 +8,9 @@ import { Repository } from "../models/subscription";
 import GitHubClient from "../github/client/github-client";
 import { getGithubUser, getGithubUserNew } from "../services/github/user";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import {AxiosResponseHeaders} from "axios";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { AxiosResponseHeaders } from "axios";
+import { Octokit } from "@octokit/rest";
 
 /**
  * Find the next page number from the response headers.
@@ -36,22 +37,22 @@ type Headers = AxiosResponseHeaders & {
 	link?: string;
 }
 
+type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
+
 export default async function(
 	logger: LoggerWithTarget,
 	github: GitHubAPI,
 	newGithub: GitHubClient,
 	jiraHost: string,
 	repository: Repository,
-	cursor?: string | number,
+	cursor: string | number = 1,
 	perPage?: number
 ) {
 	logger.info("Syncing PRs: started");
-	let status: number;
-	let headers: Headers = {};
-	let edges;
 
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);
-	cursor = !cursor? cursor = 1 : Number(cursor);
+	cursor = Number(cursor);
+	const startTime = Date.now();
 
 	const vars = {
 		owner: repository.owner.login,
@@ -60,53 +61,43 @@ export default async function(
 		page: cursor
 	};
 
-	const asyncTags:any[] = [];
-	// TODO: use graphql here instead of rest API
-	await statsd.asyncTimer(
-		// Retry up to 6 times pausing for 10s, for *very* large repos we need to wait a while for the result to succeed in dotcom
-		async () => {
-			(
-
+	const {
+		data: edges,
+		status,
+		headers
+	} = useNewGHClient ?
+		await newGithub
+			.getPullRequests(repository.owner.login, repository.name,
 				{
-					data: edges,
-					status,
-					headers
-				} = useNewGHClient?
-					await newGithub
-						.getPullRequests(repository.owner.login, repository.name,
-							{
-								per_page: perPage,
-								page: Number(cursor),
-								state: PullRequestState.ALL,
-								sort: PullRequestSort.CREATED,
-								direction: SortDirection.DES
-							})
-					: await github.pulls.list({ ...vars, state: "all", sort: "created", direction: "desc"}));
-			asyncTags.push(`status:${status}`);
-		},
-		metricHttpRequest.syncPullRequest,
-		1,
-		asyncTags
-	)();
+					per_page: perPage,
+					page: cursor,
+					state: PullRequestState.ALL,
+					sort: PullRequestSort.CREATED,
+					direction: SortDirection.DES
+				})
+		: await github.pulls.list({ ...vars, state: "all", sort: "created", direction: "desc" });
+
+	statsd.timing(metricHttpRequest.syncPullRequest, Date.now() - startTime, 1, [`status:${status}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPage = getNextPage(logger, headers) || cursor + 1;
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
-	edges.forEach((edge) => (edge.cursor = nextPage));
+	const edgesWithCursor: PullRequestWithCursor[] = edges.map((edge) => ({ ...edge, cursor: nextPage }));
 
 	// TODO: change this to reduce
 	const pullRequests = (
 		await Promise.all(
-			edges.map(async (pull) => {
-				const prDetails = useNewGHClient ? (await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)) :
+			edgesWithCursor.map(async (pull) => {
+				const prResponse = useNewGHClient ? (await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)) :
 					(await github?.pulls?.get({
-						owner: repository.owner.login, repo: repository.name,pull_number: pull.number
+						owner: repository.owner.login, repo: repository.name, pull_number: pull.number
 					}));
+				const prDetails = prResponse?.data
 				const ghUser = useNewGHClient ?
-					await getGithubUserNew(newGithub, prDetails?.data.user.login) :
-					await getGithubUser(github, prDetails?.data.user.login);
+					await getGithubUserNew(newGithub, prDetails?.user.login) :
+					await getGithubUser(github, prDetails?.user.login);
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
 					prDetails,
@@ -120,7 +111,7 @@ export default async function(
 	logger.info("Syncing PRs: finished");
 
 	return {
-		edges,
+		edges: edgesWithCursor,
 		jiraPayload:
 			pullRequests?.length
 				? {
