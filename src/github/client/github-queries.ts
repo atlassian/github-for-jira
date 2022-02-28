@@ -1,4 +1,4 @@
-import {Repository} from "@octokit/graphql-schema";
+import { Repository } from "@octokit/graphql-schema";
 
 export const ViewerRepositoryCountQuery = `
 query {
@@ -7,6 +7,42 @@ query {
 			totalCount
 		}
 	}
+}`
+
+type RepositoryNode = {
+  node: Repository
+}
+
+export type GetRepositoriesResponse = {
+  viewer: {
+    repositories: {
+      pageInfo,
+      edges: RepositoryNode[]
+    }
+  }
+};
+
+export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
+  viewer {
+    repositories(first: $per_page, after: $cursor) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      edges {
+        node {
+          id: databaseId
+          name
+          full_name: nameWithOwner
+          owner {
+            login
+          }
+          html_url: url
+          updated_at: updatedAt
+        }
+      }
+    }
+  }
 }`
 
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {

@@ -75,7 +75,8 @@ function decodeAsymmetricToken(token: string, publicKey: string, noVerify: boole
 
 
 function verifyQsh(qsh: string, req: Request): boolean {
-	const requestInAtlassianJwtFormat = {...req, pathname: req.path}
+	// to get full path from express request, we need to add baseUrl with path
+	const requestInAtlassianJwtFormat = {...req, pathname: req.baseUrl + req.path}
 	let expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, false, BASE_URL);
 	let signatureHashVerified = qsh === expectedHash;
 
@@ -206,7 +207,6 @@ export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Resp
 		}
 
 		const publicKey = await queryAtlassianConnectPublicKey(getKeyId(token), isStagingTenant(req));
-
 		const unverifiedClaims = decodeAsymmetricToken(token, publicKey, true)
 
 		const issuer = unverifiedClaims.iss;
@@ -235,4 +235,3 @@ export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Resp
 		sendError(res, 401, "Unauthorized")
 	}
 }
-

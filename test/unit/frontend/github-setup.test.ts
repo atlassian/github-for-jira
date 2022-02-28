@@ -3,7 +3,7 @@ import { Installation } from "../../../src/models";
 import FrontendApp from "../../../src/frontend/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
-import { getSignedCookieHeader } from "../util/cookies";
+import { getSignedCookieHeader } from "../../utils/cookies";
 import envVars from "../../../src/config/env";
 
 describe("Github Setup", () => {
@@ -22,27 +22,53 @@ describe("Github Setup", () => {
 	});
 
 	describe("#GET", () => {
-		it("should return HTML when jiraHost is missing", async () =>
-			supertest(frontendApp)
-				.get("/github/setup")
-				.expect(res => {
-					expect(res.status).toBe(200);
-					expect(res.headers["content-type"]).toContain("text/html");
-				}));
+		beforeEach(async () => {
+			await Installation.create({
+				jiraHost,
+				clientKey: "abc123",
+				secrets: "def234",
+				sharedSecret: "ghi345",
+			});
+		});
 
-		it("should return HTML when jiraHost is set but no corresponding Installations exists", async () =>
+		it("should return redirect to github oauth flow for GET request if token is missing", async () =>
 			supertest(frontendApp)
 				.get("/github/setup")
 				.set(
 					"Cookie",
 					getSignedCookieHeader({
-						jiraHost
+						jiraHost,
 					})
 				)
-				.expect(res => {
-					expect(res.status).toBe(200);
-					expect(res.headers["content-type"]).toContain("text/html");
+				.expect((res) => {
+					expect(res.status).toBe(302);
+					expect(res.headers.location).toContain(
+						"github.com/login/oauth/authorize"
+					);
 				}));
+
+		it("should return redirect to github oauth flow for GET request if token is invalid", async () => {
+			githubNock
+				.get("/")
+				.matchHeader("Authorization", /^Bearer .+$/)
+				.reply(403);
+
+			return supertest(frontendApp)
+				.get("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+						githubToken: "token",
+					})
+				)
+				.expect((res) => {
+					expect(res.status).toBe(302);
+					expect(res.headers.location).toContain(
+						"github.com/login/oauth/authorize"
+					);
+				});
+		});
 	});
 
 	describe("#POST", () => {

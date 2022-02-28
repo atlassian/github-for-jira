@@ -47,6 +47,11 @@ describe("Branch Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(true);
 
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+				expect.anything()
+			).mockResolvedValue(true);
+
 			const fixture = require("../fixtures/branch-basic.json");
 
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
@@ -83,7 +88,7 @@ describe("Branch Webhook", () => {
 						id: "test-repo-id",
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/pull/new/TES-123-test-ref",
+								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123%20-%20TES-123-test-ref&quick_pull=1",
 								lastCommit: {
 									author: {
 										name: "test-branch-author-name",
@@ -161,6 +166,11 @@ describe("Branch Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(false);
 
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+				expect.anything()
+			).mockResolvedValue(true);
+
 			const fixture = require("../fixtures/branch-basic.json");
 
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
@@ -195,7 +205,7 @@ describe("Branch Webhook", () => {
 						id: "test-repo-id",
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/pull/new/TES-123-test-ref",
+								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123%20-%20TES-123-test-ref&quick_pull=1",
 								lastCommit: {
 									author: {
 										name: "test-branch-author-name",
@@ -269,7 +279,10 @@ describe("Branch Webhook", () => {
 		it("should call the devinfo delete API when a branch is deleted", async () => {
 			const fixture = require("../fixtures/branch-delete.json");
 			jiraNock
-				.delete("/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref?_updateSequenceId=12345678")
+				.delete("/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref")
+				.query({
+					_updateSequenceId: 12345678
+				})
 				.reply(200);
 
 			mockSystemTime(12345678);

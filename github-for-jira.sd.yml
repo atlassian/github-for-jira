@@ -13,7 +13,7 @@ compose:
     environment:
       PGBOUNCER_POOL_MODE: transaction
       PGBOUNCER_DEFAULT_POOL_SIZE: 15 # Max scale up:
-                                      #   (10 web servers + 6 workers) * 15 pool size  = 240 connections
+                                      #   (15 web servers + 15 workers) * 15 pool size  = 450 connections (See postgres-db connections limit)
                                       # Normal business:
                                       #   (5 web servers + 3 workers) * 15 pool size = 120 connections
       PGBOUNCER_SERVER_IDLE_TIMEOUT: 60
@@ -242,7 +242,7 @@ workers:
             Lower: 30
             Upper: 80
           Metrics:
-            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/80)*100])"
+            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/20)*100, (branchQueueMessages/250)*100, (deploymentQueueMessages/250)*100])"
               Id: "combinedCpuRamAndQueues"
               Label: "Scaling based on Queue Sizes and CPU and Memory consumption"
             - MetricStat:
@@ -282,6 +282,26 @@ workers:
                 Period: 60
                 Stat: Maximum
               Id: backfillQueueMessages
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: ApproximateNumberOfMessagesVisible
+                  Namespace: AWS/SQS
+                  Dimensions:
+                    - LogicalQueueName: 'branch'
+                Period: 60
+                Stat: Maximum
+              Id: branchQueueMessages
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: ApproximateNumberOfMessagesVisible
+                  Namespace: AWS/SQS
+                  Dimensions:
+                    - LogicalQueueName: 'deployment'
+                Period: 60
+                Stat: Maximum
+              Id: deploymentQueueMessages
               ReturnData: false
 
 
@@ -395,6 +415,10 @@ environmentOverrides:
                 Stat: Average
               Id: responseTime
               ReturnData: false
+    links:
+      runOnce:
+        - uuid: fea5d423-e21f-465b-aa67-54c8367b7777
+          description: Basic Check PDV (Staging)
     alarms:
       overrides:
         LatencyHigh: null
@@ -451,14 +475,18 @@ environmentOverrides:
     scaling:
       instance: c5.2xlarge
       min: 5
-      max: 10 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+      max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
       metrics: *CpuMemAlbScalingRules
+    links:
+      runOnce:
+        - uuid: d99d882f-74a9-4093-822a-9ddf38b5e523
+          description: Basic Check PDV (Prod)
     workers:
       - name: Worker
         scaling:
           instance: c5.2xlarge
           min: 3
-          max: 4 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
           metrics: *CpuMemAndQueuesScalingRules
     alarms:
       overrides:
@@ -499,7 +527,8 @@ environmentOverrides:
       - name: database
         type: postgres-db
         attributes:
-          connectionLimit: 240 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          connectionLimit: 675 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE.
+            # Should be set to Max Connections can be used by nodes + some room if we have to scale even more manually. PGBOUNCER_DEFAULT_POOL_SIZE*N*1.5
 
       - name: rds
         type: dedicated-rds
@@ -508,7 +537,7 @@ environmentOverrides:
             DBInstanceClass: db.r5.4xlarge
             AllocatedStorage: 40 # GB
             MaxAllocatedStorage: 100
-            ConnectionAlarm: 500 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 + N (cause two stacks can work
+            ConnectionAlarm: 900 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 * N (cause two stacks can work
                                  # together during the deploy)
             TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
 
@@ -521,3 +550,88 @@ environmentOverrides:
           ip_whitelist:
             - public
           routes: *blackholeSpammingIPs
+
+      - type: sqs
+        name: backfill
+        alarms:
+          AlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for backfill queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
+            Threshold: 30 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Priority: High
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "QueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+
+      - type: sqs
+        name: discovery
+        alarms:
+          AlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for discovery queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
+            Threshold: 5 #Discovery queue rarely gets messages so if we see 5 messages stuck on the queue, it should be an alarm
+            Priority: High
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "QueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+
+      - type: sqs
+        name: push
+        alarms:
+          AlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for push queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
+            Threshold: 400 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Priority: High
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "QueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+
+      - type: sqs
+        name: deployment
+        alarms:
+          AlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for deployment queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
+            Threshold: 400 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Priority: High
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "QueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+
+      - type: sqs
+        name: branch
+        alarms:
+          AlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for branch queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
+            Threshold: 400 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Priority: High
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "QueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum

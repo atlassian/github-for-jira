@@ -4,10 +4,12 @@ import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
 import waitUntil from "../utils/waitUntil";
 import { sqsQueues } from "../../src/sqs/queues";
+import {when} from "jest-when";
+import {booleanFlag, BooleanFlags} from "../../src/config/feature-flags";
 
 jest.mock("../../src/config/feature-flags");
 
-describe("Deployment Webhook", () => {
+describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
@@ -30,6 +32,12 @@ describe("Deployment Webhook", () => {
 		});
 
 		await sqsQueues.deployment.start();
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(useNewGithubClient);
 	});
 
 	afterEach(async () => {
