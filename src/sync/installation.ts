@@ -3,7 +3,7 @@ import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus
 import { RepoSyncState, Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
-import enhanceOctokit from "../config/enhance-octokit";
+import enhanceOctokit, { RateLimitingError as OldRateLimitingError} from "../config/enhance-octokit";
 import statsd from "../config/statsd";
 import getPullRequests from "./pull-request";
 import getBranches from "./branches";
@@ -13,7 +13,7 @@ import { metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import { booleanFlag, BooleanFlags, isBlocked } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
-import Redis from "ioredis";
+import IORedis from "ioredis";
 import getRedisInfo from "../config/redis-info";
 import GitHubClient from "../github/client/github-client";
 import { BackfillMessagePayload } from "../sqs/backfill";
@@ -21,7 +21,6 @@ import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import { RateLimitingError } from "../github/client/errors";
-import { RateLimitingError as OldRateLimitingError} from "../config/enhance-octokit";
 
 const tasks: TaskProcessors = {
 	pull: getPullRequests,
@@ -396,7 +395,7 @@ export async function maybeScheduleNextTask(
 	}
 }
 
-const redis = new Redis(getRedisInfo("installations-in-progress"));
+const redis = new IORedis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
 export const processInstallation =

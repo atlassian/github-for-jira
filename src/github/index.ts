@@ -6,7 +6,7 @@ import workflow from "./workflow";
 import deployment from "./deployment";
 import push from "./push";
 import { createBranch, deleteBranch } from "./branch";
-import webhookTimeout from "../middleware/webhook-timeout";
+import webhookTimeout from "../util/webhook-timeout";
 import statsd from "../config/statsd";
 import { metricWebhooks } from "../config/metric-names";
 import { Application } from "probot";

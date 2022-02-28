@@ -6,7 +6,7 @@ import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import {isBlocked} from "../config/feature-flags";
+import { isBlocked } from "../config/feature-flags";
 import GitHubClient from "./client/github-client";
 
 export default async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
@@ -32,7 +32,7 @@ export const processDeployment = async (
 	const logger = rootLogger.child({
 		webhookId: webhookId,
 		installationId,
-		webhookReceived: webhookReceivedDate,
+		webhookReceived: webhookReceivedDate
 	});
 
 	if (await isBlocked(installationId, logger)) {
@@ -72,4 +72,4 @@ export const processDeployment = async (
 		logger,
 		result?.status
 	);
-}
+};

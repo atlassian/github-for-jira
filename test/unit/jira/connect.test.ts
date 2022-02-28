@@ -1,6 +1,6 @@
 import supertest from "supertest";
 import express, { Express } from "express";
-import setupFrontend from "../../../src/frontend/app";
+import { getFrontendApp } from "../../../src/app";
 import {getLogger} from "../../../src/config/logger";
 
 jest.mock("../../../src/config/feature-flags");
@@ -19,7 +19,7 @@ describe("Connect", () => {
 
 	describe("Frontend", () => {
 		beforeEach(() => {
-			app.use("/", setupFrontend({
+			app.use(getFrontendApp({
 				getSignedJsonWebToken: () => "",
 				getInstallationAccessToken: async () => ""
 			}));
