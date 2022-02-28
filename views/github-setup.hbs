@@ -57,18 +57,20 @@
             <p class="githubSetup__githubOrgConfirmation__label">
               Select Jira Cloud site to connect to your GitHub organization
             </p>
-            <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
-              <img
-                class="githubSetup__githubOrgConfirmation__avatar"
-                src="{{avatar}}"
-                height="24"
-                width="24"
-                data-installation-id="{{id}}"
-              />
-              <span
-                class="githubSetup__githubOrgConfirmation__orgName"
-              >{{orgName}}</span>
-            </div>
+            {{#if orgName}}
+              <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
+                <img
+                  class="githubSetup__githubOrgConfirmation__avatar"
+                  src="{{avatar}}"
+                  height="24"
+                  width="24"
+                  data-installation-id="{{id}}"
+                />
+                <span
+                  class="githubSetup__githubOrgConfirmation__orgName"
+                >{{orgName}}</span>
+              </div>
+            {{/if}}
           </div>
 
         </div>
@@ -116,6 +118,20 @@
           </div>
         </div>
       {{else}}
+        {{#if orgName}}
+          <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
+            <img
+              class="githubSetup__githubOrgConfirmation__avatar"
+              src="{{avatar}}"
+              height="24"
+              width="24"
+              data-installation-id="{{id}}"
+            />
+            <span
+              class="githubSetup__githubOrgConfirmation__orgName"
+            >{{orgName}}</span>
+          </div>
+        {{/if}}
         {{> githubSetupForm csrfToken=csrfToken error=error id="jiraDomainMain" className="inputMain" }}
       {{/if}}
   </section>

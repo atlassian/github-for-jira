@@ -15,12 +15,12 @@ GithubRouter.use(GithubOAuthRouter);
 // CSRF Protection Middleware for all following routes
 GithubRouter.use(csrfMiddleware);
 
-GithubRouter.post("/setup", GithubSetupPost);
-
 // All following routes need Github Auth
 GithubRouter.use(GithubAuthMiddleware);
 
-GithubRouter.get("/setup", GithubSetupGet)
+GithubRouter.route("/setup")
+	.get(GithubSetupGet)
+	.post(GithubSetupPost)
 
 GithubRouter.route("/configuration")
 	.get(GithubConfigurationGet)

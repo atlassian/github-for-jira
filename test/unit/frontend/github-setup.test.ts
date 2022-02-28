@@ -73,6 +73,13 @@ describe("Github Setup", () => {
 	});
 
 	describe("#POST", () => {
+		beforeEach(() => {
+			githubNock
+				.get("/")
+				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
+				.reply(200);
+		});
+
 		it("should return a 200 with the redirect url to marketplace if a valid domain is given", async () => {
 			jiraNock
 				.get("/status")
@@ -80,6 +87,13 @@ describe("Github Setup", () => {
 
 			await supertest(frontendApp)
 				.post("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+						githubToken: "token",
+					})
+				)
 				.send({
 					jiraDomain: envVars.INSTANCE_NAME
 				})
@@ -103,6 +117,13 @@ describe("Github Setup", () => {
 
 			await supertest(frontendApp)
 				.post("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+						githubToken: "token",
+					})
+				)
 				.send({
 					jiraDomain: envVars.INSTANCE_NAME
 				})
@@ -115,12 +136,26 @@ describe("Github Setup", () => {
 		it("should return a 400 if no domain is given", () =>
 			supertest(frontendApp)
 				.post("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+						githubToken: "token",
+					})
+				)
 				.send({})
 				.expect(400));
 
 		it("should return a 400 if an empty domain is given", () =>
 			supertest(frontendApp)
 				.post("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+						githubToken: "token",
+					})
+				)
 				.send({
 					jiraDomain: ""
 				})
