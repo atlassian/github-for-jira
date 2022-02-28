@@ -19,6 +19,7 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
                   message
                   oid
                   url
+                  changedFiles
                 }
               }
             }
@@ -28,12 +29,19 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
     }
   }`;
 
-export const commitsNoLastCursor = {
+
+
+export const commitsNoLastCursor = (variables) => ({
 	query,
-	variables: {
-		owner: "integrations", repo: "test-repo-name", per_page: 20, default_ref: "master"
-	}
-};
+	variables
+});
+
+// export const commitsNoLastCursor = {
+// 	query,
+// 	variables: {
+// 		owner: "integrations", repo: "test-repo-name", per_page: 20, default_ref: "master"
+// 	}
+// };
 
 export const commitsWithLastCursor = {
 	query,

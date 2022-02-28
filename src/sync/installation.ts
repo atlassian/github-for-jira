@@ -7,7 +7,7 @@ import enhanceOctokit from "../config/enhance-octokit";
 import statsd from "../config/statsd";
 import getPullRequests from "./pull-request";
 import getBranches from "./branches";
-import { getCommits } from "./commits";
+import getCommits from "./commits";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import { booleanFlag, BooleanFlags, isBlocked } from "../config/feature-flags";
@@ -196,7 +196,6 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	const newGithub = new GitHubClient(getCloudInstallationId(installationId), logger);
 
 	const github = await getEnhancedGitHub(app, installationId);
-
 	const nextTask = await getNextTask(subscription);
 
 	if (!nextTask) {
@@ -269,7 +268,8 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	try {
 		const { edges, jiraPayload } = await execute();
-
+		console.log("JIRAPAYLOAD")
+		console.log(jiraPayload)
 		if (jiraPayload) {
 			try {
 				await jiraClient.devinfo.repository.update(jiraPayload, {
@@ -410,7 +410,6 @@ export const processInstallation =
 			const {installationId, jiraHost} = data;
 
 			try {
-
 				if (await isBlocked(installationId, logger)) {
 					logger.warn("blocking installation job");
 					return;
