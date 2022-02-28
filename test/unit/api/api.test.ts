@@ -4,13 +4,10 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import { Installation, RepoSyncState, Subscription } from "../../../src/models";
 import InstallationClass from "../../../src/models/installation";
 import SubscriptionClass from "../../../src/models/subscription";
-import api from "../../../src/api";
+import { ApiRouter } from "../../../src/routes/api/api-router";
 import { getLogger } from "../../../src/config/logger";
-import getAxiosInstance from "../../../src/jira/client/axios";
-import { mocked } from "ts-jest/utils";
 
 jest.mock("../../../src/config/feature-flags");
-jest.mock("../../../src/jira/client/axios");
 
 describe("API", () => {
 	let app: Application;
@@ -50,7 +47,7 @@ describe("API", () => {
 			req.session = { jiraHost };
 			next();
 		});
-		app.use("/api", api);
+		app.use("/api", ApiRouter);
 		return app;
 	};
 
@@ -190,22 +187,19 @@ describe("API", () => {
 	});
 
 	describe("Endpoints", () => {
-		function mockJiraResponse(status: number) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			mocked(getAxiosInstance).mockReturnValue({
-				"get": () => Promise.resolve<any>({
-					status
-				})
-			});
-		}
+
+		beforeEach(() => {
+			githubNock
+				.post("/graphql")
+				.reply(200, successfulAuthResponseWrite);
+		});
 
 		describe("verify", () => {
-			beforeEach(async () => {
-				mockJiraResponse(200);
-			});
-
 			it("should return 'Installation already enabled'", () => {
+				jiraNock
+					.get("/rest/devinfo/0.10/existsByProperties?fakeProperty=1")
+					.reply(200);
+
 				return supertest(app)
 					.post(`/api/jira/${installation.id}/verify`)
 					.set("Authorization", "Bearer xxx")
@@ -215,12 +209,6 @@ describe("API", () => {
 						expect(response.body.message).toMatchSnapshot();
 					});
 			});
-		});
-
-		beforeEach(() => {
-			githubNock
-				.post("/graphql")
-				.reply(200, successfulAuthResponseWrite);
 		});
 
 		describe("installation", () => {
@@ -239,7 +227,7 @@ describe("API", () => {
 					.get(`/api/${gitHubInstallationId}`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${jiraHost}`)
+					.send({jiraHost})
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -271,7 +259,7 @@ describe("API", () => {
 					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${jiraHost}`)
+					.send({jiraHost})
 					.expect(404)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -318,7 +306,8 @@ describe("API", () => {
 				return supertest(app)
 					.post(`/api/${invalidId}/sync`)
 					.set("Authorization", "Bearer xxx")
-					.send("jiraHost=https://unknownhost.atlassian.net")
+					.set("Content-Type", "application/json")
+					.send({jiraHost: "https://unknownhost.atlassian.net"})
 					.expect(404)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -329,8 +318,9 @@ describe("API", () => {
 				return supertest(app)
 					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Authorization", "Bearer xxx")
+					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${jiraHost}`)
+					.send({jiraHost})
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -341,14 +331,55 @@ describe("API", () => {
 				return supertest(app)
 					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Authorization", "Bearer xxx")
+					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
-					.send(`jiraHost=${jiraHost}`)
-					.send("resetType=full")
+					.send({jiraHost, resetType: "full"})
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
 					});
 			});
 		});
+
+		describe("Delete Installation", () => {
+			beforeEach(() => {
+				jiraNock
+					.delete("/rest/devinfo/0.10/bulkByProperties")
+					.query({installationId: gitHubInstallationId})
+					.reply(200);
+
+				jiraNock
+					.delete("/rest/builds/0.1/bulkByProperties")
+					.query({gitHubInstallationId})
+					.reply(200);
+
+				jiraNock
+					.delete("/rest/deployments/0.1/bulkByProperties")
+					.query({gitHubInstallationId})
+					.reply(200);
+			});
+
+			it("Should work with old delete installation route", () => {
+				return supertest(app)
+					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
+					.set("Authorization", "Bearer xxx")
+					.set("host", "127.0.0.1")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toMatchSnapshot();
+					});
+			});
+
+			it("Should work with new delete installation route", () => {
+				return supertest(app)
+					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
+					.set("Authorization", "Bearer xxx")
+					.set("host", "127.0.0.1")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toMatchSnapshot();
+					});
+			});
+		})
 	});
 });

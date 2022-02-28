@@ -24,6 +24,8 @@ type GraphQlQueryResponse<ResponseData> = {
 	errors?: GraphQLError[];
 };
 
+export type PaginatedAxiosResponse<T> = { hasNextPage:boolean; } & AxiosResponse<T>;
+
 /**
  * A GitHub client that supports authentication as a GitHub app.
  *
@@ -43,14 +45,12 @@ export default class GitHubClient {
 	) {
 		this.logger = logger || getLogger("github.client.axios");
 
-		const clientConfig: AxiosRequestConfig = {
+		this.axios = axios.create({
 			baseURL: githubInstallationId.githubBaseUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
-		};
-
-		this.axios = axios.create(clientConfig);
+		});
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
@@ -157,7 +157,7 @@ export default class GitHubClient {
 	 * Get a single pull request for the given repository.
 	 */
 	// TODO: add a unit test
-	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
+	public async getPullRequest(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
 		return await this.get<Octokit.PullsGetResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}`, {}, {
 			owner,
 			repo,
@@ -185,6 +185,21 @@ export default class GitHubClient {
 			ref
 		});
 	};
+
+	/**
+	 * Get a page of repositories.
+	 */
+	public getRepositoriesPage = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
+		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
+			perPage: 100,
+			page
+		});
+		const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
+		return {
+			...response,
+			hasNextPage
+		}
+	}
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,

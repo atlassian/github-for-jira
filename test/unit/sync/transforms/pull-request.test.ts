@@ -28,7 +28,7 @@ describe("pull_request transform", () => {
 
 		mockSystemTime(12345678);
 
-		const data = await transformPullRequest(fixture, pullRequest, null);
+		const data = await transformPullRequest(fixture as any, pullRequest);
 
 		expect(data).toMatchObject({
 			id: 1234568,
@@ -85,7 +85,7 @@ describe("pull_request transform", () => {
 				state: "MERGED",
 				title: "Test Pull Request title",
 				body: "",
-				updatedAt: "2018-04-18T15:42:13Z",
+				updated_at: "2018-04-18T15:42:13Z",
 				url: "https://github.com/test-owner/test-repo/pull/123"
 			},
 			repository: {
@@ -100,7 +100,7 @@ describe("pull_request transform", () => {
 		mockSystemTime(12345678);
 
 		await expect(transformPullRequest(
-			fixture,
+			fixture as any,
 			pullRequest,
 			user
 		)).resolves.toBeUndefined();

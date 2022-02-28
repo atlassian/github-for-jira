@@ -1,0 +1,19 @@
+import { NextFunction, Request, Response, Router } from "express";
+import { booleanFlag, BooleanFlags } from "../../config/feature-flags";
+import { MaintenanceGet } from "./maintenance-get";
+
+export const MaintenanceRouter = Router();
+const ignoredPaths = [
+	"/jira/atlassian-connect.json",
+	"/jira/events/installed",
+	"/jira/events/uninstalled",
+];
+
+MaintenanceRouter.use(async (req: Request, res: Response, next: NextFunction) => {
+	if (!ignoredPaths.includes(req.path) && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, res.locals.jiraHost)) {
+		return MaintenanceGet(req, res);
+	}
+	next();
+});
+
+MaintenanceRouter.get("/maintenance", MaintenanceGet);
