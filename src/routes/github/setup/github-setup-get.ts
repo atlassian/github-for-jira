@@ -30,19 +30,14 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 	]);
 
 	const redirectUrl = siteExists && jiraInstallation ? getJiraAppUrl(jiraHost) : getJiraMarketplaceUrl(jiraHost);
-	const hasJiraHost = !!jiraHost;
-	const login = githubInstallation?.data.account?.login;
-	const avatar_url = githubInstallation?.data.account?.avatar_url;
-
 	res.render("github-setup.hbs", {
 		csrfToken: req.csrfToken(),
 		nonce: res.locals.nonce,
 		jiraHost,
 		redirectUrl,
-		hasJiraHost,
 		clientKey: jiraInstallation?.clientKey,
-		orgName: login,
-		avatar: avatar_url,
+		orgName: githubInstallation?.data.account?.login,
+		avatar: githubInstallation?.data.account?.avatar_url,
 		html_url: info.html_url,
 		id: installationId
 	});
