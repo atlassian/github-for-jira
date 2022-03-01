@@ -87,7 +87,7 @@ describe("GitHub Client", () => {
 		const pageSize = 5;
 		const page = 1;
 
-		githubAccessTokenNock(githubInstallationId, "installation token");
+		githubUserTokenNock(githubInstallationId, "installation token");
 		givenGitHubReturnsPullrequests(
 			owner,
 			repo,
@@ -111,7 +111,7 @@ describe("GitHub Client", () => {
 		const repo = "repo";
 		const sha = "84fdc9346f43f829f88fb4b1d240b1aaaa5250da";
 
-		githubAccessTokenNock(githubInstallationId, "installation token");
+		githubUserTokenNock(githubInstallationId, "installation token");
 		givenGitHubReturnsCommit(
 			owner,
 			repo,
@@ -144,7 +144,7 @@ describe("GitHub Client", () => {
 
 
 	it("should handle rate limit error from Github when X-RateLimit-Reset not specified", async () => {
-		githubAccessTokenNock(githubInstallationId, "installation token");
+		githubUserTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -170,7 +170,7 @@ describe("GitHub Client", () => {
 	});
 
 	it("should handle rate limit error from Github when X-RateLimit-Reset specified", async () => {
-		githubAccessTokenNock(githubInstallationId, "installation token");
+		githubUserTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -197,7 +197,7 @@ describe("GitHub Client", () => {
 	});
 
 	it("should handle blocked IP error from Github when specified", async () => {
-		githubAccessTokenNock(githubInstallationId, "installation token");
+		githubUserTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -218,7 +218,7 @@ describe("GitHub Client", () => {
 	});
 
 	it("should handle rate limit on 403", async () => {
-		githubAccessTokenNock(githubInstallationId, "installation token");
+		githubUserTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -245,7 +245,7 @@ describe("GitHub Client", () => {
 	});
 
 	it("should transform error properly on 404", async () => {
-		githubAccessTokenNock(githubInstallationId, "installation token");
+		githubUserTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).reply(
@@ -279,7 +279,7 @@ describe("GitHub Client", () => {
 		const pageSize = 5;
 		const page = 1;
 
-		gheAccessTokenNock(githubInstallationId, "installation token");
+		gheUserTokenNock(githubInstallationId, "installation token");
 		givenGitHubReturnsPullrequests(
 			owner,
 			repo,
@@ -320,7 +320,7 @@ describe("GitHub Client", () => {
 			expect.anything()
 		).mockResolvedValue(100);
 
-		githubAccessTokenNock(githubInstallationId, "installation token");
+		githubUserTokenNock(githubInstallationId, "installation token");
 		githubNock.get(`/repos/owner/repo/pulls`).query({
 			installationId: /^.*$/
 		}).delay(2000).reply(

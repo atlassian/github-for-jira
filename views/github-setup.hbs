@@ -118,20 +118,28 @@
           </div>
         </div>
       {{else}}
-        {{#if orgName}}
-          <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
-            <img
-              class="githubSetup__githubOrgConfirmation__avatar"
-              src="{{avatar}}"
-              height="24"
-              width="24"
-              data-installation-id="{{id}}"
-            />
-            <span
-              class="githubSetup__githubOrgConfirmation__orgName"
-            >{{orgName}}</span>
+        <div class="githubSetup__githubOrgConfirmation__outerContainer">
+          <div class="githubSetup__githubOrgConfirmation__container">
+            <p class="githubSetup__githubOrgConfirmation__label">
+              Enter your Jira Cloud site to connect to your GitHub organization
+            </p>
+            {{#if orgName}}
+              <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
+                <img
+                  class="githubSetup__githubOrgConfirmation__avatar"
+                  src="{{avatar}}"
+                  height="24"
+                  width="24"
+                  data-installation-id="{{id}}"
+                />
+                <span
+                  class="githubSetup__githubOrgConfirmation__orgName"
+                >{{orgName}}</span>
+              </div>
+            {{/if}}
           </div>
-        {{/if}}
+
+        </div>
         {{> githubSetupForm csrfToken=csrfToken error=error id="jiraDomainMain" className="inputMain" }}
       {{/if}}
   </section>

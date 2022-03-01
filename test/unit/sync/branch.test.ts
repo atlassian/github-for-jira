@@ -151,7 +151,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 		app = await createWebhookApp();
 
 		if (useNewGithubClient) {
-			githubAccessTokenNock(installationId);
+			githubUserTokenNock(installationId);
 		}
 
 		when(booleanFlag).calledWith(

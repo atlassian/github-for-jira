@@ -22,6 +22,7 @@ describe("Github Setup", () => {
 	});
 
 	describe("#GET", () => {
+		const installation_id = 1234;
 		beforeEach(async () => {
 			await Installation.create({
 				jiraHost,
@@ -31,55 +32,61 @@ describe("Github Setup", () => {
 			});
 		});
 
-		it("should return redirect to github oauth flow for GET request if token is missing", async () => {
+		it("should return error when missing 'installation_id' from query", async () => {
 			await supertest(frontendApp)
 				.get("/github/setup")
-				.set(
-					"Cookie",
-					getSignedCookieHeader({
-						jiraHost,
-					})
-				)
-				.expect((res) => {
-					expect(res.status).toBe(302);
-					expect(res.headers.location).toContain(
-						"github.com/login/oauth/authorize"
-					);
-				})
+				.expect(422)
 		});
 
-		it("should return redirect to github oauth flow for GET request if token is invalid", async () => {
+		it("should work with a missing app installation", async () => {
+			githubAppTokenNock();
 			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^Bearer .+$/)
-				.reply(403);
-
+				.get(`/app/installations/${installation_id}`)
+				.reply(404);
 			await supertest(frontendApp)
 				.get("/github/setup")
+				.query({installation_id})
+				.expect(200)
+		});
+
+		it("should return 200 without jiraHost", async () => {
+			githubAppTokenNock();
+			githubNock
+				.get(`/app/installations/${installation_id}`)
+				.reply(200, {
+					account: {
+						login: "test-org"
+					}
+				});
+			await supertest(frontendApp)
+				.get("/github/setup")
+				.query({installation_id})
+				.expect(200)
+		});
+
+		it("should return 200 with jiraHost", async () => {
+			githubAppTokenNock();
+			githubNock
+				.get(`/app/installations/${installation_id}`)
+				.reply(200, {
+					account: {
+						login: "test-org"
+					}
+				});
+			await supertest(frontendApp)
+				.get("/github/setup")
+				.query({installation_id})
 				.set(
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token",
 					})
 				)
-				.expect((res) => {
-					expect(res.status).toBe(302);
-					expect(res.headers.location).toContain(
-						"github.com/login/oauth/authorize"
-					);
-				});
+				.expect(200)
 		});
 	});
 
 	describe("#POST", () => {
-		beforeEach(() => {
-			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
-				.reply(200);
-		});
-
 		it("should return a 200 with the redirect url to marketplace if a valid domain is given", async () => {
 			jiraNock
 				.get("/status")
@@ -91,7 +98,6 @@ describe("Github Setup", () => {
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token",
 					})
 				)
 				.send({
@@ -121,7 +127,6 @@ describe("Github Setup", () => {
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token",
 					})
 				)
 				.send({
@@ -140,7 +145,6 @@ describe("Github Setup", () => {
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token",
 					})
 				)
 				.send({})
@@ -153,7 +157,6 @@ describe("Github Setup", () => {
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token",
 					})
 				)
 				.send({
