@@ -3,7 +3,6 @@ import { RepoSyncState, Subscription } from "../../src/models";
 
 describe("Subscription", () => {
 	let sub: SubscriptionClass;
-	let updateSpy: jest.SpyInstance;
 
 	beforeEach(async () => {
 		sub = await Subscription.create({
@@ -11,7 +10,6 @@ describe("Subscription", () => {
 			jiraHost,
 			jiraClientKey: "myClientKey",
 		});
-		updateSpy = jest.spyOn(sub, "update");
 	});
 
 	describe("updateSyncState", () => {
