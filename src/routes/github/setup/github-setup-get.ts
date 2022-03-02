@@ -5,7 +5,7 @@ import { Installation } from "../../../models";
 /*
 	Handles redirects for both the installation flow from Jira and
 	the installation flow from GH.
-	- From Jira: user has already installed but wants to connect to an org not listed. Ater selecting an org in GH and giving repo permissions:
+	- From Jira: user has already installed but wants to connect to an org not listed. After selecting an org in GH and giving repo permissions:
 		- they use the jiraHost we have in the cookie, connect, and are redirected to the GH config page
 		- they choose to enter an alternate jiraHost and are redirected to marketplace
 	- From GH:
@@ -14,42 +14,30 @@ import { Installation } from "../../../models";
 */
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received get github setup page request");
-	const { jiraHost, github, client } = res.locals;
-	const { data: { installations } } = await github.apps.listInstallationsForAuthenticatedUser();
+	const { jiraHost, client } = res.locals;
+	const installationId = Number(req.query.installation_id);
 	const { data: info } = await client.apps.getAuthenticated();
-	const installationId = req.query.installation_id;
-	const installation = installations.find((item) => item.id === Number(installationId));
-
-	if (!installation) {
-		throw new Error(`Error retrieving installation:${installationId}. You do not permissions to access this org or it does not exist.`);
-	}
-
-	let redirectUrl = getJiraMarketplaceUrl(jiraHost);
+	const githubInstallation = await client.apps.getInstallation({ installation_id: installationId })
+		.catch(() => {
+			// if we cannot get github installation, try to log as much as possible to help debug
+			req.log.warn({ appInfo: info, jiraHost, installationId }, "Cannot retrieve Github Installation from API");
+		});
 
 	// If we know enough about user and site, redirect to the app
-	if (jiraHost && await jiraSiteExists(jiraHost) && await Installation.getForHost(jiraHost)) {
-		redirectUrl = getJiraAppUrl(jiraHost);
-	}
+	const [siteExists, jiraInstallation] = await Promise.all([
+		jiraSiteExists(jiraHost),
+		Installation.getForHost(jiraHost)
+	]);
 
-	let jiraInstallation;
-
-	if (jiraHost) {
-		jiraInstallation = await Installation.getForHost(jiraHost);
-	}
-
-	const hasJiraHost = !!jiraHost;
-	const { account } = installation;
-	const { login, avatar_url } = account;
-
+	const redirectUrl = siteExists && jiraInstallation ? getJiraAppUrl(jiraHost) : getJiraMarketplaceUrl(jiraHost);
 	res.render("github-setup.hbs", {
 		csrfToken: req.csrfToken(),
 		nonce: res.locals.nonce,
 		jiraHost,
 		redirectUrl,
-		hasJiraHost,
 		clientKey: jiraInstallation?.clientKey,
-		orgName: login,
-		avatar: avatar_url,
+		orgName: githubInstallation?.data.account?.login,
+		avatar: githubInstallation?.data.account?.avatar_url,
 		html_url: info.html_url,
 		id: installationId
 	});

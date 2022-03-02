@@ -52,7 +52,7 @@ describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
 			const fixture = require("../fixtures/deployment_status-basic.json");
 			const sha = fixture.payload.deployment.sha;
 
-			githubAccessTokenNock(1234);
+			githubUserTokenNock(1234);
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
 				.reply(200, {

@@ -1,7 +1,7 @@
 import RepoSyncState from "../models/reposyncstate";
 import { sqsQueues } from "../sqs/queues";
-import Subscription from "../models/subscription";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import Subscription, { SyncStatus } from "../models/subscription";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import Logger from "bunyan";
 
 export async function findOrStartSync(
@@ -10,16 +10,21 @@ export async function findOrStartSync(
 	syncType?: "full" | "partial"
 ): Promise<void> {
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
-	const count = await RepoSyncState.countFromSubscription(subscription)
+	const [count] = await Promise.all([
+		RepoSyncState.countFromSubscription(subscription),
+		// Set sync status to PENDING
+		subscription.update({ syncStatus: SyncStatus.PENDING })
+	]);
+
+	logger.info({ subscription, syncType, count }, "Starting sync");
+
 	if (count === 0 || syncType === "full") {
+		// Reset all state if we're doing a full sync
 		await RepoSyncState.resetSyncFromSubscription(subscription);
-		logger.info("Starting Jira sync");
-		await sqsQueues.discovery.sendMessage({installationId, jiraHost}, 0, logger)
+		await sqsQueues.discovery.sendMessage({ installationId, jiraHost }, 0, logger);
 		return;
 	}
 
-	// Otherwise, just add a job to the queue for this installation
 	// This will automatically pick back up from where it left off
-	// if something got stuck
-	await sqsQueues.backfill.sendMessage({installationId, jiraHost}, 0, logger);
+	await sqsQueues.backfill.sendMessage({ installationId, jiraHost }, 0, logger);
 }

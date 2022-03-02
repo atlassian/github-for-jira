@@ -51,7 +51,7 @@ describe("Push Webhook", () => {
 		it("should update the Jira issue when no username is present", async () => {
 			const event = require("../fixtures/push-no-username.json");
 
-			githubAccessTokenNock(1234);
+			githubUserTokenNock(1234);
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/api/commit-no-username.json"));
@@ -117,7 +117,7 @@ describe("Push Webhook", () => {
 		it("should only send 10 files if push contains more than 10 files changed", async () => {
 			const event = require("../fixtures/push-multiple.json");
 
-			githubAccessTokenNock(1234);
+			githubUserTokenNock(1234);
 			githubNock
 				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
 				.reply(200, require("../fixtures/more-than-10-files.json"));
@@ -253,7 +253,7 @@ describe("Push Webhook", () => {
 		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
 			const event = require("../fixtures/push-no-username.json");
 
-			githubAccessTokenNock(1234);
+			githubUserTokenNock(1234);
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-merge-commit.json"));
 
@@ -317,7 +317,7 @@ describe("Push Webhook", () => {
 		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
 			const event = require("../fixtures/push-no-username.json");
 
-			githubAccessTokenNock(1234);
+			githubUserTokenNock(1234);
 			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
 				.reply(200, require("../fixtures/push-non-merge-commit"));
 
@@ -397,7 +397,7 @@ describe("Push Webhook", () => {
 		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
 			const event = require("../fixtures/push-no-username.json");
 
-			githubAccessTokenNock(1234);
+			githubUserTokenNock(1234);
 
 			githubNock
 				.get(`/repos/test-repo-owner/test-repo-name/commits/commit-no-username`)
