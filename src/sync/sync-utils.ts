@@ -16,13 +16,15 @@ export async function findOrStartSync(
 		subscription.update({ syncStatus: SyncStatus.PENDING })
 	]);
 
+	logger.info({ subscription, syncType, count }, "Starting sync");
+
 	if (count === 0 || syncType === "full") {
 		// Reset all state if we're doing a full sync
 		await RepoSyncState.resetSyncFromSubscription(subscription);
+		await sqsQueues.discovery.sendMessage({ installationId, jiraHost }, 0, logger);
+		return;
 	}
 
-	logger.info({subscription,syncType}, "Starting Jira sync");
 	// This will automatically pick back up from where it left off
-	// if something got stuck
 	await sqsQueues.backfill.sendMessage({ installationId, jiraHost }, 0, logger);
 }
