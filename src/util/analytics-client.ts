@@ -1,13 +1,14 @@
 import {getLogger} from "../config/logger";
 import { omit } from "lodash";
 import { optionalRequire } from "optional-require";
-import {AnalyticsConfigEnum} from "../interfaces/common";
 import {isNodeProd} from "./isNodeEnv";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
 const logger = getLogger("analytics")
 const instance = process.env.INSTANCE_NAME;
 const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
+
+let analyticsNodeClient;
 
 function sendAnalytics(eventType: "trait")
 function sendAnalytics(eventType: "screen", attributes:{name:string} & Record<string,unknown>)
@@ -17,10 +18,13 @@ function sendAnalytics(eventType: string, attributes?: Record<string, unknown>):
 		return;
 	}
 
-	const analyticsNodeClient = analyticsClient({
-		env: AnalyticsConfigEnum.ProdEnv,
-		product: AnalyticsConfigEnum.Product
-	});
+	if(!analyticsNodeClient){
+		// Values defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
+		analyticsNodeClient = analyticsClient({
+			env: "prod", // This needs to be "prod" as we're using prod Jira instances.
+			product: "gitHubForJira"
+		});
+	}
 
 	const baseAttributes = {
 		userId: "anonymousId",
@@ -33,46 +37,43 @@ function sendAnalytics(eventType: string, attributes?: Record<string, unknown>):
 
 	switch (eventType) {
 		case "screen":
-			wrapPromises(analyticsNodeClient.sendScreenEvent({
+			wrapPromise(analyticsNodeClient.sendScreenEvent({
 				...baseAttributes,
 				name: attributes?.name,
 				screenEvent: {
 					platform: "web",
-					attributes: {
-						...omit(attributes, "name"),
-						appKey
-					}
+					attributes: omit(attributes, "name")
 				}
 			}))
 			break;
 		case "ui":
-			wrapPromises(analyticsNodeClient.sendUIEvent({
+			wrapPromise(analyticsNodeClient.sendUIEvent({
 				...baseAttributes,
 				uiEvent: {
-					attributes: attributes
+					attributes
 				}
 			}))
 			break;
 		case "track":
-			wrapPromises(analyticsNodeClient.sendTrackEvent({
+			wrapPromise(analyticsNodeClient.sendTrackEvent({
 				...baseAttributes,
 				trackEvent: {
-					attributes: attributes
+					attributes
 				}
 			}))
 			break;
 		case "trait":
-			wrapPromises(analyticsNodeClient.sendTraitEvent({
+			wrapPromise(analyticsNodeClient.sendTraitEvent({
 				entityType: attributes?.entityType,
 				entityId: attributes?.entityId,
 				entityTraits: attributes?.entityTraits
 			}))
 			break;
 		case "operational":
-			wrapPromises(analyticsNodeClient.sendOperationalEvent({
+			wrapPromise(analyticsNodeClient.sendOperationalEvent({
 				...baseAttributes,
 				operationalEvent: {
-					attributes: attributes
+					attributes
 				}
 			}))
 			break;
@@ -82,7 +83,7 @@ function sendAnalytics(eventType: string, attributes?: Record<string, unknown>):
 	}
 }
 
-function wrapPromises(promise: Promise<unknown>) {
+function wrapPromise(promise: Promise<unknown>) {
 	promise.catch((error) => {
 		logger.warn(`Cannot sendAnalytics event: ${error}`)
 	})

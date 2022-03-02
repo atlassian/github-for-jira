@@ -10,12 +10,6 @@ export enum BooleanEnum {
 }
 
 // All variables below were defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
-export enum AnalyticsConfigEnum {
-	Product = "gitHubForJira", // required - do not change - https://hello.atlassian.net/browse/DE-8853
-	ProdEnv = "prod"
-}
-
-// All variables below were defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
 export enum AnalyticsEventTypesEnum {
 	ScreenEvent = "screen",
 	UiEvent = "ui",
