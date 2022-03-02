@@ -27,11 +27,6 @@ describe("Subscription", () => {
 			});
 		});
 
-		it("should complete sync status if no repos are provided", async () => {
-			await sub.updateSyncState({});
-			expect(updateSpy).toBeCalledWith({"syncStatus": "COMPLETE"});
-		});
-
 		it("should return same repos as what's updated", async () => {
 			const repos = {
 				"1": {
