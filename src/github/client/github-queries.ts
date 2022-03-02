@@ -201,14 +201,6 @@ export const GetBranchesQuery = `query ($owner: String!, $repo: String!, $per_pa
     }
   }`;
 
-export type getDefaultRefResponse = {
-  repository: {
-    defaultBranchRef: {
-      name: string
-    }
-  }
-};
-
 export const getDefaultRef = `query ($owner: String!, $repo: String!) {
     repository(owner: $owner, name: $repo) {
         defaultBranchRef {

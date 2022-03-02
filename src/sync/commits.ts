@@ -6,10 +6,9 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getCommitsResponse, getCommitsQueryOctoKit, getDefaultRef }  from "../github/client/github-queries";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
-// TODO - FUNCTION RETURN TYPES
 // According to the logs, GraphQL queries sometimes fail because the "changedFiles" field is not available.
 // In this case we just try again, but without asking for the changedFiles field.
-const retryFetchCommits = async (logger: LoggerWithTarget, err, gitHubClient: GitHubClient, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number) => {
+const retryFetchCommits = async (logger: LoggerWithTarget, err, gitHubClient: GitHubClient, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number): Promise<getCommitsResponse> => {
 	const changedFilesErrors = err.errors?.filter(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
 
 	if (changedFilesErrors?.length) {
@@ -19,7 +18,7 @@ const retryFetchCommits = async (logger: LoggerWithTarget, err, gitHubClient: Gi
 	throw new Error(err);
 };
 
-const fetchCommits = async (logger: LoggerWithTarget, gitHubClient: GitHubClient, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number): Promise<any> => {
+const fetchCommits = async (logger: LoggerWithTarget, gitHubClient: GitHubClient, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number) => {
 	let commitsData: getCommitsResponse;
 
 	try {
@@ -104,12 +103,11 @@ const getCommitsOctoKit = async (logger: LoggerWithTarget, github: GitHubAPI, _n
 	// if the repository is empty, commitsData.repository.ref is null
 	const edges = commitsData.repository?.ref?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
-	const jiraPayload = transformCommit({ commits, repository })
 
 	logger.info("Syncing commits: finished");
 
 	return {
 		edges,
-		jiraPayload
+		jiraPayload: transformCommit({ commits, repository })
 	};
 };
