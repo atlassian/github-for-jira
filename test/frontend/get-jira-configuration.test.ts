@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import getJiraConfiguration from "../../src/frontend/get-jira-configuration";
+import { JiraConfigurationGet } from "../../src/routes/jira/configuration/jira-configuration-get";
 import { Installation, RepoSyncState, Subscription } from "../../src/models";
 import SubscriptionClass from "../../src/models/subscription";
 
 jest.mock("../../src/frontend/analytics-client");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { sendAnalytics } = require("../../src/frontend/analytics-client");
+const { sendAnalytics } = require("../../src/util/analytics-client");
 
 describe("Jira Configuration Suite", () => {
 	let subscription: SubscriptionClass;
@@ -64,7 +64,7 @@ describe("Jira Configuration Suite", () => {
 
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
-		await getJiraConfiguration(mockRequest(), response, jest.fn());
+		await JiraConfigurationGet(mockRequest(), response, jest.fn());
 		const data = response.render.mock.calls[0][1];
 		expect(data.hasConnections).toBe(true);
 		expect(data.failedConnections.length).toBe(0);

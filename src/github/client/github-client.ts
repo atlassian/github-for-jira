@@ -1,6 +1,6 @@
 import Logger from "bunyan";
-import {Octokit} from "@octokit/rest";
-import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse} from "axios";
+import { Octokit } from "@octokit/rest";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
@@ -17,12 +17,14 @@ import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
-import {GithubClientGraphQLError, GraphQLError, RateLimitingError} from "./errors";
+import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
 	errors?: GraphQLError[];
 };
+
+export type PaginatedAxiosResponse<T> = { hasNextPage:boolean; } & AxiosResponse<T>;
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -43,14 +45,12 @@ export default class GitHubClient {
 	) {
 		this.logger = logger || getLogger("github.client.axios");
 
-		const clientConfig: AxiosRequestConfig = {
+		this.axios = axios.create({
 			baseURL: githubInstallationId.githubBaseUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
-		};
-
-		this.axios = axios.create(clientConfig);
+		});
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
@@ -132,7 +132,6 @@ export default class GitHubClient {
 		const graphqlErrors = response.data.errors;
 		if(graphqlErrors?.length) {
 
-
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
@@ -158,7 +157,7 @@ export default class GitHubClient {
 	 * Get a single pull request for the given repository.
 	 */
 	// TODO: add a unit test
-	public async getPullRequest(owner: string, repo: string, pullNumber: string): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
+	public async getPullRequest(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
 		return await this.get<Octokit.PullsGetResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}`, {}, {
 			owner,
 			repo,
@@ -187,6 +186,21 @@ export default class GitHubClient {
 		});
 	};
 
+	/**
+	 * Get a page of repositories.
+	 */
+	public getRepositoriesPage = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
+		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
+			perPage: 100,
+			page
+		});
+		const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
+		return {
+			...response,
+			hasNextPage
+		}
+	}
+
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
 			{environment,
@@ -208,7 +222,6 @@ export default class GitHubClient {
 
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
-
 
 	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string): Promise<GetBranchesResponse> {
 		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,

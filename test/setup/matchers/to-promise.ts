@@ -1,10 +1,13 @@
-// eslint-disable-next-line @typescript-eslint/no-namespace
+/* eslint-disable @typescript-eslint/no-namespace */
 declare namespace jest {
-	// eslint-disable-next-line @typescript-eslint/no-namespace
 	interface Matchers<R> {
 		toResolve(): Promise<R>;
 
 		toReject(): Promise<R>;
+
+		toHaveResolved(): Promise<R>;
+
+		toHaveResolvedTimes(times: number): Promise<R>;
 	}
 }
 
@@ -31,5 +34,34 @@ expect.extend({
 			return { pass: true, message: () => "Expected promise to resolve, however it rejected.\n" };
 		}
 		return { pass: false, message: () => "Expected promise to reject, however it resolved.\n" };
+	},
+	toHaveResolved: async (received: jest.Mock<unknown>) => {
+		try {
+			await Promise.all(received.mock.results
+				.filter(result => result.type === "return")
+				.map(result => result.value)
+			);
+			return { pass: true, message: () => `\n\nExpected mock calls to not resolve.\n\n` };
+		} catch (e) {
+			return {
+				pass: false,
+				message: () => `\n\nExpected mock calls to resolve.\n\n`
+			};
+		}
+	},
+	toHaveResolvedTimes: async (received: jest.Mock<unknown>, expected: number) => {
+		const results = await Promise.allSettled(received.mock.results
+			.filter(result => result.type === "return")
+			.map(result => result.value)
+		);
+		const count = results.reduce((num, result) => result.status == "fulfilled" ? num + 1 : num, 0);
+
+		if (count == expected) {
+			return { pass: true, message: () => `\n\nExpected number of resolved calls: not ${expected}\n\n` };
+		}
+		return {
+			pass: false,
+			message: () => `\n\nExpected number of resolved calls: ${expected}\n\n Received number of resolved calls: ${count}\n\n`
+		};
 	}
 });
