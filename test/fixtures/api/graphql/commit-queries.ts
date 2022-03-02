@@ -1,6 +1,6 @@
-const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
+const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo){
-      ref(qualifiedName: $default_ref) {
+      defaultBranchRef {
         target {
           ... on Commit {
             history(first: $per_page, after: $cursor) {
@@ -34,13 +34,6 @@ export const commitsNoLastCursor = (variables) => ({
 	query,
 	variables
 });
-
-// export const commitsNoLastCursor = {
-// 	query,
-// 	variables: {
-// 		owner: "integrations", repo: "test-repo-name", per_page: 20, default_ref: "master"
-// 	}
-// };
 
 export const commitsWithLastCursor = {
 	query,

@@ -80,7 +80,7 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
 
 export type getCommitsResponse = {
   repository: {
-    ref: {
+    defaultBranchRef: {
       target: {
         history: {
           edges
@@ -93,6 +93,37 @@ export type getCommitsResponse = {
 export const getCommitsQuery = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo){
       defaultBranchRef {
+        target {
+          ... on Commit {
+            history(first: $per_page, after: $cursor) {
+              edges {
+                cursor
+                node {
+                  author {
+                    avatarUrl
+                    email
+                    name
+                    user {
+                      url
+                    }
+                  }
+                  authoredDate
+                  message
+                  oid
+                  url
+                  ${includeChangedFiles ? "changedFiles" : ""}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }`;
+
+export const getCommitsQueryOctoKit = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
+    repository(owner: $owner, name: $repo){
+      ref(qualifiedName: $default_ref) {
         target {
           ... on Commit {
             history(first: $per_page, after: $cursor) {
@@ -177,7 +208,8 @@ export type getDefaultRefResponse = {
     }
   }
 };
-export const getDefaultRefQuery = `query ($owner: String!, $repo: String!) {
+
+export const getDefaultRef = `query ($owner: String!, $repo: String!) {
     repository(owner: $owner, name: $repo) {
         defaultBranchRef {
           name

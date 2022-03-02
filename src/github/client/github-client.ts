@@ -16,7 +16,7 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, getCommitsQuery, getCommitsResponse, getDefaultRefQuery, getDefaultRefResponse } from "./github-queries";
+import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, getCommitsQuery, getCommitsResponse } from "./github-queries";
 import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
@@ -232,30 +232,16 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
-	public async getCommitsPage(includeChangedFiles: boolean, owner: string, repoName: string, defaultRef: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
+	public async getCommitsPage(includeChangedFiles: boolean, owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
 		const response = await this.graphql<getCommitsResponse>(getCommitsQuery(includeChangedFiles),
 			{
 				owner,
 				repo: repoName,
 				per_page: perPage,
-				// default_ref: defaultRef,
 				cursor
 			});
-		console.log(defaultRef);
 		console.log("REPOSEN FROM GRAPHQL QUER 2222");
 		console.log(response?.data?.data);
 		return response?.data?.data;
 	}
-
-	public async getDefaultRef(owner: string, repoName: string): Promise<getDefaultRefResponse> {
-		const response = await this.graphql<getDefaultRefResponse>(getDefaultRefQuery,
-			{
-				owner,
-				repo: repoName
-			});
-		console.log("RESPONSE WITH");
-		console.log(response?.data?.data);
-		return response?.data?.data;
-	}
-
 }

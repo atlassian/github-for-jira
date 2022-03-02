@@ -3,64 +3,32 @@ import { GitHubAPI } from "probot";
 import { Repository } from "../models/subscription";
 import GitHubClient from "../github/client/github-client";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { getCommitsQuery, getCommitsResponse, getDefaultRefQuery, getDefaultRefResponse } from "../github/client/github-queries";
-// import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { getCommitsResponse, getCommitsQueryOctoKit, getDefaultRef }  from "../github/client/github-queries";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
-type RepositoryDetails = {
-	owner: string,
-	repoName: string,
-	refName: string
-}
-
-export const getDefaultRef = async (useNewGitHubClient: boolean, github: GitHubAPI, gitHubClient: GitHubClient, owner: string, repoName: string) => {
-	let data: getDefaultRefResponse;
-	if(useNewGitHubClient) {
-		data = await gitHubClient.getDefaultRef(owner, repoName);
-	} else {
-		data = (await github.graphql(getDefaultRefQuery, {
-			owner,
-			repo: repoName
-		}) as getDefaultRefResponse);
-	}
-	return (data.repository.defaultBranchRef) ? data.repository.defaultBranchRef.name : "master";
-};
-
-const getCommitsRequest = async (useNewGitHubClient: boolean, github: GitHubAPI, gitHubClient: GitHubClient, repoDetails: RepositoryDetails, includeChangedFiles: boolean, cursor?: string | number, perPage?: number): Promise<getCommitsResponse> => {
-
-	if(useNewGitHubClient) {
-		return await gitHubClient.getCommitsPage(true, repoDetails.owner, repoDetails.repoName, repoDetails.refName, perPage, cursor);
-	}
-	return (await github.graphql(getCommitsQuery(includeChangedFiles), {
-		owner: repoDetails.owner,
-		repo: repoDetails.repoName,
-		default_ref: repoDetails.refName,
-		per_page: perPage,
-		cursor,
-	}) as any);
-};
-
+// TODO - FUNCTION RETURN TYPES
 // According to the logs, GraphQL queries sometimes fail because the "changedFiles" field is not available.
 // In this case we just try again, but without asking for the changedFiles field.
-const retryFetchCommits = async (logger: LoggerWithTarget, err, useNewGitHubClient: boolean, github: GitHubAPI, gitHubClient: GitHubClient, repoDetails: RepositoryDetails, cursor?: string | number, perPage?: number) => {
+const retryFetchCommits = async (logger: LoggerWithTarget, err, gitHubClient: GitHubClient, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number) => {
 	const changedFilesErrors = err.errors?.filter(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
 
 	if (changedFilesErrors?.length) {
 		logger.info("retrying without changedFiles");
-		return await getCommitsRequest(useNewGitHubClient, github, gitHubClient, repoDetails, false, cursor, perPage);
+		return await gitHubClient.getCommitsPage(false, repoOwner, repoName, perPage, cursor);
 	}
 	throw new Error(err);
 };
 
-const fetchCommits = async (logger: LoggerWithTarget, useNewGitHubClient: boolean, github: GitHubAPI, gitHubClient: GitHubClient, repoDetails: RepositoryDetails, cursor?: string | number, perPage?: number): Promise<any> => {
+const fetchCommits = async (logger: LoggerWithTarget, gitHubClient: GitHubClient, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number): Promise<any> => {
 	let commitsData: getCommitsResponse;
 
 	try {
-		commitsData = await getCommitsRequest(useNewGitHubClient, github, gitHubClient, repoDetails, true, cursor, perPage);
+		commitsData = await gitHubClient.getCommitsPage(true, repoOwner, repoName, perPage, cursor);
 	} catch (err) {
-		commitsData = await retryFetchCommits(logger, err, useNewGitHubClient, github, gitHubClient, repoDetails, cursor, perPage);
+		commitsData = await retryFetchCommits(logger, err, gitHubClient, repoOwner, repoName, cursor, perPage);
 	}
-	// if the repository is empty, commitsData.repository.ref is null
-	const edges = commitsData.repository?.ref?.target?.history?.edges;
+
+	const edges = commitsData.repository?.defaultBranchRef?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
 
 	return {
@@ -69,23 +37,82 @@ const fetchCommits = async (logger: LoggerWithTarget, useNewGitHubClient: boolea
 	};
 };
 
-const createRepositoryDetailsObject = (owner: string, repoName: string, refName: string): RepositoryDetails => {
-	return {
-		owner,
-		repoName,
-		refName
-	};
+export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, gitHubClient: GitHubClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+	logger.info("Syncing commits: started");
+	if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL, false, jiraHost)) {
+		const { edges, commits }  = await fetchCommits(logger, gitHubClient, repository.owner.login, repository.name, cursor, perPage);
+		const jiraPayload = await transformCommit({ commits, repository });
+		logger.info("Syncing commits: finished");
+
+		console.log("GHCLIENT RESPONSE")
+		console.log(jiraPayload)
+		return {
+			edges,
+			jiraPayload
+		};
+	}
+	return getCommitsOctoKit(logger, github, gitHubClient, jiraHost, repository, cursor, perPage) 
 };
 
-// named export todo
-export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, _newGithub: GitHubClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+/*
+* OCTOKIT implementation, to be removed with Feature flag clean up
+*/
+
+// TODO: better typings
+const getCommitsOctoKit = async (logger: LoggerWithTarget, github: GitHubAPI, _newGithub: GitHubClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 	logger.info("Syncing commits: started");
-	const useNewGitHubClient = true;//await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL, false, jiraHost);
-	const refName = await getDefaultRef(useNewGitHubClient, github, _newGithub, repository.owner.login, repository.name);
-	const repoDetails = createRepositoryDetailsObject(repository.owner.login, repository.name, refName);
-	const { edges, commits }  = await fetchCommits(logger, useNewGitHubClient, github, _newGithub, repoDetails, cursor, perPage);
-	const jiraPayload = await transformCommit({ commits, repository });
+
+	// TODO: fix typings for graphql
+	const data = (await github.graphql(getDefaultRef, {
+		owner: repository.owner.login,
+		repo: repository.name
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	}) as any);
+
+	const refName = (data.repository.defaultBranchRef) ? data.repository.defaultBranchRef.name : "master";
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let commitsData: any = {};
+
+	const fetchCommits = async (includeChangedFiles: boolean) => {
+		return github.graphql(getCommitsQueryOctoKit(includeChangedFiles), {
+			owner: repository.owner.login,
+			repo: repository.name,
+			per_page: perPage,
+			cursor,
+			default_ref: refName
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		});
+	};
+
+	// TODO: fix typings for graphql
+	try {
+		commitsData = await fetchCommits(true);
+	} catch (err) {
+
+		// According to the logs, GraphQL queries sometimes fail because the "changedFiles" field is not available.
+		// In this case we just try again, but without asking for the changedFiles field.
+
+		logger.info("retrying without changedFiles");
+
+		const changedFilesErrors = err.errors?.filter(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
+		if (changedFilesErrors.length) {
+			commitsData = await fetchCommits(false);
+		}
+
+		logger.info("successfully retried without changedFiles");
+	}
+
+	// if the repository is empty, commitsData.repository.ref is null
+	const edges = commitsData.repository?.ref?.target?.history?.edges;
+	const commits = edges?.map(({ node: item }) => item) || [];
+	const jiraPayload = transformCommit({ commits, repository })
+
 	logger.info("Syncing commits: finished");
+
+	console.log("OCKTOKIT RESPONSE")
+	console.log(jiraPayload)
+
 	return {
 		edges,
 		jiraPayload

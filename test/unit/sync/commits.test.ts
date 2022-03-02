@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
-import { commitsNoLastCursor, getDefaultBranch } from "../../fixtures/api/graphql/commit-queries";
+import { commitsNoLastCursor } from "../../fixtures/api/graphql/commit-queries";
 import { processInstallation } from "../../../src/sync/installation";
 import { Installation, RepoSyncState, Subscription } from "../../../src/models";
 import { mocked } from "ts-jest/utils";
@@ -13,10 +13,8 @@ import { BackfillMessagePayload } from "../../../src/sqs/backfill";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 
-const defaultBranchFixture = require("../../fixtures/api/graphql/default-branch.json");
 const commitNodesFixture = require("../../fixtures/api/graphql/commit-nodes.json");
 const mixedCommitNodes = require("../../fixtures/api/graphql/commit-nodes-mixed.json");
-const defaultBranchNullFixture = require("../../fixtures/api/graphql/default-branch-null.json");
 const commitsNoKeys = require("../../fixtures/api/graphql/commit-nodes-no-keys.json");
 
 jest.mock("../../../src/sqs/queues");
@@ -48,17 +46,11 @@ describe("sync/commits", () => {
 		return commitsNoLastCursor({
 			owner: "integrations",
 			repo: "test-repo-name",
-			per_page: 20,
-			default_ref: "master"
+			per_page: 20
 		});
 	};
 
-	const createGitHubNock = (defaultRefResponse, commitsResponse?) => {
-		githubNock
-			.post("/graphql", getDefaultBranch)
-			.query(true)
-			.reply(200, defaultRefResponse);
-
+	const createGitHubNock = (commitsResponse?) => {
 		githubNock
 			.post("/graphql", getCommitsQuery())
 			.query(true)
@@ -106,7 +98,6 @@ describe("sync/commits", () => {
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 
 		githubAccessTokenNock(installationId);
-		githubAccessTokenNock(installationId);
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL,
@@ -124,7 +115,7 @@ describe("sync/commits", () => {
 	it("should sync to Jira when Commit Nodes have jira references", async () => {
 		const data: BackfillMessagePayload = { installationId, jiraHost };
 
-		createGitHubNock(defaultBranchFixture, commitNodesFixture);
+		createGitHubNock(commitNodesFixture);
 		const commits = [
 			{
 				"author": {
@@ -153,7 +144,7 @@ describe("sync/commits", () => {
 	it("should send Jira all commits that have Issue Keys", async () => {
 		const data = { installationId, jiraHost };
 
-		createGitHubNock(defaultBranchFixture, mixedCommitNodes);
+		createGitHubNock(mixedCommitNodes);
 
 		const commits = [
 			{
@@ -220,7 +211,7 @@ describe("sync/commits", () => {
 	it("should default to master branch if defaultBranchRef is null", async () => {
 		const data = { installationId, jiraHost };
 
-		createGitHubNock(defaultBranchNullFixture, commitNodesFixture);
+		createGitHubNock(commitNodesFixture);
 
 		jiraNock.post("/rest/devinfo/0.10/bulk", {
 			preventTransitions: true,
@@ -263,7 +254,7 @@ describe("sync/commits", () => {
 	it("should not call Jira if no issue keys are present", async () => {
 		const data = { installationId, jiraHost };
 
-		createGitHubNock(defaultBranchFixture, commitsNoKeys);
+		createGitHubNock(commitsNoKeys);
 
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
@@ -275,7 +266,7 @@ describe("sync/commits", () => {
 
 	it("should not call Jira if no data is returned", async () => {
 		const data = { installationId, jiraHost };
-		createGitHubNock(defaultBranchFixture);
+		createGitHubNock();
 
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
