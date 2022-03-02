@@ -44,8 +44,6 @@ export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, gi
 		const jiraPayload = await transformCommit({ commits, repository });
 		logger.info("Syncing commits: finished");
 
-		console.log("GHCLIENT RESPONSE")
-		console.log(jiraPayload)
 		return {
 			edges,
 			jiraPayload
@@ -109,9 +107,6 @@ const getCommitsOctoKit = async (logger: LoggerWithTarget, github: GitHubAPI, _n
 	const jiraPayload = transformCommit({ commits, repository })
 
 	logger.info("Syncing commits: finished");
-
-	console.log("OCKTOKIT RESPONSE")
-	console.log(jiraPayload)
 
 	return {
 		edges,

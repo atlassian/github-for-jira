@@ -337,17 +337,6 @@ const batchedBulkUpdate = async (
 				installationId
 			}
 		};
-		console.log("LOOKS LIKE THIS");
-		console.log("LOOKS LIKE THIS");
-		console.log("LOOKS LIKE THIS");
-		console.log("LOOKS LIKE THIS");
-		console.log("LOOKS LIKE THIS");
-		console.log("LOOKS LIKE THIS");
-		console.log("LOOKS LIKE THIS");
-		console.log("LOOKS LIKE THIS");
-		console.log("LOOKS LIKE THIS");
-		console.log("LOOKS LIKE THIS");
-		console.log(body);
 		return instance.post("/rest/devinfo/0.10/bulk", body);
 	});
 	return Promise.all(batchedUpdates);

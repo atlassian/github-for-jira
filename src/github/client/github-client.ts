@@ -240,8 +240,6 @@ export default class GitHubClient {
 				per_page: perPage,
 				cursor
 			});
-		console.log("REPOSEN FROM GRAPHQL QUER 2222");
-		console.log(response?.data?.data);
 		return response?.data?.data;
 	}
 }
