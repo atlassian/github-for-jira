@@ -238,9 +238,12 @@ export default class GitHubClient {
 				owner,
 				repo: repoName,
 				per_page: perPage,
-				default_ref: defaultRef,
+				// default_ref: defaultRef,
 				cursor
 			});
+		console.log(defaultRef);
+		console.log("REPOSEN FROM GRAPHQL QUER 2222");
+		console.log(response?.data?.data);
 		return response?.data?.data;
 	}
 
@@ -250,6 +253,8 @@ export default class GitHubClient {
 				owner,
 				repo: repoName
 			});
+		console.log("RESPONSE WITH");
+		console.log(response?.data?.data);
 		return response?.data?.data;
 	}
 

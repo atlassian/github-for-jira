@@ -30,7 +30,6 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
   }`;
 
 
-
 export const commitsNoLastCursor = (variables) => ({
 	query,
 	variables

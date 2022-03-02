@@ -3,11 +3,11 @@ import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus
 import { RepoSyncState, Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import { getRepositorySummary } from "./jobs";
-import enhanceOctokit, { RateLimitingError as OldRateLimitingError} from "../config/enhance-octokit";
+import enhanceOctokit, { RateLimitingError as OldRateLimitingError } from "../config/enhance-octokit";
 import statsd from "../config/statsd";
 import getPullRequests from "./pull-request";
 import getBranches from "./branches";
-import getCommits from "./commits";
+import { getCommits } from "./commits";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "../config/metric-names";
 import { booleanFlag, BooleanFlags, isBlocked } from "../config/feature-flags";
@@ -267,8 +267,6 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	try {
 		const { edges, jiraPayload } = await execute();
-		console.log("JIRAPAYLOAD")
-		console.log(jiraPayload)
 		if (jiraPayload) {
 			try {
 				await jiraClient.devinfo.repository.update(jiraPayload, {
@@ -332,7 +330,7 @@ const handleBackfillError = async (err,
 
 	if (delay) {
 		// if not NaN or 0
-		logger.info({delay}, `Delaying job for ${delay}ms`);
+		logger.info({ delay }, `Delaying job for ${delay}ms`);
 		scheduleNextTask(delay);
 		return;
 	}
@@ -363,10 +361,9 @@ const handleBackfillError = async (err,
 		return;
 	}
 
-
 	// TODO: add the jiraHost to the logger with logger.child()
 	const host = subscription.jiraHost || "none";
-	logger.warn({err, jiraHost: host}, "Task failed, continuing with next task");
+	logger.warn({ err, jiraHost: host }, "Task failed, continuing with next task");
 
 	// marking the current task as failed
 	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
@@ -375,7 +372,7 @@ const handleBackfillError = async (err,
 
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
-}
+};
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export async function maybeScheduleNextTask(
@@ -406,7 +403,7 @@ export const processInstallation =
 		);
 
 		return async (data: BackfillMessagePayload, sentry: Hub, logger: LoggerWithTarget): Promise<void> => {
-			const {installationId, jiraHost} = data;
+			const { installationId, jiraHost } = data;
 
 			try {
 				if (await isBlocked(installationId, logger)) {

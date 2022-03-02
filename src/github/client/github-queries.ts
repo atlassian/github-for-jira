@@ -43,7 +43,7 @@ export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
       }
     }
   }
-}`
+}`;
 
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo){
@@ -90,9 +90,9 @@ export type getCommitsResponse = {
   }
 };
 
-export const getCommitsQuery = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
+export const getCommitsQuery = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo){
-      ref(qualifiedName: $default_ref) {
+      defaultBranchRef {
         target {
           ... on Commit {
             history(first: $per_page, after: $cursor) {
