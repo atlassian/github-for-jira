@@ -10,7 +10,7 @@ WORKDIR /app
 COPY . .
 
 # Installing packages
-RUN npm ci
+# RUN npm ci (running in the pipeline)
 
 # Building TypeScript files
 RUN npm run build:release
