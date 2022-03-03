@@ -6,8 +6,8 @@ RUN apk add g++ make python3
 # adding to solve vuln
 RUN apk add --update --upgrade busybox
 
-COPY . /app
 WORKDIR /app
+COPY . .
 
 # Installing packages
 RUN npm ci
