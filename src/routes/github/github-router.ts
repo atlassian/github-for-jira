@@ -6,6 +6,8 @@ import { GithubSetupPost } from "./setup/github-setup-post";
 import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
 import { csrfMiddleware } from "../../middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
+import { query } from "express-validator";
+import { returnOnValidationError } from "../api/api-utils";
 
 export const GithubRouter = Router();
 
@@ -15,12 +17,12 @@ GithubRouter.use(GithubOAuthRouter);
 // CSRF Protection Middleware for all following routes
 GithubRouter.use(csrfMiddleware);
 
-GithubRouter.post("/setup", GithubSetupPost);
+GithubRouter.route("/setup")
+	.get(query("installation_id").isInt(), returnOnValidationError, GithubSetupGet)
+	.post(GithubSetupPost);
 
 // All following routes need Github Auth
 GithubRouter.use(GithubAuthMiddleware);
-
-GithubRouter.get("/setup", GithubSetupGet)
 
 GithubRouter.route("/configuration")
 	.get(GithubConfigurationGet)

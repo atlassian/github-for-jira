@@ -97,9 +97,9 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 
 		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
 		if (useNewGithubClient) {
-			githubAccessTokenNock(TEST_INSTALLATION_ID);
-			githubAccessTokenNock(TEST_INSTALLATION_ID);
-			githubAccessTokenNock(TEST_INSTALLATION_ID);
+			githubUserTokenNock(TEST_INSTALLATION_ID);
+			githubUserTokenNock(TEST_INSTALLATION_ID);
+			githubUserTokenNock(TEST_INSTALLATION_ID);
 		}
 
 		// Mocking all GitHub API Calls

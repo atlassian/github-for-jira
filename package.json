@@ -12,8 +12,8 @@
     "prestart": "run-p setup clean db:dev",
     "init": "run-p db",
     "start": "run-p start:main start:worker",
-    "start:main": "tsnd --watch=.env,db/config.json --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
-    "start:worker": "tsnd --watch=.env,db/config.json --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/worker.ts",
+    "start:main": "tsnd --watch=.env,db/config.json,**/*.hbs --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
+    "start:worker": "tsnd --watch=.env,db/config.json,**/*.hbs --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/worker.ts",
     "start:production": "run-p start:main:production start:worker:production",
     "start:main:production": "run-s db:migrate:prod && node .",
     "start:worker:production": "run-s db:migrate:prod && node src/worker",
@@ -75,6 +75,7 @@
     "lodash": "^4.17.21",
     "moment": "^2.24.0",
     "moo": "^0.5.0",
+    "optional-require": "^1.1.8",
     "pg": "^8.6.0",
     "primer": "^10.6.0",
     "probot": "^9.15.1",
@@ -132,6 +133,9 @@
     "ts-node": "^10.5.0",
     "ts-node-dev": "^1.1.8",
     "yaml-lint": "^1.2.4"
+  },
+  "optionalDependencies": {
+    "@atlassiansox/analytics-node-client": "^2.2.2"
   },
   "volta": {
     "node": "14.17.0"

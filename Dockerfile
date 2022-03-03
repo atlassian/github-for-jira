@@ -10,6 +10,6 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
-RUN npm ci
+RUN npm ci --no-optional
 
 CMD ["npm", "start"]

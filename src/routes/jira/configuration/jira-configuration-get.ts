@@ -7,6 +7,8 @@ import { AppInstallation, FailedAppInstallation } from "../../../config/interfac
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { groupBy } from "lodash";
+import {sendAnalytics} from "../../../util/analytics-client";
+import {AnalyticsEventTypesEnum, AnalyticsScreenEventsEnum} from "../../../interfaces/common";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -119,6 +121,8 @@ export const JiraConfigurationGet = async (
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce
 		});
+
+		sendAnalytics(AnalyticsEventTypesEnum.ScreenEvent, { name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName, jiraHost, connectedOrgCount: installations.total })
 
 		req.log.info("Jira configuration rendered successfully.");
 	} catch (error) {

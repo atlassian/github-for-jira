@@ -13,7 +13,8 @@ jest.mock("lru-cache");
 
 const redis = new IORedis(getRedisInfo("test"));
 
-type AccessTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
+type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
+type GithubAppTokenNockFunc = () => void
 type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
 
 declare global {
@@ -24,8 +25,10 @@ declare global {
 	let githubNock: nock.Scope;
 	let gheNock: nock.Scope;
 	let gheUrl: string;
-	let githubAccessTokenNock: AccessTokenNockFunc;
-	let gheAccessTokenNock: AccessTokenNockFunc;
+	let githubUserTokenNock: GithubUserTokenNockFunc;
+	let githubAppTokenNock: GithubAppTokenNockFunc;
+	let gheUserTokenNock: GithubUserTokenNockFunc;
+	let gheAppTokenNock: GithubAppTokenNockFunc;
 	let mockSystemTime: MockSystemTimeFunc;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
@@ -37,8 +40,10 @@ declare global {
 			githubNock: nock.Scope;
 			gheNock: nock.Scope;
 			gheUrl: string;
-			githubAccessTokenNock: AccessTokenNockFunc;
-			gheAccessTokenNock: AccessTokenNockFunc;
+			githubUserTokenNock: GithubUserTokenNockFunc;
+			githubAppTokenNock: GithubAppTokenNockFunc;
+			gheUserTokenNock: GithubUserTokenNockFunc;
+			gheAppTokenNock: GithubAppTokenNockFunc;
 			mockSystemTime: MockSystemTimeFunc;
 		}
 	}
@@ -58,7 +63,7 @@ const clearState = async () => Promise.all([
 	sequelize.truncate({ truncate: true })
 ]);
 
-const accessToken = (scope: nock.Scope): AccessTokenNockFunc =>
+const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>
 	(installationId: number | string, returnToken = "token", expires = Date.now() + 3600, expectedAuthToken?: string) => {
 		scope
 			.post(`/app/installations/${installationId}/access_tokens`)
@@ -69,6 +74,44 @@ const accessToken = (scope: nock.Scope): AccessTokenNockFunc =>
 			.reply(200, {
 				token: returnToken,
 				expires_at: expires
+			});
+	};
+
+const githubAppToken = (scope: nock.Scope): GithubAppTokenNockFunc =>
+	() => {
+		scope
+			.get("/app")
+			// .matchHeader("Authorization", /^Bearer .+$/i)
+			.reply(200, {
+				"id": 1,
+				"slug": "octoapp",
+				"node_id": "MDExOkludGVncmF0aW9uMQ==",
+				"owner": {
+					"login": "github",
+					"id": 1,
+					"node_id": "MDEyOk9yZ2FuaXphdGlvbjE=",
+					"url": "https://api.github.com/orgs/github",
+					"gravatar_id": "",
+					"html_url": "https://github.com/octocat",
+					"type": "User",
+					"site_admin": true
+				},
+				"name": "Octocat App",
+				"description": "",
+				"external_url": "https://example.com",
+				"html_url": "https://github.com/apps/octoapp",
+				"created_at": "2017-07-08T16:18:44-04:00",
+				"updated_at": "2017-07-08T16:18:44-04:00",
+				"permissions": {
+					"metadata": "read",
+					"contents": "read",
+					"issues": "write",
+					"single_file": "write"
+				},
+				"events": [
+					"push",
+					"pull_request"
+				]
 			});
 	};
 
@@ -88,8 +131,10 @@ beforeEach(() => {
 	global.githubNock = nock("https://api.github.com");
 	global.gheUrl = "https://github.mydomain.com";
 	global.gheNock = nock(global.gheUrl);
-	global.githubAccessTokenNock = accessToken(githubNock);
-	global.gheAccessTokenNock = accessToken(gheNock);
+	global.githubUserTokenNock = githubUserToken(githubNock);
+	global.githubAppTokenNock = githubAppToken(githubNock);
+	global.gheUserTokenNock = githubUserToken(gheNock);
+	global.gheAppTokenNock = githubAppToken(gheNock);
 	global.mockSystemTime = (time: number | string | Date) => {
 		const mock = jest.isMockFunction(Date.now) ? mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());

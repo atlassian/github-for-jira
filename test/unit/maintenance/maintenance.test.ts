@@ -103,18 +103,15 @@ describe("Maintenance", () => {
 
 			it("should return 503 for any frontend routes to a jira host in maintenance mode", () =>
 				supertest(app)
-					.get("/github/setup")
+					.get("/error")
 					.expect(503)
 			);
 
 			it("should return expected page when maintenance mode is off", () => {
 				whenMaintenanceMode(false);
 				return supertest(app)
-					.get("/github/setup")
-					.then(response => {
-						expect(response.status).toBeGreaterThanOrEqual(200);
-						expect(response.status).toBeLessThan(400);
-					});
+					.get("/error")
+					.expect(500);
 			});
 
 			it("should still be able to get static assets in maintenance mode", () =>
