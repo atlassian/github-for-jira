@@ -232,8 +232,10 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
-	// According to the logs, GraphQL queries sometimes fail because the "changedFiles" field is not available.
-	// In this case we just try again, but without asking for the changedFiles field.
+	/*
+	* It has been noticed in the logs that GraphQL queries sometimes fail because the "changedFiles" field is not available.
+	* In this case we just try again, but without asking for the changedFiles field.
+	*/
 	async retryFetchCommits (err, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number): Promise<getCommitsResponse> {
 		const changedFilesErrors = err.errors?.filter(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
 
@@ -243,7 +245,10 @@ export default class GitHubClient {
 		}
 		throw new Error(err);
 	}
-
+	
+	/**
+	 * Get a page of commits from the default branch.
+	*/
 	async getCommitsPageRequest(owner: string, repoName: string, includeChangedFiles = false, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
 		const response = await this.graphql<getCommitsResponse>(getCommitsQuery(includeChangedFiles),
 			{
@@ -254,7 +259,10 @@ export default class GitHubClient {
 			});
 		return response?.data?.data;
 	}
-
+	
+	/**
+	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
+	*/
 	public async getCommitsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
 		let response;
 		try {
