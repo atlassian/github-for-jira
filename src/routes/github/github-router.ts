@@ -6,7 +6,7 @@ import { GithubSetupPost } from "./setup/github-setup-post";
 import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
 import { csrfMiddleware } from "../../middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
-import { body, query } from "express-validator";
+import { query } from "express-validator";
 import { returnOnValidationError } from "../api/api-utils";
 
 export const GithubRouter = Router();
@@ -26,7 +26,7 @@ GithubRouter.use(GithubAuthMiddleware);
 
 GithubRouter.route("/configuration")
 	.get(GithubConfigurationGet)
-	.post(body("installationId").isInt(), returnOnValidationError, GithubConfigurationPost);
+	.post(GithubConfigurationPost);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 GithubRouter.use("/subscriptions?", GithubSubscriptionRouter);

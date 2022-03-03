@@ -14,6 +14,15 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		return;
 	}
 	const installationId = Number(req.body.installationId);
+
+	if (!installationId) {
+		res.status(400)
+			.json({
+				err: "An Installation ID must be provided to link an installation and a Jira host."
+			});
+		return;
+	}
+
 	req.addLogFields({ installationId });
 	req.log.info("Received add subscription request");
 
