@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import supertest from "supertest";
 import { Installation } from "../../../src/models";
 import { getFrontendApp } from "../../../src/app";
@@ -53,11 +54,7 @@ describe("Github Setup", () => {
 			githubAppTokenNock();
 			githubNock
 				.get(`/app/installations/${installation_id}`)
-				.reply(200, {
-					account: {
-						login: "test-org"
-					}
-				});
+				.reply(200, require("../../fixtures/get-jira-configuration/single-installation.json"));
 			await supertest(frontendApp)
 				.get("/github/setup")
 				.query({installation_id})
@@ -68,11 +65,7 @@ describe("Github Setup", () => {
 			githubAppTokenNock();
 			githubNock
 				.get(`/app/installations/${installation_id}`)
-				.reply(200, {
-					account: {
-						login: "test-org"
-					}
-				});
+				.reply(200, require("../../fixtures/get-jira-configuration/single-installation.json"));
 			await supertest(frontendApp)
 				.get("/github/setup")
 				.query({installation_id})

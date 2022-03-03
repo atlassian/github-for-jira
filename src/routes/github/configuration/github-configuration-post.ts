@@ -18,7 +18,15 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	if (!installationId) {
 		res.status(400)
 			.json({
-				err: "An Installation ID must be provided to link an installation and a Jira host."
+				err: "An Installation ID must be provided to link an installation."
+			});
+		return;
+	}
+
+	if (!req.body.clientKey) {
+		res.status(400)
+			.json({
+				err: "A clientKey must be provided to link an installation."
 			});
 		return;
 	}
@@ -29,6 +37,8 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	// Check if the user that posted this has access to the installation ID they're requesting
 	try {
 		const installation = await client.apps.getInstallation({ installation_id: installationId })
+			.then(r => r.data, () => undefined);
+
 		if (!installation) {
 			res.status(404)
 				.json({
