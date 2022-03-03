@@ -1,4 +1,4 @@
-import { Repository } from "@octokit/graphql-schema";
+import { Repository, Commit } from "@octokit/graphql-schema";
 
 export const ViewerRepositoryCountQuery = `
 query {
@@ -78,12 +78,16 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
     }
   }`;
 
+type CommitNode = {
+  node: Commit
+}
+
 export type getCommitsResponse = {
   repository: {
     defaultBranchRef: {
       target: {
         history: {
-          edges
+          edges: CommitNode[]
         }
       }
     }

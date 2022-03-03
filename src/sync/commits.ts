@@ -3,30 +3,11 @@ import { GitHubAPI } from "probot";
 import { Repository } from "../models/subscription";
 import GitHubClient from "../github/client/github-client";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { getCommitsResponse, getCommitsQueryOctoKit, getDefaultRef }  from "../github/client/github-queries";
+import { getCommitsQueryOctoKit, getDefaultRef }  from "../github/client/github-queries";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
-// According to the logs, GraphQL queries sometimes fail because the "changedFiles" field is not available.
-// In this case we just try again, but without asking for the changedFiles field.
-const retryFetchCommits = async (logger: LoggerWithTarget, err, gitHubClient: GitHubClient, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number): Promise<getCommitsResponse> => {
-	const changedFilesErrors = err.errors?.filter(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
-
-	if (changedFilesErrors?.length) {
-		logger.info("retrying without changedFiles");
-		return await gitHubClient.getCommitsPage(false, repoOwner, repoName, perPage, cursor);
-	}
-	throw new Error(err);
-};
-
-const fetchCommits = async (logger: LoggerWithTarget, gitHubClient: GitHubClient, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number) => {
-	let commitsData: getCommitsResponse;
-
-	try {
-		commitsData = await gitHubClient.getCommitsPage(true, repoOwner, repoName, perPage, cursor);
-	} catch (err) {
-		commitsData = await retryFetchCommits(logger, err, gitHubClient, repoOwner, repoName, cursor, perPage);
-	}
-
+const fetchCommits = async (gitHubClient: GitHubClient, repository: Repository, cursor?: string | number, perPage?: number) => {
+	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, cursor);
 	const edges = commitsData.repository?.defaultBranchRef?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
 
@@ -39,7 +20,7 @@ const fetchCommits = async (logger: LoggerWithTarget, gitHubClient: GitHubClient
 export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, gitHubClient: GitHubClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 	logger.info("Syncing commits: started");
 	if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL, false, jiraHost)) {
-		const { edges, commits }  = await fetchCommits(logger, gitHubClient, repository.owner.login, repository.name, cursor, perPage);
+		const { edges, commits }  = await fetchCommits(gitHubClient, repository, cursor, perPage);
 		const jiraPayload = await transformCommit({ commits, repository });
 		logger.info("Syncing commits: finished");
 
