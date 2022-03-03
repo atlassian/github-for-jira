@@ -97,7 +97,7 @@ describe("sync/commits", () => {
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 
-		githubAccessTokenNock(installationId);
+		githubUserTokenNock(installationId);
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL,
@@ -203,49 +203,6 @@ describe("sync/commits", () => {
 			}
 		];
 		createJiraNock(commits);
-
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
-	});
-
-	it("should default to master branch if defaultBranchRef is null", async () => {
-		const data = { installationId, jiraHost };
-
-		createGitHubNock(commitNodesFixture);
-
-		jiraNock.post("/rest/devinfo/0.10/bulk", {
-			preventTransitions: true,
-			repositories: [
-				{
-					"commits": [
-						{
-							"author": {
-								"name": "test-author-name",
-								"email": "test-author-email@example.com"
-							},
-							"authorTimestamp": "test-authored-date",
-							"displayId": "test-o",
-							"fileCount": 0,
-							"hash": "test-oid",
-							"id": "test-oid",
-							"issueKeys": [
-								"TES-17"
-							],
-							"message": "[TES-17] test-commit-message",
-							"url": "https://github.com/test-login/test-repo/commit/test-sha",
-							"updateSequenceId": 12345678
-						}
-					],
-					"id": "1",
-					"name": "test-repo-name",
-					"url": "test-repo-url",
-					"updateSequenceId": 12345678
-				}
-			],
-			properties: {
-				installationId: 1234
-			}
-		}).reply(200);
 
 		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
