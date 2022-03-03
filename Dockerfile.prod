@@ -6,11 +6,11 @@ RUN apk add g++ make python3
 # adding to solve vuln
 RUN apk add --update --upgrade busybox
 
+COPY . /app
 WORKDIR /app
-COPY . .
 
 # Installing packages
-# RUN npm ci (running in the pipeline)
+RUN npm ci
 
 # Building TypeScript files
 RUN npm run build:release
