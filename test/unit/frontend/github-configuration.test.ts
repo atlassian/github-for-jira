@@ -135,7 +135,7 @@ describe("Github Configuration", () => {
 				.get("/user")
 				.reply(200, { login: "test-user" });
 
-			githubAccessTokenNock(sub.gitHubInstallationId);
+			githubUserTokenNock(sub.gitHubInstallationId);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
@@ -213,7 +213,7 @@ describe("Github Configuration", () => {
 				.get("/user")
 				.reply(200, { login: "test-user" });
 
-			githubAccessTokenNock(sub.gitHubInstallationId);
+			githubUserTokenNock(sub.gitHubInstallationId);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
