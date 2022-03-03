@@ -16,7 +16,14 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, getCommitsQuery, getCommitsResponse } from "./github-queries";
+import { 
+	GetBranchesQuery, 
+	GetBranchesResponse, 
+	ViewerRepositoryCountQuery, 
+	getCommitsQueryWithChangedFiles, 
+	getCommitsQueryWithoutChangedFiles, 
+	getCommitsResponse 
+} from "./github-queries";
 import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
@@ -131,7 +138,6 @@ export default class GitHubClient {
 
 		const graphqlErrors = response.data.errors;
 		if(graphqlErrors?.length) {
-
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
@@ -140,7 +146,7 @@ export default class GitHubClient {
 			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage , graphqlErrors));
 		}
 
-		return  response;
+		return response;
 	}
 
 	/**
@@ -232,46 +238,32 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
-	/*
-	* It has been noticed in the logs that GraphQL queries sometimes fail because the "changedFiles" field is not available.
-	* In this case we just try again, but without asking for the changedFiles field.
-	*/
-	async retryFetchCommits (err, repoOwner: string, repoName: string, cursor?: string | number, perPage?: number): Promise<getCommitsResponse> {
-		const changedFilesErrors = err.errors?.filter(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
-
-		if (changedFilesErrors?.length) {
-			this.logger.info("retrying without changedFiles");
-			return await this.getCommitsPageRequest(repoOwner, repoName, false, perPage, cursor);
-		}
-		throw new Error(err);
-	}
-	
 	/**
-	 * Get a page of commits from the default branch.
+	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
 	*/
-	async getCommitsPageRequest(owner: string, repoName: string, includeChangedFiles = false, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
-		const response = await this.graphql<getCommitsResponse>(getCommitsQuery(includeChangedFiles),
+	public async getCommitsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
+		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles(),
 			{
 				owner,
 				repo: repoName,
 				per_page: perPage,
 				cursor
-			});
-		return response?.data?.data;
-	}
-	
-	/**
-	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
-	*/
-	public async getCommitsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
-		let response;
-		try {
-			response = this.getCommitsPageRequest(owner, repoName, true, perPage, cursor);
-		}
-		catch (err) {
-			response = this.getCommitsPageRequest(owner, repoName, false, perPage, cursor);
-		}
-		return response;
+			}).catch((err) => {
+			const changedFilesErrors = err.errors?.find(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
+			
+			if (changedFilesErrors) {
+				this.logger.info("retrying without changedFiles");
+				return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles(),
+					{
+						owner,
+						repo: repoName,
+						per_page: perPage,
+						cursor
+					});
+			}
+			return Promise.reject(err);
+		})
+		return response?.data?.data;	
 	}
 
 }

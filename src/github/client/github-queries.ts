@@ -1,4 +1,4 @@
-import { Repository, Commit } from "@octokit/graphql-schema";
+import { Repository } from "@octokit/graphql-schema";
 
 export const ViewerRepositoryCountQuery = `
 query {
@@ -78,8 +78,21 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
     }
   }`;
 
-type CommitNode = {
-  node: Commit
+type CommitQueryNode = {
+  cursor: string,
+  node: {
+      author: {
+        avatarUrl: string,
+        email: string,
+        name: string,
+        user: { url: string }
+      },
+      authoredDate: Date,
+      message: string,
+      oid: string,
+      url: string,
+      changedFiles?: number
+  }
 }
 
 export type getCommitsResponse = {
@@ -87,14 +100,14 @@ export type getCommitsResponse = {
     defaultBranchRef: {
       target: {
         history: {
-          edges: CommitNode[]
+          edges: CommitQueryNode[]
         }
       }
     }
   }
 };
 
-export const getCommitsQuery = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getCommitsQueryWithChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo){
       defaultBranchRef {
         target {
@@ -115,7 +128,37 @@ export const getCommitsQuery = (includeChangedFiles?: boolean) => `query ($owner
                   message
                   oid
                   url
-                  ${includeChangedFiles ? "changedFiles" : ""}
+                  changedFiles
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }`;
+
+export const getCommitsQueryWithoutChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+    repository(owner: $owner, name: $repo){
+      defaultBranchRef {
+        target {
+          ... on Commit {
+            history(first: $per_page, after: $cursor) {
+              edges {
+                cursor
+                node {
+                  author {
+                    avatarUrl
+                    email
+                    name
+                    user {
+                      url
+                    }
+                  }
+                  authoredDate
+                  message
+                  oid
+                  url
                 }
               }
             }
