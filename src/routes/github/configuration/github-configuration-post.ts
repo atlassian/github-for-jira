@@ -7,49 +7,39 @@ import { findOrStartSync } from "../../../sync/sync-utils";
  * Handle the when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
-	const { github, githubToken, jiraHost } = res.locals;
+	const { github, client, githubToken, jiraHost } = res.locals;
 
 	if (!githubToken || !jiraHost) {
 		res.sendStatus(401);
 		return;
 	}
-
-	if (!req.body.installationId) {
-		res.status(400)
-			.json({
-				err: "An Installation ID must be provided to link an installation and a Jira host."
-			});
-		return;
-	}
-
-	req.log.info({ installationId: req.body.installationId }, "Received add subscription request");
+	const installationId = Number(req.body.installationId);
+	req.addLogFields({ installationId });
+	req.log.info("Received add subscription request");
 
 	// Check if the user that posted this has access to the installation ID they're requesting
 	try {
-		const { data: { installations } } = await github.apps.listInstallationsForAuthenticatedUser();
-
-		const userInstallation = installations.find(installation => installation.id === Number(req.body.installationId));
-
-		if (!userInstallation) {
-			res.status(401)
+		const installation = await client.apps.getInstallation({ installation_id: installationId })
+		if (!installation) {
+			res.status(404)
 				.json({
-					err: `Failed to add subscription to ${req.body.installationId}. User does not have access to that installation.`
+					err: `Installation with id ${installationId} doesn't exist.`
 				});
 			return;
 		}
 
 		// If the installation is an Org, the user needs to be an admin for that Org
-		if (userInstallation.target_type === "Organization") {
+		if (installation.target_type === "Organization") {
 			const { data: { login } } = await github.users.getAuthenticated();
 			const { data: { role } } = await github.orgs.getMembership({
-				org: userInstallation.account.login,
+				org: installation.account.login,
 				username: login
 			});
 
 			if (role !== "admin") {
 				res.status(401)
 					.json({
-						err: `Failed to add subscription to ${req.body.installationId}. User is not an admin of that installation`
+						err: `Failed to add subscription to ${installationId}. User is not an admin of that installation`
 					});
 				return;
 			}
@@ -57,7 +47,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		const subscription = await Subscription.install({
 			clientKey: getHashedKey(req.body.clientKey),
-			installationId: req.body.installationId,
+			installationId,
 			host: jiraHost
 		});
 
