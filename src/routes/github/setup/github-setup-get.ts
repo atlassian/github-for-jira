@@ -13,14 +13,15 @@ import { Installation } from "../../../models";
 		- Otherwise, render the setup page (POST).
 */
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
-	req.log.info("Received get github setup page request");
 	const { jiraHost, client } = res.locals;
 	const installationId = Number(req.query.installation_id);
 	const { data: info } = await client.apps.getAuthenticated();
+	req.addLogFields({installationId, appInfo: info});
+	req.log.info("Received get github setup page request");
 	const githubInstallation = await client.apps.getInstallation({ installation_id: installationId })
 		.catch(() => {
 			// if we cannot get github installation, try to log as much as possible to help debug
-			req.log.warn({ appInfo: info, jiraHost, installationId }, "Cannot retrieve Github Installation from API");
+			req.log.warn("Cannot retrieve Github Installation from API");
 		});
 
 	// If we know enough about user and site, redirect to the app

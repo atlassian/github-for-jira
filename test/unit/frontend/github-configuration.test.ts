@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import supertest from "supertest";
 import { Installation, Subscription } from "../../../src/models";
 import SubscriptionClass from "../../../src/models/subscription";
@@ -17,21 +18,7 @@ describe("Github Configuration", () => {
 	const adminUserResponse = { login: "admin-user" };
 	const organizationMembershipResponse = { role: "member" };
 	const organizationAdminResponse = { role: "admin" };
-	const userInstallationsResponse = {
-		total_count: 2,
-		installations: [
-			{
-				account: {
-					login: "test-org"
-				},
-				id: 1,
-				target_type: "Organization"
-			},
-			{
-				id: 3
-			}
-		]
-	};
+	const installationResponse = require("../../fixtures/get-jira-configuration/single-installation.json")
 
 	beforeEach(async () => {
 		sub = await Subscription.create({
@@ -304,13 +291,14 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
-				.get("/user/installations")
-				.reply(200, userInstallationsResponse);
+				.get("/app/installations/2")
+				.reply(404);
 
 			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({
-					installationId: 2
+					installationId: 2,
+					clientKey: sub.jiraClientKey
 				})
 				.type("form")
 				.set(
@@ -320,10 +308,10 @@ describe("Github Configuration", () => {
 						jiraHost
 					})
 				)
-				.expect(401);
+				.expect(404);
 		});
 
-		it("should return a 401 if the user is not an admin of the Org", () => {
+		it("should return a 401 if the user is not an admin of the Org", async () => {
 			// This is for github token validation check
 			githubNock
 				.get("/")
@@ -331,18 +319,19 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
-				.get("/user/installations")
-				.reply(200, userInstallationsResponse);
+				.get("/app/installations/1")
+				.reply(200, installationResponse);
 			githubNock
 				.get("/user")
 				.reply(200, authenticatedUserResponse);
 			githubNock
-				.get("/orgs/test-org/memberships/test-user")
+				.get("/orgs/fake-account/memberships/test-user")
 				.reply(200, organizationMembershipResponse);
-			return supertest(frontendApp)
+			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({
-					installationId: 1
+					installationId: 1,
+					clientKey: sub.jiraClientKey
 				})
 				.type("form")
 				.set(
@@ -355,13 +344,13 @@ describe("Github Configuration", () => {
 				.expect(401);
 		});
 
-		it("should return a 400 if no installationId is present in the body", () => {
+		it("should return a 400 if no installationId is present in the body", async () => {
 			// This is for github token validation check
 			githubNock
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
-			return supertest(frontendApp)
+			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({})
 				.set(
@@ -384,13 +373,13 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
-				.get("/user/installations")
-				.reply(200, userInstallationsResponse);
+				.get("/app/installations/1")
+				.reply(200, installationResponse);
 			githubNock
 				.get("/user")
 				.reply(200, adminUserResponse);
 			githubNock
-				.get("/orgs/test-org/memberships/admin-user")
+				.get("/orgs/fake-account/memberships/admin-user")
 				.reply(200, organizationAdminResponse);
 
 			const jiraClientKey = "a-unique-client-key";
