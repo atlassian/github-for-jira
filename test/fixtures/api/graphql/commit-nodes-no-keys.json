@@ -1,7 +1,7 @@
 {
   "data": {
     "repository": {
-      "ref": {
+      "defaultBranchRef": {
         "target": {
           "history": {
             "edges": [

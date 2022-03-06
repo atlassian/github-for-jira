@@ -7,7 +7,7 @@ query {
 			totalCount
 		}
 	}
-}`
+}`;
 
 type RepositoryNode = {
   node: Repository
@@ -43,7 +43,7 @@ export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
       }
     }
   }
-}`
+}`;
 
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo){
@@ -78,7 +78,97 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
     }
   }`;
 
-export const getCommits = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
+type CommitQueryNode = {
+  cursor: string,
+  node: {
+      author: {
+        avatarUrl: string,
+        email: string,
+        name: string,
+        user: { url: string }
+      },
+      authoredDate: Date,
+      message: string,
+      oid: string,
+      url: string,
+      changedFiles?: number
+  }
+}
+
+export type getCommitsResponse = {
+  repository: {
+    defaultBranchRef: {
+      target: {
+        history: {
+          edges: CommitQueryNode[]
+        }
+      }
+    }
+  }
+};
+
+export const getCommitsQueryWithChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+    repository(owner: $owner, name: $repo){
+      defaultBranchRef {
+        target {
+          ... on Commit {
+            history(first: $per_page, after: $cursor) {
+              edges {
+                cursor
+                node {
+                  author {
+                    avatarUrl
+                    email
+                    name
+                    user {
+                      url
+                    }
+                  }
+                  authoredDate
+                  message
+                  oid
+                  url
+                  changedFiles
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }`;
+
+export const getCommitsQueryWithoutChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+    repository(owner: $owner, name: $repo){
+      defaultBranchRef {
+        target {
+          ... on Commit {
+            history(first: $per_page, after: $cursor) {
+              edges {
+                cursor
+                node {
+                  author {
+                    avatarUrl
+                    email
+                    name
+                    user {
+                      url
+                    }
+                  }
+                  authoredDate
+                  message
+                  oid
+                  url
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }`;
+
+export const getCommitsQueryOctoKit = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
     repository(owner: $owner, name: $repo){
       ref(qualifiedName: $default_ref) {
         target {

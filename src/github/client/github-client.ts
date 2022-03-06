@@ -16,7 +16,14 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery } from "./github-queries";
+import { 
+	GetBranchesQuery, 
+	GetBranchesResponse, 
+	ViewerRepositoryCountQuery, 
+	getCommitsQueryWithChangedFiles, 
+	getCommitsQueryWithoutChangedFiles, 
+	getCommitsResponse 
+} from "./github-queries";
 import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
@@ -131,7 +138,6 @@ export default class GitHubClient {
 
 		const graphqlErrors = response.data.errors;
 		if(graphqlErrors?.length) {
-
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
@@ -140,7 +146,7 @@ export default class GitHubClient {
 			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage , graphqlErrors));
 		}
 
-		return  response;
+		return response;
 	}
 
 	/**
@@ -203,18 +209,16 @@ export default class GitHubClient {
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
-			{environment,
-				per_page},
-			{owner,
-				repo});
+			{ environment, per_page },
+			{ owner, repo }
+		);
 	}
 
 	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number) : Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentStatusesResponse>(`/repos/{owner}/{repo}/deployments/{deployment_id}/statuses`,
-			{per_page},
-			{owner,
-				repo,
-				deployment_id});
+			{ per_page },
+			{ owner, repo, deployment_id }
+		);
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
@@ -226,12 +230,40 @@ export default class GitHubClient {
 	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string): Promise<GetBranchesResponse> {
 		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,
 			{
-				owner: owner,
+				owner,
 				repo: repoName,
 				per_page: perPage,
 				cursor
 			});
 		return response?.data?.data;
+	}
+
+	/**
+	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
+	*/
+	public async getCommitsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
+		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles(),
+			{
+				owner,
+				repo: repoName,
+				per_page: perPage,
+				cursor
+			}).catch((err) => {
+			const changedFilesErrors = err.errors?.find(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
+			
+			if (changedFilesErrors) {
+				this.logger.info("retrying without changedFiles");
+				return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles(),
+					{
+						owner,
+						repo: repoName,
+						per_page: perPage,
+						cursor
+					});
+			}
+			return Promise.reject(err);
+		})
+		return response?.data?.data;	
 	}
 
 }
