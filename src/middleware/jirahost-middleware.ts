@@ -21,5 +21,7 @@ export const jirahostMiddleware = (req: Request, res: Response, next: NextFuncti
 		res.locals.jiraHost = req.session.jiraHost;
 	}
 
+	req.addLogFields({jiraHost: res.locals.jiraHost});
+
 	next();
 };
