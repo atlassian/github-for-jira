@@ -42,6 +42,12 @@ describe("Branch Webhook", () => {
 		it("should queue and process a create webhook", async () => {
 
 			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(true);
+
+			when(booleanFlag).calledWith(
 				BooleanFlags.USE_SQS_FOR_BRANCH,
 				expect.anything(),
 				expect.anything()
@@ -49,6 +55,132 @@ describe("Branch Webhook", () => {
 
 			when(booleanFlag).calledWith(
 				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(true);
+
+			const fixture = require("../fixtures/branch-basic.json");
+
+			const ref = encodeURIComponent("heads/TES-123-test-ref");
+			const sha = "test-branch-ref-sha";
+
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
+				.reply(200, {
+					ref: `refs/${ref}`,
+					object: {
+						sha
+					}
+				});
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
+				.reply(200, {
+					commit: {
+						author: {
+							name: "test-branch-author-name",
+							email: "test-branch-author-name@github.com",
+							date: "test-branch-author-date"
+						},
+						message: "test-commit-message"
+					},
+					html_url: `test-repo-url/commits/${sha}`
+				});
+
+			jiraNock.post("/rest/devinfo/0.10/bulk", {
+				preventTransitions: false,
+				repositories: [
+					{
+						name: "example/test-repo-name",
+						url: "test-repo-url",
+						id: "test-repo-id",
+						branches: [
+							{
+								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123%20-%20TES-123-test-ref&quick_pull=1",
+								lastCommit: {
+									author: {
+										name: "test-branch-author-name",
+										email: "test-branch-author-name@github.com"
+									},
+									authorTimestamp: "test-branch-author-date",
+									displayId: "test-b",
+									fileCount: 0,
+									hash: "test-branch-ref-sha",
+									id: "test-branch-ref-sha",
+									issueKeys: ["TES-123"],
+									message: "test-commit-message",
+									updateSequenceId: 12345678,
+									url: "test-repo-url/commits/test-branch-ref-sha"
+								},
+								id: "TES-123-test-ref",
+								issueKeys: ["TES-123"],
+								name: "TES-123-test-ref",
+								url: "test-repo-url/tree/TES-123-test-ref",
+								updateSequenceId: 12345678
+							}
+						],
+						updateSequenceId: 12345678
+					}
+				],
+				properties: {
+					installationId: gitHubInstallationId
+				}
+			}).reply(200);
+
+			mockSystemTime(12345678);
+
+			await expect(app.receive(fixture)).toResolve();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
+		});
+
+		it("should not update Jira issue if there are no issue Keys in the branch name", async () => {
+			const fixture = require("../fixtures/branch-no-issues.json");
+			const getLastCommit = jest.fn();
+
+			await expect(app.receive(fixture)).toResolve();
+			expect(getLastCommit).not.toBeCalled();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
+		});
+
+		it("should exit early if ref_type is not a branch", async () => {
+			const fixture = require("../fixtures/branch-invalid-ref_type.json");
+			const parseSmartCommit = jest.fn();
+
+			await expect(app.receive(fixture)).toResolve();
+			expect(parseSmartCommit).not.toBeCalled();
+
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
+		});
+	});
+
+	describe("Create Branch With Octokit(delete with USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT cleanup)", () => {
+		it("should queue and process a create webhook", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(false);
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_SQS_FOR_BRANCH,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(true);
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(true);
 
@@ -168,6 +300,7 @@ describe("Branch Webhook", () => {
 
 			when(booleanFlag).calledWith(
 				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(true);
 
