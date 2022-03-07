@@ -2,8 +2,12 @@
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 
-describe("Workflow Webhook", () => {
+jest.mock("../../src/config/feature-flags");
+
+describe.each([true, false])("Workflow Webhook", (useNewGithubClient) => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
@@ -20,21 +24,35 @@ describe("Workflow Webhook", () => {
 			clientKey: "client-key",
 			sharedSecret: "shared-secret"
 		});
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_WORKFLOW_WEBHOOK,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(useNewGithubClient);
+
+		if(useNewGithubClient) {
+			githubUserTokenNock(gitHubInstallationId);
+		}
 	});
 
-	describe("workflow_run", () => {
+	describe(`workflow_run - useNewGithubClient '${useNewGithubClient}'`, () => {
 		it("should update the Jira issue with the linked GitHub workflow_run", async () => {
 			const fixture = require("../fixtures/workflow-basic.json");
 
-			// TODO: need to start validating all issue keys with jira
-			/*jiraNock.get("/rest/api/latest/issue/TEST-123?fields=summary")
-				.reply(200, {
-					key: "TEST-123",
-					fields: {
-						summary: "Example Issue"
+			githubNock.get("/repos/test-repo-owner/test-repo-name/compare/f95f852bd8fca8fcc58a9a2d6c842781e32a215e...ec26c3e57ca3a959ca5aad62de7213c562f8c821", {
+				"status": "behind",
+				"ahead_by": 1,
+				"behind_by": 2,
+				"total_commits": 1,
+				"commits": [
+					{
+						"commit": {
+							"message": "Fix all the bugs",
+						},
 					}
-				});*/
-
+				]
+			});
 
 			jiraNock.post("/rest/builds/0.1/bulk", {
 				builds:

@@ -10,7 +10,7 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { GetBranchesQuery, GetBranchesResponse, ViewerRepositoryCountQuery, getCommitsQueryWithChangedFiles, getCommitsQueryWithoutChangedFiles, getCommitsResponse } from "./github-queries";
+import { GetBranchesQuery, GetBranchesResponse, getCommitsQueryWithChangedFiles, getCommitsQueryWithoutChangedFiles, getCommitsResponse, ViewerRepositoryCountQuery } from "./github-queries";
 import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
@@ -18,7 +18,7 @@ type GraphQlQueryResponse<ResponseData> = {
 	errors?: GraphQLError[];
 };
 
-export type PaginatedAxiosResponse<T> = { hasNextPage:boolean; } & AxiosResponse<T>;
+export type PaginatedAxiosResponse<T> = { hasNextPage: boolean; } & AxiosResponse<T>;
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -124,13 +124,13 @@ export default class GitHubClient {
 			});
 
 		const graphqlErrors = response.data.errors;
-		if(graphqlErrors?.length) {
+		if (graphqlErrors?.length) {
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
 
-			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` :"");
-			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage , graphqlErrors));
+			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
+			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
 		}
 
 		return response;
@@ -179,6 +179,17 @@ export default class GitHubClient {
 		});
 	};
 
+	public compareReferences = async (owner: string, repo: string, baseRef: string, headRef: string): Promise<AxiosResponse<Octokit.ReposCompareCommitsResponse>> => {
+		return this.get<Octokit.ReposCompareCommitsResponse>(
+			`/repos/{owner}/{repo}/compare/{basehead}`,
+			undefined,
+			{
+				owner,
+				repo,
+				basehead: `${baseRef}...${headRef}`
+			});
+	};
+
 	/**
 	 * Returns a single reference from Git. The {ref} in the URL must be formatted as heads/<branch name>
 	 */
@@ -205,14 +216,14 @@ export default class GitHubClient {
 		};
 	};
 
-	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
+	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
 			{ environment, per_page },
 			{ owner, repo }
 		);
 	};
 
-	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number) : Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {
+	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentStatusesResponse>(`/repos/{owner}/{repo}/deployments/{deployment_id}/statuses`,
 			{ per_page },
 			{ owner, repo, deployment_id }
@@ -238,7 +249,7 @@ export default class GitHubClient {
 
 	/**
 	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
-	*/
+	 */
 	public async getCommitsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles(),
 			{
