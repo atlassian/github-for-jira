@@ -12,21 +12,21 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
 
 const getLastCommit = async (useNewGitHubClient: boolean, github: GitHubAPI, gitHubClient: GitHubClient, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
-	const { data: { object: { sha: ref } } } = useNewGitHubClient ?
+	const { data: { object: { sha } } } = useNewGitHubClient ?
 		await gitHubClient.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`) :
 		await github.git.getRef({ owner: webhookPayload.repository.owner.login, repo: webhookPayload.repository.name, ref: `heads/${webhookPayload.ref}` });
 
 	const { data: { commit, author, html_url: url } } = useNewGitHubClient ?
-		await gitHubClient.getCommit(webhookPayload.repository.owner.login, webhookPayload.repository.name, ref) :
-		await github.repos.getCommit({ owner: webhookPayload.repository.owner.login, repo: webhookPayload.repository.name, ref });
+		await gitHubClient.getCommit(webhookPayload.repository.owner.login, webhookPayload.repository.name, sha) :
+		await github.repos.getCommit({ owner: webhookPayload.repository.owner.login, repo: webhookPayload.repository.name, ref: sha });
 
 	return {
 		author: getJiraAuthor(author, commit.author),
 		authorTimestamp: commit.author.date,
-		displayId: ref.substring(0, 6),
+		displayId: sha.substring(0, 6),
 		fileCount: 0,
-		hash: ref,
-		id: ref,
+		hash: sha,
+		id: sha,
 		issueKeys,
 		message: commit.message,
 		url,

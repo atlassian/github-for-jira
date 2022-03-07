@@ -18,7 +18,6 @@ export const createBranch = async (
 ): Promise<void> => {
 
 	const webhookPayload: WebhookPayloadCreate = context.payload;
-	const logger = context.log;
 
 	if (await booleanFlag(BooleanFlags.USE_SQS_FOR_BRANCH, false, jiraClient.baseURL)) {
 		await sqsQueues.branch.sendMessage({
@@ -30,14 +29,14 @@ export const createBranch = async (
 		});
 	} else {
 
-		const jiraPayload = await transformBranch(context.github, webhookPayload, jiraClient.baseURL, githubInstallationId, logger);
+		const jiraPayload = await transformBranch(context.github, webhookPayload, jiraClient.baseURL, githubInstallationId, context.log);
 
 		if (!jiraPayload) {
-			logger.info({ noop: "no_jira_payload_create_branch" }, "Halting further execution for createBranch since jiraPayload is empty");
+			context.log({ noop: "no_jira_payload_create_branch" }, "Halting further execution for createBranch since jiraPayload is empty");
 			return;
 		}
 
-		logger.info(`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`);
+		context.log(`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`);
 
 		const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 		const { webhookReceived, name, log } = context;
@@ -99,14 +98,13 @@ export const processBranch = async (
 export const deleteBranch = async (context: CustomContext, jiraClient): Promise<void> => {
 	const payload: WebhookPayloadDelete = context.payload;
 	const issueKeys = issueKeyParser().parse(payload.ref);
-	const logger = context.log;
 
 	if (isEmpty(issueKeys)) {
-		logger.info({ noop: "no_issue_keys" }, "Halting further execution for deleteBranch since issueKeys is empty");
-		return undefined;
+		context.log({ noop: "no_issue_keys" }, "Halting further execution for deleteBranch since issueKeys is empty");
+		return;
 	}
 
-	logger.info(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
+	context.log(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
 		`${payload.repository?.id}`,
