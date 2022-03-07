@@ -38,7 +38,7 @@ function mapStatus(status: string, conclusion?: string): string {
 }
 
 function mapPullRequests(
-	pull_requests: GitHubPullRequest[]
+	pull_requests: GitHubPullRequest[] = []
 ): JiraPullRequest[] {
 	return pull_requests.map((pr) => ({
 		commit: {
@@ -72,34 +72,20 @@ export const transformWorkflowPayload = async (
 		}, workflow
 	} = payload;
 
+	const workflowHasPullRequest = !!pull_requests?.length;
+	const commitMessages = workflowHasPullRequest ? await getAllCommitMessagesBetweenReferences(
+		{
+			owner: repository.owner.login,
+			repo: repository.name,
+			base: pull_requests[0].base.ref,
+			head: pull_requests[0].head.ref
+		},
+		githubClient,
+		logger
+	) : "";
 
-	let issueKeys;
-	const workflowHasPullRequest = pull_requests.length > 0;
-
-	if (workflowHasPullRequest) {
-		const { owner, name: repoName } = repository;
-		const { base, head } = pull_requests[0];
-
-		const compareCommitsPayload = {
-			owner: owner.login,
-			repo: repoName,
-			base: base.ref,
-			head: head.ref
-		};
-
-		const allCommitMessages = await getAllCommitMessagesBetweenReferences(
-			compareCommitsPayload,
-			githubClient,
-			logger
-		);
-
-		issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${allCommitMessages}`) || [];
-	} else {
-		issueKeys =
-			issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
-	}
-
-	if (!issueKeys) {
+	const issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${commitMessages}`) || [];
+	if (!issueKeys.length) {
 		return undefined;
 	}
 
