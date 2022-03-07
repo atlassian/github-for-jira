@@ -10,7 +10,6 @@ import enhanceOctokit from "../config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import {emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime} from "../util/webhooks";
-import JiraClient from "../models/jira-client";
 
 const LOGGER_NAME = "github.webhooks";
 
@@ -71,7 +70,7 @@ function extractWebhookEventNameFromContext(context: CustomContext<any>): string
 
 // TODO: fix typings
 export default (
-	callback: (context: CustomContext, jiraClient: JiraClient, util: any, githubInstallationId: number) => Promise<void>
+	callback: (context: CustomContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
 ) => {
 	return withSentry(async (context: CustomContext) => {
 		enhanceOctokit(context.github);

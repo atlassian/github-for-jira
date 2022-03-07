@@ -5,25 +5,12 @@ import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
 import { GetPullRequestParams } from "./types";
-import {
-	handleFailedRequest,
-	instrumentFailedRequest,
-	instrumentRequest,
-	setRequestStartTime,
-	setRequestTimeout
-} from "./interceptors";
+import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./interceptors";
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { 
-	GetBranchesQuery, 
-	GetBranchesResponse, 
-	ViewerRepositoryCountQuery, 
-	getCommitsQueryWithChangedFiles, 
-	getCommitsQueryWithoutChangedFiles, 
-	getCommitsResponse 
-} from "./github-queries";
+import { GetBranchesQuery, GetBranchesResponse, getCommitsQueryWithChangedFiles, getCommitsQueryWithoutChangedFiles, getCommitsResponse, ViewerRepositoryCountQuery } from "./github-queries";
 import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
 
 type GraphQlQueryResponse<ResponseData> = {
@@ -31,7 +18,7 @@ type GraphQlQueryResponse<ResponseData> = {
 	errors?: GraphQLError[];
 };
 
-export type PaginatedAxiosResponse<T> = { hasNextPage:boolean; } & AxiosResponse<T>;
+export type PaginatedAxiosResponse<T> = { hasNextPage: boolean; } & AxiosResponse<T>;
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -137,13 +124,13 @@ export default class GitHubClient {
 			});
 
 		const graphqlErrors = response.data.errors;
-		if(graphqlErrors?.length) {
+		if (graphqlErrors?.length) {
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
 
-			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` :"");
-			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage , graphqlErrors));
+			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
+			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
 		}
 
 		return response;
@@ -192,6 +179,17 @@ export default class GitHubClient {
 		});
 	};
 
+	public compareReferences = async (owner: string, repo: string, baseRef: string, headRef: string): Promise<AxiosResponse<Octokit.ReposCompareCommitsResponse>> => {
+		return this.get<Octokit.ReposCompareCommitsResponse>(
+			`/repos/{owner}/{repo}/compare/{basehead}`,
+			undefined,
+			{
+				owner,
+				repo,
+				basehead: `${baseRef}...${headRef}`
+			});
+	};
+
 	/**
 	 * Get a page of repositories.
 	 */
@@ -204,22 +202,22 @@ export default class GitHubClient {
 		return {
 			...response,
 			hasNextPage
-		}
-	}
+		};
+	};
 
-	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number ): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
+	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
 			{ environment, per_page },
 			{ owner, repo }
 		);
-	}
+	};
 
-	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number) : Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {
+	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentStatusesResponse>(`/repos/{owner}/{repo}/deployments/{deployment_id}/statuses`,
 			{ per_page },
 			{ owner, repo, deployment_id }
 		);
-	}
+	};
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
@@ -240,7 +238,7 @@ export default class GitHubClient {
 
 	/**
 	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
-	*/
+	 */
 	public async getCommitsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles(),
 			{
@@ -250,7 +248,7 @@ export default class GitHubClient {
 				cursor
 			}).catch((err) => {
 			const changedFilesErrors = err.errors?.find(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
-			
+
 			if (changedFilesErrors) {
 				this.logger.info("retrying without changedFiles");
 				return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles(),
@@ -262,8 +260,8 @@ export default class GitHubClient {
 					});
 			}
 			return Promise.reject(err);
-		})
-		return response?.data?.data;	
+		});
+		return response?.data?.data;
 	}
 
 }

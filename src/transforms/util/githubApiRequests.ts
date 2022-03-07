@@ -1,5 +1,6 @@
 import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import GitHubClient from "../../github/client/github-client";
 
 interface CompareCommitsPayload {
 	owner: string;
@@ -10,22 +11,23 @@ interface CompareCommitsPayload {
 
 // Used to compare commits for builds and deployments so we can
 // obtain all issue keys referenced in commit messages.
-export const compareCommitsBetweenBaseAndHeadBranches = async (
+export const getAllCommitMessagesBetweenReferences = async (
 	payload: CompareCommitsPayload,
-	github: GitHubAPI,
+	github: GitHubAPI | GitHubClient,
 	logger: LoggerWithTarget
-): Promise<string | undefined | void> => {
+): Promise<string> => {
+	let messages;
 	try {
-		const commitsDiff = await github.repos.compareCommits(payload);
-		const allCommitMessagesFromPullRequest = commitsDiff.data?.commits
+		const commitsDiff = github instanceof GitHubClient ? await github.compareReferences(payload.owner, payload.repo, payload.base, payload.head) : await github.repos.compareCommits(payload);
+		messages = commitsDiff.data?.commits
 			?.map((c) => c.commit.message)
 			.join(" ");
-
-		return allCommitMessagesFromPullRequest;
 	} catch (err) {
 		logger?.error(
 			{ err, repo: payload.repo },
 			"Failed to compare commits on repo."
 		);
 	}
+
+	return messages || "";
 };
