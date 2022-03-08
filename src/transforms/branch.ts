@@ -11,13 +11,13 @@ import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
 
-const getLastCommit = async (useNewGitHubClient: boolean, github: GitHubAPI, gitHubClient: GitHubClient, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
-	const { data: { object: { sha } } } = useNewGitHubClient ?
-		await gitHubClient.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`) :
+const getLastCommit = async (github: GitHubClient | GitHubAPI, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
+	const { data: { object: { sha } } } = github instanceof GitHubClient ?
+		await github.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`) :
 		await github.git.getRef({ owner: webhookPayload.repository.owner.login, repo: webhookPayload.repository.name, ref: `heads/${webhookPayload.ref}` });
 
-	const { data: { commit, author, html_url: url } } = useNewGitHubClient ?
-		await gitHubClient.getCommit(webhookPayload.repository.owner.login, webhookPayload.repository.name, sha) :
+	const { data: { commit, author, html_url: url } } = github instanceof GitHubClient  ?
+		await github.getCommit(webhookPayload.repository.owner.login, webhookPayload.repository.name, sha) :
 		await github.repos.getCommit({ owner: webhookPayload.repository.owner.login, repo: webhookPayload.repository.name, ref: sha });
 
 	return {
@@ -47,10 +47,11 @@ export const transformBranch = async (github: GitHubAPI, webhookPayload: Webhook
 	}
 
 	const gitHubClient = new GitHubClient(getCloudInstallationId(installationId), logger);
-	const newPrUrl = booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false, jiraHost);
-	const newGitHubClient = booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraHost);
-	const [useNewPrUrl, useNewGitHubClient] = await Promise.all([newPrUrl, newGitHubClient]);
-	const lastCommit = await getLastCommit(useNewGitHubClient, github, gitHubClient, webhookPayload, issueKeys);
+	const [useNewPrUrl, useNewGitHubClient] = await Promise.all([
+		booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false, jiraHost), 
+		booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraHost)
+	]);
+	const lastCommit = await getLastCommit((useNewGitHubClient ? gitHubClient : github), webhookPayload, issueKeys);
 
 	return {
 		id: repository.id,
