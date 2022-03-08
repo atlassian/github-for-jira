@@ -72,6 +72,14 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
 
 	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
+	// const newGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
+	
+	// JOSH-TODO REPLACE GH HERE
+	// const gitHubUserCommit = newGitHubClient ? await getGithubUserNew(github, pullRequest.head?.user?.login) : await getGithubUser(github, pullRequest.head?.user?.login);
+	// const gitHubUserPullRequest = newGitHubClient ? await getGithubUserNew(github, pullRequest.user?.login) : await getGithubUser(github, pullRequest.user?.login);
+
+	const gitHubUserCommit =  await getGithubUser(github, pullRequest.head?.user?.login);
+	const gitHubUserPullRequest = await getGithubUser(github, pullRequest.user?.login);
 
 	return {
 		id: pullRequest.base.repo.id,
@@ -87,7 +95,7 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 						createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys) : `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`, 
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
-							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
+							author: getJiraAuthor(pullRequest.head?.user, gitHubUserCommit),
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
 							fileCount: 0,
@@ -108,7 +116,7 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
-				author: getJiraAuthor(pullRequest.user, await getGithubUser(github, pullRequest.user?.login)),
+				author: getJiraAuthor(pullRequest.user, gitHubUserPullRequest),
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
 				displayId: `#${pullRequest.number}`,
