@@ -1,11 +1,11 @@
 import issueKeyParser from "jira-issue-key-parser";
-import _ from "lodash"; // todo
+import { isEmpty, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
 import { Octokit } from "@octokit/rest";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
-import { getGithubUserNew, getGithubUser } from "../services/github/user";
+import { getGithubUser } from "../services/github/user";
 import { JiraAuthor } from "../interfaces/jira";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
@@ -25,7 +25,7 @@ interface Review extends JiraAuthor {
 
 // TODO: define arguments and return
 function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
-	const sortedReviews = _.orderBy(reviews, "submitted_at", "desc");
+	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, Review> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
 	return sortedReviews.reduce((acc: Review[], review) => {
@@ -63,7 +63,7 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pul
 		prRef: pullRequest.head.ref || "none"
 	}
 
-	if (_.isEmpty(issueKeys) || !head?.repo) {
+	if (isEmpty(issueKeys) || !head?.repo) {
 		log?.info(logPayload, "Ignoring pullrequest hence it has no issue keys or repo");
 		return undefined;
 	}
@@ -85,10 +85,10 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pul
 				? []
 				: [
 					{
-						createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys) : `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`, 
+						createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys) : `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
-							author: getJiraAuthor(pullRequest.head?.user, github instanceof GitHubClient ? await getGithubUserNew(github, pullRequest.head?.user?.login) : await getGithubUser(github, pullRequest.head?.user?.login)),
+							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
 							fileCount: 0,
@@ -109,7 +109,7 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pul
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
-				author: getJiraAuthor(pullRequest.user, github instanceof GitHubClient ? await getGithubUserNew(github, pullRequest.user?.login) : await getGithubUser(github, pullRequest.user?.login)),
+				author: getJiraAuthor(pullRequest.user, await getGithubUser(github, pullRequest.user?.login)),
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
 				displayId: `#${pullRequest.number}`,

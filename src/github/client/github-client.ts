@@ -167,9 +167,9 @@ export default class GitHubClient {
 	}
 
 	/**
-	 * List reviews for a pull request in chronological order.
+	 * Get all reviews for a specific pull request.
 	 */
-	public async listPullRequestReviews(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsListReviewsResponse>> {
+	public async getPullRequestReviews(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsListReviewsResponse>> {
 		return await this.get<Octokit.PullsListReviewsResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}/reviews`, {}, {
 			owner,
 			repo,
