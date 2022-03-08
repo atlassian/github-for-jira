@@ -6,7 +6,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
+import { getAllCommitMessagesBetweenReferences } from "./util/githubApiRequests";
 import GitHubClient from "../github/client/github-client";
 import {AxiosResponse} from "axios";
 
@@ -88,9 +88,9 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		head: currentDeploySha
 	}
 
-	const allCommitMessages = await compareCommitsBetweenBaseAndHeadBranches(
+	const allCommitMessages = await getAllCommitMessagesBetweenReferences(
 		compareCommitsPayload,
-		github,
+		useNewClient ? newGitHubClient : github,
 		logger
 	);
 

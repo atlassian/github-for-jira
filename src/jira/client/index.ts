@@ -24,6 +24,8 @@ export interface DeploymentsResult {
  * general, the client should match the Octokit rest.js design for clear
  * interoperability.
  */
+
+// TODO: need to type jiraClient ASAP
 async function getJiraClient(
 	jiraHost: string,
 	gitHubInstallationId: number,
