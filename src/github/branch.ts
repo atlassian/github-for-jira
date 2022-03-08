@@ -9,13 +9,10 @@ import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import getJiraClient from "../jira/client";
+import GitHubClient from "./client/github-client";
+import { getCloudInstallationId } from "./client/installation-id";
 
-export const createBranch = async (
-	context: CustomContext,
-	jiraClient,
-	_util,
-	githubInstallationId: number
-): Promise<void> => {
+export const createBranch = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
 	const webhookPayload: WebhookPayloadCreate = context.payload;
 
@@ -29,10 +26,15 @@ export const createBranch = async (
 		});
 	} else {
 
-		const jiraPayload = await transformBranch(context.github, webhookPayload, jiraClient.baseURL, githubInstallationId, context.log);
+		const gitHubClient = new GitHubClient(getCloudInstallationId(githubInstallationId), context.log);
+		const github = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraHost) ? gitHubClient : context.github;
+		const jiraPayload = await transformBranch(github, webhookPayload);
 
 		if (!jiraPayload) {
-			context.log({ noop: "no_jira_payload_create_branch" }, "Halting further execution for createBranch since jiraPayload is empty");
+			context.log(
+				{ noop: "no_jira_payload_create_branch" }, 
+				"Halting further execution for createBranch since jiraPayload is empty"
+			);
 			return;
 		}
 
@@ -51,7 +53,7 @@ export const createBranch = async (
 };
 
 export const processBranch = async (
-	github: GitHubAPI,
+	github: GitHubAPI | GitHubClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadCreate,
 	webhookReceivedDate: Date,
@@ -65,7 +67,7 @@ export const processBranch = async (
 		webhookReceived: webhookReceivedDate
 	});
 
-	const jiraPayload = await transformBranch(github, webhookPayload, jiraHost, installationId, logger);
+	const jiraPayload = await transformBranch(github, webhookPayload);
 
 	if (!jiraPayload) {
 		logger.info(
@@ -75,9 +77,7 @@ export const processBranch = async (
 		return;
 	}
 
-	logger.info(
-		`Sending jira update for create branch event`
-	);
+	logger.info(`Sending jira update for create branch event`);
 
 	const jiraClient = await getJiraClient(
 		jiraHost,

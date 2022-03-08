@@ -55,7 +55,6 @@ describe("Branch Webhook", () => {
 
 			when(booleanFlag).calledWith(
 				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
-				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(true);
 
@@ -176,7 +175,6 @@ describe("Branch Webhook", () => {
 
 			when(booleanFlag).calledWith(
 				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
-				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(true);
 

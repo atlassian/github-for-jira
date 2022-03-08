@@ -6,9 +6,7 @@ import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { GitHubAPI } from "probot";
 import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
 import GitHubClient from "../github/client/github-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
 
 const getLastCommit = async (github: GitHubClient | GitHubAPI, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
@@ -34,7 +32,7 @@ const getLastCommit = async (github: GitHubClient | GitHubAPI, webhookPayload: W
 	};
 };
 
-export const transformBranch = async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate, jiraHost: string, installationId: number, logger: LoggerWithTarget): Promise<JiraBranchData | undefined> => {
+export const transformBranch = async (github: GitHubAPI | GitHubClient, webhookPayload: WebhookPayloadCreate): Promise<JiraBranchData | undefined> => {
 	if (webhookPayload.ref_type !== "branch") {
 		return;
 	}
@@ -46,12 +44,7 @@ export const transformBranch = async (github: GitHubAPI, webhookPayload: Webhook
 		return;
 	}
 
-	const gitHubClient = new GitHubClient(getCloudInstallationId(installationId), logger);
-	const [useNewPrUrl, useNewGitHubClient] = await Promise.all([
-		booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false, jiraHost), 
-		booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraHost)
-	]);
-	const lastCommit = await getLastCommit((useNewGitHubClient ? gitHubClient : github), webhookPayload, issueKeys);
+	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
 
 	return {
 		id: repository.id,
@@ -59,7 +52,8 @@ export const transformBranch = async (github: GitHubAPI, webhookPayload: Webhook
 		url: repository.html_url,
 		branches: [
 			{
-				createPullRequestUrl: useNewPrUrl ? generateCreatePullRequestUrl(repository.html_url, ref, issueKeys) : `${repository.html_url}/pull/new/${ref}`,
+				createPullRequestUrl: await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false)
+					? generateCreatePullRequestUrl(repository.html_url, ref, issueKeys) : `${repository.html_url}/pull/new/${ref}`,
 				lastCommit,
 				id: getJiraId(ref),
 				issueKeys,
