@@ -334,7 +334,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 }
 
 /**
- * Handles and error and takes action based on the error type and parameters
+ * Handles an error and takes action based on the error type and parameters
  *
  * @param err The error
  * @param logger
