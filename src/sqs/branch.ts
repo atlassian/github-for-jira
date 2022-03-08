@@ -24,7 +24,7 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 	const messagePayload: BranchMessagePayload = context.payload;
 	const gitHubClient = new GitHubClient(getCloudInstallationId(messagePayload.installationId), context.log);
 	const githubApi = await app.auth(messagePayload.installationId);
-	const github = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraHost) ? gitHubClient : githubApi;
+	const github = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, messagePayload.jiraHost) ? gitHubClient : githubApi;
 
 	await processBranch(
 		github,

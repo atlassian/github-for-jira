@@ -27,7 +27,7 @@ export const createBranch = async (context: CustomContext, jiraClient, _util, gi
 	} else {
 
 		const gitHubClient = new GitHubClient(getCloudInstallationId(githubInstallationId), context.log);
-		const github = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraHost) ? gitHubClient : context.github;
+		const github = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraClient.baseURL) ? gitHubClient : context.github;
 		const jiraPayload = await transformBranch(github, webhookPayload);
 
 		if (!jiraPayload) {
