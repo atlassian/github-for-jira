@@ -159,6 +159,17 @@ export default class GitHubClient {
 	}
 
 	/**
+	 * Get all reviews for a specific pull request.
+	 */
+	public async getPullRequestReviews(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsListReviewsResponse>> {
+		return await this.get<Octokit.PullsListReviewsResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}/reviews`, {}, {
+			owner,
+			repo,
+			pullNumber
+		});
+	}
+
+	/**
 	 * Get publicly available information for user with given username.
 	 */
 	// TODO: add a unit test
