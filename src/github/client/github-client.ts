@@ -178,17 +178,6 @@ export default class GitHubClient {
 	}
 
 	/**
-	 * Update an issue
-	 */
-	public async updateIssue(data = {}, owner: string, repo: string, issueNumber: string | number): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
-		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issueNumber}`, data, {
-			owner,
-			repo,
-			issueNumber
-		});
-	}
-
-	/**
 	 * Get publicly available information for user with given username.
 	 */
 	// TODO: add a unit test
@@ -248,6 +237,17 @@ export default class GitHubClient {
 			{ owner, repo, deployment_id }
 		);
 	};
+
+	/**
+	 * Update an issue
+	 */
+	public async updateIssue(data = {}, owner: string, repo: string, issueNumber: string | number): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
+		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issueNumber}`, data, {
+			owner,
+			repo,
+			issueNumber
+		});
+	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);

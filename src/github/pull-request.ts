@@ -80,13 +80,8 @@ export const pullRequestWebhookHandler = async (
 		const linkifiedBody = await util.unfurl(pullRequestBody);
 
 		if (linkifiedBody) {
-			const editedPullRequest = context.issue({
-				body: linkifiedBody,
-				id: pull_request.id
-			});
 			context.log(logPayload, "Updating pull request");
-
-			await context.github.issues.update(editedPullRequest);
+			updateGitHubIssues(githubClient, linkifiedBody, pull_request.id, context)
 		}
 	} catch (err) {
 		context.log.warn(
@@ -117,6 +112,18 @@ export const pullRequestWebhookHandler = async (
 		jiraResponse?.status
 	);
 };
+
+const updateGitHubIssues = async (githubCient: GitHubAPI | GitHubClient, body, context, id) => {
+	const editedPullRequest = context.issue({
+		body,
+		id
+	});
+
+	const {owner, repo, issue_number} = editedPullRequest;
+	githubCient instanceof GitHubClient ?
+		await githubCient.updateIssue(editedPullRequest, owner, repo, issue_number) :
+		await context.github.issues.update(editedPullRequest);
+}
 
 const getReviews = async (githubCient: GitHubAPI | GitHubClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
 	const response = githubCient instanceof GitHubClient ?
