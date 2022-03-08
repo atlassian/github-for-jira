@@ -113,6 +113,14 @@ export default class GitHubClient {
 		});
 	}
 
+	private async patch<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+		return this.axios.patch<T>(url, body, {
+			...await this.installationAuthenticationHeaders(),
+			params,
+			urlParams
+		});
+	}
+
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
 		const response = await this.axios.post<GraphQlQueryResponse<T>>("/graphql",
 			{
@@ -155,6 +163,28 @@ export default class GitHubClient {
 			owner,
 			repo,
 			pullNumber
+		});
+	}
+
+	/**
+	 * List reviews for a pull request in chronological order.
+	 */
+	public async listPullRequestReviews(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsListReviewsResponse>> {
+		return await this.get<Octokit.PullsListReviewsResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}/reviews`, {}, {
+			owner,
+			repo,
+			pullNumber
+		});
+	}
+
+	/**
+	 * Update an issue
+	 */
+	public async updateIssue(data = {}, owner: string, repo: string, issueNumber: string | number): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
+		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issueNumber}`, data, {
+			owner,
+			repo,
+			issueNumber
 		});
 	}
 

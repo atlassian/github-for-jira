@@ -1,14 +1,15 @@
 import issueKeyParser from "jira-issue-key-parser";
-import _ from "lodash";
+import _ from "lodash"; // todo
 import { getJiraId } from "../jira/util/id";
 import { Octokit } from "@octokit/rest";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
-import { getGithubUser } from "../services/github/user";
+import { getGithubUserNew, getGithubUser } from "../services/github/user";
 import { JiraAuthor } from "../interfaces/jira";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
+import GitHubClient from "../github/client/github-client";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -49,7 +50,7 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 }
 
 // TODO: define arguments and return
-export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
+export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
@@ -72,7 +73,7 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
 
 	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
-
+	
 	return {
 		id: pullRequest.base.repo.id,
 		name: pullRequest.base.repo.full_name,
@@ -87,7 +88,7 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 						createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys) : `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`, 
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
-							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
+							author: getJiraAuthor(pullRequest.head?.user, github instanceof GitHubClient ? await getGithubUserNew(github, pullRequest.head?.user?.login) : await getGithubUser(github, pullRequest.head?.user?.login)),
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
 							fileCount: 0,
@@ -108,7 +109,7 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
-				author: getJiraAuthor(pullRequest.user, await getGithubUser(github, pullRequest.user?.login)),
+				author: getJiraAuthor(pullRequest.user, github instanceof GitHubClient ? await getGithubUserNew(github, pullRequest.user?.login) : await getGithubUser(github, pullRequest.user?.login)),
 				commentCount: pullRequest.comments,
 				destinationBranch: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
 				displayId: `#${pullRequest.number}`,
