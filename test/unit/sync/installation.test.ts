@@ -1,14 +1,21 @@
-import { isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "../../../src/sync/installation";
+import {
+	handleBackfillError,
+	isRetryableWithSmallerRequest,
+	maybeScheduleNextTask,
+	processInstallation
+} from "../../../src/sync/installation";
 
-import { DeduplicatorResult } from "../../../src/sync/deduplicator";
+import {DeduplicatorResult} from "../../../src/sync/deduplicator";
 
 import "../../../src/config/feature-flags";
 
-import { Application } from "probot";
-import { getLogger } from "../../../src/config/logger";
-import { sqsQueues } from "../../../src/sqs/queues";
-import { Hub } from "@sentry/types/dist/hub";
-import { mocked } from "ts-jest/utils";
+import {Application} from "probot";
+import {getLogger} from "../../../src/config/logger";
+import {sqsQueues} from "../../../src/sqs/queues";
+import {Hub} from "@sentry/types/dist/hub";
+import {mocked} from "ts-jest/utils";
+import {RateLimitingError} from "../../../src/github/client/errors";
+import {mockNotFoundErrorOctokitGraphql, mockOtherOctokitRequestErrors} from "../../mocks/errorResponses";
 
 const TEST_LOGGER = getLogger("test");
 
@@ -117,4 +124,162 @@ describe("sync/installation", () => {
 			expect(mockBackfillQueueSendMessage.mock.calls).toEqual([[JOB_DATA, 0, TEST_LOGGER]]);
 		});
 	});
+
+	describe("handleBackfillError", () => {
+
+		const scheduleNextTask = jest.fn();
+		const ignoreCurrentRepo = jest.fn();
+		const failCurrentRepo = jest.fn();
+
+		beforeEach(() => {
+			ignoreCurrentRepo.mockReturnValue(Promise.resolve());
+			failCurrentRepo.mockReturnValue(Promise.resolve());
+
+			mockSystemTime(12345678);
+		})
+
+		it("Rate limiting error will be retried with the correct delay", () => {
+			const axiosResponse = {
+				data: "Rate Limit",
+				status: 403,
+				statusText: "RateLimit",
+				headers: {
+					"x-ratelimit-reset": "12360",
+					"x-ratelimit-remaining": "0"
+				},
+				config: {}
+			};
+
+			handleBackfillError(new RateLimitingError(axiosResponse), TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			expect(scheduleNextTask).toBeCalledWith(14322);
+			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+
+		});
+
+		it("No delay if rate limit already reset", () => {
+			const axiosResponse = {
+				data: "Rate Limit",
+				status: 403,
+				statusText: "RateLimit",
+				headers: {
+					"x-ratelimit-reset": "12345",
+					"x-ratelimit-remaining": "0"
+				},
+				config: {}
+			};
+
+			handleBackfillError(new RateLimitingError(axiosResponse), TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			expect(scheduleNextTask).toBeCalledWith(0);
+			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+
+		});
+
+		it("Error with headers indicating rate limit will be retryed with the appropriate delay", () => {
+			const probablyRateLimitError = {
+				...new Error(),
+				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
+				headers: {
+					"access-control-allow-origin": "*",
+					"connection": "close",
+					"content-type": "application/json; charset=utf-8",
+					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
+					"x-ratelimit-limit": "8900",
+					"x-ratelimit-remaining": "0",
+					"x-ratelimit-reset": "12360",
+					"x-ratelimit-resource": "core",
+					"x-ratelimit-used": "2421",
+				},
+				name: "HttpError",
+				status: 403
+			}
+
+			handleBackfillError(probablyRateLimitError, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			expect(scheduleNextTask).toBeCalledWith(14322);
+			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+
+		});
+
+
+		it("Repository ignored if not found error", () => {
+			const notFoundError = {
+				...new Error(),
+				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
+				headers: {
+					"access-control-allow-origin": "*",
+					"connection": "close",
+					"content-type": "application/json; charset=utf-8",
+					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
+					"x-ratelimit-limit": "8900",
+					"x-ratelimit-remaining": "6479",
+					"x-ratelimit-reset": "12360",
+					"x-ratelimit-resource": "core",
+					"x-ratelimit-used": "2421",
+				},
+				name: "HttpError",
+				status: 404
+			}
+
+			handleBackfillError(notFoundError, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
+			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(1);
+			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+		});
+
+		it("Repository ignored if GraphQL not found error", () => {
+
+			handleBackfillError(mockNotFoundErrorOctokitGraphql, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
+			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(1);
+			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+		});
+
+		it("Repository failed if some kind of unknown error", () => {
+
+
+			handleBackfillError(mockOtherOctokitRequestErrors, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
+			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(failCurrentRepo).toHaveBeenCalledTimes(1);
+		});
+
+		it("60s delay if abuse detection triggered", () => {
+			const abuseDetectionError = {
+				...new Error(),
+				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
+				headers: {
+					"access-control-allow-origin": "*",
+					"connection": "close",
+					"content-type": "application/json; charset=utf-8",
+					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
+					"x-ratelimit-limit": "8900",
+					"x-ratelimit-remaining": "6479",
+					"x-ratelimit-reset": "12360",
+					"x-ratelimit-resource": "core",
+					"x-ratelimit-used": "2421",
+				},
+				message: "You have triggered an abuse detection mechanism",
+				name: "HttpError",
+				status: 403
+			}
+
+			handleBackfillError(abuseDetectionError, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			expect(scheduleNextTask).toHaveBeenCalledWith(60_000);
+			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+		});
+
+		it("5s delay if connection timeout", () => {
+			const connectionTimeoutErr = "connect ETIMEDOUT";
+
+			handleBackfillError(connectionTimeoutErr, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			expect(scheduleNextTask).toHaveBeenCalledWith(5_000);
+			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+		});
+
+	});
+
 });
