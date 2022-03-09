@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import supertest from "supertest";
 import { Installation } from "../../../src/models";
-import FrontendApp from "../../../src/frontend/app";
+import { getFrontendApp } from "../../../src/app";
 import { getLogger } from "../../../src/config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "../../utils/cookies";
@@ -15,13 +16,14 @@ describe("Github Setup", () => {
 			request.log = getLogger("test");
 			next();
 		});
-		frontendApp.use(FrontendApp({
+		frontendApp.use(getFrontendApp({
 			getSignedJsonWebToken: () => "",
 			getInstallationAccessToken: async () => "access-token"
 		}));
 	});
 
 	describe("#GET", () => {
+		const installation_id = 1234;
 		beforeEach(async () => {
 			await Installation.create({
 				jiraHost,
@@ -31,43 +33,49 @@ describe("Github Setup", () => {
 			});
 		});
 
-		it("should return redirect to github oauth flow for GET request if token is missing", async () =>
-			supertest(frontendApp)
+		it("should return error when missing 'installation_id' from query", async () => {
+			await supertest(frontendApp)
 				.get("/github/setup")
-				.set(
-					"Cookie",
-					getSignedCookieHeader({
-						jiraHost,
-					})
-				)
-				.expect((res) => {
-					expect(res.status).toBe(302);
-					expect(res.headers.location).toContain(
-						"github.com/login/oauth/authorize"
-					);
-				}));
+				.expect(422)
+		});
 
-		it("should return redirect to github oauth flow for GET request if token is invalid", async () => {
+		it("should work with a missing app installation", async () => {
+			githubAppTokenNock();
 			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^Bearer .+$/)
-				.reply(403);
-
-			return supertest(frontendApp)
+				.get(`/app/installations/${installation_id}`)
+				.reply(404);
+			await supertest(frontendApp)
 				.get("/github/setup")
+				.query({installation_id})
+				.expect(200)
+		});
+
+		it("should return 200 without jiraHost", async () => {
+			githubAppTokenNock();
+			githubNock
+				.get(`/app/installations/${installation_id}`)
+				.reply(200, require("../../fixtures/get-jira-configuration/single-installation.json"));
+			await supertest(frontendApp)
+				.get("/github/setup")
+				.query({installation_id})
+				.expect(200)
+		});
+
+		it("should return 200 with jiraHost", async () => {
+			githubAppTokenNock();
+			githubNock
+				.get(`/app/installations/${installation_id}`)
+				.reply(200, require("../../fixtures/get-jira-configuration/single-installation.json"));
+			await supertest(frontendApp)
+				.get("/github/setup")
+				.query({installation_id})
 				.set(
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token",
 					})
 				)
-				.expect((res) => {
-					expect(res.status).toBe(302);
-					expect(res.headers.location).toContain(
-						"github.com/login/oauth/authorize"
-					);
-				});
+				.expect(200)
 		});
 	});
 
@@ -77,8 +85,14 @@ describe("Github Setup", () => {
 				.get("/status")
 				.reply(200);
 
-			return supertest(frontendApp)
+			await supertest(frontendApp)
 				.post("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+					})
+				)
 				.send({
 					jiraDomain: envVars.INSTANCE_NAME
 				})
@@ -100,8 +114,14 @@ describe("Github Setup", () => {
 				.get("/status")
 				.reply(200);
 
-			return supertest(frontendApp)
+			await supertest(frontendApp)
 				.post("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+					})
+				)
 				.send({
 					jiraDomain: envVars.INSTANCE_NAME
 				})
@@ -114,12 +134,24 @@ describe("Github Setup", () => {
 		it("should return a 400 if no domain is given", () =>
 			supertest(frontendApp)
 				.post("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+					})
+				)
 				.send({})
 				.expect(400));
 
 		it("should return a 400 if an empty domain is given", () =>
 			supertest(frontendApp)
 				.post("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+					})
+				)
 				.send({
 					jiraDomain: ""
 				})

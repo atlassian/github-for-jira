@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import express, { Express } from "express";
-import healthcheck from "../../../src/frontend/healthcheck";
-import setupFrontend from "../../../src/frontend/app";
+import { HealthcheckRouter } from "../../../src/routes/healthcheck/healthcheck-router";
+import { getFrontendApp } from "../../../src/app";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import { when } from "jest-when";
 import {getLogger} from "../../../src/config/logger";
@@ -23,13 +23,13 @@ describe("Maintenance", () => {
 		whenMaintenanceMode(true);
 		app = express();
 		app.use((request, _, next) => {
-			request.log = getLogger('test');
+			request.log = getLogger("test");
 			next();
 		});
 	});
 
 	describe("Healthcheck", () => {
-		beforeEach(() => app.use("/", healthcheck));
+		beforeEach(() => app.use(HealthcheckRouter));
 
 		it("should still work in maintenance mode", () =>
 			supertest(app)
@@ -45,7 +45,7 @@ describe("Maintenance", () => {
 
 	describe("Frontend", () => {
 		beforeEach(() => {
-			app.use("/", setupFrontend({
+			app.use(getFrontendApp({
 				getSignedJsonWebToken: () => "",
 				getInstallationAccessToken: async () => ""
 			}));
@@ -103,18 +103,15 @@ describe("Maintenance", () => {
 
 			it("should return 503 for any frontend routes to a jira host in maintenance mode", () =>
 				supertest(app)
-					.get("/github/setup")
+					.get("/error")
 					.expect(503)
 			);
 
 			it("should return expected page when maintenance mode is off", () => {
 				whenMaintenanceMode(false);
 				return supertest(app)
-					.get("/github/setup")
-					.then(response => {
-						expect(response.status).toBeGreaterThanOrEqual(200);
-						expect(response.status).toBeLessThan(400);
-					});
+					.get("/error")
+					.expect(500);
 			});
 
 			it("should still be able to get static assets in maintenance mode", () =>

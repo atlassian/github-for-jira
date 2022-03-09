@@ -34,8 +34,6 @@ app.get('/foo', async (req, res) => {
 declare global {
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace Express {
-		// These open interfaces may be extended in an application-specific manner via declaration merging.
-		// See for example method-override.d.ts (https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/method-override/index.d.ts)
 		interface Request {
 			addLogFields: (fields) => void;
 			log: Logger;
@@ -43,7 +41,7 @@ declare global {
 	}
 }
 
-export default (req: Request, res: Response, next: NextFunction): void => {
+export const LogMiddleware = (req: Request, res: Response, next: NextFunction): void => {
 	req.addLogFields = (fields: Record<string, unknown>): void => {
 		if (req.log) {
 			req.log = req.log.child(fields);

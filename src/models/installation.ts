@@ -26,6 +26,9 @@ export default class Installation extends Sequelize.Model {
 	static async getForClientKey(
 		clientKey: string
 	): Promise<Installation | null> {
+		if(!clientKey?.length) {
+			return null;
+		}
 		return Installation.findOne({
 			where: {
 				clientKey: getHashedKey(clientKey)
@@ -34,6 +37,9 @@ export default class Installation extends Sequelize.Model {
 	}
 
 	static async getForHost(host: string): Promise<Installation | null> {
+		if(!host?.length) {
+			return null;
+		}
 		return Installation.findOne( {
 			where: {
 				jiraHost: host
@@ -43,6 +49,9 @@ export default class Installation extends Sequelize.Model {
 	}
 
 	static async getAllForHost(host: string): Promise<Installation[]> {
+		if(!host?.length) {
+			return [];
+		}
 		return Installation.findAll({
 			where: {
 				jiraHost: host

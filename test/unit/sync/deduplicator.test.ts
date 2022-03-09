@@ -1,10 +1,9 @@
-import Redis from "ioredis";
+import IORedis from "ioredis";
 import getRedisInfo from "../../../src/config/redis-info";
 import {Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout} from "../../../src/sync/deduplicator";
-import IORedis from "ioredis";
 
 describe("deduplicator", () => {
-	const redis = new Redis(getRedisInfo("deduplicator-test" + new Date().toISOString()));
+	const redis = new IORedis(getRedisInfo("deduplicator-test" + new Date().toISOString()));
 	let storage: RedisInProgressStorageWithTimeout;
 	let key = "";
 	beforeEach(() => {

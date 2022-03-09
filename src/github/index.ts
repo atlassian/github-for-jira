@@ -2,12 +2,12 @@ import issueComment from "./issue-comment";
 import issue from "./issue";
 import middleware from "./middleware";
 import pullRequest from "./pull-request";
-import workflow from "./workflow";
+import { workflowWebhookHandler } from "./workflow";
 import deployment from "./deployment";
 import codeScanningAlert from "./code-scanning-alert";
-import push from "./push";
+import { pushWebhookHandler } from "./push";
 import { createBranch, deleteBranch } from "./branch";
-import webhookTimeout from "../middleware/webhook-timeout";
+import webhookTimeout from "../util/webhook-timeout";
 import statsd from "../config/statsd";
 import { metricWebhooks } from "../config/metric-names";
 import { Application } from "probot";
@@ -36,7 +36,7 @@ export default (robot: Application) => {
 
 	robot.on(["issues.opened", "issues.edited"], middleware(issue));
 
-	robot.on("push", middleware(push));
+	robot.on("push", middleware(pushWebhookHandler));
 
 	robot.on(
 		[
@@ -49,7 +49,7 @@ export default (robot: Application) => {
 		middleware(pullRequest)
 	);
 
-	robot.on("workflow_run", middleware(workflow));
+	robot.on("workflow_run", middleware(workflowWebhookHandler));
 
 	robot.on("deployment_status", middleware(deployment));
 

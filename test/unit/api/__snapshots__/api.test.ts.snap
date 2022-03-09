@@ -55,6 +55,10 @@ Object {
 
 exports[`API Authentication should return 404 if no token is provided 1`] = `Object {}`;
 
+exports[`API Endpoints Delete Installation Should work with new delete installation route 1`] = `Object {}`;
+
+exports[`API Endpoints Delete Installation Should work with old delete installation route 1`] = `Object {}`;
+
 exports[`API Endpoints Repo Sync State should return 404 if no installation is found 1`] = `Object {}`;
 
 exports[`API Endpoints installation should return 404 if no installation is found 1`] = `Object {}`;

@@ -2,7 +2,7 @@
 import {encodeSymmetric} from "atlassian-jwt";
 import {mocked} from "ts-jest/utils";
 import {Installation} from "../../../src/models";
-import {verifyJiraContextJwtTokenMiddleware} from "../../../src/frontend/verify-jira-jwt-middleware";
+import {JiraContextJwtTokenMiddleware} from "../../../src/middleware/jira-jwt-middleware";
 import logger from "../../../src/config/logger"
 
 jest.mock("../../../src/models");
@@ -98,7 +98,7 @@ describe("#verifyJiraMiddleware", () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("test-host", testSharedSecret);
 
-			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+			await JiraContextJwtTokenMiddleware(req, res, next);
 
 			expect(next).toHaveBeenCalledWith();
 		});
@@ -107,7 +107,7 @@ describe("#verifyJiraMiddleware", () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("host", testSharedSecret);
 
-			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+			await JiraContextJwtTokenMiddleware(req, res, next);
 
 			expect(res.locals.installation).toEqual(installation);
 		});
@@ -115,7 +115,7 @@ describe("#verifyJiraMiddleware", () => {
 		it("should return a 404 for an invalid installation", async () => {
 			const req = buildRequest("host");
 
-			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+			await JiraContextJwtTokenMiddleware(req, res, next);
 
 			expect(next).toHaveBeenCalledWith(new Error("Not Found"));
 		});
@@ -125,7 +125,7 @@ describe("#verifyJiraMiddleware", () => {
 			const req = buildRequest("host", testSharedSecret);
 			const addLogFieldsSpy = jest.spyOn(req, "addLogFields");
 
-			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+			await JiraContextJwtTokenMiddleware(req, res, next);
 
 			expect(addLogFieldsSpy).toHaveBeenCalledWith({
 				jiraHost,
@@ -158,7 +158,7 @@ describe("#verifyJiraMiddleware", () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("host", testSharedSecret);
 
-			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+			await JiraContextJwtTokenMiddleware(req, res, next);
 
 			expect(next).toHaveBeenCalledWith();
 		});
@@ -166,7 +166,7 @@ describe("#verifyJiraMiddleware", () => {
 		it("is not found when host is missing", async () => {
 			const req = buildRequest("host", testSharedSecret);
 
-			await verifyJiraContextJwtTokenMiddleware(req, res, next);
+			await JiraContextJwtTokenMiddleware(req, res, next);
 
 			expect(next).toHaveBeenCalledWith(new Error("Not Found"));
 		});
@@ -177,7 +177,7 @@ describe("#verifyJiraMiddleware", () => {
 		mocked(Installation.getForHost).mockResolvedValue(installation);
 		const req = buildRequest("good-host", "wrong-secret");
 
-		await verifyJiraContextJwtTokenMiddleware(req, res, next);
+		await JiraContextJwtTokenMiddleware(req, res, next);
 
 		expect(next).toBeCalledTimes(0)
 	});
@@ -188,7 +188,7 @@ describe("#verifyJiraMiddleware", () => {
 
 		const req = buildRequestWithNoToken("host");
 
-		await verifyJiraContextJwtTokenMiddleware(req, res, next);
+		await JiraContextJwtTokenMiddleware(req, res, next);
 
 		expect(res.status).toHaveBeenCalledWith(401)
 		expect(next).toHaveBeenCalledTimes(0);
@@ -200,7 +200,7 @@ describe("#verifyJiraMiddleware", () => {
 
 		const req = buildRequestWrongJwt("host", testSharedSecret);
 
-		await verifyJiraContextJwtTokenMiddleware(req, res, next);
+		await JiraContextJwtTokenMiddleware(req, res, next);
 
 		expect(res.status).toHaveBeenCalledWith(401)
 		expect(next).toHaveBeenCalledTimes(0);

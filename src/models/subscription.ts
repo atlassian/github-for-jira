@@ -194,14 +194,6 @@ export default class Subscription extends Sequelize.Model {
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
 	// https://github.com/sequelize/sequelize/issues/4387
 	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
-
-		// Zero repos, means zero syncs required so set COMPLETE.
-		if(!Object.keys(updatedState?.repos || {}).length) {
-			await this.update({
-				syncStatus: SyncStatus.COMPLETE
-			});
-		}
-
 		const state = _.merge(await RepoSyncState.toRepoJson(this), updatedState);
 		await RepoSyncState.updateFromRepoJson(this, state);
 		return this;

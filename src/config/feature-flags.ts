@@ -25,6 +25,8 @@ export enum BooleanFlags {
 	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
 	USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY = "use-new-github-client-for-discovery",
 	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
+	USE_NEW_GITHUB_CLIENT_FOR_WORKFLOW_WEBHOOK = "use-new-github-client-for-workflow-webhook",
+	USE_NEW_GITHUB_CLIENT_FOR_BACKFILL = "use-new-github-client-for-backfill_z7ps8",
 	USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT = "use-new-github-pull-request-url-format"
 }
 

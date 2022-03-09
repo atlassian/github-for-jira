@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 // eslint-disable-next-line import/no-duplicates
 import transformDeployment, { mapEnvironment } from "../../../src/transforms/deployment";
-import {getLogger} from "../../../src/config/logger";
-import {GitHubAPI} from "probot";
+import { getLogger } from "../../../src/config/logger";
+import { GitHubAPI } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 import GitHubClient from "../../../src/github/client/github-client";
-import {getCloudInstallationId} from "../../../src/github/client/installation-id";
+import { getCloudInstallationId } from "../../../src/github/client/installation-id";
 
 jest.mock("../../../src/config/feature-flags");
 
@@ -83,7 +83,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 	const deployment_status = require("../../fixtures/deployment_status-basic.json");
 	const owner = deployment_status.payload.repository.owner.login;
 	const repo = deployment_status.payload.repository.name;
-	const githubClient = new GitHubClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"))
+	const githubClient = new GitHubClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
@@ -91,15 +91,16 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(useNewGithubClient);
-	})
+	});
 
-	it("supports branch and merge workflows - FF TRUE", async () => {
+	it(`supports branch and merge workflows - FF '${useNewGithubClient}'`, async () => {
 
 		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
 		if (useNewGithubClient) {
-			githubAccessTokenNock(TEST_INSTALLATION_ID);
-			githubAccessTokenNock(TEST_INSTALLATION_ID);
-			githubAccessTokenNock(TEST_INSTALLATION_ID);
+			githubUserTokenNock(TEST_INSTALLATION_ID);
+			githubUserTokenNock(TEST_INSTALLATION_ID);
+			githubUserTokenNock(TEST_INSTALLATION_ID);
+			githubUserTokenNock(TEST_INSTALLATION_ID);
 		}
 
 		// Mocking all GitHub API Calls
@@ -139,7 +140,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 
 		// Compare commits
 		githubNock.get(`/repos/${owner}/${repo}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
-			.reply(200,{
+			.reply(200, {
 				commits: [
 					{
 						commit: {
@@ -151,7 +152,8 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 							message: "ABC-2"
 						}
 					}
-				]}
+				]
+			}
 			);
 
 
@@ -161,7 +163,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 			expect.anything()
 		).mockResolvedValue(true);
 
-		const jiraPayload = await transformDeployment(GitHubAPI(), githubClient, deployment_status.payload, "testing.atlassian.net", getLogger("deploymentLogger"))
+		const jiraPayload = await transformDeployment(GitHubAPI(), githubClient, deployment_status.payload, "testing.atlassian.net", getLogger("deploymentLogger"));
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
@@ -177,16 +179,14 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 				pipeline: {
 					id: "deploy",
 					displayName: "deploy",
-					url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
+					url: "test-repo-url/commit/885bee1-commit-id-1c458/checks"
 				},
 				environment: {
 					id: "Production",
 					displayName: "Production",
-					type: "production",
-				},
+					type: "production"
+				}
 			}]
-		})
-	})
-
-	// TODO add test if FF is false
+		});
+	});
 });
