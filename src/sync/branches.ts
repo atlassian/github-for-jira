@@ -1,7 +1,7 @@
 import { transformBranches } from "./transforms/branch";
 import { GitHubAPI } from "probot";
 import { Repository } from "../models/subscription";
-import { Repository as OctokitRepository } from "@octokit/graphql-schema";
+import { Repository as OctokitRepository} from "@octokit/graphql-schema";
 import GitHubClient from "../github/client/github-client";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -17,7 +17,7 @@ export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: Gi
 
 	let result;
 	if(useNewGHClient) {
-		result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string);
+		result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string)
 	} else {
 		result = ((await github.graphql(GetBranchesQuery, {
 			owner: repository.owner.login,

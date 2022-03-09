@@ -20,6 +20,7 @@ const fetchCommits = async (gitHubClient: GitHubClient, repository: Repository, 
 export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, gitHubClient: GitHubClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 	logger.info("Syncing commits: started");
 	if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL, false, jiraHost)) {
+		console.log("IM GETTING FROM GHCLIENT");
 		const { edges, commits }  = await fetchCommits(gitHubClient, repository, cursor, perPage);
 		const jiraPayload = await transformCommit({ commits, repository });
 		logger.info("Syncing commits: finished");
@@ -29,7 +30,8 @@ export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, gi
 			jiraPayload
 		};
 	}
-	return getCommitsOctoKit(logger, github, gitHubClient, jiraHost, repository, cursor, perPage);
+	console.log("IM GETTING FROM OCTO");
+	return getCommitsOctoKit(logger, github, gitHubClient, jiraHost, repository, cursor, perPage) 
 };
 
 /*
