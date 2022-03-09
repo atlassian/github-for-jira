@@ -72,25 +72,17 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	try {
 		await updateGithubIssues(githubClient, context, util, pull_request);
 	} catch (err) {
-		console.log("err ERROR ME");
-		console.log(err);
 		context.log.warn(
 			{ err },
 			"Error while trying to update PR body with links to Jira ticket"
 		);
 	}
 
-	console.log("webhookReceiveda");
-	console.log(context.webhookReceived);
 	if (!jiraPayload) {
 		context.log.info("Halting futher execution for pull request since jiraPayload is empty");
 		return;
 	}
 
-	console.log("is")
-	console.log(githubClient instanceof GitHubClient)
-	console.log("jiraPayload");
-	console.log(jiraPayload);
 	context.log(`Sending pull request update to Jira ${baseUrl}`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
@@ -116,19 +108,8 @@ const updateGithubIssues = async (github: GitHubClient | GitHubAPI, context: Cus
 		id: pullRequest.id
 	});
 
-	console.log("isgithub")
-	console.log(github instanceof GitHubClient)
-	console.log("all good a");
 	const { body, id, owner, repo, number } = editedPullRequest;
-	console.log("all good b");
-	console.log(body);
-	console.log(id);
-	console.log(owner);
-	console.log(repo);
-	console.log(number);
-	console.log(editedPullRequest);
 
-	// todo JOSH the issue is here somewhere with issue_number
 	github instanceof GitHubClient ?
 		await github.updateIssue({ body, id }, owner, repo, number) :
 		await github.issues.update(editedPullRequest);

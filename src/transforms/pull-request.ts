@@ -54,14 +54,14 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pul
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
-	const textToSearch = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? `${prTitle}\n${head.ref}\n${body}}` : `${prTitle}\n${pullRequest.head.ref}`
+	const textToSearch = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? `${prTitle}\n${head.ref}\n${body}}` : `${prTitle}\n${pullRequest.head.ref}`;
 	const issueKeys = issueKeyParser().parse(textToSearch) || [];
 
 	const logPayload = {
 		prTitle: prTitle || "none",
 		repoName: head?.repo.name || "none",
 		prRef: pullRequest.head.ref || "none"
-	}
+	};
 
 	if (isEmpty(issueKeys) || !head?.repo) {
 		log?.info(logPayload, "Ignoring pullrequest hence it has no issue keys or repo");
@@ -71,7 +71,6 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pul
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
 
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
-console.log("  CALED C");
 	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
 
 	return {

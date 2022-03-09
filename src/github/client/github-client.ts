@@ -242,10 +242,6 @@ export default class GitHubClient {
 	 * Update an issue
 	 */
 	public async updateIssue(data = {}, owner: string, repo: string, issueNumber: string | number): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
-		console.log("WHOAMI");
-		console.log(`/repos/${owner}/${repo}/issues/${issueNumber}`);
-		console.log(data);
-
 		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issueNumber}`, data, {}, {
 			owner,
 			repo,

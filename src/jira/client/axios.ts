@@ -83,8 +83,6 @@ const getSuccessMiddleware = (logger: Logger) =>
 	 * @returns {import("axios").AxiosResponse} The axios response
 	 */
 	(response) => {
-		console.log("BIGONE");
-		console.log(response);
 		logger.debug(
 			{
 				params: response.config.urlParams

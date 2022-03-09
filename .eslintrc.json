@@ -37,7 +37,7 @@
 	},
 	"rules": {
 		"@typescript-eslint/explicit-module-boundary-types": "off",
-		// "no-console": "warn",
+		"no-console": "warn",
 		"no-unused-vars": "warn",
 		"quotes": [
 			"warn",
@@ -50,14 +50,6 @@
 		"indent": ["error", "tab", {
 			"SwitchCase": 1
 		}],
-		"@import/no-unresolved": "off",
-		"object-curly-spacing": ["error", "always"],
-        "semi": ["error", "always"],
-        "no-multiple-empty-lines": ["error", { "max": 1, "maxEOF": 0 }],
-        "no-trailing-spaces": "error",
-        "comma-dangle": "error",
-		"keyword-spacing": "error",
-		"no-console": "error",
-		"space-in-parens": ["error", "never"]
+		"@import/no-unresolved": "off"
 	}
 }

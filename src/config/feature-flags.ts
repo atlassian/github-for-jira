@@ -25,7 +25,6 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY = "use-new-github-client-for-discovery",
 	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
 	USE_NEW_GITHUB_CLIENT_FOR_WORKFLOW_WEBHOOK = "use-new-github-client-for-workflow-webhook",
-	USE_NEW_GITHUB_CLIENT_FOR_PUSH_WEBHOOK = "use-new-github-client-for-push-webhook",
 	USE_NEW_GITHUB_CLIENT_FOR_PULL_REQUEST_WEBHOOK = "use-new-github-client-for-pull-request-webhook",
 	USE_NEW_GITHUB_CLIENT_FOR_BACKFILL = "use-new-github-client-for-backfill_z7ps8",
 	USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT = "use-new-github-pull-request-url-format"

@@ -51,8 +51,6 @@ export const transformBranch = async (github: GitHubAPI, webhookPayload: Webhook
 	}
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
-	console.log("  CALED B");
-
 	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false);
 
 	// TODO: type this return
@@ -62,7 +60,7 @@ export const transformBranch = async (github: GitHubAPI, webhookPayload: Webhook
 		url: repository.html_url,
 		branches: [
 			{
-				createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(repository.html_url, ref, issueKeys) : `${repository.html_url}/pull/new/${ref}`, 
+				createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(repository.html_url, ref, issueKeys) : `${repository.html_url}/pull/new/${ref}`,
 				lastCommit,
 				id: getJiraId(ref),
 				issueKeys,

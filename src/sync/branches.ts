@@ -1,7 +1,7 @@
 import { transformBranches } from "./transforms/branch";
 import { GitHubAPI } from "probot";
 import { Repository } from "../models/subscription";
-import { Repository as OctokitRepository} from "@octokit/graphql-schema";
+import { Repository as OctokitRepository } from "@octokit/graphql-schema";
 import GitHubClient from "../github/client/github-client";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -12,7 +12,6 @@ export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: Gi
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
 
-	console.log("  CALED A");
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES, false, jiraHost);
 	const useNewGHPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false, jiraHost);
 
