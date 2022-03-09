@@ -29,7 +29,7 @@ export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, gi
 			jiraPayload
 		};
 	}
-	return getCommitsOctoKit(logger, github, gitHubClient, jiraHost, repository, cursor, perPage);
+	return await getCommitsOctoKit(logger, github, gitHubClient, jiraHost, repository, cursor, perPage);
 };
 
 /*
