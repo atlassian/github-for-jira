@@ -2,9 +2,9 @@ import { enqueuePush } from "../transforms/push";
 import issueKeyParser from "jira-issue-key-parser";
 import { Context } from "probot/lib/context";
 import { getCurrentTime } from "../util/webhooks";
-import _ from "lodash";
+import { isEmpty } from "lodash";
 
-export default async (context: Context, jiraClient): Promise<void> => {
+export const pushWebhookHandler = async (context: Context, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();
 
 	// Copy the shape of the context object for processing
@@ -18,7 +18,7 @@ export default async (context: Context, jiraClient): Promise<void> => {
 		commits: context.payload?.commits?.map((commit) => {
 			const issueKeys = issueKeyParser().parse(commit.message);
 
-			if (!_.isEmpty(issueKeys)) {
+			if (!isEmpty(issueKeys)) {
 				return commit;
 			}
 		})
@@ -36,5 +36,4 @@ export default async (context: Context, jiraClient): Promise<void> => {
 
 	context.log("Enqueueing push event");
 	await enqueuePush(payload, jiraClient.baseURL);
-
 };
