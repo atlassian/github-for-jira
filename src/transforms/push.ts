@@ -1,18 +1,17 @@
-import {Subscription} from "../models";
+import { Subscription } from "../models";
 import getJiraClient from "../jira/client";
 import issueKeyParser from "jira-issue-key-parser";
-import {getJiraAuthor} from "../util/jira";
-import {emitWebhookProcessedMetrics} from "../util/webhooks";
-import {JiraCommit} from "../interfaces/jira";
-import _ from "lodash";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import {isBlocked} from "../config/feature-flags";
+import { getJiraAuthor } from "../util/jira";
+import { emitWebhookProcessedMetrics } from "../util/webhooks";
+import { JiraCommit } from "../interfaces/jira";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { isBlocked } from "../config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
-import {PushQueueMessagePayload} from "../sqs/push";
+import { PushQueueMessagePayload } from "../sqs/push";
 import GitHubClient from "../github/client/github-client";
+import { isEmpty } from "lodash";
 
 // TODO: define better types for this file
-
 const mapFile = (
 	githubFile,
 	repoName: string,
@@ -24,7 +23,7 @@ const mapFile = (
 	const mapStatus = {
 		added: "ADDED",
 		removed: "DELETED",
-		modified: "MODIFIED",
+		modified: "MODIFIED"
 	};
 
 	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
@@ -34,11 +33,11 @@ const mapFile = (
 		changeType: mapStatus[githubFile.status] || "UNKNOWN",
 		linesAdded: githubFile.additions,
 		linesRemoved: githubFile.deletions,
-		url: githubFile.blob_url || fallbackUrl,
+		url: githubFile.blob_url || fallbackUrl
 	};
 };
 
-export const createJobData = (payload, jiraHost: string) : PushQueueMessagePayload => {
+export const createJobData = (payload, jiraHost: string): PushQueueMessagePayload => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 
@@ -47,14 +46,14 @@ export const createJobData = (payload, jiraHost: string) : PushQueueMessagePaylo
 		name,
 		full_name,
 		html_url,
-		owner,
+		owner
 	};
 
 	const shas: { id: string, issueKeys: string[] }[] = [];
 	for (const commit of payload.commits) {
 		const issueKeys = issueKeyParser().parse(commit.message) || [];
 
-		if (_.isEmpty(issueKeys)) {
+		if (isEmpty(issueKeys)) {
 			// Don't add this commit to the queue since it doesn't have issue keys
 			continue;
 		}
@@ -70,16 +69,12 @@ export const createJobData = (payload, jiraHost: string) : PushQueueMessagePaylo
 		jiraHost,
 		installationId: payload.installation.id,
 		webhookId: payload.webhookId || "none",
-		webhookReceived: payload.webhookReceived || undefined,
+		webhookReceived: payload.webhookReceived || undefined
 	};
-}
+};
 
-export async function enqueuePush(
-	payload: unknown,
-	jiraHost: string
-) {
-	return sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
-}
+export const enqueuePush = async (payload: unknown, jiraHost: string) =>
+	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
 
 export const processPush = async (github: GitHubClient, payload: PushQueueMessagePayload, rootLogger: LoggerWithTarget) => {
 	const {
@@ -87,7 +82,7 @@ export const processPush = async (github: GitHubClient, payload: PushQueueMessag
 		repository: { owner, name: repo },
 		shas,
 		installationId,
-		jiraHost,
+		jiraHost
 	} = payload;
 
 	if (await isBlocked(installationId, rootLogger)) {
@@ -103,7 +98,7 @@ export const processPush = async (github: GitHubClient, payload: PushQueueMessag
 		repoName: repo,
 		orgName: owner.name,
 		installationId,
-		webhookReceived,
+		webhookReceived
 	});
 
 	log.info("Processing push");
@@ -130,13 +125,18 @@ export const processPush = async (github: GitHubClient, payload: PushQueueMessag
 				log.info("Calling GitHub to fetch commit info " + sha.id);
 				try {
 					const {
-						data,
-						data: {commit: githubCommit},
+						data: {
+							files,
+							author,
+							parents,
+							sha: commitSha,
+							html_url,
+							commit: {
+								author: githubCommitAuthor,
+								message
+							}
+						}
 					} = await github.getCommit(owner.login, repo, sha.id);
-
-					const {files, author, parents, sha: commitSha, html_url} = data;
-
-					const {author: githubCommitAuthor, message} = githubCommit;
 
 					// Jira only accepts a max of 10 files for each commit, so don't send all of them
 					const filesToSend = files.slice(0, 10);
@@ -152,17 +152,15 @@ export const processPush = async (github: GitHubClient, payload: PushQueueMessag
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
-						files: filesToSend.map((file) =>
-							mapFile(file, repo, owner.name, sha.id)
-						),
+						files: filesToSend.map((file) => mapFile(file, repo, owner.name, sha.id)),
 						id: commitSha,
 						issueKeys: sha.issueKeys,
 						url: html_url,
 						updateSequenceId: Date.now(),
-						flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined,
-					}
+						flags: isMergeCommit ? ["MERGE_COMMIT"] : undefined
+					};
 				} catch (err) {
-					log.warn({ err },"Failed to fetch data from GitHub");
+					log.warn({ err }, "Failed to fetch data from GitHub");
 					throw err;
 				}
 			})
@@ -182,7 +180,7 @@ export const processPush = async (github: GitHubClient, payload: PushQueueMessag
 				url: repository.html_url,
 				id: repository.id,
 				commits: chunk,
-				updateSequenceId: Date.now(),
+				updateSequenceId: Date.now()
 			};
 
 			log.info("Sending data to Jira");

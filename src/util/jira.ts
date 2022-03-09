@@ -1,9 +1,9 @@
 import { JiraAuthor } from "../interfaces/jira";
-import _ from "lodash";
+import { pickBy } from "lodash";
 
 export const getJiraAuthor = (...authors: (Author | undefined)[]): JiraAuthor => {
 	const author = Object.assign({}, ...authors);
-	return author.login || author.name ? _.pickBy({
+	return author.login || author.name ? pickBy({
 		avatar: author.avatar_url || author.avatarUrl || (author.login ? `https://github.com/users/${author.login}.png` : undefined),
 		name: author.name || author.user?.name || author.login || author.email?.match(/^(.*)@/)?.pop() || "unknown",
 		email: author.email || `${author.login}@noreply.user.github.com`,
