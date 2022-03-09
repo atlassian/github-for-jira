@@ -7,10 +7,10 @@ import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 
 jest.mock("../../src/config/feature-flags");
 
-describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubClient) => {
+describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient) => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
-	const issueKeys = useNewGithubClient ? ["TEST-123", "TEST-321", "TEST-124"] : ["TEST-123", "TEST-321"];
+	const issueKeys = ["TEST-123", "TEST-321"];
 
 	beforeEach(async () => {
 		app = await createWebhookApp();
@@ -27,19 +27,25 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 		});
 
 		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PUSH_WEBHOOK,
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PULL_REQUEST_WEBHOOK,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(useNewGithubClient);
 
-		if (useNewGithubClient) {
-			githubUserTokenNock(gitHubInstallationId);
-		}
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+			expect.anything()
+		).mockResolvedValue(useNewGithubClient);
+
 	});
 
 	it("should have reviewers on pull request action", async () => {
 		const fixture = require("../fixtures/pull-request-basic.json");
-
+		if (useNewGithubClient) {
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+		}
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -111,7 +117,7 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 					url: "test-pull-request-base-url",
 					branches: [
 						{
-							createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+							createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
 							lastCommit: {
 								author: {
 									avatar: "https://github.com/ghost.png",
@@ -182,6 +188,9 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 	it("should delete the reference to a pull request when issue keys are removed from the title", async () => {
 		const fixture = require("../fixtures/pull-request-remove-keys.json");
 		const { repository, pull_request: pullRequest } = fixture.payload;
+		if (useNewGithubClient) {
+			githubUserTokenNock(gitHubInstallationId);
+		}
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, [
@@ -247,6 +256,12 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 	it("will not delete references if a branch still has an issue key", async () => {
 		const fixture = require("../fixtures/pull-request-test-changes-with-branch.json");
 
+		if (useNewGithubClient) {
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+		}
+
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, [
 				{
@@ -308,6 +323,11 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 		beforeEach(() => fixture = require("../fixtures/pull-request-triggered-by-bot.json"));
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot", async () => {
+			if (useNewGithubClient) {
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+			}
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
 					login: "test-pull-request-author-login",
@@ -358,6 +378,13 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 					}
 				]);
 
+			githubNock
+				.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
+					body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
+					id: "test-pull-request-id"
+				})
+				.reply(200);
+
 			jiraNock
 				.get("/rest/api/latest/issue/TEST-124?fields=summary")
 				.reply(200, {
@@ -376,7 +403,7 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 							branches:
 								[
 									{
-										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
 										lastCommit:
 											{
 												author:
@@ -447,19 +474,19 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 					}
 			}).reply(200);
 
-			githubNock
-				.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-					body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
-					id: "test-pull-request-id"
-				})
-				.reply(200);
-
 			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture[0])).toResolve();
 		});
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot", async () => {
+
+			if (useNewGithubClient) {
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+			}
+
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
 					login: "test-pull-request-author-login",
@@ -573,6 +600,12 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 		});
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot", async () => {
+			if (useNewGithubClient) {
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+			}
 			githubNock.get("/users/test-pull-request-user-login")
 				.twice()
 				.reply(200, {
@@ -646,7 +679,7 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 							branches:
 								[
 									{
-										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
 										lastCommit:
 											{
 												author:

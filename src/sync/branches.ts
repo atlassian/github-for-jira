@@ -12,12 +12,13 @@ export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: Gi
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
 
+	console.log("  CALED A");
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES, false, jiraHost);
 	const useNewGHPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false, jiraHost);
 
 	let result;
-	if(useNewGHClient) {
-		result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string)
+	if (useNewGHClient) {
+		result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string);
 	} else {
 		result = ((await github.graphql(GetBranchesQuery, {
 			owner: repository.owner.login,

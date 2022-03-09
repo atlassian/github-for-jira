@@ -51,6 +51,7 @@ export const transformBranch = async (github: GitHubAPI, webhookPayload: Webhook
 	}
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
+	console.log("  CALED B");
 
 	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false);
 

@@ -71,7 +71,7 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pul
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
 
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
-
+console.log("  CALED C");
 	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
 
 	return {
