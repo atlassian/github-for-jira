@@ -22,12 +22,7 @@ export type PushQueueMessagePayload = {
 }
 
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
-
 	context.log.info("Handling push message from the SQS queue")
-
-	const payload = context.payload;
-
-	const installationId = getCloudInstallationId(payload.installationId);
-	const github = new GitHubClient(installationId, context.log);
-	await processPush(github, payload, wrapLogger(context.log));
+	const github = new GitHubClient(getCloudInstallationId(context.payload.installationId), context.log);
+	await processPush(github, context.payload, wrapLogger(context.log));
 }
