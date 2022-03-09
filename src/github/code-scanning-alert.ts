@@ -1,6 +1,7 @@
 import transformCodeScanningAlert from "../transforms/code-scanning-alert";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import {emitWebhookProcessedMetrics} from "../util/webhooks";
 
 export default async (context: Context, jiraClient): Promise<void> => {
 	if (!(await booleanFlag(BooleanFlags.SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS, false, jiraClient.baseUrl))) {
@@ -15,5 +16,12 @@ export default async (context: Context, jiraClient): Promise<void> => {
 	}
 
 	context.log.info(`Sending code scanning alert event as Remote Link to Jira: ${jiraClient.baseURL}`);
-	await jiraClient.remoteLink.submit(jiraPayload);
+	const result = await jiraClient.remoteLink.submit(jiraPayload);
+
+	emitWebhookProcessedMetrics(
+		new Date(context.payload.webhookReceived).getTime(),
+		"code_scanning_alert",
+		context.log,
+		result?.status
+	)
 };
