@@ -4,7 +4,7 @@ import middleware from "./middleware";
 import pullRequest from "./pull-request";
 import { workflowWebhookHandler } from "./workflow";
 import deployment from "./deployment";
-import push from "./push";
+import { pushWebhookHandler } from "./push";
 import { createBranch, deleteBranch } from "./branch";
 import webhookTimeout from "../util/webhook-timeout";
 import statsd from "../config/statsd";
@@ -35,7 +35,7 @@ export default (robot: Application) => {
 
 	robot.on(["issues.opened", "issues.edited"], middleware(issueWebhookHandler));
 
-	robot.on("push", middleware(push));
+	robot.on("push", middleware(pushWebhookHandler));
 
 	robot.on(
 		[

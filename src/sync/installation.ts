@@ -84,14 +84,15 @@ const upperFirst = (str: string) =>
 const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
-const updateJobStatus = async (
+//Exported for testing
+export const updateJobStatus = async (
 	data: BackfillMessagePayload,
 	edges: any[] | undefined,
 	task: TaskType,
 	repositoryId: string,
 	logger: LoggerWithTarget,
 	scheduleNextTask: (delay) => void
-) => {
+) : Promise<void> => {
 	const { installationId, jiraHost } = data;
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
@@ -313,25 +314,41 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`]);
 
 	} catch (err) {
-		await handleBackfillError(err, logger, scheduleNextTask, data, task, repositoryId, subscription, nextTask);
+		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
 	}
 }
 
-const handleBackfillError = async (err,
-	logger: LoggerWithTarget,
-	scheduleNextTask: (delayMs) => void, data: BackfillMessagePayload,
-	task: "pull" | "commit" | "branch",
-	repositoryId: string,
+/**
+ * Handles an error and takes action based on the error type and parameters
+ *
+ * @param err The error
+ * @param logger
+ * @param scheduleNextTask Function which schedules next task with the specified delay
+ * @param ignoreCurrentRepo Function which ignores currently processing repo and schedules the next task
+ * @param failCurrentRepoAndContinue Function which sets the status of the current repo sync to "failed" and schedules the next task
+ */
+export const handleBackfillError = async (err,
+	data: BackfillMessagePayload,
+	nextTask: Task,
 	subscription: SubscriptionClass,
-	nextTask: Task) : Promise<void> => {
+	logger: LoggerWithTarget,
+	scheduleNextTask: (delayMs: number) => void) : Promise<void> => {
 
-	const rateLimit = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) ? err.rateLimitReset : Number(err?.headers?.["x-ratelimit-reset"]);
-	const delay = Math.max(rateLimit * 1000 - Date.now(), 0);
+	const isRateLimitError = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
-	if (delay) {
-		// if not NaN or 0
-		logger.info({ delay }, `Delaying job for ${delay}ms`);
-		scheduleNextTask(delay);
+	if(isRateLimitError) {
+		const rateLimit = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) ? err.rateLimitReset : Number(err?.headers?.["x-ratelimit-reset"]);
+		const delay = Math.max(rateLimit * 1000 - Date.now(), 0);
+
+		if (delay) {
+			// if not NaN or 0
+			logger.info({delay}, `Delaying job for ${delay}ms`);
+			scheduleNextTask(delay);
+		} else {
+			//Retry immediately if rate limiting reset already
+			logger.info("Rate limit was reset already. Scheduling next task")
+			scheduleNextTask(0);
+		}
 		return;
 	}
 
@@ -357,14 +374,17 @@ const handleBackfillError = async (err,
 	// Continue sync when a 404/NOT_FOUND is returned
 	if (isNotFoundError(err, logger)) {
 		const edgesLeft = []; // No edges left to process since the repository doesn't exist
-		await updateJobStatus(data, edgesLeft, task, repositoryId, logger, scheduleNextTask);
+		await updateJobStatus(data, edgesLeft, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
 		return;
 	}
 
-	// TODO: add the jiraHost to the logger with logger.child()
-	const host = subscription.jiraHost || "none";
-	logger.warn({ err, jiraHost: host }, "Task failed, continuing with next task");
+	logger.warn({ err }, "Task failed, continuing with next task");
 
+	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
+
+};
+
+export const markCurrentRepositoryAsFailedAndContinue = async (subscription: SubscriptionClass, nextTask: Task, scheduleNextTask: (delayMs: number) => void) : Promise<void> => {
 	// marking the current task as failed
 	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
 
@@ -372,7 +392,7 @@ const handleBackfillError = async (err,
 
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
-};
+}
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export async function maybeScheduleNextTask(
