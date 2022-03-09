@@ -84,14 +84,15 @@ const upperFirst = (str: string) =>
 const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
-const updateJobStatus = async (
+//Exported for testing
+export const updateJobStatus = async (
 	data: BackfillMessagePayload,
 	edges: any[] | undefined,
 	task: TaskType,
 	repositoryId: string,
 	logger: LoggerWithTarget,
 	scheduleNextTask: (delay) => void
-) => {
+) : Promise<void> => {
 	const { installationId, jiraHost } = data;
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
@@ -313,23 +314,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`]);
 
 	} catch (err) {
-
-		const ignoreCurrentRepo = async () => {
-			const edgesLeft = []; // No edges left to process since the repository doesn't exist
-			await updateJobStatus(data, edgesLeft, task, repositoryId, logger, scheduleNextTask);
-		}
-
-		const failCurrentRepoAndContinue = async () => {
-			// marking the current task as failed
-			await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
-
-			statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
-
-			// queueing the job again to pick up the next task
-			scheduleNextTask(0);
-		}
-
-		await handleBackfillError(err, logger, scheduleNextTask, ignoreCurrentRepo, failCurrentRepoAndContinue);
+		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
 	}
 }
 
@@ -343,10 +328,11 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
  * @param failCurrentRepoAndContinue Function which sets the status of the current repo sync to "failed" and schedules the next task
  */
 export const handleBackfillError = async (err,
+	data: BackfillMessagePayload,
+	nextTask: Task,
+	subscription: SubscriptionClass,
 	logger: LoggerWithTarget,
-	scheduleNextTask: (delayMs: number) => void,
-	ignoreCurrentRepo: () => Promise<void>,
-	failCurrentRepoAndContinue: () => Promise<void>) : Promise<void> => {
+	scheduleNextTask: (delayMs: number) => void) : Promise<void> => {
 
 	const isRateLimitError = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
@@ -387,15 +373,26 @@ export const handleBackfillError = async (err,
 
 	// Continue sync when a 404/NOT_FOUND is returned
 	if (isNotFoundError(err, logger)) {
-		await ignoreCurrentRepo();
+		const edgesLeft = []; // No edges left to process since the repository doesn't exist
+		await updateJobStatus(data, edgesLeft, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
 		return;
 	}
 
 	logger.warn({ err }, "Task failed, continuing with next task");
 
-	await failCurrentRepoAndContinue();
+	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 
 };
+
+export const markCurrentRepositoryAsFailedAndContinue = async (subscription: SubscriptionClass, nextTask: Task, scheduleNextTask: (delayMs: number) => void) : Promise<void> => {
+	// marking the current task as failed
+	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
+
+	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
+
+	// queueing the job again to pick up the next task
+	scheduleNextTask(0);
+}
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export async function maybeScheduleNextTask(

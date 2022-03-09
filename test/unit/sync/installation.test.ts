@@ -1,9 +1,10 @@
 import {
 	handleBackfillError,
-	isRetryableWithSmallerRequest,
-	maybeScheduleNextTask,
-	processInstallation
+	isRetryableWithSmallerRequest, maybeScheduleNextTask,
+	processInstallation,
 } from "../../../src/sync/installation";
+
+import * as installation from "../../../src/sync/installation";
 
 import {DeduplicatorResult} from "../../../src/sync/deduplicator";
 
@@ -16,6 +17,7 @@ import {Hub} from "@sentry/types/dist/hub";
 import {mocked} from "ts-jest/utils";
 import {RateLimitingError} from "../../../src/github/client/errors";
 import {mockNotFoundErrorOctokitGraphql, mockOtherOctokitRequestErrors} from "../../mocks/errorResponses";
+import SubscriptionClass, {Repository} from "../../../src/models/subscription";
 
 const TEST_LOGGER = getLogger("test");
 
@@ -32,6 +34,17 @@ jest.mock("../../../src/sync/deduplicator", () => ({
 describe("sync/installation", () => {
 
 	const JOB_DATA = { installationId: 1, jiraHost: "http://foo" };
+
+	const TEST_REPO : Repository =  {id: "123",
+		name: "Test",
+		full_name: "Test/Test",
+		owner: { login: "test" },
+		html_url: "https://test",
+		updated_at: 1234 };
+
+	const TASK : installation.Task = { task: "commit", repositoryId: "123", repository: TEST_REPO };
+
+	const TEST_SUBSCRIPTION : SubscriptionClass = {} as any;
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
@@ -128,12 +141,16 @@ describe("sync/installation", () => {
 	describe("handleBackfillError", () => {
 
 		const scheduleNextTask = jest.fn();
-		const ignoreCurrentRepo = jest.fn();
-		const failCurrentRepo = jest.fn();
+		let updateStatusSpy;
+		let failRepoSpy;
 
 		beforeEach(() => {
-			ignoreCurrentRepo.mockReturnValue(Promise.resolve());
-			failCurrentRepo.mockReturnValue(Promise.resolve());
+
+			updateStatusSpy = jest.spyOn(installation, 'updateJobStatus');
+			failRepoSpy = jest.spyOn(installation, 'markCurrentRepositoryAsFailedAndContinue');
+
+			updateStatusSpy.mockReturnValue(Promise.resolve());
+			failRepoSpy.mockReturnValue(Promise.resolve());
 
 			mockSystemTime(12345678);
 		})
@@ -150,10 +167,10 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			handleBackfillError(new RateLimitingError(axiosResponse), TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(14322);
-			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
-			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 
 		});
 
@@ -169,10 +186,10 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			handleBackfillError(new RateLimitingError(axiosResponse), TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(0);
-			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
-			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 
 		});
 
@@ -195,10 +212,10 @@ describe("sync/installation", () => {
 				status: 403
 			}
 
-			handleBackfillError(probablyRateLimitError, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			handleBackfillError(probablyRateLimitError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(14322);
-			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
-			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 
 		});
 
@@ -222,27 +239,27 @@ describe("sync/installation", () => {
 				status: 404
 			}
 
-			handleBackfillError(notFoundError, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			handleBackfillError(notFoundError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(1);
-			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 		it("Repository ignored if GraphQL not found error", () => {
 
-			handleBackfillError(mockNotFoundErrorOctokitGraphql, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			handleBackfillError(mockNotFoundErrorOctokitGraphql, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(1);
-			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 		it("Repository failed if some kind of unknown error", () => {
 
 
-			handleBackfillError(mockOtherOctokitRequestErrors, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			handleBackfillError(mockOtherOctokitRequestErrors, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
-			expect(failCurrentRepo).toHaveBeenCalledTimes(1);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(1);
 		});
 
 		it("60s delay if abuse detection triggered", () => {
@@ -265,19 +282,19 @@ describe("sync/installation", () => {
 				status: 403
 			}
 
-			handleBackfillError(abuseDetectionError, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(60_000);
-			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
-			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 		it("5s delay if connection timeout", () => {
 			const connectionTimeoutErr = "connect ETIMEDOUT";
 
-			handleBackfillError(connectionTimeoutErr, TEST_LOGGER, scheduleNextTask, ignoreCurrentRepo, failCurrentRepo);
+			handleBackfillError(connectionTimeoutErr, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(5_000);
-			expect(ignoreCurrentRepo).toHaveBeenCalledTimes(0);
-			expect(failCurrentRepo).toHaveBeenCalledTimes(0);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 	});
