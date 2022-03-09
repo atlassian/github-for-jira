@@ -113,6 +113,14 @@ export default class GitHubClient {
 		});
 	}
 
+	private async patch<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+		return this.axios.patch<T>(url, body, {
+			...await this.installationAuthenticationHeaders(),
+			params,
+			urlParams
+		});
+	}
+
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
 		const response = await this.axios.post<GraphQlQueryResponse<T>>("/graphql",
 			{
@@ -229,6 +237,21 @@ export default class GitHubClient {
 			{ owner, repo, deployment_id }
 		);
 	};
+
+	/**
+	 * Update an issue
+	 */
+	public async updateIssue(data = {}, owner: string, repo: string, issueNumber: string | number): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
+		console.log("WHOAMI")
+		console.log(`/repos/${owner}/${repo}/issues/${issueNumber}`)
+		console.log(data)
+		
+		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issueNumber}`, data, {}, {
+			owner,
+			repo,
+			issueNumber
+		});
+	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);

@@ -26,7 +26,7 @@ export const pullRequestWebhookHandler = async (
 	} = context.payload;
 
 	const githubClient =
-		await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PUSH_WEBHOOK, false, jiraClient.baseURL) ?
+		await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PULL_REQUEST_WEBHOOK, false, jiraClient.baseURL) ?
 			new GitHubClient(getCloudInstallationId(githubInstallationId), context.log)
 			: context.github;
 
@@ -79,14 +79,18 @@ export const pullRequestWebhookHandler = async (
 	try {
 		const linkifiedBody = await util.unfurl(pullRequestBody);
 
-		if (linkifiedBody) {
-			const editedPullRequest = context.issue({
-				body: linkifiedBody,
-				id: pull_request.id
-			});
-			context.log(logPayload, "Updating pull request");
+		// if (linkifiedBody) {
+		// 	const editedPullRequest = context.issue({
+		// 		body: linkifiedBody,
+		// 		id: pull_request.id
+		// 	});
+		// 	context.log(logPayload, "Updating pull request");
 
-			await context.github.issues.update(editedPullRequest);
+		// 	await context.github.issues.update(editedPullRequest);
+		// }
+		if(linkifiedBody) {
+			context.log(logPayload, "Updating pull request");
+			await updateGithubIssues(githubClient, context, linkifiedBody, pull_request.id);
 		}
 	} catch (err) {
 		context.log.warn(
@@ -117,6 +121,23 @@ export const pullRequestWebhookHandler = async (
 		jiraResponse?.status
 	);
 };
+
+
+const updateGithubIssues = async (github: GitHubClient | GitHubAPI, context, body, id) => {
+	const editedPullRequest = context.issue({
+		body,
+		id,
+	});
+
+	console.log("editedPullRequest")
+	console.log(editedPullRequest)
+	console.log("github instanceof GitHubClient")
+	console.log(github instanceof GitHubClient)
+	const { owner, repo, issue_number } = editedPullRequest;
+	github instanceof GitHubClient ?
+		await github.updateIssue({ body, id }, owner, repo, issue_number) :
+		await github.issues.update(editedPullRequest);
+}
 
 const getReviews = async (githubCient: GitHubAPI | GitHubClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
 	const response = githubCient instanceof GitHubClient ?
