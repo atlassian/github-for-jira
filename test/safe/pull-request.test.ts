@@ -2,15 +2,10 @@
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 
-jest.mock("../../src/config/feature-flags");
-
-describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubClient) => {
+describe("Pull Request Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
-	const issueKeys = useNewGithubClient ? ["TEST-123", "TEST-321", "TEST-124"] : ["TEST-123", "TEST-321"];
 
 	beforeEach(async () => {
 		app = await createWebhookApp();
@@ -25,16 +20,6 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 			jiraHost,
 			jiraClientKey: clientKey
 		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PUSH_WEBHOOK,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
-
-		if (useNewGithubClient) {
-			githubUserTokenNock(gitHubInstallationId);
-		}
 	});
 
 	it("should have reviewers on pull request action", async () => {
@@ -111,7 +96,7 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 					url: "test-pull-request-base-url",
 					branches: [
 						{
-							createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+							createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
 							lastCommit: {
 								author: {
 									avatar: "https://github.com/ghost.png",
@@ -124,13 +109,13 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 								fileCount: 0,
 								hash: "test-pull-request-sha",
 								id: "test-pull-request-sha",
-								issueKeys,
+								issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 								message: "n/a",
 								updateSequenceId: 12345678,
 								url: "test-pull-request-head-url/commit/test-pull-request-sha"
 							},
 							id: "TEST-321-test-pull-request-head-ref",
-							issueKeys,
+							issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 							name: "TEST-321-test-pull-request-head-ref",
 							url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
 							updateSequenceId: 12345678
@@ -148,7 +133,7 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 							destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 							displayId: "#1",
 							id: 1,
-							issueKeys,
+							issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 							lastUpdate: "test-pull-request-update-time",
 							reviewers: [
 								{
@@ -178,6 +163,7 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 
 		await expect(app.receive(fixture)).toResolve();
 	});
+
 
 	it("should delete the reference to a pull request when issue keys are removed from the title", async () => {
 		const fixture = require("../fixtures/pull-request-remove-keys.json");
@@ -376,7 +362,7 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 							branches:
 								[
 									{
-										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+										createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
 										lastCommit:
 											{
 												author:
@@ -391,13 +377,23 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 												fileCount: 0,
 												hash: "test-pull-request-sha",
 												id: "test-pull-request-sha",
-												issueKeys,
+												issueKeys:
+													[
+														"TEST-123",
+														"TEST-321",
+														"TEST-124"
+													],
 												message: "n/a",
 												updateSequenceId: 12345678,
 												url: "test-pull-request-head-url/commit/test-pull-request-sha"
 											},
 										id: "TEST-321-test-pull-request-head-ref",
-										issueKeys,
+										issueKeys:
+											[
+												"TEST-123",
+												"TEST-321",
+												"TEST-124"
+											],
 										name: "TEST-321-test-pull-request-head-ref",
 										url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
 										updateSequenceId: 12345678
@@ -417,7 +413,12 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 										destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 										displayId: "#1",
 										id: 1,
-										issueKeys,
+										issueKeys:
+											[
+												"TEST-123",
+												"TEST-321",
+												"TEST-124"
+											],
 										lastUpdate: "test-pull-request-update-time",
 										reviewers:
 											[
@@ -541,7 +542,7 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 								destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 								displayId: "#1",
 								id: 1,
-								issueKeys,
+								issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
 								lastUpdate: "test-pull-request-update-time",
 								reviewers: [
 									{
@@ -646,7 +647,7 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 							branches:
 								[
 									{
-										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+										createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
 										lastCommit:
 											{
 												author:
@@ -661,13 +662,23 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 												fileCount: 0,
 												hash: "test-pull-request-sha",
 												id: "test-pull-request-sha",
-												issueKeys,
+												issueKeys:
+													[
+														"TEST-123",
+														"TEST-321",
+														"TEST-124"
+													],
 												message: "n/a",
 												updateSequenceId: 12345678,
 												url: "test-pull-request-head-url/commit/test-pull-request-sha"
 											},
 										id: "TEST-321-test-pull-request-head-ref",
-										issueKeys,
+										issueKeys:
+											[
+												"TEST-123",
+												"TEST-321",
+												"TEST-124"
+											],
 										name: "TEST-321-test-pull-request-head-ref",
 										url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
 										updateSequenceId: 12345678
@@ -687,7 +698,12 @@ describe.each([/*true, */false])("Pull Request Webhook - FF %p", (useNewGithubCl
 										destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 										displayId: "#1",
 										id: 1,
-										issueKeys,
+										issueKeys:
+											[
+												"TEST-123",
+												"TEST-321",
+												"TEST-124"
+											],
 										lastUpdate: "test-pull-request-update-time",
 										reviewers:
 											[

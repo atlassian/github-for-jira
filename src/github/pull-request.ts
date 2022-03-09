@@ -1,59 +1,53 @@
 import { transformPullRequest } from "../transforms/pull-request";
 import issueKeyParser from "jira-issue-key-parser";
+
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
-import { isEmpty } from "lodash";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import GitHubClient from "./client/github-client";
-import { getCloudInstallationId } from "./client/installation-id";
-import { GitHubAPI } from "probot";
-import { Octokit } from "@octokit/rest";
+import _ from "lodash";
 
-export const pullRequestWebhookHandler = async (
+export default async (
 	context: CustomContext,
 	jiraClient,
-	util,
-	githubInstallationId: number
+	util
 ): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
 			id: repositoryId,
 			name: repo,
-			owner: { login: owner }
+			owner: { login: owner },
 		},
-		changes
+		changes,
 	} = context.payload;
-
-	const githubClient =
-		await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PUSH_WEBHOOK, false, jiraClient.baseURL) ?
-			new GitHubClient(getCloudInstallationId(githubInstallationId), context.log)
-			: context.github;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: any = {};
 	try {
-		reviews = await getReviews(githubClient, owner, repo, pull_request.number);
+		reviews = await context.github.pulls.listReviews({
+			owner: owner,
+			repo: repo,
+			pull_number: pull_request.number,
+		});
 	} catch (e) {
 		context.log.warn(
 			{
 				err: e,
 				payload: context.payload,
-				pull_request
+				pull_request,
 			},
 			"Missing Github Permissions: Can't retrieve reviewers"
 		);
 	}
 
 	const jiraPayload = await transformPullRequest(
-		githubClient,
+		context.github,
 		pull_request,
-		reviews,
+		reviews.data,
 		context.log
 	);
 
-	const { number: pullRequestNumber, body: pullRequestBody, id: pullRequestId } = pull_request;
-	const logPayload = { pullRequestId, pullRequestNumber, jiraPayload };
+	const { number: pullRequestNumber, body: pullRequestBody, id: pullRequestId } =  pull_request
+	const logPayload = { pullRequestId, pullRequestNumber, jiraPayload }
 
 	context.log.info(logPayload, "Pullrequest mapped to Jira Payload");
 
@@ -61,7 +55,7 @@ export const pullRequestWebhookHandler = async (
 	if (!jiraPayload && changes?.title) {
 		const issueKeys = issueKeyParser().parse(changes?.title?.from);
 
-		if (!isEmpty(issueKeys)) {
+		if (!_.isEmpty(issueKeys)) {
 			context.log.info(
 				{ issueKeys },
 				"Sending pullrequest delete event for issue keys"
@@ -82,7 +76,7 @@ export const pullRequestWebhookHandler = async (
 		if (linkifiedBody) {
 			const editedPullRequest = context.issue({
 				body: linkifiedBody,
-				id: pull_request.id
+				id: pull_request.id,
 			});
 			context.log(logPayload, "Updating pull request");
 
@@ -117,11 +111,3 @@ export const pullRequestWebhookHandler = async (
 		jiraResponse?.status
 	);
 };
-
-const getReviews = async (githubCient: GitHubAPI | GitHubClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
-	const response = githubCient instanceof GitHubClient ?
-		await githubCient.getPullRequestReviews(owner, repo, pull_number) :
-		await githubCient.pulls.listReviews({ owner, repo, pull_number });
-	return response.data;
-};
-

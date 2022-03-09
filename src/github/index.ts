@@ -1,7 +1,7 @@
 import issueComment from "./issue-comment";
 import issue from "./issue";
 import middleware from "./middleware";
-import { pullRequestWebhookHandler } from "./pull-request";
+import pullRequest from "./pull-request";
 import { workflowWebhookHandler } from "./workflow";
 import deployment from "./deployment";
 import push from "./push";
@@ -45,7 +45,7 @@ export default (robot: Application) => {
 			"pull_request.edited",
 			"pull_request_review"
 		],
-		middleware(pullRequestWebhookHandler)
+		middleware(pullRequest)
 	);
 
 	robot.on("workflow_run", middleware(workflowWebhookHandler));
