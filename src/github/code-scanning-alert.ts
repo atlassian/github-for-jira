@@ -18,8 +18,9 @@ export default async (context: Context, jiraClient): Promise<void> => {
 	context.log.info(`Sending code scanning alert event as Remote Link to Jira: ${jiraClient.baseURL}`);
 	const result = await jiraClient.remoteLink.submit(jiraPayload);
 
-	emitWebhookProcessedMetrics(
-		new Date(context.payload.webhookReceived).getTime(),
+	const webhookReceived = context.payload.webhookReceived;
+	webhookReceived && emitWebhookProcessedMetrics(
+		new Date(webhookReceived).getTime(),
 		"code_scanning_alert",
 		context.log,
 		result?.status
