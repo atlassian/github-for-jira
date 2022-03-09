@@ -25,12 +25,12 @@ const getEntityTitle = async (ref: string, repoName: string, repoOwner: string, 
 	switch (components[1]) {
 		case "heads": // branch
 			// The branch name may contain forward slashes! Rejoin them
-			return components.slice(2).join("/");
+			return Promise.resolve(components.slice(2).join("/"));
 		case "pull": // pull request
 			return await getPullRequestTitle(repoName, parseInt(components[2]), repoOwner, context);
 		default:
 			context.log.error(`Could not interpret reference from code_scanning_alert: ${ref}`);
-			return "";
+			return Promise.resolve("");
 	}
 }
 
@@ -57,7 +57,9 @@ export default async (context: Context): Promise<JiraRemoteLinkData | undefined>
 	if (action === "closed_by_user" || action === "reopened_by_user") {
 		// These are manual operations done by users and are not associated to a specific Issue.
 		// The webhook contains ALL instances of this alert, so we need to grab the ref from each instance.
-		entityTitles.push(...alert.instances.map(async (instance) => await getEntityTitle(instance.ref, repository.name, repository.owner.login, context)));
+		entityTitles.push(...await Promise.all(alert.instances.map(
+			(instance) => getEntityTitle(instance.ref, repository.name, repository.owner.login, context))
+		));
 	} else {
 		// The action is associated with a single branch/PR
 		entityTitles.push(await getEntityTitle(ref, repository.name, repository.owner.login, context));
