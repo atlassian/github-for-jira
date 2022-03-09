@@ -3,8 +3,9 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { GitHubPullRequest } from "../interfaces/github";
 import { JiraBuildData, JiraPullRequest } from "../interfaces/jira";
 import { GitHubAPI } from "probot";
-import { compareCommitsBetweenBaseAndHeadBranches } from "./util/githubApiRequests";
+import { getAllCommitMessagesBetweenReferences } from "./util/githubApiRequests";
 import { WorkflowPayload } from "../config/interfaces";
+import GitHubClient from "../github/client/github-client";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
@@ -37,68 +38,54 @@ function mapStatus(status: string, conclusion?: string): string {
 }
 
 function mapPullRequests(
-	pull_requests: GitHubPullRequest[]
+	pull_requests: GitHubPullRequest[] = []
 ): JiraPullRequest[] {
 	return pull_requests.map((pr) => ({
 		commit: {
 			id: pr.head.sha,
-			repositoryUri: pr.head.repo.url,
+			repositoryUri: pr.head.repo.url
 		},
 		ref: {
 			name: pr.head.ref,
-			uri: `${pr.head.repo.url}/tree/${pr.head.ref}`,
-		},
+			uri: `${pr.head.repo.url}/tree/${pr.head.ref}`
+		}
 	}));
 }
 
-export default async (
-	githubClient: GitHubAPI,
+export const transformWorkflowPayload = async (
+	githubClient: GitHubAPI | GitHubClient,
 	payload: WorkflowPayload,
 	logger: LoggerWithTarget
 ): Promise<JiraBuildData | undefined> => {
-	const { workflow_run, workflow } = payload;
-
 	const {
-		conclusion,
-		head_branch,
-		head_commit,
-		html_url,
-		name,
-		pull_requests,
-		repository,
-		run_number,
-		status,
-		updated_at,
-	} = workflow_run;
+		workflow_run: {
+			conclusion,
+			head_branch,
+			head_commit,
+			html_url,
+			name,
+			pull_requests,
+			repository,
+			run_number,
+			status,
+			updated_at
+		}, workflow
+	} = payload;
 
-	let issueKeys;
+	const workflowHasPullRequest = !!pull_requests?.length;
+	const commitMessages = workflowHasPullRequest ? await getAllCommitMessagesBetweenReferences(
+		{
+			owner: repository.owner.login,
+			repo: repository.name,
+			base: pull_requests[0].base.ref,
+			head: pull_requests[0].head.ref
+		},
+		githubClient,
+		logger
+	) : "";
 
-	const workflowHasPullRequest = pull_requests.length > 0;
-
-	if (workflowHasPullRequest) {
-		const { owner, name: repoName } = repository;
-		const { base, head } = pull_requests[0];
-
-		const compareCommitsPayload = {
-			owner: owner.login,
-			repo: repoName,
-			base: base.ref,
-			head: head.ref
-		}
-
-		const allCommitMessages = await compareCommitsBetweenBaseAndHeadBranches(
-			compareCommitsPayload,
-			githubClient,
-			logger
-		);
-
-		issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${allCommitMessages}`) || [];
-	} else {
-		issueKeys =
-		issueKeyParser().parse(`${head_branch}\n${head_commit.message}`) || [];
-	}
-
-	if (!issueKeys) {
+	const issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${commitMessages}`) || [];
+	if (!issueKeys.length) {
 		return undefined;
 	}
 
@@ -119,8 +106,8 @@ export default async (
 				issueKeys,
 				references: workflowHasPullRequest
 					? maxPullRequestReferences
-					: undefined, // Optional information that links PRs.
-			},
-		],
+					: undefined // Optional information that links PRs.
+			}
+		]
 	};
 };

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import GitHubAPI from "../../../../src/config/github-api";
-import { compareCommitsBetweenBaseAndHeadBranches } from "../../../../src/transforms/util/githubApiRequests";
+import { getAllCommitMessagesBetweenReferences } from "../../../../src/transforms/util/githubApiRequests";
 import { getLogger } from "../../../../src/config/logger";
 
 describe("GitHub API Request Suite", () => {
@@ -36,7 +36,7 @@ describe("GitHub API Request Suite", () => {
 					...data,
 				});
 
-			const bob = await compareCommitsBetweenBaseAndHeadBranches(
+			const bob = await getAllCommitMessagesBetweenReferences(
 				payload,
 				GitHubAPI(),
 				getLogger("test")
@@ -76,7 +76,7 @@ describe("GitHub API Request Suite", () => {
 					...data,
 				});
 
-			const bob = await compareCommitsBetweenBaseAndHeadBranches(
+			const bob = await getAllCommitMessagesBetweenReferences(
 				payload,
 				GitHubAPI(),
 				getLogger("test")
