@@ -122,17 +122,12 @@ export const pullRequestWebhookHandler = async (
 	);
 };
 
-
 const updateGithubIssues = async (github: GitHubClient | GitHubAPI, context, body, id) => {
 	const editedPullRequest = context.issue({
 		body,
 		id,
 	});
-
-	console.log("editedPullRequest")
-	console.log(editedPullRequest)
-	console.log("github instanceof GitHubClient")
-	console.log(github instanceof GitHubClient)
+	
 	const { owner, repo, issue_number } = editedPullRequest;
 	github instanceof GitHubClient ?
 		await github.updateIssue({ body, id }, owner, repo, issue_number) :
@@ -145,4 +140,3 @@ const getReviews = async (githubCient: GitHubAPI | GitHubClient, owner: string, 
 		await githubCient.pulls.listReviews({ owner, repo, pull_number });
 	return response.data;
 };
-
