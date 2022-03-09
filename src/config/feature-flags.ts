@@ -26,7 +26,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
 	USE_NEW_GITHUB_CLIENT_FOR_WORKFLOW_WEBHOOK = "use-new-github-client-for-workflow-webhook",
 	USE_NEW_GITHUB_CLIENT_FOR_BACKFILL = "use-new-github-client-for-backfill_z7ps8",
-	USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT = "use-new-github-pull-request-url-format"
+	USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT = "use-new-github-pull-request-url-format",
+	USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT = "use-new-github-client-for-branch-event"
 }
 
 export enum StringFlags {

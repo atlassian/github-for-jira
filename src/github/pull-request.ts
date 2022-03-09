@@ -46,8 +46,8 @@ export default async (
 		context.log
 	);
 
-	const { number: pullRequestNumber, body: pullRequestBody, id: pullRequestId } =  pull_request
-	const logPayload = { pullRequestId, pullRequestNumber, jiraPayload }
+	const { number: pullRequestNumber, body: pullRequestBody, id: pullRequestId } =  pull_request;
+	const logPayload = { pullRequestId, pullRequestNumber, jiraPayload };
 
 	context.log.info(logPayload, "Pullrequest mapped to Jira Payload");
 
