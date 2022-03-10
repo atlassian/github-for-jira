@@ -10,6 +10,11 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 const logger = getLogger("sqs");
 
+//Maximum SQS Delay according to SQS docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html
+const MAX_MESSAGE_DELAY_SEC: number = 15*60;
+
+//Maximum SQS Visibility Timeout according to docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html
+const MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC: number = 12*60*60 - 1;
 /**
  * Message processing context, which will be passed to message handler to handle the received message
  */
@@ -191,11 +196,16 @@ export class SqsQueue<MessagePayload> {
 	 * @param log Logger to be used to log message sending status
 	 */
 	public async sendMessage(payload: MessagePayload, delaySec = 0, log: Logger | LoggerWithTarget = this.log) {
+		if(delaySec >= MAX_MESSAGE_DELAY_SEC) {
+			delaySec = MAX_MESSAGE_DELAY_SEC - 1;
+		}
+
 		const params: SendMessageRequest = {
 			MessageBody: JSON.stringify(payload),
 			QueueUrl: this.queueUrl,
 			DelaySeconds: delaySec
 		};
+
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
 		log.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
@@ -417,21 +427,26 @@ export class SqsQueue<MessagePayload> {
 		return context.receiveCount >= this.maxAttempts;
 	}
 
-	private async changeVisibilityTimeout(message: Message, timeout: number, logger: Logger): Promise<void> {
+	private async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`);
 			return;
 		}
 
-		if(timeout < 0) {
+		if(timeoutSec < 0) {
 			logger.error(`Timeout needs to be a positive number.`);
 			return;
+		}
+
+		if(timeoutSec >= MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC) {
+			logger.warn(`Attempt to set visibility timeout greater than allowed. Timeout value: ${timeoutSec} sec. Will be reset to max value of ${MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC} sec`);
+			timeoutSec = MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC;
 		}
 
 		const params: ChangeMessageVisibilityRequest = {
 			QueueUrl: this.queueUrl,
 			ReceiptHandle: message.ReceiptHandle,
-			VisibilityTimeout: Math.round(timeout)
+			VisibilityTimeout: Math.round(timeoutSec)
 		};
 		try {
 			await this.sqs.changeMessageVisibility(params).promise();
