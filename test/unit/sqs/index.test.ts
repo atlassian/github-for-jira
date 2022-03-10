@@ -5,6 +5,7 @@ import envVars from "../../../src/config/env";
 import waitUntil from "../../utils/waitUntil";
 import statsd from "../../../src/config/statsd";
 import { sqsQueueMetrics } from "../../../src/config/metric-names";
+import {Request as AwsRequest} from "aws-sdk"
 
 const TEST_QUEUE_URL = envVars.SQS_TEST_QUEUE_URL;
 const TEST_QUEUE_REGION = envVars.SQS_TEST_QUEUE_REGION;
@@ -76,6 +77,26 @@ describe("SqsQueue tests", () => {
 			await queue.sendMessage(payload, 1);
 			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(1));
 			expect(Date.now() - startTime).toBeGreaterThanOrEqual(1000);
+		});
+
+		it("Message send with the maximum delay if bigger delay specified", async () => {
+
+			const sendMessageSpy = jest.spyOn(queue.sqs, "sendMessage" );
+			const request: AwsRequest<any, any> = {promise: () => Promise.resolve({MessageId: "123"})} as any;
+			sendMessageSpy.mockReturnValue(request);
+			await queue.sendMessage(payload, 123423453);
+
+			expect(sendMessageSpy).toBeCalledWithDelaySec(899);
+		});
+
+		it("Message send with the specified delay", async () => {
+
+			const sendMessageSpy = jest.spyOn(queue.sqs, "sendMessage" );
+			const request: AwsRequest<any, any> = {promise: () => Promise.resolve({MessageId: "123"})} as any;
+			sendMessageSpy.mockReturnValue(request);
+			await queue.sendMessage(payload, 64);
+
+			expect(sendMessageSpy).toBeCalledWithDelaySec(64);
 		});
 
 		it("Message gets executed exactly once", async () => {
