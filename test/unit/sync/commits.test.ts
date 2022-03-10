@@ -20,7 +20,7 @@ const commitsNoKeys = require("../../fixtures/api/graphql/commit-nodes-no-keys.j
 jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
 
-describe("sync/commits", () => {
+describe.each([true, false])("sync/commits - new github client is %s", (useNewGithubClient) => {
 	let app: Application;
 	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
@@ -51,6 +51,7 @@ describe("sync/commits", () => {
 	};
 
 	const createGitHubNock = (commitsResponse?) => {
+
 		githubNock
 			.post("/graphql", getCommitsQuery())
 			.query(true)
@@ -97,13 +98,15 @@ describe("sync/commits", () => {
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 
-		githubUserTokenNock(installationId);
+		if (useNewGithubClient) {
+			githubUserTokenNock(installationId);
+		}
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL,
 			expect.anything(),
 			expect.anything()
-		).mockResolvedValue(true);
+		).mockResolvedValue(useNewGithubClient);
 	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {

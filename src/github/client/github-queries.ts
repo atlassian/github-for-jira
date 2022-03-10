@@ -108,96 +108,96 @@ export type getCommitsResponse = {
 };
 
 export const getCommitsQueryWithChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
-    repository(owner: $owner, name: $repo){
-      defaultBranchRef {
-        target {
-          ... on Commit {
-            history(first: $per_page, after: $cursor) {
-              edges {
-                cursor
-                node {
-                  author {
-                    avatarUrl
-                    email
-                    name
-                    user {
-                      url
-                    }
+  repository(owner: $owner, name: $repo){
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history(first: $per_page, after: $cursor) {
+            edges {
+              cursor
+              node {
+                author {
+                  avatarUrl
+                  email
+                  name
+                  user {
+                    url
                   }
-                  authoredDate
-                  message
-                  oid
-                  url
-                  changedFiles
                 }
+                authoredDate
+                message
+                oid
+                url
+                changedFiles
               }
             }
           }
         }
       }
     }
-  }`;
+  }
+}`;
 
 export const getCommitsQueryWithoutChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
-    repository(owner: $owner, name: $repo){
-      defaultBranchRef {
-        target {
-          ... on Commit {
-            history(first: $per_page, after: $cursor) {
-              edges {
-                cursor
-                node {
-                  author {
-                    avatarUrl
-                    email
-                    name
-                    user {
-                      url
-                    }
+  repository(owner: $owner, name: $repo){
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history(first: $per_page, after: $cursor) {
+            edges {
+              cursor
+              node {
+                author {
+                  avatarUrl
+                  email
+                  name
+                  user {
+                    url
                   }
-                  authoredDate
-                  message
-                  oid
-                  url
                 }
+                authoredDate
+                message
+                oid
+                url
               }
             }
           }
         }
       }
     }
+  }
   }`;
 
 export const getCommitsQueryOctoKit = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
-    repository(owner: $owner, name: $repo){
-      ref(qualifiedName: $default_ref) {
-        target {
-          ... on Commit {
-            history(first: $per_page, after: $cursor) {
-              edges {
-                cursor
-                node {
-                  author {
-                    avatarUrl
-                    email
-                    name
-                    user {
-                      url
-                    }
+  repository(owner: $owner, name: $repo){
+    ref(qualifiedName: $default_ref) {
+      target {
+        ... on Commit {
+          history(first: $per_page, after: $cursor) {
+            edges {
+              cursor
+              node {
+                author {
+                  avatarUrl
+                  email
+                  name
+                  user {
+                    url
                   }
-                  authoredDate
-                  message
-                  oid
-                  url
-                  ${includeChangedFiles ? "changedFiles" : ""}
                 }
+                authoredDate
+                message
+                oid
+                url
+                ${includeChangedFiles ? "changedFiles" : ""}
               }
             }
           }
         }
       }
     }
-  }`;
+  }
+}`;
 
 export type GetBranchesResponse = {repository: Repository};
 export const GetBranchesQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {

@@ -1,0 +1,27 @@
+{
+  "data": {
+    "repository": {
+      "ref": {
+        "target": {
+          "history": {
+            "edges": [
+              {
+                "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
+                "node": {
+                  "author": {
+                    "email": "test-author-email@example.com",
+                    "name": "test-author-name"
+                  },
+                  "authoredDate": "test-authored-date",
+                  "message": "[TES-17] test-commit-message",
+                  "oid": "test-oid",
+                  "url": "https://github.com/test-login/test-repo/commit/test-sha"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

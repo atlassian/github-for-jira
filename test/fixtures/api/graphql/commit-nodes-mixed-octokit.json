@@ -1,0 +1,69 @@
+{
+  "data": {
+    "repository": {
+      "ref": {
+        "target": {
+          "history": {
+            "edges": [
+              {
+                "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 97",
+                "node": {
+                  "author": {
+                    "email": "test-author-email@example.com",
+                    "name": "test-author-name"
+                  },
+                  "authoredDate": "test-authored-date",
+                  "changedFiles": 3,
+                  "message": "[TES-17] test-commit-message",
+                  "oid": "test-oid-1",
+                  "url": "https://github.com/test-login/test-repo/commit/test-sha"
+                }
+              },
+              {
+                "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 98",
+                "node": {
+                  "author": {
+                    "avatarUrl": "test-avatar-url",
+                    "email": "test-author-email@example.com",
+                    "name": "test-author-name"
+                  },
+                  "authoredDate": "test-authored-date",
+                  "message": "[TES-15] another test-commit-message",
+                  "oid": "test-oid-2",
+                  "url": "https://github.com/test-login/test-repo/commit/test-sha"
+                }
+              },
+              {
+                "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
+                "node": {
+                  "author": {
+                    "avatarUrl": "test-avatar-url",
+                    "email": "test-author-email@example.com",
+                    "name": "test-author-name"
+                  },
+                  "authoredDate": "test-authored-date",
+                  "message": "TES-14-TES-15 message with multiple keys",
+                  "oid": "test-oid-3",
+                  "url": "https://github.com/test-login/test-repo/commit/test-sha"
+                }
+              },
+              {
+                "cursor": "Y3Vyc29yOnYyOpK5MjAxsdlkwOC0yM1QxNzozODowNS0wNDowMM4MjT7J 99",
+                "node": {
+                  "author": {
+                    "email": "test-author-email@example.com",
+                    "name": "test-author-name"
+                  },
+                  "authoredDate": "test-authored-date",
+                  "message": "message with no issue keys",
+                  "oid": "test-oid-4",
+                  "url": "https://github.com/test-login/test-repo/commit/test-sha"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
