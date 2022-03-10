@@ -29,43 +29,6 @@ const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor:
   }
 }`;
 
-const queryOctoKit = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
-  repository(owner: $owner, name: $repo){
-    ref(qualifiedName: $default_ref) {
-      target {
-        ... on Commit {
-          history(first: $per_page, after: $cursor) {
-            edges {
-              cursor
-              node {
-                author {
-                  avatarUrl
-                  email
-                  name
-                  user {
-                    url
-                  }
-                }
-                authoredDate
-                message
-                oid
-                url
-                changedFiles
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}`;
-
-
-export const commitsNoLastCursorOctokit = (variables) => ({
-	query: queryOctoKit,
-	variables
-});
-
 export const commitsNoLastCursor = (variables) => ({
 	query,
 	variables
