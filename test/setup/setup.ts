@@ -1,8 +1,9 @@
 import nock from "nock";
 import env from "../../src/config/env";
-import "./matchers/to-have-sent-metrics";
 import "./matchers/nock";
 import "./matchers/to-promise";
+import "./matchers/to-have-sent-metrics";
+import "./matchers/to-be-called-with-delay";
 import { sequelize } from "../../src/models/sequelize";
 import { mocked } from "ts-jest/utils";
 import IORedis from "ioredis";
