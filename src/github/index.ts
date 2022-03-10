@@ -1,5 +1,5 @@
 import issueComment from "./issue-comment";
-import issue from "./issue";
+import { issueWebhookHandler } from "./issue";
 import middleware from "./middleware";
 import pullRequest from "./pull-request";
 import { workflowWebhookHandler } from "./workflow";
@@ -33,7 +33,7 @@ export default (robot: Application) => {
 		webhookTimeout(middleware(issueComment))
 	);
 
-	robot.on(["issues.opened", "issues.edited"], middleware(issue));
+	robot.on(["issues.opened", "issues.edited"], middleware(issueWebhookHandler));
 
 	robot.on("push", middleware(pushWebhookHandler));
 
