@@ -104,8 +104,6 @@ const updateGithubIssues = async (github: GitHubClient | GitHubAPI, context: Cus
 	}
 
 	context.log("Updating pull request");
-	console.log("WATTTT");
-	console.log(linkifiedBody);
 	const updatedPullRequest = {
 		body: linkifiedBody,
 		owner,
