@@ -31,10 +31,7 @@ export const createBranch = async (context: CustomContext, jiraClient, _util, gi
 		const jiraPayload = await transformBranch(github, webhookPayload);
 
 		if (!jiraPayload) {
-			context.log(
-				{ noop: "no_jira_payload_create_branch" }, 
-				"Halting further execution for createBranch since jiraPayload is empty"
-			);
+			context.log("Halting further execution for createBranch since jiraPayload is empty");
 			return;
 		}
 
@@ -70,10 +67,7 @@ export const processBranch = async (
 	const jiraPayload = await transformBranch(github, webhookPayload);
 
 	if (!jiraPayload) {
-		logger.info(
-			{ noop: "no_jira_payload_create_branch" },
-			"Halting further execution for createBranch since jiraPayload is empty"
-		);
+		logger.info("Halting further execution for createBranch since jiraPayload is empty");
 		return;
 	}
 

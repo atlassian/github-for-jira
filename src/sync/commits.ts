@@ -3,8 +3,14 @@ import { GitHubAPI } from "probot";
 import { Repository } from "../models/subscription";
 import GitHubClient from "../github/client/github-client";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { getCommitsQueryWithChangedFiles, getCommitsQueryWithoutChangedFiles }  from "../github/client/github-queries";
+import { CommitQueryNode, getCommitsQueryWithChangedFiles, getCommitsQueryWithoutChangedFiles }  from "../github/client/github-queries";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { JiraCommitData } from "src/interfaces/jira";
+
+type CommitData = {
+	edges: CommitQueryNode[],
+	jiraPayload: JiraCommitData | undefined
+}
 
 const fetchCommits = async (gitHubClient: GitHubClient, repository: Repository, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, cursor);
@@ -17,7 +23,7 @@ const fetchCommits = async (gitHubClient: GitHubClient, repository: Repository, 
 	};
 };
 
-export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, gitHubClient: GitHubClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, gitHubClient: GitHubClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number): Promise<CommitData> => {
 	logger.info("Syncing commits: started");
 	if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL, false, jiraHost)) {
 		const { edges, commits }  = await fetchCommits(gitHubClient, repository, cursor, perPage);
@@ -33,7 +39,7 @@ export const getCommits = async (logger: LoggerWithTarget, github: GitHubAPI, gi
 };
 
 // TODO: better typings
-const getCommitsOctoKit = async (logger: LoggerWithTarget, github: GitHubAPI, _newGithub: GitHubClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+const getCommitsOctoKit = async (logger: LoggerWithTarget, github: GitHubAPI, _newGithub: GitHubClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number): Promise<CommitData> => {
 	logger.info("Syncing commits: started");
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

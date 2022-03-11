@@ -78,7 +78,7 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
     }
   }`;
 
-type CommitQueryNode = {
+export type CommitQueryNode = {
   cursor: string,
   node: {
       author: {
