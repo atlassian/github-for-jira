@@ -107,11 +107,12 @@ const updateGithubIssues = async (github: GitHubClient | GitHubAPI, context: Cus
 		body: linkifiedBody,
 		id: pullRequest.id
 	});
-
-	const { body, id, owner, repo, number } = editedPullRequest;
+	
+	const { body, owner, repo, number } = editedPullRequest;
+	const issue = { body, owner, repo, issue_number: number };
 
 	github instanceof GitHubClient ?
-		await github.updateIssue({ body, id }, owner, repo, number) :
+		await github.updateIssue(issue) :
 		await github.issues.update(editedPullRequest);
 };
 
