@@ -1,10 +1,10 @@
 import issueComment from "./issue-comment";
-import issue from "./issue";
+import { issueWebhookHandler } from "./issue";
 import middleware from "./middleware";
 import pullRequest from "./pull-request";
 import { workflowWebhookHandler } from "./workflow";
 import deployment from "./deployment";
-import push from "./push";
+import { pushWebhookHandler } from "./push";
 import { createBranch, deleteBranch } from "./branch";
 import webhookTimeout from "../util/webhook-timeout";
 import statsd from "../config/statsd";
@@ -33,9 +33,9 @@ export default (robot: Application) => {
 		webhookTimeout(middleware(issueComment))
 	);
 
-	robot.on(["issues.opened", "issues.edited"], middleware(issue));
+	robot.on(["issues.opened", "issues.edited"], middleware(issueWebhookHandler));
 
-	robot.on("push", middleware(push));
+	robot.on("push", middleware(pushWebhookHandler));
 
 	robot.on(
 		[

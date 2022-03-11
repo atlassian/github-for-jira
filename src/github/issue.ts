@@ -1,9 +1,18 @@
-import JiraClient from "../models/jira-client";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import GitHubClient from "./client/github-client";
+import { getCloudInstallationId } from "./client/installation-id";
+import { GitHubAPI } from "probot";
+import { Octokit } from "@octokit/rest";
+import { WebhookPayloadIssues } from "@octokit/webhooks";
 
-export default async (context: CustomContext, _: JiraClient, util): Promise<void> => {
-	const { issue } = context.payload;
+export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, jiraClient, util, githubInstallationId: number): Promise<void> => {
+	const { issue, repository } = context.payload;
+
+	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_ISSUE_WEBHOOK, false, jiraClient.baseURL) ?
+		new GitHubClient(getCloudInstallationId(githubInstallationId), context.log) :
+		context.github;
 
 	let linkifiedBody;
 	try {
@@ -19,14 +28,14 @@ export default async (context: CustomContext, _: JiraClient, util): Promise<void
 		);
 	}
 
-	const editedIssue = context.issue({
-		body: linkifiedBody,
-		id: issue.id
-	});
-
 	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);
 
-	const githubResponse = await context.github.issues.update(editedIssue);
+	const githubResponse = await updateIssue(githubClient, {
+		body: linkifiedBody,
+		owner: repository.owner.login,
+		repo: repository.name,
+		issue_number: issue.number
+	})
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
@@ -36,3 +45,6 @@ export default async (context: CustomContext, _: JiraClient, util): Promise<void
 		githubResponse?.status
 	);
 };
+
+const updateIssue = async (githubClient:GitHubAPI | GitHubClient, issue: Octokit.IssuesUpdateParams) =>
+	githubClient instanceof GitHubClient ? await githubClient.updateIssue(issue) : await githubClient.issues.update(issue);
