@@ -191,6 +191,17 @@ export default class GitHubClient {
 	};
 
 	/**
+	 * Returns a single reference from Git. The {ref} in the URL must be formatted as heads/<branch name>
+	 */
+	public getRef = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.GitGetRefResponse>> => {
+		return await this.get<Octokit.GitGetRefResponse>(`/repos/{owner}/{repo}/git/ref/{ref}`, {}, {
+			owner,
+			repo,
+			ref
+		});
+	};
+
+	/**
 	 * Get a page of repositories.
 	 */
 	public getRepositoriesPage = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {

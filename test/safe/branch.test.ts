@@ -38,8 +38,14 @@ describe("Branch Webhook", () => {
 		await sqsQueues.branch.purgeQueue();
 	});
 
-	describe("Create Branch", () => {
+	describe.each([true, false])("Create Branch - New GH Client feature flag is '%s'", (useNewGithubClient) => {
 		it("should queue and process a create webhook", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(useNewGithubClient);
 
 			when(booleanFlag).calledWith(
 				BooleanFlags.USE_SQS_FOR_BRANCH,
@@ -155,6 +161,7 @@ describe("Branch Webhook", () => {
 			});
 		});
 	});
+
 
 	describe("Create Branch (with disabled FF - delete this test with FF cleanup)", () => {
 		it("should update Jira issue with link to a branch on GitHub", async () => {
