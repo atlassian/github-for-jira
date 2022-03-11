@@ -277,4 +277,18 @@ export default class GitHubClient {
 				}
 			});
 	}
+
+	public async updateIssueComment({ owner, repo, comment_id, body }: Octokit.IssuesUpdateCommentParams): Promise<AxiosResponse<Octokit.IssuesUpdateCommentResponse>> {
+		return await this.axios.patch<Octokit.IssuesUpdateResponse>(
+			`/repos/{owner}/{repo}/issues/comments/{comment_id}`, {
+				body
+			}, {
+				...await this.installationAuthenticationHeaders(),
+				urlParams: {
+					owner,
+					repo,
+					comment_id
+				}
+			});
+	}
 }
