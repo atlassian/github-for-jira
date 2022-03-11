@@ -1,34 +1,33 @@
 const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
-    repository(owner: $owner, name: $repo){
-      defaultBranchRef {
-        target {
-          ... on Commit {
-            history(first: $per_page, after: $cursor) {
-              edges {
-                cursor
-                node {
-                  author {
-                    avatarUrl
-                    email
-                    name
-                    user {
-                      url
-                    }
+  repository(owner: $owner, name: $repo){
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history(first: $per_page, after: $cursor) {
+            edges {
+              cursor
+              node {
+                author {
+                  avatarUrl
+                  email
+                  name
+                  user {
+                    url
                   }
-                  authoredDate
-                  message
-                  oid
-                  url
-                  changedFiles
                 }
+                authoredDate
+                message
+                oid
+                url
+                changedFiles
               }
             }
           }
         }
       }
     }
-  }`;
-
+  }
+}`;
 
 export const commitsNoLastCursor = (variables) => ({
 	query,

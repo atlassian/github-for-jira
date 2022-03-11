@@ -1,29 +1,22 @@
 import { getJiraId } from "../jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../util/jira";
-import _ from "lodash";
+import { isEmpty } from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { GitHubAPI } from "probot";
 import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
+import GitHubClient from "../github/client/github-client";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
 
-async function getLastCommit(github: GitHubAPI, webhookPayload: WebhookPayloadCreate, issueKeys: string[]) {
+const getLastCommit = async (github: GitHubClient | GitHubAPI, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
+	const { data: { object: { sha } } } = github instanceof GitHubClient ?
+		await github.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`) :
+		await github.git.getRef({ owner: webhookPayload.repository.owner.login, repo: webhookPayload.repository.name, ref: `heads/${webhookPayload.ref}` });
 
-	const {
-		data: { object: { sha } }
-	} = await github.git.getRef({
-		owner: webhookPayload.repository.owner.login,
-		repo: webhookPayload.repository.name,
-		ref: `heads/${webhookPayload.ref}`
-	});
-
-	const {
-		data: { commit, author, html_url: url }
-	} = await github.repos.getCommit({
-		owner: webhookPayload.repository.owner.login,
-		repo: webhookPayload.repository.name,
-		ref: sha
-	});
+	const { data: { commit, author, html_url: url } } = github instanceof GitHubClient  ?
+		await github.getCommit(webhookPayload.repository.owner.login, webhookPayload.repository.name, sha) :
+		await github.repos.getCommit({ owner: webhookPayload.repository.owner.login, repo: webhookPayload.repository.name, ref: sha });
 
 	return {
 		author: getJiraAuthor(author, commit.author),
@@ -37,30 +30,29 @@ async function getLastCommit(github: GitHubAPI, webhookPayload: WebhookPayloadCr
 		url,
 		updateSequenceId: Date.now()
 	};
-}
+};
 
-export const transformBranch = async (github: GitHubAPI, webhookPayload: WebhookPayloadCreate) => {
-	if (webhookPayload.ref_type !== "branch") return undefined;
+export const transformBranch = async (github: GitHubAPI | GitHubClient, webhookPayload: WebhookPayloadCreate): Promise<JiraBranchData | undefined> => {
+	if (webhookPayload.ref_type !== "branch") {
+		return;
+	}
 
 	const { ref, repository } = webhookPayload;
-
 	const issueKeys = issueKeyParser().parse(ref) || [];
 
-	if (_.isEmpty(issueKeys)) {
-		return undefined;
+	if (isEmpty(issueKeys)) {
+		return;
 	}
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
-	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false);
-
-	// TODO: type this return
 	return {
 		id: repository.id,
 		name: repository.full_name,
 		url: repository.html_url,
 		branches: [
 			{
-				createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(repository.html_url, ref, issueKeys) : `${repository.html_url}/pull/new/${ref}`,
+				createPullRequestUrl: await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false)
+					? generateCreatePullRequestUrl(repository.html_url, ref, issueKeys) : `${repository.html_url}/pull/new/${ref}`,
 				lastCommit,
 				id: getJiraId(ref),
 				issueKeys,
