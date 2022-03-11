@@ -239,13 +239,27 @@ export default class GitHubClient {
 	};
 
 	public async updateIssue({ owner, repo, issue_number, body }: Octokit.IssuesUpdateParams): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
-		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issue_number}`, body, {},
+		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issue_number}`, { body }, {},
 			{
 				owner,
 				repo,
 				issue_number
 			});
 	}
+
+	// public async updateIssue({ owner, repo, issue_number, body }: Octokit.IssuesUpdateParams): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
+	// 	return await this.axios.patch<Octokit.IssuesUpdateResponse>(
+	// 		`/repos/{owner}/{repo}/issues/{issue_number}`, {
+	// 			body
+	// 		}, {
+	// 			...await this.installationAuthenticationHeaders(),
+	// 			urlParams: {
+	// 				owner,
+	// 				repo,
+	// 				issue_number
+	// 			}
+	// 		});
+	// }
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);

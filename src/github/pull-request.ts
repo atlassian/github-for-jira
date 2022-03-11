@@ -19,7 +19,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		},
 		changes
 	} = context.payload;
-	const { number: pullRequestNumber, body: pullRequestBody, id: pullRequestId } = pull_request;
+	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
 	const githubClient =
 		await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PULL_REQUEST_WEBHOOK, false, jiraClient.baseURL) ?
@@ -27,9 +27,10 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 			: context.github;
 
 	context.log = context.log.child({
-		number: pullRequestNumber,
-		body: pullRequestBody,
-		id: pullRequestId
+		jiraHostName: jiraClient.baseURL,
+		installationId: githubInstallationId,
+		pullRequestNumber,
+		pullRequestId
 	});
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,7 +104,8 @@ const updateGithubIssues = async (github: GitHubClient | GitHubAPI, context: Cus
 	}
 
 	context.log("Updating pull request");
-
+	console.log("WATTTT");
+	console.log(linkifiedBody);
 	const updatedPullRequest = {
 		body: linkifiedBody,
 		owner,

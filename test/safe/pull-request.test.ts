@@ -97,8 +97,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 			]);
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
-			id: "test-pull-request-id"
+			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
 		}).reply(200);
 
 		jiraNock
@@ -380,8 +379,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 
 			githubNock
 				.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-					body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
-					id: "test-pull-request-id"
+					body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
 				})
 				.reply(200);
 
@@ -538,8 +536,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 				]);
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
-				id: "test-pull-request-id"
+				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
 			}).reply(200);
 
 			jiraNock.get("/rest/api/latest/issue/TEST-124?fields=summary")
@@ -615,8 +612,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 				});
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
-				id: "test-pull-request-id"
+				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
 			}).reply(200);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")

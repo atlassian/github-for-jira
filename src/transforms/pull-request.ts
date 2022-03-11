@@ -54,7 +54,8 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pul
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
-	const textToSearch = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? `${prTitle}\n${head.ref}\n${body}}` : `${prTitle}\n${pullRequest.head.ref}`;
+	const prBody = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? body : "";
+	const textToSearch = `${prTitle}\n${head.ref}\n${prBody}}`;
 	const issueKeys = issueKeyParser().parse(textToSearch) || [];
 
 	const logPayload = {
