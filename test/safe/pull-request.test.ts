@@ -2,10 +2,15 @@
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../../src/models";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "../../src/config/feature-flags";
 
-describe("Pull Request Webhook", () => {
+jest.mock("../../src/config/feature-flags");
+
+describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient) => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
+	const issueKeys = ["TEST-123", "TEST-321"];
 
 	beforeEach(async () => {
 		app = await createWebhookApp();
@@ -20,11 +25,27 @@ describe("Pull Request Webhook", () => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PULL_REQUEST_WEBHOOK,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(useNewGithubClient);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
+			expect.anything()
+		).mockResolvedValue(useNewGithubClient);
+
 	});
 
 	it("should have reviewers on pull request action", async () => {
 		const fixture = require("../fixtures/pull-request-basic.json");
-
+		if (useNewGithubClient) {
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+		}
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -76,8 +97,7 @@ describe("Pull Request Webhook", () => {
 			]);
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
-			id: "test-pull-request-id"
+			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
 		}).reply(200);
 
 		jiraNock
@@ -96,7 +116,7 @@ describe("Pull Request Webhook", () => {
 					url: "test-pull-request-base-url",
 					branches: [
 						{
-							createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
+							createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
 							lastCommit: {
 								author: {
 									avatar: "https://github.com/ghost.png",
@@ -109,13 +129,13 @@ describe("Pull Request Webhook", () => {
 								fileCount: 0,
 								hash: "test-pull-request-sha",
 								id: "test-pull-request-sha",
-								issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
+								issueKeys,
 								message: "n/a",
 								updateSequenceId: 12345678,
 								url: "test-pull-request-head-url/commit/test-pull-request-sha"
 							},
 							id: "TEST-321-test-pull-request-head-ref",
-							issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
+							issueKeys,
 							name: "TEST-321-test-pull-request-head-ref",
 							url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
 							updateSequenceId: 12345678
@@ -133,7 +153,7 @@ describe("Pull Request Webhook", () => {
 							destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 							displayId: "#1",
 							id: 1,
-							issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
+							issueKeys,
 							lastUpdate: "test-pull-request-update-time",
 							reviewers: [
 								{
@@ -164,10 +184,12 @@ describe("Pull Request Webhook", () => {
 		await expect(app.receive(fixture)).toResolve();
 	});
 
-
 	it("should delete the reference to a pull request when issue keys are removed from the title", async () => {
 		const fixture = require("../fixtures/pull-request-remove-keys.json");
 		const { repository, pull_request: pullRequest } = fixture.payload;
+		if (useNewGithubClient) {
+			githubUserTokenNock(gitHubInstallationId);
+		}
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, [
@@ -233,6 +255,12 @@ describe("Pull Request Webhook", () => {
 	it("will not delete references if a branch still has an issue key", async () => {
 		const fixture = require("../fixtures/pull-request-test-changes-with-branch.json");
 
+		if (useNewGithubClient) {
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+		}
+
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, [
 				{
@@ -294,6 +322,11 @@ describe("Pull Request Webhook", () => {
 		beforeEach(() => fixture = require("../fixtures/pull-request-triggered-by-bot.json"));
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot", async () => {
+			if (useNewGithubClient) {
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+			}
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
 					login: "test-pull-request-author-login",
@@ -344,6 +377,12 @@ describe("Pull Request Webhook", () => {
 					}
 				]);
 
+			githubNock
+				.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
+					body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
+				})
+				.reply(200);
+
 			jiraNock
 				.get("/rest/api/latest/issue/TEST-124?fields=summary")
 				.reply(200, {
@@ -362,7 +401,7 @@ describe("Pull Request Webhook", () => {
 							branches:
 								[
 									{
-										createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
+										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
 										lastCommit:
 											{
 												author:
@@ -377,23 +416,13 @@ describe("Pull Request Webhook", () => {
 												fileCount: 0,
 												hash: "test-pull-request-sha",
 												id: "test-pull-request-sha",
-												issueKeys:
-													[
-														"TEST-123",
-														"TEST-321",
-														"TEST-124"
-													],
+												issueKeys,
 												message: "n/a",
 												updateSequenceId: 12345678,
 												url: "test-pull-request-head-url/commit/test-pull-request-sha"
 											},
 										id: "TEST-321-test-pull-request-head-ref",
-										issueKeys:
-											[
-												"TEST-123",
-												"TEST-321",
-												"TEST-124"
-											],
+										issueKeys,
 										name: "TEST-321-test-pull-request-head-ref",
 										url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
 										updateSequenceId: 12345678
@@ -413,12 +442,7 @@ describe("Pull Request Webhook", () => {
 										destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 										displayId: "#1",
 										id: 1,
-										issueKeys:
-											[
-												"TEST-123",
-												"TEST-321",
-												"TEST-124"
-											],
+										issueKeys,
 										lastUpdate: "test-pull-request-update-time",
 										reviewers:
 											[
@@ -448,19 +472,19 @@ describe("Pull Request Webhook", () => {
 					}
 			}).reply(200);
 
-			githubNock
-				.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-					body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
-					id: "test-pull-request-id"
-				})
-				.reply(200);
-
 			mockSystemTime(12345678);
 
 			await expect(app.receive(fixture[0])).toResolve();
 		});
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot", async () => {
+
+			if (useNewGithubClient) {
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+			}
+
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
 					login: "test-pull-request-author-login",
@@ -512,8 +536,7 @@ describe("Pull Request Webhook", () => {
 				]);
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
-				id: "test-pull-request-id"
+				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
 			}).reply(200);
 
 			jiraNock.get("/rest/api/latest/issue/TEST-124?fields=summary")
@@ -542,7 +565,7 @@ describe("Pull Request Webhook", () => {
 								destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 								displayId: "#1",
 								id: 1,
-								issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
+								issueKeys,
 								lastUpdate: "test-pull-request-update-time",
 								reviewers: [
 									{
@@ -574,6 +597,12 @@ describe("Pull Request Webhook", () => {
 		});
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot", async () => {
+			if (useNewGithubClient) {
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(gitHubInstallationId);
+			}
 			githubNock.get("/users/test-pull-request-user-login")
 				.twice()
 				.reply(200, {
@@ -583,8 +612,7 @@ describe("Pull Request Webhook", () => {
 				});
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
-				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`,
-				id: "test-pull-request-id"
+				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
 			}).reply(200);
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
@@ -647,7 +675,7 @@ describe("Pull Request Webhook", () => {
 							branches:
 								[
 									{
-										createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
+										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
 										lastCommit:
 											{
 												author:
@@ -662,23 +690,13 @@ describe("Pull Request Webhook", () => {
 												fileCount: 0,
 												hash: "test-pull-request-sha",
 												id: "test-pull-request-sha",
-												issueKeys:
-													[
-														"TEST-123",
-														"TEST-321",
-														"TEST-124"
-													],
+												issueKeys,
 												message: "n/a",
 												updateSequenceId: 12345678,
 												url: "test-pull-request-head-url/commit/test-pull-request-sha"
 											},
 										id: "TEST-321-test-pull-request-head-ref",
-										issueKeys:
-											[
-												"TEST-123",
-												"TEST-321",
-												"TEST-124"
-											],
+										issueKeys,
 										name: "TEST-321-test-pull-request-head-ref",
 										url: "test-pull-request-head-url/tree/TEST-321-test-pull-request-head-ref",
 										updateSequenceId: 12345678
@@ -698,12 +716,7 @@ describe("Pull Request Webhook", () => {
 										destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 										displayId: "#1",
 										id: 1,
-										issueKeys:
-											[
-												"TEST-123",
-												"TEST-321",
-												"TEST-124"
-											],
+										issueKeys,
 										lastUpdate: "test-pull-request-update-time",
 										reviewers:
 											[

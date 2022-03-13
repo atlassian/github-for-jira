@@ -1,5 +1,5 @@
 import issueKeyParser from "jira-issue-key-parser";
-import _ from "lodash";
+import { isEmpty, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
 import { Octokit } from "@octokit/rest";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -9,6 +9,7 @@ import { getGithubUser } from "../services/github/user";
 import { JiraAuthor } from "../interfaces/jira";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
+import GitHubClient from "../github/client/github-client";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -24,7 +25,7 @@ interface Review extends JiraAuthor {
 
 // TODO: define arguments and return
 function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
-	const sortedReviews = _.orderBy(reviews, "submitted_at", "desc");
+	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, Review> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
 	return sortedReviews.reduce((acc: Review[], review) => {
@@ -49,20 +50,21 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 }
 
 // TODO: define arguments and return
-export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
+export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
-	const textToSearch = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? `${prTitle}\n${head.ref}\n${body}}` : `${prTitle}\n${pullRequest.head.ref}`
+	const prBody = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? body : "";
+	const textToSearch = `${prTitle}\n${head.ref}\n${prBody}}`;
 	const issueKeys = issueKeyParser().parse(textToSearch) || [];
 
 	const logPayload = {
 		prTitle: prTitle || "none",
 		repoName: head?.repo.name || "none",
 		prRef: pullRequest.head.ref || "none"
-	}
+	};
 
-	if (_.isEmpty(issueKeys) || !head?.repo) {
+	if (isEmpty(issueKeys) || !head?.repo) {
 		log?.info(logPayload, "Ignoring pullrequest hence it has no issue keys or repo");
 		return undefined;
 	}
@@ -70,7 +72,6 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
 
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
-
 	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
 
 	return {
@@ -84,7 +85,7 @@ export const transformPullRequest = async (github: GitHubAPI, pullRequest: Octok
 				? []
 				: [
 					{
-						createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys) : `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`, 
+						createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys) : `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
 							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
