@@ -16,7 +16,7 @@ export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: Gi
 	const useNewGHPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false, jiraHost);
 
 	let result;
-	if(useNewGHClient) {
+	if (useNewGHClient) {
 		result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string);
 	} else {
 		result = ((await github.graphql(GetBranchesQuery, {

@@ -6,7 +6,7 @@ import { GitHubAPI } from "probot";
 import { metricHttpRequest } from "../config/metric-names";
 import { Repository } from "../models/subscription";
 import GitHubClient from "../github/client/github-client";
-import { getGithubUser, getGithubUserNew } from "../services/github/user";
+import { getGithubUser } from "../services/github/user";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { AxiosResponseHeaders } from "axios";
@@ -95,9 +95,10 @@ export default async function(
 						owner: repository.owner.login, repo: repository.name, pull_number: pull.number
 					}));
 				const prDetails = prResponse?.data
-				const ghUser = useNewGHClient ?
-					await getGithubUserNew(newGithub, prDetails?.user.login) :
-					await getGithubUser(github, prDetails?.user.login);
+				const ghUser = await getGithubUser(
+					useNewGHClient ? newGithub : github,
+					prDetails?.user.login
+				);
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
 					prDetails,

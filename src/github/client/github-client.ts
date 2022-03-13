@@ -113,6 +113,14 @@ export default class GitHubClient {
 		});
 	}
 
+	private async patch<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+		return this.axios.patch<T>(url, body, {
+			...await this.installationAuthenticationHeaders(),
+			params,
+			urlParams
+		});
+	}
+
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
 		const response = await this.axios.post<GraphQlQueryResponse<T>>("/graphql",
 			{
@@ -152,6 +160,17 @@ export default class GitHubClient {
 	// TODO: add a unit test
 	public async getPullRequest(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsGetResponse>> {
 		return await this.get<Octokit.PullsGetResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}`, {}, {
+			owner,
+			repo,
+			pullNumber
+		});
+	}
+
+	/**
+	 * Get all reviews for a specific pull request.
+	 */
+	public async getPullRequestReviews(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsListReviewsResponse>> {
+		return await this.get<Octokit.PullsListReviewsResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}/reviews`, {}, {
 			owner,
 			repo,
 			pullNumber
@@ -230,6 +249,15 @@ export default class GitHubClient {
 		);
 	};
 
+	public async updateIssue({ owner, repo, issue_number, body }: Octokit.IssuesUpdateParams): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
+		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issue_number}`, { body }, {},
+			{
+				owner,
+				repo,
+				issue_number
+			});
+	}
+
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
 
@@ -275,31 +303,15 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
-	public async updateIssue({ owner, repo, issue_number, body }: Octokit.IssuesUpdateParams): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
-		return await this.axios.patch<Octokit.IssuesUpdateResponse>(
-			`/repos/{owner}/{repo}/issues/{issue_number}`, {
-				body
-			}, {
-				...await this.installationAuthenticationHeaders(),
-				urlParams: {
-					owner,
-					repo,
-					issue_number
-				}
-			});
-	}
-
 	public async updateIssueComment({ owner, repo, comment_id, body }: Octokit.IssuesUpdateCommentParams): Promise<AxiosResponse<Octokit.IssuesUpdateCommentResponse>> {
-		return await this.axios.patch<Octokit.IssuesUpdateResponse>(
-			`/repos/{owner}/{repo}/issues/comments/{comment_id}`, {
-				body
-			}, {
-				...await this.installationAuthenticationHeaders(),
-				urlParams: {
-					owner,
-					repo,
-					comment_id
-				}
+		return await this.patch<Octokit.IssuesUpdateResponse>(
+			`/repos/{owner}/{repo}/issues/comments/{comment_id}`,
+			{ body },
+			{},
+			{
+				owner,
+				repo,
+				comment_id
 			});
 	}
 }

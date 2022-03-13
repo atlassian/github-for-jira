@@ -45,7 +45,6 @@ export const transformBranch = async (github: GitHubAPI | GitHubClient, webhookP
 	}
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
-
 	return {
 		id: repository.id,
 		name: repository.full_name,
