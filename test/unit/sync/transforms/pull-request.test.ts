@@ -14,7 +14,7 @@ describe("pull_request transform", () => {
 		pullRequest.title = "[TES-123] Evernote Test";
 
 		const fixture = {
-			pullRequest: pullRequest,
+			pullRequest,
 			repository: {
 				id: 1234568,
 				name: "test-repo",
