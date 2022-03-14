@@ -303,4 +303,15 @@ export default class GitHubClient {
 		return response?.data?.data;
 	}
 
+	public async updateIssueComment({ owner, repo, comment_id, body }: Octokit.IssuesUpdateCommentParams): Promise<AxiosResponse<Octokit.IssuesUpdateCommentResponse>> {
+		return await this.patch<Octokit.IssuesUpdateResponse>(
+			`/repos/{owner}/{repo}/issues/comments/{comment_id}`,
+			{ body },
+			{},
+			{
+				owner,
+				repo,
+				comment_id
+			});
+	}
 }
