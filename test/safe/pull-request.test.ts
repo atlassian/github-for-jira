@@ -150,7 +150,8 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 								url: "test-pull-request-author-url"
 							},
 							commentCount: "test-pull-request-comment-count",
-							destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
+							destinationBranch: "test-pull-request-base-ref",
+							destinationBranchUrl: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 							displayId: "#1",
 							id: 1,
 							issueKeys,
@@ -439,7 +440,8 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 												url: "test-pull-request-author-url"
 											},
 										commentCount: "test-pull-request-comment-count",
-										destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
+										destinationBranch: "test-pull-request-base-ref",
+										destinationBranchUrl: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 										displayId: "#1",
 										id: 1,
 										issueKeys,
@@ -562,7 +564,8 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 									url: "test-pull-request-author-url"
 								},
 								commentCount: "test-pull-request-comment-count",
-								destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
+								destinationBranch: "test-pull-request-base-ref",
+								destinationBranchUrl: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 								displayId: "#1",
 								id: 1,
 								issueKeys,
@@ -713,7 +716,8 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 												url: "test-pull-request-author-url"
 											},
 										commentCount: "test-pull-request-comment-count",
-										destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
+										destinationBranch: "test-pull-request-base-ref",
+										destinationBranchUrl: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 										displayId: "#1",
 										id: 1,
 										issueKeys,

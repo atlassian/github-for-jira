@@ -87,7 +87,8 @@ export const jiraMatchingIssuesKeysBulkResponse = {
 						url: "test-pull-request-author-url"
 					},
 					commentCount: "test-pull-request-comment-count",
-					destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
+					destinationBranch: "test-pull-request-base-ref",
+					destinationBranchUrl: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 					displayId: "#1",
 					id: 1,
 					issueKeys: ["TEST-123", "TEST-222", "TEST-321", "TEST-124", "TEST-223"],
@@ -157,7 +158,8 @@ export const jiraMultipleJiraBulkResponse = {
 						url: "test-pull-request-author-url"
 					},
 					commentCount: "test-pull-request-comment-count",
-					destinationBranch: "test-pull-request-base-url/tree/test-pull-request-base-ref",
+					destinationBranch: "test-pull-request-base-ref",
+					destinationBranchUrl: "test-pull-request-base-url/tree/test-pull-request-base-ref",
 					displayId: "#1",
 					id: 1,
 					issueKeys: ["TEST-123", "TEST-321", "TEST-124"],
