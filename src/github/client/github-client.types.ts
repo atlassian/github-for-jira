@@ -1,3 +1,6 @@
+import { AxiosResponse } from "axios";
+import { GraphQLError } from "./errors";
+
 export enum SortDirection {
 	ASC = "asc",
 	DES = "desc"
@@ -23,3 +26,10 @@ export type GetPullRequestParams = {
 	per_page?: number;
 	page?: number;
 }
+
+export type GraphQlQueryResponse<ResponseData> = {
+	data: ResponseData;
+	errors?: GraphQLError[];
+};
+
+export type PaginatedAxiosResponse<T> = { hasNextPage: boolean; } & AxiosResponse<T>;

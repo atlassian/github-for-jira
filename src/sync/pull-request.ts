@@ -1,11 +1,11 @@
-import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/types";
+import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
 import transformPullRequest from "./transforms/pull-request";
 import statsd from "../config/statsd";
 import { GitHubAPI } from "probot";
 import { metricHttpRequest } from "../config/metric-names";
 import { Repository } from "../models/subscription";
-import GitHubClient from "../github/client/github-client";
+import { GitHubAppClient } from "../github/client/github-app-client";
 import { getGithubUser } from "../services/github/user";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -42,7 +42,7 @@ type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 export default async function(
 	logger: LoggerWithTarget,
 	github: GitHubAPI,
-	newGithub: GitHubClient,
+	newGithub: GitHubAppClient,
 	jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,

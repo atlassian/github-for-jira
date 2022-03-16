@@ -4,28 +4,21 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
-import { GetPullRequestParams } from "./types";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./interceptors";
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import { GetBranchesQuery, GetBranchesResponse, getCommitsQueryWithChangedFiles, getCommitsQueryWithoutChangedFiles, getCommitsResponse, ViewerRepositoryCountQuery } from "./github-queries";
-import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
-
-type GraphQlQueryResponse<ResponseData> = {
-	data: ResponseData;
-	errors?: GraphQLError[];
-};
-
-export type PaginatedAxiosResponse<T> = { hasNextPage: boolean; } & AxiosResponse<T>;
+import { GithubClientGraphQLError, RateLimitingError } from "./errors";
+import { GraphQlQueryResponse, PaginatedAxiosResponse, GetPullRequestParams } from "./github-client.types";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
-export default class GitHubClient {
+export class GitHubAppClient {
 	private readonly axios: AxiosInstance;
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
@@ -37,7 +30,7 @@ export default class GitHubClient {
 		logger: Logger,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
-		this.logger = logger || getLogger("github.client.axios");
+		this.logger = logger || getLogger("github.app.client");
 
 		this.axios = axios.create({
 			baseURL: githubInstallationId.githubBaseUrl,

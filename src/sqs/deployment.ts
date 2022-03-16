@@ -2,7 +2,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { Context, MessageHandler } from "./index";
 import app from "../worker/app";
 import { processDeployment } from "../github/deployment";
-import GitHubClient from "../github/client/github-client";
+import { GitHubAppClient } from "../github/client/github-app-client";
 import {getCloudInstallationId} from "../github/client/installation-id";
 
 export type DeploymentMessagePayload = {
@@ -33,7 +33,7 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 	context.log.info("Handling deployment message from the SQS queue")
 
 	const github = await app.auth(installationId);
-	const newGitHubClient = new GitHubClient(getCloudInstallationId(installationId), context.log);
+	const newGitHubClient = new GitHubAppClient(getCloudInstallationId(installationId), context.log);
 
 	await processDeployment(
 		github,

@@ -5,7 +5,7 @@ import { getLogger } from "../../../src/config/logger";
 import { GitHubAPI } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
-import GitHubClient from "../../../src/github/client/github-client";
+import { GitHubAppClient } from "../../../src/github/client/github-app-client";
 import { getCloudInstallationId } from "../../../src/github/client/installation-id";
 
 jest.mock("../../../src/config/feature-flags");
@@ -83,7 +83,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 	const deployment_status = require("../../fixtures/deployment_status-basic.json");
 	const owner = deployment_status.payload.repository.owner.login;
 	const repo = deployment_status.payload.repository.name;
-	const githubClient = new GitHubClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
+	const githubClient = new GitHubAppClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(

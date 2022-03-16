@@ -1,17 +1,17 @@
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { getLogger } from "../../config/logger";
-import GitHubClient from "../../github/client/github-client";
+import { GitHubAppClient } from "../../github/client/github-app-client";
 
-const logger = getLogger("services.github.user")
+const logger = getLogger("services.github.user");
 // TODO: Remove this method on featureFlag cleanup
-export const getGithubUser = async (github: GitHubAPI | GitHubClient, username: string): Promise<Octokit.UsersGetByUsernameResponse | undefined> => {
+export const getGithubUser = async (github: GitHubAPI | GitHubAppClient, username: string): Promise<Octokit.UsersGetByUsernameResponse | undefined> => {
 	if (!username) {
 		return undefined;
 	}
 
 	try {
-		const response = github instanceof GitHubClient ?
+		const response = github instanceof GitHubAppClient ?
 			await github.getUserByUsername(username):
 			await github.users.getByUsername({ username });
 		return response.data;

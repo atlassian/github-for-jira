@@ -10,5 +10,4 @@ export class PullRequestProcessor implements StepProcessor<JobState> {
 		};
 	}
 
-
 }
