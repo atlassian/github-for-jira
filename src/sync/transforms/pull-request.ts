@@ -1,6 +1,6 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../../util/jira";
-import _ from "lodash";
+import { isEmpty } from "lodash";
 import { Octokit } from "@octokit/rest";
 import { Repository } from "../../models/subscription";
 
@@ -25,7 +25,7 @@ export default async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghU
 		`${pullRequest.title}\n${pullRequest.head.ref}`
 	);
 
-	if (_.isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
 
@@ -37,7 +37,8 @@ export default async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghU
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
 				author: getJiraAuthor(prDetails.user, ghUser),
 				commentCount: prDetails.comments || 0,
-				destinationBranch: `${repository.html_url}/tree/${prDetails.base?.ref || ""}`,
+				destinationBranch: prDetails.base?.ref || "",
+				destinationBranchUrl: `${repository.html_url}/tree/${prDetails.base?.ref || ""}`,
 				displayId: `#${prDetails.number}`,
 				id: prDetails.number,
 				issueKeys,
