@@ -7,19 +7,14 @@ import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 
 /**
- * A GitHub client that supports authentication as a GitHub app.
- *
- * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
+ * A GitHub client that supports authentication as a GitHub User.
  */
 export class GitHubUserClient {
-	private readonly userToken: string;
 	private readonly axios: AxiosInstance;
+	private readonly userToken: string;
 	private readonly logger: Logger;
 
-	constructor(
-		userToken: string,
-		logger: Logger = getLogger("github.user.client")
-	) {
+	constructor(userToken: string, logger: Logger = getLogger("github.user.client")) {
 		this.userToken = userToken;
 		this.logger = logger;
 
