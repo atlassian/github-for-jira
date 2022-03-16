@@ -5,13 +5,13 @@ import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
 import { GetPullRequestParams } from "./types";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./interceptors";
+import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import { GetBranchesQuery, GetBranchesResponse, getCommitsQueryWithChangedFiles, getCommitsQueryWithoutChangedFiles, getCommitsResponse, ViewerRepositoryCountQuery } from "./github-queries";
-import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./errors";
+import { GithubClientGraphQLError, GraphQLError, RateLimitingError } from "./github-client-errors";
 
 type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;

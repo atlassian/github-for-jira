@@ -3,6 +3,7 @@
 		"target": "ES2020",
 		"module": "commonjs",
 		"moduleResolution": "node",
+		"resolveJsonModule": true,
 		"allowSyntheticDefaultImports": true,
 		"allowJs": true,
 		"importHelpers": true,
@@ -23,24 +24,17 @@
 		"outDir": "build",
 		"baseUrl": ".",
 		"paths": {
-			"routes": [
-				"src/routes"
-			],
-			"middleware": [
-				"src/middleware"
-			],
-			"utils": [
-				"src/util"
-			],
-			"config": [
-				"src/config"
-			],
-			"interfaces": [
-				"src/interfaces"
-			],
-			"services": [
-				"src/services"
-			]
+			"~/*": ["./*"],
+			"routes/*": ["src/routes/*"],
+			"middleware/*": ["src/middleware/*"],
+			"utils/*": ["src/util/*"],
+			"config/*": ["src/config/*"],
+			"interfaces/*": ["src/interfaces/*"],
+			"models/*": ["src/models/*"],
+			"services/*": ["src/services/*"],
+			"db/*": ["db/*"],
+			"test/*": ["test/*"],
+			"fixtures/*": ["test/fixtures/*"]
 		}
 	},
 	"include": [

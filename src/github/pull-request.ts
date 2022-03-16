@@ -1,7 +1,7 @@
 import { transformPullRequest } from "../transforms/pull-request";
 import issueKeyParser from "jira-issue-key-parser";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
+import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import GitHubClient from "./client/github-client";

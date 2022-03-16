@@ -1,5 +1,5 @@
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
+import { CustomContext } from "middleware/github-webhook-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import GitHubClient from "./client/github-client";
 import { getCloudInstallationId } from "./client/installation-id";

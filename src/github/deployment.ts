@@ -1,6 +1,6 @@
 import transformDeployment from "../transforms/deployment";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
+import { CustomContext } from "middleware/github-webhook-middleware";
 import getJiraClient, { DeploymentsResult } from "../jira/client";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
