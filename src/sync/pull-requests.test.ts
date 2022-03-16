@@ -86,7 +86,8 @@ describe.skip("sync/pull-request", () => {
 									url: "https://api.github.com/users/bkeepers"
 								},
 								commentCount: 0,
-								destinationBranch: "test-repo-url/tree/devel",
+								destinationBranch: "devel",
+								destinationBranchUrl: "test-repo-url/tree/devel",
 								displayId: "#51",
 								id: 51,
 								issueKeys: ["TES-15"],

@@ -3,8 +3,8 @@ import path from "path";
 import getJiraUtil from "./index";
 
 describe("Jira util", () => {
-	function loadFixture(name) {
-		const base = path.join(__dirname, "../../fixtures/text", name);
+	const loadFixture = (name: string) => {
+		const base = path.resolve(__dirname, "../../../test/fixtures/text", name);
 		const source = fs
 			.readFileSync(`${base}.source.md`)
 			.toString("utf-8")
@@ -14,7 +14,7 @@ describe("Jira util", () => {
 			.toString("utf-8")
 			.trim();
 		return { source, rendered };
-	}
+	};
 
 	describe("#addJiraIssueLinks", () => {
 		let util;

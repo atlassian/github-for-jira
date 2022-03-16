@@ -10,7 +10,7 @@ describe("Jira Auth Axios Middleware", () => {
 
 	beforeEach(() => {
 		const instance = axios.create();
-		const secret = fs.readFileSync(path.resolve(__dirname, "../../../setup/test-key.pem"), { encoding: "utf8" });
+		const secret = fs.readFileSync(path.resolve(__dirname, "../../../test/setup/test-key.pem"), { encoding: "utf8" });
 		middleware = jiraAuthMiddleware(secret, instance);
 		mockSystemTime(0);
 		config = {

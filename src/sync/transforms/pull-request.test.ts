@@ -14,7 +14,7 @@ describe("pull_request transform", () => {
 		pullRequest.title = "[TES-123] Evernote Test";
 
 		const fixture = {
-			pullRequest: pullRequest,
+			pullRequest,
 			repository: {
 				id: 1234568,
 				name: "test-repo",
@@ -43,8 +43,8 @@ describe("pull_request transform", () => {
 						url: "https://github.com/ghost"
 					},
 					commentCount: 10,
-					destinationBranch:
-						"https://github.com/test-owner/test-repo/tree/devel",
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/test-owner/test-repo/tree/devel",
 					displayId: "#51",
 					id: 51,
 					issueKeys: ["TES-123"],

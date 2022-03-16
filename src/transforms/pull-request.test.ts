@@ -30,7 +30,8 @@ describe("pull_request transform", () => {
 						name: "Some User Name",
 						url: "https://api.github.com/users/bkeepers"
 					},
-					destinationBranch: "https://github.com/integrations/test/tree/devel",
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
 					issueKeys: ["TES-123"],
@@ -86,7 +87,8 @@ describe("pull_request transform", () => {
 						name: "Some User Name",
 						url: "https://api.github.com/users/bkeepers"
 					},
-					destinationBranch: "https://github.com/integrations/test/tree/devel",
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
 					issueKeys: ["TES-123"],
