@@ -1,10 +1,10 @@
-import {BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError} from "./errors";
+import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./errors";
 import Logger from "bunyan";
 import statsd from "../../config/statsd";
 import { metricError } from "../../config/metric-names";
-import {AxiosRequestConfig, AxiosResponse} from "axios";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { extractPath } from "../../jira/client/axios";
-import {numberFlag, NumberFlags} from "../../config/feature-flags";
+import { numberFlag, NumberFlags } from "../../config/feature-flags";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -25,11 +25,11 @@ export const setRequestStartTime = (config) => {
 export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
 	const timeout = await numberFlag(NumberFlags.GITHUB_CLIENT_TIMEOUT, 60000);
 	//Check if timeout is set already explicitly in the call
-	if(!config.timeout && timeout) {
+	if (!config.timeout && timeout) {
 		config.timeout = timeout;
 	}
 	return config;
-}
+};
 
 //TODO Move to util/axios/common-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,7 +52,6 @@ const sendResponseMetrics = (metricName: string, response?: any, status?: string
 	statsd.histogram(metricName, requestDurationMs, tags);
 	return response;
 };
-
 
 export const instrumentRequest = (metricName) =>
 	(response) => {
@@ -85,7 +84,6 @@ export const instrumentFailedRequest = (metricName) =>
 		}
 		return Promise.reject(error);
 	};
-
 
 export const handleFailedRequest = (logger: Logger) =>
 	(error) => {

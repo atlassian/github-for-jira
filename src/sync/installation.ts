@@ -15,7 +15,7 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import IORedis from "ioredis";
 import getRedisInfo from "../config/redis-info";
-import GitHubClient from "../github/client/github-client";
+import { GitHubAppClient } from "../github/client/github-app-client";
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
@@ -33,7 +33,7 @@ interface TaskProcessors {
 		(
 			logger: LoggerWithTarget,
 			github: GitHubAPI,
-			newGithub: GitHubClient,
+			newGithub: GitHubAppClient,
 			jiraHost: string,
 			repository: Repository,
 			cursor?: string | number,
@@ -193,7 +193,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		logger
 	);
 
-	const newGithub = new GitHubClient(getCloudInstallationId(installationId), logger);
+	const newGithub = new GitHubAppClient(getCloudInstallationId(installationId), logger);
 
 	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription);

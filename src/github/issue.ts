@@ -1,7 +1,7 @@
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import GitHubClient from "./client/github-client";
+import { GitHubAppClient } from "./client/github-app-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
@@ -11,7 +11,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 	const { issue, repository } = context.payload;
 
 	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_ISSUE_WEBHOOK, false, jiraClient.baseURL) ?
-		new GitHubClient(getCloudInstallationId(githubInstallationId), context.log) :
+		new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log) :
 		context.github;
 
 	// TODO: need to create reusable function for unfurling
@@ -36,7 +36,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		owner: repository.owner.login,
 		repo: repository.name,
 		issue_number: issue.number
-	})
+	});
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
@@ -47,5 +47,5 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 	);
 };
 
-const updateIssue = async (githubClient:GitHubAPI | GitHubClient, issue: Octokit.IssuesUpdateParams) =>
-	githubClient instanceof GitHubClient ? await githubClient.updateIssue(issue) : await githubClient.issues.update(issue);
+const updateIssue = async (githubClient:GitHubAPI | GitHubAppClient, issue: Octokit.IssuesUpdateParams) =>
+	githubClient instanceof GitHubAppClient ? await githubClient.updateIssue(issue) : await githubClient.issues.update(issue);

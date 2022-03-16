@@ -51,5 +51,6 @@
 			"SwitchCase": 1
 		}],
 		"@import/no-unresolved": "off"
+
 	}
 }
