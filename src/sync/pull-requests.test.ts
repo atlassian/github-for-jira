@@ -9,6 +9,8 @@ import { createWebhookApp } from "test/utils/probot";
 import {getLogger} from "config/logger";
 import {Hub} from "@sentry/types/dist/hub";
 
+import pullRequestList from "fixtures/api/pull-request-list.json";
+
 jest.mock("models/index");
 
 describe.skip("sync/pull-request", () => {
@@ -62,8 +64,6 @@ describe.skip("sync/pull-request", () => {
 	])("PR Title: %p, PR Head Ref: %p", (title, head) => {
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 			const data = { installationId, jiraHost };
-
-			const pullRequestList = require("fixtures/api/pull-request-list.json");
 			pullRequestList[0].title = title;
 			pullRequestList[0].head.ref = head;
 
@@ -129,16 +129,14 @@ describe.skip("sync/pull-request", () => {
 	// TODO: fix this test.  Can't figure out why githubNock isn't working for this one...
 	it("should not sync if nodes do not contain issue keys", async () => {
 		process.env.LIMITER_PER_INSTALLATION = "2000";
-
-		const data 	= require("fixtures/api/pull-request-list.json");
 		githubNock.get("/repos/integrations/test-repo-name/pulls")
 			.query(true)
-			.reply(200, data);
+			.reply(200, pullRequestList);
 
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation(app)(pullRequestList as any, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});

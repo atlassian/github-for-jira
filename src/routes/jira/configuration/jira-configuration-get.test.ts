@@ -4,8 +4,8 @@ import { Installation, RepoSyncState, Subscription } from "../../../models";
 import SubscriptionClass from "../../../models/subscription";
 import GithubApi from "../../../config/github-api";
 import { GitHubAPI } from "probot";
-import singleInstallation from "test/fixtures/jira-configuration/single-installation.json";
-import failedInstallation from "test/fixtures/jira-configuration/failed-installation.json";
+import singleInstallation from "fixtures/jira-configuration/single-installation.json";
+import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 
 describe("Jira Configuration Suite", () => {
 	let subscription: SubscriptionClass;

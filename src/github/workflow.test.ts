@@ -4,7 +4,7 @@ import { Application } from "probot";
 import { Installation, Subscription } from "../models";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import workflowBasicFixture from "test/fixtures/workflow-basic.json"
+import workflowBasicFixture from "fixtures/workflow-basic.json"
 
 jest.mock("../config/feature-flags");
 

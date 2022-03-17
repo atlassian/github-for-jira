@@ -1,11 +1,13 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../models";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-jest.mock("../config/feature-flags");
+import issueCommentBasic from "fixtures/issue-comment-basic.json";
+
+jest.mock("config/feature-flags");
 
 describe.each([true, false])("Issue Comment Webhook - FF %p", (useNewGithubClient) => {
 	let app: Application;
@@ -35,8 +37,6 @@ describe.each([true, false])("Issue Comment Webhook - FF %p", (useNewGithubClien
 	describe("issue_comment", () => {
 		describe("created", () => {
 			it("should update the GitHub issue with a linked Jira ticket", async () => {
-				const fixture = require("../../test/fixtures/issue-comment-basic.json");
-
 				if(useNewGithubClient) {
 					githubUserTokenNock(gitHubInstallationId);
 				}
@@ -56,7 +56,7 @@ describe.each([true, false])("Issue Comment Webhook - FF %p", (useNewGithubClien
 					})
 					.reply(200);
 
-				await expect(app.receive(fixture)).toResolve();
+				await expect(app.receive(issueCommentBasic as any)).toResolve();
 			});
 		});
 	});

@@ -7,6 +7,8 @@ import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
 
+import installationResponse from "fixtures/jira-configuration/single-installation.json";
+
 describe("Github Configuration", () => {
 	let frontendApp: Application;
 	let sub: SubscriptionClass;
@@ -15,8 +17,6 @@ describe("Github Configuration", () => {
 	const adminUserResponse = { login: "admin-user" };
 	const organizationMembershipResponse = { role: "member" };
 	const organizationAdminResponse = { role: "admin" };
-	const installationResponse = require("fixtures/jira-configuration/single-installation.json");
-
 	beforeEach(async () => {
 		sub = await Subscription.create({
 			gitHubInstallationId: 15,

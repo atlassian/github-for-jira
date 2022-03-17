@@ -14,6 +14,14 @@ import { sqsQueues } from "../sqs/queues";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
+import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
+
+import branchCommitsHaveKeys from "fixtures/api/graphql/branch-commits-have-keys.json";
+
+import associatedPRhasKeys from "fixtures/api/graphql/branch-associated-pr-has-keys.json";
+
+import branchNoIssueKeys from "fixtures/api/graphql/branch-no-issue-keys.json";
+
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
@@ -21,11 +29,6 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 	const installationId = 1234;
 
 	let app: Application;
-	const branchNodesFixture = require("fixtures/api/graphql/branch-ref-nodes.json");
-	const branchCommitsHaveKeys = require("fixtures/api/graphql/branch-commits-have-keys.json");
-	const associatedPRhasKeys = require("fixtures/api/graphql/branch-associated-pr-has-keys.json");
-	const branchNoIssueKeys = require("fixtures/api/graphql/branch-no-issue-keys.json");
-
 	const sentry: Hub = { setUser: jest.fn() } as any;
 
 	const makeExpectedResponse = (branchName) => ({

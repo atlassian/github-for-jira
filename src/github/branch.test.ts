@@ -1,13 +1,18 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
 import { Installation, Subscription } from "../models";
 import { Application } from "probot";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import waitUntil from "test/utils/waitUntil";
 import { sqsQueues } from "../sqs/queues";
 
-jest.mock("../config/feature-flags");
+import branchInvalidRef from "fixtures/branch-invalid-ref_type.json";
+import branchBasic from "fixtures/branch-basic.json";
+import branchNoIssues from "fixtures/branch-no-issues.json";
+import branchDelete from "fixtures/branch-delete.json";
+
+jest.mock("config/feature-flags");
 
 describe("Branch Webhook", () => {
 	let app: Application;
@@ -57,9 +62,6 @@ describe("Branch Webhook", () => {
 				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
 				expect.anything()
 			).mockResolvedValue(true);
-
-			const fixture = require("../../test/fixtures/branch-basic.json");
-
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
@@ -127,7 +129,7 @@ describe("Branch Webhook", () => {
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(fixture)).toResolve();
+			await expect(app.receive(branchBasic as any)).toResolve();
 
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();
@@ -136,10 +138,9 @@ describe("Branch Webhook", () => {
 		});
 
 		it("should not update Jira issue if there are no issue Keys in the branch name", async () => {
-			const fixture = require("../../test/fixtures/branch-no-issues.json");
 			const getLastCommit = jest.fn();
 
-			await expect(app.receive(fixture)).toResolve();
+			await expect(app.receive(branchNoIssues as any)).toResolve();
 			expect(getLastCommit).not.toBeCalled();
 
 			await waitUntil(async () => {
@@ -149,10 +150,9 @@ describe("Branch Webhook", () => {
 		});
 
 		it("should exit early if ref_type is not a branch", async () => {
-			const fixture = require("../../test/fixtures/branch-invalid-ref_type.json");
 			const parseSmartCommit = jest.fn();
 
-			await expect(app.receive(fixture)).toResolve();
+			await expect(app.receive(branchInvalidRef as any)).toResolve();
 			expect(parseSmartCommit).not.toBeCalled();
 
 			await waitUntil(async () => {
@@ -177,9 +177,6 @@ describe("Branch Webhook", () => {
 				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
 				expect.anything()
 			).mockResolvedValue(true);
-
-			const fixture = require("../../test/fixtures/branch-basic.json");
-
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
@@ -245,7 +242,7 @@ describe("Branch Webhook", () => {
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(fixture)).toResolve();
+			await expect(app.receive(branchBasic as any)).toResolve();
 
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();
@@ -254,11 +251,10 @@ describe("Branch Webhook", () => {
 		});
 
 		it.skip("should not update Jira issue if there are no issue Keys in the branch name", async () => {
-			const fixture = require("../../test/fixtures/branch-no-issues.json");
 			// TODO: This test makes no sense - getLastCommit cannot be called from here...
 			const getLastCommit = jest.fn();
 
-			await expect(app.receive(fixture)).toResolve();
+			await expect(app.receive(branchNoIssues as any)).toResolve();
 			expect(getLastCommit).not.toBeCalled();
 
 			await waitUntil(async () => {
@@ -268,11 +264,10 @@ describe("Branch Webhook", () => {
 		});
 
 		it.skip("should exit early if ref_type is not a branch", async () => {
-			const fixture = require("../../test/fixtures/branch-invalid-ref_type.json");
 			// TODO: This test makes no sense - parseSmartCommit cannot be called from here...
 			const parseSmartCommit = jest.fn();
 
-			await expect(app.receive(fixture)).toResolve();
+			await expect(app.receive(branchInvalidRef as any)).toResolve();
 			expect(parseSmartCommit).not.toBeCalled();
 
 			await waitUntil(async () => {
@@ -284,7 +279,6 @@ describe("Branch Webhook", () => {
 
 	describe("delete a branch", () => {
 		it("should call the devinfo delete API when a branch is deleted", async () => {
-			const fixture = require("../../test/fixtures/branch-delete.json");
 			jiraNock
 				.delete("/rest/devinfo/0.10/repository/test-repo-id/branch/TES-123-test-ref")
 				.query({
@@ -294,7 +288,7 @@ describe("Branch Webhook", () => {
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(fixture)).toResolve();
+			await expect(app.receive(branchDelete as any)).toResolve();
 
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();

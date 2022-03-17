@@ -11,14 +11,14 @@ import { Context } from "../sqs";
 import { Message } from "aws-sdk/clients/sqs";
 import { sqsQueues } from "../sqs/queues";
 
-import pushNonMergeCommit from "test/fixtures/push-non-merge-commit.json";
-import pushNoUsername from "../../test/fixtures/push-no-username.json";
-import commitNoUsername from "../../test/fixtures/api/commit-no-username.json";
-import pushMultiple from "../../test/fixtures/push-multiple.json";
-import moreThanTenFiles from "../../test/fixtures/more-than-10-files.json";
-import pushNoIssues from "../../test/fixtures/push-no-issues.json";
-import pushNoIssuekeyCommits from "../../test/fixtures/push-no-issuekey-commits.json";
-import pushMergeCommit from "../../test/fixtures/push-merge-commit.json";
+import pushNonMergeCommit from "fixtures/push-non-merge-commit.json";
+import pushNoUsername from "fixtures/push-no-username.json";
+import commitNoUsername from "fixtures/api/commit-no-username.json";
+import pushMultiple from "fixtures/push-multiple.json";
+import moreThanTenFiles from "fixtures/more-than-10-files.json";
+import pushNoIssues from "fixtures/push-no-issues.json";
+import pushNoIssuekeyCommits from "fixtures/push-no-issuekey-commits.json";
+import pushMergeCommit from "fixtures/push-merge-commit.json";
 
 const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
 	payload: createJobData(payload, jiraHost),

@@ -1,11 +1,14 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
 import { Installation, Subscription } from "../models";
 import { Application } from "probot";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-jest.mock("../config/feature-flags");
+import issueNullBody from "fixtures/issue-null-body.json";
+import issueBasic from "fixtures/issue-basic.json";
+
+jest.mock("config/feature-flags");
 
 describe.each([true, false])("Issue Webhook - FF %p", (useNewGithubClient) => {
 	let app: Application;
@@ -35,8 +38,6 @@ describe.each([true, false])("Issue Webhook - FF %p", (useNewGithubClient) => {
 	describe("issue", () => {
 		describe("created", () => {
 			it("should update the GitHub issue with a linked Jira ticket", async () => {
-				const fixture = require("../../test/fixtures/issue-basic.json");
-
 				if(useNewGithubClient) {
 					githubUserTokenNock(gitHubInstallationId);
 				}
@@ -61,13 +62,12 @@ describe.each([true, false])("Issue Webhook - FF %p", (useNewGithubClient) => {
 						}
 					});
 
-				await expect(app.receive(fixture)).toResolve();
+				await expect(app.receive(issueBasic as any)).toResolve();
 			});
 
 			it("should not break if the issue has a null body", async () => {
-				const fixture = require("../../test/fixtures/issue-null-body.json");
 				// should not throw
-				await expect(app.receive(fixture)).toResolve();
+				await expect(app.receive(issueNullBody as any)).toResolve();
 			});
 		});
 	});

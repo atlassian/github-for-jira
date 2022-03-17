@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line import/no-duplicates
 import transformDeployment, { mapEnvironment } from "./deployment";
 import { getLogger } from "config/logger";
@@ -7,6 +7,8 @@ import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import GitHubClient from "../github/client/github-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
+
+import deployment_status from "fixtures/deployment_status-basic.json";
 
 jest.mock("config/feature-flags");
 
@@ -80,9 +82,7 @@ describe("deployment environment mapping", () => {
 const TEST_INSTALLATION_ID = 1234;
 describe.each([true, false])("transform GitHub webhook payload to Jira payload", (useNewGithubClient) => {
 
-	const deployment_status = require("fixtures/deployment_status-basic.json");
-	const owner = deployment_status.payload.repository.owner.login;
-	const repo = deployment_status.payload.repository.name;
+	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
 	const githubClient = new GitHubClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
 
 	beforeEach(() => {
@@ -105,7 +105,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 
 		// Mocking all GitHub API Calls
 		// Get commit
-		githubNock.get(`/repos/${owner}/${repo}/commits/${deployment_status.payload.deployment.sha}`)
+		githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
 			.reply(200, {
 				...owner,
 				commit: {
@@ -114,7 +114,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 			});
 
 		// List deployments
-		githubNock.get(`/repos/${owner}/${repo}/deployments?environment=Production&per_page=10`)
+		githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=Production&per_page=10`)
 			.reply(200,
 				[
 					{
@@ -126,7 +126,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 			);
 
 		// List deployments statuses
-		githubNock.get(`/repos/${owner}/${repo}/deployments/1/statuses?per_page=100`)
+		githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
 			.reply(200, [
 				{
 					id: 1,
@@ -139,7 +139,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 			]);
 
 		// Compare commits
-		githubNock.get(`/repos/${owner}/${repo}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
 			.reply(200, {
 				commits: [
 					{
@@ -163,7 +163,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 			expect.anything()
 		).mockResolvedValue(true);
 
-		const jiraPayload = await transformDeployment(GitHubAPI(), githubClient, deployment_status.payload, "testing.atlassian.net", getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(GitHubAPI(), githubClient, deployment_status.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{

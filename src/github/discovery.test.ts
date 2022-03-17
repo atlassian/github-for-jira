@@ -9,6 +9,8 @@ import waitUntil from "test/utils/waitUntil";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
+import listRepositories from "fixtures/list-repositories.json";
+
 jest.mock("../config/feature-flags");
 
 describe("Discovery Queue Test - Ocktokit", () => {
@@ -44,7 +46,7 @@ describe("Discovery Queue Test - Ocktokit", () => {
 		githubUserTokenNock(TEST_INSTALLATION_ID);
 		githubNock.get("/installation/repositories?per_page=100")
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
-			.reply(200, require("../../test/fixtures/list-repositories.json"));
+			.reply(200, listRepositories);
 	};
 
 	async function verify2RepositoriesInTheStateAndBackfillMessageSent() {
@@ -111,7 +113,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 		githubNock
 			.get("/installation/repositories?per_page=100&page=1")
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
-			.reply(200, require("../../test/fixtures/list-repositories.json"), { "link": linkLastPage });
+			.reply(200, listRepositories, { "link": linkLastPage });
 	};
 
 	it("Discovery sqs queue processes the message", async () => {

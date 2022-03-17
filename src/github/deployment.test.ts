@@ -1,13 +1,15 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../models";
 import waitUntil from "test/utils/waitUntil";
 import { sqsQueues } from "../sqs/queues";
 import {when} from "jest-when";
-import {booleanFlag, BooleanFlags} from "../config/feature-flags";
+import {booleanFlag, BooleanFlags} from "config/feature-flags";
 
-jest.mock("../config/feature-flags");
+import deploymentStatusBasic from "fixtures/deployment_status-basic.json";
+
+jest.mock("config/feature-flags");
 
 describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
 	let app: Application;
@@ -48,9 +50,7 @@ describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
 	describe("deployment_status", () => {
 
 		it("should queue and process a deployment event", async () => {
-
-			const fixture = require("../../test/fixtures/deployment_status-basic.json");
-			const sha = fixture.payload.deployment.sha;
+			const sha = deploymentStatusBasic.payload.deployment.sha;
 
 			githubUserTokenNock(1234);
 
@@ -103,13 +103,12 @@ describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
 					}
 			}).reply(200);
 
-			await expect(app.receive(fixture)).toResolve();
+			await expect(app.receive(deploymentStatusBasic as any)).toResolve();
 
 			await waitUntil(async () => {
 				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
 			});
 		});
-
 	});
 });

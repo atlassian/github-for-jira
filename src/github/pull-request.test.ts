@@ -1,11 +1,18 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../models";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-jest.mock("../config/feature-flags");
+import pullRequestBasic from "fixtures/pull-request-basic.json";
+import pullRequestRemoveKeys from "fixtures/pull-request-remove-keys.json";
+import pullRequestNullRepo from "fixtures/pull-request-null-repo.json";
+import pullRequestChangesWithBranch from "fixtures/pull-request-test-changes-with-branch.json";
+
+import pullRequestTriggeredByBot from "fixtures/pull-request-triggered-by-bot.json";
+
+jest.mock("config/feature-flags");
 
 describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient) => {
 	let app: Application;
@@ -40,7 +47,6 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 	});
 
 	it("should have reviewers on pull request action", async () => {
-		const fixture = require("../../test/fixtures/pull-request-basic.json");
 		if (useNewGithubClient) {
 			githubUserTokenNock(gitHubInstallationId);
 			githubUserTokenNock(gitHubInstallationId);
@@ -182,12 +188,11 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 
 		mockSystemTime(12345678);
 
-		await expect(app.receive(fixture)).toResolve();
+		await expect(app.receive(pullRequestBasic as any)).toResolve();
 	});
 
 	it("should delete the reference to a pull request when issue keys are removed from the title", async () => {
-		const fixture = require("../../test/fixtures/pull-request-remove-keys.json");
-		const { repository, pull_request: pullRequest } = fixture.payload;
+		const { repository, pull_request: pullRequest } = pullRequestRemoveKeys.payload;
 		if (useNewGithubClient) {
 			githubUserTokenNock(gitHubInstallationId);
 		}
@@ -242,20 +247,16 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 
 		mockSystemTime(12345678);
 
-		await expect(app.receive(fixture)).toResolve();
+		await expect(app.receive(pullRequestRemoveKeys as any)).toResolve();
 	});
 
 	it("should not update the Jira issue if the source repo of a pull_request was deleted", async () => {
-		const fixture = require("../../test/fixtures/pull-request-null-repo.json");
-
 		mockSystemTime(12345678);
 
-		await expect(app.receive(fixture)).toResolve();
+		await expect(app.receive(pullRequestNullRepo as any)).toResolve();
 	});
 
 	it("will not delete references if a branch still has an issue key", async () => {
-		const fixture = require("../../test/fixtures/pull-request-test-changes-with-branch.json");
-
 		if (useNewGithubClient) {
 			githubUserTokenNock(gitHubInstallationId);
 			githubUserTokenNock(gitHubInstallationId);
@@ -315,12 +316,10 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 
 		mockSystemTime(12345678);
 
-		await expect(app.receive(fixture)).toResolve();
+		await expect(app.receive(pullRequestChangesWithBranch as any)).toResolve();
 	});
 
 	describe("Trigged by Bot", () => {
-		let fixture;
-		beforeEach(() => fixture = require("../../test/fixtures/pull-request-triggered-by-bot.json"));
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot", async () => {
 			if (useNewGithubClient) {
@@ -476,7 +475,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(fixture[0])).toResolve();
+			await expect(app.receive(pullRequestTriggeredByBot[0] as any)).toResolve();
 		});
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot", async () => {
@@ -596,7 +595,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(fixture[1])).toResolve();
+			await expect(app.receive(pullRequestTriggeredByBot[1] as any)).toResolve();
 		});
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot", async () => {
@@ -752,7 +751,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 
 			mockSystemTime(12345678);
 
-			await expect(app.receive(fixture[2])).toResolve();
+			await expect(app.receive(pullRequestTriggeredByBot[2] as any)).toResolve();
 		});
 	});
 });

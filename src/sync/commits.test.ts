@@ -13,9 +13,11 @@ import { BackfillMessagePayload } from "../sqs/backfill";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-const commitNodesFixture = require("fixtures/api/graphql/commit-nodes.json");
-const mixedCommitNodes = require("fixtures/api/graphql/commit-nodes-mixed.json");
-const commitsNoKeys = require("fixtures/api/graphql/commit-nodes-no-keys.json");
+import commitNodesFixture from "fixtures/api/graphql/commit-nodes.json";
+
+import mixedCommitNodes from "fixtures/api/graphql/commit-nodes-mixed.json";
+
+import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");

@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import transformPullRequest from "./pull-request";
 
+import pullRequestFixture from "fixtures/api/pull-request.json";
+import userFixture from "fixtures/api/user.json";
+
 describe("pull_request transform", () => {
 	let pullRequest: any;
 	let user: any;
 
 	beforeEach(() => {
-		pullRequest = Object.assign({}, require("fixtures/api/pull-request.json"));
-		user = Object.assign({}, require("fixtures/api/user.json"));
+		pullRequest = Object.assign({}, pullRequestFixture);
+		user = Object.assign({}, userFixture);
 	});
 
 	it("should send the ghost user to Jira when GitHub user has been deleted", async () => {

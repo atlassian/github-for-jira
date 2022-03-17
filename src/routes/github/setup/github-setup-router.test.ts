@@ -1,11 +1,13 @@
 
 import supertest from "supertest";
 import { Installation } from "models/index";
-import { getFrontendApp } from "../../../app";
+import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import envVars from "config/env";
+
+import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 
 describe("Github Setup", () => {
 	let frontendApp: Application;
@@ -54,7 +56,7 @@ describe("Github Setup", () => {
 			githubAppTokenNock();
 			githubNock
 				.get(`/app/installations/${installation_id}`)
-				.reply(200, require("fixtures/jira-configuration/single-installation.json"));
+				.reply(200, singleInstallation);
 			await supertest(frontendApp)
 				.get("/github/setup")
 				.query({installation_id})
@@ -65,7 +67,7 @@ describe("Github Setup", () => {
 			githubAppTokenNock();
 			githubNock
 				.get(`/app/installations/${installation_id}`)
-				.reply(200, require("fixtures/jira-configuration/single-installation.json"));
+				.reply(200, singleInstallation);
 			await supertest(frontendApp)
 				.get("/github/setup")
 				.query({installation_id})
