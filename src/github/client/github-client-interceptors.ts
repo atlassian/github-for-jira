@@ -53,7 +53,6 @@ const sendResponseMetrics = (metricName: string, response?: any, status?: string
 	return response;
 };
 
-
 export const instrumentRequest = (metricName) =>
 	(response) => {
 		if (!response) {
@@ -85,7 +84,6 @@ export const instrumentFailedRequest = (metricName) =>
 		}
 		return Promise.reject(error);
 	};
-
 
 export const handleFailedRequest = (logger: Logger) =>
 	(error) => {

@@ -2,13 +2,13 @@ import { transformBranches } from "./transforms/branch";
 import { GitHubAPI } from "probot";
 import { Repository } from "../models/subscription";
 import { Repository as OctokitRepository } from "@octokit/graphql-schema";
-import GitHubClient from "../github/client/github-client";
+import { GitHubAppClient } from "../github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { GetBranchesQuery } from "../github/client/github-queries";
 
 // TODO: better typings
-export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: GitHubClient, jiraHost: string, repository:Repository, cursor?:string | number, perPage?:number) => {
+export default async (logger: LoggerWithTarget, github: GitHubAPI, newGithub: GitHubAppClient, jiraHost: string, repository:Repository, cursor?:string | number, perPage?:number) => {
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
 

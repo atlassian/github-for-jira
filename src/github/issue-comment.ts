@@ -1,7 +1,7 @@
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import GitHubClient from "./client/github-client";
+import { GitHubAppClient } from "./client/github-app-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
@@ -16,7 +16,7 @@ export const issueCommentWebhookHandler = async (
 	let linkifiedBody;
 
 	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_ISSUE_COMMENT_WEBHOOK, false, jiraClient.baseURL) ?
-		new GitHubClient(getCloudInstallationId(githubInstallationId), context.log) :
+		new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log) :
 		context.github;
 
 	// TODO: need to create reusable function for unfurling
@@ -51,5 +51,5 @@ export const issueCommentWebhookHandler = async (
 	);
 };
 
-const updateIssueComment = async (githubClient: GitHubAPI | GitHubClient, comment: Octokit.IssuesUpdateCommentParams) =>
-	githubClient instanceof GitHubClient ? await githubClient.updateIssueComment(comment) : await githubClient.issues.updateComment(comment);
+const updateIssueComment = async (githubClient: GitHubAPI | GitHubAppClient, comment: Octokit.IssuesUpdateCommentParams) =>
+	githubClient instanceof GitHubAppClient ? await githubClient.updateIssueComment(comment) : await githubClient.issues.updateComment(comment);

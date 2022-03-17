@@ -1,15 +1,13 @@
-
 /* eslint-disable jest/no-standalone-expect */
-
 import { getLogger } from "config/logger";
-import GitHubClient from "./github-client";
-import statsd from "../../config/statsd";
+import { GitHubAppClient } from "./github-app-client";
+import statsd from "config/statsd";
 import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
 import { getCloudInstallationId, InstallationId } from "./installation-id";
 import nock from "nock";
 import AppTokenHolder from "./app-token-holder";
 import fs from "fs";
-import envVars from "../../config/env";
+import envVars from "config/env";
 import { when } from "jest-when";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 
@@ -96,7 +94,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubAppClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
 			page
@@ -119,7 +117,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubAppClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		const commit = await client.getCommit(owner, repo, sha);
 
 		expect(commit).toBeTruthy();
@@ -154,7 +152,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubAppClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -181,7 +179,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubAppClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -204,7 +202,7 @@ describe("GitHub Client", () => {
 			403, { message: "Org has an IP allow list enabled" }
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubAppClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -229,7 +227,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubAppClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -255,7 +253,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubAppClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -298,7 +296,7 @@ describe("GitHub Client", () => {
 			}
 		});
 
-		const client = new GitHubClient(
+		const client = new GitHubAppClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
 			getLogger("test"),
 			appTokenHolder
@@ -327,7 +325,7 @@ describe("GitHub Client", () => {
 			200, [{ number: 1 }]
 		);
 
-		const client = await new GitHubClient(getCloudInstallationId(githubInstallationId), getLogger("test"), AppTokenHolder.getInstance());
+		const client = await new GitHubAppClient(getCloudInstallationId(githubInstallationId), getLogger("test"), AppTokenHolder.getInstance());
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});

@@ -7,7 +7,7 @@ import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { isBlocked } from "../config/feature-flags";
-import GitHubClient from "./client/github-client";
+import { GitHubAppClient } from "./client/github-app-client";
 
 export default async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -21,7 +21,7 @@ export default async (context: CustomContext, jiraClient, _util, githubInstallat
 
 export const processDeployment = async (
 	github: GitHubAPI,
-	newGitHubClient: GitHubClient,
+	newGitHubClient: GitHubAppClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadDeploymentStatus,
 	webhookReceivedDate: Date,

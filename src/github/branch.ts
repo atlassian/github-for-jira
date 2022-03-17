@@ -9,7 +9,7 @@ import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import getJiraClient from "../jira/client";
-import GitHubClient from "./client/github-client";
+import { GitHubAppClient } from "./client/github-app-client";
 import { getCloudInstallationId } from "./client/installation-id";
 
 export const createBranch = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
@@ -26,7 +26,7 @@ export const createBranch = async (context: CustomContext, jiraClient, _util, gi
 		});
 	} else {
 
-		const gitHubClient = new GitHubClient(getCloudInstallationId(githubInstallationId), context.log);
+		const gitHubClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log);
 		const github = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraClient.baseURL) ? gitHubClient : context.github;
 		const jiraPayload = await transformBranch(github, webhookPayload);
 
@@ -50,7 +50,7 @@ export const createBranch = async (context: CustomContext, jiraClient, _util, gi
 };
 
 export const processBranch = async (
-	github: GitHubAPI | GitHubClient,
+	github: GitHubAPI | GitHubAppClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadCreate,
 	webhookReceivedDate: Date,

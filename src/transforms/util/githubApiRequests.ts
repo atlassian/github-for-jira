@@ -1,6 +1,6 @@
 import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import GitHubClient from "../../github/client/github-client";
+import { GitHubAppClient } from "../../github/client/github-app-client";
 
 interface CompareCommitsPayload {
 	owner: string;
@@ -13,12 +13,12 @@ interface CompareCommitsPayload {
 // obtain all issue keys referenced in commit messages.
 export const getAllCommitMessagesBetweenReferences = async (
 	payload: CompareCommitsPayload,
-	github: GitHubAPI | GitHubClient,
+	github: GitHubAPI | GitHubAppClient,
 	logger: LoggerWithTarget
 ): Promise<string> => {
 	let messages;
 	try {
-		const commitsDiff = github instanceof GitHubClient ? await github.compareReferences(payload.owner, payload.repo, payload.base, payload.head) : await github.repos.compareCommits(payload);
+		const commitsDiff = github instanceof GitHubAppClient ? await github.compareReferences(payload.owner, payload.repo, payload.base, payload.head) : await github.repos.compareCommits(payload);
 		messages = commitsDiff.data?.commits
 			?.map((c) => c.commit.message)
 			.join(" ");

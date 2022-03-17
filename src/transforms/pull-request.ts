@@ -9,7 +9,7 @@ import { getGithubUser } from "../services/github/user";
 import { JiraAuthor } from "../interfaces/jira";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
-import GitHubClient from "../github/client/github-client";
+import { GitHubAppClient } from "../github/client/github-app-client";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -50,7 +50,7 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 }
 
 // TODO: define arguments and return
-export const transformPullRequest = async (github: GitHubAPI | GitHubClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
+export const transformPullRequest = async (github: GitHubAPI | GitHubAppClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values

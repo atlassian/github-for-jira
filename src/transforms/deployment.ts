@@ -7,7 +7,7 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { getAllCommitMessagesBetweenReferences } from "./util/githubApiRequests";
-import GitHubClient from "../github/client/github-client";
+import { GitHubAppClient } from "../github/client/github-app-client";
 import {AxiosResponse} from "axios";
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
@@ -15,7 +15,7 @@ async function getLastSuccessfulDeployCommitSha(
 	owner: string,
 	repoName: string,
 	github: GitHubAPI,
-	newGitHubClient: GitHubClient,
+	newGitHubClient: GitHubAppClient,
 	useNewClient: boolean,
 	deployments: Octokit.ReposListDeploymentsResponseItem[],
 	logger?: LoggerWithTarget
@@ -55,7 +55,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 	currentDeployId: number,
 	currentDeployEnv: string,
 	github: GitHubAPI,
-	newGitHubClient: GitHubClient,
+	newGitHubClient: GitHubAppClient,
 	useNewClient: boolean,
 	logger: LoggerWithTarget
 ): Promise<string | void | undefined> {
@@ -156,7 +156,7 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (githubClient: GitHubAPI, newGitHubClient: GitHubClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+export default async (githubClient: GitHubAPI, newGitHubClient: GitHubAppClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 

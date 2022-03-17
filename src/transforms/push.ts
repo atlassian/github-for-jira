@@ -8,7 +8,7 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { isBlocked } from "../config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { PushQueueMessagePayload } from "../sqs/push";
-import GitHubClient from "../github/client/github-client";
+import { GitHubAppClient } from "../github/client/github-app-client";
 import { isEmpty } from "lodash";
 
 // TODO: define better types for this file
@@ -76,7 +76,7 @@ export const createJobData = (payload, jiraHost: string): PushQueueMessagePayloa
 export const enqueuePush = async (payload: unknown, jiraHost: string) =>
 	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
 
-export const processPush = async (github: GitHubClient, payload: PushQueueMessagePayload, rootLogger: LoggerWithTarget) => {
+export const processPush = async (github: GitHubAppClient, payload: PushQueueMessagePayload, rootLogger: LoggerWithTarget) => {
 	const {
 		repository,
 		repository: { owner, name: repo },
