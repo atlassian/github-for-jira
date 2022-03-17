@@ -1,12 +1,12 @@
 import Sequelize from "sequelize";
 import logger from "../config/logger";
-import { getNodeEnv } from "utils/isNodeEnv";
-import { EnvironmentEnum } from "interfaces/common";
-import dbConfig from "db/config.json";
+import { getNodeEnv } from "../util/isNodeEnv";
+import { EnvironmentEnum } from "../interfaces/common";
 
 const nodeEnv = getNodeEnv() || EnvironmentEnum.development;
 // TODO: config misses timezone config to force to UTC, defaults to local timezone of PST
-const config = dbConfig[nodeEnv];
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const config = require("../../db/config.json")[nodeEnv];
 
 config.benchmark = true;
 config.logging = config.disable_sql_logging

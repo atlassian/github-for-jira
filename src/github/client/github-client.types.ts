@@ -1,5 +1,5 @@
 import { AxiosResponse } from "axios";
-import { GraphQLError } from "./github-client-errors";
+import { GraphQLError } from "./errors";
 
 export enum SortDirection {
 	ASC = "asc",
@@ -11,10 +11,10 @@ export enum PullRequestState {
 	ALL = "all"
 }
 export enum PullRequestSort {
-	CREATED = "created",
-	UPDATED = "updated",
-	POPULARITY = "popularity",
-	LONG_RUNNING = "long-running",
+	CREATED = 'created',
+	UPDATED = 'updated',
+	POPULARITY = 'popularity',
+	LONG_RUNNING = 'long-running',
 }
 
 export type GetPullRequestParams = {
