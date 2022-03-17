@@ -36,7 +36,7 @@ describe("POST /github/subscription - octokit", () => {
 
 	});
 
-	test("Delete Jira Configuration", async () => {
+	test("Delete GitHub Subscription", async () => {
 
 		const req = {
 			log: { error: jest.fn(), info: jest.fn() },
@@ -78,7 +78,7 @@ describe("POST /github/subscription - octokit", () => {
 	});
 });
 
-describe("POST /github/subscription", () => {
+describe("delete-github-subscription", () => {
 	const gitHubInstallationId = 15;
 	let req, res;
 
@@ -120,7 +120,7 @@ describe("POST /github/subscription", () => {
 
 	});
 
-	it("Delete Jira Configuration as an Org admin", async () => {
+	it("Should delete GitHub Subscription as an Org admin - installation type Org", async () => {
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, type: "Org"
 		});
@@ -133,7 +133,7 @@ describe("POST /github/subscription", () => {
 		expect(await Subscription.count()).toEqual(0);
 	});
 
-	it("Delete Jira Configuration as an User", async () => {
+	it("Should delete GitHub Subscription as an User - installation type User", async () => {
 
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-user" }, type: "User"
@@ -147,7 +147,7 @@ describe("POST /github/subscription", () => {
 		expect(await Subscription.count()).toEqual(0);
 	});
 
-	it("Attemplt delete Jira Configuration Org - not authorized", async () => {
+	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type Org", async () => {
 
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, type: "Org"
@@ -161,7 +161,21 @@ describe("POST /github/subscription", () => {
 		expect(await Subscription.count()).toEqual(1);
 	});
 
-	it("Missing githubToken", async () => {
+	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type User", async () => {
+
+		createGitHubNockGet("/app/installations/15", 200, {
+			account: { login: "something-something-test-user" }, type: "user"
+		});
+		createGitHubNockGet("/user/memberships/orgs/something-something-test-user", 200, {
+			role: "batman", user: { login: "test-user" }
+		});
+
+		await GithubSubscriptionDelete(req as any, res as any);
+		expect(res.status).toHaveBeenCalledWith(401);
+		expect(await Subscription.count()).toEqual(1);
+	});
+
+	it("Should 401 when missing githubToken", async () => {
 
 		res = {
 			sendStatus: jest.fn(),
@@ -172,21 +186,18 @@ describe("POST /github/subscription", () => {
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
 	});
 
-	test.each([["installationId"], ["jiraHost"]])("missing body.%s",
-		async (property) => {
+	it.each([["installationId"], ["jiraHost"]])("Should 400 when missing body.%s", async (property) => {
+		delete req.body[property];
+		delete res.locals[property];
 
-			delete req.body[property];
-			delete res.locals[property];
+		res.status.mockReturnValue(res);
 
-			res.status.mockReturnValue(res);
-
-			await GithubSubscriptionDelete(req as any, res as any);
-			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json.mock.calls[0]).toMatchSnapshot([
-				{
-					err: expect.any(String)
-				}
-			]);
-		}
-	);
+		await GithubSubscriptionDelete(req as any, res as any);
+		expect(res.status).toHaveBeenCalledWith(400);
+		expect(res.json.mock.calls[0]).toMatchSnapshot([
+			{
+				err: expect.any(String)
+			}
+		]);
+	});
 });

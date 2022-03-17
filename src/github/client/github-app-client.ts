@@ -245,15 +245,6 @@ export class GitHubAppClient {
 		});
 	};
 
-	public async getMembership(org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>> {
-		return await this.get<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>("/user/memberships/orgs/{org}",
-			{
-				urlParams: {
-					org
-				}
-			});
-	}
-
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
 			{ environment, per_page },
