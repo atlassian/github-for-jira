@@ -2,7 +2,7 @@ import IORedis from "ioredis";
 import getRedisInfo from "../../config/redis-info";
 import { Response, Router } from "express";
 import { getLogger } from "../../config/logger";
-import { sequelize } from "../../models/sequelize";
+import { sequelize } from "models/sequelize";
 
 export const HealthcheckRouter = Router();
 const cache = new IORedis(getRedisInfo("ping"));

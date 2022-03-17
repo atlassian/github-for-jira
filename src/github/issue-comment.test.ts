@@ -2,14 +2,12 @@
 import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../models";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 import issueCommentBasic from "fixtures/issue-comment-basic.json";
 
 jest.mock("config/feature-flags");
 
-describe.each([true, false])("Issue Comment Webhook - FF %p", (useNewGithubClient) => {
+describe("Issue Comment Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
@@ -26,20 +24,12 @@ describe.each([true, false])("Issue Comment Webhook - FF %p", (useNewGithubClien
 			clientKey: "client-key",
 			sharedSecret: "shared-secret"
 		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_ISSUE_COMMENT_WEBHOOK,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
 	});
 
 	describe("issue_comment", () => {
 		describe("created", () => {
 			it("should update the GitHub issue with a linked Jira ticket", async () => {
-				if(useNewGithubClient) {
-					githubUserTokenNock(gitHubInstallationId);
-				}
+				githubUserTokenNock(gitHubInstallationId);
 
 				jiraNock
 					.get("/rest/api/latest/issue/TEST-123?fields=summary")

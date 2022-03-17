@@ -1,18 +1,13 @@
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
+import { emitWebhookProcessedMetrics } from "utils/webhooks";
 import { CustomContext } from "middleware/github-webhook-middleware";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { GitHubAppClient } from "./client/github-app-client";
 import { getCloudInstallationId } from "./client/installation-id";
-import { GitHubAPI } from "probot";
-import { Octokit } from "@octokit/rest";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
 
-export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, jiraClient, util, githubInstallationId: number): Promise<void> => {
+export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, _jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const { issue, repository } = context.payload;
 
-	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_ISSUE_WEBHOOK, false, jiraClient.baseURL) ?
-		new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log) :
-		context.github;
+	const githubClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log);
 
 	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;
@@ -31,7 +26,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 
 	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);
 
-	const githubResponse = await updateIssue(githubClient, {
+	const githubResponse = await githubClient.updateIssue({
 		body: linkifiedBody,
 		owner: repository.owner.login,
 		repo: repository.name,
@@ -46,6 +41,3 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		githubResponse?.status
 	);
 };
-
-const updateIssue = async (githubClient:GitHubAPI | GitHubAppClient, issue: Octokit.IssuesUpdateParams) =>
-	githubClient instanceof GitHubAppClient ? await githubClient.updateIssue(issue) : await githubClient.issues.update(issue);
