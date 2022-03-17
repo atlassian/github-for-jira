@@ -6,9 +6,9 @@ import { GitHubAppClient } from "../../../github/client/github-app-client";
 import { GitHubUserClient } from "../../../github/client/github-user-client";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 
-const hasDeleteAccess = async (gitHubUserClient: GitHubUserClient | GitHubAPI, installation): Promise<boolean> => {
+const hasDeleteRights = async (gitHubUserClient: GitHubUserClient | GitHubAPI, installation): Promise<boolean> => {
 	const { data: { role, user: { login } } } = gitHubUserClient instanceof GitHubUserClient ?
-		await gitHubUserClient.getMembership(installation.account.login) :
+		await gitHubUserClient.getMembershipForAuthenticatedUser(installation.account.login) :
 		await gitHubUserClient.orgs.getMembershipForAuthenticatedUser({ org: installation.account.login });
 
 	if (installation.type === "User") {
@@ -42,7 +42,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 			await gitHubAppClient.getInstallation(installationId) :
 			await client.apps.getInstallation({ installation_id: installationId });
 
-		if (!await hasDeleteAccess(useNewGitHubClient ? gitHubUserClient : github, installation)) {
+		if (!await hasDeleteRights(useNewGitHubClient ? gitHubUserClient : github, installation)) {
 			res.status(401).json({ err: `Unauthorized access to delete subscription.` });
 			return;
 		}
