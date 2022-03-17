@@ -28,29 +28,25 @@ describe("POST /github/subscription", () => {
 		};
 
 		const login = "test-user";
+		const role = "admin";
 
-		const getAuthenticated = jest.fn().mockResolvedValue({ data: { login } });
+		const getMembershipForAuthenticatedUser = jest.fn().mockResolvedValue( { data: { role, user: { login } } } );
+		const getInstallation = jest.fn().mockResolvedValue({ data: {
+			id: gitHubInstallationId,
+			target_type: "User",
+			account: { login }
+		}});
 		const res = {
 			sendStatus: jest.fn(),
 			status: jest.fn(),
 			locals: {
 				jiraHost,
 				githubToken: "abc-token",
+				client: {
+					apps: { getInstallation }
+				},
 				github: {
-					apps: {
-						listInstallationsForAuthenticatedUser: jest.fn().mockResolvedValue({
-							data: {
-								installations: [
-									{
-										id: gitHubInstallationId,
-										target_type: "User",
-										account: { login }
-									}
-								]
-							}
-						})
-					},
-					users: { getAuthenticated }
+					orgs: { getMembershipForAuthenticatedUser }
 				}
 			}
 		};
@@ -62,6 +58,10 @@ describe("POST /github/subscription", () => {
 
 	it("Missing githubToken", async () => {
 		const req = {
+			body: {
+				installationId: gitHubInstallationId,
+				jiraHost
+			},
 			session: {}
 		};
 
