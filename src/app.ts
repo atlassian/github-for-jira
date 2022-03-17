@@ -2,8 +2,8 @@ import express, { Express, NextFunction, Request, Response, Router } from "expre
 import path from "path";
 import getGithubClientMiddleware from "./middleware/github-client-middleware";
 import { App } from "@octokit/app";
-import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
-import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
+import { registerHandlebarsPartials } from "./util/handlebars/partials";
+import { registerHandlebarsHelpers } from "./util/handlebars/helpers";
 import crypto from "crypto";
 import { Application } from "probot";
 import statsd, { elapsedTimeMetrics } from "./config/statsd";

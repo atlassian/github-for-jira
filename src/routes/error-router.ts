@@ -42,7 +42,7 @@ ErrorRouter.use(Sentry.Handlers.errorHandler());
 ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 	const errorReference = uuidv4();
 
-	req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend")
+	req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend ErrorRouter.")
 
 	if (!isNodeProd() && !res.locals.showError) {
 		return next(err);

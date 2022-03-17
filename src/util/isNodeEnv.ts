@@ -1,4 +1,4 @@
-import { EnvironmentEnum } from "interfaces/common";
+import { EnvironmentEnum } from "../interfaces/common";
 
 export const getNodeEnv = () => process.env.NODE_ENV || EnvironmentEnum.development;
 export const isNodeEnv = (env: EnvironmentEnum) => getNodeEnv() === env;
