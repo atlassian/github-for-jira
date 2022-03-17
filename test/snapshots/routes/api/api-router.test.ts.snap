@@ -1,0 +1,89 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`API Router Authentication should return 200 if a valid token is provided 1`] = `Object {}`;
+
+exports[`API Router Authentication should return 200 if token belongs to an admin 1`] = `Object {}`;
+
+exports[`API Router Authentication should return 401 if the GraphQL query returns errors 1`] = `
+Object {
+  "errors": Array [
+    Object {
+      "extensions": Object {
+        "code": "undefinedField",
+        "fieldName": "foo",
+        "typeName": "User",
+      },
+      "locations": Array [
+        Object {
+          "column": 5,
+          "line": 4,
+        },
+      ],
+      "message": "Field 'foo' doesn't exist on type 'User'",
+      "path": Array [
+        "query",
+        "viewer",
+        "foo",
+      ],
+    },
+  ],
+  "viewerPermissionQuery": "{
+  viewer {
+    login
+    organization(login: \\"fusion-arc\\") {
+      viewerCanAdminister
+    }
+  }
+}
+",
+}
+`;
+
+exports[`API Router Authentication should return 401 if the returned organization is null 1`] = `
+Object {
+  "error": "Unauthorized",
+  "message": "Token provided does not have required access",
+}
+`;
+
+exports[`API Router Authentication should return 401 if the token is invalid 1`] = `
+Object {
+  "documentation_url": "https://developer.github.com/v4",
+  "message": "Bad credentials",
+}
+`;
+
+exports[`API Router Authentication should return 404 if no token is provided 1`] = `Object {}`;
+
+exports[`API Router Endpoints Delete Installation Should work with new delete installation route 1`] = `Object {}`;
+
+exports[`API Router Endpoints Delete Installation Should work with old delete installation route 1`] = `Object {}`;
+
+exports[`API Router Endpoints Repo Sync State should return 404 if no installation is found 1`] = `Object {}`;
+
+exports[`API Router Endpoints installation should return 404 if no installation is found 1`] = `Object {}`;
+
+exports[`API Router Endpoints installation should return information for an existing installation 1`] = `
+Object {
+  "connections": Array [
+    Object {
+      "isGlobalInstall": false,
+      "syncStatus": null,
+      "updated_at": "Invalid Date",
+    },
+  ],
+  "failedConnections": Array [],
+  "hasConnections": true,
+  "host": "https://test-atlassian-instance.atlassian.net",
+  "installationId": "1234",
+  "syncStateUrl": "http://127.0.0.1/api/1234/https%3A%2F%2Ftest-atlassian-instance.atlassian.net/syncstate",
+}
+`;
+
+exports[`API Router Endpoints sync should reset sync state if asked to 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+
+exports[`API Router Endpoints sync should return 404 if no installation is found 1`] = `"Not Found"`;
+
+exports[`API Router Endpoints sync should trigger the sync or start function 1`] = `"{\\"message\\":\\"Successfully (re)started sync for 1234\\"}"`;
+
+exports[`API Router Endpoints verify should return 'Installation already enabled' 1`] = `"Verification successful"`;
