@@ -156,7 +156,7 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (githubClient: GitHubAPI, newGitHubClient: GitHubAppClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+export default async (githubClient: GitHubAPI, newGitHubClient: GitHubAppClient, payload: WebhookPayloadDeploymentStatus, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 
@@ -169,25 +169,19 @@ export default async (githubClient: GitHubAPI, newGitHubClient: GitHubAppClient,
 			ref: deployment.sha
 		});
 
+	const allCommitsMessages = await getCommitMessagesSinceLastSuccessfulDeployment(
+		payload.repository.owner.login,
+		payload.repository.name,
+		deployment.sha,
+		deployment.id,
+		deployment_status.environment,
+		githubClient,
+		newGitHubClient,
+		useNewGitHubClient,
+		logger
+	);
 
-	let issueKeys;
-	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {
-		const allCommitsMessages = await getCommitMessagesSinceLastSuccessfulDeployment(
-			payload.repository.owner.login,
-			payload.repository.name,
-			deployment.sha,
-			deployment.id,
-			deployment_status.environment,
-			githubClient,
-			newGitHubClient,
-			useNewGitHubClient,
-			logger
-		);
-
-		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}\n${allCommitsMessages}`) || [];
-	} else {
-		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`) || [];
-	}
+	const issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}\n${allCommitsMessages}`) || [];
 
 	if (_.isEmpty(issueKeys)) {
 		return undefined;

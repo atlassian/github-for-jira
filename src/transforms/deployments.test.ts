@@ -156,14 +156,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 			}
 			);
 
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-
-		const jiraPayload = await transformDeployment(GitHubAPI(), githubClient, deployment_status.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(GitHubAPI(), githubClient, deployment_status.payload as any, getLogger("deploymentLogger"));
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
