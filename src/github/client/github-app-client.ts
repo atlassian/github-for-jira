@@ -239,7 +239,7 @@ export class GitHubAppClient {
 	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
 		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations/{installationId}`, {
 			...this.appAuthenticationHeaders(),
-			urlParams: { 
+			urlParams: {
 				installationId
 			}
 		});
@@ -248,7 +248,7 @@ export class GitHubAppClient {
 	public async getMembership(org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>> {
 		return await this.get<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>("/user/memberships/orgs/{org}",
 			{
-				urlParams: { 
+				urlParams: {
 					org
 				}
 			});

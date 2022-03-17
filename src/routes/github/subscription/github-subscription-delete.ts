@@ -54,7 +54,6 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 				res.status(404).send("Cannot find Subscription.");
 				return;
 			}
-			console.log("BIGTEST");
 			await subscription.destroy();
 			res.sendStatus(202);
 		} catch (err) {
