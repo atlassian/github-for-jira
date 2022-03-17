@@ -1,4 +1,4 @@
-import { CustomContext } from "../github/middleware";
+import { CustomContext } from "middleware/github-webhook-middleware";
 
 const DEFAULT_TIMEOUT = Number(process.env.REQUEST_TIMEOUT_MS) || 25000;
 

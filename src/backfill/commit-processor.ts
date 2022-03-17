@@ -1,14 +1,10 @@
-import { RateLimitState, StepProcessor, StepResult } from "./looper/api";
-import { JobState } from "./index";
+import { JobState, StepProcessor, StepResult } from "./backfill.types";
 
 export class CommitProcessor implements StepProcessor<JobState> {
-
-	process(jobState: JobState, _?: RateLimitState): StepResult<JobState> {
+	process(jobState: JobState): StepResult<JobState> {
 		return {
 			success: true,
 			jobState: jobState
 		};
 	}
-
-
 }

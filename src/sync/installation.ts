@@ -20,7 +20,7 @@ import { BackfillMessagePayload } from "../sqs/backfill";
 import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
 import { getCloudInstallationId } from "../github/client/installation-id";
-import { RateLimitingError } from "../github/client/errors";
+import { RateLimitingError } from "../github/client/github-client-errors";
 
 const tasks: TaskProcessors = {
 	pull: getPullRequests,

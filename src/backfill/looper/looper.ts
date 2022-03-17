@@ -1,38 +1,5 @@
-import {
-	JobStore,
-	RateLimitState,
-	RateLimitStrategy,
-	RetryStrategy,
-	Step,
-	StepPrioritizer,
-	StepResult
-} from "./api";
 import Logger from "bunyan";
-
-/**
- * Information about the next action that should be taken after a step has been processed.
- */
-export interface NextAction<JOB_ID> {
-
-	/**
-	 * Identifier for the job.
-	 */
-	jobId: JOB_ID;
-
-	/**
-	 * If this is true, the job isn't finished, yet. Go ahead and schedule the next step of the job.
-	 * If this is false, the job is finished.
-	 */
-	scheduleNextStep: boolean;
-
-	/**
-	 * If this is set, the next step should be delayed.
-	 */
-	delay?: {
-		seconds: number;
-		reason: "retry" | "rate-limit"
-	}
-}
+import { JobStore, NextAction, RateLimitState, RateLimitStrategy, RetryStrategy, Step, StepPrioritizer, StepResult } from "../backfill.types";
 
 export class Looper<JOB_ID, JOB_STATE> {
 
@@ -126,14 +93,12 @@ export class Looper<JOB_ID, JOB_STATE> {
 			this.logger.warn(`Retrying step ${JSON.stringify(step)} due to error: ${stepResult.error?.message}`);
 			this.jobStore.setFailedAttemptsCount(step.jobId, failedAttempts);
 			return this.continueJobWithRetryDelay(step, retry.retryAfterSeconds);
-		} else {
-			// Don't retry. Reset the failed attempts and skip the current step.
-			this.logger.warn(`Not retrying step ${JSON.stringify(step)} after ${failedAttempts} failed attempts. Error was: ${stepResult.error?.message}`);
-			this.jobStore.setFailedAttemptsCount(step.jobId, 0);
-			return this.skipStep(step, jobState, stepResult);
 		}
 
-		return this.continueJobWithRateLimitDelay(step, stepResult.rateLimit);
+		// Don't retry. Reset the failed attempts and skip the current step.
+		this.logger.warn(`Not retrying step ${JSON.stringify(step)} after ${failedAttempts} failed attempts. Error was: ${stepResult.error?.message}`);
+		this.jobStore.setFailedAttemptsCount(step.jobId, 0);
+		return this.skipStep(step, jobState, stepResult);
 	}
 
 	private continueJobWithRetryDelay(step: Step<JOB_ID>, delayInSeconds?: number): NextAction<JOB_ID> {
@@ -150,7 +115,7 @@ export class Looper<JOB_ID, JOB_STATE> {
 	}
 
 	private continueJobWithRateLimitDelay(step: Step<JOB_ID>, rateLimitState?: RateLimitState): NextAction<JOB_ID> {
-		const delayInSeconds = this.rateLimitStrategy.getDelayInSeconds(rateLimitState)
+		const delayInSeconds = this.rateLimitStrategy.getDelayInSeconds(rateLimitState);
 		return {
 			jobId: step.jobId,
 			scheduleNextStep: true,
@@ -166,7 +131,7 @@ export class Looper<JOB_ID, JOB_STATE> {
 	private stopJob(step: Step<JOB_ID>): NextAction<JOB_ID> {
 		return {
 			jobId: step.jobId,
-			scheduleNextStep: false,
+			scheduleNextStep: false
 		};
 	}
 
