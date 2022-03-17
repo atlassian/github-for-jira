@@ -6,8 +6,8 @@ import { Installation, RepoSyncState, Subscription } from "models/index";
 import { Application } from "probot";
 import { createWebhookApp } from "test/utils/probot";
 import { processInstallation } from "./installation";
-import nock from "nock";
 import { getLogger } from "config/logger";
+import { cleanAll } from "nock";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { sqsQueues } from "../sqs/queues";
@@ -259,7 +259,7 @@ describe("sync/branches", () => {
 		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 		expect(jiraNock).not.toBeDone();
-		nock.cleanAll();
+		cleanAll();
 	});
 
 	it("should reschedule message with delay if there is rate limit", async () => {
