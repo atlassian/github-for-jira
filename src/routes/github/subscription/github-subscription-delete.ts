@@ -19,28 +19,29 @@ const hasDeleteRights = async (gitHubUserClient: GitHubUserClient | GitHubAPI, i
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
 	const { github, client, githubToken, jiraHost } = res.locals;
-	const { installationId } = req.body;
+	const { installationId: gitHubInstallationId } = req.body;
+	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION, false, jiraHost) ;
-	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(installationId), req.log);
-	const gitHubUserClient = new GitHubUserClient(githubToken, req.log);
+	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), logger);
+	const gitHubUserClient = new GitHubUserClient(githubToken, logger);
 
 	if (!githubToken) {
 		res.sendStatus(401);
 		return;
 	}
 
-	if (!installationId || !jiraHost) {
+	if (!gitHubInstallationId || !jiraHost) {
 		res.status(400).json({ err: "installationId and jiraHost must be provided to delete a subscription." });
 		return;
 	}
 
-	req.log.info("Received delete-subscription request");
+	logger.info("Received delete-subscription request");
 
 	try {
 		const { data: installation } = useNewGitHubClient ?
-			await gitHubAppClient.getInstallation(installationId) :
-			await client.apps.getInstallation({ installation_id: installationId });
+			await gitHubAppClient.getInstallation(gitHubInstallationId) :
+			await client.apps.getInstallation({ installation_id: gitHubInstallationId });
 
 		if (!await hasDeleteRights(useNewGitHubClient ? gitHubUserClient : github, installation)) {
 			res.status(401).json({ err: `Unauthorized access to delete subscription.` });
@@ -48,7 +49,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		}
 
 		try {
-			const subscription = await Subscription.getSingleInstallation(jiraHost, installationId);
+			const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 			if (!subscription) {
 				res.status(404).send("Cannot find Subscription.");
 				return;
@@ -60,7 +61,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		}
 
 	} catch (err) {
-		req.log.error({ err, req, res }, "Error while processing delete subscription request");
+		logger.error({ err, req, res }, "Error while processing delete subscription request");
 		res.sendStatus(500);
 	}
 };
