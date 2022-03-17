@@ -236,6 +236,12 @@ export class GitHubAppClient {
 		};
 	};
 
+	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
+		return await this.get<Octokit.AppsGetInstallationResponse>(`/app/installations/{installationId}`, {}, {
+			installationId
+		});
+	};
+
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
 			{ environment, per_page },
