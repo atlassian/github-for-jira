@@ -121,6 +121,8 @@ describe("delete-github-subscription", () => {
 	});
 
 	it("Should delete GitHub Subscription as an Org admin - installation type Org", async () => {
+		
+		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, type: "Org"
 		});
@@ -134,7 +136,8 @@ describe("delete-github-subscription", () => {
 	});
 
 	it("Should delete GitHub Subscription as an User - installation type User", async () => {
-
+		
+		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-user" }, type: "User"
 		});
@@ -148,7 +151,8 @@ describe("delete-github-subscription", () => {
 	});
 
 	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type Org", async () => {
-
+		
+		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, type: "Org"
 		});
@@ -162,7 +166,8 @@ describe("delete-github-subscription", () => {
 	});
 
 	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type User", async () => {
-
+		
+		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "something-something-test-user" }, type: "user"
 		});
