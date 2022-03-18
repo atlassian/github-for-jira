@@ -10,16 +10,16 @@ query {
 }`;
 
 type RepositoryNode = {
-  node: Repository
+	node: Repository
 }
 
 export type GetRepositoriesResponse = {
-  viewer: {
-    repositories: {
-      pageInfo,
-      edges: RepositoryNode[]
-    }
-  }
+	viewer: {
+		repositories: {
+			pageInfo,
+			edges: RepositoryNode[]
+		}
+	}
 };
 
 export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
@@ -79,35 +79,35 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
   }`;
 
 export type CommitQueryNode = {
-  cursor: string,
-  node: {
-      author: {
-        avatarUrl: string,
-        email: string,
-        name: string,
-        user: { url: string }
-      },
-      authoredDate: Date,
-      message: string,
-      oid: string,
-      url: string,
-      changedFiles?: number
-  }
+	cursor: string,
+	node: {
+		author: {
+			avatarUrl: string,
+			email: string,
+			name: string,
+			user: { url: string }
+		},
+		authoredDate: Date,
+		message: string,
+		oid: string,
+		url: string,
+		changedFiles?: number
+	}
 }
 
 export type getCommitsResponse = {
-  repository: {
-    defaultBranchRef: {
-      target: {
-        history: {
-          edges: CommitQueryNode[]
-        }
-      }
-    }
-  }
+	repository: {
+		defaultBranchRef: {
+			target: {
+				history: {
+					edges: CommitQueryNode[]
+				}
+			}
+		}
+	}
 };
 
-export const getCommitsQueryWithChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo){
     defaultBranchRef {
       target {
@@ -138,7 +138,7 @@ export const getCommitsQueryWithChangedFiles = () => `query ($owner: String!, $r
   }
 }`;
 
-export const getCommitsQueryWithoutChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getCommitsQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo){
     defaultBranchRef {
       target {
@@ -168,8 +168,8 @@ export const getCommitsQueryWithoutChangedFiles = () => `query ($owner: String!,
   }
   }`;
 
-export type GetBranchesResponse = {repository: Repository};
-export const GetBranchesQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export type getBranchesResponse = { repository: Repository };
+export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
         edges {
@@ -190,6 +190,53 @@ export const GetBranchesQuery = `query ($owner: String!, $repo: String!, $per_pa
                 }
                 authoredDate
                 changedFiles
+                history(first: 50) {
+                  nodes {
+                    message
+                    oid
+                    authoredDate
+                    author {
+                      avatarUrl
+                      email
+                      name
+                      user {
+                        url
+                      }
+                    }
+                    url
+                  }
+                }
+                oid
+                message
+                url
+              }
+            }
+          }
+        }
+      }
+    }
+  }`;
+
+export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+    repository(owner: $owner, name: $repo) {
+      refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
+        edges {
+          cursor
+          node {
+            associatedPullRequests(first:1) {
+              nodes {
+                title
+              }
+            }
+            name
+            target {
+              ... on Commit {
+                author {
+                  avatarUrl
+                  email
+                  name
+                }
+                authoredDate
                 history(first: 50) {
                   nodes {
                     message

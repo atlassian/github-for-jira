@@ -70,4 +70,7 @@ export class GithubClientGraphQLError extends GithubClientError {
 
 }
 
+export const isChangedFilesError = (err:GithubClientGraphQLError):boolean =>
+	!!err?.errors?.find(e => e.message?.includes("changedFiles"))
+
 const ONE_HOUR_IN_SECONDS = 60 * 60;

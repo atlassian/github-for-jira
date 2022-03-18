@@ -92,7 +92,7 @@ export const updateJobStatus = async (
 	repositoryId: string,
 	logger: LoggerWithTarget,
 	scheduleNextTask: (delay) => void
-) : Promise<void> => {
+): Promise<void> => {
 	const { installationId, jiraHost } = data;
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
@@ -145,16 +145,13 @@ const getEnhancedGitHub = async (app: Application, installationId) =>
  * @param err the error thrown by Octokit.
  */
 export const isRetryableWithSmallerRequest = (err): boolean => {
-	if (err.errors) {
-
-		const retryableErrors = err.errors.filter(
-			(error) => {
-				return "MAX_NODE_LIMIT_EXCEEDED" == error.type
-					|| error.message?.startsWith("Something went wrong while executing your query");
-			}
+	if (err?.errors) {
+		const retryableErrors = err?.errors?.find(
+			(error) => "MAX_NODE_LIMIT_EXCEEDED" == error.type ||
+				error.message?.startsWith("Something went wrong while executing your query")
 		);
 
-		return retryableErrors.length;
+		return !!retryableErrors;
 	} else {
 		return false;
 	}
@@ -251,18 +248,15 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 						cursor,
 						task
 					}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
-					if (isRetryableWithSmallerRequest(err)) {
-						// error is retryable, retrying with next smaller page size
-						continue;
-					} else {
+					if (!isRetryableWithSmallerRequest(err)) {
 						// error is not retryable, re-throwing it
 						throw err;
 					}
+					// error is retryable, retrying with next smaller page size
 				}
 			}
-
 		}
-
+		logger.error({ jiraHost, installationId, repositoryId, task }, "Error processing GraphQL query");
 		throw new Error(`Error processing GraphQL query: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
 	};
 
@@ -332,21 +326,21 @@ export const handleBackfillError = async (err,
 	nextTask: Task,
 	subscription: SubscriptionClass,
 	logger: LoggerWithTarget,
-	scheduleNextTask: (delayMs: number) => void) : Promise<void> => {
+	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
 	const isRateLimitError = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
-	if(isRateLimitError) {
+	if (isRateLimitError) {
 		const rateLimit = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) ? err.rateLimitReset : Number(err?.headers?.["x-ratelimit-reset"]);
 		const delay = Math.max(rateLimit * 1000 - Date.now(), 0);
 
 		if (delay) {
 			// if not NaN or 0
-			logger.info({delay}, `Delaying job for ${delay}ms`);
+			logger.info({ delay }, `Delaying job for ${delay}ms`);
 			scheduleNextTask(delay);
 		} else {
 			//Retry immediately if rate limiting reset already
-			logger.info("Rate limit was reset already. Scheduling next task")
+			logger.info("Rate limit was reset already. Scheduling next task");
 			scheduleNextTask(0);
 		}
 		return;
@@ -378,13 +372,12 @@ export const handleBackfillError = async (err,
 		return;
 	}
 
-	logger.warn({ err }, "Task failed, continuing with next task");
+	logger.error({ err }, "Task failed, continuing with next task");
 
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
-
 };
 
-export const markCurrentRepositoryAsFailedAndContinue = async (subscription: SubscriptionClass, nextTask: Task, scheduleNextTask: (delayMs: number) => void) : Promise<void> => {
+export const markCurrentRepositoryAsFailedAndContinue = async (subscription: SubscriptionClass, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
 	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
 
@@ -392,7 +385,7 @@ export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Sub
 
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
-}
+};
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export async function maybeScheduleNextTask(

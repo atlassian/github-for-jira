@@ -9,9 +9,17 @@ import { metricHttpRequest } from "../../config/metric-names";
 import { getLogger } from "../../config/logger";
 import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
-import { GetBranchesQuery, GetBranchesResponse, getCommitsQueryWithChangedFiles, getCommitsQueryWithoutChangedFiles, getCommitsResponse, ViewerRepositoryCountQuery } from "./github-queries";
-import { GithubClientGraphQLError, RateLimitingError } from "./errors";
-import { GraphQlQueryResponse, PaginatedAxiosResponse, GetPullRequestParams } from "./github-client.types";
+import {
+	getBranchesQueryWithChangedFiles,
+	getBranchesQueryWithoutChangedFiles,
+	getBranchesResponse,
+	getCommitsQueryWithChangedFiles,
+	getCommitsQueryWithoutChangedFiles,
+	getCommitsResponse,
+	ViewerRepositoryCountQuery
+} from "./github-queries";
+import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./errors";
+import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -257,14 +265,28 @@ export class GitHubAppClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage?: number, cursor?: string): Promise<GetBranchesResponse> {
-		const response = await this.graphql<GetBranchesResponse>(GetBranchesQuery,
+	public async getBranchesPage(owner: string, repoName: string, perPage: number, cursor?: string): Promise<getBranchesResponse> {
+		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles,
 			{
 				owner,
 				repo: repoName,
 				per_page: perPage,
 				cursor
-			});
+			}).catch((err) => {
+			// Is it a changedFiles error?
+			if (!isChangedFilesError(err)) {
+				return Promise.reject(err);
+			}
+
+			this.logger.warn("retrying branch graphql query without changedFiles");
+			return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles,
+				{
+					owner,
+					repo: repoName,
+					per_page: perPage,
+					cursor
+				});
+		});
 		return response?.data?.data;
 	}
 
@@ -272,26 +294,25 @@ export class GitHubAppClient {
 	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
 	 */
 	public async getCommitsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
-		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles(),
+		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles,
 			{
 				owner,
 				repo: repoName,
 				per_page: perPage,
 				cursor
 			}).catch((err) => {
-			const changedFilesErrors = err.errors?.find(e => e.message?.includes("The changedFiles count for this commit is unavailable"));
 
-			if (changedFilesErrors) {
-				this.logger.info("retrying without changedFiles");
-				return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles(),
-					{
-						owner,
-						repo: repoName,
-						per_page: perPage,
-						cursor
-					});
+			if (!isChangedFilesError(err)) {
+				return Promise.reject(err);
 			}
-			return Promise.reject(err);
+			this.logger.warn("retrying commit graphql query without changedFiles");
+			return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles,
+				{
+					owner,
+					repo: repoName,
+					per_page: perPage,
+					cursor
+				});
 		});
 		return response?.data?.data;
 	}
