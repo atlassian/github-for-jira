@@ -58,10 +58,8 @@ describe("Branch Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(true);
 
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
-				expect.anything()
-			).mockResolvedValue(true);
+			const fixture = require("../fixtures/branch-basic.json");
+
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
@@ -173,10 +171,8 @@ describe("Branch Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(false);
 
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
-				expect.anything()
-			).mockResolvedValue(true);
+			const fixture = require("../fixtures/branch-basic.json");
+
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 

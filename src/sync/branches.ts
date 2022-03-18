@@ -9,15 +9,30 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 export default async (logger: LoggerWithTarget, _github: GitHubAPI, newGithub: GitHubAppClient, jiraHost: string, repository:Repository, cursor?:string | number, perPage?:number) => {
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
+
 	perPage = perPage || 20;
-	const useNewGHPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, false, jiraHost);
-	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string);
+	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES, false, jiraHost);
+
+	let result;
+	if (useNewGHClient) {
+		result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string);
+	} else {
+		result = ((await github.graphql(GetBranchesQuery, {
+			owner: repository.owner.login,
+			repo: repository.name,
+			per_page: perPage,
+			cursor
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		})) as { repository: OctokitRepository});
+
+	}
+
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
 
 	logger.info("Syncing branches: finished");
 
-	const jiraPayload = await transformBranches({ branches, repository }, useNewGHPrUrl);
+	const jiraPayload = await transformBranches({ branches, repository });
 
 	return {
 		edges,
