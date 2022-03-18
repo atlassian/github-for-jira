@@ -39,7 +39,7 @@ describe("POST /github/subscription - octokit", () => {
 	test("Delete GitHub Subscription", async () => {
 
 		const req = {
-			log: { error: jest.fn(), info: jest.fn() },
+			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost
@@ -101,7 +101,7 @@ describe("delete-github-subscription", () => {
 		).mockResolvedValue(true);
 
 		req = {
-			log: { error: jest.fn(), info: jest.fn() },
+			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost
