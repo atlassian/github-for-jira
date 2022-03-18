@@ -17,7 +17,7 @@ import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
 
-describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'", (useNewGithubClient) => {
+describe("sync/branches", () => {
 	const installationId = 1234;
 
 	let app: Application;
@@ -150,15 +150,7 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 
 		app = await createWebhookApp();
 
-		if (useNewGithubClient) {
-			githubUserTokenNock(installationId);
-		}
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCHES,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
+		githubUserTokenNock(installationId);
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
@@ -267,12 +259,10 @@ describe.each([true, false])("sync/branches - New GH Client feature flag is '%s'
 		nock.cleanAll();
 	});
 
-	if (useNewGithubClient) {
-		it("should reschedule message with delay if there is rate limit", async () => {
-			const data = { installationId, jiraHost };
-			nockGitHubGraphQlRateLimit("12360");
-			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data, 15);
-		});
-	}
+	it("should reschedule message with delay if there is rate limit", async () => {
+		const data = { installationId, jiraHost };
+		nockGitHubGraphQlRateLimit("12360");
+		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		verifyMessageSent(data, 15);
+	});
 });
