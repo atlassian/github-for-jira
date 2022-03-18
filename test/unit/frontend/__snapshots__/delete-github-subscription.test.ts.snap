@@ -1,53 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`POST /github/subscription - delete GitHub Subscription missing body.installationId 1`] = `
-Array [
-  Object {
-    "err": Any<String>,
-  },
-]
-`;
-
-exports[`POST /github/subscription - delete GitHub Subscription missing body.jiraHost 1`] = `
-Array [
-  Object {
-    "err": Any<String>,
-  },
-]
-`;
-
-exports[`POST /github/subscription missing body.installationId 1`] = `
-Array [
-  Object {
-    "err": Any<String>,
-  },
-]
-`;
-
-exports[`POST /github/subscription missing body.installationId 2`] = `
-Array [
-  Object {
-    "err": Any<String>,
-  },
-]
-`;
-
-exports[`POST /github/subscription missing body.jiraHost 1`] = `
-Array [
-  Object {
-    "err": Any<String>,
-  },
-]
-`;
-
-exports[`POST /github/subscription missing body.jiraHost 2`] = `
-Array [
-  Object {
-    "err": Any<String>,
-  },
-]
-`;
-
 exports[`delete-github-subscription Should 400 when missing body.installationId 1`] = `
 Array [
   Object {
