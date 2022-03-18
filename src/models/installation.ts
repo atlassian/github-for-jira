@@ -26,10 +26,10 @@ export default class Installation extends Sequelize.Model {
 	static async getForClientKey(
 		clientKey: string
 	): Promise<Installation | null> {
-		if(!clientKey?.length) {
+		if (!clientKey?.length) {
 			return null;
 		}
-		return Installation.findOne({
+		return await this.findOne({
 			where: {
 				clientKey: getHashedKey(clientKey)
 			}
@@ -37,22 +37,22 @@ export default class Installation extends Sequelize.Model {
 	}
 
 	static async getForHost(host: string): Promise<Installation | null> {
-		if(!host?.length) {
+		if (!host?.length) {
 			return null;
 		}
-		return Installation.findOne( {
+		return await this.findOne({
 			where: {
 				jiraHost: host
 			},
-			order: [["id", "DESC"]]
+			order: [["createdAt", "DESC"]]
 		});
 	}
 
 	static async getAllForHost(host: string): Promise<Installation[]> {
-		if(!host?.length) {
+		if (!host?.length) {
 			return [];
 		}
-		return Installation.findAll({
+		return await this.findAll({
 			where: {
 				jiraHost: host
 			},
@@ -67,7 +67,7 @@ export default class Installation extends Sequelize.Model {
 	 * @returns {Installation}
 	 */
 	static async install(payload: InstallationPayload): Promise<Installation> {
-		const [installation, created] = await Installation.findOrCreate({
+		const [installation, created] = await this.findOrCreate({
 			where: {
 				clientKey: getHashedKey(payload.clientKey)
 			},
@@ -105,7 +105,7 @@ export default class Installation extends Sequelize.Model {
 	}
 
 	async subscriptions(): Promise<SubscriptionClass[]> {
-		return Subscription.getAllForClientKey(this.clientKey);
+		return await Subscription.getAllForClientKey(this.clientKey);
 	}
 }
 

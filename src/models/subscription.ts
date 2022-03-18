@@ -62,7 +62,7 @@ export default class Subscription extends Sequelize.Model {
 	numberOfSyncedRepos?: number;
 
 	static async getAllForHost(host: string): Promise<Subscription[]> {
-		return Subscription.findAll({
+		return this.findAll({
 			where: {
 				jiraHost: host
 			}
@@ -72,7 +72,7 @@ export default class Subscription extends Sequelize.Model {
 	static getAllForInstallation(
 		installationId: number
 	): Promise<Subscription[]> {
-		return Subscription.findAll({
+		return this.findAll({
 			where: {
 				gitHubInstallationId: installationId
 			}
@@ -116,7 +116,7 @@ export default class Subscription extends Sequelize.Model {
 			});
 		}
 
-		return Subscription.findAll({
+		return this.findAll({
 			where: {
 				[Op.and]: andFilter
 			},
@@ -127,7 +127,7 @@ export default class Subscription extends Sequelize.Model {
 	}
 
 	static getAllForClientKey(clientKey: string): Promise<Subscription[]> {
-		return Subscription.findAll({
+		return this.findAll({
 			where: {
 				jiraClientKey: clientKey
 			}
@@ -138,7 +138,7 @@ export default class Subscription extends Sequelize.Model {
 		jiraHost: string,
 		gitHubInstallationId: number
 	): Promise<Subscription | null> {
-		return Subscription.findOne({
+		return this.findOne({
 			where: {
 				jiraHost,
 				gitHubInstallationId
@@ -150,7 +150,7 @@ export default class Subscription extends Sequelize.Model {
 		clientKey: string,
 		installationId: string
 	): Promise<Subscription | null> {
-		return Subscription.findOne({
+		return this.findOne({
 			where: {
 				jiraClientKey: clientKey,
 				gitHubInstallationId: installationId
@@ -159,7 +159,7 @@ export default class Subscription extends Sequelize.Model {
 	}
 
 	static async install(payload: SubscriptionInstallPayload): Promise<Subscription> {
-		const [subscription] = await Subscription.findOrCreate({
+		const [subscription] = await this.findOrCreate({
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
@@ -171,7 +171,7 @@ export default class Subscription extends Sequelize.Model {
 	}
 
 	static async uninstall(payload: SubscriptionPayload): Promise<void> {
-		await Subscription.destroy({
+		await this.destroy({
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host

@@ -1,12 +1,10 @@
-import logger from "../config/logger";
+import logger from "config/logger";
 import { getNodeEnv } from "utils/isNodeEnv";
-import { EnvironmentEnum } from "interfaces/common";
-import dbConfig from "db/config.json";
 import { Sequelize } from "sequelize";
+import dbConfig from "db/config.json";
 
-const nodeEnv = getNodeEnv() || EnvironmentEnum.development;
 // TODO: config misses timezone config to force to UTC, defaults to local timezone of PST
-const config = dbConfig[nodeEnv];
+const config = dbConfig[getNodeEnv()];
 
 config.benchmark = true;
 config.logging = config.disable_sql_logging

@@ -4,10 +4,10 @@ import { sequelize } from "models/sequelize";
 import IORedis from "ioredis";
 import getRedisInfo from "config/redis-info";
 
-const cache = new IORedis(getRedisInfo("ping"));
 const logger = getLogger("deepcheck");
 const timeout = 15000;
 export const DeepcheckGet = async (_: Request, res: Response): Promise<void> => {
+	const cache = new IORedis(getRedisInfo("ping"));
 	try {
 		await Promise.race([
 			Promise.all([

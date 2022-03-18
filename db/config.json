@@ -3,9 +3,9 @@
     "dialect": "postgres",
     "use_env_variable": "DATABASE_URL",
 		"pool": {
-			"max": 15,
+			"max": 1,
 			"min": 0,
-			"idle": 1000
+			"idle": 10000
 		}
   },
   "test": {
