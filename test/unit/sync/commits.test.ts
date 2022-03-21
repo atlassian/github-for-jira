@@ -10,8 +10,6 @@ import { sqsQueues } from "../../../src/sqs/queues";
 import { getLogger } from "../../../src/config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../../../src/sqs/backfill";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "../../../src/config/feature-flags";
 
 const commitNodesFixture = require("../../fixtures/api/graphql/commit-nodes.json");
 const mixedCommitNodes = require("../../fixtures/api/graphql/commit-nodes-mixed.json");
@@ -20,7 +18,7 @@ const commitsNoKeys = require("../../fixtures/api/graphql/commit-nodes-no-keys.j
 jest.mock("../../../src/sqs/queues");
 jest.mock("../../../src/config/feature-flags");
 
-describe.each([true, false])("sync/commits - new github client is %s", (useNewGithubClient) => {
+describe("sync/commits - new github client is %s", () => {
 	let app: Application;
 	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
@@ -98,15 +96,8 @@ describe.each([true, false])("sync/commits - new github client is %s", (useNewGi
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 
-		if (useNewGithubClient) {
-			githubUserTokenNock(installationId);
-		}
+		githubUserTokenNock(installationId);
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
 	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
