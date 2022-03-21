@@ -27,12 +27,6 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 		});
 
 		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PULL_REQUEST_WEBHOOK,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
-
-		when(booleanFlag).calledWith(
 			BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
 			expect.anything()
 		).mockResolvedValue(useNewGithubClient);
@@ -41,11 +35,9 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 
 	it("should have reviewers on pull request action", async () => {
 		const fixture = require("../fixtures/pull-request-basic.json");
-		if (useNewGithubClient) {
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-		}
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -188,9 +180,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 	it("should delete the reference to a pull request when issue keys are removed from the title", async () => {
 		const fixture = require("../fixtures/pull-request-remove-keys.json");
 		const { repository, pull_request: pullRequest } = fixture.payload;
-		if (useNewGithubClient) {
-			githubUserTokenNock(gitHubInstallationId);
-		}
+		githubUserTokenNock(gitHubInstallationId);
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, [
@@ -256,11 +246,9 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 	it("will not delete references if a branch still has an issue key", async () => {
 		const fixture = require("../fixtures/pull-request-test-changes-with-branch.json");
 
-		if (useNewGithubClient) {
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-		}
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, [
@@ -323,11 +311,10 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 		beforeEach(() => fixture = require("../fixtures/pull-request-triggered-by-bot.json"));
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot", async () => {
-			if (useNewGithubClient) {
-				githubUserTokenNock(gitHubInstallationId);
-				githubUserTokenNock(gitHubInstallationId);
-				githubUserTokenNock(gitHubInstallationId);
-			}
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
 					login: "test-pull-request-author-login",
@@ -481,11 +468,9 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot", async () => {
 
-			if (useNewGithubClient) {
-				githubUserTokenNock(gitHubInstallationId);
-				githubUserTokenNock(gitHubInstallationId);
-				githubUserTokenNock(gitHubInstallationId);
-			}
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
@@ -600,12 +585,12 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 		});
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot", async () => {
-			if (useNewGithubClient) {
-				githubUserTokenNock(gitHubInstallationId);
-				githubUserTokenNock(gitHubInstallationId);
-				githubUserTokenNock(gitHubInstallationId);
-				githubUserTokenNock(gitHubInstallationId);
-			}
+
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
+
 			githubNock.get("/users/test-pull-request-user-login")
 				.twice()
 				.reply(200, {

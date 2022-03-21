@@ -3,7 +3,6 @@ import issueKeyParser from "jira-issue-key-parser";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import { CustomContext } from "./middleware";
 import { isEmpty } from "lodash";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { GitHubAppClient } from "./client/github-app-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
@@ -21,10 +20,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	} = context.payload;
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
-	const githubClient =
-		await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PULL_REQUEST_WEBHOOK, false, jiraClient.baseURL) ?
-			new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log)
-			: context.github;
+	const githubClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log);
 
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,
@@ -116,9 +112,7 @@ const updateGithubIssues = async (github: GitHubAppClient | GitHubAPI, context: 
 		await github.issues.update(updatedPullRequest);
 };
 
-const getReviews = async (githubCient: GitHubAPI | GitHubAppClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
-	const response = githubCient instanceof GitHubAppClient ?
-		await githubCient.getPullRequestReviews(owner, repo, pull_number) :
-		await githubCient.pulls.listReviews({ owner, repo, pull_number });
+const getReviews = async (githubCient: GitHubAppClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
+	const response = await githubCient.getPullRequestReviews(owner, repo, pull_number);
 	return response.data;
 };
