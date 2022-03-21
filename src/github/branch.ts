@@ -6,7 +6,6 @@ import { isEmpty } from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
-import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import getJiraClient from "../jira/client";
 import { GitHubAppClient } from "./client/github-app-client";
@@ -27,8 +26,7 @@ export const createBranch = async (context: CustomContext, jiraClient, _util, gi
 	} else {
 
 		const gitHubClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log);
-		const github = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraClient.baseURL) ? gitHubClient : context.github;
-		const jiraPayload = await transformBranch(github, webhookPayload);
+		const jiraPayload = await transformBranch(gitHubClient, webhookPayload);
 
 		if (!jiraPayload) {
 			context.log("Halting further execution for createBranch since jiraPayload is empty");
@@ -50,7 +48,7 @@ export const createBranch = async (context: CustomContext, jiraClient, _util, gi
 };
 
 export const processBranch = async (
-	github: GitHubAPI | GitHubAppClient,
+	github: GitHubAppClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadCreate,
 	webhookReceivedDate: Date,
