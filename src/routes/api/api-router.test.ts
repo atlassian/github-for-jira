@@ -37,7 +37,7 @@ describe("API Router", () => {
 		}
 	};
 
-	const createApp = async () => {
+	const createApp = () => {
 		const app = express();
 		app.use((req: Request, res: Response, next: NextFunction) => {
 			res.locals = locals || {};
@@ -57,7 +57,7 @@ describe("API Router", () => {
 				}
 			}
 		};
-		app = await createApp();
+		app = createApp();
 
 		installation = await Installation.create({
 			gitHubInstallationId,
@@ -87,7 +87,7 @@ describe("API Router", () => {
 				}
 			});
 
-		await supertest(await createApp())
+		await supertest(app)
 			.get(`/api/${subscription.gitHubInstallationId}/${encodeURIComponent(subscription.jiraHost)}/syncstate`)
 			.set("Authorization", "Bearer xxx")
 			.then((response) => {

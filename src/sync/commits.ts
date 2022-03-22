@@ -46,7 +46,7 @@ const getCommitsOctoKit = async (logger: LoggerWithTarget, github: GitHubAPI, _n
 	let commitsData: any = {};
 
 	const fetchCommits = async (includeChangedFiles: boolean) => {
-		return github.graphql(includeChangedFiles ? getCommitsQueryWithChangedFiles() : getCommitsQueryWithoutChangedFiles(), {
+		return github.graphql(includeChangedFiles ? getCommitsQueryWithChangedFiles : getCommitsQueryWithoutChangedFiles, {
 			owner: repository.owner.login,
 			repo: repository.name,
 			per_page: perPage,
