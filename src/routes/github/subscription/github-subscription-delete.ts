@@ -1,17 +1,17 @@
 import { Request, Response } from "express";
-import { GitHubAPI } from "probot";
+import { GitHubAPI, Octokit } from "probot";
 import { Subscription } from "../../../models";
 import { getCloudInstallationId } from "../../../github/client/installation-id";
 import { GitHubAppClient } from "../../../github/client/github-app-client";
 import { GitHubUserClient } from "../../../github/client/github-user-client";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 
-const hasDeleteRights = async (gitHubUserClient: GitHubUserClient | GitHubAPI, installation): Promise<boolean> => {
+const hasDeleteRights = async (gitHubUserClient: GitHubUserClient | GitHubAPI, installation: Octokit.AppsGetInstallationResponse): Promise<boolean> => {
 	const { data: { role, user: { login } } } = gitHubUserClient instanceof GitHubUserClient ?
 		await gitHubUserClient.getMembershipForAuthenticatedUser(installation.account.login) :
 		await gitHubUserClient.orgs.getMembershipForAuthenticatedUser({ org: installation.account.login });
 
-	if (installation.type === "User") {
+	if (installation.target_type === "User") {
 		return installation.account.login === login;
 	}
 	return role === "admin";

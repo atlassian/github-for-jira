@@ -124,7 +124,7 @@ describe("delete-github-subscription", () => {
 		
 		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
-			account: { login: "test-org" }, type: "Org"
+			account: { login: "test-org" }, target_type: "Org"
 		});
 		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
 			role: "admin", user: { login: "test-org" }
@@ -139,7 +139,7 @@ describe("delete-github-subscription", () => {
 		
 		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
-			account: { login: "test-user" }, type: "User"
+			account: { login: "test-user" }, target_type: "User"
 		});
 		createGitHubNockGet("/user/memberships/orgs/test-user", 200, {
 			role: "batman", user: { login: "test-user" }
@@ -154,7 +154,7 @@ describe("delete-github-subscription", () => {
 		
 		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
-			account: { login: "test-org" }, type: "Org"
+			account: { login: "test-org" }, target_type: "Org"
 		});
 		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
 			role: "notadmin", user: { login: "test-org" }
@@ -169,7 +169,7 @@ describe("delete-github-subscription", () => {
 		
 		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
-			account: { login: "something-something-test-user" }, type: "user"
+			account: { login: "something-something-test-user" }, target_type: "user"
 		});
 		createGitHubNockGet("/user/memberships/orgs/something-something-test-user", 200, {
 			role: "batman", user: { login: "test-user" }
