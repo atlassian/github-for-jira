@@ -236,6 +236,10 @@ export class GitHubAppClient {
 		};
 	};
 
+	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsListInstallationsForAuthenticatedUserResponse>> => {
+		return await this.get<Octokit.AppsListInstallationsForAuthenticatedUserResponse>("/app/installations", {}, {});
+	};
+
 	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
 		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations/{installationId}`, {
 			...this.appAuthenticationHeaders(),

@@ -31,7 +31,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_BACKFILL = "use-new-github-client-for-backfill_z7ps8",
 	USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT = "use-new-github-pull-request-url-format",
 	USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT = "use-new-github-client-for-branch-event",
-	USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION = "use-new-github-client-for-delete-subscription"
+	USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION = "use-new-github-client-for-delete-subscription",
+	USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION = "use-new-github-client-for-get-subscription"
 }
 
 export enum StringFlags {
