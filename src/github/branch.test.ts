@@ -58,8 +58,6 @@ describe("Branch Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(true);
 
-			const fixture = require("../fixtures/branch-basic.json");
-
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
@@ -170,8 +168,6 @@ describe("Branch Webhook", () => {
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(false);
-
-			const fixture = require("../fixtures/branch-basic.json");
 
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";

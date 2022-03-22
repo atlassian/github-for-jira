@@ -6,13 +6,11 @@ import { Installation, RepoSyncState, Subscription } from "models/index";
 import { Application } from "probot";
 import { createWebhookApp } from "test/utils/probot";
 import { processInstallation } from "./installation";
-import nock from "nock";
+import { cleanAll } from "nock";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { sqsQueues } from "../sqs/queues";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
 
@@ -254,7 +252,7 @@ describe("sync/branches", () => {
 		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 		expect(jiraNock).not.toBeDone();
-		nock.cleanAll();
+		cleanAll();
 	});
 
 	it("should reschedule message with delay if there is rate limit", async () => {
