@@ -4,10 +4,10 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AppTokenHolder from "./app-token-holder";
 import InstallationTokenCache from "./installation-token-cache";
 import AuthToken from "./auth-token";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./interceptors";
-import { metricHttpRequest } from "../../config/metric-names";
-import { getLogger } from "../../config/logger";
-import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
+import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
+import { metricHttpRequest } from "config/metric-names";
+import { getLogger } from "config/logger";
+import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import {
 	getBranchesQueryWithChangedFiles,
@@ -18,8 +18,8 @@ import {
 	getCommitsResponse,
 	ViewerRepositoryCountQuery
 } from "./github-queries";
-import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./errors";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
+import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.

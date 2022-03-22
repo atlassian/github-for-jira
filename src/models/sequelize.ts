@@ -1,12 +1,10 @@
-import Sequelize from "sequelize";
-import logger from "../config/logger";
-import { getNodeEnv } from "../util/isNodeEnv";
-import { EnvironmentEnum } from "../interfaces/common";
+import logger from "config/logger";
+import { getNodeEnv } from "utils/isNodeEnv";
+import { Sequelize } from "sequelize";
+import dbConfig from "db/config.json";
 
-const nodeEnv = getNodeEnv() || EnvironmentEnum.development;
 // TODO: config misses timezone config to force to UTC, defaults to local timezone of PST
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const config = require("../../db/config.json")[nodeEnv];
+const config = dbConfig[getNodeEnv()];
 
 config.benchmark = true;
 config.logging = config.disable_sql_logging
@@ -14,5 +12,5 @@ config.logging = config.disable_sql_logging
 	: (query, ms) => logger.trace({ ms }, query);
 
 export const sequelize = config.use_env_variable
-	? new Sequelize.Sequelize(process.env[config.use_env_variable] || "DATABASE_URL", config)
-	: new Sequelize.Sequelize(config);
+	? new Sequelize(process.env[config.use_env_variable] || "DATABASE_URL", config)
+	: new Sequelize(config);
