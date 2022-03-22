@@ -15,7 +15,7 @@
 		"start:main": "tsnd -r tsconfig-paths/register --watch=.env,db/config.json,**/*.hbs --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
 		"start:worker": "tsnd -r tsconfig-paths/register --watch=.env,db/config.json,**/*.hbs --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/worker.ts",
 		"start:production": "run-p start:main:production start:worker:production",
-		"start:main:production": "run-s db:migrate:prod && node -r tsconfig-paths/register .",
+		"start:main:production": "run-s db:migrate:prod && node -r tsconfig-paths/register src/main",
 		"start:worker:production": "run-s db:migrate:prod && node -r tsconfig-paths/register src/worker",
 		"clean": "rimraf coverage build tmp src/**/*.js src/**/*.js.map test/**/*.js test/**/*.js.map",
 		"setup": "ts-node -r tsconfig-paths/register prestart.ts",
@@ -84,6 +84,7 @@
 		"sequelize-encrypted": "^1.0.0",
 		"sqs-consumer": "^5.6.0",
 		"throng": "^5.0.0",
+		"tsconfig-paths": "^3.14.0",
 		"tslib": "~2.3.1",
 		"typescript": "~4.5.5",
 		"uuid": "^8.3.2"
@@ -131,7 +132,6 @@
 		"ts-jest": "~27.1.3",
 		"ts-node": "^10.5.0",
 		"ts-node-dev": "^1.1.8",
-		"tsconfig-paths": "^3.14.0",
 		"yaml-lint": "^1.2.4"
 	},
 	"volta": {
