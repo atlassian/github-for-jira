@@ -39,11 +39,6 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 			expect.anything()
 		).mockResolvedValue(useNewGithubClient);
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
-
 	});
 
 	it("should have reviewers on pull request action", async () => {
@@ -122,7 +117,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 					url: "test-pull-request-base-url",
 					branches: [
 						{
-							createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+							createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
 							lastCommit: {
 								author: {
 									avatar: "https://github.com/ghost.png",
@@ -401,7 +396,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 							branches:
 								[
 									{
-										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+										createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
 										lastCommit:
 											{
 												author:
@@ -677,7 +672,7 @@ describe.each([true, false])("Pull Request Webhook - FF %p", (useNewGithubClient
 							branches:
 								[
 									{
-										createPullRequestUrl: useNewGithubClient ? "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1" : "test-pull-request-head-url/pull/new/TEST-321-test-pull-request-head-ref",
+										createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
 										lastCommit:
 											{
 												author:
