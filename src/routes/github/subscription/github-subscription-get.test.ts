@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Subscription } from "../../../models";
-import { GithubSubscriptionDelete } from "../../../routes/github/subscription/github-subscription-delete";
+import { Subscription } from "models/index";
+import { GithubSubscriptionGet } from "routes/github/subscription/github-subscription-get";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "../../..//config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-jest.mock("../../../src/config/feature-flags");
+jest.mock("config/feature-flags");
 
 const createGitHubNockGet = (url, status, response) => {
 	githubNock
@@ -14,105 +14,96 @@ const createGitHubNockGet = (url, status, response) => {
 
 describe("github-subscription-get", () => {
 	const gitHubInstallationId = 15;
-	let req, res;
+	const jiraHost = "mock-host";
+	let req, res, next;
+	let subscriptions;
 
 	beforeEach(async () => {
-		await Subscription.create({
+		subscriptions = await Subscription.create({
 			gitHubInstallationId,
 			jiraHost
 		});
-
-		// await Installation.create({
-		// 	jiraHost,
-		// 	clientKey: "client-key",
-		// 	sharedSecret: "shared-secret"
-		// });
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION,
 			expect.anything(),
 			expect.anything()
-		).mockResolvedValue(true);
+		).mockResolvedValue(false);
+
+		next = jest.fn();
 
 		req = {
 			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
-			body: {
-				installationId: gitHubInstallationId,
-				jiraHost
-			}
+			params: {
+				installationId: gitHubInstallationId
+			},
+			csrfToken: jest.fn()
 		};
 
 		res = {
+			render: jest.fn(),
 			sendStatus: jest.fn(),
 			status: jest.fn(),
 			json: jest.fn(),
 			locals: {
 				jiraHost,
-				githubToken: "abc-token"
+				githubToken: "abc-token",
+				isAdmin: jest.fn().mockResolvedValue(true),
+				nonce: ""
 			}
 		};
 
 	});
 
-	it("Should delete GitHub Subscription as an Org admin - installation type Org", async () => {
+	it("Should get GitHub Subscriptions", async () => {
 		
-		githubUserTokenNock(gitHubInstallationId);
-		createGitHubNockGet("/app/installations/15", 200, {
-			account: { login: "test-org" }, type: "Org"
-		});
-		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
-			role: "admin", user: { login: "test-org" }
-		});
+		const installation = {
+			target_type: "Org", account: { login: "test-org" }
+		};
+	
+		createGitHubNockGet("/user", 200, { login: "test-org" });
 
-		await GithubSubscriptionDelete(req as any, res as any);
-		expect(res.sendStatus).toHaveBeenCalledWith(202);
-		expect(await Subscription.count()).toEqual(0);
+		createGitHubNockGet("/app/installations/15", 200, installation);
+
+		createGitHubNockGet("/app/installations", 200, { things: "stuff" });
+
+		await GithubSubscriptionGet(req as any, res as any, next as any);
+		subscriptions.numberOfSyncedRepos = null;
+		expect(res.render).toHaveBeenCalledWith("github-subscriptions.hbs", expect.objectContaining({
+			csrfToken: req.csrfToken(),
+			nonce: res.locals.nonce,
+			installation,
+			info: { things: "stuff" },
+			host: res.locals.jiraHost,
+			hasSubscriptions: true
+		}));
 	});
 
-	it("Should delete GitHub Subscription as an User - installation type User", async () => {
+	it("Should throw Error inside Next when API failure occurs", async () => {
 		
-		githubUserTokenNock(gitHubInstallationId);
+		createGitHubNockGet("/user", 200, { login: "test-org" });
+
 		createGitHubNockGet("/app/installations/15", 200, {
-			account: { login: "test-user" }, type: "User"
-		});
-		createGitHubNockGet("/user/memberships/orgs/test-user", 200, {
-			role: "batman", user: { login: "test-user" }
+			target_type: "Org", account: { login: "test-org" }
 		});
 
-		await GithubSubscriptionDelete(req as any, res as any);
-		expect(res.sendStatus).toHaveBeenCalledWith(202);
-		expect(await Subscription.count()).toEqual(0);
+		await GithubSubscriptionGet(req as any, res as any, next as any);
+		expect(next).toHaveBeenCalledWith(new Error("Unable to show subscription page"));
 	});
 
-	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type Org", async () => {
-		
-		githubUserTokenNock(gitHubInstallationId);
+	it("Should throw Unaothorized Error inside Next when API not admin", async () => {
+		res.locals.isAdmin = jest.fn().mockResolvedValue(false);
+
+		createGitHubNockGet("/user", 200, { login: "test-org" });
+
 		createGitHubNockGet("/app/installations/15", 200, {
-			account: { login: "test-org" }, type: "Org"
-		});
-		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
-			role: "notadmin", user: { login: "test-org" }
+			target_type: "Org", account: { login: "test-org" }
 		});
 
-		await GithubSubscriptionDelete(req as any, res as any);
-		expect(res.status).toHaveBeenCalledWith(401);
-		expect(await Subscription.count()).toEqual(1);
+		await GithubSubscriptionGet(req as any, res as any, next as any);
+		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
 	});
 
-	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type User", async () => {
-		
-		githubUserTokenNock(gitHubInstallationId);
-		createGitHubNockGet("/app/installations/15", 200, {
-			account: { login: "something-something-test-user" }, type: "user"
-		});
-		createGitHubNockGet("/user/memberships/orgs/something-something-test-user", 200, {
-			role: "batman", user: { login: "test-user" }
-		});
-
-		await GithubSubscriptionDelete(req as any, res as any);
-		expect(res.status).toHaveBeenCalledWith(401);
-		expect(await Subscription.count()).toEqual(1);
-	});
 
 	it("Should 401 when missing githubToken", async () => {
 
@@ -121,22 +112,25 @@ describe("github-subscription-get", () => {
 			locals: {}
 		};
 
-		await GithubSubscriptionDelete(req as any, res as any);
-		expect(res.sendStatus).toHaveBeenCalledWith(401);
+		await GithubSubscriptionGet(req as any, res as any, next as any);
+		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
 	});
 
-	it.each([["installationId"], ["jiraHost"]])("Should 400 when missing body.%s", async (property) => {
-		delete req.body[property];
-		delete res.locals[property];
+	it("Missing installationId", async () => {
+		delete req.params["installationId"];
 
 		res.status.mockReturnValue(res);
 
-		await GithubSubscriptionDelete(req as any, res as any);
-		expect(res.status).toHaveBeenCalledWith(400);
-		expect(res.json.mock.calls[0]).toMatchSnapshot([
-			{
-				err: expect.any(String)
-			}
-		]);
+		await GithubSubscriptionGet(req as any, res as any, next as any);
+		expect(next).toHaveBeenCalledWith(new Error("installationId and jiraHost must be provided to delete a subscription."));
+	});
+
+	it("Missing jirahost", async () => {
+		delete res.locals["jiraHost"];
+
+		res.status.mockReturnValue(res);
+
+		await GithubSubscriptionGet(req as any, res as any, next as any);
+		expect(next).toHaveBeenCalledWith(new Error("installationId and jiraHost must be provided to delete a subscription."));
 	});
 });
