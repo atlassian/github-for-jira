@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation, Subscription } from "../../../models";
+import { Subscription } from "../../../models";
 import { GithubSubscriptionDelete } from "../../../routes/github/subscription/github-subscription-delete";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "../../..//config/feature-flags";
@@ -22,14 +22,14 @@ describe("github-subscription-get", () => {
 			jiraHost
 		});
 
-		await Installation.create({
-			jiraHost,
-			clientKey: "client-key",
-			sharedSecret: "shared-secret"
-		});
+		// await Installation.create({
+		// 	jiraHost,
+		// 	clientKey: "client-key",
+		// 	sharedSecret: "shared-secret"
+		// });
 
 		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION,
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);

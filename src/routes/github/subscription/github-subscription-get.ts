@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { getCloudInstallationId } from "../../../github/client/installation-id";
 import { GitHubAppClient } from "../../../github/client/github-app-client";
 import { GitHubUserClient } from "../../../github/client/github-user-client";
-import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
+// import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -15,13 +15,16 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 
 	const gitHubInstallationId = Number(req.params.installationId); // TEST mock req.body
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });  // TEST mock
-	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, false, jiraHost) ; // TEST mock
+	const useNewGitHubClient = false;// await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, false, jiraHost) ; // TEST mock
 	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), logger); // TEST mock
 	const gitHubUserClient = new GitHubUserClient(githubToken, logger); // TEST mock
 
 	try {
 		const { data: login } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated(); // TEST
-
+		console.log("IM HERE ZZZZZZ");
+		console.log(login);
+		console.log("IM HERE 222222");
+		console.log((await github.users.getAuthenticated()));
 		// get the installation to see if the user is an admin of it
 		const { data: installation } = useNewGitHubClient ? // describe each on this...sigh
 			await gitHubAppClient.getInstallation(gitHubInstallationId) : // TEST - nock
