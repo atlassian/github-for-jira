@@ -43,7 +43,7 @@ describe("Branch Webhook", () => {
 		await sqsQueues.branch.purgeQueue();
 	});
 
-	describe("Create Branch - New GH Client feature flag is '%s'", () => {
+	describe("Create Branch", () => {
 		it("should queue and process a create webhook", async () => {
 
 			when(booleanFlag).calledWith(
