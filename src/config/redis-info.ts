@@ -1,5 +1,5 @@
 import IORedis from "ioredis";
-import { isNodeProd } from "../util/isNodeEnv";
+import { isNodeProd } from "utils/is-node-env";
 
 export default (connectionName: string): IORedis.RedisOptions => ({
 	port: Number(process.env.REDISX_CACHE_PORT) || 6379,

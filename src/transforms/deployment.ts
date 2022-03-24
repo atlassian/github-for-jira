@@ -6,7 +6,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { getAllCommitMessagesBetweenReferences } from "./util/githubApiRequests";
+import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import {AxiosResponse} from "axios";
 

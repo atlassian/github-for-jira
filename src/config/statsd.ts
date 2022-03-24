@@ -1,7 +1,7 @@
 import { StatsCb, StatsD, Tags } from "hot-shots";
 import { getLogger } from "./logger";
 import { NextFunction, Request, Response } from "express";
-import { isNodeDev, isNodeTest } from "../util/isNodeEnv";
+import { isNodeDev, isNodeTest } from "utils/is-node-env";
 import { metricHttpRequest } from "./metric-names";
 
 export const globalTags = {

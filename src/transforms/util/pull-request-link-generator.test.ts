@@ -1,4 +1,4 @@
-import { generateCreatePullRequestUrl } from "./pullRequestLinkGenerator";
+import { generateCreatePullRequestUrl } from "./pull-request-link-generator";
 
 describe("pullRequestLinkGenerator()", () => {
 

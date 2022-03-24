@@ -1,6 +1,6 @@
 import Logger, { levelFromName } from "bunyan";
 import bformat from "bunyan-format";
-import filteringHttpLogsStream from "../util/filteringHttpLogsStream";
+import filteringHttpLogsStream from "utils/filtering-http-logs-stream";
 import { LoggerWithTarget, wrapLogger } from "probot/lib/wrap-logger";
 import { Request } from "express";
 

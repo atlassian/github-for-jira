@@ -4,7 +4,7 @@ import * as PrivateKey from "probot/lib/private-key";
 import { createProbot } from "probot";
 import { initializeSentry } from "./config/sentry";
 import "./config/proxy";
-import { isNodeProd } from "./util/isNodeEnv";
+import { isNodeProd } from "utils/is-node-env";
 import configureAndLoadApp from "./configure-robot";
 
 const probot = createProbot({

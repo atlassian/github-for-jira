@@ -2,7 +2,7 @@
 import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
 import { Installation, Subscription } from "../models";
-import waitUntil from "test/utils/waitUntil";
+import waitUntil from "test/utils/wait-until";
 import { sqsQueues } from "../sqs/queues";
 import {when} from "jest-when";
 import {booleanFlag, BooleanFlags} from "config/feature-flags";

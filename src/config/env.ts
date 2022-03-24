@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 import path from "path";
 import { LogLevelString } from "bunyan";
-import { getNodeEnv, isNodeTest } from "../util/isNodeEnv";
-import { EnvironmentEnum } from "../interfaces/common";
+import { getNodeEnv, isNodeTest } from "utils/is-node-env";
+import { EnvironmentEnum } from "interfaces/common";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 

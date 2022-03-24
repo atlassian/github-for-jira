@@ -2,7 +2,7 @@ import { getJiraId } from "../../jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "../../util/jira";
 import { union, isEmpty } from "lodash";
-import { generateCreatePullRequestUrl } from "../../transforms/util/pullRequestLinkGenerator";
+import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
 
 // TODO: better typing in file
 /**

@@ -4,7 +4,7 @@ import { sqsQueues } from "../sqs/queues";
 import { createWebhookApp } from "test/utils/probot";
 import { discovery } from "../sync/discovery";
 import { getLogger } from "../config/logger";
-import waitUntil from "test/utils/waitUntil";
+import waitUntil from "test/utils/wait-until";
 
 import listRepositories from "fixtures/list-repositories.json";
 

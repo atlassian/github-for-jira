@@ -1,7 +1,7 @@
 import cluster from "cluster";
 import { getLogger } from "../../config/logger";
 import { ClusterCommand } from "./send-command";
-import { isNodeProd } from "../../util/isNodeEnv";
+import { isNodeProd } from "utils/is-node-env";
 
 const logger = getLogger("cluster.listen-command");
 

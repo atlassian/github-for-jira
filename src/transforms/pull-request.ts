@@ -8,7 +8,7 @@ import { GitHubAPI } from "probot";
 import { getGithubUser } from "../services/github/user";
 import { JiraAuthor } from "../interfaces/jira";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
+import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubAppClient } from "../github/client/github-app-client";
 
 function mapStatus(status: string, merged_at?: string) {

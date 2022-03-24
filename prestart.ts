@@ -2,7 +2,7 @@ import envVars from "./src/config/env";
 import axios, { AxiosResponse } from "axios";
 import * as fs from "fs";
 import * as path from "path";
-import { isNodeDev } from "./src/util/isNodeEnv";
+import { isNodeDev } from "./src/util/is-node-env";
 
 const envFilePath = path.resolve(__dirname, ".env");
 

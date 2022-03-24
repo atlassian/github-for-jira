@@ -1,5 +1,5 @@
 import logger from "config/logger";
-import { getNodeEnv } from "utils/isNodeEnv";
+import { getNodeEnv } from "utils/is-node-env";
 import { Sequelize } from "sequelize";
 import dbConfig from "db/config.json";
 

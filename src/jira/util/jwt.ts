@@ -5,7 +5,7 @@ import {createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, 
 import {NextFunction, Request, Response} from "express";
 import envVars from "../../config/env";
 import _ from "lodash";
-import queryAtlassianConnectPublicKey from "./queryAtlassianConnectPublicKey";
+import queryAtlassianConnectPublicKey from "./query-atlassian-connect-public-key";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case

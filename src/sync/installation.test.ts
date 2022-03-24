@@ -9,7 +9,7 @@ import { Hub } from "@sentry/types/dist/hub";
 import { mocked } from "ts-jest/utils";
 import { RateLimitingError } from "~/src/github/client/github-client-errors";
 import SubscriptionClass, { Repository } from "models/subscription";
-import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/errorResponses";
+import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 import unsortedReposJson from "fixtures/repositories.json";
 import sortedReposJson from "fixtures/sorted-repos.json";
 

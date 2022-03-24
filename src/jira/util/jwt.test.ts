@@ -2,7 +2,7 @@
 import { TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "./jwt";
 import logger from "config/logger";
 import { AsymmetricAlgorithm, encodeAsymmetric, encodeSymmetric } from "atlassian-jwt";
-import queryAtlassianConnectPublicKey from "./queryAtlassianConnectPublicKey";
+import queryAtlassianConnectPublicKey from "./query-atlassian-connect-public-key";
 import { when } from "jest-when";
 import { Request, Response } from "express";
 import Mock = jest.Mock;

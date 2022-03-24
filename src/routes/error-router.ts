@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from "express";
 import * as Sentry from "@sentry/node";
-import { isNodeProd } from "../util/isNodeEnv";
+import { isNodeProd } from "utils/is-node-env";
 import { Errors } from "../config/errors";
 import envVars from "../config/env";
 import statsd from "../config/statsd";

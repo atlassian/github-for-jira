@@ -5,7 +5,7 @@ import { createWebhookApp } from "test/utils/probot";
 import { getLogger } from "config/logger";
 import { Installation, Subscription } from "../models";
 import { Application } from "probot";
-import waitUntil from "test/utils/waitUntil";
+import waitUntil from "test/utils/wait-until";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "../sqs/push";
 import { Context } from "../sqs";
 import { Message } from "aws-sdk/clients/sqs";
