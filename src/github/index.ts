@@ -1,6 +1,6 @@
 import { issueCommentWebhookHandler } from "./issue-comment";
 import { issueWebhookHandler } from "./issue";
-import middleware from "./middleware";
+import { GithubWebhookMiddleware } from "middleware/github-webhook-middleware";
 import { pullRequestWebhookHandler } from "./pull-request";
 import { workflowWebhookHandler } from "./workflow";
 import deployment from "./deployment";
@@ -8,7 +8,7 @@ import { pushWebhookHandler } from "./push";
 import { createBranch, deleteBranch } from "./branch";
 import webhookTimeout from "../util/webhook-timeout";
 import statsd from "../config/statsd";
-import { metricWebhooks } from "../config/metric-names";
+import { metricWebhooks } from "config/metric-names";
 import { Application } from "probot";
 import { deleteRepository } from "./repository";
 
@@ -30,12 +30,12 @@ export default (robot: Application) => {
 
 	robot.on(
 		["issue_comment.created", "issue_comment.edited"],
-		webhookTimeout(middleware(issueCommentWebhookHandler))
+		webhookTimeout(GithubWebhookMiddleware(issueCommentWebhookHandler))
 	);
 
-	robot.on(["issues.opened", "issues.edited"], middleware(issueWebhookHandler));
+	robot.on(["issues.opened", "issues.edited"], GithubWebhookMiddleware(issueWebhookHandler));
 
-	robot.on("push", middleware(pushWebhookHandler));
+	robot.on("push", GithubWebhookMiddleware(pushWebhookHandler));
 
 	robot.on(
 		[
@@ -45,15 +45,15 @@ export default (robot: Application) => {
 			"pull_request.edited",
 			"pull_request_review"
 		],
-		middleware(pullRequestWebhookHandler)
+		GithubWebhookMiddleware(pullRequestWebhookHandler)
 	);
 
-	robot.on("workflow_run", middleware(workflowWebhookHandler));
+	robot.on("workflow_run", GithubWebhookMiddleware(workflowWebhookHandler));
 
-	robot.on("deployment_status", middleware(deployment));
+	robot.on("deployment_status", GithubWebhookMiddleware(deployment));
 
-	robot.on("create", middleware(createBranch));
-	robot.on("delete", middleware(deleteBranch));
+	robot.on("create", GithubWebhookMiddleware(createBranch));
+	robot.on("delete", GithubWebhookMiddleware(deleteBranch));
 
-	robot.on("repository.deleted", middleware(deleteRepository));
+	robot.on("repository.deleted", GithubWebhookMiddleware(deleteRepository));
 };

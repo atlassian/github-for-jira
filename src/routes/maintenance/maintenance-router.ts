@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { booleanFlag, BooleanFlags } from "../../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { MaintenanceGet } from "./maintenance-get";
 
 export const MaintenanceRouter = Router();

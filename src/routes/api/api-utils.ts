@@ -5,6 +5,7 @@ import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
 
+// TODO: add tests
 type SerializedSubscription = Pick<Subscription, "gitHubInstallationId" | "jiraHost" | "createdAt" | "updatedAt" | "syncStatus">;
 export const serializeSubscription = (subscription: Subscription): SerializedSubscription => ({
 	gitHubInstallationId: subscription.gitHubInstallationId,

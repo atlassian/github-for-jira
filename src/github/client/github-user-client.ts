@@ -1,10 +1,10 @@
 import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./interceptors";
-import { metricHttpRequest } from "../../config/metric-names";
-import { getLogger } from "../../config/logger";
-import { urlParamsMiddleware } from "../../util/axios/url-params-middleware";
+import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
+import { metricHttpRequest } from "config/metric-names";
+import { getLogger } from "config/logger";
+import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.

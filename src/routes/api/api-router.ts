@@ -9,7 +9,7 @@ import { returnOnValidationError, serializeSubscription } from "./api-utils";
 import getRedisInfo from "../../config/redis-info";
 import { findOrStartSync } from "../../sync/sync-utils";
 import { ApiJiraRouter } from "./jira/api-jira-router";
-import { LogMiddleware } from "../../middleware/frontend-log-middleware";
+import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";

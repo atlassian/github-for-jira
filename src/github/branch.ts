@@ -1,7 +1,7 @@
 import { transformBranch } from "../transforms/branch";
 import issueKeyParser from "jira-issue-key-parser";
 import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
+import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";

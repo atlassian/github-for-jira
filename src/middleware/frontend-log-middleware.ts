@@ -9,7 +9,7 @@ This enhances the existing request logger, created by Probot.
 https://github.com/probot/probot/blob/e20d3ce8f188f8266d6c1ab71aa245c110a0a26f/src/middleware/logging.ts
 
 Works only for frontend endpoints; for webhooks endpoint (probot-managed) there's a different "fake" middleware:
-src/github/middleware.ts (Probot doesn't allow to have middlewares for webhooks:
+src/github/github-webhook-middleware.ts (Probot doesn't allow to have middlewares for webhooks:
 https://github.com/probot/probot/issues/598 )
 
 See an example of how to use this in your routes below. Once added, `userId` is included in subsequent log messages.

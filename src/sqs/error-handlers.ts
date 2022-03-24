@@ -4,7 +4,7 @@ import { Octokit } from "@octokit/rest";
 import { RateLimitingError as OldRateLimitingError } from "../config/enhance-octokit";
 import { emitWebhookFailedMetrics } from "../util/webhooks";
 import { PushQueueMessagePayload } from "./push";
-import { RateLimitingError } from "../github/client/errors";
+import { RateLimitingError } from "../github/client/github-client-errors";
 
 /**
  * Sometimes we can get errors from Jira and GitHub which does not indicate a failured webhook. For example:

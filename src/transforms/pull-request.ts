@@ -72,7 +72,6 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubAppClient, 
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
 
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
-	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
 
 	return {
 		id: pullRequest.base.repo.id,
@@ -85,7 +84,7 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubAppClient, 
 				? []
 				: [
 					{
-						createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys) : `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
+						createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys),
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
 							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
