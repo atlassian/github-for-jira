@@ -26,8 +26,6 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	try {
 		const { data: { login } } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated();
 
-		console.log("GET USER A");
-		console.log(login);
 		// get the installation to see if the user is an admin of it
 		const { data: installation } = useNewGitHubClient ?
 			await gitHubAppClient.getInstallation(gitHubInstallationId) :
@@ -45,10 +43,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 			return next(new Error("Unauthorized"));
 		}
 
-		console.log("INSIDE ADMIN");
 		const { data: info } = useNewGitHubClient ? await gitHubAppClient.getInstallations() : await client.apps.getAuthenticated();
-		console.log("GET INSTALLATIONSSSSSS A");
-		console.log(info);
 		return res.render("github-subscriptions.hbs", {
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,

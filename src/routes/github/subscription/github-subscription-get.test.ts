@@ -32,7 +32,7 @@ describe("github-subscription-get", () => {
 		next = jest.fn();
 
 		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
+			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
 			params: {
 				installationId: gitHubInstallationId
 			},
@@ -55,7 +55,7 @@ describe("github-subscription-get", () => {
 	});
 
 	it("Should get GitHub Subscriptions", async () => {
-		
+
 		const installation = {
 			target_type: "Org", account: { login: "test-org" }
 		};
@@ -79,8 +79,8 @@ describe("github-subscription-get", () => {
 		}));
 	});
 
-	it("Should throw Error inside Next when API failure occurs", async () => {
-		
+	it("Should throw Unauthorized Error when login fails access test", async () => {
+
 		res.locals.isAdmin = jest.fn().mockResolvedValue(false);
 
 		createGitHubNockGet("/user", 200, { login: "test-org" });
@@ -94,7 +94,7 @@ describe("github-subscription-get", () => {
 		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
 	});
 
-	it("Should throw Unaothorized Error inside Next when API not admin", async () => {
+	it("Should return Error inside Next when error is thrown inside try block", async () => {
 		res.locals.isAdmin = jest.fn().mockRejectedValue(new Error("Whoops"));
 
 		createGitHubNockGet("/user", 200, { login: "test-org" });
@@ -108,8 +108,7 @@ describe("github-subscription-get", () => {
 		expect(next).toHaveBeenCalledWith(new Error("Unable to show subscription page"));
 	});
 
-
-	it("Should 401 when missing githubToken", async () => {
+	it("Should return Unauthorized inside Next when missing githubToken", async () => {
 
 		res = {
 			sendStatus: jest.fn(),
@@ -120,7 +119,7 @@ describe("github-subscription-get", () => {
 		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
 	});
 
-	it("Missing installationId", async () => {
+	it("Should return Unauthorized inside Next when missing installationId", async () => {
 		delete req.params["installationId"];
 
 		res.status.mockReturnValue(res);
@@ -129,7 +128,7 @@ describe("github-subscription-get", () => {
 		expect(next).toHaveBeenCalledWith(new Error("installationId and jiraHost must be provided to delete a subscription."));
 	});
 
-	it("Missing jirahost", async () => {
+	it("Should return Unauthorized inside Next when missing jirahost", async () => {
 		delete res.locals["jiraHost"];
 
 		res.status.mockReturnValue(res);
@@ -160,7 +159,7 @@ describe("/github/subscription - octokit", () => {
 		next = jest.fn();
 
 		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
+			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
 			params: {
 				installationId: gitHubInstallationId
 			},
@@ -188,20 +187,20 @@ describe("/github/subscription - octokit", () => {
 				isAdmin: jest.fn().mockResolvedValue(true),
 				nonce: "",
 				client: {
-					apps: { 
+					apps: {
 						getInstallation,
 						getAuthenticated: githubAppGetAuthenticated
 					}
 				},
 				github: {
-					users: { getAuthenticated: githubUsersGetAuthenticated}
+					users: { getAuthenticated: githubUsersGetAuthenticated }
 				}
 			}
 		};
 	});
 
 	it("Should get GitHub Subscriptions", async () => {
-		
+
 		await GithubSubscriptionGet(req as any, res as any, next as any);
 
 		expect(res.render).toHaveBeenCalledWith("github-subscriptions.hbs", expect.objectContaining({
@@ -213,18 +212,15 @@ describe("/github/subscription - octokit", () => {
 		}));
 	});
 
-	it("Should throw Error inside Next when API failure occurs", async () => {
+	it("Should return Error inside Next when error is thrown inside try block", async () => {
 		res.locals.github.users.getAuthenticated = jest.fn().mockRejectedValue(new Error("Whoops"));
 		await GithubSubscriptionGet(req as any, res as any, next as any);
 		expect(next).toHaveBeenCalledWith(new Error("Unable to show subscription page"));
 	});
 
-	it("Should throw Unaothorized Error inside Next when API not admin", async () => {
+	it("Should throw Unauthorized Error when login fails access test", async () => {
 		res.locals.isAdmin = jest.fn().mockResolvedValue(false);
 		await GithubSubscriptionGet(req as any, res as any, next as any);
 		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
 	});
-
-
-
 });
