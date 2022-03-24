@@ -80,6 +80,8 @@ describe.skip("github-subscription-get", () => {
 
 	it("Should throw Error inside Next when API failure occurs", async () => {
 		
+		res.locals.isAdmin = jest.fn().mockResolvedValue(false);
+
 		createGitHubNockGet("/user", 200, { login: "test-org" });
 
 		createGitHubNockGet("/app/installations/15", 200, {
@@ -91,7 +93,7 @@ describe.skip("github-subscription-get", () => {
 	});
 
 	it("Should throw Unaothorized Error inside Next when API not admin", async () => {
-		res.locals.isAdmin = jest.fn().mockResolvedValue(false);
+		res.locals.isAdmin = jest.fn().mockRejectedValue(new Error("Whoops"));
 
 		createGitHubNockGet("/user", 200, { login: "test-org" });
 
@@ -135,128 +137,92 @@ describe.skip("github-subscription-get", () => {
 });
 
 
-// describe("POST /github/subscription - octokit", () => {
+describe("/github/subscription - octokit", () => {
 
-// 	const gitHubInstallationId = 15;
-// 	const jiraHost = "mock-host";
-// 	let req, res, next;
+	const gitHubInstallationId = 15;
+	const jiraHost = "mock-host";
+	let req, res, next;
 
-// 	beforeEach(async () => {
-// 		await Subscription.create({
-// 			gitHubInstallationId,
-// 			jiraHost
-// 		});
+	beforeEach(async () => {
+		await Subscription.create({
+			gitHubInstallationId,
+			jiraHost
+		});
 
-// 		when(booleanFlag).calledWith(
-// 			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION,
-// 			expect.anything(),
-// 			expect.anything()
-// 		).mockResolvedValue(false);
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(false);
 
-// 		next = jest.fn();
+		next = jest.fn();
 
-// 		req = {
-// 			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
-// 			params: {
-// 				installationId: gitHubInstallationId
-// 			},
-// 			csrfToken: jest.fn()
-// 		};
+		req = {
+			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
+			params: {
+				installationId: gitHubInstallationId
+			},
+			csrfToken: jest.fn()
+		};
 
-// 		const githubAppGetAuthenticated = jest.fn().mockResolvedValue({ data: { stuff: "things" } });
-// 		const githubUsersGetAuthenticated = jest.fn().mockResolvedValue({ data: { login: "test-user" } });
-// 		const getInstallation = jest.fn().mockResolvedValue({
-// 			data: {
-// 				id: gitHubInstallationId,
-// 				target_type: "User",
-// 				account: { login: "test-user" }
-// 			}
-// 		});
+		const githubAppGetAuthenticated = jest.fn().mockResolvedValue({ data: { things: "stuff" } });
+		const githubUsersGetAuthenticated = jest.fn().mockResolvedValue({ data: { login: "test-user" } });
+		const getInstallation = jest.fn().mockResolvedValue({
+			data: {
+				id: gitHubInstallationId,
+				target_type: "User",
+				account: { login: "test-user" }
+			}
+		});
 
-// 		res = {
-// 			render: jest.fn(),
-// 			sendStatus: jest.fn(),
-// 			status: jest.fn(),
-// 			json: jest.fn(),
-// 			locals: {
-// 				jiraHost,
-// 				githubToken: "abc-token",
-// 				isAdmin: jest.fn().mockResolvedValue(true),
-// 				nonce: "",
-// 				client: {
-// 					apps: { 
-// 						getInstallation,
-// 						getAuthenticated: githubAppGetAuthenticated
-// 					}
-// 				},
-// 				github: {
-// 					users: { getAuthenticated: githubUsersGetAuthenticated}
-// 				}
-// 			}
-// 		};
-// 	});
+		res = {
+			render: jest.fn(),
+			sendStatus: jest.fn(),
+			status: jest.fn(),
+			json: jest.fn(),
+			locals: {
+				jiraHost,
+				githubToken: "abc-token",
+				isAdmin: jest.fn().mockResolvedValue(true),
+				nonce: "",
+				client: {
+					apps: { 
+						getInstallation,
+						getAuthenticated: githubAppGetAuthenticated
+					}
+				},
+				github: {
+					users: { getAuthenticated: githubUsersGetAuthenticated}
+				}
+			}
+		};
+	});
 
-
-// 	// const getMembershipForAuthenticatedUser = jest.fn().mockResolvedValue({ data: { role, user: { login } } });
-// 	// const getInstallation = jest.fn().mockResolvedValue({
-// 	// 	data: {
-// 	// 		id: gitHubInstallationId,
-// 	// 		target_type: "User",
-// 	// 		account: { login }
-// 	// 	}
-// 	// });
-	
-
-
-// 	it("Should get GitHub Subscriptions", async () => {
+	it("Should get GitHub Subscriptions", async () => {
 		
-// 		const installation = {
-// 			target_type: "Org", account: { login: "test-org" }
-// 		};
-	
-// 		createGitHubNockGet("/user", 200, { login: "test-org" });
+		await GithubSubscriptionGet(req as any, res as any, next as any);
 
-// 		createGitHubNockGet("/app/installations/15", 200, installation);
+		expect(res.render).toHaveBeenCalledWith("github-subscriptions.hbs", expect.objectContaining({
+			csrfToken: req.csrfToken(),
+			nonce: res.locals.nonce,
+			info: { things: "stuff" },
+			host: res.locals.jiraHost,
+			hasSubscriptions: true
+		}));
+	});
 
-// 		createGitHubNockGet("/app/installations", 200, { things: "stuff" });
+	it("Should throw Error inside Next when API failure occurs", async () => {
+		res.locals.github.users.getAuthenticated = jest.fn().mockRejectedValue(new Error("Whoops"));
+		await GithubSubscriptionGet(req as any, res as any, next as any);
+		expect(next).toHaveBeenCalledWith(new Error("Unable to show subscription page"));
+	});
 
-// 		await GithubSubscriptionGet(req as any, res as any, next as any);
-
-// 		expect(res.render).toHaveBeenCalledWith("github-subscriptions.hbs", expect.objectContaining({
-// 			csrfToken: req.csrfToken(),
-// 			nonce: res.locals.nonce,
-// 			installation,
-// 			info: { things: "stuff" },
-// 			host: res.locals.jiraHost,
-// 			hasSubscriptions: true
-// 		}));
-// 	});
-
-// 	it("Should throw Error inside Next when API failure occurs", async () => {
-		
-// 		createGitHubNockGet("/user", 200, { login: "test-org" });
-
-// 		createGitHubNockGet("/app/installations/15", 200, {
-// 			target_type: "Org", account: { login: "test-org" }
-// 		});
-
-// 		await GithubSubscriptionGet(req as any, res as any, next as any);
-// 		expect(next).toHaveBeenCalledWith(new Error("Unable to show subscription page"));
-// 	});
-
-// 	it("Should throw Unaothorized Error inside Next when API not admin", async () => {
-// 		res.locals.isAdmin = jest.fn().mockResolvedValue(false);
-
-// 		createGitHubNockGet("/user", 200, { login: "test-org" });
-
-// 		createGitHubNockGet("/app/installations/15", 200, {
-// 			target_type: "Org", account: { login: "test-org" }
-// 		});
-
-// 		await GithubSubscriptionGet(req as any, res as any, next as any);
-// 		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
-// 	});
+	it("Should throw Unaothorized Error inside Next when API not admin", async () => {
+		res.locals.isAdmin = jest.fn().mockResolvedValue(false);
+		await GithubSubscriptionGet(req as any, res as any, next as any);
+		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
+	});
 
 
 
-// });
+});
