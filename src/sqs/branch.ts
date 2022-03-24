@@ -1,5 +1,5 @@
 import { WebhookPayloadCreate } from "@octokit/webhooks";
-import { Context, MessageHandler } from "./index";
+import { Context, MessageHandler } from "./sqs";
 import { processBranch } from "../github/branch";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { getCloudInstallationId } from "../github/client/installation-id";

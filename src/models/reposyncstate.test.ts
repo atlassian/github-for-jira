@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import SubscriptionClass, { RepositoryData } from "./subscription";
-import { RepoSyncState, Subscription } from "./index";
+import { RepoSyncState, Subscription } from "./models";
 import { mocked } from "ts-jest/utils";
 import { booleanFlag } from "config/feature-flags";
 

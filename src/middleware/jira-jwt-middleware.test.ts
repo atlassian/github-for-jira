@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { encodeSymmetric } from "atlassian-jwt";
 import { mocked } from "ts-jest/utils";
-import { Installation } from "models/index";
+import { Installation } from "models/models";
 import { JiraContextJwtTokenMiddleware } from "./jira-jwt-middleware";
 import logger from "config/logger";
 
-jest.mock("models/index");
+jest.mock("models/models");
 
 describe("#verifyJiraMiddleware", () => {
 	let res;

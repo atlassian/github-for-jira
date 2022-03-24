@@ -1,4 +1,4 @@
-import { Subscription } from "models/index";
+import { Subscription } from "models/models";
 import { Request, Response } from "express";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {

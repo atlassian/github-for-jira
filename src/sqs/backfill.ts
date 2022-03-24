@@ -1,4 +1,4 @@
-import { MessageHandler } from "./index";
+import { MessageHandler } from "./sqs";
 import app from "../worker/app";
 import { processInstallation } from "../sync/installation";
 import * as Sentry from "@sentry/node";

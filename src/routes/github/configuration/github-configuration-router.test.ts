@@ -1,5 +1,5 @@
 import supertest from "supertest";
-import { Installation, Subscription } from "~/src/models";
+import { Installation, Subscription } from "models/models";
 import SubscriptionClass from "models/subscription";
 import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";

@@ -1,4 +1,4 @@
-import { Context, ErrorHandler, ErrorHandlingResult } from "./index";
+import { Context, ErrorHandler, ErrorHandlingResult } from "./sqs";
 import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";

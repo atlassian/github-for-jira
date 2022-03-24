@@ -1,4 +1,4 @@
-import { MessageHandler } from "./index";
+import { MessageHandler } from "./sqs";
 import { discovery } from "../sync/discovery";
 
 export type DiscoveryMessagePayload = {

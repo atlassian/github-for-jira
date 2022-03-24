@@ -1,5 +1,5 @@
-import { Subscription } from "models/index";
-import getJiraClient from "../jira/client";
+import { Subscription } from "models/models";
+import getJiraClient from "../jira/client/jira-client";
 import issueKeyParser from "jira-issue-key-parser";
 import { getJiraAuthor } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";

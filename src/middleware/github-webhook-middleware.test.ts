@@ -1,5 +1,5 @@
 import { mocked } from "ts-jest/utils";
-import { Installation, Subscription } from "models/index";
+import { Installation, Subscription } from "models/models";
 import GitHubAPI from "config/github-api";
 import { GithubWebhookMiddleware } from "./github-webhook-middleware";
 import { mockModels } from "test/utils/models";
@@ -8,8 +8,8 @@ import { createLogger } from "bunyan";
 import { Writable } from "stream";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 
-jest.mock("models/index");
-jest.mock("utils/webhooks");
+jest.mock("models/models");
+jest.mock("utils/webhook-utils");
 
 describe("Probot event middleware", () => {
 	let context;

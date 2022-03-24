@@ -1,5 +1,5 @@
 import SubscriptionClass from "./subscription";
-import { RepoSyncState, Subscription } from "./index";
+import { RepoSyncState, Subscription } from "./models";
 
 describe("Subscription", () => {
 	let sub: SubscriptionClass;

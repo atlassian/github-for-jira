@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-var-requires */
 import { getInstallations, JiraConfigurationGet } from "./jira-configuration-get";
-import { Installation, RepoSyncState, Subscription } from "models/index";
+import { Installation, RepoSyncState, Subscription } from "models/models";
 import SubscriptionClass from "models/subscription";
 import GithubApi from "config/github-api";
 import { GitHubAPI } from "probot";

@@ -1,4 +1,4 @@
-import { Installation } from "models/index";
+import { Installation } from "models/models";
 import { NextFunction, Request, Response } from "express";
 import { sendError, TokenType, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
 

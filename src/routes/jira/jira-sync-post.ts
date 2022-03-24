@@ -1,4 +1,4 @@
-import { Subscription } from "models/index";
+import { Subscription } from "models/models";
 import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "../../sync/sync-utils";

@@ -1,5 +1,5 @@
 import InstallationClass from "models/installation";
-import { Installation, Subscription } from "models/index";
+import { Installation, Subscription } from "models/models";
 import express, { Express, NextFunction, Request, Response } from "express";
 import { RootRouter } from "../router";
 import supertest from "supertest";

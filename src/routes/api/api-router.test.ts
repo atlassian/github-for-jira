@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
-import { Installation, RepoSyncState, Subscription } from "~/src/models";
+import { Installation, RepoSyncState, Subscription } from "models/models";
 import InstallationClass from "models/installation";
 import SubscriptionClass from "models/subscription";
 import { ApiRouter } from "routes/api/api-router";

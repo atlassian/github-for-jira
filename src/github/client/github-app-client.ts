@@ -99,7 +99,6 @@ export class GitHubAppClient {
 	/**
 	 * Get publicly available information for user with given username.
 	 */
-		// TODO: add a unit test
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
 		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
 			username

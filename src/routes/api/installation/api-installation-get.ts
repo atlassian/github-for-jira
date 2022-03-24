@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Subscription } from "models/index";
+import { Subscription } from "models/models";
 import format from "date-fns/format";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {

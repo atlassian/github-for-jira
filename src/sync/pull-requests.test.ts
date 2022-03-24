@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { mocked } from "ts-jest/utils";
-import { Subscription } from "models/index";
+import { Subscription } from "models/models";
 import { Application } from "probot";
 import { processInstallation } from "./installation";
 import nock from "nock";
@@ -11,7 +11,7 @@ import { Hub } from "@sentry/types/dist/hub";
 
 import pullRequestList from "fixtures/api/pull-request-list.json";
 
-jest.mock("models/index");
+jest.mock("models/models");
 
 describe.skip("sync/pull-request", () => {
 	const installationId = 1234;

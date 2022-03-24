@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getHashedKey } from "models/installation";
 import { mocked } from "ts-jest/utils";
-import { Subscription } from "models/index";
+import { Subscription } from "models/models";
 import uninstall from "./uninstall";
 
-jest.mock("models/index");
+jest.mock("models/models");
 
 describe("Webhook: /events/uninstalled", () => {
 	let installation;

@@ -1,6 +1,6 @@
 import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
-import { Installation, Subscription } from "models/index";
+import { Installation, Subscription } from "models/models";
 import workflowBasicFixture from "fixtures/workflow-basic.json";
 
 jest.mock("../config/feature-flags");

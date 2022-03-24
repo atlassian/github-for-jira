@@ -1,4 +1,4 @@
-import { Subscription } from "models/index";
+import { Subscription } from "models/models";
 import { NextFunction, Request, Response } from "express";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

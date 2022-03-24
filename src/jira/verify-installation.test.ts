@@ -2,7 +2,7 @@
 import verifyInstallation from "./verify-installation";
 import { getLogger } from "config/logger";
 import InstallationClass from "models/installation";
-import { Installation } from "models/index";
+import { Installation } from "models/models";
 import getAxiosInstance from "./client/axios";
 import { mocked } from "ts-jest/utils";
 

@@ -1,4 +1,4 @@
-import { Subscription } from "models/index";
+import { Subscription } from "models/models";
 import { getHashedKey } from "models/installation";
 import { Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";

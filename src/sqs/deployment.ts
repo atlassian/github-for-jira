@@ -1,5 +1,5 @@
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
-import { Context, MessageHandler } from "./index";
+import { Context, MessageHandler } from "./sqs";
 import app from "../worker/app";
 import { processDeployment } from "../github/deployment";
 import { GitHubAppClient } from "../github/client/github-app-client";

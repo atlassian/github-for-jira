@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
-import { Installation, Subscription } from "models/index";
+import { Installation, Subscription } from "models/models";
 import { Application } from "probot";
 
 import issueNullBody from "fixtures/issue-null-body.json";

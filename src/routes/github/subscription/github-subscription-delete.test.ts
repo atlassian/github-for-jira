@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation, Subscription } from "models/index";
+import { Installation, Subscription } from "models/models";
 import { GithubSubscriptionDelete } from "./github-subscription-delete";
 
 describe("POST /github/subscription", () => {

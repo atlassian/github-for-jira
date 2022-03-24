@@ -1,5 +1,5 @@
 import SubscriptionClass, { SyncStatus } from "models/subscription";
-import { RepoSyncState, Subscription } from "models/index";
+import { RepoSyncState, Subscription } from "models/models";
 import { NextFunction, Request, Response } from "express";
 import statsd from "config/statsd";
 import { metricError } from "config/metric-names";

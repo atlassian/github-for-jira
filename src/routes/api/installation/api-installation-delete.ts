@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { Subscription } from "models/index";
-import getJiraClient from "../../../jira/client";
+import { Subscription } from "models/models";
+import getJiraClient from "../../../jira/client/jira-client";
 
 export const ApiInstallationDelete = async (req: Request, res: Response): Promise<void> => {
 	const githubInstallationId = req.params.installationId;

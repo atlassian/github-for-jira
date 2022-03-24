@@ -7,7 +7,7 @@ import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import getJiraClient from "../jira/client";
+import getJiraClient from "../jira/client/jira-client";
 import { GitHubAppClient } from "./client/github-app-client";
 import { getCloudInstallationId } from "./client/installation-id";
 

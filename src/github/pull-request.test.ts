@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
-import { Installation, Subscription } from "models/index";
+import { Installation, Subscription } from "models/models";
 
 import pullRequestBasic from "fixtures/pull-request-basic.json";
 import pullRequestRemoveKeys from "fixtures/pull-request-remove-keys.json";

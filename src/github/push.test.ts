@@ -3,11 +3,11 @@ import nock from "nock";
 import { createJobData } from "../transforms/push";
 import { createWebhookApp } from "test/utils/probot";
 import { getLogger } from "config/logger";
-import { Installation, Subscription } from "models/index";
+import { Installation, Subscription } from "models/models";
 import { Application } from "probot";
 import waitUntil from "test/utils/wait-until";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "../sqs/push";
-import { Context } from "../sqs";
+import { Context } from "../sqs/sqs";
 import { Message } from "aws-sdk/clients/sqs";
 import { sqsQueues } from "../sqs/queues";
 

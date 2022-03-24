@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import statsd from "config/statsd";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
-import { Context, ErrorHandlingResult } from "./index";
+import { Context, ErrorHandlingResult } from "./sqs";
 import { getLogger } from "config/logger";
 import { JiraClientError } from "../jira/client/axios";
 import { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";

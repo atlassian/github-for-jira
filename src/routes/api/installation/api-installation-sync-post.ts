@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Subscription } from "models/index";
+import { Subscription } from "models/models";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 
 export const ApiInstallationSyncPost = async (req: Request, res: Response): Promise<void> => {

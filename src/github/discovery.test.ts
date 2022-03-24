@@ -1,5 +1,5 @@
 /* eslint-disable jest/expect-expect */
-import { Installation, RepoSyncState, Subscription } from "models/index";
+import { Installation, RepoSyncState, Subscription } from "models/models";
 import { sqsQueues } from "../sqs/queues";
 import { createWebhookApp } from "test/utils/probot";
 import { discovery } from "../sync/discovery";

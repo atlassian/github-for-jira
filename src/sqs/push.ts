@@ -1,4 +1,4 @@
-import { Context, MessageHandler } from "./index";
+import { Context, MessageHandler } from "./sqs";
 import { processPush } from "../transforms/push";
 import { wrapLogger } from "probot/lib/wrap-logger";
 import { GitHubAppClient } from "../github/client/github-app-client";

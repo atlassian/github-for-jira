@@ -7,7 +7,7 @@ import { when } from "jest-when";
 import { Request, Response } from "express";
 import Mock = jest.Mock;
 
-jest.mock("./queryAtlassianConnectPublicKey");
+jest.mock("./query-atlassian-connect-public-key");
 
 describe("jwt", () => {
 	let testQueryParams: Record<string, string>;

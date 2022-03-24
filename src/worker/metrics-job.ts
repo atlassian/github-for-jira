@@ -1,6 +1,6 @@
 import { metricHttpRequest } from "config/metric-names";
 import statsd from "config/statsd";
-import { Subscription } from "models/index";
+import { Subscription } from "models/models";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 export const METRICS_LOGGER_NAME = "metrics-job";

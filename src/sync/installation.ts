@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus } from "models/subscription";
-import { RepoSyncState, Subscription } from "models/index";
-import getJiraClient from "../jira/client";
+import { RepoSyncState, Subscription } from "models/models";
+import getJiraClient from "../jira/client/jira-client";
 import { getRepositorySummary } from "./jobs";
 import enhanceOctokit, { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
 import statsd from "config/statsd";

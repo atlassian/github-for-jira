@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import Sequelize from "sequelize";
-import { Subscription } from "./index";
+import { Subscription } from "./models";
 import SubscriptionClass from "./subscription";
 
 // TODO: this should not be there.  Should only check once a function is called

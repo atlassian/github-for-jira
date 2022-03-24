@@ -1,5 +1,5 @@
 /* eslint-disable jest/no-done-callback,@typescript-eslint/no-explicit-any */
-import { SqsQueue } from "./index";
+import { SqsQueue } from "./sqs";
 import { v4 as uuidv4 } from "uuid";
 import envVars from "config/env";
 import waitUntil from "test/utils/wait-until";
@@ -13,7 +13,7 @@ const TEST_QUEUE_NAME = "test";
 
 const delay = (time: number) => new Promise(resolve => setTimeout(resolve, time));
 
-describe("SqsQueue tests", () => {
+describe("SQS", () => {
 	let mockRequestHandler: jest.Mock;
 	let mockErrorHandler: jest.Mock;
 	let testMaxQueueAttempts = 3;
@@ -29,15 +29,15 @@ describe("SqsQueue tests", () => {
 		payload = { msg: uuidv4() };
 		createSqsQueue = (timeout: number, maxAttempts: number = testMaxQueueAttempts) =>
 			new SqsQueue({
-					queueName: TEST_QUEUE_NAME,
-					queueUrl: TEST_QUEUE_URL,
-					queueRegion: TEST_QUEUE_REGION,
-					longPollingIntervalSec: 0,
-					timeoutSec: timeout,
-					maxAttempts: maxAttempts
-				},
-				mockRequestHandler,
-				mockErrorHandler);
+				queueName: TEST_QUEUE_NAME,
+				queueUrl: TEST_QUEUE_URL,
+				queueRegion: TEST_QUEUE_REGION,
+				longPollingIntervalSec: 0,
+				timeoutSec: timeout,
+				maxAttempts: maxAttempts
+			},
+			mockRequestHandler,
+			mockErrorHandler);
 	});
 
 	afterEach(async () => {

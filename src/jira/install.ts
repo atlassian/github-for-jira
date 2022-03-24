@@ -1,4 +1,4 @@
-import { Installation } from "models/index";
+import { Installation } from "models/models";
 import { Request, Response } from "express";
 import statsd from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
