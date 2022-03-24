@@ -21,12 +21,7 @@ export enum BooleanFlags {
 	USE_SQS_FOR_BRANCH = "use-sqs-for-branch",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
-	USE_NEW_GITHUB_CLIENT_FOR_DISCOVERY = "use-new-github-client-for-discovery",
-	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
-	USE_NEW_GITHUB_CLIENT_FOR_PULL_REQUEST_WEBHOOK = "use-new-github-client-for-pull-request-webhook",
-	USE_NEW_GITHUB_CLIENT_FOR_BACKFILL = "use-new-github-client-for-backfill_z7ps8",
-	USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT = "use-new-github-pull-request-url-format",
-	USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT = "use-new-github-client-for-branch-event"
+	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments"
 }
 
 export enum StringFlags {
