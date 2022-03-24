@@ -6,7 +6,6 @@ import { Installation, RepoSyncState, Subscription } from "models/index";
 import { Application } from "probot";
 import { createWebhookApp } from "test/utils/probot";
 import { processInstallation } from "./installation";
-import { cleanAll } from "nock";
 import { getLogger } from "config/logger";
 import { cleanAll } from "nock";
 import { Hub } from "@sentry/types/dist/hub";
