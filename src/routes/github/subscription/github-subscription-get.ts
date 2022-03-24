@@ -3,7 +3,7 @@ import { Subscription } from "models/index";
 import { getCloudInstallationId } from "../../../github/client/installation-id";
 import { GitHubAppClient } from "../../../github/client/github-app-client";
 import { GitHubUserClient } from "../../../github/client/github-user-client";
-// import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
@@ -19,12 +19,15 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	}
 
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
-	const useNewGitHubClient = false;// await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, false, jiraHost);
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, false, jiraHost);
 	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), logger);
 	const gitHubUserClient = new GitHubUserClient(githubToken, logger);
 
 	try {
 		const { data: { login } } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated();
+
+		console.log("GET USER A");
+		console.log(login);
 		// get the installation to see if the user is an admin of it
 		const { data: installation } = useNewGitHubClient ?
 			await gitHubAppClient.getInstallation(gitHubInstallationId) :
@@ -42,7 +45,10 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 			return next(new Error("Unauthorized"));
 		}
 
+		console.log("INSIDE ADMIN");
 		const { data: info } = useNewGitHubClient ? await gitHubAppClient.getInstallations() : await client.apps.getAuthenticated();
+		console.log("GET INSTALLATIONSSSSSS A");
+		console.log(info);
 		return res.render("github-subscriptions.hbs", {
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,

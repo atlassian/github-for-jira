@@ -12,7 +12,7 @@ const createGitHubNockGet = (url, status, response) => {
 		.reply(status, response);
 };
 
-describe.skip("github-subscription-get", () => {
+describe("github-subscription-get", () => {
 	const gitHubInstallationId = 15;
 	const jiraHost = "mock-host";
 	let req, res, next;
@@ -59,11 +59,12 @@ describe.skip("github-subscription-get", () => {
 		const installation = {
 			target_type: "Org", account: { login: "test-org" }
 		};
-	
 		createGitHubNockGet("/user", 200, { login: "test-org" });
 
+		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, installation);
 
+		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations", 200, { things: "stuff" });
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);
@@ -84,12 +85,13 @@ describe.skip("github-subscription-get", () => {
 
 		createGitHubNockGet("/user", 200, { login: "test-org" });
 
+		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
 			target_type: "Org", account: { login: "test-org" }
 		});
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);
-		expect(next).toHaveBeenCalledWith(new Error("Unable to show subscription page"));
+		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
 	});
 
 	it("Should throw Unaothorized Error inside Next when API not admin", async () => {
@@ -97,12 +99,13 @@ describe.skip("github-subscription-get", () => {
 
 		createGitHubNockGet("/user", 200, { login: "test-org" });
 
+		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
 			target_type: "Org", account: { login: "test-org" }
 		});
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);
-		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
+		expect(next).toHaveBeenCalledWith(new Error("Unable to show subscription page"));
 	});
 
 
@@ -135,7 +138,6 @@ describe.skip("github-subscription-get", () => {
 		expect(next).toHaveBeenCalledWith(new Error("installationId and jiraHost must be provided to delete a subscription."));
 	});
 });
-
 
 describe("/github/subscription - octokit", () => {
 
