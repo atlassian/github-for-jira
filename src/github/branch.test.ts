@@ -43,14 +43,8 @@ describe("Branch Webhook", () => {
 		await sqsQueues.branch.purgeQueue();
 	});
 
-	describe.each([true, false])("Create Branch - New GH Client feature flag is '%s'", (useNewGithubClient) => {
+	describe("Create Branch", () => {
 		it("should queue and process a create webhook", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(useNewGithubClient);
 
 			when(booleanFlag).calledWith(
 				BooleanFlags.USE_SQS_FOR_BRANCH,
@@ -58,10 +52,6 @@ describe("Branch Webhook", () => {
 				expect.anything()
 			).mockResolvedValue(true);
 
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
-				expect.anything()
-			).mockResolvedValue(true);
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
@@ -150,121 +140,6 @@ describe("Branch Webhook", () => {
 		});
 
 		it("should exit early if ref_type is not a branch", async () => {
-			const parseSmartCommit = jest.fn();
-
-			await expect(app.receive(branchInvalidRef as any)).toResolve();
-			expect(parseSmartCommit).not.toBeCalled();
-
-			await waitUntil(async () => {
-				expect(githubNock).toBeDone();
-				expect(jiraNock).toBeDone();
-			});
-		});
-	});
-
-
-	describe("Create Branch (with disabled FF - delete this test with FF cleanup)", () => {
-		it("should update Jira issue with link to a branch on GitHub", async () => {
-
-			// delete this whole test with FF cleanup
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_SQS_FOR_BRANCH,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(false);
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
-				expect.anything()
-			).mockResolvedValue(true);
-			const ref = encodeURIComponent("heads/TES-123-test-ref");
-			const sha = "test-branch-ref-sha";
-
-			githubNock.get(`/repos/test-repo-owner/test-repo-name/git/ref/${ref}`)
-				.reply(200, {
-					ref: `refs/${ref}`,
-					object: {
-						sha
-					}
-				});
-			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
-				.reply(200, {
-					commit: {
-						author: {
-							name: "test-branch-author-name",
-							email: "test-branch-author-name@github.com",
-							date: "test-branch-author-date"
-						},
-						message: "test-commit-message"
-					},
-					html_url: `test-repo-url/commits/${sha}`
-				});
-
-			jiraNock.post("/rest/devinfo/0.10/bulk", {
-				preventTransitions: false,
-				repositories: [
-					{
-						name: "example/test-repo-name",
-						url: "test-repo-url",
-						id: "test-repo-id",
-						branches: [
-							{
-								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123%20-%20TES-123-test-ref&quick_pull=1",
-								lastCommit: {
-									author: {
-										name: "test-branch-author-name",
-										email: "test-branch-author-name@github.com"
-									},
-									authorTimestamp: "test-branch-author-date",
-									displayId: "test-b",
-									fileCount: 0,
-									hash: "test-branch-ref-sha",
-									id: "test-branch-ref-sha",
-									issueKeys: ["TES-123"],
-									message: "test-commit-message",
-									updateSequenceId: 12345678,
-									url: "test-repo-url/commits/test-branch-ref-sha"
-								},
-								id: "TES-123-test-ref",
-								issueKeys: ["TES-123"],
-								name: "TES-123-test-ref",
-								url: "test-repo-url/tree/TES-123-test-ref",
-								updateSequenceId: 12345678
-							}
-						],
-						updateSequenceId: 12345678
-					}
-				],
-				properties: {
-					installationId: gitHubInstallationId
-				}
-			}).reply(200);
-
-			mockSystemTime(12345678);
-
-			await expect(app.receive(branchBasic as any)).toResolve();
-
-			await waitUntil(async () => {
-				expect(githubNock).toBeDone();
-				expect(jiraNock).toBeDone();
-			});
-		});
-
-		it.skip("should not update Jira issue if there are no issue Keys in the branch name", async () => {
-			// TODO: This test makes no sense - getLastCommit cannot be called from here...
-			const getLastCommit = jest.fn();
-
-			await expect(app.receive(branchNoIssues as any)).toResolve();
-			expect(getLastCommit).not.toBeCalled();
-
-			await waitUntil(async () => {
-				expect(githubNock).toBeDone();
-				expect(jiraNock).toBeDone();
-			});
-		});
-
-		it.skip("should exit early if ref_type is not a branch", async () => {
-			// TODO: This test makes no sense - parseSmartCommit cannot be called from here...
 			const parseSmartCommit = jest.fn();
 
 			await expect(app.receive(branchInvalidRef as any)).toResolve();

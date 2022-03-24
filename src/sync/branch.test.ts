@@ -6,13 +6,12 @@ import { Installation, RepoSyncState, Subscription } from "models/index";
 import { Application } from "probot";
 import { createWebhookApp } from "test/utils/probot";
 import { processInstallation } from "./installation";
+import { cleanAll } from "nock";
 import { getLogger } from "config/logger";
 import { cleanAll } from "nock";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { sqsQueues } from "../sqs/queues";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
 
@@ -155,11 +154,6 @@ describe("sync/branches", () => {
 
 		githubUserTokenNock(installationId);
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
 	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {

@@ -228,6 +228,13 @@ describe("multiple Jira instances", () => {
 	});
 
 	it("should not linkify issue keys for jira instance that has matching issues", async () => {
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+
 		githubNock.get("/users/test-pull-request-user-login")
 			.times(2)
 			.reply(200, githubRequestUserLoginResponse);
@@ -269,6 +276,14 @@ describe("multiple Jira instances", () => {
 	});
 
 	it("should associate PR with to multiple jira with same issue keys", async () => {
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+
 		githubNock.get("/users/test-pull-request-user-login")
 			.twice()
 			.reply(200, githubRequestUserLoginResponse);
