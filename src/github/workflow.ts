@@ -1,6 +1,6 @@
 import { transformWorkflowPayload } from "../transforms/workflow";
 import { CustomContext } from "middleware/github-webhook-middleware";
-import { emitWebhookProcessedMetrics } from "utils/webhooks";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { GitHubAppClient } from "./client/github-app-client";
 import { getCloudInstallationId } from "./client/installation-id";
 

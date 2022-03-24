@@ -9,9 +9,9 @@ import AuthToken from "./auth-token";
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#authenticating-as-an-installation
  */
 export default class InstallationTokenCache {
+	private static instance: InstallationTokenCache;
 	private readonly installationTokenCache: LRUCache<number, AuthToken>;
 
-	private static instance: InstallationTokenCache;
 	/**
 	 * Creates a new InstallationTokenCache. This cache should be shared between all GitHub clients so that the clients don't
 	 * have to re-generate a new installation token for every request they make (which is expensive, because it includes a call to GitHub).
@@ -50,7 +50,7 @@ export default class InstallationTokenCache {
 		return token;
 	}
 
-	public clear():void {
+	public clear(): void {
 		this.installationTokenCache.reset();
 	}
 }

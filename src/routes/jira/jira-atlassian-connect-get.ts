@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import envVars from "../../config/env";
-import { EnvironmentEnum } from "../../interfaces/common";
+import envVars from "config/env";
+import { EnvironmentEnum } from "interfaces/common";
 
 const instance = envVars.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);

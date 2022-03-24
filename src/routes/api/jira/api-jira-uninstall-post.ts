@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { Installation } from "../../../models";
-import JiraClient from "../../../models/jira-client";
-import uninstall from "../../../jira/uninstall";
+import { Installation } from "models/index";
+import JiraClient from "models/jira-client";
+import uninstall from "~/src/jira/uninstall";
 
 export const ApiJiraUninstallPost = async (request: Request, response: Response): Promise<void> => {
 	response.locals.installation = await Installation.findOne({

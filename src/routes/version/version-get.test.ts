@@ -1,7 +1,7 @@
 import express, { Application } from "express";
 import { VersionGet } from "./version-get";
 import supertest from "supertest";
-import envVars from "../../config/env";
+import envVars from "config/env";
 
 describe("/version", () => {
 	let app: Application;

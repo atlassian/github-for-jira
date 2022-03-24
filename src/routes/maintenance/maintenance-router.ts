@@ -6,7 +6,7 @@ export const MaintenanceRouter = Router();
 const ignoredPaths = [
 	"/jira/atlassian-connect.json",
 	"/jira/events/installed",
-	"/jira/events/uninstalled",
+	"/jira/events/uninstalled"
 ];
 
 MaintenanceRouter.use(async (req: Request, res: Response, next: NextFunction) => {

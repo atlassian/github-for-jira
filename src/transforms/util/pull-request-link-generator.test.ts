@@ -28,4 +28,4 @@ describe("pullRequestLinkGenerator()", () => {
 
 		expect(generateCreatePullRequestUrl(BASE_URL, NAME, ISSUE_KEYS)).toBe(EXPECTED_RESULT);
 	});
-})
+});

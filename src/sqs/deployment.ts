@@ -3,7 +3,7 @@ import { Context, MessageHandler } from "./index";
 import app from "../worker/app";
 import { processDeployment } from "../github/deployment";
 import { GitHubAppClient } from "../github/client/github-app-client";
-import {getCloudInstallationId} from "../github/client/installation-id";
+import { getCloudInstallationId } from "../github/client/installation-id";
 
 export type DeploymentMessagePayload = {
 	jiraHost: string,
@@ -19,18 +19,17 @@ export type DeploymentMessagePayload = {
 export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayload> = async (context: Context<DeploymentMessagePayload>) => {
 
 
-
 	const messagePayload: DeploymentMessagePayload = context.payload;
 
-	const {webhookId, jiraHost, installationId} = messagePayload;
+	const { webhookId, jiraHost, installationId } = messagePayload;
 
 	context.log = context.log.child({
 		webhookId,
 		jiraHost,
 		installationId
-	})
+	});
 
-	context.log.info("Handling deployment message from the SQS queue")
+	context.log.info("Handling deployment message from the SQS queue");
 
 	const github = await app.auth(installationId);
 	const newGitHubClient = new GitHubAppClient(getCloudInstallationId(installationId), context.log);
@@ -44,4 +43,4 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 		jiraHost,
 		installationId,
 		context.log);
-}
+};

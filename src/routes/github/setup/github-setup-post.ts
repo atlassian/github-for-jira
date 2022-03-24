@@ -1,7 +1,7 @@
-import { validJiraDomains } from "../../../util/validations";
+import { validJiraDomains } from "utils/validations";
 import { Request, Response } from "express";
-import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../../../util/jira-utils";
-import { Installation } from "../../../models";
+import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "utils/jira-utils";
+import { Installation } from "models/index";
 
 const validateJiraSite = async (
 	req: Request,

@@ -1,8 +1,7 @@
-
 /* eslint-disable jest/no-standalone-expect */
 import { Prioritizer } from "./prioritizer";
-import { TaskStatus } from "../models/subscription";
-import { JobState, JobId, Step } from "./backfill.types";
+import { TaskStatus } from "models/subscription";
+import { JobId, JobState, Step } from "./backfill.types";
 import { CommitProcessor } from "./commit-processor";
 import { BranchProcessor } from "./branch-processor";
 import { PullRequestProcessor } from "./pull-request-processor";
@@ -55,7 +54,7 @@ describe("Prioritizer", () => {
 				installationId: 1234,
 				jiraHost: "https://foo.atlassian.net"
 			}
-		}
+		};
 	}
 
 	function jobStateWithWaitingPullrequests(): JobState {
@@ -118,7 +117,7 @@ describe("Prioritizer", () => {
 					updated_at: 42
 				}
 			}
-		}
+		};
 	}
 
 

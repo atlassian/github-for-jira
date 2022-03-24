@@ -69,7 +69,7 @@ describe("API Router", () => {
 		subscription = await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
-			jiraClientKey: "client-key",
+			jiraClientKey: "client-key"
 		});
 	});
 
@@ -247,7 +247,7 @@ describe("API Router", () => {
 					.get(`/api/${gitHubInstallationId}`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send({jiraHost})
+					.send({ jiraHost })
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -279,7 +279,7 @@ describe("API Router", () => {
 					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
-					.send({jiraHost})
+					.send({ jiraHost })
 					.expect(404)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -327,7 +327,7 @@ describe("API Router", () => {
 					.post(`/api/${invalidId}/sync`)
 					.set("Authorization", "Bearer xxx")
 					.set("Content-Type", "application/json")
-					.send({jiraHost: "https://unknownhost.atlassian.net"})
+					.send({ jiraHost: "https://unknownhost.atlassian.net" })
 					.expect(404)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -340,7 +340,7 @@ describe("API Router", () => {
 					.set("Authorization", "Bearer xxx")
 					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
-					.send({jiraHost})
+					.send({ jiraHost })
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -353,7 +353,7 @@ describe("API Router", () => {
 					.set("Authorization", "Bearer xxx")
 					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
-					.send({jiraHost, resetType: "full"})
+					.send({ jiraHost, resetType: "full" })
 					.expect(202)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -365,17 +365,17 @@ describe("API Router", () => {
 			beforeEach(() => {
 				jiraNock
 					.delete("/rest/devinfo/0.10/bulkByProperties")
-					.query({installationId: gitHubInstallationId})
+					.query({ installationId: gitHubInstallationId })
 					.reply(200);
 
 				jiraNock
 					.delete("/rest/builds/0.1/bulkByProperties")
-					.query({gitHubInstallationId})
+					.query({ gitHubInstallationId })
 					.reply(200);
 
 				jiraNock
 					.delete("/rest/deployments/0.1/bulkByProperties")
-					.query({gitHubInstallationId})
+					.query({ gitHubInstallationId })
 					.reply(200);
 			});
 
@@ -400,6 +400,6 @@ describe("API Router", () => {
 						expect(response.body).toMatchSnapshot();
 					});
 			});
-		})
+		});
 	});
 });

@@ -2,12 +2,12 @@ import crypto from "crypto";
 import url from "url";
 import { NextFunction, Request, Response, Router } from "express";
 import axios from "axios";
-import { getLogger } from "../../config/logger";
-import { booleanFlag, BooleanFlags } from "../../config/feature-flags";
-import { Tracer } from "../../config/tracer";
-import envVars from "../../config/env";
-import GithubApi from "../../config/github-api";
-import { Errors } from "../../config/errors";
+import { getLogger } from "config/logger";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { Tracer } from "config/tracer";
+import envVars from "config/env";
+import GithubApi from "config/github-api";
+import { Errors } from "config/errors";
 
 const logger = getLogger("github-oauth");
 

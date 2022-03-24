@@ -14,7 +14,7 @@ describe("jwt", () => {
 	let res: Response;
 	let baseRequest: Request;
 
-	let next:Mock;
+	let next: Mock;
 	const testSecret = "testSecret";
 
 	// Query string hash corresponding to the request parameters above
@@ -272,7 +272,7 @@ describe("jwt", () => {
 
 		it("should pass when token is valid for Staging Jira Instance", async () => {
 			const req = buildRequestWithJwt(testQsh);
-			req.body = { baseUrl:  "https://kabakumov2.jira-dev.com/jira/your-work" };
+			req.body = { baseUrl: "https://kabakumov2.jira-dev.com/jira/your-work" };
 			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);

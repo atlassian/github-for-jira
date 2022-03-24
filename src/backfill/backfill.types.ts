@@ -1,4 +1,4 @@
-import { RepositoryData } from "../models/subscription";
+import { RepositoryData } from "models/subscription";
 
 export type JobId = {
 	installationId: number;

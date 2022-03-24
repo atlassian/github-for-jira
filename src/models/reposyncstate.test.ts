@@ -2,7 +2,7 @@
 import SubscriptionClass, { RepositoryData } from "./subscription";
 import { RepoSyncState, Subscription } from "./index";
 import { mocked } from "ts-jest/utils";
-import { booleanFlag } from "../config/feature-flags";
+import { booleanFlag } from "config/feature-flags";
 
 jest.mock("../../src/config/feature-flags");
 
@@ -15,7 +15,7 @@ describe("RepoSyncState", () => {
 		sub = await Subscription.create({
 			gitHubInstallationId: 123,
 			jiraHost,
-			jiraClientKey: "myClientKey",
+			jiraClientKey: "myClientKey"
 		});
 
 		repo = {
@@ -477,7 +477,7 @@ describe("RepoSyncState", () => {
 				repoName: "github-for-jira",
 				repoOwner: "atlassian",
 				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira",
+				repoUrl: "github.com/atlassian/github-for-jira"
 			});
 		});
 	});

@@ -1,5 +1,5 @@
-import {Installation} from "../models";
-import {NextFunction, Request, Response} from "express";
+import { Installation } from "models/index";
+import { NextFunction, Request, Response } from "express";
 
 /**
  * Express middleware for connect app events

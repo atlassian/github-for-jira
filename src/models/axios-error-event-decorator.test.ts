@@ -41,7 +41,7 @@ describe("AxiosErrorDecorator", () => {
 				host: "www.example.com",
 				headers: {
 					accept: "application/json, text/plain, */*",
-					host: "www.example.com",
+					host: "www.example.com"
 				}
 			});
 		});

@@ -29,15 +29,15 @@ describe("SqsQueue tests", () => {
 		payload = { msg: uuidv4() };
 		createSqsQueue = (timeout: number, maxAttempts: number = testMaxQueueAttempts) =>
 			new SqsQueue({
-				queueName: TEST_QUEUE_NAME,
-				queueUrl: TEST_QUEUE_URL,
-				queueRegion: TEST_QUEUE_REGION,
-				longPollingIntervalSec: 0,
-				timeoutSec: timeout,
-				maxAttempts: maxAttempts
-			},
-			mockRequestHandler,
-			mockErrorHandler);
+					queueName: TEST_QUEUE_NAME,
+					queueUrl: TEST_QUEUE_URL,
+					queueRegion: TEST_QUEUE_REGION,
+					longPollingIntervalSec: 0,
+					timeoutSec: timeout,
+					maxAttempts: maxAttempts
+				},
+				mockRequestHandler,
+				mockErrorHandler);
 	});
 
 	afterEach(async () => {

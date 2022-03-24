@@ -1,8 +1,8 @@
 import { Request, Response, Router } from "express";
-import postJiraInstall from "../../../jira/install";
-import extractInstallationFromJiraCallback from "../../../jira/extract-installation-from-jira-callback";
-import postJiraUninstall from "../../../jira/uninstall";
-import { verifyAsymmetricJwtTokenMiddleware } from "../../../jira/util/jwt";
+import postJiraInstall from "~/src/jira/install";
+import extractInstallationFromJiraCallback from "~/src/jira/extract-installation-from-jira-callback";
+import postJiraUninstall from "~/src/jira/uninstall";
+import { verifyAsymmetricJwtTokenMiddleware } from "~/src/jira/util/jwt";
 
 export const JiraEventsRouter = Router();
 

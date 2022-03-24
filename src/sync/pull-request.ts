@@ -1,13 +1,13 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
 import transformPullRequest from "./transforms/pull-request";
-import statsd from "../config/statsd";
+import statsd from "config/statsd";
 import { GitHubAPI } from "probot";
-import { metricHttpRequest } from "../config/metric-names";
-import { Repository } from "../models/subscription";
+import { metricHttpRequest } from "config/metric-names";
+import { Repository } from "models/subscription";
 import { GitHubAppClient } from "../github/client/github-app-client";
-import { getGithubUser } from "../services/github/user";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { getGithubUser } from "services/github/user";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { AxiosResponseHeaders } from "axios";
 import { Octokit } from "@octokit/rest";
@@ -94,7 +94,7 @@ export default async function(
 					(await github?.pulls?.get({
 						owner: repository.owner.login, repo: repository.name, pull_number: pull.number
 					}));
-				const prDetails = prResponse?.data
+				const prDetails = prResponse?.data;
 				const ghUser = await getGithubUser(
 					useNewGHClient ? newGithub : github,
 					prDetails?.user.login

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
-import { Installation, Subscription } from "../models";
+import { Installation, Subscription } from "models/index";
 
 import issueCommentBasic from "fixtures/issue-comment-basic.json";
 

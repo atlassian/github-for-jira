@@ -6,8 +6,8 @@ import { processInstallation } from "./installation";
 import nock from "nock";
 import { RepoSyncStateObject } from "models/subscription";
 import { createWebhookApp } from "test/utils/probot";
-import {getLogger} from "config/logger";
-import {Hub} from "@sentry/types/dist/hub";
+import { getLogger } from "config/logger";
+import { Hub } from "@sentry/types/dist/hub";
 
 import pullRequestList from "fixtures/api/pull-request-list.json";
 

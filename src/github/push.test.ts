@@ -3,7 +3,7 @@ import nock from "nock";
 import { createJobData } from "../transforms/push";
 import { createWebhookApp } from "test/utils/probot";
 import { getLogger } from "config/logger";
-import { Installation, Subscription } from "../models";
+import { Installation, Subscription } from "models/index";
 import { Application } from "probot";
 import waitUntil from "test/utils/wait-until";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "../sqs/push";

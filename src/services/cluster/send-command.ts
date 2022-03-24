@@ -1,5 +1,5 @@
 import cluster, { Worker } from "cluster";
-import { getLogger } from "../../config/logger";
+import { getLogger } from "config/logger";
 import { isNodeProd } from "utils/is-node-env";
 
 const logger = getLogger("cluster.send-command");

@@ -11,8 +11,8 @@ export const DeepcheckGet = async (_: Request, res: Response): Promise<void> => 
 	try {
 		await Promise.race([
 			Promise.all([
-				cache.ping().then(() => logger.info("redis works"),() => Promise.reject("Could not connect to Redis")),
-				sequelize.authenticate().then(() => logger.info("DB works"),() => Promise.reject("Could not connect to postgres DB"))
+				cache.ping().then(() => logger.info("redis works"), () => Promise.reject("Could not connect to Redis")),
+				sequelize.authenticate().then(() => logger.info("DB works"), () => Promise.reject("Could not connect to postgres DB"))
 			]),
 			new Promise((_, reject) => setTimeout(() => reject(`deepcheck timed out after ${timeout}ms`), timeout))
 		]);

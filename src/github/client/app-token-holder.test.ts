@@ -1,5 +1,6 @@
 import AppTokenHolder from "./app-token-holder";
 import { getCloudInstallationId } from "./installation-id";
+
 jest.unmock("lru-cache");
 
 describe("AppTokenHolder", () => {
@@ -10,7 +11,7 @@ describe("AppTokenHolder", () => {
 
 	afterEach(() => {
 		jest.useRealTimers();
-	})
+	});
 
 	it("Re-generates expired tokens", async () => {
 		const appTokenHolder = new AppTokenHolder();

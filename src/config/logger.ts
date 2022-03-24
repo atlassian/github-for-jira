@@ -59,7 +59,7 @@ const logger = wrapLogger(Logger.createLogger(
 		serializers: {
 			err: errorSerializer,
 			res: Logger.stdSerializers.res,
-			req: requestSerializer,
+			req: requestSerializer
 		}
 	}
 ));

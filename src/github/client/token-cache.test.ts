@@ -15,7 +15,7 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 
 	afterEach(() => {
 		jest.useRealTimers();
-	})
+	});
 
 	it("should not cache any tokens when testing InstallationTokenCache", async () => {
 		const installationTokenCache = new InstallationTokenCache();

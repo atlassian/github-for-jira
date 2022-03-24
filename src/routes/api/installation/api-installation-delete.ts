@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Subscription } from "../../../models";
+import { Subscription } from "models/index";
 import getJiraClient from "../../../jira/client";
 
 export const ApiInstallationDelete = async (req: Request, res: Response): Promise<void> => {

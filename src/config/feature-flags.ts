@@ -1,4 +1,3 @@
-
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import envVars from "./env";

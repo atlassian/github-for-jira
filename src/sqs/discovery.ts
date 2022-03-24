@@ -6,10 +6,10 @@ export type DiscoveryMessagePayload = {
 	jiraHost: string
 }
 
-export const discoveryQueueMessageHandler : MessageHandler<DiscoveryMessagePayload> = async (context) => {
+export const discoveryQueueMessageHandler: MessageHandler<DiscoveryMessagePayload> = async (context) => {
 	context.log = context.log.child({
 		jiraHost: context?.payload?.jiraHost,
 		installationId: context?.payload?.installationId
-	})
+	});
 	await discovery(context.payload, context.log);
 };

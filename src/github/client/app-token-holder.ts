@@ -26,10 +26,9 @@ export const cloudKeyLocator: KeyLocator = () => {
  */
 export default class AppTokenHolder {
 
+	private static instance: AppTokenHolder;
 	private readonly privateKeyLocator: KeyLocator;
 	private readonly appTokenCache: LRUCache<string, AuthToken>;
-
-	private static instance: AppTokenHolder;
 
 	constructor(keyLocator?: KeyLocator) {
 		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
@@ -41,21 +40,6 @@ export default class AppTokenHolder {
 			AppTokenHolder.instance = new AppTokenHolder();
 		}
 		return AppTokenHolder.instance;
-	}
-
-
-	/**
-	 * Gets the current app token or creates a new one if the old is about to expire.
-	 */
-	public getAppToken(appId: InstallationId): AuthToken {
-		let currentToken = this.appTokenCache.get(appId.toString());
-
-		if (!currentToken || currentToken.isAboutToExpire()) {
-			const key = this.privateKeyLocator(appId);
-			currentToken = AppTokenHolder.createAppJwt(key, appId.appId);
-			this.appTokenCache.set(appId.toString(), currentToken);
-		}
-		return currentToken;
 	}
 
 	/**
@@ -78,6 +62,20 @@ export default class AppTokenHolder {
 			encodeAsymmetric(jwtPayload, key, AsymmetricAlgorithm.RS256),
 			expirationDate
 		);
+	}
+
+	/**
+	 * Gets the current app token or creates a new one if the old is about to expire.
+	 */
+	public getAppToken(appId: InstallationId): AuthToken {
+		let currentToken = this.appTokenCache.get(appId.toString());
+
+		if (!currentToken || currentToken.isAboutToExpire()) {
+			const key = this.privateKeyLocator(appId);
+			currentToken = AppTokenHolder.createAppJwt(key, appId.appId);
+			this.appTokenCache.set(appId.toString(), currentToken);
+		}
+		return currentToken;
 	}
 
 	public clear(): void {

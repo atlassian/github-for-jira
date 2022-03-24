@@ -1,7 +1,7 @@
-import { Subscription } from "../models";
+import { Subscription } from "models/index";
 import { Request, Response } from "express";
-import statsd from "../config/statsd";
-import { metricHttpRequest } from "../config/metric-names";
+import statsd from "config/statsd";
+import { metricHttpRequest } from "config/metric-names";
 
 /**
  * Handle the uninstall webhook from Jira

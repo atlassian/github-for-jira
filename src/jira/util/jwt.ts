@@ -1,15 +1,15 @@
 // Original source code:
 // https://bitbucket.org/atlassian/atlassian-connect-express/src/f434e5a9379a41213acf53b9c2689ce5eec55e21/lib/middleware/authentication.js?at=master&fileviewer=file-view-default#authentication.js-227
 // TODO: need some typing for jwt
-import {createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId} from "atlassian-jwt";
-import {NextFunction, Request, Response} from "express";
-import envVars from "../../config/env";
-import _ from "lodash";
+import { createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId } from "atlassian-jwt";
+import { NextFunction, Request, Response } from "express";
+import envVars from "config/env";
 import queryAtlassianConnectPublicKey from "./query-atlassian-connect-public-key";
+import { includes, isEmpty } from "lodash";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
-const BASE_URL = envVars.APP_URL
+const BASE_URL = envVars.APP_URL;
 
 /**
  * Atlassian Connect has 2 different types of JWT tokens.
@@ -73,22 +73,18 @@ function decodeAsymmetricToken(token: string, publicKey: string, noVerify: boole
 	);
 }
 
-
 function verifyQsh(qsh: string, req: Request): boolean {
 	// to get full path from express request, we need to add baseUrl with path
-	const requestInAtlassianJwtFormat = {...req, pathname: req.baseUrl + req.path}
+	const requestInAtlassianJwtFormat = { ...req, pathname: req.baseUrl + req.path };
 	let expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, false, BASE_URL);
-	let signatureHashVerified = qsh === expectedHash;
+	const signatureHashVerified = qsh === expectedHash;
 
 	if (!signatureHashVerified) {
 		// If that didn't verify, it might be a post/put - check the request body too
 		expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, true, BASE_URL);
-		signatureHashVerified = qsh === expectedHash;
-		if (!signatureHashVerified) {
-			return false;
-		}
+		return qsh === expectedHash;
 	}
-	return true
+	return true;
 }
 
 export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenType: TokenType, req: Request, res: Response): boolean {
@@ -96,31 +92,31 @@ export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenTy
 
 	// TODO: build in leeway?
 	if (expiry && (Date.now() / 1000 >= expiry)) {
-		req.log.info("JWT Verification Failed, token is expired")
+		req.log.info("JWT Verification Failed, token is expired");
 		sendError(res, 401, "Authentication request has expired. Try reloading the page.");
 		return false;
 	}
 
 	if (verifiedClaims.qsh) {
-		let qshVerified = false
+		let qshVerified:boolean;
 		if (tokenType === TokenType.context) {
 			//If we use context jsw tokens, their qsh will be constant
-			qshVerified = verifiedClaims.qsh === "context-qsh"
+			qshVerified = verifiedClaims.qsh === "context-qsh";
 		} else {
 			//validate query string hash
 			qshVerified = verifyQsh(verifiedClaims.qsh, req);
 		}
 
 		if (!qshVerified) {
-			req.log.info("JWT Verification Failed, wrong qsh")
+			req.log.info("JWT Verification Failed, wrong qsh");
 			sendError(res, 401, "Unauthorized");
 		}
-		return qshVerified
+		return qshVerified;
 
 	} else {
-		req.log.info("JWT Verification Failed, no qsh")
+		req.log.info("JWT Verification Failed, no qsh");
 		sendError(res, 401, "JWT tokens without qsh are not allowed");
-		return false
+		return false;
 	}
 }
 
@@ -131,7 +127,7 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
 		return false;
 	}
 
-	const algorithm = getAlgorithm(token)
+	const algorithm = getAlgorithm(token);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let unverifiedClaims: any;
@@ -171,67 +167,67 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
 export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: TokenType, req: Request, res: Response, next: NextFunction): void => {
 	try {
 		if (!verifySymmetricJwtAndSetResponseCodeOnError(secret, req, res, tokenType)) {
-			return
+			return;
 		}
-		req.log.info("JWT Token Verified Successfully!")
+		req.log.info("JWT Token Verified Successfully!");
 		next();
 	} catch (error) {
-		req.log.error(error, "Error happened when validating JWT token")
-		sendError(res, 401, "Unauthorized")
-		return
+		req.log.error(error, "Error happened when validating JWT token");
+		sendError(res, 401, "Unauthorized");
+		return;
 	}
-}
+};
 
-const ALLOWED_BASE_URLS = [BASE_URL]
+const ALLOWED_BASE_URLS = [BASE_URL];
 
 const isStagingTenant = (req: Request): boolean => {
 	try {
 		const hostBaseUrl = req.body?.baseUrl;
 		if (hostBaseUrl) {
 			const host = new URL(hostBaseUrl).hostname;
-			return /\.jira-dev\.com$/.test(host)
+			return /\.jira-dev\.com$/.test(host);
 		}
 	} catch (err) {
-		req.log.error(err, "Error determining Jira instance environment")
+		req.log.error(err, "Error determining Jira instance environment");
 	}
-	return false
-}
+	return false;
+};
 
 export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const token = extractJwtFromRequest(req);
 		if (!token) {
-			req.log.info("JWT Verification Failed, no token present")
-			sendError(res, 401, "Unauthorized")
+			req.log.info("JWT Verification Failed, no token present");
+			sendError(res, 401, "Unauthorized");
 			return;
 		}
 
 		const publicKey = await queryAtlassianConnectPublicKey(getKeyId(token), isStagingTenant(req));
-		const unverifiedClaims = decodeAsymmetricToken(token, publicKey, true)
+		const unverifiedClaims = decodeAsymmetricToken(token, publicKey, true);
 
 		const issuer = unverifiedClaims.iss;
 		if (!issuer) {
-			req.log.info("JWT Verification Failed, no issuer present")
+			req.log.info("JWT Verification Failed, no issuer present");
 			sendError(res, 401, "JWT claim did not contain the issuer (iss) claim");
 			return;
 		}
 
-		if (_.isEmpty(unverifiedClaims.aud) ||
+		if (isEmpty(unverifiedClaims.aud) ||
 			!unverifiedClaims.aud[0] ||
-			!_.includes(ALLOWED_BASE_URLS, unverifiedClaims.aud[0].replace(/\/$/, ""))) {
-			req.log.info("JWT Verification Failed, no correct audience present")
-			sendError(res, 401, "WT claim did not contain the correct audience (aud) claim")
+			!includes(ALLOWED_BASE_URLS, unverifiedClaims.aud[0].replace(/\/$/, ""))) {
+			req.log.info("JWT Verification Failed, no correct audience present");
+			sendError(res, 401, "WT claim did not contain the correct audience (aud) claim");
 			return;
 		}
 
-		const verifiedClaims = decodeAsymmetricToken(token, publicKey, false)
+		const verifiedClaims = decodeAsymmetricToken(token, publicKey, false);
 
 		if (verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, TokenType.normal, req, res)) {
-			req.log.info("JWT Token Verified Successfully!")
-			next()
+			req.log.info("JWT Token Verified Successfully!");
+			next();
 		}
 	} catch (e) {
-		req.log.warn({...e}, "Error while validating JWT token")
-		sendError(res, 401, "Unauthorized")
+		req.log.warn({ ...e }, "Error while validating JWT token");
+		sendError(res, 401, "Unauthorized");
 	}
-}
+};

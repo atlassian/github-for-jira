@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
-import { Installation, Subscription } from "../models";
+import { Installation, Subscription } from "models/index";
 import waitUntil from "test/utils/wait-until";
 import { sqsQueues } from "../sqs/queues";
-import {when} from "jest-when";
-import {booleanFlag, BooleanFlags} from "config/feature-flags";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 import deploymentStatusBasic from "fixtures/deployment_status-basic.json";
 

@@ -6,7 +6,7 @@ import { Options } from "probot/lib/github";
 export default (options: Partial<Options> = {}): GitHubAPI => {
 	options.logger = options.logger || getLogger("config.github-api");
 	options.throttle = {
-		enabled: false,
-	}
+		enabled: false
+	};
 	return enhanceOctokit(GitHubAPI(options as Options));
 }

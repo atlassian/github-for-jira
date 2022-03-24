@@ -22,7 +22,7 @@ const requiredEnvVars = [
 	"SQS_DEPLOYMENT_QUEUE_REGION",
 	"SQS_BRANCH_QUEUE_URL",
 	"SQS_BRANCH_QUEUE_REGION",
-	"MICROS_AWS_REGION",
+	"MICROS_AWS_REGION"
 ];
 
 const filename = isNodeTest() ? ".env.test" : ".env";

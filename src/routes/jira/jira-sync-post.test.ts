@@ -12,7 +12,7 @@ jest.mock("~/src/sqs/queues");
 describe("sync", () => {
 	let app: Express;
 	let installation: InstallationClass;
-	let jwt:string;
+	let jwt: string;
 
 	beforeEach(async () => {
 		installation = await Installation.install({

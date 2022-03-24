@@ -20,7 +20,7 @@ describe("GitHub API Request Suite", () => {
 				owner: repository.owner.login,
 				repo: repository.name,
 				base: pull_requests[0].base.ref,
-				head: pull_requests[0].head.ref,
+				head: pull_requests[0].head.ref
 			};
 
 			const pullRequestCommits = Object.assign(
@@ -35,7 +35,7 @@ describe("GitHub API Request Suite", () => {
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
 				)
 				.reply(200, {
-					...data,
+					...data
 				});
 
 			const bob = await getAllCommitMessagesBetweenReferences(
@@ -60,7 +60,7 @@ describe("GitHub API Request Suite", () => {
 				owner: repository.owner.login,
 				repo: repository.name,
 				base: pull_requests[0].base.ref,
-				head: pull_requests[0].head.ref,
+				head: pull_requests[0].head.ref
 			};
 
 			const pullRequestCommits = Object.assign(
@@ -75,7 +75,7 @@ describe("GitHub API Request Suite", () => {
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
 				)
 				.reply(200, {
-					...data,
+					...data
 				});
 
 			const bob = await getAllCommitMessagesBetweenReferences(

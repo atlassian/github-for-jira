@@ -18,13 +18,13 @@ const queryAtlassianConnectPublicKey = async (keyId: string, isStagingTenant: bo
 
 	const result = await axios.get(`${keyServerUrl}/${keyId}`, {
 		timeout: 5000
-	})
+	});
 
 	if (result.status !== 200) {
-		throw new Error(`Unable to get public key for keyId ${keyId}`)
+		throw new Error(`Unable to get public key for keyId ${keyId}`);
 	}
 
-	return result.data
-}
+	return result.data;
+};
 
-export default queryAtlassianConnectPublicKey
+export default queryAtlassianConnectPublicKey;

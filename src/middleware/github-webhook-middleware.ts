@@ -9,7 +9,7 @@ import getJiraUtil from "../jira/util";
 import enhanceOctokit from "config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import {emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime} from "utils/webhooks";
+import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
 
 const LOGGER_NAME = "github.webhooks";
 
@@ -18,7 +18,7 @@ const warnOnErrorCodes = ["401", "403", "404"];
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function (callback) {
+const withSentry = function(callback) {
 	return async (context) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry?.configureScope((scope) =>
@@ -88,7 +88,7 @@ export const GithubWebhookMiddleware = (
 			id: context.id,
 			repo: context.payload?.repository ? context.repo() : undefined,
 			payload: context.payload,
-			webhookReceived,
+			webhookReceived
 		});
 
 		const repoName = context.payload?.repository?.name || "none";
@@ -101,9 +101,10 @@ export const GithubWebhookMiddleware = (
 			event: webhookEvent,
 			webhookReceived
 		};
-		context.log = context.log.child({ name: LOGGER_NAME, ...webhookParams } );
+		context.log = context.log.child({ name: LOGGER_NAME, ...webhookParams });
 		// TODO: log only for local dev and for those who has enabled verbose logging
-		context.log.info({repoName,
+		context.log.info({
+			repoName,
 			orgName,
 			payload: context.payload
 		}, "Webhook verbose data");
@@ -119,7 +120,7 @@ export const GithubWebhookMiddleware = (
 				{
 					noop: "bot",
 					botId: context.payload?.sender?.id,
-					botLogin: context.payload?.sender?.login,
+					botLogin: context.payload?.sender?.login
 				},
 				"Halting further execution since the sender is a bot and action is not a state change nor a deployment"
 			);
@@ -130,7 +131,7 @@ export const GithubWebhookMiddleware = (
 			context.log(
 				{
 					installation_id: context.payload?.installation?.id,
-					repository_id: context.payload?.repository?.id,
+					repository_id: context.payload?.repository?.id
 				},
 				"Halting further execution since the repository is explicitly ignored"
 			);
@@ -171,7 +172,7 @@ export const GithubWebhookMiddleware = (
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(
-					{jiraHost, webhookEvent},
+					{ jiraHost, webhookEvent },
 					`Maintenance mode ENABLED - Ignoring event`
 				);
 				continue;
@@ -184,7 +185,7 @@ export const GithubWebhookMiddleware = (
 				context.log.error(
 					{
 						timeout: true,
-						timeoutElapsed: context.timedout,
+						timeoutElapsed: context.timedout
 					},
 					`Timing out at after ${context.timedout}ms`
 				);
@@ -210,7 +211,7 @@ export const GithubWebhookMiddleware = (
 				await callback(context, jiraClient, util, gitHubInstallationId);
 			} catch (err) {
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
-				if(!isWarning) {
+				if (!isWarning) {
 					context.log.error(
 						{ err, jiraHost },
 						`Error processing the event`

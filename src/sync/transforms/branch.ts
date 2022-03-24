@@ -1,7 +1,7 @@
-import { getJiraId } from "../../jira/util/id";
+import { getJiraId } from "~/src/jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "../../util/jira";
-import { union, isEmpty } from "lodash";
+import { getJiraAuthor } from "utils/jira-utils";
+import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
 
 // TODO: better typing in file
@@ -48,7 +48,7 @@ const mapBranch = (branch, repository) => {
 		url: `${repository.html_url}/tree/${branch.name}`,
 		updateSequenceId: Date.now()
 	};
-}
+};
 
 /**
  * mapCommit takes the a single commit object from the array
@@ -75,7 +75,7 @@ const mapCommit = (commit) => {
 		url: commit.url,
 		updateSequenceId: Date.now()
 	};
-}
+};
 
 // TODO: add typings
 export const transformBranches = async (payload) => {

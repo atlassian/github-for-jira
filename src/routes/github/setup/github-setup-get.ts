@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "../../../util/jira-utils";
-import { Installation } from "../../../models";
+import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "utils/jira-utils";
+import { Installation } from "models/index";
 
 /*
 	Handles redirects for both the installation flow from Jira and
@@ -16,7 +16,7 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 	const { jiraHost, client } = res.locals;
 	const installationId = Number(req.query.installation_id);
 	const { data: info } = await client.apps.getAuthenticated();
-	req.addLogFields({installationId, appInfo: info});
+	req.addLogFields({ installationId, appInfo: info });
 	req.log.info("Received get github setup page request");
 	const githubInstallation = await client.apps.getInstallation({ installation_id: installationId })
 		.catch(() => {

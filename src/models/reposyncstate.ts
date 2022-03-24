@@ -1,8 +1,8 @@
-import Sequelize, { CountOptions, DestroyOptions, FindOptions, Op } from "sequelize";
+import { CountOptions, DestroyOptions, FindOptions, Model, Op } from "sequelize";
 import Subscription, { Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
-import _ from "lodash";
+import { merge, pickBy } from "lodash";
 
-export default class RepoSyncState extends Sequelize.Model {
+export default class RepoSyncState extends Model {
 	id: number;
 	subscriptionId: number;
 	repoId: number;
@@ -68,7 +68,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	static async countFromSubscription(subscription: Subscription, options: CountOptions = {}): Promise<number> {
-		return RepoSyncState.count(_.merge(options, {
+		return RepoSyncState.count(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			}
@@ -76,7 +76,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
-		return RepoSyncState.findAll(_.merge(options, {
+		return RepoSyncState.findAll(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			}
@@ -84,7 +84,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState> {
-		return RepoSyncState.findOne(_.merge(options, {
+		return RepoSyncState.findOne(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			},
@@ -93,7 +93,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	static async deleteFromSubscription(subscription: Subscription, options: DestroyOptions = {}): Promise<number> {
-		return RepoSyncState.destroy(_.merge(options, {
+		return RepoSyncState.destroy(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			}
@@ -188,9 +188,9 @@ export default class RepoSyncState extends Sequelize.Model {
 				repoId
 			}
 		});
-		const repo = _.merge(model?.toRepositoryData() || {}, {
+		const repo = merge(model?.toRepositoryData() || {}, {
 			[key]: value
-		})
+		});
 		return model?.setFromRepositoryData(repo)?.save();
 	}
 
@@ -208,7 +208,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	toRepositoryData(): RepositoryData {
-		return _.pickBy({
+		return pickBy({
 			repository: {
 				id: this.repoId.toString(),
 				name: this.repoName,

@@ -1,8 +1,8 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "../../util/jira";
+import { getJiraAuthor } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { Octokit } from "@octokit/rest";
-import { Repository } from "../../models/subscription";
+import { Repository } from "models/subscription";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {

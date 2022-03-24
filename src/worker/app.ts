@@ -4,8 +4,8 @@
 
 import { Application, createProbot } from "probot";
 import { findPrivateKey } from "probot/lib/private-key";
-import { HealthcheckRouter } from "../routes/healthcheck/healthcheck-router";
-import { overrideProbotLoggingMethods } from "../config/logger";
+import { HealthcheckRouter } from "routes/healthcheck/healthcheck-router";
+import { overrideProbotLoggingMethods } from "config/logger";
 
 export const probot = createProbot({
 	id: Number(process.env.APP_ID),

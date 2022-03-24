@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { Installation } from "../../../models";
-import verifyInstallation from "../../../jira/verify-installation";
+import { Installation } from "models/index";
+import verifyInstallation from "~/src/jira/verify-installation";
 
 export const ApiJiraVerifyPost = async (req: Request, res: Response): Promise<void> => {
 	const { installationId } = req.params;

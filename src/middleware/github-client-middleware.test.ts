@@ -7,7 +7,7 @@ describe("GitHub client middleware", () => {
 	let adminFunction;
 
 	beforeEach(async () => {
-		adminFunction = isAdmin({locals: {github: GitHubAPI()}} as any, logger);
+		adminFunction = isAdmin({ locals: { github: GitHubAPI() } } as any, logger);
 	});
 
 	it("isAdmin returns true if user is admin of a given organization", async () => {

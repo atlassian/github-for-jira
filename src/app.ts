@@ -87,7 +87,7 @@ const secureHeaders = (router: Router, frontendApp: Express) => {
 	// This particular combination of methods works
 	frontendApp.disable("x-powered-by");
 	router.use(helmet.hidePoweredBy());
-}
+};
 
 export const setupFrontend = (app: Application): void => {
 	const router = app.route();

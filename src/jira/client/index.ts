@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation, Subscription } from "../../models";
+import { Installation, Subscription } from "models/index";
 import getAxiosInstance from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 import issueKeyParser from "jira-issue-key-parser";
-import { JiraCommit, JiraIssue } from "../../interfaces/jira";
-import { getLogger } from "../../config/logger";
+import { JiraCommit, JiraIssue } from "interfaces/jira";
+import { getLogger } from "config/logger";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -186,7 +186,7 @@ async function getJiraClient(
 									gitHubInstallationId
 								}
 							}
-						),
+						)
 					])
 			},
 			pullRequest: {

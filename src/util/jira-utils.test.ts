@@ -4,7 +4,7 @@ import { getJiraAppUrl, getJiraMarketplaceUrl } from "./jira-utils";
 
 describe("Jira Utils", () => {
 	describe("getJiraAppUrl", () => {
-		let instanceName:string;
+		let instanceName: string;
 		beforeEach(() => instanceName = envVars.INSTANCE_NAME);
 		afterEach(() => envVars.INSTANCE_NAME = instanceName);
 
@@ -25,9 +25,9 @@ describe("Jira Utils", () => {
 	});
 
 	describe("getJiraMarketplaceUrl", () => {
-		it("should return the correct default URL", ()=> {
-			expect(getJiraMarketplaceUrl(jiraHost)).toEqual(`${jiraHost}/jira/marketplace/discover/app/com.github.integration.production`)
-			expect(getJiraMarketplaceUrl("https://foo.com")).toEqual(`https://foo.com/jira/marketplace/discover/app/com.github.integration.production`)
+		it("should return the correct default URL", () => {
+			expect(getJiraMarketplaceUrl(jiraHost)).toEqual(`${jiraHost}/jira/marketplace/discover/app/com.github.integration.production`);
+			expect(getJiraMarketplaceUrl("https://foo.com")).toEqual(`https://foo.com/jira/marketplace/discover/app/com.github.integration.production`);
 		});
 
 		it("should return empty string if missing jiraHost", () => {

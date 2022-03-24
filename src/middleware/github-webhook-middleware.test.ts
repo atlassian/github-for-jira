@@ -6,7 +6,7 @@ import { mockModels } from "test/utils/models";
 import { wrapLogger } from "probot/lib/wrap-logger";
 import { createLogger } from "bunyan";
 import { Writable } from "stream";
-import { emitWebhookFailedMetrics } from "utils/webhooks";
+import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 
 jest.mock("models/index");
 jest.mock("utils/webhooks");

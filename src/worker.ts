@@ -1,19 +1,19 @@
 import "./config/env"; // Important to be before other dependencies
 import "./config/proxy"; // Important to be before other dependencies
 import throng from "throng";
-import {isNodeProd} from "utils/is-node-env";
-import {listenToMicrosLifecycle} from "./services/micros/lifecycle";
-import {ClusterCommand, sendCommandToCluster} from "./services/cluster/send-command";
-import {probot} from "./worker/app";
-import {initializeSentry} from "./config/sentry";
-import {listenForClusterCommand} from "./services/cluster/listen-command";
-import {start, stop} from "./worker/startup";
+import { isNodeProd } from "utils/is-node-env";
+import { listenToMicrosLifecycle } from "./services/micros/lifecycle";
+import { ClusterCommand, sendCommandToCluster } from "./services/cluster/send-command";
+import { probot } from "./worker/app";
+import { initializeSentry } from "./config/sentry";
+import { listenForClusterCommand } from "./services/cluster/listen-command";
+import { start, stop } from "./worker/startup";
 
 const initialize = () => {
 	initializeSentry();
 	// starts healthcheck/deepcheck or else deploy will fail
 	probot.start();
-}
+};
 
 if (isNodeProd()) {
 	// Production clustering (one process per core)

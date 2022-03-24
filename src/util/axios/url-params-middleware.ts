@@ -1,5 +1,5 @@
 import { AxiosRequestConfig } from "axios";
-import { getLogger } from "../../config/logger";
+import { getLogger } from "config/logger";
 
 declare module "axios" {
 	interface AxiosRequestConfig {

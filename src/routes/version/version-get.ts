@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import envVars from "../../config/env";
+import envVars from "config/env";
 
 export const VersionGet = (_: Request, res: Response) => {
 	res.send({

@@ -3,10 +3,10 @@ import { param } from "express-validator";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import IORedis from "ioredis";
-import GithubAPI from "../../config/github-api";
-import { Subscription } from "../../models";
+import GithubAPI from "config/github-api";
+import { Subscription } from "models/index";
 import { returnOnValidationError, serializeSubscription } from "./api-utils";
-import getRedisInfo from "../../config/redis-info";
+import getRedisInfo from "config/redis-info";
 import { findOrStartSync } from "../../sync/sync-utils";
 import { ApiJiraRouter } from "./jira/api-jira-router";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
@@ -95,11 +95,11 @@ ApiRouter.use(
 			}
 
 			req.log.info({
-				req,
-				login: data.viewer.login,
-				isAdmin: data.viewer.organization?.viewerCanAdminister
-			},
-			"Admin API routes accessed"
+					req,
+					login: data.viewer.login,
+					isAdmin: data.viewer.organization?.viewerCanAdminister
+				},
+				"Admin API routes accessed"
 			);
 
 			next();

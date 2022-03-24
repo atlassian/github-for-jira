@@ -1,12 +1,12 @@
 import transformDeployment from "../transforms/deployment";
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import getJiraClient, { DeploymentsResult } from "../jira/client";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { isBlocked } from "../config/feature-flags";
+import { isBlocked } from "config/feature-flags";
 import { GitHubAppClient } from "./client/github-app-client";
 
 export default async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {

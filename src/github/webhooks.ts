@@ -7,7 +7,7 @@ import deployment from "./deployment";
 import { pushWebhookHandler } from "./push";
 import { createBranch, deleteBranch } from "./branch";
 import webhookTimeout from "../util/webhook-timeout";
-import statsd from "../config/statsd";
+import statsd from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import { Application } from "probot";
 import { deleteRepository } from "./repository";

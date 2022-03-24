@@ -1,9 +1,9 @@
 /* eslint-disable jest/expect-expect */
-import { Installation, RepoSyncState, Subscription } from "../models";
+import { Installation, RepoSyncState, Subscription } from "models/index";
 import { sqsQueues } from "../sqs/queues";
 import { createWebhookApp } from "test/utils/probot";
 import { discovery } from "../sync/discovery";
-import { getLogger } from "../config/logger";
+import { getLogger } from "config/logger";
 import waitUntil from "test/utils/wait-until";
 
 import listRepositories from "fixtures/list-repositories.json";

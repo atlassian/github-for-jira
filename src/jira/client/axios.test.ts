@@ -1,4 +1,4 @@
-import getJiraAxios, {JiraClientError} from "./axios";
+import getJiraAxios, { JiraClientError } from "./axios";
 
 describe("Jira axios instance", () => {
 
@@ -63,9 +63,9 @@ describe("Jira axios instance", () => {
 
 				let error = undefined;
 				try {
-					await getJiraAxios(jiraHost, "secret").post("/foo/bar", requestPayload)
-				} catch(e) {
-					error = e
+					await getJiraAxios(jiraHost, "secret").post("/foo/bar", requestPayload);
+				} catch (e) {
+					error = e;
 				}
 
 				expect(error).toBeInstanceOf(JiraClientError);

@@ -1,11 +1,11 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { JiraCommit, JiraCommitData } from "../interfaces/jira";
-import { getJiraAuthor } from "../util/jira";
-import _ from "lodash";
+import { JiraCommit, JiraCommitData } from "interfaces/jira";
+import { getJiraAuthor } from "utils/jira-utils";
+import { isEmpty } from "lodash";
 
 export const mapCommit = (commit): JiraCommit | undefined => {
 	const issueKeys = issueKeyParser().parse(commit.message) || [];
-	if (_.isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
 

@@ -1,6 +1,6 @@
-import {Application, Probot} from "probot";
-import setupGitHub from "./github";
-import {overrideProbotLoggingMethods} from "./config/logger";
+import { Application, Probot } from "probot";
+import setupGitHub from "./github/webhooks";
+import { overrideProbotLoggingMethods } from "./config/logger";
 import { setupFrontend } from "./app";
 
 export async function setupApp(app: Application): Promise<Application> {

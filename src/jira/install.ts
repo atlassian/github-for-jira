@@ -1,7 +1,7 @@
-import { Installation } from "../models";
+import { Installation } from "models/index";
 import { Request, Response } from "express";
-import statsd from "../config/statsd";
-import { metricHttpRequest } from "../config/metric-names";
+import statsd from "config/statsd";
+import { metricHttpRequest } from "config/metric-names";
 
 /**
  * Handle the install webhook from Jira

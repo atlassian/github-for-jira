@@ -141,7 +141,7 @@ describe("test installation model", () => {
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret",
-				clientKey,
+				clientKey
 			});
 
 			const installations = await Installation.getAllForHost(jiraHost);
@@ -152,7 +152,7 @@ describe("test installation model", () => {
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret",
-				clientKey,
+				clientKey
 			});
 
 			const installation = await Installation.getForHost(jiraHost);
@@ -164,7 +164,7 @@ describe("test installation model", () => {
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret",
-				clientKey,
+				clientKey
 			});
 
 			const singleInstallation = await Installation.getAllForHost(jiraHost);
@@ -174,7 +174,7 @@ describe("test installation model", () => {
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "goodsecret",
-				clientKey,
+				clientKey
 			});
 
 			const installations = await Installation.getAllForHost(jiraHost);
@@ -194,14 +194,14 @@ describe("test installation model", () => {
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret",
-				clientKey,
+				clientKey
 			});
 
 			// Install duplicate of jira host
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "goodsecret",
-				clientKey,
+				clientKey
 			});
 
 			const installations = await Installation.getAllForHost(jiraHost);
@@ -213,31 +213,31 @@ describe("test installation model", () => {
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret1",
-				clientKey,
+				clientKey
 			});
 
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret2",
-				clientKey,
+				clientKey
 			});
 
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret3",
-				clientKey,
+				clientKey
 			});
 
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret4",
-				clientKey,
+				clientKey
 			});
 
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "goodsecret",
-				clientKey,
+				clientKey
 			});
 
 			const installations = await Installation.getAllForHost(jiraHost);
@@ -253,31 +253,31 @@ describe("test installation model", () => {
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret1",
-				clientKey,
+				clientKey
 			});
 
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret2",
-				clientKey,
+				clientKey
 			});
 
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret3",
-				clientKey,
+				clientKey
 			});
 
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "badsecret4",
-				clientKey,
+				clientKey
 			});
 
 			await Installation.create({
 				jiraHost,
 				sharedSecret: "goodsecret",
-				clientKey,
+				clientKey
 			});
 
 			const installations = await Installation.getAllForHost(jiraHost);

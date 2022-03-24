@@ -58,7 +58,7 @@ const syncRepositories = async (github, subscription: Subscription, logger: Logg
 * Use the github client to request all repositories and update the sync state per repo, send a bacnkfill queue message once complete.
 */
 export const discovery = async (data: DiscoveryMessagePayload, logger: LoggerWithTarget): Promise<void> => {
-	const startTime = new Date().toISOString() ;
+	const startTime = new Date().toISOString();
 	const { jiraHost, installationId } = data;
 	const github = new GitHubAppClient(getCloudInstallationId(installationId), logger);
 	const subscription = await Subscription.getSingleInstallation(
@@ -66,7 +66,7 @@ export const discovery = async (data: DiscoveryMessagePayload, logger: LoggerWit
 		installationId
 	);
 
-	if(!subscription) {
+	if (!subscription) {
 		logger.info({ jiraHost, installationId }, "Subscription has been removed, ignoring job.");
 		return;
 	}

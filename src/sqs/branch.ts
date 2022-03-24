@@ -17,7 +17,7 @@ export type BranchMessagePayload = {
 
 export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = async (context: Context<BranchMessagePayload>) => {
 
-	context.log.info("Handling branch message from the SQS queue")
+	context.log.info("Handling branch message from the SQS queue");
 
 	const messagePayload: BranchMessagePayload = context.payload;
 	const gitHubClient = new GitHubAppClient(getCloudInstallationId(messagePayload.installationId), context.log);
@@ -32,4 +32,4 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 		context.log
 	);
 
-}
+};
