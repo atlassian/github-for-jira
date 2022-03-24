@@ -20,7 +20,7 @@ import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
-describe("sync/commits - new github client is %s", () => {
+describe("sync/commits", () => {
 	let app: Application;
 	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
