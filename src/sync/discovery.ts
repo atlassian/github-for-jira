@@ -1,5 +1,5 @@
 import { getRepositorySummary } from "./jobs";
-import Subscription, { Repositories, Repository } from "../models/subscription";
+import { Subscription, Repositories, Repository } from "models/subscription";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAppClient } from "../github/client/github-app-client";

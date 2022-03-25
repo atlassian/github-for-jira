@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
-import { Installation, RepoSyncState, Subscription } from "models/models";
-import InstallationClass from "models/installation";
-import SubscriptionClass from "models/subscription";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
 import { ApiRouter } from "routes/api/api-router";
 import { getLogger } from "config/logger";
 
@@ -12,8 +12,8 @@ describe("API Router", () => {
 	let locals;
 	const invalidId = 99999999;
 	const gitHubInstallationId = 1234;
-	let installation: InstallationClass;
-	let subscription: SubscriptionClass;
+	let installation: Installation;
+	let subscription: Subscription;
 
 	const successfulAuthResponseWrite = {
 		data: {

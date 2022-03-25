@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { Repositories, Repository, RepositoryData, SyncStatus } from "models/subscription";
-import { RepoSyncState, Subscription } from "models/models";
+import { Subscription, Repositories, Repository, RepositoryData, SyncStatus } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
 import getJiraClient from "../jira/client/jira-client";
 import { getRepositorySummary } from "./jobs";
 import enhanceOctokit, { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
@@ -52,7 +52,7 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-const getNextTask = async (subscription: SubscriptionClass): Promise<Task | undefined> => {
+const getNextTask = async (subscription: Subscription): Promise<Task | undefined> => {
 	const repos = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
 	const sorted: [string, RepositoryData][] = repos.map(repo => [repo.repoId.toString(), repo.toRepositoryData()]);
 
@@ -324,7 +324,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 export const handleBackfillError = async (err,
 	data: BackfillMessagePayload,
 	nextTask: Task,
-	subscription: SubscriptionClass,
+	subscription: Subscription,
 	logger: LoggerWithTarget,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
@@ -377,7 +377,7 @@ export const handleBackfillError = async (err,
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
-export const markCurrentRepositoryAsFailedAndContinue = async (subscription: SubscriptionClass, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
 	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
 

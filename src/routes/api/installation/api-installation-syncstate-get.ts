@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { RepoSyncState, Subscription } from "models/models";
+import { RepoSyncState } from "models/reposyncstate";
+import { Subscription } from "models/subscription";
 
 export const ApiInstallationSyncstateGet = async (req: Request, res: Response): Promise<void> => {
 	const githubInstallationId = Number(req.params.installationId);

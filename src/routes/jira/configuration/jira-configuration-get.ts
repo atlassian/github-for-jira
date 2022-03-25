@@ -1,5 +1,5 @@
-import SubscriptionClass, { SyncStatus } from "models/subscription";
-import { RepoSyncState, Subscription } from "models/models";
+import { Subscription, SyncStatus } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
 import { NextFunction, Request, Response } from "express";
 import statsd from "config/statsd";
 import { metricError } from "config/metric-names";
@@ -25,7 +25,7 @@ export interface InstallationResults {
 	total: number;
 }
 
-export const getInstallations = async (client: GitHubAPI, subscriptions: SubscriptionClass[], log?: Logger): Promise<InstallationResults> => {
+export const getInstallations = async (client: GitHubAPI, subscriptions: Subscription[], log?: Logger): Promise<InstallationResults> => {
 	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(client, sub, log)));
 	// Had to add "unknown" in between type as lodash types is incorrect for
 	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
@@ -38,7 +38,7 @@ export const getInstallations = async (client: GitHubAPI, subscriptions: Subscri
 	};
 };
 
-const getInstallation = async (client: GitHubAPI, subscription: SubscriptionClass, log?: Logger): Promise<AppInstallation> => {
+const getInstallation = async (client: GitHubAPI, subscription: Subscription, log?: Logger): Promise<AppInstallation> => {
 	const id = subscription.gitHubInstallationId;
 	try {
 		const response = await client.apps.getInstallation({ installation_id: id });
@@ -95,7 +95,7 @@ export const JiraConfigurationGet = async (
 
 		const failedConnections: FailedConnection[] = await Promise.all(
 			installations.rejected.map(async (installation) => {
-				const sub = subscriptions.find((sub: SubscriptionClass) => installation.id === sub.gitHubInstallationId);
+				const sub = subscriptions.find((sub: Subscription) => installation.id === sub.gitHubInstallationId);
 				const repo = sub && await RepoSyncState.findOneFromSubscription(sub);
 				return {
 					id: installation.id,

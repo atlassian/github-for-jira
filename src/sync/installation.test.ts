@@ -8,7 +8,7 @@ import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
 import { mocked } from "ts-jest/utils";
 import { RateLimitingError } from "~/src/github/client/github-client-errors";
-import SubscriptionClass, { Repository } from "models/subscription";
+import { Subscription, Repository } from "models/subscription";
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 import unsortedReposJson from "fixtures/repositories.json";
 import sortedReposJson from "fixtures/sorted-repos.json";
@@ -39,7 +39,7 @@ describe("sync/installation", () => {
 
 	const TASK: installation.Task = { task: "commit", repositoryId: "123", repository: TEST_REPO };
 
-	const TEST_SUBSCRIPTION: SubscriptionClass = {} as any;
+	const TEST_SUBSCRIPTION: Subscription = {} as any;
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore

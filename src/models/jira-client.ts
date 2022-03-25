@@ -1,6 +1,6 @@
 import getAxiosInstance, { JiraClientError } from "../jira/client/axios";
 import { AxiosInstance } from "axios";
-import Installation from "./installation";
+import { Installation } from "./installation";
 import Logger from "bunyan";
 
 // TODO: why are there 2 jira clients?

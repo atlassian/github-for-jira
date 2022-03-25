@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
-import { Installation, Subscription } from "models/models";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import { Application } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";

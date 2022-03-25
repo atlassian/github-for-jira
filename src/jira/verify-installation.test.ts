@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import verifyInstallation from "./verify-installation";
 import { getLogger } from "config/logger";
-import InstallationClass from "models/installation";
-import { Installation } from "models/models";
+import { Installation } from "models/installation";
 import getAxiosInstance from "./client/axios";
 import { mocked } from "ts-jest/utils";
 
 jest.mock("./client/axios");
 
 describe("verify-installation", () => {
-	let installation: InstallationClass;
+	let installation: Installation;
 
 	beforeEach(async () => {
 		installation = await Installation.install({

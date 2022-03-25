@@ -1,6 +1,6 @@
-import RepoSyncState from "models/reposyncstate";
+import { RepoSyncState } from "models/reposyncstate";
 import { sqsQueues } from "../sqs/queues";
-import Subscription, { SyncStatus } from "models/subscription";
+import { Subscription, SyncStatus } from "models/subscription";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import Logger from "bunyan";
 

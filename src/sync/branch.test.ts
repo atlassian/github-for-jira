@@ -2,7 +2,9 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
-import { Installation, RepoSyncState, Subscription } from "models/models";
+import { Installation } from "models/installation";
+import { RepoSyncState } from "models/reposyncstate";
+import { Subscription } from "models/subscription";
 import { Application } from "probot";
 import { createWebhookApp } from "test/utils/probot";
 import { processInstallation } from "./installation";

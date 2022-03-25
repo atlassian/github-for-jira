@@ -1,8 +1,8 @@
-import SubscriptionClass from "./subscription";
-import { RepoSyncState, Subscription } from "./models";
+import { Subscription } from "./subscription";
+import { RepoSyncState } from "./reposyncstate";
 
 describe("Subscription", () => {
-	let sub: SubscriptionClass;
+	let sub: Subscription;
 
 	beforeEach(async () => {
 		sub = await Subscription.create({

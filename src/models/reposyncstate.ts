@@ -1,8 +1,9 @@
-import { CountOptions, DestroyOptions, FindOptions, Model, Op } from "sequelize";
-import Subscription, { Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
+import { BOOLEAN, CountOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING } from "sequelize";
+import { Subscription, Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
 import { merge, pickBy } from "lodash";
+import { sequelize } from "models/sequelize";
 
-export default class RepoSyncState extends Model {
+export class RepoSyncState extends Model {
 	id: number;
 	subscriptionId: number;
 	repoId: number;
@@ -229,3 +230,57 @@ export default class RepoSyncState extends Model {
 		});
 	}
 }
+
+RepoSyncState.init({
+	id: {
+		type: DataTypes.INTEGER,
+		primaryKey: true,
+		allowNull: false,
+		autoIncrement: true
+	},
+	subscriptionId: {
+		type: DataTypes.INTEGER,
+		allowNull: false
+	},
+	repoId: {
+		type: INTEGER,
+		allowNull: false
+	},
+	repoName: {
+		type: STRING,
+		allowNull: false
+	},
+	repoOwner: {
+		type: STRING,
+		allowNull: false
+	},
+	repoFullName: {
+		type: STRING,
+		allowNull: false
+	},
+	repoUrl: {
+		type: STRING,
+		allowNull: false
+	},
+	priority: INTEGER,
+	branchStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	commitStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	issueStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	pullStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	buildStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	deploymentStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	branchCursor: STRING,
+	commitCursor: STRING,
+	issueCursor: STRING,
+	pullCursor: STRING,
+	buildCursor: STRING,
+	deploymentCursor: STRING,
+	forked: BOOLEAN,
+	repoPushedAt: DATE,
+	repoUpdatedAt: DATE,
+	repoCreatedAt: DATE,
+	syncUpdatedAt: DATE,
+	syncCompletedAt: DATE,
+	createdAt: DATE,
+	updatedAt: DATE
+}, { sequelize });

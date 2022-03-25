@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SubscriptionClass, { RepositoryData } from "./subscription";
-import { RepoSyncState, Subscription } from "./models";
+import { Subscription, RepositoryData } from "./subscription";
+import { RepoSyncState } from "./reposyncstate";
 import { mocked } from "ts-jest/utils";
 import { booleanFlag } from "config/feature-flags";
 
-jest.mock("../../src/config/feature-flags");
+jest.mock("config/feature-flags");
 
 describe("RepoSyncState", () => {
-	let sub: SubscriptionClass;
+	let sub: Subscription;
 	let repo;
 
 	beforeEach(async () => {

@@ -1,6 +1,7 @@
-import { Model, Op, WhereOptions } from "sequelize";
-import RepoSyncState from "./reposyncstate";
+import { DataTypes, DATE, Model, Op, WhereOptions } from "sequelize";
+import { RepoSyncState } from "./reposyncstate";
 import { merge, uniq } from "lodash";
+import { sequelize } from "models/sequelize";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -49,7 +50,7 @@ export interface Repository {
 	updated_at: number; // TODO: is this a date object or a timestamp?  Different places uses different things
 }
 
-export default class Subscription extends Model {
+export class Subscription extends Model {
 	id: number;
 	gitHubInstallationId: number;
 	jiraHost: string;
@@ -208,6 +209,23 @@ export default class Subscription extends Model {
 		await this.destroy();
 	}
 }
+
+Subscription.init({
+	id: {
+		type: DataTypes.INTEGER,
+		primaryKey: true,
+		allowNull: false,
+		autoIncrement: true
+	},
+	gitHubInstallationId: DataTypes.INTEGER,
+	jiraHost: DataTypes.STRING,
+	selectedRepositories: DataTypes.ARRAY(DataTypes.INTEGER),
+	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
+	syncWarning: DataTypes.STRING,
+	jiraClientKey: DataTypes.STRING,
+	createdAt: DATE,
+	updatedAt: DATE
+}, { sequelize });
 
 export interface SubscriptionPayload {
 	installationId: number;

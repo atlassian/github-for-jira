@@ -1,5 +1,5 @@
-import { Subscription } from "models/models";
-import { getHashedKey } from "models/installation";
+import { Subscription } from "models/subscription";
+import { getHashedKey } from "models/sequelize";
 import { Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 

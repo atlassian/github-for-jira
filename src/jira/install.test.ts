@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import install from "./install";
 import { mocked } from "ts-jest/utils";
-import { Installation } from "models/models";
+import { Installation } from "models/installation";
 
-jest.mock("models/models");
+jest.mock("models/installation");
 
 describe("Webhook: /events/installed", () => {
 	let installation;

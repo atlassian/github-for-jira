@@ -1,4 +1,4 @@
-import { Subscription } from "models/models";
+import { Subscription } from "models/subscription";
 import { Request, Response } from "express";
 import statsd from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";

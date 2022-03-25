@@ -1,4 +1,4 @@
-import { Subscription } from "models/models";
+import { Subscription } from "models/subscription";
 import getJiraClient from "~/src/jira/client/jira-client";
 import { Request, Response } from "express";
 

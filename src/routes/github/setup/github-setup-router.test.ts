@@ -1,5 +1,5 @@
 import supertest from "supertest";
-import { Installation } from "models/models";
+import { Installation } from "models/installation";
 import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";

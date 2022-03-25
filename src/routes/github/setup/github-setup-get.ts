@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "utils/jira-utils";
-import { Installation } from "models/models";
+import { Installation } from "models/installation";
 
 /*
 	Handles redirects for both the installation flow from Jira and

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Installation } from "models/models";
+import { Installation } from "models/installation";
 import JiraClient from "models/jira-client";
 import uninstall from "~/src/jira/uninstall";
 

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getHashedKey } from "models/installation";
+import { getHashedKey } from "models/sequelize";
 import { mocked } from "ts-jest/utils";
-import { Subscription } from "models/models";
+import { Subscription } from "models/subscription";
 import uninstall from "./uninstall";
 
-jest.mock("models/models");
+jest.mock("models/subscription");
 
 describe("Webhook: /events/uninstalled", () => {
 	let installation;

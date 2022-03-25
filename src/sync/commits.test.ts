@@ -2,7 +2,9 @@
 import { removeInterceptor } from "nock";
 import { commitsNoLastCursor } from "fixtures/api/graphql/commit-queries";
 import { processInstallation } from "./installation";
-import { Installation, RepoSyncState, Subscription } from "models/models";
+import { Installation } from "models/installation";
+import { RepoSyncState } from "models/reposyncstate";
+import { Subscription } from "models/subscription";
 import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
 import { createWebhookApp } from "test/utils/probot";

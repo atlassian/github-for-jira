@@ -4,7 +4,7 @@ import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import IORedis from "ioredis";
 import GithubAPI from "config/github-api";
-import { Subscription } from "models/models";
+import { Subscription } from "models/subscription";
 import { returnOnValidationError, serializeSubscription } from "./api-utils";
 import getRedisInfo from "config/redis-info";
 import { findOrStartSync } from "../../sync/sync-utils";

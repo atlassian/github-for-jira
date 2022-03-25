@@ -1,4 +1,5 @@
-import { Installation, Subscription } from "models/models";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { getInstallations, InstallationResults } from "../../jira/configuration/jira-configuration-get";
 import { GitHubAPI } from "probot";

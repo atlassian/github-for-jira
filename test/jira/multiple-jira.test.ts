@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
-import { Installation, Subscription } from "models/models";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import nock from "nock";
 import pullRequestMultipleInvalidIssues from "../fixtures/pull-request-multiple-invalid-issue-key.json";
 import pullRequestBasic from "../fixtures/pull-request-basic.json";

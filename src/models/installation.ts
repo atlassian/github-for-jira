@@ -1,20 +1,13 @@
-import crypto from "crypto";
-import Sequelize from "sequelize";
-import { Subscription } from "./models";
-import SubscriptionClass from "./subscription";
+import { BOOLEAN, DataTypes, DATE, Model } from "sequelize";
+import { Subscription } from "./subscription";
+import { encrypted, getHashedKey, sequelize } from "models/sequelize";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
 	throw new Error("STORAGE_SECRET is not defined.");
 }
 
-export const getHashedKey = (clientKey: string): string => {
-	const keyHash = crypto.createHmac("sha256", process.env.STORAGE_SECRET || "");
-	keyHash.update(clientKey);
-	return keyHash.digest("hex");
-};
-
-export default class Installation extends Sequelize.Model {
+export class Installation extends Model {
 	id: number;
 	jiraHost: string;
 	secrets: string;
@@ -104,10 +97,32 @@ export default class Installation extends Sequelize.Model {
 		await this.destroy();
 	}
 
-	async subscriptions(): Promise<SubscriptionClass[]> {
+	async subscriptions(): Promise<Subscription[]> {
 		return await Subscription.getAllForClientKey(this.clientKey);
 	}
 }
+
+Installation.init({
+	id: {
+		type: DataTypes.INTEGER,
+		primaryKey: true,
+		allowNull: false,
+		autoIncrement: true
+	},
+	jiraHost: DataTypes.STRING,
+	secrets: encrypted.vault("secrets"),
+	sharedSecret: encrypted.field("sharedSecret", {
+		type: DataTypes.STRING,
+		allowNull: false
+	}),
+	clientKey: {
+		type: DataTypes.STRING,
+		allowNull: false
+	},
+	enabled: BOOLEAN,
+	createdAt: DATE,
+	updatedAt: DATE
+}, { sequelize });
 
 export interface InstallationPayload {
 	host: string;
