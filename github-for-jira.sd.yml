@@ -45,20 +45,22 @@ links:
 
 cleanup: false
 
-#serviceProxy:
-#  enabled: true
-#  ingress:
-#    authentication:
-#      enabled: true
-#
-#  plugins:
-#    auth:
-#      authentication:
-#        plugins:
-#          - type: asap
-#      authorization:
-#        plugins:
-#          - type: poco
+serviceProxy:
+  enabled: true
+  ingress:
+    authentication:
+      enabled: true
+      transitionMode: true
+  plugins:
+    auth:
+      logLevel: info
+      authentication:
+        plugins:
+          - type: asap
+          - type: slauthtoken
+      authorization:
+        plugins:
+          - type: poco
 
 lifecycleEvents:
   source: queue
