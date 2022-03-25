@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isAdmin } from "./github-client-middleware";
-import GitHubAPI from "config/github-api";
-import logger from "config/logger";
+import { GithubAPI } from "config/github-api";
+import { getLogger } from "config/logger";
 
 describe("GitHub client middleware", () => {
 	let adminFunction;
 
 	beforeEach(async () => {
-		adminFunction = isAdmin({ locals: { github: GitHubAPI() } } as any, logger);
+		adminFunction = isAdmin({ locals: { github: GithubAPI() } } as any, getLogger("github-middleware.test"));
 	});
 
 	it("isAdmin returns true if user is admin of a given organization", async () => {

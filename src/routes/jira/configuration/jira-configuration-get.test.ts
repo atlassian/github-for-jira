@@ -3,7 +3,7 @@ import { getInstallations, JiraConfigurationGet } from "./jira-configuration-get
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
-import GithubApi from "config/github-api";
+import { GithubAPI } from "config/github-api";
 import { GitHubAPI } from "probot";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
@@ -74,7 +74,7 @@ describe("Jira Configuration Suite", () => {
 
 	describe("getInstallations", () => {
 		let sub: Subscription;
-		const client = GithubApi();
+		const client = GithubAPI();
 
 		beforeEach(async () => {
 			sub = await Subscription.create({

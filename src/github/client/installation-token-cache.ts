@@ -1,5 +1,5 @@
 import LRUCache from "lru-cache";
-import AuthToken from "./auth-token";
+import { AuthToken } from "./auth-token";
 
 /**
  * A cache that holds installation tokens for the most recently used installations.
@@ -8,7 +8,7 @@ import AuthToken from "./auth-token";
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#authenticating-as-an-installation
  */
-export default class InstallationTokenCache {
+export class InstallationTokenCache {
 	private static instance: InstallationTokenCache;
 	private readonly installationTokenCache: LRUCache<number, AuthToken>;
 

@@ -6,7 +6,7 @@ import url from "url";
  *
  * See https://docs.sentry.io/platforms/node/#eventprocessors
  */
-export default class AxiosErrorEventDecorator {
+export class AxiosErrorEventDecorator {
 	event: any | undefined;
 	hint: any | undefined;
 

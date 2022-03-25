@@ -3,7 +3,7 @@ import Logger from "bunyan";
 import { getLogger } from "config/logger";
 import SQS, { ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest } from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
-import statsd from "config/statsd";
+import { statsd }  from "config/statsd";
 import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";

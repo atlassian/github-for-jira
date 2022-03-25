@@ -10,7 +10,7 @@ const CONNECT_INSTALL_KEYS_CDN_URL_STAGING =
  * Queries the public key for the specified keyId
  * @param keyId
  */
-const queryAtlassianConnectPublicKey = async (keyId: string, isStagingTenant: boolean): Promise<string> => {
+export const queryAtlassianConnectPublicKey = async (keyId: string, isStagingTenant: boolean): Promise<string> => {
 
 	const keyServerUrl = !isStagingTenant
 		? CONNECT_INSTALL_KEYS_CDN_URL
@@ -26,5 +26,3 @@ const queryAtlassianConnectPublicKey = async (keyId: string, isStagingTenant: bo
 
 	return result.data;
 };
-
-export default queryAtlassianConnectPublicKey;

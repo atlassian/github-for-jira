@@ -3,8 +3,9 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { mocked } from "ts-jest/utils";
 import { Installation } from "models/installation";
 import { JiraContextJwtTokenMiddleware } from "./jira-jwt-middleware";
-import logger from "config/logger";
+import { getLogger } from "config/logger";
 
+const logger = getLogger("jwt-middleware.test");
 jest.mock("models/installation");
 
 describe("#verifyJiraMiddleware", () => {

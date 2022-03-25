@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import install from "./install";
+import { JiraEventsInstallPost } from "./jira-events-install-post";
 import { mocked } from "ts-jest/utils";
 import { Installation } from "models/installation";
 
@@ -34,7 +34,7 @@ describe("Webhook: /events/installed", () => {
 		const req = { log: { info: jest.fn() }, body };
 		const res = { sendStatus: jest.fn(), on: jest.fn() };
 
-		await install(req as any, res as any);
+		await JiraEventsInstallPost(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 	});
 });

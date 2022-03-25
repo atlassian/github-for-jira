@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import verifyInstallation from "./verify-installation";
+import { verifyJiraInstallation } from "./verify-installation";
 import { getLogger } from "config/logger";
 import { Installation } from "models/installation";
-import getAxiosInstance from "./client/axios";
+import { getAxiosInstance } from "./client/axios";
 import { mocked } from "ts-jest/utils";
 
 jest.mock("./client/axios");
@@ -38,16 +38,16 @@ describe("verify-installation", () => {
 
 	it("returns true when Jira responds with 200", async () => {
 		mockJiraResponse(200);
-		expect(await verifyInstallation(installation, getLogger("test"))()).toBeTruthy();
+		expect(await verifyJiraInstallation(installation, getLogger("test"))()).toBeTruthy();
 	});
 
 	it("returns false when Jira responds with 401", async () => {
 		mockJiraResponse(401);
-		expect(await verifyInstallation(installation, getLogger("test"))()).toBeFalsy();
+		expect(await verifyJiraInstallation(installation, getLogger("test"))()).toBeFalsy();
 	});
 
 	it("returns false when Jira client throws an exception", async () => {
 		mockJiraResponseException(new Error("boom"));
-		expect(await verifyInstallation(installation, getLogger("test"))()).toBeFalsy();
+		expect(await verifyJiraInstallation(installation, getLogger("test"))()).toBeFalsy();
 	});
 });

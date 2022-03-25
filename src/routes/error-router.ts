@@ -2,8 +2,8 @@ import { NextFunction, Request, Response, Router } from "express";
 import * as Sentry from "@sentry/node";
 import { isNodeProd } from "utils/is-node-env";
 import { Errors } from "config/errors";
-import envVars from "config/env";
-import statsd from "config/statsd";
+import { envVars }  from "config/env";
+import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { v4 as uuidv4 } from "uuid";
 

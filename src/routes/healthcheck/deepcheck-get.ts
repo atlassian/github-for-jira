@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { getLogger } from "config/logger";
 import { sequelize } from "models/sequelize";
 import IORedis from "ioredis";
-import getRedisInfo from "config/redis-info";
+import { getRedisInfo } from "config/redis-info";
 
 const logger = getLogger("deepcheck");
 const timeout = 15000;

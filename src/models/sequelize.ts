@@ -1,10 +1,11 @@
-import logger from "config/logger";
 import { getNodeEnv } from "utils/is-node-env";
 import { Sequelize } from "sequelize";
 import dbConfig from "db/config.json";
 import EncryptedField from "sequelize-encrypted";
 import crypto from "crypto";
+import { getLogger } from "config/logger";
 
+const logger = getLogger("sequelize");
 // TODO: config misses timezone config to force to UTC, defaults to local timezone of PST
 const config = dbConfig[getNodeEnv()];
 

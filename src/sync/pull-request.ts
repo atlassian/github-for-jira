@@ -1,7 +1,7 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
-import transformPullRequest from "./transforms/pull-request";
-import statsd from "config/statsd";
+import { transformPullRequest } from "./transforms/pull-request";
+import { statsd }  from "config/statsd";
 import { GitHubAPI } from "probot";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
@@ -39,7 +39,7 @@ type Headers = AxiosResponseHeaders & {
 
 type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 
-export default async function(
+export const getPullRequestTask = async (
 	logger: LoggerWithTarget,
 	github: GitHubAPI,
 	newGithub: GitHubAppClient,
@@ -47,7 +47,7 @@ export default async function(
 	repository: Repository,
 	cursor: string | number = 1,
 	perPage?: number
-) {
+) => {
 	logger.info("Syncing PRs: started");
 
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);

@@ -1,5 +1,5 @@
 import { emitWebhookPayloadMetrics, emitWebhookProcessedMetrics } from "./webhook-utils";
-import statsd from "config/statsd";
+import { statsd }  from "config/statsd";
 
 describe("Webhooks suite", () => {
 	const mockInfoLog = jest.fn();

@@ -1,4 +1,4 @@
-import statsd from "config/statsd";
+import { statsd }  from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import Logger from "bunyan";
 

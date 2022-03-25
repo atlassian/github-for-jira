@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Subscription, Repositories, Repository, RepositoryData, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
-import getJiraClient from "../jira/client/jira-client";
+import { getJiraClient } from "../jira/client/jira-client";
 import { getRepositorySummary } from "./jobs";
-import enhanceOctokit, { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
-import statsd from "config/statsd";
-import getPullRequests from "./pull-request";
-import getBranches from "./branches";
-import { getCommits } from "./commits";
+import { enhanceOctokit, RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
+import { statsd }  from "config/statsd";
+import { getPullRequestTask } from "./pull-request";
+import { getBranchTask } from "./branches";
+import { getCommitTask } from "./commits";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { booleanFlag, BooleanFlags, isBlocked } from "config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import IORedis from "ioredis";
-import getRedisInfo from "config/redis-info";
+import { getRedisInfo } from "config/redis-info";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { Hub } from "@sentry/types/dist/hub";
@@ -23,9 +23,9 @@ import { getCloudInstallationId } from "../github/client/installation-id";
 import { RateLimitingError } from "../github/client/github-client-errors";
 
 const tasks: TaskProcessors = {
-	pull: getPullRequests,
-	branch: getBranches,
-	commit: getCommits
+	pull: getPullRequestTask,
+	branch: getBranchTask,
+	commit: getCommitTask
 };
 
 interface TaskProcessors {

@@ -1,9 +1,9 @@
 /* eslint-disable jest/no-done-callback,@typescript-eslint/no-explicit-any */
 import { SqsQueue } from "./sqs";
 import { v4 as uuidv4 } from "uuid";
-import envVars from "config/env";
-import waitUntil from "test/utils/wait-until";
-import statsd from "config/statsd";
+import { envVars }  from "config/env";
+import { waitUntil } from "test/utils/wait-until";
+import { statsd }  from "config/statsd";
 import { sqsQueueMetrics } from "config/metric-names";
 import { Request as AwsRequest } from "aws-sdk";
 

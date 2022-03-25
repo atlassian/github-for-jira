@@ -5,7 +5,7 @@ import { Subscription } from "models/subscription";
 import { Application } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import waitUntil from "test/utils/wait-until";
+import { waitUntil } from "test/utils/wait-until";
 import { sqsQueues } from "../sqs/queues";
 
 import branchInvalidRef from "fixtures/branch-invalid-ref_type.json";

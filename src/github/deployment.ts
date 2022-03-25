@@ -1,7 +1,7 @@
-import transformDeployment from "../transforms/deployment";
+import { transformDeployment } from "../transforms/transform-deployment";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
-import getJiraClient, { DeploymentsResult } from "../jira/client/jira-client";
+import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
@@ -9,7 +9,7 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { isBlocked } from "config/feature-flags";
 import { GitHubAppClient } from "./client/github-app-client";
 
-export default async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const deploymentWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
 		jiraHost: jiraClient.baseURL,
 		installationId: githubInstallationId,

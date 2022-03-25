@@ -3,8 +3,8 @@
 // TODO: need some typing for jwt
 import { createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId } from "atlassian-jwt";
 import { NextFunction, Request, Response } from "express";
-import envVars from "config/env";
-import queryAtlassianConnectPublicKey from "./query-atlassian-connect-public-key";
+import { envVars }  from "config/env";
+import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { includes, isEmpty } from "lodash";
 
 const JWT_PARAM = "jwt";

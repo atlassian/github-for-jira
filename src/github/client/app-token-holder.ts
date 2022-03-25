@@ -1,5 +1,5 @@
 import { AsymmetricAlgorithm, encodeAsymmetric } from "atlassian-jwt";
-import AuthToken, { ONE_MINUTE, TEN_MINUTES } from "./auth-token";
+import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 
 //TODO: Remove Probot dependency to find privateKey
 import * as PrivateKey from "probot/lib/private-key";
@@ -24,7 +24,7 @@ export const cloudKeyLocator: KeyLocator = () => {
  * @see https://docs.github.com/en/rest/reference/apps
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#authenticating-as-a-github-app
  */
-export default class AppTokenHolder {
+export class AppTokenHolder {
 
 	private static instance: AppTokenHolder;
 	private readonly privateKeyLocator: KeyLocator;

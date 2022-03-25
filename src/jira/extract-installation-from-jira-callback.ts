@@ -10,7 +10,7 @@ import { NextFunction, Request, Response } from "express";
  * @param res Response
  * @param next Next function
  */
-export default async (req: Request, res: Response, next: NextFunction) => {
+export const extractInstallationFromJiraCallback = async (req: Request, res: Response, next: NextFunction) => {
 	if (!req.body?.clientKey) {
 		res.status(401);
 		return;

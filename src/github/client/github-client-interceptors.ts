@@ -1,6 +1,6 @@
 import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
 import Logger from "bunyan";
-import statsd from "config/statsd";
+import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { extractPath } from "../../jira/client/axios";

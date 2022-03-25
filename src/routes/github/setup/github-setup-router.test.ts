@@ -4,7 +4,7 @@ import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import envVars from "config/env";
+import { envVars }  from "config/env";
 
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 

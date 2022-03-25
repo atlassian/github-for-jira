@@ -1,4 +1,4 @@
-import envVars from "config/env";
+import { envVars }  from "config/env";
 
 /**
  * An installation ID uniquely identifies an installation of a GitHub app across the (single) cloud instance

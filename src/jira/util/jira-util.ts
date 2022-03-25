@@ -1,10 +1,10 @@
-import envVars from "config/env";
+import { envVars }  from "config/env";
 import { getLogger } from "config/logger";
 import { JiraIssue } from "interfaces/jira";
 
 const logger = getLogger("jira.util");
 
-export default (jiraClient) => {
+export const getJiraUtil = (jiraClient) => {
 	const containsReferenceLink = (line) => {
 		// reference text links should have 2 parts only
 		if (line.split(" ").length === 2) {

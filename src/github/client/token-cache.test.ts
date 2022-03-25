@@ -1,7 +1,7 @@
-import InstallationTokenCache from "./installation-token-cache";
-import AuthToken, { TEN_MINUTES } from "./auth-token";
+import { InstallationTokenCache } from "./installation-token-cache";
+import { AuthToken, TEN_MINUTES } from "./auth-token";
 import * as PrivateKey from "probot/lib/private-key";
-import AppTokenHolder from "./app-token-holder";
+import { AppTokenHolder } from "./app-token-holder";
 import { getCloudInstallationId } from "./installation-id";
 
 describe("InstallationTokenCache & AppTokenHolder", () => {

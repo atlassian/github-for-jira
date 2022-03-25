@@ -1,7 +1,7 @@
 import { Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { NextFunction, Request, Response } from "express";
-import statsd from "config/statsd";
+import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { GitHubAPI } from "probot";

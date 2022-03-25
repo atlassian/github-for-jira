@@ -1,5 +1,5 @@
 import nock from "nock";
-import env from "config/env";
+import { envVars } from "config/env";
 import "./matchers/nock";
 import "./matchers/to-promise";
 import "./matchers/to-have-sent-metrics";
@@ -7,7 +7,7 @@ import "./matchers/to-be-called-with-delay";
 import { sequelize } from "models/sequelize";
 import { mocked } from "ts-jest/utils";
 import IORedis from "ioredis";
-import getRedisInfo from "config/redis-info";
+import { getRedisInfo } from "config/redis-info";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
@@ -56,7 +56,7 @@ const resetEnvVars = () => {
 	// are already set in the environment.
 	process.env = {
 		...process.env,
-		...env
+		...envVars
 	};
 };
 

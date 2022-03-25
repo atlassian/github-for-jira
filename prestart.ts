@@ -1,4 +1,4 @@
-import envVars from "./src/config/env";
+import { envVars }  from "./src/config/env";
 import axios, { AxiosResponse } from "axios";
 import * as fs from "fs";
 import * as path from "path";

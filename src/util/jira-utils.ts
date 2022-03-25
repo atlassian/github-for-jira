@@ -1,4 +1,4 @@
-import envVars from "config/env";
+import { envVars }  from "config/env";
 import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
 import { pickBy } from "lodash";

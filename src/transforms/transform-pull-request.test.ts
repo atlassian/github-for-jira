@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { transformPullRequest } from "./pull-request";
+import { transformPullRequest } from "./transform-pull-request";
 import { GitHubAPI } from "probot";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
 

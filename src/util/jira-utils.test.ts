@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import envVars from "config/env";
+import { envVars }  from "config/env";
 import { getJiraAppUrl, getJiraMarketplaceUrl } from "./jira-utils";
 
 describe("Jira Utils", () => {

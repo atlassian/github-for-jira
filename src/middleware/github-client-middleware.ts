@@ -1,9 +1,9 @@
-import GithubAPI from "config/github-api";
+import { GithubAPI } from "config/github-api";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import { App } from "@octokit/app";
 import Logger from "bunyan";
 
-export default (octokitApp: App): RequestHandler => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getGithubClientMiddleware = (octokitApp: App): RequestHandler => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	// If githubToken isn't set, this GithubAPI will be unauthed
 	res.locals.github = GithubAPI();
 	res.locals.client = GithubAPI({

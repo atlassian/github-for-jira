@@ -2,7 +2,7 @@
 import { getHashedKey } from "models/sequelize";
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "models/subscription";
-import uninstall from "./uninstall";
+import { JiraEventsUninstallPost } from "./jira-events-uninstall-post";
 
 jest.mock("models/subscription");
 
@@ -44,7 +44,7 @@ describe("Webhook: /events/uninstalled", () => {
 		const req = { log: { info: jest.fn() } } as any;
 		const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
-		await uninstall(req, res);
+		await JiraEventsUninstallPost(req, res);
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 		expect(installation.uninstall).toHaveBeenCalled();
 		expect(subscriptions[0].uninstall).toHaveBeenCalled();
@@ -55,7 +55,7 @@ describe("Webhook: /events/uninstalled", () => {
 		const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
 		subscriptions = [];
-		await uninstall(req, res);
+		await JiraEventsUninstallPost(req, res);
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 		expect(installation.uninstall).toHaveBeenCalled();
 	});

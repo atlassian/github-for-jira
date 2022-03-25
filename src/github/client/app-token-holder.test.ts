@@ -1,4 +1,4 @@
-import AppTokenHolder from "./app-token-holder";
+import { AppTokenHolder } from "./app-token-holder";
 import { getCloudInstallationId } from "./installation-id";
 
 jest.unmock("lru-cache");

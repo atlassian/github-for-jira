@@ -6,7 +6,7 @@ import { getLogger } from "config/logger";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { Application } from "probot";
-import waitUntil from "test/utils/wait-until";
+import { waitUntil } from "test/utils/wait-until";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "../sqs/push";
 import { Context } from "../sqs/sqs";
 import { Message } from "aws-sdk/clients/sqs";

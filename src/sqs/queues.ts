@@ -1,4 +1,4 @@
-import envVars from "config/env";
+import { envVars }  from "config/env";
 import { SqsQueue } from "./sqs";
 import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
 import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";

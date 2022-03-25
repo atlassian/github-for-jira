@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import statsd from "config/statsd";
+import { statsd }  from "config/statsd";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
 import { Context, ErrorHandlingResult } from "./sqs";
 import { getLogger } from "config/logger";

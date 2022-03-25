@@ -1,5 +1,5 @@
-import InstallationTokenCache from "./installation-token-cache";
-import AuthToken, { ONE_MINUTE, TEN_MINUTES } from "./auth-token";
+import { InstallationTokenCache } from "./installation-token-cache";
+import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 
 jest.unmock("lru-cache");
 

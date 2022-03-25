@@ -1,9 +1,9 @@
 import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import AppTokenHolder from "./app-token-holder";
-import InstallationTokenCache from "./installation-token-cache";
-import AuthToken from "./auth-token";
+import { AppTokenHolder } from "./app-token-holder";
+import { InstallationTokenCache } from "./installation-token-cache";
+import { AuthToken } from "./auth-token";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
 import { getLogger } from "config/logger";

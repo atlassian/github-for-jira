@@ -2,7 +2,7 @@ import Logger from "bunyan";
 import axios, { AxiosError, AxiosInstance } from "axios";
 
 import url from "url";
-import statsd from "config/statsd";
+import { statsd }  from "config/statsd";
 import { getLogger } from "config/logger";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
@@ -162,7 +162,7 @@ const instrumentFailedRequest = () => {
  * attempt to reuse them. This accomplished using Axios interceptors to
  * just-in-time add the token to a request before sending it.
  */
-export default (
+export const getAxiosInstance = (
 	baseURL: string,
 	secret: string,
 	logger?: Logger

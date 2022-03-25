@@ -24,7 +24,7 @@ export const mapCommit = (commit): JiraCommit | undefined => {
 };
 
 // TODO: type payload and return better
-export default (payload): JiraCommitData | undefined => {
+export const transformCommit = (payload): JiraCommitData | undefined => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
 		.map((commit) => mapCommit(commit))

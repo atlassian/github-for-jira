@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "./jwt";
-import logger from "config/logger";
 import { AsymmetricAlgorithm, encodeAsymmetric, encodeSymmetric } from "atlassian-jwt";
-import queryAtlassianConnectPublicKey from "./query-atlassian-connect-public-key";
+import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { when } from "jest-when";
 import { Request, Response } from "express";
 import Mock = jest.Mock;
+import { getLogger } from "config/logger";
 
 jest.mock("./query-atlassian-connect-public-key");
 
@@ -86,7 +86,7 @@ describe("jwt", () => {
 			session: {
 				jiraHost: "https://test.atlassian.net"
 			},
-			log: logger
+			log: getLogger("jwt.test")
 		} as any;
 	});
 

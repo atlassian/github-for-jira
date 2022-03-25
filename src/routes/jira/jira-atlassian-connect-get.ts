@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import envVars from "config/env";
+import { envVars }  from "config/env";
 import { EnvironmentEnum } from "interfaces/common";
 
 const instance = envVars.INSTANCE_NAME;

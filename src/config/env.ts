@@ -41,7 +41,7 @@ const getProxyFromEnvironment = (): string | undefined => {
 	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
 };
 
-const envVars: EnvVars = {
+export const envVars: EnvVars = {
 	...process.env,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
@@ -59,8 +59,6 @@ const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
 if (missingVars.length) {
 	throw new Error(`Missing required Environment Variables: ${missingVars.join(", ")}`);
 }
-
-export default envVars;
 
 export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,

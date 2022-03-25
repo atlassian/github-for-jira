@@ -1,7 +1,7 @@
 import { mocked } from "ts-jest/utils";
 import { Installation} from "models/installation";
 import { Subscription } from "models/subscription";
-import GitHubAPI from "config/github-api";
+import { GithubAPI } from "config/github-api";
 import { GithubWebhookMiddleware } from "./github-webhook-middleware";
 import { mockModels } from "test/utils/models";
 import { wrapLogger } from "probot/lib/wrap-logger";
@@ -22,7 +22,7 @@ describe("Probot event middleware", () => {
 				sender: { type: "not bot" },
 				installation: { id: 1234 }
 			},
-			github: GitHubAPI(),
+			github: GithubAPI(),
 			log: wrapLogger(createLogger({
 				name: "test",
 				stream: new Writable({

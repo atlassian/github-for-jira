@@ -1,4 +1,4 @@
-import JiraClient from "models/jira-client";
+import { JiraClient } from "models/jira-client";
 import { Subscription } from "models/subscription";
 import {Installation } from "models/installation";
 import Logger from "bunyan";

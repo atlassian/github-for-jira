@@ -1,4 +1,4 @@
-import GitHubAPI from "config/github-api";
+import { GithubAPI } from "config/github-api";
 import { getAllCommitMessagesBetweenReferences } from "~/src/transforms/util/github-api-requests";
 import { getLogger } from "config/logger";
 import workflowBasic from "fixtures/workflow-basic.json";
@@ -40,7 +40,7 @@ describe("GitHub API Request Suite", () => {
 
 			const bob = await getAllCommitMessagesBetweenReferences(
 				payload,
-				GitHubAPI(),
+				GithubAPI(),
 				getLogger("test")
 			);
 
@@ -80,7 +80,7 @@ describe("GitHub API Request Suite", () => {
 
 			const bob = await getAllCommitMessagesBetweenReferences(
 				payload,
-				GitHubAPI(),
+				GithubAPI(),
 				getLogger("test")
 			);
 

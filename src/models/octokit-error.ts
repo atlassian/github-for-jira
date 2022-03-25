@@ -1,4 +1,4 @@
-import SentryScopeProxy from "./sentry-scope-proxy";
+import { SentryScopeProxy } from "./sentry-scope-proxy";
 import { GitHubAPI, Octokit } from "probot";
 
 /*
@@ -6,7 +6,7 @@ import { GitHubAPI, Octokit } from "probot";
  *
  * Intended to be used by `octokit.hook.wrap('request')`
  */
-export default class OctokitError extends Error {
+export class OctokitError extends Error {
 	sentryScope: SentryScopeProxy;
 	requestOptions: Octokit.HookOptions;
 	httpError: Octokit.HookError;

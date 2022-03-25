@@ -51,7 +51,7 @@ function mapPullRequests(
 	}));
 }
 
-export const transformWorkflowPayload = async (
+export const transformWorkflow = async (
 	githubClient: GitHubAppClient,
 	payload: WorkflowPayload,
 	logger: LoggerWithTarget

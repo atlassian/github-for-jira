@@ -32,5 +32,5 @@ overrideProbotLoggingMethods(probot.logger);
 
 // Load an empty app so we can get access to probot's auth handling
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-export default probot.load(App);
+export const workerApp = probot.load(App);
 

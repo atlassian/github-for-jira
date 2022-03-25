@@ -88,13 +88,11 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		head: currentDeploySha
 	};
 
-	const allCommitMessages = await getAllCommitMessagesBetweenReferences(
+	return await getAllCommitMessagesBetweenReferences(
 		compareCommitsPayload,
 		useNewClient ? newGitHubClient : github,
 		logger
 	);
-
-	return allCommitMessages;
 }
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
@@ -156,7 +154,7 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (githubClient: GitHubAPI, newGitHubClient: GitHubAppClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubAppClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 

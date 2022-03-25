@@ -1,4 +1,4 @@
-import envVars from "config/env";
+import { envVars }  from "config/env";
 import { Consumer, SQSMessage } from "sqs-consumer";
 import EventEmitter from "events";
 import { getLogger } from "config/logger";
