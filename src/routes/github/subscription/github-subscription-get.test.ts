@@ -119,7 +119,7 @@ describe("github-subscription-get", () => {
 		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
 	});
 
-	it("Should return Unauthorized inside Next when missing installationId", async () => {
+	it("Should return Error inside Next when missing installationId", async () => {
 		delete req.params["installationId"];
 
 		res.status.mockReturnValue(res);
@@ -128,7 +128,7 @@ describe("github-subscription-get", () => {
 		expect(next).toHaveBeenCalledWith(new Error("installationId and jiraHost must be provided to delete a subscription."));
 	});
 
-	it("Should return Unauthorized inside Next when missing jirahost", async () => {
+	it("Should return Error inside Next when missing jirahost", async () => {
 		delete res.locals["jiraHost"];
 
 		res.status.mockReturnValue(res);
