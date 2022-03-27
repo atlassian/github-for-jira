@@ -1,5 +1,5 @@
-import { emitWebhookPayloadMetrics, emitWebhookProcessedMetrics } from "./webhooks";
-import statsd from "config/statsd";
+import { emitWebhookPayloadMetrics, emitWebhookProcessedMetrics } from "./webhook-utils";
+import { statsd }  from "config/statsd";
 
 describe("Webhooks suite", () => {
 	const mockInfoLog = jest.fn();
@@ -42,7 +42,7 @@ describe("Webhooks suite", () => {
 				{
 					gsd_histogram: "1000_10000_30000_60000_120000_300000_600000_3000000",
 					name: "workflow_run",
-					status: "202",
+					status: "202"
 				}
 			);
 
@@ -52,7 +52,7 @@ describe("Webhooks suite", () => {
 				{
 					gsd_histogram: "1000_10000_30000_60000_120000_300000_600000_3000000",
 					name: "workflow_run",
-					status: "202",
+					status: "202"
 				}
 			);
 		});
@@ -98,7 +98,7 @@ describe("Webhooks suite", () => {
 	});
 
 	describe("emitWebhookPayloadMetrics", () => {
-		it("should push metrics for payload size", ()=> {
+		it("should push metrics for payload size", () => {
 			const statsdSpy = jest.spyOn(statsd, "histogram");
 			const webhookName = "workflow_run";
 			const payloadSize = 0;

@@ -9,7 +9,7 @@ describe("InstallationId", () => {
 	});
 
 	it("deserializes correctly", async () => {
-		const deserializedInstallationId = InstallationId.fromString("https://api.github.com###4711###12345678")
+		const deserializedInstallationId = InstallationId.fromString("https://api.github.com###4711###12345678");
 		expect(deserializedInstallationId.githubBaseUrl).toBe("https://api.github.com");
 		expect(deserializedInstallationId.appId).toBe(4711);
 		expect(deserializedInstallationId.installationId).toBe(12345678);

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from "probot/lib/logger";
-import JiraClient from "./jira-client";
+import { JiraClient } from "./jira-client";
 
 describe("JiraClient", () => {
 	describe("isAuthorized()", () => {

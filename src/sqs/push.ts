@@ -1,4 +1,4 @@
-import { Context, MessageHandler } from "./index"
+import { Context, MessageHandler } from "./sqs";
 import { processPush } from "../transforms/push";
 import { wrapLogger } from "probot/lib/wrap-logger";
 import { GitHubAppClient } from "../github/client/github-app-client";
@@ -9,7 +9,7 @@ export type PayloadRepository = {
 	name: string,
 	full_name: string,
 	html_url: string,
-	owner: {name: string, login: string},
+	owner: { name: string, login: string },
 }
 
 export type PushQueueMessagePayload = {
@@ -22,7 +22,7 @@ export type PushQueueMessagePayload = {
 }
 
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
-	context.log.info("Handling push message from the SQS queue")
+	context.log.info("Handling push message from the SQS queue");
 	const github = new GitHubAppClient(getCloudInstallationId(context.payload.installationId), context.log);
 	await processPush(github, context.payload, wrapLogger(context.log));
-}
+};

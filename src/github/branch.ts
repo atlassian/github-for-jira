@@ -1,17 +1,17 @@
-import { transformBranch } from "../transforms/branch";
+import { transformBranch } from "../transforms/transform-branch";
 import issueKeyParser from "jira-issue-key-parser";
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import getJiraClient from "../jira/client";
+import { getJiraClient } from "../jira/client/jira-client";
 import { GitHubAppClient } from "./client/github-app-client";
 import { getCloudInstallationId } from "./client/installation-id";
 
-export const createBranch = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
 	const webhookPayload: WebhookPayloadCreate = context.payload;
 
@@ -87,7 +87,7 @@ export const processBranch = async (
 	);
 };
 
-export const deleteBranch = async (context: CustomContext, jiraClient): Promise<void> => {
+export const deleteBranchWebhookHandler = async (context: CustomContext, jiraClient): Promise<void> => {
 	const payload: WebhookPayloadDelete = context.payload;
 	const issueKeys = issueKeyParser().parse(payload.ref);
 

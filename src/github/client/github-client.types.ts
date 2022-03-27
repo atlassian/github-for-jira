@@ -5,11 +5,13 @@ export enum SortDirection {
 	ASC = "asc",
 	DES = "desc"
 }
+
 export enum PullRequestState {
 	OPEN = "open",
 	CLOSED = "closed",
 	ALL = "all"
 }
+
 export enum PullRequestSort {
 	CREATED = "created",
 	UPDATED = "updated",

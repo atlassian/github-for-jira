@@ -1,14 +1,14 @@
-import SubscriptionClass from "./subscription";
-import { RepoSyncState, Subscription } from "./index";
+import { Subscription } from "./subscription";
+import { RepoSyncState } from "./reposyncstate";
 
 describe("Subscription", () => {
-	let sub: SubscriptionClass;
+	let sub: Subscription;
 
 	beforeEach(async () => {
 		sub = await Subscription.create({
 			gitHubInstallationId: 123,
 			jiraHost,
-			jiraClientKey: "myClientKey",
+			jiraClientKey: "myClientKey"
 		});
 	});
 
@@ -21,7 +21,7 @@ describe("Subscription", () => {
 				installationId: 123,
 				jiraHost,
 				numberOfSyncedRepos: 0,
-				repos: {},
+				repos: {}
 			});
 		});
 
@@ -70,7 +70,7 @@ describe("Subscription", () => {
 				repoName: "test-repo-name",
 				repoOwner: "integrations",
 				repoFullName: "integrations/test-repo-name",
-				repoUrl: "test-repo-url",
+				repoUrl: "test-repo-url"
 			});
 			await sub.updateRepoSyncStateItem("1", "branchStatus", "pending");
 			expect(await RepoSyncState.toRepoJson(sub)).toMatchObject({
@@ -79,12 +79,12 @@ describe("Subscription", () => {
 				numberOfSyncedRepos: 0,
 				repos: {
 					"1": {
-						repository:{
+						repository: {
 							id: "1",
 							name: "test-repo-name",
 							full_name: "integrations/test-repo-name",
 							owner: { login: "integrations" },
-							html_url: "test-repo-url",
+							html_url: "test-repo-url"
 						},
 						branchStatus: "pending"
 					}

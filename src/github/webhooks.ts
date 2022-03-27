@@ -3,16 +3,16 @@ import { issueWebhookHandler } from "./issue";
 import { GithubWebhookMiddleware } from "middleware/github-webhook-middleware";
 import { pullRequestWebhookHandler } from "./pull-request";
 import { workflowWebhookHandler } from "./workflow";
-import deployment from "./deployment";
+import { deploymentWebhookHandler } from "./deployment";
 import { pushWebhookHandler } from "./push";
-import { createBranch, deleteBranch } from "./branch";
-import webhookTimeout from "../util/webhook-timeout";
-import statsd from "../config/statsd";
+import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "./branch";
+import { webhookTimeout } from "utils/webhook-timeout";
+import { statsd }  from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import { Application } from "probot";
 import { deleteRepository } from "./repository";
 
-export default (robot: Application) => {
+export const setupGithubWebhooks = (robot: Application) => {
 	// TODO: Need ability to remove these listeners, especially for testing...
 	robot.on("*", async (context) => {
 		const { name, payload, id } = context;
@@ -50,10 +50,10 @@ export default (robot: Application) => {
 
 	robot.on("workflow_run", GithubWebhookMiddleware(workflowWebhookHandler));
 
-	robot.on("deployment_status", GithubWebhookMiddleware(deployment));
+	robot.on("deployment_status", GithubWebhookMiddleware(deploymentWebhookHandler));
 
-	robot.on("create", GithubWebhookMiddleware(createBranch));
-	robot.on("delete", GithubWebhookMiddleware(deleteBranch));
+	robot.on("create", GithubWebhookMiddleware(createBranchWebhookHandler));
+	robot.on("delete", GithubWebhookMiddleware(deleteBranchWebhookHandler));
 
 	robot.on("repository.deleted", GithubWebhookMiddleware(deleteRepository));
 };

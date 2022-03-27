@@ -1,5 +1,5 @@
-import statsd from "../config/statsd";
-import { metricWebhooks } from "../config/metric-names";
+import { statsd }  from "config/statsd";
+import { metricWebhooks } from "config/metric-names";
 import Logger from "bunyan";
 
 export const getCurrentTime = () => Date.now();
@@ -35,7 +35,7 @@ export const emitWebhookProcessedMetrics = (
 
 			const tags = {
 				name: webhookName,
-				status: status?.toString() || "none",
+				status: status?.toString() || "none"
 			};
 
 			statsd.increment(metricWebhooks.webhookProcessed, tags);
@@ -82,12 +82,12 @@ export const emitWebhookProcessedMetrics = (
 export const emitWebhookFailedMetrics = (webhookName: string) => {
 
 	const tags = {
-		name: webhookName,
+		name: webhookName
 	};
 
 	statsd.increment(metricWebhooks.webhookFailure, tags);
 
-}
+};
 
 
 /**
@@ -106,7 +106,7 @@ export const emitWebhookPayloadMetrics = (webhookName: string, size: number) => 
 	);
 
 	const histogramBuckets =
-	"128000_256000_512000_1024000_2048000"; //buckets in byte size
+		"128000_256000_512000_1024000_2048000"; //buckets in byte size
 
 	tags["gsd_histogram"] = histogramBuckets;
 
@@ -115,4 +115,4 @@ export const emitWebhookPayloadMetrics = (webhookName: string, size: number) => 
 		size,
 		tags
 	);
-}
+};

@@ -2,12 +2,12 @@ import crypto from "crypto";
 import url from "url";
 import { NextFunction, Request, Response, Router } from "express";
 import axios from "axios";
-import { getLogger } from "../../config/logger";
-import { booleanFlag, BooleanFlags } from "../../config/feature-flags";
-import { Tracer } from "../../config/tracer";
-import envVars from "../../config/env";
-import GithubApi from "../../config/github-api";
-import { Errors } from "../../config/errors";
+import { getLogger } from "config/logger";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { Tracer } from "config/tracer";
+import { envVars }  from "config/env";
+import { GithubAPI } from "config/github-api";
+import { Errors } from "config/errors";
 
 const logger = getLogger("github-oauth");
 
@@ -142,7 +142,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
 		// TODO: Not a great place to put this, but it'll do for now
-		res.locals.github = GithubApi({ auth: githubToken });
+		res.locals.github = GithubAPI({ auth: githubToken });
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);

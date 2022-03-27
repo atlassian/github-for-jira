@@ -1,9 +1,9 @@
-import {MessageHandler} from "./index"
-import app from "../worker/app";
-import {processInstallation} from "../sync/installation";
+import { MessageHandler } from "./sqs";
+import { workerApp } from "../worker/app";
+import { processInstallation } from "../sync/installation";
 import * as Sentry from "@sentry/node";
-import AxiosErrorEventDecorator from "../models/axios-error-event-decorator";
-import SentryScopeProxy from "../models/sentry-scope-proxy";
+import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
+import { SentryScopeProxy } from "models/sentry-scope-proxy";
 
 export type BackfillMessagePayload = {
 	installationId: number,
@@ -11,7 +11,7 @@ export type BackfillMessagePayload = {
 	startTime?: string
 }
 
-export const backfillQueueMessageHandler:MessageHandler<BackfillMessagePayload> = async (context) => {
+export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload> = async (context) => {
 	const sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 	sentry.configureScope((scope) =>
 		scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
@@ -19,12 +19,12 @@ export const backfillQueueMessageHandler:MessageHandler<BackfillMessagePayload> 
 	sentry.configureScope((scope) =>
 		scope.addEventProcessor(SentryScopeProxy.processEvent)
 	);
-	
-	const {installationId, jiraHost} = context.payload;
-	context.log = context.log.child({installationId, jiraHost});
+
+	const { installationId, jiraHost } = context.payload;
+	context.log = context.log.child({ installationId, jiraHost });
 
 	try {
-		const processor = await processInstallation(app);
+		const processor = await processInstallation(workerApp);
 		await processor(context.payload, sentry, context.log);
 	} catch (err) {
 		sentry.setExtra("job", {
@@ -40,4 +40,4 @@ export const backfillQueueMessageHandler:MessageHandler<BackfillMessagePayload> 
 
 		throw err;
 	}
-}
+};

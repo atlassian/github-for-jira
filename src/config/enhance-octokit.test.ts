@@ -1,12 +1,12 @@
-import GitHubAPI from "./github-api";
-import enhanceOctokit from "./enhance-octokit";
+import { GithubAPI } from "./github-api";
+import { enhanceOctokit } from "./enhance-octokit";
 
 describe("enhanceOctokit", () => {
 	describe.skip("request metrics", () => {
 		let octokit;
 
 		beforeEach(async () => {
-			octokit = GitHubAPI();
+			octokit = GithubAPI();
 			enhanceOctokit(octokit);
 		});
 
