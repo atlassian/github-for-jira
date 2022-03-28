@@ -21,7 +21,13 @@ atlas plugin install -n poco
 From the root of the project, run
 
 ```shell
-atlas poco bundle test -b etc/poco/bundle/main.json -t etc/poco/bundle/main-test.json
+atlas poco bundle test \
+  -b etc/poco/bundle/main.json \
+  -b etc/poco/bundle/extras-stg.json \
+  -b etc/poco/bundle/extras-prod.json \
+  -t etc/poco/bundle/main-test.json \
+  -t etc/poco/bundle/extras-prod-test.json \
+  -t etc/poco/bundle/extras-stg-test.json
 ```
 
 Refer to [Testing](https://developer.atlassian.com/platform/poco/policies/workflow/testing/) for more details.
@@ -40,7 +46,9 @@ atlas poco bundle publish -s github-for-jira -e ddev \
 # Publish into staging
 atlas poco bundle publish -s github-for-jira -e stg-west \
   -b etc/poco/bundle/main.json \
-  -t etc/poco/bundle/main-test.json 
+  -b etc/poco/bundle/extras-stg.json \
+  -t etc/poco/bundle/main-test.json \
+  -t etc/poco/bundle/extras-stg-test.json
 ```
 
 # Deployment to production
