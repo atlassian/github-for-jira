@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response, Router } from "express";
 import * as Sentry from "@sentry/node";
-import { isNodeProd } from "../util/isNodeEnv";
-import { Errors } from "../config/errors";
-import envVars from "../config/env";
-import statsd from "../config/statsd";
-import { metricError } from "../config/metric-names";
+import { isNodeProd } from "utils/is-node-env";
+import { Errors } from "config/errors";
+import { envVars }  from "config/env";
+import { statsd }  from "config/statsd";
+import { metricError } from "config/metric-names";
 import { v4 as uuidv4 } from "uuid";
 
 export const ErrorRouter = Router();
@@ -13,8 +13,8 @@ export const ErrorRouter = Router();
 ErrorRouter.get(["/error", "/error/:message", "/error/:message/:name"], (req: Request, res: Response, next: NextFunction) => {
 	res.locals.showError = true;
 	const error = new Error(req.params.message);
-	if(req.params.name) {
-		error.name = req.params.name
+	if (req.params.name) {
+		error.name = req.params.name;
 	}
 	next(error);
 });
@@ -42,7 +42,7 @@ ErrorRouter.use(Sentry.Handlers.errorHandler());
 ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 	const errorReference = uuidv4();
 
-	req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend")
+	req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend");
 
 	if (!isNodeProd() && !res.locals.showError) {
 		return next(err);

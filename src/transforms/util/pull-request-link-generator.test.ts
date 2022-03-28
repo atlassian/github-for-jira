@@ -1,4 +1,4 @@
-import { generateCreatePullRequestUrl } from "./pullRequestLinkGenerator";
+import { generateCreatePullRequestUrl } from "./pull-request-link-generator";
 
 describe("pullRequestLinkGenerator()", () => {
 
@@ -28,4 +28,4 @@ describe("pullRequestLinkGenerator()", () => {
 
 		expect(generateCreatePullRequestUrl(BASE_URL, NAME, ISSUE_KEYS)).toBe(EXPECTED_RESULT);
 	});
-})
+});

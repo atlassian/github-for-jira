@@ -1,9 +1,9 @@
 import { getJiraId } from "../jira/util/id";
 import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "../util/jira";
+import { getJiraAuthor } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
-import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
+import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
 

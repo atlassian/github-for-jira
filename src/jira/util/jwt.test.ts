@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "./jwt";
-import logger from "config/logger";
 import { AsymmetricAlgorithm, encodeAsymmetric, encodeSymmetric } from "atlassian-jwt";
-import queryAtlassianConnectPublicKey from "./queryAtlassianConnectPublicKey";
+import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { when } from "jest-when";
 import { Request, Response } from "express";
 import Mock = jest.Mock;
+import { getLogger } from "config/logger";
 
-jest.mock("./queryAtlassianConnectPublicKey");
+jest.mock("./query-atlassian-connect-public-key");
 
 describe("jwt", () => {
 	let testQueryParams: Record<string, string>;
 	let res: Response;
 	let baseRequest: Request;
 
-	let next:Mock;
+	let next: Mock;
 	const testSecret = "testSecret";
 
 	// Query string hash corresponding to the request parameters above
@@ -86,7 +86,7 @@ describe("jwt", () => {
 			session: {
 				jiraHost: "https://test.atlassian.net"
 			},
-			log: logger
+			log: getLogger("jwt.test")
 		} as any;
 	});
 
@@ -272,7 +272,7 @@ describe("jwt", () => {
 
 		it("should pass when token is valid for Staging Jira Instance", async () => {
 			const req = buildRequestWithJwt(testQsh);
-			req.body = { baseUrl:  "https://kabakumov2.jira-dev.com/jira/your-work" };
+			req.body = { baseUrl: "https://kabakumov2.jira-dev.com/jira/your-work" };
 			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);

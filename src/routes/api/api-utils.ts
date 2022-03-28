@@ -1,6 +1,6 @@
-import JiraClient from "../../models/jira-client";
-import Subscription from "../../models/subscription";
-import Installation from "../../models/installation";
+import { JiraClient } from "models/jira-client";
+import { Subscription } from "models/subscription";
+import {Installation } from "models/installation";
 import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
@@ -47,4 +47,4 @@ export const returnOnValidationError = (
 		res.status(422).json({ errors: errors.array() });
 	}
 	next();
-}
+};

@@ -1,7 +1,7 @@
-import InstallationTokenCache from "./installation-token-cache";
-import AuthToken, { TEN_MINUTES } from "./auth-token";
+import { InstallationTokenCache } from "./installation-token-cache";
+import { AuthToken, TEN_MINUTES } from "./auth-token";
 import * as PrivateKey from "probot/lib/private-key";
-import AppTokenHolder from "./app-token-holder";
+import { AppTokenHolder } from "./app-token-holder";
 import { getCloudInstallationId } from "./installation-id";
 
 describe("InstallationTokenCache & AppTokenHolder", () => {
@@ -15,7 +15,7 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 
 	afterEach(() => {
 		jest.useRealTimers();
-	})
+	});
 
 	it("should not cache any tokens when testing InstallationTokenCache", async () => {
 		const installationTokenCache = new InstallationTokenCache();

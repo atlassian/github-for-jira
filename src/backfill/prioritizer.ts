@@ -1,4 +1,4 @@
-import { RepositoryData } from "../models/subscription";
+import { RepositoryData } from "models/subscription";
 import { PullRequestProcessor } from "./pull-request-processor";
 import { BranchProcessor } from "./branch-processor";
 import { CommitProcessor } from "./commit-processor";
@@ -16,6 +16,18 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 	) {
 		this.commitsSkipCount = commitsSkipCount || 10;
 		this.pullrequestSkipCount = pullrequestSkipCount || 10;
+	}
+
+	private static hasWaitingPullrequests(repo: RepositoryData): boolean {
+		return repo.pullStatus === "pending" || repo.pullStatus === undefined;
+	}
+
+	private static hasWaitingBranches(repo: RepositoryData): boolean {
+		return repo.branchStatus === "pending" || repo.branchStatus == undefined;
+	}
+
+	private static hasWaitingCommits(repo: RepositoryData): boolean {
+		return repo.commitStatus === "pending" || repo.commitStatus === undefined;
 	}
 
 	getStepProcessor(_: Step<JobId>, jobState: JobState): StepProcessor<JobState> | undefined {
@@ -62,17 +74,5 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 		}
 
 		return jobState;
-	}
-
-	private static hasWaitingPullrequests(repo: RepositoryData): boolean {
-		return repo.pullStatus === "pending" || repo.pullStatus === undefined;
-	}
-
-	private static hasWaitingBranches(repo: RepositoryData): boolean {
-		return repo.branchStatus === "pending" || repo.branchStatus == undefined;
-	}
-
-	private static hasWaitingCommits(repo: RepositoryData): boolean {
-		return repo.commitStatus === "pending" || repo.commitStatus === undefined;
 	}
 }

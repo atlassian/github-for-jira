@@ -3,12 +3,12 @@ import { isEmpty, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
 import { Octokit } from "@octokit/rest";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { getJiraAuthor } from "../util/jira";
+import { getJiraAuthor } from "utils/jira-utils";
 import { GitHubAPI } from "probot";
-import { getGithubUser } from "../services/github/user";
-import { JiraAuthor } from "../interfaces/jira";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
+import { getGithubUser } from "services/github/user";
+import { JiraAuthor } from "interfaces/jira";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubAppClient } from "../github/client/github-app-client";
 
 function mapStatus(status: string, merged_at?: string) {

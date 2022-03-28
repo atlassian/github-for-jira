@@ -15,16 +15,16 @@ describe("Feature Flag", () => {
 
 		// We're importing featureFlags only after mocking LaunchDarkly.init(), so
 		// that LaunchDarkly.init() is called on the mock and not on the real thing.
-		featureFlags = await import("./feature-flags")
-	}
+		featureFlags = await import("./feature-flags");
+	};
 
 	it("returns true when LaunchDarkly returns true", async () => {
-		await mockFeatureFlagValue(true)
+		await mockFeatureFlagValue(true);
 		expect(await featureFlags.booleanFlag(featureFlags.BooleanFlags.MAINTENANCE_MODE, true, "https://myjira.atlassian.net")).toBeTruthy();
 	});
 
 	it("returns false when LaunchDarkly returns false", async () => {
-		await mockFeatureFlagValue(false)
+		await mockFeatureFlagValue(false);
 		expect(await featureFlags.booleanFlag(featureFlags.BooleanFlags.MAINTENANCE_MODE, true, "https://myjira.atlassian.net")).toBeFalsy();
 	});
 

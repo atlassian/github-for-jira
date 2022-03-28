@@ -1,8 +1,8 @@
 import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "../../util/jira";
+import { getJiraAuthor } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { Octokit } from "@octokit/rest";
-import { Repository } from "../../models/subscription";
+import { Repository } from "models/subscription";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {
@@ -18,7 +18,7 @@ interface Payload {
 	repository: Repository;
 }
 
-export default async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghUser?: Octokit.UsersGetByUsernameResponse) => {
+export const transformPullRequest =  async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghUser?: Octokit.UsersGetByUsernameResponse) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
 	const issueKeys = issueKeyParser().parse(

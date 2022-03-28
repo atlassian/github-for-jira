@@ -1,12 +1,12 @@
-import { Subscription } from "../models";
+import { Subscription } from "models/subscription";
 import { Request, Response } from "express";
-import statsd from "../config/statsd";
-import { metricHttpRequest } from "../config/metric-names";
+import { statsd }  from "config/statsd";
+import { metricHttpRequest } from "config/metric-names";
 
 /**
  * Handle the uninstall webhook from Jira
  */
-export default async (req: Request, res: Response): Promise<void> => {
+export const JiraEventsUninstallPost = async (req: Request, res: Response): Promise<void> => {
 	const { installation } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(installation.jiraHost);
 

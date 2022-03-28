@@ -1,8 +1,9 @@
-import Sequelize, { CountOptions, DestroyOptions, FindOptions, Op } from "sequelize";
-import Subscription, { Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
-import _ from "lodash";
+import { BOOLEAN, CountOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING } from "sequelize";
+import { Subscription, Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
+import { merge, pickBy } from "lodash";
+import { sequelize } from "models/sequelize";
 
-export default class RepoSyncState extends Sequelize.Model {
+export class RepoSyncState extends Model {
 	id: number;
 	subscriptionId: number;
 	repoId: number;
@@ -68,7 +69,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	static async countFromSubscription(subscription: Subscription, options: CountOptions = {}): Promise<number> {
-		return RepoSyncState.count(_.merge(options, {
+		return RepoSyncState.count(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			}
@@ -76,7 +77,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
-		return RepoSyncState.findAll(_.merge(options, {
+		return RepoSyncState.findAll(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			}
@@ -84,7 +85,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState> {
-		return RepoSyncState.findOne(_.merge(options, {
+		return RepoSyncState.findOne(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			},
@@ -93,7 +94,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	static async deleteFromSubscription(subscription: Subscription, options: DestroyOptions = {}): Promise<number> {
-		return RepoSyncState.destroy(_.merge(options, {
+		return RepoSyncState.destroy(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			}
@@ -188,9 +189,9 @@ export default class RepoSyncState extends Sequelize.Model {
 				repoId
 			}
 		});
-		const repo = _.merge(model?.toRepositoryData() || {}, {
+		const repo = merge(model?.toRepositoryData() || {}, {
 			[key]: value
-		})
+		});
 		return model?.setFromRepositoryData(repo)?.save();
 	}
 
@@ -208,7 +209,7 @@ export default class RepoSyncState extends Sequelize.Model {
 	}
 
 	toRepositoryData(): RepositoryData {
-		return _.pickBy({
+		return pickBy({
 			repository: {
 				id: this.repoId.toString(),
 				name: this.repoName,
@@ -229,3 +230,57 @@ export default class RepoSyncState extends Sequelize.Model {
 		});
 	}
 }
+
+RepoSyncState.init({
+	id: {
+		type: DataTypes.INTEGER,
+		primaryKey: true,
+		allowNull: false,
+		autoIncrement: true
+	},
+	subscriptionId: {
+		type: DataTypes.INTEGER,
+		allowNull: false
+	},
+	repoId: {
+		type: INTEGER,
+		allowNull: false
+	},
+	repoName: {
+		type: STRING,
+		allowNull: false
+	},
+	repoOwner: {
+		type: STRING,
+		allowNull: false
+	},
+	repoFullName: {
+		type: STRING,
+		allowNull: false
+	},
+	repoUrl: {
+		type: STRING,
+		allowNull: false
+	},
+	priority: INTEGER,
+	branchStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	commitStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	issueStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	pullStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	buildStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	deploymentStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	branchCursor: STRING,
+	commitCursor: STRING,
+	issueCursor: STRING,
+	pullCursor: STRING,
+	buildCursor: STRING,
+	deploymentCursor: STRING,
+	forked: BOOLEAN,
+	repoPushedAt: DATE,
+	repoUpdatedAt: DATE,
+	repoCreatedAt: DATE,
+	syncUpdatedAt: DATE,
+	syncCompletedAt: DATE,
+	createdAt: DATE,
+	updatedAt: DATE
+}, { sequelize });

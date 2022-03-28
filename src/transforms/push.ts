@@ -1,11 +1,11 @@
-import { Subscription } from "../models";
-import getJiraClient from "../jira/client";
+import { Subscription } from "models/subscription";
+import { getJiraClient } from "../jira/client/jira-client";
 import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "../util/jira";
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { JiraCommit } from "../interfaces/jira";
+import { getJiraAuthor } from "utils/jira-utils";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { JiraCommit } from "interfaces/jira";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { isBlocked } from "../config/feature-flags";
+import { isBlocked } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { PushQueueMessagePayload } from "../sqs/push";
 import { GitHubAppClient } from "../github/client/github-app-client";

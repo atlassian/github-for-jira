@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import getJiraUtil from "./index";
+import { getJiraUtil } from "./jira-util";
 
 describe("Jira util", () => {
 	const loadFixture = (name: string) => {

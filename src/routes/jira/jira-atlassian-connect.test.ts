@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import express, { Express } from "express";
-import { getFrontendApp } from "../../app";
-import {getLogger} from "config/logger";
+import { getFrontendApp } from "~/src/app";
+import { getLogger } from "config/logger";
 
 describe("Atlassian Connect", () => {
 	let app: Express;
@@ -35,7 +35,7 @@ describe("Atlassian Connect", () => {
 						delete response.body.name;
 						delete response.body.key;
 						expect(response.body).toMatchSnapshot();
-					})
+					});
 			});
 
 		});
