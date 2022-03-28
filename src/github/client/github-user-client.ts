@@ -57,7 +57,7 @@ export class GitHubUserClient {
 		return this.axios.get<T>(url, config);
 	}
 
-  public async getMembershipForAuthenticatedUser(org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>> {
+	public async getMembershipForAuthenticatedUser(org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>> {
 		return await this.get<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>("/user/memberships/orgs/{org}",
 			{
 				urlParams: { 
