@@ -108,7 +108,6 @@ export const handleFailedRequest = (logger: Logger) =>
 				logger.warn({ err: error }, "Blocked by GitHub allowlist");
 				return Promise.reject(new BlockedIpError(error, status));
 			}
-
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
 			isWarning ? logger.warn(errorMessage) : logger.error({ err: error }, errorMessage);

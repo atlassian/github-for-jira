@@ -1,6 +1,6 @@
-import { Subscription } from "models/subscription";
 import { Request, Response } from "express";
 import { GitHubAPI, Octokit } from "probot";
+import { Subscription } from "models/subscription";
 import { getCloudInstallationId } from "../../../github/client/installation-id";
 import { GitHubAppClient } from "../../../github/client/github-app-client";
 import { GitHubUserClient } from "../../../github/client/github-user-client";
