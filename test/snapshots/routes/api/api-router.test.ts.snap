@@ -1,59 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`API Router Authentication should return 200 if a valid token is provided 1`] = `Object {}`;
+exports[`API Router Authentication is not handled on the App level anymore Doesnt matter if there is no token 1`] = `Object {}`;
 
-exports[`API Router Authentication should return 200 if token belongs to an admin 1`] = `Object {}`;
-
-exports[`API Router Authentication should return 401 if the GraphQL query returns errors 1`] = `
-Object {
-  "errors": Array [
-    Object {
-      "extensions": Object {
-        "code": "undefinedField",
-        "fieldName": "foo",
-        "typeName": "User",
-      },
-      "locations": Array [
-        Object {
-          "column": 5,
-          "line": 4,
-        },
-      ],
-      "message": "Field 'foo' doesn't exist on type 'User'",
-      "path": Array [
-        "query",
-        "viewer",
-        "foo",
-      ],
-    },
-  ],
-  "viewerPermissionQuery": "{
-  viewer {
-    login
-    organization(login: \\"fusion-arc\\") {
-      viewerCanAdminister
-    }
-  }
-}
-",
-}
-`;
-
-exports[`API Router Authentication should return 401 if the returned organization is null 1`] = `
-Object {
-  "error": "Unauthorized",
-  "message": "Token provided does not have required access",
-}
-`;
-
-exports[`API Router Authentication should return 401 if the token is invalid 1`] = `
-Object {
-  "documentation_url": "https://developer.github.com/v4",
-  "message": "Bad credentials",
-}
-`;
-
-exports[`API Router Authentication should return 404 if no token is provided 1`] = `Object {}`;
+exports[`API Router Authentication is not handled on the App level anymore should return 200 if authorization header set 1`] = `Object {}`;
 
 exports[`API Router Endpoints Delete Installation Should work with new delete installation route 1`] = `Object {}`;
 
