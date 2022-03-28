@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation, Subscription } from "../../models";
-import getAxiosInstance from "./axios";
+import { Installation} from "models/installation";
+import { Subscription } from "models/subscription";
+import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 import issueKeyParser from "jira-issue-key-parser";
-import { JiraCommit, JiraIssue } from "../../interfaces/jira";
-import { getLogger } from "../../config/logger";
+import { JiraCommit, JiraIssue } from "interfaces/jira";
+import { getLogger } from "config/logger";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -26,11 +27,11 @@ export interface DeploymentsResult {
  */
 
 // TODO: need to type jiraClient ASAP
-async function getJiraClient(
+export const getJiraClient = async (
 	jiraHost: string,
 	gitHubInstallationId: number,
 	log: Logger = getLogger("jira-client")
-): Promise<any> {
+): Promise<any> => {
 	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
 	if (!installation) {
@@ -186,7 +187,7 @@ async function getJiraClient(
 									gitHubInstallationId
 								}
 							}
-						),
+						)
 					])
 			},
 			pullRequest: {
@@ -301,14 +302,6 @@ async function getJiraClient(
 
 	return client;
 }
-
-export default async (
-	jiraHost: string,
-	gitHubInstallationId: number,
-	logger?: Logger
-) => {
-	return getJiraClient(jiraHost, gitHubInstallationId, logger);
-};
 
 /**
  * Splits commits in data payload into chunks of 400 and makes separate requests

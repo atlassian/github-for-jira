@@ -1,7 +1,7 @@
 import { processInstallation } from "../sync/installation";
 import { mocked } from "ts-jest/utils";
 import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
-import { Context } from "./index";
+import { Context } from "./sqs";
 import { getLogger } from "config/logger";
 import * as Sentry from "@sentry/node";
 

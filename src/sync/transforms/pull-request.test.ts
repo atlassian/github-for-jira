@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import transformPullRequest from "./pull-request";
+import { transformPullRequest } from "./pull-request";
 
 import pullRequestFixture from "fixtures/api/pull-request.json";
 import userFixture from "fixtures/api/user.json";

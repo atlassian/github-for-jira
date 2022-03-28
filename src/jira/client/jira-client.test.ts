@@ -1,10 +1,10 @@
-import { Installation, Subscription } from "models/index";
-import SubscriptionClass from "models/subscription";
-import getJiraClient from "./index";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
+import { getJiraClient } from "./jira-client";
 
 describe("Test getting a jira client", () => {
 	const gitHubInstallationId = Math.round(Math.random() * 10000);
-	let subscription: SubscriptionClass;
+	let subscription: Subscription;
 	let client;
 
 	beforeEach(async () => {

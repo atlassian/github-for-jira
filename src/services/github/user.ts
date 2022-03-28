@@ -1,6 +1,6 @@
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { getLogger } from "../../config/logger";
+import { getLogger } from "config/logger";
 import { GitHubAppClient } from "../../github/client/github-app-client";
 
 const logger = getLogger("services.github.user");
@@ -12,7 +12,7 @@ export const getGithubUser = async (github: GitHubAPI | GitHubAppClient, usernam
 
 	try {
 		const response = github instanceof GitHubAppClient ?
-			await github.getUserByUsername(username):
+			await github.getUserByUsername(username) :
 			await github.users.getByUsername({ username });
 		return response.data;
 	} catch (err) {

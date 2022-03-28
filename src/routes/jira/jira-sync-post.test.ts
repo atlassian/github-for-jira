@@ -1,5 +1,5 @@
-import InstallationClass from "models/installation";
-import { Installation, Subscription } from "models/index";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import express, { Express, NextFunction, Request, Response } from "express";
 import { RootRouter } from "../router";
 import supertest from "supertest";
@@ -11,8 +11,8 @@ jest.mock("~/src/sqs/queues");
 
 describe("sync", () => {
 	let app: Express;
-	let installation: InstallationClass;
-	let jwt:string;
+	let installation: Installation;
+	let jwt: string;
 
 	beforeEach(async () => {
 		installation = await Installation.install({

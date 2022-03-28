@@ -1,9 +1,9 @@
 import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import AppTokenHolder from "./app-token-holder";
-import InstallationTokenCache from "./installation-token-cache";
-import AuthToken from "./auth-token";
+import { AppTokenHolder } from "./app-token-holder";
+import { InstallationTokenCache } from "./installation-token-cache";
+import { AuthToken } from "./auth-token";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
 import { getLogger } from "config/logger";
@@ -64,88 +64,6 @@ export class GitHubAppClient {
 	}
 
 	/**
-	 * Use this config in a request to authenticate with the app token.
-	 */
-	private appAuthenticationHeaders(): Partial<AxiosRequestConfig> {
-		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
-		return {
-			headers: {
-				Accept: "application/vnd.github.v3+json",
-				Authorization: `Bearer ${appToken.token}`
-			}
-		};
-	}
-
-	/**
-	 * Use this config in a request to authenticate with an installation token for the githubInstallationId.
-	 */
-	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
-		const installationToken = await this.installationTokenCache.getInstallationToken(
-			this.githubInstallationId.installationId,
-			() => this.createInstallationToken(this.githubInstallationId.installationId));
-		return {
-			headers: {
-				Accept: "application/vnd.github.v3+json",
-				Authorization: `Bearer ${installationToken.token}`
-			}
-		};
-	}
-
-	/**
-	 * Calls the GitHub API in the name of the GitHub app to generate a token that in turn can be used to call the GitHub
-	 * API in the name of an installation of that app (to access the users' data).
-	 */
-	private async createInstallationToken(githubInstallationId: number): Promise<AuthToken> {
-		const response = await this.axios.post<Octokit.AppsCreateInstallationTokenResponse>(`/app/installations/{githubInstallationId}/access_tokens`, {}, {
-			...this.appAuthenticationHeaders(),
-			urlParams: {
-				githubInstallationId
-			}
-		});
-		const tokenResponse: Octokit.AppsCreateInstallationTokenResponse = response.data;
-		return new AuthToken(tokenResponse.token, new Date(tokenResponse.expires_at));
-	}
-
-	private async get<T>(url, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
-		return this.axios.get<T>(url, {
-			...await this.installationAuthenticationHeaders(),
-			params,
-			urlParams
-		});
-	}
-
-	private async patch<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
-		return this.axios.patch<T>(url, body, {
-			...await this.installationAuthenticationHeaders(),
-			params,
-			urlParams
-		});
-	}
-
-	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		const response = await this.axios.post<GraphQlQueryResponse<T>>("/graphql",
-			{
-				query,
-				variables
-			},
-			{
-				...await this.installationAuthenticationHeaders()
-			});
-
-		const graphqlErrors = response.data.errors;
-		if (graphqlErrors?.length) {
-			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
-				return Promise.reject(new RateLimitingError(response));
-			}
-
-			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
-			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
-		}
-
-		return response;
-	}
-
-	/**
 	 * Lists pull requests for the given repository.
 	 */
 	public async getPullRequests(owner: string, repo: string, pullRequestParams: GetPullRequestParams): Promise<AxiosResponse<Octokit.PullsListResponseItem[]>> {
@@ -181,7 +99,6 @@ export class GitHubAppClient {
 	/**
 	 * Get publicly available information for user with given username.
 	 */
-	// TODO: add a unit test
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
 		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
 			username
@@ -327,5 +244,87 @@ export class GitHubAppClient {
 				repo,
 				comment_id
 			});
+	}
+
+	/**
+	 * Use this config in a request to authenticate with the app token.
+	 */
+	private appAuthenticationHeaders(): Partial<AxiosRequestConfig> {
+		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
+		return {
+			headers: {
+				Accept: "application/vnd.github.v3+json",
+				Authorization: `Bearer ${appToken.token}`
+			}
+		};
+	}
+
+	/**
+	 * Use this config in a request to authenticate with an installation token for the githubInstallationId.
+	 */
+	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
+		const installationToken = await this.installationTokenCache.getInstallationToken(
+			this.githubInstallationId.installationId,
+			() => this.createInstallationToken(this.githubInstallationId.installationId));
+		return {
+			headers: {
+				Accept: "application/vnd.github.v3+json",
+				Authorization: `Bearer ${installationToken.token}`
+			}
+		};
+	}
+
+	/**
+	 * Calls the GitHub API in the name of the GitHub app to generate a token that in turn can be used to call the GitHub
+	 * API in the name of an installation of that app (to access the users' data).
+	 */
+	private async createInstallationToken(githubInstallationId: number): Promise<AuthToken> {
+		const response = await this.axios.post<Octokit.AppsCreateInstallationTokenResponse>(`/app/installations/{githubInstallationId}/access_tokens`, {}, {
+			...this.appAuthenticationHeaders(),
+			urlParams: {
+				githubInstallationId
+			}
+		});
+		const tokenResponse: Octokit.AppsCreateInstallationTokenResponse = response.data;
+		return new AuthToken(tokenResponse.token, new Date(tokenResponse.expires_at));
+	}
+
+	private async get<T>(url, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+		return this.axios.get<T>(url, {
+			...await this.installationAuthenticationHeaders(),
+			params,
+			urlParams
+		});
+	}
+
+	private async patch<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+		return this.axios.patch<T>(url, body, {
+			...await this.installationAuthenticationHeaders(),
+			params,
+			urlParams
+		});
+	}
+
+	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
+		const response = await this.axios.post<GraphQlQueryResponse<T>>("/graphql",
+			{
+				query,
+				variables
+			},
+			{
+				...await this.installationAuthenticationHeaders()
+			});
+
+		const graphqlErrors = response.data.errors;
+		if (graphqlErrors?.length) {
+			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
+				return Promise.reject(new RateLimitingError(response));
+			}
+
+			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
+			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
+		}
+
+		return response;
 	}
 }

@@ -1,10 +1,10 @@
-import envVars from "../../config/env";
-import { getLogger } from "../../config/logger";
-import { JiraIssue } from "../../interfaces/jira";
+import { envVars }  from "config/env";
+import { getLogger } from "config/logger";
+import { JiraIssue } from "interfaces/jira";
 
 const logger = getLogger("jira.util");
 
-export default (jiraClient) => {
+export const getJiraUtil = (jiraClient) => {
 	const containsReferenceLink = (line) => {
 		// reference text links should have 2 parts only
 		if (line.split(" ").length === 2) {
@@ -31,7 +31,7 @@ export default (jiraClient) => {
 			.map((referenceLink) => referenceLink.slice(1, referenceLink.indexOf("]")));
 	};
 
-	function addJiraIssueLinks(text: string, issues:JiraIssue[]): string {
+	function addJiraIssueLinks(text: string, issues: JiraIssue[]): string {
 		const referenceRegex = /\[([A-Z]+-[0-9]+)\](?!\()/g;
 		const issueMap = issues.reduce((acc, issue) => ({
 			...acc,

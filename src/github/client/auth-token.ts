@@ -1,7 +1,7 @@
 export const TEN_MINUTES = 10 * 60 * 1000;
 export const ONE_MINUTE = 60 * 1000;
 
-export default class AuthToken {
+export class AuthToken {
 	readonly token: string;
 	readonly expirationDate: Date;
 

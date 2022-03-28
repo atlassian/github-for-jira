@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line import/no-duplicates
-import transformDeployment, { mapEnvironment } from "./deployment";
+import { transformDeployment, mapEnvironment } from "./transform-deployment";
 import { getLogger } from "config/logger";
 import { GitHubAPI } from "probot";
 import { when } from "jest-when";
