@@ -1,9 +1,8 @@
-import { NextFunction, Request, Response, Router } from "express";
+import { Request, Response, Router } from "express";
 import { param } from "express-validator";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import IORedis from "ioredis";
-import { GithubAPI } from "config/github-api";
 import { Subscription } from "models/subscription";
 import { returnOnValidationError, serializeSubscription } from "./api-utils";
 import { getRedisInfo } from "config/redis-info";
@@ -15,20 +14,6 @@ import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 
 export const ApiRouter = Router();
-
-const viewerPermissionQuery = `{
-  viewer {
-    login
-    organization(login: "fusion-arc") {
-      viewerCanAdminister
-    }
-  }
-}
-`;
-
-function validAdminPermission(viewer) {
-	return viewer.organization?.viewerCanAdminister || false;
-}
 
 // TODO: remove this duplication because of the horrible way to do logs through requests
 ApiRouter.use(urlencoded({ extended: false }));
@@ -42,78 +27,6 @@ ApiRouter.use(rateLimit({
 	windowMs: 60 * 1000, // 1 minutes
 	max: 60 // limit each IP to 60 requests per windowMs
 }));
-
-// All routes require a PAT to belong to someone on staff
-// This middleware will take the token and make a request to GraphQL
-// to see if it belongs to someone on staff
-
-ApiRouter.use(
-	async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-		const token = req.get("Authorization");
-		if (!token) {
-			res.sendStatus(404);
-			return;
-		}
-		try {
-			// Create a separate octokit instance than the one used by the app
-			const octokit = GithubAPI({
-				auth: token.split(" ")[1]
-			});
-			const { data, errors } = (
-				await octokit.request({
-					headers: {
-						Accept: "application/json",
-						"Content-Type": "application/json"
-					},
-					method: "POST",
-					// 'viewer' will be the person that owns the token
-					query: viewerPermissionQuery,
-					url: "/graphql"
-				})
-			).data;
-
-			req.addLogFields({ login: data?.viewer?.login });
-
-			if (errors) {
-				res.status(401).json({ errors, viewerPermissionQuery });
-				return;
-			}
-
-			if (!validAdminPermission(data.viewer)) {
-				req.log.info(
-					{
-						login: data.viewer.login,
-						isAdmin: data.viewer.organization?.viewerCanAdminister
-					},
-					`User attempted to access admin API routes.`
-				);
-				res.status(401).json({
-					error: "Unauthorized",
-					message: "Token provided does not have required access"
-				});
-				return;
-			}
-
-			req.log.info({
-				req,
-				login: data.viewer.login,
-				isAdmin: data.viewer.organization?.viewerCanAdminister
-			},
-			"Admin API routes accessed"
-			);
-
-			next();
-		} catch (err) {
-			req.log.info({ err });
-
-			if (err.status === 401) {
-				res.status(401).send(err.HttpError);
-				return;
-			}
-			res.sendStatus(500);
-		}
-	}
-);
 
 ApiRouter.get("/", (_: Request, res: Response): void => {
 	res.send({});
