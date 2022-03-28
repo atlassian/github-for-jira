@@ -4,8 +4,8 @@
 
 import { Application, createProbot } from "probot";
 import { findPrivateKey } from "probot/lib/private-key";
-import { HealthcheckRouter } from "../routes/healthcheck/healthcheck-router";
-import { overrideProbotLoggingMethods } from "../config/logger";
+import { HealthcheckRouter } from "routes/healthcheck/healthcheck-router";
+import { overrideProbotLoggingMethods } from "config/logger";
 
 export const probot = createProbot({
 	id: Number(process.env.APP_ID),
@@ -32,5 +32,5 @@ overrideProbotLoggingMethods(probot.logger);
 
 // Load an empty app so we can get access to probot's auth handling
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-export default probot.load(App);
+export const workerApp = probot.load(App);
 

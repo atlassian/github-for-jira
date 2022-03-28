@@ -1,4 +1,4 @@
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 
 export const deleteRepository = async (context, jiraClient): Promise<void> => {
 	context.log(`Deleting dev info for repo ${context.payload.repository?.id}`);

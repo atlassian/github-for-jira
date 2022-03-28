@@ -2,7 +2,7 @@ import issueKeyParser from "jira-issue-key-parser";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { GitHubPullRequest } from "interfaces/github";
 import { JiraBuildData, JiraPullRequest } from "interfaces/jira";
-import { getAllCommitMessagesBetweenReferences } from "./util/githubApiRequests";
+import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
 import { WorkflowPayload } from "config/interfaces";
 import { GitHubAppClient } from "../github/client/github-app-client";
 
@@ -51,7 +51,7 @@ function mapPullRequests(
 	}));
 }
 
-export const transformWorkflowPayload = async (
+export const transformWorkflow = async (
 	githubClient: GitHubAppClient,
 	payload: WorkflowPayload,
 	logger: LoggerWithTarget

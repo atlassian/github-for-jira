@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {encodeSymmetric} from "atlassian-jwt";
-import {mocked} from "ts-jest/utils";
-import {Installation} from "models/index";
-import {JiraContextJwtTokenMiddleware} from "./jira-jwt-middleware";
-import logger from "config/logger"
+import { encodeSymmetric } from "atlassian-jwt";
+import { mocked } from "ts-jest/utils";
+import { Installation } from "models/installation";
+import { JiraContextJwtTokenMiddleware } from "./jira-jwt-middleware";
+import { getLogger } from "config/logger";
 
-jest.mock("models/index");
+const logger = getLogger("jwt-middleware.test");
+jest.mock("models/installation");
 
 describe("#verifyJiraMiddleware", () => {
 	let res;
@@ -23,8 +24,8 @@ describe("#verifyJiraMiddleware", () => {
 		};
 		next = jest.fn();
 
-		res.status.mockReturnValue(res)
-		res.json.mockReturnValue(res)
+		res.status.mockReturnValue(res);
+		res.json.mockReturnValue(res);
 
 		installation = {
 			id: 19,
@@ -60,10 +61,10 @@ describe("#verifyJiraMiddleware", () => {
 	const buildRequestWithNoToken = (jiraHost): any => {
 		return {
 			body: {
-				jiraHost,
+				jiraHost
 			},
 			query: {
-				xdm_e: jiraHost,
+				xdm_e: jiraHost
 			},
 			addLogFields: jest.fn(),
 			log: logger
@@ -141,7 +142,7 @@ describe("#verifyJiraMiddleware", () => {
 
 			return {
 				body: {
-					jiraHost,
+					jiraHost
 				},
 				query: {
 					xdm_e: jiraHost,
@@ -177,7 +178,7 @@ describe("#verifyJiraMiddleware", () => {
 
 		await JiraContextJwtTokenMiddleware(req, res, next);
 
-		expect(next).toBeCalledTimes(0)
+		expect(next).toBeCalledTimes(0);
 	});
 
 	it("is unauthorized when token missing", async () => {
@@ -188,7 +189,7 @@ describe("#verifyJiraMiddleware", () => {
 
 		await JiraContextJwtTokenMiddleware(req, res, next);
 
-		expect(res.status).toHaveBeenCalledWith(401)
+		expect(res.status).toHaveBeenCalledWith(401);
 		expect(next).toHaveBeenCalledTimes(0);
 	});
 
@@ -200,10 +201,9 @@ describe("#verifyJiraMiddleware", () => {
 
 		await JiraContextJwtTokenMiddleware(req, res, next);
 
-		expect(res.status).toHaveBeenCalledWith(401)
+		expect(res.status).toHaveBeenCalledWith(401);
 		expect(next).toHaveBeenCalledTimes(0);
 	});
-
 
 
 });

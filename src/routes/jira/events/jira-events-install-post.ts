@@ -1,12 +1,12 @@
-import { Installation } from "../models";
+import { Installation } from "models/installation";
 import { Request, Response } from "express";
-import statsd from "../config/statsd";
-import { metricHttpRequest } from "../config/metric-names";
+import { statsd }  from "config/statsd";
+import { metricHttpRequest } from "config/metric-names";
 
 /**
  * Handle the install webhook from Jira
  */
-export default async (req: Request, res: Response): Promise<void> => {
+export const JiraEventsInstallPost = async (req: Request, res: Response): Promise<void> => {
 	req.log.info("Received installation payload");
 
 	const { baseUrl: host, clientKey, sharedSecret } = req.body;

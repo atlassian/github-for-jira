@@ -1,5 +1,5 @@
-import GitHubAPI from "config/github-api";
-import { getAllCommitMessagesBetweenReferences } from "~/src/transforms/util/githubApiRequests";
+import { GithubAPI } from "config/github-api";
+import { getAllCommitMessagesBetweenReferences } from "~/src/transforms/util/github-api-requests";
 import { getLogger } from "config/logger";
 import workflowBasic from "fixtures/workflow-basic.json";
 import pullRequestMultipleCommits from "fixtures/api/pull-request-multiple-commits-diff.json";
@@ -20,7 +20,7 @@ describe("GitHub API Request Suite", () => {
 				owner: repository.owner.login,
 				repo: repository.name,
 				base: pull_requests[0].base.ref,
-				head: pull_requests[0].head.ref,
+				head: pull_requests[0].head.ref
 			};
 
 			const pullRequestCommits = Object.assign(
@@ -35,12 +35,12 @@ describe("GitHub API Request Suite", () => {
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
 				)
 				.reply(200, {
-					...data,
+					...data
 				});
 
 			const bob = await getAllCommitMessagesBetweenReferences(
 				payload,
-				GitHubAPI(),
+				GithubAPI(),
 				getLogger("test")
 			);
 
@@ -60,7 +60,7 @@ describe("GitHub API Request Suite", () => {
 				owner: repository.owner.login,
 				repo: repository.name,
 				base: pull_requests[0].base.ref,
-				head: pull_requests[0].head.ref,
+				head: pull_requests[0].head.ref
 			};
 
 			const pullRequestCommits = Object.assign(
@@ -75,12 +75,12 @@ describe("GitHub API Request Suite", () => {
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
 				)
 				.reply(200, {
-					...data,
+					...data
 				});
 
 			const bob = await getAllCommitMessagesBetweenReferences(
 				payload,
-				GitHubAPI(),
+				GithubAPI(),
 				getLogger("test")
 			);
 

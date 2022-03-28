@@ -11,7 +11,7 @@ describe("Handlebar Helpers", () => {
 		it("should return empty string with non stringifyable or falsy parameter", () => {
 			expect(toLowercaseHelper(undefined)).toEqual("");
 			expect(toLowercaseHelper(null as any)).toEqual("");
-			expect(toLowercaseHelper({ } as any)).toEqual("");
+			expect(toLowercaseHelper({} as any)).toEqual("");
 		});
 
 		it("should return the lowercase string of any stringifyable object", () => {
@@ -30,7 +30,7 @@ describe("Handlebar Helpers", () => {
 		it("should return empty string with non stringifyable or falsy parameter", () => {
 			expect(replaceSpaceWithHyphenHelper(undefined)).toEqual("");
 			expect(replaceSpaceWithHyphenHelper(null as any)).toEqual("");
-			expect(replaceSpaceWithHyphenHelper({ } as any)).toEqual("");
+			expect(replaceSpaceWithHyphenHelper({} as any)).toEqual("");
 		});
 
 		it("should return the kebab case string for any stringifyable object", () => {

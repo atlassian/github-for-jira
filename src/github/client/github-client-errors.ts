@@ -1,4 +1,4 @@
-import {AxiosError, AxiosResponse} from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 
 export class GithubClientError extends Error {
 	status?: number;
@@ -7,9 +7,9 @@ export class GithubClientError extends Error {
 	constructor(message: string, status?: number, cause?: AxiosError) {
 		super(message);
 		this.status = status;
-		if(cause) {
-			this.cause = {...cause, config: {}};
-			this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack
+		if (cause) {
+			this.cause = { ...cause, config: {} };
+			this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
 		}
 	}
 }
@@ -29,7 +29,7 @@ export class RateLimitingError extends GithubClientError {
 	constructor(response: AxiosResponse, cause?: AxiosError) {
 		super("Rate limiting error", response.status, cause);
 		const rateLimitResetHeaderValue: string = response.headers?.["x-ratelimit-reset"];
-		this.rateLimitReset =  parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
+		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
 	}
 }
 
@@ -43,19 +43,19 @@ export class BlockedIpError extends GithubClientError {
  * Type for errors section in GraphQL response
  */
 export type GraphQLError = {
-		message: string;
-		type: string;
-		path?: [string];
-		extensions?: {
-			[key: string]: any;
-		};
-		locations?: [
-			{
-				line: number;
-				column: number;
-			}
-		];
+	message: string;
+	type: string;
+	path?: [string];
+	extensions?: {
+		[key: string]: any;
 	};
+	locations?: [
+		{
+			line: number;
+			column: number;
+		}
+	];
+};
 
 export class GithubClientGraphQLError extends GithubClientError {
 
@@ -63,6 +63,7 @@ export class GithubClientGraphQLError extends GithubClientError {
 	 * errors section from the GraplQL response
 	 */
 	errors: GraphQLError[];
+
 	constructor(message: string, errors: GraphQLError[]) {
 		super(message);
 		this.errors = errors;
@@ -70,7 +71,7 @@ export class GithubClientGraphQLError extends GithubClientError {
 
 }
 
-export const isChangedFilesError = (err:GithubClientGraphQLError):boolean =>
-	!!err?.errors?.find(e => e.message?.includes("changedFiles"))
+export const isChangedFilesError = (err: GithubClientGraphQLError): boolean =>
+	!!err?.errors?.find(e => e.message?.includes("changedFiles"));
 
 const ONE_HOUR_IN_SECONDS = 60 * 60;

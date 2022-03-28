@@ -1,7 +1,7 @@
 import { StatsCb, StatsD, Tags } from "hot-shots";
 import { getLogger } from "./logger";
 import { NextFunction, Request, Response } from "express";
-import { isNodeDev, isNodeTest } from "../util/isNodeEnv";
+import { isNodeDev, isNodeTest } from "utils/is-node-env";
 import { metricHttpRequest } from "./metric-names";
 
 export const globalTags = {
@@ -14,7 +14,7 @@ export const globalTags = {
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 const logger = getLogger("config.statsd");
 
-const statsd = new StatsD({
+export const statsd = new StatsD({
 	prefix: "github-for-jira.",
 	host: "platform-statsd",
 	port: 8125,
@@ -105,6 +105,5 @@ export function asyncDistTimer(
 		p.then(recordStat, recordStat);
 		return p;
 	};
-}
 
-export default statsd;
+}

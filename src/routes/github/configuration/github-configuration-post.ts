@@ -1,7 +1,7 @@
-import { Subscription } from "../../../models";
-import { getHashedKey } from "../../../models/installation";
+import { Subscription } from "models/subscription";
+import { getHashedKey } from "models/sequelize";
 import { Request, Response } from "express";
-import { findOrStartSync } from "../../../sync/sync-utils";
+import { findOrStartSync } from "~/src/sync/sync-utils";
 
 /**
  * Handle the when a user adds a repo to this installation

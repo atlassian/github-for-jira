@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { mocked } from "ts-jest/utils";
-import { Subscription } from "models/index";
+import { Subscription, RepoSyncStateObject } from "models/subscription";
 import { Application } from "probot";
 import { processInstallation } from "./installation";
 import nock from "nock";
-import { RepoSyncStateObject } from "models/subscription";
 import { createWebhookApp } from "test/utils/probot";
-import {getLogger} from "config/logger";
-import {Hub} from "@sentry/types/dist/hub";
+import { getLogger } from "config/logger";
+import { Hub } from "@sentry/types/dist/hub";
 
 import pullRequestList from "fixtures/api/pull-request-list.json";
 
-jest.mock("models/index");
+jest.mock("models/subscription");
 
 describe.skip("sync/pull-request", () => {
 	const installationId = 1234;

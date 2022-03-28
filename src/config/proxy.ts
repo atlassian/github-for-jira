@@ -1,4 +1,4 @@
-import envVars from "./env";
+import { envVars }  from "./env";
 import { bootstrap } from "global-agent";
 import { getLogger } from "./logger";
 

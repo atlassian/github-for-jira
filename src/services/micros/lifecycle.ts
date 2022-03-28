@@ -1,7 +1,7 @@
-import envVars from "../../config/env";
+import { envVars }  from "config/env";
 import { Consumer, SQSMessage } from "sqs-consumer";
 import EventEmitter from "events";
-import { getLogger } from "../../config/logger";
+import { getLogger } from "config/logger";
 
 const logger = getLogger("micros.lifecycle");
 let client: Consumer;
@@ -45,7 +45,7 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 						// Get the event name (`active` or `inactive`) from the events, removing the prefix
 						const event = notification.LifecycleTransition?.toLowerCase().replace("micros:", "");
 						// Check to make sure `LifecycleTransition` was actually set
-						if(event) {
+						if (event) {
 							logger.info({ event, data: notification }, `Triggering '${event}' lifecycle event`);
 							eventEmitter.emit(event, notification);
 						}

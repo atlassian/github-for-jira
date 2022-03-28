@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { Installation } from "../../../models";
-import JiraClient from "../../../models/jira-client";
-import uninstall from "../../../jira/uninstall";
+import { Installation } from "models/installation";
+import { JiraClient } from "models/jira-client";
+import { JiraEventsUninstallPost } from "routes/jira/events/jira-events-uninstall-post";
 
 export const ApiJiraUninstallPost = async (request: Request, response: Response): Promise<void> => {
 	response.locals.installation = await Installation.findOne({
@@ -29,5 +29,5 @@ export const ApiJiraUninstallPost = async (request: Request, response: Response)
 	request.log.info(
 		`Forcing uninstall for ${response.locals.installation.clientKey}`
 	);
-	await uninstall(request, response);
+	await JiraEventsUninstallPost(request, response);
 };

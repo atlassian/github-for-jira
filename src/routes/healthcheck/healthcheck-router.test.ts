@@ -14,12 +14,12 @@ describe("Healthcheck Router", () => {
 	it("should GET /healthcheck", async () => {
 		await supertest(app)
 			.get(`/healthcheck`)
-			.expect(200)
+			.expect(200);
 	});
 
 	it("should GET /deepcheck", async () => {
 		await supertest(app)
 			.get(`/deepcheck`)
-			.expect(200)
+			.expect(200);
 	});
 });

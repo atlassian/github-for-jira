@@ -1,8 +1,6 @@
-/* eslint-disable no-unused-vars */
-
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
-import envVars from "./env";
+import { envVars }  from "./env";
 import crypto from "crypto";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 

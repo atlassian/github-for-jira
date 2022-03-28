@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation, Subscription } from "models/index";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import { GithubSubscriptionDelete } from "./github-subscription-delete";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
