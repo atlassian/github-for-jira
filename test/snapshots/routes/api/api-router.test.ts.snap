@@ -4,10 +4,6 @@ exports[`API Router Authentication based on SLAuth headers Request allowed when 
 
 exports[`API Router Authentication based on SLAuth headers Request allowed when Authentication Mechanism is SLAuth Token 1`] = `Object {}`;
 
-exports[`API Router Authentication is not handled on the App level anymore Doesnt matter if there is no token 1`] = `Object {}`;
-
-exports[`API Router Authentication is not handled on the App level anymore should return 200 if authorization header set 1`] = `Object {}`;
-
 exports[`API Router Endpoints Delete Installation Should work with new delete installation route 1`] = `Object {}`;
 
 exports[`API Router Endpoints Delete Installation Should work with old delete installation route 1`] = `Object {}`;
