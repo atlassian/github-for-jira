@@ -1,9 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`github-subscription-get Should 400 when missing body.jiraHost 1`] = `
-Array [
-  Object {
-    "err": Any<String>,
-  },
-]
-`;
