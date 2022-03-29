@@ -55,29 +55,52 @@ describe("API Router", () => {
 
 		await supertest(app)
 			.get(`/api/${subscription.gitHubInstallationId}/${encodeURIComponent(subscription.jiraHost)}/syncstate`)
+			.set("X-Slauth-Mechanism", "asap")
 			.then((response) => {
 				expect(response.text).toStrictEqual(`{"installationId":${gitHubInstallationId},"jiraHost":"${jiraHost}","numberOfSyncedRepos":0,"repos":{}}`);
 			});
 	});
 
-	describe("Authentication is not handled on the App level anymore", () => {
-		it("Doesnt matter if there is no token", () => {
+	describe("Authentication based on SLAuth headers", () => {
+		it("Request allowed when Authentication Mechanism is ASAP", () => {
 			return supertest(app)
 				.get("/api")
+				.set("X-Slauth-Mechanism", "asap")
+				.set("X-Slauth-Principal", "pollinator-check/fea5d423-e21f-465b-aa67-54c8367b7777")
 				.expect(200)
 				.then((response) => {
 					expect(response.body).toMatchSnapshot();
 				});
 		});
 
-		it("should return 200 if authorization header set", () => {
-
+		it("Request allowed when Authentication Mechanism is SLAuth Token", () => {
 			return supertest(app)
 				.get("/api")
-				.set("Authorization", "Bearer xxx")
+				.set("X-Slauth-Mechanism", "slauthtoken")
+				.set("X-Slauth-Principal", "group")
+				.set("X-Slauth-User-Groups", "micros-sv--github-for-jira-dl-admins")
 				.expect(200)
 				.then((response) => {
 					expect(response.body).toMatchSnapshot();
+				});
+		});
+
+		it("should return 401 no SLauth Headers", () => {
+
+			return supertest(app)
+				.get("/api")
+				.then((response) => {
+					expect(response.status).toEqual(401);
+				});
+		});
+
+		it("should return 401 when Authentication Mechanism is Open", () => {
+
+			return supertest(app)
+				.get("/api")
+				.set("X-Slauth-Mechanism", "open")
+				.then((response) => {
+					expect(response.status).toEqual(401);
 				});
 		});
 	});
@@ -92,6 +115,7 @@ describe("API Router", () => {
 
 				return supertest(app)
 					.post(`/api/jira/${installation.id}/verify`)
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.expect("Content-Type", /json/)
 					.then((response) => {
@@ -104,6 +128,7 @@ describe("API Router", () => {
 			it("should return 404 if no installation is found", async () => {
 				return supertest(app)
 					.get(`/api/${invalidId}`)
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(404)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -115,6 +140,7 @@ describe("API Router", () => {
 					.get(`/api/${gitHubInstallationId}`)
 					.set("host", "127.0.0.1")
 					.send({ jiraHost })
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -145,6 +171,7 @@ describe("API Router", () => {
 				return supertest(app)
 					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.send({ jiraHost })
 					.expect(404)
 					.then((response) => {
@@ -156,6 +183,7 @@ describe("API Router", () => {
 				return supertest(app)
 					.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/syncstate`)
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchObject({
@@ -192,6 +220,7 @@ describe("API Router", () => {
 					.post(`/api/${invalidId}/sync`)
 					.set("Content-Type", "application/json")
 					.send({ jiraHost: "https://unknownhost.atlassian.net" })
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(404)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -203,6 +232,7 @@ describe("API Router", () => {
 					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.send({ jiraHost })
 					.expect(202)
 					.then((response) => {
@@ -215,6 +245,7 @@ describe("API Router", () => {
 					.post(`/api/${gitHubInstallationId}/sync`)
 					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.send({ jiraHost, resetType: "full" })
 					.expect(202)
 					.then((response) => {
@@ -245,6 +276,7 @@ describe("API Router", () => {
 				return supertest(app)
 					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -255,6 +287,7 @@ describe("API Router", () => {
 				return supertest(app)
 					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();

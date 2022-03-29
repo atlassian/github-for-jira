@@ -1,5 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`API Router Authentication based on SLAuth headers Request allowed when Authentication Mechanism is ASAP 1`] = `Object {}`;
+
+exports[`API Router Authentication based on SLAuth headers Request allowed when Authentication Mechanism is SLAuth Token 1`] = `Object {}`;
+
 exports[`API Router Authentication is not handled on the App level anymore Doesnt matter if there is no token 1`] = `Object {}`;
 
 exports[`API Router Authentication is not handled on the App level anymore should return 200 if authorization header set 1`] = `Object {}`;
