@@ -1,7 +1,9 @@
 import { GithubAPI } from "config/github-api";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import { App } from "@octokit/app";
+import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const getGithubClientMiddleware = (octokitApp: App): RequestHandler => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	// If githubToken isn't set, this GithubAPI will be unauthed
@@ -25,9 +27,10 @@ export const isAdmin = (res: Response, logger: Logger) =>
 
 		// Otherwise this is an Organization installation and we need to ask GitHub for role of the logged in user
 		try {
-			const {
-				data: { role }
-			} = await res.locals.github.orgs.getMembership({ org, username });
+			const gitHubUserClient = new GitHubUserClient(res.locals.githubToken, logger);
+			const { data: { role } } = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_IS_ADMIN, false, jiraHost) ?
+				await gitHubUserClient.getMembershipForAuthenticatedUser(org) :
+				await res.locals.github.orgs.getMembership({ org, username });
 
 			logger.info(`isAdmin: User ${username} has ${role} role for org ${org}`);
 
