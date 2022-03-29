@@ -50,7 +50,6 @@ serviceProxy:
   ingress:
     authentication:
       enabled: true
-      transitionMode: true
   plugins:
     auth:
       logLevel: info

@@ -66,25 +66,9 @@ describe("Maintenance", () => {
 		});
 
 		describe("Admin API", () => {
-			beforeEach(() =>
-				githubNock
-					.post("/graphql")
-					.reply(200, {
-						data: {
-							viewer: {
-								login: "monalisa",
-								organization: {
-									viewerCanAdminister: true
-								}
-							}
-						}
-					})
-			);
-
 			it("should still work in maintenance mode", () =>
 				supertest(app)
 					.get("/api")
-					.set("Authorization", "Bearer xxx")
 					.expect(200)
 			);
 		});
