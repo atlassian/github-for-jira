@@ -1,0 +1,44 @@
+{
+	"tests": [
+		{
+			"name": "Allow pollinator test to call Delete Installation endpoints",
+			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/fea5d423-e21f-465b-aa67-54c8367b7777"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Allow pollinator test to call Delete Installation endpoints",
+			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/47fcf993-7364-49c4-8e71-25b79e046428"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Not allow Pollinator tests to call other Admin endpoints",
+			"path": "/api/jira/13453453/verify",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/47fcf993-7364-49c4-8e71-25b79e046428"
+			],
+			"allowed": false
+		},
+		{
+			"name": "Not allow Pollinator tests to call other Admin endpoints",
+			"path": "/api/jira/13453453/verify",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/fea5d423-e21f-465b-aa67-54c8367b7777"
+			],
+			"allowed": false
+		}
+	]
+}

@@ -15,28 +15,6 @@ describe("API Router", () => {
 	let installation: Installation;
 	let subscription: Subscription;
 
-	const successfulAuthResponseWrite = {
-		data: {
-			viewer: {
-				login: "gimenete",
-				organization: {
-					viewerCanAdminister: true
-				}
-			}
-		}
-	};
-
-	const successfulAuthResponseAdmin = {
-		data: {
-			viewer: {
-				login: "monalisa",
-				organization: {
-					viewerCanAdminister: true
-				}
-			}
-		}
-	};
-
 	const createApp = () => {
 		const app = express();
 		app.use((req: Request, res: Response, next: NextFunction) => {
@@ -74,145 +52,60 @@ describe("API Router", () => {
 	});
 
 	it("should GET syncstate", async () => {
-		githubNock
-			.post("/graphql")
-			.reply(200, {
-				data: {
-					viewer: {
-						login: "monalisa",
-						organization: {
-							viewerCanAdminister: true
-						}
-					}
-				}
-			});
 
 		await supertest(app)
 			.get(`/api/${subscription.gitHubInstallationId}/${encodeURIComponent(subscription.jiraHost)}/syncstate`)
-			.set("Authorization", "Bearer xxx")
+			.set("X-Slauth-Mechanism", "asap")
 			.then((response) => {
 				expect(response.text).toStrictEqual(`{"installationId":${gitHubInstallationId},"jiraHost":"${jiraHost}","numberOfSyncedRepos":0,"repos":{}}`);
 			});
 	});
 
-	describe("Authentication", () => {
-		it("should return 404 if no token is provided", () => {
+	describe("Authentication based on SLAuth headers", () => {
+		it("Request allowed when Authentication Mechanism is ASAP", () => {
 			return supertest(app)
 				.get("/api")
-				.expect(404)
-				.then((response) => {
-					expect(response.body).toMatchSnapshot();
-				});
-		});
-
-		it("should return 200 if a valid token is provided", () => {
-			githubNock
-				.post("/graphql")
-				.reply(200, successfulAuthResponseWrite);
-
-			return supertest(app)
-				.get("/api")
-				.set("Authorization", "Bearer xxx")
+				.set("X-Slauth-Mechanism", "asap")
+				.set("X-Slauth-Principal", "pollinator-check/fea5d423-e21f-465b-aa67-54c8367b7777")
 				.expect(200)
 				.then((response) => {
 					expect(response.body).toMatchSnapshot();
 				});
 		});
 
-		it("should return 200 if token belongs to an admin", () => {
-			githubNock
-				.post("/graphql")
-				.reply(200, successfulAuthResponseAdmin);
-
+		it("Request allowed when Authentication Mechanism is SLAuth Token", () => {
 			return supertest(app)
 				.get("/api")
-				.set("Authorization", "Bearer xxx")
+				.set("X-Slauth-Mechanism", "slauthtoken")
+				.set("X-Slauth-Principal", "group")
+				.set("X-Slauth-User-Groups", "micros-sv--github-for-jira-dl-admins")
 				.expect(200)
 				.then((response) => {
 					expect(response.body).toMatchSnapshot();
 				});
 		});
 
-		it("should return 401 if the GraphQL query returns errors", () => {
-			githubNock
-				.post("/graphql")
-				.reply(200, {
-					errors: [
-						{
-							path: ["query", "viewer", "foo"],
-							extensions: {
-								code: "undefinedField",
-								typeName: "User",
-								fieldName: "foo"
-							},
-							locations: [
-								{
-									line: 4,
-									column: 5
-								}
-							],
-							message: "Field 'foo' doesn't exist on type 'User'"
-						}
-					]
-				});
+		it("should return 401 no SLauth Headers", () => {
 
 			return supertest(app)
 				.get("/api")
-				.set("Authorization", "Bearer xxx")
 				.then((response) => {
-					expect(response.body).toMatchSnapshot();
 					expect(response.status).toEqual(401);
 				});
 		});
 
-		it("should return 401 if the returned organization is null", () => {
-			githubNock
-				.post("/graphql")
-				.reply(200, {
-					data: {
-						viewer: {
-							login: "gimenete",
-							organization: null
-						}
-					}
-				});
+		it("should return 401 when Authentication Mechanism is Open", () => {
 
 			return supertest(app)
 				.get("/api")
-				.set("Authorization", "Bearer xxx")
-				.expect(401)
+				.set("X-Slauth-Mechanism", "open")
 				.then((response) => {
-					expect(response.body).toMatchSnapshot();
-				});
-		});
-
-		it("should return 401 if the token is invalid", () => {
-			githubNock
-				.post("/graphql")
-				.reply(401, {
-					HttpError: {
-						message: "Bad credentials",
-						documentation_url: "https://developer.github.com/v4"
-					}
-				});
-
-			return supertest(app)
-				.get("/api")
-				.set("Authorization", "Bearer bad token")
-				.expect(401)
-				.then((response) => {
-					expect(response.body).toMatchSnapshot();
+					expect(response.status).toEqual(401);
 				});
 		});
 	});
 
 	describe("Endpoints", () => {
-
-		beforeEach(() => {
-			githubNock
-				.post("/graphql")
-				.reply(200, successfulAuthResponseWrite);
-		});
 
 		describe("verify", () => {
 			it("should return 'Installation already enabled'", () => {
@@ -222,7 +115,7 @@ describe("API Router", () => {
 
 				return supertest(app)
 					.post(`/api/jira/${installation.id}/verify`)
-					.set("Authorization", "Bearer xxx")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.expect("Content-Type", /json/)
 					.then((response) => {
@@ -235,7 +128,7 @@ describe("API Router", () => {
 			it("should return 404 if no installation is found", async () => {
 				return supertest(app)
 					.get(`/api/${invalidId}`)
-					.set("Authorization", "Bearer xxx")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(404)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -245,9 +138,9 @@ describe("API Router", () => {
 			it("should return information for an existing installation", async () => {
 				return supertest(app)
 					.get(`/api/${gitHubInstallationId}`)
-					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
 					.send({ jiraHost })
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -277,8 +170,8 @@ describe("API Router", () => {
 			it("should return 404 if no installation is found", async () => {
 				return supertest(app)
 					.get(`/api/${invalidId}/${encodeURIComponent(jiraHost)}/syncstate`)
-					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.send({ jiraHost })
 					.expect(404)
 					.then((response) => {
@@ -289,8 +182,8 @@ describe("API Router", () => {
 			it("should return the sync state for an existing installation", async () => {
 				return supertest(app)
 					.get(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/syncstate`)
-					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchObject({
@@ -325,9 +218,9 @@ describe("API Router", () => {
 			it("should return 404 if no installation is found", async () => {
 				return supertest(app)
 					.post(`/api/${invalidId}/sync`)
-					.set("Authorization", "Bearer xxx")
 					.set("Content-Type", "application/json")
 					.send({ jiraHost: "https://unknownhost.atlassian.net" })
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(404)
 					.then((response) => {
 						expect(response.text).toMatchSnapshot();
@@ -337,9 +230,9 @@ describe("API Router", () => {
 			it("should trigger the sync or start function", async () => {
 				return supertest(app)
 					.post(`/api/${gitHubInstallationId}/sync`)
-					.set("Authorization", "Bearer xxx")
 					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.send({ jiraHost })
 					.expect(202)
 					.then((response) => {
@@ -350,9 +243,9 @@ describe("API Router", () => {
 			it("should reset sync state if asked to", async () => {
 				return supertest(app)
 					.post(`/api/${gitHubInstallationId}/sync`)
-					.set("Authorization", "Bearer xxx")
 					.set("Content-Type", "application/json")
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.send({ jiraHost, resetType: "full" })
 					.expect(202)
 					.then((response) => {
@@ -382,8 +275,8 @@ describe("API Router", () => {
 			it("Should work with old delete installation route", () => {
 				return supertest(app)
 					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
-					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
@@ -393,8 +286,8 @@ describe("API Router", () => {
 			it("Should work with new delete installation route", () => {
 				return supertest(app)
 					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
-					.set("Authorization", "Bearer xxx")
 					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(200)
 					.then((response) => {
 						expect(response.body).toMatchSnapshot();
