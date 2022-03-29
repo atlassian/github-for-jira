@@ -8,7 +8,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraClient } from "../jira/client/jira-client";
-import { GitHubAppClient } from "./client/github-app-client";
+import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
 
 export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
@@ -25,7 +25,7 @@ export const createBranchWebhookHandler = async (context: CustomContext, jiraCli
 		});
 	} else {
 
-		const gitHubClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log);
+		const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
 		const jiraPayload = await transformBranch(gitHubClient, webhookPayload);
 
 		if (!jiraPayload) {
@@ -48,7 +48,7 @@ export const createBranchWebhookHandler = async (context: CustomContext, jiraCli
 };
 
 export const processBranch = async (
-	github: GitHubAppClient,
+	github: GitHubInstallationClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadCreate,
 	webhookReceivedDate: Date,

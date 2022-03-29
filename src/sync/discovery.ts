@@ -2,7 +2,7 @@ import { getRepositorySummary } from "./jobs";
 import { Subscription, Repositories, Repository } from "models/subscription";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { sqsQueues } from "../sqs/queues";
-import { GitHubAppClient } from "../github/client/github-app-client";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import { DiscoveryMessagePayload } from "../sqs/discovery";
 
@@ -60,7 +60,7 @@ const syncRepositories = async (github, subscription: Subscription, logger: Logg
 export const discovery = async (data: DiscoveryMessagePayload, logger: LoggerWithTarget): Promise<void> => {
 	const startTime = new Date().toISOString();
 	const { jiraHost, installationId } = data;
-	const github = new GitHubAppClient(getCloudInstallationId(installationId), logger);
+	const github = new GitHubInstallationClient(getCloudInstallationId(installationId), logger);
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId

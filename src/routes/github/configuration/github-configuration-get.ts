@@ -7,7 +7,7 @@ import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
 import { Tracer } from "config/tracer";
-import { GitHubAppClient } from "~/src/github/client/github-app-client";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import Logger from "bunyan";
 import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { AppInstallation } from "config/interfaces";
@@ -71,7 +71,7 @@ const getInstallationsWithAdmin = async (
 		});
 
 		try {
-			const githubClient = new GitHubAppClient(getCloudInstallationId(installation.id), log);
+			const githubClient = new GitHubInstallationClient(getCloudInstallationId(installation.id), log);
 			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
 			const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 

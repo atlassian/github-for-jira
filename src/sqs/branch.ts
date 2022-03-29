@@ -1,7 +1,7 @@
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { Context, MessageHandler } from "./sqs";
 import { processBranch } from "../github/branch";
-import { GitHubAppClient } from "../github/client/github-app-client";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
 
 export type BranchMessagePayload = {
@@ -20,7 +20,7 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 	context.log.info("Handling branch message from the SQS queue");
 
 	const messagePayload: BranchMessagePayload = context.payload;
-	const gitHubClient = new GitHubAppClient(getCloudInstallationId(messagePayload.installationId), context.log);
+	const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(messagePayload.installationId), context.log);
 
 	await processBranch(
 		gitHubClient,
