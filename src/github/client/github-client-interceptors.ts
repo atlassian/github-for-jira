@@ -1,10 +1,10 @@
 import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
 import Logger from "bunyan";
-import statsd from "../../config/statsd";
-import { metricError } from "../../config/metric-names";
+import { statsd }  from "config/statsd";
+import { metricError } from "config/metric-names";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { extractPath } from "../../jira/client/axios";
-import { numberFlag, NumberFlags } from "../../config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -108,7 +108,6 @@ export const handleFailedRequest = (logger: Logger) =>
 				logger.warn({ err: error }, "Blocked by GitHub allowlist");
 				return Promise.reject(new BlockedIpError(error, status));
 			}
-
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
 			isWarning ? logger.warn(errorMessage) : logger.error({ err: error }, errorMessage);

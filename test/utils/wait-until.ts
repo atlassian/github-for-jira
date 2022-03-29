@@ -1,8 +1,8 @@
-export default function waitUntil<T>(
+export const waitUntil = <T>(
 	promiseFactory: () => Promise<T>,
 	delayMillis = 100,
 	maxAttempts = 30
-): Promise<T> {
+): Promise<T> => {
 	let nAttempts = 0;
 
 	let giveItATryPromiseFactory = () => promiseFactory(); // will be reinitialized later

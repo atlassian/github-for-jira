@@ -15,7 +15,7 @@ import { Writable } from "stream";
  * @param out {Stream} original stream
  * @return {WritableStream} that you can pipe bunyan output into
  */
-const filteringHttpLogsStream = (filteringLoggerName: string, out) => {
+export const filteringHttpLogsStream = (filteringLoggerName: string, out) => {
 	//TODO Remove this code when there will be convenient way to do it in Probot.
 	//See https://github.com/probot/probot/issues/1577
 	const shouldBeFiltered = (chunk: any): boolean => {
@@ -32,5 +32,3 @@ const filteringHttpLogsStream = (filteringLoggerName: string, out) => {
 	});
 	return writable;
 };
-
-export default filteringHttpLogsStream;

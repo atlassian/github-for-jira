@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "test/utils/probot";
-import { Installation, Subscription } from "../models";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import { Application } from "probot";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 import issueNullBody from "fixtures/issue-null-body.json";
 import issueBasic from "fixtures/issue-basic.json";
 
 jest.mock("config/feature-flags");
 
-describe.each([true, false])("Issue Webhook - FF %p", (useNewGithubClient) => {
+describe("Issue Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
@@ -27,20 +26,12 @@ describe.each([true, false])("Issue Webhook - FF %p", (useNewGithubClient) => {
 			clientKey: "client-key",
 			sharedSecret: "shared-secret"
 		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_ISSUE_WEBHOOK,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
 	});
 
 	describe("issue", () => {
 		describe("created", () => {
 			it("should update the GitHub issue with a linked Jira ticket", async () => {
-				if(useNewGithubClient) {
-					githubUserTokenNock(gitHubInstallationId);
-				}
+				githubUserTokenNock(gitHubInstallationId);
 
 				jiraNock
 					.get("/rest/api/latest/issue/TEST-123?fields=summary")
@@ -53,7 +44,7 @@ describe.each([true, false])("Issue Webhook - FF %p", (useNewGithubClient) => {
 
 				githubNock
 					.patch("/repos/test-repo-owner/test-repo-name/issues/123456789", {
-						body: `Test example issue with linked Jira issue: [TEST-123]\n\n[TEST-123]: ${jiraHost}/browse/TEST-123`,
+						body: `Test example issue with linked Jira issue: [TEST-123]\n\n[TEST-123]: ${jiraHost}/browse/TEST-123`
 					})
 					.reply(200, {
 						key: "TEST-123",

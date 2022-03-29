@@ -1,15 +1,16 @@
-import { Installation, Subscription } from "../../../models";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { getInstallations, InstallationResults } from "../../jira/configuration/jira-configuration-get";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
-import { Errors } from "../../../config/errors";
-import { Tracer } from "../../../config/tracer";
-import { GitHubAppClient } from "../../../github/client/github-app-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { Errors } from "config/errors";
+import { Tracer } from "config/tracer";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import Logger from "bunyan";
-import { getCloudInstallationId } from "../../../github/client/installation-id";
-import { AppInstallation } from "../../../config/interfaces";
+import { getCloudInstallationId } from "~/src/github/client/installation-id";
+import { AppInstallation } from "config/interfaces";
 
 interface ConnectedStatus {
 	syncStatus?: string;
@@ -70,7 +71,7 @@ const getInstallationsWithAdmin = async (
 		});
 
 		try {
-			const githubClient = new GitHubAppClient(getCloudInstallationId(installation.id), log);
+			const githubClient = new GitHubInstallationClient(getCloudInstallationId(installation.id), log);
 			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
 			const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 
@@ -82,7 +83,7 @@ const getInstallationsWithAdmin = async (
 				admin
 			});
 		} catch (err) {
-			log.warn({err, installationId: installation.id, org: installation.account.login}, "Cannot check admin or get number of repos per org")
+			log.warn({ err, installationId: installation.id, org: installation.account.login }, "Cannot check admin or get number of repos per org");
 		}
 	}
 	return installationsWithAdmin;

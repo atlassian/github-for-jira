@@ -1,6 +1,6 @@
 // setup route middlewares
 import { NextFunction, Request, Response } from "express";
-import { postInstallUrl } from "../routes/jira/jira-atlassian-connect-get";
+import { postInstallUrl } from "routes/jira/jira-atlassian-connect-get";
 
 export const jirahostMiddleware = (req: Request, res: Response, next: NextFunction) => {
 	if (req.cookies.jiraHost) {
@@ -21,7 +21,7 @@ export const jirahostMiddleware = (req: Request, res: Response, next: NextFuncti
 		res.locals.jiraHost = req.session.jiraHost;
 	}
 
-	req.addLogFields({jiraHost: res.locals.jiraHost});
+	req.addLogFields({ jiraHost: res.locals.jiraHost });
 
 	next();
 };

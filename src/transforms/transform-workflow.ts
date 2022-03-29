@@ -1,11 +1,10 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { GitHubPullRequest } from "../interfaces/github";
-import { JiraBuildData, JiraPullRequest } from "../interfaces/jira";
-import { GitHubAPI } from "probot";
-import { getAllCommitMessagesBetweenReferences } from "./util/githubApiRequests";
-import { WorkflowPayload } from "../config/interfaces";
-import { GitHubAppClient } from "../github/client/github-app-client";
+import { GitHubPullRequest } from "interfaces/github";
+import { JiraBuildData, JiraPullRequest } from "interfaces/jira";
+import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
+import { WorkflowPayload } from "config/interfaces";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
@@ -52,8 +51,8 @@ function mapPullRequests(
 	}));
 }
 
-export const transformWorkflowPayload = async (
-	githubClient: GitHubAPI | GitHubAppClient,
+export const transformWorkflow = async (
+	githubClient: GitHubInstallationClient,
 	payload: WorkflowPayload,
 	logger: LoggerWithTarget
 ): Promise<JiraBuildData | undefined> => {

@@ -1,5 +1,5 @@
 import IORedis from "ioredis";
-import getRedisInfo from "config/redis-info";
+import { getRedisInfo } from "config/redis-info";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 
 describe("deduplicator", () => {

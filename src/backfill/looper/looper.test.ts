@@ -1,15 +1,12 @@
-
 /* eslint-disable jest/no-standalone-expect */
-import {
-	CappedDelayRateLimitStrategy,
-} from "./capped-delay-ratelimit-strategy";
+import { CappedDelayRateLimitStrategy } from "./capped-delay-ratelimit-strategy";
 import { Looper } from "./looper";
-import { getLogger } from "../../config/logger";
+import { getLogger } from "config/logger";
 import each from "jest-each";
 import { JobStore, RateLimitState, Step, StepPrioritizer, StepProcessor, StepResult } from "../backfill.types";
 import { BackoffRetryStrategy } from "./backoff-retry-strategy";
 
-const logger = getLogger("looper.test.ts")
+const logger = getLogger("looper.test.ts");
 
 describe("Looper", () => {
 
@@ -26,7 +23,7 @@ describe("Looper", () => {
 			cursor: 0
 		},
 		failedAttemptsCount: 0
-	}
+	};
 
 	type JobId = string;
 
@@ -36,8 +33,8 @@ describe("Looper", () => {
 
 	class MyProcessor implements StepProcessor<JobState> {
 
-		private readonly failingCursors: number[] = [];
 		itemsProcessed: number[] = [];
+		private readonly failingCursors: number[] = [];
 
 		constructor(failingCursors: number[]) {
 			this.failingCursors = failingCursors;
@@ -56,7 +53,7 @@ describe("Looper", () => {
 						isFatal: false
 					},
 					jobState
-				}
+				};
 			}
 
 			this.itemsProcessed.push(jobState.cursor);
@@ -65,7 +62,7 @@ describe("Looper", () => {
 				success: true,
 				rateLimit: rateLimitState,
 				jobState
-			}
+			};
 		}
 	}
 
@@ -96,7 +93,7 @@ describe("Looper", () => {
 	class MyJobStore implements JobStore<JobId, JobState> {
 
 		getFailedAttemptsCount() {
-			return DATABASE.failedAttemptsCount
+			return DATABASE.failedAttemptsCount;
 		}
 
 		getJobState(): JobState {
@@ -142,14 +139,14 @@ describe("Looper", () => {
 		// In a real implementation, this would not be called in a simple loop, but instead triggered by an async queue mechanism.
 		while (nextAction.scheduleNextStep) {
 
-			logger.info(`STATE AFTER STEP ${i}: ${JSON.stringify(DATABASE, null, 2)}`)
+			logger.info(`STATE AFTER STEP ${i}: ${JSON.stringify(DATABASE, null, 2)}`);
 
 			// travel into the future to simulate waiting time and refresh the rate limit
 			if (nextAction.delay) {
 				logger.info(`DELAYING BY ${nextAction.delay.seconds} seconds due to ${nextAction.delay.reason}!`);
 				now = new Date(now.getTime() + nextAction.delay.seconds * 1000);
 
-				if(nextAction.delay.reason == "retry"){
+				if (nextAction.delay.reason == "retry") {
 					retryCount++;
 				}
 
@@ -169,10 +166,10 @@ describe("Looper", () => {
 		expect(DATABASE.jobState.cursor).toBe(10);
 		expect(processor.itemsProcessed).toHaveLength(8);
 		expect(processor.itemsProcessed).toEqual(expect.arrayContaining([1, 2, 4, 5, 6, 8, 9]));
-		expect(processor.itemsProcessed).not.toContain(3) // item 3 was skipped due to failed retries
-		expect(processor.itemsProcessed).not.toContain(7) // item 7 was skipped due to failed retries
-		expect(retryCount).toBe(6) // 2 * 3 retries
-		expect(ratelimitedCount).toBe(3) // the rate limit budget should have run out 3 times
+		expect(processor.itemsProcessed).not.toContain(3); // item 3 was skipped due to failed retries
+		expect(processor.itemsProcessed).not.toContain(7); // item 7 was skipped due to failed retries
+		expect(retryCount).toBe(6); // 2 * 3 retries
+		expect(ratelimitedCount).toBe(3); // the rate limit budget should have run out 3 times
 
 	});
 
@@ -185,7 +182,7 @@ describe("Looper", () => {
 			[3, 3, true, 16],
 			[3, 4, false, 32],
 			[3, 5, false, 64],
-			[3, 6, false, 128],
+			[3, 6, false, 128]
 		]).it("input: retries=%s, failed attempts=%s; output: shouldRetry=%s, delay=%s", async (retries: number, failedAttempts: number, expectedToRetry: boolean, expectedDelay: boolean) => {
 			const backoffStrategy = new BackoffRetryStrategy(retries, 2, 2);
 			expect(backoffStrategy.getRetry(failedAttempts).shouldRetry).toBe(expectedToRetry);
@@ -228,7 +225,7 @@ describe("Looper", () => {
 			[900, now, rateLimit(-1, fiveMinutesFromNow), 300], 	// delay of 5 minutes because budget is empty
 			[900, now, rateLimit(0, fiveMinutesAgo), 0], 					// no delay, because refresh date is in the past
 			[-1, now, rateLimit(0, fiveMinutesAgo), 0], 					// no delay because of invalid cap value
-			[900, now, undefined, 0], 																			// no delay because no rate limit provided
+			[900, now, undefined, 0] 																			// no delay because no rate limit provided
 		]).it("input: maxDelay=%s, now=%s, rateLimit=%s; output: expectedDelay=%s", async (maxDelay: number, now: Date, ratelimit: RateLimitState, expectedDelay: number) => {
 			const retryStrategy = new CappedDelayRateLimitStrategy(maxDelay, () => now);
 			const delay = retryStrategy.getDelayInSeconds(ratelimit);

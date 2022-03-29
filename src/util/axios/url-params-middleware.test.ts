@@ -62,7 +62,7 @@ describe("URL Params Axios Middleware", () => {
 		const config: AxiosRequestConfig = {
 			url: "/foo?search={terms}",
 			urlParams: {
-				terms: "me",
+				terms: "me"
 			}
 		};
 		expect(urlParamsMiddleware(config).url).toEqual("/foo?search=me");

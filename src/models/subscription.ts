@@ -1,6 +1,7 @@
-import Sequelize, { Op, WhereOptions } from "sequelize";
-import _ from "lodash";
-import RepoSyncState from "./reposyncstate";
+import { DataTypes, DATE, Model, Op, WhereOptions } from "sequelize";
+import { RepoSyncState } from "./reposyncstate";
+import { merge, uniq } from "lodash";
+import { sequelize } from "models/sequelize";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -49,7 +50,7 @@ export interface Repository {
 	updated_at: number; // TODO: is this a date object or a timestamp?  Different places uses different things
 }
 
-export default class Subscription extends Sequelize.Model {
+export class Subscription extends Model {
 	id: number;
 	gitHubInstallationId: number;
 	jiraHost: string;
@@ -100,7 +101,7 @@ export default class Subscription extends Sequelize.Model {
 		if (installationIds?.length > 0) {
 			andFilter.push({
 				gitHubInstallationId: {
-					[Op.in]: _.uniq(installationIds)
+					[Op.in]: uniq(installationIds)
 				}
 			});
 		}
@@ -194,7 +195,7 @@ export default class Subscription extends Sequelize.Model {
 	// This is a workaround to fix a long standing bug in sequelize for JSON data types
 	// https://github.com/sequelize/sequelize/issues/4387
 	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
-		const state = _.merge(await RepoSyncState.toRepoJson(this), updatedState);
+		const state = merge(await RepoSyncState.toRepoJson(this), updatedState);
 		await RepoSyncState.updateFromRepoJson(this, state);
 		return this;
 	}
@@ -208,6 +209,23 @@ export default class Subscription extends Sequelize.Model {
 		await this.destroy();
 	}
 }
+
+Subscription.init({
+	id: {
+		type: DataTypes.INTEGER,
+		primaryKey: true,
+		allowNull: false,
+		autoIncrement: true
+	},
+	gitHubInstallationId: DataTypes.INTEGER,
+	jiraHost: DataTypes.STRING,
+	selectedRepositories: DataTypes.ARRAY(DataTypes.INTEGER),
+	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
+	syncWarning: DataTypes.STRING,
+	jiraClientKey: DataTypes.STRING,
+	createdAt: DATE,
+	updatedAt: DATE
+}, { sequelize });
 
 export interface SubscriptionPayload {
 	installationId: number;

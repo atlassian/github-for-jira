@@ -11,4 +11,4 @@ export const SessionGet = (req: Request, res: Response, next: NextFunction) => {
 		redirectUrl: new URL(req.params[0], process.env.APP_URL).href,
 		nonce: res.locals.nonce
 	});
-}
+};

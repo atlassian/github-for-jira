@@ -1,21 +1,21 @@
-import _ from "lodash";
 import issueKeyParser from "jira-issue-key-parser";
-import { JiraDeploymentData } from "../interfaces/jira";
+import { JiraDeploymentData } from "interfaces/jira";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { getAllCommitMessagesBetweenReferences } from "./util/githubApiRequests";
-import { GitHubAppClient } from "../github/client/github-app-client";
-import {AxiosResponse} from "axios";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
+import { AxiosResponse } from "axios";
+import { deburr, isEmpty } from "lodash";
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
 async function getLastSuccessfulDeployCommitSha(
 	owner: string,
 	repoName: string,
 	github: GitHubAPI,
-	newGitHubClient: GitHubAppClient,
+	newGitHubClient: GitHubInstallationClient,
 	useNewClient: boolean,
 	deployments: Octokit.ReposListDeploymentsResponseItem[],
 	logger?: LoggerWithTarget
@@ -55,7 +55,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 	currentDeployId: number,
 	currentDeployEnv: string,
 	github: GitHubAPI,
-	newGitHubClient: GitHubAppClient,
+	newGitHubClient: GitHubInstallationClient,
 	useNewClient: boolean,
 	logger: LoggerWithTarget
 ): Promise<string | void | undefined> {
@@ -86,15 +86,13 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		repo: repoName,
 		base: lastSuccessfullyDeployedCommit,
 		head: currentDeploySha
-	}
+	};
 
-	const allCommitMessages = await getAllCommitMessagesBetweenReferences(
+	return await getAllCommitMessagesBetweenReferences(
 		compareCommitsPayload,
 		useNewClient ? newGitHubClient : github,
 		logger
 	);
-
-	return allCommitMessages;
 }
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
@@ -137,14 +135,14 @@ export function mapEnvironment(environment: string): string {
 			`^(.*${separator})?(${exactMatch})(${separator}.*)?$`,
 			"i"
 		);
-		return envNamesPattern.test(_.deburr(environment));
+		return envNamesPattern.test(deburr(environment));
 	};
 
 	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
-		production: ["production", "prod", "prd", "live"],
+		production: ["production", "prod", "prd", "live"]
 	};
 
 	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key]));
@@ -156,7 +154,7 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export default async (githubClient: GitHubAPI, newGitHubClient: GitHubAppClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 
@@ -189,7 +187,7 @@ export default async (githubClient: GitHubAPI, newGitHubClient: GitHubAppClient,
 		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`) || [];
 	}
 
-	if (_.isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
 
@@ -215,13 +213,13 @@ export default async (githubClient: GitHubAPI, newGitHubClient: GitHubAppClient,
 			pipeline: {
 				id: deployment.task,
 				displayName: deployment.task,
-				url: deployment_status.target_url || deployment.url,
+				url: deployment_status.target_url || deployment.url
 			},
 			environment: {
 				id: deployment_status.environment,
 				displayName: deployment_status.environment,
-				type: environment,
-			},
-		}],
+				type: environment
+			}
+		}]
 	};
 };

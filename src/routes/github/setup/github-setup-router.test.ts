@@ -1,11 +1,10 @@
-
 import supertest from "supertest";
-import { Installation } from "models/index";
+import { Installation } from "models/installation";
 import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import envVars from "config/env";
+import { envVars }  from "config/env";
 
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 
@@ -31,14 +30,14 @@ describe("Github Setup", () => {
 				jiraHost,
 				clientKey: "abc123",
 				secrets: "def234",
-				sharedSecret: "ghi345",
+				sharedSecret: "ghi345"
 			});
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
 			await supertest(frontendApp)
 				.get("/github/setup")
-				.expect(422)
+				.expect(422);
 		});
 
 		it("should work with a missing app installation", async () => {
@@ -48,8 +47,8 @@ describe("Github Setup", () => {
 				.reply(404);
 			await supertest(frontendApp)
 				.get("/github/setup")
-				.query({installation_id})
-				.expect(200)
+				.query({ installation_id })
+				.expect(200);
 		});
 
 		it("should return 200 without jiraHost", async () => {
@@ -59,8 +58,8 @@ describe("Github Setup", () => {
 				.reply(200, singleInstallation);
 			await supertest(frontendApp)
 				.get("/github/setup")
-				.query({installation_id})
-				.expect(200)
+				.query({ installation_id })
+				.expect(200);
 		});
 
 		it("should return 200 with jiraHost", async () => {
@@ -70,14 +69,14 @@ describe("Github Setup", () => {
 				.reply(200, singleInstallation);
 			await supertest(frontendApp)
 				.get("/github/setup")
-				.query({installation_id})
+				.query({ installation_id })
 				.set(
 					"Cookie",
 					getSignedCookieHeader({
-						jiraHost,
+						jiraHost
 					})
 				)
-				.expect(200)
+				.expect(200);
 		});
 	});
 
@@ -92,7 +91,7 @@ describe("Github Setup", () => {
 				.set(
 					"Cookie",
 					getSignedCookieHeader({
-						jiraHost,
+						jiraHost
 					})
 				)
 				.send({
@@ -101,7 +100,7 @@ describe("Github Setup", () => {
 				.expect(res => {
 					expect(res.status).toBe(200);
 					expect(res.body.redirect).toBe(`${jiraHost}/jira/marketplace/discover/app/com.github.integration.production`);
-				})
+				});
 		});
 
 		it("should return a 200 with the redirect url to the app if a valid domain is given and an installation already exists", async () => {
@@ -121,7 +120,7 @@ describe("Github Setup", () => {
 				.set(
 					"Cookie",
 					getSignedCookieHeader({
-						jiraHost,
+						jiraHost
 					})
 				)
 				.send({
@@ -130,7 +129,7 @@ describe("Github Setup", () => {
 				.expect(res => {
 					expect(res.status).toBe(200);
 					expect(res.body.redirect).toBe(`${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page`);
-				})
+				});
 		});
 
 		it("should return a 400 if no domain is given", () =>
@@ -139,7 +138,7 @@ describe("Github Setup", () => {
 				.set(
 					"Cookie",
 					getSignedCookieHeader({
-						jiraHost,
+						jiraHost
 					})
 				)
 				.send({})
@@ -151,7 +150,7 @@ describe("Github Setup", () => {
 				.set(
 					"Cookie",
 					getSignedCookieHeader({
-						jiraHost,
+						jiraHost
 					})
 				)
 				.send({

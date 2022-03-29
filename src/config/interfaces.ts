@@ -131,7 +131,7 @@ interface WorkflowRunRepository {
 	deployments_url: string;
 }
 
-interface  WorkflowRunPullRequestsHeadAndBaseRepo {
+interface WorkflowRunPullRequestsHeadAndBaseRepo {
 	id: number;
 	url: string;
 	name: string;
@@ -197,6 +197,7 @@ interface Workflow {
 	html_url: string;
 	badge_url: string;
 }
+
 interface WorkflowSender {
 	login: string;
 	id: number;

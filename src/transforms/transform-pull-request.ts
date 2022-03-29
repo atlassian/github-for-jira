@@ -3,13 +3,13 @@ import { isEmpty, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
 import { Octokit } from "@octokit/rest";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { getJiraAuthor } from "../util/jira";
+import { getJiraAuthor } from "utils/jira-utils";
 import { GitHubAPI } from "probot";
-import { getGithubUser } from "../services/github/user";
-import { JiraAuthor } from "../interfaces/jira";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
-import { GitHubAppClient } from "../github/client/github-app-client";
+import { getGithubUser } from "services/github/user";
+import { JiraAuthor } from "interfaces/jira";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -50,7 +50,7 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 }
 
 // TODO: define arguments and return
-export const transformPullRequest = async (github: GitHubAPI | GitHubAppClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
+export const transformPullRequest = async (github: GitHubAPI | GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
@@ -72,7 +72,6 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubAppClient, 
 	const pullRequestStatus = mapStatus(pullRequest.state, pullRequest.merged_at);
 
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
-	const newPrUrl = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_PULL_REQUEST_URL_FORMAT, true);
 
 	return {
 		id: pullRequest.base.repo.id,
@@ -85,7 +84,7 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubAppClient, 
 				? []
 				: [
 					{
-						createPullRequestUrl: newPrUrl ? generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys) : `${pullRequest?.head?.repo?.html_url}/pull/new/${pullRequest?.head?.ref}`,
+						createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys),
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
 							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),

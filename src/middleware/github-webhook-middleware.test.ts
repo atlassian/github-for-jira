@@ -1,15 +1,17 @@
 import { mocked } from "ts-jest/utils";
-import { Installation, Subscription } from "models/index";
-import GitHubAPI from "config/github-api";
+import { Installation} from "models/installation";
+import { Subscription } from "models/subscription";
+import { GithubAPI } from "config/github-api";
 import { GithubWebhookMiddleware } from "./github-webhook-middleware";
 import { mockModels } from "test/utils/models";
 import { wrapLogger } from "probot/lib/wrap-logger";
 import { createLogger } from "bunyan";
 import { Writable } from "stream";
-import { emitWebhookFailedMetrics } from "utils/webhooks";
+import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 
-jest.mock("models/index");
-jest.mock("utils/webhooks");
+jest.mock("models/installation");
+jest.mock("models/subscription");
+jest.mock("utils/webhook-utils");
 
 describe("Probot event middleware", () => {
 	let context;
@@ -20,7 +22,7 @@ describe("Probot event middleware", () => {
 				sender: { type: "not bot" },
 				installation: { id: 1234 }
 			},
-			github: GitHubAPI(),
+			github: GithubAPI(),
 			log: wrapLogger(createLogger({
 				name: "test",
 				stream: new Writable({

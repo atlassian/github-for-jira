@@ -49,12 +49,12 @@ export class GitHubUserClient {
 		);
 	}
 
-	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-		return this.axios.get<T>(url, config);
-	}
-
 	public async getUser(): Promise<AxiosResponse<Octokit.UsersGetAuthenticatedResponse>> {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
+	}
+  
+	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+		return this.axios.get<T>(url, config);
 	}
 
 	public async getMembershipForAuthenticatedUser(org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>> {

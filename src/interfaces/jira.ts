@@ -37,7 +37,7 @@ export interface JiraBranch {
 	updateSequenceId: number
 }
 
-export interface JiraBranchData  {
+export interface JiraBranchData {
 	id: number,
 	name: string,
 	url: string,
@@ -65,7 +65,7 @@ export interface JiraIssue {
 	id: string;
 	self: string;
 	key: string;
-	fields:{
+	fields: {
 		summary: string;
 	};
 }

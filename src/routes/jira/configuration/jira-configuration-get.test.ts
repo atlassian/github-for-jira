@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-var-requires */
 import { getInstallations, JiraConfigurationGet } from "./jira-configuration-get";
-import { Installation, RepoSyncState, Subscription } from "../../../models";
-import SubscriptionClass from "../../../models/subscription";
-import GithubApi from "../../../config/github-api";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
+import { GithubAPI } from "config/github-api";
 import { GitHubAPI } from "probot";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 
 describe("Jira Configuration Suite", () => {
-	let subscription: SubscriptionClass;
+	let subscription: Subscription;
 
 	beforeEach(async () => {
 		subscription = await Subscription.create({
@@ -72,8 +73,8 @@ describe("Jira Configuration Suite", () => {
 	});
 
 	describe("getInstallations", () => {
-		let sub: SubscriptionClass;
-		const client = GithubApi();
+		let sub: Subscription;
+		const client = GithubAPI();
 
 		beforeEach(async () => {
 			sub = await Subscription.create({
@@ -128,7 +129,7 @@ describe("Jira Configuration Suite", () => {
 		});
 
 		it("should return one successful connection if installation exists and one failed one if installation doesn't exist", async () => {
-			const failedSub: SubscriptionClass = await Subscription.create({
+			const failedSub: Subscription = await Subscription.create({
 				gitHubInstallationId: 123,
 				jiraHost,
 				jiraClientKey: "myClientKey"
@@ -163,7 +164,7 @@ describe("Jira Configuration Suite", () => {
 		});
 
 		it("should return a multiple failed connections if no installations exists", async () => {
-			const failedSub: SubscriptionClass = await Subscription.create({
+			const failedSub: Subscription = await Subscription.create({
 				gitHubInstallationId: 123,
 				jiraHost,
 				jiraClientKey: "myClientKey"

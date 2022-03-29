@@ -1,5 +1,5 @@
 import { AsymmetricAlgorithm, encodeAsymmetric } from "atlassian-jwt";
-import AuthToken, { ONE_MINUTE, TEN_MINUTES } from "./auth-token";
+import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 
 //TODO: Remove Probot dependency to find privateKey
 import * as PrivateKey from "probot/lib/private-key";
@@ -24,12 +24,11 @@ export const cloudKeyLocator: KeyLocator = () => {
  * @see https://docs.github.com/en/rest/reference/apps
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#authenticating-as-a-github-app
  */
-export default class AppTokenHolder {
-
-	private readonly privateKeyLocator: KeyLocator;
-	private readonly appTokenCache: LRUCache<string, AuthToken>;
+export class AppTokenHolder {
 
 	private static instance: AppTokenHolder;
+	private readonly privateKeyLocator: KeyLocator;
+	private readonly appTokenCache: LRUCache<string, AuthToken>;
 
 	constructor(keyLocator?: KeyLocator) {
 		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
@@ -41,21 +40,6 @@ export default class AppTokenHolder {
 			AppTokenHolder.instance = new AppTokenHolder();
 		}
 		return AppTokenHolder.instance;
-	}
-
-
-	/**
-	 * Gets the current app token or creates a new one if the old is about to expire.
-	 */
-	public getAppToken(appId: InstallationId): AuthToken {
-		let currentToken = this.appTokenCache.get(appId.toString());
-
-		if (!currentToken || currentToken.isAboutToExpire()) {
-			const key = this.privateKeyLocator(appId);
-			currentToken = AppTokenHolder.createAppJwt(key, appId.appId);
-			this.appTokenCache.set(appId.toString(), currentToken);
-		}
-		return currentToken;
 	}
 
 	/**
@@ -78,6 +62,20 @@ export default class AppTokenHolder {
 			encodeAsymmetric(jwtPayload, key, AsymmetricAlgorithm.RS256),
 			expirationDate
 		);
+	}
+
+	/**
+	 * Gets the current app token or creates a new one if the old is about to expire.
+	 */
+	public getAppToken(appId: InstallationId): AuthToken {
+		let currentToken = this.appTokenCache.get(appId.toString());
+
+		if (!currentToken || currentToken.isAboutToExpire()) {
+			const key = this.privateKeyLocator(appId);
+			currentToken = AppTokenHolder.createAppJwt(key, appId.appId);
+			this.appTokenCache.set(appId.toString(), currentToken);
+		}
+		return currentToken;
 	}
 
 	public clear(): void {

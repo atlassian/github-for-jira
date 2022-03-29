@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Subscription } from "models/index";
+import { Subscription } from "models/subscription";
 import { GithubSubscriptionGet } from "routes/github/subscription/github-subscription-get";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
@@ -61,10 +61,8 @@ describe("github-subscription-get", () => {
 		};
 		createGitHubNockGet("/user", 200, { login: "test-org" });
 
-		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, installation);
 
-		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations", 200, { things: "stuff" });
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);
@@ -85,7 +83,6 @@ describe("github-subscription-get", () => {
 
 		createGitHubNockGet("/user", 200, { login: "test-org" });
 
-		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
 			target_type: "Org", account: { login: "test-org" }
 		});
@@ -99,7 +96,6 @@ describe("github-subscription-get", () => {
 
 		createGitHubNockGet("/user", 200, { login: "test-org" });
 
-		githubUserTokenNock(gitHubInstallationId);
 		createGitHubNockGet("/app/installations/15", 200, {
 			target_type: "Org", account: { login: "test-org" }
 		});

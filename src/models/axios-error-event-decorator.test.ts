@@ -1,6 +1,6 @@
 import axios from "axios";
 import nock from "nock";
-import AxiosErrorDecorator from "./axios-error-event-decorator";
+import { AxiosErrorEventDecorator } from "./axios-error-event-decorator";
 
 describe("AxiosErrorDecorator", () => {
 	const buildEvent = () => ({ extra: {}, tags: {} });
@@ -22,7 +22,7 @@ describe("AxiosErrorDecorator", () => {
 		});
 
 		it("adds response data", async () => {
-			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
+			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
 			expect(decoratedEvent.extra.response).toEqual({
 				status: 403,
@@ -33,7 +33,7 @@ describe("AxiosErrorDecorator", () => {
 		});
 
 		it("adds request data", () => {
-			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
+			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
 			expect(decoratedEvent.extra.request).toMatchObject({
 				method: "GET",
@@ -41,13 +41,13 @@ describe("AxiosErrorDecorator", () => {
 				host: "www.example.com",
 				headers: {
 					accept: "application/json, text/plain, */*",
-					host: "www.example.com",
+					host: "www.example.com"
 				}
 			});
 		});
 
 		it("uses path and status for grouping", () => {
-			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
+			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
 			expect(decoratedEvent.fingerprint).toEqual([
 				"{{ default }}",
@@ -74,7 +74,7 @@ describe("AxiosErrorDecorator", () => {
 		});
 
 		it("excludes query string from grouping", () => {
-			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
+			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
 			expect(decoratedEvent.fingerprint).toEqual([
 				"{{ default }}",
@@ -104,7 +104,7 @@ describe("AxiosErrorDecorator", () => {
 		});
 
 		it("adds truncated response body", () => {
-			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
+			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
 			expect(decoratedEvent.extra.response.body).toMatch(
 				/^This is the really long body/
@@ -113,7 +113,7 @@ describe("AxiosErrorDecorator", () => {
 		});
 
 		it("adds parsed request body", () => {
-			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
+			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
 			expect(decoratedEvent.extra.request.body).toEqual({ hello: "hi" });
 		});
@@ -134,7 +134,7 @@ describe("AxiosErrorDecorator", () => {
 		});
 
 		it("adds raw request body", () => {
-			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
+			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
 			expect(decoratedEvent.extra.request.body).toEqual("hi=hello");
 		});
@@ -145,7 +145,7 @@ describe("AxiosErrorDecorator", () => {
 			const event = buildEvent();
 			const hint = buildHint(new Error("boom"));
 
-			const decoratedEvent = AxiosErrorDecorator.decorate(event, hint);
+			const decoratedEvent = AxiosErrorEventDecorator.decorate(event, hint);
 
 			expect(decoratedEvent.extra.response).toEqual(undefined);
 			expect(decoratedEvent.extra.request).toEqual(undefined);

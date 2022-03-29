@@ -26,10 +26,10 @@
       </div>
     </div>
 
-    {{> githubSetupFormError errorMessage="Do not include http or https in the site name" hiddenClass="hidden" }}
+    {{> github-setup-form-error errorMessage="Do not include http or https in the site name" hiddenClass="hidden" }}
 
     {{#if error}}
-       {{> githubSetupFormError errorMessage=error hiddenClass="" }}
+       {{> github-setup-form-error errorMessage=error hiddenClass="" }}
     {{/if}}
 
     <div class="githubSetup__form__modalButtons">

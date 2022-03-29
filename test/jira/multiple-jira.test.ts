@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createWebhookApp } from "../utils/probot";
 import { Application } from "probot";
-import { Installation, Subscription } from "~/src/models";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import nock from "nock";
 import pullRequestMultipleInvalidIssues from "../fixtures/pull-request-multiple-invalid-issue-key.json";
 import pullRequestBasic from "../fixtures/pull-request-basic.json";
@@ -228,6 +229,13 @@ describe("multiple Jira instances", () => {
 	});
 
 	it("should not linkify issue keys for jira instance that has matching issues", async () => {
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+
 		githubNock.get("/users/test-pull-request-user-login")
 			.times(2)
 			.reply(200, githubRequestUserLoginResponse);
@@ -269,6 +277,14 @@ describe("multiple Jira instances", () => {
 	});
 
 	it("should associate PR with to multiple jira with same issue keys", async () => {
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+
 		githubNock.get("/users/test-pull-request-user-login")
 			.twice()
 			.reply(200, githubRequestUserLoginResponse);

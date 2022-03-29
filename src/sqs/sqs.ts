@@ -1,20 +1,20 @@
 import AWS from "aws-sdk";
 import Logger from "bunyan";
-import { getLogger } from "../config/logger";
+import { getLogger } from "config/logger";
 import SQS, { ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest } from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
-import statsd from "../config/statsd";
+import { statsd }  from "config/statsd";
 import { Tags } from "hot-shots";
-import { sqsQueueMetrics } from "../config/metric-names";
+import { sqsQueueMetrics } from "config/metric-names";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 const logger = getLogger("sqs");
 
 //Maximum SQS Delay according to SQS docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html
-const MAX_MESSAGE_DELAY_SEC: number = 15*60;
+const MAX_MESSAGE_DELAY_SEC: number = 15 * 60;
 
 //Maximum SQS Visibility Timeout according to docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html
-const MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC: number = 12*60*60 - 1;
+const MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC: number = 12 * 60 * 60 - 1;
 /**
  * Message processing context, which will be passed to message handler to handle the received message
  */
@@ -196,7 +196,7 @@ export class SqsQueue<MessagePayload> {
 	 * @param log Logger to be used to log message sending status
 	 */
 	public async sendMessage(payload: MessagePayload, delaySec = 0, log: Logger | LoggerWithTarget = this.log) {
-		if(delaySec >= MAX_MESSAGE_DELAY_SEC) {
+		if (delaySec >= MAX_MESSAGE_DELAY_SEC) {
 			delaySec = MAX_MESSAGE_DELAY_SEC - 1;
 		}
 
@@ -256,9 +256,24 @@ export class SqsQueue<MessagePayload> {
 		return this.sqs.purgeQueue({ QueueUrl: this.queueUrl }).promise();
 	}
 
-	public async getMessageCount():Promise<number> {
-		const response = await this.sqs.getQueueAttributes({QueueUrl: this.queueUrl, AttributeNames:["ApproximateNumberOfMessages"]}).promise();
+	public async getMessageCount(): Promise<number> {
+		const response = await this.sqs.getQueueAttributes({ QueueUrl: this.queueUrl, AttributeNames: ["ApproximateNumberOfMessages"] }).promise();
 		return Number(response.Attributes?.ApproximateNumberOfMessages || 0);
+	}
+
+	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: ListenerContext) {
+		if (!data.Messages) {
+			listenerContext.log.trace("Nothing to process");
+			return;
+		}
+
+		statsd.increment(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
+
+		listenerContext.log.trace("Processing messages batch");
+		await Promise.all(data.Messages.map(async message => {
+			await this.executeMessage(message, listenerContext);
+		}));
+		listenerContext.log.trace("Messages batch processed");
 	}
 
 	/**
@@ -433,12 +448,12 @@ export class SqsQueue<MessagePayload> {
 			return;
 		}
 
-		if(timeoutSec < 0) {
+		if (timeoutSec < 0) {
 			logger.error(`Timeout needs to be a positive number.`);
 			return;
 		}
 
-		if(timeoutSec >= MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC) {
+		if (timeoutSec >= MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC) {
 			logger.warn(`Attempt to set visibility timeout greater than allowed. Timeout value: ${timeoutSec} sec. Will be reset to max value of ${MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC} sec`);
 			timeoutSec = MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC;
 		}
@@ -464,20 +479,5 @@ export class SqsQueue<MessagePayload> {
 			...this.metricsTags,
 			gsd_histogram: PROCESSING_DURATION_HISTOGRAM_BUCKETS
 		});
-	}
-
-	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: ListenerContext) {
-		if (!data.Messages) {
-			listenerContext.log.trace("Nothing to process");
-			return;
-		}
-
-		statsd.increment(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
-
-		listenerContext.log.trace("Processing messages batch");
-		await Promise.all(data.Messages.map(async message => {
-			await this.executeMessage(message, listenerContext);
-		}));
-		listenerContext.log.trace("Messages batch processed");
 	}
 }
