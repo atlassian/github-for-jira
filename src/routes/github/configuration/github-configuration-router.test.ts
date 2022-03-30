@@ -150,7 +150,7 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get(`/orgs/test-org/memberships/test-user`)
+				.get(`/user/memberships/orgs/test-org`)
 				.reply(200, {
 					role: "admin"
 				});
@@ -219,7 +219,7 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get("/orgs/test-org/memberships/test-user")
+				.get("/user/memberships/orgs/test-org")
 				.reply(200, {
 					role: "admin"
 				});

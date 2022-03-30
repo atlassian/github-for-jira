@@ -76,13 +76,19 @@
 
                 {{! Repository access }}
                 <div class="gitHubConfiguration__orgContent__repoAccess org__cell">
-                  <p
-                    class="gitHubConfiguration__orgContent__repoSelection"
-                  >{{repoAccessType repository_selection}}</p>
-                  <p
-                    class="gitHubConfiguration__orgContent__numberOfRepos"
-                  >{{numberOfRepos}}</p>
-                  {{#if admin}}
+                  {{#if isIPBlocked}}
+                    <p class="gitHubConfiguration__orgContent__repoSelection">
+                      GitHub for Jira is IP blocked for this organization.
+                    </p>
+                  {{else}}
+                    <p
+                      class="gitHubConfiguration__orgContent__repoSelection"
+                    >{{repoAccessType repository_selection}}</p>
+                    <p
+                      class="gitHubConfiguration__orgContent__numberOfRepos"
+                    >{{numberOfRepos}}</p>
+                  {{/if}}
+                  {{#if isAdmin}}
                     <a href="{{html_url}}" target="_blank">
                       <span
                         class="gitHubConfiguration__orgContent__edit aui-icon aui-icon-small aui-iconfont-new-edit"
@@ -95,7 +101,13 @@
 
                 {{! Connect }}
                 <div class="gitHubConfiguration__orgContent__connect org__cell">
-                  {{#if admin}}
+                  {{#if isIPBlocked}}
+                    <a class="gitHubConfiguration__orgContent__ipBlockedContainer" target="_blank" href='{{../repoUrl}}/blob/main/docs/ip-allowlist.md'>
+                      <span class="gitHubConfiguration__orgContent__ipBlocked aui-icon aui-icon-medium aui-iconfont-question-filled">
+                        To unblock, please click icon and follow the instructions
+                      </span>
+                    </a>
+                  {{else if isAdmin}}
                     {{#if (isNotConnected syncStatus)}}
                       <button
                         class="gitHubConfiguration__orgContent__connectBtn aui-button install-link"
@@ -128,20 +140,15 @@
                         Connected
                       </p>
                     {{/if}}
-
-                    {{else}}
-                    <button class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button" aria-disabled="true" disabled>
-                      Connect
-                    </button>
-                  {{/if}}
-
-                  {{#if admin}}
                     <a class="gitHubConfiguration__orgContent__settingsContainer" href='/github/subscriptions/{{id}}'>
                       <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
                         Manage Jira Subscriptions
                       </span>
                     </a>
                   {{else}}
+                    <button class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button" aria-disabled="true" disabled>
+                      Connect
+                    </button>
                      <div class="gitHubConfiguration__orgContent__settingsContainer--disabled">
                       <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
                         Manage Jira Subscriptions
@@ -168,6 +175,11 @@
                   <p class="gitHubConfiguration__failedSyncWarningLabel">
                     There was a problem syncing data from your account. The sync process will automatically retry.
                     If this does not happen, please restart backfill.
+                  </p>
+
+                  {{!-- Hidden unless user hovers over warning icon when a sync fails --}}
+                  <p class="gitHubConfiguration__ipBlockedLabel">
+                    GitHub for Jira is IP blocked for this organization. Click to troubleshoot.
                   </p>
                 </div>
               </div>
