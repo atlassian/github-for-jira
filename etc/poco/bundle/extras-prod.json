@@ -1,0 +1,21 @@
+{
+  "allow": [
+    {
+      "description": "Allow prod pollinator checks to call endpoints for testing",
+      "paths": [
+        "/api/deleteInstallation/**"
+      ],
+      "methods": [
+        "DELETE"
+      ],
+      "principals": {
+        "asap": {
+          "issuers": [
+						"pollinator-check/d99d882f-74a9-4093-822a-9ddf38b5e523",
+						"pollinator-check/713bec45-18fb-48c7-b6c2-46e6e824caec"
+					]
+        }
+      }
+    }
+  ]
+}
