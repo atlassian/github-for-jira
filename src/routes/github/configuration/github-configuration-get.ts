@@ -194,8 +194,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		);
 
 		// Sort to that orgs ready to be connected are at the top
-		const isReady = (i: MergedInstallation) => i.isAdmin && !i.isIPBlocked && i.syncStatus !== "FINISHED" && i.syncStatus !== "IN PROGRESS" && i.syncStatus !== "PENDING";
-		const sortedInstallation = connectedInstallations.sort((a, b) => Number(isReady(b)) - Number(isReady(a)));
+		const rankInstallation = (i: MergedInstallation) => Number(i.isAdmin && !i.isIPBlocked) + Number(i.syncStatus !== "FINISHED" && i.syncStatus !== "IN PROGRESS" && i.syncStatus !== "PENDING");
+		const sortedInstallation = connectedInstallations.sort((a, b) => rankInstallation(b) - rankInstallation(a));
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info({ connectedInstallations }, `verbose logging: connectedInstallations`);

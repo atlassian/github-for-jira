@@ -80,7 +80,7 @@
                     <p class="gitHubConfiguration__orgContent__repoSelection">
                       This organization's IP address is blocked. <a class="aui-button aui-button-link" target="_blank" href='{{../repoUrl}}/blob/main/docs/ip-allowlist.md'>Learn more</a>
                     </p>
-                  {{else}}t
+                  {{else}}
                     <p
                       class="gitHubConfiguration__orgContent__repoSelection"
                     >{{repoAccessType repository_selection}}</p>
@@ -101,7 +101,9 @@
 
                 {{! Connect }}
                 <div class="gitHubConfiguration__orgContent__connect org__cell">
-                  {{#if isAdmin}}
+                  {{#if isIPBlocked}}
+                    {{! show no actions }}
+                  {{else if isAdmin}}
                     {{#if (isNotConnected syncStatus)}}
                       <button
                         class="gitHubConfiguration__orgContent__connectBtn aui-button install-link"
