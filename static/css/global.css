@@ -117,8 +117,7 @@ a:focus {
 .gitHubConfiguration__notAdminMsg,
 .gitHubConfiguration__manageSubscriptions,
 .gitHubConfiguration__manageSubscriptions--notAdmin,
-.gitHubConfiguration__failedSyncWarningLabel,
-.gitHubConfiguration__ipBlockedLabel {
+.gitHubConfiguration__failedSyncWarningLabel {
   background-color: #172b4d;
   border-radius: 3px;
   display: none;
