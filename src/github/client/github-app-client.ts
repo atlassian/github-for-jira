@@ -246,6 +246,19 @@ export class GitHubAppClient {
 			});
 	}
 
+	public getUserMembershipForOrg = async (username: string, org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
+		return await this.get<Octokit.OrgsGetMembershipResponse>(`/orgs/{org}/memberships/{username}`, {}, {
+			username,
+			org
+		});
+	};
+
+	public getApp = async (): Promise<AxiosResponse<Octokit.AppsGetAuthenticatedResponse>> => {
+		return await this.axios.get<Octokit.AppsGetAuthenticatedResponse>(`/app`, {
+			...this.appAuthenticationHeaders()
+		});
+	};
+
 	/**
 	 * Use this config in a request to authenticate with the app token.
 	 */
