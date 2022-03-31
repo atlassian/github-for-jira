@@ -100,10 +100,9 @@
                 </div>
 
                 {{! Connect }}
+                {{#unless isIPBlocked}}
                 <div class="gitHubConfiguration__orgContent__connect org__cell">
-                  {{#if isIPBlocked}}
-                    {{! show no actions }}
-                  {{else if isAdmin}}
+                  {{#if isAdmin}}
                     {{#if (isNotConnected syncStatus)}}
                       <button
                         class="gitHubConfiguration__orgContent__connectBtn aui-button install-link"
@@ -173,6 +172,7 @@
                     If this does not happen, please restart backfill.
                   </p>
                 </div>
+                {{/unless}}
               </div>
             {{/each}}
 
