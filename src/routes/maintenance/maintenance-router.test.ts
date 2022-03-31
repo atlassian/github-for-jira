@@ -69,6 +69,7 @@ describe("Maintenance", () => {
 			it("should still work in maintenance mode", () =>
 				supertest(app)
 					.get("/api")
+					.set("X-Slauth-Mechanism", "asap")
 					.expect(200)
 			);
 		});
