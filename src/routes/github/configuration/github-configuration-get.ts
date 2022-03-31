@@ -17,6 +17,7 @@ import { isUserAdminOfOrganization } from "utils/github-utils";
 import { BlockedIpError } from "~/src/github/client/github-client-errors";
 
 interface ConnectedStatus {
+	// TODO: really need to type this sync status
 	syncStatus?: string;
 	account: Octokit.AppsGetInstallationResponseAccount;
 }
@@ -192,6 +193,10 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			log
 		);
 
+		// Sort to that orgs ready to be connected are at the top
+		const isReady = (i: MergedInstallation) => i.isAdmin && !i.isIPBlocked && i.syncStatus !== "FINISHED" && i.syncStatus !== "IN PROGRESS" && i.syncStatus !== "PENDING";
+		const sortedInstallation = connectedInstallations.sort((a, b) => Number(isReady(b)) - Number(isReady(a)));
+
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info({ connectedInstallations }, `verbose logging: connectedInstallations`);
 		}
@@ -200,7 +205,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		res.render("github-configuration.hbs", {
 			csrfToken: req.csrfToken(),
-			installations: connectedInstallations,
+			installations: sortedInstallation,
 			jiraHost,
 			nonce: res.locals.nonce,
 			info,
