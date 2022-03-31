@@ -1,93 +1,93 @@
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
-    <title>{{title}}</title>
-    <link
-      rel="stylesheet"
-      href="/public/aui/aui-prototyping.css"
-      integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-    <link rel="stylesheet" href="/public/primer/build.css" media="all" />
-    <link
-      rel="stylesheet"
-      href="/public/css/github-configuration.css"
-      media="all"
-    />
-    <link rel="stylesheet" href="/public/css/global.css" media="all" />
-    <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
-  </head>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+  <title>{{title}}</title>
+  <link
+    rel="stylesheet"
+    href="/public/aui/aui-prototyping.css"
+    integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <link rel="stylesheet" href="/public/primer/build.css" media="all" />
+  <link
+    rel="stylesheet"
+    href="/public/css/github-configuration.css"
+    media="all"
+  />
+  <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+</head>
 
-  <body class="px-3 py-6">
-    <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
-    <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
-    <input
-      type="hidden"
-      id="clientKey"
-      name="clientKey"
-      value="{{clientKey}}"
+<body class="px-3 py-6">
+<input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
+<input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
+<input
+  type="hidden"
+  id="clientKey"
+  name="clientKey"
+  value="{{clientKey}}"
+/>
+
+<section class="gitHubConfiguration__logout__container">
+  <p class="gitHubConfiguration__logout__account">GitHub Account:
+    <span class="gitHubConfiguration__logout__name">{{login}}</span></p>
+  <p
+    class="gitHubConfiguration__logout__link logout-link"
+    target="_blank"
+  >Logout</p>
+</section>
+
+<section class="gitHubConfiguration">
+  <div class="headerImage">
+    <img
+      src="/public/assets/jira-and-github.png"
+      alt="Jira and GitHub logos"
     />
+  </div>
 
-    <section class="gitHubConfiguration__logout__container">
-      <p class="gitHubConfiguration__logout__account">GitHub Account:
-        <span class="gitHubConfiguration__logout__name">{{login}}</span></p>
-      <p
-        class="gitHubConfiguration__logout__link logout-link"
-        target="_blank"
-      >Logout</p>
-    </section>
+  <h2 class="f2 text-center text-normal gitHubConfiguration__header">Connect a
+    GitHub organization to your Jira site</h2>
+  <p class="jiraInstance">{{jiraHost}}</p>
 
-    <section class="gitHubConfiguration">
-      <div class="headerImage">
-        <img
-          src="/public/assets/jira-and-github.png"
-          alt="Jira and GitHub logos"
-        />
+  {{! TODO: Replace this with AUI table: https://aui.atlassian.com/aui/latest/docs/tables.html }}
+  <div class="Box">
+    <div class="gitHubConfiguration__wrapper">
+      <div class="gitHubConfiguration__tableHeader">
+        <p class="gitHubConfiguration__tableHeader__label col1">GitHub organization</p>
+        {{#if installations}}
+          <p class="gitHubConfiguration__tableHeader__label col2">Repository access</p>
+        {{/if}}
       </div>
 
-      <h2 class="f2 text-center text-normal gitHubConfiguration__header">Connect a
-        GitHub organization to your Jira site</h2>
-      <p class="jiraInstance">{{jiraHost}}</p>
-
-      <div class="Box">
-        <div class="gitHubConfiguration__wrapper">
-          <div class="gitHubConfiguration__tableHeader">
-            <p class="gitHubConfiguration__tableHeader__label">GitHub organization</p>
-            {{#if installations}}
-              <p class="gitHubConfiguration__tableHeader__label">Repository access</p>
-            {{/if}}
-          </div>
-
-          <div class="githubOrgs__table">
-            {{#each installations}}
-              <div class="githubOrgs__table__row clearfix">
-                {{! Organizations }}
-                <div class="gitHubConfiguration__orgContent__account org__cell">
-                  <img
-                    class="gitHubConfiguration__orgContent__avatar"
-                    src="{{account.avatar_url}}"
-                    alt="GitHub organization avatar"
-                  />
-                  <span class="text-bold text-gray-dark">{{account.login}}</a></span>
-                </div>
-
-                {{! Repository access }}
-                <div class="gitHubConfiguration__orgContent__repoAccess org__cell">
-                  {{#if isIPBlocked}}
-                    <p class="gitHubConfiguration__orgContent__repoSelection">
-                      This organization's IP address is blocked. <a class="aui-button aui-button-link" target="_blank" href='{{../repoUrl}}/blob/main/docs/ip-allowlist.md'>Learn more</a>
-                    </p>
-                  {{else}}
-                    <p
-                      class="gitHubConfiguration__orgContent__repoSelection"
-                    >{{repoAccessType repository_selection}}</p>
-                    <p
-                      class="gitHubConfiguration__orgContent__numberOfRepos"
-                    >{{numberOfRepos}}</p>
-                  {{/if}}
+      <div class="githubOrgs__table">
+        {{#each installations}}
+          <div class="githubOrgs__table__row clearfix">
+            {{! Organizations }}
+            <div class="gitHubConfiguration__orgContent__account col1">
+              <img
+                class="gitHubConfiguration__orgContent__avatar"
+                src="{{account.avatar_url}}"
+                alt="GitHub organization avatar"
+              />
+              <span class="text-bold text-gray-dark">{{account.login}}</a></span>
+            </div>
+            <div class="col2">
+              {{! Repository access }}
+              <div class="gitHubConfiguration__orgContent__repoAccess">
+                {{#if isIPBlocked}}
+                  <p class="gitHubConfiguration__orgContent__repoSelection">
+                    This organization's IP address is blocked. <a class="aui-button aui-button-link" target="_blank" href='{{../repoUrl}}/blob/main/docs/ip-allowlist.md'>Learn more</a>
+                  </p>
+                {{else}}
+                  <p
+                    class="gitHubConfiguration__orgContent__repoSelection"
+                  >{{repoAccessType repository_selection}}</p>
+                  <p
+                    class="gitHubConfiguration__orgContent__numberOfRepos"
+                  >{{numberOfRepos}}</p>
                   {{#if isAdmin}}
                     <a href="{{html_url}}" target="_blank">
                       <span
@@ -97,11 +97,12 @@
                       </span>
                     </a>
                   {{/if}}
-                </div>
+                {{/if}}
+              </div>
 
-                {{! Connect }}
-                {{#unless isIPBlocked}}
-                <div class="gitHubConfiguration__orgContent__connect org__cell">
+              {{! Connect }}
+              {{#unless isIPBlocked}}
+                <div class="gitHubConfiguration__orgContent__connect">
                   {{#if isAdmin}}
                     {{#if (isNotConnected syncStatus)}}
                       <button
@@ -144,7 +145,7 @@
                     <button class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button" aria-disabled="true" disabled>
                       Connect
                     </button>
-                     <div class="gitHubConfiguration__orgContent__settingsContainer--disabled">
+                    <div class="gitHubConfiguration__orgContent__settingsContainer--disabled">
                       <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
                         Manage Jira Subscriptions
                       </span>
@@ -172,33 +173,34 @@
                     If this does not happen, please restart backfill.
                   </p>
                 </div>
-                {{/unless}}
-              </div>
-            {{/each}}
-
-            {{#unless installations}}
-              <p class="gitHubConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
-            {{/unless}}
+              {{/unless}}
+            </div>
           </div>
+        {{/each}}
 
-          <a
-            class="gitHubConfiguration__connectNewOrg"
-            href="{{info.html_url}}/installations/new"
-          >
-            <span class="gitHubConfiguration__connectNewOrg__plus">+</span>Install GitHub for Jira on a new organization
-          </a>
-        </div>
+        {{#unless installations}}
+          <p class="gitHubConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
+        {{/unless}}
       </div>
 
-    </section>
-    <script src="/public/js/github-configuration.js" nonce="{{nonce}}"></script>
-    <script
-      src="/public/aui/aui-prototyping.js"
-      integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-      nonce="{{nonce}}"
-    ></script>
-  </body>
+      <a
+        class="gitHubConfiguration__connectNewOrg"
+        href="{{info.html_url}}/installations/new"
+      >
+        <span class="gitHubConfiguration__connectNewOrg__plus">+</span>Install GitHub for Jira on a new organization
+      </a>
+    </div>
+  </div>
+
+</section>
+<script src="/public/js/github-configuration.js" nonce="{{nonce}}"></script>
+<script
+  src="/public/aui/aui-prototyping.js"
+  integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+  nonce="{{nonce}}"
+></script>
+</body>
 
 </html>
