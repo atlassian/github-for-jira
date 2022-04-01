@@ -50,7 +50,7 @@ describe("POST /github/subscription - octokit", () => {
 		const login = "test-user";
 		const role = "admin";
 
-		const getMembershipForAuthenticatedUser = jest.fn().mockResolvedValue({ data: { role, user: { login } } });
+		const getMembershipForOrg = jest.fn().mockResolvedValue({ data: { role, user: { login } } });
 		const getInstallation = jest.fn().mockResolvedValue({
 			data: {
 				id: gitHubInstallationId,
@@ -68,7 +68,7 @@ describe("POST /github/subscription - octokit", () => {
 					apps: { getInstallation }
 				},
 				github: {
-					orgs: { getMembershipForAuthenticatedUser }
+					orgs: { getMembershipForOrg }
 				}
 			}
 		};

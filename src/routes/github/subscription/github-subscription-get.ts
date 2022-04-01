@@ -1,8 +1,10 @@
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
+import { isUserAdminOfOrganization } from "utils/github-utils";
+import { GitHubUserClient } from "~/src/github/client/github-user-client";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { github, client, isAdmin, githubToken } = res.locals;
+	const { github, client, githubToken } = res.locals;
 	if (!githubToken) {
 		return next(new Error("Unauthorized"));
 	}
@@ -17,11 +19,12 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 		const subscriptions = await Subscription.getAllForInstallation(installationId);
 
 		// Only show the page if the logged in user is an admin of this installation
-		if (await isAdmin({
-			org: installation.account.login,
-			username: login,
-			type: installation.target_type
-		})) {
+		if (await isUserAdminOfOrganization(
+			new GitHubUserClient(githubToken, req.log),
+			installation.account.login,
+			login,
+			installation.target_type
+		)) {
 			const { data: info } = await client.apps.getAuthenticated();
 
 			return res.render("github-subscriptions.hbs", {

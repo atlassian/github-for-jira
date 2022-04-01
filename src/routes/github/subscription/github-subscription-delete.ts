@@ -6,9 +6,10 @@ import { GitHubAppClient } from "../../../github/client/github-app-client";
 import { GitHubUserClient } from "../../../github/client/github-user-client";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 
+// todo use isadmin github util
 const hasDeleteRights = async (gitHubUserClient: GitHubUserClient | GitHubAPI, installation: Octokit.AppsGetInstallationResponse): Promise<boolean> => {
 	const { data: { role, user: { login } } } = gitHubUserClient instanceof GitHubUserClient ?
-		await gitHubUserClient.getMembershipForAuthenticatedUser(installation.account.login) :
+		await gitHubUserClient.getMembershipForOrg(installation.account.login) :
 		await gitHubUserClient.orgs.getMembershipForAuthenticatedUser({ org: installation.account.login });
 
 	if (installation.target_type === "User") {

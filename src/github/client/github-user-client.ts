@@ -25,9 +25,6 @@ export class GitHubUserClient {
 			}
 		});
 
-		this.axios.interceptors.request.use(setRequestStartTime);
-		this.axios.interceptors.request.use(setRequestTimeout);
-		this.axios.interceptors.request.use(urlParamsMiddleware);
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
 			return {
 				...config,
@@ -38,11 +35,15 @@ export class GitHubUserClient {
 				}
 			};
 		});
+		this.axios.interceptors.request.use(setRequestStartTime);
+		this.axios.interceptors.request.use(setRequestTimeout);
+		this.axios.interceptors.request.use(urlParamsMiddleware);
 
 		this.axios.interceptors.response.use(
 			undefined,
 			handleFailedRequest(this.logger)
 		);
+
 		this.axios.interceptors.response.use(
 			instrumentRequest(metricHttpRequest.github),
 			instrumentFailedRequest(metricHttpRequest.github)
@@ -52,17 +53,16 @@ export class GitHubUserClient {
 	public async getUser(): Promise<AxiosResponse<Octokit.UsersGetAuthenticatedResponse>> {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
 	}
-  
+
+	public getMembershipForOrg = async (org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
+		return await this.get<Octokit.OrgsGetMembershipResponse>(`/user/memberships/orgs/{org}`, {
+			urlParams: {
+				org
+			}
+		});
+	};
+
 	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
 		return this.axios.get<T>(url, config);
-	}
-
-	public async getMembershipForAuthenticatedUser(org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>> {
-		return await this.get<Octokit.OrgsGetMembershipForAuthenticatedUserResponse>("/user/memberships/orgs/{org}",
-			{
-				urlParams: { 
-					org
-				}
-			});
 	}
 }
