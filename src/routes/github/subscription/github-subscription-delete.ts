@@ -1,22 +1,10 @@
 import { Request, Response } from "express";
-import { GitHubAPI, Octokit } from "probot";
 import { Subscription } from "models/subscription";
 import { getCloudInstallationId } from "../../../github/client/installation-id";
 import { GitHubAppClient } from "../../../github/client/github-app-client";
 import { GitHubUserClient } from "../../../github/client/github-user-client";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
-
-// todo use isadmin github util
-const hasDeleteRights = async (gitHubUserClient: GitHubUserClient | GitHubAPI, installation: Octokit.AppsGetInstallationResponse): Promise<boolean> => {
-	const { data: { role, user: { login } } } = gitHubUserClient instanceof GitHubUserClient ?
-		await gitHubUserClient.getMembershipForOrg(installation.account.login) :
-		await gitHubUserClient.orgs.getMembershipForAuthenticatedUser({ org: installation.account.login });
-
-	if (installation.target_type === "User") {
-		return installation.account.login === login;
-	}
-	return role === "admin";
-};
+import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
 	const { github, client, githubToken, jiraHost } = res.locals;
@@ -40,15 +28,31 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 	logger.info("Received delete-subscription request");
 
 	try {
+		// get the installation to see if the user is an admin of it
 		const { data: installation } = useNewGitHubClient ?
 			await gitHubAppClient.getInstallation(gitHubInstallationId) :
 			await client.apps.getInstallation({ installation_id: gitHubInstallationId });
 
-		if (!await hasDeleteRights(useNewGitHubClient ? gitHubUserClient : github, installation)) {
+		const { data: { login } } = useNewGitHubClient ?
+			await gitHubUserClient.getUser() :
+			await github.users.getAuthenticated();
+
+		console.log("LOGING");
+		console.log(installation.account.login);
+		console.log(installation.target_type);
+		console.log(login);
+		// Only show the page if the logged in user is an admin of this installation
+		if (!await isUserAdminOfOrganization(
+			new GitHubUserClient(githubToken, req.log),
+			installation.account.login,
+			login,
+			installation.target_type
+		)) {
 			res.status(401).json({ err: `Unauthorized access to delete subscription.` });
 			return;
 		}
 
+		console.log("GOT ADMIN")
 		try {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 			if (!subscription) {
@@ -62,6 +66,8 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		}
 
 	} catch (err) {
+		console.log("WHAT HAPPENED");
+		console.log(err);
 		logger.error({ err, req, res }, "Error while processing delete subscription request");
 		res.sendStatus(500);
 	}
