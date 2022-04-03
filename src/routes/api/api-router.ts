@@ -1,4 +1,4 @@
-import {NextFunction, Request, Response, Router} from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import { param } from "express-validator";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
@@ -29,18 +29,18 @@ ApiRouter.use(
 		const issuer = req.get("X-Slauth-Issuer");
 		const principal = req.get("X-Slauth-Principal");
 
-		req.log = req.log.child({slauth: {
+		req.log = req.log.child({ slauth: {
 			mechanism,
 			issuer,
 			principal,
 			userGroup: req.get("X-Slauth-User-Groups"),
 			aaid: req.get("X-Slauth-User-Aaid"),
 			username: req.get("X-Slauth-User-Username")
-		}});
+		} });
 
-		if(!mechanism || mechanism === "open") {
-			req.log.warn("Attempt to access Admin API without authentication")
-			res.status(401).json({error: "Open access not allowed"});
+		if (!mechanism || mechanism === "open") {
+			req.log.warn("Attempt to access Admin API without authentication");
+			res.status(401).json({ error: "Open access not allowed" });
 			return;
 		}
 
@@ -49,7 +49,6 @@ ApiRouter.use(
 		next();
 	}
 );
-
 
 ApiRouter.use(rateLimit({
 	store: new RedisStore({

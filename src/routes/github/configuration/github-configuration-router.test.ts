@@ -174,7 +174,6 @@ describe("Github Configuration", () => {
 					}
 				});
 
-
 			await supertest(frontendApp)
 				.get("/github/configuration")
 				.set(
@@ -288,6 +287,10 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
+				.get("/user")
+				.reply(200, { login: "test-user" });
+
+			githubNock
 				.get("/app/installations/2")
 				.reply(404);
 
@@ -305,7 +308,7 @@ describe("Github Configuration", () => {
 						jiraHost
 					})
 				)
-				.expect(404);
+				.expect(500);
 		});
 
 		it("should return a 401 if the user is not an admin of the Org", async () => {
@@ -316,14 +319,17 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
-				.get("/app/installations/1")
-				.reply(200, installationResponse);
-			githubNock
 				.get("/user")
 				.reply(200, authenticatedUserResponse);
+
 			githubNock
-				.get("/orgs/fake-account/memberships/test-user")
+				.get("/app/installations/1")
+				.reply(200, installationResponse);
+
+			githubNock
+				.get("/user/memberships/orgs/fake-account")
 				.reply(200, organizationMembershipResponse);
+
 			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({
@@ -370,13 +376,15 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
-				.get("/app/installations/1")
-				.reply(200, installationResponse);
-			githubNock
 				.get("/user")
 				.reply(200, adminUserResponse);
+
 			githubNock
-				.get("/orgs/fake-account/memberships/admin-user")
+				.get("/app/installations/1")
+				.reply(200, installationResponse);
+
+			githubNock
+				.get("/user/memberships/orgs/fake-account")
 				.reply(200, organizationAdminResponse);
 
 			const jiraClientKey = "a-unique-client-key";
