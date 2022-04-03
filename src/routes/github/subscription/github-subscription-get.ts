@@ -1,15 +1,15 @@
-import { NextFunction, Request, Response } from "express";
 import { Subscription } from "models/subscription";
+import { NextFunction, Request, Response } from "express";
 import { getCloudInstallationId } from "../../../github/client/installation-id";
 import { GitHubAppClient } from "../../../github/client/github-app-client";
 import { GitHubUserClient } from "../../../github/client/github-user-client";
+import { isUserAdminOfOrganization } from "utils/github-utils";
 import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	const { github, client, githubToken, jiraHost } = res.locals;
 
-	const { github, client, isAdmin, githubToken, jiraHost } = res.locals;
 	const gitHubInstallationId = Number(req.params.installationId);
-
 	if (!githubToken) {
 		return next(new Error("Unauthorized"));
 	}
@@ -35,24 +35,25 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
 
 		// Only show the page if the logged in user is an admin of this installation
-		if (!await isAdmin({
-			org: installation.account.login,
-			username: login,
-			type: installation.target_type
-		})) {
+		if (await isUserAdminOfOrganization(
+			new GitHubUserClient(githubToken, req.log),
+			installation.account.login,
+			login,
+			installation.target_type
+		)) {
+			const { data: info } = useNewGitHubClient ? await gitHubAppClient.getInstallations() : await client.apps.getAuthenticated();
+			return res.render("github-subscriptions.hbs", {
+				csrfToken: req.csrfToken(),
+				nonce: res.locals.nonce,
+				installation,
+				info,
+				host: res.locals.jiraHost,
+				subscriptions,
+				hasSubscriptions: subscriptions.length > 0
+			});
+		} else {
 			return next(new Error("Unauthorized"));
 		}
-
-		const { data: info } = useNewGitHubClient ? await gitHubAppClient.getInstallations() : await client.apps.getAuthenticated();
-		return res.render("github-subscriptions.hbs", {
-			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
-			installation,
-			info,
-			host: res.locals.jiraHost,
-			subscriptions,
-			hasSubscriptions: subscriptions.length > 0
-		});
 	} catch (err) {
 		logger.error(err, "Unable to show subscription page");
 		return next(new Error("Unable to show subscription page"));

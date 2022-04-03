@@ -2,8 +2,9 @@
 db/config.json
 
 # Environment Files
-.env
-.envrc
+.env*
+!.env.example
+!.env.test
 
 # DB Secret File
 *.pem

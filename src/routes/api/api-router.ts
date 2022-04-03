@@ -29,11 +29,6 @@ ApiRouter.use(
 		const issuer = req.get("X-Slauth-Issuer");
 		const principal = req.get("X-Slauth-Principal");
 
-		if(!mechanism || mechanism === "open") {
-			res.status(401).json({error: "Open access not allowed"});
-			return;
-		}
-
 		req.log = req.log.child({slauth: {
 			mechanism,
 			issuer,
@@ -42,6 +37,12 @@ ApiRouter.use(
 			aaid: req.get("X-Slauth-User-Aaid"),
 			username: req.get("X-Slauth-User-Username")
 		}});
+
+		if(!mechanism || mechanism === "open") {
+			req.log.warn("Attempt to access Admin API without authentication")
+			res.status(401).json({error: "Open access not allowed"});
+			return;
+		}
 
 		req.log.info("API Request successfully authenticated");
 

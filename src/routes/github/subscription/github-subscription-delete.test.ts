@@ -50,7 +50,8 @@ describe("POST /github/subscription - octokit", () => {
 		const login = "test-user";
 		const role = "admin";
 
-		const getMembershipForAuthenticatedUser = jest.fn().mockResolvedValue({ data: { role, user: { login } } });
+		const getAuthenticated = jest.fn().mockResolvedValue({ data: { login } });
+		const getMembershipForOrg = jest.fn().mockResolvedValue({ data: { role, user: { login } } });
 		const getInstallation = jest.fn().mockResolvedValue({
 			data: {
 				id: gitHubInstallationId,
@@ -68,7 +69,8 @@ describe("POST /github/subscription - octokit", () => {
 					apps: { getInstallation }
 				},
 				github: {
-					orgs: { getMembershipForAuthenticatedUser }
+					orgs: { getMembershipForOrg },
+					users: { getAuthenticated }
 				}
 			}
 		};
@@ -126,6 +128,9 @@ describe("delete-github-subscription", () => {
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, target_type: "Org"
 		});
+		createGitHubNockGet("/user", 200, {
+			login: "test-org"
+		});
 		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
 			role: "admin", user: { login: "test-org" }
 		});
@@ -140,8 +145,8 @@ describe("delete-github-subscription", () => {
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-user" }, target_type: "User"
 		});
-		createGitHubNockGet("/user/memberships/orgs/test-user", 200, {
-			role: "batman", user: { login: "test-user" }
+		createGitHubNockGet("/user", 200, {
+			login: "test-user"
 		});
 
 		await GithubSubscriptionDelete(req as any, res as any);
@@ -153,6 +158,9 @@ describe("delete-github-subscription", () => {
 		
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, target_type: "Org"
+		});
+		createGitHubNockGet("/user", 200, {
+			login: "test-org"
 		});
 		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
 			role: "notadmin", user: { login: "test-org" }
@@ -167,6 +175,9 @@ describe("delete-github-subscription", () => {
 		
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "something-something-test-user" }, target_type: "user"
+		});
+		createGitHubNockGet("/user", 200, {
+			login: "test-org"
 		});
 		createGitHubNockGet("/user/memberships/orgs/something-something-test-user", 200, {
 			role: "batman", user: { login: "test-user" }
