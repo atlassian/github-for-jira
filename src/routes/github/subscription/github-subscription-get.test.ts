@@ -63,6 +63,10 @@ describe("github-subscription-get", () => {
 
 		createGitHubNockGet("/app/installations/15", 200, installation);
 
+		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
+			role: "admin", user: { login: "test-org" }
+		});
+
 		createGitHubNockGet("/app/installations", 200, { things: "stuff" });
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);
@@ -85,6 +89,10 @@ describe("github-subscription-get", () => {
 
 		createGitHubNockGet("/app/installations/15", 200, {
 			target_type: "Org", account: { login: "test-org" }
+		});
+
+		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
+			role: "notadmin", user: { login: "test-org" }
 		});
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);
@@ -212,11 +220,5 @@ describe("/github/subscription - octokit", () => {
 		res.locals.github.users.getAuthenticated = jest.fn().mockRejectedValue(new Error("Whoops"));
 		await GithubSubscriptionGet(req as any, res as any, next as any);
 		expect(next).toHaveBeenCalledWith(new Error("Unable to show subscription page"));
-	});
-
-	it("Should throw Unauthorized Error when login fails access test", async () => {
-		res.locals.isAdmin = jest.fn().mockResolvedValue(false);
-		await GithubSubscriptionGet(req as any, res as any, next as any);
-		expect(next).toHaveBeenCalledWith(new Error("Unauthorized"));
 	});
 });

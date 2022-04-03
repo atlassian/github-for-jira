@@ -37,10 +37,6 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 			await gitHubUserClient.getUser() :
 			await github.users.getAuthenticated();
 
-		console.log("LOGING");
-		console.log(installation.account.login);
-		console.log(installation.target_type);
-		console.log(login);
 		// Only show the page if the logged in user is an admin of this installation
 		if (!await isUserAdminOfOrganization(
 			new GitHubUserClient(githubToken, req.log),
@@ -51,8 +47,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 			res.status(401).json({ err: `Unauthorized access to delete subscription.` });
 			return;
 		}
-
-		console.log("GOT ADMIN")
+	
 		try {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 			if (!subscription) {
@@ -66,8 +61,6 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		}
 
 	} catch (err) {
-		console.log("WHAT HAPPENED");
-		console.log(err);
 		logger.error({ err, req, res }, "Error while processing delete subscription request");
 		res.sendStatus(500);
 	}
