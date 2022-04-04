@@ -67,15 +67,12 @@ describe("github-subscription-get", () => {
 			role: "admin", user: { login: "test-org" }
 		});
 
-		createGitHubNockGet("/app/installations", 200, { things: "stuff" });
-
 		await GithubSubscriptionGet(req as any, res as any, next as any);
 
 		expect(res.render).toHaveBeenCalledWith("github-subscriptions.hbs", expect.objectContaining({
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,
 			installation,
-			info: { things: "stuff" },
 			host: res.locals.jiraHost,
 			hasSubscriptions: true
 		}));
@@ -210,7 +207,6 @@ describe("/github/subscription - octokit", () => {
 		expect(res.render).toHaveBeenCalledWith("github-subscriptions.hbs", expect.objectContaining({
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,
-			info: { things: "stuff" },
 			host: res.locals.jiraHost,
 			hasSubscriptions: true
 		}));
