@@ -1,5 +1,5 @@
-import {Installation} from "../models";
-import {NextFunction, Request, Response} from "express";
+import { Installation } from "models/installation";
+import { NextFunction, Request, Response } from "express";
 
 /**
  * Express middleware for connect app events
@@ -10,7 +10,7 @@ import {NextFunction, Request, Response} from "express";
  * @param res Response
  * @param next Next function
  */
-export default async (req: Request, res: Response, next: NextFunction) => {
+export const extractInstallationFromJiraCallback = async (req: Request, res: Response, next: NextFunction) => {
 	if (!req.body?.clientKey) {
 		res.status(401);
 		return;

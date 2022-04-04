@@ -2,12 +2,14 @@
 import issueKeyParser from "jira-issue-key-parser";
 import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
-import { Installation, RepoSyncState, Subscription } from "models/index";
+import { Installation } from "models/installation";
+import { RepoSyncState } from "models/reposyncstate";
+import { Subscription } from "models/subscription";
 import { Application } from "probot";
 import { createWebhookApp } from "test/utils/probot";
 import { processInstallation } from "./installation";
-import { cleanAll } from "nock";
 import { getLogger } from "config/logger";
+import { cleanAll } from "nock";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { sqsQueues } from "../sqs/queues";

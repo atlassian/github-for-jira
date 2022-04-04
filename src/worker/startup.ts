@@ -1,6 +1,7 @@
 import { probot } from "./app";
 import { sqsQueues } from "../sqs/queues";
-import { getLogger } from "../config/logger";
+import { getLogger } from "config/logger";
+
 const logger = getLogger("worker");
 
 let running = false;
@@ -12,7 +13,7 @@ export async function start() {
 	}
 
 	logger.info("Micros Lifecycle: Starting queue processing");
-	sqsQueues.start()
+	sqsQueues.start();
 
 	running = true;
 }

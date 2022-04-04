@@ -1,11 +1,11 @@
 import { transformBranches } from "./transforms/branch";
 import { GitHubAPI } from "probot";
-import { Repository } from "../models/subscription";
-import { GitHubAppClient } from "../github/client/github-app-client";
+import { Repository } from "models/subscription";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 // TODO: better typings
-export default async (logger: LoggerWithTarget, _github: GitHubAPI, newGithub: GitHubAppClient, _jiraHost: string, repository:Repository, cursor?:string | number, perPage?:number) => {
+export const getBranchTask = async (logger: LoggerWithTarget, _github: GitHubAPI, newGithub: GitHubInstallationClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
 	perPage = perPage || 20;

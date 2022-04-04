@@ -31,9 +31,9 @@ export const sqsQueueMetrics = {
 	received: `${server}.sqs.queue.received`,
 	completed: `${server}.sqs.queue.success`,
 	failed: `${server}.sqs.queue.failed`,
-	sent:  `${server}.sqs.queue.sent`,
+	sent: `${server}.sqs.queue.sent`,
 	deleted: `${server}.sqs.queue.deleted`,
-	duration: `${server}.sqs.queue.duration`,
+	duration: `${server}.sqs.queue.duration`
 };
 
 export const metricHttpRequest = {
@@ -50,7 +50,7 @@ export const metricHttpRequest = {
 export const metricSyncStatus = {
 	complete: `${server}.sync-status.complete`,
 	failed: `${server}.sync-status.failed`,
-	fullSyncDuration: `${server}.sync.full-sync.duration`, //Measures total time of full sync
+	fullSyncDuration: `${server}.sync.full-sync.duration` //Measures total time of full sync
 };
 
 export const metricTaskStatus = {
@@ -64,5 +64,5 @@ export const metricWebhooks = {
 	webhookPayloadSize: `${server}.webhooks.payload-size.bytes`,
 	webhookProcessed: `${server}.webhooks.processed`,
 	webhookFailure: `${server}.webhooks.failed`,
-	webhookLatency: `${server}.webhooks.processing-time.latency`,
+	webhookLatency: `${server}.webhooks.processing-time.latency`
 };

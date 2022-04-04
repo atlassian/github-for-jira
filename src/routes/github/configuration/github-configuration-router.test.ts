@@ -1,6 +1,6 @@
 import supertest from "supertest";
-import { Installation, Subscription } from "~/src/models";
-import SubscriptionClass from "models/subscription";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";
@@ -11,7 +11,7 @@ import installationResponse from "fixtures/jira-configuration/single-installatio
 
 describe("Github Configuration", () => {
 	let frontendApp: Application;
-	let sub: SubscriptionClass;
+	let sub: Subscription;
 
 	const authenticatedUserResponse = { login: "test-user" };
 	const adminUserResponse = { login: "admin-user" };
@@ -150,7 +150,7 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get(`/orgs/test-org/memberships/test-user`)
+				.get(`/user/memberships/orgs/test-org`)
 				.reply(200, {
 					role: "admin"
 				});
@@ -219,7 +219,7 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get("/orgs/test-org/memberships/test-user")
+				.get("/user/memberships/orgs/test-org")
 				.reply(200, {
 					role: "admin"
 				});

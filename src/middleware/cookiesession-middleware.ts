@@ -1,6 +1,6 @@
 // setup route middlewares
 import cookieSession from "cookie-session";
-import envVars from "../config/env";
+import { envVars }  from "config/env";
 
 export const cookieSessionMiddleware = cookieSession({
 	keys: [envVars.GITHUB_CLIENT_SECRET],

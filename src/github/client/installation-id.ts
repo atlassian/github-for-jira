@@ -1,4 +1,4 @@
-import envVars from "../../config/env";
+import { envVars }  from "config/env";
 
 /**
  * An installation ID uniquely identifies an installation of a GitHub app across the (single) cloud instance
@@ -21,10 +21,6 @@ export class InstallationId {
 		this.installationId = installationId;
 	}
 
-	toString(): string {
-		return `${this.githubBaseUrl}###${this.appId}###${this.installationId}`;
-	}
-
 	static fromString(appIdString: string): InstallationId {
 		const regex = /^(.+)###([0-9]+)###([0-9]+)$/;
 		const matches = regex.exec(appIdString);
@@ -38,8 +34,12 @@ export class InstallationId {
 		const installationId = matches[3];
 		return new InstallationId(githubUrl, parseInt(appId), parseInt(installationId));
 	}
+
+	toString(): string {
+		return `${this.githubBaseUrl}###${this.appId}###${this.installationId}`;
+	}
 }
 
 export const getCloudInstallationId = (installationId: number): InstallationId => {
 	return new InstallationId("https://api.github.com", parseInt(envVars.APP_ID), installationId);
-}
+};

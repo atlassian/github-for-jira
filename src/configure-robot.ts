@@ -1,15 +1,15 @@
-import {Application, Probot} from "probot";
-import setupGitHub from "./github";
-import {overrideProbotLoggingMethods} from "./config/logger";
+import { Application, Probot } from "probot";
+import { setupGithubWebhooks } from "./github/webhooks";
+import { overrideProbotLoggingMethods } from "config/logger";
 import { setupFrontend } from "./app";
 
 export async function setupApp(app: Application): Promise<Application> {
-	setupGitHub(app);
+	setupGithubWebhooks(app);
 	setupFrontend(app);
 	return app;
 }
 
-export default function configureAndLoadApp(probot: Probot) {
+export const configureAndLoadApp = (probot: Probot) => {
 	probot.load(setupApp);
 	probot.webhook.on("error", (err: Error) => {
 		probot.logger.error(err, "Webhook Error");

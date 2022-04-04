@@ -4,7 +4,7 @@ import { HealthcheckRouter } from "../healthcheck/healthcheck-router";
 import { getFrontendApp } from "../../app";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
-import {getLogger} from "config/logger";
+import { getLogger } from "config/logger";
 
 jest.mock("config/feature-flags");
 
@@ -66,25 +66,10 @@ describe("Maintenance", () => {
 		});
 
 		describe("Admin API", () => {
-			beforeEach(() =>
-				githubNock
-					.post("/graphql")
-					.reply(200, {
-						data: {
-							viewer: {
-								login: "monalisa",
-								organization: {
-									viewerCanAdminister: true
-								}
-							}
-						}
-					})
-			);
-
 			it("should still work in maintenance mode", () =>
 				supertest(app)
 					.get("/api")
-					.set("Authorization", "Bearer xxx")
+					.set("X-Slauth-Mechanism", "asap")
 					.expect(200)
 			);
 		});

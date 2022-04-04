@@ -1,34 +1,50 @@
-import { Subscription } from "../../../models";
+import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
+import { getCloudInstallationId } from "~/src/github/client/installation-id";
+import { GitHubAppClient } from "~/src/github/client/github-app-client";
+import { GitHubUserClient } from "~/src/github/client/github-user-client";
+import { isUserAdminOfOrganization } from "utils/github-utils";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { github, client, isAdmin, githubToken } = res.locals;
+	const { github, client, githubToken, jiraHost } = res.locals;
+
+	const gitHubInstallationId = Number(req.params.installationId);
 	if (!githubToken) {
 		return next(new Error("Unauthorized"));
 	}
 
-	const installationId = Number(req.params.installationId);
+	if (!gitHubInstallationId || !jiraHost) {
+		return next(new Error("installationId and jiraHost must be provided to delete a subscription."));
+	}
+
+	const logger = req.log.child({ jiraHost, gitHubInstallationId });
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, false, jiraHost);
+	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), logger);
+	const gitHubUserClient = new GitHubUserClient(githubToken, logger);
 
 	try {
-		const { data: { login } } = await github.users.getAuthenticated();
+		const { data: { login } } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated();
+
 		// get the installation to see if the user is an admin of it
-		const { data: installation } = await client.apps.getInstallation({ installation_id: installationId });
+		const { data: installation } = useNewGitHubClient ?
+			await gitHubAppClient.getInstallation(gitHubInstallationId) :
+			await client.apps.getInstallation({ installation_id: gitHubInstallationId });
+
 		// get all subscriptions from the database for this installation ID
-		const subscriptions = await Subscription.getAllForInstallation(installationId);
+		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
 
 		// Only show the page if the logged in user is an admin of this installation
-		if (await isAdmin({
-			org: installation.account.login,
-			username: login,
-			type: installation.target_type
-		})) {
-			const { data: info } = await client.apps.getAuthenticated();
-
+		if (await isUserAdminOfOrganization(
+			new GitHubUserClient(githubToken, req.log),
+			installation.account.login,
+			login,
+			installation.target_type
+		)) {
 			return res.render("github-subscriptions.hbs", {
 				csrfToken: req.csrfToken(),
 				nonce: res.locals.nonce,
 				installation,
-				info,
 				host: res.locals.jiraHost,
 				subscriptions,
 				hasSubscriptions: subscriptions.length > 0
@@ -37,7 +53,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 			return next(new Error("Unauthorized"));
 		}
 	} catch (err) {
-		req.log.error(err, "Unable to show subscription page");
-		return next(new Error("Not Found"));
+		logger.error(err, "Unable to show subscription page");
+		return next(new Error("Unable to show subscription page"));
 	}
 };

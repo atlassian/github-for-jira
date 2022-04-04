@@ -2,7 +2,9 @@
 import { removeInterceptor } from "nock";
 import { commitsNoLastCursor } from "fixtures/api/graphql/commit-queries";
 import { processInstallation } from "./installation";
-import { Installation, RepoSyncState, Subscription } from "models/index";
+import { Installation } from "models/installation";
+import { RepoSyncState } from "models/reposyncstate";
+import { Subscription } from "models/subscription";
 import { mocked } from "ts-jest/utils";
 import { Application } from "probot";
 import { createWebhookApp } from "test/utils/probot";
@@ -10,8 +12,6 @@ import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/backfill";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 import commitNodesFixture from "fixtures/api/graphql/commit-nodes.json";
 
@@ -22,7 +22,7 @@ import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
-describe.each([true, false])("sync/commits - new github client is %s", (useNewGithubClient) => {
+describe("sync/commits", () => {
 	let app: Application;
 	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
@@ -100,15 +100,8 @@ describe.each([true, false])("sync/commits - new github client is %s", (useNewGi
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 
-		if (useNewGithubClient) {
-			githubUserTokenNock(installationId);
-		}
+		githubUserTokenNock(installationId);
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BACKFILL,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
 	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {

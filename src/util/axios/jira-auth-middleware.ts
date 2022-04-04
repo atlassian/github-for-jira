@@ -1,7 +1,7 @@
 import { AxiosInstance, AxiosRequestConfig } from "axios";
 import url from "url";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
-import envVars from "../../config/env";
+import { envVars }  from "config/env";
 
 const instance = envVars.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
