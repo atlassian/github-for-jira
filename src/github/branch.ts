@@ -1,5 +1,4 @@
 import { transformBranch } from "../transforms/transform-branch";
-import issueKeyParser from "jira-issue-key-parser";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
@@ -10,6 +9,7 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraClient } from "../jira/client/jira-client";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
+import { jiraIssueKeyParser } from "utils/jira-utils";
 
 export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
@@ -89,7 +89,7 @@ export const processBranch = async (
 
 export const deleteBranchWebhookHandler = async (context: CustomContext, jiraClient): Promise<void> => {
 	const payload: WebhookPayloadDelete = context.payload;
-	const issueKeys = issueKeyParser().parse(payload.ref);
+	const issueKeys = jiraIssueKeyParser(payload.ref);
 
 	if (isEmpty(issueKeys)) {
 		context.log({ noop: "no_issue_keys" }, "Halting further execution for deleteBranch since issueKeys is empty");

@@ -5,9 +5,9 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import issueKeyParser from "jira-issue-key-parser";
 import { JiraCommit, JiraIssue } from "interfaces/jira";
 import { getLogger } from "config/logger";
+import { jiraIssueKeyParser } from "utils/jira-utils";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -70,7 +70,7 @@ export const getJiraClient = async (
 			},
 			parse: (text: string): string[] | undefined => {
 				if (!text) return undefined;
-				return issueKeyParser().parse(text) || undefined;
+				return jiraIssueKeyParser(text);
 			},
 			comments: {
 				// eslint-disable-next-line camelcase

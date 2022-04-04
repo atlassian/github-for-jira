@@ -1,8 +1,8 @@
 import { enqueuePush } from "../transforms/push";
-import issueKeyParser from "jira-issue-key-parser";
 import { Context } from "probot/lib/context";
 import { getCurrentTime } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
+import { jiraIssueKeyParser } from "utils/jira-utils";
 
 export const pushWebhookHandler = async (context: Context, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();
@@ -16,7 +16,7 @@ export const pushWebhookHandler = async (context: Context, jiraClient): Promise<
 		repository: context.payload?.repository,
 		// TODO: use reduce instead
 		commits: context.payload?.commits?.map((commit) => {
-			const issueKeys = issueKeyParser().parse(commit.message);
+			const issueKeys = jiraIssueKeyParser(commit.message);
 
 			if (!isEmpty(issueKeys)) {
 				return commit;

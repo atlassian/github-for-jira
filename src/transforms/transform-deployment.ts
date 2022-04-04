@@ -1,4 +1,3 @@
-import issueKeyParser from "jira-issue-key-parser";
 import { JiraDeploymentData } from "interfaces/jira";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
@@ -9,6 +8,7 @@ import { getAllCommitMessagesBetweenReferences } from "./util/github-api-request
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { AxiosResponse } from "axios";
 import { deburr, isEmpty } from "lodash";
+import { jiraIssueKeyParser } from "utils/jira-utils";
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
 async function getLastSuccessfulDeployCommitSha(
@@ -182,9 +182,9 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 			logger
 		);
 
-		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}\n${allCommitsMessages}`) || [];
+		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`);
 	} else {
-		issueKeys = issueKeyParser().parse(`${deployment.ref}\n${message}`) || [];
+		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}`);
 	}
 
 	if (isEmpty(issueKeys)) {
