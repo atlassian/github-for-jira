@@ -7,6 +7,7 @@ import { GithubAPI } from "config/github-api";
 import { GitHubAPI } from "probot";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
+import { getLogger } from "config/logger";
 
 describe("Jira Configuration Suite", () => {
 	let subscription: Subscription;
@@ -75,6 +76,7 @@ describe("Jira Configuration Suite", () => {
 	describe("getInstallations", () => {
 		let sub: Subscription;
 		const client = GithubAPI();
+		const logger = getLogger("MOCK");
 
 		beforeEach(async () => {
 			sub = await Subscription.create({
@@ -85,7 +87,7 @@ describe("Jira Configuration Suite", () => {
 		});
 
 		it("should return no success or failed connections if no subscriptions given", async () => {
-			expect(await getInstallations(client, [])).toEqual({
+			expect(await getInstallations(client, [], logger)).toEqual({
 				fulfilled: [],
 				rejected: [],
 				total: 0
@@ -97,7 +99,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(200, singleInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub], logger)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
@@ -115,14 +117,14 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub], logger)).toMatchObject({
 				fulfilled: [],
 				rejected: [{
 					error: {
 						status: 404,
 						documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 					},
-					id: sub.gitHubInstallationId,
+					gitHubInstallationId: sub.gitHubInstallationId,
 					deleted: true
 				}]
 			});
@@ -143,7 +145,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${failedSub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub, failedSub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub, failedSub], logger)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
@@ -157,7 +159,7 @@ describe("Jira Configuration Suite", () => {
 						status: 404,
 						documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 					},
-					id: failedSub.gitHubInstallationId,
+					gitHubInstallationId: failedSub.gitHubInstallationId,
 					deleted: true
 				}]
 			});
@@ -178,7 +180,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${failedSub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub, failedSub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub, failedSub], logger)).toMatchObject({
 				fulfilled: [],
 				rejected: [
 					{
@@ -186,7 +188,7 @@ describe("Jira Configuration Suite", () => {
 							status: 404,
 							documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 						},
-						id: sub.gitHubInstallationId,
+						gitHubInstallationId: sub.gitHubInstallationId,
 						deleted: true
 					},
 					{
@@ -194,7 +196,7 @@ describe("Jira Configuration Suite", () => {
 							status: 404,
 							documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 						},
-						id: failedSub.gitHubInstallationId,
+						gitHubInstallationId: failedSub.gitHubInstallationId,
 						deleted: true
 					}
 				]
@@ -230,7 +232,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(200, singleInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub], logger)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
