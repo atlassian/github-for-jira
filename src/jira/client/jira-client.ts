@@ -6,7 +6,7 @@ import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 import issueKeyParser from "jira-issue-key-parser";
-import { JiraCommit, JiraIssue } from "interfaces/jira";
+import { JiraBuildData, JiraCommit, JiraDeploymentData, JiraIssue } from "interfaces/jira";
 import { getLogger } from "config/logger";
 
 // Max number of issue keys we can pass to the Jira API
@@ -248,7 +248,7 @@ export const getJiraClient = async (
 			}
 		},
 		workflow: {
-			submit: async (data) => {
+			submit: async (data: JiraBuildData, repositoryId: string) => {
 				updateIssueKeysFor(data.builds, dedup);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
@@ -261,7 +261,8 @@ export const getJiraClient = async (
 				const payload = {
 					builds: data.builds,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						repositoryId
 					},
 					providerMetadata: {
 						product: data.product
@@ -270,10 +271,17 @@ export const getJiraClient = async (
 				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
 				logger?.info("Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
+			},
+			delete: async (repositoryId: string) => {
+				return await instance.delete("/rest/builds/0.1/bulkByProperties", {
+					params: {
+						repositoryId
+					}
+				});
 			}
 		},
 		deployment: {
-			submit: async (data): Promise<DeploymentsResult> => {
+			submit: async (data: JiraDeploymentData, repositoryId: string): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, dedup);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
@@ -286,7 +294,8 @@ export const getJiraClient = async (
 				const payload = {
 					deployments: data.deployments,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						repositoryId
 					}
 				};
 				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
@@ -297,6 +306,13 @@ export const getJiraClient = async (
 					rejectedDeployments: response.data?.rejectedDeployments
 				};
 			}
+		},
+		delete: async (repositoryId: string) => {
+			return await instance.delete("/rest/deployments/0.1/bulkByProperties", {
+				params: {
+					repositoryId
+				}
+			});
 		}
 	};
 

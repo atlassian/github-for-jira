@@ -19,7 +19,7 @@ export const workflowWebhookHandler = async (context: CustomContext, jiraClient,
 
 	logger.info(`Sending workflow event to Jira: ${jiraClient.baseURL}`);
 
-	const jiraResponse = await jiraClient.workflow.submit(jiraPayload);
+	const jiraResponse = await jiraClient.workflow.submit(jiraPayload, payload.repository.id);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
