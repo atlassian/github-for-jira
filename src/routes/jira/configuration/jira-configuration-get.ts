@@ -12,7 +12,6 @@ import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
-
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
 		case "ACTIVE":
