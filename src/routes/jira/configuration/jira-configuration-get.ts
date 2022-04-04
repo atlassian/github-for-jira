@@ -64,13 +64,13 @@ const getInstallation = async (client: GitHubAPI, subscription: Subscription, lo
 		};
 
 	} catch (err) {
-		log?.error(
+		log.error(
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.code === 404 },
 			"Failed connection"
 		);
 		statsd.increment(metricError.failedConnection);
 
-		return Promise.reject({ error: err, gitHubInstallationId, deleted: err.code === 404 });
+		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.code === 404 });
 	}
 };
 
