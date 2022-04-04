@@ -3,7 +3,7 @@ import { Subscription } from "models/subscription";
 import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {

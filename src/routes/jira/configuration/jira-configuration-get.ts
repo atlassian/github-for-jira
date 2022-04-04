@@ -10,7 +10,7 @@ import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
