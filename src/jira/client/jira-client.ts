@@ -305,14 +305,14 @@ export const getJiraClient = async (
 					status: response.status,
 					rejectedDeployments: response.data?.rejectedDeployments
 				};
+			},
+			delete: async (repositoryId: string) => {
+				return await instance.delete("/rest/deployments/0.1/bulkByProperties", {
+					params: {
+						repositoryId
+					}
+				});
 			}
-		},
-		delete: async (repositoryId: string) => {
-			return await instance.delete("/rest/deployments/0.1/bulkByProperties", {
-				params: {
-					repositoryId
-				}
-			});
 		}
 	};
 

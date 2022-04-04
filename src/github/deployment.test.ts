@@ -100,7 +100,8 @@ describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
 					],
 				properties:
 					{
-						gitHubInstallationId: 1234
+						gitHubInstallationId: 1234,
+						repositoryId: "test-repo-id"
 					}
 			}).reply(200);
 

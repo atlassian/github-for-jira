@@ -75,7 +75,8 @@ describe("Workflow Webhook", () => {
 				],
 			properties:
 				{
-					gitHubInstallationId: 1234
+					gitHubInstallationId: 1234,
+					repositoryId: "test-repo-id"
 				},
 			providerMetadata:
 				{
