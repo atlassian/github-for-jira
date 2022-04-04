@@ -134,7 +134,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 						status: 404,
 						documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 					},
-					gitHubInstallationId: sub.gitHubInstallationId,
+					id: sub.gitHubInstallationId,
 					deleted: true
 				}]
 			});
@@ -169,7 +169,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 						status: 404,
 						documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 					},
-					gitHubInstallationId: failedSub.gitHubInstallationId,
+					id: failedSub.gitHubInstallationId,
 					deleted: true
 				}]
 			});
@@ -198,7 +198,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 							status: 404,
 							documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 						},
-						gitHubInstallationId: sub.gitHubInstallationId,
+						id: sub.gitHubInstallationId,
 						deleted: true
 					},
 					{
@@ -206,7 +206,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 							status: 404,
 							documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 						},
-						gitHubInstallationId: failedSub.gitHubInstallationId,
+						id: failedSub.gitHubInstallationId,
 						deleted: true
 					}
 				]
