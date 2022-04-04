@@ -4,7 +4,7 @@ import { GitHubPullRequest } from "interfaces/github";
 import { JiraBuildData, JiraPullRequest } from "interfaces/jira";
 import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
 import { WorkflowPayload } from "config/interfaces";
-import { GitHubAppClient } from "../github/client/github-app-client";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
@@ -52,7 +52,7 @@ function mapPullRequests(
 }
 
 export const transformWorkflow = async (
-	githubClient: GitHubAppClient,
+	githubClient: GitHubInstallationClient,
 	payload: WorkflowPayload,
 	logger: LoggerWithTarget
 ): Promise<JiraBuildData | undefined> => {

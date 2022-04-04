@@ -4,10 +4,10 @@ import { getJiraAuthor } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
-import { GitHubAppClient } from "../github/client/github-app-client";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
 
-const getLastCommit = async (github: GitHubAppClient, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
+const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
 	const { data: { object: { sha } } } = await github.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`);
 	const { data: { commit, author, html_url: url } } = await github.getCommit(webhookPayload.repository.owner.login, webhookPayload.repository.name, sha);
 
@@ -25,7 +25,7 @@ const getLastCommit = async (github: GitHubAppClient, webhookPayload: WebhookPay
 	};
 };
 
-export const transformBranch = async (github: GitHubAppClient, webhookPayload: WebhookPayloadCreate): Promise<JiraBranchData | undefined> => {
+export const transformBranch = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate): Promise<JiraBranchData | undefined> => {
 	if (webhookPayload.ref_type !== "branch") {
 		return;
 	}

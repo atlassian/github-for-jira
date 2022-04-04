@@ -5,7 +5,7 @@ import { statsd }  from "config/statsd";
 import { GitHubAPI } from "probot";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
-import { GitHubAppClient } from "../github/client/github-app-client";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getGithubUser } from "services/github/user";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -42,7 +42,7 @@ type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 export const getPullRequestTask = async (
 	logger: LoggerWithTarget,
 	github: GitHubAPI,
-	newGithub: GitHubAppClient,
+	newGithub: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,

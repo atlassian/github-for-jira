@@ -1,13 +1,13 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
-import { GitHubAppClient } from "./client/github-app-client";
+import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
 
 export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, _jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const { issue, repository } = context.payload;
 
-	const githubClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
 
 	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;

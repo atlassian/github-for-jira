@@ -7,6 +7,7 @@ import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
 import { Tracer } from "config/tracer";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import Logger from "bunyan";
 import { getCloudInstallationId } from "~/src/github/client/installation-id";
@@ -67,8 +68,8 @@ const getInstallationsWithAdmin = async (
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(installation.id), log);
-		const numberOfReposPromise = gitHubAppClient.getNumberOfReposForInstallation().catch((err) => {
+		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id), log);
+		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
 			return 0;
 		});
@@ -85,7 +86,6 @@ const getInstallationsWithAdmin = async (
 		});
 		const [isAdmin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
-
 
 		return {
 			...installation,

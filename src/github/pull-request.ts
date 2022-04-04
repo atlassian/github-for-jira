@@ -3,7 +3,7 @@ import issueKeyParser from "jira-issue-key-parser";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
-import { GitHubAppClient } from "./client/github-app-client";
+import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
@@ -20,7 +20,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	} = context.payload;
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
-	const githubClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), context.log);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
 
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,
@@ -93,7 +93,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	);
 };
 
-const updateGithubIssues = async (github: GitHubAppClient | GitHubAPI, context: CustomContext, util, repo, owner, pullRequest) => {
+const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, context: CustomContext, util, repo, owner, pullRequest) => {
 	const linkifiedBody = await util.unfurl(pullRequest.body);
 	if (!linkifiedBody) {
 		return;
@@ -107,12 +107,12 @@ const updateGithubIssues = async (github: GitHubAppClient | GitHubAPI, context: 
 		issue_number: pullRequest.number
 	};
 
-	github instanceof GitHubAppClient ?
+	github instanceof GitHubInstallationClient ?
 		await github.updateIssue(updatedPullRequest) :
 		await github.issues.update(updatedPullRequest);
 };
 
-const getReviews = async (githubCient: GitHubAppClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
+const getReviews = async (githubCient: GitHubInstallationClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
 	const response = await githubCient.getPullRequestReviews(owner, repo, pull_number);
 	return response.data;
 };

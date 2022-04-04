@@ -1,82 +1,67 @@
-import { Subscription } from "models/subscription";
 import { Request, Response } from "express";
+import { Subscription } from "models/subscription";
+import { getCloudInstallationId } from "../../../github/client/installation-id";
+import { GitHubAppClient } from "../../../github/client/github-app-client";
+import { GitHubUserClient } from "../../../github/client/github-user-client";
+import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
+import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
-	const { github, githubToken, jiraHost } = res.locals;
+	const { github, client, githubToken, jiraHost } = res.locals;
+	const { installationId: gitHubInstallationId } = req.body;
+	const logger = req.log.child({ jiraHost, gitHubInstallationId });
+
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION, false, jiraHost) ;
+	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), logger);
+	const gitHubUserClient = new GitHubUserClient(githubToken, logger);
+
 	if (!githubToken) {
 		res.sendStatus(401);
 		return;
 	}
 
-	if (!req.body.installationId || !jiraHost) {
-		res.status(400)
-			.json({
-				err: "installationId and jiraHost must be provided to delete a subscription."
-			});
+	if (!gitHubInstallationId || !jiraHost) {
+		res.status(400).json({ err: "installationId and jiraHost must be provided to delete a subscription." });
 		return;
 	}
 
-	req.log.info("Received delete-subscription request");
+	logger.info("Received delete-subscription request");
 
-	/**
-	 * Returns the role of the user for an Org or 'admin' if the
-	 * installation belongs to the current user
-	 */
-	async function getRole({ login, installation }) {
-		if (installation.target_type === "Organization") {
-			const { data: { role } } = await github.orgs.getMembership({
-				org: installation.account.login,
-				username: login
-			});
-			return role;
-		} else if (installation.target_type === "User") {
-			return (login === installation.account.login) ? "admin" : "";
-		}
-		throw new Error(`unknown "target_type" on installation id ${req.body.installationId}.`);
-	}
-
-	// Check if the user that posted this has access to the installation ID they're requesting
 	try {
-		const { data: { installations } } = await github.apps.listInstallationsForAuthenticatedUser();
+		// get the installation to see if the user is an admin of it
+		const { data: installation } = useNewGitHubClient ?
+			await gitHubAppClient.getInstallation(gitHubInstallationId) :
+			await client.apps.getInstallation({ installation_id: gitHubInstallationId });
 
-		const userInstallation = installations.find(installation => installation.id === Number(req.body.installationId));
+		const { data: { login } } = useNewGitHubClient ?
+			await gitHubUserClient.getUser() :
+			await github.users.getAuthenticated();
 
-		if (!userInstallation) {
-			res.status(401)
-				.json({
-					err: `Failed to delete subscription for ${req.body.installationId}. User does not have access to that installation.`
-				});
+		// Only show the page if the logged in user is an admin of this installation
+		if (!await isUserAdminOfOrganization(
+			new GitHubUserClient(githubToken, req.log),
+			installation.account.login,
+			login,
+			installation.target_type
+		)) {
+			res.status(401).json({ err: `Unauthorized access to delete subscription.` });
 			return;
 		}
-		const { data: { login } } = await github.users.getAuthenticated();
 
-		// If the installation is an Org, the user needs to be an admin for that Org
 		try {
-			const role = await getRole({ login, installation: userInstallation });
-			if (role !== "admin") {
-				res.status(401)
-					.json({
-						err: `Failed to delete subscription for ${req.body.installationId}. User does not have access to that installation.`
-					});
-				return;
-			}
-
-			const subscription = await Subscription.getSingleInstallation(res.locals.jiraHost, req.body.installationId);
+			const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 			if (!subscription) {
-				req.log.warn({ req, res }, "Cannot find Subscription");
 				res.status(404).send("Cannot find Subscription.");
 				return;
 			}
 			await subscription.destroy();
 			res.sendStatus(202);
 		} catch (err) {
-			res.status(403)
-				.json({
-					err: `Failed to delete subscription to ${req.body.installationId}. ${err}`
-				});
+			res.status(403).json({ err: `Failed to delete subscription.` });
 		}
+
 	} catch (err) {
-		req.log.error({ err, req, res }, "Error while processing delete subscription request");
+		logger.error({ err, req, res }, "Error while processing delete subscription request");
 		res.sendStatus(500);
 	}
 };

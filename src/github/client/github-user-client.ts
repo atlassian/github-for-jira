@@ -65,5 +65,4 @@ export class GitHubUserClient {
 	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
 		return this.axios.get<T>(url, config);
 	}
-
 }

@@ -5,7 +5,7 @@ import { getLogger } from "config/logger";
 import { GitHubAPI } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { GitHubAppClient } from "../github/client/github-app-client";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
 
 import deployment_status from "fixtures/deployment_status-basic.json";
@@ -83,7 +83,7 @@ const TEST_INSTALLATION_ID = 1234;
 describe.each([true, false])("transform GitHub webhook payload to Jira payload", (useNewGithubClient) => {
 
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
-	const githubClient = new GitHubAppClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
