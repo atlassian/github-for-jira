@@ -41,12 +41,10 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 			login,
 			installation.target_type
 		)) {
-			const { data: info } = useNewGitHubClient ? await gitHubAppClient.getInstallations() : await client.apps.getAuthenticated();
 			return res.render("github-subscriptions.hbs", {
 				csrfToken: req.csrfToken(),
 				nonce: res.locals.nonce,
 				installation,
-				info,
 				host: res.locals.jiraHost,
 				subscriptions,
 				hasSubscriptions: subscriptions.length > 0
