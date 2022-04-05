@@ -8,6 +8,7 @@ import Logger from "bunyan";
 import { JiraCommit, JiraIssue } from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
+import { uniq } from "lodash";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -249,7 +250,7 @@ export const getJiraClient = async (
 		},
 		workflow: {
 			submit: async (data) => {
-				updateIssueKeysFor(data.builds, dedup);
+				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
 						truncatedBuilds: getTruncatedIssuekeys(data.builds)
@@ -274,7 +275,7 @@ export const getJiraClient = async (
 		},
 		deployment: {
 			submit: async (data): Promise<DeploymentsResult> => {
-				updateIssueKeysFor(data.deployments, dedup);
+				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
 						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
@@ -360,7 +361,7 @@ const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
  * Deduplicates issueKeys field for branches and commits
  */
 const dedupIssueKeys = (repositoryObj, logger?) => {
-	updateRepositoryIssueKeys(repositoryObj, dedup, logger);
+	updateRepositoryIssueKeys(repositoryObj, logger);
 };
 
 /**
@@ -391,25 +392,16 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
  * Runs a mutating function on all branches and commits
  * with issue keys in a Jira Repository object
  */
-const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc, logger?) => {
+const updateRepositoryIssueKeys = (repositoryObj, logger?) => {
 	if (repositoryObj.commits) {
-		repositoryObj.commits = updateIssueKeysFor(
-			repositoryObj.commits,
-			mutatingFunc
-		);
+		repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, uniq);
 	}
 
 	if (repositoryObj.branches) {
-		repositoryObj.branches = updateIssueKeysFor(
-			repositoryObj.branches,
-			mutatingFunc
-		);
+		repositoryObj.branches = updateIssueKeysFor(repositoryObj.branches, uniq);
 		repositoryObj.branches.forEach((branch) => {
 			if (branch.lastCommit) {
-				branch.lastCommit = updateIssueKeysFor(
-					[branch.lastCommit],
-					mutatingFunc
-				)[0];
+				branch.lastCommit = updateIssueKeysFor([branch.lastCommit], uniq)[0];
 			}
 		});
 	}
@@ -422,17 +414,12 @@ const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc, logger?) => {
 /**
  * Runs the mutatingFunc on the issue keys field for each branch or commit
  */
-const updateIssueKeysFor = (resources, mutatingFunc) => {
+const updateIssueKeysFor = (resources, func) => {
 	resources.forEach((resource) => {
-		resource.issueKeys = mutatingFunc(resource.issueKeys);
+		resource.issueKeys = func(resource.issueKeys);
 	});
 	return resources;
 };
-
-/**
- * Deduplicates elements in an array
- */
-const dedup = (array) => [...new Set(array)];
 
 /**
  * Truncates to 100 elements in an array

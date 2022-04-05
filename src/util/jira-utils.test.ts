@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { envVars }  from "config/env";
+import { envVars } from "config/env";
 import { getJiraAppUrl, getJiraMarketplaceUrl, jiraIssueKeyParser } from "./jira-utils";
 
 describe("Jira Utils", () => {
@@ -37,89 +37,62 @@ describe("Jira Utils", () => {
 	});
 
 	describe("jiraIssueKeyParser", () => {
-		describe("issue keys - branches", () => {
-			it("extracts a single issue key from a branch - all uppercase", () => {
-				expect(jiraIssueKeyParser("JRA-123")).toEqual(["JRA-123"]);
-				expect(jiraIssueKeyParser("JRA-456-some-extra-text")).toEqual(["JRA-456"]);
-				expect(jiraIssueKeyParser("some-extra-text-JRA-789")).toEqual(["JRA-789"]);
-			});
-
-			it("extracts a single issue key from a branch - all lowercase", () => {
-				expect(jiraIssueKeyParser("jra-123")).toEqual(["JRA-123"]);
-				expect(jiraIssueKeyParser("jra-456-some-extra-text")).toEqual(["JRA-456"]);
-				expect(jiraIssueKeyParser("some-extra-text-jra-789")).toEqual(["JRA-789"]);
-			});
-
-			it("extracts a single issue key from a branch - uppercase and lowercase", () => {
-				expect(jiraIssueKeyParser("jRa-123")).toEqual(["JRA-123"]);
-				expect(jiraIssueKeyParser("Jra-456-some-extra-text")).toEqual(["JRA-456"]);
-				expect(jiraIssueKeyParser("some-extra-text-jrA-789")).toEqual(["JRA-789"]);
-			});
-
-			it("extracts multiple issue keys from a branch", () => {
-				expect(jiraIssueKeyParser("JRA-123-Jra-456")).toEqual(["JRA-123", "JRA-456"]);
-				expect(jiraIssueKeyParser("jRa-123-JRA-456-my-branch")).toEqual(["JRA-123", "JRA-456"]);
-				expect(jiraIssueKeyParser("my-branch-JrA-123-JRa-456")).toEqual(["JRA-123", "JRA-456"]);
-				expect(jiraIssueKeyParser("JrA-123-my-branch-jra-456")).toEqual(["JRA-123", "JRA-456"]);
-			});
-
-			it("extracts issue keys embedded in branch", () => {
-				expect(jiraIssueKeyParser("feature/JRA-123-my-feature")).toEqual(["JRA-123"]);
-				expect(jiraIssueKeyParser("feature/JRA-123-and-JRA-456")).toEqual(["JRA-123", "JRA-456"]);
-			});
-
-			it("extracts alphanumeric issue key from a branch", () => {
-				expect(jiraIssueKeyParser("feature/J3-123-my-feature")).toEqual(["J3-123"]);
-			});
-
-			it("should not extract issue key when key leads with a number", () => {
-				expect(jiraIssueKeyParser("feature/45-123-my-feature")).toEqual([]);
-			});
-
-			it("should not extract issue key with single char project key", () => {
-				expect(jiraIssueKeyParser("F-67-my-feature")).toEqual([]);
-			});
+		it("should handle incorrect types and always return empty array", () => {
+			[2, "", [], {}, undefined, null]
+				.forEach((value: any) => expect(jiraIssueKeyParser(value)).toEqual([]));
 		});
 
-		describe("issue keys - commits and pull requests (title and body)", () => {
-			it("extracts a single issue key from a commit message/pull request", () => {
-				expect(jiraIssueKeyParser("JrA-123")).toEqual(["JRA-123"]);
-				expect(jiraIssueKeyParser("JRa-456 some extra text")).toEqual(["JRA-456"]);
-				expect(jiraIssueKeyParser("some extra text jRA-789")).toEqual(["JRA-789"]);
-			});
-
-			it("extracts multiple issue keys from a commit message/pull request", () => {
-				expect(jiraIssueKeyParser("JRa-123 and JrA-456")).toEqual(["JRA-123", "JRA-456"]);
-				expect(jiraIssueKeyParser("JRA-123 jRA-456 did some stuff")).toEqual(["JRA-123", "JRA-456"]);
-				expect(jiraIssueKeyParser("did some stuff here too for jrA-123 jra-456")).toEqual(["JRA-123", "JRA-456"]);
-				expect(jiraIssueKeyParser("JRA-123 changes that applied to JRA-456")).toEqual(["JRA-123", "JRA-456"]);
-			});
-
-			it("extracts issue keys prefixed with a hash from a commit message/pull request", () => {
-				expect(jiraIssueKeyParser("#JRA-123 #Jra-456")).toEqual(["JRA-123", "JRA-456"]);
-			});
-
-			it("extracts issue keys from brackets and parentheses from a commit message/pull request", () => {
-				expect(jiraIssueKeyParser("Making a commit with [JrA-123] and (jra-456)")).toEqual(["JRA-123", "JRA-456"]);
-				expect(jiraIssueKeyParser("[TEST-123] Test commit.")).toEqual(["TEST-123"]);
-			});
-
-			it("extracts alphanumeric issue key from a commit message/pull request", () => {
-				expect(jiraIssueKeyParser("made some changes to j2-123")).toEqual(["J2-123"]);
-			});
-
-			it("should not extract issue key when key leads with a number", () => {
-				expect(jiraIssueKeyParser("my feature 22-123")).toEqual([]);
-			});
+		it("should extract jira issue key with different casing", () => {
+			["JRA-123", "jra-123", "jRa-123"]
+				.forEach((value: any) => expect(jiraIssueKeyParser(value)).toEqual(["JRA-123"]));
 		});
 
-		it("should handle incorrect types", () => {
-			expect(jiraIssueKeyParser(2 as any)).toEqual([]);
-			expect(jiraIssueKeyParser("" as any)).toEqual([]);
-			expect(jiraIssueKeyParser([] as any)).toEqual([]);
-			expect(jiraIssueKeyParser({} as any)).toEqual([]);
-			expect(jiraIssueKeyParser(null as any)).toEqual([]);
-			expect(jiraIssueKeyParser(undefined as any)).toEqual([]);
+		it("should not extract jira issue key starting with number", () => {
+			["2PAC-123", "42-123"].forEach(value => expect(jiraIssueKeyParser(value)).toEqual([]));
+		});
+
+		it("should extract jira issue key with number(s) in it that's not the first character", () => {
+			expect(jiraIssueKeyParser("J42-123")).toEqual(["J42-123"]);
+			expect(jiraIssueKeyParser("b4l-123")).toEqual(["B4L-123"]);
+			expect(jiraIssueKeyParser("Ja9-123")).toEqual(["JA9-123"]);
+		});
+
+		it("extracts alphanumeric issue key from a branch", () => {
+			expect(jiraIssueKeyParser("feature/J3-123-my-feature")).toEqual(["J3-123"]);
+		});
+
+		it("should not extract issue key with single char project key", () => {
+			expect(jiraIssueKeyParser("F-67-my-feature")).toEqual([]);
+		});
+
+		it("should not extract the same issue twice", () => {
+			expect(jiraIssueKeyParser("JRA-123 with suffix spaces and JRA-123 TBD-123")).toEqual(["JRA-123", "TBD-123"]);
+		});
+
+		it("should extract issue keys wrapped in special characters", () => {
+			const specialChars = ` !"#$%&'()*+,-./:;<=>?@[\\]^_\`{|}~\n\t`.split("");
+			specialChars
+				.forEach((char) => {
+					expect(jiraIssueKeyParser(`${char}JRA-123${char}`)).toEqual(["JRA-123"]);
+					const randomChar = specialChars[Math.floor(specialChars.length * Math.random())];
+					expect(jiraIssueKeyParser(`${randomChar}JRA-123${char}`)).toEqual(["JRA-123"]);
+					expect(jiraIssueKeyParser(`${char}JRA-123${randomChar}`)).toEqual(["JRA-123"]);
+				});
+		});
+
+		it("should extract jira issue key when part of a longer string", () => {
+			[
+				"feature-branch/JRA-123",
+				"prefix-kebab-JRA-123",
+				"JRA-123-suffix-kebab",
+				"JRA-123 with suffix spaces",
+				"prefix spaces with JRA-123",
+			]
+				.forEach(value => expect(jiraIssueKeyParser(value)).toEqual(["JRA-123"]));
+		});
+
+		it("should extract multiple issue keys in a single string", () => {
+			expect(jiraIssueKeyParser("JRA-123 Jra-456-jra-901\n[bah-001]")).toEqual(["JRA-123", "JRA-456", "JRA-901", "BAH-001"]);
 		});
 	});
 });

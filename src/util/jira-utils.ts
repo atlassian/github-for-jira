@@ -1,7 +1,7 @@
 import { envVars }  from "config/env";
 import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
-import { isString, pickBy } from "lodash";
+import { isString, pickBy, uniq } from "lodash";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page` : "";
@@ -76,21 +76,15 @@ interface Author {
  */
 
 export const jiraIssueKeyParser = (str: string): string[] => {
-	if (!isString(str) || !str.length) return [];
-
-	const issueKeyRegex = /[A-Za-z0-9]+-[0-9]+/g;
-	const matches = str.match(issueKeyRegex);
-	const isNumeric = /[0-9]+/g;
-
-	if (!matches) {
+	// if not a string or string has no length, return empty array.
+	if (!isString(str) || !str.length){
 		return [];
 	}
 
-	return matches
-		// Remove any keys that lead with a numeric value
-		.filter((issue) => !issue.charAt(0).match(isNumeric))
-		// Remove any keys that have a single char
-		.filter((issue) => !issue.charAt(1).match("-"))
-		// Convert to uppercase so keys can be matched to Jira issues
-		.map((issueKey) => issueKey.toUpperCase()) || [];
+	// Uppercase the whole string
+	// (^|[^a-z0-9]) means that the it must be at the start of the string or be a non alphanumeric character (separator like space, new line, or special character like [)
+	// [a-z][a-z0-9]+ means that the id must start with an alphabet letter, then must be at least one more alphanumerical character to start the ID
+	// -[0-9]+ means that it must be separated by a dash, then at least 1 number character
+	// then remove duplicate issue keys
+	return uniq(Array.from(str.toUpperCase().matchAll(/(^|[^A-Z0-9])([A-Z][A-Z0-9]+-[0-9]+)/g), m => m[2]));
 };
