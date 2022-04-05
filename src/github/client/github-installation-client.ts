@@ -153,18 +153,6 @@ export class GitHubInstallationClient {
 		};
 	};
 
-	/**
-	 * This path requires JWT, therefore passing the token directly into the header.
-	 */
-	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
-		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations/{installationId}`, {
-			...this.appAuthenticationHeaders(),
-			urlParams: {
-				installationId
-			}
-		});
-	};
-
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
 			{ environment, per_page },

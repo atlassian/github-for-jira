@@ -47,7 +47,6 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 			res.status(401).json({ err: `Unauthorized access to delete subscription.` });
 			return;
 		}
-
 		try {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 			if (!subscription) {

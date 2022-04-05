@@ -104,7 +104,7 @@ describe("delete-github-subscription", () => {
 		).mockResolvedValue(true);
 
 		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
+			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost
