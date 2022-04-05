@@ -1,7 +1,7 @@
-import { envVars }  from "config/env";
+import { envVars } from "config/env";
 import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
-import { isString, pickBy, uniq } from "lodash";
+import { isEmpty, isString, pickBy, uniq } from "lodash";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page` : "";
@@ -88,3 +88,5 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	// then remove duplicate issue keys
 	return uniq(Array.from(str.toUpperCase().matchAll(/(^|[^A-Z0-9])([A-Z][A-Z0-9]+-[0-9]+)/g), m => m[2]));
 };
+
+export const hasJiraIssueKey = (str:string): boolean => isEmpty(jiraIssueKeyParser(str));
