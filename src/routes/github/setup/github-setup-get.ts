@@ -27,12 +27,12 @@ const getInstallationData = async (githubInstallationId: number, jiraHost: strin
 		await githubAppClient.getApp() :
 		await client.apps.getAuthenticated();
 
-	// We want to allow the flow to continue even if no installation is found.
+	// We want to proceed even if no installation is found.
 	try {
 		const installationRequest = useNewGithubClient ?
 			await githubAppClient.getInstallation(githubInstallationId) :
 			await client.apps.getInstallation({ installation_id: githubInstallationId });
-		
+
 		githubInstallation = installationRequest.data;
 	} catch (err) {
 		logger.warn("Cannot retrieve Github Installation from API");
@@ -41,16 +41,17 @@ const getInstallationData = async (githubInstallationId: number, jiraHost: strin
 	return {
 		githubInstallation,
 		info
-	}
-}
+	};
+};
 
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost, client } = res.locals;
 	const githubInstallationId = Number(req.query.installation_id);
-	const{ githubInstallation, info } = await getInstallationData(githubInstallationId, jiraHost, req.log, client);
+	const { githubInstallation, info } = await getInstallationData(githubInstallationId, jiraHost, req.log, client);
 
-	req.log = req.log.child({ githubInstallationId, appInfo: info });
+	req.addLogFields({ githubInstallationId, appInfo: info });
 	req.log.info("Received get github setup page request");
+
 	// If we know enough about user and site, redirect to the app
 	const [siteExists, jiraInstallation] = await Promise.all([
 		jiraSiteExists(jiraHost),
@@ -66,7 +67,7 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 		clientKey: jiraInstallation?.clientKey,
 		orgName: githubInstallation?.account?.login,
 		avatar: githubInstallation?.account?.avatar_url,
-		html_url: info?.html_url,
+		html_url: info.html_url,
 		id: githubInstallationId
 	});
 };

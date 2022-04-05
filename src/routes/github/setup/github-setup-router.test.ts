@@ -42,7 +42,6 @@ describe.each([true, false])("Github Setup - GitHub Client is %s", (useNewGithub
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(useNewGithubClient);
-			
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
