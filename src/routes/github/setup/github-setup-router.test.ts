@@ -1,3 +1,4 @@
+/* eslint-disable jest/expect-expect */
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { getFrontendApp } from "~/src/app";
@@ -5,10 +6,13 @@ import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { envVars }  from "config/env";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
+jest.mock("config/feature-flags");
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 
-describe("Github Setup", () => {
+describe.each([true, false])("Github Setup - GitHub Client is %s", (useNewGithubClient) => {
 	let frontendApp: Application;
 
 	beforeEach(async () => {
@@ -32,6 +36,13 @@ describe("Github Setup", () => {
 				secrets: "def234",
 				sharedSecret: "ghi345"
 			});
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(useNewGithubClient);
+			
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
