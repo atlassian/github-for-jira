@@ -100,11 +100,12 @@ ApiRouter.delete(
 	ApiInstallationDelete
 );
 
-ApiRouter.use("/jira", ApiJiraRouter);
-ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
-
 ApiRouter.put("/installation/:installationId/fixKeyAndSecret/fromInstallation/:fromInstallationId",
 	param("installationId").isInt(),
 	param("fromInstallationId").isInt(),
 	ApiInstallationFixKeyAndSecret
 );
+
+
+ApiRouter.use("/jira", ApiJiraRouter);
+ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
