@@ -11,7 +11,8 @@ import { ApiJiraRouter } from "./jira/api-jira-router";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
-import { ApiInstallationDelete } from "./installation/api-installation-delete";
+import { ApiInstallationDelete } from "./installation/api-installation-delete" ;
+import { ApiInstallationFixKeyAndSecret } from "routes/api/installation/api-installation-fix-key-and-secret";
 
 export const ApiRouter = Router();
 
@@ -101,3 +102,9 @@ ApiRouter.delete(
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
+
+ApiRouter.put("/installation/:installationId/fixKeyAndSecret/fromInstallation/:fromInstallationId",
+	param("installationId").isInt(),
+	param("fromInstallationId").isInt(),
+	ApiInstallationFixKeyAndSecret
+);
