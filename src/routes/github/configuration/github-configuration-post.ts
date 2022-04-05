@@ -1,3 +1,4 @@
+import Logger from "bunyan";
 import { Subscription } from "models/subscription";
 import { getHashedKey } from "models/sequelize";
 import { Request, Response } from "express";
@@ -6,6 +7,20 @@ import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { getCloudInstallationId } from "~/src/github/client/installation-id";
+
+const hasAdminAccess = async (gitHubInstallationId: number, githubToken: string, logger: Logger): Promise<boolean>  => {
+	const gitHubUserClient = new GitHubUserClient(githubToken, logger);
+	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), logger);
+
+	try {		
+		const { data: { login } } =  await gitHubUserClient.getUser();
+		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
+		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type);
+	}	catch (err) {
+		logger.warn({ err }, "Error checking user access");
+		return false;
+	}
+}
 
 /**
  * Handle the when a user adds a repo to this installation
@@ -38,17 +53,11 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	req.addLogFields({ gitHubInstallationId });
 	req.log.info("Received add subscription request");
 
-	// Check if the user that posted this has access to the installation ID they're requesting
 	try {
-		const gitHubUserClient = new GitHubUserClient(githubToken, req.log);
-		const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), req.log);
-
-		const { data: { login } } =  await gitHubUserClient.getUser();
-		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
-
-		if (!await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type)) {
-			res.status(401)
-				.json({ err: `Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation` });
+		
+		// Check if the user that posted this has access to the installation ID they're requesting
+		if (!await hasAdminAccess(gitHubInstallationId, githubToken, req.log)) {
+			res.status(401).json({ err: `Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation` });
 			return;
 		}
 

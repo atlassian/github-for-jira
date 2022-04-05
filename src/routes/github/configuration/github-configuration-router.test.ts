@@ -1,3 +1,4 @@
+/* eslint-disable jest/expect-expect */
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
@@ -308,7 +309,7 @@ describe("Github Configuration", () => {
 						jiraHost
 					})
 				)
-				.expect(500);
+				.expect(401);
 		});
 
 		it("should return a 401 if the user is not an admin of the Org", async () => {
