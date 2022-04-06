@@ -316,7 +316,7 @@ export class GitHubInstallationClient {
 				...await this.installationAuthenticationHeaders()
 			});
 
-		const graphqlErrors = response.data.errors;
+		const graphqlErrors = response.data?.errors;
 		if (graphqlErrors?.length) {
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
