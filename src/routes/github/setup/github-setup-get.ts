@@ -18,20 +18,18 @@ import { GitHubAPI } from "probot";
 		- Otherwise, render the setup page (POST).
 */
 
-const getInstallationData = async (githubInstallationId: number, jiraHost: string, logger: Logger, client: GitHubAPI) => {
-	const githubAppClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), logger);
-	const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP, false, jiraHost);
+const getInstallationData = async (githubAppClient: GitHubAppClient | GitHubAPI, githubInstallationId: number, logger: Logger) => {
 	let githubInstallation;
 
-	const { data: info } = useNewGithubClient ?
+	const { data: info } = githubAppClient instanceof GitHubAppClient ? 
 		await githubAppClient.getApp() :
-		await client.apps.getAuthenticated();
+		await githubAppClient.apps.getAuthenticated();
 
 	// We want to proceed even if no installation is found.
 	try {
-		const installationRequest = useNewGithubClient ?
+		const installationRequest = githubAppClient instanceof GitHubAppClient ?
 			await githubAppClient.getInstallation(githubInstallationId) :
-			await client.apps.getInstallation({ installation_id: githubInstallationId });
+			await githubAppClient.apps.getInstallation({ installation_id: githubInstallationId });
 
 		githubInstallation = installationRequest.data;
 	} catch (err) {
@@ -47,7 +45,9 @@ const getInstallationData = async (githubInstallationId: number, jiraHost: strin
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost, client } = res.locals;
 	const githubInstallationId = Number(req.query.installation_id);
-	const { githubInstallation, info } = await getInstallationData(githubInstallationId, jiraHost, req.log, client);
+	const githubAppClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), req.log);
+	const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP, false, jiraHost);
+	const { githubInstallation, info } = await getInstallationData(useNewGithubClient ? githubAppClient : client, githubInstallationId, req.log);
 
 	req.addLogFields({ githubInstallationId, appInfo: info });
 	req.log.info("Received get github setup page request");
