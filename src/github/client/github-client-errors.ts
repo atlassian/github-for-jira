@@ -73,9 +73,9 @@ export class GithubClientGraphQLError extends GithubClientError {
 }
 
 const logger = getLogger("github.errors");
-export const isChangedFilesError = (err: GithubClientGraphQLError): boolean => {
+export const isChangedFilesError = (err: GithubClientGraphQLError | GithubClientError): boolean => {
 	logger.warn({error: err}, "isChangedFilesError");
-	return true;
+	return err instanceof GithubClientGraphQLError || !(err instanceof RateLimitingError || err instanceof GithubClientTimeoutError);
 	// return !!err?.errors?.find(e => e.message?.includes("changedFiles"));
 }
 
