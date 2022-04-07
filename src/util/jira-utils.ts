@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { envVars } from "config/env";
 import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
@@ -81,12 +82,13 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 		return [];
 	}
 
+	// Based on the JIRA Ticket parser extended regex: ^\p{L}[\p{L}\p{Digit}_]{1,255}-\p{Digit}{1,255}$
 	// Uppercase the whole string
 	// (^|[^a-z0-9]) means that the it must be at the start of the string or be a non alphanumeric character (separator like space, new line, or special character like [)
 	// [a-z][a-z0-9]+ means that the id must start with an alphabet letter, then must be at least one more alphanumerical character to start the ID
 	// -[0-9]+ means that it must be separated by a dash, then at least 1 number character
 	// then remove duplicate issue keys
-	return uniq(Array.from(str.toUpperCase().matchAll(/(^|[^A-Z0-9])([A-Z][A-Z0-9]+-[0-9]+)/g), m => m[2]));
+	return uniq(Array.from(str.matchAll(/(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu), m => m[2].toUpperCase()));
 };
 
 export const hasJiraIssueKey = (str:string): boolean => isEmpty(jiraIssueKeyParser(str));

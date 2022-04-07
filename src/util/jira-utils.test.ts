@@ -80,6 +80,23 @@ describe("Jira Utils", () => {
 				});
 		});
 
+		it("should extract issue keys with unicode characters including non-latin based", () => {
+			// Latin (french)
+			expect(jiraIssueKeyParser("tête-123")).toEqual(["TÊTE-123"]);
+			// Arabic - because of RTL, using unicode version to not change direction of text
+			expect(jiraIssueKeyParser("b\u063A\u062E-123")).toEqual(["B\u063A\u062E-123"]);
+			// Hebrew - because of RTL, using unicode version to not change direction of text
+			expect(jiraIssueKeyParser("c\u05E7-123")).toEqual(["C\u05E7-123"]);
+			// Thai
+			expect(jiraIssueKeyParser("tกฒ-123")).toEqual(["Tกฒ-123"]);
+			// Japanese
+			expect(jiraIssueKeyParser("シtヌ-123")).toEqual(["シTヌ-123"]);
+			// Chinese
+			expect(jiraIssueKeyParser("r汉字-123")).toEqual(["R汉字-123"]);
+			// Russian
+			expect(jiraIssueKeyParser("шъ-123")).toEqual(["ШЪ-123"]);
+		});
+
 		it("should extract jira issue key when part of a longer string", () => {
 			[
 				"feature-branch/JRA-123",
