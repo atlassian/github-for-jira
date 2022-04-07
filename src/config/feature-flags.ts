@@ -23,7 +23,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
 	USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION = "use-new-github-client-for-delete-subscription",
 	USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION = "use-new-github-client-for-get-subscription",
-	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation"
+	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation",
+	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup"
 }
 
 export enum StringFlags {
