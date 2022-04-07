@@ -68,14 +68,13 @@ interface Author {
  *      - jra-123 (all lowercase - any order)
  *      - J2-123 (first part of key alphanumeric)
  *      - [JRA-123] (keys inside square brackets)
- *      - (JRA-123) (keys inside square brackets)
+ *      - (JRA-123) (keys inside parenthesis)
  *      - #JRA-123 (keys prefixed with hash)
  *
  * Not accepted:
  *      - 22-123 (issue key starts with a number)
  *      - JRA 123 (missing hyphen from key)
  */
-
 export const jiraIssueKeyParser = (str: string): string[] => {
 	// if not a string or string has no length, return empty array.
 	if (!isString(str) || !str.length){
