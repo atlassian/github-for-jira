@@ -80,6 +80,11 @@ ApiRouter.post(
 		// only resync installations whose "updatedAt" date is older than x seconds
 		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
 
+		if(!statusTypes && !installationIds && !limit && !inactiveForSeconds){
+			res.status(400).send("please provide at least one of the filter parameters!");
+			return;
+		}
+
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>

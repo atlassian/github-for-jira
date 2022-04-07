@@ -81,7 +81,7 @@ export class GitHubAppClient {
 			Authorization: `Bearer ${appToken.token}`
 		};
 	}
-	
+
 	/**
 	 * This path requires JWT, therefore passing the token directly into the header.
 	 */
