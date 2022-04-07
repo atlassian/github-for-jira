@@ -170,6 +170,7 @@
 
 .gitHubConfiguration__orgContent__settingsContainer,
 .gitHubConfiguration__orgContent__settingsContainer--disabled {
+    margin-left: 10px;
     border-radius: 3px;
     cursor: pointer;
     padding: 0.45em;
@@ -210,7 +211,6 @@
 }
 
 .gitHubConfiguration__manageSubscriptions {
-    height: 2.3em;
     left: 3em;
     top: -2.6em;
     width: 12.8em;
