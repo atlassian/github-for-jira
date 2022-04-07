@@ -6,6 +6,8 @@ import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { envVars }  from "config/env";
 
+jest.mock("config/feature-flags");
+
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 
 describe("Github Setup", () => {
@@ -32,6 +34,7 @@ describe("Github Setup", () => {
 				secrets: "def234",
 				sharedSecret: "ghi345"
 			});
+
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {

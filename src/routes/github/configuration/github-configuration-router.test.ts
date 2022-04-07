@@ -1,3 +1,4 @@
+/* eslint-disable jest/expect-expect */
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
@@ -6,8 +7,11 @@ import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
-
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("Github Configuration", () => {
 	let frontendApp: Application;
@@ -108,7 +112,23 @@ describe("Github Configuration", () => {
 		});
 	});
 
-	describe("#GET", () => {
+	describe.each([true, false])("#GET - GithubClient - %s", (useNewGithubClient) => {
+
+		beforeEach(async () => {
+		// 	when(booleanFlag).calledWith(
+		// 		BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG,
+		// 		expect.anything(),
+		// 		expect.anything()
+		// 	).mockResolvedValue(useNewGithubClient);
+		// });
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(useNewGithubClient);
+		});
+
+
 		it("should return 200 when calling with valid Github Token", async () => {
 			githubNock
 				.get("/")
