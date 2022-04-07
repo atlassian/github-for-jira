@@ -115,14 +115,8 @@ describe("Github Configuration", () => {
 	describe.each([true, false])("#GET - GithubClient - %s", (useNewGithubClient) => {
 
 		beforeEach(async () => {
-		// 	when(booleanFlag).calledWith(
-		// 		BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG,
-		// 		expect.anything(),
-		// 		expect.anything()
-		// 	).mockResolvedValue(useNewGithubClient);
-		// });
 			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS,
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG,
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(useNewGithubClient);
