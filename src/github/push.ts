@@ -17,6 +17,7 @@ export const pushWebhookHandler = async (context: Context, jiraClient): Promise<
 			if(hasJiraIssueKey(commit.message)) {
 				acc.push(commit);
 			}
+			return acc;
 		}, []),
 		installation: context.payload?.installation
 	};

@@ -51,15 +51,11 @@ export const createJobData = (payload, jiraHost: string): PushQueueMessagePayloa
 	const shas: { id: string, issueKeys: string[] }[] = [];
 	for (const commit of payload.commits) {
 		const issueKeys = jiraIssueKeyParser(commit.message);
-
-		if (isEmpty(issueKeys)) {
-			// Don't add this commit to the queue since it doesn't have issue keys
-			continue;
+		if (!isEmpty(issueKeys)) {
+			// Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
+			// Creates an array of shas for the job processor to work on
+			shas.push({ id: commit.id, issueKeys });
 		}
-
-		// Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
-		// Creates an array of shas for the job processor to work on
-		shas.push({ id: commit.id, issueKeys });
 	}
 
 	return {
