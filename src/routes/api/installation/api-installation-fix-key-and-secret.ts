@@ -38,12 +38,21 @@ export const ApiInstallationFixKeyAndSecret = async (req: Request, res: Response
 
 	await withInstallation(installationId, async (installation) => {
 		await withInstallation(fromInstallationId, async (fromInstallation) => {
-			installation.setAttributes({
-				clientKey: fromInstallation.clientKey,
-				secrets: fromInstallation.secrets
+			await installation
+				.update({
+					clientKey: fromInstallation.clientKey,
+					sharedSecret: fromInstallation.sharedSecret
+				});
+
+			await withInstallation(installationId, async (verify) => {
+				res.status(200).send(`fixed client key and secret of installation ${installationId} using installation ${fromInstallationId}` +
+				JSON.stringify({
+					installationClientKey: verify.clientKey,
+					installationSharedSecret: verify.sharedSecret,
+					fromInstallationClientKey: fromInstallation.clientKey,
+					fromInstallationSharedSecret: fromInstallation.sharedSecret  ,
+				}));
 			});
-			await installation.save();
-			res.status(200).send(`fixed client key and secret of installation ${installationId} using installation ${fromInstallationId}`);
 			return;
 		});
 	});
