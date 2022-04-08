@@ -21,7 +21,7 @@ import { GitHubAPI } from "probot";
 const getInstallationData = async (githubAppClient: GitHubAppClient | GitHubAPI, githubInstallationId: number, logger: Logger) => {
 	let githubInstallation;
 
-	const { data: info } = githubAppClient instanceof GitHubAppClient ? 
+	const { data: info } = githubAppClient instanceof GitHubAppClient ?
 		await githubAppClient.getApp() :
 		await githubAppClient.apps.getAuthenticated();
 

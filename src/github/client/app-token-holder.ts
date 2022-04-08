@@ -6,7 +6,6 @@ import * as PrivateKey from "probot/lib/private-key";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
 
-
 export type KeyLocator = (installationId: InstallationId) => string;
 
 /**

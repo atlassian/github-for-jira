@@ -7,6 +7,10 @@ import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
 
@@ -250,7 +254,16 @@ describe("Github Configuration", () => {
 		});
 	});
 
-	describe("#POST", () => {
+	describe.each([true, false])("#POST - GitHub Client is %s", (useNewGithubClient) => {
+
+		beforeEach(async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(useNewGithubClient);
+		});
+
 		it("should return a 401 if no GitHub token present in session", async () => {
 			await supertest(frontendApp)
 				.post("/github/configuration")
