@@ -70,7 +70,6 @@
 		"helmet": "^3.21.2",
 		"hot-shots": "^8.3.2",
 		"ioredis": "^4.16.3",
-		"jira-issue-key-parser": "0.0.11",
 		"launchdarkly-node-server-sdk": "^6.2.0",
 		"lodash": "^4.17.21",
 		"moment": "^2.29.2",

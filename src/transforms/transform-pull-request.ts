@@ -1,9 +1,8 @@
-import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
 import { Octokit } from "@octokit/rest";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { getJiraAuthor } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubAPI } from "probot";
 import { getGithubUser } from "services/github/user";
 import { JiraAuthor } from "interfaces/jira";
@@ -55,8 +54,7 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubInstallatio
 
 	// This is the same thing we do in sync, concatenating these values
 	const prBody = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? body : "";
-	const textToSearch = `${prTitle}\n${head.ref}\n${prBody}}`;
-	const issueKeys = issueKeyParser().parse(textToSearch) || [];
+	const issueKeys = jiraIssueKeyParser(`${prTitle}\n${head.ref}\n${prBody}}`);
 
 	const logPayload = {
 		prTitle: prTitle || "none",

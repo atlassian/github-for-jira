@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import issueKeyParser from "jira-issue-key-parser";
 import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
 import { Installation } from "models/installation";
@@ -21,6 +20,7 @@ import branchCommitsHaveKeys from "fixtures/api/graphql/branch-commits-have-keys
 import associatedPRhasKeys from "fixtures/api/graphql/branch-associated-pr-has-keys.json";
 
 import branchNoIssueKeys from "fixtures/api/graphql/branch-no-issue-keys.json";
+import { jiraIssueKeyParser } from "utils/jira-utils";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -40,7 +40,7 @@ describe("sync/branches", () => {
 						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123%20-%20${branchName}&quick_pull=1`,
 						id: branchName,
 						issueKeys: ["TES-123"]
-							.concat(issueKeyParser().parse(branchName) || [])
+							.concat(jiraIssueKeyParser(branchName))
 							.reverse()
 							.filter((key) => !!key),
 						lastCommit: {
