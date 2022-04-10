@@ -62,6 +62,10 @@ export class GitHubUserClient {
 		});
 	};
 
+	public async getInstallations(): Promise<AxiosResponse<Octokit.AppsListInstallationsForAuthenticatedUserResponse>> {
+		return await this.get<Octokit.AppsListInstallationsForAuthenticatedUserResponse>("/user/installations");
+	}
+
 	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
 		return this.axios.get<T>(url, config);
 	}
