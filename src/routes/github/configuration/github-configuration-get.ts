@@ -126,6 +126,9 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, false);
+	const githubUserClient = new GitHubUserClient(githubToken, log);
+
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
 
@@ -137,7 +140,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	tracer.trace(`found jira host: ${jiraHost}`);
 
-	const { data: { login } } = await github.users.getAuthenticated();
+	const { data: { login } } = useNewGitHubClient ? await githubUserClient.getUser() : await github.users.getAuthenticated();
 
 	tracer.trace(`got login name: ${login}`);
 
@@ -159,10 +162,13 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			res.status(404).send(`Missing installation for host '${jiraHost}'`);
 			return;
 		}
+		const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(installation.id), log);		
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 
-		const { data: { installations }, headers } = (await github.apps.listInstallationsForAuthenticatedUser());
+		const { data: { installations }, headers } = useNewGitHubClient ? 
+			await githubUserClient.getInstallations() :
+			await github.apps.listInstallationsForAuthenticatedUser();
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info({ installations, headers }, `verbose logging: listInstallationsForAuthenticatedUser`);
@@ -170,8 +176,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const githubUserClient = new GitHubUserClient(githubToken, log);
-		const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(installation.id), log);
 		const installationsWithAdmin = await getInstallationsWithAdmin(githubUserClient, log, login, installations);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
