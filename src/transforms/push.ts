@@ -93,7 +93,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		repoName: repo,
 		orgName: owner.name,
 		installationId,
-		webhookReceived
+		webhookReceived,
+		jiraHost
 	});
 
 	log.info("Processing push");
