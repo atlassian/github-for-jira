@@ -1,7 +1,6 @@
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
-import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit } from "interfaces/jira";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -51,16 +50,12 @@ export const createJobData = (payload, jiraHost: string): PushQueueMessagePayloa
 
 	const shas: { id: string, issueKeys: string[] }[] = [];
 	for (const commit of payload.commits) {
-		const issueKeys = issueKeyParser().parse(commit.message) || [];
-
-		if (isEmpty(issueKeys)) {
-			// Don't add this commit to the queue since it doesn't have issue keys
-			continue;
+		const issueKeys = jiraIssueKeyParser(commit.message);
+		if (!isEmpty(issueKeys)) {
+			// Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
+			// Creates an array of shas for the job processor to work on
+			shas.push({ id: commit.id, issueKeys });
 		}
-
-		// Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
-		// Creates an array of shas for the job processor to work on
-		shas.push({ id: commit.id, issueKeys });
 	}
 
 	return {
