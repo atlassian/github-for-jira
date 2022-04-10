@@ -10,6 +10,7 @@ import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
+
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 
 describe.each([true, false])("Github Setup - GitHub Client is %s", (useNewGithubClient) => {
