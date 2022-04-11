@@ -38,10 +38,10 @@ export interface JiraBranch {
 }
 
 export interface JiraBranchData {
+	branches: JiraBranch[],
 	id: number,
 	name: string,
 	url: string,
-	branches: JiraBranch[],
 	updateSequenceId: number
 }
 
@@ -117,4 +117,21 @@ export interface JiraDeployment {
 
 export interface JiraDeploymentData {
 	deployments: JiraDeployment[];
+}
+
+export interface JiraBulkUpdateData {
+	preventTransitions: boolean;
+	properties: {
+		installationId: number;
+	},
+	repositories: JiraRepositoryData[];
+}
+
+export interface JiraRepositoryData {
+	commits?: JiraCommit[];
+	branches?: JiraBranch[],
+	id: string;
+	name: string;
+	url: string;
+	updateSequenceId: number;
 }

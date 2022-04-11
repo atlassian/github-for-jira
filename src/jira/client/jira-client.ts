@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation} from "models/installation";
+import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import { JiraCommit, JiraIssue } from "interfaces/jira";
+import { JiraBulkUpdateData, JiraCommit, JiraIssue, JiraRepositoryData } from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
@@ -56,11 +56,11 @@ export const getJiraClient = async (
 						issue_id: issueId
 					}
 				}),
-			getAll: async (issueIds: string[], query?: { fields: string }): Promise<JiraIssue[]> => {
+			getAll: async (issueIds?: string[], query?: { fields: string }): Promise<JiraIssue[]> => {
 				const responses = await Promise.all<AxiosResponse<JiraIssue> | undefined>(
-					issueIds.map((issueId) => client.issues.get(issueId, query)
+					uniq(issueIds).map((issueId) => client.issues.get(issueId, query)
 						// Ignore any errors
-						.catch(() => undefined))
+						.catch(() => undefined)) || []
 				);
 				return responses.reduce((acc: JiraIssue[], response) => {
 					if (response?.status === 200 && !!response?.data) {
@@ -68,6 +68,10 @@ export const getJiraClient = async (
 					}
 					return acc;
 				}, []);
+			},
+			validateIssueKeys: async (issueIds?: string[]): Promise<string[]> => {
+				const issues = await client.issues.getAll(issueIds);
+				return issues.map(i => i.key);
 			},
 			parse: (text: string): string[] | undefined => {
 				if (!text) return undefined;
@@ -220,8 +224,8 @@ export const getJiraClient = async (
 							repositoryId
 						}
 					}),
-				update: async (data, options?: { preventTransitions: boolean }) => {
-					dedupIssueKeys(data, logger);
+				update: async (data: JiraRepositoryData, options?: { preventTransitions: boolean }) => {
+					await validateRepositoryIssueKeys(data, client.issues.validateIssueKeys, logger);
 
 					if (
 						!withinIssueKeyLimit(data.commits) ||
@@ -231,7 +235,7 @@ export const getJiraClient = async (
 							truncatedCommits: getTruncatedIssuekeys(data.commits),
 							truncatedBranches: getTruncatedIssuekeys(data.branches)
 						}, issueKeyLimitWarning);
-						truncateIssueKeys(data);
+						await truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
 							jiraHost,
 							gitHubInstallationId
@@ -250,12 +254,12 @@ export const getJiraClient = async (
 		},
 		workflow: {
 			submit: async (data) => {
-				updateIssueKeysFor(data.builds, uniq);
+				await updateIssueKeysFor(data.builds, client.issues.validateIssueKeys);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
 						truncatedBuilds: getTruncatedIssuekeys(data.builds)
 					}, issueKeyLimitWarning);
-					updateIssueKeysFor(data.builds, truncate);
+					await updateIssueKeysFor(data.builds, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
@@ -275,12 +279,12 @@ export const getJiraClient = async (
 		},
 		deployment: {
 			submit: async (data): Promise<DeploymentsResult> => {
-				updateIssueKeysFor(data.deployments, uniq);
+				await updateIssueKeysFor(data.deployments, client.issues.validateIssueKeys);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
 						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
 					}, issueKeyLimitWarning);
-					updateIssueKeysFor(data.deployments, truncate);
+					await updateIssueKeysFor(data.deployments, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
@@ -302,14 +306,14 @@ export const getJiraClient = async (
 	};
 
 	return client;
-}
+};
 
 /**
  * Splits commits in data payload into chunks of 400 and makes separate requests
  * to avoid Jira API limit
  */
 const batchedBulkUpdate = async (
-	data,
+	data: JiraRepositoryData,
 	instance: AxiosInstance,
 	installationId: number,
 	options?: { preventTransitions: boolean }
@@ -326,7 +330,7 @@ const batchedBulkUpdate = async (
 		if (commitChunk.length) {
 			data.commits = commitChunk;
 		}
-		const body = {
+		const body: JiraBulkUpdateData = {
 			preventTransitions: options?.preventTransitions || false,
 			repositories: [data],
 			properties: {
@@ -342,7 +346,7 @@ const batchedBulkUpdate = async (
  * Returns if the max length of the issue
  * key field is within the limit
  */
-const withinIssueKeyLimit = (resources: { issueKeys: string[] }[]): boolean => {
+const withinIssueKeyLimit = (resources?: { issueKeys: string[] }[]): boolean => {
 	if (!resources) return true;
 	const issueKeyCounts = resources.map((resource) => resource.issueKeys.length);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
@@ -360,16 +364,31 @@ const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
 /**
  * Deduplicates issueKeys field for branches and commits
  */
-const dedupIssueKeys = (repositoryObj, logger?) => {
-	updateRepositoryIssueKeys(repositoryObj, logger);
+const validateRepositoryIssueKeys = async (repositoryObj: JiraRepositoryData, validationFunction: (v: string[] | undefined) => Promise<string[]>, logger?) => {
+	if (!repositoryObj.commits && !repositoryObj.branches) {
+		logger?.info("No branches or commits found. Cannot update.");
+		return;
+	}
+
+	await Promise.all([
+		repositoryObj.commits && updateIssueKeysFor(repositoryObj.commits, validationFunction),
+		repositoryObj.branches && updateIssueKeysFor(repositoryObj.branches, validationFunction),
+		Promise.all(repositoryObj.branches?.map(async (branch) => {
+			if (branch.lastCommit) {
+				branch.lastCommit = await updateIssueKeysFor([branch.lastCommit], validationFunction)[0];
+			}
+		}) || [])
+	]);
 };
 
 /**
  * Truncates branches and commits to first 100 issue keys for branch or commit
  */
-const truncateIssueKeys = (repositoryObj) => {
-	updateRepositoryIssueKeys(repositoryObj, truncate);
-};
+const truncateIssueKeys = async (repositoryObj: JiraRepositoryData) =>
+	await Promise.all([
+		repositoryObj.commits && updateIssueKeysFor(repositoryObj.commits, truncate),
+		repositoryObj.branches && updateIssueKeysFor(repositoryObj.branches, truncate)
+	]);
 
 interface IssueKeyObject {
 	issueKeys?: string[];
@@ -389,37 +408,13 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
 	}, []);
 
 /**
- * Runs a mutating function on all branches and commits
- * with issue keys in a Jira Repository object
- */
-const updateRepositoryIssueKeys = (repositoryObj, logger?) => {
-	if (repositoryObj.commits) {
-		repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, uniq);
-	}
-
-	if (repositoryObj.branches) {
-		repositoryObj.branches = updateIssueKeysFor(repositoryObj.branches, uniq);
-		repositoryObj.branches.forEach((branch) => {
-			if (branch.lastCommit) {
-				branch.lastCommit = updateIssueKeysFor([branch.lastCommit], uniq)[0];
-			}
-		});
-	}
-
-	if (!repositoryObj.commits && !repositoryObj.branches) {
-		logger?.warn("No branches or commits found. Cannot update.");
-	}
-};
-
-/**
  * Runs the mutatingFunc on the issue keys field for each branch or commit
  */
-const updateIssueKeysFor = (resources, func) => {
-	resources.forEach((resource) => {
-		resource.issueKeys = func(resource.issueKeys);
-	});
-	return resources;
-};
+const updateIssueKeysFor = async <T>(resources: (T & IssueKeyObject)[], func: (v: string[] | undefined) => Promise<string[]> | string[]): Promise<(T & IssueKeyObject)[]> =>
+	await Promise.all(resources.map(async (resource) => {
+		resource.issueKeys = await func(resource.issueKeys);
+		return resource;
+	}));
 
 /**
  * Truncates to 100 elements in an array
