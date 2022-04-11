@@ -1,6 +1,6 @@
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { GitHubPullRequest } from "interfaces/github";
-import { JiraBuildData, JiraPullRequest } from "interfaces/jira";
+import { JiraBuildData, JiraBuildReference } from "interfaces/jira";
 import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
 import { WorkflowPayload } from "config/interfaces";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -38,7 +38,7 @@ function mapStatus(status: string, conclusion?: string): string {
 
 function mapPullRequests(
 	pull_requests: GitHubPullRequest[] = []
-): JiraPullRequest[] {
+): JiraBuildReference[] {
 	return pull_requests.map((pr) => ({
 		commit: {
 			id: pr.head.sha,

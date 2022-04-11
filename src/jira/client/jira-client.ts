@@ -225,7 +225,7 @@ export const getJiraClient = async (
 						}
 					}),
 				update: async (data: JiraRepositoryData, options?: { preventTransitions: boolean }) => {
-					await validateRepositoryIssueKeys(data, client.issues.validateIssueKeys, logger);
+					await validateRepositoryIssueKeys(data, client.issues.validateIssueKeys);
 
 					if (
 						!withinIssueKeyLimit(data.commits) ||
@@ -364,31 +364,29 @@ const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
 /**
  * Deduplicates issueKeys field for branches and commits
  */
-const validateRepositoryIssueKeys = async (repositoryObj: JiraRepositoryData, validationFunction: (v: string[] | undefined) => Promise<string[]>, logger?) => {
-	if (!repositoryObj.commits && !repositoryObj.branches) {
-		logger?.info("No branches or commits found. Cannot update.");
-		return;
-	}
-
+const validateRepositoryIssueKeys = async (repositoryObj: JiraRepositoryData, validationFunction: (v: string[] | undefined) => Promise<string[]>): Promise<void> => {
 	await Promise.all([
-		repositoryObj.commits && updateIssueKeysFor(repositoryObj.commits, validationFunction),
-		repositoryObj.branches && updateIssueKeysFor(repositoryObj.branches, validationFunction),
+		updateIssueKeysFor(repositoryObj.commits, validationFunction),
+		updateIssueKeysFor(repositoryObj.branches, validationFunction),
 		Promise.all(repositoryObj.branches?.map(async (branch) => {
 			if (branch.lastCommit) {
 				branch.lastCommit = await updateIssueKeysFor([branch.lastCommit], validationFunction)[0];
 			}
-		}) || [])
+		}) || []),
+		updateIssueKeysFor(repositoryObj.pullRequests, validationFunction),
 	]);
 };
 
 /**
  * Truncates branches and commits to first 100 issue keys for branch or commit
  */
-const truncateIssueKeys = async (repositoryObj: JiraRepositoryData) =>
+const truncateIssueKeys = async (repositoryObj: JiraRepositoryData): Promise<void> => {
 	await Promise.all([
-		repositoryObj.commits && updateIssueKeysFor(repositoryObj.commits, truncate),
-		repositoryObj.branches && updateIssueKeysFor(repositoryObj.branches, truncate)
+		updateIssueKeysFor(repositoryObj.commits, truncate),
+		updateIssueKeysFor(repositoryObj.branches, truncate),
+		updateIssueKeysFor(repositoryObj.pullRequests, truncate)
 	]);
+}
 
 interface IssueKeyObject {
 	issueKeys?: string[];
@@ -410,7 +408,7 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
 /**
  * Runs the mutatingFunc on the issue keys field for each branch or commit
  */
-const updateIssueKeysFor = async <T>(resources: (T & IssueKeyObject)[], func: (v: string[] | undefined) => Promise<string[]> | string[]): Promise<(T & IssueKeyObject)[]> =>
+const updateIssueKeysFor = async <T>(resources: (T & IssueKeyObject)[] = [], func: (v: string[] | undefined) => Promise<string[]> | string[]): Promise<(T & IssueKeyObject)[]> =>
 	await Promise.all(resources.map(async (resource) => {
 		resource.issueKeys = await func(resource.issueKeys);
 		return resource;

@@ -2,7 +2,7 @@ import Logger from "bunyan";
 import axios, { AxiosError, AxiosInstance } from "axios";
 
 import url from "url";
-import { statsd }  from "config/statsd";
+import { statsd } from "config/statsd";
 import { getLogger } from "config/logger";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
@@ -48,26 +48,19 @@ const getErrorMiddleware = (logger: Logger) =>
 	/**
 	 * Potentially enrich the promise's rejection.
 	 *
-	 * @param {import("axios").AxiosError} error - The error response from Axios
+	 * @param {import("axios").AxiosError} err - The error response from Axios
 	 * @returns {Promise<Error>} The rejected promise
 	 */
-	(error: AxiosError): Promise<Error> => {
-
-		const status = error?.response?.status;
-
-		const errorMessage = "Error executing Axios Request " + (status ? getJiraErrorMessages(status) : error.message || "");
-
+	(err: AxiosError): Promise<Error> => {
+		const status = err.response?.status;
+		const errorMessage = `Error executing Axios Request ${status ? getJiraErrorMessages(status) : err.message || ""}:\n${err.response?.data}`;
 		const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
 		// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
 		// Log exception only if it is error, because AxiosError contains the request payload
-		if (isWarning) {
-			logger.warn(errorMessage);
-		} else {
-			logger.error({ err: error }, errorMessage);
-		}
+		(isWarning ? logger.warn : logger.error)({ err, config: err.config }, errorMessage);
 
-		return Promise.reject(new JiraClientError(errorMessage, error, status));
+		return Promise.reject(new JiraClientError(errorMessage, err, status));
 	};
 
 /**
@@ -147,11 +140,9 @@ const instrumentRequest = (response) => {
  * @param {import("axios").AxiosError} error - The Axios error response object.
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-const instrumentFailedRequest = () => {
-	return (error) => {
-		instrumentRequest(error?.response);
-		return Promise.reject(error);
-	};
+const instrumentFailedRequest = (error) => {
+	instrumentRequest(error?.response);
+	return Promise.reject(error);
 };
 
 /**
@@ -188,7 +179,7 @@ export const getAxiosInstance = (
 
 	instance.interceptors.response.use(
 		instrumentRequest,
-		instrumentFailedRequest()
+		instrumentFailedRequest
 	);
 
 	instance.interceptors.response.use(

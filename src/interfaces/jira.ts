@@ -1,4 +1,4 @@
-export interface JiraPullRequest {
+export interface JiraBuildReference {
 	commit: {
 		id: string;
 		repositoryUri: string;
@@ -19,7 +19,7 @@ export interface JiraBuild {
 	state: string;
 	lastUpdated: string;
 	issueKeys: string[];
-	references?: JiraPullRequest[];
+	references?: JiraBuildReference[];
 }
 
 export interface JiraBuildData {
@@ -59,6 +59,33 @@ export interface JiraCommit {
 
 	files?: JiraCommitFile[];
 	flags?: string[];
+}
+
+export interface JiraPullRequest {
+	author: JiraAuthor;
+	id: string;
+	issueKeys: string[];
+	updateSequenceId: number;
+	status: string;
+	title: string;
+	commentCount: number;
+	sourceBranch: string;
+	sourceBranchUrl?: string;
+	lastUpdate: string;
+	destinationBranch: string;
+	destinationBranchUrl?: string;
+	url: string;
+	displayId: string;
+	reviewers?: JiraPullRequestReviewer[];
+}
+
+export interface JiraPullRequestReviewer {
+	name: string;
+	approvalStatus?: string;
+	url?: string;
+	avatar?: string;
+	email?: string;
+	accountId?: string;
 }
 
 export interface JiraIssue {
@@ -130,6 +157,7 @@ export interface JiraBulkUpdateData {
 export interface JiraRepositoryData {
 	commits?: JiraCommit[];
 	branches?: JiraBranch[],
+	pullRequests?: JiraPullRequest[],
 	id: string;
 	name: string;
 	url: string;
