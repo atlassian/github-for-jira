@@ -37,4 +37,4 @@ export type GraphQlQueryResponse<ResponseData> = {
 
 export type PaginatedAxiosResponse<T> = { hasNextPage: boolean; } & AxiosResponse<T>;
 
-export type ActionsListRepoWorkflowRunsResponseEnhanced = Octokit.ActionsListRepoWorkflowRunsResponse & {name: string, conclusion: string | undefined };
+export type ActionsListRepoWorkflowRunsResponseEnhanced = Octokit.ActionsListRepoWorkflowRunsResponse & {name: string};

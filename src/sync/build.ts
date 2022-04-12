@@ -24,14 +24,14 @@ export const getBuildTask = async (
 	const { workflow_runs } = data;
 
 	// TODO AHHHHH - dig into why it didnt end when there was no data
-	if(workflow_runs.length == 0) {
+	if (workflow_runs.length == 0) {
 		throw new Error("WHHOOPPS");
 	}
 
 	// Transform all the build items at once, result will be array of arrays so flatten for JiraPayload
 	const builds = (await Promise.all(workflow_runs.map(async (run) => {
 		const workflowItem = { workflow_run: run, workflow: { id: run.id } } as unknown as WorkflowPayload;
-		const build = await transformWorkflow(gitHubInstallationClient, workflowItem, logger)
+		const build = await transformWorkflow(gitHubInstallationClient, workflowItem, logger);
 		return build?.builds;
 	}))).flat();
 
@@ -43,7 +43,7 @@ export const getBuildTask = async (
 		builds,
 		url: repository.html_url,
 		updateSequenceId: Date.now()
-	} 
+	};
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPage = cursor + 1;
@@ -56,4 +56,4 @@ export const getBuildTask = async (
 		edges: edgesWithCursor,
 		jiraPayload
 	};
-}
+};

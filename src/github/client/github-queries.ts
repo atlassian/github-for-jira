@@ -275,9 +275,6 @@ export type DeploymentQueryNode = {
       name: string,
       id: string
     },
-    commit: {
-      message: string
-    }
     environment: string,
     description: string,
     latestStatus: {
@@ -310,9 +307,6 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
             owner {
               login
             }
-          }
-          commit {
-            message
           }
           databaseId
           commitOid

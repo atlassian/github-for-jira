@@ -43,7 +43,6 @@ async function getLastSuccessfulDeployCommitSha(
 		logger?.error(`Failed to get deployment statuses.`);
 	}
 
-
 	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 100) then we'll return the last one from the array, even if it's a failed one.
 	return deployments[deployments.length - 1].sha;
 }
@@ -184,7 +183,6 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 	} else {
 		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}`);
 	}
-
 
 	if (isEmpty(issueKeys)) {
 		return undefined;

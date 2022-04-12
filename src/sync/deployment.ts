@@ -14,7 +14,7 @@ type DeploymentData = {
 
 const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
 	const deploymentData = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, cursor);
-	const edges = deploymentData.repository.deployments.edges
+	const edges = deploymentData.repository.deployments.edges;
 	const deployments = edges?.map(({ node: item }) => item) || [];
 
 	return {
@@ -24,7 +24,7 @@ const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClie
 };
 
 export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number): Promise<DeploymentData> => {
-	
+
 	logger.info("Syncing Deployments: started");
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 

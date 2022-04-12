@@ -71,8 +71,6 @@ export const transformWorkflow = async (
 		}, workflow
 	} = payload;
 
-	console.log("WHATWEGOT");
-	console.log(payload);
 	const workflowHasPullRequest = !!pull_requests?.length;
 	const commitMessages = workflowHasPullRequest ? await getAllCommitMessagesBetweenReferences(
 		{

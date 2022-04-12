@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation} from "models/installation";
+import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
@@ -302,7 +302,7 @@ export const getJiraClient = async (
 	};
 
 	return client;
-}
+};
 
 /**
  * Splits commits in data payload into chunks of 400 and makes separate requests
