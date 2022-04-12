@@ -163,6 +163,10 @@ describe("API Router", () => {
 					commitCursor: "bar",
 					pullStatus: "complete",
 					pullCursor: "12",
+					buildStatus: "complete",
+					buildCursor: "bang",
+					deploymentStatus: "complete",
+					deploymentCursor: "buzz",
 					repoUpdatedAt: new Date(0)
 				});
 			});
@@ -194,8 +198,12 @@ describe("API Router", () => {
 									pullStatus: "complete",
 									branchStatus: "complete",
 									commitStatus: "complete",
+									buildStatus: "complete",
+									deploymentStatus: "complete",
 									lastBranchCursor: "foo",
 									lastCommitCursor: "bar",
+									lastDeploymentCursor: "buzz",
+									lastBuildCursor: "bang",
 									lastPullCursor: 12,
 									repository: {
 										id: "1",
