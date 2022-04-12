@@ -263,3 +263,75 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
       }
     }
   }`;
+
+export type DeploymentQueryNode = {
+  cursor: string,
+  node: {
+    repository: Repository,
+    databaseId: string,
+    commitOid: string,
+    task: string,
+    ref: {
+      name: string,
+      id: string
+    },
+    commit: {
+      message: string
+    }
+    environment: string,
+    description: string,
+    latestStatus: {
+      environmentUrl: string,
+      logUrl: string,
+      state: string,
+      id: string,
+      updatedAt: string
+    }
+  }
+}
+
+export type getDeploymentsResponse = {
+	repository: {
+		deployments: {
+      edges: DeploymentQueryNode[]
+    }
+	}
+};
+
+
+export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo){
+    deployments(first: $per_page, after: $cursor) {
+      edges {
+        cursor
+        node {
+          repository {
+            name
+            owner {
+              login
+            }
+          }
+          commit {
+            message
+          }
+          databaseId
+          commitOid
+          task
+          ref {
+            name
+            id
+          }
+          environment
+          description
+          latestStatus {
+            environmentUrl
+            logUrl
+            state
+            id
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+}`;

@@ -157,7 +157,6 @@ export function mapEnvironment(environment: string): string {
 export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
-
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, false, jiraHost);
 	const { data: { commit: { message } } } = useNewGitHubClient ?
 		await newGitHubClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha) :
@@ -166,7 +165,6 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 			repo: payload.repository.name,
 			ref: deployment.sha
 		});
-
 
 	let issueKeys;
 	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {
@@ -186,6 +184,7 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 	} else {
 		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}`);
 	}
+
 
 	if (isEmpty(issueKeys)) {
 		return undefined;

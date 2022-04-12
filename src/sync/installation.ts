@@ -8,6 +8,8 @@ import { statsd }  from "config/statsd";
 import { getPullRequestTask } from "./pull-request";
 import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
+import { getBuildTask } from "./build";
+import { getDeploymentTask } from "./deployment";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { booleanFlag, BooleanFlags, isBlocked } from "config/feature-flags";
@@ -25,7 +27,9 @@ import { RateLimitingError } from "../github/client/github-client-errors";
 const tasks: TaskProcessors = {
 	pull: getPullRequestTask,
 	branch: getBranchTask,
-	commit: getCommitTask
+	commit: getCommitTask,
+	build: getBuildTask,
+	deployment: getDeploymentTask
 };
 
 interface TaskProcessors {
@@ -41,7 +45,7 @@ interface TaskProcessors {
 		) => Promise<{ edges: any[], jiraPayload: any }>;
 }
 
-type TaskType = "pull" | "commit" | "branch";
+type TaskType = "pull" | "commit" | "branch" | "build" | "deployment";
 
 const taskTypes = Object.keys(tasks) as TaskType[];
 
@@ -79,12 +83,11 @@ export interface Task {
 	cursor?: string | number;
 }
 
-const upperFirst = (str: string) =>
-	str.substring(0, 1).toUpperCase() + str.substring(1);
+const upperFirst = (str: string) => str.substring(0, 1).toUpperCase() + str.substring(1);
 const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
-//Exported for testing
+// Exported for testing
 export const updateJobStatus = async (
 	data: BackfillMessagePayload,
 	edges: any[] | undefined,
@@ -264,9 +267,18 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		const { edges, jiraPayload } = await execute();
 		if (jiraPayload) {
 			try {
-				await jiraClient.devinfo.repository.update(jiraPayload, {
-					preventTransitions: true
-				});
+				switch (task) {
+					case "build":
+						await jiraClient.workflow.submit(jiraPayload);
+						break;
+					case "deployment":
+						await jiraClient.deployment.submit(jiraPayload);
+						break;
+					default:
+						await jiraClient.devinfo.repository.update(jiraPayload, {
+							preventTransitions: true
+						});
+				}
 			} catch (err) {
 				if (err?.response?.status === 400) {
 					sentry.setExtra(

@@ -51,7 +51,9 @@ export class RepoSyncState extends Model {
 			where: {
 				pullStatus: "complete",
 				branchStatus: "complete",
-				commitStatus: "complete"
+				commitStatus: "complete",
+				buildStatus: "complete",
+				deploymentStatus: "complete"
 			}
 		});
 	}
@@ -62,7 +64,9 @@ export class RepoSyncState extends Model {
 				[Op.or]: {
 					pullStatus: "failed",
 					branchStatus: "failed",
-					commitStatus: "failed"
+					commitStatus: "failed",
+					buildStatus: "failed",
+					deploymentStatus: "failed"
 				}
 			}
 		});
@@ -110,7 +114,11 @@ export class RepoSyncState extends Model {
 			commitStatus: null,
 			commitCursor: null,
 			pullStatus: null,
-			pullCursor: null
+			pullCursor: null,
+			buildStatus: null,
+			buildCursor: null,
+			deploymentStatus: null,
+			deploymentCursor: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
@@ -204,6 +212,10 @@ export class RepoSyncState extends Model {
 			this.commitCursor = repo.lastCommitCursor;
 			this.pullStatus = repo.pullStatus;
 			this.pullCursor = repo.lastPullCursor?.toString();
+			this.buildStatus = repo.buildStatus;
+			this.buildCursor = repo.lastBuildCursor?.toString();
+			this.deploymentStatus = repo.deploymentStatus;
+			this.deploymentCursor = repo.lastDeploymentCursor;
 		}
 		return this;
 	}
@@ -226,7 +238,11 @@ export class RepoSyncState extends Model {
 			commitStatus: this.commitStatus,
 			lastCommitCursor: this.commitCursor,
 			branchStatus: this.branchStatus,
-			lastBranchCursor: this.branchCursor
+			lastBranchCursor: this.branchCursor,
+			buildStatus: this.buildStatus,
+			lastBuildCursor: this.buildCursor,
+			deploymentStatus: this.deploymentStatus,
+			lastDeploymentCursor: this.deploymentCursor
 		});
 	}
 }
