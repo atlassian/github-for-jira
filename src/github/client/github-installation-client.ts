@@ -111,6 +111,11 @@ export class GitHubInstallationClient {
 	 * Get a single commit for the given repository.
 	 */
 	public getCommit = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> => {
+		console.log("IM CALALLLINGIN IT NOEWWWWWW");
+		console.log(`/repos/${owner}/${repo}/commits/${ref}`);
+		console.log(owner);
+		console.log(repo);
+		console.log(ref);
 		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/{owner}/{repo}/commits/{ref}`, {}, {
 			owner,
 			repo,

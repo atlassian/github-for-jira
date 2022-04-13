@@ -14,6 +14,7 @@ type DeploymentData = {
 
 const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
 	const deploymentData = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, cursor);
+
 	const edges = deploymentData.repository.deployments.edges;
 	const deployments = edges?.map(({ node: item }) => item) || [];
 
@@ -28,7 +29,6 @@ export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHu
 
 	logger.info("Syncing Deployments: started");
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
-
 
 	if (!deployments || deployments.length === 0) {
 		return {
@@ -56,16 +56,18 @@ export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHu
 				state: node.latestStatus.state
 			}
 		} as unknown as WebhookPayloadDeploymentStatus;
+		console.log("NODENODENODENODENODE");
+		console.log(node);
 		const data = await transformDeployment(_github, gitHubInstallationClient, deploymentStatus, jiraHost, logger);
 		return data?.deployments;
 	}))).flat().filter((deployment) => !!deployment); // todo - use reduce!!
 
 	logger.info("Syncing Deployments: finished");
 
+	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;
+
 	return {
 		edges,
-		jiraPayload: {
-			deployments: transformedDeployments
-		}
+		jiraPayload
 	};
 };

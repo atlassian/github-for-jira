@@ -100,7 +100,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-deployments-0-1-bulk-post
 // Deployment state - Jira: Can be one of unknown, pending, in_progress, cancelled, failed, rolled_back, successful
 function mapState(state: string): string {
-	switch (state) {
+	switch (state) { // toodo may be a upper casr error here aking SUCCESS go to unknown
 		case "queued":
 			return "pending";
 		// We send "pending" as "in progress" because the GitHub API goes Pending -> Success (there's no in progress update).
@@ -154,6 +154,7 @@ export function mapEnvironment(environment: string): string {
 }
 
 export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+	
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, false, jiraHost);

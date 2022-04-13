@@ -275,6 +275,8 @@ export const getJiraClient = async (
 		},
 		deployment: {
 			submit: async (data): Promise<DeploymentsResult> => {
+				console.log("ABOUT TO TRY");
+				console.log(data);
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
