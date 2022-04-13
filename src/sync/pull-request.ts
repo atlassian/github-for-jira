@@ -48,7 +48,7 @@ export const getPullRequestTask = async (
 	cursor: string | number = 1,
 	perPage?: number
 ) => {
-	logger.info("Syncing PRs: started");
+	logger.debug({jiraHost, repository, cursor, perPage}, "Syncing PRs: started");
 
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);
 	cursor = Number(cursor);
@@ -109,7 +109,7 @@ export const getPullRequestTask = async (
 		)
 	).filter((value) => !!value);
 
-	logger.info("Syncing PRs: finished");
+	logger.debug({jiraHost, repository, cursor, perPage}, "Syncing PRs: finished");
 
 	return {
 		edges: edgesWithCursor,

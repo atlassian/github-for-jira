@@ -5,15 +5,15 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 // TODO: better typings
-export const getBranchTask = async (logger: LoggerWithTarget, _github: GitHubAPI, newGithub: GitHubInstallationClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+export const getBranchTask = async (logger: LoggerWithTarget, _github: GitHubAPI, newGithub: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 	// TODO: fix typings for graphql
-	logger.info("Syncing branches: started");
+	logger.debug({ jiraHost, repository, cursor, perPage }, "Syncing branches: started");
 	perPage = perPage || 20;
 	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
 
-	logger.info("Syncing branches: finished");
+	logger.debug({ jiraHost, repository, cursor, perPage }, "Syncing branches: finished");
 
 	const jiraPayload = await transformBranches({ branches, repository });
 

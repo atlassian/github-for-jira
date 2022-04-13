@@ -8,7 +8,7 @@ import Logger from "bunyan";
 import { JiraBulkUpdateData, JiraCommit, JiraIssue, JiraRepositoryData } from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { uniq } from "lodash";
+import { difference, isEmpty, uniq } from "lodash";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -49,29 +49,30 @@ export const getJiraClient = async (
 	const client = {
 		baseURL: installation.jiraHost,
 		issues: {
-			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
-				instance.get("/rest/api/latest/issue/{issue_id}", {
+			get: async (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
+				await instance.get("/rest/api/latest/issue/{issue_id}", {
 					params: query,
 					urlParams: {
 						issue_id: issueId
 					}
 				}),
-			getAll: async (issueIds?: string[], query?: { fields: string }): Promise<JiraIssue[]> => {
+			getAll: async (issueKeys?: string[], query?: { fields: string }): Promise<JiraIssue[]> => {
 				const responses = await Promise.all<AxiosResponse<JiraIssue> | undefined>(
-					uniq(issueIds).map((issueId) => client.issues.get(issueId, query)
+					uniq(issueKeys).map(async (issueId) => await client.issues.get(issueId, query)
 						// Ignore any errors
-						.catch(() => undefined)) || []
+						.catch(() => undefined))
 				);
-				return responses.reduce((acc: JiraIssue[], response) => {
+				return responses.reduce((acc: JiraIssue[], response?:AxiosResponse<JiraIssue>) => {
 					if (response?.status === 200 && !!response?.data) {
 						acc.push(response.data);
 					}
 					return acc;
 				}, []);
 			},
-			validateIssueKeys: async (issueIds?: string[]): Promise<string[]> => {
-				const issues = await client.issues.getAll(issueIds);
-				return issues.map(i => i.key);
+			validateIssueKeys: async (issueKeys?: string[]): Promise<string[]> => {
+				const validIssueKeys = (await client.issues.getAll(issueKeys)).map(i => i.key);
+				logger.debug({ issueKeys, validIssueKeys, invalidIssueKeys: difference(issueKeys, validIssueKeys) }, "Validating issue keys.");
+				return validIssueKeys;
 			},
 			parse: (text: string): string[] | undefined => {
 				if (!text) return undefined;
@@ -254,12 +255,12 @@ export const getJiraClient = async (
 		},
 		workflow: {
 			submit: async (data) => {
-				await updateIssueKeysFor(data.builds, client.issues.validateIssueKeys);
+				await updateAndSpliceIssueKeysFor(data.builds, client.issues.validateIssueKeys);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
 						truncatedBuilds: getTruncatedIssuekeys(data.builds)
 					}, issueKeyLimitWarning);
-					await updateIssueKeysFor(data.builds, truncate);
+					await updateAndSpliceIssueKeysFor(data.builds, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
@@ -279,12 +280,12 @@ export const getJiraClient = async (
 		},
 		deployment: {
 			submit: async (data): Promise<DeploymentsResult> => {
-				await updateIssueKeysFor(data.deployments, client.issues.validateIssueKeys);
+				await updateAndSpliceIssueKeysFor(data.deployments, client.issues.validateIssueKeys);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
 						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
 					}, issueKeyLimitWarning);
-					await updateIssueKeysFor(data.deployments, truncate);
+					await updateAndSpliceIssueKeysFor(data.deployments, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
@@ -366,14 +367,16 @@ const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
  */
 const validateRepositoryIssueKeys = async (repositoryObj: JiraRepositoryData, validationFunction: (v: string[] | undefined) => Promise<string[]>): Promise<void> => {
 	await Promise.all([
-		updateIssueKeysFor(repositoryObj.commits, validationFunction),
-		updateIssueKeysFor(repositoryObj.branches, validationFunction),
+		updateAndSpliceIssueKeysFor(repositoryObj.commits, validationFunction),
+		updateAndSpliceIssueKeysFor(repositoryObj.branches, validationFunction),
 		Promise.all(repositoryObj.branches?.map(async (branch) => {
 			if (branch.lastCommit) {
+				// The documentation is weird here since `lastCommit` is required, but so is `issueKeys`,
+				// which is not guaranteed to be in the last commit...
 				branch.lastCommit = await updateIssueKeysFor([branch.lastCommit], validationFunction)[0];
 			}
 		}) || []),
-		updateIssueKeysFor(repositoryObj.pullRequests, validationFunction),
+		updateAndSpliceIssueKeysFor(repositoryObj.pullRequests, validationFunction)
 	]);
 };
 
@@ -382,11 +385,11 @@ const validateRepositoryIssueKeys = async (repositoryObj: JiraRepositoryData, va
  */
 const truncateIssueKeys = async (repositoryObj: JiraRepositoryData): Promise<void> => {
 	await Promise.all([
-		updateIssueKeysFor(repositoryObj.commits, truncate),
-		updateIssueKeysFor(repositoryObj.branches, truncate),
-		updateIssueKeysFor(repositoryObj.pullRequests, truncate)
+		updateAndSpliceIssueKeysFor(repositoryObj.commits, truncate),
+		updateAndSpliceIssueKeysFor(repositoryObj.branches, truncate),
+		updateAndSpliceIssueKeysFor(repositoryObj.pullRequests, truncate)
 	]);
-}
+};
 
 interface IssueKeyObject {
 	issueKeys?: string[];
@@ -406,13 +409,30 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
 	}, []);
 
 /**
- * Runs the mutatingFunc on the issue keys field for each branch or commit
+ * updates issue keys with func then splice the array for those missing issue keys
  */
-const updateIssueKeysFor = async <T>(resources: (T & IssueKeyObject)[] = [], func: (v: string[] | undefined) => Promise<string[]> | string[]): Promise<(T & IssueKeyObject)[]> =>
+const updateAndSpliceIssueKeysFor = async <T extends IssueKeyObject>(resources: T[] = [], func: (v: string[] | undefined) => Promise<string[]> | string[]): Promise<void> =>
+	await updateIssueKeysFor(resources, func)
+		.then(() => {
+			// Remove resource if missing issuekeys
+			// this modifies the original array instead of returning a new array.
+			// This whole file needs to be redone
+			for (let i = resources.length - 1; i >= 0; i--) {
+				if (isEmpty(resources[i].issueKeys)) {
+					resources.splice(i, 1);
+				}
+			}
+		});
+
+/**
+ * updates issue keys with func
+ */
+const updateIssueKeysFor = async <T extends IssueKeyObject>(resources: T[] = [], func: (v: string[] | undefined) => Promise<string[]> | string[]): Promise<void> => {
 	await Promise.all(resources.map(async (resource) => {
 		resource.issueKeys = await func(resource.issueKeys);
 		return resource;
 	}));
+}
 
 /**
  * Truncates to 100 elements in an array

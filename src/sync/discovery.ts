@@ -1,5 +1,5 @@
 import { getRepositorySummary } from "./jobs";
-import { Subscription, Repositories, Repository } from "models/subscription";
+import { Repositories, Repository, Subscription } from "models/subscription";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -45,7 +45,7 @@ const syncRepositories = async (github, subscription: Subscription, logger: Logg
 			const { data, hasNextPage } = await github.getRepositoriesPage(page);
 			requestNextPage = hasNextPage;
 			await updateSyncState(subscription, data.repositories);
-			logger.info(`${data.repositories.length} Repositories syncing`);
+			logger.debug({ page, hasNextPage }, `Adding ${data.repositories.length} repositories to be synced`);
 			page++;
 		} catch (err) {
 			requestNextPage = false;

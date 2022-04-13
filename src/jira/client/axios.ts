@@ -53,13 +53,12 @@ const getErrorMiddleware = (logger: Logger) =>
 	 */
 	(err: AxiosError): Promise<Error> => {
 		const status = err.response?.status;
-		const errorMessage = `Error executing Axios Request ${status ? getJiraErrorMessages(status) : err.message || ""}:\n${err.response?.data}`;
+		const errorMessage = `Error executing Axios Request ${status ? getJiraErrorMessages(status) : err.message || ""}`;
 		const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
 		// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
 		// Log exception only if it is error, because AxiosError contains the request payload
-		(isWarning ? logger.warn : logger.error)({ err, config: err.config }, errorMessage);
-
+		(isWarning ? logger.warn : logger.error)({ err, config: err.config, body: err.response?.data }, errorMessage);
 		return Promise.reject(new JiraClientError(errorMessage, err, status));
 	};
 
@@ -161,7 +160,7 @@ export const getAxiosInstance = (
 	logger = logger || getLogger("jira.client.axios");
 	const instance = axios.create({
 		baseURL,
-		timeout: Number(process.env.JIRA_TIMEOUT) || 30000
+		timeout: Number(process.env.JIRA_TIMEOUT) || 60000
 	});
 
 	// *** IMPORTANT: Interceptors are executed in reverse order. ***
