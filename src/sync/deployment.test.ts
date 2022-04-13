@@ -16,14 +16,10 @@ import { BackfillMessagePayload } from "../sqs/backfill";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-
 jest.mock("config/feature-flags");
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
-
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
-
-// import deploymentsNoKeys from "fixtures/api/graphql/deployment-nodes-no-keys.json";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -58,7 +54,7 @@ describe("sync/deployments", () => {
 
 	const createJiraNock = (deployments) => {
 		jiraNock
-			.post("/rest/deployments/0.1/bulk", makeExpectedJiraResponse(deployments)) // todo look at webhook response
+			.post("/rest/deployments/0.1/bulk", makeExpectedJiraResponse(deployments))
 			.reply(200);
 	};
 
@@ -173,7 +169,6 @@ describe("sync/deployments", () => {
 		githubUserTokenNock(installationId);
 
 		createGitHubNock(mixedDeploymentNodes);
-
 
 		githubUserTokenNock(installationId);
 		githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)

@@ -56,8 +56,6 @@ export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHu
 				state: node.latestStatus.state
 			}
 		} as unknown as WebhookPayloadDeploymentStatus;
-		console.log("NODENODENODENODENODE");
-		console.log(node);
 		const data = await transformDeployment(_github, gitHubInstallationClient, deploymentStatus, jiraHost, logger);
 		return data?.deployments;
 	}))).flat().filter((deployment) => !!deployment); // todo - use reduce!!

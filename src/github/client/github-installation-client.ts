@@ -111,11 +111,6 @@ export class GitHubInstallationClient {
 	 * Get a single commit for the given repository.
 	 */
 	public getCommit = async (owner: string, repo: string, ref: string): Promise<AxiosResponse<Octokit.ReposGetCommitResponse>> => {
-		console.log("IM CALALLLINGIN IT NOEWWWWWW");
-		console.log(`/repos/${owner}/${repo}/commits/${ref}`);
-		console.log(owner);
-		console.log(repo);
-		console.log(ref);
 		return await this.get<Octokit.ReposGetCommitResponse>(`/repos/{owner}/{repo}/commits/{ref}`, {}, {
 			owner,
 			repo,
@@ -175,11 +170,11 @@ export class GitHubInstallationClient {
 	};
 
 	public listWorkflowRuns = async (owner: string, repo: string, per_page, cursor?: number): Promise<AxiosResponse<ActionsListRepoWorkflowRunsResponseEnhanced>> => {
-		return await this.get<ActionsListRepoWorkflowRunsResponseEnhanced>(`/repos/{owner}/{repo}/actions/runs`, 
+		return await this.get<ActionsListRepoWorkflowRunsResponseEnhanced>(`/repos/{owner}/{repo}/actions/runs`,
 			{ per_page, page: cursor },
 			{ owner, repo }
 		);
-	}
+	};
 
 	public async updateIssue({ owner, repo, issue_number, body }: Octokit.IssuesUpdateParams): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
 		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issue_number}`, { body }, {},

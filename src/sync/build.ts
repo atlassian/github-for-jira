@@ -23,7 +23,6 @@ export const getBuildTask = async (
 
 	const { workflow_runs } = data;
 
-
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPage = cursor + 1;
 
@@ -48,6 +47,14 @@ export const getBuildTask = async (
 	}))).flat().filter(build => !!build);
 
 	logger.info("Syncing Builds: finished");
+
+	// When there are no valid builds return early with undefined JiraPayload so that no Jira calls are made
+	if (!builds || builds.length === 0) {
+		return {
+			edges: edgesWithCursor,
+			jiraPayload: undefined
+		};
+	}
 
 	const jiraPayload = {
 		id: repository.id,
