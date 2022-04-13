@@ -23,17 +23,29 @@ export const getBuildTask = async (
 
 	const { workflow_runs } = data;
 
-	// TODO AHHHHH - dig into why it didnt end when there was no data
-	if (workflow_runs.length == 0) {
-		throw new Error("WHHOOPPS");
+
+	// Force us to go to a non-existant page if we're past the max number of pages
+	const nextPage = cursor + 1;
+
+	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
+	// fetches the cursor from one of the edges instead of letting us return it explicitly.
+	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPage }];
+
+	// Return early if no data to process
+	if (workflow_runs.length === 0) {
+		return {
+			edges: [],
+			jiraPayload: undefined
+		};
 	}
 
+	//todo-jk reduce
 	// Transform all the build items at once, result will be array of arrays so flatten for JiraPayload
 	const builds = (await Promise.all(workflow_runs.map(async (run) => {
 		const workflowItem = { workflow_run: run, workflow: { id: run.id } } as unknown as WorkflowPayload;
 		const build = await transformWorkflow(gitHubInstallationClient, workflowItem, logger);
 		return build?.builds;
-	}))).flat();
+	}))).flat().filter(build => !!build);
 
 	logger.info("Syncing Builds: finished");
 
@@ -44,13 +56,6 @@ export const getBuildTask = async (
 		url: repository.html_url,
 		updateSequenceId: Date.now()
 	};
-
-	// Force us to go to a non-existant page if we're past the max number of pages
-	const nextPage = cursor + 1;
-
-	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
-	// fetches the cursor from one of the edges instead of letting us return it explicitly.
-	const edgesWithCursor: BuildWithCursor[] = [{ ...data, cursor: nextPage }];
 
 	return {
 		edges: edgesWithCursor,

@@ -9,7 +9,7 @@ import { DeploymentQueryNode } from "../github/client/github-queries";
 
 type DeploymentData = {
 	edges: DeploymentQueryNode[],
-	jiraPayload: any//JiraDeploymentData | undefined
+	jiraPayload: any//JiraDeploymentData | undefined //todo-jk type
 }
 
 const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
@@ -23,10 +23,19 @@ const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClie
 	};
 };
 
+//todo-jk reduce
 export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number): Promise<DeploymentData> => {
 
 	logger.info("Syncing Deployments: started");
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
+
+
+	if (!deployments || deployments.length === 0) {
+		return {
+			edges,
+			jiraPayload: undefined
+		};
+	}
 
 	const transformedDeployments = (await Promise.all(deployments.map(async (node) => {
 		const deploymentStatus = {
