@@ -112,7 +112,7 @@ export interface JiraDeployment {
 		id: string;
 		displayName: string;
 		type: string;
-	},
+	}
 }
 
 export interface JiraDeploymentData {

@@ -8,6 +8,21 @@ import { WorkflowPayload } from "../config/interfaces";
 
 type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
+const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logger) => {
+	const transformTasks = await workflowRun.reduce(async (acc, current) => {
+		const workflowItem = { workflow_run: current, workflow: { id: current.id } } as WorkflowPayload;
+		const build = await transformWorkflow(gitHubInstallationClient, workflowItem, logger);
+		if (build?.builds) {
+			(await acc).push(build?.builds);
+		}
+		return await acc
+	}, []);
+
+	const transformedBuilds = await Promise.all(transformTasks);
+
+	return transformedBuilds.flat();
+}
+
 export const getBuildTask = async (
 	logger: LoggerWithTarget,
 	_github: GitHubAPI,
@@ -38,14 +53,7 @@ export const getBuildTask = async (
 		};
 	}
 
-	//todo-jk reduce
-	// Transform all the build items at once, result will be array of arrays so flatten for JiraPayload
-	const builds = (await Promise.all(workflow_runs.map(async (run) => {
-		const workflowItem = { workflow_run: run, workflow: { id: run.id } } as unknown as WorkflowPayload;
-		const build = await transformWorkflow(gitHubInstallationClient, workflowItem, logger);
-		return build?.builds;
-	}))).flat().filter(build => !!build);
-
+	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, logger); 
 	logger.info("Syncing Builds: finished");
 
 	// When there are no valid builds return early with undefined JiraPayload so that no Jira calls are made
