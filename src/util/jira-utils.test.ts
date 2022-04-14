@@ -111,5 +111,9 @@ describe("Jira Utils", () => {
 		it("should extract multiple issue keys in a single string", () => {
 			expect(jiraIssueKeyParser("JRA-123 Jra-456-jra-901\n[bah-001]")).toEqual(["JRA-123", "JRA-456", "JRA-901", "BAH-001"]);
 		});
+
+		it("should extract issue keys in an underscore", () => {
+			expect(jiraIssueKeyParser("J_dog-123")).toEqual(["J_DOG-123"]);
+		});
 	});
 });
