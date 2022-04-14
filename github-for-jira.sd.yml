@@ -15,7 +15,7 @@ compose:
       PGBOUNCER_DEFAULT_POOL_SIZE: 15 # Max scale up:
                                       #   (15 web servers + 15 workers) * 15 pool size  = 450 connections (See postgres-db connections limit)
                                       # Normal business:
-                                      #   (5 web servers + 3 workers) * 15 pool size = 120 connections
+                                      #   (5 web servers + 6 workers) * 15 pool size = 165 connections
       PGBOUNCER_SERVER_IDLE_TIMEOUT: 60
       PGBOUNCER_MAX_CLIENT_CONN: 2000
   microservice:
@@ -538,6 +538,7 @@ environmentOverrides:
             DBInstanceClass: db.r5.4xlarge
             AllocatedStorage: 40 # GB
             MaxAllocatedStorage: 100
+
             ConnectionAlarm: 900 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 * N (cause two stacks can work
                                  # together during the deploy)
             TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
