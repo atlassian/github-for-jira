@@ -295,7 +295,6 @@ export type getDeploymentsResponse = {
 	}
 };
 
-
 export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo){
     deployments(first: $per_page, after: $cursor) {

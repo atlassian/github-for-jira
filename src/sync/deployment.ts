@@ -54,7 +54,7 @@ export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHu
 	logger.info("Syncing Deployments: started");
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 
-	if (!deployments || deployments.length === 0) {
+	if (!deployments?.length) {
 		return {
 			edges,
 			jiraPayload: undefined

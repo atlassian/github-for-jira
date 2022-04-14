@@ -35,18 +35,11 @@ export const getBuildTask = async (
 	logger.info("Syncing Builds: started");
 	cursor = Number(cursor);
 	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor);
-
 	const { workflow_runs } = data;
-
-	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPage = cursor + 1;
-
-	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
-	// fetches the cursor from one of the edges instead of letting us return it explicitly.
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPage }];
 
-	// Return early if no data to process
-	if (workflow_runs.length === 0) {
+	if (!workflow_runs?.length) {
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -57,7 +50,7 @@ export const getBuildTask = async (
 	logger.info("Syncing Builds: finished");
 
 	// When there are no valid builds return early with undefined JiraPayload so that no Jira calls are made
-	if (!builds || builds.length === 0) {
+	if (!builds?.length) {
 		return {
 			edges: edgesWithCursor,
 			jiraPayload: undefined
