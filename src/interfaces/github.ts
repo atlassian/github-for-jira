@@ -1,7 +1,3 @@
-import { stringList } from "aws-sdk/clients/datapipeline";
-import { Review } from "src/transforms/pull-request";
-import { JiraAuthor, JiraBranch, JiraCommit } from './jira';
-
 export interface GitHubPullRequest {
 	head: {
 		sha: string;

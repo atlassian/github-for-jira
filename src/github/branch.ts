@@ -26,8 +26,7 @@ export const createBranchWebhookHandler = async (context: CustomContext, jiraCli
 		});
 	} else {
 		const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
-		const jiraPayload = await transformBranch(gitHubClient, webhookPayload);
-		const jiraPayload: JiraBranchData | undefined = await transformBranch(github, webhookPayload);
+		const jiraPayload: JiraBranchData | undefined = await transformBranch(gitHubClient, webhookPayload);
 
 		if (!jiraPayload) {
 			context.log("Halting further execution for createBranch since jiraPayload is empty");

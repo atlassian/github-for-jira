@@ -1,3 +1,4 @@
+import { WorkflowRunRepository } from '../config/interfaces';
 export interface JiraPullRequest {
 	commit: {
 		id: string;
