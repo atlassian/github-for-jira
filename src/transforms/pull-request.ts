@@ -6,7 +6,6 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraAuthor } from "../util/jira";
 import { GitHubAPI } from "probot";
 import { getGithubUser } from "../services/github/user";
-import { JiraAuthor } from "../interfaces/jira";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pullRequestLinkGenerator";
 import GitHubClient from "../github/client/github-client";
@@ -17,10 +16,6 @@ function mapStatus(status: string, merged_at?: string) {
 	if (status === "closed" && merged_at) return "MERGED";
 	if (status === "closed" && !merged_at) return "DECLINED";
 	return "UNKNOWN";
-}
-
-interface Review extends JiraAuthor {
-	approvalStatus: string;
 }
 
 // TODO: define arguments and return

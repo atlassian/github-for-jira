@@ -11,6 +11,7 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import getJiraClient from "../jira/client";
 import GitHubClient from "./client/github-client";
 import { getCloudInstallationId } from "./client/installation-id";
+import { JiraBranchData } from '../interfaces/jira';
 
 export const createBranch = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
@@ -28,7 +29,7 @@ export const createBranch = async (context: CustomContext, jiraClient, _util, gi
 
 		const gitHubClient = new GitHubClient(getCloudInstallationId(githubInstallationId), context.log);
 		const github = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraClient.baseURL) ? gitHubClient : context.github;
-		const jiraPayload = await transformBranch(github, webhookPayload);
+		const jiraPayload: JiraBranchData | undefined = await transformBranch(github, webhookPayload);
 
 		if (!jiraPayload) {
 			context.log("Halting further execution for createBranch since jiraPayload is empty");
@@ -64,7 +65,7 @@ export const processBranch = async (
 		webhookReceived: webhookReceivedDate
 	});
 
-	const jiraPayload = await transformBranch(github, webhookPayload);
+	const jiraPayload: JiraBranchData | undefined = await transformBranch(github, webhookPayload);
 
 	if (!jiraPayload) {
 		logger.info("Halting further execution for createBranch since jiraPayload is empty");

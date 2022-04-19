@@ -3,6 +3,7 @@ import issueKeyParser from "jira-issue-key-parser";
 import { Context } from "probot/lib/context";
 import { getCurrentTime } from "../util/webhooks";
 import { isEmpty } from "lodash";
+import { JiraPushData } from '../interfaces/jira';
 
 export const pushWebhookHandler = async (context: Context, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();
@@ -10,7 +11,7 @@ export const pushWebhookHandler = async (context: Context, jiraClient): Promise<
 	// Copy the shape of the context object for processing
 	// but filter out any commits that don't have issue keys
 	// so we don't have to process them.
-	const payload = {
+	const payload: JiraPushData = {
 		webhookId: context.id,
 		webhookReceived,
 		repository: context.payload?.repository,

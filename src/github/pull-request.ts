@@ -8,6 +8,7 @@ import GitHubClient from "./client/github-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
+import { JiraPullRequestData } from '../interfaces/jira';
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
@@ -48,7 +49,8 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		);
 	}
 
-	const jiraPayload = await transformPullRequest(githubClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(githubClient, pull_request, reviews, context.log);
+
 	context.log.info("Pullrequest mapped to Jira Payload");
 
 	// Deletes PR link to jira if ticket id is removed from PR title

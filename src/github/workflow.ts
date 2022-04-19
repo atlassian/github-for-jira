@@ -4,12 +4,13 @@ import { emitWebhookProcessedMetrics } from "../util/webhooks";
 import GitHubClient from "./client/github-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { JiraBuildData } from '../interfaces/jira';
 
 export const workflowWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	const { github, payload, log: logger } = context;
 	const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_WORKFLOW_WEBHOOK, false, jiraClient.baseURL);
 	const githubClient = new GitHubClient(getCloudInstallationId(githubInstallationId), logger);
-	const jiraPayload = await transformWorkflowPayload(useNewGithubClient ? githubClient : github, payload, logger);
+	const jiraPayload: JiraBuildData | undefined = await transformWorkflowPayload(useNewGithubClient ? githubClient : github, payload, logger);
 
 	if (!jiraPayload) {
 		logger.info(

@@ -89,14 +89,14 @@ export const getLogger = (name: string): LoggerWithTarget => {
 //we shouldn't use console.log in our code, but it is done to catch
 //possible logs from third party libraries
 const consoleLogger = getLogger("console");
-// eslint-disable-next-line no-console
-console.debug = consoleLogger.debug.bind(consoleLogger);
-// eslint-disable-next-line no-console
-console.error = consoleLogger.error.bind(consoleLogger);
-// eslint-disable-next-line no-console
-console.log = consoleLogger.info.bind(consoleLogger);
-// eslint-disable-next-line no-console
-console.warn = consoleLogger.warn.bind(consoleLogger);
+// // eslint-disable-next-line no-console
+// console.debug = consoleLogger.debug.bind(consoleLogger);
+// // eslint-disable-next-line no-console
+// console.error = consoleLogger.error.bind(consoleLogger);
+// // eslint-disable-next-line no-console
+// console.log = consoleLogger.info.bind(consoleLogger);
+// // eslint-disable-next-line no-console
+// console.warn = consoleLogger.warn.bind(consoleLogger);
 
 
 export default logger;

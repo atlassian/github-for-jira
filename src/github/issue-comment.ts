@@ -5,6 +5,7 @@ import GitHubClient from "./client/github-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
+import { GitHubIssue } from '../interfaces/github';
 
 export const issueCommentWebhookHandler = async (
 	context: CustomContext,
@@ -35,12 +36,14 @@ export const issueCommentWebhookHandler = async (
 
 	context.log(`Updating comment in GitHub with ID ${comment.id}`);
 
-	const githubResponse = await updateIssueComment(githubClient, {
+	const webhookPayload = {
 		body: linkifiedBody,
 		owner: repository.owner.login,
 		repo: repository.name,
 		comment_id: comment.id
-	});
+	}
+
+	const githubResponse: GitHubIssue = await updateIssueComment(githubClient, webhookPayload);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(

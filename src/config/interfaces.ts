@@ -82,7 +82,7 @@ interface WorkflowRunRepositoryOwner {
 	site_admin: boolean;
 }
 
-interface WorkflowRunRepository {
+export interface WorkflowRunRepository {
 	id: number;
 	node_id: string;
 	name: string;
