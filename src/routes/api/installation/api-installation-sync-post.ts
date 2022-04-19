@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import { Subscription } from "../../../models";
-import { findOrStartSync } from "../../../sync/sync-utils";
+import { Subscription } from "models/subscription";
+import { findOrStartSync } from "~/src/sync/sync-utils";
 
 export const ApiInstallationSyncPost = async (req: Request, res: Response): Promise<void> => {
 	const githubInstallationId = Number(req.params.installationId);
-	req.log.debug({body: req.body}, "Sync body");
+	req.log.debug({ body: req.body }, "Sync body");
 	const { jiraHost, resetType } = req.body;
 
 	try {

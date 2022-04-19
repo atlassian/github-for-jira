@@ -1,11 +1,11 @@
-import "./config/env"; // Important to be before other dependencies
+import "config/env"; // Important to be before other dependencies
 import throng from "throng";
 import * as PrivateKey from "probot/lib/private-key";
 import { createProbot } from "probot";
-import { initializeSentry } from "./config/sentry";
-import "./config/proxy";
-import { isNodeProd } from "./util/isNodeEnv";
-import configureAndLoadApp from "./configure-robot";
+import { initializeSentry } from "config/sentry";
+import "config/proxy";
+import { isNodeProd } from "utils/is-node-env";
+import { configureAndLoadApp } from "./configure-robot";
 
 const probot = createProbot({
 	id: Number(process.env.APP_ID),

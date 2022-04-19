@@ -8,7 +8,7 @@
  *
  * Learn more at https://docs.sentry.io/platforms/node/#eventprocessors
  */
-export default class SentryScopeProxy {
+export class SentryScopeProxy {
 	event: any;
 	hint: any;
 	extra: Record<string, any>;

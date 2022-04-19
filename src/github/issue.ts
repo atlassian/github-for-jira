@@ -1,18 +1,14 @@
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
-import GitHubClient from "./client/github-client";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { CustomContext } from "middleware/github-webhook-middleware";
+import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
-import { GitHubAPI } from "probot";
-import { Octokit } from "@octokit/rest";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
 import { GitHubIssue } from '../interfaces/github';
 
-export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, jiraClient, util, githubInstallationId: number): Promise<void> => {
+export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, _jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const { issue, repository } = context.payload;
-	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_ISSUE_WEBHOOK, false, jiraClient.baseURL) ?
-		new GitHubClient(getCloudInstallationId(githubInstallationId), context.log) :
-		context.github;
+
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
 
 	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;
@@ -38,7 +34,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		issue_number: issue.number
 	}
 
-	const githubResponse: GitHubIssue = await updateIssue(githubClient, webhookPayload);
+	const githubResponse: GitHubIssue = await githubClient.updateIssue(webhookPayload);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
@@ -48,6 +44,3 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		githubResponse?.status
 	);
 };
-
-const updateIssue = async (githubClient:GitHubAPI | GitHubClient, issue: Octokit.IssuesUpdateParams) =>
-	githubClient instanceof GitHubClient ? await githubClient.updateIssue(issue) : await githubClient.issues.update(issue);

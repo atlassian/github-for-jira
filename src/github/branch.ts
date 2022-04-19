@@ -1,19 +1,18 @@
-import { transformBranch } from "../transforms/branch";
-import issueKeyParser from "jira-issue-key-parser";
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
+import { transformBranch } from "../transforms/transform-branch";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
-import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import getJiraClient from "../jira/client";
-import GitHubClient from "./client/github-client";
+import { getJiraClient } from "../jira/client/jira-client";
+import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { JiraBranchData } from '../interfaces/jira';
+import { jiraIssueKeyParser } from "utils/jira-utils";
 
-export const createBranch = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
 	const webhookPayload: WebhookPayloadCreate = context.payload;
 
@@ -26,9 +25,8 @@ export const createBranch = async (context: CustomContext, jiraClient, _util, gi
 			webhookPayload
 		});
 	} else {
-
-		const gitHubClient = new GitHubClient(getCloudInstallationId(githubInstallationId), context.log);
-		const github = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_BRANCH_EVENT, false, jiraClient.baseURL) ? gitHubClient : context.github;
+		const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+		const jiraPayload = await transformBranch(gitHubClient, webhookPayload);
 		const jiraPayload: JiraBranchData | undefined = await transformBranch(github, webhookPayload);
 
 		if (!jiraPayload) {
@@ -51,7 +49,7 @@ export const createBranch = async (context: CustomContext, jiraClient, _util, gi
 };
 
 export const processBranch = async (
-	github: GitHubAPI | GitHubClient,
+	github: GitHubInstallationClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadCreate,
 	webhookReceivedDate: Date,
@@ -90,9 +88,9 @@ export const processBranch = async (
 	);
 };
 
-export const deleteBranch = async (context: CustomContext, jiraClient): Promise<void> => {
+export const deleteBranchWebhookHandler = async (context: CustomContext, jiraClient): Promise<void> => {
 	const payload: WebhookPayloadDelete = context.payload;
-	const issueKeys = issueKeyParser().parse(payload.ref);
+	const issueKeys = jiraIssueKeyParser(payload.ref);
 
 	if (isEmpty(issueKeys)) {
 		context.log({ noop: "no_issue_keys" }, "Halting further execution for deleteBranch since issueKeys is empty");

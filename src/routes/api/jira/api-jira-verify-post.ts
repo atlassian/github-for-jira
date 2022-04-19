@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { Installation } from "../../../models";
-import verifyInstallation from "../../../jira/verify-installation";
+import { Installation } from "models/installation";
+import { verifyJiraInstallation } from "~/src/jira/verify-installation";
 
 export const ApiJiraVerifyPost = async (req: Request, res: Response): Promise<void> => {
 	const { installationId } = req.params;
@@ -11,7 +11,7 @@ export const ApiJiraVerifyPost = async (req: Request, res: Response): Promise<vo
 			res.status(500).send("Installation doesn't exist");
 			return;
 		}
-		const isValid = await verifyInstallation(installation, req.log)();
+		const isValid = await verifyJiraInstallation(installation, req.log)();
 		res.json({
 			message: isValid ? "Verification successful" : "Verification failed",
 			installation: {

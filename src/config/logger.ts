@@ -1,6 +1,6 @@
-import Logger, { levelFromName } from "bunyan";
+import Logger, { createLogger, INFO, levelFromName, stdSerializers } from "bunyan";
 import bformat from "bunyan-format";
-import filteringHttpLogsStream from "../util/filteringHttpLogsStream";
+import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
 import { LoggerWithTarget, wrapLogger } from "probot/lib/wrap-logger";
 import { Request } from "express";
 
@@ -32,7 +32,7 @@ const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 
 const errorSerializer = (err) => (!err || !err.stack) ? err : {
 	...err,
-	response: Logger.stdSerializers.res(err.response),
+	response: stdSerializers.res(err.response),
 	request: requestSerializer(err.request),
 	stack: getFullErrorStack(err)
 };
@@ -49,17 +49,17 @@ const getFullErrorStack = (ex) => {
 };
 
 const logLevel = process.env.LOG_LEVEL || "info";
-const globalLoggingLevel = levelFromName[logLevel] || Logger.INFO;
+const globalLoggingLevel = levelFromName[logLevel] || INFO;
 
-const logger = wrapLogger(Logger.createLogger(
+const logger = wrapLogger(createLogger(
 	{
 		name: "root-logger",
 		stream: LOG_STREAM,
 		level: globalLoggingLevel,
 		serializers: {
 			err: errorSerializer,
-			res: Logger.stdSerializers.res,
-			req: requestSerializer,
+			res: stdSerializers.res,
+			req: requestSerializer
 		}
 	}
 ));
@@ -89,15 +89,11 @@ export const getLogger = (name: string): LoggerWithTarget => {
 //we shouldn't use console.log in our code, but it is done to catch
 //possible logs from third party libraries
 const consoleLogger = getLogger("console");
-// // eslint-disable-next-line no-console
-// console.debug = consoleLogger.debug.bind(consoleLogger);
-// // eslint-disable-next-line no-console
-// console.error = consoleLogger.error.bind(consoleLogger);
-// // eslint-disable-next-line no-console
-// console.log = consoleLogger.info.bind(consoleLogger);
-// // eslint-disable-next-line no-console
-// console.warn = consoleLogger.warn.bind(consoleLogger);
-
-
-export default logger;
-
+// eslint-disable-next-line no-console
+console.debug = consoleLogger.debug.bind(consoleLogger);
+// eslint-disable-next-line no-console
+console.error = consoleLogger.error.bind(consoleLogger);
+// eslint-disable-next-line no-console
+console.log = consoleLogger.info.bind(consoleLogger);
+// eslint-disable-next-line no-console
+console.warn = consoleLogger.warn.bind(consoleLogger);

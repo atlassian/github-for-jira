@@ -1,16 +1,16 @@
-import transformDeployment from "../transforms/deployment";
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
-import getJiraClient, { DeploymentsResult } from "../jira/client";
+import { transformDeployment } from "../transforms/transform-deployment";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { CustomContext } from "middleware/github-webhook-middleware";
+import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { isBlocked } from "../config/feature-flags";
-import GitHubClient from "./client/github-client";
+import { isBlocked } from "config/feature-flags";
+import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentData } from '../interfaces/jira';
 
-export default async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const deploymentWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
 		jiraHost: jiraClient.baseURL,
 		installationId: githubInstallationId,
@@ -22,7 +22,7 @@ export default async (context: CustomContext, jiraClient, _util, githubInstallat
 
 export const processDeployment = async (
 	github: GitHubAPI,
-	newGitHubClient: GitHubClient,
+	newGitHubClient: GitHubInstallationClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadDeploymentStatus,
 	webhookReceivedDate: Date,

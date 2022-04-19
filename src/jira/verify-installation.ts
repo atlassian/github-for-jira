@@ -1,9 +1,9 @@
 import * as Sentry from "@sentry/node";
-import getAxiosInstance from "./client/axios";
-import Installation from "../models/installation";
+import { getAxiosInstance } from "./client/axios";
+import { Installation } from "models/installation";
 import Logger from "bunyan";
 
-export default (installation: Installation, log: Logger) => {
+export const verifyJiraInstallation = (installation: Installation, log: Logger) => {
 	return async (): Promise<boolean> => {
 		const instance = getAxiosInstance(installation.jiraHost, installation.sharedSecret, log);
 

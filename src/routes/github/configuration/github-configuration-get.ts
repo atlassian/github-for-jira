@@ -1,17 +1,24 @@
-import { Installation, Subscription } from "../../../models";
+import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { getInstallations, InstallationResults } from "../../jira/configuration/jira-configuration-get";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
-import { Errors } from "../../../config/errors";
-import { Tracer } from "../../../config/tracer";
-import GitHubClient from "../../../github/client/github-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { Errors } from "config/errors";
+import { Tracer } from "config/tracer";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
+import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import Logger from "bunyan";
-import { getCloudInstallationId } from "../../../github/client/installation-id";
-import { AppInstallation } from "../../../config/interfaces";
+import { getCloudInstallationId } from "~/src/github/client/installation-id";
+import { AppInstallation } from "config/interfaces";
+import { envVars } from "config/env";
+import { GitHubUserClient } from "~/src/github/client/github-user-client";
+import { isUserAdminOfOrganization } from "utils/github-utils";
+import { BlockedIpError } from "~/src/github/client/github-client-errors";
 
 interface ConnectedStatus {
+	// TODO: really need to type this sync status
 	syncStatus?: string;
 	account: Octokit.AppsGetInstallationResponseAccount;
 }
@@ -54,38 +61,39 @@ const installationConnectedStatus = async (
 };
 
 const getInstallationsWithAdmin = async (
+	gitHubUserClient: GitHubUserClient,
 	log: Logger,
-	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[],
 	login: string,
-	isAdmin: (args: { org: string, username: string, type: string }) => Promise<boolean>): Promise<InstallationWithAdmin[]> => {
-	const installationsWithAdmin: InstallationWithAdmin[] = [];
-
-	for (const installation of installations) {
+	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = []
+): Promise<InstallationWithAdmin[]> => {
+	return await Promise.all(installations.map(async (installation) => {
+		const errors: Error[] = [];
+		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id), log);
+		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation().catch((err) => {
+			errors.push(err);
+			return 0;
+		});
 		// See if we can get the membership for this user
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
-		const checkAdmin = isAdmin({
-			org: installation.account.login,
-			username: login,
-			type: installation.target_type
+		const checkAdmin = isUserAdminOfOrganization(
+			gitHubUserClient,
+			installation.account.login,
+			login,
+			installation.target_type
+		).catch(err => {
+			errors.push(err);
+			return false;
 		});
+		const [isAdmin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
+		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
 
-		try {
-			const githubClient = new GitHubClient(getCloudInstallationId(installation.id), log);
-			const numberOfReposPromise = githubClient.getNumberOfReposForInstallation();
-			const [admin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
-
-			log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
-
-			installationsWithAdmin.push({
-				...installation,
-				numberOfRepos: numberOfRepos || 0,
-				admin
-			});
-		} catch (err) {
-			log.warn({err, installationId: installation.id, org: installation.account.login}, "Cannot check admin or get number of repos per org")
-		}
-	}
-	return installationsWithAdmin;
+		return {
+			...installation,
+			numberOfRepos,
+			isAdmin,
+			isIPBlocked: !!errors.find(err => err instanceof BlockedIpError)
+		};
+	}));
 };
 
 const removeFailedConnectionsFromDb = async (req: Request, installations: InstallationResults, jiraHost: string): Promise<void> => {
@@ -106,12 +114,20 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: Instal
 };
 
 export const GithubConfigurationGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { jiraHost, githubToken } = res.locals;
+	const {
+		jiraHost,
+		githubToken,
+		github, // user-authenticated GitHub client
+		client, // app-authenticated GitHub client
+	} = res.locals;
 	const log = req.log.child({ jiraHost });
 
 	if (!githubToken) {
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
+
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, false);
+	const githubUserClient = new GitHubUserClient(githubToken, log);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
@@ -124,13 +140,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	tracer.trace(`found jira host: ${jiraHost}`);
 
-	const {
-		github, // user-authenticated GitHub client
-		client, // app-authenticated GitHub client
-		isAdmin
-	} = res.locals;
-
-	const { data: { login } } = await github.users.getAuthenticated();
+	const { data: { login } } = useNewGitHubClient ? await githubUserClient.getUser() : await github.users.getAuthenticated();
 
 	tracer.trace(`got login name: ${login}`);
 
@@ -152,10 +162,13 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			res.status(404).send(`Missing installation for host '${jiraHost}'`);
 			return;
 		}
+		const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(installation.id), log);		
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 
-		const { data: { installations }, headers } = (await github.apps.listInstallationsForAuthenticatedUser());
+		const { data: { installations }, headers } = useNewGitHubClient ? 
+			await githubUserClient.getInstallations() :
+			await github.apps.listInstallationsForAuthenticatedUser();
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info({ installations, headers }, `verbose logging: listInstallationsForAuthenticatedUser`);
@@ -163,16 +176,14 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(log, installations, login, isAdmin);
+		const installationsWithAdmin = await getInstallationsWithAdmin(githubUserClient, log, login, installations);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
 		}
 
 		tracer.trace(`got user's installations with admin status from GitHub`);
-
-		const { data: info } = await client.apps.getAuthenticated();
-
+		const { data: info } = await gitHubAppClient.getApp(); //(client as GitHubAPI).apps.getAuthenticated();
 		tracer.trace(`got user's authenticated apps from GitHub`);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
@@ -186,6 +197,10 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			log
 		);
 
+		// Sort to that orgs ready to be connected are at the top
+		const rankInstallation = (i: MergedInstallation) => Number(i.isAdmin) - Number(i.isIPBlocked) + 3 * Number(i.syncStatus !== "FINISHED" && i.syncStatus !== "IN PROGRESS" && i.syncStatus !== "PENDING");
+		const sortedInstallation = connectedInstallations.sort((a, b) => rankInstallation(b) - rankInstallation(a));
+
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info({ connectedInstallations }, `verbose logging: connectedInstallations`);
 		}
@@ -194,12 +209,13 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		res.render("github-configuration.hbs", {
 			csrfToken: req.csrfToken(),
-			installations: connectedInstallations,
-			jiraHost: jiraHost,
+			installations: sortedInstallation,
+			jiraHost,
 			nonce: res.locals.nonce,
 			info,
 			clientKey: installation.clientKey,
-			login
+			login,
+			repoUrl: envVars.GITHUB_REPO_URL
 		});
 
 		tracer.trace(`rendered page`);
@@ -215,5 +231,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 interface InstallationWithAdmin extends Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem {
 	numberOfRepos: number;
-	admin: boolean;
+	isAdmin: boolean;
+	isIPBlocked: boolean;
 }

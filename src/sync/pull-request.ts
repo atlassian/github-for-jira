@@ -1,13 +1,13 @@
-import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/types";
+import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
-import transformPullRequest from "./transforms/pull-request";
-import statsd from "../config/statsd";
+import { transformPullRequest } from "./transforms/pull-request";
+import { statsd }  from "config/statsd";
 import { GitHubAPI } from "probot";
-import { metricHttpRequest } from "../config/metric-names";
-import { Repository } from "../models/subscription";
-import GitHubClient from "../github/client/github-client";
-import { getGithubUser } from "../services/github/user";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { metricHttpRequest } from "config/metric-names";
+import { Repository } from "models/subscription";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
+import { getGithubUser } from "services/github/user";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { AxiosResponseHeaders } from "axios";
 import { Octokit } from "@octokit/rest";
@@ -39,15 +39,15 @@ type Headers = AxiosResponseHeaders & {
 
 type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 
-export default async function(
+export const getPullRequestTask = async (
 	logger: LoggerWithTarget,
 	github: GitHubAPI,
-	newGithub: GitHubClient,
+	newGithub: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,
 	perPage?: number
-) {
+) => {
 	logger.info("Syncing PRs: started");
 
 	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);
@@ -94,7 +94,7 @@ export default async function(
 					(await github?.pulls?.get({
 						owner: repository.owner.login, repo: repository.name, pull_number: pull.number
 					}));
-				const prDetails = prResponse?.data
+				const prDetails = prResponse?.data;
 				const ghUser = await getGithubUser(
 					useNewGHClient ? newGithub : github,
 					prDetails?.user.login

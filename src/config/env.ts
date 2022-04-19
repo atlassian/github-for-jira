@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 import path from "path";
 import { LogLevelString } from "bunyan";
-import { getNodeEnv, isNodeTest } from "../util/isNodeEnv";
-import { EnvironmentEnum } from "../interfaces/common";
+import { getNodeEnv, isNodeTest } from "utils/is-node-env";
+import { EnvironmentEnum } from "interfaces/common";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 
@@ -22,7 +22,7 @@ const requiredEnvVars = [
 	"SQS_DEPLOYMENT_QUEUE_REGION",
 	"SQS_BRANCH_QUEUE_URL",
 	"SQS_BRANCH_QUEUE_REGION",
-	"MICROS_AWS_REGION",
+	"MICROS_AWS_REGION"
 ];
 
 const filename = isNodeTest() ? ".env.test" : ".env";
@@ -41,7 +41,7 @@ const getProxyFromEnvironment = (): string | undefined => {
 	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
 };
 
-const envVars: EnvVars = {
+export const envVars: EnvVars = {
 	...process.env,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
@@ -59,8 +59,6 @@ const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
 if (missingVars.length) {
 	throw new Error(`Missing required Environment Variables: ${missingVars.join(", ")}`);
 }
-
-export default envVars;
 
 export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,

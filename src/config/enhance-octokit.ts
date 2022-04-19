@@ -1,4 +1,4 @@
-import statsd from "./statsd";
+import { statsd }  from "./statsd";
 import { GitHubAPI } from "probot";
 import { metricError, metricHttpRequest } from "./metric-names";
 import { getLogger } from "./logger";
@@ -70,7 +70,7 @@ const instrumentRequests = (octokit: GitHubAPI) => {
  * This acts like an Octokit plugin but works on Octokit instances.
  * (Because Probot instantiates the Octokit client for us, we can't use plugins.)
  */
-export default (octokit: GitHubAPI): GitHubAPI => {
+export const enhanceOctokit = (octokit: GitHubAPI): GitHubAPI => {
 	instrumentRequests(octokit);
 	return octokit;
 };

@@ -1,10 +1,10 @@
-import { Step, StepPrioritizer, StepProcessor } from "./looper/api";
-import { JobId, JobState } from "./index";
-import { RepositoryData } from "../models/subscription";
+import { RepositoryData } from "models/subscription";
 import { PullRequestProcessor } from "./pull-request-processor";
 import { BranchProcessor } from "./branch-processor";
 import { CommitProcessor } from "./commit-processor";
+import { JobId, JobState, Step, StepPrioritizer, StepProcessor } from "./backfill.types";
 
+// TODO: clean up messy code
 export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 
 	private readonly commitsSkipCount;
@@ -18,22 +18,31 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 		this.pullrequestSkipCount = pullrequestSkipCount || 10;
 	}
 
-	getStepProcessor(_: Step<JobId>, jobState: JobState): StepProcessor<JobState> | null | undefined {
+	private static hasWaitingPullrequests(repo: RepositoryData): boolean {
+		return repo.pullStatus === "pending" || repo.pullStatus === undefined;
+	}
 
+	private static hasWaitingBranches(repo: RepositoryData): boolean {
+		return repo.branchStatus === "pending" || repo.branchStatus == undefined;
+	}
+
+	private static hasWaitingCommits(repo: RepositoryData): boolean {
+		return repo.commitStatus === "pending" || repo.commitStatus === undefined;
+	}
+
+	getStepProcessor(_: Step<JobId>, jobState: JobState): StepProcessor<JobState> | undefined {
 		if (Prioritizer.hasWaitingPullrequests(jobState.repository)) {
 			return new PullRequestProcessor();
 		} else if (Prioritizer.hasWaitingBranches(jobState.repository)) {
 			return new BranchProcessor();
 		} else if (Prioritizer.hasWaitingCommits(jobState.repository)) {
 			return new CommitProcessor();
-		} else {
-			// The job is done.
-			return undefined;
 		}
-
+		// The job is done.
+		return undefined;
 	}
 
-	skip(_: Step<JobId>, jobState: JobState): JobState {
+	skip(_step: Step<JobId>, jobState: JobState): JobState {
 		const repo = jobState.repository;
 
 		if (Prioritizer.hasWaitingPullrequests(jobState.repository)) {
@@ -66,17 +75,4 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 
 		return jobState;
 	}
-
-	private static hasWaitingPullrequests(repo: RepositoryData): boolean {
-		return repo.pullStatus === "pending" || repo.pullStatus == undefined;
-	}
-
-	private static hasWaitingBranches(repo: RepositoryData): boolean {
-		return repo.branchStatus === "pending" || repo.branchStatus == undefined;
-	}
-
-	private static hasWaitingCommits(repo: RepositoryData): boolean {
-		return repo.commitStatus === "pending" || repo.commitStatus == undefined;
-	}
-
 }

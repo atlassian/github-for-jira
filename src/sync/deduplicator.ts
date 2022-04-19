@@ -1,4 +1,4 @@
-import {Redis} from "ioredis";
+import { Redis } from "ioredis";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -65,7 +65,7 @@ type InProgressStorage = {
 	 * @param jobRunnerId - the ID of the worker to watch for
 	 * @param jobRunnerFlagUpdateTimeoutMsecs - the timeout which worker uses to update the flag with, the value is
 	 * 																				 used to calculate the sleep interval between observations of the flag
-   *																				 during the execution.
+	 *																				 during the execution.
 	 *
 	 * @return true if and only if can 100% tell that the execution with the given ID  is during something (the process is
 	 * live), false otherwise (it might be still live but we couldn't determine that)

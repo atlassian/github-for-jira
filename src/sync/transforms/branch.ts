@@ -1,8 +1,7 @@
-import { getJiraId } from "../../jira/util/id";
-import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "../../util/jira";
-import { union, isEmpty } from "lodash";
-import { generateCreatePullRequestUrl } from "../../transforms/util/pullRequestLinkGenerator";
+import { getJiraId } from "~/src/jira/util/id";
+import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import { isEmpty, union } from "lodash";
+import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
 
 // TODO: better typing in file
 /**
@@ -14,12 +13,12 @@ import { generateCreatePullRequestUrl } from "../../transforms/util/pullRequestL
  *  - Title of the associated Pull Request
  *  - Messages from up to the last 100 commits in that branch
  */
-const mapBranch = (branch, repository, useNewGHPrUrl) => {
-	const branchKeys = issueKeyParser().parse(branch.name) || [];
-	const pullRequestKeys = issueKeyParser().parse(
+const mapBranch = (branch, repository) => {
+	const branchKeys = jiraIssueKeyParser(branch.name);
+	const pullRequestKeys = jiraIssueKeyParser(
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
-	) || [];
-	const commitKeys = issueKeyParser().parse(branch.target.message) || [];
+	);
+	const commitKeys = jiraIssueKeyParser(branch.target.message);
 	const allKeys = union(branchKeys, pullRequestKeys, commitKeys)
 		.filter((key) => !!key);
 
@@ -29,7 +28,7 @@ const mapBranch = (branch, repository, useNewGHPrUrl) => {
 	}
 
 	return {
-		createPullRequestUrl: useNewGHPrUrl ? generateCreatePullRequestUrl(repository.html_url, branch.name, allKeys) : `${repository.html_url}/pull/new/${branch.name}`,
+		createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, branch.name, allKeys),
 		id: getJiraId(branch.name),
 		issueKeys: allKeys,
 		lastCommit: {
@@ -48,7 +47,7 @@ const mapBranch = (branch, repository, useNewGHPrUrl) => {
 		url: `${repository.html_url}/tree/${branch.name}`,
 		updateSequenceId: Date.now()
 	};
-}
+};
 
 /**
  * mapCommit takes the a single commit object from the array
@@ -56,7 +55,7 @@ const mapBranch = (branch, repository, useNewGHPrUrl) => {
  * to the structure needed for the DevInfo API
  */
 const mapCommit = (commit) => {
-	const issueKeys = issueKeyParser().parse(commit.message);
+	const issueKeys = jiraIssueKeyParser(commit.message);
 
 	if (isEmpty(issueKeys)) {
 		return undefined;
@@ -75,13 +74,13 @@ const mapCommit = (commit) => {
 		url: commit.url,
 		updateSequenceId: Date.now()
 	};
-}
+};
 
 // TODO: add typings
-export const transformBranches = async (payload, useNewGHPrUrl: boolean) => {
+export const transformBranches = async (payload) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
-		.map((branch) => mapBranch(branch, payload.repository, useNewGHPrUrl))
+		.map((branch) => mapBranch(branch, payload.repository))
 		.filter((branch) => !!branch);
 
 	// TODO: use reduce instead of map/filter
