@@ -42,21 +42,21 @@ export interface GitHubIssue {
 }
 
 
-interface WorkflowRunAuthorAndCommitter {
+interface GitHubWorkflowRunAuthorAndCommitter {
 	name: string;
 	email: string;
 }
 
-interface WorkflowRunHeadCommit {
+interface GitHubWorkflowRunHeadCommit {
 	id: string;
 	tree_id: string;
 	message: string;
 	timestamp: Date;
-	author: WorkflowRunAuthorAndCommitter;
-	committer: WorkflowRunAuthorAndCommitter;
+	author: GitHubWorkflowRunAuthorAndCommitter;
+	committer: GitHubWorkflowRunAuthorAndCommitter;
 }
 
-interface WorkflowRunRepositoryOwner {
+interface GitHubWorkflowRunRepositoryOwner {
 	login: string;
 	id: number;
 	node_id: string;
@@ -77,13 +77,13 @@ interface WorkflowRunRepositoryOwner {
 	site_admin: boolean;
 }
 
-export interface WorkflowRunRepository {
+interface GitHubWorkflowRunRepository {
 	id: number;
 	node_id: string;
 	name: string;
 	full_name: string;
 	private: boolean;
-	owner: WorkflowRunRepositoryOwner;
+	owner: GitHubWorkflowRunRepositoryOwner;
 	html_url: string;
 	description: string | null;
 	fork: boolean;
@@ -126,28 +126,28 @@ export interface WorkflowRunRepository {
 	deployments_url: string;
 }
 
-interface WorkflowRunPullRequestsHeadAndBaseRepo {
+interface GitHubWorkflowRunPullRequestsHeadAndBaseRepo {
 	id: number;
 	url: string;
 	name: string;
 }
 
-interface WorkflowRunPullRequestsHeadAndBase {
+interface GitHubWorkflowRunPullRequestsHeadAndBase {
 	ref: string;
 	sha: string;
-	repo: WorkflowRunPullRequestsHeadAndBaseRepo;
+	repo: GitHubWorkflowRunPullRequestsHeadAndBaseRepo;
 }
 
 
-interface WorkflowRunPullRequests {
+interface GitHubWorkflowRunPullRequests {
 	url: string;
 	id: number;
 	number: number;
-	head: WorkflowRunPullRequestsHeadAndBase;
-	base: WorkflowRunPullRequestsHeadAndBase;
+	head: GitHubWorkflowRunPullRequestsHeadAndBase;
+	base: GitHubWorkflowRunPullRequestsHeadAndBase;
 }
 
-interface WorkflowRun {
+interface GitHubWorkflowRun {
 	id: number;
 	name: string;
 	node_id: string;
@@ -162,7 +162,7 @@ interface WorkflowRun {
 	check_suite_node_id: string;
 	url: string;
 	html_url: string;
-	pull_requests: WorkflowRunPullRequests[];
+	pull_requests: GitHubWorkflowRunPullRequests[];
 	created_at: string;
 	updated_at: string;
 	run_attempt: number;
@@ -175,12 +175,12 @@ interface WorkflowRun {
 	rerun_url: string;
 	previous_attempt_url: string | null;
 	workflow_url: string;
-	head_commit: WorkflowRunHeadCommit;
-	repository: WorkflowRunRepository;
-	head_repository: WorkflowRunRepository;
+	head_commit: GitHubWorkflowRunHeadCommit;
+	repository: GitHubWorkflowRunRepository;
+	head_repository: GitHubWorkflowRunRepository;
 }
 
-interface Workflow {
+interface GitHubWorkflow {
 	id: string;
 	node_id: string;
 	name: string;
@@ -193,7 +193,7 @@ interface Workflow {
 	badge_url: string;
 }
 
-interface WorkflowSender {
+interface GitHubWorkflowSender {
 	login: string;
 	id: number;
 	node_id: string;
@@ -214,18 +214,18 @@ interface WorkflowSender {
 	site_admin: boolean;
 }
 
-interface WorkflowInstallation {
+interface GitHubWorkflowInstallation {
 	id: number;
 	node_id: string;
 }
 
-export interface WorkflowPayload {
+export interface GitHubWorkflowPayload {
 	action: string;
-	workflow_run: WorkflowRun;
-	workflow: Workflow;
-	repository: WorkflowRunRepository;
-	sender: WorkflowSender;
-	installation: WorkflowInstallation;
+	workflow_run: GitHubWorkflowRun;
+	workflow: GitHubWorkflow;
+	repository: GitHubWorkflowRunRepository;
+	sender: GitHubWorkflowSender;
+	installation: GitHubWorkflowInstallation;
 }
 
 interface GitHubData {
@@ -240,4 +240,53 @@ export interface GitHubIssueCommentData extends GitHubData {
 
 export interface GitHubIssueData extends GitHubData {
 	issue_number: number;
+}
+
+interface GitHubRepository extends GitHubWorkflowRunRepository {
+	created_at: number;
+	updated_at: string;
+	pushed_at: number;
+	git_url: string;
+	ssh_url: string;
+	clone_url: string;
+	svn_url: string;
+	homepage?: string;
+	size: number;
+	stargazers_count: number;
+	watchers_count: number;
+	language?: string;
+	has_issues: boolean;
+	has_projects: boolean;
+	has_downloads: boolean;
+	has_wiki: boolean;
+	has_pages: boolean;
+	forks_count: number;
+	mirror_url?: string;
+	archived: boolean;
+	disabled: boolean;
+	open_issues_count: number;
+	license?: string;
+	allow_forking: boolean;
+	is_template: boolean;
+	topics: string[];
+	visibility: string;
+	forks: number;
+	open_issues: number;
+	watchers: number;
+	default_branch: string;
+	stargazers: number;
+	master_branch: string;
+}
+
+interface GitHubInstallation {
+	id: number;
+	node_id: number;
+}
+
+export interface GitHubPushData {
+	webhookId: string;
+	webhookReceived: number;
+	repository: GitHubRepository;
+	commits: string[];
+	installation: GitHubInstallation;
 }

@@ -2,7 +2,7 @@ import { enqueuePush } from "../transforms/push";
 import { Context } from "probot/lib/context";
 import { getCurrentTime } from "utils/webhook-utils";
 import { hasJiraIssueKey } from "utils/jira-utils";
-import { JiraPushData } from '../interfaces/jira';
+import { GitHubPushData } from '../interfaces/github';
 
 export const pushWebhookHandler = async (context: Context, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();
@@ -10,7 +10,7 @@ export const pushWebhookHandler = async (context: Context, jiraClient): Promise<
 	// Copy the shape of the context object for processing
 	// but filter out any commits that don't have issue keys
 	// so we don't have to process them.
-	const payload: JiraPushData = {
+	const payload: GitHubPushData = {
 		webhookId: context.id,
 		webhookReceived,
 		repository: context.payload?.repository,
