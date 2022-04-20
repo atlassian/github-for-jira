@@ -85,8 +85,13 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	// (^|[^\p{L}\p{Nd}]) means that it must be at the start of the string or be a non unicode-digit character (separator like space, new line, or special character like [)
 	// [\p{L}][\p{L}\p{Nd}_]{1,255} means that the id must start with a unicode letter, then must be at least one more unicode-digit character up to 256 length to prefix the ID
 	// -\p{Nd}{1,255} means that it must be separated by a dash, then at least 1 number character up to 256 length
-	// then we UPPERCASE the matched string and remove duplicate issue keys
-	return uniq(Array.from(str.matchAll(/(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu), m => m[2].toUpperCase()));
+	// const regex = /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
+
+	// Old regex which was working before trying to update it to the the "correct" one
+	const regex = /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
+
+	// Parse all issue keys from string then we UPPERCASE the matched string and remove duplicate issue keys
+	return uniq(Array.from(str.matchAll(regex), m => m[2].toUpperCase()));
 };
 
 export const hasJiraIssueKey = (str:string): boolean => !isEmpty(jiraIssueKeyParser(str));
