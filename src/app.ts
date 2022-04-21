@@ -6,12 +6,7 @@ import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials"
 import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
 import crypto from "crypto";
 import { Application } from "probot";
-import { statsd, elapsedTimeMetrics } from "config/statsd";
-import IORedis from "ioredis";
-import { getRedisInfo } from "config/redis-info";
-import rateLimit from "express-rate-limit";
-import RedisStore from "rate-limit-redis";
-import { metricError } from "config/metric-names";
+import { elapsedTimeMetrics } from "config/statsd";
 import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
@@ -92,24 +87,6 @@ const secureHeaders = (router: Router, frontendApp: Express) => {
 export const setupFrontend = (app: Application): void => {
 	const router = app.route();
 	router.use(elapsedTimeMetrics);
-
-	if (process.env.USE_RATE_LIMITING === "true") {
-		const client = new IORedis(getRedisInfo("rate-limiter"));
-		const limiter = rateLimit({
-			store: new RedisStore({
-				client
-			}),
-			skip: () => false,
-			handler(_, res) {
-				// We don't include path in this metric as the bots scanning us generate many of them
-				statsd.increment(metricError.expressRateLimited);
-				res.status(429).send("Too many requests, please try again later.");
-			},
-			max: 100 // limit each IP to a number of requests per windowMs
-		});
-
-		router.use(limiter);
-	}
 
 	if (process.env.FORCE_HTTPS) {
 		router.use(sslify.HTTPS({ trustProtoHeader: true }));
