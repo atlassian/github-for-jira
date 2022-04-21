@@ -1,4 +1,4 @@
-import { Repository } from "@octokit/graphql-schema";
+import { Repository } from "models/subscription";
 
 export const ViewerRepositoryCountQuery = `
 query {
@@ -9,18 +9,21 @@ query {
 	}
 }`;
 
-type RepositoryNode = {
+interface RepositoryNode {
 	node: Repository
 }
 
-export type GetRepositoriesResponse = {
+export interface GetRepositoriesResponse {
 	viewer: {
 		repositories: {
-			pageInfo,
-			edges: RepositoryNode[]
+			pageInfo: {
+				endCursor: string;
+				hasNextPage: boolean;
+			};
+			edges: RepositoryNode[];
 		}
 	}
-};
+}
 
 export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
   viewer {
@@ -31,14 +34,14 @@ export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
       }
       edges {
         node {
-          id: databaseId
+          id
           name
-          full_name: nameWithOwner
+          full_name
           owner {
             login
           }
-          html_url: url
-          updated_at: updatedAt
+          html_url
+          updated_at
         }
       }
     }

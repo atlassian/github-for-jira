@@ -195,6 +195,7 @@ export class RepoSyncState extends Model {
 		return model?.setFromRepositoryData(repo)?.save();
 	}
 
+	// TODO: revert this back to not using 'lastSomethingCursor'
 	setFromRepositoryData(repo?: RepositoryData): RepoSyncState {
 		if (repo) {
 			this.repoUpdatedAt = new Date(repo.repository?.updated_at ?? Date.now());

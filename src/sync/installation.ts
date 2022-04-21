@@ -4,13 +4,13 @@ import { RepoSyncState } from "models/reposyncstate";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getRepositorySummary } from "./jobs";
 import { enhanceOctokit, RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
-import { statsd }  from "config/statsd";
+import { statsd } from "config/statsd";
 import { getPullRequestTask } from "./pull-request";
 import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { booleanFlag, BooleanFlags, isBlocked } from "config/feature-flags";
+import { isBlocked } from "config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import IORedis from "ioredis";
@@ -21,27 +21,33 @@ import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import { RateLimitingError } from "../github/client/github-client-errors";
+import { getRepositoryTask } from "~/src/sync/discovery";
 
 const tasks: TaskProcessors = {
+	repository: getRepositoryTask,
 	pull: getPullRequestTask,
 	branch: getBranchTask,
 	commit: getCommitTask
 };
 
 interface TaskProcessors {
-	[task: string]:
-		(
-			logger: LoggerWithTarget,
-			github: GitHubAPI,
-			newGithub: GitHubInstallationClient,
-			jiraHost: string,
-			repository: Repository,
-			cursor?: string | number,
-			perPage?: number
-		) => Promise<{ edges: any[], jiraPayload: any }>;
+	[task: string]: (
+		logger: LoggerWithTarget,
+		github: GitHubAPI,
+		newGithub: GitHubInstallationClient,
+		jiraHost: string,
+		repository: Repository,
+		cursor?: string | number,
+		perPage?: number
+	) => Promise<TaskPayload>;
 }
 
-type TaskType = "pull" | "commit" | "branch";
+export interface TaskPayload {
+	edges: any[];
+	jiraPayload: any;
+}
+
+type TaskType = "repository" | "pull" | "commit" | "branch";
 
 const taskTypes = Object.keys(tasks) as TaskType[];
 
@@ -53,6 +59,15 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	);
 
 const getNextTask = async (subscription: Subscription): Promise<Task | undefined> => {
+	if (subscription.repositoryStatus !== "complete") {
+		return {
+			task: "repository",
+			repositoryId: subscription.repositoryCursor || "",
+			repository: {} as Repository,
+			cursor: subscription.repositoryCursor
+		};
+	}
+
 	const repos = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
 	const sorted: [string, RepositoryData][] = repos.map(repo => [repo.repoId.toString(), repo.toRepositoryData()]);
 
@@ -84,7 +99,7 @@ const upperFirst = (str: string) =>
 const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
-//Exported for testing
+// Exported for testing
 export const updateJobStatus = async (
 	data: BackfillMessagePayload,
 	edges: any[] | undefined,
@@ -109,13 +124,11 @@ export const updateJobStatus = async (
 	const status = edges?.length ? "pending" : "complete";
 
 	logger.info({ status }, "Updating job status");
-
 	await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status);
 
 	if (edges?.length) {
 		// there's more data to get
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
-
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription))) {
@@ -204,13 +217,13 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	await subscription.update({ syncStatus: "ACTIVE" });
 
-	const { task, repositoryId, cursor } = nextTask;
+	const { task, cursor, repositoryId } = nextTask;
 	let { repository } = nextTask;
 
-	if (!repository) {
+	if (!nextTask.repository && repositoryId) {
 		// Old records don't have this info. New ones have it
 		const { data: repo } = await github.request("GET /repositories/:id", {
-			id: repositoryId
+			id: nextTask.repositoryId
 		});
 		repository = getRepositorySummary(repo);
 		await subscription.updateSyncState({
@@ -228,36 +241,28 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	const processor = tasks[task];
 
 	const execute = async () => {
-		if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
-
-			// just try with one page size
-			return await processor(logger, github, newGithub, jiraHost, repository, cursor, 20);
-
-		} else {
-
-			for (const perPage of [20, 10, 5, 1]) {
-				// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
-				try {
-					return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
-				} catch (err) {
-					logger.error({
-						err,
-						payload: data,
-						github,
-						repository,
-						cursor,
-						task
-					}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
-					if (!isRetryableWithSmallerRequest(err)) {
-						// error is not retryable, re-throwing it
-						throw err;
-					}
-					// error is retryable, retrying with next smaller page size
+		for (const perPage of [20, 10, 5, 1]) {
+			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
+			try {
+				return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
+			} catch (err) {
+				logger.error({
+					err,
+					payload: data,
+					github,
+					repository,
+					cursor,
+					task
+				}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
+				if (!isRetryableWithSmallerRequest(err)) {
+					// error is not retryable, re-throwing it
+					throw err;
 				}
+				// error is retryable, retrying with next smaller page size
 			}
 		}
-		logger.error({ jiraHost, installationId, repositoryId, task }, "Error processing GraphQL query");
-		throw new Error(`Error processing GraphQL query: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
+		logger.error({ jiraHost, installationId, repositoryId: nextTask.repositoryId, task }, "Error processing GraphQL query");
+		throw new Error(`Error processing GraphQL query: installationId=${installationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
 	};
 
 	try {
@@ -300,7 +305,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			data,
 			edges,
 			task,
-			repositoryId,
+			nextTask.repositoryId,
 			logger,
 			scheduleNextTask
 		);
@@ -314,12 +319,6 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 /**
  * Handles an error and takes action based on the error type and parameters
- *
- * @param err The error
- * @param logger
- * @param scheduleNextTask Function which schedules next task with the specified delay
- * @param ignoreCurrentRepo Function which ignores currently processing repo and schedules the next task
- * @param failCurrentRepoAndContinue Function which sets the status of the current repo sync to "failed" and schedules the next task
  */
 export const handleBackfillError = async (err,
 	data: BackfillMessagePayload,

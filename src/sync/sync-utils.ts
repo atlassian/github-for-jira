@@ -10,21 +10,21 @@ export async function findOrStartSync(
 	syncType?: "full" | "partial"
 ): Promise<void> {
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
-	const [count] = await Promise.all([
-		RepoSyncState.countFromSubscription(subscription),
-		// Set sync status to PENDING
-		subscription.update({ syncStatus: SyncStatus.PENDING })
-	]);
+	// Set sync status to PENDING, reset number of synced repos, remove repository cursor and status
+	await subscription.update({
+		syncStatus: SyncStatus.PENDING,
+		numberOfSyncedRepos: 0,
+		repositoryCursor: null,
+		repositoryStatus: null
+	});
 
-	logger.info({ subscription, syncType, count }, "Starting sync");
+	logger.info({ subscription, syncType }, "Starting sync");
 
-	if (count === 0 || syncType === "full") {
-		// Reset all state if we're doing a full sync
-		await RepoSyncState.resetSyncFromSubscription(subscription);
-		await sqsQueues.discovery.sendMessage({ installationId, jiraHost }, 0, logger);
-		return;
+	if (syncType === "full") {
+		// Remove all state as we're starting anew
+		await RepoSyncState.deleteFromSubscription(subscription);
 	}
 
-	// This will automatically pick back up from where it left off
+	// Start sync
 	await sqsQueues.backfill.sendMessage({ installationId, jiraHost }, 0, logger);
 }

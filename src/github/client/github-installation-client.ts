@@ -15,10 +15,10 @@ import {
 	getBranchesResponse,
 	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
-	getCommitsResponse,
+	getCommitsResponse, GetRepositoriesQuery, GetRepositoriesResponse,
 	ViewerRepositoryCountQuery
 } from "./github-queries";
-import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
+import { GetPullRequestParams, GraphQlQueryResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 
 /**
@@ -30,7 +30,7 @@ export class GitHubInstallationClient {
 	private readonly axios: AxiosInstance;
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
-	private readonly githubInstallationId: InstallationId;
+	public readonly githubInstallationId: InstallationId;
 	private readonly logger: Logger;
 
 	constructor(
@@ -141,16 +141,12 @@ export class GitHubInstallationClient {
 	/**
 	 * Get a page of repositories.
 	 */
-	public getRepositoriesPage = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
-		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
-			perPage: 100,
-			page
+	public getRepositoriesPage = async (perPage = 1, cursor?: string): Promise<GetRepositoriesResponse> => {
+		const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
+			perPage,
+			cursor
 		});
-		const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
-		return {
-			...response,
-			hasNextPage
-		};
+		return response.data.data;
 	};
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
@@ -182,7 +178,7 @@ export class GitHubInstallationClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage: number, cursor?: string): Promise<getBranchesResponse> {
+	public async getBranchesPage(owner: string, repoName: string, perPage = 1, cursor?: string): Promise<getBranchesResponse> {
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles,
 			{
 				owner,
