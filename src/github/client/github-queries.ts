@@ -34,14 +34,14 @@ export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
       }
       edges {
         node {
-          id
+          id: databaseId
           name
-          full_name
+          full_name: nameWithOwner
           owner {
             login
           }
-          html_url
-          updated_at
+          html_url: url
+          updated_at: updatedAt
         }
       }
     }

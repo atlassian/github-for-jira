@@ -141,9 +141,9 @@ export class GitHubInstallationClient {
 	/**
 	 * Get a page of repositories.
 	 */
-	public getRepositoriesPage = async (perPage = 1, cursor?: string): Promise<GetRepositoriesResponse> => {
+	public getRepositoriesPage = async (per_page = 1, cursor?: string): Promise<GetRepositoriesResponse> => {
 		const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
-			perPage,
+			per_page,
 			cursor
 		});
 		return response.data.data;

@@ -48,7 +48,8 @@ export const getRepositoryTask = async (
 		viewer: {
 			repositories: {
 				pageInfo: {
-					endCursor: nextCursor
+					endCursor: nextCursor,
+					hasNextPage
 				},
 				edges
 			}
@@ -61,9 +62,10 @@ export const getRepositoryTask = async (
 	const repositories = edges.map(edge => edge?.node);
 
 	await updateSyncState(subscription, repositories);
-	logger.info({repositories}, `Added ${repositories.length} Repositories to state`);
+	logger.debug({ repositories }, `Added ${repositories.length} Repositories to state`);
+	logger.info(`Added ${repositories.length} Repositories to state`);
 
-	logger.debug("Repository Discovery: finished");
+	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
 	return {
 		edges: edgesWithCursor,
