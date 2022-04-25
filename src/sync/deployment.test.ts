@@ -91,6 +91,12 @@ describe("sync/deployments", () => {
 			createdAt: new Date()
 		});
 
+		when(booleanFlag).calledWith(
+			BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
+
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 

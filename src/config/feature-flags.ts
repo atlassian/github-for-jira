@@ -25,7 +25,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION = "use-new-github-client-for-get-subscription",
 	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
-	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup"
+	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
+	BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS = "run-backfill-for-builds-and-deployments"
 }
 
 export enum StringFlags {

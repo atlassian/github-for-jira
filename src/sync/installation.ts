@@ -32,6 +32,11 @@ const tasks: TaskProcessors = {
 	deployment: getDeploymentTask
 };
 
+// const additionalTasks: TaskProcessors = {
+// 	build: getBuildTask,
+// 	deployment: getDeploymentTask
+// };
+
 interface TaskProcessors {
 	[task: string]:
 		(
@@ -47,7 +52,7 @@ interface TaskProcessors {
 
 type TaskType = "pull" | "commit" | "branch" | "build" | "deployment";
 
-const taskTypes = Object.keys(tasks) as TaskType[];
+let taskTypes = Object.keys(tasks) as TaskType[];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
@@ -429,6 +434,11 @@ export const processInstallation =
 
 		return async (data: BackfillMessagePayload, sentry: Hub, logger: LoggerWithTarget): Promise<void> => {
 			const { installationId, jiraHost } = data;
+
+			// This is prefered at taskType definition, but feature flag requires async so was moved to starting of process
+			if (!await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, true, jiraHost)) {
+				taskTypes = taskTypes.filter((task) => task !== "build" && task !== "deployment")
+			}
 
 			try {
 				if (await isBlocked(installationId, logger)) {
