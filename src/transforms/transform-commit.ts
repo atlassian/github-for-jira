@@ -1,7 +1,7 @@
 import { JiraCommit, JiraCommitData } from "interfaces/jira";
 import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { isEmpty } from "lodash";
-const MAX_COMMIT_LENGTH = 1024;
+const MAX_COMMIT_MESSAGE_LENGTH = 1024;
 
 export const mapCommit = (commit): JiraCommit | undefined => {
 	const issueKeys = jiraIssueKeyParser(commit.message);
@@ -17,7 +17,7 @@ export const mapCommit = (commit): JiraCommit | undefined => {
 		hash: commit.oid,
 		id: commit.oid,
 		issueKeys,
-		message: commit?.message?.substr(0, MAX_COMMIT_LENGTH),
+		message: commit?.message?.substring(0, MAX_COMMIT_MESSAGE_LENGTH),
 		url: commit.url || undefined, // If blank string, don't send url
 		updateSequenceId: Date.now()
 	};

@@ -5,6 +5,7 @@ import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
+const MAX_COMMIT_MESSAGE_LENGTH = 1024;
 
 const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
 	const { data: { object: { sha } } } = await github.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`);
@@ -18,7 +19,7 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: W
 		hash: sha,
 		id: sha,
 		issueKeys,
-		message: commit.message,
+		message: commit?.message?.substring(0, MAX_COMMIT_MESSAGE_LENGTH),
 		url,
 		updateSequenceId: Date.now()
 	};
