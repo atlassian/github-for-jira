@@ -436,7 +436,7 @@ export const processInstallation =
 			const { installationId, jiraHost } = data;
 
 			// This is prefered at taskType definition, but feature flag requires async so was moved to starting of process
-			if (!await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, true, jiraHost)) {
+			if (!await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, false, jiraHost)) {
 				taskTypes = taskTypes.filter((task) => task !== "build" && task !== "deployment")
 			}
 
