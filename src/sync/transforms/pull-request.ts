@@ -1,8 +1,7 @@
-import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "../../util/jira";
-import _ from "lodash";
+import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import { isEmpty } from "lodash";
 import { Octokit } from "@octokit/rest";
-import { Repository } from "../../models/subscription";
+import { Repository } from "models/subscription";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {
@@ -18,14 +17,12 @@ interface Payload {
 	repository: Repository;
 }
 
-export default async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghUser?: Octokit.UsersGetByUsernameResponse) => {
+export const transformPullRequest =  async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghUser?: Octokit.UsersGetByUsernameResponse) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
-	const issueKeys = issueKeyParser().parse(
-		`${pullRequest.title}\n${pullRequest.head.ref}`
-	);
+	const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}`);
 
-	if (_.isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
 
@@ -37,7 +34,8 @@ export default async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghU
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
 				author: getJiraAuthor(prDetails.user, ghUser),
 				commentCount: prDetails.comments || 0,
-				destinationBranch: `${repository.html_url}/tree/${prDetails.base?.ref || ""}`,
+				destinationBranch: prDetails.base?.ref || "",
+				destinationBranchUrl: `${repository.html_url}/tree/${prDetails.base?.ref || ""}`,
 				displayId: `#${prDetails.number}`,
 				id: prDetails.number,
 				issueKeys,

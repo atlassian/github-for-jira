@@ -1,8 +1,8 @@
 import { Request, Response, Router } from "express";
-import postJiraInstall from "../../../jira/install";
-import extractInstallationFromJiraCallback from "../../../jira/extract-installation-from-jira-callback";
-import postJiraUninstall from "../../../jira/uninstall";
-import { verifyAsymmetricJwtTokenMiddleware } from "../../../jira/util/jwt";
+import { JiraEventsInstallPost } from "routes/jira/events/jira-events-install-post";
+import { extractInstallationFromJiraCallback } from "~/src/jira/extract-installation-from-jira-callback";
+import { JiraEventsUninstallPost } from "routes/jira/events/jira-events-uninstall-post";
+import { verifyAsymmetricJwtTokenMiddleware } from "~/src/jira/util/jwt";
 
 export const JiraEventsRouter = Router();
 
@@ -14,5 +14,5 @@ JiraEventsRouter.post("/enabled", (_: Request, res: Response) => {
 	return res.sendStatus(204);
 });
 
-JiraEventsRouter.post("/installed", verifyAsymmetricJwtTokenMiddleware, postJiraInstall);
-JiraEventsRouter.post("/uninstalled", verifyAsymmetricJwtTokenMiddleware, extractInstallationFromJiraCallback, postJiraUninstall);
+JiraEventsRouter.post("/installed", verifyAsymmetricJwtTokenMiddleware, JiraEventsInstallPost);
+JiraEventsRouter.post("/uninstalled", verifyAsymmetricJwtTokenMiddleware, extractInstallationFromJiraCallback, JiraEventsUninstallPost);

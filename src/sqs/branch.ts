@@ -1,7 +1,8 @@
 import { WebhookPayloadCreate } from "@octokit/webhooks";
-import { Context, MessageHandler } from "./index";
-import app from "../worker/app";
+import { Context, MessageHandler } from "./sqs";
 import { processBranch } from "../github/branch";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
+import { getCloudInstallationId } from "../github/client/installation-id";
 
 export type BranchMessagePayload = {
 	jiraHost: string,
@@ -16,14 +17,13 @@ export type BranchMessagePayload = {
 
 export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = async (context: Context<BranchMessagePayload>) => {
 
-	context.log.info("Handling branch message from the SQS queue")
+	context.log.info("Handling branch message from the SQS queue");
 
 	const messagePayload: BranchMessagePayload = context.payload;
-
-	const github = await app.auth(messagePayload.installationId);
+	const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(messagePayload.installationId), context.log);
 
 	await processBranch(
-		github,
+		gitHubClient,
 		messagePayload.webhookId,
 		messagePayload.webhookPayload,
 		new Date(messagePayload.webhookReceived),
@@ -32,4 +32,4 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 		context.log
 	);
 
-}
+};

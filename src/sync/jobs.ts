@@ -1,4 +1,4 @@
-import { Repository } from "../models/subscription";
+import { Repository } from "models/subscription";
 
 export const getRepositorySummary = (repo: Repository): Repository => ({
 	id: repo.id,

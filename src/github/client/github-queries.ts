@@ -10,16 +10,16 @@ query {
 }`;
 
 type RepositoryNode = {
-  node: Repository
+	node: Repository
 }
 
 export type GetRepositoriesResponse = {
-  viewer: {
-    repositories: {
-      pageInfo,
-      edges: RepositoryNode[]
-    }
-  }
+	viewer: {
+		repositories: {
+			pageInfo,
+			edges: RepositoryNode[]
+		}
+	}
 };
 
 export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
@@ -78,129 +78,98 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
     }
   }`;
 
-type CommitQueryNode = {
-  cursor: string,
-  node: {
-      author: {
-        avatarUrl: string,
-        email: string,
-        name: string,
-        user: { url: string }
-      },
-      authoredDate: Date,
-      message: string,
-      oid: string,
-      url: string,
-      changedFiles?: number
-  }
+export type CommitQueryNode = {
+	cursor: string,
+	node: {
+		author: {
+			avatarUrl: string,
+			email: string,
+			name: string,
+			user: { url: string }
+		},
+		authoredDate: Date,
+		message: string,
+		oid: string,
+		url: string,
+		changedFiles?: number
+	}
 }
 
 export type getCommitsResponse = {
-  repository: {
-    defaultBranchRef: {
-      target: {
-        history: {
-          edges: CommitQueryNode[]
+	repository: {
+		defaultBranchRef: {
+			target: {
+				history: {
+					edges: CommitQueryNode[]
+				}
+			}
+		}
+	}
+};
+
+export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo){
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history(first: $per_page, after: $cursor) {
+            edges {
+              cursor
+              node {
+                author {
+                  avatarUrl
+                  email
+                  name
+                  user {
+                    url
+                  }
+                }
+                authoredDate
+                message
+                oid
+                url
+                changedFiles
+              }
+            }
+          }
         }
       }
     }
   }
-};
+}`;
 
-export const getCommitsQueryWithChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
-    repository(owner: $owner, name: $repo){
-      defaultBranchRef {
-        target {
-          ... on Commit {
-            history(first: $per_page, after: $cursor) {
-              edges {
-                cursor
-                node {
-                  author {
-                    avatarUrl
-                    email
-                    name
-                    user {
-                      url
-                    }
+export const getCommitsQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo){
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history(first: $per_page, after: $cursor) {
+            edges {
+              cursor
+              node {
+                author {
+                  avatarUrl
+                  email
+                  name
+                  user {
+                    url
                   }
-                  authoredDate
-                  message
-                  oid
-                  url
-                  changedFiles
                 }
+                authoredDate
+                message
+                oid
+                url
               }
             }
           }
         }
       }
     }
+  }
   }`;
 
-export const getCommitsQueryWithoutChangedFiles = () => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
-    repository(owner: $owner, name: $repo){
-      defaultBranchRef {
-        target {
-          ... on Commit {
-            history(first: $per_page, after: $cursor) {
-              edges {
-                cursor
-                node {
-                  author {
-                    avatarUrl
-                    email
-                    name
-                    user {
-                      url
-                    }
-                  }
-                  authoredDate
-                  message
-                  oid
-                  url
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }`;
-
-export const getCommitsQueryOctoKit = (includeChangedFiles?: boolean) => `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String, $default_ref: String!) {
-    repository(owner: $owner, name: $repo){
-      ref(qualifiedName: $default_ref) {
-        target {
-          ... on Commit {
-            history(first: $per_page, after: $cursor) {
-              edges {
-                cursor
-                node {
-                  author {
-                    avatarUrl
-                    email
-                    name
-                    user {
-                      url
-                    }
-                  }
-                  authoredDate
-                  message
-                  oid
-                  url
-                  ${includeChangedFiles ? "changedFiles" : ""}
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }`;
-
-export type GetBranchesResponse = {repository: Repository};
-export const GetBranchesQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export type getBranchesResponse = { repository: Repository };
+export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
         edges {
@@ -248,10 +217,49 @@ export const GetBranchesQuery = `query ($owner: String!, $repo: String!, $per_pa
     }
   }`;
 
-export const getDefaultRef = `query ($owner: String!, $repo: String!) {
+export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
-        defaultBranchRef {
-          name
+      refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
+        edges {
+          cursor
+          node {
+            associatedPullRequests(first:1) {
+              nodes {
+                title
+              }
+            }
+            name
+            target {
+              ... on Commit {
+                author {
+                  avatarUrl
+                  email
+                  name
+                }
+                authoredDate
+                history(first: 50) {
+                  nodes {
+                    message
+                    oid
+                    authoredDate
+                    author {
+                      avatarUrl
+                      email
+                      name
+                      user {
+                        url
+                      }
+                    }
+                    url
+                  }
+                }
+                oid
+                message
+                url
+              }
+            }
+          }
         }
+      }
     }
   }`;

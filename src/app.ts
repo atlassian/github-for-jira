@@ -1,20 +1,20 @@
 import express, { Express, NextFunction, Request, Response, Router } from "express";
 import path from "path";
-import getGithubClientMiddleware from "./middleware/github-client-middleware";
+import { getGithubClientMiddleware } from "./middleware/github-client-middleware";
 import { App } from "@octokit/app";
-import { registerHandlebarsPartials } from "./util/handlebars/partials";
-import { registerHandlebarsHelpers } from "./util/handlebars/helpers";
+import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
+import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
 import crypto from "crypto";
 import { Application } from "probot";
-import statsd, { elapsedTimeMetrics } from "./config/statsd";
+import { statsd, elapsedTimeMetrics } from "config/statsd";
 import IORedis from "ioredis";
-import getRedisInfo from "./config/redis-info";
+import { getRedisInfo } from "config/redis-info";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
-import { metricError } from "./config/metric-names";
+import { metricError } from "config/metric-names";
 import sslify from "express-sslify";
 import helmet from "helmet";
-import { RootRouter } from "./routes/router";
+import { RootRouter } from "routes/router";
 
 export const getFrontendApp = (octokitApp: App): Express => {
 	const app = express();
@@ -87,7 +87,7 @@ const secureHeaders = (router: Router, frontendApp: Express) => {
 	// This particular combination of methods works
 	frontendApp.disable("x-powered-by");
 	router.use(helmet.hidePoweredBy());
-}
+};
 
 export const setupFrontend = (app: Application): void => {
 	const router = app.route();

@@ -1,0 +1,84 @@
+{
+  "tests": [
+    {
+      "name": "allow request with no asap to retrieve info",
+      "path": "/version",
+      "method": "GET",
+      "mechanism": "open",
+      "principals": [],
+      "allowed": true
+    },
+    {
+      "name": "allow request with no asap to retrieve healthcheck",
+      "path": "/healthcheck",
+      "method": "GET",
+      "mechanism": "open",
+      "principals": [],
+      "allowed": true
+    },
+    {
+      "name": "allow request with no asap to retrieve deepcheck",
+      "path": "/deepcheck",
+      "method": "GET",
+      "mechanism": "open",
+      "principals": [],
+      "allowed": true
+    },
+    {
+      "name": "Allow external users open jira configuration page",
+      "path": "/jira/configuration",
+      "method": "GET",
+      "mechanism": "open",
+      "principals": [],
+      "allowed": true
+    },
+		{
+			"name": "Allow external users open github configuration page",
+			"path": "/github/configuration",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to access public resources",
+			"path": "/public/atlassian-ui-kit/bundle.css",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to disconnect github account",
+			"path": "/jira/configuration",
+			"method": "DELETE",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to restart backfill",
+			"path": "/jira/sync",
+			"method": "POST",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Prohibit public users to access Admin API endpoints",
+			"path": "/api/jira/13453453/verify",
+			"method": "POST",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": false
+		},
+		{
+			"name": "Allow service team members to access Admin API endpoints",
+			"path": "/api/jira/13453453/verify",
+			"method": "POST",
+			"mechanism": "group",
+			"principals": ["micros-sv--github-for-jira-dl-admins"],
+			"allowed": true
+		}
+	]
+}

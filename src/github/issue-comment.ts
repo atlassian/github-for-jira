@@ -1,22 +1,24 @@
-import JiraClient from "../models/jira-client";
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { CustomContext } from "middleware/github-webhook-middleware";
+import { GitHubInstallationClient } from "./client/github-installation-client";
+import { getCloudInstallationId } from "./client/installation-id";
 
-export default async (
+export const issueCommentWebhookHandler = async (
 	context: CustomContext,
-	_: JiraClient,
-	util
+	_jiraClient,
+	util,
+	githubInstallationId: number
 ): Promise<void> => {
-	const { comment } = context.payload;
+	const { comment, repository } = context.payload;
 	let linkifiedBody;
 
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+
+	// TODO: need to create reusable function for unfurling
 	try {
 		linkifiedBody = await util.unfurl(comment.body);
 		if (!linkifiedBody) {
-			context.log.debug(
-				{ noop: "no_linkified_body_issue_comment" },
-				"Halting further execution for issueComment since linkifiedBody is empty"
-			);
+			context.log.debug("Halting further execution for issueComment since linkifiedBody is empty");
 			return;
 		}
 	} catch (err) {
@@ -26,16 +28,13 @@ export default async (
 		);
 	}
 
-	const editedComment = context.issue({
-		body: linkifiedBody,
-		comment_id: comment.id,
-	});
-
 	context.log(`Updating comment in GitHub with ID ${comment.id}`);
-
-	const githubResponse = await context.github.issues.updateComment(
-		editedComment
-	);
+	const githubResponse = await githubClient.updateIssueComment({
+		body: linkifiedBody,
+		owner: repository.owner.login,
+		repo: repository.name,
+		comment_id: comment.id
+	});
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(

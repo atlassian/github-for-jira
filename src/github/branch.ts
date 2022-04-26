@@ -1,21 +1,17 @@
-import { transformBranch } from "../transforms/branch";
-import issueKeyParser from "jira-issue-key-parser";
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
-import _ from "lodash";
+import { transformBranch } from "../transforms/transform-branch";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { CustomContext } from "middleware/github-webhook-middleware";
+import { isEmpty } from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
-import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
-import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import getJiraClient from "../jira/client";
+import { getJiraClient } from "../jira/client/jira-client";
+import { GitHubInstallationClient } from "./client/github-installation-client";
+import { getCloudInstallationId } from "./client/installation-id";
+import { jiraIssueKeyParser } from "utils/jira-utils";
 
-export const createBranch = async (
-	context: CustomContext,
-	jiraClient,
-	_util,
-	githubInstallationId: number
-): Promise<void> => {
+export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
 	const webhookPayload: WebhookPayloadCreate = context.payload;
 
@@ -29,19 +25,15 @@ export const createBranch = async (
 		});
 	} else {
 
-		const jiraPayload = await transformBranch(context.github, webhookPayload);
+		const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+		const jiraPayload = await transformBranch(gitHubClient, webhookPayload);
 
 		if (!jiraPayload) {
-			context.log(
-				{ noop: "no_jira_payload_create_branch" },
-				"Halting further execution for createBranch since jiraPayload is empty"
-			);
+			context.log("Halting further execution for createBranch since jiraPayload is empty");
 			return;
 		}
 
-		context.log(
-			`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`
-		);
+		context.log(`Sending jira update for create branch event for hostname: ${jiraClient.baseURL}`);
 
 		const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 		const { webhookReceived, name, log } = context;
@@ -56,7 +48,7 @@ export const createBranch = async (
 };
 
 export const processBranch = async (
-	github: GitHubAPI,
+	github: GitHubInstallationClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadCreate,
 	webhookReceivedDate: Date,
@@ -64,25 +56,20 @@ export const processBranch = async (
 	installationId: number,
 	rootLogger: LoggerWithTarget
 ) => {
-	const jiraPayload = await transformBranch(github, webhookPayload);
-
 	const logger = rootLogger.child({
 		webhookId: webhookId,
 		installationId,
 		webhookReceived: webhookReceivedDate
 	});
 
+	const jiraPayload = await transformBranch(github, webhookPayload);
+
 	if (!jiraPayload) {
-		logger.info(
-			{ noop: "no_jira_payload_create_branch" },
-			"Halting further execution for createBranch since jiraPayload is empty"
-		);
+		logger.info("Halting further execution for createBranch since jiraPayload is empty");
 		return;
 	}
 
-	logger.info(
-		`Sending jira update for create branch event`
-	);
+	logger.info(`Sending jira update for create branch event`);
 
 	const jiraClient = await getJiraClient(
 		jiraHost,
@@ -100,21 +87,16 @@ export const processBranch = async (
 	);
 };
 
-export const deleteBranch = async (context: CustomContext, jiraClient): Promise<void> => {
+export const deleteBranchWebhookHandler = async (context: CustomContext, jiraClient): Promise<void> => {
 	const payload: WebhookPayloadDelete = context.payload;
-	const issueKeys = issueKeyParser().parse(payload.ref);
+	const issueKeys = jiraIssueKeyParser(payload.ref);
 
-	if (_.isEmpty(issueKeys)) {
-		context.log(
-			{ noop: "no_issue_keys" },
-			"Halting further execution for deleteBranch since issueKeys is empty"
-		);
-		return undefined;
+	if (isEmpty(issueKeys)) {
+		context.log({ noop: "no_issue_keys" }, "Halting further execution for deleteBranch since issueKeys is empty");
+		return;
 	}
 
-	context.log(
-		`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`
-	);
+	context.log(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
 		`${payload.repository?.id}`,

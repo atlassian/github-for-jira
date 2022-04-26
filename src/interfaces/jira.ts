@@ -27,6 +27,24 @@ export interface JiraBuildData {
 	builds: JiraBuild[];
 }
 
+export interface JiraBranch {
+	createPullRequestUrl: string,
+	lastCommit: JiraCommit,
+	id: string,
+	issueKeys: string[],
+	name: string,
+	url: string,
+	updateSequenceId: number
+}
+
+export interface JiraBranchData {
+	id: number,
+	name: string,
+	url: string,
+	branches: JiraBranch[],
+	updateSequenceId: number
+}
+
 export interface JiraCommit {
 	author: JiraAuthor;
 	authorTimestamp: string;
@@ -47,7 +65,7 @@ export interface JiraIssue {
 	id: string;
 	self: string;
 	key: string;
-	fields:{
+	fields: {
 		summary: string;
 	};
 }

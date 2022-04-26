@@ -1,10 +1,15 @@
-import JiraClient from "../models/jira-client";
-import { emitWebhookProcessedMetrics } from "../util/webhooks";
-import { CustomContext } from "./middleware";
+import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { CustomContext } from "middleware/github-webhook-middleware";
+import { GitHubInstallationClient } from "./client/github-installation-client";
+import { getCloudInstallationId } from "./client/installation-id";
+import { WebhookPayloadIssues } from "@octokit/webhooks";
 
-export default async (context: CustomContext, _: JiraClient, util): Promise<void> => {
-	const { issue } = context.payload;
+export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, _jiraClient, util, githubInstallationId: number): Promise<void> => {
+	const { issue, repository } = context.payload;
 
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+
+	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;
 	try {
 		linkifiedBody = await util.unfurl(issue.body);
@@ -19,14 +24,14 @@ export default async (context: CustomContext, _: JiraClient, util): Promise<void
 		);
 	}
 
-	const editedIssue = context.issue({
-		body: linkifiedBody,
-		id: issue.id
-	});
-
 	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);
 
-	const githubResponse = await context.github.issues.update(editedIssue);
+	const githubResponse = await githubClient.updateIssue({
+		body: linkifiedBody,
+		owner: repository.owner.login,
+		repo: repository.name,
+		issue_number: issue.number
+	});
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(

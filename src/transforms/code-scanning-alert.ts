@@ -1,6 +1,6 @@
-import issueKeyParser from "jira-issue-key-parser";
+import { jiraIssueKeyParser } from "utils/jira-utils";
 import {Context} from "probot/lib/context";
-import {JiraRemoteLinkData, JiraRemoteLinkStatusAppearance} from "../interfaces/jira";
+import {JiraRemoteLinkData, JiraRemoteLinkStatusAppearance} from "interfaces/jira";
 
 const MAX_STRING_LENGTH = 255;
 
@@ -65,8 +65,7 @@ export default async (context: Context): Promise<JiraRemoteLinkData | undefined>
 		entityTitles.push(await getEntityTitle(ref, repository.name, repository.owner.login, context));
 	}
 
-	const parser = issueKeyParser();
-	const issueKeys = entityTitles.flatMap((entityTitle) => parser.parse(entityTitle) ?? []);
+	const issueKeys = entityTitles.flatMap((entityTitle) => jiraIssueKeyParser(entityTitle) ?? []);
 	if (issueKeys.length === 0) {
 		return Promise.resolve(undefined);
 	}

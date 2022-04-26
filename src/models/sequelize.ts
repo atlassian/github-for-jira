@@ -1,18 +1,32 @@
-import Sequelize from "sequelize";
-import logger from "../config/logger";
-import { getNodeEnv } from "../util/isNodeEnv";
-import { EnvironmentEnum } from "../interfaces/common";
+import { getNodeEnv } from "utils/is-node-env";
+import { Sequelize } from "sequelize";
+import dbConfig from "db/config.json";
+import EncryptedField from "sequelize-encrypted";
+import crypto from "crypto";
+import { getLogger } from "config/logger";
 
-const nodeEnv = getNodeEnv() || EnvironmentEnum.development;
+const logger = getLogger("sequelize");
 // TODO: config misses timezone config to force to UTC, defaults to local timezone of PST
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const config = require("../../db/config.json")[nodeEnv];
+const config = dbConfig[getNodeEnv()];
 
 config.benchmark = true;
 config.logging = config.disable_sql_logging
 	? undefined
 	: (query, ms) => logger.trace({ ms }, query);
 
+// TODO: need to move this into a function
+if (!process.env.STORAGE_SECRET) {
+	throw new Error("STORAGE_SECRET is not defined.");
+}
+
+export const getHashedKey = (clientKey: string): string => {
+	const keyHash = crypto.createHmac("sha256", process.env.STORAGE_SECRET || "");
+	keyHash.update(clientKey);
+	return keyHash.digest("hex");
+};
+
+export const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
+
 export const sequelize = config.use_env_variable
-	? new Sequelize.Sequelize(process.env[config.use_env_variable] || "DATABASE_URL", config)
-	: new Sequelize.Sequelize(config);
+	? new Sequelize(process.env[config.use_env_variable] || "DATABASE_URL", config)
+	: new Sequelize(config);
