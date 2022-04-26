@@ -1,5 +1,6 @@
 import { getJiraId } from "~/src/jira/util/id";
-import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import issueKeyParser from "jira-issue-key-parser";
+import { getJiraAuthor } from "utils/jira-utils";
 import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
 
@@ -14,11 +15,11 @@ import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request
  *  - Messages from up to the last 100 commits in that branch
  */
 const mapBranch = (branch, repository) => {
-	const branchKeys = jiraIssueKeyParser(branch.name);
-	const pullRequestKeys = jiraIssueKeyParser(
+	const branchKeys = issueKeyParser().parse(branch.name) || [];
+	const pullRequestKeys = issueKeyParser().parse(
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
-	);
-	const commitKeys = jiraIssueKeyParser(branch.target.message);
+	) || [];
+	const commitKeys = issueKeyParser().parse(branch.target.message) || [];
 	const allKeys = union(branchKeys, pullRequestKeys, commitKeys)
 		.filter((key) => !!key);
 
@@ -55,7 +56,7 @@ const mapBranch = (branch, repository) => {
  * to the structure needed for the DevInfo API
  */
 const mapCommit = (commit) => {
-	const issueKeys = jiraIssueKeyParser(commit.message);
+	const issueKeys = issueKeyParser().parse(commit.message);
 
 	if (isEmpty(issueKeys)) {
 		return undefined;

@@ -1,10 +1,10 @@
+import issueKeyParser from "jira-issue-key-parser";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { GitHubPullRequest } from "interfaces/github";
 import { JiraBuildData, JiraPullRequest } from "interfaces/jira";
 import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
 import { WorkflowPayload } from "config/interfaces";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { jiraIssueKeyParser } from "utils/jira-utils";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
@@ -83,7 +83,7 @@ export const transformWorkflow = async (
 		logger
 	) : "";
 
-	const issueKeys = jiraIssueKeyParser(`${head_branch}\n${head_commit.message}\n${commitMessages}`);
+	const issueKeys = issueKeyParser().parse(`${head_branch}\n${head_commit.message}\n${commitMessages}`) || [];
 	if (!issueKeys.length) {
 		return undefined;
 	}

@@ -1,5 +1,6 @@
 import { getJiraId } from "../jira/util/id";
-import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import issueKeyParser from "jira-issue-key-parser";
+import { getJiraAuthor } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
@@ -30,7 +31,7 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 	}
 
 	const { ref, repository } = webhookPayload;
-	const issueKeys = jiraIssueKeyParser(ref);
+	const issueKeys = issueKeyParser().parse(ref) || [];
 
 	if (isEmpty(issueKeys)) {
 		return;

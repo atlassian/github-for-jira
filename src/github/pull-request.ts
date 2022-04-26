@@ -1,4 +1,5 @@
 import { transformPullRequest } from "../transforms/transform-pull-request";
+import issueKeyParser from "jira-issue-key-parser";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
@@ -6,7 +7,6 @@ import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { jiraIssueKeyParser } from "utils/jira-utils";
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
@@ -49,7 +49,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 
 	// Deletes PR link to jira if ticket id is removed from PR title
 	if (!jiraPayload && changes?.title) {
-		const issueKeys = jiraIssueKeyParser(changes?.title?.from);
+		const issueKeys = issueKeyParser().parse(changes?.title?.from);
 
 		if (!isEmpty(issueKeys)) {
 			context.log.info(

@@ -5,10 +5,9 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
+import issueKeyParser from "jira-issue-key-parser";
 import { JiraCommit, JiraIssue } from "interfaces/jira";
 import { getLogger } from "config/logger";
-import { jiraIssueKeyParser } from "utils/jira-utils";
-import { uniq } from "lodash";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -71,7 +70,7 @@ export const getJiraClient = async (
 			},
 			parse: (text: string): string[] | undefined => {
 				if (!text) return undefined;
-				return jiraIssueKeyParser(text);
+				return issueKeyParser().parse(text) || undefined;
 			},
 			comments: {
 				// eslint-disable-next-line camelcase
@@ -250,7 +249,7 @@ export const getJiraClient = async (
 		},
 		workflow: {
 			submit: async (data) => {
-				updateIssueKeysFor(data.builds, uniq);
+				updateIssueKeysFor(data.builds, dedup);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
 						truncatedBuilds: getTruncatedIssuekeys(data.builds)
@@ -275,7 +274,7 @@ export const getJiraClient = async (
 		},
 		deployment: {
 			submit: async (data): Promise<DeploymentsResult> => {
-				updateIssueKeysFor(data.deployments, uniq);
+				updateIssueKeysFor(data.deployments, dedup);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
 						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
@@ -361,7 +360,7 @@ const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
  * Deduplicates issueKeys field for branches and commits
  */
 const dedupIssueKeys = (repositoryObj, logger?) => {
-	updateRepositoryIssueKeys(repositoryObj, logger);
+	updateRepositoryIssueKeys(repositoryObj, dedup, logger);
 };
 
 /**
@@ -392,16 +391,25 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
  * Runs a mutating function on all branches and commits
  * with issue keys in a Jira Repository object
  */
-const updateRepositoryIssueKeys = (repositoryObj, logger?) => {
+const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc, logger?) => {
 	if (repositoryObj.commits) {
-		repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, uniq);
+		repositoryObj.commits = updateIssueKeysFor(
+			repositoryObj.commits,
+			mutatingFunc
+		);
 	}
 
 	if (repositoryObj.branches) {
-		repositoryObj.branches = updateIssueKeysFor(repositoryObj.branches, uniq);
+		repositoryObj.branches = updateIssueKeysFor(
+			repositoryObj.branches,
+			mutatingFunc
+		);
 		repositoryObj.branches.forEach((branch) => {
 			if (branch.lastCommit) {
-				branch.lastCommit = updateIssueKeysFor([branch.lastCommit], uniq)[0];
+				branch.lastCommit = updateIssueKeysFor(
+					[branch.lastCommit],
+					mutatingFunc
+				)[0];
 			}
 		});
 	}
@@ -414,12 +422,17 @@ const updateRepositoryIssueKeys = (repositoryObj, logger?) => {
 /**
  * Runs the mutatingFunc on the issue keys field for each branch or commit
  */
-const updateIssueKeysFor = (resources, func) => {
+const updateIssueKeysFor = (resources, mutatingFunc) => {
 	resources.forEach((resource) => {
-		resource.issueKeys = func(resource.issueKeys);
+		resource.issueKeys = mutatingFunc(resource.issueKeys);
 	});
 	return resources;
 };
+
+/**
+ * Deduplicates elements in an array
+ */
+const dedup = (array) => [...new Set(array)];
 
 /**
  * Truncates to 100 elements in an array
