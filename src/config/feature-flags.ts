@@ -14,7 +14,6 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	SIMPLER_PROCESSOR = "simpler-processor",
-	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS = "support-branch-and-merge-workflows-for-deployments",
 	TRACE_LOGGING = "trace-logging",
 	USE_SQS_FOR_BRANCH = "use-sqs-for-branch",

@@ -7,7 +7,6 @@ import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getGithubUser } from "services/github/user";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { AxiosResponseHeaders } from "axios";
 import { Octokit } from "@octokit/rest";
@@ -41,41 +40,31 @@ type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 
 export const getPullRequestTask = async (
 	logger: LoggerWithTarget,
-	github: GitHubAPI,
+	_oldGithub: GitHubAPI,
 	newGithub: GitHubInstallationClient,
-	jiraHost: string,
+	_jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,
 	perPage?: number
 ) => {
 	logger.info("Syncing PRs: started");
 
-	const useNewGHClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT__FOR_PR, false, jiraHost);
 	cursor = Number(cursor);
 	const startTime = Date.now();
-
-	const vars = {
-		owner: repository.owner.login,
-		repo: repository.name,
-		per_page: perPage,
-		page: cursor
-	};
 
 	const {
 		data: edges,
 		status,
 		headers
-	} = useNewGHClient ?
-		await newGithub
-			.getPullRequests(repository.owner.login, repository.name,
-				{
-					per_page: perPage,
-					page: cursor,
-					state: PullRequestState.ALL,
-					sort: PullRequestSort.CREATED,
-					direction: SortDirection.DES
-				})
-		: await github.pulls.list({ ...vars, state: "all", sort: "created", direction: "desc" });
+	} =	await newGithub
+		.getPullRequests(repository.owner.login, repository.name,
+			{
+				per_page: perPage,
+				page: cursor,
+				state: PullRequestState.ALL,
+				sort: PullRequestSort.CREATED,
+				direction: SortDirection.DES
+			})
 
 	statsd.timing(metricHttpRequest.syncPullRequest, Date.now() - startTime, 1, [`status:${status}`]);
 
@@ -90,14 +79,9 @@ export const getPullRequestTask = async (
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
-				const prResponse = useNewGHClient ? (await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)) :
-					(await github?.pulls?.get({
-						owner: repository.owner.login, repo: repository.name, pull_number: pull.number
-					}));
+				const prResponse = await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)
 				const prDetails = prResponse?.data;
-				const ghUser = await getGithubUser(
-					useNewGHClient ? newGithub : github,
-					prDetails?.user.login
+				const ghUser = await getGithubUser(newGithub, prDetails?.user.login
 				);
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
