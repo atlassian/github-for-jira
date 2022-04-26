@@ -42,12 +42,12 @@ export interface RepositoryData {
 export type TaskStatus = "pending" | "complete" | "failed";
 
 export interface Repository {
-	id: string;
+	id: number;
 	name: string;
 	full_name: string;
 	owner: { login: string };
 	html_url: string;
-	updated_at: number; // TODO: is this a date object or a timestamp?  Different places uses different things
+	updated_at: string; // TODO: is this a date object or a timestamp?  Different places uses different things
 }
 
 export class Subscription extends Model {
@@ -202,7 +202,7 @@ export class Subscription extends Model {
 		return this;
 	}
 
-	async updateRepoSyncStateItem(repositoryId: string, key: keyof RepositoryData | "repositoryCursor" | "repositoryStatus", value: unknown) {
+	async updateRepoSyncStateItem(repositoryId: number, key: keyof RepositoryData | "repositoryCursor" | "repositoryStatus", value: unknown) {
 		// TODO: this is temporary until we redo sync
 		if (key === "repositoryStatus" || key === "repositoryCursor") {
 			await this.update({ [key]: value });

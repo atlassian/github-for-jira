@@ -292,14 +292,14 @@ describe("RepoSyncState", () => {
 			lastCommitCursor: "2",
 			lastPullCursor: 3,
 			repository: {
-				id: "2",
+				id: 2,
 				name: "bar",
 				full_name: "foo/bar",
 				html_url: "github.com/foo/bar",
 				owner: {
 					login: "foo"
 				},
-				updated_at: Date.now()
+				updated_at: Date.now().toString()
 			}
 		};
 
@@ -461,14 +461,14 @@ describe("RepoSyncState", () => {
 				lastCommitCursor: "bar",
 				lastPullCursor: 12,
 				repository: {
-					id: "1",
+					id: 1,
 					name: "github-for-jira",
 					full_name: "atlassian/github-for-jira",
 					html_url: "github.com/atlassian/github-for-jira",
 					owner: {
 						login: "atlassian"
 					},
-					updated_at: 0
+					updated_at: "0"
 				}
 			});
 			expect(result).toMatchObject({
@@ -494,14 +494,14 @@ describe("RepoSyncState", () => {
 				lastCommitCursor: "bar",
 				lastPullCursor: 12,
 				repository: {
-					id: "1",
+					id: 1,
 					name: "github-for-jira",
 					full_name: "atlassian/github-for-jira",
 					html_url: "github.com/atlassian/github-for-jira",
 					owner: {
 						login: "atlassian"
 					},
-					updated_at: 0
+					updated_at: "0"
 				}
 			});
 			expect(state).toMatchObject({

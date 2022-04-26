@@ -18,7 +18,7 @@ import {
 	getCommitsResponse, GetRepositoriesQuery, GetRepositoriesResponse,
 	ViewerRepositoryCountQuery
 } from "./github-queries";
-import { GetPullRequestParams, GraphQlQueryResponse } from "./github-client.types";
+import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 
 /**
@@ -147,6 +147,19 @@ export class GitHubInstallationClient {
 			cursor
 		});
 		return response.data.data;
+	};
+
+	// TODO: remove this function after discovery backfill is deployed
+	public getRepositoriesPageOld = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
+		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
+			perPage: 100,
+			page
+		});
+		const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
+		return {
+			...response,
+			hasNextPage
+		};
 	};
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {

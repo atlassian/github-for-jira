@@ -62,7 +62,7 @@ const getNextTask = async (subscription: Subscription): Promise<Task | undefined
 	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
-			repositoryId: subscription.repositoryCursor || "",
+			repositoryId: 0,
 			repository: {} as Repository,
 			cursor: subscription.repositoryCursor
 		};
@@ -79,7 +79,7 @@ const getNextTask = async (subscription: Subscription): Promise<Task | undefined
 		const { repository, [getCursorKey(task)]: cursor } = repoData;
 		return {
 			task,
-			repositoryId,
+			repositoryId: Number(repositoryId),
 			repository: repository as Repository,
 			cursor: cursor as any
 		};
@@ -89,7 +89,7 @@ const getNextTask = async (subscription: Subscription): Promise<Task | undefined
 
 export interface Task {
 	task: TaskType;
-	repositoryId: string;
+	repositoryId: number;
 	repository: Repository;
 	cursor?: string | number;
 }
@@ -104,7 +104,7 @@ export const updateJobStatus = async (
 	data: BackfillMessagePayload,
 	edges: any[] | undefined,
 	task: TaskType,
-	repositoryId: string,
+	repositoryId: number,
 	logger: LoggerWithTarget,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
