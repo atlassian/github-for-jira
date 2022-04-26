@@ -299,7 +299,7 @@ describe("RepoSyncState", () => {
 				owner: {
 					login: "foo"
 				},
-				updated_at: Date.now().toString()
+				updated_at: new Date(Date.now()).toISOString()
 			}
 		};
 
@@ -319,7 +319,7 @@ describe("RepoSyncState", () => {
 			expect(data.repoName).toEqual(json.repository?.name);
 			expect(data.repoOwner).toEqual(json.repository?.owner.login);
 			expect(data.repoFullName).toEqual(json.repository?.full_name);
-			expect(data.repoUpdatedAt?.getTime()).toEqual(json.repository?.updated_at);
+			expect(data.repoUpdatedAt?.toISOString()).toEqual(json.repository?.updated_at);
 			expect(data.repoUrl).toEqual(json.repository?.html_url);
 			expect(data.branchStatus).toEqual(json.branchStatus);
 			expect(data.branchCursor).toEqual(json.lastBranchCursor);
