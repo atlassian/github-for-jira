@@ -373,10 +373,14 @@ const withinIssueKeyLimit = (resources: { issueKeys: string[] }[]): boolean => {
  * "issueIdOrKeys" association.
  */
 const withinIssueKeyAssociationsLimit = (resources) => {
-	if (resources == null) return [];
+	let issueKeyCounts = [];
 
-	const issueKeyCounts = resources.map((resource) => resource.associations[0].values.length);
-	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
+	if (resources?.associations?.length > 0) {
+		issueKeyCounts = resources.map((resource) => resource.associations[0].values.length);
+		return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
+	}
+
+	return issueKeyCounts;
 }
 
 /**
@@ -458,10 +462,12 @@ const updateIssueKeysFor = (resources, func) => {
  * "issueIdOrKeys" association.
  */
 const updateIssueKeyAssociationValuesFor = (resources, mutatingFunc) => {
-	resources.forEach((resource) => {
-		resource.associations[0].values = mutatingFunc(resource.associations[0].values)
-	});
-	return resources;
+	if (resources?.associations?.length > 0) {
+		resources.forEach((resource) => {
+			resource.associations[0].values = mutatingFunc(resource.associations[0].values)
+		});
+		return resources;
+	}
 };
 
 /**

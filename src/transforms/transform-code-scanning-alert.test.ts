@@ -1,4 +1,4 @@
-import transformCodeScanningAlert from "./code-scanning-alert";
+import { transformCodeScanningAlert } from "./transform-code-scanning-alert";
 import codeScanningPayload from "./../../test/fixtures/api/code-scanning-alert.json";
 import {Context} from "probot/lib/context";
 import {getLogger} from "./../config/logger";

@@ -49,7 +49,7 @@ const transformStatusToAppearance = (status: string, context: Context): JiraRemo
 	}
 }
 
-export default async (context: Context): Promise<JiraRemoteLinkData | undefined> => {
+export const transformCodeScanningAlert = async (context: Context): Promise<JiraRemoteLinkData | undefined> => {
 	const {action, alert, ref, repository} = context.payload;
 
 	// Grab branch names or PR titles
@@ -66,28 +66,28 @@ export default async (context: Context): Promise<JiraRemoteLinkData | undefined>
 	}
 
 	const issueKeys = entityTitles.flatMap((entityTitle) => jiraIssueKeyParser(entityTitle) ?? []);
-	if (issueKeys.length === 0) {
-		return Promise.resolve(undefined);
+	if (!issueKeys.length) {
+		return undefined;
 	}
 
-	return Promise.resolve({
+	return {
 		remoteLinks: [{
 			schemaVersion: "1.0",
-			id: `${repository.id.toString()}-${alert.number}`,
+			id: `${repository.id}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			displayName: `Alert #${alert.number}`,
-			description: alert.rule.description.substring(0, MAX_STRING_LENGTH),
+			description: alert.rule.description.substring(0, MAX_STRING_LENGTH) || undefined,
 			url: alert.html_url,
 			type: "security",
 			status: {
 				appearance: transformStatusToAppearance(alert.most_recent_instance.state, context),
 				label: alert.most_recent_instance.state
 			},
-			lastUpdated: alert.created_at,
+			lastUpdated: alert.updated_at,
 			associations: [{
 				associationType: "issueKeys",
 				values: issueKeys
 			}]
 		}]
-	});
+	};
 };
