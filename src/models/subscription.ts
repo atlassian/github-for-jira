@@ -60,6 +60,7 @@ export class Subscription extends Model {
 	jiraClientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
+	totalNumberOfRepos?: number;
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;

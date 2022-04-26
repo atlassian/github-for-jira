@@ -17,10 +17,13 @@ const mapRepositories = (repositories: Repository[]): Repositories => {
 /*
 * Update the sync status of a batch of repos.
 */
-const updateSyncState = async (subscription: Subscription, repositories: Repository[]): Promise<void> => {
-	await subscription.updateSyncState({
-		repos: mapRepositories(repositories)
-	});
+const updateSyncState = async (subscription: Subscription, repositories: Repository[], totalNumberOfRepos: number): Promise<void> => {
+	await Promise.all([
+		subscription.updateSyncState({
+			repos: mapRepositories(repositories)
+		}),
+		subscription.update({ totalNumberOfRepos })
+	]);
 };
 
 export const getRepositoryTask = async (
@@ -47,6 +50,7 @@ export const getRepositoryTask = async (
 	const {
 		viewer: {
 			repositories: {
+				totalCount,
 				pageInfo: {
 					endCursor: nextCursor,
 					hasNextPage
@@ -61,7 +65,7 @@ export const getRepositoryTask = async (
 	const edgesWithCursor = edges.map((edge) => ({ ...edge, cursor: nextCursor }));
 	const repositories = edges.map(edge => edge?.node);
 
-	await updateSyncState(subscription, repositories);
+	await updateSyncState(subscription, repositories, totalCount);
 	logger.debug({ repositories }, `Added ${repositories.length} Repositories to state`);
 	logger.info(`Added ${repositories.length} Repositories to state`);
 

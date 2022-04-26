@@ -49,7 +49,7 @@ export interface TaskPayload {
 
 type TaskType = "repository" | "pull" | "commit" | "branch";
 
-const taskTypes = Object.keys(tasks) as TaskType[];
+const taskTypes:TaskType[] = ["pull", "commit", "branch"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
@@ -96,7 +96,7 @@ export interface Task {
 
 const upperFirst = (str: string) =>
 	str.substring(0, 1).toUpperCase() + str.substring(1);
-const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
+const getCursorKey = (type: TaskType) => type === "repository" ? `${type}Cursor`: `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
 // Exported for testing

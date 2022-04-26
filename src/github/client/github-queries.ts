@@ -16,6 +16,7 @@ interface RepositoryNode {
 export interface GetRepositoriesResponse {
 	viewer: {
 		repositories: {
+			totalCount: number;
 			pageInfo: {
 				endCursor: string;
 				hasNextPage: boolean;
@@ -28,6 +29,7 @@ export interface GetRepositoriesResponse {
 export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
   viewer {
     repositories(first: $per_page, after: $cursor) {
+      totalCount
       pageInfo {
         endCursor
         hasNextPage
