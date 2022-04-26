@@ -10,7 +10,7 @@ import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { booleanFlag, BooleanFlags, isBlocked } from "config/feature-flags";
+import { isBlocked } from "config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import IORedis from "ioredis";
@@ -228,34 +228,28 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	const processor = tasks[task];
 
 	const execute = async () => {
-		if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
 
-			// just try with one page size
-			return await processor(logger, github, newGithub, jiraHost, repository, cursor, 20);
-
-		} else {
-
-			for (const perPage of [20, 10, 5, 1]) {
-				// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
-				try {
-					return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
-				} catch (err) {
-					logger.error({
-						err,
-						payload: data,
-						github,
-						repository,
-						cursor,
-						task
-					}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
-					if (!isRetryableWithSmallerRequest(err)) {
-						// error is not retryable, re-throwing it
-						throw err;
-					}
-					// error is retryable, retrying with next smaller page size
+		for (const perPage of [20, 10, 5, 1]) {
+			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
+			try {
+				return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
+			} catch (err) {
+				logger.error({
+					err,
+					payload: data,
+					github,
+					repository,
+					cursor,
+					task
+				}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
+				if (!isRetryableWithSmallerRequest(err)) {
+					// error is not retryable, re-throwing it
+					throw err;
 				}
+				// error is retryable, retrying with next smaller page size
 			}
 		}
+
 		logger.error({ jiraHost, installationId, repositoryId, task }, "Error processing GraphQL query");
 		throw new Error(`Error processing GraphQL query: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
 	};
