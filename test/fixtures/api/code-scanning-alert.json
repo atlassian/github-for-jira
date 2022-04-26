@@ -3,6 +3,7 @@
 	"alert": {
 		"number": 272,
 		"created_at": "2021-09-06T06:00:00Z",
+		"updated_at": "2021-09-06T06:00:00Z",
 		"url": "https://api.github.com/repos/TerryAg/github-jira-test/code-scanning/alerts/272",
 		"html_url": "https://github.com/TerryAg/github-jira-test/security/code-scanning/272",
 		"state": "open",
