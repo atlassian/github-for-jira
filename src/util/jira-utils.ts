@@ -43,6 +43,11 @@ export const getJiraAuthor = (...authors: (Author | undefined)[]): JiraAuthor =>
 	};
 };
 
+export const limitCommitMessage = (message: string ): string => {
+	const MAX_COMMIT_MESSAGE_LENGTH = 1024;
+	return message.substring(0, MAX_COMMIT_MESSAGE_LENGTH);
+};
+
 interface Author {
 	// Github REST API always returns `avatar_url` while the GraphQL API returns `avatarUrl`
 	// We're including both just in case

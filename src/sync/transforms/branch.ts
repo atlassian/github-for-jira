@@ -1,8 +1,7 @@
 import { getJiraId } from "~/src/jira/util/id";
-import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
-const MAX_COMMIT_MESSAGE_LENGTH = 1024;
 
 // TODO: better typing in file
 /**
@@ -40,7 +39,7 @@ const mapBranch = (branch, repository) => {
 			hash: branch.target.oid,
 			id: branch.target.oid,
 			issueKeys: commitKeys,
-			message: branch.target.message,
+			message: limitCommitMessage(branch.target.message),
 			url: branch.target.url || undefined,
 			updateSequenceId: Date.now()
 		},
@@ -70,7 +69,7 @@ const mapCommit = (commit) => {
 		hash: commit.oid,
 		id: commit.oid,
 		issueKeys: issueKeys || [],
-		message: commit?.message?.substring(0, MAX_COMMIT_MESSAGE_LENGTH),
+		message: limitCommitMessage(commit.message),
 		timestamp: commit.authoredDate,
 		url: commit.url,
 		updateSequenceId: Date.now()
