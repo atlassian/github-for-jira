@@ -83,7 +83,7 @@ export const transformCodeScanningAlert = async (context: Context): Promise<Jira
 				appearance: transformStatusToAppearance(alert.most_recent_instance.state, context),
 				label: alert.most_recent_instance.state
 			},
-			lastUpdated: alert.updated_at,
+			lastUpdated: alert.updated_at || alert.created_at,
 			associations: [{
 				associationType: "issueKeys",
 				values: issueKeys
