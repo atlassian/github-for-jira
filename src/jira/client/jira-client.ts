@@ -5,7 +5,7 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import { JiraCommit, JiraIssue } from "interfaces/jira";
+import {JiraCommit, JiraIssue, JiraRemoteLink} from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
@@ -372,15 +372,13 @@ const withinIssueKeyLimit = (resources: { issueKeys: string[] }[]): boolean => {
  * Assumption is that the transformed resource only has one association which is for
  * "issueIdOrKeys" association.
  */
-const withinIssueKeyAssociationsLimit = (resources) => {
-	let issueKeyCounts = [];
-
-	if (resources?.associations?.length > 0) {
-		issueKeyCounts = resources.map((resource) => resource.associations[0].values.length);
-		return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
+const withinIssueKeyAssociationsLimit = (resources: JiraRemoteLink[]): boolean => {
+	if (!resources) {
+		return true;
 	}
 
-	return issueKeyCounts;
+	const issueKeyCounts = resources.filter(resource => resource.associations?.length > 0).map((resource) => resource.associations[0].values.length);
+	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 }
 
 /**
@@ -461,13 +459,15 @@ const updateIssueKeysFor = (resources, func) => {
  * Assumption is that the transformed resource only has one association which is for
  * "issueIdOrKeys" association.
  */
-const updateIssueKeyAssociationValuesFor = (resources, mutatingFunc) => {
-	if (resources?.associations?.length > 0) {
-		resources.forEach((resource) => {
+const updateIssueKeyAssociationValuesFor = (resources: JiraRemoteLink[], mutatingFunc: any): JiraRemoteLink[] => {
+	resources?.forEach(resource => {
+		if(resource.associations?.length > 0){
 			resource.associations[0].values = mutatingFunc(resource.associations[0].values)
-		});
-		return resources;
-	}
+		}
+	})
+
+
+	return resources;
 };
 
 /**

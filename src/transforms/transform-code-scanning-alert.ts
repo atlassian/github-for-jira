@@ -12,7 +12,7 @@ const getPullRequestTitle = async (repoName: string, prId: number, repoOwner: st
 	});
 
 	if (response.status !== 200) {
-		context.log.warn(`Received error when querying for Pull Request information: ${JSON.stringify(response.data)}`);
+		context.log.warn({ response }, "Received error when querying for Pull Request information.");
 		return "";
 	} else {
 		return response.data.title;
@@ -30,7 +30,7 @@ const getEntityTitle = async (ref: string, repoName: string, repoOwner: string, 
 			return await getPullRequestTitle(repoName, parseInt(components[2]), repoOwner, context);
 		default:
 			context.log.error(`Could not interpret reference from code_scanning_alert: ${ref}`);
-			return Promise.resolve("");
+			return "";
 	}
 }
 
