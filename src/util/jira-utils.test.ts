@@ -51,7 +51,8 @@ describe("Jira Utils", () => {
 			["2PAC-123", "42-123"].forEach(value => expect(jiraIssueKeyParser(value)).toEqual([]));
 		});
 
-		it("should not extract jira issue key with number starting with 0", () => {
+		// unskip once FF is removed
+		it.skip("should not extract jira issue key with number starting with 0", () => {
 			expect(jiraIssueKeyParser("PAC-001")).toEqual([]);
 		});
 
