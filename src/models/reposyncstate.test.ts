@@ -399,7 +399,7 @@ describe("RepoSyncState", () => {
 						lastCommitCursor: "bar",
 						lastPullCursor: 12,
 						repository: {
-							id: "1",
+							id: 1,
 							name: "github-for-jira",
 							full_name: "atlassian/github-for-jira",
 							html_url: "github.com/atlassian/github-for-jira",
@@ -412,7 +412,7 @@ describe("RepoSyncState", () => {
 					"2": {
 						branchStatus: "failed",
 						repository: {
-							id: "2",
+							id: 2,
 							name: "github-for-jira",
 							full_name: "atlassian/github-for-jira",
 							html_url: "github.com/atlassian/github-for-jira",
@@ -501,7 +501,7 @@ describe("RepoSyncState", () => {
 					owner: {
 						login: "atlassian"
 					},
-					updated_at: "0"
+					updated_at: new Date(0).toISOString()
 				}
 			});
 			expect(state).toMatchObject({
@@ -536,7 +536,7 @@ describe("RepoSyncState", () => {
 				lastCommitCursor: "bar",
 				lastPullCursor: 12,
 				repository: {
-					id: "1",
+					id: 1,
 					name: "github-for-jira",
 					full_name: "atlassian/github-for-jira",
 					html_url: "github.com/atlassian/github-for-jira",

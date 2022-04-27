@@ -210,9 +210,9 @@ export class RepoSyncState extends Model {
 	}
 
 	toRepositoryData(): RepositoryData {
-		return pickBy({
+		return pickBy<RepositoryData>({
 			repository: {
-				id: this.repoId.toString(),
+				id: this.repoId,
 				name: this.repoName,
 				full_name: this.repoFullName,
 				owner: {

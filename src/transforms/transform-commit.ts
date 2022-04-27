@@ -35,7 +35,7 @@ export const transformCommit = (payload): JiraCommitData | undefined => {
 
 	return {
 		commits: commits,
-		id: payload.repository.id,
+		id: payload.repository.id.toString(),
 		name: payload.repository.full_name,
 		url: payload.repository.html_url,
 		updateSequenceId: Date.now()

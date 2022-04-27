@@ -34,7 +34,7 @@ describe("Subscription", () => {
 						full_name: "foo/bar",
 						owner: { login: "foo" },
 						html_url: "foo.com",
-						updated_at: "123456789"
+						updated_at: new Date(123456789).toISOString()
 					}
 				}
 			};
@@ -49,7 +49,7 @@ describe("Subscription", () => {
 				repos: {
 					"1": {
 						repository: {
-							id: "1",
+							id: 1,
 							name: "bar",
 							full_name: "foo/bar",
 							owner: { login: "foo" },
@@ -80,7 +80,7 @@ describe("Subscription", () => {
 				repos: {
 					"1": {
 						repository: {
-							id: "1",
+							id: 1,
 							name: "test-repo-name",
 							full_name: "integrations/test-repo-name",
 							owner: { login: "integrations" },
@@ -103,7 +103,7 @@ describe("Subscription", () => {
 							full_name: "foo/bar",
 							owner: { login: "foo" },
 							html_url: "foo.com",
-							updated_at: "123456789"
+							updated_at: new Date(123456789).toISOString()
 						},
 						branchStatus: "pending"
 					}
