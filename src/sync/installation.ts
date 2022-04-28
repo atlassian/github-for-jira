@@ -69,7 +69,7 @@ const getNextTask = async (subscription: Subscription): Promise<Task | undefined
 	}
 
 	const repos = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
-	const sorted: [string, RepositoryData][] = repos.map(repo => [repo.repoId.toString(), repo.toRepositoryData()]);
+	const sorted: [number, RepositoryData][] = repos.map(repo => [repo.repoId, repo.toRepositoryData()]);
 
 	for (const [repositoryId, repoData] of sorted) {
 		const task = taskTypes.find(
@@ -79,7 +79,7 @@ const getNextTask = async (subscription: Subscription): Promise<Task | undefined
 		const { repository, [getCursorKey(task)]: cursor } = repoData;
 		return {
 			task,
-			repositoryId: Number(repositoryId),
+			repositoryId: repositoryId,
 			repository: repository as Repository,
 			cursor: cursor as any
 		};
