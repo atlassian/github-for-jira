@@ -216,29 +216,31 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 		});
 
 		it("should return successful connection with correct number of repos and sync status", async () => {
-			await RepoSyncState.create({
-				subscriptionId: sub.id,
-				repoId: 1,
-				repoName: "github-for-jira",
-				repoOwner: "atlassian",
-				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira",
-				pullStatus: "complete",
-				commitStatus: "complete",
-				branchStatus: "complete"
-			});
-
-			await RepoSyncState.create({
-				subscriptionId: sub.id,
-				repoId: 1,
-				repoName: "github-for-jira",
-				repoOwner: "atlassian",
-				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira",
-				pullStatus: "pending",
-				commitStatus: "complete",
-				branchStatus: "complete"
-			});
+			await Promise.all([
+				RepoSyncState.create({
+					subscriptionId: sub.id,
+					repoId: 1,
+					repoName: "github-for-jira",
+					repoOwner: "atlassian",
+					repoFullName: "atlassian/github-for-jira",
+					repoUrl: "github.com/atlassian/github-for-jira",
+					pullStatus: "complete",
+					commitStatus: "complete",
+					branchStatus: "complete"
+				}),
+				RepoSyncState.create({
+					subscriptionId: sub.id,
+					repoId: 1,
+					repoName: "github-for-jira",
+					repoOwner: "atlassian",
+					repoFullName: "atlassian/github-for-jira",
+					repoUrl: "github.com/atlassian/github-for-jira",
+					pullStatus: "pending",
+					commitStatus: "complete",
+					branchStatus: "complete"
+				}),
+				sub.update({ totalNumberOfRepos: 2 })
+			]);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
@@ -257,5 +259,4 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 			});
 		});
 	});
-
 });

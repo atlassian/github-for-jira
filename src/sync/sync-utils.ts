@@ -14,6 +14,7 @@ export async function findOrStartSync(
 	await subscription.update({
 		syncStatus: SyncStatus.PENDING,
 		numberOfSyncedRepos: 0,
+		totalNumberOfRepos: null,
 		repositoryCursor: null,
 		repositoryStatus: null
 	});

@@ -231,6 +231,7 @@ Subscription.init({
 	syncWarning: DataTypes.STRING,
 	jiraClientKey: DataTypes.STRING,
 	numberOfSyncedRepos: DataTypes.INTEGER,
+	totalNumberOfRepos: DataTypes.INTEGER,
 	repositoryCursor: DataTypes.STRING,
 	repositoryStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	createdAt: DATE,
