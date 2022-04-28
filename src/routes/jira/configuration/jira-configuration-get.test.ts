@@ -21,7 +21,8 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 			gitHubInstallationId: 15,
 			jiraHost,
 			jiraClientKey: "clientKey",
-			syncWarning: "some warning"
+			syncWarning: "some warning",
+			totalNumberOfRepos: 1
 		});
 
 		await RepoSyncState.create({
@@ -92,7 +93,8 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 			sub = await Subscription.create({
 				gitHubInstallationId: 12345678,
 				jiraHost,
-				jiraClientKey: "myClientKey"
+				jiraClientKey: "myClientKey",
+				totalNumberOfRepos: 0
 			});
 		});
 
