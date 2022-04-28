@@ -11,6 +11,7 @@ import { statsd }  from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import { Application } from "probot";
 import { deleteRepository } from "./repository";
+import {codeScanningAlertWebhookHandler} from "~/src/github/code-scanning-alert";
 
 export const setupGithubWebhooks = (robot: Application) => {
 	// TODO: Need ability to remove these listeners, especially for testing...
@@ -56,4 +57,6 @@ export const setupGithubWebhooks = (robot: Application) => {
 	robot.on("delete", GithubWebhookMiddleware(deleteBranchWebhookHandler));
 
 	robot.on("repository.deleted", GithubWebhookMiddleware(deleteRepository));
+
+	robot.on("code_scanning_alert", GithubWebhookMiddleware(codeScanningAlertWebhookHandler));
 };
