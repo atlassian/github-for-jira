@@ -5,6 +5,8 @@ RUN apk add g++ make python3
 
 # adding to solve vuln
 RUN apk add --update --upgrade busybox
+RUN apk add --update --upgrade libretls
+RUN apk add --update --upgrade openssl
 
 COPY . /app
 WORKDIR /app
