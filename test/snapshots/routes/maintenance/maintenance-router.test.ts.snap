@@ -63,6 +63,14 @@ Object {
       },
       "url": "https://github.com",
     },
+    "jiraRemoteLinkInfoProvider": Object {
+      "homeUrl": "https://github.com",
+      "key": "github-remotelinks-integration",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub",
+      },
+    },
     "postInstallPage": Object {
       "conditions": Array [
         Object {
