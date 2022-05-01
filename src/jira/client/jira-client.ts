@@ -5,7 +5,7 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import { JiraCommit, JiraIssue } from "interfaces/jira";
+import {JiraCommit, JiraIssue, JiraRemoteLink} from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
@@ -298,6 +298,25 @@ export const getJiraClient = async (
 					rejectedDeployments: response.data?.rejectedDeployments
 				};
 			}
+		},
+		remoteLink: {
+			submit: async (data) => {
+				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
+				updateIssueKeyAssociationValuesFor(data.remoteLinks, dedup);
+				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
+					updateIssueKeyAssociationValuesFor(data.remoteLinks, truncate);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					await subscription?.update({ syncWarning: issueKeyLimitWarning });
+				}
+				const payload = {
+					remoteLinks: data.remoteLinks,
+					properties: {
+						gitHubInstallationId
+					}
+				};
+				logger.info("Sending remoteLinks payload to jira.");
+				await instance.post("/rest/remotelinks/1.0/bulk", payload);
+			}
 		}
 	};
 
@@ -347,6 +366,20 @@ const withinIssueKeyLimit = (resources: { issueKeys: string[] }[]): boolean => {
 	const issueKeyCounts = resources.map((resource) => resource.issueKeys.length);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
+
+/**
+ * Returns if the max length of the issue key field is within the limit
+ * Assumption is that the transformed resource only has one association which is for
+ * "issueIdOrKeys" association.
+ */
+const withinIssueKeyAssociationsLimit = (resources: JiraRemoteLink[]): boolean => {
+	if (!resources) {
+		return true;
+	}
+
+	const issueKeyCounts = resources.filter(resource => resource.associations?.length > 0).map((resource) => resource.associations[0].values.length);
+	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
+}
 
 /**
  * Deduplicates commits by ID field for a repository payload
@@ -420,6 +453,27 @@ const updateIssueKeysFor = (resources, func) => {
 	});
 	return resources;
 };
+
+/**
+ * Runs the mutatingFunc on the association values field for each entity resource
+ * Assumption is that the transformed resource only has one association which is for
+ * "issueIdOrKeys" association.
+ */
+const updateIssueKeyAssociationValuesFor = (resources: JiraRemoteLink[], mutatingFunc: any): JiraRemoteLink[] => {
+	resources?.forEach(resource => {
+		if(resource.associations?.length > 0){
+			resource.associations[0].values = mutatingFunc(resource.associations[0].values)
+		}
+	})
+
+
+	return resources;
+};
+
+/**
+ * Deduplicates elements in an array
+ */
+const dedup = (array) => [...new Set(array)];
 
 /**
  * Truncates to 100 elements in an array
