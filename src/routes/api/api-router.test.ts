@@ -198,7 +198,7 @@ describe("API Router", () => {
 									lastCommitCursor: "bar",
 									lastPullCursor: 12,
 									repository: {
-										id: "1",
+										id: 1,
 										name: "github-for-jira",
 										full_name: "atlassian/github-for-jira",
 										html_url: "github.com/atlassian/github-for-jira",

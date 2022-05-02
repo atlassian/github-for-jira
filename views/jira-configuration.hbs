@@ -146,12 +146,14 @@
                         <span>Only select repos</span>
                       {{/if}}
 
+                      {{#if totalNumberOfRepos}}
                       <span class="jiraConfiguration__table__syncCount">
                         {{ifAllReposSynced
                           numberOfSyncedRepos
                           totalNumberOfRepos
                         }}
                       </span>
+                      {{/if}}
 
                       <a
                         href="{{html_url}}"

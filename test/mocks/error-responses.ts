@@ -190,14 +190,14 @@ export const mockJob = {
 
 export const mockNextTask:Task = {
 	task: "branch",
-	repositoryId: "483702170",
+	repositoryId: 483702170,
 	repository: {
-		id: "483702170",
+		id: 483702170,
 		name: "some-repo",
 		full_name: "Some-Org/some-repo",
 		owner: { login: "Some-Org" },
 		html_url: "https://github.com/some-org/some-repo",
-		updated_at: 23132123,
+		updated_at: "23132123",
 	},
 	cursor: 1,
 };

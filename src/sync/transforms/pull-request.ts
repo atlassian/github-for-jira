@@ -27,7 +27,7 @@ export const transformPullRequest =  async (payload: Payload, prDetails: Octokit
 	}
 
 	return {
-		id: repository.id,
+		id: repository.id.toString(),
 		name: repository.full_name,
 		pullRequests: [
 			{
