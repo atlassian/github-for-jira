@@ -44,9 +44,8 @@ export const getJiraAuthor = (...authors: (Author | undefined)[]): JiraAuthor =>
 	};
 };
 
-export const limitCommitMessage = (message: string): string => {
-	const MAX_COMMIT_MESSAGE_LENGTH = 1024;
-	return message.substring(0, MAX_COMMIT_MESSAGE_LENGTH);
+export const limitCommitMessage = (message = "", length = 1024): string => {
+	return message.substring(0, length);
 };
 
 interface Author {
