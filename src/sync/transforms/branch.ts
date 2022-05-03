@@ -97,7 +97,7 @@ export const transformBranches = async (payload) => {
 	return {
 		branches,
 		commits,
-		id: payload.repository.id,
+		id: payload.repository.id.toString(),
 		name: payload.repository.name,
 		url: payload.repository.html_url,
 		updateSequenceId: Date.now()

@@ -3,6 +3,7 @@ import { envVars } from "config/env";
 import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
+import { booleanFlag, BooleanFlags, onFlagChange } from "config/feature-flags";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page` : "";
@@ -63,6 +64,10 @@ interface Author {
 	};
 }
 
+let regexFixFeature = false;
+onFlagChange(BooleanFlags.REGEX_FIX, async () => {
+	regexFixFeature = await booleanFlag(BooleanFlags.REGEX_FIX, false);
+});
 /**
  * Parses strings for Jira issue keys for commit messages,
  * branches, and pull requests.
@@ -90,8 +95,14 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	// (^|[^\p{L}\p{Nd}]) means that it must be at the start of the string or be a non unicode-digit character (separator like space, new line, or special character like [)
 	// [\p{L}][\p{L}\p{Nd}_]{1,255} means that the id must start with a unicode letter, then must be at least one more unicode-digit character up to 256 length to prefix the ID
 	// -\p{Nd}{1,255} means that it must be separated by a dash, then at least 1 number character up to 256 length
-	// then we UPPERCASE the matched string and remove duplicate issue keys
-	return uniq(Array.from(str.matchAll(/(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu), m => m[2].toUpperCase()));
+	const regex = regexFixFeature ?
+		// Old regex which was working before trying to update it to the the "correct" one
+		/(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu :
+		// Regex given to us by sayans
+		/(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
+
+	// Parse all issue keys from string then we UPPERCASE the matched string and remove duplicate issue keys
+	return uniq(Array.from(str.matchAll(regex), m => m[2].toUpperCase()));
 };
 
 export const hasJiraIssueKey = (str:string): boolean => !isEmpty(jiraIssueKeyParser(str));
