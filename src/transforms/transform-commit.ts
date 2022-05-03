@@ -1,5 +1,5 @@
 import { JiraCommit, JiraCommitData } from "interfaces/jira";
-import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 
 export const mapCommit = (commit): JiraCommit | undefined => {
@@ -16,7 +16,7 @@ export const mapCommit = (commit): JiraCommit | undefined => {
 		hash: commit.oid,
 		id: commit.oid,
 		issueKeys,
-		message: commit.message,
+		message: limitCommitMessage(commit.message),
 		url: commit.url || undefined, // If blank string, don't send url
 		updateSequenceId: Date.now()
 	};
