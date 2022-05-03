@@ -154,7 +154,7 @@ export function mapEnvironment(environment: string): string {
 }
 
 export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
-	
+
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, false, jiraHost);

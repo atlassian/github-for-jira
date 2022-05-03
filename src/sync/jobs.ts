@@ -1,6 +1,7 @@
 import { Repository } from "models/subscription";
 
-export const getRepositorySummary = (repo: Repository): Repository => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getRepositorySummary = (repo: any): Repository => ({
 	id: repo.id,
 	name: repo.name,
 	full_name: repo.full_name,

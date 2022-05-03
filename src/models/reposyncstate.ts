@@ -203,6 +203,7 @@ export class RepoSyncState extends Model {
 		return model?.setFromRepositoryData(repo)?.save();
 	}
 
+	// TODO: revert this back to not using 'lastSomethingCursor'
 	setFromRepositoryData(repo?: RepositoryData): RepoSyncState {
 		if (repo) {
 			this.repoUpdatedAt = new Date(repo.repository?.updated_at ?? Date.now());
@@ -221,9 +222,9 @@ export class RepoSyncState extends Model {
 	}
 
 	toRepositoryData(): RepositoryData {
-		return pickBy({
+		return pickBy<RepositoryData>({
 			repository: {
-				id: this.repoId.toString(),
+				id: this.repoId,
 				name: this.repoName,
 				full_name: this.repoFullName,
 				owner: {

@@ -569,6 +569,7 @@ environmentOverrides:
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
 
+      # Remove this after new discovery backfill process is deployed
       - type: sqs
         name: discovery
         alarms:

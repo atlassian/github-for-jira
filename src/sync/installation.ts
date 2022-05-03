@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Subscription, Repositories, Repository, RepositoryData, SyncStatus } from "models/subscription";
+import { Repositories, Repository, RepositoryData, Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getRepositorySummary } from "./jobs";
 import { enhanceOctokit, RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
-import { statsd }  from "config/statsd";
+import { statsd } from "config/statsd";
 import { getPullRequestTask } from "./pull-request";
 import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
@@ -23,8 +23,10 @@ import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import { RateLimitingError } from "../github/client/github-client-errors";
+import { getRepositoryTask } from "~/src/sync/discovery";
 
 const tasks: TaskProcessors = {
+	repository: getRepositoryTask,
 	pull: getPullRequestTask,
 	branch: getBranchTask,
 	commit: getCommitTask,
@@ -32,27 +34,26 @@ const tasks: TaskProcessors = {
 	deployment: getDeploymentTask
 };
 
-// const additionalTasks: TaskProcessors = {
-// 	build: getBuildTask,
-// 	deployment: getDeploymentTask
-// };
-
 interface TaskProcessors {
-	[task: string]:
-		(
-			logger: LoggerWithTarget,
-			github: GitHubAPI,
-			newGithub: GitHubInstallationClient,
-			jiraHost: string,
-			repository: Repository,
-			cursor?: string | number,
-			perPage?: number
-		) => Promise<{ edges: any[], jiraPayload: any }>;
+	[task: string]: (
+		logger: LoggerWithTarget,
+		github: GitHubAPI,
+		newGithub: GitHubInstallationClient,
+		jiraHost: string,
+		repository: Repository,
+		cursor?: string | number,
+		perPage?: number
+	) => Promise<TaskPayload>;
 }
 
-type TaskType = "pull" | "commit" | "branch" | "build" | "deployment";
+export interface TaskPayload {
+	edges: any[];
+	jiraPayload: any;
+}
 
-let taskTypes = Object.keys(tasks) as TaskType[];
+type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
+
+const taskTypes: TaskType[] = ["pull", "commit", "branch"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
@@ -62,8 +63,17 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	);
 
 const getNextTask = async (subscription: Subscription): Promise<Task | undefined> => {
+	if (await booleanFlag(BooleanFlags.REPO_DISCOVERY_BACKFILL, false, subscription.jiraHost) && subscription.repositoryStatus !== "complete") {
+		return {
+			task: "repository",
+			repositoryId: 0,
+			repository: {} as Repository,
+			cursor: subscription.repositoryCursor
+		};
+	}
+
 	const repos = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
-	const sorted: [string, RepositoryData][] = repos.map(repo => [repo.repoId.toString(), repo.toRepositoryData()]);
+	const sorted: [number, RepositoryData][] = repos.map(repo => [repo.repoId, repo.toRepositoryData()]);
 
 	for (const [repositoryId, repoData] of sorted) {
 		const task = taskTypes.find(
@@ -73,7 +83,7 @@ const getNextTask = async (subscription: Subscription): Promise<Task | undefined
 		const { repository, [getCursorKey(task)]: cursor } = repoData;
 		return {
 			task,
-			repositoryId,
+			repositoryId: repositoryId,
 			repository: repository as Repository,
 			cursor: cursor as any
 		};
@@ -83,13 +93,14 @@ const getNextTask = async (subscription: Subscription): Promise<Task | undefined
 
 export interface Task {
 	task: TaskType;
-	repositoryId: string;
+	repositoryId: number;
 	repository: Repository;
 	cursor?: string | number;
 }
 
-const upperFirst = (str: string) => str.substring(0, 1).toUpperCase() + str.substring(1);
-const getCursorKey = (type: TaskType) => `last${upperFirst(type)}Cursor`;
+const upperFirst = (str: string) =>
+	str.substring(0, 1).toUpperCase() + str.substring(1);
+const getCursorKey = (type: TaskType) => type === "repository" ? `${type}Cursor`: `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
 // Exported for testing
@@ -97,7 +108,7 @@ export const updateJobStatus = async (
 	data: BackfillMessagePayload,
 	edges: any[] | undefined,
 	task: TaskType,
-	repositoryId: string,
+	repositoryId: number,
 	logger: LoggerWithTarget,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
@@ -117,13 +128,11 @@ export const updateJobStatus = async (
 	const status = edges?.length ? "pending" : "complete";
 
 	logger.info({ status }, "Updating job status");
-
 	await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status);
 
 	if (edges?.length) {
 		// there's more data to get
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
-
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription))) {
@@ -212,13 +221,13 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	await subscription.update({ syncStatus: "ACTIVE" });
 
-	const { task, repositoryId, cursor } = nextTask;
+	const { task, cursor, repositoryId } = nextTask;
 	let { repository } = nextTask;
 
-	if (!repository) {
+	if (!nextTask.repository && repositoryId) {
 		// Old records don't have this info. New ones have it
 		const { data: repo } = await github.request("GET /repositories/:id", {
-			id: repositoryId
+			id: nextTask.repositoryId
 		});
 		repository = getRepositorySummary(repo);
 		await subscription.updateSyncState({
@@ -236,36 +245,28 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	const processor = tasks[task];
 
 	const execute = async () => {
-		if (await booleanFlag(BooleanFlags.SIMPLER_PROCESSOR, true)) {
-
-			// just try with one page size
-			return await processor(logger, github, newGithub, jiraHost, repository, cursor, 20);
-
-		} else {
-
-			for (const perPage of [20, 10, 5, 1]) {
-				// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
-				try {
-					return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
-				} catch (err) {
-					logger.error({
-						err,
-						payload: data,
-						github,
-						repository,
-						cursor,
-						task
-					}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
-					if (!isRetryableWithSmallerRequest(err)) {
-						// error is not retryable, re-throwing it
-						throw err;
-					}
-					// error is retryable, retrying with next smaller page size
+		for (const perPage of [20, 10, 5, 1]) {
+			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
+			try {
+				return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
+			} catch (err) {
+				logger.error({
+					err,
+					payload: data,
+					github,
+					repository,
+					cursor,
+					task
+				}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
+				if (!isRetryableWithSmallerRequest(err)) {
+					// error is not retryable, re-throwing it
+					throw err;
 				}
+				// error is retryable, retrying with next smaller page size
 			}
 		}
-		logger.error({ jiraHost, installationId, repositoryId, task }, "Error processing GraphQL query");
-		throw new Error(`Error processing GraphQL query: installationId=${installationId}, repositoryId=${repositoryId}, task=${task}`);
+		logger.error({ jiraHost, installationId, repositoryId: nextTask.repositoryId, task }, "Error processing GraphQL query");
+		throw new Error(`Error processing GraphQL query: installationId=${installationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
 	};
 
 	try {
@@ -317,7 +318,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			data,
 			edges,
 			task,
-			repositoryId,
+			nextTask.repositoryId,
 			logger,
 			scheduleNextTask
 		);
@@ -331,12 +332,6 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 /**
  * Handles an error and takes action based on the error type and parameters
- *
- * @param err The error
- * @param logger
- * @param scheduleNextTask Function which schedules next task with the specified delay
- * @param ignoreCurrentRepo Function which ignores currently processing repo and schedules the next task
- * @param failCurrentRepoAndContinue Function which sets the status of the current repo sync to "failed" and schedules the next task
  */
 export const handleBackfillError = async (err,
 	data: BackfillMessagePayload,
@@ -435,9 +430,8 @@ export const processInstallation =
 		return async (data: BackfillMessagePayload, sentry: Hub, logger: LoggerWithTarget): Promise<void> => {
 			const { installationId, jiraHost } = data;
 
-			// This is prefered at taskType definition, but feature flag requires async so was moved to starting of process
-			if (!await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, false, jiraHost)) {
-				taskTypes = taskTypes.filter((task) => task !== "build" && task !== "deployment")
+			if (await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, false, jiraHost)) {
+				taskTypes.push("build", "deployment");
 			}
 
 			try {

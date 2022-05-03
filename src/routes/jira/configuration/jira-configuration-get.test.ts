@@ -21,7 +21,8 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 			gitHubInstallationId: 15,
 			jiraHost,
 			jiraClientKey: "clientKey",
-			syncWarning: "some warning"
+			syncWarning: "some warning",
+			totalNumberOfRepos: 1
 		});
 
 		await RepoSyncState.create({
@@ -92,7 +93,8 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 			sub = await Subscription.create({
 				gitHubInstallationId: 12345678,
 				jiraHost,
-				jiraClientKey: "myClientKey"
+				jiraClientKey: "myClientKey",
+				totalNumberOfRepos: 0
 			});
 		});
 
@@ -214,33 +216,35 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 		});
 
 		it("should return successful connection with correct number of repos and sync status", async () => {
-			await RepoSyncState.create({
-				subscriptionId: sub.id,
-				repoId: 1,
-				repoName: "github-for-jira",
-				repoOwner: "atlassian",
-				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira",
-				pullStatus: "complete",
-				commitStatus: "complete",
-				branchStatus: "complete",
-				buildStatus: "complete",
-				deploymentStatus: "complete"
-			});
-
-			await RepoSyncState.create({
-				subscriptionId: sub.id,
-				repoId: 1,
-				repoName: "github-for-jira",
-				repoOwner: "atlassian",
-				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira",
-				pullStatus: "pending",
-				commitStatus: "complete",
-				branchStatus: "complete",
-				buildStatus: "complete",
-				deploymentStatus: "complete"
-			});
+			await Promise.all([
+				RepoSyncState.create({
+					subscriptionId: sub.id,
+					repoId: 1,
+					repoName: "github-for-jira",
+					repoOwner: "atlassian",
+					repoFullName: "atlassian/github-for-jira",
+					repoUrl: "github.com/atlassian/github-for-jira",
+					pullStatus: "complete",
+					commitStatus: "complete",
+					branchStatus: "complete",
+					buildStatus: "complete",
+					deploymentStatus: "complete"
+				}),
+				RepoSyncState.create({
+					subscriptionId: sub.id,
+					repoId: 1,
+					repoName: "github-for-jira",
+					repoOwner: "atlassian",
+					repoFullName: "atlassian/github-for-jira",
+					repoUrl: "github.com/atlassian/github-for-jira",
+					pullStatus: "pending",
+					commitStatus: "complete",
+					branchStatus: "complete",
+					buildStatus: "complete",
+					deploymentStatus: "complete"
+				}),
+				sub.update({ totalNumberOfRepos: 2 })
+			]);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
@@ -259,5 +263,4 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 			});
 		});
 	});
-
 });
