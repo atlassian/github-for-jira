@@ -9,6 +9,7 @@ import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "./branch
 import { webhookTimeout } from "utils/webhook-timeout";
 import { Application } from "probot";
 import { deleteRepository } from "./repository";
+import {codeScanningAlertWebhookHandler} from "~/src/github/code-scanning-alert";
 
 export const setupGithubWebhooks = (robot: Application) => {
 	robot.on(
@@ -42,4 +43,6 @@ export const setupGithubWebhooks = (robot: Application) => {
 	robot.on("delete", GithubWebhookMiddleware(deleteBranchWebhookHandler));
 
 	robot.on("repository.deleted", GithubWebhookMiddleware(deleteRepository));
+
+	robot.on("code_scanning_alert", GithubWebhookMiddleware(codeScanningAlertWebhookHandler));
 };
