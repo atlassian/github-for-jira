@@ -13,7 +13,6 @@ export const issueCommentWebhookHandler = async (
 	let linkifiedBody;
 
 	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
-
 	// TODO: need to create reusable function for unfurling
 	try {
 		linkifiedBody = await util.unfurl(comment.body);
