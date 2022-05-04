@@ -4,6 +4,7 @@ import { encrypted, getHashedKey, sequelize } from "models/sequelize";
 import { EncryptedModel } from "models/encrypted-model";
 import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { getLogger } from "config/logger";
+import { Config } from "interfaces/common";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
@@ -22,6 +23,7 @@ export class Installation extends EncryptedModel {
 	updatedAt: Date;
 	createdAt: Date;
 	githubAppId?: number;
+	config: Config;
 
 	getEncryptionSecretKey() {
 		return EncryptionSecretKeyEnum.JIRA_INSTANCE_SECRETS;
@@ -141,6 +143,7 @@ Installation.init({
 		allowNull: false
 	},
 	enabled: BOOLEAN,
+	config: DataTypes.JSON,
 	createdAt: DATE,
 	updatedAt: DATE,
 	githubAppId: {

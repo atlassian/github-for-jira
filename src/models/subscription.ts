@@ -2,6 +2,7 @@ import { DataTypes, DATE, Model, Op, WhereOptions } from "sequelize";
 import { RepoSyncState } from "./reposyncstate";
 import { merge, uniq } from "lodash";
 import { sequelize } from "models/sequelize";
+import { Config } from "interfaces/common";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -69,6 +70,7 @@ export class Subscription extends Model {
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
 	gitHubAppId?: number;
+	config: Config;
 
 	static async getAllForHost(host: string): Promise<Subscription[]> {
 		return this.findAll({
@@ -252,6 +254,7 @@ Subscription.init({
 	totalNumberOfRepos: DataTypes.INTEGER,
 	repositoryCursor: DataTypes.STRING,
 	repositoryStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	config: DataTypes.JSON,
 	createdAt: DATE,
 	updatedAt: DATE,
 	gitHubAppId: {

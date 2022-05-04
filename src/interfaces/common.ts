@@ -36,3 +36,19 @@ declare global {
 		}
 	}
 }
+
+export interface Config {
+	deployments?: {
+
+		/**
+		 * globs that are used in the `mapEnvironment()` function to match a given environment with one
+		 * of the valid Jira environment types.
+		 */
+		environmentMapping?: {
+			development?: string[];
+			testing?: string[];
+			staging?: string[];
+			production?: string[];
+		}
+	}
+}

@@ -1,7 +1,8 @@
-import { BOOLEAN, CountOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING } from "sequelize";
+import { BOOLEAN, CountOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, JSON, Model, Op, STRING } from "sequelize";
 import { Subscription, Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
 import { groupBy, merge, pickBy } from "lodash";
 import { sequelize } from "models/sequelize";
+import { Config } from "interfaces/common";
 
 export class RepoSyncState extends Model {
 	id: number;
@@ -30,6 +31,7 @@ export class RepoSyncState extends Model {
 	repoCreatedAt?: Date;
 	syncUpdatedAt?: Date;
 	syncCompletedAt?: Date;
+	config: Config;
 	updatedAt: Date;
 	createdAt: Date;
 
@@ -314,6 +316,7 @@ RepoSyncState.init({
 	repoCreatedAt: DATE,
 	syncUpdatedAt: DATE,
 	syncCompletedAt: DATE,
+	config: JSON,
 	createdAt: DATE,
 	updatedAt: DATE
 }, { sequelize });
