@@ -15,48 +15,48 @@ import {codeScanningAlertWebhookHandler} from "~/src/github/code-scanning-alert"
 
 export const setupGithubWebhooks = (robot: Application) => {
 	// TODO: Need ability to remove these listeners, especially for testing...
-	// robot.on("*", async (context) => {
-	// 	const { name, payload, id } = context;
+	robot.on("*", async (context) => {
+		const { name, payload, id } = context;
 
-	// 	context.log.info({ event: name, action: payload.action, webhookId: id }, "Event received");
+		context.log.info({ event: name, action: payload.action, webhookId: id }, "Event received");
 
-	// 	const tags = [
-	// 		"name: webhooks",
-	// 		`event: ${name}`,
-	// 		`action: ${payload.action}`
-	// 	];
+		const tags = [
+			"name: webhooks",
+			`event: ${name}`,
+			`action: ${payload.action}`
+		];
 
-	// 	statsd.increment(metricWebhooks.webhookEvent, tags);
-	// });
+		statsd.increment(metricWebhooks.webhookEvent, tags);
+	});
 
-	// robot.on(
-	// 	["issue_comment.created", "issue_comment.edited"],
-	// 	webhookTimeout(GithubWebhookMiddleware(issueCommentWebhookHandler))
-	// );
+	robot.on(
+		["issue_comment.created", "issue_comment.edited"],
+		webhookTimeout(GithubWebhookMiddleware(issueCommentWebhookHandler))
+	);
 
 	robot.on(["issues.opened", "issues.edited"], GithubWebhookMiddleware(issueWebhookHandler));
 
-	// robot.on("push", GithubWebhookMiddleware(pushWebhookHandler));
+	robot.on("push", GithubWebhookMiddleware(pushWebhookHandler));
 
-	// robot.on(
-	// 	[
-	// 		"pull_request.opened",
-	// 		"pull_request.closed",
-	// 		"pull_request.reopened",
-	// 		"pull_request.edited",
-	// 		"pull_request_review"
-	// 	],
-	// 	GithubWebhookMiddleware(pullRequestWebhookHandler)
-	// );
+	robot.on(
+		[
+			"pull_request.opened",
+			"pull_request.closed",
+			"pull_request.reopened",
+			"pull_request.edited",
+			"pull_request_review"
+		],
+		GithubWebhookMiddleware(pullRequestWebhookHandler)
+	);
 
-	// robot.on("workflow_run", GithubWebhookMiddleware(workflowWebhookHandler));
+	robot.on("workflow_run", GithubWebhookMiddleware(workflowWebhookHandler));
 
-	// robot.on("deployment_status", GithubWebhookMiddleware(deploymentWebhookHandler));
+	robot.on("deployment_status", GithubWebhookMiddleware(deploymentWebhookHandler));
 
-	// robot.on("create", GithubWebhookMiddleware(createBranchWebhookHandler));
-	// robot.on("delete", GithubWebhookMiddleware(deleteBranchWebhookHandler));
+	robot.on("create", GithubWebhookMiddleware(createBranchWebhookHandler));
+	robot.on("delete", GithubWebhookMiddleware(deleteBranchWebhookHandler));
 
-	// robot.on("repository.deleted", GithubWebhookMiddleware(deleteRepository));
+	robot.on("repository.deleted", GithubWebhookMiddleware(deleteRepository));
 
-	// robot.on("code_scanning_alert", GithubWebhookMiddleware(codeScanningAlertWebhookHandler));
+	robot.on("code_scanning_alert", GithubWebhookMiddleware(codeScanningAlertWebhookHandler));
 };
