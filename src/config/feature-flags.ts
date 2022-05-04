@@ -27,7 +27,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
 	REGEX_FIX = "regex-fix",
-	REPO_DISCOVERY_BACKFILL = "repo-discovery-backfill"
+	REPO_DISCOVERY_BACKFILL = "repo-discovery-backfill",
+	CONFIG_AS_CODE = "config-as-code"
 }
 
 export enum StringFlags {

@@ -1,6 +1,7 @@
 import { BOOLEAN, DataTypes, DATE, Model } from "sequelize";
 import { Subscription } from "./subscription";
 import { encrypted, getHashedKey, sequelize } from "models/sequelize";
+import { Config } from "interfaces/common";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
@@ -15,6 +16,7 @@ export class Installation extends Model {
 	clientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
+	config: Config;
 
 	static async getForClientKey(
 		clientKey: string
@@ -120,6 +122,7 @@ Installation.init({
 		allowNull: false
 	},
 	enabled: BOOLEAN,
+	config: DataTypes.JSON,
 	createdAt: DATE,
 	updatedAt: DATE
 }, { sequelize });
