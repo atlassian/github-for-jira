@@ -11,12 +11,6 @@ jobs:
         run: npm install -g yarn
       - uses: actions/checkout@v1
       - uses: volta-cli/action@v1
-      - name: Cache node_modules
-        id: cache-primes
-        uses: actions/cache@v1
-        with:
-          path: ./node_modules
-          key: ${{ runner.os }}-${{hashFiles('**/yarn.lock')}}-node_modules
       - run: volta pin yarn@latest
       - run: yarn install --frozen-lockfile
       - run: yarn run lint
@@ -31,12 +25,6 @@ jobs:
       - uses: actions/checkout@v1
       - run: docker-compose up -d app
       - uses: volta-cli/action@v1
-      - name: Cache node_modules
-        id: cache-primes
-        uses: actions/cache@v1
-        with:
-          path: ./node_modules
-          key: ${{ runner.os }}-${{hashFiles('**/yarn.lock')}}-node_modules
       - run: volta pin yarn@latest
       - run: yarn install --frozen-lockfile
       - run: yarn run db:test
