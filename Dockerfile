@@ -12,6 +12,6 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
-CMD ["npm", "start"]
+CMD ["yarn", "start"]

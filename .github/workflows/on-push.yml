@@ -15,9 +15,9 @@ jobs:
         with:
           path: ./node_modules
           key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
-      - run: npm install
-      - run: npm run lint
-      - run: npm run build
+      - run: yarn install --frozen-lockfile
+      - run: yarn run lint
+      - run: yarn run build
 
   test:
     runs-on: ubuntu-latest
@@ -32,8 +32,8 @@ jobs:
         with:
           path: ./node_modules
           key: ${{ runner.os }}-${{hashFiles('**/package-lock.json')}}-node_modules
-      - run: npm install
-      - run: npm run db:test
+      - run: yarn install --frozen-lockfile
+      - run: yarn run db:test
       - name: Run tests
         env:
           REDISX_CACHE_HOST: localhost
@@ -43,7 +43,7 @@ jobs:
           AWS_ACCESS_KEY_ID: localkey
           AWS_SECRET_ACCESS_KEY: localsecret
           AWS_EC2_METADATA_DISABLED: true
-        run: npm test
+        run: yarn test
 
   docker:
     runs-on: ubuntu-latest
