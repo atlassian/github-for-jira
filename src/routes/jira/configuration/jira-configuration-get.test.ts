@@ -84,7 +84,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 		expect(data.successfulConnections.length).toBe(1);
 	});
 
-	describe("getInstallations", () => {
+	describe.skip("getInstallations", () => {
 		let sub: Subscription;
 		const client = GithubAPI();
 		const logger = getLogger("MOCK");
