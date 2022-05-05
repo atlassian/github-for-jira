@@ -417,10 +417,10 @@ environmentOverrides:
                 Stat: Average
               Id: responseTime
               ReturnData: false
-#    links:
-#      runOnce:
-#        - uuid: fea5d423-e21f-465b-aa67-54c8367b7777
-#          description: Basic Check PDV (Staging)
+    links:
+      runOnce:
+        - uuid: fea5d423-e21f-465b-aa67-54c8367b7777
+          description: Basic Check PDV (Staging)
     alarms:
       overrides:
         LatencyHigh: null
