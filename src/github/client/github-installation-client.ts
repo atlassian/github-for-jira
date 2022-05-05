@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { Octokit } from "@octokit/rest";
+import {Octokit} from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
 import { InstallationTokenCache } from "./installation-token-cache";
@@ -18,7 +18,12 @@ import {
 	getCommitsResponse, GetRepositoriesQuery, GetRepositoriesResponse,
 	ViewerRepositoryCountQuery
 } from "./github-queries";
-import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
+import {
+	GetPullRequestParams,
+	GraphQlQueryResponse,
+	PaginatedAxiosResponse,
+	ReposGetContentsResponse
+} from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 
 /**
@@ -253,6 +258,28 @@ export class GitHubInstallationClient {
 				repo,
 				comment_id
 			});
+	}
+
+	/**
+	 * Get a file at a given path from a repository.
+	 * Returns null if the file does not exist.
+	 */
+	public async getRepositoryFile(owner: string, repo: string, path: string): Promise<string | undefined> {
+		try {
+			const response = await this.get<ReposGetContentsResponse>(`/repos/:owner/:repo/contents/:path`, {}, {
+				owner,
+				repo,
+				path
+			});
+
+			return response.data.content;
+		} catch (err) {
+			if (err.status == 404) {
+				this.logger.info({ err, owner, repo, path }, "could not find file in repo")
+				return undefined;
+			}
+			throw err;
+		}
 	}
 
 	/**

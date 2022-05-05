@@ -28,26 +28,6 @@ export const pushWebhookHandler = async (context: Context, jiraClient): Promise<
 		const modifiedFiles = context.payload?.commits?.reduce((acc, commit) =>
 			([...acc, ...commit.added, ...commit.modified, ...commit.removed]), []);
 		await updateRepoConfig(modifiedFiles);
-		/*for (const commit of payload.commits) {
-
-			for (const touchedFileName of ) {
-				context.log({ touchedFileName }, "config-as-code: touched file");
-				await fileTouched(
-					payload.installation.id,
-					payload.repository.owner.name,
-					payload.repository.name,
-					payload.repository.id,
-					touchedFileName);
-			}
-
-			for (const removedFileName of [...commit.removed]) {
-				context.log({ removedFileName }, "config-as-code: removed file");
-				await fileRemoved(
-					payload.installation.id,
-					payload.repository.id,
-					removedFileName);
-			}
-		}*/
 	}
 
 	if (!payload.commits?.length) {
