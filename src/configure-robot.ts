@@ -10,11 +10,11 @@ export async function setupApp(app: Application): Promise<Application> {
 }
 
 export const configureAndLoadApp = (probot: Probot) => {
-	probot.load(setupApp);
-	probot.webhook.on("error", (err: Error) => {
-		probot.logger.error(err, "Webhook Error");
-	});
 	overrideProbotLoggingMethods(probot.logger);
-}
+	probot.load(setupApp);
+	probot.webhook.on("error", (error: Error) => {
+		probot.logger.error({ error }, "Webhook Error");
+	});
+};
 
 
