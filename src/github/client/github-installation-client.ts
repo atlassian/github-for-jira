@@ -142,11 +142,16 @@ export class GitHubInstallationClient {
 	 * Get a page of repositories.
 	 */
 	public getRepositoriesPage = async (per_page = 1, cursor?: string): Promise<GetRepositoriesResponse> => {
-		const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
-			per_page,
-			cursor
-		});
-		return response.data.data;
+		try {
+			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
+				per_page,
+				cursor
+			});
+			return response.data.data;
+		} catch (err) {
+			err.isRetryable = true;
+			throw err;
+		}
 	};
 
 	// TODO: remove this function after discovery backfill is deployed
@@ -327,6 +332,7 @@ export class GitHubInstallationClient {
 
 		const graphqlErrors = response.data?.errors;
 		if (graphqlErrors?.length) {
+			this.logger.warn({ res: response }, "GraphQL errors");
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
