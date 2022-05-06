@@ -344,6 +344,10 @@ export const getJiraClient = async (
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			},
 		},
+		projects: {
+			get: (): Promise<AxiosResponse<JiraIssue>> =>
+				instance.get("/rest/api/3/project"),
+		}
 	};
 
 	return client;

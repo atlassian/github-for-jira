@@ -55,6 +55,8 @@ const getErrorMiddleware = (logger: Logger) =>
 
 		const status = error?.response?.status;
 
+		logger.warn("JIRA ERROR: ", error)
+
 		const errorMessage = "Error executing Axios Request " + (status ? getJiraErrorMessages(status) : error.message || "");
 
 		const isWarning = status && (status >= 300 && status < 500 && status !== 400);
