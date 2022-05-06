@@ -2,6 +2,7 @@ import { AxiosInstance, AxiosRequestConfig } from "axios";
 import url from "url";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { envVars }  from "config/env";
+import {getLogger} from "config/logger";
 
 const instance = envVars.INSTANCE_NAME;
 const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
@@ -28,6 +29,8 @@ export const jiraAuthMiddleware = (secret: string, instance: AxiosInstance) =>
 			},
 			secret
 		);
+
+		const logger = getLogger("octokit");
 
 		// Set authorization headers
 		config.headers = config.headers || {};

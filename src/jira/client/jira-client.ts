@@ -50,20 +50,26 @@ export const getJiraClient = async (
 	const client = {
 		baseURL: installation.jiraHost,
 		issues: {
-			create: (): Promise<AxiosResponse<JiraIssue>> =>
-				instance.post("/rest/api/latest/issue", {
-					fields: {
-						project: {
-							key: "TEST",
+			create: (data: any): Promise<AxiosResponse<JiraIssue>> =>
+				instance.post("/rest/api/latest/issue", data),
+			comments: {
+				// eslint-disable-next-line camelcase
+				getForIssue: (issue_id: string) =>
+					instance.get("/rest/api/latest/issue/{issue_id}/comment", {
+						urlParams: {
+							issue_id,
 						},
-						summary: "REST ye merry gentlemen.",
-						description:
-							"Creating of an issue using project keys and issue type names using the REST API",
-						issuetype: {
-							name: "Bug",
+					}),
+				// eslint-disable-next-line camelcase
+				addForIssue: (issue_id: string, payload) =>
+					instance.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
+						urlParams: {
+							issue_id,
 						},
-					},
-				}),
+					}),
+			},
+			delete: (): Promise<AxiosResponse<JiraIssue>> =>
+				instance.delete("/rest/api/latest/issue/TI-1"),
 			get: (
 				issueId: string,
 				query = { fields: "summary" }
@@ -98,22 +104,6 @@ export const getJiraClient = async (
 			parse: (text: string): string[] | undefined => {
 				if (!text) return undefined;
 				return jiraIssueKeyParser(text);
-			},
-			comments: {
-				// eslint-disable-next-line camelcase
-				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/{issue_id}/comment", {
-						urlParams: {
-							issue_id,
-						},
-					}),
-				// eslint-disable-next-line camelcase
-				addForIssue: (issue_id: string, payload) =>
-					instance.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
-						urlParams: {
-							issue_id,
-						},
-					}),
 			},
 			transitions: {
 				// eslint-disable-next-line camelcase
