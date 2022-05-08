@@ -49,7 +49,7 @@ export interface TaskPayload {
 
 type TaskType = "repository" | "pull" | "commit" | "branch";
 
-const taskTypes:TaskType[] = ["pull", "commit", "branch"];
+const taskTypes: TaskType[] = ["pull", "commit", "branch"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
@@ -96,7 +96,7 @@ export interface Task {
 
 const upperFirst = (str: string) =>
 	str.substring(0, 1).toUpperCase() + str.substring(1);
-const getCursorKey = (type: TaskType) => type === "repository" ? `${type}Cursor`: `last${upperFirst(type)}Cursor`;
+const getCursorKey = (type: TaskType) => type === "repository" ? `${type}Cursor` : `last${upperFirst(type)}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
 // Exported for testing
@@ -165,9 +165,8 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 		);
 
 		return !!retryableErrors;
-	} else {
-		return false;
 	}
+	return err?.isRetryable || false;
 };
 
 // Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources
@@ -261,8 +260,8 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 				// error is retryable, retrying with next smaller page size
 			}
 		}
-		logger.error({ jiraHost, installationId, repositoryId: nextTask.repositoryId, task }, "Error processing GraphQL query");
-		throw new Error(`Error processing GraphQL query: installationId=${installationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
+		logger.error({ jiraHost, installationId, repositoryId: nextTask.repositoryId, task }, "Error processing task");
+		throw new Error(`Error processing task: installationId=${installationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
 	};
 
 	try {

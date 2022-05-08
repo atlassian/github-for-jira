@@ -10,8 +10,8 @@ import { enhanceOctokit } from "config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
-
-const LOGGER_NAME = "github.webhooks";
+import { statsd } from "config/statsd";
+import { metricWebhooks } from "config/metric-names";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
@@ -91,23 +91,27 @@ export const GithubWebhookMiddleware = (
 			webhookReceived
 		});
 
-		const repoName = context.payload?.repository?.name || "none";
-		const orgName = context.payload?.repository?.owner?.name || "none";
-		const gitHubInstallationId = Number(context.payload?.installation?.id);
+		const { name, payload, id: webhookId } = context;
+		const repoName = payload?.repository?.name || "none";
+		const orgName = payload?.repository?.owner?.name || "none";
+		const gitHubInstallationId = Number(payload?.installation?.id);
 
-		const webhookParams = {
-			webhookId: context.id,
+		context.log = context.log.child({
+			name: "github.webhooks",
+			webhookId,
 			gitHubInstallationId,
 			event: webhookEvent,
-			webhookReceived
-		};
-		context.log = context.log.child({ name: LOGGER_NAME, ...webhookParams });
-		// TODO: log only for local dev and for those who has enabled verbose logging
-		context.log.info({
+			webhookReceived,
 			repoName,
-			orgName,
-			payload: context.payload
-		}, "Webhook verbose data");
+			orgName
+		});
+		context.log.debug({ payload }, "Webhook payload");
+
+		statsd.increment(metricWebhooks.webhookEvent, [
+			"name: webhooks",
+			`event: ${name}`,
+			`action: ${payload.action}`
+		]);
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
