@@ -107,14 +107,14 @@ describe("Prioritizer", () => {
 				branchStatus: branchStatus,
 				pullStatus: pullrequestStatus,
 				repository: {
-					id: "foo",
+					id: 1234,
 					name: "repo1",
 					full_name: "repo1",
 					owner: {
 						login: "owner"
 					},
 					html_url: "https://github.com/foo",
-					updated_at: 42
+					updated_at: "42"
 				}
 			}
 		};

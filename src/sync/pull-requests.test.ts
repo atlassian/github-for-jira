@@ -32,8 +32,8 @@ describe.skip("sync/pull-request", () => {
 						full_name: "test-repo-name",
 						owner: { login: "integrations" },
 						html_url: "test-repo-url",
-						id: "test-repo-id",
-						updated_at: 123456789
+						id: 1234,
+						updated_at: "123456789"
 					},
 					pullStatus: "pending",
 					branchStatus: "complete",
