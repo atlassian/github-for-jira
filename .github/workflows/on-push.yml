@@ -16,7 +16,6 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - run: volta pin yarn@latest
       - run: yarn install --frozen-lockfile
       - run: yarn run lint
       - run: yarn run build
@@ -35,7 +34,6 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - run: volta pin yarn@latest
       - run: yarn install --frozen-lockfile
       - run: yarn run db:test
       - name: Run tests
