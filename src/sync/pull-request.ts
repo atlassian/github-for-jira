@@ -100,7 +100,7 @@ export const getPullRequestTask = async (
 		jiraPayload:
 			pullRequests?.length
 				? {
-					id: repository.id,
+					id: repository.id.toString(),
 					name: repository.full_name,
 					pullRequests,
 					url: repository.html_url,

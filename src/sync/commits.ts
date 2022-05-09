@@ -22,7 +22,14 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 	};
 };
 
-export const getCommitTask = async (logger: LoggerWithTarget, _github: GitHubAPI, gitHubClient: GitHubInstallationClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number): Promise<CommitData> => {
+export const getCommitTask = async (
+	logger: LoggerWithTarget,
+	_github: GitHubAPI,
+	gitHubClient: GitHubInstallationClient,
+	_jiraHost: string,
+	repository: Repository,
+	cursor?: string | number,
+	perPage?: number): Promise<CommitData> => {
 	logger.info("Syncing commits: started");
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, cursor, perPage);
 	const jiraPayload = await transformCommit({ commits, repository });
