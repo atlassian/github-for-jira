@@ -1,14 +1,18 @@
-import { JiraDeploymentData } from "interfaces/jira";
-import { GitHubAPI } from "probot";
-import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { Octokit } from "@octokit/rest";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
-import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { AxiosResponse } from "axios";
-import { deburr, isEmpty } from "lodash";
-import { jiraIssueKeyParser } from "utils/jira-utils";
+import {JiraDeploymentData} from "interfaces/jira";
+import {GitHubAPI} from "probot";
+import {WebhookPayloadDeploymentStatus} from "@octokit/webhooks";
+import {LoggerWithTarget} from "probot/lib/wrap-logger";
+import {Octokit} from "@octokit/rest";
+import {booleanFlag, BooleanFlags} from "config/feature-flags";
+import {getAllCommitMessagesBetweenReferences} from "./util/github-api-requests";
+import {GitHubInstallationClient} from "../github/client/github-installation-client";
+import {AxiosResponse} from "axios";
+import _, {deburr, isEmpty} from "lodash";
+import {jiraIssueKeyParser} from "utils/jira-utils";
+import {Config} from "interfaces/common";
+import {RepoSyncState} from "models/reposyncstate";
+import {Subscription} from "models/subscription";
+import minimatch from "minimatch";
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
 async function getLastSuccessfulDeployCommitSha(
@@ -119,11 +123,34 @@ function mapState(state: string): string {
 	}
 }
 
+const matchesEnvironment = (environment: string, globPatterns: string[] = []): boolean => {
+	for (const glob of globPatterns) {
+		if (minimatch(environment, glob)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Maps a given environment name to a Jira environment name using the custom mapping defined in a RepoConfig.
+ */
+export const mapEnvironmentWithConfig = (environment: string, config: Config): string => {
+	const jiraEnvironment = _.keys(config?.deployments?.environmentMapping)
+		.find(jiraEnvironmentType => matchesEnvironment(environment, config.deployments?.environmentMapping?.[jiraEnvironmentType]));
+
+	if (!jiraEnvironment) {
+		return "unmapped";
+	}
+
+	return jiraEnvironment;
+}
+
 // We need to map the environment of a GitHub deployment back to a valid deployment environment in Jira.
 // https://docs.github.com/en/actions/reference/environments
 // GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
 // Jira: Can be one of unmapped, development, testing, staging, production
-export function mapEnvironment(environment: string): string {
+export async function mapEnvironment(environment: string, config?: Config): Promise<string> {
 	const isEnvironment = (envNames: string[]): boolean => {
 		// Matches any of the input names exactly
 		const exactMatch = envNames.join("|");
@@ -138,12 +165,21 @@ export function mapEnvironment(environment: string): string {
 		return envNamesPattern.test(deburr(environment));
 	};
 
-	const environmentMapping = {
+	let environmentMapping = {
 		development: ["development", "dev", "trunk"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
 		production: ["production", "prod", "prd", "live"]
 	};
+
+	if (config) {
+		environmentMapping = _.merge(environmentMapping, config.deployments?.environmentMapping);
+		mapEnvironmentWithConfig(environment, {
+			deployments: {
+				environmentMapping
+			}
+		});
+	}
 
 	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key]));
 
@@ -159,7 +195,7 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 	const deployment_status = payload.deployment_status;
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, false, jiraHost);
-	const { data: { commit: { message } } } = useNewGitHubClient ?
+	const {data: {commit: {message}}} = useNewGitHubClient ?
 		await newGitHubClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha) :
 		await githubClient.repos.getCommit({
 			owner: payload.repository.owner.login,
@@ -191,7 +227,15 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 		return undefined;
 	}
 
-	const environment = mapEnvironment(deployment_status.environment);
+	let config: undefined | Config = undefined;
+
+	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
+		const sub = await Subscription.getSingleInstallation(jiraHost, newGitHubClient.githubInstallationId.installationId);
+		const repoSyncState = await RepoSyncState.findByRepoId(sub, payload.repository.id);
+		config = repoSyncState.config;
+	}
+
+	const environment = await mapEnvironment(deployment_status.environment, config);
 	if (environment === "unmapped") {
 		logger?.info({
 			environment: deployment_status.environment,
