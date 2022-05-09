@@ -1,5 +1,5 @@
 import { getJiraId } from "../jira/util/id";
-import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
@@ -18,7 +18,7 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: W
 		hash: sha,
 		id: sha,
 		issueKeys,
-		message: commit.message,
+		message: limitCommitMessage(commit.message),
 		url,
 		updateSequenceId: Date.now()
 	};
