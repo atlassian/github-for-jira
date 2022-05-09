@@ -54,7 +54,7 @@ describe("sync", () => {
 			})
 			.expect(202)
 			.then(() => {
-				expect(sqsQueues.discovery.sendMessage).toBeCalledWith({ installationId: installation.id, jiraHost }, expect.anything(), expect.anything());
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith({ installationId: installation.id, jiraHost }, expect.anything(), expect.anything());
 			});
 	});
 });
