@@ -35,7 +35,6 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
 
-	const protocol = process.env.GHE_HOST ? 'http' : 'https'
 	const redirectUrl = `http://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 
 	req.log.info({
@@ -133,7 +132,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		await axios.get(`http://api.${envVars.GITHUB_HOSTNAME}`, {
+		await axios.get(`http://${envVars.GITHUB_HOSTNAME}/api/v3`, {
 			headers: {
 				Authorization: `Bearer ${githubToken}`
 			}
