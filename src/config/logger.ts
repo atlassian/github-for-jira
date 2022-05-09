@@ -66,11 +66,9 @@ const logger = wrapLogger(createLogger(
 
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
 export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-
 	// Remove  Default Probot Logging Stream
-	probotLogger.streams.pop();
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(probotLogger as any).streams.pop();
 
 	// Replace with formatOut stream
 	probotLogger.addStream({
