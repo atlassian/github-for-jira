@@ -100,3 +100,27 @@ window.onclick = function(event) {
 		syncStatusModal.style.display = "none";
 	}
 };
+
+$(".ugly-button-ghe-test").click(function (event) {
+	event.preventDefault();
+	const csrfToken = document.getElementById("_csrf").value;
+
+	window.AP.context.getToken(function (token) {
+		$.ajax({
+			type: "POST",
+			url: "/jira/ghe/spike",
+			data: {
+				installationId: 21055629,
+				jiraHost: "https://rachellerathbone.atlassian.net",
+				jwt: token,
+				_csrf: csrfToken,
+			},
+			success: function (data) {
+				console.log("SUCCESS: ", data);
+			},
+			error: function (error) {
+				console.error("ERROR: ", error);
+			},
+		});
+	});
+});
