@@ -82,6 +82,14 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
+	static async findByRepoId(subscription: Subscription, repoId: number): Promise<RepoSyncState> {
+		return RepoSyncState.findOneFromSubscription(subscription, {
+			where: {
+				repoId
+			}
+		});
+	}
+
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
 		return RepoSyncState.findAll(merge(options, {
 			where: {

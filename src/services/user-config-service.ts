@@ -9,14 +9,17 @@ const USER_CONFIG_FILE = ".jira/config.yml";
 const logger = getLogger("services.user-config");
 const MAX_PATTERNS_PER_ENVIRONMENT = 10;
 
-export const updateRepoConfig = async (githubInstallationId: number, modifiedFiles: string[] = []): Promise<void> => {
-
+export const updateRepoConfig = async (repoSyncState: RepoSyncState, githubInstallationId: number, modifiedFiles: string[] = []): Promise<void> => {
 	// Only get save the latest repo config if the file in the repository changed (added, modified or removed)
 	if (modifiedFiles.includes(USER_CONFIG_FILE)) {
 		try {
 			await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId);
 		} catch (err) {
-
+			logger.error({
+				err,
+				githubInstallationId,
+				repoSyncStateId: repoSyncState.id
+			}, "error while updating the repo config");
 		}
 	}
 };
@@ -51,7 +54,11 @@ const hasTooManyPatternsPerEnvironment = (config: Config): boolean => {
 /**
  * Converts incoming YAML string to JSON (RepoConfig)
  */
-const convertYamlToUserConfig = (input: string): Config => {
+const convertYamlToUserConfig = (input?: string): Config => {
+
+	if (!input) {
+		return {};
+	}
 
 	const config: Config = YAML.parse(input);
 
@@ -79,13 +86,6 @@ const convertYamlToUserConfig = (input: string): Config => {
 
 const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: number): Promise<void> => {
 	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName);
-	if (!yamlConfig) {
-		return;
-	}
 	const config = convertYamlToUserConfig(yamlConfig);
-	await repoSyncState.update({config}, {
-		where: {
-			id: repoSyncState.id
-		}
-	});
+	await repoSyncState.update({config});
 }
