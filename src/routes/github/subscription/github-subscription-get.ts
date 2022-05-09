@@ -1,10 +1,10 @@
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
-import { getCloudInstallationId } from "../../../github/client/installation-id";
-import { GitHubAppClient } from "../../../github/client/github-app-client";
-import { GitHubUserClient } from "../../../github/client/github-user-client";
+import { getCloudInstallationId } from "~/src/github/client/installation-id";
+import { GitHubAppClient } from "~/src/github/client/github-app-client";
+import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
-import { booleanFlag, BooleanFlags } from "../../../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { github, client, githubToken, jiraHost } = res.locals;
