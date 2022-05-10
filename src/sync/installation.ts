@@ -249,6 +249,15 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			try {
 				return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
 			} catch (err) {
+							
+				// In the event that the customer does not have the required permissions due to functionality being added and new permissions
+				// being required without being accepted. We will continue to process the data per usual wihile omitting the tasks the the app
+				// does not have access too.
+				if (err.status === 403 && err.message?.includes("Resource not accessible by integration")) {
+					await subscription?.update({ syncWarning: "Incomplete Sync, please" });
+					// Return undefined objects so the sync can complete while skipping this task
+					return 	{ edges: undefined, jiraPayload: undefined }
+				}
 				logger.error({
 					err,
 					payload: data,
@@ -257,6 +266,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 					cursor,
 					task
 				}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
+
 				if (!isRetryableWithSmallerRequest(err)) {
 					// error is not retryable, re-throwing it
 					throw err;

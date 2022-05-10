@@ -13,6 +13,8 @@ export class GithubClientError extends Error {
 			this.cause = { ...cause, config: {} };
 			this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
 		}
+		console.log("asathis");
+		console.log(this);
 	}
 }
 
@@ -38,6 +40,12 @@ export class RateLimitingError extends GithubClientError {
 export class BlockedIpError extends GithubClientError {
 	constructor(error: AxiosError, status?: number) {
 		super("Blocked by GitHub allowlist", status, error);
+	}
+}
+
+export class InvalidPermissionsError extends GithubClientError {
+	constructor(error: AxiosError, status?: number) {
+		super("Resource not accessible by integration", status, error);
 	}
 }
 

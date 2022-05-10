@@ -34,6 +34,7 @@ export const getBuildTask = async (
 ) => {
 	logger.info("Syncing Builds: started");
 	cursor = Number(cursor);
+		
 	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor);
 	const { workflow_runs } = data;
 	const nextPage = cursor + 1;

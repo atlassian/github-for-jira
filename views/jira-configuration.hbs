@@ -170,6 +170,16 @@
 
                     {{! Backfill status }}
                     <td class="jiraConfiguration__table__cell">
+                      {{!-- Display any sync warnings --}}
+                      {{#if syncWarning}}
+                        <div class="jiraConfiguration__syncWarning">
+                          <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
+                            Sync failed warnings
+                          </span> 
+                          <div class="jiraConfiguration__syncWarningMessage">{{syncWarning}}</div>
+                        </div>
+                      {{/if}}
+                      {{syncWarning}}
                       <span
                         id="{{id}}-status"
                         class="jiraConfiguration__table__{{toLowerCase
@@ -195,11 +205,10 @@
                             &#x21bb;
                           </button>
                           <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                          <div class="jiraConfiguration__retryMsg">Retry</div>
+                          <div class="jiraConfiguration__retryMsg">Retry2</div>
                         </div>
                       {{/if}}
                     </td>
-
                     {{! Settings }}
                     <td class="jiraConfiguration__table__cell__settings">
                       <button

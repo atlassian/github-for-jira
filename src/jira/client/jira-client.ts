@@ -223,6 +223,11 @@ export const getJiraClient = async (
 				update: async (data, options?: { preventTransitions: boolean }) => {
 					dedupIssueKeys(data, logger);
 
+					// const subscription = await Subscription.getSingleInstallation(
+					// 	jiraHost,
+					// 	gitHubInstallationId
+					// );
+					// await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					if (
 						!withinIssueKeyLimit(data.commits) ||
 						!withinIssueKeyLimit(data.branches)
@@ -236,6 +241,7 @@ export const getJiraClient = async (
 							jiraHost,
 							gitHubInstallationId
 						);
+						console.log("MORE MADENESSSSS")
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
 
