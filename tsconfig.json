@@ -21,7 +21,6 @@
 		"noImplicitAny": false,
 		"noImplicitThis": false,
 		"esModuleInterop": true,
-		"resolveJsonModule": true,
 		"outDir": "build",
 		"baseUrl": ".",
 		"paths": {

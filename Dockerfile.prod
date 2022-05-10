@@ -12,10 +12,10 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # Building TypeScript files
-RUN npm run build:release
+RUN yarn run build:release
 
 FROM node:14.19-alpine3.15
 USER node
