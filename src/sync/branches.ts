@@ -5,7 +5,14 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 // TODO: better typings
-export const getBranchTask = async (logger: LoggerWithTarget, _github: GitHubAPI, newGithub: GitHubInstallationClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+export const getBranchTask = async (
+	logger: LoggerWithTarget,
+	_github: GitHubAPI,
+	newGithub: GitHubInstallationClient,
+	_jiraHost: string,
+	repository: Repository,
+	cursor?: string | number,
+	perPage?: number) => {
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
 	perPage = perPage || 20;

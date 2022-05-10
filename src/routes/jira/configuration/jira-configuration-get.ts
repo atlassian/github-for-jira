@@ -1,12 +1,16 @@
-import { Subscription, SyncStatus } from "models/subscription";
-import { RepoSyncState } from "models/reposyncstate";
-import { NextFunction, Request, Response } from "express";
-import { statsd }  from "config/statsd";
-import { metricError } from "config/metric-names";
-import { AppInstallation, FailedAppInstallation } from "config/interfaces";
+
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { groupBy } from "lodash";
+import { NextFunction, Request, Response } from "express";
+import { Subscription, SyncStatus } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
+import { statsd }  from "config/statsd";
+import { metricError } from "config/metric-names";
+import { AppInstallation, FailedAppInstallation } from "config/interfaces";
+import { getCloudInstallationId } from "~/src/github/client/installation-id";
+import { GitHubAppClient } from "~/src/github/client/github-app-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -25,7 +29,7 @@ export interface InstallationResults {
 	total: number;
 }
 
-export const getInstallations = async (client: GitHubAPI, subscriptions: Subscription[], log?: Logger): Promise<InstallationResults> => {
+export const getInstallations = async (client: GitHubAPI, subscriptions: Subscription[], log: Logger): Promise<InstallationResults> => {
 	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(client, sub, log)));
 	// Had to add "unknown" in between type as lodash types is incorrect for
 	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
@@ -38,28 +42,35 @@ export const getInstallations = async (client: GitHubAPI, subscriptions: Subscri
 	};
 };
 
-const getInstallation = async (client: GitHubAPI, subscription: Subscription, log?: Logger): Promise<AppInstallation> => {
-	const id = subscription.gitHubInstallationId;
+const getInstallation = async (client: GitHubAPI, subscription: Subscription, log: Logger): Promise<AppInstallation> => {
+
+	const { jiraHost } = subscription;
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION, false, jiraHost) ;
+	const { gitHubInstallationId } = subscription;
+	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), log);
+
 	try {
-		const response = await client.apps.getInstallation({ installation_id: id });
+		const response = useNewGitHubClient ?
+			await gitHubAppClient.getInstallation(gitHubInstallationId) :
+			await client.apps.getInstallation({ installation_id: gitHubInstallationId });
 
 		return {
 			...response.data,
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
-			totalNumberOfRepos: await RepoSyncState.countFromSubscription(subscription),
+			totalNumberOfRepos: subscription.totalNumberOfRepos,
 			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
-			jiraHost: subscription.jiraHost
+			jiraHost
 		};
 
 	} catch (err) {
-		log?.error(
-			{ installationId: id, error: err, uninstalled: err.code === 404 },
+		log.error(
+			{ installationId: gitHubInstallationId, error: err, uninstalled: err.code === 404 },
 			"Failed connection"
 		);
 		statsd.increment(metricError.failedConnection);
 
-		return Promise.reject({ error: err, id, deleted: err.code === 404 });
+		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.code === 404 });
 	}
 };
 

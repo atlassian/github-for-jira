@@ -1,8 +1,10 @@
 import { AxiosError, AxiosResponse } from "axios";
+import { getLogger } from "config/logger";
 
 export class GithubClientError extends Error {
 	status?: number;
 	cause?: AxiosError;
+	isRetryable = false;
 
 	constructor(message: string, status?: number, cause?: AxiosError) {
 		super(message);
@@ -47,6 +49,7 @@ export type GraphQLError = {
 	type: string;
 	path?: [string];
 	extensions?: {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		[key: string]: any;
 	};
 	locations?: [
@@ -68,10 +71,14 @@ export class GithubClientGraphQLError extends GithubClientError {
 		super(message);
 		this.errors = errors;
 	}
-
 }
 
-export const isChangedFilesError = (err: GithubClientGraphQLError): boolean =>
-	!!err?.errors?.find(e => e.message?.includes("changedFiles"));
+const logger = getLogger("github.errors");
+export const isChangedFilesError = (err: GithubClientGraphQLError | GithubClientError): boolean => {
+	const bool = err instanceof GithubClientGraphQLError || !(err instanceof RateLimitingError || err instanceof GithubClientTimeoutError);
+	logger.warn({isChangedFilesError: bool , error: err}, "isChangedFilesError");
+	return bool;
+	// return !!err?.errors?.find(e => e.message?.includes("changedFiles"));
+}
 
 const ONE_HOUR_IN_SECONDS = 60 * 60;

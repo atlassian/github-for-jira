@@ -1,6 +1,5 @@
 import { getJiraId } from "~/src/jira/util/id";
-import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
 
@@ -15,11 +14,11 @@ import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request
  *  - Messages from up to the last 100 commits in that branch
  */
 const mapBranch = (branch, repository) => {
-	const branchKeys = issueKeyParser().parse(branch.name) || [];
-	const pullRequestKeys = issueKeyParser().parse(
+	const branchKeys = jiraIssueKeyParser(branch.name);
+	const pullRequestKeys = jiraIssueKeyParser(
 		branch.associatedPullRequests.nodes.length ? branch.associatedPullRequests.nodes[0].title : ""
-	) || [];
-	const commitKeys = issueKeyParser().parse(branch.target.message) || [];
+	);
+	const commitKeys = jiraIssueKeyParser(branch.target.message);
 	const allKeys = union(branchKeys, pullRequestKeys, commitKeys)
 		.filter((key) => !!key);
 
@@ -40,7 +39,7 @@ const mapBranch = (branch, repository) => {
 			hash: branch.target.oid,
 			id: branch.target.oid,
 			issueKeys: commitKeys,
-			message: branch.target.message,
+			message: limitCommitMessage(branch.target.message),
 			url: branch.target.url || undefined,
 			updateSequenceId: Date.now()
 		},
@@ -56,7 +55,7 @@ const mapBranch = (branch, repository) => {
  * to the structure needed for the DevInfo API
  */
 const mapCommit = (commit) => {
-	const issueKeys = issueKeyParser().parse(commit.message);
+	const issueKeys = jiraIssueKeyParser(commit.message);
 
 	if (isEmpty(issueKeys)) {
 		return undefined;
@@ -70,7 +69,7 @@ const mapCommit = (commit) => {
 		hash: commit.oid,
 		id: commit.oid,
 		issueKeys: issueKeys || [],
-		message: commit.message,
+		message: limitCommitMessage(commit.message),
 		timestamp: commit.authoredDate,
 		url: commit.url,
 		updateSequenceId: Date.now()
@@ -98,7 +97,7 @@ export const transformBranches = async (payload) => {
 	return {
 		branches,
 		commits,
-		id: payload.repository.id,
+		id: payload.repository.id.toString(),
 		name: payload.repository.name,
 		url: payload.repository.html_url,
 		updateSequenceId: Date.now()

@@ -1,6 +1,6 @@
 import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
 import Logger from "bunyan";
-import { statsd }  from "config/statsd";
+import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { extractPath } from "../../jira/client/axios";
@@ -105,12 +105,15 @@ export const handleFailedRequest = (logger: Logger) =>
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
-				logger.warn({ err: error }, "Blocked by GitHub allowlist");
+				logger.warn({
+					err: error,
+					remote: response.data?.message
+				}, "Blocked by GitHub allowlist");
 				return Promise.reject(new BlockedIpError(error, status));
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
-			isWarning ? logger.warn(errorMessage) : logger.error({ err: error }, errorMessage);
+			(isWarning ? logger.warn : logger.error)({ err: error, res: response }, errorMessage);
 			return Promise.reject(new GithubClientError(errorMessage, status, error));
 		}
 

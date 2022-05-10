@@ -1,10 +1,9 @@
-import issueKeyParser from "jira-issue-key-parser";
 import { JiraCommit, JiraCommitData } from "interfaces/jira";
-import { getJiraAuthor } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 
 export const mapCommit = (commit): JiraCommit | undefined => {
-	const issueKeys = issueKeyParser().parse(commit.message) || [];
+	const issueKeys = jiraIssueKeyParser(commit.message);
 	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
@@ -17,7 +16,7 @@ export const mapCommit = (commit): JiraCommit | undefined => {
 		hash: commit.oid,
 		id: commit.oid,
 		issueKeys,
-		message: commit.message,
+		message: limitCommitMessage(commit.message),
 		url: commit.url || undefined, // If blank string, don't send url
 		updateSequenceId: Date.now()
 	};
@@ -36,7 +35,7 @@ export const transformCommit = (payload): JiraCommitData | undefined => {
 
 	return {
 		commits: commits,
-		id: payload.repository.id,
+		id: payload.repository.id.toString(),
 		name: payload.repository.full_name,
 		url: payload.repository.html_url,
 		updateSequenceId: Date.now()

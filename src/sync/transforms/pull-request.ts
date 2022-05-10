@@ -1,5 +1,4 @@
-import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { Octokit } from "@octokit/rest";
 import { Repository } from "models/subscription";
@@ -21,16 +20,14 @@ interface Payload {
 export const transformPullRequest =  async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghUser?: Octokit.UsersGetByUsernameResponse) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
-	const issueKeys = issueKeyParser().parse(
-		`${pullRequest.title}\n${pullRequest.head.ref}`
-	);
+	const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}`);
 
 	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
 
 	return {
-		id: repository.id,
+		id: repository.id.toString(),
 		name: repository.full_name,
 		pullRequests: [
 			{

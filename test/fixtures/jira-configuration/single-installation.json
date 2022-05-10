@@ -56,14 +56,5 @@
 	"has_multiple_single_files": false,
 	"single_file_paths": [],
 	"suspended_by": null,
-	"suspended_at": null,
-	"syncStatus": "FINISHED",
-	"syncWarning": "",
-	"subscriptionUpdatedAt": {
-		"relative": "3 minutes ago",
-		"absolute": "November 5, 2021 4:31 am"
-	},
-	"totalNumberOfRepos": 2,
-	"numberOfSyncedRepos": 2,
-	"jiraHost": "https://fakejirahost.atlassian.net"
+	"suspended_at": null
 }

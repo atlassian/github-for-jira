@@ -7,8 +7,13 @@ import { GithubAPI } from "config/github-api";
 import { GitHubAPI } from "probot";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
+import { getLogger } from "config/logger";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-describe("Jira Configuration Suite", () => {
+jest.mock("config/feature-flags");
+
+describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s", (useNewGithubClient) => {
 	let subscription: Subscription;
 
 	beforeEach(async () => {
@@ -16,7 +21,8 @@ describe("Jira Configuration Suite", () => {
 			gitHubInstallationId: 15,
 			jiraHost,
 			jiraClientKey: "clientKey",
-			syncWarning: "some warning"
+			syncWarning: "some warning",
+			totalNumberOfRepos: 1
 		});
 
 		await RepoSyncState.create({
@@ -37,6 +43,12 @@ describe("Jira Configuration Suite", () => {
 			secrets: "def234",
 			sharedSecret: "ghi345"
 		});
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(useNewGithubClient);
 	});
 
 	const mockRequest = (): any => ({
@@ -75,17 +87,19 @@ describe("Jira Configuration Suite", () => {
 	describe("getInstallations", () => {
 		let sub: Subscription;
 		const client = GithubAPI();
+		const logger = getLogger("MOCK");
 
 		beforeEach(async () => {
 			sub = await Subscription.create({
 				gitHubInstallationId: 12345678,
 				jiraHost,
-				jiraClientKey: "myClientKey"
+				jiraClientKey: "myClientKey",
+				totalNumberOfRepos: 0
 			});
 		});
 
 		it("should return no success or failed connections if no subscriptions given", async () => {
-			expect(await getInstallations(client, [])).toEqual({
+			expect(await getInstallations(client, [], logger)).toEqual({
 				fulfilled: [],
 				rejected: [],
 				total: 0
@@ -97,7 +111,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(200, singleInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub], logger)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
@@ -115,7 +129,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub], logger)).toMatchObject({
 				fulfilled: [],
 				rejected: [{
 					error: {
@@ -143,7 +157,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${failedSub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub, failedSub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub, failedSub], logger)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
@@ -178,7 +192,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${failedSub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub, failedSub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub, failedSub], logger)).toMatchObject({
 				fulfilled: [],
 				rejected: [
 					{
@@ -202,35 +216,37 @@ describe("Jira Configuration Suite", () => {
 		});
 
 		it("should return successful connection with correct number of repos and sync status", async () => {
-			await RepoSyncState.create({
-				subscriptionId: sub.id,
-				repoId: 1,
-				repoName: "github-for-jira",
-				repoOwner: "atlassian",
-				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira",
-				pullStatus: "complete",
-				commitStatus: "complete",
-				branchStatus: "complete"
-			});
-
-			await RepoSyncState.create({
-				subscriptionId: sub.id,
-				repoId: 1,
-				repoName: "github-for-jira",
-				repoOwner: "atlassian",
-				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira",
-				pullStatus: "pending",
-				commitStatus: "complete",
-				branchStatus: "complete"
-			});
+			await Promise.all([
+				RepoSyncState.create({
+					subscriptionId: sub.id,
+					repoId: 1,
+					repoName: "github-for-jira",
+					repoOwner: "atlassian",
+					repoFullName: "atlassian/github-for-jira",
+					repoUrl: "github.com/atlassian/github-for-jira",
+					pullStatus: "complete",
+					commitStatus: "complete",
+					branchStatus: "complete"
+				}),
+				RepoSyncState.create({
+					subscriptionId: sub.id,
+					repoId: 1,
+					repoName: "github-for-jira",
+					repoOwner: "atlassian",
+					repoFullName: "atlassian/github-for-jira",
+					repoUrl: "github.com/atlassian/github-for-jira",
+					pullStatus: "pending",
+					commitStatus: "complete",
+					branchStatus: "complete"
+				}),
+				sub.update({ totalNumberOfRepos: 2 })
+			]);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(200, singleInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub])).toMatchObject({
+			expect(await getInstallations(GitHubAPI(), [sub], logger)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
@@ -243,5 +259,4 @@ describe("Jira Configuration Suite", () => {
 			});
 		});
 	});
-
 });

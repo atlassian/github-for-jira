@@ -370,6 +370,7 @@ environmentOverrides:
         APP_URL: https://github.stg.atlassian.com
         WEBHOOK_PROXY_URL: https://github.stg.atlassian.com
         INSTANCE_NAME: staging
+        LOG_LEVEL: debug
         SENTRY_ENVIRONMENT: stg-west
         APP_ID: '12645'
         GITHUB_CLIENT_ID: Iv1.2d8e2a184a746aec
@@ -569,6 +570,7 @@ environmentOverrides:
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
 
+      # Remove this after new discovery backfill process is deployed
       - type: sqs
         name: discovery
         alarms:

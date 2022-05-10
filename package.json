@@ -5,7 +5,7 @@
 	"repository": "https://github.com/atlassian/github-for-jira.git",
 	"engines": {
 		"node": ">= 14.16 <15",
-		"npm": "^6.12.0"
+		"yarn": "^1.22.0"
 	},
 	"main": "src/main",
 	"scripts": {
@@ -70,10 +70,9 @@
 		"helmet": "^3.21.2",
 		"hot-shots": "^8.3.2",
 		"ioredis": "^4.16.3",
-		"jira-issue-key-parser": "0.0.11",
 		"launchdarkly-node-server-sdk": "^6.2.0",
 		"lodash": "^4.17.21",
-		"moment": "^2.24.0",
+		"moment": "^2.29.2",
 		"moo": "^0.5.0",
 		"pg": "^8.7.3",
 		"primer": "^10.6.0",
@@ -103,7 +102,7 @@
 		"@types/lodash": "^4.14.178",
 		"@types/moo": "^0.5.4",
 		"@types/newrelic": "^6.2.0",
-		"@types/node": "~14.14.44",
+		"@types/node": "~14.18.16",
 		"@types/rate-limit-redis": "^1.7.1",
 		"@types/supertest": "^2.0.11",
 		"@typescript-eslint/eslint-plugin": "~5.12.0",
@@ -135,6 +134,7 @@
 		"yaml-lint": "^1.2.4"
 	},
 	"volta": {
-		"node": "14.17.0"
+		"node": "14.17.0",
+		"yarn": "1.22.18"
 	}
 }

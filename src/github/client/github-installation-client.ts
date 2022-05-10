@@ -15,7 +15,7 @@ import {
 	getBranchesResponse,
 	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
-	getCommitsResponse,
+	getCommitsResponse, GetRepositoriesQuery, GetRepositoriesResponse,
 	ViewerRepositoryCountQuery
 } from "./github-queries";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
@@ -30,7 +30,7 @@ export class GitHubInstallationClient {
 	private readonly axios: AxiosInstance;
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
-	private readonly githubInstallationId: InstallationId;
+	public readonly githubInstallationId: InstallationId;
 	private readonly logger: Logger;
 
 	constructor(
@@ -141,7 +141,21 @@ export class GitHubInstallationClient {
 	/**
 	 * Get a page of repositories.
 	 */
-	public getRepositoriesPage = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
+	public getRepositoriesPage = async (per_page = 1, cursor?: string): Promise<GetRepositoriesResponse> => {
+		try {
+			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
+				per_page,
+				cursor
+			});
+			return response.data.data;
+		} catch (err) {
+			err.isRetryable = true;
+			throw err;
+		}
+	};
+
+	// TODO: remove this function after discovery backfill is deployed
+	public getRepositoriesPageOld = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
 		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
 			perPage: 100,
 			page
@@ -182,7 +196,7 @@ export class GitHubInstallationClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage: number, cursor?: string): Promise<getBranchesResponse> {
+	public async getBranchesPage(owner: string, repoName: string, perPage = 1, cursor?: string): Promise<getBranchesResponse> {
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles,
 			{
 				owner,
@@ -316,8 +330,9 @@ export class GitHubInstallationClient {
 				...await this.installationAuthenticationHeaders()
 			});
 
-		const graphqlErrors = response.data.errors;
+		const graphqlErrors = response.data?.errors;
 		if (graphqlErrors?.length) {
+			this.logger.warn({ res: response }, "GraphQL errors");
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
 				return Promise.reject(new RateLimitingError(response));
 			}
