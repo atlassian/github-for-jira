@@ -221,8 +221,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	let { repository } = nextTask;
 
 	// TESTING - TEMP TO FORCE THIS BRANCH 
-	if (repositoryId) {
-	// if (!nextTask.repository && repositoryId) {
+	if (!nextTask.repository && repositoryId) {
 		// Old records don't have this info. New ones have it
 		const { data: repo } = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_REPO, false, subscription.jiraHost) ?
 			await gitHubInstallationClient.getRepository(nextTask.repositoryId) :
