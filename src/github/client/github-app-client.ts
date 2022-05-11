@@ -22,12 +22,13 @@ export class GitHubAppClient {
 
 	constructor(
 		logger: Logger,
-		appId = envVars.GITHUB_CLIENT_ID,
+		appId = envVars.APP_ID,
 		baseURL = "https://api.github.com"
 	) {
 		this.logger = logger || getLogger("github.app.client");
 		// TODO - change this for GHE, to get from github apps table
 		const privateKey = PrivateKey.findPrivateKey() || "";
+
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 		this.axios = axios.create({
 			baseURL,
