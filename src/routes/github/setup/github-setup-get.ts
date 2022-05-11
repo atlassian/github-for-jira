@@ -3,7 +3,6 @@ import Logger from "bunyan";
 import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "utils/jira-utils";
 import { Installation } from "models/installation";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubAPI } from "probot";
 
@@ -21,7 +20,7 @@ import { GitHubAPI } from "probot";
 const getInstallationData = async (githubAppClient: GitHubAppClient | GitHubAPI, githubInstallationId: number, logger: Logger) => {
 	let githubInstallation;
 
-	const { data: info } = githubAppClient instanceof GitHubAppClient ? 
+	const { data: info } = githubAppClient instanceof GitHubAppClient ?
 		await githubAppClient.getApp() :
 		await githubAppClient.apps.getAuthenticated();
 
@@ -45,7 +44,7 @@ const getInstallationData = async (githubAppClient: GitHubAppClient | GitHubAPI,
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost, client } = res.locals;
 	const githubInstallationId = Number(req.query.installation_id);
-	const githubAppClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), req.log);
+	const githubAppClient = new GitHubAppClient(req.log);
 	const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP, false, jiraHost);
 	const { githubInstallation, info } = await getInstallationData(useNewGithubClient ? githubAppClient : client, githubInstallationId, req.log);
 

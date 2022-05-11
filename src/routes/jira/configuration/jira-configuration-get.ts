@@ -7,7 +7,6 @@ import { RepoSyncState } from "models/reposyncstate";
 import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
-import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
@@ -46,7 +45,7 @@ const getInstallation = async (client: GitHubAPI, subscription: Subscription, lo
 	const { jiraHost } = subscription;
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION, false, jiraHost) ;
 	const { gitHubInstallationId } = subscription;
-	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), log);
+	const gitHubAppClient = new GitHubAppClient(log);
 
 	try {
 		const response = useNewGitHubClient ?
