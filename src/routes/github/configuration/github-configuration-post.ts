@@ -7,7 +7,6 @@ import { findOrStartSync } from "~/src/sync/sync-utils";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
@@ -58,7 +57,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	try {
 		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, false, jiraHost);
 		const gitHubUserClient = new GitHubUserClient(githubToken, req.log);
-		const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), req.log);
+		const gitHubAppClient = new GitHubAppClient(req.log);
 
 		// Check if the user that posted this has access to the installation ID they're requesting
 		if (!await hasAdminAccess(useNewGithubClient ? gitHubAppClient : client, gitHubUserClient, gitHubInstallationId, req.log)) {
