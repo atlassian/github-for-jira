@@ -2,13 +2,12 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import format from "date-fns/format";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId } = req.params;
 	const { client } = res.locals;
-	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(+installationId), req.log);
+	const gitHubAppClient = new GitHubAppClient(req.log);
 
 	try {
 		const subscriptions = await Subscription.getAllForInstallation(Number(installationId));
