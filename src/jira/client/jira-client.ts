@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation} from "models/installation";
+import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import {JiraCommit, JiraIssue, JiraRemoteLink} from "interfaces/jira";
+import { JiraCommit, JiraIssue, JiraRemoteLink } from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
@@ -321,7 +321,7 @@ export const getJiraClient = async (
 	};
 
 	return client;
-}
+};
 
 /**
  * Splits commits in data payload into chunks of 400 and makes separate requests
@@ -379,7 +379,7 @@ const withinIssueKeyAssociationsLimit = (resources: JiraRemoteLink[]): boolean =
 
 	const issueKeyCounts = resources.filter(resource => resource.associations?.length > 0).map((resource) => resource.associations[0].values.length);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
-}
+};
 
 /**
  * Deduplicates commits by ID field for a repository payload
@@ -440,7 +440,7 @@ const updateRepositoryIssueKeys = (repositoryObj, logger?) => {
 	}
 
 	if (!repositoryObj.commits && !repositoryObj.branches) {
-		logger?.warn("No branches or commits found. Cannot update.");
+		logger?.warn({ data: repositoryObj }, "No branches or commits found. Cannot update.");
 	}
 };
 
@@ -461,10 +461,10 @@ const updateIssueKeysFor = (resources, func) => {
  */
 const updateIssueKeyAssociationValuesFor = (resources: JiraRemoteLink[], mutatingFunc: any): JiraRemoteLink[] => {
 	resources?.forEach(resource => {
-		if(resource.associations?.length > 0){
-			resource.associations[0].values = mutatingFunc(resource.associations[0].values)
+		if (resource.associations?.length > 0) {
+			resource.associations[0].values = mutatingFunc(resource.associations[0].values);
 		}
-	})
+	});
 
 
 	return resources;
