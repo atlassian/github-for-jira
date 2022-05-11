@@ -6,7 +6,9 @@ import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setReq
 import { metricHttpRequest } from "config/metric-names";
 import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
-import { InstallationId } from "./installation-id";
+import * as PrivateKey from "probot/lib/private-key";
+import { envVars } from "config/env";
+import { AuthToken } from "~/src/github/client/auth-token";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -15,19 +17,20 @@ import { InstallationId } from "./installation-id";
  */
 export class GitHubAppClient {
 	private readonly axios: AxiosInstance;
-	private readonly appTokenHolder: AppTokenHolder;
-	private readonly githubInstallationId: InstallationId;
+	private readonly appToken: AuthToken;
 	private readonly logger: Logger;
 
 	constructor(
-		githubInstallationId: InstallationId,
 		logger: Logger,
-		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
+		appId = envVars.GITHUB_CLIENT_ID,
+		baseURL = "https://api.github.com"
 	) {
 		this.logger = logger || getLogger("github.app.client");
-
+		// TODO - change this for GHE, to get from github apps table
+		const privateKey = PrivateKey.findPrivateKey() || "";
+		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 		this.axios = axios.create({
-			baseURL: githubInstallationId.githubBaseUrl,
+			baseURL,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -54,8 +57,6 @@ export class GitHubAppClient {
 				}
 			};
 		});
-		this.appTokenHolder = appTokenHolder;
-		this.githubInstallationId = githubInstallationId;
 	}
 
 	public getUserMembershipForOrg = async (username: string, org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
@@ -75,10 +76,9 @@ export class GitHubAppClient {
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
-		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			Accept: "application/vnd.github.v3+json",
-			Authorization: `Bearer ${appToken.token}`
+			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}
 
