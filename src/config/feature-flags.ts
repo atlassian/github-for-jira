@@ -13,10 +13,8 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	USE_NEW_GITHUB_CLIENT__FOR_PR = "git-hub-client-for-pullrequests",
 	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS = "support-branch-and-merge-workflows-for-deployments",
 	TRACE_LOGGING = "trace-logging",
-	USE_SQS_FOR_BRANCH = "use-sqs-for-branch",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
@@ -26,7 +24,9 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
-	REGEX_FIX = "regex-fix"
+	REGEX_FIX = "regex-fix",
+	REPO_DISCOVERY_BACKFILL = "repo-discovery-backfill",
+	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect"
 }
 
 export enum StringFlags {
