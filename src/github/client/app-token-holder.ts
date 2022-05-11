@@ -44,7 +44,7 @@ export class AppTokenHolder {
 	/**
 	 * Generates a JWT using the private key of the GitHub app to authorize against the GitHub API.
 	 */
-	private static createAppJwt(key: string, appId: number): AuthToken {
+	public static createAppJwt(key: string, appId: string): AuthToken {
 
 		const expirationDate = new Date(Date.now() + TEN_MINUTES);
 
@@ -54,7 +54,7 @@ export class AppTokenHolder {
 			// expiration date, GitHub allows max 10 minutes
 			exp: Math.floor(expirationDate.getTime() / 1000),
 			// issuer is the GitHub app ID
-			iss: appId.toString()
+			iss: appId
 		};
 
 		return new AuthToken(
@@ -71,7 +71,7 @@ export class AppTokenHolder {
 
 		if (!currentToken || currentToken.isAboutToExpire()) {
 			const key = this.privateKeyLocator(appId);
-			currentToken = AppTokenHolder.createAppJwt(key, appId.appId);
+			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString());
 			this.appTokenCache.set(appId.toString(), currentToken);
 		}
 		return currentToken;
