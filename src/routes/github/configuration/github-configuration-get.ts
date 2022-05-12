@@ -129,7 +129,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, true);
 	const githubUserClient = new GitHubUserClient(githubToken, log);
 
-	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
+	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, true);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
 
 	tracer.trace("found github token");
@@ -147,6 +147,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	// Remove any failed installations before a user attempts to reconnect
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const allInstallations = await getInstallations(client, subscriptions, log);
+
 	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost);
 
 	tracer.trace(`removed failed installations`);
@@ -156,6 +157,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		// we can get the jira client Key from the JWT's `iss` property
 		// so we'll decode the JWT here and verify it's the right key before continuing
 		const installation = await Installation.getForHost(jiraHost);
+
 		if (!installation) {
 			tracer.trace(`missing installation`);
 			log.warn({ req, res }, "Missing installation");
@@ -178,7 +180,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const installationsWithAdmin = await getInstallationsWithAdmin(githubUserClient, log, login, installations);
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, true, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
 		}
 
@@ -206,6 +208,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		}
 
 		tracer.trace(`got connected installations`);
+
 
 		res.render("github-configuration.hbs", {
 			csrfToken: req.csrfToken(),

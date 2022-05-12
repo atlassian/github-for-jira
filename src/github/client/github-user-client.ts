@@ -30,7 +30,7 @@ export class GitHubUserClient {
 				...config,
 				headers: {
 					...config.headers,
-					Accept: "application/vnd.github.machine-man-preview+json",
+					Accept: "application/vnd.github.machine-man-preview+json", // connect github organization
 					// Accept: "application/vnd.github.v3+json",
 					Authorization: `token ${this.userToken}`
 				}

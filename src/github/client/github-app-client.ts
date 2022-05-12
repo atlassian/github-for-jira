@@ -77,7 +77,8 @@ export class GitHubAppClient {
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
 		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
-			Accept: "application/vnd.github.v3+json",
+			// Accept: "application/vnd.github.v3+json",
+			Accept: "application/vnd.github.machine-man-preview+json",
 			Authorization: `Bearer ${appToken.token}`
 		};
 	}
@@ -86,11 +87,13 @@ export class GitHubAppClient {
 	 * This path requires JWT, therefore passing the token directly into the header.
 	 */
 	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
-		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations/{installationId}`, {
+		const response = await this.axios.get<Octokit.AppsGetInstallationResponse>(`/installations/{installationId}`, {
 			urlParams: {
 				installationId
 			}
 		});
+
+		return response;
 	};
 
 	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {

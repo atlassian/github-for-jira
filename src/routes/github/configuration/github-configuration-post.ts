@@ -2,12 +2,18 @@ import { Subscription } from "models/subscription";
 import { getHashedKey } from "models/sequelize";
 import { Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
+import {booleanFlag, BooleanFlags} from "config/feature-flags";
+import {GitHubAppClient} from "~/src/github/client/github-app-client";
+
 
 /**
  * Handle the when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
 	const { github, client, githubToken, jiraHost } = res.locals;
+
+	// const useNewGitHubAppClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, true);
+	const githubAppClient = new GitHubAppClient(githubToken, req.log);
 
 	if (!githubToken || !jiraHost) {
 		res.sendStatus(401);
@@ -36,7 +42,8 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 	// Check if the user that posted this has access to the installation ID they're requesting
 	try {
-		const installation = await client.apps.getInstallation({ installation_id: installationId })
+		const installation = await githubAppClient.getInstallation(installationId)
+		// const installation = await client.apps.getInstallation({ installation_id: installationId })
 			.then(r => r.data, () => undefined);
 
 		if (!installation) {

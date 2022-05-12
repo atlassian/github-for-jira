@@ -63,7 +63,7 @@ const secureHeaders = (router: Router, frontendApp: Express) => {
 			//Send SCP reports to Atlassian security monitoring
 			reportUri: "https://web-security-reports.services.atlassian.com/csp-report/github-for-jira",
 			// Allow self-hosted images, data: images, organization images and the error image
-			imgSrc: ["'self'", "data:", "https://*.githubusercontent.com", "https://octodex.github.com"]
+			imgSrc: ["'self'", "data:", "https://*.githubusercontent.com", "http://github.internal.atlassian.com"]
 		}
 	}));
 	// Enable HSTS with the value we use for education.github.com

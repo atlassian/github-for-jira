@@ -44,6 +44,10 @@ export class GitHubInstallationClient {
 			baseURL: githubInstallationId.githubBaseUrl,
 			transitional: {
 				clarifyTimeoutError: true
+			},
+			headers: {
+				Accept: "application/vnd.github.machine-man-preview+json"
+				// Accept: "application/vnd.github.v3+json",
 			}
 		});
 
@@ -186,9 +190,14 @@ export class GitHubInstallationClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
+		const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
+			perPage: 100,
+		});
 
-		return response?.data?.data?.viewer?.repositories?.totalCount;
+		// const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
+
+		// return response?.data?.data?.viewer?.repositories?.totalCount;
+		return response.data.total_count;
 	}
 
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, cursor?: string): Promise<getBranchesResponse> {
@@ -262,7 +271,8 @@ export class GitHubInstallationClient {
 		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
-				Accept: "application/vnd.github.v3+json",
+				Accept: "application/vnd.github.machine-man-preview+json",
+				// Accept: "application/vnd.github.v3+json",
 				Authorization: `Bearer ${appToken.token}`
 			}
 		};
@@ -277,7 +287,8 @@ export class GitHubInstallationClient {
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
-				Accept: "application/vnd.github.v3+json",
+				Accept: "application/vnd.github.machine-man-preview+json",
+				// Accept: "application/vnd.github.v3+json",
 				Authorization: `Bearer ${installationToken.token}`
 			}
 		};
