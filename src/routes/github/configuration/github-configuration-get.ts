@@ -118,7 +118,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		jiraHost,
 		githubToken,
 		github, // user-authenticated GitHub client
-		client, // app-authenticated GitHub client
+		client // app-authenticated GitHub client
 	} = res.locals;
 	const log = req.log.child({ jiraHost });
 
