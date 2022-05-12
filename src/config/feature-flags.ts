@@ -22,11 +22,13 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION = "use-new-github-client-for-delete-subscription",
 	USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION = "use-new-github-client-for-get-subscription",
 	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation",
-	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
 	BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS = "run-backfill-for-builds-and-deployments",
+	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST = "use-new-github-client-for-github-config-post",
+	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
 	REGEX_FIX = "regex-fix",
 	REPO_DISCOVERY_BACKFILL = "repo-discovery-backfill",
+	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
 	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect"
 }
 
