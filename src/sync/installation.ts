@@ -12,7 +12,7 @@ import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { booleanFlag, BooleanFlags, isBlocked } from "config/feature-flags";
+import { isBlocked, BooleanFlags, booleanFlag } from "config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import IORedis from "ioredis";
@@ -63,7 +63,7 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	);
 
 const getNextTask = async (subscription: Subscription): Promise<Task | undefined> => {
-	if (await booleanFlag(BooleanFlags.REPO_DISCOVERY_BACKFILL, false, subscription.jiraHost) && subscription.repositoryStatus !== "complete") {
+	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
 			repositoryId: 0,
