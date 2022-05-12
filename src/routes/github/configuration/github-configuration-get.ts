@@ -180,7 +180,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const installationsWithAdmin = await getInstallationsWithAdmin(githubUserClient, log, login, installations);
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, true, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
 		}
 
