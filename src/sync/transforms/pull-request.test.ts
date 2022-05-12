@@ -34,7 +34,7 @@ describe("pull_request transform", () => {
 		const data = await transformPullRequest(fixture as any, pullRequest);
 
 		expect(data).toMatchObject({
-			id: 1234568,
+			id: "1234568",
 			name: "test-owner/test-repo",
 			pullRequests: [
 				{

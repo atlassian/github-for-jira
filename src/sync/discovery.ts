@@ -1,76 +1,78 @@
-import { getRepositorySummary } from "./jobs";
 import { Subscription, Repositories, Repository } from "models/subscription";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { sqsQueues } from "../sqs/queues";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
-import { DiscoveryMessagePayload } from "../sqs/discovery";
+import { GitHubAPI } from "probot";
+import { TaskPayload } from "~/src/sync/installation";
 
 /*
 * Mapping the response data into a map by repo.id as required by subscription.updateSyncState.
 */
 const mapRepositories = (repositories: Repository[]): Repositories => {
 	return repositories.reduce((obj, repo) => {
-		obj[repo.id] = { repository: getRepositorySummary(repo) };
+		obj[repo.id] = { repository: repo };
 		return obj;
 	}, {});
 };
 
 /*
-* Reset the sync count to zero.
-*/
-const resetSyncedReposCount = async (subscription: Subscription): Promise<void> => {
-	await subscription.updateSyncState({ numberOfSyncedRepos: 0 });
-};
-
-/*
 * Update the sync status of a batch of repos.
 */
-const updateSyncState = async (subscription: Subscription, repositories: Repository[]): Promise<void> => {
-	const repos = mapRepositories(repositories);
-	await subscription.updateSyncState({
-		repos
-	});
+const updateSyncState = async (subscription: Subscription, repositories: Repository[], totalNumberOfRepos: number): Promise<void> => {
+	await Promise.all([
+		subscription.updateSyncState({
+			repos: mapRepositories(repositories)
+		}),
+		subscription.update({ totalNumberOfRepos })
+	]);
 };
 
-/*
-* Continuosuly call the GitHub repo to fetch a page of repositories at a time and update there sync status until no more pages.
-*/
-const syncRepositories = async (github, subscription: Subscription, logger: LoggerWithTarget): Promise<void> => {
-	let page = 1;
-	let requestNextPage = true;
-	await resetSyncedReposCount(subscription);
-	while (requestNextPage) {
-		try {
-			const { data, hasNextPage } = await github.getRepositoriesPage(page);
-			requestNextPage = hasNextPage;
-			await updateSyncState(subscription, data.repositories);
-			logger.info(`${data.repositories.length} Repositories syncing`);
-			page++;
-		} catch (err) {
-			requestNextPage = false;
-			throw new Error(err);
-		}
-	}
-};
-
-/*
-* Use the github client to request all repositories and update the sync state per repo, send a bacnkfill queue message once complete.
-*/
-export const discovery = async (data: DiscoveryMessagePayload, logger: LoggerWithTarget): Promise<void> => {
-	const startTime = new Date().toISOString();
-	const { jiraHost, installationId } = data;
-	const github = new GitHubInstallationClient(getCloudInstallationId(installationId), logger);
+export const getRepositoryTask = async (
+	logger: LoggerWithTarget,
+	_github: GitHubAPI,
+	newGithub: GitHubInstallationClient,
+	jiraHost: string,
+	_repository: Repository,
+	cursor?: string | number,
+	perPage?: number
+): Promise<TaskPayload> => {
+	logger.debug("Repository Discovery: started");
+	const installationId = newGithub.githubInstallationId.installationId;
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId
 	);
 
 	if (!subscription) {
-		logger.info({ jiraHost, installationId }, "Subscription has been removed, ignoring job.");
-		return;
+		logger.warn({ jiraHost, installationId }, "Subscription has been removed, ignoring repository task.");
+		return { edges: [], jiraPayload: undefined };
 	}
 
-	await syncRepositories(github, subscription, logger);
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime }, 0, logger);
+	const {
+		viewer: {
+			repositories: {
+				totalCount,
+				pageInfo: {
+					endCursor: nextCursor,
+					hasNextPage
+				},
+				edges
+			}
+		}
+	} = await newGithub.getRepositoriesPage(perPage, cursor as string);
+
+	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
+	// fetches the cursor from one of the edges instead of letting us return it explicitly.
+	const edgesWithCursor = edges.map((edge) => ({ ...edge, cursor: nextCursor }));
+	const repositories = edges.map(edge => edge?.node);
+
+	await updateSyncState(subscription, repositories, totalCount);
+	logger.debug({ repositories }, `Added ${repositories.length} Repositories to state`);
+	logger.info(`Added ${repositories.length} Repositories to state`);
+
+	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
+
+	return {
+		edges: edgesWithCursor,
+		jiraPayload: undefined // Nothing to save to jira just yet
+	};
 };

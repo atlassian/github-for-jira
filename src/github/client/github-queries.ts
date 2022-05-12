@@ -1,4 +1,4 @@
-import { Repository } from "@octokit/graphql-schema";
+import { Repository } from "models/subscription";
 
 export const ViewerRepositoryCountQuery = `
 query {
@@ -9,22 +9,27 @@ query {
 	}
 }`;
 
-type RepositoryNode = {
-	node: Repository
+interface RepositoryNode {
+	node: Repository;
 }
 
-export type GetRepositoriesResponse = {
+export interface GetRepositoriesResponse {
 	viewer: {
 		repositories: {
-			pageInfo,
-			edges: RepositoryNode[]
+			totalCount: number;
+			pageInfo: {
+				endCursor: string;
+				hasNextPage: boolean;
+			};
+			edges: RepositoryNode[];
 		}
-	}
-};
+	};
+}
 
 export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
   viewer {
     repositories(first: $per_page, after: $cursor) {
+      totalCount
       pageInfo {
         endCursor
         hasNextPage
@@ -168,7 +173,50 @@ export const getCommitsQueryWithoutChangedFiles = `query ($owner: String!, $repo
   }
   }`;
 
-export type getBranchesResponse = { repository: Repository };
+export type getBranchesResponse = {
+	repository: {
+		refs: {
+			edges: {
+				cursor: string;
+				node: {
+					associatedPullRequests: {
+						nodes: { title: string }[];
+					},
+					name: string;
+					target: {
+						author: {
+							avatarUrl: string;
+							email: string;
+							name: string;
+						},
+						authoredDate: string;
+						changedFiles: number;
+						oid: string;
+						message: string;
+						url: string;
+						history: {
+							nodes: {
+								message: string;
+								oid: string;
+								authoredDate: string;
+								author: {
+									avatarUrl: string;
+									email: string;
+									name: string;
+									user: {
+										url: string;
+									}
+								},
+								url: string;
+							}[]
+						}
+					}
+				}
+			}[]
+		}
+	}
+};
+
 export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {

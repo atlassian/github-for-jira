@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
-import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
@@ -12,7 +11,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION, false, jiraHost) ;
-	const gitHubAppClient = new GitHubAppClient(getCloudInstallationId(gitHubInstallationId), logger);
+	const gitHubAppClient = new GitHubAppClient(logger);
 	const gitHubUserClient = new GitHubUserClient(githubToken, logger);
 
 	if (!githubToken) {

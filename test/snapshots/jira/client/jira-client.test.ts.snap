@@ -40,6 +40,9 @@ Object {
       "getForIssue": [Function],
     },
   },
+  "remoteLink": Object {
+    "submit": [Function],
+  },
   "workflow": Object {
     "submit": [Function],
   },
