@@ -90,15 +90,6 @@ resources:
         - PII/IndirectConfidential # name of GitHub org
 
   - type: sqs
-    name: discovery
-    attributes:
-      MaxReceiveCount: 3
-      MessageRetentionPeriod: 1209600
-      VisibilityTimeout: 602 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails.
-      dataType:
-        - UGC/Label                # name of Jira site
-
-  - type: sqs
     name: push
     attributes:
       MaxReceiveCount: 5
@@ -561,24 +552,6 @@ environmentOverrides:
             Namespace: AWS/SQS
             Description: "Message count for backfill queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
             Threshold: 30 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
-            Priority: High
-            Dimensions:
-              - Name: QueueName
-                Value: { "Ref": "QueueName" }
-            EvaluationPeriods: 5
-            Period: 300
-            ComparisonOperator: GreaterThanThreshold
-            Statistic: Maximum
-
-      # Remove this after new discovery backfill process is deployed
-      - type: sqs
-        name: discovery
-        alarms:
-          AlarmOnTooManyMessages:
-            MetricName: ApproximateNumberOfMessagesVisible
-            Namespace: AWS/SQS
-            Description: "Message count for discovery queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
-            Threshold: 5 #Discovery queue rarely gets messages so if we see 5 messages stuck on the queue, it should be an alarm
             Priority: High
             Dimensions:
               - Name: QueueName
