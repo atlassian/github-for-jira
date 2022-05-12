@@ -83,7 +83,7 @@ const callQueues = async () => {
 
 const waitForQueues = async () => {
 	console.info("Waiting on SQS queues to be available...");
-	// Call localstack 3 times until ready
+	// Call localstack 5 times until ready
 	await callQueues()
 		.catch(() => wait(5000).then(callQueues))
 		.catch(() => wait(5000).then(callQueues))
