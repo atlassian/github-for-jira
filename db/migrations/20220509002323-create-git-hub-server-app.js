@@ -2,25 +2,21 @@
 
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
-		return queryInterface.createTable('GithubApps', {
+		return queryInterface.createTable('GitHubServerApps', {
 			id: {
 				allowNull: false,
 				autoIncrement: true,
 				primaryKey: true,
 				type: Sequelize.INTEGER
 			},
+			uuid: {
+				allowNull: false,
+				unique: true,
+				type: Sequelize.STRING
+			},
 			githubBaseUrl: {
 				allowNull: false,
 				type: Sequelize.STRING
-			},
-			githubApiBaseUrl: {
-				allowNull: false,
-				type: Sequelize.STRING
-			},
-			githubServerType: {
-				allowNull: false,
-				type: Sequelize.ENUM("cloud", "ghe")
-
 			},
 			githubClientId: {
 				allowNull: false,
@@ -42,6 +38,6 @@ module.exports = {
 	},
 
 	down: async (queryInterface, Sequelize) => {
-		return queryInterface.dropTable('GithubApps')
+		return queryInterface.dropTable('GitHubServerApps')
 	}
 };
