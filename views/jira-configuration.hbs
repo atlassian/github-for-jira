@@ -170,15 +170,6 @@
 
                     {{! Backfill status }}
                     <td class="jiraConfiguration__table__cell">
-                      {{!-- Display any sync warnings --}}
-                      {{#if syncWarning}}
-                        <div class="jiraConfiguration__syncWarning">
-                          <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
-                            Sync failed warnings
-                          </span> 
-                          <div class="jiraConfiguration__syncWarningMessage">{{syncWarning}}</div>
-                        </div>
-                      {{/if}}
                       {{syncWarning}}
                       <span
                         id="{{id}}-status"
@@ -189,6 +180,21 @@
                       >
                         {{syncStatus}}
                       </span>
+                      {{!-- Display any sync warnings --}}
+                      {{#if syncWarning}}
+                        <div class="jiraConfiguration__syncWarning">
+                          <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
+                            Sync failed warnings
+                          </span> 
+                          <div class="jiraConfiguration__syncWarningMessage">
+                            {{!-- {{#if isBuildPermissionsError}} --}}
+                            <span>Build tasks have not been backfilled. Please <a href="{{html_url}}">accept build permissions</a> on GitHub (you must be the admin of your organization), then retry backfill.</span>{{syncWarning}}
+                            {{!-- {{else}}
+                            <span>{{syncWarning}}</span>
+                            {{/if}} --}}
+                            </div>
+                        </div>
+                      {{/if}}
                       {{#if (inProgressOrPendingSync syncStatus)}}
                         <div class="jiraConfiguration__loaderContainer">
                           <aui-spinner size="small"></aui-spinner>
