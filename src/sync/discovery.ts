@@ -3,9 +3,6 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { GitHubAPI } from "probot";
 import { TaskPayload } from "~/src/sync/installation";
-import { DiscoveryMessagePayload } from "~/src/sqs/discovery";
-import { getCloudInstallationId } from "~/src/github/client/installation-id";
-import { sqsQueues } from "~/src/sqs/queues";
 
 /*
 * Mapping the response data into a map by repo.id as required by subscription.updateSyncState.
@@ -78,41 +75,4 @@ export const getRepositoryTask = async (
 		edges: edgesWithCursor,
 		jiraPayload: undefined // Nothing to save to jira just yet
 	};
-};
-
-// TODO: remove everything after this line once new discovery backfill is deployed
-export const discovery = async (data: DiscoveryMessagePayload, logger: LoggerWithTarget): Promise<void> => {
-	const startTime = new Date().toISOString();
-	const { jiraHost, installationId } = data;
-	const github = new GitHubInstallationClient(getCloudInstallationId(installationId), logger);
-	const subscription = await Subscription.getSingleInstallation(
-		jiraHost,
-		installationId
-	);
-
-	if (!subscription) {
-		logger.info({ jiraHost, installationId }, "Subscription has been removed, ignoring job.");
-		return;
-	}
-
-	await syncRepositories(github, subscription, logger);
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime }, 0, logger);
-};
-
-const syncRepositories = async (github: GitHubInstallationClient, subscription: Subscription, logger: LoggerWithTarget): Promise<void> => {
-	let page = 1;
-	let requestNextPage = true;
-	await subscription.updateSyncState({ numberOfSyncedRepos: 0 });
-	while (requestNextPage) {
-		try {
-			const { data, hasNextPage } = await github.getRepositoriesPageOld(page);
-			requestNextPage = hasNextPage;
-			await updateSyncState(subscription, data.repositories, data.total_count);
-			logger.info(`${data.repositories.length} Repositories syncing`);
-			page++;
-		} catch (err) {
-			requestNextPage = false;
-			throw new Error(err);
-		}
-	}
 };

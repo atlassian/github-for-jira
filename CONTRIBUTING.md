@@ -83,14 +83,14 @@ Once you've set up your GitHub app and cloned this repo, copy the content from `
 The first time you run the app, simply run:
 
 ```
-npm install # installs node modules
+yarn install # installs node modules
 docker-compose up # Spin up docker containers
-npm run init # Creates DBs and initializes tables, creates sqs queues
+yarn run init # Creates DBs and initializes tables, creates sqs queues
 ```
 
 That's it.  Everything is ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread).
 If you want to debug, you can connect to the remote port of 9229 for the main thread and 9230 for the worker thread in docker.  Any changes to the code will restart the node server automatically.
-For tests, run `npm test`.
+For tests, run `yarn test`.
 If you want to run a different tunneling tool, run `docker-compose up app` instead as it will only bring up the app and its dependencies (redis & postgres).  You can then run you tunnelling tool to point to `http://app:8080`.
 
 ### Installing the App
@@ -129,7 +129,7 @@ That being said, here are the steps needed to create a Pull Request for us to re
 1. [Sign the CLA first!](#contributor-license-agreement)
 1. Fork the repository.
 1. Do your changes either on the main branch or create a new one.
-1. Make sure the tests pass on your machine with `npm test` and the build works with `npm run build`.  If you're adding new functionality, please add tests to reflect this.
+1. Make sure the tests pass on your machine with `yarn test` and the build works with `yarn run build`.  If you're adding new functionality, please add tests to reflect this.
 1. Commit and Push your changes - verify it passes all checks.
 1. Submit your pull request with a detailed message about what's changed.
 1. Wait for us to review and answer questions/make changes where requested.
