@@ -11,8 +11,10 @@ GitHubServerApp.init({
 		autoIncrement: true
 	},
 	uuid: {
-		type: DataTypes.STRING,
-		unique: true
+		type: DataTypes.UUID,
+		defaultValue: DataTypes.UUIDV4,
+		unique: true,
+		allowNull: false
 	},
 	githubBaseUrl: {
 		type: DataTypes.STRING,

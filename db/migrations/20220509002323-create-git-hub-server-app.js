@@ -12,7 +12,7 @@ module.exports = {
 			uuid: {
 				allowNull: false,
 				unique: true,
-				type: Sequelize.STRING
+				type: Sequelize.UUID
 			},
 			githubBaseUrl: {
 				allowNull: false,
