@@ -7,7 +7,7 @@ import { sqsQueues } from "../sqs/queues";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraClient } from "../jira/client/jira-client";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { JiraBranchData } from '../interfaces/jira';
+import { JiraBranchData } from "../interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 
 export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
