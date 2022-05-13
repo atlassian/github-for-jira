@@ -1,21 +1,41 @@
+import { GitHubAPI } from "probot";
+import Logger from "bunyan";
 import { Subscription } from "models/subscription";
 import { getHashedKey } from "models/sequelize";
 import { Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
+import { isUserAdminOfOrganization } from "~/src/util/github-utils";
+import { GitHubUserClient } from "~/src/github/client/github-user-client";
+import { GitHubAppClient } from "~/src/github/client/github-app-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
+	try {
+		const { data: { login } } = await gitHubUserClient.getUser();
+		const { data: installation } = gitHubAppClient instanceof GitHubAppClient ?
+			await gitHubAppClient.getInstallation(gitHubInstallationId) :
+			await gitHubAppClient.apps.getInstallation({ installation_id: gitHubInstallationId });
+
+		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type);
+	}	catch (err) {
+		logger.warn({ err }, "Error checking user access");
+		return false;
+	}
+};
 
 /**
  * Handle the when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
-	const { github, client, githubToken, jiraHost } = res.locals;
+	const { githubToken, jiraHost, client } = res.locals;
+	const gitHubInstallationId = Number(req.body.installationId);
 
 	if (!githubToken || !jiraHost) {
 		res.sendStatus(401);
 		return;
 	}
-	const installationId = Number(req.body.installationId);
 
-	if (!installationId) {
+	if (!gitHubInstallationId) {
 		res.status(400)
 			.json({
 				err: "An Installation ID must be provided to link an installation."
@@ -31,42 +51,23 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		return;
 	}
 
-	req.addLogFields({ installationId });
+	req.addLogFields({ gitHubInstallationId });
 	req.log.info("Received add subscription request");
 
-	// Check if the user that posted this has access to the installation ID they're requesting
 	try {
-		const installation = await client.apps.getInstallation({ installation_id: installationId })
-			.then(r => r.data, () => undefined);
+		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, false, jiraHost);
+		const gitHubUserClient = new GitHubUserClient(githubToken, req.log);
+		const gitHubAppClient = new GitHubAppClient(req.log);
 
-		if (!installation) {
-			res.status(404)
-				.json({
-					err: `Installation with id ${installationId} doesn't exist.`
-				});
+		// Check if the user that posted this has access to the installation ID they're requesting
+		if (!await hasAdminAccess(useNewGithubClient ? gitHubAppClient : client, gitHubUserClient, gitHubInstallationId, req.log)) {
+			res.status(401).json({ err: `Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation` });
 			return;
-		}
-
-		// If the installation is an Org, the user needs to be an admin for that Org
-		if (installation.target_type === "Organization") {
-			const { data: { login } } = await github.users.getAuthenticated();
-			const { data: { role } } = await github.orgs.getMembership({
-				org: installation.account.login,
-				username: login
-			});
-
-			if (role !== "admin") {
-				res.status(401)
-					.json({
-						err: `Failed to add subscription to ${installationId}. User is not an admin of that installation`
-					});
-				return;
-			}
 		}
 
 		const subscription = await Subscription.install({
 			clientKey: getHashedKey(req.body.clientKey),
-			installationId,
+			installationId: gitHubInstallationId,
 			host: jiraHost
 		});
 
