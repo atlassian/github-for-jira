@@ -87,13 +87,17 @@ export class GitHubAppClient {
 	 * This path requires JWT, therefore passing the token directly into the header.
 	 */
 	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
-		const response = await this.axios.get<Octokit.AppsGetInstallationResponse>(`/installations/{installationId}`, {
-			urlParams: {
-				installationId
-			}
-		});
+		const logger = getLogger("mylogger");
+		try {
+			return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/installations/{installationId}`, {
+				urlParams: {
+					installationId
+				}
+			});
+		} catch (e) {
+			logger.error("What the bloody hell is wrong?? ", e)
+		}
 
-		return response;
 	};
 
 	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {

@@ -5,6 +5,7 @@ import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 import * as PrivateKey from "probot/lib/private-key";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
+import {getLogger} from "config/logger";
 
 
 export type KeyLocator = (installationId: InstallationId) => string;
@@ -46,15 +47,14 @@ export class AppTokenHolder {
 	 * Generates a JWT using the private key of the GitHub app to authorize against the GitHub API.
 	 */
 	private static createAppJwt(key: string, appId: number): AuthToken {
-
 		const expirationDate = new Date(Date.now() + TEN_MINUTES);
-
 		const jwtPayload = {
 			// "issued at" date, 60 seconds into the past to allow for some time drift
 			iat: Math.floor((Date.now() - ONE_MINUTE) / 1000),
 			// expiration date, GitHub allows max 10 minutes
 			exp: Math.floor(expirationDate.getTime() / 1000),
 			// issuer is the GitHub app ID
+			/* TypeError: Cannot read property 'toString' of undefined */
 			iss: appId.toString()
 		};
 
@@ -72,6 +72,7 @@ export class AppTokenHolder {
 
 		if (!currentToken || currentToken.isAboutToExpire()) {
 			const key = this.privateKeyLocator(appId);
+
 			currentToken = AppTokenHolder.createAppJwt(key, appId.appId);
 			this.appTokenCache.set(appId.toString(), currentToken);
 		}
