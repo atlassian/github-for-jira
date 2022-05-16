@@ -166,7 +166,7 @@ export const isRetryableWithSmallerRequest = (err): boolean => {
 
 		return !!retryableErrors;
 	}
-	return err?.isRetryable || false;
+	return true;
 };
 
 // Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources

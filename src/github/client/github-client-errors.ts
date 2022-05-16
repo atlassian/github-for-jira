@@ -4,7 +4,6 @@ import { getLogger } from "config/logger";
 export class GithubClientError extends Error {
 	status?: number;
 	cause?: AxiosError;
-	isRetryable = false;
 
 	constructor(message: string, status?: number, cause?: AxiosError) {
 		super(message);
