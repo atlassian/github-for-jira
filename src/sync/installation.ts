@@ -259,7 +259,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 					await subscription?.update({ syncWarning: "Invalid permissions for build task" });
 					logger.error({ err }, `Invalid permissions for build task`);
 					// Return undefined objects so the sync can complete while skipping this task
-					return 	{ edges: undefined, jiraPayload: undefined }
+					return 	{ edges: undefined, jiraPayload: undefined };
 				}
 				logger.error({
 					err,

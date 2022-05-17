@@ -72,7 +72,8 @@ describe("sync/deployments", () => {
 		const subscription = await Subscription.create({
 			gitHubInstallationId: installationId,
 			jiraHost,
-			syncStatus: "ACTIVE"
+			syncStatus: "ACTIVE",
+			repositoryStatus: "complete"
 		});
 
 		await RepoSyncState.create({

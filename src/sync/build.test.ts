@@ -56,7 +56,8 @@ describe("sync/builds", () => {
 		const subscription = await Subscription.create({
 			gitHubInstallationId: installationId,
 			jiraHost,
-			syncStatus: "ACTIVE"
+			syncStatus: "ACTIVE",
+			repositoryStatus: "complete"
 		});
 
 		await RepoSyncState.create({
@@ -139,6 +140,7 @@ describe("sync/builds", () => {
 		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 	});
+
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {
 		const data: BackfillMessagePayload = { installationId, jiraHost };
 

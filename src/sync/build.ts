@@ -15,13 +15,13 @@ const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logge
 		if (build?.builds) {
 			(await acc).push(build?.builds);
 		}
-		return await acc
+		return await acc;
 	}, []);
 
 	const transformedBuilds = await Promise.all(transformTasks);
 
 	return transformedBuilds.flat();
-}
+};
 
 export const getBuildTask = async (
 	logger: LoggerWithTarget,
@@ -34,7 +34,7 @@ export const getBuildTask = async (
 ) => {
 	logger.info("Syncing Builds: started");
 	cursor = Number(cursor);
-		
+
 	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor);
 	const { workflow_runs } = data;
 	const nextPage = cursor + 1;
@@ -47,7 +47,7 @@ export const getBuildTask = async (
 		};
 	}
 
-	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, logger); 
+	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, logger);
 	logger.info("Syncing Builds: finished");
 
 	// When there are no valid builds return early with undefined JiraPayload so that no Jira calls are made
