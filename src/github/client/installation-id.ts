@@ -41,5 +41,6 @@ export class InstallationId {
 }
 
 export const getCloudInstallationId = (installationId: number): InstallationId => {
-	return new InstallationId("https://api.github.com", parseInt(envVars.APP_ID), installationId);
+	return new InstallationId("http://github.internal.atlassian.com/api/v3", parseInt(envVars.APP_ID), installationId);
+	// return new InstallationId("https://api.github.com", parseInt(envVars.APP_ID), installationId);
 };

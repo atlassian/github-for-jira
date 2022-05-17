@@ -8,6 +8,7 @@ import { Tracer } from "config/tracer";
 import { envVars }  from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
+import {checkGitHubAppType, isGitHubEnterpriseApp} from "utils/handlebars/check-github-app-type";
 
 const logger = getLogger("github-oauth");
 
@@ -34,9 +35,9 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-
+	const protocol = isGitHubEnterpriseApp ? 'http' : 'https'
 	const redirectUrl = `http://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
-	// const redirectUrl = `https://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+
 	req.log.info({
 		redirectUrl,
 		postLoginUrl: req.session[state]

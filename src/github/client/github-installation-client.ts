@@ -197,9 +197,12 @@ export class GitHubInstallationClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
-
-		return response?.data?.data?.viewer?.repositories?.totalCount;
+		const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
+			perPage: 100,
+		});
+		// const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
+		return response.data.total_count;
+		// return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, cursor?: string): Promise<getBranchesResponse> {
@@ -273,7 +276,8 @@ export class GitHubInstallationClient {
 		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
-				Accept: "application/vnd.github.v3+json",
+				// Accept: "application/vnd.github.v3+json",
+				Accept: "application/vnd.github.machine-man-preview+json",
 				Authorization: `Bearer ${appToken.token}`
 			}
 		};

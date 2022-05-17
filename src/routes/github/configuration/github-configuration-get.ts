@@ -65,14 +65,16 @@ const getInstallationsWithAdmin = async (
 	log: Logger,
 	login: string,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = []
-): Promise<InstallationWithAdmin[]> => {
+): Promise<Awaited<{ access_tokens_url: string; repositories_url: string; isIPBlocked: boolean; single_file_name: string; target_type: string; target_id: number; isAdmin: number | boolean; numberOfRepos: number | boolean; permissions: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemPermissions; html_url: string; id: number; app_id: number; account: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemAccount; events: Array<string> }>[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
 		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id), log);
-		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation().catch((err) => {
-			errors.push(err);
-			return 0;
-		});
+		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation()
+			.catch((err) => {
+				errors.push(err);
+				return 0;
+			}
+		);
 		// See if we can get the membership for this user
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(
