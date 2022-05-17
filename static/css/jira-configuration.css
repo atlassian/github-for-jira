@@ -145,21 +145,47 @@
   display: block;
 }
 
-.jiraConfiguration__syncWarningMessage {
-  background-color: #172b4d;
+.jiraConfiguration__syncWarning {
+  position: relative;
+}
+
+.warning-popup {
+  display: block;
+  box-sizing: border-box;
+  z-index: 400;
+  flex: 1 1 auto;
+  background-color: var(--ds-surface-overlay,#FFFFFF);
   border-radius: 3px;
-  color: #fff;
+  box-shadow: var(--ds-shadow-overlay,0 4px 8px -2px rgba(9,30,66,0.25),0 0 1px rgba(9,30,66,0.31));
+  overflow: auto;
+}
+
+.warning-popup div {
+  padding: 15px;
+}
+
+.jiraConfiguration__syncWarningMessage {
+  border-radius: 3px;
   display: none;
   font-size: 1rem;
-  left: -0.8em;
+  left: -14em;
+  right: -14em;
   padding: 0.3em;
   position: absolute;
-  right: em;
-  top: -2em;
+  top: -6em;
 }
 
 .jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
   display: block;
+}
+
+.jiraConfiguration__syncWarning__connectFailed__warningIcon {
+  color: #ff9b20;
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  transform: scale(1.3);
+  cursor: pointer;
 }
 
 .jiraConfiguration__table__body

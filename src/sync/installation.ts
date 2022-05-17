@@ -249,15 +249,14 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			try {
 				return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
 			} catch (err) {
-							
-				// In the event that the customer does not have the required permissions due to functionality being added and new permissions
-				// being required without being accepted. We will continue to process the data per usual wihile omitting the tasks the the app
-				// does not have access too.
-				//if (err.status === 403 && err.message?.includes("Resource not accessible by integration")) {
-				await subscription?.update({ syncWarning: "Incomplete Sync, please" });
-				// Return undefined objects so the sync can complete while skipping this task
-				return 	{ edges: undefined, jiraPayload: undefined }
-				//}
+				// In the event that the customer has not accepted the required permissions.
+				// We will continue to process the data per usual while omitting the tasks the app does not have access too.
+				if (err.status === 403 && task === "build" && err.message?.includes("Resource not accessible by integration")) {
+					await subscription?.update({ syncWarning: "Invalid permissions for build task" });
+					logger.error({ err }, `Invalid permissions for build task`);
+					// Return undefined objects so the sync can complete while skipping this task
+					return 	{ edges: undefined, jiraPayload: undefined }
+				}
 				logger.error({
 					err,
 					payload: data,

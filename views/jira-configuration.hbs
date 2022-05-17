@@ -170,7 +170,6 @@
 
                     {{! Backfill status }}
                     <td class="jiraConfiguration__table__cell">
-                      {{syncWarning}}
                       <span
                         id="{{id}}-status"
                         class="jiraConfiguration__table__{{toLowerCase
@@ -181,17 +180,18 @@
                         {{syncStatus}}
                       </span>
                       {{!-- Display any sync warnings --}}
-                      {{#if syncWarning}}
+                      {{#if (isMissingBuildPermissions syncWarning)}}
                         <div class="jiraConfiguration__syncWarning">
                           <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
                             Sync failed warnings
                           </span> 
-                          <div class="jiraConfiguration__syncWarningMessage">
-                            {{!-- {{#if isBuildPermissionsError}} --}}
-                            <span>Build tasks have not been backfilled. Please <a href="{{html_url}}">accept build permissions</a> on GitHub (you must be the admin of your organization), then retry backfill.</span>{{syncWarning}}
-                            {{!-- {{else}}
-                            <span>{{syncWarning}}</span>
-                            {{/if}} --}}
+                          <div class="jiraConfiguration__syncWarningMessage warning-popup">
+                            <div>Build tasks have not been backfilled. Please 
+                              <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
+                                  href="{{html_url}}"
+                                  data-installation-link="{{html_url}}"
+                                  target="_blank">accept build permissions</a>
+                               on GitHub (you must be the admin of your organization), then retry backfill.</div>
                             </div>
                         </div>
                       {{/if}}
