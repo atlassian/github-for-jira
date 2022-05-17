@@ -19,7 +19,7 @@ export class GitHubUserClient {
 		this.logger = logger;
 
 		this.axios = axios.create({
-			baseURL: "https://api.github.com",
+			baseURL: "http://github.internal.atlassian.com/api/v3",
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -30,7 +30,8 @@ export class GitHubUserClient {
 				...config,
 				headers: {
 					...config.headers,
-					Accept: "application/vnd.github.v3+json",
+					Accept: "application/vnd.github.machine-man-preview+json",
+					// Accept: "application/vnd.github.v3+json",
 					Authorization: `token ${this.userToken}`
 				}
 			};

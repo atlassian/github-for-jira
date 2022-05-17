@@ -35,7 +35,8 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
 
-	const redirectUrl = `https://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+	const redirectUrl = `http://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+	// const redirectUrl = `https://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 	req.log.info({
 		redirectUrl,
 		postLoginUrl: req.session[state]
@@ -88,7 +89,8 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 	try {
 		const response = await axios.get(
-			`https://${envVars.GITHUB_HOSTNAME}/login/oauth/access_token`,
+			`http://${envVars.GITHUB_HOSTNAME}/login/oauth/access_token`,
+			// `https://${envVars.GITHUB_HOSTNAME}/login/oauth/access_token`,
 			{
 				params: {
 					client_id: githubClient,
@@ -131,7 +133,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		await axios.get(`https://api.${envVars.GITHUB_HOSTNAME}`, {
+		await axios.get(`http://${envVars.GITHUB_HOSTNAME}/api/v3`, {
 			headers: {
 				Authorization: `Bearer ${githubToken}`
 			}

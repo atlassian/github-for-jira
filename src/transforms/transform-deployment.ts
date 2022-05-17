@@ -158,7 +158,7 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 
-	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, false, jiraHost);
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, true, jiraHost);
 	const { data: { commit: { message } } } = useNewGitHubClient ?
 		await newGitHubClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha) :
 		await githubClient.repos.getCommit({

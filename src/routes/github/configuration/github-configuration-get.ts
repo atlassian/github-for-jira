@@ -126,7 +126,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, false);
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, true);
 	const githubUserClient = new GitHubUserClient(githubToken, log);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);

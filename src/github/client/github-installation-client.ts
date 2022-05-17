@@ -288,7 +288,8 @@ export class GitHubInstallationClient {
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
-				Accept: "application/vnd.github.v3+json",
+				Accept: "application/vnd.github.machine-man-preview+json",
+				// Accept: "application/vnd.github.v3+json",
 				Authorization: `Bearer ${installationToken.token}`
 			}
 		};

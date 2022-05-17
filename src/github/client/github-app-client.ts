@@ -23,7 +23,8 @@ export class GitHubAppClient {
 	constructor(
 		logger: Logger,
 		appId = envVars.APP_ID,
-		baseURL = "https://api.github.com"
+		baseURL = "http://github.internal.atlassian.com/api/v3"
+		// baseURL = "https://api.github.com"
 	) {
 		this.logger = logger || getLogger("github.app.client");
 		// TODO - change this for GHE, to get from github apps table
@@ -78,7 +79,8 @@ export class GitHubAppClient {
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
 		return {
-			Accept: "application/vnd.github.v3+json",
+			Accept: "application/vnd.github.machine-man-preview+json",
+			// Accept: "application/vnd.github.v3+json",
 			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}

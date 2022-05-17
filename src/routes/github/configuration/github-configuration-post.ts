@@ -35,13 +35,13 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		return;
 	}
 
-	if (!gitHubInstallationId) {
-		res.status(400)
-			.json({
-				err: "An Installation ID must be provided to link an installation."
-			});
-		return;
-	}
+	// if (!gitHubInstallationId) {
+	// 	res.status(400)
+	// 		.json({
+	// 			err: "An Installation ID must be provided to link an installation."
+	// 		});
+	// 	return;
+	// }
 
 	if (!req.body.clientKey) {
 		res.status(400)
@@ -55,7 +55,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	req.log.info("Received add subscription request");
 
 	try {
-		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, false, jiraHost);
+		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, true, jiraHost);
 		const gitHubUserClient = new GitHubUserClient(githubToken, req.log);
 		const gitHubAppClient = new GitHubAppClient(req.log);
 
