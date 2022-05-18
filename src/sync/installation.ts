@@ -10,7 +10,7 @@ import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { isBlocked } from "config/feature-flags";
+import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import IORedis from "ioredis";
@@ -34,7 +34,7 @@ interface TaskProcessors {
 	[task: string]: (
 		logger: LoggerWithTarget,
 		github: GitHubAPI,
-		newGithub: GitHubInstallationClient,
+		gitHubInstallationClient: GitHubInstallationClient,
 		jiraHost: string,
 		repository: Repository,
 		cursor?: string | number,
@@ -202,7 +202,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		logger
 	);
 
-	const newGithub = new GitHubInstallationClient(getCloudInstallationId(installationId), logger);
+	const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installationId), logger);
 
 	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription);
@@ -211,6 +211,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		await subscription.update({ syncStatus: "COMPLETE" });
 		statsd.increment(metricSyncStatus.complete);
 		logger.info("Sync complete");
+
 		return;
 	}
 
@@ -221,9 +222,12 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	if (!nextTask.repository && repositoryId) {
 		// Old records don't have this info. New ones have it
-		const { data: repo } = await github.request("GET /repositories/:id", {
-			id: nextTask.repositoryId
-		});
+		const { data: repo } = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_REPO, false, subscription.jiraHost) ?
+			await gitHubInstallationClient.getRepository(nextTask.repositoryId) :
+			await github.request("GET /repositories/:id", {
+				id: nextTask.repositoryId
+			});
+
 		repository = getRepositorySummary(repo);
 		await subscription.updateSyncState({
 			repos: {
@@ -243,7 +247,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
-				return await processor(logger, github, newGithub, jiraHost, repository, cursor, perPage);
+				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
 			} catch (err) {
 				logger.error({
 					err,

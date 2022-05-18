@@ -40,7 +40,7 @@ describe("POST /github/subscription - octokit", () => {
 	test("Delete GitHub Subscription", async () => {
 
 		const req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
+			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost
@@ -124,7 +124,6 @@ describe("delete-github-subscription", () => {
 	});
 
 	it("Should delete GitHub Subscription as an Org admin - installation type Org", async () => {
-		
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, target_type: "Org"
 		});
@@ -141,7 +140,6 @@ describe("delete-github-subscription", () => {
 	});
 
 	it("Should delete GitHub Subscription as an User - installation type User", async () => {
-		
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-user" }, target_type: "User"
 		});
@@ -155,7 +153,6 @@ describe("delete-github-subscription", () => {
 	});
 
 	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type Org", async () => {
-		
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, target_type: "Org"
 		});
@@ -172,7 +169,6 @@ describe("delete-github-subscription", () => {
 	});
 
 	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type User", async () => {
-		
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "something-something-test-user" }, target_type: "user"
 		});
