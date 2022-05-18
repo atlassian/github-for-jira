@@ -9,6 +9,7 @@ import { Octokit } from "@octokit/rest";
 import { JiraPullRequestData } from '../interfaces/jira';
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from '../interfaces/github';
+import {getGitHubBaseUrl} from "utils/check-github-app-type";
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
@@ -22,7 +23,8 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	} = context.payload;
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, context.log);
+	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), gitHubBaseUrl, context.log);
 
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,

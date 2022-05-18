@@ -3,6 +3,7 @@ import { AuthToken, TEN_MINUTES } from "./auth-token";
 import * as PrivateKey from "probot/lib/private-key";
 import { AppTokenHolder } from "./app-token-holder";
 import { getCloudInstallationId } from "./installation-id";
+import { envVars } from "~/src/config/env";
 
 describe("InstallationTokenCache & AppTokenHolder", () => {
 	const githubInstallationId = 123456;
@@ -33,12 +34,11 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 	it("should not cache any tokens when testing AppTokenHolder", async () => {
 		const keyLocator = jest.fn().mockReturnValue(PrivateKey.findPrivateKey());
 		const appTokenHolder = new AppTokenHolder(keyLocator);
-		const jiraHost =  "https://test.atlassian.net";
 
 		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
-		const token1 = appTokenHolder.getAppToken(getCloudInstallationId(4711, jiraHost));
+		const token1 = appTokenHolder.getAppToken(getCloudInstallationId(4711, envVars.GITHUB_HOSTNAME));
 		expect(token1).toBeTruthy();
-		const token2 = appTokenHolder.getAppToken(getCloudInstallationId(4711, jiraHost));
+		const token2 = appTokenHolder.getAppToken(getCloudInstallationId(4711, envVars.GITHUB_HOSTNAME));
 		expect(token2).toBeTruthy();
 		expect(keyLocator).toHaveBeenCalledTimes(2);
 	});

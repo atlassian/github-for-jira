@@ -8,7 +8,7 @@ import { Tracer } from "config/tracer";
 import { envVars }  from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import { isGitHubEnterpriseApp, setGitHubBaseUrl } from "utils/check-github-app-type";
+import {getGitHubBaseUrl, setGitHubBaseUrl} from "utils/check-github-app-type";
 
 const logger = getLogger("github-oauth");
 
@@ -37,7 +37,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-	const gitHubHostname = isGitHubEnterpriseApp(jiraHost) || envVars.GITHUB_HOSTNAME;
+	const gitHubHostname = await getGitHubBaseUrl(jiraHost) || envVars.GITHUB_HOSTNAME;
 	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 	req.log.info("redirectUrl:", redirectUrl)
 
@@ -91,7 +91,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
-	const gitHubHostname = isGitHubEnterpriseApp(jiraHost) || envVars.GITHUB_HOSTNAME;
+	const gitHubHostname = await getGitHubBaseUrl(jiraHost) || envVars.GITHUB_HOSTNAME;
 
 	try {
 		const response = await axios.get(
@@ -139,8 +139,10 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		req.log.debug("found github token in session. validating token with API.");
 
 		const { jiraHost } = res.locals;
-		req.log.info("setGitHubBaseUrl(jiraHos: ", setGitHubBaseUrl(jiraHost))
-		await axios.get(setGitHubBaseUrl(jiraHost), {
+		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+		const url = setGitHubBaseUrl(gitHubBaseUrl)
+		req.log.info("setGitHubBaseUrl(jiraHos: ", url)
+		await axios.get(url, {
 			headers: {
 				Authorization: `Bearer ${githubToken}`
 			}

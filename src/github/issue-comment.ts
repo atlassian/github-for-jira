@@ -3,6 +3,7 @@ import { CustomContext } from "middleware/github-webhook-middleware";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubIssue, GitHubIssueCommentData } from "../interfaces/github";
+import {getGitHubBaseUrl} from "utils/check-github-app-type";
 
 export const issueCommentWebhookHandler = async (
 	context: CustomContext,
@@ -19,7 +20,8 @@ export const issueCommentWebhookHandler = async (
 	} = context.payload;
 	let linkifiedBody;
 
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, context.log);
+	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), gitHubBaseUrl, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	try {

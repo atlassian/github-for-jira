@@ -3,6 +3,7 @@ import { processPush } from "../transforms/push";
 import { wrapLogger } from "probot/lib/wrap-logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
+import {getGitHubBaseUrl} from "utils/check-github-app-type";
 
 export type PayloadRepository = {
 	id: number,
@@ -23,6 +24,7 @@ export type PushQueueMessagePayload = {
 
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
 	context.log.info("Handling push message from the SQS queue");
-	const github = new GitHubInstallationClient(getCloudInstallationId(context.payload.installationId, jiraHost), jiraHost, context.log);
+	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+	const github = new GitHubInstallationClient(getCloudInstallationId(context.payload.installationId, gitHubBaseUrl), gitHubBaseUrl, context.log);
 	await processPush(github, context.payload, wrapLogger(context.log));
 };

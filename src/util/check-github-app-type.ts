@@ -12,7 +12,7 @@ export const getGitHubBaseUrl = async (jiraHost: string): Promise<string> => {
 	// then query to the GSA table to get url
 	// call GitHubServerApps -> get all info for that id
 	// return !gitHubBase 097.rl ? "http://github.internal.atlassian.com" | null;
-	return gitHubAppId ? "http://github.internal.atlassian.com" : envVars.GITHUB_HOSTNAME;
+	return !gitHubAppId ? "http://github.internal.atlassian.com" : envVars.GITHUB_HOSTNAME;
 	// baseUrl -> app url e.g
 	// accept headers -> just need to know if an app url exists (could check for null
 }

@@ -4,6 +4,7 @@ import { workerApp } from "../worker/app";
 import { processDeployment } from "../github/deployment";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
+import {getGitHubBaseUrl} from "utils/check-github-app-type";
 
 export type DeploymentMessagePayload = {
 	jiraHost: string,
@@ -32,7 +33,8 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 	context.log.info("Handling deployment message from the SQS queue");
 
 	const github = await workerApp.auth(installationId);
-	const newGitHubClient = new GitHubInstallationClient(getCloudInstallationId(installationId, jiraHost), jiraHost, context.log);
+	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+	const newGitHubClient = new GitHubInstallationClient(getCloudInstallationId(installationId, gitHubBaseUrl), gitHubBaseUrl, context.log);
 
 	await processDeployment(
 		github,

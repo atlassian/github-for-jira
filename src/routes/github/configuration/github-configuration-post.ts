@@ -8,7 +8,7 @@ import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import {getGitHubBaseUrl, isGitHubEnterpriseApp} from "utils/check-github-app-type";
+import { getGitHubBaseUrl } from "utils/check-github-app-type";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {

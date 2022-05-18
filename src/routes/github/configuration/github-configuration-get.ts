@@ -16,7 +16,7 @@ import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { BlockedIpError } from "~/src/github/client/github-client-errors";
-import {getGitHubBaseUrl, isGitHubEnterpriseApp} from "utils/check-github-app-type";
+import { getGitHubBaseUrl } from "utils/check-github-app-type";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -67,16 +67,15 @@ const getInstallationsWithAdmin = async (
 	login: string,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
 	jiraHost: string
-): Promise<Awaited<{ access_tokens_url: string; repositories_url: string; isIPBlocked: boolean; single_file_name: string; target_type: string; target_id: number; isAdmin: number | boolean; numberOfRepos: number | boolean; permissions: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemPermissions; html_url: string; id: number; app_id: number; account: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemAccount; events: Array<string> }>[]> => {
+): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id, jiraHost), jiraHost, log);
-		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation()
-			.catch((err) => {
-				errors.push(err);
-				return 0;
-			}
-		);
+		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id, gitHubBaseUrl), gitHubBaseUrl, log);
+		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation().catch((err) => {
+			errors.push(err);
+			return 0;
+		});
 		// See if we can get the membership for this user
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(

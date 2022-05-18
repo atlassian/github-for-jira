@@ -94,7 +94,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, envVars.GITHUB_HOSTNAME), envVars.GITHUB_HOSTNAME, getLogger("test"));
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
 			page
@@ -117,7 +117,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, envVars.GITHUB_HOSTNAME), envVars.GITHUB_HOSTNAME, getLogger("test"));
 		const commit = await client.getCommit(owner, repo, sha);
 
 		expect(commit).toBeTruthy();
@@ -152,7 +152,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, envVars.GITHUB_HOSTNAME), envVars.GITHUB_HOSTNAME, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -179,7 +179,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, envVars.GITHUB_HOSTNAME), envVars.GITHUB_HOSTNAME, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -202,7 +202,7 @@ describe("GitHub Client", () => {
 			403, { message: "Org has an IP allow list enabled" }
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, envVars.GITHUB_HOSTNAME), envVars.GITHUB_HOSTNAME, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -227,7 +227,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, envVars.GITHUB_HOSTNAME), envVars.GITHUB_HOSTNAME, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -253,7 +253,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, envVars.GITHUB_HOSTNAME), envVars.GITHUB_HOSTNAME, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -298,7 +298,7 @@ describe("GitHub Client", () => {
 
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
-			jiraHost,
+			envVars.GITHUB_HOSTNAME,
 			getLogger("test"),
 			appTokenHolder
 		);
@@ -326,7 +326,7 @@ describe("GitHub Client", () => {
 			200, [{ number: 1 }]
 		);
 
-		const client = await new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, getLogger("test"), AppTokenHolder.getInstance());
+		const client = await new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, envVars.GITHUB_HOSTNAME), envVars.GITHUB_HOSTNAME, getLogger("test"), AppTokenHolder.getInstance());
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
