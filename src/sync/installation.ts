@@ -161,7 +161,10 @@ const getEnhancedGitHub = async (app: Application, installationId) =>
  * with a smaller request (i.e. with fewer pages).
  * @param err the error thrown by Octokit.
  */
-export const isRetryableWithSmallerRequest = (err): boolean => {
+export const isRetryableWithSmallerRequest = async (err): Promise<boolean> => {
+	if(await booleanFlag(BooleanFlags.RETRY_ALL_ERRORS, false)) {
+		return true;
+	}
 	if (err?.errors) {
 		const retryableErrors = err?.errors?.find(
 			(error) => "MAX_NODE_LIMIT_EXCEEDED" == error.type ||
@@ -269,8 +272,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 					cursor,
 					task
 				}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
-
-				if (!isRetryableWithSmallerRequest(err)) {
+				if (!(await isRetryableWithSmallerRequest(err))) {
 					// error is not retryable, re-throwing it
 					throw err;
 				}
@@ -422,7 +424,7 @@ export async function maybeScheduleNextTask(
 		if (nextTaskDelaysMs.length > 1) {
 			logger.warn("Multiple next jobs were scheduled, scheduling one with the highest priority");
 		}
-		const delayMs = nextTaskDelaysMs.shift()!;
+		const delayMs = nextTaskDelaysMs.shift();
 		logger.info("Scheduling next job with a delay = " + delayMs);
 
 		await sqsQueues.backfill.sendMessage(jobData, Math.ceil((delayMs || 0) / 1000), logger);
