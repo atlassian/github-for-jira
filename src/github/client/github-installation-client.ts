@@ -20,6 +20,7 @@ import {
 } from "./github-queries";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
+import {isGitHubEnterpriseApp} from "utils/handlebars/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -31,17 +32,19 @@ export class GitHubInstallationClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
+	private readonly jiraHost: string;
 	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: InstallationId,
+		jiraHost: string,
 		logger: Logger,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.installation.client");
 
 		this.axios = axios.create({
-			baseURL: githubInstallationId.githubBaseUrl,
+			baseURL: isGitHubEnterpriseApp(this.jiraHost) ? "http://github.internal.atlassian.com/api/v3" : "https://api.github.com",
 			transitional: {
 				clarifyTimeoutError: true
 			}

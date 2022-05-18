@@ -5,6 +5,7 @@ import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setReq
 import { metricHttpRequest } from "config/metric-names";
 import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
+import {isGitHubEnterpriseApp} from "utils/handlebars/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -12,14 +13,16 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 export class GitHubUserClient {
 	private readonly axios: AxiosInstance;
 	private readonly userToken: string;
+	private readonly jiraHost: string;
 	private readonly logger: Logger;
 
-	constructor(userToken: string, logger: Logger = getLogger("github.user.client")) {
+	constructor(userToken: string, jiraHost: string, logger: Logger = getLogger("github.user.client")) {
 		this.userToken = userToken;
+		this.jiraHost = jiraHost;
 		this.logger = logger;
 
 		this.axios = axios.create({
-			baseURL: "http://github.internal.atlassian.com/api/v3",
+			baseURL: isGitHubEnterpriseApp(this.jiraHost) ? "http://github.internal.atlassian.com/api/v3" : "https://api.github.com",
 			transitional: {
 				clarifyTimeoutError: true
 			}

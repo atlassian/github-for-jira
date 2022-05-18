@@ -11,8 +11,8 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION, true, jiraHost) ;
-	const gitHubAppClient = new GitHubAppClient(logger);
-	const gitHubUserClient = new GitHubUserClient(githubToken, logger);
+	const gitHubAppClient = new GitHubAppClient(jiraHost, logger);
+	const gitHubUserClient = new GitHubUserClient(githubToken, jiraHost, logger);
 
 	if (!githubToken) {
 		res.sendStatus(401);
@@ -38,7 +38,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 
 		// Only show the page if the logged in user is an admin of this installation
 		if (!await isUserAdminOfOrganization(
-			new GitHubUserClient(githubToken, req.log),
+			new GitHubUserClient(githubToken, jiraHost, req.log),
 			installation.account.login,
 			login,
 			installation.target_type

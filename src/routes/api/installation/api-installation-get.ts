@@ -7,7 +7,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId } = req.params;
 	const { client } = res.locals;
-	const gitHubAppClient = new GitHubAppClient(req.log);
+	const gitHubAppClient = new GitHubAppClient(jiraHost, req.log);
 
 	try {
 		const subscriptions = await Subscription.getAllForInstallation(Number(installationId));

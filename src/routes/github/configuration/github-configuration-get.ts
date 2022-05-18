@@ -68,7 +68,7 @@ const getInstallationsWithAdmin = async (
 ): Promise<Awaited<{ access_tokens_url: string; repositories_url: string; isIPBlocked: boolean; single_file_name: string; target_type: string; target_id: number; isAdmin: number | boolean; numberOfRepos: number | boolean; permissions: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemPermissions; html_url: string; id: number; app_id: number; account: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemAccount; events: Array<string> }>[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id), log);
+		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id), jiraHost, log);
 		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation()
 			.catch((err) => {
 				errors.push(err);
@@ -129,7 +129,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	}
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, true);
-	const githubUserClient = new GitHubUserClient(githubToken, log);
+	const githubUserClient = new GitHubUserClient(githubToken, jiraHost, log);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
@@ -164,7 +164,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			res.status(404).send(`Missing installation for host '${jiraHost}'`);
 			return;
 		}
-		const gitHubAppClient = new GitHubAppClient(log);
+		const gitHubAppClient = new GitHubAppClient(jiraHost, log);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 

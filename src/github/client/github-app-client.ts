@@ -9,6 +9,7 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
+import {isGitHubEnterpriseApp} from "utils/handlebars/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -18,13 +19,13 @@ import { AuthToken } from "~/src/github/client/auth-token";
 export class GitHubAppClient {
 	private readonly axios: AxiosInstance;
 	private readonly appToken: AuthToken;
+	private readonly jiraHost: string;
 	private readonly logger: Logger;
 
 	constructor(
+		jiraHost: string,
 		logger: Logger,
 		appId = envVars.APP_ID,
-		baseURL = "http://github.internal.atlassian.com/api/v3"
-		// baseURL = "https://api.github.com"
 	) {
 		this.logger = logger || getLogger("github.app.client");
 		// TODO - change this for GHE, to get from github apps table
@@ -32,7 +33,7 @@ export class GitHubAppClient {
 
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 		this.axios = axios.create({
-			baseURL,
+			baseURL: isGitHubEnterpriseApp(this.jiraHost) ? "http://github.internal.atlassian.com/api/v3" : "https://api.github.com",
 			transitional: {
 				clarifyTimeoutError: true
 			}

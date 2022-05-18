@@ -98,6 +98,18 @@ export class Installation extends Model {
 		await this.destroy();
 	}
 
+	static async getForHost(host: string): Promise<Installation | null> {
+		if (!host?.length) {
+			return null;
+		}
+		return await this.findOne({
+			where: {
+				jiraHost: host
+			},
+			order: [["createdAt", "DESC"]]
+		});
+	}
+
 	async subscriptions(): Promise<Subscription[]> {
 		return await Subscription.getAllForClientKey(this.clientKey);
 	}

@@ -12,7 +12,7 @@ export const issueCommentWebhookHandler = async (
 	const { comment, repository } = context.payload;
 	let linkifiedBody;
 
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), jiraHost, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	try {

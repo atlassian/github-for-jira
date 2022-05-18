@@ -35,13 +35,13 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		return;
 	}
 
-	// if (!gitHubInstallationId) {
-	// 	res.status(400)
-	// 		.json({
-	// 			err: "An Installation ID must be provided to link an installation."
-	// 		});
-	// 	return;
-	// }
+	if (!gitHubInstallationId) {
+		res.status(400)
+			.json({
+				err: "An Installation ID must be provided to link an installation."
+			});
+		return;
+	}
 
 	if (!req.body.clientKey) {
 		res.status(400)
@@ -56,8 +56,8 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 	try {
 		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, true, jiraHost);
-		const gitHubUserClient = new GitHubUserClient(githubToken, req.log);
-		const gitHubAppClient = new GitHubAppClient(req.log);
+		const gitHubUserClient = new GitHubUserClient(githubToken, jiraHost,  req.log);
+		const gitHubAppClient = new GitHubAppClient(jiraHost, req.log);
 
 		// Check if the user that posted this has access to the installation ID they're requesting
 		if (!await hasAdminAccess(useNewGithubClient ? gitHubAppClient : client, gitHubUserClient, gitHubInstallationId, req.log)) {
