@@ -142,11 +142,16 @@ export class GitHubInstallationClient {
 	 * Get a page of repositories.
 	 */
 	public getRepositoriesPage = async (per_page = 1, cursor?: string): Promise<GetRepositoriesResponse> => {
-		const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
-			per_page,
-			cursor
-		});
-		return response.data.data;
+		try {
+			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
+				per_page,
+				cursor
+			});
+			return response.data.data;
+		} catch (err) {
+			err.isRetryable = true;
+			throw err;
+		}
 	};
 
 	public getRepository = async (id: number): Promise<AxiosResponse<any>> => {
