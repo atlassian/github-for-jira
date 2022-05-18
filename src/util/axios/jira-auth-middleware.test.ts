@@ -6,7 +6,7 @@ import path from "path";
 describe("Jira Auth Axios Middleware", () => {
 	let middleware: (config: AxiosRequestConfig) => AxiosRequestConfig;
 	let config: AxiosRequestConfig;
-	const token = "JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjAsImV4cCI6MzAsImlzcyI6ImNvbS5naXRodWIuaW50ZWdyYXRpb24udGVzdC1hdGxhc3NpYW4taW5zdGFuY2UiLCJxc2giOiI3OTliZTg0YTdmYTM1NTcwMDg3MTYzYzBjZDlhZjNhYmZmN2FjMDVjMmMxMmJhMGJiMWQ3ZWViYzk4NGIzYWMyIn0.yXI3QdqBT4QBIKtgG6Vh3-plOr52XCXNA2nHNVXfTig";
+	const token = "JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjAsImV4cCI6MTgwLCJpc3MiOiJjb20uZ2l0aHViLmludGVncmF0aW9uLnRlc3QtYXRsYXNzaWFuLWluc3RhbmNlIiwicXNoIjoiNzk5YmU4NGE3ZmEzNTU3MDA4NzE2M2MwY2Q5YWYzYWJmZjdhYzA1YzJjMTJiYTBiYjFkN2VlYmM5ODRiM2FjMiJ9.pxhdfKmiAhXGvH7rm-nKgMuvuhadlZTphziSQxHbIzU";
 
 	beforeEach(() => {
 		const instance = axios.create();
@@ -48,7 +48,7 @@ describe("Jira Auth Axios Middleware", () => {
 		config.url += "/foo";
 		const result = middleware(config);
 		expect(result.headers?.Authorization).not.toEqual(token);
-		expect(result.headers?.Authorization).toEqual("JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjAsImV4cCI6MzAsImlzcyI6ImNvbS5naXRodWIuaW50ZWdyYXRpb24udGVzdC1hdGxhc3NpYW4taW5zdGFuY2UiLCJxc2giOiJjYzMyY2RmZGNlMzljMDljNjk3ZDllYjQ1MmRkNjE5OTEwNWVkMDA1MzU2Mjg5NTllMTU2MmUwZGE5MGYwNzgyIn0.MK52x4P0k2eqHlUlCI8-ZWfn_qE1Q53ZbGsI63_VhEc");
+		expect(result.headers?.Authorization).toEqual("JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjAsImV4cCI6MTgwLCJpc3MiOiJjb20uZ2l0aHViLmludGVncmF0aW9uLnRlc3QtYXRsYXNzaWFuLWluc3RhbmNlIiwicXNoIjoiY2MzMmNkZmRjZTM5YzA5YzY5N2Q5ZWI0NTJkZDYxOTkxMDVlZDAwNTM1NjI4OTU5ZTE1NjJlMGRhOTBmMDc4MiJ9.nbTpwmv8knxugYYLNUjPQtyYWx_3Pq1E0fJhX34vssk");
 	});
 
 	it("should generate different token when using params option", () => {
@@ -57,13 +57,13 @@ describe("Jira Auth Axios Middleware", () => {
 		};
 		const result = middleware(config);
 		expect(result.headers?.Authorization).not.toEqual(token);
-		expect(result.headers?.Authorization).toEqual("JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjAsImV4cCI6MzAsImlzcyI6ImNvbS5naXRodWIuaW50ZWdyYXRpb24udGVzdC1hdGxhc3NpYW4taW5zdGFuY2UiLCJxc2giOiJkZDRmZjlhYTQ4YTQxMDdlNzRiZmJlMTIwOGFlMDAyNzdmZWY2MzdiODkzMmVlYzc5YTIzZWUwODY3ZDY3MjE4In0.mT-JyFgpdJDhf8P1qsrpG1gaeJW4xPDr1VntHDNqhvI");
+		expect(result.headers?.Authorization).toEqual("JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjAsImV4cCI6MTgwLCJpc3MiOiJjb20uZ2l0aHViLmludGVncmF0aW9uLnRlc3QtYXRsYXNzaWFuLWluc3RhbmNlIiwicXNoIjoiZGQ0ZmY5YWE0OGE0MTA3ZTc0YmZiZTEyMDhhZTAwMjc3ZmVmNjM3Yjg5MzJlZWM3OWEyM2VlMDg2N2Q2NzIxOCJ9.152vgnGF1Oq-6wnqhR40V9HvRspDT9V_q0BRMx50XPA");
 	});
 
 	it("should generate different token when changing issue date", () => {
 		mockSystemTime(123456789);
 		const result = middleware(config);
 		expect(result.headers?.Authorization).not.toEqual(token);
-		expect(result.headers?.Authorization).toEqual("JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjEyMzQ1NiwiZXhwIjoxMjM0ODYsImlzcyI6ImNvbS5naXRodWIuaW50ZWdyYXRpb24udGVzdC1hdGxhc3NpYW4taW5zdGFuY2UiLCJxc2giOiI3OTliZTg0YTdmYTM1NTcwMDg3MTYzYzBjZDlhZjNhYmZmN2FjMDVjMmMxMmJhMGJiMWQ3ZWViYzk4NGIzYWMyIn0.iL3x3RFljJrgKrMz9UDJ2wcRBlt7N-ETARzlt5lgWEg");
+		expect(result.headers?.Authorization).toEqual("JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjEyMzQ1NiwiZXhwIjoxMjM2MzYsImlzcyI6ImNvbS5naXRodWIuaW50ZWdyYXRpb24udGVzdC1hdGxhc3NpYW4taW5zdGFuY2UiLCJxc2giOiI3OTliZTg0YTdmYTM1NTcwMDg3MTYzYzBjZDlhZjNhYmZmN2FjMDVjMmMxMmJhMGJiMWQ3ZWViYzk4NGIzYWMyIn0.kFVlsoXQxVMJCqRHPF7G6uQ1X629KYEqch0lRdrzikI");
 	});
 });
