@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import axios, { AxiosError, AxiosInstance } from "axios";
+import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 
 import url from "url";
 import { statsd } from "config/statsd";
@@ -32,6 +32,8 @@ export const getJiraErrorMessages = (status: number) => {
 			return "HTTP 401 - Missing a JWT token, or token is invalid.";
 		case 403:
 			return "HTTP 403 - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope";
+		case 404:
+			return "HTTP 404 - Jira instance not found or temporarily suspended.";
 		case 413:
 			return "HTTP 413 - Data is too large. Submit fewer devinfo entities in each payload.";
 		case 429:
@@ -142,12 +144,20 @@ const instrumentRequest = (response) => {
 /**
  * Submit statsd metrics on failed requests.
  *
- * @param {import("axios").AxiosError} error - The Axios error response object.
  * @returns {Promise<Error>} a rejected promise with the error inside.
+ * @param instance
+ * @param logger
  */
-const instrumentFailedRequest = () => {
-	return (error) => {
+const instrumentFailedRequest = (instance: AxiosInstance, logger: Logger) => {
+	return async (error) => {
 		instrumentRequest(error?.response);
+		if (error?.statusCode === 503) {
+			const statusResponse: AxiosResponse = await instance.get("/status");
+			if (statusResponse?.status === 503) {
+				logger.info(`503 from Jira: Jira instance ${instance} is suspended or does not exist. Returning 404 to our application.`);
+				error.statusCode = 404;
+			}
+		}
 		return Promise.reject(error);
 	};
 };
@@ -187,7 +197,7 @@ export const getAxiosInstance = (
 
 	instance.interceptors.response.use(
 		instrumentRequest,
-		instrumentFailedRequest()
+		instrumentFailedRequest(instance, logger)
 	);
 
 	instance.interceptors.response.use(
