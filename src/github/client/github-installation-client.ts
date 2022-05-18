@@ -44,7 +44,7 @@ export class GitHubInstallationClient {
 		this.logger = logger || getLogger("github.installation.client");
 
 		this.axios = axios.create({
-			baseURL: isGitHubEnterpriseApp(this.jiraHost) ? "http://github.internal.atlassian.com/api/v3" : "https://api.github.com",
+			baseURL: !!isGitHubEnterpriseApp(this.jiraHost) ? `${isGitHubEnterpriseApp(this.jiraHost)}/api/v3` : "https://api.github.com",
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -279,8 +279,7 @@ export class GitHubInstallationClient {
 		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
-				// Accept: "application/vnd.github.v3+json",
-				Accept: "application/vnd.github.machine-man-preview+json",
+				Accept: isGitHubEnterpriseApp(this.jiraHost) ? "application/vnd.github.machine-man-preview+json" : "application/vnd.github.v3+json",
 				Authorization: `Bearer ${appToken.token}`
 			}
 		};
@@ -295,8 +294,7 @@ export class GitHubInstallationClient {
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
-				Accept: "application/vnd.github.machine-man-preview+json",
-				// Accept: "application/vnd.github.v3+json",
+				Accept: isGitHubEnterpriseApp(this.jiraHost) ? "application/vnd.github.machine-man-preview+json" : "application/vnd.github.v3+json",
 				Authorization: `Bearer ${installationToken.token}`
 			}
 		};

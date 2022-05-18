@@ -22,7 +22,7 @@ export class GitHubUserClient {
 		this.logger = logger;
 
 		this.axios = axios.create({
-			baseURL: isGitHubEnterpriseApp(this.jiraHost) ? "http://github.internal.atlassian.com/api/v3" : "https://api.github.com",
+			baseURL: !!isGitHubEnterpriseApp(this.jiraHost) ? `${isGitHubEnterpriseApp(this.jiraHost)}/api/v3` : "https://api.github.com",
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -33,8 +33,7 @@ export class GitHubUserClient {
 				...config,
 				headers: {
 					...config.headers,
-					Accept: "application/vnd.github.machine-man-preview+json",
-					// Accept: "application/vnd.github.v3+json",
+					Accept: isGitHubEnterpriseApp(this.jiraHost) ? "application/vnd.github.machine-man-preview+json" : "application/vnd.github.v3+json",
 					Authorization: `token ${this.userToken}`
 				}
 			};

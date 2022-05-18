@@ -64,7 +64,8 @@ const getInstallationsWithAdmin = async (
 	gitHubUserClient: GitHubUserClient,
 	log: Logger,
 	login: string,
-	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = []
+	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
+	jiraHost: string
 ): Promise<Awaited<{ access_tokens_url: string; repositories_url: string; isIPBlocked: boolean; single_file_name: string; target_type: string; target_id: number; isAdmin: number | boolean; numberOfRepos: number | boolean; permissions: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemPermissions; html_url: string; id: number; app_id: number; account: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemAccount; events: Array<string> }>[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
@@ -178,7 +179,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(githubUserClient, log, login, installations);
+		const installationsWithAdmin = await getInstallationsWithAdmin(githubUserClient, log, login, installations, jiraHost);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);

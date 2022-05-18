@@ -3,9 +3,16 @@ import { CustomContext } from "middleware/github-webhook-middleware";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
+import { GitHubIssue, GitHubIssueData } from '../interfaces/github';
 
 export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, _jiraClient, util, githubInstallationId: number): Promise<void> => {
-	const { issue, repository } = context.payload;
+	const {
+		issue,
+		repository: {
+			name: repoName,
+			owner: { login: owner }
+		}
+	} = context.payload;
 
 	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), jiraHost, context.log);
 
@@ -26,12 +33,14 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 
 	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);
 
-	const githubResponse = await githubClient.updateIssue({
+	const updatedIssue: GitHubIssueData = {
 		body: linkifiedBody,
-		owner: repository.owner.login,
-		repo: repository.name,
+		owner,
+		repo: repoName,
 		issue_number: issue.number
-	});
+	}
+
+	const githubResponse: GitHubIssue = await githubClient.updateIssue(updatedIssue);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
