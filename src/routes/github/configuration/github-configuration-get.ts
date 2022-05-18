@@ -16,6 +16,7 @@ import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { BlockedIpError } from "~/src/github/client/github-client-errors";
+import {getGitHubBaseUrl, isGitHubEnterpriseApp} from "utils/check-github-app-type";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -129,8 +130,10 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
+	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, true);
-	const githubUserClient = new GitHubUserClient(githubToken, jiraHost, log);
+	const githubUserClient = new GitHubUserClient(githubToken, gitHubBaseUrl, log);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);

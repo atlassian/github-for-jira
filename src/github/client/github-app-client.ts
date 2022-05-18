@@ -19,21 +19,22 @@ import { setAcceptHeader, setGitHubBaseUrl} from "utils/check-github-app-type";
 export class GitHubAppClient {
 	private readonly axios: AxiosInstance;
 	private readonly appToken: AuthToken;
-	private readonly jiraHost: string;
+	private readonly gitHubBaseUrl: string;
 	private readonly logger: Logger;
 
 	constructor(
-		jiraHost: string,
+		gitHubBaseUrl: string,
 		logger: Logger,
 		appId = envVars.APP_ID,
 	) {
 		this.logger = logger || getLogger("github.app.client");
 		// TODO - change this for GHE, to get from github apps table
 		const privateKey = PrivateKey.findPrivateKey() || "";
+		this.gitHubBaseUrl = gitHubBaseUrl;
 
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 		this.axios = axios.create({
-			baseURL: setGitHubBaseUrl(this.jiraHost),
+			baseURL: setGitHubBaseUrl(this.gitHubBaseUrl),
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -80,7 +81,7 @@ export class GitHubAppClient {
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
 		return {
-			Accept: setAcceptHeader(this.jiraHost),
+			Accept: setAcceptHeader(this.gitHubBaseUrl),
 			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}

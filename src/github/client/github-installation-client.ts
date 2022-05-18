@@ -16,7 +16,6 @@ import {
 	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
 	getCommitsResponse, GetRepositoriesQuery, GetRepositoriesResponse,
-	ViewerRepositoryCountQuery
 } from "./github-queries";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
@@ -32,19 +31,19 @@ export class GitHubInstallationClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
-	private readonly jiraHost: string;
+	private readonly gitHubBaseUrl: string;
 	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: InstallationId,
-		jiraHost: string,
+		gitHubBaseUrl: string,
 		logger: Logger,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.installation.client");
 
 		this.axios = axios.create({
-			baseURL: setGitHubBaseUrl(this.jiraHost),
+			baseURL: setGitHubBaseUrl(this.gitHubBaseUrl),
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -64,7 +63,7 @@ export class GitHubInstallationClient {
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
-		this.jiraHost = jiraHost;
+		this.gitHubBaseUrl = gitHubBaseUrl;
 	}
 
 	/**
@@ -280,7 +279,7 @@ export class GitHubInstallationClient {
 		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
-				Accept: setAcceptHeader(this.jiraHost),
+				Accept: setAcceptHeader(this.gitHubBaseUrl),
 				Authorization: `Bearer ${appToken.token}`
 			}
 		};
@@ -295,7 +294,7 @@ export class GitHubInstallationClient {
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
-				Accept: setAcceptHeader(this.jiraHost),
+				Accept: setAcceptHeader(this.gitHubBaseUrl),
 				Authorization: `Bearer ${installationToken.token}`
 			}
 		};

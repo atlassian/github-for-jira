@@ -8,6 +8,7 @@ import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import {getGitHubBaseUrl, isGitHubEnterpriseApp} from "utils/check-github-app-type";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
@@ -54,9 +55,11 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	req.addLogFields({ gitHubInstallationId });
 	req.log.info("Received add subscription request");
 
+	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+
 	try {
 		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, true, jiraHost);
-		const gitHubUserClient = new GitHubUserClient(githubToken, jiraHost,  req.log);
+		const gitHubUserClient = new GitHubUserClient(githubToken, gitHubBaseUrl, req.log);
 		const gitHubAppClient = new GitHubAppClient(jiraHost, req.log);
 
 		// Check if the user that posted this has access to the installation ID they're requesting

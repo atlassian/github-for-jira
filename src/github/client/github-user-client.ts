@@ -13,16 +13,16 @@ import { setAcceptHeader, setGitHubBaseUrl} from "utils/check-github-app-type";
 export class GitHubUserClient {
 	private readonly axios: AxiosInstance;
 	private readonly userToken: string;
-	private readonly jiraHost: string;
+	private readonly gitHubBaseUrl: string;
 	private readonly logger: Logger;
 
-	constructor(userToken: string, jiraHost: string, logger: Logger = getLogger("github.user.client")) {
+	constructor(userToken: string, gitHubBaseUrl: string, logger: Logger = getLogger("github.user.client")) {
 		this.userToken = userToken;
-		this.jiraHost = jiraHost;
+		this.gitHubBaseUrl = gitHubBaseUrl;
 		this.logger = logger;
 
 		this.axios = axios.create({
-			baseURL: setGitHubBaseUrl(this.jiraHost),
+			baseURL: setGitHubBaseUrl(this.gitHubBaseUrl),
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -33,7 +33,7 @@ export class GitHubUserClient {
 				...config,
 				headers: {
 					...config.headers,
-					Accept: setAcceptHeader(this.jiraHost),
+					Accept: setAcceptHeader(this.gitHubBaseUrl),
 					Authorization: `token ${this.userToken}`
 				}
 			};
