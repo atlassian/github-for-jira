@@ -168,7 +168,9 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			res.status(404).send(`Missing installation for host '${jiraHost}'`);
 			return;
 		}
-		const gitHubAppClient = new GitHubAppClient(jiraHost, log);
+
+		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+		const gitHubAppClient = new GitHubAppClient(gitHubBaseUrl, log);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 

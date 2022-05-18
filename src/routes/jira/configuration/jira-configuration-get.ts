@@ -10,6 +10,7 @@ import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import {getGitHubBaseUrl} from "utils/check-github-app-type";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -46,7 +47,8 @@ const getInstallation = async (client: GitHubAPI, subscription: Subscription, lo
 	const { jiraHost } = subscription;
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION, true, jiraHost) ;
 	const { gitHubInstallationId } = subscription;
-	const gitHubAppClient = new GitHubAppClient(jiraHost, log);
+	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+	const gitHubAppClient = new GitHubAppClient(gitHubBaseUrl, log);
 
 	try {
 		const response = useNewGitHubClient ?
