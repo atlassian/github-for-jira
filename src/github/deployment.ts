@@ -8,6 +8,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
+import { JiraDeploymentData } from "../interfaces/jira";
 
 export const deploymentWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -42,7 +43,7 @@ export const processDeployment = async (
 
 	logger.info("processing deployment message!");
 
-	const jiraPayload = await transformDeployment(github, newGitHubClient, webhookPayload, jiraHost, logger);
+	const jiraPayload: JiraDeploymentData | undefined = await transformDeployment(github, newGitHubClient, webhookPayload, jiraHost, logger);
 
 	if (!jiraPayload) {
 		logger.info(
