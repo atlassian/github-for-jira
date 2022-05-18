@@ -4,13 +4,12 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { transformWorkflow } from "../transforms/transform-workflow";
-import { WorkflowPayload } from "../config/interfaces";
-
+import { GitHubWorkflowPayload } from "~/src/interfaces/github"
 type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
 const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logger) => {
 	const transformTasks = await workflowRun.reduce(async (acc, current) => {
-		const workflowItem = { workflow_run: current, workflow: { id: current.id } } as WorkflowPayload;
+		const workflowItem = { workflow_run: current, workflow: { id: current.id } } as GitHubWorkflowPayload;
 		const build = await transformWorkflow(gitHubInstallationClient, workflowItem, logger);
 		if (build?.builds) {
 			(await acc).push(build?.builds);

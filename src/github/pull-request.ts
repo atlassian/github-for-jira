@@ -6,14 +6,16 @@ import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
+import { JiraPullRequestData } from '../interfaces/jira';
 import { jiraIssueKeyParser } from "utils/jira-utils";
+import { GitHubIssueData } from '../interfaces/github';
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
 			id: repositoryId,
-			name: repo,
+			name: repoName,
 			owner: { login: owner }
 		},
 		changes
@@ -32,7 +34,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: any = {};
 	try {
-		reviews = await getReviews(githubClient, owner, repo, pull_request.number);
+		reviews = await getReviews(githubClient, owner, repoName, pull_request.number);
 	} catch (err) {
 		context.log.warn(
 			{
@@ -44,7 +46,8 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		);
 	}
 
-	const jiraPayload = await transformPullRequest(githubClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(githubClient, pull_request, reviews, context.log);
+
 	context.log.info("Pullrequest mapped to Jira Payload");
 
 	// Deletes PR link to jira if ticket id is removed from PR title
@@ -67,7 +70,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	}
 
 	try {
-		await updateGithubIssues(githubClient, context, util, repo, owner, pull_request);
+		await updateGithubIssues(githubClient, context, util, repoName, owner, pull_request);
 	} catch (err) {
 		context.log.warn(
 			{ err },
@@ -93,17 +96,19 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	);
 };
 
-const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, context: CustomContext, util, repo, owner, pullRequest) => {
+const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, context: CustomContext, util, repoName, owner, pullRequest) => {
 	const linkifiedBody = await util.unfurl(pullRequest.body);
+
 	if (!linkifiedBody) {
 		return;
 	}
 
 	context.log("Updating pull request");
-	const updatedPullRequest = {
+
+	const updatedPullRequest: GitHubIssueData = {
 		body: linkifiedBody,
 		owner,
-		repo,
+		repo: repoName,
 		issue_number: pullRequest.number
 	};
 
