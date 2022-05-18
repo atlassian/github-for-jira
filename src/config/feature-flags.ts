@@ -21,11 +21,14 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
 	USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION = "use-new-github-client-for-delete-subscription",
 	USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION = "use-new-github-client-for-get-subscription",
-	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation",
-	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
+	USE_NEW_GITHUB_CLIENT_FOR_GET_sINSTALLATION = "use-new-github-client-for-get-installation",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
+	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST = "use-new-github-client-for-github-config-post",
+	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
 	REGEX_FIX = "regex-fix",
-	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect",
+	USE_NEW_GITHUB_CLIENT_FOR_GET_REPO = "use-new-github-client-for-get-repo",
+	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
+	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect"
 	RETRY_ALL_ERRORS = "retry-all-errors",
 }
 

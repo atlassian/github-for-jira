@@ -149,6 +149,12 @@ export class GitHubInstallationClient {
 		return response.data.data;
 	};
 
+	public getRepository = async (id: number): Promise<AxiosResponse<any>> => {
+		return await this.get<Octokit.GitGetRefResponse>(`/repositories/{id}`, {}, {
+			id
+		});
+	};
+
 	// TODO: remove this function after discovery backfill is deployed
 	public getRepositoriesPageOld = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
 		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
