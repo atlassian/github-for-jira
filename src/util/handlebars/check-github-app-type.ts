@@ -7,8 +7,18 @@ export const isGitHubEnterpriseApp = (jiraHost: string): string | null => {
 
 
 	// call GitHubServerApps -> get all info for that id
+	// return !gitHubBaseUrl ? "http://github.internal.atlassian.com" | null;
 	return "http://github.internal.atlassian.com";
-
-	// baseUrl -> app url e.g.
+	// baseUrl -> app url e.g
 	// accept headers -> just need to know if an app url exists (could check for null
+}
+
+
+export const setGitHubBaseUrl = (jiraHost: string): string => {
+	const hasGitHubServerUrl = !!isGitHubEnterpriseApp(jiraHost);
+	return hasGitHubServerUrl ? `${isGitHubEnterpriseApp(jiraHost)}/api/v3` : "https://api.github.com";
+}
+
+export const setAcceptHeader = (jiraHost: string): string => {
+	return !!isGitHubEnterpriseApp(jiraHost) ? "application/vnd.github.machine-man-preview+json" : "application/vnd.github.v3+json";
 }

@@ -20,7 +20,7 @@ import {
 } from "./github-queries";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
-import {isGitHubEnterpriseApp} from "utils/handlebars/check-github-app-type";
+import { setAcceptHeader, setGitHubBaseUrl} from "utils/handlebars/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -44,7 +44,7 @@ export class GitHubInstallationClient {
 		this.logger = logger || getLogger("github.installation.client");
 
 		this.axios = axios.create({
-			baseURL: !!isGitHubEnterpriseApp(this.jiraHost) ? `${isGitHubEnterpriseApp(this.jiraHost)}/api/v3` : "https://api.github.com",
+			baseURL: setGitHubBaseUrl(this.jiraHost),
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -64,6 +64,7 @@ export class GitHubInstallationClient {
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
+		this.jiraHost = jiraHost;
 	}
 
 	/**
@@ -279,7 +280,7 @@ export class GitHubInstallationClient {
 		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
-				Accept: isGitHubEnterpriseApp(this.jiraHost) ? "application/vnd.github.machine-man-preview+json" : "application/vnd.github.v3+json",
+				Accept: setAcceptHeader(this.jiraHost),
 				Authorization: `Bearer ${appToken.token}`
 			}
 		};
@@ -294,7 +295,7 @@ export class GitHubInstallationClient {
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
-				Accept: isGitHubEnterpriseApp(this.jiraHost) ? "application/vnd.github.machine-man-preview+json" : "application/vnd.github.v3+json",
+				Accept: setAcceptHeader(this.jiraHost),
 				Authorization: `Bearer ${installationToken.token}`
 			}
 		};

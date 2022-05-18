@@ -5,7 +5,7 @@ import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setReq
 import { metricHttpRequest } from "config/metric-names";
 import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
-import {isGitHubEnterpriseApp} from "utils/handlebars/check-github-app-type";
+import { setAcceptHeader, setGitHubBaseUrl} from "utils/handlebars/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -22,7 +22,7 @@ export class GitHubUserClient {
 		this.logger = logger;
 
 		this.axios = axios.create({
-			baseURL: !!isGitHubEnterpriseApp(this.jiraHost) ? `${isGitHubEnterpriseApp(this.jiraHost)}/api/v3` : "https://api.github.com",
+			baseURL: setGitHubBaseUrl(this.jiraHost),
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -33,7 +33,7 @@ export class GitHubUserClient {
 				...config,
 				headers: {
 					...config.headers,
-					Accept: isGitHubEnterpriseApp(this.jiraHost) ? "application/vnd.github.machine-man-preview+json" : "application/vnd.github.v3+json",
+					Accept: setAcceptHeader(this.jiraHost),
 					Authorization: `token ${this.userToken}`
 				}
 			};

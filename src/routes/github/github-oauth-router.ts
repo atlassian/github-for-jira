@@ -8,6 +8,7 @@ import { Tracer } from "config/tracer";
 import { envVars }  from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
+import { isGitHubEnterpriseApp, setGitHubBaseUrl } from "utils/handlebars/check-github-app-type";
 
 const logger = getLogger("github-oauth");
 
@@ -32,10 +33,13 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 		res.locals.redirect ||
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 
+	const { jiraHost } = res.locals;
+
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-	// const protocol = isGitHubEnterpriseApp ? 'http' : 'https'
-	const redirectUrl = `http://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+	const gitHubHostname = isGitHubEnterpriseApp(jiraHost) || envVars.GITHUB_HOSTNAME;
+	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+	req.log.info("redirectUrl:", redirectUrl)
 
 	req.log.info({
 		redirectUrl,
@@ -87,10 +91,11 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
+	const gitHubHostname = isGitHubEnterpriseApp(jiraHost) || envVars.GITHUB_HOSTNAME;
+
 	try {
 		const response = await axios.get(
-			`http://${envVars.GITHUB_HOSTNAME}/login/oauth/access_token`,
-			// `https://${envVars.GITHUB_HOSTNAME}/login/oauth/access_token`,
+			`${gitHubHostname}/login/oauth/access_token`,
 			{
 				params: {
 					client_id: githubClient,
@@ -133,7 +138,9 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		await axios.get(`http://${envVars.GITHUB_HOSTNAME}/api/v3`, {
+		const { jiraHost } = res.locals;
+		req.log.info("setGitHubBaseUrl(jiraHos: ", setGitHubBaseUrl(jiraHost))
+		await axios.get(setGitHubBaseUrl(jiraHost), {
 			headers: {
 				Authorization: `Bearer ${githubToken}`
 			}
