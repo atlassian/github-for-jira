@@ -13,8 +13,6 @@ export class GithubClientError extends Error {
 			this.cause = { ...cause, config: {} };
 			this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
 		}
-		console.log("asathis");
-		console.log(this);
 	}
 }
 

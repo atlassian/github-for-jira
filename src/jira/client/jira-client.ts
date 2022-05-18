@@ -236,7 +236,6 @@ export const getJiraClient = async (
 							jiraHost,
 							gitHubInstallationId
 						);
-						console.log("MORE MADENESSSSS")
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
 
