@@ -32,7 +32,7 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 	context.log.info("Handling deployment message from the SQS queue");
 
 	const github = await workerApp.auth(installationId);
-	const newGitHubClient = new GitHubInstallationClient(getCloudInstallationId(installationId), jiraHost, context.log);
+	const newGitHubClient = new GitHubInstallationClient(getCloudInstallationId(installationId, jiraHost), jiraHost, context.log);
 
 	await processDeployment(
 		github,

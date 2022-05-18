@@ -1,4 +1,5 @@
 import { envVars }  from "config/env";
+import {setGitHubBaseUrl} from "utils/check-github-app-type";
 
 /**
  * An installation ID uniquely identifies an installation of a GitHub app across the (single) cloud instance
@@ -40,7 +41,8 @@ export class InstallationId {
 	}
 }
 
-export const getCloudInstallationId = (installationId: number): InstallationId => {
-	return new InstallationId("http://github.internal.atlassian.com/api/v3", parseInt(envVars.APP_ID), installationId);
+export const getCloudInstallationId = (installationId: number, jiraHost: string): InstallationId => {
+	const githubBaseUrl = setGitHubBaseUrl(jiraHost);
+	return new InstallationId(githubBaseUrl, parseInt(envVars.APP_ID), installationId);
 	// return new InstallationId("https://api.github.com", parseInt(envVars.APP_ID), installationId);
 };

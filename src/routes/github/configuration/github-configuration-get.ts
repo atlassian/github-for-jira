@@ -69,7 +69,7 @@ const getInstallationsWithAdmin = async (
 ): Promise<Awaited<{ access_tokens_url: string; repositories_url: string; isIPBlocked: boolean; single_file_name: string; target_type: string; target_id: number; isAdmin: number | boolean; numberOfRepos: number | boolean; permissions: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemPermissions; html_url: string; id: number; app_id: number; account: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItemAccount; events: Array<string> }>[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id), jiraHost, log);
+		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id, jiraHost), jiraHost, log);
 		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation()
 			.catch((err) => {
 				errors.push(err);

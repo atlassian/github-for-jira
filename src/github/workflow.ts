@@ -8,7 +8,7 @@ import { JiraBuildData } from '../interfaces/jira';
 export const workflowWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;
 
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), jiraHost, logger);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, jiraHost), jiraHost, logger);
 	const jiraPayload = await transformWorkflow(githubClient, payload, logger);
 
 	if (!jiraPayload) {

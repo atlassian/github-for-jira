@@ -8,7 +8,7 @@ import { Tracer } from "config/tracer";
 import { envVars }  from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import { isGitHubEnterpriseApp, setGitHubBaseUrl } from "utils/handlebars/check-github-app-type";
+import { isGitHubEnterpriseApp, setGitHubBaseUrl } from "utils/check-github-app-type";
 
 const logger = getLogger("github-oauth");
 

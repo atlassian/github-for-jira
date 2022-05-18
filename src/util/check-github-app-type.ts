@@ -5,6 +5,9 @@ export const isGitHubEnterpriseApp = (jiraHost: string): string | null => {
 	// call Installation getGitHubAppIdForHost
 	// const installation = await Installation.getForHost(jiraHost);
 
+	// then get the githubappid from the installtion
+	// then query to the GSA table to get url
+
 
 	// call GitHubServerApps -> get all info for that id
 	// return !gitHubBaseUrl ? "http://github.internal.atlassian.com" | null;
@@ -15,8 +18,7 @@ export const isGitHubEnterpriseApp = (jiraHost: string): string | null => {
 
 
 export const setGitHubBaseUrl = (jiraHost: string): string => {
-	const hasGitHubServerUrl = !!isGitHubEnterpriseApp(jiraHost);
-	return hasGitHubServerUrl ? `${isGitHubEnterpriseApp(jiraHost)}/api/v3` : "https://api.github.com";
+	return !!isGitHubEnterpriseApp(jiraHost) ? `${isGitHubEnterpriseApp(jiraHost)}/api/v3` : "https://api.github.com";
 }
 
 export const setAcceptHeader = (jiraHost: string): string => {

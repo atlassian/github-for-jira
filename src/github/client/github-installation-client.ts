@@ -20,7 +20,7 @@ import {
 } from "./github-queries";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
-import { setAcceptHeader, setGitHubBaseUrl} from "utils/handlebars/check-github-app-type";
+import { setAcceptHeader, setGitHubBaseUrl} from "utils/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
