@@ -1,15 +1,27 @@
-import { Model, DataTypes } from "sequelize";
-import { encrypted, sequelize } from "models/sequelize";
+import { Model, DataTypes, Sequelize } from "sequelize";
+import { sequelize } from "models/sequelize";
+import EncryptedField from "sequelize-encrypted";
+const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
+
+interface GitHubServerAppPayload {
+	uuid: string;
+	githubBaseUrl: string;
+	githubClientId: string;
+	githubClientSecret: string;
+	webhookSecret: string;
+	privateKey: string;
+}
 
 export class GitHubServerApp extends Model {
 	id: number;
 	uuid: string;
 	githubBaseUrl: string;
 	githubClientId: string;
-	secrets: string;
 	githubClientSecret: string;
 	webhookSecret: string;
 	privateKey: string;
+	updatedAt: Date;
+	createdAt: Date;
 
 	/**
 	 * Get GitHubServerApp
@@ -29,6 +41,28 @@ export class GitHubServerApp extends Model {
 				id: gitHubServerAppId
 			}
 		});
+	}
+
+	/**
+	 * Create a new GitHubServerApp object
+	 *
+	 * @param {{
+	 * 		uuid: string,
+	 * 		githubBaseUrl:
+	 * 		string,
+	 * 		githubClientId: string,
+	 * 		githubClientSecret: string,
+	 * 		webhookSecret: string,
+	 * 		privateKey: string
+	 * 	}} payload
+	 * @returns {GitHubServerApp}
+	 */
+	static async install(payload: GitHubServerAppPayload): Promise<GitHubServerApp> {
+		const [gitHubServerApp] = await this.create({
+			...payload
+		});
+
+		return gitHubServerApp;
 	}
 }
 
@@ -67,4 +101,3 @@ GitHubServerApp.init({
 		allowNull: false
 	})
 }, { sequelize });
-
