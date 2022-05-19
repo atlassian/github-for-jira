@@ -1,13 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import {encrypted, getHashedKey, sequelize} from "models/sequelize";
-import {Subscription} from "models/subscription";
-
-interface GitHubServerAppPayload {
-	uuid: string;
-	githubBaseUrl: string;
-	githubClientId: string;
-	secrets: string;
-}
+import { encrypted, sequelize } from "models/sequelize";
 
 export class GitHubServerApp extends Model {
 	id: number;
@@ -37,24 +29,6 @@ export class GitHubServerApp extends Model {
 				id: gitHubServerAppId
 			}
 		});
-	}
-
-	/**
-	 * Create a new GitHubServerApp object
-	 *
-	 * @param {{host: string, clientKey: string, secret: string}} payload
-	 * @returns {GitHubServerApp}
-	 */
-	static async install(payload: GitHubServerAppPayload): Promise<GitHubServerApp> {
-		const { uuid, githubBaseUrl, githubClientId, secrets } = payload;
-		const [gitHubServerApp] = await this.create({
-			uuid,
-			githubBaseUrl,
-			githubClientId,
-			secrets,
-		});
-
-		return gitHubServerApp;
 	}
 }
 
