@@ -141,7 +141,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		const { jiraHost } = res.locals;
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 		const url = setGitHubBaseUrl(gitHubBaseUrl)
-		req.log.info("setGitHubBaseUrl(jiraHos: ", url)
+
 		await axios.get(url, {
 			headers: {
 				Authorization: `Bearer ${githubToken}`

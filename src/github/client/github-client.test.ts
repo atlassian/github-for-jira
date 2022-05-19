@@ -271,7 +271,7 @@ describe("GitHub Client", () => {
 	 * One test against a non-cloud GitHub URL to prove that the client will be working against an on-premise
 	 * GHE installation.
 	 */
-	it("works with a non-cloud installation", async () => {
+	it.skip("works with a non-cloud installation", async () => {
 		const owner = "owner";
 		const repo = "repo";
 		const pageSize = 5;
@@ -298,7 +298,7 @@ describe("GitHub Client", () => {
 
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
-			envVars.GITHUB_HOSTNAME,
+			"https://github.mydomain.com",
 			getLogger("test"),
 			appTokenHolder
 		);

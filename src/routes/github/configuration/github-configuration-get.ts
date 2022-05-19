@@ -71,9 +71,11 @@ const getInstallationsWithAdmin = async (
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+		log.info("GET PLACE: ", gitHubBaseUrl)
 		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id, gitHubBaseUrl), gitHubBaseUrl, log);
-		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation().catch((err) => {
+		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation(jiraHost).catch((err) => {
 			errors.push(err);
+			log.info("ERROR: ", err)
 			return 0;
 		});
 		// See if we can get the membership for this user

@@ -15,11 +15,12 @@ import {
 	getBranchesResponse,
 	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
-	getCommitsResponse, GetRepositoriesQuery, GetRepositoriesResponse,
+	getCommitsResponse, GetRepositoriesQuery, GetRepositoriesResponse, ViewerRepositoryCountQuery,
 } from "./github-queries";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
-import { setAcceptHeader, setGitHubBaseUrl} from "utils/check-github-app-type";
+import {getGitHubBaseUrl, setAcceptHeader, setGitHubBaseUrl} from "utils/check-github-app-type";
+import { envVars } from "~/src/config/env";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -43,7 +44,7 @@ export class GitHubInstallationClient {
 		this.logger = logger || getLogger("github.installation.client");
 
 		this.axios = axios.create({
-			baseURL: setGitHubBaseUrl(this.gitHubBaseUrl),
+			baseURL: setGitHubBaseUrl(gitHubBaseUrl),
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -199,13 +200,20 @@ export class GitHubInstallationClient {
 			});
 	}
 
-	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
-			perPage: 100,
-		});
-		// const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
-		return response.data.total_count;
-		// return response?.data?.data?.viewer?.repositories?.totalCount;
+	public async getNumberOfReposForInstallation(jiraHost: string): Promise<number> {
+		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+
+		if (gitHubBaseUrl === envVars.GITHUB_HOSTNAME) {
+			const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
+			this.logger.info("WHAT???", response)
+			return response?.data?.data?.viewer?.repositories?.totalCount;
+		} else {
+			const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
+				perPage: 100,
+			});
+			this.logger.info("WHAT???", response)
+			return response.data.total_count;
+		}
 	}
 
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, cursor?: string): Promise<getBranchesResponse> {
