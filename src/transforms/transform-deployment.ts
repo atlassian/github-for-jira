@@ -99,7 +99,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 // Deployment state - GitHub: Can be one of error, failure, pending, in_progress, queued, or success
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-deployments-0-1-bulk-post
 // Deployment state - Jira: Can be one of unknown, pending, in_progress, cancelled, failed, rolled_back, successful
-function mapState(state: string): string {
+function mapState(state: string | undefined): string {
 	switch (state?.toLowerCase()) {
 		case "queued":
 			return "pending";

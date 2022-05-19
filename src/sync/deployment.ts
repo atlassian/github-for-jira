@@ -7,7 +7,7 @@ import { transformDeployment } from "../transforms/transform-deployment";
 
 const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
 	const deploymentData = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, cursor);
-	const edges = deploymentData.repository.deployments.edges;
+	const edges = deploymentData.repository.deployments.edges || [];
 	const deployments = edges?.map(({ node: item }) => item) || [];
 
 	return {
