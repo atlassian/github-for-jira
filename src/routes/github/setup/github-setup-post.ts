@@ -25,10 +25,8 @@ const validateJiraSite = async (
 
 export const GithubSetupPost = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost, jiraDomain, jiraDomainMain, jiraDomainModal } = req.body;
-
-	const domain = jiraDomain || jiraDomainMain || jiraDomainModal;
-	const topLevelDomain = "atlassian.net";
-	const url = jiraHost || `https://${domain}.${topLevelDomain}`;
+	const domain = jiraDomain || jiraDomainMain || jiraDomainModal || "";
+	const url = jiraHost || `https://${domain}.atlassian.net`;
 
 	req.log.info(`Received github setup page request for jira ${url}`);
 

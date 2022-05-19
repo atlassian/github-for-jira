@@ -124,7 +124,7 @@ $(".install-app").click(function (event) {
 	event.preventDefault();
 	githubSetupPost({
 		_csrf: document.getElementById('_csrf').value,
-		jiraHost: $(event.target).data('jiraHost')
+		jiraHost: $(event.target).data('jirahost')
 	})
 });
 
