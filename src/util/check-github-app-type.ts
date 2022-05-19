@@ -4,8 +4,6 @@ import { envVars } from "config/env";
 import {GitHubServerApp} from "models/git-hub-server-app";
 import {getLogger} from "config/logger";
 
-const logger = getLogger("mylogger");
-
 export const getGitHubBaseUrl = async (jiraHost: string): Promise<string> => {
 	const installation = await Installation.getForHost(jiraHost);
 	const gitHubAppId = installation?.githubAppId;
