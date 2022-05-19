@@ -62,7 +62,7 @@ describe("sync/installation", () => {
 				]
 			};
 
-			expect(isRetryableWithSmallerRequest(err)).toBeTruthy();
+			expect(await isRetryableWithSmallerRequest(err)).toBeTruthy();
 		});
 
 		it("should return true for 'something went wrong' error", async () => {
@@ -74,7 +74,7 @@ describe("sync/installation", () => {
 				]
 			};
 
-			expect(isRetryableWithSmallerRequest(err)).toBeTruthy();
+			expect(await isRetryableWithSmallerRequest(err)).toBeTruthy();
 		});
 
 		it("should return false for unknown error", async () => {
@@ -86,7 +86,7 @@ describe("sync/installation", () => {
 				]
 			};
 
-			expect(isRetryableWithSmallerRequest(err)).toBeFalsy();
+			expect(await isRetryableWithSmallerRequest(err)).toBeFalsy();
 		});
 	});
 

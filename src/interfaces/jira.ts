@@ -60,7 +60,7 @@ export interface JiraBranch {
 }
 
 export interface JiraBranchData {
-	id: number;
+	id: string;
 	name: string;
 	url: string;
 	branches: JiraBranch[];
