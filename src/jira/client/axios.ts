@@ -149,13 +149,13 @@ const instrumentRequest = (response) => {
  * @param logger
  */
 const instrumentFailedRequest = (instance: AxiosInstance, logger: Logger) => {
-	return async (error) => {
+	return async (error:AxiosError) => {
 		instrumentRequest(error?.response);
-		if (error?.statusCode === 503) {
+		if (error?.code === "503") {
 			const statusResponse: AxiosResponse = await instance.get("/status");
 			if (statusResponse?.status === 503) {
 				logger.info(`503 from Jira: Jira instance ${instance} is suspended or does not exist. Returning 404 to our application.`);
-				error.statusCode = 404;
+				error.code = "404";
 			}
 		}
 		return Promise.reject(error);
