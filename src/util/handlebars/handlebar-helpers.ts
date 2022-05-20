@@ -44,5 +44,5 @@ export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("isModal", (modalId) => modalId === "jiraDomainModal");
 
 
-	hbs.registerHelper("isMissingBuildPermissions", (syncWarning: string) => syncWarning?.includes("Invalid permissions for build task"));
+	hbs.registerHelper("isMissingPermissions", (syncWarning: string) => syncWarning?.includes("Invalid permissions for"));
 };

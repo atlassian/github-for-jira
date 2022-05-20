@@ -259,7 +259,8 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 				// TODO - need a better way to manage GitHub errors globally
 				// In the event that the customer has not accepted the required permissions.
 				// We will continue to process the data per usual while omitting the tasks the app does not have access too.
-				if (err.status === 403 && err.message?.includes("Resource not accessible by integration")) {
+				// The GraphQL errors do not return a status so we check 403 or undefined
+				if ((err.status === 403 || err.status === undefined) && err.message?.includes("Resource not accessible by integration")) {
 					await subscription?.update({ syncWarning: `Invalid permissions for ${task} task` });
 					logger.error({ err }, `Invalid permissions for ${task} task`);
 					// Return undefined objects so the sync can complete while skipping this task
