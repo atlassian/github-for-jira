@@ -8,18 +8,6 @@ import { GitHubWorkflowPayload } from "~/src/interfaces/github"
 type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
 const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logger) => {
-	// const transformTasks = await workflowRun.reduce(async (acc, current) => {
-	// 	const workflowItem = { workflow_run: current, workflow: { id: current.id } } as GitHubWorkflowPayload;
-	// 	const build = await transformWorkflow(gitHubInstallationClient, workflowItem, logger);
-	// 	if (build?.builds) {
-	// 		(await acc).push(build?.builds);
-	// 	}
-	// 	return await acc;
-	// }, []);
-
-	// const transformedBuilds = await Promise.all(transformTasks);
-
-	// return transformedBuilds.flat();
 
 	const transformTasks = workflowRun.map(workflow => {
 		const workflowItem = { workflow_run: workflow, workflow: { id: workflow.id } } as GitHubWorkflowPayload;
@@ -31,7 +19,6 @@ const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logge
 		.filter(build => !!build)
 		.map(build => build.builds)
 		.flat();
-
 };
 
 export const getBuildTask = async (
