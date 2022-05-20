@@ -6,6 +6,7 @@ import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubAPI } from "probot";
 import {getGitHubBaseUrl} from "utils/check-github-app-type";
+import {gheServerAuthAndConnectFlowFlag} from "utils/feature-flag-utils";
 
 /*
 	Handles redirects for both the installation flow from Jira and
@@ -46,7 +47,7 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 	const { jiraHost, client } = res.locals;
 	const githubInstallationId = Number(req.query.installation_id);
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const githubAppClient = new GitHubAppClient(gitHubBaseUrl, req.log);
+	const githubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost) ? new GitHubAppClient(req.log, gitHubBaseUrl) : new GitHubAppClient(req.log);
 	const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP, true, jiraHost);
 	const { githubInstallation, info } = await getInstallationData(useNewGithubClient ? githubAppClient : client, githubInstallationId, req.log);
 

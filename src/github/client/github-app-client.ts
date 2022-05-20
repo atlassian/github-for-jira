@@ -19,12 +19,12 @@ import { setAcceptHeader, setGitHubBaseUrl} from "utils/check-github-app-type";
 export class GitHubAppClient {
 	private readonly axios: AxiosInstance;
 	private readonly appToken: AuthToken;
-	private readonly gitHubBaseUrl: string;
+	private readonly gitHubBaseUrl: string | undefined;
 	private readonly logger: Logger;
 
 	constructor(
-		gitHubBaseUrl: string,
 		logger: Logger,
+		gitHubBaseUrl?: string | undefined,
 		appId = envVars.APP_ID,
 	) {
 		this.logger = logger || getLogger("github.app.client");
