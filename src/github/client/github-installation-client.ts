@@ -21,7 +21,6 @@ import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } fr
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 import {
 	getGitHubBaseUrl,
-	GITHUB_ENTERPRISE_CLOUD_BASEURL,
 	setAcceptHeader,
 	setGitHubBaseUrl
 } from "utils/check-github-app-type";
@@ -207,16 +206,14 @@ export class GitHubInstallationClient {
 	public async getNumberOfReposForInstallation(jiraHost: string): Promise<number> {
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 
-		if (gitHubBaseUrl === GITHUB_ENTERPRISE_CLOUD_BASEURL) {
-			const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
-			this.logger.info("WHAT???", response)
-			return response?.data?.data?.viewer?.repositories?.totalCount;
-		} else {
+		if (gitHubBaseUrl) {
 			const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
 				perPage: 100,
 			});
-			this.logger.info("WHAT???", response)
 			return response.data.total_count;
+		} else {
+			const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
+			return response?.data?.data?.viewer?.repositories?.totalCount;
 		}
 	}
 

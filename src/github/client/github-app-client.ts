@@ -9,7 +9,7 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
-import { setAcceptHeader, setGitHubBaseUrl} from "utils/check-github-app-type";
+import { setAcceptHeader, setGitHubBaseUrl } from "utils/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.

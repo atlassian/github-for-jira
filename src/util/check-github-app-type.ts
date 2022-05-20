@@ -1,8 +1,7 @@
 // this will need to be updated later to check for database entry
 import { Installation } from "models/installation";
-import {GitHubServerApp} from "models/git-hub-server-app";
-// import {getLogger} from "config/logger";
-// const logger = getLogger("testing")
+import { GitHubServerApp } from "models/git-hub-server-app";
+
 export const GITHUB_ENTERPRISE_CLOUD_BASEURL = "https://github.com";
 
 export const getGitHubBaseUrl = async (jiraHost: string): Promise<string> => {
