@@ -22,7 +22,7 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 
 	const messagePayload: BranchMessagePayload = context.payload;
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(messagePayload.installationId, gitHubBaseUrl), gitHubBaseUrl, context.log);
+	const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(messagePayload.installationId, gitHubBaseUrl), context.log, gitHubBaseUrl);
 
 	await processBranch(
 		gitHubClient,

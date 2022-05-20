@@ -36,13 +36,13 @@ export class GitHubInstallationClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
-	private readonly gitHubBaseUrl: string;
+	private readonly gitHubBaseUrl: string | undefined;
 	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: InstallationId,
-		gitHubBaseUrl: string,
 		logger: Logger,
+		gitHubBaseUrl?: string | undefined,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.installation.client");

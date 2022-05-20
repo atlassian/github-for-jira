@@ -73,7 +73,7 @@ const getInstallationsWithAdmin = async (
 		const errors: Error[] = [];
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 		log.info("GET PLACE: ", gitHubBaseUrl)
-		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id, gitHubBaseUrl), gitHubBaseUrl, log);
+		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id, gitHubBaseUrl), log, gitHubBaseUrl);
 		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation(jiraHost).catch((err) => {
 			errors.push(err);
 			log.info("ERROR: ", err)

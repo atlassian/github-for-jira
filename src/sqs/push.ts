@@ -25,6 +25,6 @@ export type PushQueueMessagePayload = {
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
 	context.log.info("Handling push message from the SQS queue");
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const github = new GitHubInstallationClient(getCloudInstallationId(context.payload.installationId, gitHubBaseUrl), gitHubBaseUrl, context.log);
+	const github = new GitHubInstallationClient(getCloudInstallationId(context.payload.installationId, gitHubBaseUrl), context.log, gitHubBaseUrl);
 	await processPush(github, context.payload, wrapLogger(context.log));
 };

@@ -95,7 +95,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), GITHUB_ENTERPRISE_CLOUD_BASEURL, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
 			page
@@ -118,7 +118,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), GITHUB_ENTERPRISE_CLOUD_BASEURL, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
 		const commit = await client.getCommit(owner, repo, sha);
 
 		expect(commit).toBeTruthy();
@@ -153,7 +153,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), GITHUB_ENTERPRISE_CLOUD_BASEURL, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -180,7 +180,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), GITHUB_ENTERPRISE_CLOUD_BASEURL, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -203,7 +203,7 @@ describe("GitHub Client", () => {
 			403, { message: "Org has an IP allow list enabled" }
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), GITHUB_ENTERPRISE_CLOUD_BASEURL, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -228,7 +228,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), GITHUB_ENTERPRISE_CLOUD_BASEURL, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -254,7 +254,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), GITHUB_ENTERPRISE_CLOUD_BASEURL, getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -299,7 +299,6 @@ describe("GitHub Client", () => {
 
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
-			"https://github.mydomain.com",
 			getLogger("test"),
 			appTokenHolder
 		);
