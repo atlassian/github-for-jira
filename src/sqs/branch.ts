@@ -4,6 +4,7 @@ import { processBranch } from "../github/branch";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import {getGitHubBaseUrl} from "utils/check-github-app-type";
+import {gheServerAuthAndConnectFlowFlag} from "utils/feature-flag-utils";
 
 export type BranchMessagePayload = {
 	jiraHost: string,
@@ -22,7 +23,9 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 
 	const messagePayload: BranchMessagePayload = context.payload;
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(messagePayload.installationId, gitHubBaseUrl), context.log, gitHubBaseUrl);
+	const gitHubClient = await gheServerAuthAndConnectFlowFlag(jiraHost) ?
+		new GitHubInstallationClient(getCloudInstallationId(messagePayload.installationId, gitHubBaseUrl), context.log, gitHubBaseUrl) :
+		new GitHubInstallationClient(getCloudInstallationId(messagePayload.installationId), context.log);
 
 	await processBranch(
 		gitHubClient,

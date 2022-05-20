@@ -5,12 +5,11 @@ import { statsd }  from "config/statsd";
 import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
 import { getCloudInstallationId, InstallationId } from "./installation-id";
 import nock from "nock";
-import { AppTokenHolder } from "./app-token-holder";
-import fs from "fs";
-import { envVars }  from "config/env";
+// import { AppTokenHolder } from "./app-token-holder";
+// import fs from "fs";
+// import { envVars }  from "config/env";
 import { when } from "jest-when";
 import { numberFlag, NumberFlags } from "config/feature-flags";
-import { GITHUB_ENTERPRISE_CLOUD_BASEURL } from "utils/check-github-app-type";
 
 jest.mock("config/feature-flags");
 
@@ -95,7 +94,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
 			page
@@ -118,7 +117,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		const commit = await client.getCommit(owner, repo, sha);
 
 		expect(commit).toBeTruthy();
@@ -153,7 +152,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -180,7 +179,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -203,7 +202,7 @@ describe("GitHub Client", () => {
 			403, { message: "Org has an IP allow list enabled" }
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -228,7 +227,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -254,7 +253,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), getLogger("test"));
+		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -288,19 +287,18 @@ describe("GitHub Client", () => {
 			gheNock
 		);
 
-		const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
-			switch (installationId.githubBaseUrl) {
-				case gheUrl:
-					return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
-				default:
-					throw new Error("unknown github instance!");
-			}
-		});
+		// const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
+		// 	switch (installationId.githubBaseUrl) {
+		// 		case gheUrl:
+		// 			return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
+		// 		default:
+		// 			throw new Error("unknown github instance!");
+		// 	}
+		// });
 
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
 			getLogger("test"),
-			appTokenHolder
 		);
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
@@ -326,7 +324,7 @@ describe("GitHub Client", () => {
 			200, [{ number: 1 }]
 		);
 
-		const client = await new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, GITHUB_ENTERPRISE_CLOUD_BASEURL), GITHUB_ENTERPRISE_CLOUD_BASEURL, getLogger("test"), AppTokenHolder.getInstance());
+		const client = await new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
