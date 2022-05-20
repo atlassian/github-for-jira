@@ -17,6 +17,7 @@ import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { BlockedIpError } from "~/src/github/client/github-client-errors";
 import { getGitHubBaseUrl } from "utils/check-github-app-type";
+import {gheServerAuthAndConnectFlowFlag} from "utils/feature-flag-utils";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -134,7 +135,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, true);
-	const githubUserClient = new GitHubUserClient(githubToken, log, gitHubBaseUrl);
+	const githubUserClient = await gheServerAuthAndConnectFlowFlag(jiraHost) ? new GitHubUserClient(githubToken, log, gitHubBaseUrl) : new GitHubUserClient(githubToken, log);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
