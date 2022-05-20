@@ -17,36 +17,34 @@ const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClie
 };
 
 const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: LoggerWithTarget) => {
-	const transformTasks = await deployments.reduce(async (acc, current) => {
+
+	const transformTasks = deployments.map((deployment) => {
 		const deploymentStatus = {
-			repository: current.repository,
+			repository: deployment.repository,
 			deployment: {
-				sha: current.commitOid,
-				id: current.databaseId,
-				ref: current.ref.id,
-				description: current.description,
-				task: current.task,
-				url: current.latestStatus.logUrl
+				sha: deployment.commitOid,
+				id: deployment.databaseId,
+				ref: deployment.ref.id,
+				description: deployment.description,
+				task: deployment.task,
+				url: deployment.latestStatus.logUrl
 			},
 			deployment_status: {
-				environment: current.environment,
-				id: current.databaseId,
-				target_url: current.latestStatus.logUrl,
-				updated_at: current.latestStatus.updatedAt,
-				state: current.latestStatus.state
+				environment: deployment.environment,
+				id: deployment.databaseId,
+				target_url: deployment.latestStatus.logUrl,
+				updated_at: deployment.latestStatus.updatedAt,
+				state: deployment.latestStatus.state
 			}
 		} as WebhookPayloadDeploymentStatus;
-		const data = await transformDeployment(_github, gitHubInstallationClient, deploymentStatus, jiraHost, logger);
+		return transformDeployment(_github, gitHubInstallationClient, deploymentStatus, jiraHost, logger);
+	});
 
-		if (data?.deployments) {
-			(await acc).push(data?.deployments);
-		}
-		return await acc;
-	}, []);
-
-	const transformedDeployments = await Promise.all(transformTasks);
-
-	return transformedDeployments.flat();
+	const transformedDeployments = await Promise.all(transformTasks);	
+	return transformedDeployments
+		.filter(deployment => !!deployment)
+		.map(deployment => deployment.deployments)
+		.flat();
 }
 
 export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
