@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isUserAdminOfOrganization } from "./github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
-import {envVars} from "config/env";
 
 describe("GitHub Utils", () => {
 	describe("isUserAdminOfOrganization", () => {
 		let githubUserClient: GitHubUserClient;
 		beforeEach(() => {
-			githubUserClient = new GitHubUserClient("token", envVars.GITHUB_HOSTNAME);
+			githubUserClient = new GitHubUserClient("token");
 		});
 
 		it("should return true if user is admin of a given organization", async () => {

@@ -8,7 +8,7 @@ import { Tracer } from "config/tracer";
 import { envVars }  from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import {getGitHubBaseUrl, setGitHubBaseUrl} from "utils/check-github-app-type";
+import { getGitHubBaseUrl, GITHUB_ENTERPRISE_CLOUD_BASEURL, setGitHubBaseUrl } from "utils/check-github-app-type";
 
 const logger = getLogger("github-oauth");
 
@@ -37,7 +37,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-	const gitHubHostname = await getGitHubBaseUrl(jiraHost) || envVars.GITHUB_HOSTNAME;
+	const gitHubHostname = await getGitHubBaseUrl(jiraHost) || GITHUB_ENTERPRISE_CLOUD_BASEURL;
 	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 	req.log.info("redirectUrl:", redirectUrl)
 
@@ -91,7 +91,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
-	const gitHubHostname = await getGitHubBaseUrl(jiraHost) || envVars.GITHUB_HOSTNAME;
+	const gitHubHostname = await getGitHubBaseUrl(jiraHost) || GITHUB_ENTERPRISE_CLOUD_BASEURL;
 
 	try {
 		const response = await axios.get(

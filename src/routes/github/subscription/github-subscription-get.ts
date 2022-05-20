@@ -22,7 +22,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, true, jiraHost);
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 	const gitHubAppClient = new GitHubAppClient(gitHubBaseUrl, logger);
-	const gitHubUserClient = new GitHubUserClient(githubToken, gitHubBaseUrl, req.log);
+	const gitHubUserClient = new GitHubUserClient(githubToken, req.log, gitHubBaseUrl);
 
 	try {
 		const { data: { login } } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated();
@@ -37,7 +37,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 
 		// Only show the page if the logged in user is an admin of this installation
 		if (await isUserAdminOfOrganization(
-			new GitHubUserClient(githubToken, gitHubBaseUrl, req.log),
+			new GitHubUserClient(githubToken, req.log, gitHubBaseUrl),
 			installation.account.login,
 			login,
 			installation.target_type

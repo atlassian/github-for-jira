@@ -19,8 +19,12 @@ import {
 } from "./github-queries";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
-import {getGitHubBaseUrl, setAcceptHeader, setGitHubBaseUrl} from "utils/check-github-app-type";
-import { envVars } from "~/src/config/env";
+import {
+	getGitHubBaseUrl,
+	GITHUB_ENTERPRISE_CLOUD_BASEURL,
+	setAcceptHeader,
+	setGitHubBaseUrl
+} from "utils/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -203,7 +207,7 @@ export class GitHubInstallationClient {
 	public async getNumberOfReposForInstallation(jiraHost: string): Promise<number> {
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 
-		if (gitHubBaseUrl === envVars.GITHUB_HOSTNAME) {
+		if (gitHubBaseUrl === GITHUB_ENTERPRISE_CLOUD_BASEURL) {
 			const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
 			this.logger.info("WHAT???", response)
 			return response?.data?.data?.viewer?.repositories?.totalCount;

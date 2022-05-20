@@ -134,7 +134,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, true);
-	const githubUserClient = new GitHubUserClient(githubToken, gitHubBaseUrl, log);
+	const githubUserClient = new GitHubUserClient(githubToken, log, gitHubBaseUrl);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);

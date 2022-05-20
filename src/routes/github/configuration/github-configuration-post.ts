@@ -59,7 +59,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	try {
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, true, jiraHost);
-		const gitHubUserClient = new GitHubUserClient(githubToken, gitHubBaseUrl, req.log);
+		const gitHubUserClient = new GitHubUserClient(githubToken, req.log, gitHubBaseUrl);
 		const gitHubAppClient = new GitHubAppClient(gitHubBaseUrl, req.log);
 
 		// Check if the user that posted this has access to the installation ID they're requesting
