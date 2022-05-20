@@ -151,6 +151,7 @@ const instrumentRequest = (response) => {
 const instrumentFailedRequest = (instance: AxiosInstance, logger: Logger) => {
 	return async (error:AxiosError) => {
 		instrumentRequest(error?.response);
+		logger.info(`ERROR OBJ IS ${error}`)
 		if (error.response?.status === 503) {
 			const statusResponse: AxiosResponse = await instance.get("/status");
 			if (statusResponse?.status === 503) {
