@@ -99,13 +99,23 @@
                   value="{{clientKey}}"
                 />
               </div>
-              <button
-                class="githubSetup__orgContent__connectBtn aui-button install-link"
-                data-installation-id="{{id}}"
-                type="submit"
-              >
-                Connect
-              </button>
+              {{#if clientKey}}
+                <button
+                  class="githubSetup__orgContent__connectBtn aui-button install-link"
+                  data-installation-id="{{id}}"
+                  type="submit"
+                >
+                  Connect
+                </button>
+              {{else}}
+                <button
+                  class="githubSetup__orgContent__connectBtn aui-button install-app"
+                  data-jirahost="{{jiraHost}}"
+                  type="submit"
+                >
+                  Install App
+                </button>
+              {{/if}}
             </div>
           </div>
 

@@ -17,28 +17,29 @@ if (cancelNewJiraSiteBtn) {
 const hasProtocol = (str) =>
 	str.includes("http://") || str.includes("https://") || str.includes("www.");
 
+const githubSetupPost = (data, url = "/github/setup") =>
+	// TODO do something here to show user that form is being submitted
+	$.post(url, data)
+		.done(function(body) {
+			if (body.error) {
+				throw body;
+			}
+
+			// Redirecting the user to the correct jira instance
+			// Should probably redo this with query strings and just redoing the GET request
+			document.location.href = body.redirect;
+		})
+		.fail(function(response) {
+			// Handle failure
+		});
+
 $(document).ready(() => {
 	// Handle form submit
 	$(".githubSetup__form").on("submit", (event) => {
 		event.preventDefault();
-		// TODO do something here to show user that form is being submitted
-		$.post(
-			event.target.action,
-			Object.fromEntries(new FormData(event.target).entries())
-		)
-			.done(function(body) {
-				if (body.error) {
-					throw body;
-				}
-
-				// Redirecting the user to the correct jira instance
-				// Should probably redo this with query strings and just redoing the GET request
-				document.location.href = body.redirect;
-			})
-			.fail(function(response) {
-				// Handle failure
-			});
-		;
+		githubSetupPost(
+			Object.fromEntries(new FormData(event.target).entries()),
+			event.target.action);
 	});
 
 	// Handle events for main form
@@ -116,7 +117,15 @@ $('.install-link').click(function (event) {
       return console.log(data.err)
     }
     window.close()
-  })
-})
+  });
+});
+
+$(".install-app").click(function (event) {
+	event.preventDefault();
+	githubSetupPost({
+		_csrf: document.getElementById('_csrf').value,
+		jiraHost: $(event.target).data('jirahost')
+	})
+});
 
 
