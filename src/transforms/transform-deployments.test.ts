@@ -9,7 +9,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { getCloudInstallationId } from "../github/client/installation-id";
 
 import deployment_status from "fixtures/deployment_status-basic.json";
-import { envVars } from "../config/env";
+import { GITHUB_ENTERPRISE_CLOUD_BASEURL } from "utils/check-github-app-type";
 
 jest.mock("config/feature-flags");
 
@@ -84,7 +84,7 @@ const TEST_INSTALLATION_ID = 1234;
 describe.each([true, false])("transform GitHub webhook payload to Jira payload", (useNewGithubClient) => {
 
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(TEST_INSTALLATION_ID, envVars.GITHUB_HOSTNAME), envVars.GITHUB_HOSTNAME, getLogger("test"));
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(TEST_INSTALLATION_ID, GITHUB_ENTERPRISE_CLOUD_BASEURL), GITHUB_ENTERPRISE_CLOUD_BASEURL, getLogger("test"));
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(

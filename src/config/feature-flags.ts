@@ -29,7 +29,8 @@ export enum BooleanFlags {
 	REPO_DISCOVERY_BACKFILL = "repo-discovery-backfill",
 	USE_NEW_GITHUB_CLIENT_FOR_GET_REPO = "use-new-github-client-for-get-repo",
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
-	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect"
+	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect",
+	GHE_SERVER_AUTH_AND_CONNECT_FLOW = "ghe-server-auth-and-connect-flow_kfvxv",
 }
 
 export enum StringFlags {

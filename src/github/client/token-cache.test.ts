@@ -3,7 +3,7 @@ import { AuthToken, TEN_MINUTES } from "./auth-token";
 import * as PrivateKey from "probot/lib/private-key";
 import { AppTokenHolder } from "./app-token-holder";
 import { getCloudInstallationId } from "./installation-id";
-import { envVars } from "~/src/config/env";
+import { GITHUB_ENTERPRISE_CLOUD_BASEURL } from "utils/check-github-app-type";
 
 describe("InstallationTokenCache & AppTokenHolder", () => {
 	const githubInstallationId = 123456;
@@ -36,9 +36,9 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 		const appTokenHolder = new AppTokenHolder(keyLocator);
 
 		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
-		const token1 = appTokenHolder.getAppToken(getCloudInstallationId(4711, envVars.GITHUB_HOSTNAME));
+		const token1 = appTokenHolder.getAppToken(getCloudInstallationId(4711, GITHUB_ENTERPRISE_CLOUD_BASEURL));
 		expect(token1).toBeTruthy();
-		const token2 = appTokenHolder.getAppToken(getCloudInstallationId(4711, envVars.GITHUB_HOSTNAME));
+		const token2 = appTokenHolder.getAppToken(getCloudInstallationId(4711, GITHUB_ENTERPRISE_CLOUD_BASEURL));
 		expect(token2).toBeTruthy();
 		expect(keyLocator).toHaveBeenCalledTimes(2);
 	});
