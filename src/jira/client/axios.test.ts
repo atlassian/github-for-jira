@@ -76,7 +76,22 @@ describe("Jira axios instance", () => {
 		});
 	});
 
-	it("should check if Jira is deactivated on failed request", async () => {
+	it("should return original 503 error from failed request if Jira is active", async () => {
+		const requestPayload = "TestRequestPayload";
+		jiraNock.post("/foo/bar", requestPayload).reply(503);
+		jiraNock.get("/status").reply(200);
+
+		let error;
+		try {
+			await getAxiosInstance(jiraHost, "secret").post("/foo/bar", requestPayload);
+		} catch (e) {
+			error = e;
+		}
+
+		expect(error?.status).toEqual(503);
+	});
+
+	it("should return 404 from failed request if Jira is deactivated", async () => {
 		const requestPayload = "TestRequestPayload";
 		jiraNock.post("/foo/bar", requestPayload).reply(503);
 		jiraNock.get("/status").reply(503);
