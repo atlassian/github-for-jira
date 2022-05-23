@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosInstance } from "axios";
 
 import url from "url";
 import { statsd } from "config/statsd";
@@ -33,7 +33,7 @@ export const getJiraErrorMessages = (status: number) => {
 		case 403:
 			return "HTTP 403 - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope";
 		case 404:
-			return "HTTP 404 - Jira instance not found or temporarily suspended.";
+			return "HTTP 404 - Bad REST path, or Jira instance not found or temporarily suspended.";
 		case 413:
 			return "HTTP 413 - Data is too large. Submit fewer devinfo entities in each payload.";
 		case 429:
@@ -143,19 +143,18 @@ const instrumentRequest = (response) => {
 
 /**
  * Submit statsd metrics on failed requests.
- *
- * @returns {Promise<Error>} a rejected promise with the error inside.
- * @param instance
- * @param logger
  */
-const instrumentFailedRequest = (instance: AxiosInstance, logger: Logger) => {
+const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 	return async (error: AxiosError) => {
 		instrumentRequest(error?.response);
 		if (error.response?.status === 503) {
-			const statusResponse: AxiosResponse = await instance.get("/status");
-			if (statusResponse?.status === 503) {
-				logger.info(`503 from Jira: Jira instance ${instance} is suspended or does not exist. Returning 404 to our application.`);
-				error.response.status = 404;
+			try {
+				await axios.get("/status", { baseURL });
+			} catch (e) {
+				if (e.response.status === 503) {
+					logger.info(`503 from Jira: Jira instance '${baseURL}' has been deactivated, is suspended or does not exist. Returning 404 to our application.`);
+					error.response.status = 404;
+				}
 			}
 		}
 		return Promise.reject(error);
@@ -197,7 +196,7 @@ export const getAxiosInstance = (
 
 	instance.interceptors.response.use(
 		instrumentRequest,
-		instrumentFailedRequest(instance, logger)
+		instrumentFailedRequest(baseURL, logger)
 	);
 
 	instance.interceptors.response.use(
