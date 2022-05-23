@@ -144,14 +144,14 @@ const instrumentRequest = (response) => {
 /**
  * Submit statsd metrics on failed requests.
  */
-const instrumentFailedRequest = (baseURL:string, logger: Logger) => {
+const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 	return async (error: AxiosError) => {
 		instrumentRequest(error?.response);
 		if (error.response?.status === 503) {
 			try {
-				await axios.get("/status", {baseURL});
+				await axios.get("/status", { baseURL });
 			} catch (e) {
-				if (e.status === 503) {
+				if (e.response.status === 503) {
 					logger.info(`503 from Jira: Jira instance '${baseURL}' has been deactivated, is suspended or does not exist. Returning 404 to our application.`);
 					error.response.status = 404;
 				}
