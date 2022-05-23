@@ -34,7 +34,7 @@ describe("Pull Request Webhook", () => {
 
 	});
 
-	it.only("should have reviewers on pull request action", async () => {
+	it("should have reviewers on pull request action", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
