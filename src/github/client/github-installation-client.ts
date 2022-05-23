@@ -36,13 +36,13 @@ export class GitHubInstallationClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
-	private readonly gitHubBaseUrl: string;
+	private readonly gitHubBaseUrl: string | undefined;
 	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: InstallationId,
-		gitHubBaseUrl: string,
 		logger: Logger,
+		gitHubBaseUrl?: string | undefined,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.installation.client");
@@ -209,13 +209,11 @@ export class GitHubInstallationClient {
 
 		if (gitHubBaseUrl === GITHUB_ENTERPRISE_CLOUD_BASEURL) {
 			const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
-			this.logger.info("WHAT???", response)
 			return response?.data?.data?.viewer?.repositories?.totalCount;
 		} else {
 			const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
 				perPage: 100,
 			});
-			this.logger.info("WHAT???", response)
 			return response.data.total_count;
 		}
 	}

@@ -24,7 +24,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), gitHubBaseUrl, context.log);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), context.log, gitHubBaseUrl);
 
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,

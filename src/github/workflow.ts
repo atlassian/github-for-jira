@@ -8,7 +8,7 @@ import {getGitHubBaseUrl} from "utils/check-github-app-type";
 export const workflowWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), gitHubBaseUrl, logger);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), logger, gitHubBaseUrl);
 	const jiraPayload = await transformWorkflow(githubClient, payload, logger);
 
 	if (!jiraPayload) {

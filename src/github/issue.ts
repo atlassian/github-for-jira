@@ -16,7 +16,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 	} = context.payload;
 
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), gitHubBaseUrl, context.log);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), context.log, gitHubBaseUrl);
 
 	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;

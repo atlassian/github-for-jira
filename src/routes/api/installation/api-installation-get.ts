@@ -9,7 +9,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 	const { installationId } = req.params;
 	const { client } = res.locals;
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const gitHubAppClient = new GitHubAppClient(gitHubBaseUrl, req.log);
+	const gitHubAppClient = new GitHubAppClient(req.log, gitHubBaseUrl);
 
 	try {
 		const subscriptions = await Subscription.getAllForInstallation(Number(installationId));

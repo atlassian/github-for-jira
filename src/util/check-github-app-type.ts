@@ -8,10 +8,10 @@ export const GITHUB_ENTERPRISE_CLOUD_BASEURL = "https://github.com";
 export const getGitHubBaseUrl = async (jiraHost: string): Promise<string> => {
 	const installation = await Installation.getForHost(jiraHost);
 	const gitHubAppId = installation?.githubAppId;
+	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 
-	const baseUrl = gitHubAppId ? "http://github.internal.atlassian.com" : GITHUB_ENTERPRISE_CLOUD_BASEURL;
-	logger.info("baseUrl", baseUrl)
-	return baseUrl;
+	return gitHubServerApp ? gitHubServerApp?.githubBaseUrl : GITHUB_ENTERPRISE_CLOUD_BASEURL;
+
 }
 
 export const setGitHubBaseUrl = (gitHubBaseUrl: string | undefined): string => {

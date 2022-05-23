@@ -72,7 +72,7 @@ const getInstallationsWithAdmin = async (
 		const errors: Error[] = [];
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 		log.info("GET PLACE: ", gitHubBaseUrl)
-		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id, gitHubBaseUrl), gitHubBaseUrl, log);
+		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id, gitHubBaseUrl), log, gitHubBaseUrl);
 		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation(jiraHost).catch((err) => {
 			errors.push(err);
 			log.info("ERROR: ", err)
@@ -134,7 +134,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, true);
-	const githubUserClient = new GitHubUserClient(githubToken, gitHubBaseUrl, log);
+	const githubUserClient = new GitHubUserClient(githubToken, log, gitHubBaseUrl);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
@@ -171,7 +171,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		}
 
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-		const gitHubAppClient = new GitHubAppClient(gitHubBaseUrl, log);
+		const gitHubAppClient = new GitHubAppClient(log, gitHubBaseUrl);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 
