@@ -4,6 +4,7 @@ import { wrapLogger } from "probot/lib/wrap-logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import {getGitHubBaseUrl} from "utils/check-github-app-type";
+import { gheServerAuthAndConnectFlowFlag } from "../util/feature-flag-utils";
 
 export type PayloadRepository = {
 	id: number,
@@ -25,6 +26,8 @@ export type PushQueueMessagePayload = {
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
 	context.log.info("Handling push message from the SQS queue");
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const github = new GitHubInstallationClient(getCloudInstallationId(context.payload.installationId, gitHubBaseUrl), context.log, gitHubBaseUrl);
+	const github = await gheServerAuthAndConnectFlowFlag(jiraHost)
+		? new GitHubInstallationClient(getCloudInstallationId(context.payload.installationId, gitHubBaseUrl), context.log, gitHubBaseUrl)
+		: new GitHubInstallationClient(getCloudInstallationId(context.payload.installationId), context.log);
 	await processPush(github, context.payload, wrapLogger(context.log));
 };

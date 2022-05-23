@@ -5,6 +5,7 @@ import { processDeployment } from "../github/deployment";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import {getGitHubBaseUrl} from "utils/check-github-app-type";
+import { gheServerAuthAndConnectFlowFlag } from "../util/feature-flag-utils";
 
 export type DeploymentMessagePayload = {
 	jiraHost: string,
@@ -34,7 +35,9 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 
 	const github = await workerApp.auth(installationId);
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const newGitHubClient = new GitHubInstallationClient(getCloudInstallationId(installationId, gitHubBaseUrl), context.log, gitHubBaseUrl);
+	const newGitHubClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
+		? new GitHubInstallationClient(getCloudInstallationId(installationId, gitHubBaseUrl), context.log, gitHubBaseUrl)
+		: new GitHubInstallationClient(getCloudInstallationId(installationId), context.log);
 
 	await processDeployment(
 		github,

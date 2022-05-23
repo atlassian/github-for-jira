@@ -10,6 +10,7 @@ import { JiraPullRequestData } from '../interfaces/jira';
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from '../interfaces/github';
 import {getGitHubBaseUrl} from "utils/check-github-app-type";
+import { gheServerAuthAndConnectFlowFlag } from "../util/feature-flag-utils";
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
@@ -24,7 +25,9 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), context.log, gitHubBaseUrl);
+	const githubClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
+		? new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), context.log, gitHubBaseUrl)
+		: new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
 
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,

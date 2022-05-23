@@ -82,7 +82,7 @@ const TEST_INSTALLATION_ID = 1234;
 describe.each([true, false])("transform GitHub webhook payload to Jira payload", (useNewGithubClient) => {
 
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"), undefined);
+	const githubClient = new GitHubInstallationClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
