@@ -4,12 +4,15 @@ import format from "date-fns/format";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import {getGitHubBaseUrl} from "utils/check-github-app-type";
+import { gheServerAuthAndConnectFlowFlag } from "~/src/util/feature-flag-utils";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId } = req.params;
 	const { client } = res.locals;
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const gitHubAppClient = new GitHubAppClient(req.log, gitHubBaseUrl);
+	const gitHubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
+		? new GitHubAppClient(req.log, gitHubBaseUrl)
+		: new GitHubAppClient(req.log);
 
 	try {
 		const subscriptions = await Subscription.getAllForInstallation(Number(installationId));

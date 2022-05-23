@@ -11,6 +11,7 @@ import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import {getGitHubBaseUrl} from "utils/check-github-app-type";
+import { gheServerAuthAndConnectFlowFlag } from "~/src/util/feature-flag-utils";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -48,7 +49,9 @@ const getInstallation = async (client: GitHubAPI, subscription: Subscription, lo
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION, true, jiraHost) ;
 	const { gitHubInstallationId } = subscription;
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const gitHubAppClient = new GitHubAppClient(log, gitHubBaseUrl);
+	const gitHubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
+		? new GitHubAppClient(log, gitHubBaseUrl)
+		: new GitHubAppClient(log);
 
 	try {
 		const response = useNewGitHubClient ?

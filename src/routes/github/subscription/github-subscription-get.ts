@@ -22,7 +22,9 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, true, jiraHost);
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const gitHubAppClient = new GitHubAppClient(logger, gitHubBaseUrl);
+	const gitHubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
+		? new GitHubAppClient(logger, gitHubBaseUrl)
+		: new GitHubAppClient(logger);
 	const gitHubUserClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
 		? new GitHubUserClient(githubToken, req.log, gitHubBaseUrl)
 		: new GitHubUserClient(githubToken, req.log);

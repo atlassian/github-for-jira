@@ -174,7 +174,9 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		}
 
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-		const gitHubAppClient = new GitHubAppClient(log, gitHubBaseUrl);
+		const gitHubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
+			? new GitHubAppClient(log, gitHubBaseUrl)
+			: new GitHubAppClient(log);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 

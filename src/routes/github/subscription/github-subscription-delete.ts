@@ -13,7 +13,9 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION, true, jiraHost) ;
-	const gitHubAppClient = new GitHubAppClient(logger, gitHubBaseUrl);
+	const gitHubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
+		? new GitHubAppClient(logger, gitHubBaseUrl)
+		: new GitHubAppClient(logger);
 	const gitHubUserClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
 		? new GitHubUserClient(githubToken, logger, gitHubBaseUrl)
 		: new GitHubUserClient(githubToken, logger);
