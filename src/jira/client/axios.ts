@@ -150,17 +150,12 @@ const instrumentRequest = (response) => {
  */
 const instrumentFailedRequest = (instance: AxiosInstance, logger: Logger) => {
 	return async (error: AxiosError) => {
-		logger.info("instrumentFailedRequest FIRST ERROR TYPE IS --- " + typeof (error));
-		logger.info(`error code is --- ${error.response?.status}`);
 		instrumentRequest(error?.response);
-		if (error.response?.status === 503 || error.response?.status === 404) {
+		if (error.response?.status === 503) {
 			try {
-				logger.info("calling status endpoint");
 				await instance.get("/status");
 			} catch (e) {
-				logger.info(`ERROR OBJ IS -====>>> ${e}`);
-				logger.info(`ERROR TYPE OBJ IS -====>>> ` + typeof (e));
-				if (e.response?.status === 503 || e.response?.status === 404) {
+				if (e.status === 503) {
 					logger.info(`503 from Jira: Jira instance ${instance} has been deactivated, is suspended or does not exist. Returning 404 to our application.`);
 					error.response.status = 404;
 				}
