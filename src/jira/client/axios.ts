@@ -143,20 +143,16 @@ const instrumentRequest = (response) => {
 
 /**
  * Submit statsd metrics on failed requests.
- *
- * @returns {Promise<Error>} a rejected promise with the error inside.
- * @param instance
- * @param logger
  */
-const instrumentFailedRequest = (instance: AxiosInstance, logger: Logger) => {
+const instrumentFailedRequest = (baseURL:string, logger: Logger) => {
 	return async (error: AxiosError) => {
 		instrumentRequest(error?.response);
 		if (error.response?.status === 503) {
 			try {
-				await instance.get("/status");
+				await axios.get("/status", {baseURL});
 			} catch (e) {
 				if (e.status === 503) {
-					logger.info(`503 from Jira: Jira instance ${instance} has been deactivated, is suspended or does not exist. Returning 404 to our application.`);
+					logger.info(`503 from Jira: Jira instance '${baseURL}' has been deactivated, is suspended or does not exist. Returning 404 to our application.`);
 					error.response.status = 404;
 				}
 			}
@@ -200,7 +196,7 @@ export const getAxiosInstance = (
 
 	instance.interceptors.response.use(
 		instrumentRequest,
-		instrumentFailedRequest(instance, logger)
+		instrumentFailedRequest(baseURL, logger)
 	);
 
 	instance.interceptors.response.use(
