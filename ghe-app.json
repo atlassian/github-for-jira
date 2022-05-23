@@ -1,0 +1,22 @@
+{
+	"name": "ghe-app-for-jira",
+	"url": "https://www.example.com",
+	"hook_attributes": {
+		"url": "https://example.com/github/events"
+	},
+	"redirect_url": "__redirectUrl__",
+	"callback_urls": [
+		"https://example.com/callback"
+	],
+	"public": false,
+	"default_permissions": {
+		"issues": "write",
+		"checks": "write"
+	},
+	"default_events": [
+		"issues",
+		"issue_comment",
+		"check_suite",
+		"check_run"
+	]
+}

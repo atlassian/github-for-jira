@@ -93,7 +93,6 @@ ApiRouter.post(
 		res.json(subscriptions.map(serializeSubscription));
 	}
 );
-
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost",

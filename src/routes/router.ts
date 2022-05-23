@@ -16,6 +16,9 @@ import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { GheAppInstall } from "./ghe-app-install";
+import { GheApp } from "./ghe-app";
+import { GheWebhookReceiver } from "./ghe-webhook-receiver";
 
 export const RootRouter = Router();
 
@@ -64,5 +67,8 @@ RootRouter.get("/", async (req: Request, res: Response) => {
 	return res.redirect(info.external_url);
 });
 
+RootRouter.get("/ghe-app-install/:uuid", GheAppInstall);
+RootRouter.post("/ghe/events/:uuid", GheWebhookReceiver);
+RootRouter.get("/ghe-app/:uuid", GheApp);
 // For when nothing gets triggered in the above routes, or an error occurs
 RootRouter.use(ErrorRouter);
