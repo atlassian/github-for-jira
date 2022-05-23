@@ -24,7 +24,7 @@ export class GitHubAppClient {
 
 	constructor(
 		logger: Logger,
-		gitHubBaseUrl: string,
+		gitHubBaseUrl: string | undefined,
 		appId = envVars.APP_ID,
 	) {
 		this.logger = logger || getLogger("github.app.client");

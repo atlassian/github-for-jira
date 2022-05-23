@@ -38,7 +38,7 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
 	return {
-		id: repository.id,
+		id: repository.id.toString(),
 		name: repository.full_name,
 		url: repository.html_url,
 		branches: [
