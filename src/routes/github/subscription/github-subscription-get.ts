@@ -5,6 +5,7 @@ import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import {getGitHubBaseUrl} from "utils/check-github-app-type";
+import { gheServerAuthAndConnectFlowFlag } from "~/src/util/feature-flag-utils";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { github, client, githubToken, jiraHost } = res.locals;
@@ -22,7 +23,9 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, true, jiraHost);
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 	const gitHubAppClient = new GitHubAppClient(logger, gitHubBaseUrl);
-	const gitHubUserClient = new GitHubUserClient(githubToken, req.log, gitHubBaseUrl);
+	const gitHubUserClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
+		? new GitHubUserClient(githubToken, req.log, gitHubBaseUrl)
+		: new GitHubUserClient(githubToken, req.log);
 
 	try {
 		const { data: { login } } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated();
@@ -37,7 +40,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 
 		// Only show the page if the logged in user is an admin of this installation
 		if (await isUserAdminOfOrganization(
-			new GitHubUserClient(githubToken, req.log, gitHubBaseUrl),
+			gitHubUserClient,
 			installation.account.login,
 			login,
 			installation.target_type
