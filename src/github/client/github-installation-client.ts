@@ -20,7 +20,6 @@ import {
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 import {
-	getGitHubBaseUrl,
 	setAcceptHeader,
 	setGitHubBaseUrl
 } from "utils/check-github-app-type";
@@ -203,18 +202,16 @@ export class GitHubInstallationClient {
 			});
 	}
 
-	public async getNumberOfReposForInstallation(jiraHost: string): Promise<number> {
-		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+	public async getNumberOfReposForInstallation(): Promise<number> {
+		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
+		return response?.data?.data?.viewer?.repositories?.totalCount;
+	}
 
-		if (gitHubBaseUrl) {
-			const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
-				perPage: 100,
-			});
-			return response.data.total_count;
-		} else {
-			const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
-			return response?.data?.data?.viewer?.repositories?.totalCount;
-		}
+	public async getNumberOfReposForInstallationRest(): Promise<number> {
+		const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
+			perPage: 100,
+		});
+		return response.data.total_count;
 	}
 
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, cursor?: string): Promise<getBranchesResponse> {

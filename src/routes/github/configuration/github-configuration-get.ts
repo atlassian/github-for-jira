@@ -72,14 +72,22 @@ const getInstallationsWithAdmin = async (
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
 		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+
 		const gitHubInstallationClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
 			? new GitHubInstallationClient(getCloudInstallationId(installation.id, gitHubBaseUrl), log, gitHubBaseUrl)
 			: new GitHubInstallationClient(getCloudInstallationId(installation.id), log);
-		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation(jiraHost).catch((err) => {
-			errors.push(err);
-			log.info("ERROR: ", err)
-			return 0;
-		});
+
+
+		const numberOfReposPromise = await gheServerAuthAndConnectFlowFlag(jiraHost)
+			? gitHubInstallationClient.getNumberOfReposForInstallationRest().catch((err) => {
+				errors.push(err);
+				return 0;
+			})
+			: gitHubInstallationClient.getNumberOfReposForInstallation().catch((err) => {
+				errors.push(err);
+				return 0;
+			});
+
 		// See if we can get the membership for this user
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(

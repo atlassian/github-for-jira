@@ -3,11 +3,8 @@ import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "./github-installation-client";
 import { statsd }  from "config/statsd";
 import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
-import { getCloudInstallationId, InstallationId } from "./installation-id";
+import { getCloudInstallationId } from "./installation-id";
 import nock from "nock";
-import { AppTokenHolder } from "./app-token-holder";
-import fs from "fs";
-import { envVars }  from "config/env";
 import { when } from "jest-when";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 
