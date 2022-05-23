@@ -151,14 +151,14 @@ const instrumentRequest = (response) => {
 const instrumentFailedRequest = (instance: AxiosInstance, logger: Logger) => {
 	return async (error: AxiosError) => {
 		instrumentRequest(error?.response);
-		if (error.response?.status === 503) {
+		if (error.response?.status === 503 || error.response?.status === 404) {
 			try {
-				logger.info("Calling status endpoint");
+				logger.info("calling status endpoint")
 				await instance.get("/status");
 			} catch (error) {
-				logger.info(`ERROR OBJ IS===> ${error}`);
-				if (error?.status === 503) {
-					logger.info(`503 from Jira: Jira instance ${instance} is suspended or does not exist. Returning 404 to our application.`);
+				console.log(`ERROR OBJ IS -====>>> ${error}`)
+				if (error?.status === 503 || error?.status === 404) {
+					logger.info(`503 from Jira: Jira instance ${instance} has been deactivated, is suspended or does not exist. Returning 404 to our application.`);
 					error.response.status = 404;
 				}
 			}
