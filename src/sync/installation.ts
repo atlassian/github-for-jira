@@ -159,7 +159,7 @@ const getEnhancedGitHub = async (app: Application, installationId) =>
  */
 export const isRetryableWithSmallerRequest = async (err): Promise<boolean> => {
 	if(await booleanFlag(BooleanFlags.RETRY_ALL_ERRORS, false)) {
-		return true;
+		return  err?.isRetryable || false;
 	}
 	if (err?.errors) {
 		const retryableErrors = err?.errors?.find(
