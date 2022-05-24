@@ -3,6 +3,8 @@ import bformat from "bunyan-format";
 import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
 import { LoggerWithTarget, wrapLogger } from "probot/lib/wrap-logger";
 import { Request } from "express";
+import * as util from "util";
+import { AxiosResponse } from "axios";
 
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
@@ -19,6 +21,12 @@ export const FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME = "frontend-log-middle
 const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME,
 	bformat({ outputMode, levelInString: true })
 );
+
+const responseSerializer = (res: AxiosResponse) => ({
+	...stdSerializers.res(res),
+	config: JSON.parse(util.inspect(res?.config)), // removes circular dependency in json
+	request: requestSerializer(res.request)
+})
 
 const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 	method: req.method,
@@ -58,7 +66,7 @@ const logger = wrapLogger(createLogger(
 		level: globalLoggingLevel,
 		serializers: {
 			err: errorSerializer,
-			res: stdSerializers.res,
+			res: responseSerializer,
 			req: requestSerializer
 		}
 	}
