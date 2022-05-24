@@ -15,6 +15,19 @@ type CommitSummary = {
 }
 
 // Used to compare commits for builds and deployments so we can
+// obtain all issue keys referenced in commit messages.
+export const getAllCommitMessagesBetweenReferences = async (
+	payload: CompareCommitsPayload,
+	github: GitHubAPI | GitHubInstallationClient,
+	logger: LoggerWithTarget
+): Promise<string> => {
+	const commitSummaries = await getAllCommitsBetweenReferences(payload, github, logger);
+	const messages = await extractMessagesFromCommitSummaries(commitSummaries);
+
+	return messages || "";
+};
+
+// Used to compare commits for builds and deployments so we can
 // obtain commit hashes and messages.
 export const getAllCommitsBetweenReferences = async (
 	payload: CompareCommitsPayload,
