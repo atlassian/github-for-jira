@@ -42,4 +42,7 @@ export const registerHandlebarsHelpers = () => {
 	);
 
 	hbs.registerHelper("isModal", (modalId) => modalId === "jiraDomainModal");
+
+
+	hbs.registerHelper("isMissingPermissions", (syncWarning: string) => syncWarning?.includes("Invalid permissions for"));
 };

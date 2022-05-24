@@ -33,7 +33,6 @@ async function getLastSuccessfulDeployCommitSha(
 		logger?.error(`Failed to get deployment statuses.`);
 	}
 
-
 	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 100) then we'll return the last one from the array, even if it's a failed one.
 	return deployments[deployments.length - 1].sha;
 }
@@ -82,8 +81,8 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 // Deployment state - GitHub: Can be one of error, failure, pending, in_progress, queued, or success
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-deployments-0-1-bulk-post
 // Deployment state - Jira: Can be one of unknown, pending, in_progress, cancelled, failed, rolled_back, successful
-function mapState(state: string): string {
-	switch (state) {
+function mapState(state: string | undefined): string {
+	switch (state?.toLowerCase()) {
 		case "queued":
 			return "pending";
 		// We send "pending" as "in progress" because the GitHub API goes Pending -> Success (there's no in progress update).

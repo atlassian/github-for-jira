@@ -72,6 +72,7 @@ export const transformWorkflow = async (
 	} = payload;
 
 	const workflowHasPullRequest = !!pull_requests?.length;
+
 	const commitMessages = workflowHasPullRequest ? await getAllCommitMessagesBetweenReferences(
 		{
 			owner: repository.owner.login,
