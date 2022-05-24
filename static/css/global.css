@@ -114,6 +114,7 @@ a:focus {
 }
 
 .jiraConfiguration__retryMsg,
+.jiraConfiguration__syncWarningMessage,
 .gitHubConfiguration__notAdminMsg,
 .gitHubConfiguration__manageSubscriptions,
 .gitHubConfiguration__manageSubscriptions--notAdmin,

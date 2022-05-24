@@ -43,6 +43,12 @@ export class BlockedIpError extends GithubClientError {
 	}
 }
 
+export class InvalidPermissionsError extends GithubClientError {
+	constructor(error: AxiosError, status?: number) {
+		super("Resource not accessible by integration", status, error);
+	}
+}
+
 /**
  * Type for errors section in GraphQL response
  */
