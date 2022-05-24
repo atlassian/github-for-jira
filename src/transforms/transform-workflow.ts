@@ -1,7 +1,7 @@
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { GitHubPullRequest } from "interfaces/github";
 import { JiraBuildData, JiraPullRequestHead } from "interfaces/jira";
-import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
+import { extractMessagesFromCommitSummaries, getAllCommitsBetweenReferences } from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubWorkflowPayload } from '../interfaces/github';
@@ -72,16 +72,20 @@ export const transformWorkflow = async (
 	} = payload;
 
 	const workflowHasPullRequest = !!pull_requests?.length;
-	const commitMessages = workflowHasPullRequest ? await getAllCommitMessagesBetweenReferences(
-		{
-			owner: repository.owner.login,
-			repo: repository.name,
-			base: pull_requests[0].base.ref,
-			head: pull_requests[0].head.ref
-		},
-		githubClient,
-		logger
-	) : "";
+	let commitMessages = "";
+	if (workflowHasPullRequest) {
+		const commitSummaries = await getAllCommitsBetweenReferences(
+			{
+				owner: repository.owner.login,
+				repo: repository.name,
+				base: pull_requests[0].base.ref,
+				head: pull_requests[0].head.ref
+			},
+			githubClient,
+			logger
+		);
+		commitMessages = await extractMessagesFromCommitSummaries(commitSummaries);
+	}
 
 	const issueKeys = jiraIssueKeyParser(`${head_branch}\n${head_commit.message}\n${commitMessages}`);
 	if (!issueKeys.length) {

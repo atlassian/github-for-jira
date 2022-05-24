@@ -1,12 +1,15 @@
-import { GithubAPI } from "config/github-api";
-import { getAllCommitMessagesBetweenReferences } from "~/src/transforms/util/github-api-requests";
-import { getLogger } from "config/logger";
+import {GithubAPI} from "config/github-api";
+import {
+	extractMessagesFromCommitSummaries,
+	getAllCommitsBetweenReferences
+} from "~/src/transforms/util/github-api-requests";
+import {getLogger} from "config/logger";
 import workflowBasic from "fixtures/workflow-basic.json";
 import pullRequestMultipleCommits from "fixtures/api/pull-request-multiple-commits-diff.json";
 import pullRequestSingleCommit from "fixtures/api/pull-request-single-commit-diff.json";
 
 describe("GitHub API Request Suite", () => {
-	describe("compareCommitsBetweenBaseAndHeadBranches", () => {
+	describe("getAllCommitsBetweenReferences", () => {
 		it("should return message from multiple commits containing multiple issue keys", async () => {
 			const workflowRunPayload = Object.assign(
 				{},
@@ -38,13 +41,26 @@ describe("GitHub API Request Suite", () => {
 					...data
 				});
 
-			const bob = await getAllCommitMessagesBetweenReferences(
+			const bob = await getAllCommitsBetweenReferences(
 				payload,
 				GithubAPI(),
 				getLogger("test")
 			);
 
-			expect(bob).toEqual("TEST-117 TEST-89 edit TEST-109 TEST-11");
+			expect(bob).toEqual([
+				{
+					sha: "2jkrnw9pidfnew89fn2903rnpfwjdfndsf",
+					message: "TEST-117 TEST-89 edit"
+				},
+				{
+					sha: "2jkrnw9pidfnew89fn2903rnpfwjdfndsf",
+					message: "TEST-109"
+				},
+				{
+					sha: "2jkrnw9pidfnew89fn2903rnpfwjdfndsf",
+					message: "TEST-11"
+				}
+			]);
 		});
 
 		it("should return message with multiple issue keys for a single commit", async () => {
@@ -78,13 +94,40 @@ describe("GitHub API Request Suite", () => {
 					...data
 				});
 
-			const bob = await getAllCommitMessagesBetweenReferences(
+			const bob = await getAllCommitsBetweenReferences(
 				payload,
 				GithubAPI(),
 				getLogger("test")
 			);
 
-			expect(bob).toEqual("my sole commit TEST-100");
+			expect(bob).toEqual([
+				{
+					sha: "2jkrnw9pidfnew89fn2903rnpfwjdfndsf",
+					message: "my sole commit TEST-100"
+				}
+			]);
+		});
+	});
+
+	describe("extractMessagesFromCommitSummaries", () => {
+		it("should extract the concatenated message from multiple commit summaries", async () => {
+			const bob = await extractMessagesFromCommitSummaries(
+				[
+					{
+						sha: "2jkrnw9pidfnew89fn2903rnpfwjdfndsf",
+						message: "TEST-117 TEST-89 edit"
+					},
+					{
+						sha: "2jkrnw9pidfnew89fn2903rnpfwjdfndsf",
+						message: "TEST-109"
+					},
+					{
+						sha: "2jkrnw9pidfnew89fn2903rnpfwjdfndsf",
+						message: "TEST-11"
+					}
+				]);
+
+			expect(bob).toEqual("TEST-117 TEST-89 edit TEST-109 TEST-11");
 		});
 	});
 });
