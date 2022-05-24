@@ -440,7 +440,7 @@ const updateRepositoryIssueKeys = (repositoryObj, logger?) => {
 	}
 
 	if (!repositoryObj.commits && !repositoryObj.branches) {
-		logger?.warn({ data: repositoryObj }, "No branches or commits found. Cannot update.");
+		logger?.debug({ data: repositoryObj }, "No branches or commits found. Cannot modify.");
 	}
 };
 

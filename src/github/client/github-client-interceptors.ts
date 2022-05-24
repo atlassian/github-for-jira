@@ -2,7 +2,7 @@ import { InvalidPermissionsError, BlockedIpError, GithubClientError, GithubClien
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
-import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosError, AxiosRequestConfig } from "axios";
 import { extractPath } from "../../jira/client/axios";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 
@@ -86,11 +86,12 @@ export const instrumentFailedRequest = (metricName) =>
 	};
 
 export const handleFailedRequest = (logger: Logger) =>
-	(error) => {
-		const response = error.response as AxiosResponse;
+	(error: AxiosError) => {
+		const { response, config, request } = error;
+		logger = logger.child({res: response, config, req: request, err: error});
 
 		if (response?.status === 408 || error.code === "ETIMEDOUT") {
-			logger.warn({ err: error }, "Request timed out");
+			logger.warn("Request timed out");
 			return Promise.reject(new GithubClientTimeoutError(error));
 		}
 
@@ -100,15 +101,12 @@ export const handleFailedRequest = (logger: Logger) =>
 
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
-				logger.warn({ err: error }, "Rate limiting error");
+				logger.warn("Rate limiting error");
 				return Promise.reject(new RateLimitingError(response, error));
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
-				logger.warn({
-					err: error,
-					remote: response.data?.message
-				}, "Blocked by GitHub allowlist");
+				logger.warn({ remote: response.data?.message }, "Blocked by GitHub allowlist");
 				return Promise.reject(new BlockedIpError(error, status));
 			}
 
@@ -121,7 +119,7 @@ export const handleFailedRequest = (logger: Logger) =>
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
-			(isWarning ? logger.warn : logger.error)({ err: error, res: response }, errorMessage);
+			(isWarning ? logger.warn : logger.error)(errorMessage);
 			return Promise.reject(new GithubClientError(errorMessage, status, error));
 		}
 
