@@ -22,7 +22,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	} = context.payload;
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
-	const githubClient = await createInstallationClient(githubInstallationId, jiraHost, context.log);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log);
 
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,
@@ -34,7 +34,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: any = {};
 	try {
-		reviews = await getReviews(githubClient, owner, repoName, pull_request.number);
+		reviews = await getReviews(gitHubInstallationClient, owner, repoName, pull_request.number);
 	} catch (err) {
 		context.log.warn(
 			{
@@ -46,7 +46,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		);
 	}
 
-	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(githubClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
 
 	context.log.info("Pullrequest mapped to Jira Payload");
 
@@ -70,7 +70,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	}
 
 	try {
-		await updateGithubIssues(githubClient, context, util, repoName, owner, pull_request);
+		await updateGithubIssues(gitHubInstallationClient, context, util, repoName, owner, pull_request);
 	} catch (err) {
 		context.log.warn(
 			{ err },

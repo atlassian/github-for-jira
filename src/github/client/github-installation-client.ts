@@ -205,6 +205,7 @@ export class GitHubInstallationClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
+	// TODO - remove this when we have replaced Probot and can make graphql requests for both cloud and server
 	public async getNumberOfReposForInstallationRest(): Promise<number> {
 		const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
 			perPage: 100,

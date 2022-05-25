@@ -36,7 +36,6 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
 	const gitHubHostname = await getGitHubHostname(jiraHost);
-	req.log.info("HOSTNAME: ", gitHubHostname)
 	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 	req.log.info("redirectUrl:", redirectUrl)
 
@@ -91,7 +90,6 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
 	const gitHubHostname = await getGitHubHostname(jiraHost);
-	req.log.info("HOSTNAME: ", gitHubHostname)
 
 	try {
 		const response = await axios.get(
