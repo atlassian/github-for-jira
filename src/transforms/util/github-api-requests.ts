@@ -9,7 +9,7 @@ interface CompareCommitsPayload {
 	head: string;
 }
 
-type CommitSummary = {
+export type CommitSummary = {
 	sha: string;
 	message: string;
 }

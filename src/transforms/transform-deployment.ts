@@ -1,10 +1,14 @@
-import { JiraDeploymentData } from "interfaces/jira";
+import {JiraAssociation, JiraCommitAssociation, JiraDeploymentData} from "interfaces/jira";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { extractMessagesFromCommitSummaries, getAllCommitsBetweenReferences } from "./util/github-api-requests";
+import {
+	CommitSummary,
+	extractMessagesFromCommitSummaries,
+	getAllCommitsBetweenReferences
+} from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { AxiosResponse } from "axios";
 import { deburr, isEmpty } from "lodash";
@@ -47,7 +51,7 @@ async function getLastSuccessfulDeployCommitSha(
 	return deployments[deployments.length - 1].sha;
 }
 
-async function getCommitMessagesSinceLastSuccessfulDeployment(
+async function getCommitsSinceLastSuccessfulDeployment(
 	owner: string,
 	repoName: string,
 	currentDeploySha: string,
@@ -57,7 +61,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 	newGitHubClient: GitHubInstallationClient,
 	useNewClient: boolean,
 	logger: LoggerWithTarget
-): Promise<string | void | undefined> {
+): Promise<Array<CommitSummary> | void | undefined> {
 
 	// Grab the last 10 deployments for this repo
 	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> = useNewClient
@@ -87,13 +91,11 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		head: currentDeploySha
 	};
 
-	const commitSummaries = await getAllCommitsBetweenReferences(
+	return await getAllCommitsBetweenReferences(
 		compareCommitsPayload,
 		useNewClient ? newGitHubClient : github,
 		logger
 	);
-
-	return await extractMessagesFromCommitSummaries(commitSummaries);
 }
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
@@ -155,6 +157,26 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
+// Maps commit summaries to a commit association containing the commit keys (commit hash and repository id)
+function mapCommitSummariesToCommitAssociation(
+	commitSummaries: Array<CommitSummary>,
+	repositoryId: string
+): JiraCommitAssociation {
+
+	const commitKeys = commitSummaries
+		?.map((commitSummary) => {
+			return {
+				commitHash: commitSummary.sha,
+				repositoryId: repositoryId
+			};
+		});
+
+	return {
+		associationType: "commit",
+		values: commitKeys
+	};
+}
+
 export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 
 	const deployment = payload.deployment;
@@ -169,8 +191,9 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 		});
 
 	let issueKeys;
+	let associations: Array<JiraAssociation | JiraCommitAssociation> | undefined;
 	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {
-		const allCommitsMessages = await getCommitMessagesSinceLastSuccessfulDeployment(
+		const commitSummaries = await getCommitsSinceLastSuccessfulDeployment(
 			payload.repository.owner.login,
 			payload.repository.name,
 			deployment.sha,
@@ -182,7 +205,13 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 			logger
 		);
 
+		const allCommitsMessages = commitSummaries ? await extractMessagesFromCommitSummaries(commitSummaries) : "";
 		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`);
+
+		const shouldSendCommitsWithDeploymentEntities = await booleanFlag(BooleanFlags.SEND_RELATED_COMMITS_WITH_DEPLOYMENT_ENTITIES, false, jiraHost);
+		if (shouldSendCommitsWithDeploymentEntities && commitSummaries && commitSummaries.length) {
+			associations = [ mapCommitSummariesToCommitAssociation(commitSummaries, payload.repository.id.toString()) ];
+		}
 	} else {
 		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}`);
 	}
@@ -219,7 +248,8 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 				id: deployment_status.environment,
 				displayName: deployment_status.environment,
 				type: environment
-			}
+			},
+			associations: associations
 		}]
 	};
 };
