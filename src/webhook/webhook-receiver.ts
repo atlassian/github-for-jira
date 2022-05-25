@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { GitHubServerApp } from "../models/git-hub-server-app";
+// import { GitHubServerApp } from "../models/git-hub-server-app";
 import { getPayload } from "./get-payload";
 import { Webhooks } from "./webhooks";
 
@@ -26,7 +26,7 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
 	const id = request.headers["x-github-delivery"] as string;
-	const uuid = request.params.uuid;
+	//const uuid = request.params.uuid;
 	/* let webhookSecret = process.env.WEBHOOK_SECRET;
 	if (uuid != "cloud") {
 		const gitHubServerApp = await GitHubServerApp.getGitHubServerAppForUuid(uuid)

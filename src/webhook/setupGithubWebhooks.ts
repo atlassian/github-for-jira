@@ -1,8 +1,8 @@
-import { issueCommentWebhookHandler } from "./issue-comment";
+/* import { issueCommentWebhookHandler } from "./issue-comment";
 import { issueWebhookHandler } from "./issue";
 import { GithubWebhookMiddleware } from "middleware/github-webhook-middleware";
 import { pullRequestWebhookHandler } from "./pull-request";
-import { workflowWebhookHandler } from "./workflow";
+import { workflowWebhookHandler } from "./workflow"; */
 import { WebhookEvent } from "./types";
 import { Webhooks } from "./webhooks";
 
