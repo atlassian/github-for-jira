@@ -164,16 +164,6 @@ export interface JiraCommitKey {
 	repositoryId: string;
 }
 
-export interface JiraCommitKey {
-	commitHash: string;
-	repositoryId: string;
-}
-
-export interface JiraCommitAssociation {
-	associationType: string;
-	values: JiraCommitKey[];
-}
-
 export interface JiraRemoteLinkData {
 	remoteLinks: JiraRemoteLink[];
 }
