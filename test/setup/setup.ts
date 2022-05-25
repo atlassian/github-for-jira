@@ -8,6 +8,7 @@ import { sequelize } from "models/sequelize";
 import { mocked } from "ts-jest/utils";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
+
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");

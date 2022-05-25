@@ -8,7 +8,7 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import {
 	GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER,
 	GITHUB_ENTERPRISE_CLOUD_API_BASEURL,
-	GitHubEnterpriseUrls
+	GitHubClientConfig
 } from "utils/check-github-app-type";
 
 /**
@@ -18,9 +18,9 @@ export class GitHubUserClient {
 	private readonly axios: AxiosInstance;
 	private readonly userToken: string;
 	private readonly logger: Logger;
-	private readonly gitHubEnterprise: GitHubEnterpriseUrls | undefined;
+	private readonly gitHubEnterprise: GitHubClientConfig | undefined;
 
-	constructor(userToken: string, logger: Logger = getLogger("github.user.client"), gitHubEnterprise?: GitHubEnterpriseUrls) {
+	constructor(userToken: string, logger: Logger = getLogger("github.user.client"), gitHubEnterprise?: GitHubClientConfig) {
 		this.userToken = userToken;
 		this.logger = logger;
 		this.gitHubEnterprise = gitHubEnterprise;

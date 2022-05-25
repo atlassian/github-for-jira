@@ -12,7 +12,7 @@ import { AuthToken } from "~/src/github/client/auth-token";
 import {
 	GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER,
 	GITHUB_ENTERPRISE_CLOUD_API_BASEURL,
-	GitHubEnterpriseUrls
+	GitHubClientConfig
 } from "utils/check-github-app-type";
 
 /**
@@ -25,11 +25,11 @@ export class GitHubAppClient {
 	private readonly axios: AxiosInstance;
 	private readonly appToken: AuthToken;
 	private readonly logger: Logger;
-	private readonly gitHubEnterprise: GitHubEnterpriseUrls | undefined;
+	private readonly gitHubEnterprise: GitHubClientConfig | undefined;
 
 	constructor(
 		logger: Logger,
-		gitHubEnterprise?: GitHubEnterpriseUrls,
+		gitHubEnterprise?: GitHubClientConfig,
 		appId = envVars.APP_ID,
 	) {
 		this.logger = logger || getLogger("github.app.client");

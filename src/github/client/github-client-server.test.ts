@@ -7,7 +7,7 @@ import nock from "nock";
 import { AppTokenHolder } from "./app-token-holder";
 import fs from "fs";
 import { envVars }  from "config/env";
-import { GitHubEnterpriseUrls } from "~/src/util/check-github-app-type";
+import { GitHubClientConfig } from "~/src/util/check-github-app-type";
 jest.mock("config/feature-flags");
 
 describe("GitHub Client", () => {
@@ -48,7 +48,7 @@ describe("GitHub Client", () => {
 			.matchHeader("Accept", "application/vnd.github.machine-man-preview+json")
 			.reply(200, [
 				{ number: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
-			]);
+			])
 	}
 
 	function verifyMetricsSent(path: string, status) {
@@ -60,7 +60,7 @@ describe("GitHub Client", () => {
 		}));
 	}
 
-	it.skip("works with a non-cloud installation", async () => {
+	it("works with a non-cloud installation", async () => {
 		const owner = "owner";
 		const repo = "repo";
 		const pageSize = 5;
@@ -81,11 +81,11 @@ describe("GitHub Client", () => {
 				case gheUrl:
 					return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
 				default:
-					throw new Error("unknown github instance!");
+					throw new Error("unknown GitHub instance!");
 			}
 		});
 
-		const gitHubEnterpriseServerUrls: GitHubEnterpriseUrls = {
+		const gitHubClientConfig: GitHubClientConfig = {
 			hostname: "https://github.mydomain.com",
 			apiBaseUrl: "https://github.mydomain.com/api/v3",
 			acceptHeader: "application/vnd.github.machine-man-preview+json"
@@ -94,7 +94,7 @@ describe("GitHub Client", () => {
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
 			getLogger("test"),
-			gitHubEnterpriseServerUrls,
+			gitHubClientConfig,
 			appTokenHolder
 		);
 		const pullrequests = await client.getPullRequests(owner, repo, {

@@ -19,7 +19,7 @@ import {
 } from "./github-queries";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
-import { GitHubEnterpriseUrls, GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER } from "utils/check-github-app-type";
+import { GitHubClientConfig, GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER } from "utils/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -32,13 +32,13 @@ export class GitHubInstallationClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
-	private readonly gitHubEnterprise: GitHubEnterpriseUrls | undefined;
+	private readonly gitHubEnterprise: GitHubClientConfig | undefined;
 	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: InstallationId,
 		logger: Logger,
-		gitHubEnterprise?: GitHubEnterpriseUrls | undefined,
+		gitHubEnterprise?: GitHubClientConfig | undefined,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.installation.client");
