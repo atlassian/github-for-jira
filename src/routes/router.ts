@@ -16,11 +16,15 @@ import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { EventPost } from "./webhook/event-post";
+import { Webhooks } from "../webhook/webhooks";
+import { setupGithubWebhooks } from "../webhook/setupGithubWebhooks";
+import { webhookReceiver } from "../webhook/webhook-receiver";
 
 export const RootRouter = Router();
 
 // The request handler must be the first middleware on the app
-RootRouter.use(Sentry.Handlers.requestHandler());
+/* RootRouter.use(Sentry.Handlers.requestHandler());
 
 // Parse URL-encoded bodies for Jira configuration requests
 RootRouter.use(urlencoded({ extended: false }));
@@ -62,7 +66,7 @@ RootRouter.get("/", async (req: Request, res: Response) => {
 		await res.locals.client.apps.getAuthenticated();
 
 	return res.redirect(info.external_url);
-});
+}); */
 
 // For when nothing gets triggered in the above routes, or an error occurs
-RootRouter.use(ErrorRouter);
+//RootRouter.use(ErrorRouter);

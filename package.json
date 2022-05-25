@@ -13,6 +13,7 @@
 		"init": "run-p db",
 		"start": "run-p start:main start:worker",
 		"start:main": "tsnd -r tsconfig-paths/register --watch=.env,db/config.json,**/*.hbs --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
+		"start:main1": "tsnd -r tsconfig-paths/register --watch=.env,db/config.json,**/*.hbs --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/server.ts",
 		"start:worker": "tsnd -r tsconfig-paths/register --watch=.env,db/config.json,**/*.hbs --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/worker.ts",
 		"start:production": "run-p start:main:production start:worker:production",
 		"start:main:production": "run-s db:migrate:prod && node -r tsconfig-paths/register src/main",
@@ -40,8 +41,7 @@
 		"db:migrate:prod": "sequelize db:migrate --env production-migrate",
 		"db:dev": "run-s db:create:dev db:migrate:dev",
 		"db:test": "run-s db:create:test db:migrate:test",
-		"prepare": "husky install",
-		"precommit": "run-p lint build"
+		"prepare": "husky install"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
