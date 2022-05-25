@@ -24,17 +24,17 @@ const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHub
 			deployment: {
 				sha: deployment.commitOid,
 				id: deployment.databaseId,
-				ref: deployment.ref.id,
+				ref: deployment.ref?.id,
 				description: deployment.description,
 				task: deployment.task,
-				url: deployment.latestStatus.logUrl
+				url: deployment.latestStatus?.logUrl
 			},
 			deployment_status: {
 				environment: deployment.environment,
 				id: deployment.databaseId,
-				target_url: deployment.latestStatus.logUrl,
-				updated_at: deployment.latestStatus.updatedAt,
-				state: deployment.latestStatus.state
+				target_url: deployment.latestStatus?.logUrl,
+				updated_at: deployment.latestStatus?.updatedAt,
+				state: deployment.latestStatus?.state
 			}
 		} as WebhookPayloadDeploymentStatus;
 		return transformDeployment(_github, gitHubInstallationClient, deploymentStatus, jiraHost, logger);
