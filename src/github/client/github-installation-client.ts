@@ -15,9 +15,14 @@ import {
 	getBranchesResponse,
 	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
-	getCommitsResponse, GetRepositoriesQuery, GetRepositoriesResponse, ViewerRepositoryCountQuery,
+	getCommitsResponse,
+	GetRepositoriesQuery,
+	GetRepositoriesResponse,
+	ViewerRepositoryCountQuery,
+	getDeploymentsResponse,
+	getDeploymentsQuery
 } from "./github-queries";
-import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
+import { ActionsListRepoWorkflowRunsResponseEnhanced, GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 import { GitHubClientConfig, GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER } from "utils/check-github-app-type";
 
@@ -191,6 +196,13 @@ export class GitHubInstallationClient {
 		);
 	};
 
+	public listWorkflowRuns = async (owner: string, repo: string, per_page, cursor?: number): Promise<AxiosResponse<ActionsListRepoWorkflowRunsResponseEnhanced>> => {
+		return await this.get<ActionsListRepoWorkflowRunsResponseEnhanced>(`/repos/{owner}/{repo}/actions/runs`,
+			{ per_page, page: cursor },
+			{ owner, repo }
+		);
+	};
+
 	public async updateIssue({ owner, repo, issue_number, body }: Octokit.IssuesUpdateParams): Promise<AxiosResponse<Octokit.IssuesUpdateResponse>> {
 		return await this.patch<Octokit.IssuesUpdateResponse>(`/repos/{owner}/{repo}/issues/{issue_number}`, { body }, {},
 			{
@@ -235,6 +247,17 @@ export class GitHubInstallationClient {
 					cursor
 				});
 		});
+		return response?.data?.data;
+	}
+
+	public async getDeploymentsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
+		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQuery,
+			{
+				owner,
+				repo: repoName,
+				per_page: perPage,
+				cursor
+			});
 		return response?.data?.data;
 	}
 

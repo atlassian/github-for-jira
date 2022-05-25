@@ -8,6 +8,8 @@ import { statsd } from "config/statsd";
 import { getPullRequestTask } from "./pull-request";
 import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
+import { getBuildTask } from "./build";
+import { getDeploymentTask } from "./deployment";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
@@ -27,7 +29,9 @@ const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
 	pull: getPullRequestTask,
 	branch: getBranchTask,
-	commit: getCommitTask
+	commit: getCommitTask,
+	build: getBuildTask,
+	deployment: getDeploymentTask
 };
 
 interface TaskProcessors {
@@ -47,7 +51,7 @@ export interface TaskPayload {
 	jiraPayload: any;
 }
 
-type TaskType = "repository" | "pull" | "commit" | "branch";
+type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
 
 const taskTypes: TaskType[] = ["pull", "commit", "branch"];
 
@@ -159,7 +163,7 @@ const getEnhancedGitHub = async (app: Application, installationId) =>
  */
 export const isRetryableWithSmallerRequest = async (err): Promise<boolean> => {
 	if(await booleanFlag(BooleanFlags.RETRY_ALL_ERRORS, false)) {
-		return true;
+		return  err?.isRetryable || false;
 	}
 	if (err?.errors) {
 		const retryableErrors = err?.errors?.find(
@@ -251,6 +255,16 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			try {
 				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
 			} catch (err) {
+				// TODO - need a better way to manage GitHub errors globally
+				// In the event that the customer has not accepted the required permissions.
+				// We will continue to process the data per usual while omitting the tasks the app does not have access too.
+				// The GraphQL errors do not return a status so we check 403 or undefined
+				if ((err.status === 403 || err.status === undefined) && err.message?.includes("Resource not accessible by integration")) {
+					await subscription?.update({ syncWarning: `Invalid permissions for ${task} task` });
+					logger.error({ err }, `Invalid permissions for ${task} task`);
+					// Return undefined objects so the sync can complete while skipping this task
+					return 	{ edges: undefined, jiraPayload: undefined };
+				}
 				logger.error({
 					err,
 					payload: data,
@@ -274,9 +288,18 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		const { edges, jiraPayload } = await execute();
 		if (jiraPayload) {
 			try {
-				await jiraClient.devinfo.repository.update(jiraPayload, {
-					preventTransitions: true
-				});
+				switch (task) {
+					case "build":
+						await jiraClient.workflow.submit(jiraPayload);
+						break;
+					case "deployment":
+						await jiraClient.deployment.submit(jiraPayload);
+						break;
+					default:
+						await jiraClient.devinfo.repository.update(jiraPayload, {
+							preventTransitions: true
+						});
+				}
 			} catch (err) {
 				if (err?.response?.status === 400) {
 					sentry.setExtra(
@@ -421,6 +444,10 @@ export const processInstallation =
 
 		return async (data: BackfillMessagePayload, sentry: Hub, logger: LoggerWithTarget): Promise<void> => {
 			const { installationId, jiraHost } = data;
+
+			if (await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, false, jiraHost)) {
+				taskTypes.push("build", "deployment");
+			}
 
 			try {
 				if (await isBlocked(installationId, logger)) {

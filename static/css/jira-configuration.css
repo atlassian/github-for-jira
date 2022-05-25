@@ -111,7 +111,7 @@
   padding: 0.8em 0;
 }
 
-.jiraConfiguration__retryContainer {
+.jiraConfiguration__retryContainer, .jiraConfiguration__retryContainer {
   font-size: 1.5rem;
   position: relative;
 }
@@ -143,6 +143,56 @@
 
 .jiraConfiguration__retry:hover ~ .jiraConfiguration__retryMsg {
   display: block;
+}
+
+.jiraConfiguration__syncWarning {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 8px;
+  position: relative;
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0.2rem;
+}
+
+.jiraConfiguration__syncWarning:hover {
+  background: #0914E208;
+}
+
+.warning-popup {
+  display: block;
+  box-sizing: border-box;
+  z-index: 400;
+  flex: 1 1 auto;
+  background-color: var(--ds-surface-overlay,#FFFFFF);
+  border-radius: 3px;
+  box-shadow: var(--ds-shadow-overlay,0 4px 8px -2px rgba(9,30,66,0.25),0 0 1px rgba(9,30,66,0.31));
+  overflow: auto;
+}
+
+.warning-popup div {
+  padding: 15px;
+  line-height: 20px;
+}
+
+.jiraConfiguration__syncWarningMessage {
+  border-radius: 3px;
+  display: none;
+  font-size: 1rem;
+  left: -15em;
+  right: -15em;
+  padding: 0.3em;
+  position: absolute;
+  top: -7.5em;
+}
+
+.jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
+  display: block;
+}
+
+.jiraConfiguration__syncWarning__connectFailed__warningIcon {
+  color: #ff9b20;
 }
 
 .jiraConfiguration__table__body

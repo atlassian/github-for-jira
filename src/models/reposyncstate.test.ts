@@ -50,20 +50,26 @@ describe("RepoSyncState", () => {
 				...repo,
 				pullStatus: "complete",
 				commitStatus: "complete",
-				branchStatus: "complete"
+				branchStatus: "complete",
+				buildStatus: "complete",
+				deploymentStatus: "complete"
 			});
 			await RepoSyncState.create({
 				...repo,
 				pullStatus: "pending",
 				commitStatus: "complete",
-				branchStatus: "complete"
+				branchStatus: "complete",
+				buildStatus: "complete",
+				deploymentStatus: "complete"
 			});
 			await RepoSyncState.create({
 				...repo,
 				subscriptionId: Math.round(Math.random() * 10000),
 				pullStatus: "complete",
 				commitStatus: "complete",
-				branchStatus: "complete"
+				branchStatus: "complete",
+				buildStatus: "complete",
+				deploymentStatus: "complete"
 			});
 			const result = await RepoSyncState.countSyncedReposFromSubscription(sub);
 			expect(result).toEqual(1);
@@ -372,6 +378,10 @@ describe("RepoSyncState", () => {
 				commitCursor: "bar",
 				pullStatus: "complete",
 				pullCursor: "12",
+				buildStatus: "complete",
+				buildCursor: "22",
+				deploymentStatus: "complete",
+				deploymentCursor: "buzz",
 				repoUpdatedAt: new Date(0)
 			});
 			await RepoSyncState.create({
@@ -395,6 +405,8 @@ describe("RepoSyncState", () => {
 						pullStatus: "complete",
 						branchStatus: "complete",
 						commitStatus: "complete",
+						buildStatus: "complete",
+						deploymentStatus: "complete",
 						lastBranchCursor: "foo",
 						lastCommitCursor: "bar",
 						lastPullCursor: 12,

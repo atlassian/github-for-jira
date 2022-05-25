@@ -1,4 +1,3 @@
-
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { groupBy } from "lodash";
