@@ -18,7 +18,6 @@ import {
 	createInstallationClient,
 	createUserClient,
 } from "utils/check-github-app-type";
-import { gheServerAuthAndConnectFlowFlag } from "~/src/util/feature-flag-utils";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -74,7 +73,7 @@ const getInstallationsWithAdmin = async (
 		const errors: Error[] = [];
 		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
 
-		const numberOfReposPromise = await gheServerAuthAndConnectFlowFlag(jiraHost)
+		const numberOfReposPromise = await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, true, jiraHost)
 			? gitHubClient.getNumberOfReposForInstallationRest().catch((err) => {
 				errors.push(err);
 				return 0;

@@ -1,10 +1,10 @@
 // this will need to be updated later to check for database entry
 import { Installation } from "models/installation";
 import { GitHubServerApp } from "models/git-hub-server-app";
-import {GitHubInstallationClient} from "~/src/github/client/github-installation-client";
-import {getCloudInstallationId} from "~/src/github/client/installation-id";
-import {booleanFlag, BooleanFlags} from "config/feature-flags";
-import {GitHubUserClient} from "~/src/github/client/github-user-client";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
+import { getCloudInstallationId } from "../github/client/installation-id";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan"
 import { GitHubAppClient } from "../github/client/github-app-client";
 
@@ -16,18 +16,18 @@ export interface GitHubEnterpriseUrls {
 }
 
 export async function getGitHubApiUrl(jiraHost: string) {
-	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+	const gitHubEnterprise = await getGitHubBaseUrl(jiraHost);
 
-	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, false, jiraHost) && gitHubBaseUrl
-		? `${gitHubBaseUrl}/api/v3`
+	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, true, jiraHost) && gitHubEnterprise
+		? `${gitHubEnterprise.baseUrl}/api/v3`
 		: "https://api.github.com";
 }
 
 export async function getGitHubHostname(jiraHost: string) {
-	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
+	const gitHubEnterprise = await getGitHubBaseUrl(jiraHost);
 
-	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, false, jiraHost) && gitHubBaseUrl
-		? gitHubBaseUrl
+	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, true, jiraHost) && gitHubEnterprise
+		? gitHubEnterprise.baseUrl
 		: GITHUB_ENTERPRISE_CLOUD_BASEURL;
 }
 
@@ -58,7 +58,7 @@ export const getGitHubBaseUrl = async (jiraHost: string): Promise<GitHubEnterpri
 export async function createAppClient(logger: Logger, jiraHost: string): Promise<GitHubAppClient> {
 	const gitHubEnterprise = await getGitHubBaseUrl(jiraHost);
 
-	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, false, jiraHost)
+	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, true, jiraHost)
 		? new GitHubAppClient(logger, gitHubEnterprise)
 		: new GitHubAppClient(logger);
 }
@@ -69,7 +69,7 @@ export async function createAppClient(logger: Logger, jiraHost: string): Promise
  */
 export async function createInstallationClient(githubInstallationId: number, jiraHost: string, logger: Logger): Promise<GitHubInstallationClient> {
 	const gitHubEnterprise = await getGitHubBaseUrl(jiraHost);
-	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, false, jiraHost)
+	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, true, jiraHost)
 		? new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubEnterprise.baseUrl), logger, gitHubEnterprise)
 		: new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), logger);
 }
@@ -79,7 +79,7 @@ export async function createInstallationClient(githubInstallationId: number, jir
  */
 export async function createUserClient(githubToken: string, jiraHost: string, logger: Logger): Promise<GitHubUserClient> {
 	const gitHubEnterprise = await getGitHubBaseUrl(jiraHost);
-	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, false, jiraHost)
+	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, true, jiraHost)
 		? new GitHubUserClient(githubToken, logger, gitHubEnterprise)
 		: new GitHubUserClient(githubToken, logger);
 }
