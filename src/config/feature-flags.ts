@@ -30,7 +30,7 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
 	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect",
 	RETRY_ALL_ERRORS = "retry-all-errors",
-	GHE_SERVER_AUTH_AND_CONNECT_FLOW = "ghe-server-auth-and-connect-flow_kfvxv",
+	GHE_SERVER = "ghe_server",
 }
 
 export enum StringFlags {
