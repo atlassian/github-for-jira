@@ -8,8 +8,7 @@ import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { getGitHubBaseUrl } from "utils/check-github-app-type";
-import { gheServerAuthAndConnectFlowFlag } from "~/src/util/feature-flag-utils";
+import { createAppClient, createUserClient } from "utils/check-github-app-type";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
@@ -58,14 +57,9 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 
 	try {
-		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, true, jiraHost);
-		const gitHubUserClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-			? new GitHubUserClient(githubToken, req.log, gitHubBaseUrl)
-			: new GitHubUserClient(githubToken, req.log);
-		const gitHubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-			? new GitHubAppClient(req.log, gitHubBaseUrl)
-			: new GitHubAppClient(req.log);
+		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
+		const gitHubAppClient = await createAppClient(req.log, jiraHost);
 
 		// Check if the user that posted this has access to the installation ID they're requesting
 		if (!await hasAdminAccess(useNewGithubClient ? gitHubAppClient : client, gitHubUserClient, gitHubInstallationId, req.log)) {

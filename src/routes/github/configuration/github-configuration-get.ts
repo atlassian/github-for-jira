@@ -7,16 +7,17 @@ import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
 import { Tracer } from "config/tracer";
-import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
-import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import Logger from "bunyan";
-import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { AppInstallation } from "config/interfaces";
 import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { BlockedIpError } from "~/src/github/client/github-client-errors";
-import { getGitHubBaseUrl } from "utils/check-github-app-type";
+import {
+	createAppClient,
+	createInstallationClient,
+	createUserClient,
+} from "utils/check-github-app-type";
 import { gheServerAuthAndConnectFlowFlag } from "~/src/util/feature-flag-utils";
 
 interface ConnectedStatus {
@@ -71,19 +72,14 @@ const getInstallationsWithAdmin = async (
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-
-		const gitHubInstallationClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-			? new GitHubInstallationClient(getCloudInstallationId(installation.id, gitHubBaseUrl), log, gitHubBaseUrl)
-			: new GitHubInstallationClient(getCloudInstallationId(installation.id), log);
-
+		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
 
 		const numberOfReposPromise = await gheServerAuthAndConnectFlowFlag(jiraHost)
-			? gitHubInstallationClient.getNumberOfReposForInstallationRest().catch((err) => {
+			? gitHubClient.getNumberOfReposForInstallationRest().catch((err) => {
 				errors.push(err);
 				return 0;
 			})
-			: gitHubInstallationClient.getNumberOfReposForInstallation().catch((err) => {
+			: gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 				errors.push(err);
 				return 0;
 			});
@@ -141,12 +137,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, true);
-	const githubUserClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-		? new GitHubUserClient(githubToken, log, gitHubBaseUrl)
-		: new GitHubUserClient(githubToken, log);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
@@ -159,7 +151,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	tracer.trace(`found jira host: ${jiraHost}`);
 
-	const { data: { login } } = useNewGitHubClient ? await githubUserClient.getUser() : await github.users.getAuthenticated();
+	const { data: { login } } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated();
 
 	tracer.trace(`got login name: ${login}`);
 
@@ -182,15 +174,12 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			return;
 		}
 
-		const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-		const gitHubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-			? new GitHubAppClient(log, gitHubBaseUrl)
-			: new GitHubAppClient(log);
+		const gitHubAppClient = await createAppClient(log, jiraHost);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 
 		const { data: { installations }, headers } = useNewGitHubClient ?
-			await githubUserClient.getInstallations() :
+			await gitHubUserClient.getInstallations() :
 			await github.apps.listInstallationsForAuthenticatedUser();
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
@@ -199,7 +188,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(githubUserClient, log, login, installations, jiraHost);
+		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);

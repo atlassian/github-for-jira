@@ -14,10 +14,8 @@ jest.mock("lru-cache");
 
 const redis = new IORedis(getRedisInfo("test"));
 
-type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void;
-type GithubAppTokenNockFunc = () => void;
-type GitHubEnterpriseHostFunc = (host: string) => void;
-
+type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
+type GithubAppTokenNockFunc = () => void
 type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
 
 declare global {
@@ -25,15 +23,14 @@ declare global {
 	let jiraStaginHost: string;
 	let jiraNock: nock.Scope;
 	let jiraStagingNock: nock.Scope;
-
 	let githubNock: nock.Scope;
+	let gheNock: nock.Scope;
+	let gheUrl: string;
 	let githubUserTokenNock: GithubUserTokenNockFunc;
 	let githubAppTokenNock: GithubAppTokenNockFunc;
-	let gitHubEnterpriseHostNock: GitHubEnterpriseHostFunc;
-	let gitHubEnterpriseHostUrl: string;
-
+	let gheUserTokenNock: GithubUserTokenNockFunc;
+	let gheAppTokenNock: GithubAppTokenNockFunc;
 	let mockSystemTime: MockSystemTimeFunc;
-
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
@@ -41,17 +38,18 @@ declare global {
 			jiraStaginHost: string;
 			jiraNock: nock.Scope;
 			jiraStagingNock: nock.Scope;
-
 			githubNock: nock.Scope;
+			gheNock: nock.Scope;
+			gheUrl: string;
 			githubUserTokenNock: GithubUserTokenNockFunc;
 			githubAppTokenNock: GithubAppTokenNockFunc;
-			gitHubEnterpriseHostNock: GitHubEnterpriseHostFunc;
-			gitHubEnterpriseHostUrl: string;
-
+			gheUserTokenNock: GithubUserTokenNockFunc;
+			gheAppTokenNock: GithubAppTokenNockFunc;
 			mockSystemTime: MockSystemTimeFunc;
 		}
 	}
 }
+
 
 const resetEnvVars = () => {
 	// Assign defaults to process.env, but don't override existing values if they
@@ -78,15 +76,6 @@ const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>
 				token: returnToken,
 				expires_at: expires
 			});
-	};
-
-const gitHubEnterpriseHost = (): GitHubEnterpriseHostFunc =>
-	(host: string) => {
-		if (host) {
-			global.gitHubEnterpriseHostUrl = host;
-		} else {
-			global.gitHubEnterpriseHostUrl = "https://api.github.com";
-		}
 	};
 
 const githubAppToken = (scope: nock.Scope): GithubAppTokenNockFunc =>
@@ -135,19 +124,18 @@ beforeAll(async () => {
 	redis.disconnect();
 });
 
-beforeEach(async () => {
+beforeEach(() => {
 	global.jiraHost = process.env.ATLASSIAN_URL || `https://${process.env.INSTANCE_NAME}.atlassian.net`;
 	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${process.env.INSTANCE_NAME}.jira-dev.com`;
 	global.jiraNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
-
-	// TODO - fix this: need to be able to set from tests... but how??
-	global.gitHubEnterpriseHostNock = gitHubEnterpriseHost();
-	global.gitHubEnterpriseHostUrl = "https://api.github.com";
-	global.githubNock = nock(global.gitHubEnterpriseHostUrl);
+	global.githubNock = nock("https://api.github.com");
+	global.gheUrl = "https://github.mydomain.com";
+	global.gheNock = nock(global.gheUrl);
 	global.githubUserTokenNock = githubUserToken(githubNock);
 	global.githubAppTokenNock = githubAppToken(githubNock);
-
+	global.gheUserTokenNock = githubUserToken(gheNock);
+	global.gheAppTokenNock = githubAppToken(gheNock);
 	global.mockSystemTime = (time: number | string | Date) => {
 		const mock = jest.isMockFunction(Date.now) ? mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());
@@ -156,7 +144,7 @@ beforeEach(async () => {
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting
-// Needs to be in its own aftereach so that the expect doesn't stop it from cleaning up afterwards
+// Needs to be in it's own aftereach so that the expect doesn't stop it from cleaning up afterwards
 afterEach(async () => {
 	try {
 		// eslint-disable-next-line jest/no-standalone-expect

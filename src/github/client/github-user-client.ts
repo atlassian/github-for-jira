@@ -5,7 +5,7 @@ import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setReq
 import { metricHttpRequest } from "config/metric-names";
 import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
-import { setAcceptHeader, setGitHubBaseUrl } from "utils/check-github-app-type";
+import { GitHubEnterpriseUrls } from "utils/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -14,15 +14,15 @@ export class GitHubUserClient {
 	private readonly axios: AxiosInstance;
 	private readonly userToken: string;
 	private readonly logger: Logger;
-	private readonly gitHubBaseUrl: string | undefined;
+	private readonly gitHubEnterprise: GitHubEnterpriseUrls | undefined;
 
-	constructor(userToken: string, logger: Logger = getLogger("github.user.client"), gitHubBaseUrl?: string) {
+	constructor(userToken: string, logger: Logger = getLogger("github.user.client"), gitHubEnterprise?: GitHubEnterpriseUrls) {
 		this.userToken = userToken;
 		this.logger = logger;
-		this.gitHubBaseUrl = gitHubBaseUrl;
+		this.gitHubEnterprise = gitHubEnterprise;
 
 		this.axios = axios.create({
-			baseURL: setGitHubBaseUrl(this.gitHubBaseUrl),
+			baseURL: this.gitHubEnterprise?.baseUrl || "https://api.github.com",
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -33,7 +33,7 @@ export class GitHubUserClient {
 				...config,
 				headers: {
 					...config.headers,
-					Accept: setAcceptHeader(this.gitHubBaseUrl),
+					Accept: this.gitHubEnterprise?.acceptHeader || "application/vnd.github.v3+json",
 					Authorization: `token ${this.userToken}`
 				}
 			};

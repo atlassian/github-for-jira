@@ -2,10 +2,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { Context, MessageHandler } from "./sqs";
 import { workerApp } from "../worker/app";
 import { processDeployment } from "../github/deployment";
-import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
-import {getGitHubBaseUrl} from "utils/check-github-app-type";
-import { gheServerAuthAndConnectFlowFlag } from "../util/feature-flag-utils";
+import { createInstallationClient } from "utils/check-github-app-type";
 
 export type DeploymentMessagePayload = {
 	jiraHost: string,
@@ -34,14 +31,11 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 	context.log.info("Handling deployment message from the SQS queue");
 
 	const github = await workerApp.auth(installationId);
-	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const newGitHubClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-		? new GitHubInstallationClient(getCloudInstallationId(installationId, gitHubBaseUrl), context.log, gitHubBaseUrl)
-		: new GitHubInstallationClient(getCloudInstallationId(installationId), context.log);
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log);
 
 	await processDeployment(
 		github,
-		newGitHubClient,
+		gitHubInstallationClient,
 		webhookId,
 		messagePayload.webhookPayload,
 		new Date(messagePayload.webhookReceived),

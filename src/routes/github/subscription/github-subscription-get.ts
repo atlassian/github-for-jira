@@ -1,11 +1,8 @@
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
-import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import {getGitHubBaseUrl} from "utils/check-github-app-type";
-import { gheServerAuthAndConnectFlowFlag } from "~/src/util/feature-flag-utils";
+import { createAppClient, createUserClient } from "utils/check-github-app-type";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { github, client, githubToken, jiraHost } = res.locals;
@@ -21,13 +18,8 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, true, jiraHost);
-	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const gitHubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-		? new GitHubAppClient(logger, gitHubBaseUrl)
-		: new GitHubAppClient(logger);
-	const gitHubUserClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-		? new GitHubUserClient(githubToken, req.log, gitHubBaseUrl)
-		: new GitHubUserClient(githubToken, req.log);
+	const gitHubAppClient = await createAppClient(logger, jiraHost);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
 
 	try {
 		const { data: { login } } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated();

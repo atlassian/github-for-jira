@@ -19,11 +19,9 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
-import { getCloudInstallationId } from "../github/client/installation-id";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
-import {getGitHubBaseUrl} from "utils/check-github-app-type";
-import { gheServerAuthAndConnectFlowFlag } from "../util/feature-flag-utils";
+import { createInstallationClient } from "utils/check-github-app-type";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -207,11 +205,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		logger
 	);
 
-	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const gitHubInstallationClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-		? new GitHubInstallationClient(getCloudInstallationId(installationId, gitHubBaseUrl), logger, gitHubBaseUrl)
-		: new GitHubInstallationClient(getCloudInstallationId(installationId), logger);
-
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription);
 

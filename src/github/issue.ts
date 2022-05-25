@@ -1,11 +1,8 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
-import { GitHubInstallationClient } from "./client/github-installation-client";
-import { getCloudInstallationId } from "./client/installation-id";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
 import { GitHubIssue, GitHubIssueData } from 'interfaces/github';
-import {getGitHubBaseUrl} from "utils/check-github-app-type";
-import { gheServerAuthAndConnectFlowFlag } from "utils/feature-flag-utils";
+import { createInstallationClient } from "utils/check-github-app-type";
 
 export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, _jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
@@ -16,10 +13,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		}
 	} = context.payload;
 
-	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const githubClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-		? new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), context.log, gitHubBaseUrl)
-		: new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+	const githubClient = await createInstallationClient(githubInstallationId, jiraHost, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;

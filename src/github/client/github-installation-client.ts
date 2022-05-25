@@ -19,13 +19,11 @@ import {
 } from "./github-queries";
 import { GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
-import {
-	setAcceptHeader,
-	setGitHubBaseUrl
-} from "utils/check-github-app-type";
+import { GitHubEnterpriseUrls } from "utils/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
+ * API is specific to an organization (e.g. can get all repos for an org)
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
@@ -34,19 +32,19 @@ export class GitHubInstallationClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
-	private readonly gitHubBaseUrl: string | undefined;
+	private readonly gitHubEnterprise: GitHubEnterpriseUrls | undefined;
 	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: InstallationId,
 		logger: Logger,
-		gitHubBaseUrl?: string | undefined,
+		gitHubEnterprise?: GitHubEnterpriseUrls | undefined,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.installation.client");
 
 		this.axios = axios.create({
-			baseURL: setGitHubBaseUrl(gitHubBaseUrl),
+			baseURL: gitHubEnterprise?.baseUrl || githubInstallationId.githubBaseUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -66,7 +64,7 @@ export class GitHubInstallationClient {
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
-		this.gitHubBaseUrl = gitHubBaseUrl;
+		this.gitHubEnterprise = gitHubEnterprise;
 	}
 
 	/**
@@ -285,7 +283,7 @@ export class GitHubInstallationClient {
 		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
-				Accept: setAcceptHeader(this.gitHubBaseUrl),
+				Accept: this.gitHubEnterprise?.acceptHeader || "application/vnd.github.v3+json",
 				Authorization: `Bearer ${appToken.token}`
 			}
 		};
@@ -300,7 +298,7 @@ export class GitHubInstallationClient {
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
-				Accept: setAcceptHeader(this.gitHubBaseUrl),
+				Accept: this.gitHubEnterprise?.acceptHeader || "application/vnd.github.v3+json",
 				Authorization: `Bearer ${installationToken.token}`
 			}
 		};

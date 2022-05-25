@@ -1,24 +1,16 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
-import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
-import {getGitHubBaseUrl} from "utils/check-github-app-type";
-import { gheServerAuthAndConnectFlowFlag } from "~/src/util/feature-flag-utils";
+import { createAppClient, createUserClient } from "utils/check-github-app-type";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
 	const { github, client, githubToken, jiraHost } = res.locals;
 	const { installationId: gitHubInstallationId } = req.body;
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
-	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION, true, jiraHost) ;
-	const gitHubAppClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-		? new GitHubAppClient(logger, gitHubBaseUrl)
-		: new GitHubAppClient(logger);
-	const gitHubUserClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-		? new GitHubUserClient(githubToken, logger, gitHubBaseUrl)
-		: new GitHubUserClient(githubToken, logger);
+	const gitHubAppClient = await createAppClient(logger, jiraHost);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger);
 
 	if (!githubToken) {
 		res.sendStatus(401);

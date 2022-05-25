@@ -9,10 +9,11 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
-import { setAcceptHeader, setGitHubBaseUrl} from "utils/check-github-app-type";
+import { GitHubEnterpriseUrls } from "utils/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
+ * This is the top level app API: get all installations of this app, or get more info on this app
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
@@ -20,21 +21,21 @@ export class GitHubAppClient {
 	private readonly axios: AxiosInstance;
 	private readonly appToken: AuthToken;
 	private readonly logger: Logger;
-	private readonly gitHubBaseUrl: string | undefined;
+	private readonly gitHubEnterprise: GitHubEnterpriseUrls | undefined;
 
 	constructor(
 		logger: Logger,
-		gitHubBaseUrl?: string | undefined,
+		gitHubEnterprise?: GitHubEnterpriseUrls,
 		appId = envVars.APP_ID,
 	) {
 		this.logger = logger || getLogger("github.app.client");
 		// TODO - change this for GHE, to get from github apps table
 		const privateKey = PrivateKey.findPrivateKey() || "";
-		this.gitHubBaseUrl = gitHubBaseUrl;
+		this.gitHubEnterprise = gitHubEnterprise;
 
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 		this.axios = axios.create({
-			baseURL: setGitHubBaseUrl(this.gitHubBaseUrl),
+			baseURL: this.gitHubEnterprise?.baseUrl || "https://api.github.com",
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -81,7 +82,7 @@ export class GitHubAppClient {
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
 		return {
-			Accept: setAcceptHeader(this.gitHubBaseUrl),
+			Accept: this.gitHubEnterprise?.acceptHeader || "application/vnd.github.v3+json",
 			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}

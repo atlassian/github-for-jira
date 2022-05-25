@@ -3,14 +3,12 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { JiraPullRequestData } from '../interfaces/jira';
+import { JiraPullRequestData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { GitHubIssueData } from '../interfaces/github';
-import {getGitHubBaseUrl} from "utils/check-github-app-type";
-import { gheServerAuthAndConnectFlowFlag } from "../util/feature-flag-utils";
+import { GitHubIssueData } from "interfaces/github";
+import { createInstallationClient } from "utils/check-github-app-type";
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
@@ -24,10 +22,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	} = context.payload;
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
-	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
-	const githubClient = await gheServerAuthAndConnectFlowFlag(jiraHost)
-		? new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubBaseUrl), context.log, gitHubBaseUrl)
-		: new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+	const githubClient = await createInstallationClient(githubInstallationId, jiraHost, context.log);
 
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,
