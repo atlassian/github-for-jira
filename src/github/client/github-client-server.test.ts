@@ -60,7 +60,7 @@ describe("GitHub Client", () => {
 		}));
 	}
 
-	it.skip("works with a non-cloud installation", async () => {
+	it("works with a non-cloud installation", async () => {
 		const owner = "owner";
 		const repo = "repo";
 		const pageSize = 5;
@@ -103,6 +103,6 @@ describe("GitHub Client", () => {
 		});
 
 		expect(pullrequests).toBeTruthy();
-		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "200");
+		verifyMetricsSent("/api/v3/repos/{owner}/{repo}/pulls", "200");
 	});
 });
