@@ -3,7 +3,7 @@ import { CustomContext } from "middleware/github-webhook-middleware";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
-import { JiraBuildData } from '../interfaces/jira';
+import { JiraBuildData } from "../interfaces/jira";
 
 export const workflowWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;

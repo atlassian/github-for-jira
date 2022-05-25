@@ -3,7 +3,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
+import { extractMessagesFromCommitSummaries, getAllCommitsBetweenReferences } from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { AxiosResponse } from "axios";
 import { deburr, isEmpty } from "lodash";
@@ -69,11 +69,13 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		head: currentDeploySha
 	};
 
-	return await getAllCommitMessagesBetweenReferences(
+	const commitSummaries = await getAllCommitsBetweenReferences(
 		compareCommitsPayload,
 		githubInstallationClient,
 		logger
 	);
+
+	return await extractMessagesFromCommitSummaries(commitSummaries);
 }
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
@@ -121,7 +123,7 @@ export function mapEnvironment(environment: string): string {
 
 	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
-		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
+		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality", "uat", "sit"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
 		production: ["production", "prod", "prd", "live"]
 	};
