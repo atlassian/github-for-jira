@@ -8,9 +8,9 @@ import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan"
 import { GitHubAppClient } from "../github/client/github-app-client";
 
-export const GITHUB_ENTERPRISE_CLOUD_HOSTNAME = "https://github.com";
-export const GITHUB_ENTERPRISE_CLOUD_API_BASEURL = "https://api.github.com";
-export const GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER = "application/vnd.github.v3+json"
+export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
+export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
+export const GITHUB_CLOUD_ACCEPT_HEADER = "application/vnd.github.v3+json"
 
 export interface GitHubClientConfig {
 	hostname: string;
@@ -23,7 +23,7 @@ export async function getGitHubApiUrl(jiraHost: string) {
 
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) && gitHubClientConfig
 		? `${gitHubClientConfig.apiBaseUrl}`
-		: GITHUB_ENTERPRISE_CLOUD_API_BASEURL;
+		: GITHUB_CLOUD_API_BASEURL;
 }
 
 export async function getGitHubHostname(jiraHost: string) {
@@ -31,7 +31,7 @@ export async function getGitHubHostname(jiraHost: string) {
 
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) && gitHubClientConfig
 		? gitHubClientConfig.hostname
-		: GITHUB_ENTERPRISE_CLOUD_HOSTNAME;
+		: GITHUB_CLOUD_HOSTNAME;
 }
 
 const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConfig> => {
@@ -47,7 +47,7 @@ const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConf
 			acceptHeader:  "application/vnd.github.machine-man-preview+json"
 		}
 		: {
-			hostname: GITHUB_ENTERPRISE_CLOUD_HOSTNAME,
+			hostname: GITHUB_CLOUD_HOSTNAME,
 			apiBaseUrl: "https://api.github.com",
 			acceptHeader: "application/vnd.github.v3+json"
 		}

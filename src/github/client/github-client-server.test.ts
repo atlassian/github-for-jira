@@ -7,7 +7,7 @@ import nock from "nock";
 import { AppTokenHolder } from "./app-token-holder";
 import fs from "fs";
 import { envVars }  from "config/env";
-import { GitHubClientConfig } from "~/src/util/get-github-client-config";
+import { GitHubClientConfig } from "utils/get-github-client-config";
 jest.mock("config/feature-flags");
 
 describe("GitHub Client", () => {

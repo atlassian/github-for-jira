@@ -8,7 +8,7 @@ import { Octokit } from "@octokit/rest";
 import { JiraPullRequestData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
-import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { createInstallationClient } from "utils/get-github-client-config";
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
