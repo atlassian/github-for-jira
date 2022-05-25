@@ -181,15 +181,13 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		});
 	});
 
-	it(`supports branch and merge workflows, sending related commits in deployment - FF '${useNewGithubClient}'`, async () => {
+	it(`supports branch and merge workflows, sending related commits in deployment`, async () => {
 
 		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-		if (useNewGithubClient) {
-			githubUserTokenNock(TEST_INSTALLATION_ID);
-			githubUserTokenNock(TEST_INSTALLATION_ID);
-			githubUserTokenNock(TEST_INSTALLATION_ID);
-			githubUserTokenNock(TEST_INSTALLATION_ID);
-		}
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
 
 		// Mocking all GitHub API Calls
 		// Get commit
@@ -259,7 +257,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			expect.anything()
 		).mockResolvedValue(true);
 
-		const jiraPayload = await transformDeployment(GitHubAPI(), githubClient, deployment_status.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
