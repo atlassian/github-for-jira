@@ -257,7 +257,7 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 				displayName: deployment_status.environment,
 				type: environment
 			},
-			associations: associations
+			associations
 		}]
 	};
 };
