@@ -57,7 +57,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 
 	try {
-		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, true, jiraHost);
+		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, false, jiraHost);
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
 		const gitHubAppClient = await createAppClient(req.log, jiraHost);
 
