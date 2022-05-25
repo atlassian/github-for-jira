@@ -3,12 +3,13 @@ import { getLogger } from "./logger";
 import { NextFunction, Request, Response } from "express";
 import { isNodeDev, isNodeTest } from "utils/is-node-env";
 import { metricHttpRequest } from "./metric-names";
+import { envVars } from "./env";
 
 export const globalTags = {
 	environment: isNodeTest() ? "test" : process.env.MICROS_ENV || "",
 	environment_type: isNodeTest() ? "testenv" : process.env.MICROS_ENVTYPE || "",
-	deployment_id: process.env.MICROS_DEPLOYMENT_ID || "1",
-	region: process.env.MICROS_AWS_REGION || "us-west-1"
+	region: process.env.MICROS_AWS_REGION || "us-west-1",
+	micros_group: envVars.MICROS_GROUP
 };
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";

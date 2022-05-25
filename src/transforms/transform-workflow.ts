@@ -1,10 +1,9 @@
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { GitHubPullRequest } from "interfaces/github";
+import { GitHubPullRequest , GitHubWorkflowPayload } from "interfaces/github";
 import { JiraBuildData, JiraPullRequestHead } from "interfaces/jira";
 import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { GitHubWorkflowPayload } from '../interfaces/github';
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
