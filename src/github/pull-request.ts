@@ -8,7 +8,7 @@ import { Octokit } from "@octokit/rest";
 import { JiraPullRequestData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
-import { createInstallationClient } from "utils/check-github-app-type";
+import { createInstallationClient } from "utils/get-github-client-config";
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
@@ -27,19 +27,20 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,
 		installationId: githubInstallationId,
+		orgName: owner,
 		pullRequestNumber,
-		pullRequestId
+		pullRequestId,
+		payload: context.payload,
 	});
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let reviews: any = {};
+	let reviews: Octokit.PullsListReviewsResponse = [];
 	try {
 		reviews = await getReviews(gitHubInstallationClient, owner, repoName, pull_request.number);
 	} catch (err) {
 		context.log.warn(
 			{
 				err,
-				payload: context.payload,
 				pull_request
 			},
 			"Missing Github Permissions: Can't retrieve reviewers"

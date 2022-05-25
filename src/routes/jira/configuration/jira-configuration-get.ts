@@ -1,4 +1,3 @@
-
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { groupBy } from "lodash";
@@ -9,7 +8,7 @@ import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { createAppClient } from "utils/check-github-app-type";
+import { createAppClient } from "~/src/util/get-github-client-config";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {

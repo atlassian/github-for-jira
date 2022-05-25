@@ -23,6 +23,7 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION = "use-new-github-client-for-get-subscription",
 	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
+	BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS = "run-backfill-for-builds-and-deployments",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST = "use-new-github-client-for-github-config-post",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
 	REGEX_FIX = "regex-fix",
@@ -79,7 +80,7 @@ export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHo
 
 export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void):void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
-}
+};
 
 export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
 	try {

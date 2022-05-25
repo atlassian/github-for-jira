@@ -4,7 +4,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
+import { extractMessagesFromCommitSummaries, getAllCommitsBetweenReferences } from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { AxiosResponse } from "axios";
 import { deburr, isEmpty } from "lodash";
@@ -42,7 +42,6 @@ async function getLastSuccessfulDeployCommitSha(
 	} catch (e) {
 		logger?.error(`Failed to get deployment statuses.`);
 	}
-
 
 	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 100) then we'll return the last one from the array, even if it's a failed one.
 	return deployments[deployments.length - 1].sha;
@@ -88,11 +87,13 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		head: currentDeploySha
 	};
 
-	return await getAllCommitMessagesBetweenReferences(
+	const commitSummaries = await getAllCommitsBetweenReferences(
 		compareCommitsPayload,
 		useNewClient ? newGitHubClient : github,
 		logger
 	);
+
+	return await extractMessagesFromCommitSummaries(commitSummaries);
 }
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
@@ -100,8 +101,8 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 // Deployment state - GitHub: Can be one of error, failure, pending, in_progress, queued, or success
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-deployments-0-1-bulk-post
 // Deployment state - Jira: Can be one of unknown, pending, in_progress, cancelled, failed, rolled_back, successful
-function mapState(state: string): string {
-	switch (state) {
+function mapState(state: string | undefined): string {
+	switch (state?.toLowerCase()) {
 		case "queued":
 			return "pending";
 		// We send "pending" as "in progress" because the GitHub API goes Pending -> Success (there's no in progress update).
@@ -140,7 +141,7 @@ export function mapEnvironment(environment: string): string {
 
 	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
-		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
+		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality", "uat", "sit"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
 		production: ["production", "prod", "prd", "live"]
 	};
@@ -155,10 +156,11 @@ export function mapEnvironment(environment: string): string {
 }
 
 export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, false, jiraHost);
 
-	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, true, jiraHost);
 	const { data: { commit: { message } } } = useNewGitHubClient ?
 		await newGitHubClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha) :
 		await githubClient.repos.getCommit({
@@ -166,7 +168,6 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 			repo: payload.repository.name,
 			ref: deployment.sha
 		});
-
 
 	let issueKeys;
 	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {

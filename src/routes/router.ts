@@ -15,7 +15,7 @@ import { ErrorRouter } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { createAppClient } from "utils/check-github-app-type";
+import { createAppClient } from "~/src/util/get-github-client-config";
 
 export const RootRouter = Router();
 

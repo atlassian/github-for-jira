@@ -10,10 +10,11 @@ import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
 import {
-	GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER,
-	GITHUB_ENTERPRISE_CLOUD_API_BASEURL,
-	GitHubEnterpriseUrls
-} from "utils/check-github-app-type";
+	GITHUB_CLOUD_ACCEPT_HEADER,
+	GITHUB_CLOUD_API_BASEURL,
+	GitHubClientConfig
+} from "~/src/util/get-github-client-config";
+
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -25,11 +26,11 @@ export class GitHubAppClient {
 	private readonly axios: AxiosInstance;
 	private readonly appToken: AuthToken;
 	private readonly logger: Logger;
-	private readonly gitHubEnterprise: GitHubEnterpriseUrls | undefined;
+	private readonly gitHubEnterprise: GitHubClientConfig | undefined;
 
 	constructor(
 		logger: Logger,
-		gitHubEnterprise?: GitHubEnterpriseUrls,
+		gitHubEnterprise?: GitHubClientConfig,
 		appId = envVars.APP_ID,
 	) {
 		this.logger = logger || getLogger("github.app.client");
@@ -39,7 +40,7 @@ export class GitHubAppClient {
 
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 		this.axios = axios.create({
-			baseURL: this.gitHubEnterprise?.apiBaseUrl || GITHUB_ENTERPRISE_CLOUD_API_BASEURL,
+			baseURL: this.gitHubEnterprise?.apiBaseUrl || GITHUB_CLOUD_API_BASEURL,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -86,7 +87,7 @@ export class GitHubAppClient {
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
 		return {
-			Accept: this.gitHubEnterprise?.acceptHeader || GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER,
+			Accept: this.gitHubEnterprise?.acceptHeader || GITHUB_CLOUD_ACCEPT_HEADER,
 			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}

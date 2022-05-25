@@ -226,7 +226,9 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 					repoUrl: "github.com/atlassian/github-for-jira",
 					pullStatus: "complete",
 					commitStatus: "complete",
-					branchStatus: "complete"
+					branchStatus: "complete",
+					buildStatus: "complete",
+					deploymentStatus: "complete"
 				}),
 				RepoSyncState.create({
 					subscriptionId: sub.id,
@@ -237,7 +239,9 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 					repoUrl: "github.com/atlassian/github-for-jira",
 					pullStatus: "pending",
 					commitStatus: "complete",
-					branchStatus: "complete"
+					branchStatus: "complete",
+					buildStatus: "complete",
+					deploymentStatus: "complete"
 				}),
 				sub.update({ totalNumberOfRepos: 2 })
 			]);

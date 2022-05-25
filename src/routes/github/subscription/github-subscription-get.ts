@@ -2,7 +2,7 @@ import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { createAppClient, createUserClient } from "utils/check-github-app-type";
+import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { github, client, githubToken, jiraHost } = res.locals;

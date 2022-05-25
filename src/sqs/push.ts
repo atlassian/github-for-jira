@@ -1,7 +1,7 @@
 import { Context, MessageHandler } from "./sqs";
 import { processPush } from "../transforms/push";
 import { wrapLogger } from "probot/lib/wrap-logger";
-import { createInstallationClient } from "utils/check-github-app-type";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
 
 export type PayloadRepository = {
 	id: number,
