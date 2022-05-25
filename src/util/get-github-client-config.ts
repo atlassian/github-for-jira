@@ -48,8 +48,8 @@ const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConf
 		}
 		: {
 			hostname: GITHUB_CLOUD_HOSTNAME,
-			apiBaseUrl: "https://api.github.com",
-			acceptHeader: "application/vnd.github.v3+json"
+			apiBaseUrl: GITHUB_CLOUD_API_BASEURL,
+			acceptHeader: GITHUB_CLOUD_ACCEPT_HEADER
 		}
 }
 
