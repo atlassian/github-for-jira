@@ -3,7 +3,7 @@ import { CustomContext } from "middleware/github-webhook-middleware";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { getCloudInstallationId } from "./client/installation-id";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
-import { GitHubIssue, GitHubIssueData } from '../interfaces/github';
+import { GitHubIssue, GitHubIssueData } from "../interfaces/github";
 
 export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, _jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
