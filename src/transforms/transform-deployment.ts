@@ -1,4 +1,4 @@
-import {JiraAssociation, JiraCommitAssociation, JiraDeploymentData} from "interfaces/jira";
+import {JiraAssociation, JiraDeploymentData} from "interfaces/jira";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -15,7 +15,7 @@ import { deburr, isEmpty } from "lodash";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
-async function getLastSuccessfulDeployCommitSha(
+const getLastSuccessfulDeployCommitSha = async(
 	owner: string,
 	repoName: string,
 	github: GitHubAPI,
@@ -23,7 +23,7 @@ async function getLastSuccessfulDeployCommitSha(
 	useNewClient: boolean,
 	deployments: Octokit.ReposListDeploymentsResponseItem[],
 	logger?: LoggerWithTarget
-): Promise<string> {
+): Promise<string> => {
 
 	try {
 		for (const deployment of deployments) {
@@ -51,7 +51,7 @@ async function getLastSuccessfulDeployCommitSha(
 	return deployments[deployments.length - 1].sha;
 }
 
-async function getCommitsSinceLastSuccessfulDeployment(
+const getCommitsSinceLastSuccessfulDeployment = async(
 	owner: string,
 	repoName: string,
 	currentDeploySha: string,
@@ -61,7 +61,7 @@ async function getCommitsSinceLastSuccessfulDeployment(
 	newGitHubClient: GitHubInstallationClient,
 	useNewClient: boolean,
 	logger: LoggerWithTarget
-): Promise<Array<CommitSummary> | void | undefined> {
+): Promise<CommitSummary[] | undefined> => {
 
 	// Grab the last 10 deployments for this repo
 	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> = useNewClient
@@ -103,7 +103,7 @@ async function getCommitsSinceLastSuccessfulDeployment(
 // Deployment state - GitHub: Can be one of error, failure, pending, in_progress, queued, or success
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-deployments-0-1-bulk-post
 // Deployment state - Jira: Can be one of unknown, pending, in_progress, cancelled, failed, rolled_back, successful
-function mapState(state: string | undefined): string {
+const mapState = (state: string | undefined): string => {
 	switch (state?.toLowerCase()) {
 		case "queued":
 			return "pending";
@@ -126,7 +126,7 @@ function mapState(state: string | undefined): string {
 // https://docs.github.com/en/actions/reference/environments
 // GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
 // Jira: Can be one of unmapped, development, testing, staging, production
-export function mapEnvironment(environment: string): string {
+export const mapEnvironment = (environment: string): string => {
 	const isEnvironment = (envNames: string[]): boolean => {
 		// Matches any of the input names exactly
 		const exactMatch = envNames.join("|");
@@ -157,24 +157,32 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-// Maps commit summaries to a commit association containing the commit keys (commit hash and repository id)
-function mapCommitSummariesToCommitAssociation(
-	commitSummaries: Array<CommitSummary>,
-	repositoryId: string
-): JiraCommitAssociation {
+// Maps commit summaries to an array of a single association containing the commit keys (commit hash and repository id)
+const mapCommitSummariesToAssociationArray = (
+	repositoryId: string,
+	commitSummaries?: CommitSummary[]
+): JiraAssociation[] | undefined => {
 
-	const commitKeys = commitSummaries
-		?.map((commitSummary) => {
-			return {
-				commitHash: commitSummary.sha,
-				repositoryId: repositoryId
-			};
-		});
+	let associationArray;
 
-	return {
-		associationType: "commit",
-		values: commitKeys
-	};
+	if (commitSummaries && commitSummaries.length) {
+		const commitKeys = commitSummaries
+			.map((commitSummary) => {
+				return {
+					commitHash: commitSummary.sha,
+					repositoryId: repositoryId
+				};
+			});
+
+		associationArray = [
+			{
+				associationType: "commit",
+				values: commitKeys
+			}
+		];
+	}
+
+	return associationArray;
 }
 
 export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
@@ -191,7 +199,7 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 		});
 
 	let issueKeys;
-	let associations: Array<JiraAssociation | JiraCommitAssociation> | undefined;
+	let associations: JiraAssociation[] | undefined;
 	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {
 		const commitSummaries = await getCommitsSinceLastSuccessfulDeployment(
 			payload.repository.owner.login,
@@ -205,12 +213,12 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 			logger
 		);
 
-		const allCommitsMessages = commitSummaries ? await extractMessagesFromCommitSummaries(commitSummaries) : "";
+		const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
 		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`);
 
 		const shouldSendCommitsWithDeploymentEntities = await booleanFlag(BooleanFlags.SEND_RELATED_COMMITS_WITH_DEPLOYMENT_ENTITIES, false, jiraHost);
-		if (shouldSendCommitsWithDeploymentEntities && commitSummaries && commitSummaries.length) {
-			associations = [ mapCommitSummariesToCommitAssociation(commitSummaries, payload.repository.id.toString()) ];
+		if (shouldSendCommitsWithDeploymentEntities) {
+			associations = mapCommitSummariesToAssociationArray(payload.repository.id.toString(), commitSummaries);
 		}
 	} else {
 		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}`);
