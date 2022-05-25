@@ -30,7 +30,7 @@ describe("GitHub Client", () => {
 		perPage: number,
 		page: number,
 		expectedInstallationTokenInHeader?: string,
-		scope: nock.Scope = githubNock
+		scope: nock.Scope = gheNock
 	) {
 		scope
 			.get(`/repos/${owner}/${repo}/pulls`)
@@ -97,6 +97,7 @@ describe("GitHub Client", () => {
 			gitHubClientConfig,
 			appTokenHolder
 		);
+
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
 			page
