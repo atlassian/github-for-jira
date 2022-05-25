@@ -73,7 +73,7 @@ const getInstallationsWithAdmin = async (
 		const errors: Error[] = [];
 		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
 
-		const numberOfReposPromise = await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)
+		const numberOfReposPromise = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 			? gitHubClient.getNumberOfReposForInstallationRest().catch((err) => {
 				errors.push(err);
 				return 0;
