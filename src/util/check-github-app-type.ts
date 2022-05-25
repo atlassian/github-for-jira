@@ -15,7 +15,7 @@ export interface GitHubEnterpriseUrls {
 	acceptHeader: string;
 }
 
-export async function getGitHubApiUrl() {
+export async function getGitHubApiUrl(jiraHost: string) {
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 
 	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, false, jiraHost) && gitHubBaseUrl
@@ -23,7 +23,7 @@ export async function getGitHubApiUrl() {
 		: "https://api.github.com";
 }
 
-export async function getGitHubHostname() {
+export async function getGitHubHostname(jiraHost: string) {
 	const gitHubBaseUrl = await getGitHubBaseUrl(jiraHost);
 
 	return await booleanFlag(BooleanFlags.GHE_SERVER_AUTH_AND_CONNECT_FLOW, false, jiraHost) && gitHubBaseUrl
