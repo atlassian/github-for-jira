@@ -24,7 +24,7 @@ import {
 } from "./github-queries";
 import { ActionsListRepoWorkflowRunsResponseEnhanced, GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
-import { GitHubClientConfig, GITHUB_CLOUD_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { GitHubClientConfig, GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -49,7 +49,7 @@ export class GitHubInstallationClient {
 		this.logger = logger || getLogger("github.installation.client");
 
 		this.axios = axios.create({
-			baseURL: gitHubEnterprise?.apiBaseUrl || githubInstallationId.githubBaseUrl,
+			baseURL: this.gitHubEnterprise?.apiBaseUrl || githubInstallationId.githubBaseUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -307,7 +307,7 @@ export class GitHubInstallationClient {
 		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
-				Accept: this.gitHubEnterprise?.acceptHeader || GITHUB_CLOUD_ACCEPT_HEADER,
+				Accept: GITHUB_ACCEPT_HEADER,
 				Authorization: `Bearer ${appToken.token}`
 			}
 		};
@@ -322,7 +322,7 @@ export class GitHubInstallationClient {
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
-				Accept: this.gitHubEnterprise?.acceptHeader || GITHUB_CLOUD_ACCEPT_HEADER,
+				Accept: GITHUB_ACCEPT_HEADER,
 				Authorization: `Bearer ${installationToken.token}`
 			}
 		};

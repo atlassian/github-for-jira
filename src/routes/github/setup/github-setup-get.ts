@@ -46,7 +46,7 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 	const { jiraHost, client } = res.locals;
 	const githubInstallationId = Number(req.query.installation_id);
 	const gitHubAppClient = await createAppClient(req.log, jiraHost);
-	const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP, true, jiraHost);
+	const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP, false, jiraHost);
 	const { githubInstallation, info } = await getInstallationData(useNewGithubClient ? gitHubAppClient : client, githubInstallationId, req.log);
 
 	req.addLogFields({ githubInstallationId, appInfo: info });

@@ -7,7 +7,7 @@ import nock from "nock";
 import { AppTokenHolder } from "./app-token-holder";
 import fs from "fs";
 import { envVars }  from "config/env";
-import { GitHubClientConfig } from "utils/get-github-client-config";
+import {GITHUB_ACCEPT_HEADER, GitHubClientConfig} from "utils/get-github-client-config";
 jest.mock("config/feature-flags");
 
 describe("GitHub Client", () => {
@@ -45,7 +45,7 @@ describe("GitHub Client", () => {
 					? `Bearer ${expectedInstallationTokenInHeader}`
 					: /^Bearer .+$/
 			)
-			.matchHeader("Accept", "application/vnd.github.machine-man-preview+json")
+			.matchHeader("Accept", GITHUB_ACCEPT_HEADER)
 			.reply(200, [
 				{ number: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
 			])
@@ -87,8 +87,7 @@ describe("GitHub Client", () => {
 
 		const gitHubClientConfig: GitHubClientConfig = {
 			hostname: "https://github.mydomain.com",
-			apiBaseUrl: "https://github.mydomain.com/api/v3",
-			acceptHeader: "application/vnd.github.machine-man-preview+json"
+			apiBaseUrl: "https://github.mydomain.com/api/v3"
 		}
 
 		const client = new GitHubInstallationClient(

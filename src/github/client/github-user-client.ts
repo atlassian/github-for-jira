@@ -7,7 +7,7 @@ import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import {
 	GitHubClientConfig,
-	GITHUB_CLOUD_ACCEPT_HEADER,
+	GITHUB_ACCEPT_HEADER,
 	GITHUB_CLOUD_API_BASEURL
 } from "utils/get-github-client-config";
 
@@ -37,7 +37,7 @@ export class GitHubUserClient {
 				...config,
 				headers: {
 					...config.headers,
-					Accept: this.gitHubEnterprise?.acceptHeader || GITHUB_CLOUD_ACCEPT_HEADER,
+					Accept: GITHUB_ACCEPT_HEADER,
 					Authorization: `token ${this.userToken}`
 				}
 			};

@@ -10,12 +10,11 @@ import { GitHubAppClient } from "../github/client/github-app-client";
 
 export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
-export const GITHUB_CLOUD_ACCEPT_HEADER = "application/vnd.github.v3+json"
+export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json"
 
 export interface GitHubClientConfig {
 	hostname: string;
 	apiBaseUrl: string;
-	acceptHeader: string;
 }
 
 export async function getGitHubApiUrl(jiraHost: string) {
@@ -43,13 +42,11 @@ const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConf
 	return gitHubServerApp
 		? {
 			hostname: gitHubServerApp?.githubBaseUrl,
-			apiBaseUrl: `${gitHubServerApp?.githubBaseUrl}/api/v3`,
-			acceptHeader:  "application/vnd.github.machine-man-preview+json"
+			apiBaseUrl: `${gitHubServerApp?.githubBaseUrl}/api/v3`
 		}
 		: {
 			hostname: GITHUB_CLOUD_HOSTNAME,
-			apiBaseUrl: GITHUB_CLOUD_API_BASEURL,
-			acceptHeader: GITHUB_CLOUD_ACCEPT_HEADER
+			apiBaseUrl: GITHUB_CLOUD_API_BASEURL
 		}
 }
 

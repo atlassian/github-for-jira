@@ -10,7 +10,7 @@ import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
 import {
-	GITHUB_CLOUD_ACCEPT_HEADER,
+	GITHUB_ACCEPT_HEADER,
 	GITHUB_CLOUD_API_BASEURL,
 	GitHubClientConfig
 } from "~/src/util/get-github-client-config";
@@ -87,7 +87,7 @@ export class GitHubAppClient {
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
 		return {
-			Accept: this.gitHubEnterprise?.acceptHeader || GITHUB_CLOUD_ACCEPT_HEADER,
+			Accept: GITHUB_ACCEPT_HEADER,
 			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}
