@@ -31,9 +31,13 @@ export interface RepositoryData {
 	pullStatus?: TaskStatus;
 	branchStatus?: TaskStatus;
 	commitStatus?: TaskStatus;
+	buildStatus?: TaskStatus;
+	deploymentStatus?: TaskStatus;
 	lastBranchCursor?: string;
 	lastCommitCursor?: string;
 	lastPullCursor?: number;
+	lastBuildCursor?: string;
+	lastDeploymentCursor?: string;
 
 	// TODO: need to get concrete typing
 	[key: string]: unknown;

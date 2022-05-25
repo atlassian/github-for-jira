@@ -1,4 +1,4 @@
-import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
+import { InvalidPermissionsError, BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
@@ -108,6 +108,14 @@ export const handleFailedRequest = (logger: Logger) =>
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
 				logger.warn({ remote: response.data?.message }, "Blocked by GitHub allowlist");
 				return Promise.reject(new BlockedIpError(error, status));
+			}
+
+			if (status === 403 && response.data?.message?.includes("Resource not accessible by integration")) {
+				logger.warn({
+					err: error,
+					remote: response.data?.message
+				}, "unauthorized");
+				return Promise.reject(new InvalidPermissionsError(error, status));
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 

@@ -148,84 +148,25 @@ interface GitHubWorkflowRunPullRequests {
 }
 
 interface GitHubWorkflowRun {
-	id: number;
 	name: string;
-	node_id: string;
 	head_branch: string;
-	head_sha: string;
 	run_number: number;
-	event: string;
 	status: string;
 	conclusion: string | undefined;
-	workflow_id: number;
-	check_suite_id: number;
-	check_suite_node_id: string;
-	url: string;
 	html_url: string;
 	pull_requests: GitHubWorkflowRunPullRequests[];
-	created_at: string;
 	updated_at: string;
-	run_attempt: number;
-	run_started_at: string;
-	jobs_url: string;
-	logs_url: string;
-	check_suite_url: string;
-	artifacts_url: string;
-	cancel_url: string;
-	rerun_url: string;
-	previous_attempt_url: string | null;
-	workflow_url: string;
 	head_commit: GitHubWorkflowRunHeadCommit;
 	repository: GitHubWorkflowRunRepository;
-	head_repository: GitHubWorkflowRunRepository;
 }
 
 interface GitHubWorkflow {
 	id: string;
-	node_id: string;
-	name: string;
-	path: string;
-	state: string;
-	created_at: string;
-	updated_at: string;
-	url: string;
-	html_url: string;
-	badge_url: string;
-}
-
-interface GitHubWorkflowSender {
-	login: string;
-	id: number;
-	node_id: string;
-	avatar_url: string;
-	gravatar_id: string;
-	url: string;
-	html_url: string;
-	followers_url: string;
-	following_url: string;
-	gists_url: string;
-	starred_url: string;
-	subscriptions_url: string;
-	organizations_url: string;
-	repos_url: string;
-	events_url: string;
-	received_events_url: string;
-	type: string;
-	site_admin: boolean;
-}
-
-interface GitHubWorkflowInstallation {
-	id: number;
-	node_id: string;
 }
 
 export interface GitHubWorkflowPayload {
-	action: string;
 	workflow_run: GitHubWorkflowRun;
 	workflow: GitHubWorkflow;
-	repository: GitHubWorkflowRunRepository;
-	sender: GitHubWorkflowSender;
-	installation: GitHubWorkflowInstallation;
 }
 
 interface GitHubData {

@@ -16,7 +16,8 @@ export async function findOrStartSync(
 		numberOfSyncedRepos: 0,
 		totalNumberOfRepos: null,
 		repositoryCursor: null,
-		repositoryStatus: null
+		repositoryStatus: null,
+		syncWarning: null
 	});
 
 	logger.info({ subscription, syncType }, "Starting sync");
