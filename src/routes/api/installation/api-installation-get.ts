@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import format from "date-fns/format";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { createAppClient } from "utils/check-github-app-type";
+import { createAppClient } from "~/src/util/get-github-client-config";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId } = req.params;

@@ -5,7 +5,7 @@ import { Installation } from "models/installation";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubAPI } from "probot";
-import { createAppClient } from "utils/check-github-app-type";
+import { createAppClient } from "~/src/util/get-github-client-config";
 
 /*
 	Handles redirects for both the installation flow from Jira and

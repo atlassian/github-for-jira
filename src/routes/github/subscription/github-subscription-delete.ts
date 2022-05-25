@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
-import { createAppClient, createUserClient } from "utils/check-github-app-type";
+import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
 	const { github, client, githubToken, jiraHost } = res.locals;

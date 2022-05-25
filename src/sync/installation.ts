@@ -23,7 +23,7 @@ import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
-import { createInstallationClient } from "utils/check-github-app-type";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,

@@ -1,7 +1,7 @@
 import { transformWorkflow } from "../transforms/transform-workflow";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { createInstallationClient } from "utils/check-github-app-type";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
 
 export const workflowWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;

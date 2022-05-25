@@ -24,7 +24,7 @@ import {
 } from "./github-queries";
 import { ActionsListRepoWorkflowRunsResponseEnhanced, GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
-import { GitHubClientConfig, GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER } from "utils/check-github-app-type";
+import { GitHubClientConfig, GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.

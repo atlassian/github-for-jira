@@ -17,7 +17,7 @@ import {
 	createAppClient,
 	createInstallationClient,
 	createUserClient,
-} from "utils/check-github-app-type";
+} from "~/src/util/get-github-client-config";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status

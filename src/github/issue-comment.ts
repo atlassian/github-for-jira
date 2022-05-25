@@ -1,7 +1,7 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
-import { GitHubIssue, GitHubIssueCommentData } from "../interfaces/github";
-import { createInstallationClient } from "utils/check-github-app-type";
+import { GitHubIssue, GitHubIssueCommentData } from "interfaces/github";
+import { createInstallationClient } from "utils/get-github-client-config";
 
 export const issueCommentWebhookHandler = async (
 	context: CustomContext,

@@ -9,7 +9,7 @@ import {
 	GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER,
 	GITHUB_ENTERPRISE_CLOUD_API_BASEURL,
 	GitHubClientConfig
-} from "utils/check-github-app-type";
+} from "~/src/util/get-github-client-config";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.

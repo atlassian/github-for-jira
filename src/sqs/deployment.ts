@@ -2,7 +2,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { Context, MessageHandler } from "./sqs";
 import { workerApp } from "../worker/app";
 import { processDeployment } from "../github/deployment";
-import { createInstallationClient } from "utils/check-github-app-type";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
 
 export type DeploymentMessagePayload = {
 	jiraHost: string,
