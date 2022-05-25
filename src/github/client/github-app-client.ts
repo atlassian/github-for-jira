@@ -9,7 +9,11 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
-import { GitHubEnterpriseUrls } from "utils/check-github-app-type";
+import {
+	GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER,
+	GITHUB_ENTERPRISE_CLOUD_API_BASEURL,
+	GitHubEnterpriseUrls
+} from "utils/check-github-app-type";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -35,7 +39,7 @@ export class GitHubAppClient {
 
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 		this.axios = axios.create({
-			baseURL: this.gitHubEnterprise?.baseUrl || "https://api.github.com",
+			baseURL: this.gitHubEnterprise?.apiBaseUrl || GITHUB_ENTERPRISE_CLOUD_API_BASEURL,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -82,7 +86,7 @@ export class GitHubAppClient {
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
 		return {
-			Accept: this.gitHubEnterprise?.acceptHeader || "application/vnd.github.v3+json",
+			Accept: this.gitHubEnterprise?.acceptHeader || GITHUB_ENTERPRISE_CLOUD_ACCEPT_HEADER,
 			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}

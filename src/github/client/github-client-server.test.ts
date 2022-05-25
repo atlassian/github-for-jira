@@ -86,7 +86,8 @@ describe("GitHub Client", () => {
 		});
 
 		const gitHubEnterpriseServerUrls: GitHubEnterpriseUrls = {
-			baseUrl: "https://github.commydomain.com",
+			hostname: "https://github.mydomain.com",
+			apiBaseUrl: "https://github.mydomain.com/api/v3",
 			acceptHeader: "application/vnd.github.machine-man-preview+json"
 		}
 

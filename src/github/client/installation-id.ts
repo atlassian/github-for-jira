@@ -40,7 +40,7 @@ export class InstallationId {
 	}
 }
 
-export const getCloudInstallationId = (installationId: number, gitHubBaseUrl?: string | undefined): InstallationId => {
-	const baseUrl = gitHubBaseUrl ? gitHubBaseUrl : "https://api.github.com";
+export const getCloudInstallationId = (installationId: number, gitHubApiBaseUrl?: string | undefined): InstallationId => {
+	const baseUrl = gitHubApiBaseUrl ? gitHubApiBaseUrl : "https://api.github.com";
 	return new InstallationId(baseUrl, parseInt(envVars.APP_ID), installationId);
 };
