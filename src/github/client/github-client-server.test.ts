@@ -7,7 +7,7 @@ import nock from "nock";
 import { AppTokenHolder } from "./app-token-holder";
 import fs from "fs";
 import { envVars }  from "config/env";
-import {GITHUB_ACCEPT_HEADER, GitHubClientConfig} from "utils/get-github-client-config";
+import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 jest.mock("config/feature-flags");
 
 describe("GitHub Client", () => {
@@ -85,15 +85,10 @@ describe("GitHub Client", () => {
 			}
 		});
 
-		const gitHubClientConfig: GitHubClientConfig = {
-			hostname: "https://github.mydomain.com",
-			apiBaseUrl: "https://github.mydomain.com/api/v3"
-		}
-
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
 			getLogger("test"),
-			gitHubClientConfig,
+			"https://github.mydomain.com/api/v3",
 			appTokenHolder
 		);
 

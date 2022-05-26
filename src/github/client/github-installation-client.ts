@@ -24,7 +24,7 @@ import {
 } from "./github-queries";
 import { ActionsListRepoWorkflowRunsResponseEnhanced, GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
-import { GitHubClientConfig, GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -37,19 +37,19 @@ export class GitHubInstallationClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
-	private readonly gitHubEnterprise: GitHubClientConfig | undefined;
+	private readonly baseUrl: string | undefined;
 	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: InstallationId,
 		logger: Logger,
-		gitHubEnterprise?: GitHubClientConfig | undefined,
+		baseUrl?: string,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		this.logger = logger || getLogger("github.installation.client");
 
 		this.axios = axios.create({
-			baseURL: this.gitHubEnterprise?.apiBaseUrl || githubInstallationId.githubBaseUrl,
+			baseURL: this.baseUrl || githubInstallationId.githubBaseUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -69,7 +69,7 @@ export class GitHubInstallationClient {
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
-		this.gitHubEnterprise = gitHubEnterprise;
+		this.baseUrl = baseUrl;
 	}
 
 	/**
