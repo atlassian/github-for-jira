@@ -37,7 +37,7 @@ const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHub
 				state: deployment.latestStatus?.state
 			}
 		} as WebhookPayloadDeploymentStatus;
-		return transformDeployment(_github, gitHubInstallationClient, deploymentStatus, jiraHost, logger);
+		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, logger);
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);	

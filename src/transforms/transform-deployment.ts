@@ -1,5 +1,4 @@
 import { JiraDeploymentData } from "interfaces/jira";
-import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
@@ -14,9 +13,7 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 async function getLastSuccessfulDeployCommitSha(
 	owner: string,
 	repoName: string,
-	github: GitHubAPI,
-	newGitHubClient: GitHubInstallationClient,
-	useNewClient: boolean,
+	githubInstallationClient: GitHubInstallationClient,
 	deployments: Octokit.ReposListDeploymentsResponseItem[],
 	logger?: LoggerWithTarget
 ): Promise<string> {
@@ -24,15 +21,8 @@ async function getLastSuccessfulDeployCommitSha(
 	try {
 		for (const deployment of deployments) {
 			// Get each deployment status for this environment so we can have their statuses' ids
-			const listDeploymentStatusResponse: Octokit.Response<Octokit.ReposListDeploymentStatusesResponse> | AxiosResponse<Octokit.ReposListDeploymentStatusesResponse> = useNewClient
-				? await newGitHubClient.listDeploymentStatuses(owner, repoName, deployment.id, 100)
-				: await github.repos.listDeploymentStatuses({
-					owner: owner,
-					repo: repoName,
-					deployment_id: deployment.id,
-					per_page: 100 // Default is 30, max we can request is 100
-				});
-
+			const listDeploymentStatusResponse: Octokit.Response<Octokit.ReposListDeploymentStatusesResponse> | AxiosResponse<Octokit.ReposListDeploymentStatusesResponse> =
+				await githubInstallationClient.listDeploymentStatuses(owner, repoName, deployment.id, 100);
 			// Find the first successful one
 			const lastSuccessful: Octokit.ReposListDeploymentStatusesResponseItem | undefined = listDeploymentStatusResponse.data.find(deployment => deployment.state === "success");
 			if (lastSuccessful !== undefined) {
@@ -53,21 +43,13 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 	currentDeploySha: string,
 	currentDeployId: number,
 	currentDeployEnv: string,
-	github: GitHubAPI,
-	newGitHubClient: GitHubInstallationClient,
-	useNewClient: boolean,
+	githubInstallationClient: GitHubInstallationClient,
 	logger: LoggerWithTarget
 ): Promise<string | void | undefined> {
 
 	// Grab the last 10 deployments for this repo
-	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> = useNewClient
-		? await newGitHubClient.listDeployments(owner, repoName, currentDeployEnv, 10)
-		: await github.repos.listDeployments({
-			owner: owner,
-			repo: repoName,
-			environment: currentDeployEnv,
-			per_page: 10 // Default is 30, max we can request is 100
-		});
+	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> = 
+		await githubInstallationClient.listDeployments(owner, repoName, currentDeployEnv, 10);
 
 	// Filter per current environment and exclude itself
 	const filteredDeployments = deployments.data
@@ -78,7 +60,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		return undefined;
 	}
 
-	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, github, newGitHubClient, useNewClient, filteredDeployments, logger);
+	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, filteredDeployments, logger);
 
 	const compareCommitsPayload = {
 		owner: owner,
@@ -89,7 +71,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 
 	const commitSummaries = await getAllCommitsBetweenReferences(
 		compareCommitsPayload,
-		useNewClient ? newGitHubClient : github,
+		githubInstallationClient,
 		logger
 	);
 
@@ -155,18 +137,11 @@ export function mapEnvironment(environment: string): string {
 	return jiraEnv;
 }
 
-export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
-
+export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
-	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, false, jiraHost);
-	const { data: { commit: { message } } } = useNewGitHubClient ?
-		await newGitHubClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha) :
-		await githubClient.repos.getCommit({
-			owner: payload.repository.owner.login,
-			repo: payload.repository.name,
-			ref: deployment.sha
-		});
+
+	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
 
 	let issueKeys;
 	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {
@@ -176,9 +151,7 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 			deployment.sha,
 			deployment.id,
 			deployment_status.environment,
-			githubClient,
-			newGitHubClient,
-			useNewGitHubClient,
+			githubInstallationClient,
 			logger
 		);
 
