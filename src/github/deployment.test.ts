@@ -5,14 +5,12 @@ import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { waitUntil } from "test/utils/wait-until";
 import { sqsQueues } from "../sqs/queues";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 import deploymentStatusBasic from "fixtures/deployment_status-basic.json";
 
 jest.mock("config/feature-flags");
 
-describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
+describe("Deployment Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 
@@ -36,11 +34,6 @@ describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
 
 		await sqsQueues.deployment.start();
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
 	});
 
 	afterEach(async () => {
