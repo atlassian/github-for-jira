@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import {GITHUB_CLOUD_API_BASEURL} from "utils/get-github-client-config";
+import { GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "~/src/config/logger";
 
 /**
@@ -7,10 +7,21 @@ import { getLogger } from "~/src/config/logger";
  */
 export class GitHubClient {
 	protected readonly logger: Logger;
-	protected readonly baseUrl: string;
+	protected restApiUrl: string;
+	protected graphqlUrl: string;
 
-	constructor (logger: Logger  = getLogger("gitHub-client"), baseUrl = GITHUB_CLOUD_API_BASEURL) {
+	constructor (
+		logger: Logger = getLogger("gitHub-client"),
+		baseUrl?: string,
+	) {
 		this.logger = logger;
-		this.baseUrl = baseUrl;
+
+		if (baseUrl) {
+			this.restApiUrl = `${baseUrl}/api/v3`;
+			this.graphqlUrl = `${baseUrl}/api/graphql`;
+		} else {
+			this.restApiUrl = GITHUB_CLOUD_API_BASEURL;
+			this.graphqlUrl = `${GITHUB_CLOUD_API_BASEURL}/graphql`;
+		}
 	}
 }

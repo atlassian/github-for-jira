@@ -8,7 +8,7 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
-import { GITHUB_ACCEPT_HEADER, GITHUB_CLOUD_API_BASEURL } from "~/src/util/get-github-client-config";
+import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
 import { GitHubClient } from "./github-client";
 
 
@@ -30,10 +30,10 @@ export class GitHubAppClient extends GitHubClient {
 		super(logger, baseUrl);
 		// TODO - change this for GHE, to get from github apps table
 		const privateKey = PrivateKey.findPrivateKey() || "";
-
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
+
 		this.axios = axios.create({
-			baseURL: this.baseUrl || GITHUB_CLOUD_API_BASEURL,
+			baseURL: this.restApiUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}

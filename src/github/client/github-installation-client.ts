@@ -46,7 +46,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	) {
 		super(logger, baseUrl);
 		this.axios = axios.create({
-			baseURL: this.baseUrl || githubInstallationId.githubBaseUrl,
+			baseURL: this.restApiUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -356,13 +356,14 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		const response = await this.axios.post<GraphQlQueryResponse<T>>("/graphql",
+		const response = await this.axios.post<GraphQlQueryResponse<T>>("/",
 			{
 				query,
 				variables
 			},
 			{
-				...await this.installationAuthenticationHeaders()
+				...await this.installationAuthenticationHeaders(),
+				baseURL: this.graphqlUrl
 			});
 
 		const graphqlErrors = response.data?.errors;

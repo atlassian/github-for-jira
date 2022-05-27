@@ -4,7 +4,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
-import { GITHUB_ACCEPT_HEADER, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { GitHubClient } from "./github-client";
 
 /**
@@ -19,7 +19,7 @@ export class GitHubUserClient extends GitHubClient {
 		this.userToken = userToken;
 
 		this.axios = axios.create({
-			baseURL: this.baseUrl || GITHUB_CLOUD_API_BASEURL,
+			baseURL: this.restApiUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
