@@ -213,13 +213,6 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getNumberOfReposForInstallationRest(): Promise<number> {
-		const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
-			perPage: 100,
-		});
-		return response.data.total_count;
-	}
-
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, cursor?: string): Promise<getBranchesResponse> {
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles,
 			{
@@ -318,7 +311,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,
-				Authorization: `Bearer ${installationToken.token}`
+				Authorization: `Bearer ${installationToken.token}`,
 			}
 		};
 	}
@@ -356,14 +349,13 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		const response = await this.axios.post<GraphQlQueryResponse<T>>("/",
+		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.graphqlUrl,
 			{
 				query,
 				variables
 			},
 			{
-				...await this.installationAuthenticationHeaders(),
-				baseURL: this.graphqlUrl
+				...await this.installationAuthenticationHeaders()
 			});
 
 		const graphqlErrors = response.data?.errors;
