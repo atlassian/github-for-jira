@@ -34,7 +34,7 @@ const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConf
 	return gitHubServerApp
 		? {
 			hostname: gitHubServerApp?.githubBaseUrl,
-			baseUrl: `${gitHubServerApp?.githubBaseUrl}/api/v3`
+			baseUrl: `${gitHubServerApp?.githubBaseUrl}`
 		}
 		: {
 			hostname: GITHUB_CLOUD_HOSTNAME,
