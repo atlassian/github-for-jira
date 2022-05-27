@@ -3,7 +3,7 @@ import { GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "~/src/config/logger";
 
 /**
- * A GitHub client superclass
+ * A GitHub client superclass to encapsulate what differs between our GH clients
  */
 export class GitHubClient {
 	protected readonly logger: Logger;

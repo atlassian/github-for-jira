@@ -88,7 +88,7 @@ describe("GitHub Client", () => {
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
 			getLogger("test"),
-			"https://github.mydomain.com/api/v3",
+			"https://github.mydomain.com",
 			appTokenHolder
 		);
 
