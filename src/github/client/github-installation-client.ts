@@ -6,7 +6,6 @@ import { InstallationTokenCache } from "./installation-token-cache";
 import { AuthToken } from "./auth-token";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
-import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import {
@@ -25,6 +24,7 @@ import {
 import { ActionsListRepoWorkflowRunsResponseEnhanced, GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { GitHubClient } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -32,22 +32,19 @@ import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
-export class GitHubInstallationClient {
+export class GitHubInstallationClient extends GitHubClient {
 	private readonly axios: AxiosInstance;
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
-	private readonly baseUrl: string | undefined;
-	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: InstallationId,
-		logger: Logger,
+		logger?: Logger,
 		baseUrl?: string,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
-		this.logger = logger || getLogger("github.installation.client");
-
+		super(logger, baseUrl);
 		this.axios = axios.create({
 			baseURL: this.baseUrl || githubInstallationId.githubBaseUrl,
 			transitional: {
@@ -69,7 +66,6 @@ export class GitHubInstallationClient {
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
-		this.baseUrl = baseUrl;
 	}
 
 	/**
@@ -217,7 +213,6 @@ export class GitHubInstallationClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	// TODO - remove this when we have replaced Probot and can make graphql requests for both cloud and server
 	public async getNumberOfReposForInstallationRest(): Promise<number> {
 		const response = await this.get<Octokit.AppsListInstallationReposForAuthenticatedUserResponse>(`/installation/repositories?per_page={perPage}`, {}, {
 			perPage: 100,

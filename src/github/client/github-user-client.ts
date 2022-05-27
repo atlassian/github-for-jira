@@ -3,23 +3,20 @@ import { Octokit } from "@octokit/rest";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
-import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { GITHUB_ACCEPT_HEADER, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { GitHubClient } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
  */
-export class GitHubUserClient {
+export class GitHubUserClient extends GitHubClient {
 	private readonly axios: AxiosInstance;
 	private readonly userToken: string;
-	private readonly logger: Logger;
-	private readonly baseUrl: string | undefined;
 
-	constructor(userToken: string, logger: Logger = getLogger("github.user.client"), baseUrl?: string) {
+	constructor(userToken: string, logger?: Logger, baseUrl?: string) {
+		super(logger, baseUrl);
 		this.userToken = userToken;
-		this.logger = logger;
-		this.baseUrl = baseUrl;
 
 		this.axios = axios.create({
 			baseURL: this.baseUrl || GITHUB_CLOUD_API_BASEURL,
