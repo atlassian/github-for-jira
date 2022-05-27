@@ -12,6 +12,7 @@ import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
+import { ApiHashPost } from "./api-hash-post";
 
 export const ApiRouter = Router();
 
@@ -93,6 +94,9 @@ ApiRouter.post(
 		res.json(subscriptions.map(serializeSubscription));
 	}
 );
+
+// Hash incoming values the same as the internal hashing, used to help filter logs.
+ApiRouter.post("/hash", ApiHashPost);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
