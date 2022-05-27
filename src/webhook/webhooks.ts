@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { receiverOn } from "./on";
 import { receiverHandle } from "./receive";
-import { State, WebhookEvent } from "./types";
+import { State, WebhookContext } from "./types";
 
 export class Webhooks {
 	public on: (event: string | string[], callback: Function) => void;
-	public receive: (eventPayload: WebhookEvent) => Promise<void>;
+	public receive: (eventPayload: WebhookContext) => Promise<void>;
 
 	constructor() {
 		const state: State = {

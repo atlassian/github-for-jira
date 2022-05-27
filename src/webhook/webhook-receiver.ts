@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
-// import { GitHubServerApp } from "../models/git-hub-server-app";
+import { verify } from "@octokit/webhooks-methods";
+import { GitHubServerApp } from "../models/git-hub-server-app";
 import { getPayload } from "./get-payload";
 import { Webhooks } from "./webhooks";
+import { getLogger } from "../config/logger";
+import { WebhookContext } from "./types";
 
 const WEBHOOK_HEADERS = [
 	"x-github-event",
@@ -15,32 +18,9 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 		response.writeHead(400, {
 			"content-type": "application/json",
 		});
-		response.end(
-			JSON.stringify({
-				error: `Required headers missing: ${missingHeaders}`,
-			})
-		);
-
+		response.end(`Required headers missing: ${missingHeaders}`);
 		return;
 	}
-	const eventName = request.headers["x-github-event"] as string;
-	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
-	const id = request.headers["x-github-delivery"] as string;
-	//const uuid = request.params.uuid;
-	/* let webhookSecret = process.env.WEBHOOK_SECRET;
-	if (uuid != "cloud") {
-		const gitHubServerApp = await GitHubServerApp.getGitHubServerAppForUuid(uuid)
-		if (!gitHubServerApp) {
-			response.statusCode = 404;
-			response.end("GitHub app not found\n");
-			return;
-		}
-		webhookSecret = gitHubServerApp?.webhookSecret;
-		console.log(webhookSecret);
-		
-	} */
-
-
 	// GitHub will abort the request if it does not receive a response within 10s
 	let didTimeout = false;
 	const timeout = setTimeout(() => {
@@ -48,15 +28,40 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 		response.statusCode = 202;
 		response.end("still processing\n");
 	}, 9000).unref();
-	try {
-		const payload = await getPayload(request);
 
-		await webhooks.receive({
+	const eventName = request.headers["x-github-event"] as string;
+	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
+	const id = request.headers["x-github-delivery"] as string;
+	const uuid = request.params.uuid;
+	let webhookSecret: string = process.env.WEBHOOK_SECRET!;
+	try {
+		if (uuid != "cloud") {
+			const gitHubServerApp = await GitHubServerApp.getGitHubServerAppForUuid(uuid)
+			if (!gitHubServerApp) {
+				response.statusCode = 404;
+				response.end("GitHub app does not found\n");
+				clearTimeout(timeout);
+				return;
+			}
+			webhookSecret = gitHubServerApp?.webhookSecret;
+		}
+
+		const payload = await getPayload(request);
+		const matchesSignature = await verify(webhookSecret, JSON.stringify(payload), signatureSHA256);
+		if (!matchesSignature) {
+			response.statusCode = 400;
+			response.end("signature does not match event payload and secret\n");
+			clearTimeout(timeout);
+			return;
+		}
+
+		await webhooks.receive(new WebhookContext({
 			id: id,
 			name: eventName,
 			payload: payload,
 			signature: signatureSHA256,
-		});
+			log: getLogger("webhook.receiver")
+		}));
 		clearTimeout(timeout);
 
 		if (didTimeout) return;

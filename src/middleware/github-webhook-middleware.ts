@@ -6,19 +6,20 @@ import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraUtil } from "../jira/util/jira-client-util";
-import { enhanceOctokit } from "config/enhance-octokit";
+// import { enhanceOctokit } from "config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
+//import { WebhookContext } from "../webhook/types";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function(callback) {
+const withSentry = function (callback) {
 	return async (context) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry?.configureScope((scope) =>
@@ -54,13 +55,19 @@ const isStateChangeOrDeploymentAction = (action) =>
 		action
 	);
 
+/* export class CustomContext extends Context {
+	sentry?: Sentry.Hub;
+	timedout?: number;
+	webhookReceived?: number;
+} */
+
 export class CustomContext<E = any> extends Context<E> {
 	sentry?: Sentry.Hub;
 	timedout?: number;
 	webhookReceived?: number;
 }
 
-function extractWebhookEventNameFromContext(context: CustomContext<any>): string {
+function extractWebhookEventNameFromContext(context: CustomContext): string {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {
 		webhookEvent = `${webhookEvent}.${context.payload.action}`;
@@ -73,7 +80,7 @@ export const GithubWebhookMiddleware = (
 	callback: (context: CustomContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
 ) => {
 	return withSentry(async (context: CustomContext) => {
-		enhanceOctokit(context.github);
+		//enhanceOctokit(context.github);
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size
@@ -94,7 +101,9 @@ export const GithubWebhookMiddleware = (
 		const { name, payload, id: webhookId } = context;
 		const repoName = payload?.repository?.name || "none";
 		const orgName = payload?.repository?.owner?.login || "none";
-		const gitHubInstallationId = Number(payload?.installation?.id);
+		//const gitHubInstallationId = Number(payload?.installation?.id);
+		payload.installation.id = 25427686;
+		const gitHubInstallationId = 25427686;
 
 		context.log = context.log.child({
 			name: "github.webhooks",
@@ -120,7 +129,7 @@ export const GithubWebhookMiddleware = (
 			!isStateChangeOrDeploymentAction(context.payload.action) &&
 			!isStateChangeOrDeploymentAction(context.name)
 		) {
-			context.log(
+			context.log.info(
 				{
 					noop: "bot",
 					botId: context.payload?.sender?.id,
@@ -132,7 +141,7 @@ export const GithubWebhookMiddleware = (
 		}
 
 		if (isFromIgnoredRepo(context.payload)) {
-			context.log(
+			context.log.info(
 				{
 					installation_id: context.payload?.installation?.id,
 					repository_id: context.payload?.repository?.id
@@ -147,14 +156,14 @@ export const GithubWebhookMiddleware = (
 		);
 
 		if (!subscriptions.length) {
-			context.log(
+			context.log.info(
 				{ noop: "no_subscriptions", orgName: orgName },
 				"Halting further execution since no subscriptions were found."
 			);
 			return;
 		}
 
-		context.log(
+		context.log.info(
 			`Processing event for ${subscriptions.length} jira instances`
 		);
 
@@ -172,10 +181,10 @@ export const GithubWebhookMiddleware = (
 			);
 			context.sentry?.setUser({ jiraHost, gitHubInstallationId });
 			context.log = context.log.child({ jiraHost });
-			context.log("Processing event for Jira Host");
+			context.log.info("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
-				context.log(
+				context.log.info(
 					{ jiraHost, webhookEvent },
 					`Maintenance mode ENABLED - Ignoring event`
 				);

@@ -1,9 +1,6 @@
-/* import { issueCommentWebhookHandler } from "./issue-comment";
-import { issueWebhookHandler } from "./issue";
-import { GithubWebhookMiddleware } from "middleware/github-webhook-middleware";
-import { pullRequestWebhookHandler } from "./pull-request";
-import { workflowWebhookHandler } from "./workflow"; */
-import { WebhookEvent } from "./types";
+import { pushWebhookHandler } from "../github/push";
+import { GithubWebhookMiddleware } from "../middleware/github-webhook-middleware";
+import { WebhookContext } from "./types";
 import { Webhooks } from "./webhooks";
 
 export const setupGithubWebhooks = (webhooks: Webhooks) => {
@@ -12,13 +9,14 @@ export const setupGithubWebhooks = (webhooks: Webhooks) => {
 			"issue_comment.created",
 			"issue_comment.edited"
 		],
-		(event: WebhookEvent) => {
+		(event: WebhookContext) => {
 			console.log("issue_comment created and edited ", event.id)
 		});
 
 	webhooks.on(
 		"issue_comment",
-		(event: WebhookEvent) => {
+		(event: WebhookContext) => {
 			console.log("issue_comment only ", event.id);
-		})
+		});
+	webhooks.on("push", GithubWebhookMiddleware(pushWebhookHandler));
 };

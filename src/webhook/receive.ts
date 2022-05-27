@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { State, WebhookEvent } from "./types";
+import { State, WebhookContext } from "./types";
 
 function getHooks(state: State, eventName: string, eventPayloadAction: string | null): Function[] {
 	const hooks = [state.hooks[eventName], state.hooks["*"]];
@@ -9,10 +9,9 @@ function getHooks(state: State, eventName: string, eventPayloadAction: string | 
 	return ([] as Function[]).concat(...hooks.filter(Boolean)); // convert array of array to flat array
 }
 
-export async function receiverHandle(state: State, event: WebhookEvent) {
+export async function receiverHandle(state: State, event: WebhookContext) {
 
 	const hooks = getHooks(state, event.name, "action" in event.payload ? event.payload.action : null);
-	console.log("hooks.length ", hooks.length)
 	if (hooks.length === 0) {
 		return Promise.resolve();
 	}
