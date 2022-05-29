@@ -2,7 +2,6 @@
 // eslint-disable-next-line import/no-duplicates
 import { transformDeployment, mapEnvironment } from "./transform-deployment";
 import { getLogger } from "config/logger";
-import { GitHubAPI } from "probot";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -79,28 +78,18 @@ describe("deployment environment mapping", () => {
 });
 
 const TEST_INSTALLATION_ID = 1234;
-describe.each([true, false])("transform GitHub webhook payload to Jira payload", (useNewGithubClient) => {
+describe("transform GitHub webhook payload to Jira payload", () => {
 
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
 	const githubClient = new GitHubInstallationClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
 
-	beforeEach(() => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
-	});
-
-	it(`supports branch and merge workflows - FF '${useNewGithubClient}'`, async () => {
+	it("supports branch and merge workflows", async () => {
 
 		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-		if (useNewGithubClient) {
-			githubUserTokenNock(TEST_INSTALLATION_ID);
-			githubUserTokenNock(TEST_INSTALLATION_ID);
-			githubUserTokenNock(TEST_INSTALLATION_ID);
-			githubUserTokenNock(TEST_INSTALLATION_ID);
-		}
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
 
 		// Mocking all GitHub API Calls
 		// Get commit
@@ -162,7 +151,7 @@ describe.each([true, false])("transform GitHub webhook payload to Jira payload",
 			expect.anything()
 		).mockResolvedValue(true);
 
-		const jiraPayload = await transformDeployment(GitHubAPI(), githubClient, deployment_status.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
