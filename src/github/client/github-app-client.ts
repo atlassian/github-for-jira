@@ -4,34 +4,36 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders, AxiosRes
 import { AppTokenHolder } from "./app-token-holder";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
-import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
+import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
+import { GitHubClient } from "./github-client";
+
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
+ * This is the top level app API: get all installations of this app, or get more info on this app
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
-export class GitHubAppClient {
+export class GitHubAppClient extends GitHubClient {
 	private readonly axios: AxiosInstance;
 	private readonly appToken: AuthToken;
-	private readonly logger: Logger;
 
 	constructor(
-		logger: Logger,
+		logger?: Logger,
+		baseUrl?: string,
 		appId = envVars.APP_ID,
-		baseURL = "https://api.github.com"
 	) {
-		this.logger = logger || getLogger("github.app.client");
+		super(logger, baseUrl);
 		// TODO - change this for GHE, to get from github apps table
 		const privateKey = PrivateKey.findPrivateKey() || "";
-
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
+
 		this.axios = axios.create({
-			baseURL,
+			baseURL: this.restApiUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -78,7 +80,7 @@ export class GitHubAppClient {
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
 		return {
-			Accept: "application/vnd.github.v3+json",
+			Accept: GITHUB_ACCEPT_HEADER,
 			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}
