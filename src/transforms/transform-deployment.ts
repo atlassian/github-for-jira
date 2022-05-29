@@ -52,7 +52,7 @@ const getCommitsSinceLastSuccessfulDeployment = async(
 ): Promise<CommitSummary[] | undefined> => {
 
 	// Grab the last 10 deployments for this repo
-	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> = 
+	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> =
 		await githubInstallationClient.listDeployments(owner, repoName, currentDeployEnv, 10);
 
 	// Filter per current environment and exclude itself
