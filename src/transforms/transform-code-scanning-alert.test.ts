@@ -17,10 +17,10 @@ const buildContext = (payload): Context => {
 
 describe("code_scanning_alert transform", () => {
 	Date.now = jest.fn(() => 12345678);
-	const installationId = 1234;
+	const gitHubInstallationId = 1234;
 
 	it("code_scanning_alert is transformed into a remote link", async () => {
-		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload), installationId);
+		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload), gitHubInstallationId);
 		expect(remoteLinks).toMatchObject({
 			remoteLinks: [{
 				schemaVersion: "1.0",
@@ -45,7 +45,7 @@ describe("code_scanning_alert transform", () => {
 
 	it("manual code_scanning_alert maps to multiple Jira issue keys", async () => {
 		const payload = {...codeScanningPayload, action: "closed_by_user"};
-		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), installationId);
+		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId);
 		expect(remoteLinks?.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"])
 	})
 
@@ -54,7 +54,7 @@ describe("code_scanning_alert transform", () => {
 			...codeScanningPayload,
 			alert: {...codeScanningPayload.alert, rule: {...codeScanningPayload.alert.rule, description: "A".repeat(300)}}
 		};
-		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), installationId);
+		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId);
 		expect(remoteLinks?.remoteLinks[0].description).toHaveLength(255);
 	})
 
@@ -64,7 +64,7 @@ describe("code_scanning_alert transform", () => {
 		const mySpy = jest.spyOn(context.github.pulls, "get");
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE,
-			// expect.anything(), TODO BRING IN JIRA HOST TO THE FEATURE FALG
+			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(false);
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,7 +74,29 @@ describe("code_scanning_alert transform", () => {
 			},
 			status: 200
 		});
-		const remoteLinks = await transformCodeScanningAlert(context, installationId);
+		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId);
+		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
+	})
+
+	it("code_scanning_alert with pr reference queries Pull Request title - GH Client", async () => {
+		const payload = {...codeScanningPayload, ref: "refs/pull/8/merge"};
+		const context = buildContext(payload);
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
+
+		githubUserTokenNock(gitHubInstallationId);
+
+		// githubNock.get(`/repos/{owner}/{repo}/pulls/{pullNumber}`)
+		githubNock.get(`/repos/TerryAg/github-jira-test/pulls/8`)
+			.reply(200, {
+				title: "GH-10"
+			});
+
+
+		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId);
 		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
 	})
 })

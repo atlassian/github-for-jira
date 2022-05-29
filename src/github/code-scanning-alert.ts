@@ -8,7 +8,7 @@ export const codeScanningAlertWebhookHandler = async (context: Context, jiraClie
 		return;
 	}
 
-	const jiraPayload = await transformCodeScanningAlert(context, githubInstallationId);
+	const jiraPayload = await transformCodeScanningAlert(context, githubInstallationId, jiraClient.baseUrl);
 
 	if (!jiraPayload) {
 		context.log.info({noop: "no_jira_payload_code_scanning_alert"}, "Halting further execution for code scanning alert since jiraPayload is empty");
