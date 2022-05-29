@@ -59,7 +59,6 @@ const transformStatusToAppearance = (status: string, context: Context): JiraRemo
 
 export const transformCodeScanningAlert = async (context: Context, githubInstallationId: number, jiraHost?: string): Promise<JiraRemoteLinkData | undefined> => {
 	const {action, alert, ref, repository} = context.payload;
-	// TODO BRING IN JIRA HOST TO THE FEATURE FLAG
 	const githubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
 	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE, false, jiraHost) ?
 		githubInstallationClient :

@@ -89,7 +89,6 @@ describe("code_scanning_alert transform", () => {
 
 		githubUserTokenNock(gitHubInstallationId);
 
-		// githubNock.get(`/repos/{owner}/{repo}/pulls/{pullNumber}`)
 		githubNock.get(`/repos/TerryAg/github-jira-test/pulls/8`)
 			.reply(200, {
 				title: "GH-10"
