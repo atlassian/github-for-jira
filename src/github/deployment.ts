@@ -21,7 +21,7 @@ export const deploymentWebhookHandler = async (context: CustomContext, jiraClien
 };
 
 export const processDeployment = async (
-	github: GitHubAPI,
+	_github: GitHubAPI,
 	newGitHubClient: GitHubInstallationClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadDeploymentStatus,
@@ -43,7 +43,7 @@ export const processDeployment = async (
 
 	logger.info("processing deployment message!");
 
-	const jiraPayload: JiraDeploymentData | undefined = await transformDeployment(github, newGitHubClient, webhookPayload, jiraHost, logger);
+	const jiraPayload: JiraDeploymentData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger);
 
 	if (!jiraPayload) {
 		logger.info(

@@ -2,7 +2,7 @@ import { enqueuePush } from "../transforms/push";
 import { Context } from "probot/lib/context";
 import { getCurrentTime } from "utils/webhook-utils";
 import { hasJiraIssueKey } from "utils/jira-utils";
-import { GitHubPushData } from '../interfaces/github';
+import { GitHubPushData } from "../interfaces/github";
 
 export const pushWebhookHandler = async (context: Context, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();

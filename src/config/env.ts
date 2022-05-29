@@ -43,6 +43,7 @@ export const envVars: EnvVars = {
 	...process.env,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
+	MICROS_GROUP: process.env.MICROS_GROUP || "",
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
@@ -62,6 +63,7 @@ export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,
 	MICROS_ENV: EnvironmentEnum;
 	MICROS_SERVICE_VERSION?: string;
+  MICROS_GROUP: string;
 	SQS_BACKFILL_QUEUE_URL: string;
 	SQS_BACKFILL_QUEUE_REGION: string;
 	SQS_PUSH_QUEUE_URL: string;
