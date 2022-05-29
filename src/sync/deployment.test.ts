@@ -102,11 +102,6 @@ describe("sync/deployments", () => {
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 
 		githubUserTokenNock(installationId);
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
 
 	});
 
