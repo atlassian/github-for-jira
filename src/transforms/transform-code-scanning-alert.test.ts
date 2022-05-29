@@ -87,8 +87,6 @@ describe("code_scanning_alert transform", () => {
 			expect.anything()
 		).mockResolvedValue(true);
 
-		githubUserTokenNock(gitHubInstallationId);
-
 		githubNock.get(`/repos/TerryAg/github-jira-test/pulls/8`)
 			.reply(200, {
 				title: "GH-10"
