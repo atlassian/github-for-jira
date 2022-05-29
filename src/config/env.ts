@@ -21,7 +21,7 @@ const requiredEnvVars = [
 	"SQS_BRANCH_QUEUE_URL",
 	"SQS_BRANCH_QUEUE_REGION",
 	"MICROS_AWS_REGION",
-	"HASH_SECRET"
+	"GLOBAL_HASH_SECRET"
 ];
 
 const filename = isNodeTest() ? ".env.test" : ".env";
@@ -100,7 +100,7 @@ export interface EnvVars {
 	GITHUB_HOSTNAME: string;
 	DEPLOYMENT_DATE: string;
 	BULL_QUEUE_PREFIX?: string;
-	HASH_SECRET: string;
+	GLOBAL_HASH_SECRET: string;
 
 	// Test Vars
 	ATLASSIAN_SECRET?: string;
