@@ -1,8 +1,11 @@
 import { transformCodeScanningAlert } from "./transform-code-scanning-alert";
 import codeScanningPayload from "./../../test/fixtures/api/code-scanning-alert.json";
-import {Context} from "probot/lib/context";
-import {getLogger} from "./../config/logger";
-import {GitHubAPI} from "probot";
+import { Context } from "probot/lib/context";
+import { getLogger } from "./../config/logger";
+import { GitHubAPI } from "probot";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+jest.mock("config/feature-flags");
 
 const buildContext = (payload): Context => {
 	return new Context({
@@ -14,9 +17,11 @@ const buildContext = (payload): Context => {
 
 describe("code_scanning_alert transform", () => {
 	Date.now = jest.fn(() => 12345678);
+	const gitHubInstallationId = 1234;
+	const jiraHost = "testHost";
 
 	it("code_scanning_alert is transformed into a remote link", async () => {
-		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload));
+		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload), gitHubInstallationId, jiraHost);
 		expect(remoteLinks).toMatchObject({
 			remoteLinks: [{
 				schemaVersion: "1.0",
@@ -41,7 +46,7 @@ describe("code_scanning_alert transform", () => {
 
 	it("manual code_scanning_alert maps to multiple Jira issue keys", async () => {
 		const payload = {...codeScanningPayload, action: "closed_by_user"};
-		const remoteLinks = await transformCodeScanningAlert(buildContext(payload));
+		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"])
 	})
 
@@ -50,14 +55,19 @@ describe("code_scanning_alert transform", () => {
 			...codeScanningPayload,
 			alert: {...codeScanningPayload.alert, rule: {...codeScanningPayload.alert.rule, description: "A".repeat(300)}}
 		};
-		const remoteLinks = await transformCodeScanningAlert(buildContext(payload));
+		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].description).toHaveLength(255);
 	})
 
-	it("code_scanning_alert with pr reference queries Pull Request title", async () => {
+	it("code_scanning_alert with pr reference queries Pull Request title - OctoKit", async () => {
 		const payload = {...codeScanningPayload, ref: "refs/pull/8/merge"};
 		const context = buildContext(payload);
 		const mySpy = jest.spyOn(context.github.pulls, "get");
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(false);
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(mySpy as jest.MockInstance<any, any>).mockResolvedValue({
 			data: {
@@ -65,7 +75,26 @@ describe("code_scanning_alert transform", () => {
 			},
 			status: 200
 		});
-		const remoteLinks = await transformCodeScanningAlert(context);
+		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId, jiraHost);
+		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
+	})
+
+	it("code_scanning_alert with pr reference queries Pull Request title - GH Client", async () => {
+		const payload = {...codeScanningPayload, ref: "refs/pull/8/merge"};
+		const context = buildContext(payload);
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
+		
+		githubUserTokenNock(gitHubInstallationId);
+		githubNock.get(`/repos/TerryAg/github-jira-test/pulls/8`)
+			.reply(200, {
+				title: "GH-10"
+			});
+
+		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
 	})
 })

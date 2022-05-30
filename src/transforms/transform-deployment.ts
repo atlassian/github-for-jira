@@ -48,7 +48,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 ): Promise<string | void | undefined> {
 
 	// Grab the last 10 deployments for this repo
-	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> = 
+	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> =
 		await githubInstallationClient.listDeployments(owner, repoName, currentDeployEnv, 10);
 
 	// Filter per current environment and exclude itself
@@ -140,7 +140,6 @@ export function mapEnvironment(environment: string): string {
 export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
-
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
 
 	let issueKeys;
