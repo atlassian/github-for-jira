@@ -53,7 +53,7 @@ export interface TaskPayload {
 
 type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
 
-const taskTypes: TaskType[] = ["pull", "commit", "branch"];
+const taskTypes: TaskType[] = ["pull", "commit", "branch", "build", "deployment"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
@@ -62,7 +62,11 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-const getNextTask = async (subscription: Subscription): Promise<Task | undefined> => {
+const getNextTask = async (subscription: Subscription, jiraHost: string): Promise<Task | undefined> => {
+
+	const includeBuildAndDeployments = await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, false, jiraHost);
+	const tasks = taskTypes.filter(task => includeBuildAndDeployments || (task !== "build" && task !== "deployment"));
+
 	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
@@ -76,7 +80,7 @@ const getNextTask = async (subscription: Subscription): Promise<Task | undefined
 	const sorted: [number, RepositoryData][] = repos.map(repo => [repo.repoId, repo.toRepositoryData()]);
 
 	for (const [repositoryId, repoData] of sorted) {
-		const task = taskTypes.find(
+		const task = tasks.find(
 			(taskType) => repoData[getStatusKey(taskType)] === undefined || repoData[getStatusKey(taskType)] === "pending"
 		);
 		if (!task) continue;
@@ -135,7 +139,7 @@ export const updateJobStatus = async (
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
-	} else if (!(await getNextTask(subscription))) {
+	} else if (!(await getNextTask(subscription, jiraHost))) {
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
@@ -211,7 +215,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
-	const nextTask = await getNextTask(subscription);
+	const nextTask = await getNextTask(subscription, jiraHost);
 
 	if (!nextTask) {
 		await subscription.update({ syncStatus: "COMPLETE" });
@@ -444,10 +448,6 @@ export const processInstallation =
 
 		return async (data: BackfillMessagePayload, sentry: Hub, logger: LoggerWithTarget): Promise<void> => {
 			const { installationId, jiraHost } = data;
-
-			if (await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, false, jiraHost)) {
-				taskTypes.push("build", "deployment");
-			}
 
 			try {
 				if (await isBlocked(installationId, logger)) {
