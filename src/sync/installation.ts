@@ -65,7 +65,7 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 const getNextTask = async (subscription: Subscription, jiraHost: string): Promise<Task | undefined> => {
 
 	const includeBuildAndDeployments = await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, false, jiraHost);
-	const tasks = taskTypes.filter(task => includeBuildAndDeployments || task !== "build" && task !== "deployment");
+	const tasks = taskTypes.filter(task => includeBuildAndDeployments || (task !== "build" && task !== "deployment"));
 
 	if (subscription.repositoryStatus !== "complete") {
 		return {
