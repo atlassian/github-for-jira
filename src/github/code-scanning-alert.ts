@@ -3,12 +3,12 @@ import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import {emitWebhookProcessedMetrics} from "utils/webhook-utils";
 
-export const codeScanningAlertWebhookHandler = async (context: Context, jiraClient): Promise<void> => {
+export const codeScanningAlertWebhookHandler = async (context: Context, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	if (!(await booleanFlag(BooleanFlags.SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS, false, jiraClient.baseUrl))) {
 		return;
 	}
 
-	const jiraPayload = await transformCodeScanningAlert(context);
+	const jiraPayload = await transformCodeScanningAlert(context, githubInstallationId, jiraClient.baseUrl);
 
 	if (!jiraPayload) {
 		context.log.info({noop: "no_jira_payload_code_scanning_alert"}, "Halting further execution for code scanning alert since jiraPayload is empty");
