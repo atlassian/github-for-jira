@@ -6,7 +6,6 @@ import { InstallationTokenCache } from "./installation-token-cache";
 import { AuthToken } from "./auth-token";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
-import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import {
@@ -15,35 +14,39 @@ import {
 	getBranchesResponse,
 	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
-	getCommitsResponse, GetRepositoriesQuery, GetRepositoriesResponse,
+	getCommitsResponse,
+	GetRepositoriesQuery,
+	GetRepositoriesResponse,
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
 	getDeploymentsQuery
 } from "./github-queries";
 import { ActionsListRepoWorkflowRunsResponseEnhanced, GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
+import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { GitHubClient } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
+ * API is specific to an organization (e.g. can get all repos for an org)
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
-export class GitHubInstallationClient {
+export class GitHubInstallationClient extends GitHubClient {
 	private readonly axios: AxiosInstance;
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
-	private readonly logger: Logger;
 
 	constructor(
 		githubInstallationId: InstallationId,
-		logger: Logger,
+		logger?: Logger,
+		baseUrl?: string,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
-		this.logger = logger || getLogger("github.installation.client");
-
+		super(logger, baseUrl);
 		this.axios = axios.create({
-			baseURL: githubInstallationId.githubBaseUrl,
+			baseURL: this.restApiUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -207,7 +210,6 @@ export class GitHubInstallationClient {
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
-
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
@@ -293,7 +295,7 @@ export class GitHubInstallationClient {
 		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
-				Accept: "application/vnd.github.v3+json",
+				Accept: GITHUB_ACCEPT_HEADER,
 				Authorization: `Bearer ${appToken.token}`
 			}
 		};
@@ -308,8 +310,8 @@ export class GitHubInstallationClient {
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
-				Accept: "application/vnd.github.v3+json",
-				Authorization: `Bearer ${installationToken.token}`
+				Accept: GITHUB_ACCEPT_HEADER,
+				Authorization: `Bearer ${installationToken.token}`,
 			}
 		};
 	}
@@ -347,7 +349,7 @@ export class GitHubInstallationClient {
 	}
 
 	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		const response = await this.axios.post<GraphQlQueryResponse<T>>("/graphql",
+		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.graphqlUrl,
 			{
 				query,
 				variables
