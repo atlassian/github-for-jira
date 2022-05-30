@@ -1,6 +1,6 @@
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
-import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit } from "interfaces/jira";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
@@ -143,7 +143,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					log.info("GitHub call succeeded");
 					return {
 						hash: commitSha,
-						message,
+						message: limitCommitMessage(message),
 						author: getJiraAuthor(author, githubCommitAuthor),
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
