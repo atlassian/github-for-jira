@@ -7,8 +7,8 @@ import { RepoSyncState } from "models/reposyncstate";
 import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
-import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { createAppClient } from "~/src/util/get-github-client-config";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -45,7 +45,7 @@ const getInstallation = async (client: GitHubAPI, subscription: Subscription, lo
 	const { jiraHost } = subscription;
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION, false, jiraHost) ;
 	const { gitHubInstallationId } = subscription;
-	const gitHubAppClient = new GitHubAppClient(log);
+	const gitHubAppClient = await createAppClient(log, jiraHost);
 
 	try {
 		const response = useNewGitHubClient ?

@@ -3,12 +3,12 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { getCloudInstallationId } from "./client/installation-id";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { JiraPullRequestData } from "../interfaces/jira";
+import { JiraPullRequestData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { GitHubIssueData } from "../interfaces/github";
+import { GitHubIssueData } from "interfaces/github";
+import { createInstallationClient } from "utils/get-github-client-config";
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
@@ -22,7 +22,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	} = context.payload;
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
 
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,
@@ -36,7 +36,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: Octokit.PullsListReviewsResponse = [];
 	try {
-		reviews = await getReviews(githubClient, owner, repoName, pull_request.number);
+		reviews = await getReviews(gitHubInstallationClient, owner, repoName, pull_request.number);
 	} catch (err) {
 		context.log.warn(
 			{
@@ -47,7 +47,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		);
 	}
 
-	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(githubClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
 
 	context.log.info("Pullrequest mapped to Jira Payload");
 
@@ -71,7 +71,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	}
 
 	try {
-		await updateGithubIssues(githubClient, context, util, repoName, owner, pull_request);
+		await updateGithubIssues(gitHubInstallationClient, context, util, repoName, owner, pull_request);
 	} catch (err) {
 		context.log.warn(
 			{ err },
