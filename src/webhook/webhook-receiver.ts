@@ -39,7 +39,7 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 			const gitHubServerApp = await GitHubServerApp.getGitHubServerAppForUuid(uuid)
 			if (!gitHubServerApp) {
 				response.statusCode = 404;
-				response.end("GitHub app does not found\n");
+				response.end("GitHub app not found\n");
 				clearTimeout(timeout);
 				return;
 			}
