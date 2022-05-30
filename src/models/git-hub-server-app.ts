@@ -71,7 +71,7 @@ export class GitHubServerApp extends Model {
 	 * @param {{uuid: string}} uuid
 	 * @returns {GitHubServerApp}
 	 */
-	static async getGitHubServerAppForUuid(uuid: string): Promise<GitHubServerApp | null> {
+	static async findForUuid(uuid: string): Promise<GitHubServerApp | null> {
 		return this.findOne({
 			where: {
 				uuid

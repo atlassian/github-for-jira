@@ -36,7 +36,7 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 	let webhookSecret: string = process.env.WEBHOOK_SECRET!;
 	try {
 		if (uuid != "cloud") {
-			const gitHubServerApp = await GitHubServerApp.getGitHubServerAppForUuid(uuid)
+			const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 			if (!gitHubServerApp) {
 				response.statusCode = 404;
 				response.end("GitHub app not found\n");
