@@ -1,12 +1,11 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
-import { GitHubInstallationClient } from "./client/github-installation-client";
-import { getCloudInstallationId } from "./client/installation-id";
-import { GitHubIssue, GitHubIssueCommentData } from "../interfaces/github";
+import { GitHubIssue, GitHubIssueCommentData } from "interfaces/github";
+import { createInstallationClient } from "utils/get-github-client-config";
 
 export const issueCommentWebhookHandler = async (
 	context: CustomContext,
-	_jiraClient,
+	jiraClient,
 	util,
 	githubInstallationId: number
 ): Promise<void> => {
@@ -19,7 +18,7 @@ export const issueCommentWebhookHandler = async (
 	} = context.payload;
 	let linkifiedBody;
 
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	try {
@@ -43,7 +42,7 @@ export const issueCommentWebhookHandler = async (
 		comment_id: comment.id
 	}
 
-	const githubResponse: GitHubIssue = await githubClient.updateIssueComment(updatedIssueComment);
+	const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssueComment(updatedIssueComment);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(

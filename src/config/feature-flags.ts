@@ -30,7 +30,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
 	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect",
 	USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE = "use-new-github-client-for-pr-title",
-	RETRY_ALL_ERRORS = "retry-all-errors"
+	RETRY_ALL_ERRORS = "retry-all-errors",
+	GHE_SERVER = "ghe_server"
 }
 
 export enum StringFlags {
