@@ -5,6 +5,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitData } from "src/interfaces/jira";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 type CommitData = {
 	edges: CommitQueryNode[],
@@ -26,14 +27,23 @@ export const getCommitTask = async (
 	logger: LoggerWithTarget,
 	_github: GitHubAPI,
 	gitHubClient: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
 	perPage?: number): Promise<CommitData> => {
-	logger.info("Syncing commits: started");
+	const itemNumber = Number(cursor?.toString().split(" ").pop() || 0);
+	const itemLimit = await numberFlag(NumberFlags.SYNC_MAIN_COMMIT_AMOUNT, 99999999999, jiraHost);
+	if (itemNumber >= itemLimit) {
+		logger.info({itemNumber, itemLimit}, "Reached main commit amount needed, stopping commit sync")
+		return {
+			edges: [],
+			jiraPayload: undefined
+		};
+	}
+	logger.debug("Syncing commits: started");
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, cursor, perPage);
 	const jiraPayload = await transformCommit({ commits, repository });
-	logger.info("Syncing commits: finished");
+	logger.debug("Syncing commits: finished");
 
 	return {
 		edges,

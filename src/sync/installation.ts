@@ -53,7 +53,7 @@ export interface TaskPayload {
 
 type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
 
-const taskTypes: TaskType[] = ["pull", "commit", "branch", "build", "deployment"];
+const taskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(

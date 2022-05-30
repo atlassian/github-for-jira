@@ -238,7 +238,7 @@ export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: 
                 }
                 authoredDate
                 changedFiles
-                history(first: 50) {
+                history(first: $commitAmount) {
                   nodes {
                     message
                     oid
@@ -285,7 +285,7 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
                   name
                 }
                 authoredDate
-                history(first: 50) {
+                history(first: $commitAmount) {
                   nodes {
                     message
                     oid

@@ -213,28 +213,24 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage = 1, cursor?: string): Promise<getBranchesResponse> {
-		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles,
-			{
-				owner,
-				repo: repoName,
-				per_page: perPage,
-				cursor
-			}).catch((err) => {
-			// Is it a changedFiles error?
-			if (!isChangedFilesError(err)) {
-				return Promise.reject(err);
-			}
+	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitAmount = 50, cursor?: string): Promise<getBranchesResponse> {
+		const variables = {
+			owner,
+			repo: repoName,
+			per_page: perPage,
+			commitAmount,
+			cursor
+		};
+		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, variables)
+			.catch((err) => {
+				// Is it a changedFiles error?
+				if (!isChangedFilesError(err)) {
+					return Promise.reject(err);
+				}
 
-			this.logger.warn("retrying branch graphql query without changedFiles");
-			return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles,
-				{
-					owner,
-					repo: repoName,
-					per_page: perPage,
-					cursor
-				});
-		});
+				this.logger.warn("retrying branch graphql query without changedFiles");
+				return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, variables);
+			});
 		return response?.data?.data;
 	}
 
@@ -311,7 +307,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,
-				Authorization: `Bearer ${installationToken.token}`,
+				Authorization: `Bearer ${installationToken.token}`
 			}
 		};
 	}

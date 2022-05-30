@@ -3,20 +3,22 @@ import { GitHubAPI } from "probot";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 // TODO: better typings
 export const getBranchTask = async (
 	logger: LoggerWithTarget,
 	_github: GitHubAPI,
 	newGithub: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
 	perPage?: number) => {
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
 	perPage = perPage || 20;
-	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string);
+	const commitAmount = await numberFlag(NumberFlags.SYNC_BRANCH_COMMIT_AMOUNT, 50, jiraHost);
+	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, commitAmount, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
 
