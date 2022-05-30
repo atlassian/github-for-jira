@@ -139,32 +139,31 @@ export const mapEnvironment = (environment: string): string => {
 	return jiraEnv;
 }
 
-// Maps commit summaries to an array of a single association containing the commit keys (commit hash and repository id)
+// Maps commit summaries to an array of a single association containing the commit keys (commit hash and repository id).
+// Returns undefined when there are no commit summaries to map.
 const mapCommitSummariesToAssociationArray = (
 	repositoryId: string,
 	commitSummaries?: CommitSummary[]
 ): JiraAssociation[] | undefined => {
 
-	let associationArray;
-
-	if (commitSummaries && commitSummaries.length) {
-		const commitKeys = commitSummaries
-			.map((commitSummary) => {
-				return {
-					commitHash: commitSummary.sha,
-					repositoryId: repositoryId
-				};
-			});
-
-		associationArray = [
-			{
-				associationType: "commit",
-				values: commitKeys
-			}
-		];
+	if (!(commitSummaries && commitSummaries.length)) {
+		return undefined;
 	}
 
-	return associationArray;
+	const commitKeys = commitSummaries
+		.map((commitSummary) => {
+			return {
+				commitHash: commitSummary.sha,
+				repositoryId: repositoryId
+			};
+		});
+
+	return [
+		{
+			associationType: "commit",
+			values: commitKeys
+		}
+	];
 }
 
 export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {

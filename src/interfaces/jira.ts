@@ -155,7 +155,7 @@ export interface JiraPullRequestData {
 }
 
 export interface JiraAssociation {
-	associationType: string;
+	associationType: "issueKeys" | "issueIdOrKeys" | "commit";
 	values: string[] | JiraCommitKey[];
 }
 
