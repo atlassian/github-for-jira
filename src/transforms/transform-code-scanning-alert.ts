@@ -3,9 +3,9 @@ import {Context} from "probot/lib/context";
 import {JiraRemoteLinkData, JiraRemoteLinkStatusAppearance} from "interfaces/jira";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
 import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { createInstallationClient } from "../util/get-github-client-config";
 
 const MAX_STRING_LENGTH = 255;
 
@@ -57,11 +57,13 @@ const transformStatusToAppearance = (status: string, context: Context): JiraRemo
 	}
 }
 
-export const transformCodeScanningAlert = async (context: Context, githubInstallationId: number, jiraHost?: string): Promise<JiraRemoteLinkData | undefined> => {
+export const transformCodeScanningAlert = async (context: Context, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkData | undefined> => {
 	const {action, alert, ref, repository} = context.payload;
-	const githubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log);
+	// const githubInstallationClient =  new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
 	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE, false, jiraHost) ?
-		githubInstallationClient :
+		gitHubInstallationClient :
 		context.github;
 
 	// Grab branch names or PR titles

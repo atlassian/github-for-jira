@@ -18,9 +18,10 @@ const buildContext = (payload): Context => {
 describe("code_scanning_alert transform", () => {
 	Date.now = jest.fn(() => 12345678);
 	const gitHubInstallationId = 1234;
+	const jiraHost = "testHost";
 
 	it("code_scanning_alert is transformed into a remote link", async () => {
-		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload), gitHubInstallationId);
+		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload), gitHubInstallationId, jiraHost);
 		expect(remoteLinks).toMatchObject({
 			remoteLinks: [{
 				schemaVersion: "1.0",
@@ -45,7 +46,7 @@ describe("code_scanning_alert transform", () => {
 
 	it("manual code_scanning_alert maps to multiple Jira issue keys", async () => {
 		const payload = {...codeScanningPayload, action: "closed_by_user"};
-		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId);
+		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"])
 	})
 
@@ -54,7 +55,7 @@ describe("code_scanning_alert transform", () => {
 			...codeScanningPayload,
 			alert: {...codeScanningPayload.alert, rule: {...codeScanningPayload.alert.rule, description: "A".repeat(300)}}
 		};
-		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId);
+		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].description).toHaveLength(255);
 	})
 
@@ -74,7 +75,7 @@ describe("code_scanning_alert transform", () => {
 			},
 			status: 200
 		});
-		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId);
+		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
 	})
 
@@ -86,14 +87,14 @@ describe("code_scanning_alert transform", () => {
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
-
+		
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/repos/TerryAg/github-jira-test/pulls/8`)
 			.reply(200, {
 				title: "GH-10"
 			});
 
-
-		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId);
+		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
 	})
 })
