@@ -21,9 +21,9 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
-import { getCloudInstallationId } from "../github/client/installation-id";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -209,8 +209,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		logger
 	);
 
-	const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installationId), logger);
-
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription);
 

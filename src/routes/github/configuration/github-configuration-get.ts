@@ -7,15 +7,17 @@ import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
 import { Tracer } from "config/tracer";
-import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
-import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import Logger from "bunyan";
-import { getCloudInstallationId } from "~/src/github/client/installation-id";
 import { AppInstallation } from "config/interfaces";
 import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { BlockedIpError } from "~/src/github/client/github-client-errors";
+import {
+	createAppClient,
+	createInstallationClient,
+	createUserClient,
+} from "~/src/util/get-github-client-config";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -64,15 +66,18 @@ const getInstallationsWithAdmin = async (
 	gitHubUserClient: GitHubUserClient,
 	log: Logger,
 	login: string,
-	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = []
+	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
+	jiraHost: string
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubInstallationClient = new GitHubInstallationClient(getCloudInstallationId(installation.id), log);
-		const numberOfReposPromise = gitHubInstallationClient.getNumberOfReposForInstallation().catch((err) => {
+		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
+
+		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
 			return 0;
 		});
+
 		// See if we can get the membership for this user
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(
@@ -127,7 +132,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	}
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, false);
-	const githubUserClient = new GitHubUserClient(githubToken, log);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
@@ -140,7 +145,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	tracer.trace(`found jira host: ${jiraHost}`);
 
-	const { data: { login } } = useNewGitHubClient ? await githubUserClient.getUser() : await github.users.getAuthenticated();
+	const { data: { login } } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated();
 
 	tracer.trace(`got login name: ${login}`);
 
@@ -162,12 +167,13 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			res.status(404).send(`Missing installation for host '${jiraHost}'`);
 			return;
 		}
-		const gitHubAppClient = new GitHubAppClient(log);
+
+		const gitHubAppClient = await createAppClient(log, jiraHost);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 
 		const { data: { installations }, headers } = useNewGitHubClient ?
-			await githubUserClient.getInstallations() :
+			await gitHubUserClient.getInstallations() :
 			await github.apps.listInstallationsForAuthenticatedUser();
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
@@ -176,7 +182,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(githubUserClient, log, login, installations);
+		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
