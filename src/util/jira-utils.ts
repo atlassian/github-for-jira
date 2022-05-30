@@ -4,6 +4,8 @@ import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
 import { booleanFlag, BooleanFlags, onFlagChange } from "config/feature-flags";
+import { Installation } from "models/installation";
+import { GitHubServerApp } from "models/git-hub-server-app";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page` : "";
@@ -105,3 +107,13 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 };
 
 export const hasJiraIssueKey = (str:string): boolean => !isEmpty(jiraIssueKeyParser(str));
+
+export const isGitHubCloudApp = async (jiraHost: string): Promise<Promise<boolean> | boolean>=> {
+	if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
+		const installation = await Installation.getForHost(jiraHost);
+		const gitHubAppId = installation?.githubAppId;
+		return gitHubAppId ? !await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : true;
+	}
+
+	return true;
+}

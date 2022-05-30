@@ -9,6 +9,7 @@ import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { isGitHubCloudApp } from "~/src/util/jira-utils";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -41,7 +42,6 @@ export const getInstallations = async (client: GitHubAPI, subscriptions: Subscri
 };
 
 const getInstallation = async (client: GitHubAPI, subscription: Subscription, log: Logger): Promise<AppInstallation> => {
-
 	const { jiraHost } = subscription;
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION, false, jiraHost) ;
 	const { gitHubInstallationId } = subscription;
@@ -126,7 +126,8 @@ export const JiraConfigurationGet = async (
 			hasConnections: !!installations.total,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			isGitHubCloudApp: await isGitHubCloudApp(jiraHost)
 		});
 
 		req.log.info("Jira configuration rendered successfully.");

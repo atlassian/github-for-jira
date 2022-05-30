@@ -18,6 +18,7 @@ import {
 	createInstallationClient,
 	createUserClient,
 } from "~/src/util/get-github-client-config";
+import { isGitHubCloudApp } from "utils/jira-utils";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -221,7 +222,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			info,
 			clientKey: installation.clientKey,
 			login,
-			repoUrl: envVars.GITHUB_REPO_URL
+			repoUrl: envVars.GITHUB_REPO_URL,
+			isGitHubCloudApp: await isGitHubCloudApp(jiraHost)
 		});
 
 		tracer.trace(`rendered page`);

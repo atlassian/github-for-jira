@@ -126,13 +126,15 @@
                   <tr class="jiraConfiguration__table__row">
                     {{! Organization }}
                     <td class="jiraConfiguration__table__cell">
-                      <img
-                        class="jiraConfiguration__table__cell__avatar"
-                        src="{{account.avatar_url}}"
-                        height="24"
-                        width="24"
-                        data-installation-id="{{id}}"
-                      />
+                      {{#if ../isGitHubCloudApp}}
+                        <img
+                            class="jiraConfiguration__table__cell__avatar"
+                            src="{{account.avatar_url}}"
+                            height="24"
+                            width="24"
+                            data-installation-id="{{id}}"
+                        />
+                      {{/if}}
                       <span
                         class="jiraConfiguration__table__cell__orgName"
                       >{{account.login}}</span>
@@ -184,9 +186,9 @@
                         <div class="jiraConfiguration__syncWarning">
                           <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
                             Sync failed warnings
-                          </span> 
+                          </span>
                           <div class="jiraConfiguration__syncWarningMessage warning-popup">
-                            <div>Some tasks have not been backfilled. Please 
+                            <div>Some tasks have not been backfilled. Please
                               <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
                                   href="{{html_url}}"
                                   data-installation-link="{{html_url}}"
