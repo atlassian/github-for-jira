@@ -6,7 +6,6 @@ import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
-
 import deployment_status from "fixtures/deployment_status-basic.json";
 
 jest.mock("config/feature-flags");
