@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { verify } from "@octokit/webhooks-methods";
 import { GitHubServerApp } from "../models/git-hub-server-app";
-import { getPayload } from "./get-payload";
 import { Webhooks } from "./webhooks";
 import { getLogger } from "../config/logger";
 import { WebhookContext } from "./types";
@@ -46,7 +45,7 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 			webhookSecret = gitHubServerApp?.webhookSecret;
 		}
 
-		const payload = await getPayload(request);
+		const payload = request.body
 		const matchesSignature = await verify(webhookSecret, JSON.stringify(payload), signatureSHA256);
 		if (!matchesSignature) {
 			response.statusCode = 400;

@@ -1,5 +1,5 @@
 import "config/env";
-import express, { Router } from "express";
+import express, { Router, json } from "express";
 import { getLogger } from "./config/logger";
 import { setupGithubWebhooks } from "./webhook/setupGithubWebhooks";
 import { webhookReceiver } from "./webhook/webhook-receiver";
@@ -8,6 +8,8 @@ const app = express();
 const port = 8082; 
 
 const logger =  getLogger("server");
+
+app.use(json());
 
 const webhooks = new Webhooks();
 setupGithubWebhooks(webhooks);
