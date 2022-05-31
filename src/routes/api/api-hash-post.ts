@@ -3,17 +3,21 @@ import { createHashWithSharedSecret } from "~/src/util/encryption";
 
 export const ApiHashPost = async (req: Request, res: Response): Promise<void> => {
 
-	const { data: originalValue } = req.body;
+	const { data } = req.body;
 
-	if (!originalValue){
-		res.status(400).send("Please provide a value to be hashed.");
+	if (!data) {
+
+		res.status(400)
+			.json({
+				message: "Please provide a value to be hashed."
+			});
 		return;
 	}
 
-	const hashedValue = createHashWithSharedSecret(originalValue);
+	const hashedValue = createHashWithSharedSecret(data);
 
 	res.json({
-		originalValue,
+		originalValue: data,
 		hashedValue
 	});
 }
