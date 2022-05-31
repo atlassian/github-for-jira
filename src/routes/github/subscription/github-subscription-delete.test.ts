@@ -2,84 +2,12 @@
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { GithubSubscriptionDelete } from "./github-subscription-delete";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
 
 const createGitHubNockGet = (url, status, response) => {
 	githubNock
 		.get(url)
 		.reply(status, response);
 };
-
-describe("POST /github/subscription - octokit", () => {
-
-	const gitHubInstallationId = 15;
-
-	beforeEach(async () => {
-		await Subscription.create({
-			gitHubInstallationId,
-			jiraHost
-		});
-
-		await Installation.create({
-			jiraHost,
-			clientKey: "client-key",
-			sharedSecret: "shared-secret"
-		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(false);
-
-	});
-
-	test("Delete GitHub Subscription", async () => {
-
-		const req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
-			body: {
-				installationId: gitHubInstallationId,
-				jiraHost
-			}
-		};
-
-		const login = "test-user";
-		const role = "admin";
-
-		const getAuthenticated = jest.fn().mockResolvedValue({ data: { login } });
-		const getMembershipForOrg = jest.fn().mockResolvedValue({ data: { role, user: { login } } });
-		const getInstallation = jest.fn().mockResolvedValue({
-			data: {
-				id: gitHubInstallationId,
-				target_type: "User",
-				account: { login }
-			}
-		});
-		const res = {
-			sendStatus: jest.fn(),
-			status: jest.fn(),
-			locals: {
-				jiraHost,
-				githubToken: "abc-token",
-				client: {
-					apps: { getInstallation }
-				},
-				github: {
-					orgs: { getMembershipForOrg },
-					users: { getAuthenticated }
-				}
-			}
-		};
-
-		await GithubSubscriptionDelete(req as any, res as any);
-		expect(res.sendStatus).toHaveBeenCalledWith(202);
-		expect(await Subscription.count()).toEqual(0);
-	});
-});
 
 describe("delete-github-subscription", () => {
 	const gitHubInstallationId = 15;
@@ -96,12 +24,6 @@ describe("delete-github-subscription", () => {
 			clientKey: "client-key",
 			sharedSecret: "shared-secret"
 		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
 
 		req = {
 			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
