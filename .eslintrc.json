@@ -53,12 +53,12 @@
 			"SwitchCase": 1
 		}],
 		"@import/no-unresolved": "off",
-		"object-curly-spacing": ["warn", "always"],
-		"semi": ["warn", "always"],
-		"no-trailing-spaces": "warn",
-		"comma-dangle": "warn",
-		"keyword-spacing": "warn",
-		"space-in-parens": ["warn", "never"],
+		"object-curly-spacing": ["error", "always"],
+		"semi": ["error", "always"],
+		"no-trailing-spaces": "error",
+		"comma-dangle": "error",
+		"keyword-spacing": "error",
+		"space-in-parens": ["error", "never"],
 		"func-style" : ["warn", "expression"]
 	}
 }

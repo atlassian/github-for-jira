@@ -16,7 +16,7 @@ import { BlockedIpError } from "~/src/github/client/github-client-errors";
 import {
 	createAppClient,
 	createInstallationClient,
-	createUserClient,
+	createUserClient
 } from "~/src/util/get-github-client-config";
 
 interface ConnectedStatus {
