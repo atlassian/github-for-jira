@@ -4,30 +4,15 @@ import { GitHubServerApp } from "../models/git-hub-server-app";
 import { Webhooks } from "./webhooks";
 import { getLogger } from "../config/logger";
 import { WebhookContext } from "./types";
-
-const WEBHOOK_HEADERS = [
-	"x-github-event",
-	"x-hub-signature-256",
-	"x-github-delivery",
-];
+import { validationResult } from "express-validator";
 
 export const webhookReceiver = async (webhooks: Webhooks, request: Request, response: Response) => {
-	const missingHeaders = (WEBHOOK_HEADERS.filter((header) => !(header in request.headers))).join(", ");
-	if (missingHeaders) {
-		response.writeHead(400, {
-			"content-type": "application/json",
-		});
-		response.end(`Required headers missing: ${missingHeaders}`);
+	const errors = validationResult(request);
+	if (!errors.isEmpty()) {
+		response.status(400).json({ errors: errors.array() });
 		return;
 	}
-	// GitHub will abort the request if it does not receive a response within 10s
-	let didTimeout = false;
-	const timeout = setTimeout(() => {
-		didTimeout = true;
-		response.statusCode = 202;
-		response.end("still processing\n");
-	}, 9000).unref();
-
+	const logger = getLogger("webhook.receiver");
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
 	const id = request.headers["x-github-delivery"] as string;
@@ -37,9 +22,7 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 		if (uuid != "cloud") {
 			const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 			if (!gitHubServerApp) {
-				response.statusCode = 404;
-				response.end("GitHub app not found\n");
-				clearTimeout(timeout);
+				response.status(400).send("GitHub app not found");
 				return;
 			}
 			webhookSecret = gitHubServerApp?.webhookSecret;
@@ -48,32 +31,22 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 		const payload = request.body
 		const matchesSignature = await verify(webhookSecret, JSON.stringify(payload), signatureSHA256);
 		if (!matchesSignature) {
-			response.statusCode = 400;
-			response.end("signature does not match event payload and secret\n");
-			clearTimeout(timeout);
+			response.status(400).send("signature does not match event payload and secret");
 			return;
 		}
 
-		await webhooks.receive(new WebhookContext({
+		webhooks.receive(new WebhookContext({
 			id: id,
 			name: eventName,
 			payload: payload,
 			signature: signatureSHA256,
-			log: getLogger("webhook.receiver")
+			log: logger
 		}));
-		clearTimeout(timeout);
 
-		if (didTimeout) return;
+		response.send(204);
 
-		response.end("ok\n");
 	} catch (error) {
-		clearTimeout(timeout);
-
-		if (didTimeout) return;
-
-		const statusCode = error.status;
-		response.statusCode = typeof statusCode !== "undefined" ? statusCode : 500;
-		response.end(String(error));
+		logger.error(error);
 	}
 
 };
