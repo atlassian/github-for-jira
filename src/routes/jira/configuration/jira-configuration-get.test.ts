@@ -8,12 +8,8 @@ import { GitHubAPI } from "probot";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 import { getLogger } from "config/logger";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-jest.mock("config/feature-flags");
-
-describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s", (useNewGithubClient) => {
+describe("Jira Configuration Suite", () => {
 	let subscription: Subscription;
 
 	beforeEach(async () => {
@@ -44,11 +40,6 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 			sharedSecret: "ghi345"
 		});
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
 	});
 
 	const mockRequest = (): any => ({
