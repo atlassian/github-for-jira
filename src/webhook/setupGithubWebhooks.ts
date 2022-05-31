@@ -12,16 +12,16 @@ export const setupGithubWebhooks = (webhooks: Webhooks) => {
 			"issue_comment.created",
 			"issue_comment.edited"
 		],
-		(event: WebhookContext) => {
-			console.log("issue_comment created and edited ", event.id)
+		(context: WebhookContext) => {
+			context.log.info("issue_comment created/edited event received ", context.id)
 		});
 
 	webhooks.on(
 		"issue_comment",
-		(event: WebhookContext) => {
-			console.log("issue_comment only ", event.id);
+		(context: WebhookContext) => {
+			context.log.info("issue_comment event received ", context.id);
 		});
-	webhooks.on("push", (event: WebhookContext) => {
-		console.log("push event received", event.id)
+	webhooks.on("push", (context: WebhookContext) => {
+		context.log.info("push event received", context.id)
 	});
 };
