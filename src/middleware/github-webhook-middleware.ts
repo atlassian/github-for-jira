@@ -6,7 +6,6 @@ import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraUtil } from "../jira/util/jira-client-util";
-import { enhanceOctokit } from "config/enhance-octokit";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
@@ -73,7 +72,6 @@ export const GithubWebhookMiddleware = (
 	callback: (context: CustomContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
 ) => {
 	return withSentry(async (context: CustomContext) => {
-		enhanceOctokit(context.github);
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size

@@ -1,11 +1,10 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
-import { GitHubInstallationClient } from "./client/github-installation-client";
-import { getCloudInstallationId } from "./client/installation-id";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
-import { GitHubIssue, GitHubIssueData } from "../interfaces/github";
+import { GitHubIssue, GitHubIssueData } from 'interfaces/github';
+import { createInstallationClient } from "utils/get-github-client-config";
 
-export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, _jiraClient, util, githubInstallationId: number): Promise<void> => {
+export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
 		issue,
 		repository: {
@@ -14,7 +13,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		}
 	} = context.payload;
 
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;
@@ -40,7 +39,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		issue_number: issue.number
 	}
 
-	const githubResponse: GitHubIssue = await githubClient.updateIssue(updatedIssue);
+	const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssue(updatedIssue);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
