@@ -312,8 +312,6 @@ describe("API Router", () => {
 					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(400)
 					.then((response) => {
-						console.log("response");
-						console.log(response);
 						expect(response.body?.message).toEqual("Please provide a value to be hashed.");
 					});
 			});

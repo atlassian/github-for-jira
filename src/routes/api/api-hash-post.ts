@@ -6,7 +6,6 @@ export const ApiHashPost = async (req: Request, res: Response): Promise<void> =>
 	const { data } = req.body;
 
 	if (!data) {
-
 		res.status(400)
 			.json({
 				message: "Please provide a value to be hashed."
@@ -20,4 +19,4 @@ export const ApiHashPost = async (req: Request, res: Response): Promise<void> =>
 		originalValue: data,
 		hashedValue
 	});
-}
+};
