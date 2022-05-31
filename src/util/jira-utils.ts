@@ -106,14 +106,24 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	return uniq(Array.from(str.matchAll(regex), m => m[2].toUpperCase()));
 };
 
-export const hasJiraIssueKey = (str:string): boolean => !isEmpty(jiraIssueKeyParser(str));
+export const hasJiraIssueKey = (str: string): boolean => !isEmpty(jiraIssueKeyParser(str));
 
-export const isGitHubCloudApp = async (jiraHost: string): Promise<Promise<boolean> | boolean>=> {
+export const isGitHubCloudApp = async (jiraHost: string): Promise<boolean>=> {
+	let isGitHubCloud = true;
+
+	/* 3 possible scenarios while we have the feature flag
+	*		- FF is set to false: isGitHubCloud default to true
+	* 	- FF is true but there is no gitHubAppId in the Installations table or no corresponding entry in the GitHubServerApps table - isGitHubCloud is true
+	* 	- FF is true and there is a gitHubAppId in the Installations table and an entry in the GitHubServerApps table - isGitHubCloud is false
+	*/
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
 		const installation = await Installation.getForHost(jiraHost);
 		const gitHubAppId = installation?.githubAppId;
-		return gitHubAppId ? !await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : true;
+
+		if (gitHubAppId) {
+			isGitHubCloud = !await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
+		}
 	}
 
-	return true;
+	return isGitHubCloud;
 }
