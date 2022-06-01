@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost } = res.locals;
+	const { github, client, githubToken, jiraHost } = res.locals;
 	const { installationId: gitHubInstallationId } = req.body;
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION, false, jiraHost) ;
 	const gitHubAppClient = await createAppClient(logger, jiraHost);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger);
 
@@ -24,8 +26,13 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 
 	try {
 		// get the installation to see if the user is an admin of it
-		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
-		const { data: { login } } = await gitHubUserClient.getUser();
+		const { data: installation } = useNewGitHubClient ?
+			await gitHubAppClient.getInstallation(gitHubInstallationId) :
+			await client.apps.getInstallation({ installation_id: gitHubInstallationId });
+
+		const { data: { login } } = useNewGitHubClient ?
+			await gitHubUserClient.getUser() :
+			await github.users.getAuthenticated();
 
 		// Only show the page if the logged in user is an admin of this installation
 		if (!await isUserAdminOfOrganization(

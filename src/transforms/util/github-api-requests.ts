@@ -9,7 +9,7 @@ interface CompareCommitsPayload {
 	head: string;
 }
 
-export type CommitSummary = {
+type CommitSummary = {
 	sha: string;
 	message: string;
 }
@@ -22,7 +22,9 @@ export const getAllCommitMessagesBetweenReferences = async (
 	logger: LoggerWithTarget
 ): Promise<string> => {
 	const commitSummaries = await getAllCommitsBetweenReferences(payload, github, logger);
-	return extractMessagesFromCommitSummaries(commitSummaries);
+	const messages = await extractMessagesFromCommitSummaries(commitSummaries);
+
+	return messages || "";
 };
 
 // Used to compare commits for builds and deployments so we can
@@ -31,7 +33,7 @@ export const getAllCommitsBetweenReferences = async (
 	payload: CompareCommitsPayload,
 	github: GitHubAPI | GitHubInstallationClient,
 	logger: LoggerWithTarget
-): Promise<CommitSummary[] | undefined> => {
+): Promise<Array<CommitSummary>> => {
 	let commitSummaries;
 	try {
 		const commitsDiff = github instanceof GitHubInstallationClient ? await github.compareReferences(payload.owner, payload.repo, payload.base, payload.head) : await github.repos.compareCommits(payload);
@@ -49,10 +51,9 @@ export const getAllCommitsBetweenReferences = async (
 
 // Used to extract messages from commit summaries so we can
 // obtain all issue keys referenced in commit messages.
-// Returns "" when there are no commit summaries.
-export const extractMessagesFromCommitSummaries = (
-	commitSummaries?: CommitSummary[]
-): string => {
+export const extractMessagesFromCommitSummaries = async (
+	commitSummaries: Array<CommitSummary>
+): Promise<string> => {
 	const messages = commitSummaries
 		?.map((c) => c.message)
 		.join(" ");

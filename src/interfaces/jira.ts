@@ -138,7 +138,6 @@ export interface JiraDeployment {
 		displayName: string;
 		type: string;
 	};
-	associations?: JiraAssociation[];
 }
 
 export interface JiraDeploymentData {
@@ -155,13 +154,8 @@ export interface JiraPullRequestData {
 }
 
 export interface JiraAssociation {
-	associationType: "issueKeys" | "issueIdOrKeys" | "commit";
-	values: string[] | JiraCommitKey[];
-}
-
-export interface JiraCommitKey {
-	commitHash: string;
-	repositoryId: string;
+	associationType: string;
+	values: string[];
 }
 
 export interface JiraRemoteLinkData {
