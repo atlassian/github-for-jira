@@ -89,17 +89,13 @@
                     class="gitHubConfiguration__orgContent__numberOfRepos"
                   >{{numberOfRepos}}</p>
                   {{#if isAdmin}}
-                    <button
-                      class="open-link-btn aui-button aui-button-subtle"
-                      data-btn-url="{{html_url}}"
-                      data-target="_blank"
-                    >
+                   <a class="gitHubConfiguration__orgContent__editContainer" href="{{html_url}}" target="_blank">
                       <span
                         class="gitHubConfiguration__orgContent__edit aui-icon aui-icon-small aui-iconfont-new-edit"
                       >
                         Edit
                       </span>
-                    </button>
+                    </a>
                   {{/if}}
                 {{/if}}
               </div>

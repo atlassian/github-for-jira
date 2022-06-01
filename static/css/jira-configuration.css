@@ -408,6 +408,16 @@
   max-width: 332px;
 }
 
+.jiraConfiguration__table__editContainer {
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0.45em;
+  position: relative;
+}
+.jiraConfiguration__table__editContainer:hover {
+  background: #091E4208;
+}
+
 .learn-more-link {
   display: inline-block;
   margin-right: 12px;
