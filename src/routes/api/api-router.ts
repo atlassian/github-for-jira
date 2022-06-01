@@ -95,7 +95,7 @@ ApiRouter.post(
 	}
 );
 
-// Hash incoming values the same as the internal hashing, used to help filter logs.
+// Hash incoming values with GLOBAL_HASH_SECRET.
 ApiRouter.post("/hash", ApiHashPost);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
