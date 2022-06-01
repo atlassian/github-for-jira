@@ -1,7 +1,7 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
-import { GitHubIssue, GitHubIssueData } from 'interfaces/github';
+import { GitHubIssue, GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 
 export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, jiraClient, util, githubInstallationId: number): Promise<void> => {
