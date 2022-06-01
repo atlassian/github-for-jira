@@ -1,27 +1,15 @@
-/* eslint-disable @typescript-eslint/ban-types */
-
 import Logger from "bunyan";
-
-type Hooks = {
-	[key: string]: Function[];
-};
-
-export interface State {
-	hooks: Hooks;
-}
 
 export class WebhookContext {
 	id: string;
 	name: string;
 	payload: any;
-	signature: string;
 	log: Logger;
 
-	constructor({ id, name, payload, signature, log }) {
+	constructor({ id, name, payload, log }) {
 		this.id = id;
 		this.name = name;
 		this.payload = payload;
-		this.signature = signature;
 		this.log = log
 	}
 

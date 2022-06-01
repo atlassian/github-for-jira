@@ -1,12 +1,11 @@
-import { Request, Response } from "express";
 import { verify } from "@octokit/webhooks-methods";
-import { GitHubServerApp } from "../models/git-hub-server-app";
-import { Webhooks } from "./webhooks";
-import { getLogger } from "../config/logger";
-import { WebhookContext } from "./types";
+import { Request, Response } from "express";
 import { validationResult } from "express-validator";
+import { getLogger } from "~/src/config/logger";
+import { GitHubServerApp } from "~/src/models/git-hub-server-app";
+import { WebhookContext } from "./webhook-context";
 
-export const webhookReceiver = async (webhooks: Webhooks, request: Request, response: Response) => {
+export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const errors = validationResult(request);
 	if (!errors.isEmpty()) {
 		response.status(400).json({ errors: errors.array() });
@@ -18,6 +17,7 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 	const id = request.headers["x-github-delivery"] as string;
 	const uuid = request.params.uuid;
 	let webhookSecret: string = process.env.WEBHOOK_SECRET!;
+	const payload = request.body;
 	try {
 		if (uuid != "cloud") {
 			const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
@@ -27,26 +27,42 @@ export const webhookReceiver = async (webhooks: Webhooks, request: Request, resp
 			}
 			webhookSecret = gitHubServerApp?.webhookSecret;
 		}
-
-		const payload = request.body
 		const matchesSignature = await verify(webhookSecret, JSON.stringify(payload), signatureSHA256);
 		if (!matchesSignature) {
 			response.status(400).send("signature does not match event payload and secret");
 			return;
 		}
 
-		webhooks.receive(new WebhookContext({
+		const webhookContext = new WebhookContext({
 			id: id,
 			name: eventName,
 			payload: payload,
-			signature: signatureSHA256,
 			log: logger
-		}));
+		});
 
-		response.send(204);
+		const action = "action" in payload ? payload.action : null;
+		if (action) {
+			invokeEventHandler(`${eventName}.${action}`, webhookContext);
+		}
+		invokeEventHandler(eventName, webhookContext);
+
+		response.sendStatus(204);
 
 	} catch (error) {
 		logger.error(error);
 	}
 
+	function invokeEventHandler(event: string, context: WebhookContext) {
+		switch (event) {
+			case "push":
+				context.log.info("push event Received!");
+				break;
+			case "pull_request":
+				context.log.info("pull req event Received!");
+				break;
+			case "pull_request.opened":
+				context.log.info("pull req opened event Received!");
+				break;
+		}
+	}
 };
