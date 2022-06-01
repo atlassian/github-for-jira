@@ -20,11 +20,10 @@ export class WebhookContext {
 				"context.repo() is not supported for this webhook event."
 			);
 		}
-		return Object.assign(
-			{
-				owner: repo.owner.login,
-				repo: repo.name,
-			}
-		);
+		return {
+			owner: repo.owner.login,
+			repo: repo.name,
+		}
+
 	}
 }
