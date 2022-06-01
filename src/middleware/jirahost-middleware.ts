@@ -2,15 +2,20 @@
 import {NextFunction, Request, Response} from "express";
 import {verifyJiraJwtMiddleware} from "middleware/jira-jwt-middleware";
 import {TokenType} from "~/src/jira/util/jwt";
-// import {postInstallUrl} from "routes/jira/jira-atlassian-connect-get";
+import {postInstallUrl} from "routes/jira/jira-atlassian-connect-get";
 
 
-const extractJiraHost = (req: Request): string | null => {
-	return (req.query.xdm_e as string) || req.body?.jiraHost || req.cookies.jiraHost;
-}
-
-const isExtractedFromCookie = (req: Request): boolean => {
-	return !(req.query.xdm_e as string) && !req.body?.jiraHost && req.cookies.jiraHost;
+const extractUnsafeJiraHost = (req: Request): string | null => {
+	if (req.path == postInstallUrl && req.method == "GET") {
+		// Only save xdm_e query when on the GET post install url (iframe url)
+		return req.query.xdm_e as string;
+	} else if ((req.path == postInstallUrl && req.method != "GET") || req.path == "/jira/sync") {
+		// Only save the jiraHost from the body for specific routes that use it
+		return req.body?.jiraHost;
+	} else if (req.cookies.jiraHost) {
+		return req.cookies.jiraHost;
+	}
+	return null;
 }
 
 const detectJwtTokenType = (req: Request): TokenType => {
@@ -29,19 +34,19 @@ const detectJwtTokenType = (req: Request): TokenType => {
 //
 //
 export const jirahostMiddleware = (req: Request, res: Response, next: NextFunction) => {
-	const requestJiraHost = extractJiraHost(req);
-	const takenFromCookies = isExtractedFromCookie(req);
+	const unsafeJiraHost = extractUnsafeJiraHost(req);
 
-	if (requestJiraHost) {
+	req.addLogFields({ jiraHost: unsafeJiraHost });
 
-		res.locals.jiraHost = requestJiraHost;
+	// JWT validation makes sure "res.locals.jiraHost" is legit, not the cookie value. To avoid
+	// any temptation to use it later, let's remove it straight away!
+	const takenFromCookies = unsafeJiraHost === req.cookies.jiraHost;
+	res.clearCookie("jiraHost");
 
-		// JWT validation makes sure "res.locals.jiraHost" is legit, not the cookie value. To avoid
-		// any temptation to use it later, let's remove it straight away!
-		res.clearCookie("jiraHost");
-
-		const jwtTokenType = detectJwtTokenType(req);
-		verifyJiraJwtMiddleware(jwtTokenType)(req, res, () => {
+	if (unsafeJiraHost) {
+		// Even though it is unsafe, we are verifying it straight away below (in "verifyJwtBlahBlah" call)
+		res.locals.jiraHost = unsafeJiraHost;
+		verifyJiraJwtMiddleware(detectJwtTokenType(req))(req, res, () => {
 
 			// Cannot hold and rely on cookies because the issued context JWTs are short-lived
 			// (enough to validate once but not enough for long-running routines)
@@ -55,6 +60,7 @@ export const jirahostMiddleware = (req: Request, res: Response, next: NextFuncti
 			next();
 		});
 	} else {
+		res.locals.jiraHost = req.session.jiraHost;
 		next();
 	}
 
