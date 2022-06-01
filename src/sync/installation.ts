@@ -166,7 +166,7 @@ const getEnhancedGitHub = async (app: Application, installationId) =>
  * @param err the error thrown by Octokit.
  */
 export const isRetryableWithSmallerRequest = async (err): Promise<boolean> => {
-	if(await booleanFlag(BooleanFlags.RETRY_ALL_ERRORS, false)) {
+	if (await booleanFlag(BooleanFlags.RETRY_ALL_ERRORS, false)) {
 		return  err?.isRetryable || false;
 	}
 	if (err?.errors) {

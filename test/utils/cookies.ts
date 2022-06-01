@@ -6,4 +6,4 @@ export const getSignedCookieHeader = (fixture:unknown): string[] => {
 	return [
 		`session=${cookie};session.sig=${keygrip.sign(`session=${cookie}`)};`
 	];
-}
+};

@@ -26,4 +26,4 @@ export const waitUntil = <T>(
 			.catch(reschedule);
 
 	return giveItATryPromiseFactory();
-}
+};
