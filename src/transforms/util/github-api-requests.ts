@@ -36,7 +36,7 @@ export const getAllCommitsBetweenReferences = async (
 	try {
 		const commitsDiff = github instanceof GitHubInstallationClient ? await github.compareReferences(payload.owner, payload.repo, payload.base, payload.head) : await github.repos.compareCommits(payload);
 		commitSummaries = commitsDiff.data?.commits
-			?.map((c) => { return { sha: c.sha, message: c.commit.message } } );
+			?.map((c) => { return { sha: c.sha, message: c.commit.message }; });
 	} catch (err) {
 		logger?.error(
 			{ err, repo: payload.repo },

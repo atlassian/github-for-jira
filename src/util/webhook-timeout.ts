@@ -11,4 +11,4 @@ export const webhookTimeout = (callback: (context: CustomContext) => Promise<voi
 		} finally {
 			clearTimeout(id);
 		}
-	}
+	};
