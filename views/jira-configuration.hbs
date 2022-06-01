@@ -58,7 +58,7 @@
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
                 <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status</h4>
-                <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn">&times;</span>
+                <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
               </div>
 
               <table class="jiraConfiguration__syncRetryModal__table">
@@ -155,7 +155,8 @@
                       </span>
                       {{/if}}
 
-                      <a
+                       <a
+                        class="jiraConfiguration__table__editContainer"
                         href="{{html_url}}"
                         data-installation-link="{{html_url}}"
                         target="_blank"
@@ -305,6 +306,16 @@
               organization to connect and start including issue keys in
               branches, commit messages or pull requests to see development
               insights in Jira.</p>
+            <button
+              class="ak-button ak-button__appearance-default learn-more-link"
+            >
+              Learn more 
+              <span
+                class="aui-icon aui-iconfont-shortcut"
+              >
+                Shortcut
+              </span>
+            </button>
             <button
               class="ak-button ak-button__appearance-primary add-organization-link"
             >Connect GitHub organization</button>

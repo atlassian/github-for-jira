@@ -29,7 +29,7 @@ Create a new [free developer instance](https://developer.atlassian.com/platform/
 Create a new [GitHub App](https://github.com/settings/apps), setting the following config:
 
 - **GitHub App name**: Anything you want, but it must be unique across GitHub.
-- **Homepage URL**: `https://DOMAIN`
+- **Homepage URL**: `https://github.com/apps/**GitHub App name**`
 - **Callback URL**: `https://DOMAIN/github/callback`
 - **Setup URL**: `https://DOMAIN/github/setup`
 - **Webhook URL**: `https://DOMAIN/github/events`

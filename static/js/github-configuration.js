@@ -67,3 +67,8 @@ $(".sync-connection-link").click(function (event) {
 		},
 	});
 });
+
+$(".open-link-btn").click(function(event) {
+	event.preventDefault();
+	window.open($(event.target).data("btn-url"), $(event.target).data("target") || '_self');
+});
