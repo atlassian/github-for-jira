@@ -1,4 +1,4 @@
-import { verify } from "@octokit/webhooks-methods";
+import { BinaryLike, createHmac } from "crypto";
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getLogger } from "~/src/config/logger";
@@ -27,8 +27,8 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			}
 			webhookSecret = gitHubServerApp?.webhookSecret;
 		}
-		const matchesSignature = await verify(webhookSecret, JSON.stringify(payload), signatureSHA256);
-		if (!matchesSignature) {
+		const verification = createHash(JSON.stringify(payload), webhookSecret);
+		if (verification != signatureSHA256) {
 			response.status(400).send("signature does not match event payload and secret");
 			return;
 		}
@@ -51,18 +51,24 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	} catch (error) {
 		logger.error(error);
 	}
-
-	function invokeEventHandler(event: string, context: WebhookContext) {
-		switch (event) {
-			case "push":
-				context.log.info("push event Received!");
-				break;
-			case "pull_request":
-				context.log.info("pull req event Received!");
-				break;
-			case "pull_request.opened":
-				context.log.info("pull req opened event Received!");
-				break;
-		}
-	}
 };
+
+function invokeEventHandler(event: string, context: WebhookContext) {
+	switch (event) {
+		case "push":
+			context.log.info("push event Received!");
+			break;
+		case "pull_request":
+			context.log.info("pull req event Received!");
+			break;
+		case "pull_request.opened":
+			context.log.info("pull req opened event Received!");
+			break;
+	}
+}
+
+function createHash(data: BinaryLike, secret: string): string {
+	return `sha256=${createHmac("sha256", secret)
+		.update(data)
+		.digest("hex")}`;
+}
