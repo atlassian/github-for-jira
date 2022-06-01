@@ -408,6 +408,11 @@
   max-width: 332px;
 }
 
+.learn-more-link {
+  display: inline-block;
+  margin-right: 12px;
+}
+
 /*  NOTE: We can't use standard breakpoints on GitHub config page
 as the left panel navigation in Jira hijacks some of the screen */
 /* ******************* */

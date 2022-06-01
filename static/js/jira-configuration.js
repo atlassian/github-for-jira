@@ -22,6 +22,12 @@ $(".add-organization-link").click(function(event) {
 	});
 });
 
+
+$(".learn-more-link").click(function(event) {
+	event.preventDefault();
+	window.open("https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/");
+});
+
 $(".configure-connection-link").click(function(event) {
 	event.preventDefault();
 	openChildWindow($(event.target).data("installation-link"));
