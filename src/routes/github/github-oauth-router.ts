@@ -37,7 +37,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
 	const gitHubHostname = await getGitHubHostname(jiraHost);
 	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
-	req.log.info("redirectUrl:", redirectUrl)
+	req.log.info("redirectUrl:", redirectUrl);
 
 	req.log.info({
 		redirectUrl,

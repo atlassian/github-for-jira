@@ -40,7 +40,7 @@ export const issueCommentWebhookHandler = async (
 		owner,
 		repo: repoName,
 		comment_id: comment.id
-	}
+	};
 
 	const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssueComment(updatedIssueComment);
 	const { webhookReceived, name, log } = context;

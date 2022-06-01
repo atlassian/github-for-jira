@@ -311,7 +311,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,
-				Authorization: `Bearer ${installationToken.token}`,
+				Authorization: `Bearer ${installationToken.token}`
 			}
 		};
 	}

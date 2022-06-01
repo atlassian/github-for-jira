@@ -40,12 +40,12 @@ const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHub
 		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, logger);
 	});
 
-	const transformedDeployments = await Promise.all(transformTasks);	
+	const transformedDeployments = await Promise.all(transformTasks);
 	return transformedDeployments
 		.filter(deployment => !!deployment)
 		.map(deployment => deployment.deployments)
 		.flat();
-}
+};
 
 export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 
@@ -59,7 +59,7 @@ export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHu
 		};
 	}
 	const transformedDeployments = await getTransformedDeployments(deployments, _github, gitHubInstallationClient, jiraHost, logger);
-	
+
 	logger.info("Syncing Deployments: finished");
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;
