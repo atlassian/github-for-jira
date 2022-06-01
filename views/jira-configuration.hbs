@@ -155,17 +155,18 @@
                       </span>
                       {{/if}}
 
-                      <a
-                        href="{{html_url}}"
-                        data-installation-link="{{html_url}}"
-                        target="_blank"
+                     
+                      <button
+                        class="open-link-btn aui-button aui-button-subtle"
+                        data-btn-url="{{html_url}}"
+                        data-target="_blank"
                       >
                         <span
                           class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit"
                         >
                           Edit
                         </span>
-                      </a>
+                      </button>
                     </td>
 
                     {{! Backfill status }}
@@ -310,7 +311,7 @@
             >
               Learn more 
               <span
-                class="jiraConfiguration__table__edit aui-icon aui-iconfont-shortcut"
+                class="aui-icon aui-iconfont-shortcut"
               >
                 Shortcut
               </span>

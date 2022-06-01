@@ -52,6 +52,11 @@ $(".delete-connection-link").click(function(event) {
 	});
 });
 
+$(".open-link-btn").click(function(event) {
+	event.preventDefault();
+	window.open($(event.target).data("btn-url"), $(event.target).data("target") || '_self');
+});
+
 $(".sync-connection-link").click(function(event) {
 	event.preventDefault();
 	const installationId = $(event.target).data("installation-id");
