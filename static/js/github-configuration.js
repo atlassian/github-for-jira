@@ -67,3 +67,8 @@ $(".sync-connection-link").click(function (event) {
 		},
 	});
 });
+
+$(".install-btn").click(function(event) {
+	event.preventDefault();
+	window.location.href = $(event.target).data("installation-url");
+});

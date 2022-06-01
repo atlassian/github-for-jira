@@ -241,6 +241,11 @@
     text-decoration: none;
 }
 
+.no-organization-in-github {
+    width: 80%;
+    margin: 0 auto 18px;
+}
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);

@@ -182,14 +182,19 @@
           <p class="gitHubConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
         {{/unless}}
       </div>
-
-      <a
-        class="gitHubConfiguration__connectNewOrg"
-        href="{{info.html_url}}/installations/new"
-      >
-        <span class="gitHubConfiguration__connectNewOrg__plus">+</span>Install GitHub for Jira on a new organization
-      </a>
     </div>
+  </div>
+
+  <div class="text-center">
+    <div class="no-organization-in-github">
+      Don't see your Github organization? Install 'GitHub for Jira' on your Github organization to connect them to your Atlassian site.
+    </div>
+    <button
+      class="install-btn aui-button aui-button-{{#if installations}}default{{else}}primary{{/if}}"
+      data-installation-url="{{info.html_url}}/installations/new"
+    >
+      Install GitHub for Jira on a new organization
+    </button>
   </div>
 
 </section>
