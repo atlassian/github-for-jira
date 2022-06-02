@@ -9,4 +9,4 @@ export const GithubAPI = (options: Partial<Options> = {}): GitHubAPI => {
 		enabled: false
 	};
 	return enhanceOctokit(GitHubAPI(options as Options));
-}
+};
