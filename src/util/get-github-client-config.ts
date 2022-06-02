@@ -5,12 +5,12 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { getCloudInstallationId } from "../github/client/installation-id";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubUserClient } from "../github/client/github-user-client";
-import Logger from "bunyan"
+import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
 
 export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
-export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json"
+export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
 
 export interface GitHubClientConfig {
 	hostname: string;
@@ -39,8 +39,8 @@ const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConf
 		: {
 			hostname: GITHUB_CLOUD_HOSTNAME,
 			baseUrl: GITHUB_CLOUD_API_BASEURL
-		}
-}
+		};
+};
 
 export async function getGitHubHostname(jiraHost: string) {
 	const gitHubClientConfig = await getGitHubClientConfig(jiraHost);

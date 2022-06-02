@@ -12,6 +12,6 @@ expect.extend({
 		const pass = actual == expectedDelaySec;
 		const message = () => `Expected parameter to have DelaySeconds = ${expectedDelaySec} ${pass ? "" : `but was ${actual}`}`;
 
-		return {message, pass};
-	},
+		return { message, pass };
+	}
 });

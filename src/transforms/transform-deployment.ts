@@ -1,4 +1,4 @@
-import {JiraAssociation, JiraDeploymentData} from "interfaces/jira";
+import { JiraAssociation, JiraDeploymentData } from "interfaces/jira";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
@@ -39,7 +39,7 @@ const getLastSuccessfulDeployCommitSha = async(
 
 	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 100) then we'll return the last one from the array, even if it's a failed one.
 	return deployments[deployments.length - 1].sha;
-}
+};
 
 const getCommitsSinceLastSuccessfulDeployment = async(
 	owner: string,
@@ -78,7 +78,7 @@ const getCommitsSinceLastSuccessfulDeployment = async(
 		githubInstallationClient,
 		logger
 	);
-}
+};
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
 // https://docs.github.com/en/rest/reference/repos#list-deployments
@@ -102,7 +102,7 @@ const mapState = (state: string | undefined): string => {
 		default:
 			return "unknown";
 	}
-}
+};
 
 // We need to map the environment of a GitHub deployment back to a valid deployment environment in Jira.
 // https://docs.github.com/en/actions/reference/environments
@@ -137,7 +137,7 @@ export const mapEnvironment = (environment: string): string => {
 	}
 
 	return jiraEnv;
-}
+};
 
 // Maps commit summaries to an array of a single association containing the commit keys (commit hash and repository id).
 // Returns undefined when there are no commit summaries to map.
@@ -164,7 +164,7 @@ const mapCommitSummariesToAssociationArray = (
 			values: commitKeys
 		}
 	];
-}
+};
 
 export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;

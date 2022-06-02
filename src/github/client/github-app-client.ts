@@ -25,7 +25,7 @@ export class GitHubAppClient extends GitHubClient {
 	constructor(
 		logger?: Logger,
 		baseUrl?: string,
-		appId = envVars.APP_ID,
+		appId = envVars.APP_ID
 	) {
 		super(logger, baseUrl);
 		// TODO - change this for GHE, to get from github apps table

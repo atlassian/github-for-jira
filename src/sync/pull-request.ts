@@ -64,7 +64,7 @@ export const getPullRequestTask = async (
 				state: PullRequestState.ALL,
 				sort: PullRequestSort.CREATED,
 				direction: SortDirection.DES
-			})
+			});
 
 	statsd.timing(metricHttpRequest.syncPullRequest, Date.now() - startTime, 1, [`status:${status}`]);
 
@@ -79,7 +79,7 @@ export const getPullRequestTask = async (
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
-				const prResponse = await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)
+				const prResponse = await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 				const ghUser = await getGithubUser(newGithub, prDetails?.user.login
 				);
@@ -108,4 +108,4 @@ export const getPullRequestTask = async (
 				}
 				: undefined
 	};
-}
+};

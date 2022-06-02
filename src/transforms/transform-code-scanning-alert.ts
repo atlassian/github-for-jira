@@ -1,6 +1,6 @@
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import {Context} from "probot/lib/context";
-import {JiraRemoteLinkData, JiraRemoteLinkStatusAppearance} from "interfaces/jira";
+import { Context } from "probot/lib/context";
+import { JiraRemoteLinkData, JiraRemoteLinkStatusAppearance } from "interfaces/jira";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { GitHubAPI } from "probot";
@@ -25,11 +25,11 @@ const getPullRequestTitle = async (repoName: string, prId: number, repoOwner: st
 	} else {
 		return response.data.title;
 	}
-}
+};
 
 const getEntityTitle = async (ref: string, repoName: string, repoOwner: string, githubClient: GitHubInstallationClient | GitHubAPI, logger: LoggerWithTarget): Promise<string> => {
 	// ref can either be a branch reference or a PR reference
-	const components = ref.split("/")
+	const components = ref.split("/");
 	switch (components[1]) {
 		case "heads": // branch
 			// The branch name may contain forward slashes! Rejoin them
@@ -40,7 +40,7 @@ const getEntityTitle = async (ref: string, repoName: string, repoOwner: string, 
 			logger.error(`Could not interpret reference from code_scanning_alert: ${ref}`);
 			return "";
 	}
-}
+};
 
 // Status can be one of three things from the code_scanning_alert webhook: open, fixed, or dismissed
 const transformStatusToAppearance = (status: string, context: Context): JiraRemoteLinkStatusAppearance => {
@@ -55,10 +55,10 @@ const transformStatusToAppearance = (status: string, context: Context): JiraRemo
 			context.log.info(`Received unknown status from code_scanning_alert webhook: ${status}`);
 			return "default";
 	}
-}
+};
 
 export const transformCodeScanningAlert = async (context: Context, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkData | undefined> => {
-	const {action, alert, ref, repository} = context.payload;
+	const { action, alert, ref, repository } = context.payload;
 
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log);
 	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE, false, jiraHost) ?
