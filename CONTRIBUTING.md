@@ -28,8 +28,11 @@ Create a new [free developer instance](https://developer.atlassian.com/platform/
 
 Create a new [GitHub App](https://github.com/settings/apps), setting the following config:
 
-- **GitHub App name**: Anything you want, but it must be unique across GitHub.
-- **Homepage URL**: `https://github.com/apps/**GitHub App name**`
+- **Domain**: The URL for the local domain obtained after tunneling.
+    - If the tunnel is created from `atlas`, then it would be something like `https://__MYDOMAIN__.public.atlastunnel.com`
+    - But if the tunnel is created from `ngrok`, then `https://XXXX-XXX-XXX-XXX-xX.ngrok.io`.
+- **GitHub App name**: Anything you want, but it must be unique across GitHub
+- **Homepage URL**: `https://github.com/apps/GITHUB_APP_NAME` (The full URL to your GitHub App’s website)
 - **Callback URL**: `https://DOMAIN/github/callback`
 - **Setup URL**: `https://DOMAIN/github/setup`
 - **Webhook URL**: `https://DOMAIN/github/events`
