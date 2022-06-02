@@ -6,8 +6,11 @@ import { when } from "jest-when";
 import { Request, Response } from "express";
 import Mock = jest.Mock;
 import { getLogger } from "config/logger";
+import { booleanFlag as mockBooleanFlag } from "../../config/feature-flags";
 
 jest.mock("./query-atlassian-connect-public-key");
+
+jest.mock("../../config/feature-flags");
 
 describe("jwt", () => {
 	let testQueryParams: Record<string, string>;
@@ -91,6 +94,8 @@ describe("jwt", () => {
 			},
 			log: getLogger("jwt.test")
 		} as any;
+
+		(mockBooleanFlag as any).mockReturnValue(Promise.resolve(true));
 	});
 
 	describe("#verifySymmetricJwtTokenMiddleware", () => {
@@ -254,13 +259,13 @@ describe("jwt", () => {
 			});
 
 			it("Token in headers has priority over token in cookies", async () => {
-				const req = buildRequestWithTokenInCookie();
-				req.headers = {
-					authorization: `JWT boom`
+				const req = buildRequestWithTokenInHeader();
+				req.cookies = {
+					jwt: "JWT boom"
 				};
 				verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next);
-				expect(res.status).toHaveBeenCalledWith(401);
-				expect(next).toBeCalledTimes(0);
+				expect(res.status).not.toBeCalled();
+				expect(next).toBeCalledTimes(1);
 			});
 
 			it("Fails if there is no token", async () => {
