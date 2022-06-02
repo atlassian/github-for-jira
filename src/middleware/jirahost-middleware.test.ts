@@ -8,7 +8,7 @@ jest.mock("middleware/jira-jwt-middleware");
 const mockVerifyJiraJwtMiddleware = (verifyJiraJwtMiddleware as any) as jest.Mock<typeof verifyJiraJwtMiddleware>;
 
 const LEGIT_JIRA_HOST = "https://legit-jira-host.atlassian.net";
-const TEST_JWT_TOKEN = 'TO_BE_DETERMINED';
+const TEST_JWT_TOKEN = "TO_BE_DETERMINED";
 
 describe("jirahostMiddleware", () => {
 
@@ -19,13 +19,13 @@ describe("jirahostMiddleware", () => {
 		req = getReq();
 		res = getRes();
 		next = jest.fn();
-		mockJwtVerificationFn = jest.fn().mockImplementation((_, __, next) => next());
+		mockJwtVerificationFn = jest.fn().mockImplementation((_, __, n) => n());
 		mockVerifyJiraJwtMiddleware.mockReturnValue(mockJwtVerificationFn);
 	});
 
-	describe('jiraHost is provided in session', ()=>{
+	describe("jiraHost is provided in session", ()=>{
 
-		it('should extract jiraHost from session when provided', ()=>{
+		it("should extract jiraHost from session when provided", ()=>{
 
 			req.session.jiraHost = LEGIT_JIRA_HOST;
 
@@ -35,7 +35,7 @@ describe("jirahostMiddleware", () => {
 			expect(next).toBeCalled();
 		});
 
-		it('cookie should have priority', () => {
+		it("cookie should have priority", () => {
 
 			req.cookies.jiraHost = LEGIT_JIRA_HOST;
 			req.session.jiraHost = LEGIT_JIRA_HOST + "boo";
@@ -46,7 +46,7 @@ describe("jirahostMiddleware", () => {
 			expect(next).toBeCalled();
 		});
 
-		it('xdm_e should have priority', () => {
+		it("xdm_e should have priority", () => {
 
 			configureLegitJiraReq(req);
 			req.session.jiraHost = LEGIT_JIRA_HOST + "boo";
@@ -57,7 +57,7 @@ describe("jirahostMiddleware", () => {
 			expect(next).toBeCalled();
 		});
 
-		it('payload should have priority', () => {
+		it("payload should have priority", () => {
 
 			configureLegitFrontendReq(req);
 			req.session.jiraHost = LEGIT_JIRA_HOST + "boo";
@@ -87,7 +87,9 @@ describe("jirahostMiddleware", () => {
 
 		it("should not call next() when invalid", () => {
 
-			mockJwtVerificationFn.mockImplementation(() => {});
+			mockJwtVerificationFn.mockImplementation(() => {
+				//dothing
+			});
 
 			jirahostMiddleware(req, res, next);
 
@@ -124,7 +126,9 @@ describe("jirahostMiddleware", () => {
 
 		it("should not call next() when not valid", ()=>{
 
-			mockJwtVerificationFn.mockImplementation(() => {});
+			mockJwtVerificationFn.mockImplementation(() => {
+				//donothing
+			});
 
 			jirahostMiddleware(req, res, next);
 
@@ -144,11 +148,11 @@ describe("jirahostMiddleware", () => {
 
 	});
 
-	describe('jiraHost is provided by cookie as temporary method', () => {
+	describe("jiraHost is provided by cookie as temporary method", () => {
 
 		beforeEach(() => {
-			req.path = '/whatever';
-			req.method = 'GET';
+			req.path = "/whatever";
+			req.method = "GET";
 			req.cookies.jiraHost = LEGIT_JIRA_HOST;
 			req.cookies.jwt = TEST_JWT_TOKEN;
 		});
@@ -167,13 +171,15 @@ describe("jirahostMiddleware", () => {
 
 			jirahostMiddleware(req, res, next);
 
-			expect(res.clearCookie).toBeCalledWith('jiraHost');
-			expect(res.clearCookie).toBeCalledWith('jwt');
+			expect(res.clearCookie).toBeCalledWith("jiraHost");
+			expect(res.clearCookie).toBeCalledWith("jwt");
 		});
 
 		it ("should not be saved in session and call next() when not valid",  () => {
 
-			mockJwtVerificationFn.mockImplementation(() => {});
+			mockJwtVerificationFn.mockImplementation(() => {
+				//donothing
+			});
 
 			jirahostMiddleware(req, res, next);
 
@@ -218,8 +224,8 @@ describe("jirahostMiddleware", () => {
 
 			jirahostMiddleware(req, res, next);
 
-			expect(res.clearCookie).toBeCalledWith('jiraHost');
-			expect(res.clearCookie).toBeCalledWith('jwt');
+			expect(res.clearCookie).toBeCalledWith("jiraHost");
+			expect(res.clearCookie).toBeCalledWith("jwt");
 		});
 
 	});
