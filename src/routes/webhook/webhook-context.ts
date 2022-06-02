@@ -23,6 +23,6 @@ export class WebhookContext {
 		return {
 			owner: repo.owner.login,
 			repo: repo.name
-		}
+		};
 	}
 }
