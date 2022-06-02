@@ -422,7 +422,11 @@
 
 .learn-more-link {
   display: inline-block;
-  margin-right: 12px;
+  margin-right: 4px;
+}
+
+.learn-more-link:hover {
+  color: inherit;
 }
 
 /*  NOTE: We can't use standard breakpoints on GitHub config page
