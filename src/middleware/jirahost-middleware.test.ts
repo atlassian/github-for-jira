@@ -107,6 +107,13 @@ describe("jirahostMiddleware", () => {
 			expect(next).toBeCalled();
 		});
 
+		it("should use \"normal\" JWT token type", () => {
+
+			jirahostMiddleware(req, res, next);
+
+			expect(mockVerifyJiraJwtMiddleware).toBeCalledWith(TokenType.normal);
+		});
+
 	});
 
 	describe("jiraHost is provided by frontend in payload", () => {
@@ -144,6 +151,13 @@ describe("jirahostMiddleware", () => {
 			expect(res.locals.jiraHost).toBeUndefined();
 			expect(mockJwtVerificationFn).not.toBeCalled();
 			expect(next).toBeCalled();
+		});
+
+		it("should use \"context\" JWT token type", () => {
+
+			jirahostMiddleware(req, res, next);
+
+			expect(mockVerifyJiraJwtMiddleware).toBeCalledWith(TokenType.context);
 		});
 
 	});
@@ -226,6 +240,13 @@ describe("jirahostMiddleware", () => {
 
 			expect(res.clearCookie).toBeCalledWith("jiraHost");
 			expect(res.clearCookie).toBeCalledWith("jwt");
+		});
+
+		it("should use \"context\" JWT token type", () => {
+
+			jirahostMiddleware(req, res, next);
+
+			expect(mockVerifyJiraJwtMiddleware).toBeCalledWith(TokenType.context);
 		});
 
 	});
