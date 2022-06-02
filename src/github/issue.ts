@@ -37,7 +37,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		owner,
 		repo: repoName,
 		issue_number: issue.number
-	}
+	};
 
 	const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssue(updatedIssue);
 	const { webhookReceived, name, log } = context;

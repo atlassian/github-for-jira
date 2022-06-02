@@ -26,7 +26,7 @@ const responseSerializer = (res: AxiosResponse) => ({
 	...stdSerializers.res(res),
 	config: JSON.parse(util.inspect(res?.config)), // removes circular dependency in json
 	request: requestSerializer(res.request)
-})
+});
 
 const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 	method: req.method,

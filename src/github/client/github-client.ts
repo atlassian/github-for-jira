@@ -12,7 +12,7 @@ export class GitHubClient {
 
 	constructor (
 		logger: Logger = getLogger("gitHub-client"),
-		baseUrl?: string,
+		baseUrl?: string
 	) {
 		this.logger = logger;
 

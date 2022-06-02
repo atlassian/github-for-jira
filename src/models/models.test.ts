@@ -1,4 +1,4 @@
-import { Installation} from "./installation";
+import { Installation } from "./installation";
 import { Subscription } from "./subscription";
 import { getHashedKey } from "./sequelize";
 
