@@ -10,7 +10,7 @@ export class WebhookContext {
 		this.id = id;
 		this.name = name;
 		this.payload = payload;
-		this.log = log
+		this.log = log;
 	}
 
 	repo() {
@@ -22,8 +22,7 @@ export class WebhookContext {
 		}
 		return {
 			owner: repo.owner.login,
-			repo: repo.name,
+			repo: repo.name
 		}
-
 	}
 }
