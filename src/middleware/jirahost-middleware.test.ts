@@ -1,16 +1,20 @@
-import {NextFunction, Request, Response} from "express";
-import {jirahostMiddleware} from "./jirahost-middleware";
-import {verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
-import {postInstallUrl} from "routes/jira/jira-atlassian-connect-get";
-import {TokenType} from "~/src/jira/util/jwt";
+import { NextFunction, Request, Response } from "express";
+import { jirahostMiddleware } from "./jirahost-middleware";
+import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
+import { postInstallUrl } from "routes/jira/jira-atlassian-connect-get";
+import { TokenType } from "~/src/jira/util/jwt";
+import { booleanFlag } from "../config/feature-flags";
 
 jest.mock("middleware/jira-jwt-middleware");
 const mockVerifyJiraJwtMiddleware = (verifyJiraJwtMiddleware as any) as jest.Mock<typeof verifyJiraJwtMiddleware>;
 
+jest.mock("../config/feature-flags");
+const mockBooleanFlag = (booleanFlag as any) as jest.Mock<typeof booleanFlag>;
+
 const LEGIT_JIRA_HOST = "https://legit-jira-host.atlassian.net";
 const TEST_JWT_TOKEN = "TO_BE_DETERMINED";
 
-describe("jirahostMiddleware", () => {
+describe("await jirahostMiddleware", () => {
 
 	let req: Request, res: Response, next: NextFunction;
 	let mockJwtVerificationFn: jest.Mock;
@@ -21,48 +25,49 @@ describe("jirahostMiddleware", () => {
 		next = jest.fn();
 		mockJwtVerificationFn = jest.fn().mockImplementation((_, __, n) => n());
 		mockVerifyJiraJwtMiddleware.mockReturnValue(mockJwtVerificationFn);
+		mockBooleanFlag.mockReturnValue(async () => true);
 	});
 
 	describe("jiraHost is provided in session", ()=>{
 
-		it("should extract jiraHost from session when provided", ()=>{
+		it("should extract jiraHost from session when provided", async ()=>{
 
 			req.session.jiraHost = LEGIT_JIRA_HOST;
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
 			expect(next).toBeCalled();
 		});
 
-		it("cookie should have priority", () => {
+		it("cookie should have priority", async () => {
 
 			req.cookies.jiraHost = LEGIT_JIRA_HOST;
 			req.session.jiraHost = LEGIT_JIRA_HOST + "boo";
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
 			expect(next).toBeCalled();
 		});
 
-		it("xdm_e should have priority", () => {
+		it("xdm_e should have priority", async () => {
 
 			configureLegitJiraReq(req);
 			req.session.jiraHost = LEGIT_JIRA_HOST + "boo";
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
 			expect(next).toBeCalled();
 		});
 
-		it("payload should have priority", () => {
+		it("payload should have priority", async () => {
 
 			configureLegitFrontendReq(req);
 			req.session.jiraHost = LEGIT_JIRA_HOST + "boo";
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
 			expect(next).toBeCalled();
@@ -76,40 +81,40 @@ describe("jirahostMiddleware", () => {
 			configureLegitJiraReq(req);
 		});
 
-		it("should extract jiraHost correctly from xdm_e query and call next()", () => {
+		it("should extract jiraHost correctly from xdm_e query and call next()", async () => {
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
 			expect(mockVerifyJiraJwtMiddleware).toBeCalledWith(TokenType.normal);
 			expect(next).toBeCalled();
 		});
 
-		it("should not call next() when invalid", () => {
+		it("should not call next() when invalid", async () => {
 
 			mockJwtVerificationFn.mockImplementation(() => {
 				//dothing
 			});
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(next).not.toBeCalled();
 		});
 
-		it("should not be validated and used with wrong URL", () => {
+		it("should not be validated and used with wrong URL", async () => {
 
 			req.path = "/blah";
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBeUndefined();
 			expect(mockJwtVerificationFn).not.toBeCalled();
 			expect(next).toBeCalled();
 		});
 
-		it("should use \"normal\" JWT token type", () => {
+		it("should use \"normal\" JWT token type", async () => {
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(mockVerifyJiraJwtMiddleware).toBeCalledWith(TokenType.normal);
 		});
@@ -122,40 +127,40 @@ describe("jirahostMiddleware", () => {
 			configureLegitFrontendReq(req);
 		});
 
-		it("should extract jiraHost correctly from request body", ()=>{
+		it("should extract jiraHost correctly from request body", async ()=>{
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
 			expect(mockVerifyJiraJwtMiddleware).toBeCalledWith(TokenType.context);
 			expect(next).toBeCalled();
 		});
 
-		it("should not call next() when not valid", ()=>{
+		it("should not call next() when not valid", async ()=>{
 
 			mockJwtVerificationFn.mockImplementation(() => {
 				//donothing
 			});
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(next).not.toBeCalled();
 		});
 
-		it("should not be validated and used when wrong URL", ()=>{
+		it("should not be validated and used when wrong URL", async ()=>{
 
 			req.path = "/blah";
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBeUndefined();
 			expect(mockJwtVerificationFn).not.toBeCalled();
 			expect(next).toBeCalled();
 		});
 
-		it("should use \"context\" JWT token type", () => {
+		it("should use \"context\" JWT token type", async () => {
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(mockVerifyJiraJwtMiddleware).toBeCalledWith(TokenType.context);
 		});
@@ -171,9 +176,9 @@ describe("jirahostMiddleware", () => {
 			req.cookies.jwt = TEST_JWT_TOKEN;
 		});
 
-		it("should extract jiraHost correctly from cookie, validate it and save to session", () => {
+		it("should extract jiraHost correctly from cookie, validate it and save to session", async () => {
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
 			expect(mockVerifyJiraJwtMiddleware).toBeCalledWith(TokenType.context);
@@ -181,70 +186,70 @@ describe("jirahostMiddleware", () => {
 			expect(next).toBeCalled();
 		});
 
-		it ("should be deleted from the cookies together with JWT token",  () => {
+		it ("should be deleted from the cookies together with JWT token",  async () => {
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.clearCookie).toBeCalledWith("jiraHost");
 			expect(res.clearCookie).toBeCalledWith("jwt");
 		});
 
-		it ("should not be saved in session and call next() when not valid",  () => {
+		it ("should not be saved in session and call next() when not valid",  async () => {
 
 			mockJwtVerificationFn.mockImplementation(() => {
 				//donothing
 			});
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(req.session.jiraHost).toBeUndefined();
 			expect(next).not.toBeCalled();
 		});
 
-		it("xdm_e should have priority", () => {
+		it("xdm_e should have priority", async () => {
 
 			configureLegitJiraReq(req);
 			req.cookies.jiraHost = LEGIT_JIRA_HOST + "boo";
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
 		});
 
-		it("xdm_e should be ignored and cookie is used when wrong URL", () => {
+		it("xdm_e should be ignored and cookie is used when wrong URL", async () => {
 
 			configureLegitJiraReq(req);
 			req.path = "/whatever";
 			req.cookies.jiraHost = LEGIT_JIRA_HOST + "boo";
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST + "boo");
 		});
 
-		it("POST payload should have priority", () => {
+		it("POST payload should have priority", async () => {
 
 			configureLegitFrontendReq(req);
 			req.cookies.jiraHost = LEGIT_JIRA_HOST + "boo";
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
 		});
 
-		it ("should be deleted from the cookies together with JWT token even when not used",  () => {
+		it ("should be deleted from the cookies together with JWT token even when not used",  async () => {
 
 			configureLegitFrontendReq(req);
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(res.clearCookie).toBeCalledWith("jiraHost");
 			expect(res.clearCookie).toBeCalledWith("jwt");
 		});
 
-		it("should use \"context\" JWT token type", () => {
+		it("should use \"context\" JWT token type", async () => {
 
-			jirahostMiddleware(req, res, next);
+			await jirahostMiddleware(req, res, next);
 
 			expect(mockVerifyJiraJwtMiddleware).toBeCalledWith(TokenType.context);
 		});
@@ -274,7 +279,7 @@ function getRes(): Response {
 function configureLegitJiraReq(req: Request) {
 	req.path = postInstallUrl;
 	req.method = "GET",
-	req.query = { xdm_e: LEGIT_JIRA_HOST }
+	req.query = { xdm_e: LEGIT_JIRA_HOST };
 	req.body = {};
 }
 
@@ -282,5 +287,5 @@ function configureLegitFrontendReq(req: Request) {
 	req.path = postInstallUrl;
 	req.method = "POST";
 	req.query = {};
-	req.body = {jiraHost: LEGIT_JIRA_HOST}
+	req.body = { jiraHost: LEGIT_JIRA_HOST };
 }

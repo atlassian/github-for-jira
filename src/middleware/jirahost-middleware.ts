@@ -1,8 +1,9 @@
 // setup route middlewares
-import {NextFunction, Request, Response} from "express";
-import {verifyJiraJwtMiddleware} from "middleware/jira-jwt-middleware";
-import {TokenType} from "~/src/jira/util/jwt";
-import {postInstallUrl} from "routes/jira/jira-atlassian-connect-get";
+import { NextFunction, Request, Response } from "express";
+import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
+import { TokenType } from "~/src/jira/util/jwt";
+import { postInstallUrl } from "routes/jira/jira-atlassian-connect-get";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
 
 
 const extractUnsafeJiraHost = (req: Request): string | null => {
@@ -16,14 +17,14 @@ const extractUnsafeJiraHost = (req: Request): string | null => {
 		return req.cookies.jiraHost;
 	}
 	return null;
-}
+};
 
 const detectJwtTokenType = (req: Request): TokenType => {
 	if (req.query.xdm_e) {
 		return TokenType.normal;
 	}
 	return TokenType.context;
-}
+};
 
 //
 // Updates res.locals.jiraHost based on values in the request if JWT validation is OK.
@@ -33,8 +34,15 @@ const detectJwtTokenType = (req: Request): TokenType => {
 //    fetched and JWT validation will fail.
 //
 //
-export const jirahostMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const jirahostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+
+	const isSecureJiraHostInCookies = await booleanFlag(BooleanFlags.SECURE_JIRAHOST_IN_COOKIES, false);
+	if (!isSecureJiraHostInCookies) {
+		return oldJirahostMiddleware(req, res, next);
+	}
+
 	const unsafeJiraHost = extractUnsafeJiraHost(req);
+
 
 	req.addLogFields({ jiraHost: unsafeJiraHost });
 
@@ -63,45 +71,30 @@ export const jirahostMiddleware = (req: Request, res: Response, next: NextFuncti
 		res.locals.jiraHost = req.session.jiraHost;
 		next();
 	}
+};
 
-	//
-	//
-	// let jwtTokenType: (TokenType | null) = TokenType.context;
-	// let fromCookies = false;
-	//
-	// if (req.path == postInstallUrl && req.method == "GET") {
-	// 	// Only save xdm_e query when on the GET post install url (iframe url)
-	// 	res.locals.jiraHost = req.query.xdm_e as string;
-	// 	jwtTokenType = TokenType.normal;
-	// } else if ((req.path == postInstallUrl && req.method != "GET") || req.path == "/jira/sync") {
-	// 	// Only save the jiraHost from the body for specific routes that use it
-	// 	res.locals.jiraHost = req.body?.jiraHost;
-	// } else if (req.cookies.jiraHost) {
-	// 	res.locals.jiraHost = req.cookies.jiraHost;
-	// 	// JWT validation makes sure "res.locals.jiraHost" is legit, not the cookie value. To avoid
-	// 	// any temptation to use it later, let's remove it straight away!
-	// 	res.clearCookie("jiraHost");
-	// 	fromCookies = true;
-	// } else {
-	// 	res.locals.jiraHost = req.session.jiraHost;
-	// 	jwtTokenType = null;
-	// }
-	//
-	// req.addLogFields({ jiraHost: res.locals.jiraHost });
-	//
-	// if (jwtTokenType) {
-	// 	verifyJiraJwtMiddleware(jwtTokenType)(req, res, () => {
-	// 		// Cannot hold and rely on cookies because the issued context JWTs are short-lived
-	// 		// (enough to validate once but not enough for long-running routines)
-	// 		if (fromCookies) {
-	// 			req.session.jiraHost = res.locals.jiraHost;
-	// 		}
-	// 		// Cleaning up outside of "if" to unblock cookies if they were corrupted somehow
-	// 		// on any other successful validation (e.g. when /jira/configuration is refreshed)
-	// 		res.clearCookie("jwt");
-	// 		next();
-	// 	});
-	// } else {
-	// 	next();
-	// }
+const oldJirahostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+
+	if (req.cookies.jiraHost) {
+		// Save jirahost to secure session
+		req.session.jiraHost = req.cookies.jiraHost;
+		// delete jirahost from cookies.
+		res.clearCookie("jiraHost");
+	}
+
+	if (req.path == postInstallUrl && req.method == "GET") {
+		// Only save xdm_e query when on the GET post install url (iframe url)
+		res.locals.jiraHost = req.query.xdm_e as string;
+	} else if ((req.path == postInstallUrl && req.method != "GET") || req.path == "/jira/sync") {
+		// Only save the jiraHost from the body for specific routes that use it
+		res.locals.jiraHost = req.body?.jiraHost;
+	} else {
+		// Save jiraHost from session for any other URLs
+		res.locals.jiraHost = req.session.jiraHost;
+	}
+
+	req.addLogFields({ jiraHost: res.locals.jiraHost });
+
+	next();
+
 };

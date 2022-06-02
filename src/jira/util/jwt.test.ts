@@ -257,7 +257,7 @@ describe("jwt", () => {
 				const req = buildRequestWithTokenInCookie();
 				req.headers = {
 					authorization: `JWT boom`
-				}
+				};
 				verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next);
 				expect(res.status).toHaveBeenCalledWith(401);
 				expect(next).toBeCalledTimes(0);
