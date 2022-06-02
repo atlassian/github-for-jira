@@ -49,6 +49,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 		response.sendStatus(204);
 
 	} catch (error) {
+		response.sendStatus(500);
 		logger.error(error);
 	}
 };
@@ -64,6 +65,8 @@ function invokeEventHandler(event: string, context: WebhookContext) {
 		case "pull_request.opened":
 			context.log.info("pull req opened event Received!");
 			break;
+		default:
+			throw new Error(`Event '${event}' not supported `);
 	}
 }
 
