@@ -28,7 +28,7 @@ export enum TokenType {
 	context = "context"
 }
 
-export function extractJwtFromRequest(req: Request): string | undefined {
+function extractJwtFromRequest(req: Request): string | undefined {
 	const tokenInQuery = req.query?.[JWT_PARAM];
 	const tokenInBody = req.body?.[JWT_PARAM];
 	if (tokenInQuery && tokenInBody) {

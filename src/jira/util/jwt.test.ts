@@ -65,9 +65,12 @@ describe("jwt", () => {
 		// we know exactly how express is going to behave
 		res = {
 			locals: {},
-			status: jest.fn().mockReturnValue(res),
-			json: jest.fn().mockReturnValue(res)
+			status: jest.fn(),
+			json: jest.fn()
 		} as any;
+
+		(res.status as Mock).mockReturnValue(res);
+		(res.json as Mock).mockReturnValue(res);
 
 		// TODO: need to remove all references to 'kabakumov' in this file, just use jiraHost instead
 		testQueryParams = {
@@ -219,11 +222,45 @@ describe("jwt", () => {
 				};
 			};
 
+			const buildRequestWithTokenInCookie = (): any => {
+				const jwtValue = encodeSymmetric({
+					qsh: "context-qsh",
+					iss: "jira"
+				}, testSecret);
+
+				return {
+					...baseRequest,
+					query: testQueryParams,
+					method: "POST",
+					headers: {},
+					cookies: {
+						jwt: jwtValue
+					}
+				};
+			};
+
 			it("Passes if token is in header", async () => {
 				const req = buildRequestWithTokenInHeader();
 				verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next);
 				expect(res.status).toHaveBeenCalledTimes(0);
 				expect(next).toBeCalledTimes(1);
+			});
+
+			it("Passes if token is in cookies", async () => {
+				const req = buildRequestWithTokenInCookie();
+				verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next);
+				expect(res.status).toHaveBeenCalledTimes(0);
+				expect(next).toBeCalledTimes(1);
+			});
+
+			it("Token in headers has priority over token in cookies", async () => {
+				const req = buildRequestWithTokenInCookie();
+				req.headers = {
+					authorization: `JWT boom`
+				}
+				verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next);
+				expect(res.status).toHaveBeenCalledWith(401);
+				expect(next).toBeCalledTimes(0);
 			});
 
 			it("Fails if there is no token", async () => {
