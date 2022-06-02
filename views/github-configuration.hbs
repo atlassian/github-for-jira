@@ -189,12 +189,13 @@
     <div class="no-organization-in-github">
       Don't see your Github organization? Install 'GitHub for Jira' on your Github organization to connect them to your Atlassian site.
     </div>
-    <button
-      class="open-link-btn aui-button aui-button-{{#if installations}}default{{else}}primary{{/if}}"
-      data-btn-url="{{info.html_url}}/installations/new"
+    <a
+      class="aui-button aui-button-{{#if installations}}default{{else}}primary{{/if}}"
+      href="{{info.html_url}}/installations/new"
+      target="_self"
     >
       Install GitHub for Jira on a new organization
-    </button>
+    </a>
   </div>
 
 </section>
