@@ -1,3 +1,4 @@
+import Logger from "bunyan";
 import { BinaryLike, createHmac } from "crypto";
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
@@ -25,7 +26,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 				response.status(400).send("GitHub app not found");
 				return;
 			}
-			webhookSecret = gitHubServerApp?.webhookSecret;
+			webhookSecret = gitHubServerApp.webhookSecret;
 		}
 		const verification = createHash(JSON.stringify(payload), webhookSecret);
 		if (verification != signatureSHA256) {
@@ -37,15 +38,10 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			id: id,
 			name: eventName,
 			payload: payload,
-			log: logger
+			log: logger,
+			action: payload.action
 		});
-
-		const action = "action" in payload ? payload.action : null;
-		if (action) {
-			invokeEventHandler(`${eventName}.${action}`, webhookContext);
-		}
-		invokeEventHandler(eventName, webhookContext);
-
+		webhookRouter(webhookContext);
 		response.sendStatus(204);
 
 	} catch (error) {
@@ -54,19 +50,24 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	}
 };
 
-const invokeEventHandler = (event: string, context: WebhookContext) => {
+const webhookRouter = (context: WebhookContext) => {
+	if (context.action) {
+		invokeHandler(`${context.name}.${context.action}`, context.log);
+	}
+	invokeHandler(`${context.name}`, context.log);
+};
+
+const invokeHandler = (event: string, logger: Logger) => {
 	switch (event) {
 		case "push":
-			context.log.info("push event Received!");
+			logger.info("push event Received!");
 			break;
 		case "pull_request":
-			context.log.info("pull req event Received!");
+			logger.info("pull req event Received!");
 			break;
 		case "pull_request.opened":
-			context.log.info("pull req opened event Received!");
+			logger.info("pull req opened event Received!");
 			break;
-		default:
-			throw new Error(`Event '${event}' not supported `);
 	}
 };
 

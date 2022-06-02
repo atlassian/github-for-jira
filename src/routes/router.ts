@@ -16,8 +16,6 @@ import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient } from "~/src/util/get-github-client-config";
-import { header } from "express-validator";
-import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
 
 export const RootRouter = Router();
 
@@ -55,10 +53,6 @@ RootRouter.use(MaintenanceRouter);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
-
-RootRouter.post("/webhook/event/:uuid",
-	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).not().isEmpty().withMessage("Missing Header"),
-	WebhookReceiverPost);
 
 // On base path, redirect to Github App Marketplace URL
 RootRouter.get("/", async (req: Request, res: Response) => {
