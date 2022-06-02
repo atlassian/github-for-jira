@@ -54,7 +54,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	}
 };
 
-function invokeEventHandler(event: string, context: WebhookContext) {
+const invokeEventHandler = (event: string, context: WebhookContext) => {
 	switch (event) {
 		case "push":
 			context.log.info("push event Received!");
@@ -68,10 +68,10 @@ function invokeEventHandler(event: string, context: WebhookContext) {
 		default:
 			throw new Error(`Event '${event}' not supported `);
 	}
-}
+};
 
-function createHash(data: BinaryLike, secret: string): string {
+const createHash = (data: BinaryLike, secret: string): string => {
 	return `sha256=${createHmac("sha256", secret)
 		.update(data)
 		.digest("hex")}`;
-}
+};
