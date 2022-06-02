@@ -48,7 +48,7 @@ describe("GitHub Client", () => {
 			.matchHeader("Accept", GITHUB_ACCEPT_HEADER)
 			.reply(200, [
 				{ number: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
-			])
+			]);
 	}
 
 	function verifyMetricsSent(path: string, status) {

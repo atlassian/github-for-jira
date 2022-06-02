@@ -15,7 +15,7 @@ export const pushWebhookHandler = async (context: Context, jiraClient): Promise<
 		webhookReceived,
 		repository: context.payload?.repository,
 		commits: context.payload?.commits?.reduce((acc, commit) => {
-			if(hasJiraIssueKey(commit.message)) {
+			if (hasJiraIssueKey(commit.message)) {
 				acc.push(commit);
 			}
 			return acc;

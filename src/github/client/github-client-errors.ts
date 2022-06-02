@@ -91,9 +91,9 @@ export class GithubClientGraphQLError extends GithubClientError {
 const logger = getLogger("github.errors");
 export const isChangedFilesError = (err: GithubClientGraphQLError | GithubClientError): boolean => {
 	const bool = err instanceof GithubClientGraphQLError || !(err instanceof RateLimitingError || err instanceof GithubClientTimeoutError);
-	logger.warn({isChangedFilesError: bool , error: err}, "isChangedFilesError");
+	logger.warn({ isChangedFilesError: bool , error: err }, "isChangedFilesError");
 	return bool;
 	// return !!err?.errors?.find(e => e.message?.includes("changedFiles"));
-}
+};
 
 const ONE_HOUR_IN_SECONDS = 60 * 60;

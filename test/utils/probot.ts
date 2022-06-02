@@ -21,5 +21,5 @@ export const createApplication = () => {
 	});
 	app.auth = jest.fn().mockResolvedValue(GitHubAPI());
 	return app;
-}
+};
 export const createWebhookApp = async (): Promise<Application> => await setupApp(createApplication());
