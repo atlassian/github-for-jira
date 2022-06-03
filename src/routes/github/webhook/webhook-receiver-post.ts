@@ -1,33 +1,25 @@
 import Logger from "bunyan";
 import { BinaryLike, createHmac } from "crypto";
 import { Request, Response } from "express";
-import { validationResult } from "express-validator";
 import { getLogger } from "~/src/config/logger";
 import { GitHubServerApp } from "~/src/models/git-hub-server-app";
 import { WebhookContext } from "./webhook-context";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
-	const errors = validationResult(request);
-	if (!errors.isEmpty()) {
-		response.status(400).json({ errors: errors.array() });
-		return;
-	}
 	const logger = getLogger("webhook.receiver");
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
 	const id = request.headers["x-github-delivery"] as string;
 	const uuid = request.params.uuid;
-	let webhookSecret: string = process.env.WEBHOOK_SECRET!;
 	const payload = request.body;
+	let webhookSecret: string;
 	try {
-		if (uuid != "cloud") {
-			const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
-			if (!gitHubServerApp) {
-				response.status(400).send("GitHub app not found");
-				return;
-			}
-			webhookSecret = gitHubServerApp.webhookSecret;
+		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+		if (!gitHubServerApp) {
+			response.status(400).send("GitHub app not found");
+			return;
 		}
+		webhookSecret = gitHubServerApp.webhookSecret;
 		const verification = createHash(JSON.stringify(payload), webhookSecret);
 		if (verification != signatureSHA256) {
 			response.status(400).send("signature does not match event payload and secret");
