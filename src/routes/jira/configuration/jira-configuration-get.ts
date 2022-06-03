@@ -129,6 +129,8 @@ export const JiraConfigurationGet = async (
 			nonce: res.locals.nonce
 		});
 
+		// res.render("jira-select-github-version.hbs");
+
 		req.log.info("Jira configuration rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira configuration: ${error}`));
