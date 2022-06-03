@@ -213,12 +213,12 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitAmount = 50, cursor?: string): Promise<getBranchesResponse> {
+	public async getBranchesPage(owner: string, repoName: string, perPage = 1, timeCutoff = Date.now(), cursor?: string): Promise<getBranchesResponse> {
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
-			commitAmount,
+			timeCutoff,
 			cursor
 		};
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, variables)

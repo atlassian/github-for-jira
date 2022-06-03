@@ -217,7 +217,7 @@ export type getBranchesResponse = {
 	}
 };
 
-export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitAmount: Int!, $cursor: String) {
+export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $timeCutoff: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
         edges {
