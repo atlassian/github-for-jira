@@ -58,7 +58,7 @@
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
                 <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status</h4>
-                <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn">&times;</span>
+                <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
               </div>
 
               <table class="jiraConfiguration__syncRetryModal__table">
@@ -154,8 +154,8 @@
                         }}
                       </span>
                       {{/if}}
-
                       <a
+                        class="jiraConfiguration__table__editContainer"
                         href="{{html_url}}"
                         data-installation-link="{{html_url}}"
                         target="_blank"
@@ -184,9 +184,9 @@
                         <div class="jiraConfiguration__syncWarning">
                           <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
                             Sync failed warnings
-                          </span> 
+                          </span>
                           <div class="jiraConfiguration__syncWarningMessage warning-popup">
-                            <div>Some tasks have not been backfilled. Please 
+                            <div>Some tasks have not been backfilled. Please
                               <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
                                   href="{{html_url}}"
                                   data-installation-link="{{html_url}}"
@@ -305,6 +305,18 @@
               organization to connect and start including issue keys in
               branches, commit messages or pull requests to see development
               insights in Jira.</p>
+            <a
+              href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/"
+              class="ak-button ak-button__appearance-default learn-more-link"
+              target="_blank"
+            >
+              Learn more
+              <span
+                class="aui-icon aui-iconfont-shortcut"
+              >
+                Shortcut
+              </span>
+            </a>
             <button
               class="ak-button ak-button__appearance-primary add-organization-link"
             >Connect GitHub organization</button>

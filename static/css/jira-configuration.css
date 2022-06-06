@@ -408,6 +408,27 @@
   max-width: 332px;
 }
 
+.jiraConfiguration__table__editContainer,
+.jiraConfiguration__syncRetryModal__closeBtn {
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0.45em;
+  position: relative;
+}
+.jiraConfiguration__table__editContainer:hover,
+.jiraConfiguration__syncRetryModal__closeBtn:hover {
+  background: #091E4208;
+}
+
+.learn-more-link {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.learn-more-link:hover {
+  color: inherit;
+}
+
 /*  NOTE: We can't use standard breakpoints on GitHub config page
 as the left panel navigation in Jira hijacks some of the screen */
 /* ******************* */
