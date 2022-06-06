@@ -30,7 +30,7 @@
   <body class="aui-page-hybrid">
     <div class="jiraAppCreation">
       <header class="jiraAppCreation__header">
-        <p>Navigation component goes here.</p>
+          {{> navigation previousPageName="GitHub Enterprise Server URL" }}
       </header>
 
       <section class="jiraAppCreation__content">
@@ -44,6 +44,7 @@
 
                 <div class="jiraAppCreation__options__cardsContainer">
                     {{> select-app-creation-card
+                        appCreationOption="automatic"
                         appCreationIcon="/public/assets/github-logo.svg"
                         appCreationIconAlt="Automatic creation"
                         appCreationTitle="Automatic app creation"
@@ -51,6 +52,7 @@
                         isRecommended=true
                     }}
                     {{> select-app-creation-card
+                        appCreationOption="manual"
                         appCreationIcon="/public/assets/preferences.svg"
                         appCreationIconAlt="Manual configuration"
                         appCreationTitle="Manual app creation"
