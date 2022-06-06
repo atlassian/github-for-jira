@@ -2,5 +2,5 @@ import { getBranchesQueryWithChangedFiles } from "~/src/github/client/github-que
 
 export const branchesNoLastCursor = {
 	query: getBranchesQueryWithChangedFiles,
-	variables: { owner: "integrations", repo: "test-repo-name", per_page: 20, commitAmount: 50 }
+	variables: { owner: "integrations", repo: "test-repo-name", per_page: 20 }
 };

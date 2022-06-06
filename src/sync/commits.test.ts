@@ -53,7 +53,6 @@ describe("sync/commits", () => {
 	};
 
 	const createGitHubNock = (commitsResponse?) => {
-
 		githubNock
 			.post("/graphql", getCommitsQuery())
 			.query(true)

@@ -213,12 +213,12 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage = 1, timeCutoff = Date.now(), cursor?: string): Promise<getBranchesResponse> {
+	public async getBranchesPage(owner: string, repoName: string, perPage = 1, timeCutoff?: number, cursor?: string): Promise<getBranchesResponse> {
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
-			commitSince: new Date(Date.now() - timeCutoff).toISOString(),
+			commitSince: timeCutoff ? new Date(Date.now() - timeCutoff).toISOString() : undefined,
 			cursor
 		};
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, variables)
@@ -248,27 +248,22 @@ export class GitHubInstallationClient extends GitHubClient {
 	/**
 	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
 	 */
-	public async getCommitsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getCommitsResponse> {
-		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles,
-			{
-				owner,
-				repo: repoName,
-				per_page: perPage,
-				cursor
-			}).catch((err) => {
-
-			if (!isChangedFilesError(err)) {
-				return Promise.reject(err);
-			}
-			this.logger.warn("retrying commit graphql query without changedFiles");
-			return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles,
-				{
-					owner,
-					repo: repoName,
-					per_page: perPage,
-					cursor
-				});
-		});
+	public async getCommitsPage(owner: string, repoName: string, perPage?: number, timeCutoff?: number, cursor?: string | number): Promise<getCommitsResponse> {
+		const variables = {
+			owner,
+			repo: repoName,
+			per_page: perPage,
+			cursor,
+			commitSince: timeCutoff ? new Date(Date.now() - timeCutoff).toISOString() : undefined
+		};
+		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, variables)
+			.catch((err) => {
+				if (!isChangedFilesError(err)) {
+					return Promise.reject(err);
+				}
+				this.logger.warn("retrying commit graphql query without changedFiles");
+				return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, variables);
+			});
 		return response?.data?.data;
 	}
 
