@@ -206,3 +206,14 @@ a:focus {
   opacity: 54%;
   z-index: 100;
 }
+
+.jira-and-github-header-conainer {
+  text-align: center;
+}
+
+.jira-and-github-header-title {
+  font-size: 30px;
+  font-weight: 500;
+  margin-top: 1em;
+}
+

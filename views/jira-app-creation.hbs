@@ -21,49 +21,63 @@
     <link rel="stylesheet" href="/public/css/global.css" media="all" />
     <link
       rel="stylesheet"
-      href="/public/css/jira-select-github-version.css"
+      href="/public/css/jira-app-creation.css"
       media="all"
     />
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
   <body class="aui-page-hybrid">
-    <div class="jiraSelectGitHubVersion">
-      <header class="jiraSelectGitHubVersion__header">
-         {{> navigation previousPageName="GitHub Configuration" previousPagePath="" }}
+    <div class="jiraAppCreation">
+      <header class="jiraAppCreation__header">
+        <p>Navigation component goes here.</p>
       </header>
 
-      <section class="jiraSelectGitHubVersion__content">
-        <h2 class="jiraSelectGitHubVersion__content__title">Select your GitHub version</h2>
-        <div class="jiraSelectGitHubVersion__options__container">
-            <p class="jiraSelectGitHubVersion__options__prompt">Select on GitHub version type. You cannot select both types simultaneously.</h2>
+      <section class="jiraAppCreation__content">
+        {{> jira-and-github-header title="GitHub Enterprise Server app creation" }}
 
-            <div class="jiraSelectGitHubVersion__options__cardsContainer">
-                {{> select-github-version-card
-                    cardTitle='GitHub Cloud'
-                    cardContent='Choose this if the URL of your GitHub organization contains the domain name "github.com". This encompasses “Free”, “Team” and “GitHub Cloud Enterprise” accounts.'
-                    cardImagePath='/public/assets/cloud.svg'
-                    cardImageAlt='Cloud'
-                    gitHubVersion='cloud'
-                }}
-                {{> select-github-version-card
-                    cardTitle='GitHub Enterprise Server'
-                    cardContent='Choose this if the URL of your GitHub organization does not contain the domain name "github.com". It instead points to a GitHub Enterprise Server installed into your own infrastructure.'
-                    cardImagePath='/public/assets/server.svg'
-                    cardImageAlt='Server'
-                    gitHubVersion='server'
-                }}
+        <div class="jiraAppCreation__content__container">
+            <p class="jiraAppCreation__options__prompt">Connecting GitHub Enterprise Server to Jira requires an app to be created in your instance.</p>
+
+            <div class="jiraAppCreation__options__container">
+                <p class="jiraAppCreation__options__cardPrompt">Select how you’d like to connect your GitHub organization</p>
+
+                <div class="jiraAppCreation__options__cardsContainer">
+                    {{> select-app-creation-card
+                        appCreationIcon="/public/assets/github-logo.svg"
+                        appCreationIconAlt="Automatic creation"
+                        appCreationTitle="Automatic app creation"
+                        appCreationDescription="Automatically create an an application in your GitHub Server instance."
+                        isRecommended=true
+                    }}
+                    {{> select-app-creation-card
+                        appCreationIcon="/public/assets/preferences.svg"
+                        appCreationIconAlt="Manual configuration"
+                        appCreationTitle="Manual app creation"
+                        appCreationDescription="Manually create an application in your GitHub Server instance."
+                        isRecommended=false
+                    }}
+                </div>
             </div>
         </div>
 
-        <div class="jiraSelectGitHubVersion__actionBtn__container">
-            <button class="aui-button jiraSelectGitHubVersion__actionBtn" id="jiraSelectGitHubVersion__actionBtn" aria-disabled="true" disabled>Continue</button>
+        <div class="jiraAppCreation__versionDisclaimer__container">
+            <p class="jiraAppCreation__versionDisclaimer__prompt">
+                To automatically connect your Github Enterprise Server to Jira, your GitHub Enterprise Server must be
+                <span class="jiraAppCreation__versionDisclaimer__version">Version 2.19.18</span> or higher.
+                <!-- TODO - add link to documentation once it's been written-->
+                <a href="" target="_blank">Learn more</a>
+            </p>
+        </div>
+
+        <div class="jiraAppCreation__actionBtn__container">
+            <button class="aui-button jiraAppCreation__actionBtn" id="jiraAppCreation__actionBtn" aria-disabled="true" disabled>Create</button>
         </div>
       </section>
 
     </div>
 
-    <script src="/public/js/jira-select-github-version.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/jira-app-creation.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script
