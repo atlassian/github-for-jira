@@ -206,3 +206,42 @@ a:focus {
   opacity: 54%;
   z-index: 100;
 }
+
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  padding: 2em;
+}
+
+.navigation__backButton__container {
+  background: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.navigation__link {
+  color: inherit;
+}
+
+.navigation__icon {
+  transform: scale(1.3);
+}
+
+.navigation__help__container {
+  align-items: center;
+  display: flex;
+}
+
+.navigation__help__container > :last-child {
+  margin-left: 0.2em;
+}
+
+.navigation__help__message {
+  font-size: 1.2rem;
+}
+
+.navigation__link:hover {
+  background: #091E4208;
+  border-radius: 3px;
+  color: inherit;
+}
