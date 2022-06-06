@@ -76,4 +76,9 @@
     font-size: 1.2rem;
 }
 
+.selected {
+    border: 2px solid #0065FF;
+}
+
+
 
