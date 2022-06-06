@@ -107,7 +107,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 					url: postInstallUrl,
 					conditions,
 					name: {
-						value: "Configure integration"
+						value: "Github for Jira"
 					},
 					key: "gh-addon-admin",
 					location: "admin_plugins_menu/gh-addon-admin-section"

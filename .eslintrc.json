@@ -52,6 +52,13 @@
 		"indent": ["error", "tab", {
 			"SwitchCase": 1
 		}],
-		"@import/no-unresolved": "off"
+		"@import/no-unresolved": "off",
+		"object-curly-spacing": ["error", "always"],
+		"semi": ["error", "always"],
+		"no-trailing-spaces": "error",
+		"comma-dangle": "error",
+		"keyword-spacing": "error",
+		"space-in-parens": ["error", "never"],
+		"func-style" : ["warn", "expression"]
 	}
 }

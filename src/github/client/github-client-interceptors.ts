@@ -88,7 +88,7 @@ export const instrumentFailedRequest = (metricName) =>
 export const handleFailedRequest = (logger: Logger) =>
 	(error: AxiosError) => {
 		const { response, config, request } = error;
-		logger = logger.child({res: response, config, req: request, err: error});
+		logger = logger.child({ res: response, config, req: request, err: error });
 
 		if (response?.status === 408 || error.code === "ETIMEDOUT") {
 			logger.warn("Request timed out");

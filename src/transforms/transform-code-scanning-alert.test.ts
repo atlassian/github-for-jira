@@ -13,7 +13,7 @@ const buildContext = (payload): Context => {
 		"name": "hi",
 		"payload": payload
 	}, GitHubAPI(), getLogger("logger"));
-}
+};
 
 describe("code_scanning_alert transform", () => {
 	Date.now = jest.fn(() => 12345678);
@@ -41,26 +41,26 @@ describe("code_scanning_alert transform", () => {
 					values: ["GH-9"]
 				}]
 			}]
-		})
-	})
+		});
+	});
 
 	it("manual code_scanning_alert maps to multiple Jira issue keys", async () => {
-		const payload = {...codeScanningPayload, action: "closed_by_user"};
+		const payload = { ...codeScanningPayload, action: "closed_by_user" };
 		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId, jiraHost);
-		expect(remoteLinks?.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"])
-	})
+		expect(remoteLinks?.remoteLinks[0].associations[0].values).toEqual(["GH-9", "GH-10", "GH-11"]);
+	});
 
 	it("code_scanning_alert truncates to a shorter description if too long", async () => {
 		const payload = {
 			...codeScanningPayload,
-			alert: {...codeScanningPayload.alert, rule: {...codeScanningPayload.alert.rule, description: "A".repeat(300)}}
+			alert: { ...codeScanningPayload.alert, rule: { ...codeScanningPayload.alert.rule, description: "A".repeat(300) } }
 		};
 		const remoteLinks = await transformCodeScanningAlert(buildContext(payload), gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].description).toHaveLength(255);
-	})
+	});
 
 	it("code_scanning_alert with pr reference queries Pull Request title - OctoKit", async () => {
-		const payload = {...codeScanningPayload, ref: "refs/pull/8/merge"};
+		const payload = { ...codeScanningPayload, ref: "refs/pull/8/merge" };
 		const context = buildContext(payload);
 		const mySpy = jest.spyOn(context.github.pulls, "get");
 		when(booleanFlag).calledWith(
@@ -77,17 +77,17 @@ describe("code_scanning_alert transform", () => {
 		});
 		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
-	})
+	});
 
 	it("code_scanning_alert with pr reference queries Pull Request title - GH Client", async () => {
-		const payload = {...codeScanningPayload, ref: "refs/pull/8/merge"};
+		const payload = { ...codeScanningPayload, ref: "refs/pull/8/merge" };
 		const context = buildContext(payload);
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
-		
+
 		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/repos/TerryAg/github-jira-test/pulls/8`)
 			.reply(200, {
@@ -96,5 +96,5 @@ describe("code_scanning_alert transform", () => {
 
 		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId, jiraHost);
 		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
-	})
-})
+	});
+});

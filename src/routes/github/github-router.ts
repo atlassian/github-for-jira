@@ -4,11 +4,20 @@ import { csrfMiddleware } from "middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
 import { GithubSetupRouter } from "routes/github/setup/github-setup-router";
 import { GithubConfigurationRouter } from "routes/github/configuration/github-configuration-router";
+import { returnOnValidationError } from "../api/api-utils";
+import { header } from "express-validator";
+import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
 
 export const GithubRouter = Router();
 
 // OAuth Routes
 GithubRouter.use(GithubOAuthRouter);
+
+// Webhook Route
+GithubRouter.post("/webhooks/:uuid",
+	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
+	returnOnValidationError,
+	WebhookReceiverPost);
 
 // CSRF Protection Middleware for all following routes
 GithubRouter.use(csrfMiddleware);

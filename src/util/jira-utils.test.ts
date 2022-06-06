@@ -109,7 +109,7 @@ describe("Jira Utils", () => {
 				"prefix-kebab-JRA-123",
 				"JRA-123-suffix-kebab",
 				"JRA-123 with suffix spaces",
-				"prefix spaces with JRA-123",
+				"prefix spaces with JRA-123"
 			]
 				.forEach(value => expect(jiraIssueKeyParser(value)).toEqual(["JRA-123"]));
 		});

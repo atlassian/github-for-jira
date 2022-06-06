@@ -1,10 +1,10 @@
-import {GithubAPI} from "config/github-api";
+import { GithubAPI } from "config/github-api";
 import {
 	extractMessagesFromCommitSummaries,
 	getAllCommitMessagesBetweenReferences,
 	getAllCommitsBetweenReferences
 } from "~/src/transforms/util/github-api-requests";
-import {getLogger} from "config/logger";
+import { getLogger } from "config/logger";
 import workflowBasic from "fixtures/workflow-basic.json";
 import pullRequestMultipleCommits from "fixtures/api/pull-request-multiple-commits-diff.json";
 import pullRequestSingleCommit from "fixtures/api/pull-request-single-commit-diff.json";

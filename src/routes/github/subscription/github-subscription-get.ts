@@ -1,11 +1,10 @@
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { isUserAdminOfOrganization } from "utils/github-utils";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { github, client, githubToken, jiraHost } = res.locals;
+	const { githubToken, jiraHost } = res.locals;
 
 	const gitHubInstallationId = Number(req.params.installationId);
 	if (!githubToken) {
@@ -17,17 +16,14 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	}
 
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
-	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION, false, jiraHost);
 	const gitHubAppClient = await createAppClient(logger, jiraHost);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
 
 	try {
-		const { data: { login } } = useNewGitHubClient ? await gitHubUserClient.getUser() : await github.users.getAuthenticated();
+		const { data: { login } } = await gitHubUserClient.getUser();
 
 		// get the installation to see if the user is an admin of it
-		const { data: installation } = useNewGitHubClient ?
-			await gitHubAppClient.getInstallation(gitHubInstallationId) :
-			await client.apps.getInstallation({ installation_id: gitHubInstallationId });
+		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
 		// get all subscriptions from the database for this installation ID
 		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
