@@ -213,6 +213,12 @@ a:focus {
   padding: 2em;
 }
 
+.navigation__backButton__container {
+  background: #fff;
+  border: none;
+  cursor: pointer;
+}
+
 .navigation__link {
   color: inherit;
 }
