@@ -2,7 +2,7 @@ $('.jiraSelectGitHubVersion__options__card').click(function (event) {
 	event.preventDefault();
 	const selectedCard = event.target.className;
 	const selectedVersion = selectedCard.substring(selectedCard.indexOf(' ') + 1);
-	const className = `.jiraSelectGitHubVersion__options__card.${selectedVersion}`
+	const className = `.jiraSelectGitHubVersion__options__card.${selectedVersion}`;
 
 	if (selectedVersion === "cloud") {
 		$(".jiraSelectGitHubVersion__options__card.server").removeClass("selected");

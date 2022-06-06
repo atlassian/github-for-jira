@@ -128,7 +128,7 @@ export const JiraConfigurationGet = async (
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce
 		});
-		
+
 		req.log.info("Jira configuration rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira configuration: ${error}`));
