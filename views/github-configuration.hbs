@@ -89,7 +89,7 @@
                     class="gitHubConfiguration__orgContent__numberOfRepos"
                   >{{numberOfRepos}}</p>
                   {{#if isAdmin}}
-                    <a href="{{html_url}}" target="_blank">
+                    <a class="gitHubConfiguration__orgContent__editContainer" href="{{html_url}}" target="_blank">
                       <span
                         class="gitHubConfiguration__orgContent__edit aui-icon aui-icon-small aui-iconfont-new-edit"
                       >
@@ -182,14 +182,20 @@
           <p class="gitHubConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
         {{/unless}}
       </div>
-
-      <a
-        class="gitHubConfiguration__connectNewOrg"
-        href="{{info.html_url}}/installations/new"
-      >
-        <span class="gitHubConfiguration__connectNewOrg__plus">+</span>Install GitHub for Jira on a new organization
-      </a>
     </div>
+  </div>
+
+  <div class="text-center">
+    <div class="no-organization-in-github">
+      Don't see your Github organization? Install 'GitHub for Jira' on your Github organization to connect them to your Atlassian site.
+    </div>
+    <a
+      class="aui-button aui-button-{{#if installations}}default{{else}}primary{{/if}}"
+      href="{{info.html_url}}/installations/new"
+      target="_self"
+    >
+      Install GitHub for Jira on a new organization
+    </a>
   </div>
 
 </section>
