@@ -218,7 +218,7 @@ export class GitHubInstallationClient extends GitHubClient {
 			owner,
 			repo: repoName,
 			per_page: perPage,
-			timeCutoff,
+			commitSince: new Date(Date.now() - timeCutoff).toISOString(),
 			cursor
 		};
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, variables)
