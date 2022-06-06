@@ -26,7 +26,7 @@
 }
 
 .jiraSelectGitHubVersion__options__cardsContainer {
-    border-radiusL 10px;
+    border-radius: 10px;
     display: flex;
     justify-content: space-between;
     text-align: center;
