@@ -6,6 +6,7 @@ import { NextFunction, Request, Response } from "express";
 import { envVars }  from "config/env";
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { includes, isEmpty } from "lodash";
+import { booleanFlag, BooleanFlags } from "../../config/feature-flags";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
@@ -28,10 +29,15 @@ export enum TokenType {
 	context = "context"
 }
 
-export function extractJwtFromRequest(req: Request): string | undefined {
-	const tokenInQuery = req.query?.[JWT_PARAM];
+let secureJiraHostInCookies;
 
-	// JWT appears in both parameter and body will result query hash being invalid.
+
+function extractJwtFromRequest(req: Request): string | undefined {
+
+	booleanFlag(BooleanFlags.SECURE_JIRAHOST_IN_COOKIES, false)
+		.then(flag=>secureJiraHostInCookies = flag); //ignore error
+
+	const tokenInQuery = req.query?.[JWT_PARAM];
 	const tokenInBody = req.body?.[JWT_PARAM];
 	if (tokenInQuery && tokenInBody) {
 		req.log.info("JWT token can only appear in either query parameter or request body.");
@@ -39,7 +45,6 @@ export function extractJwtFromRequest(req: Request): string | undefined {
 	}
 	let token = tokenInQuery || tokenInBody;
 
-	// if there was no token in the query-string then fall back to checking the Authorization header
 	const authHeader = req.headers?.[AUTH_HEADER];
 	if (authHeader?.startsWith("JWT ")) {
 		if (token) {
@@ -47,6 +52,13 @@ export function extractJwtFromRequest(req: Request): string | undefined {
 			req.log.info(`JWT token found in ${foundIn} and in header: using ${foundIn} value.`);
 		} else {
 			token = authHeader.substring(4);
+		}
+	}
+
+	if (!token && secureJiraHostInCookies) {
+		token = req.cookies?.[JWT_PARAM];
+		if (token) {
+			req.log.info("JWT token found in cookies (last resort)");
 		}
 	}
 
