@@ -1,7 +1,7 @@
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import { envVars }  from "./env";
-import crypto from "crypto";
+import { createHashWithSharedSecret } from "utils/encryption";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 const logger = getLogger("feature-flags");
@@ -49,11 +49,8 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 		};
 	}
 
-	const hash = crypto.createHash("sha1");
-	hash.update(jiraHost);
-
 	return {
-		key: hash.digest("hex")
+		key: createHashWithSharedSecret(jiraHost)
 	};
 };
 
