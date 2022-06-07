@@ -12,6 +12,7 @@ import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
+import { ApiHashPost } from "./api-hash-post";
 
 export const ApiRouter = Router();
 
@@ -93,6 +94,9 @@ ApiRouter.post(
 		res.json(subscriptions.map(serializeSubscription));
 	}
 );
+
+// Hash incoming values with GLOBAL_HASH_SECRET.
+ApiRouter.post("/hash", ApiHashPost);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
