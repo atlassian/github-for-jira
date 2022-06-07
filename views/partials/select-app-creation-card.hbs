@@ -5,7 +5,6 @@
     {{#if isRecommended}}
         <span
             class="aui-lozenge aui-lozenge-subtle aui-lozenge-new jiraSelectAppCreation__options__recommended"
-            data-type="{{appCreationOption}}"
         >
             Recommended
         </span>
@@ -13,7 +12,6 @@
     <div class="jiraSelectAppCreation__options__card__iconContainer" data-type="{{appCreationOption}}">
         <img
             class="jiraSelectAppCreation__options__card__icon"
-            data-type="{{appCreationOption}}"
             src={{appCreationIcon}}
             alt={{appCreationIconAlt}}
         />
@@ -22,13 +20,11 @@
     <div class="jiraSelectAppCreation__options__card__contentContainer" data-type="{{appCreationOption}}">
       <h4
         class="jiraSelectAppCreation__options__card__title"
-        data-type="{{appCreationOption}}"
       >
         {{appCreationTitle}}
       </h4>
       <p
         class="jiraSelectAppCreation__options__card__info"
-        data-type="{{appCreationOption}}"
       >
         {{appCreationDescription}}
       </p>
