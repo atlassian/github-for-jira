@@ -46,8 +46,13 @@
 <script nonce="{{nonce}}">
   $(function() {
     if (window.jiraHost) {
-      // Set jiraHost value to cookie
+      {{!--/*
+            We cannot pass jwt as a query string parameter because of security considerations!
+            (E.g. they can be stored in browser's session or hijacked.)
+            More secure is to pass it using the cookies.
+      */--}}
       document.cookie = "jiraHost=" + window.jiraHost + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
+      document.cookie = "jwt=" + window.jwt + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
     }
     window.location = "{{redirectUrl}}";
   });
