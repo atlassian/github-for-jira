@@ -30,7 +30,8 @@ export enum BooleanFlags {
 	SEND_RELATED_COMMITS_WITH_DEPLOYMENT_ENTITIES = "send-related-commits-with-deployment-entities",
 	USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE = "use-new-github-client-for-pr-title",
 	RETRY_ALL_ERRORS = "retry-all-errors",
-	GHE_SERVER = "ghe_server"
+	GHE_SERVER = "ghe_server",
+	SECURE_JIRAHOST_IN_COOKIES = "secure-jirahost-in-cookies"
 }
 
 export enum StringFlags {
