@@ -159,8 +159,7 @@
 /* Hit box */
 .jiraConfiguration__syncWarning:before {
   content: '';
-  width: 3rem;
-  height: 3rem;
+  padding: 1.25em;
   position: absolute;
 }
 
