@@ -6,7 +6,7 @@
 
 .jiraAppCreation__content__container > .jiraAppCreation__options__prompt {
     font-weight: 500;
-    margin: 3em auto;
+    margin: 2.5em auto;
 }
 
 .jiraAppCreation__options__prompt,
@@ -22,6 +22,7 @@
 
 .jiraAppCreation__options__cardPrompt {
     color: #5E6C84;
+    font-weight: 600;
     margin-bottom: 1em;
 }
 
@@ -35,9 +36,9 @@
     border-radius: 3px;
     box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
     display: flex;
-    padding: 3em 1.5em;
+    padding: 2em 1.5em;
     position: relative;
-    width: 42%;
+    width: 41.5%;
 }
 
 .jiraSelectAppCreation__options__card:hover {
@@ -45,8 +46,17 @@
     cursor: pointer;
 }
 
+.jiraSelectAppCreation__options__card__iconContainer {
+    display: flex;
+    justify-content: center;
+}
+
+.jiraSelectAppCreation__options__card__icon {
+    transform: scale(0.5);
+}
+
 .jiraSelectAppCreation__options__card__contentContainer {
-    margin-left: 2em;
+    margin-left: 1.5em;
 }
 
 .jiraSelectAppCreation__options__recommended {

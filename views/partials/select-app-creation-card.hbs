@@ -1,13 +1,36 @@
-<div class="jiraSelectAppCreation__options__card {{appCreationOption}}">
+<div
+    class="jiraSelectAppCreation__options__card optionsCard {{appCreationOption}}"
+    data-type="{{appCreationOption}}"
+>
     {{#if isRecommended}}
-        <span class="aui-lozenge aui-lozenge-subtle aui-lozenge-new jiraSelectAppCreation__options__recommended">Recommended</span>
+        <span
+            class="aui-lozenge aui-lozenge-subtle aui-lozenge-new jiraSelectAppCreation__options__recommended"
+            data-type="{{appCreationOption}}"
+        >
+            Recommended
+        </span>
     {{/if}}
-    <div class="jiraSelectAppCreation__options__card__iconContainer">
-        <img class="jiraSelectAppCreation__options__card__icon" src={{appCreationIcon}} alt={{appCreationIconAlt}} />
+    <div class="jiraSelectAppCreation__options__card__iconContainer" data-type="{{appCreationOption}}">
+        <img
+            class="jiraSelectAppCreation__options__card__icon"
+            data-type="{{appCreationOption}}"
+            src={{appCreationIcon}}
+            alt={{appCreationIconAlt}}
+        />
     </div>
 
-    <div class="jiraSelectAppCreation__options__card__contentContainer">
-      <h4 class="jiraSelectAppCreation__options__card__title">{{appCreationTitle}}</h4>
-      <p class="jiraSelectAppCreation__options__card__info">{{appCreationDescription}}</p>
+    <div class="jiraSelectAppCreation__options__card__contentContainer" data-type="{{appCreationOption}}">
+      <h4
+        class="jiraSelectAppCreation__options__card__title"
+        data-type="{{appCreationOption}}"
+      >
+        {{appCreationTitle}}
+      </h4>
+      <p
+        class="jiraSelectAppCreation__options__card__info"
+        data-type="{{appCreationOption}}"
+      >
+        {{appCreationDescription}}
+      </p>
     </div>
 </div>
