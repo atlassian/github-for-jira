@@ -7,6 +7,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
+import {Subscription} from "models/subscription";
 
 export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
@@ -25,11 +26,15 @@ export async function getGitHubApiUrl(jiraHost: string) {
 		: GITHUB_CLOUD_API_BASEURL;
 }
 
-const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConfig> => {
+const getGitHubClientConfig = async (gitHubInstallationId: number): Promise<GitHubClientConfig> => {
 	// TODO: remove duplicate jiraHosts and find issue that causes duplicates
-	const installation = await Installation.getForHost(jiraHost);
+	// const installation = await Installation.getForHost(jiraHost);
+
+	const subscriptions = await Subscription.getAllForInstallation(
+		gitHubInstallationId
+	);
 	// TODO - update this
-	const gitHubAppId = false;
+	// const gitHubAppId = false;
 	// const gitHubAppId = installation?.githubAppId;
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 
@@ -57,7 +62,7 @@ export async function getGitHubHostname(jiraHost: string) {
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to
  * get all installation or get more info for the app
  */
-export async function createAppClient(logger: Logger, jiraHost: string): Promise<GitHubAppClient> {
+export async function createAppClient(logger: Logger, jiraHost: string, gitHubInstallationId: number): Promise<GitHubAppClient> {
 	const gitHubClientConfig = await getGitHubClientConfig(jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl)
@@ -68,7 +73,7 @@ export async function createAppClient(logger: Logger, jiraHost: string): Promise
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to get
  * information specific to an organization.
  */
-export async function createInstallationClient(githubInstallationId: number, jiraHost: string, logger: Logger): Promise<GitHubInstallationClient> {
+export async function createInstallationClient(githubInstallationId: number, jiraHost: string, gitHubInstallationId: number, logger: Logger): Promise<GitHubInstallationClient> {
 	const gitHubClientConfig = await getGitHubClientConfig(jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 		? new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubClientConfig.baseUrl), logger, gitHubClientConfig.baseUrl)
@@ -78,8 +83,8 @@ export async function createInstallationClient(githubInstallationId: number, jir
 /**
  * Factory function to create a GitHub client that authenticates as the user (with a user access token).
  */
-export async function createUserClient(githubToken: string, jiraHost: string, logger: Logger): Promise<GitHubUserClient> {
-	const gitHubClientConfig = await getGitHubClientConfig(jiraHost);
+export async function createUserClient(githubToken: string, jiraHost: string, gitHubInstallationId: number, logger: Logger): Promise<GitHubUserClient> {
+	const gitHubClientConfig = await getGitHubClientConfig(gitHubInstallationId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 		? new GitHubUserClient(githubToken, logger, gitHubClientConfig.baseUrl)
 		: new GitHubUserClient(githubToken, logger);
