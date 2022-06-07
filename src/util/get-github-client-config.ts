@@ -28,7 +28,9 @@ export async function getGitHubApiUrl(jiraHost: string) {
 const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConfig> => {
 	// TODO: remove duplicate jiraHosts and find issue that causes duplicates
 	const installation = await Installation.getForHost(jiraHost);
-	const gitHubAppId = installation?.githubAppId;
+	// TODO - update this
+	const gitHubAppId = false;
+	// const gitHubAppId = installation?.githubAppId;
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 
 	return gitHubServerApp
