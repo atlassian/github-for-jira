@@ -117,7 +117,6 @@ describe("Jira Configuration Suite", () => {
 		});
 
 		it("should return a single failed connection if 1 connection fails", async () => {
-			console.log("EXPECTED INSTALLATION ID", sub.gitHubInstallationId);
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);

@@ -28,11 +28,6 @@ export interface InstallationResults {
 export const getInstallations = async (subscriptions: Subscription[], log: Logger): Promise<InstallationResults> => {
 	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, log)));
 	// Had to add "unknown" in between type as lodash types is incorrect for
-	console.log('isntallations');
-	console.log('isntallations');
-	console.log('isntallations');
-	console.log('isntallations');
-	console.log(installations);
 	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
 	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
 	const rejected = connections.rejected?.map(v => v.reason as FailedAppInstallation) || [];
@@ -50,10 +45,6 @@ const getInstallation = async (subscription: Subscription, log: Logger): Promise
 	const gitHubAppClient = await createAppClient(log, jiraHost);
 
 	try {
-
-		console.log("IMA TRY SHOW REPONSE HERE");
-		console.log("IMA TRY SHOW REPONSE HERE");
-		console.log("IMA TRY SHOW REPONSE HERE");
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
 		return {
 			...response.data,
@@ -65,10 +56,6 @@ const getInstallation = async (subscription: Subscription, log: Logger): Promise
 		};
 
 	} catch (err) {
-		console.log('err');
-		console.log(err.message);
-		console.log(err.status);
-		console.log(err);
 		log.error(
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"

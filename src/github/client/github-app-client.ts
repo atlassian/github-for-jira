@@ -86,10 +86,6 @@ export class GitHubAppClient extends GitHubClient {
 	}
 
 	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
-		console.log(`/app/installations/${installationId}`);
-		console.log(`/app/installations/${installationId}`);
-		console.log(`/app/installations/${installationId}`);
-		console.log(`/app/installations/${installationId}`);
 		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations/{installationId}`, {
 			urlParams: {
 				installationId
