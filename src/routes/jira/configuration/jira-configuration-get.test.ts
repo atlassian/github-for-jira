@@ -52,12 +52,12 @@ describe("Jira Configuration Suite", () => {
 
 	const mockResponse = (): any => ({
 		locals: {
-			jiraHost,
-			client: {
-				apps: {
-					getInstallation: jest.fn().mockReturnValue({ data: {} })
-				}
-			}
+			jiraHost
+			// client: {
+			// 	apps: {
+			// 		getInstallation: jest.fn().mockReturnValue({ data: {} })
+			// 	}
+			// }
 		},
 		render: jest.fn().mockReturnValue({}),
 		status: jest.fn().mockReturnValue({}),
@@ -66,6 +66,7 @@ describe("Jira Configuration Suite", () => {
 
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
+
 		await JiraConfigurationGet(mockRequest(), response, jest.fn());
 		const data = response.render.mock.calls[0][1];
 		expect(data.hasConnections).toBe(true);
@@ -113,6 +114,7 @@ describe("Jira Configuration Suite", () => {
 		});
 
 		it("should return a single failed connection if 1 connection fails", async () => {
+			console.log("EXPECTED INSTALLATION ID", sub.gitHubInstallationId);
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
@@ -121,8 +123,8 @@ describe("Jira Configuration Suite", () => {
 				fulfilled: [],
 				rejected: [{
 					error: {
-						status: 404,
-						documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
+						status: 404
+						// // documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 					},
 					id: sub.gitHubInstallationId,
 					deleted: true
@@ -156,8 +158,8 @@ describe("Jira Configuration Suite", () => {
 				}],
 				rejected: [{
 					error: {
-						status: 404,
-						documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
+						status: 404
+						// documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 					},
 					id: failedSub.gitHubInstallationId,
 					deleted: true
@@ -185,16 +187,16 @@ describe("Jira Configuration Suite", () => {
 				rejected: [
 					{
 						error: {
-							status: 404,
-							documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
+							status: 404
+							// documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 						},
 						id: sub.gitHubInstallationId,
 						deleted: true
 					},
 					{
 						error: {
-							status: 404,
-							documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
+							status: 404
+							// documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 						},
 						id: failedSub.gitHubInstallationId,
 						deleted: true
