@@ -2,7 +2,6 @@ import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { getInstallations, InstallationResults } from "../../jira/configuration/jira-configuration-get";
-import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
@@ -51,7 +50,6 @@ const mergeByLogin = (installationsWithAdmin: InstallationWithAdmin[], connected
 
 const installationConnectedStatus = async (
 	jiraHost: string,
-	_client: GitHubAPI,
 	installationsWithAdmin: InstallationWithAdmin[],
 	reqLog: Logger
 ): Promise<MergedInstallation[]> => {
@@ -122,8 +120,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const {
 		jiraHost,
 		githubToken,
-		github, // user-authenticated GitHub client
-		client // app-authenticated GitHub client
+		github // user-authenticated GitHub client
 	} = res.locals;
 	const log = req.log.child({ jiraHost });
 
@@ -198,7 +195,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const connectedInstallations = await installationConnectedStatus(
 			jiraHost,
-			client,
 			installationsWithAdmin,
 			log
 		);

@@ -53,11 +53,6 @@ describe("Jira Configuration Suite", () => {
 	const mockResponse = (): any => ({
 		locals: {
 			jiraHost
-			// client: {
-			// 	apps: {
-			// 		getInstallation: jest.fn().mockReturnValue({ data: {} })
-			// 	}
-			// }
 		},
 		render: jest.fn().mockReturnValue({}),
 		status: jest.fn().mockReturnValue({}),
@@ -126,7 +121,6 @@ describe("Jira Configuration Suite", () => {
 				rejected: [{
 					error: {
 						status: 404
-						// // documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 					},
 					id: sub.gitHubInstallationId,
 					deleted: true
@@ -190,7 +184,6 @@ describe("Jira Configuration Suite", () => {
 					{
 						error: {
 							status: 404
-							// documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 						},
 						id: sub.gitHubInstallationId,
 						deleted: true
@@ -198,7 +191,6 @@ describe("Jira Configuration Suite", () => {
 					{
 						error: {
 							status: 404
-							// documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 						},
 						id: failedSub.gitHubInstallationId,
 						deleted: true
