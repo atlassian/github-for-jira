@@ -5,10 +5,7 @@
 import { Application, createProbot } from "probot";
 import { findPrivateKey } from "probot/lib/private-key";
 import { HealthcheckRouter } from "routes/healthcheck/healthcheck-router";
-import { getLogger, overrideProbotLoggingMethods } from "config/logger";
-
-getLogger("bgvozdev-testing").info(process.env.PRIVATE_KEY_2?.substring(0, 200) + "..." +
-	process.env.PRIVATE_KEY_2?.substring(process.env.PRIVATE_KEY_2?.length - 200));
+import { overrideProbotLoggingMethods } from "config/logger";
 
 export const probot = createProbot({
 	id: Number(process.env.APP_ID),
