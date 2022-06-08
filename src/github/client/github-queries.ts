@@ -9,8 +9,9 @@ query {
 	}
 }`;
 
-interface RepositoryNode {
+export interface RepositoryNode {
 	node: Repository;
+	cursor?: string;
 }
 
 export interface GetRepositoriesResponse {
@@ -313,33 +314,33 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
   }`;
 
 export type DeploymentQueryNode = {
-  cursor: string,
-  node: {
-    repository: Repository,
-    databaseId: string,
-    commitOid: string,
-    task: string,
-    ref: {
-      name: string,
-      id: string
-    },
-    environment: string,
-    description: string,
-    latestStatus: {
-      environmentUrl: string,
-      logUrl: string,
-      state: string,
-      id: string,
-      updatedAt: string
-    }
-  }
+	cursor: string,
+	node: {
+		repository: Repository,
+		databaseId: string,
+		commitOid: string,
+		task: string,
+		ref: {
+			name: string,
+			id: string
+		},
+		environment: string,
+		description: string,
+		latestStatus: {
+			environmentUrl: string,
+			logUrl: string,
+			state: string,
+			id: string,
+			updatedAt: string
+		}
+	}
 }
 
 export type getDeploymentsResponse = {
 	repository: {
 		deployments: {
-      edges: DeploymentQueryNode[]
-    }
+			edges: DeploymentQueryNode[]
+		}
 	}
 };
 
