@@ -21,6 +21,8 @@ import associatedPRhasKeys from "fixtures/api/graphql/branch-associated-pr-has-k
 
 import branchNoIssueKeys from "fixtures/api/graphql/branch-no-issue-keys.json";
 import { jiraIssueKeyParser } from "utils/jira-utils";
+import { when } from "jest-when";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -94,9 +96,9 @@ describe("sync/branches", () => {
 		}
 	});
 
-	function nockGitHubGraphQlRateLimit(rateLimitReset: string) {
+	const nockGitHubGraphQlRateLimit = (rateLimitReset: string) => {
 		githubNock
-			.post("/graphql", branchesNoLastCursor)
+			.post("/graphql", branchesNoLastCursor())
 			.query(true)
 			.reply(200, {
 				"errors": [
@@ -109,13 +111,13 @@ describe("sync/branches", () => {
 				"X-RateLimit-Reset": rateLimitReset,
 				"X-RateLimit-Remaining": "10"
 			});
-	}
+	};
 
-	const nockBranchRequest = (fixture) =>
+	const nockBranchRequest = (response, variables?: Record<string, any>) =>
 		githubNock
-			.post("/graphql", branchesNoLastCursor)
+			.post("/graphql", branchesNoLastCursor(variables))
 			.query(true)
-			.reply(200, fixture);
+			.reply(200, response);
 
 	const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
 
@@ -263,5 +265,37 @@ describe("sync/branches", () => {
 		nockGitHubGraphQlRateLimit("12360");
 		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data, 15);
+	});
+
+
+	describe("SYNC_BRANCH_COMMIT_TIME_LIMIT FF is enabled", () => {
+		let dateCutoff: Date;
+		beforeEach(() => {
+			const time = Date.now();
+			const cutoff = 1000 * 60 * 60 * 24;
+			mockSystemTime(time);
+			dateCutoff = new Date(time - cutoff);
+
+			when(numberFlag).calledWith(
+				NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(cutoff);
+		});
+
+		it("should sync to Jira when branch refs have jira references", async () => {
+			const data: BackfillMessagePayload = { installationId, jiraHost };
+			nockBranchRequest(branchNodesFixture, { commitSince: dateCutoff.toISOString() });
+
+			jiraNock
+				.post(
+					"/rest/devinfo/0.10/bulk",
+					makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
+				)
+				.reply(200);
+
+			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			verifyMessageSent(data);
+		});
 	});
 });
