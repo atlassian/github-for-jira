@@ -157,7 +157,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	tracer.trace(`removed failed installations`);
 
 	try {
-
 		// we can get the jira client Key from the JWT's `iss` property
 		// so we'll decode the JWT here and verify it's the right key before continuing
 		const installation = await Installation.getForHost(jiraHost);

@@ -153,7 +153,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		res.locals.github = GithubAPI({ auth: githubToken });
 		return next();
 	} catch (e) {
-		req.log.debug(`Github token is not valid.`);
+		req.log.debug(`Github token is not valid.`, e);
 		// If it's a GET request, we can redirect to login and try again
 		if (req.method == "GET") {
 			req.log.info(`Trying to get new Github token...`);
