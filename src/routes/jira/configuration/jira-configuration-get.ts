@@ -89,6 +89,17 @@ export const JiraConfigurationGet = async (
 ): Promise<void> => {
 	try {
 		const jiraHost = res.locals.jiraHost;
+		/*
+		*
+		* TESTING UNSAFE LOGGING ENVIRONMENT
+		*
+		* */
+		req.log.warn({ jiraHost, req, res, test: "test1", env_suffix: "UNSAFE" }, "Oh noes we've logged some UGC");
+		req.log.warn({ jiraHost, req, res, test: "test2" }, "Oh noes we've logged some UGC");
+
+		if (await booleanFlag(BooleanFlags.LOG_UNSAFE_DATA, false, jiraHost)) {
+			req.log.warn({ jiraHost, req, res, env_suffix: "UNSAFE", test: "test3" }, "SHOW ME UGC BEHIND THE FF");
+		}
 
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
