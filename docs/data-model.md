@@ -13,7 +13,9 @@ Installations are only specific to the Jira app, 1 per Jira instance.  It holds 
 
 ### GitHubServerApp
 
-Each GitHub App created in a GitHub Enterprise Server instance is added to this table to keep track of them.  We do not hold the GitHub Cloud app in this table since we need it as a default, but still use the same data structure in the code.  Each App will have access to many Organizations under it and we much show all results to the users when needed, which means multiple API calls .
+Each GitHub App created in a GitHub Enterprise Server instance is added to this table to keep track of them.  A Github app _can only be associated with one Jira instance for security reasons_.  This means that each new Jira instance needs to create a new GHE app.
+
+Each App will have access to many Organizations under it and we much show all results to the users when needed, which means multiple API calls. We do not hold the GitHub Cloud app in this table since we need it as a default, but still use the same data structure in the code.  
 
 ### Subscription
 
