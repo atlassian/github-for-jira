@@ -1,41 +1,12 @@
-const query = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
-  repository(owner: $owner, name: $repo){
-    defaultBranchRef {
-      target {
-        ... on Commit {
-          history(first: $per_page, after: $cursor) {
-            edges {
-              cursor
-              node {
-                author {
-                  avatarUrl
-                  email
-                  name
-                  user {
-                    url
-                  }
-                }
-                authoredDate
-                message
-                oid
-                url
-                changedFiles
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}`;
+import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-queries";
 
 export const commitsNoLastCursor = (variables) => ({
-	query,
+	query: getCommitsQueryWithChangedFiles,
 	variables
 });
 
 export const commitsWithLastCursor = {
-	query,
+	query: getCommitsQueryWithChangedFiles,
 	variables: {
 		owner: "integrations",
 		repo: "test-repo-name",
