@@ -8,8 +8,8 @@ import { JiraCommitData } from "src/interfaces/jira";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { TaskPayload } from "~/src/sync/installation";
 
-const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, timeCutoff?: number, cursor?: string | number, perPage?: number) => {
-	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, timeCutoff, cursor);
+const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, timeCutoffMsecs?: number, cursor?: string | number, perPage?: number) => {
+	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, timeCutoffMsecs, cursor);
 	const edges = commitsData.repository?.defaultBranchRef?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
 
@@ -28,11 +28,11 @@ export const getCommitTask = async (
 	cursor?: string | number,
 	perPage?: number): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
 
-	logger.debug("Syncing commits: started");
-	const timeCutoff = await numberFlag(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, NaN, jiraHost);
-	const { edges, commits } = await fetchCommits(gitHubClient, repository, timeCutoff, cursor, perPage);
+	logger.info("Syncing commits: started");
+	const timeCutoffMsecs = await numberFlag(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, NaN, jiraHost);
+	const { edges, commits } = await fetchCommits(gitHubClient, repository, timeCutoffMsecs, cursor, perPage);
 	const jiraPayload = await transformCommit({ commits, repository });
-	logger.debug("Syncing commits: finished");
+	logger.info("Syncing commits: finished");
 
 	return {
 		edges,

@@ -49,7 +49,6 @@ interface TaskProcessors {
 export interface TaskPayload<E = any, P = any> {
 	edges?: E[];
 	jiraPayload?: P;
-	isDone?: boolean;
 }
 
 type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
@@ -130,7 +129,7 @@ export const updateJobStatus = async (
 		return;
 	}
 	const { edges } = taskPayload;
-	const isComplete = !edges?.length || taskPayload.isDone;
+	const isComplete = !edges?.length;
 
 	const status = isComplete ? "complete" : "pending";
 
@@ -402,7 +401,7 @@ export const handleBackfillError = async (err,
 	// Continue sync when a 404/NOT_FOUND is returned
 	if (isNotFoundError(err, logger)) {
 		// No edges left to process since the repository doesn't exist
-		await updateJobStatus(data, { isDone: true }, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
+		await updateJobStatus(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
 		return;
 	}
 

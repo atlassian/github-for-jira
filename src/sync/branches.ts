@@ -17,8 +17,8 @@ export const getBranchTask = async (
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
 	perPage = perPage || 20;
-	const timeCutoff = await numberFlag(NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, NaN, jiraHost);
-	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, timeCutoff, cursor as string);
+	const timeCutoffMsecs = await numberFlag(NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, NaN, jiraHost);
+	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, timeCutoffMsecs, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
 
