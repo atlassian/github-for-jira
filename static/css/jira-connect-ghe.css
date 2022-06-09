@@ -1,0 +1,51 @@
+.jiraConnectGHE__content {
+  margin: 4em auto 0;
+  max-width: 560px;
+}
+.jiraConnectGHE__content__title {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.jiraConnectGHE__options__subTitle {
+  font-size: 16px;
+  margin-bottom: 8px;
+  display: inline-flex;
+}
+
+.jiraConnectGHE__prompt {
+  color: #344563;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.jiraConnectGHE__error {
+  display: none;
+  color: #DE350B;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B778C;
+}
+
+input#gheServerURL {
+  width: 100%;
+  border: 2px solid #DFE1E6;
+  border-radius: 3px;
+  background: #FAFBFC;
+  padding: 10px 8px;
+}
+
+.jiraConnectGHE__actionBtn__container {
+  margin-top: 20px;
+  text-align: right;
+}
+
+#gheServerBtnSpinner {
+  display: none;
+  color: #fff;
+}
