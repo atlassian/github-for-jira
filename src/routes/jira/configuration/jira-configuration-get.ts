@@ -9,7 +9,6 @@ import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient } from "~/src/util/get-github-client-config";
-import { getUnsafeLogger } from "config/logger";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -89,21 +88,7 @@ export const JiraConfigurationGet = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const unsafeLogger = getUnsafeLogger("sweet");
 		const jiraHost = res.locals.jiraHost;
-
-		/*
-		*
-		* TESTING UNSAFE LOGGING ENVIRONMENT
-		*
-		* */
-		req.log.warn({ jiraHost, req, res, test: "testA1" }, "Oh noes we've logged some UGC");
-		unsafeLogger.warn({ jiraHost, req, res, test: "testA2" }, "unsafe logger - Oh noes we've logged some UGC");
-
-		if (await booleanFlag(BooleanFlags.LOG_UNSAFE_DATA, false, jiraHost)) {
-			req.log.warn({ jiraHost, req, res, test: "testA3" }, "SHOW ME UGC BEHIND THE FF");
-			unsafeLogger.warn({ jiraHost, req, res, env_suffix: "unsafe4", test: "testA" }, "unsafe logger - SHOW ME UGC BEHIND THE FF");
-		}
 
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
