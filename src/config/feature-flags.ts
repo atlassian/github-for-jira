@@ -40,7 +40,9 @@ export enum StringFlags {
 }
 
 export enum NumberFlags {
-	GITHUB_CLIENT_TIMEOUT = "github-client-timeout"
+	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
+	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
+	SYNC_BRANCH_COMMIT_TIME_LIMIT= "sync-branch-commit-time-limit",
 }
 
 const createLaunchdarklyUser = (jiraHost?: string): LDUser => {

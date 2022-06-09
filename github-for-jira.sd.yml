@@ -231,7 +231,9 @@ workers:
         complexScalingRule:
           EvaluationPeriods: 3
           Threshold:
+            # Scale down if max value from queues, cpu and memory is below 30 for 3 consecutive periods of 60 seconds
             Lower: 30
+            # Scale up if max value from queues, cpu and memory is over 80 for 3 consecutive periods of 60 seconds
             Upper: 80
           Metrics:
             - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/20)*100, (branchQueueMessages/250)*100, (deploymentQueueMessages/250)*100])"
@@ -552,7 +554,7 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for backfill queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
-            Threshold: 30 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Threshold: 40 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
             Priority: High
             Dimensions:
               - Name: QueueName
