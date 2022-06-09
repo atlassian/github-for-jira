@@ -6,6 +6,7 @@ import * as PrivateKey from "probot/lib/private-key";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { envVars } from "config/env";
 
 export type KeyLocator = (installationId: InstallationId) => string;
 
@@ -16,7 +17,7 @@ let shouldUseNewSecret = false;
 export const cloudKeyLocator: KeyLocator = () => {
 	booleanFlag(BooleanFlags.USE_NEW_GITHUB_SECRETS, false).then(newValue => shouldUseNewSecret = newValue);
 	if (shouldUseNewSecret) {
-		return process.env.PRIVATE_KEY_VAULT || "";
+		return envVars.PRIVATE_KEY_VAULT;
 	}
 	return PrivateKey.findPrivateKey() || "";
 };

@@ -78,7 +78,6 @@ export interface EnvVars {
 	WEBHOOK_SECRET: string;
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;
-	GITHUB_CLIENT_SECRET_VAULT: string;
 	INSTANCE_NAME: string;
 	DATABASE_URL: string;
 	STORAGE_SECRET: string;
@@ -112,4 +111,6 @@ export interface EnvVars {
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_NAME?: string;
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION?: string;
+
+	PRIVATE_KEY_VAULT: string;
 }
