@@ -1,5 +1,4 @@
 const ALLOWED_PROTOCOLS = ["http:", "https:"];
-const ALLOWED_DOMAIN_EXTENSIONS = [".com", ".net"];
 const GITHUB_CLOUD = ["github.com", "www.github.com"];
 
 /**
@@ -14,7 +13,7 @@ const checkValidUrl = inputURL => {
 		if (!ALLOWED_PROTOCOLS.includes(protocol)) {
 			return false;
 		}
-		if (!ALLOWED_DOMAIN_EXTENSIONS.some(extension => hostname.endsWith(extension))) {
+		if (hostname.split('.').length < 2) {
 			return false;
 		}
 		if (GITHUB_CLOUD.some(ghCloud => ghCloud === hostname)) {
