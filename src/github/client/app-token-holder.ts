@@ -7,9 +7,9 @@ import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { envVars } from "config/env";
-import {getLogger} from "config/logger";
-import {LoggerWithTarget} from "probot/lib/wrap-logger";
-import {createHashWithSharedSecret} from "utils/encryption";
+import { getLogger } from "config/logger";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 export type KeyLocator = (installationId: InstallationId) => string;
 
