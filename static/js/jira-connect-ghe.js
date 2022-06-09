@@ -9,7 +9,7 @@ const GITHUB_CLOUD = ["github.com", "www.github.com"];
  */
 const checkValidUrl = inputURL => {
 	try {
-		const { protocol, hostname} = new URL(inputURL);
+		const { protocol, hostname } = new URL(inputURL);
 
 		if (!ALLOWED_PROTOCOLS.some(allowedProtocol => protocol === allowedProtocol)) {
 			return false;
@@ -41,7 +41,8 @@ $("#gheServerURL").on("keyup", event => {
 
 $("#gheServerBtn").on("click", event => {
 	const btn = event.target;
-	const isValid = checkValidUrl($("#gheServerURL").val());
+	const typedURL = $("#gheServerURL").val();
+	const isValid = checkValidUrl(typedURL);
 
 	$(btn).attr({
 		"aria-disabled": !isValid,
@@ -55,6 +56,8 @@ $("#gheServerBtn").on("click", event => {
 		$("#gheServerURL").removeClass("has-error ");
 
 		//	TODO: Need to add the action
+		const validURL = typedURL.replace(/\/+$/, '');
+
 	} else {
 		$("#gheServerURLError").show();
 		$("#gheServerURL").addClass("has-error ");
