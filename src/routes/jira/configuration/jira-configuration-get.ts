@@ -45,7 +45,7 @@ const getInstallation = async (client: GitHubAPI, subscription: Subscription, lo
 	const { jiraHost } = subscription;
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION, false, jiraHost) ;
 	const { gitHubInstallationId } = subscription;
-	const gitHubAppClient = await createAppClient(log, jiraHost);
+	const gitHubAppClient = await createAppClient(gitHubInstallationId ,log, jiraHost);
 
 	try {
 		const response = useNewGitHubClient ?
