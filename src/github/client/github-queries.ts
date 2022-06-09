@@ -113,12 +113,12 @@ export type getCommitsResponse = {
 	}
 };
 
-export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
   repository(owner: $owner, name: $repo){
     defaultBranchRef {
       target {
         ... on Commit {
-          history(first: $per_page, after: $cursor) {
+          history(first: $per_page, after: $cursor, since: $commitSince) {
             edges {
               cursor
               node {
@@ -144,12 +144,12 @@ export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: S
   }
 }`;
 
-export const getCommitsQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getCommitsQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
   repository(owner: $owner, name: $repo){
     defaultBranchRef {
       target {
         ... on Commit {
-          history(first: $per_page, after: $cursor) {
+          history(first: $per_page, after: $cursor, since: $commitSince) {
             edges {
               cursor
               node {
@@ -218,7 +218,7 @@ export type getBranchesResponse = {
 	}
 };
 
-export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
         edges {
@@ -239,7 +239,7 @@ export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: 
                 }
                 authoredDate
                 changedFiles
-                history(first: 50) {
+                history(since: $commitSince, first: 50) {
                   nodes {
                     message
                     oid
@@ -266,7 +266,7 @@ export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: 
     }
   }`;
 
-export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
         edges {
@@ -286,7 +286,7 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
                   name
                 }
                 authoredDate
-                history(first: 50) {
+                history(since: $commitSince, first: 50) {
                   nodes {
                     message
                     oid

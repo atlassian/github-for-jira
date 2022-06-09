@@ -156,6 +156,13 @@
   padding: 0.2rem;
 }
 
+/* Hit box */
+.jiraConfiguration__syncWarning:before {
+  content: '';
+  padding: 1.25em;
+  position: absolute;
+}
+
 .jiraConfiguration__syncWarning:hover {
   background: #0914E208;
 }
