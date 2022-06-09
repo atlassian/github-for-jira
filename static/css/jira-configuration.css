@@ -70,15 +70,15 @@
 }
 
 .jiraConfiguration_content > .jiraConfiguration__tableContainer {
-	overflow: auto;
-    height: calc(100% - 175px);
-	margin-top: 2.5em;
+  overflow: auto;
+  height: calc(100% - 175px); 
+  margin-top: 2.5em;
 }
 
-.jiraConfiguration_content>.jiraConfiguration__tableContainer>.jiraConfiguration__table {
-	color: #172b4d;
-	table-layout: fixed;
-	width: 100%;
+.jiraConfiguration_content > .jiraConfiguration__tableContainer > .jiraConfiguration__table {
+  color: #172b4d;
+  table-layout: fixed;
+  width: 100%;
 }
 
 .jiraConfiguration__table__head {
