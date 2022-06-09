@@ -11,7 +11,7 @@ const checkValidUrl = inputURL => {
 	try {
 		const { protocol, hostname } = new URL(inputURL);
 
-		if (!ALLOWED_PROTOCOLS.some(allowedProtocol => protocol === allowedProtocol)) {
+		if (!ALLOWED_PROTOCOLS.includes(protocol)) {
 			return false;
 		}
 		if (!ALLOWED_DOMAIN_EXTENSIONS.some(extension => hostname.endsWith(extension))) {
