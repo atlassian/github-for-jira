@@ -32,7 +32,7 @@ export enum BooleanFlags {
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
 	SECURE_JIRAHOST_IN_COOKIES = "secure-jirahost-in-cookies",
-	USE_NEW_GITHUB_SECRETS = "use-new-github-secrets"
+	USE_NEW_GITHUB_PRIVATE_KEY = "use-new-github-private-key"
 }
 
 export enum StringFlags {

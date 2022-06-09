@@ -15,7 +15,7 @@ export type KeyLocator = (installationId: InstallationId) => string;
  */
 let shouldUseNewSecret = false;
 export const cloudKeyLocator: KeyLocator = () => {
-	booleanFlag(BooleanFlags.USE_NEW_GITHUB_SECRETS, false).then(newValue => shouldUseNewSecret = newValue);
+	booleanFlag(BooleanFlags.USE_NEW_GITHUB_PRIVATE_KEY, false).then(newValue => shouldUseNewSecret = newValue);
 	if (shouldUseNewSecret) {
 		return envVars.PRIVATE_KEY_VAULT;
 	}
