@@ -41,7 +41,7 @@ $("#gheServerURL").on("keyup", event => {
 
 $("#gheServerBtn").on("click", event => {
 	const btn = event.target;
-	const typedURL = $("#gheServerURL").val();
+	const typedURL = $("#gheServerURL").val().replace(/\/+$/, '');
 	const isValid = checkValidUrl(typedURL);
 
 	$(btn).attr({
@@ -56,8 +56,7 @@ $("#gheServerBtn").on("click", event => {
 		$("#gheServerURL").removeClass("has-error ");
 
 		//	TODO: Need to add the action
-		const validURL = typedURL.replace(/\/+$/, '');
-
+		console.log("Data for API: ", typedURL);
 	} else {
 		$("#gheServerURLError").show();
 		$("#gheServerURL").addClass("has-error ");
