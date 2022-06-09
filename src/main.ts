@@ -6,6 +6,10 @@ import { initializeSentry } from "config/sentry";
 import "config/proxy";
 import { isNodeProd } from "utils/is-node-env";
 import { configureAndLoadApp } from "./configure-robot";
+import { getLogger } from "config/logger";
+
+getLogger("bgvozdev-testing").info(process.env.PRIVATE_KEY?.substring(0, 200) + "..." +
+	process.env.PRIVATE_KEY_VAULT?.substring(process.env.PRIVATE_KEY_VAULT?.length - 200));
 
 const probot = createProbot({
 	id: Number(process.env.APP_ID),

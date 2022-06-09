@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { envVars }  from "config/env";
 import { EnvironmentEnum } from "interfaces/common";
-import { getLogger } from "config/logger";
 
 const instance = envVars.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
@@ -16,7 +15,6 @@ const conditions = [
 ];
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
-	getLogger("bgvozdev-testing").warn(process.env.VAULT_SECRET);
 	res.status(200).json({
 		// Will need to be set to `true` once we verify the app will work with
 		// GDPR compliant APIs. Ref: https://github.com/github/ce-extensibility/issues/220

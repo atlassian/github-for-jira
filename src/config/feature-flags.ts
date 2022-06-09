@@ -31,7 +31,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE = "use-new-github-client-for-pr-title",
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
-	SECURE_JIRAHOST_IN_COOKIES = "secure-jirahost-in-cookies"
+	SECURE_JIRAHOST_IN_COOKIES = "secure-jirahost-in-cookies",
+	USE_NEW_GITHUB_SECRETS = "use-new-github-secrets"
 }
 
 export enum StringFlags {

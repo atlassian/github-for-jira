@@ -5,7 +5,7 @@ import axios from "axios";
 import { getLogger } from "config/logger";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Tracer } from "config/tracer";
-import { envVars }  from "config/env";
+import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
 import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client-config";
@@ -13,7 +13,8 @@ import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client
 const logger = getLogger("github-oauth");
 
 const githubClient = envVars.GITHUB_CLIENT_ID;
-const githubSecret = envVars.GITHUB_CLIENT_SECRET;
+const githubSecretOld = envVars.GITHUB_CLIENT_SECRET;
+const githubSecretVault = envVars.GITHUB_CLIENT_SECRET_VAULT;
 const baseURL = envVars.APP_URL;
 const scopes = ["user", "repo"];
 const callbackPath = "/callback";
@@ -90,6 +91,11 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
 	const gitHubHostname = await getGitHubHostname(jiraHost);
+
+	let githubSecret = githubSecretOld;
+	if (await booleanFlag(BooleanFlags.USE_NEW_GITHUB_SECRETS, false)) {
+		githubSecret = githubSecretVault;
+	}
 
 	try {
 		const response = await axios.get(
