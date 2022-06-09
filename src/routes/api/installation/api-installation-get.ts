@@ -10,7 +10,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 	const gitHubAppClient = await createAppClient(req.log, jiraHost);
 
 	try {
-		const subscriptions = await Subscription.getAllForInstallation(Number(installationId));
+		const subscriptions = await Subscription.getAllForGitHubInstallationId(Number(installationId));
 
 		if (!subscriptions.length) {
 			res.sendStatus(404);

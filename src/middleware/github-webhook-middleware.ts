@@ -140,7 +140,7 @@ export const GithubWebhookMiddleware = (
 			return;
 		}
 
-		const subscriptions = await Subscription.getAllForInstallation(
+		const subscriptions = await Subscription.getAllForGitHubInstallationId(
 			gitHubInstallationId
 		);
 

@@ -78,7 +78,7 @@ export class Subscription extends Model {
 		});
 	}
 
-	static getAllForInstallation(
+	static getAllForGitHubInstallationId(
 		installationId: number
 	): Promise<Subscription[]> {
 		return this.findAll({
