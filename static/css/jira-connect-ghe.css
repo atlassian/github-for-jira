@@ -32,12 +32,16 @@ label {
   color: #6B778C;
 }
 
-input#gheServerURL {
+.ghe-server-input {
   width: 100%;
   border: 2px solid #DFE1E6;
   border-radius: 3px;
   background: #FAFBFC;
   padding: 10px 8px;
+}
+
+.has-error {
+  border-color: #DE350B;
 }
 
 .jiraConnectGHE__actionBtn__container {

@@ -1,5 +1,6 @@
-const ALLOWED_PROTOCOLS = ['http:', 'https:'];
-const GITHUB_CLOUD = 'github.com';
+const ALLOWED_PROTOCOLS = ["http:", "https:"];
+const ALLOWED_DOMAIN_EXTENSIONS = [".com", ".net"];
+const GITHUB_CLOUD = ["github.com", "www.github.com"];
 
 /**
  * Method that checks the validity of the passed URL
@@ -10,10 +11,13 @@ const checkValidUrl = inputURL => {
 	try {
 		const { protocol, hostname} = new URL(inputURL);
 
-		if (!ALLOWED_PROTOCOLS.includes(protocol)) {
+		if (!ALLOWED_PROTOCOLS.some(allowedProtocol => protocol.startsWith(allowedProtocol))) {
 			return false;
 		}
-		if (GITHUB_CLOUD === hostname) {
+		if (!ALLOWED_DOMAIN_EXTENSIONS.some(extension => hostname.endsWith(extension))) {
+			return false;
+		}
+		if (GITHUB_CLOUD.some(ghCloud => ghCloud === hostname)) {
 			// TODO: Need to alert the users that this URL is GitHub cloud and not Enterprise
 			// Waiting for design: https://softwareteams.atlassian.net/browse/ARC-1418
 			return false;
@@ -32,6 +36,7 @@ $("#gheServerURL").on("keyup", event => {
 		"disabled": !hasUrl
 	});
 	$("#gheServerURLError").hide();
+	$("#gheServerURL").removeClass("has-error ");
 });
 
 $("#gheServerBtn").on("click", event => {
@@ -47,9 +52,11 @@ $("#gheServerBtn").on("click", event => {
 		$("#gheServerURLError").hide();
 		$("#gheServerBtnText").hide();
 		$("#gheServerBtnSpinner").show();
+		$("#gheServerURL").removeClass("has-error ");
 
 		//	TODO: Need to add the action
 	} else {
 		$("#gheServerURLError").show();
+		$("#gheServerURL").addClass("has-error ");
 	}
 });
