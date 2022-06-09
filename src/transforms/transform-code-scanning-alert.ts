@@ -60,7 +60,7 @@ const transformStatusToAppearance = (status: string, context: Context): JiraRemo
 export const transformCodeScanningAlert = async (context: Context, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkData | undefined> => {
 	const { action, alert, ref, repository } = context.payload;
 
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, context.log, jiraHost);
 	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE, false, jiraHost) ?
 		gitHubInstallationClient :
 		context.github;
