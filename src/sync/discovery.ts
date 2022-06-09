@@ -59,9 +59,7 @@ export const getRepositoryTask = async (
 		const response = await newGithub.getRepositoriesPageOld(page);
 		hasNextPage = response.hasNextPage;
 		totalCount = response.data.total_count;
-		if (hasNextPage) {
-			nextCursor = (page + 1).toString();
-		}
+		nextCursor = (page + 1).toString();
 		repositories = response.data.repositories;
 		edges = repositories?.map(repo => ({
 			node: repo,
