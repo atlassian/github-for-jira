@@ -76,7 +76,7 @@ export async function createInstallationClient(githubInstallationId: number, log
 /**
  * Factory function to create a GitHub client that authenticates as the user (with a user access token).
  */
-export async function createUserClient(githubToken: string, jiraHost: string, logger: Logger): Promise<GitHubUserClient> {
+export async function createUserClient(githubToken: string, logger: Logger, jiraHost: string): Promise<GitHubUserClient> {
 	const gitHubClientConfig = await getGitHubClientConfig(jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 		? new GitHubUserClient(githubToken, logger, gitHubClientConfig.baseUrl)
