@@ -30,7 +30,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE = "use-new-github-client-for-pr-title",
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
-	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery"
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
+	USE_NEW_GITHUB_PRIVATE_KEY = "use-new-github-private-key"
 }
 
 export enum StringFlags {
