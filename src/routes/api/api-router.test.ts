@@ -325,7 +325,7 @@ describe("API Router", () => {
 					.expect(200)
 					.then((response) => {
 						expect(response.body?.originalValue).toEqual("encrypt_this_yo");
-						expect(response.body?.hashedValue).toEqual("9f7923986803c1639492314719b2f3d30dbbd46a83e24beb3823e865420b3838");
+						expect(response.body?.hashedValue).toEqual("a539e6c6809cabace5719df6c7fb52071ee15e722ba89675f6ad06840edaa287");
 					});
 			});
 
