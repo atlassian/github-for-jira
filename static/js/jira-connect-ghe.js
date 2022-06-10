@@ -7,17 +7,18 @@ const GITHUB_CLOUD = ["github.com", "www.github.com"];
  * @param {string} inputURL
  * @returns {boolean}
  */
-const checkValidUrl = inputURL => {
+const checkValidGHEUrl = inputURL => {
 	try {
 		const { protocol, hostname } = new URL(inputURL);
 
 		if (!ALLOWED_PROTOCOLS.includes(protocol)) {
 			return false;
 		}
+		// This checks whether the hostname whether there is an extension like `.com`, `.net` etc.
 		if (hostname.split('.').length < 2) {
 			return false;
 		}
-		if (GITHUB_CLOUD.some(ghCloud => ghCloud === hostname)) {
+		if (GITHUB_CLOUD.includes(hostname)) {
 			// TODO: Need to alert the users that this URL is GitHub cloud and not Enterprise
 			// Waiting for design: https://softwareteams.atlassian.net/browse/ARC-1418
 			return false;
@@ -42,7 +43,7 @@ $("#gheServerURL").on("keyup", event => {
 $("#gheServerBtn").on("click", event => {
 	const btn = event.target;
 	const typedURL = $("#gheServerURL").val().replace(/\/+$/, '');
-	const isValid = checkValidUrl(typedURL);
+	const isValid = checkValidGHEUrl(typedURL);
 
 	$(btn).attr({
 		"aria-disabled": !isValid,
