@@ -13,7 +13,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 	try {
 		const subscriptions = await Subscription.getAllForGitHubInstallationId(Number(installationId));
 
-		if (!subscriptions.length) {
+		if (!subscriptions?.length) {
 			res.sendStatus(404);
 			return;
 		}

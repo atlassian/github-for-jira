@@ -41,7 +41,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 				installation,
 				host: res.locals.jiraHost,
 				subscriptions,
-				hasSubscriptions: subscriptions.length > 0
+				hasSubscriptions: subscriptions && subscriptions.length > 0
 			});
 		} else {
 			return next(new Error("Unauthorized"));

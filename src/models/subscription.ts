@@ -68,7 +68,7 @@ export class Subscription extends Model {
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
-	githubAppId?: number;
+	gitHubAppId?: number;
 
 	static async getAllForHost(host: string): Promise<Subscription[]> {
 		return this.findAll({
@@ -79,11 +79,15 @@ export class Subscription extends Model {
 	}
 
 	static getAllForGitHubInstallationId(
-		installationId: number
-	): Promise<Subscription[]> {
+		gitHubInstallationId: number
+	): Promise<Subscription[] | null> | null {
+		if (!gitHubInstallationId) {
+			return null;
+		}
+
 		return this.findAll({
 			where: {
-				gitHubInstallationId: installationId
+				gitHubInstallationId: gitHubInstallationId
 			}
 		});
 	}
@@ -241,7 +245,7 @@ Subscription.init({
 	repositoryStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	createdAt: DATE,
 	updatedAt: DATE,
-	githubAppId: {
+	gitHubAppId: {
 		type: DataTypes.INTEGER,
 		allowNull: true
 	}

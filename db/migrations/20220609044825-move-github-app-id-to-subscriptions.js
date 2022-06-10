@@ -4,7 +4,7 @@ module.exports = {
 	up: async (queryInterface, Sequelize) => {
 		await queryInterface.removeColumn("Installations", "githubAppId");
 
-		await queryInterface.addColumn("Subscriptions", "githubAppId", {
+		await queryInterface.addColumn("Subscriptions", "gitHubAppId", {
 			type: Sequelize.INTEGER,
 			allowNull: true
 		});
@@ -16,6 +16,6 @@ module.exports = {
 			allowNull: true
 		});
 
-		await queryInterface.removeColumn("Subscriptions", "githubAppId");
+		await queryInterface.removeColumn("Subscriptions", "gitHubAppId");
 	}
 };
