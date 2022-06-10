@@ -5,6 +5,9 @@ import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 import * as PrivateKey from "probot/lib/private-key";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { createHashWithSharedSecret } from "utils/encryption";
+import { getLogger } from "config/logger";
 
 export type KeyLocator = (installationId: InstallationId) => string;
 
@@ -28,10 +31,12 @@ export class AppTokenHolder {
 	private static instance: AppTokenHolder;
 	private readonly privateKeyLocator: KeyLocator;
 	private readonly appTokenCache: LRUCache<string, AuthToken>;
+	private readonly logger: LoggerWithTarget;
 
 	constructor(keyLocator?: KeyLocator) {
 		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
 		this.privateKeyLocator = keyLocator || cloudKeyLocator;
+		this.logger = getLogger("app-token-holder");
 	}
 
 	public static getInstance(): AppTokenHolder {
@@ -71,6 +76,7 @@ export class AppTokenHolder {
 
 		if (!currentToken || currentToken.isAboutToExpire()) {
 			const key = this.privateKeyLocator(appId);
+			this.logger.info(`${createHashWithSharedSecret(key)} is used`);
 			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString());
 			this.appTokenCache.set(appId.toString(), currentToken);
 		}
