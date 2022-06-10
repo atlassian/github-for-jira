@@ -20,7 +20,7 @@ let shouldUseNewSecret = false;
 export const cloudKeyLocator: KeyLocator = () => {
 	booleanFlag(BooleanFlags.USE_NEW_GITHUB_PRIVATE_KEY, false)?.then(newValue => shouldUseNewSecret = newValue);
 	if (shouldUseNewSecret) {
-		return envVars.PRIVATE_KEY_VAULT;
+		return Buffer.from(envVars.PRIVATE_KEY_VAULT, 'base64').toString();
 	}
 	return PrivateKey.findPrivateKey() || "";
 };
