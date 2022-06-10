@@ -77,7 +77,7 @@ describe("GitHub Client", () => {
 		);
 
 		const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
-			switch (installationId.githubBaseUrl) {
+			switch (installationId.gitHubBaseUrl) {
 				case gheUrl:
 					return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
 				default:

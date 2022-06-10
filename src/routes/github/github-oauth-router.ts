@@ -28,6 +28,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 
 	req.session["timestamp_before_oauth"] = Date.now();
 	const { jiraHost } = res.locals;
+	const { gitHubInstallationId } = req.body;
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
 	req.session[state] =
@@ -35,7 +36,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-	const gitHubHostname = await getGitHubHostname(req.body.getGitHubHostname, jiraHost);
+	const gitHubHostname = await getGitHubHostname(gitHubInstallationId, jiraHost);
 	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 	req.log.info("redirectUrl:", redirectUrl);
 
@@ -85,12 +86,12 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!code) return next("Missing OAuth Code");
 
 	const { jiraHost } = res.locals;
-	const { getGitHubHostname } = req.body;
+	const { gitHubInstallationId } = req.body;
 
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
-	const gitHubHostname = await getGitHubHostname(getGitHubHostname, jiraHost);
+	const gitHubHostname = await getGitHubHostname(gitHubInstallationId, jiraHost);
 
 	try {
 		const response = await axios.get(
