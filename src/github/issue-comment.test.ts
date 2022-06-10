@@ -6,8 +6,6 @@ import { Subscription } from "models/subscription";
 
 import issueCommentBasic from "fixtures/issue-comment-basic.json";
 
-jest.mock("config/feature-flags");
-
 describe("Issue Comment Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;

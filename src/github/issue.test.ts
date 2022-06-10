@@ -7,8 +7,6 @@ import { Application } from "probot";
 import issueNullBody from "fixtures/issue-null-body.json";
 import issueBasic from "fixtures/issue-basic.json";
 
-jest.mock("config/feature-flags");
-
 describe("Issue Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;

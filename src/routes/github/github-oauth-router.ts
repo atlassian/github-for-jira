@@ -5,7 +5,7 @@ import axios from "axios";
 import { getLogger } from "config/logger";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Tracer } from "config/tracer";
-import { envVars }  from "config/env";
+import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
 import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client-config";
