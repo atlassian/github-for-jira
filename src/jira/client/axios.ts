@@ -179,7 +179,7 @@ export const getAxiosInstance = (
 		baseURL,
 		timeout: Number(process.env.JIRA_TIMEOUT) || 30000
 	});
-	/**/
+
 	// *** IMPORTANT: Interceptors are executed in reverse order. ***
 	// the last one specified is the first to executed.
 
