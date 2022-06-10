@@ -18,7 +18,6 @@ export enum BooleanFlags {
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
-	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
 	BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS = "run-backfill-for-builds-and-deployments",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST = "use-new-github-client-for-github-config-post",
@@ -32,6 +31,7 @@ export enum BooleanFlags {
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
 	SECURE_JIRAHOST_IN_COOKIES = "secure-jirahost-in-cookies",
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	USE_NEW_GITHUB_PRIVATE_KEY = "use-new-github-private-key"
 }
 
