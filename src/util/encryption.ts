@@ -1,8 +1,13 @@
-import { BinaryLike, createHmac } from "crypto";
+import { createHmac } from "crypto";
 import { envVars } from "../config/env";
 
-export const createHashWithSharedSecret = (data: BinaryLike): string => {
+export const createHashWithSharedSecret = (data: string): string => {
+	const cleanedData = removeNonAlphaNumericCharacters(data);
 	return createHmac("sha256", envVars.GLOBAL_HASH_SECRET)
-		.update(data)
+		.update(cleanedData)
 		.digest("hex");
+};
+
+const removeNonAlphaNumericCharacters = (str: string): string => {
+	return str.replace(/[^\p{L}\p{N}]+/ug, ""); // Tests all unicode characters and only keeps Letters and Numbers
 };
