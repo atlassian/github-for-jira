@@ -4,40 +4,40 @@
 }
 .jiraConnectGHE__content__title {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 2em;
 }
 
 .jiraConnectGHE__options__subTitle {
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-size: 1rem;
+  margin-bottom: 0.5em;
   display: inline-flex;
 }
 
 .jiraConnectGHE__prompt {
   color: #344563;
-  font-size: 14px;
-  margin-bottom: 16px;
+  font-size: 0.9rem;
+  margin-bottom: 1em;
 }
 
 .jiraConnectGHE__error {
   display: none;
   color: #DE350B;
-  font-size: 12px;
-  margin-top: 2px;
+  font-size: 0.8rem;
+  margin-top: 0.125em;
 }
 
-label {
-  font-size: 12px;
+.jiraConnectGHE__label {
+  font-size: 0.8rem;
   font-weight: 600;
   color: #6B778C;
 }
 
-.ghe-server-input {
+.jiraConnectGHE__input {
   width: 100%;
   border: 2px solid #DFE1E6;
   border-radius: 3px;
   background: #FAFBFC;
-  padding: 10px 8px;
+  padding: 0.625em 0.5em;
 }
 
 .has-error {
@@ -45,7 +45,7 @@ label {
 }
 
 .jiraConnectGHE__actionBtn__container {
-  margin-top: 20px;
+  margin-top: 1.25em;
   text-align: right;
 }
 

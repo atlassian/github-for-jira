@@ -4,6 +4,7 @@ const GITHUB_CLOUD = ["github.com", "www.github.com"];
 /**
  * Method that checks the validity of the passed URL
  *
+ * @param {string} inputURL
  * @returns {boolean}
  */
 const checkValidUrl = inputURL => {
@@ -35,7 +36,7 @@ $("#gheServerURL").on("keyup", event => {
 		"disabled": !hasUrl
 	});
 	$("#gheServerURLError").hide();
-	$("#gheServerURL").removeClass("has-error ");
+	$("#gheServerURL").removeClass("has-error");
 });
 
 $("#gheServerBtn").on("click", event => {
@@ -52,12 +53,12 @@ $("#gheServerBtn").on("click", event => {
 		$("#gheServerURLError").hide();
 		$("#gheServerBtnText").hide();
 		$("#gheServerBtnSpinner").show();
-		$("#gheServerURL").removeClass("has-error ");
+		$("#gheServerURL").removeClass("has-error");
 
 		//	TODO: Need to add the action
 		console.log("Data for API: ", typedURL);
 	} else {
 		$("#gheServerURLError").show();
-		$("#gheServerURL").addClass("has-error ");
+		$("#gheServerURL").addClass("has-error");
 	}
 });

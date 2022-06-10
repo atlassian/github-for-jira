@@ -6,8 +6,8 @@
     <meta name="public-url" content="{{APP_URL}}" />
     <title>{{title}}</title>
     <link
-      rel="stylesheet"
       href="/public/aui/aui-prototyping.css"
+      rel="stylesheet"
       integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
@@ -45,7 +45,7 @@
         <div class="jiraConnectGHE__prompt">
           Connecting GitHub Enterprise Server to Jira requires a hole in your firewall. More copy/details here.
           <!--TODO: Add a link here-->
-          <a href="">Learn more.</a>
+          <a href="" target="_blank">Learn more.</a>
         </div>
 
         <div>
@@ -58,13 +58,13 @@
             Enter the URL for the server of the GitHub Enterprise organization that you want to connect. This is unique to your server.
           </div>
           <div>
-            <label for="gheServerURL">Server URL</label>
-            <input type="text" class="ghe-server-input" id="gheServerURL" placeholder="https://example.com" />
+            <label class="jiraConnectGHE__label" for="gheServerURL">Server URL</label>
+            <input type="text" class="jiraConnectGHE__input" id="gheServerURL" placeholder="https://example.com" />
             <div class="jiraConnectGHE__error" id="gheServerURLError">
               <i class="aui-icon aui-iconfont-error"></i>
               The entered URL is not valid.
               <!--TODO: Add a link here-->
-              <a href="">Learn more.</a>
+              <a href="" target="_blank">Learn more.</a>
             </div>
           </div>
 
