@@ -17,6 +17,8 @@ import {
 	createInstallationClient,
 	createUserClient
 } from "~/src/util/get-github-client-config";
+import { getUnsafeLogger } from "config/logger";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -123,6 +125,12 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		github // user-authenticated GitHub client
 	} = res.locals;
 	const log = req.log.child({ jiraHost });
+
+	const unsafeLogger = getUnsafeLogger("github - configuration");
+	const jiraHostHash = createHashWithSharedSecret(jiraHost);
+	if (await BooleanFlags.LOG_UNSAFE_DATA, false, jiraHost) {
+		unsafeLogger.warn({ test: "test1", jiraHost, jiraHostHash }, "here is some warnings yo!");
+	}
 
 	if (!githubToken) {
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
