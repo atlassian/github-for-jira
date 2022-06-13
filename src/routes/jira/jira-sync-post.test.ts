@@ -44,8 +44,7 @@ describe("sync", () => {
 		return supertest(app)
 			.post("/jira/sync")
 			.query({
-				jwt,
-				xdm_e: jiraHost
+				jwt
 			})
 			.send({
 				installationId: installation.id,

@@ -6,11 +6,8 @@ import { when } from "jest-when";
 import { Request, Response } from "express";
 import Mock = jest.Mock;
 import { getLogger } from "config/logger";
-import { booleanFlag as mockBooleanFlag } from "../../config/feature-flags";
 
 jest.mock("./query-atlassian-connect-public-key");
-
-jest.mock("../../config/feature-flags");
 
 describe("jwt", () => {
 	let testQueryParams: Record<string, string>;
@@ -95,7 +92,6 @@ describe("jwt", () => {
 			log: getLogger("jwt.test")
 		} as any;
 
-		(mockBooleanFlag as any).mockReturnValue(Promise.resolve(true));
 	});
 
 	describe("#verifySymmetricJwtTokenMiddleware", () => {

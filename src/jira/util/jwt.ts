@@ -6,7 +6,6 @@ import { NextFunction, Request, Response } from "express";
 import { envVars }  from "config/env";
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { includes, isEmpty } from "lodash";
-import { booleanFlag, BooleanFlags } from "../../config/feature-flags";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
@@ -29,13 +28,8 @@ export enum TokenType {
 	context = "context"
 }
 
-let secureJiraHostInCookies;
-
 
 function extractJwtFromRequest(req: Request): string | undefined {
-
-	booleanFlag(BooleanFlags.SECURE_JIRAHOST_IN_COOKIES, false)
-		.then(flag=>secureJiraHostInCookies = flag); //ignore error
 
 	const tokenInQuery = req.query?.[JWT_PARAM];
 	const tokenInBody = req.body?.[JWT_PARAM];
@@ -55,7 +49,7 @@ function extractJwtFromRequest(req: Request): string | undefined {
 		}
 	}
 
-	if (!token && secureJiraHostInCookies) {
+	if (!token) {
 		token = req.cookies?.[JWT_PARAM];
 		if (token) {
 			req.log.info("JWT token found in cookies (last resort)");
