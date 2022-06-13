@@ -34,9 +34,10 @@ export const getJiraClient = async (
 	gitHubInstallationId: number,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
-	// TODO - ARC-1369
-	const jiraHostHash = createHashWithSharedSecret(jiraHost);
-	const logger = log.child({ jiraHost: jiraHostHash, gitHubInstallationId });
+	const logger = log.child({
+		jiraHost: createHashWithSharedSecret(jiraHost),
+		gitHubInstallationId
+	});
 	const installation = await Installation.getForHost(jiraHost);
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");

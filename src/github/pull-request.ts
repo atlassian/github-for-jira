@@ -25,14 +25,11 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	const baseUrl = jiraClient.baseUrl || "none";
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
 
-	// TODO - ARC-1369
-
-	const jiraHostHash = createHashWithSharedSecret(jiraClient.baseURL);
 	context.log = context.log.child({
-		jiraHostName: jiraHostHash,
+		jiraHostName: createHashWithSharedSecret(jiraClient.baseURL),
 		installationId: githubInstallationId,
-		orgName: owner,// TODO - ARC-1369
-		pullRequestNumber,// TODO - ARC-1369
+		orgName: createHashWithSharedSecret(owner),
+		pullRequestNumber,
 		pullRequestId
 	});
 

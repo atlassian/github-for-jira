@@ -22,9 +22,10 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	);
 
 	const { installationId, jiraHost } = context.payload;
-	const jiraHostHash = createHashWithSharedSecret(jiraHost);
-	// TODO - ARC-1369
-	context.log = context.log.child({ installationId, jiraHost: jiraHostHash });
+	context.log = context.log.child({
+		installationId,
+		jiraHost: createHashWithSharedSecret(jiraHost)
+	});
 
 	try {
 		const processor = await processInstallation(workerApp);

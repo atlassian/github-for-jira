@@ -89,15 +89,13 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	const webhookId = payload.webhookId || "none";
 	const webhookReceived = payload.webhookReceived || undefined;
 
-	// TODO - ARC-1369
-	const jiraHostHash = createHashWithSharedSecret(jiraHost);
 	const log = rootLogger.child({
-		webhookId: webhookId,
-		repoName: repo,
-		orgName: owner.name,
+		jiraHost: createHashWithSharedSecret(jiraHost),
+		repoName: createHashWithSharedSecret(repo),
+		orgName: createHashWithSharedSecret(owner.name),
 		installationId,
-		webhookReceived,
-		jiraHost: jiraHostHash
+		webhookId: webhookId,
+		webhookReceived
 	});
 
 	log.info("Processing push");

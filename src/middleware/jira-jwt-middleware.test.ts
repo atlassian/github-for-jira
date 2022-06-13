@@ -127,7 +127,7 @@ describe("#verifyJiraMiddleware", () => {
 			await JiraContextJwtTokenMiddleware(req, res, next);
 
 			expect(addLogFieldsSpy).toHaveBeenCalledWith({
-				jiraHost,
+				jiraHost: '75d13390c64c6924b9976a4e5311ccb5ef11edd71dbb089f46a7bf6de4bf3370',
 				jiraClientKey: "abc12***" // should be the shortened key
 			});
 		});

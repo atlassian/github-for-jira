@@ -13,6 +13,7 @@ import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 export const ApiRouter = Router();
 
@@ -30,14 +31,13 @@ ApiRouter.use(
 		const issuer = req.get("X-Slauth-Issuer");
 		const principal = req.get("X-Slauth-Principal");
 
-		// TODO - ARC-1369 - looks persnoal to me
 		req.log = req.log.child({ slauth: {
 			mechanism,
 			issuer,
 			principal,
-			userGroup: req.get("X-Slauth-User-Groups"), // arc-1368 tohash
+			userGroup: createHashWithSharedSecret(req.get("X-Slauth-User-Groups")),
 			aaid: req.get("X-Slauth-User-Aaid"),
-			username: req.get("X-Slauth-User-Username") // arc-1368 tohash
+			username: createHashWithSharedSecret(req.get("X-Slauth-User-Username"))
 		} });
 
 		if (!mechanism || mechanism === "open") {

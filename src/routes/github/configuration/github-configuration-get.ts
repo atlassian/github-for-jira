@@ -123,9 +123,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		githubToken,
 		github // user-authenticated GitHub client
 	} = res.locals;
-	// TODO - ARC-1369
-	const jiraHostHash = createHashWithSharedSecret(jiraHost);
-	const log = req.log.child({ jiraHost: jiraHostHash });
+	const log = req.log.child({ jiraHost: createHashWithSharedSecret(jiraHost) });
 
 	if (!githubToken) {
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));

@@ -1,6 +1,7 @@
 import { Installation } from "models/installation";
 import { NextFunction, Request, Response } from "express";
 import { sendError, TokenType, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	req: Request,
@@ -23,7 +24,7 @@ export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	res.locals.installation = installation;
 
 	req.addLogFields({
-		jiraHost: installation.jiraHost,
+		jiraHost: createHashWithSharedSecret(installation.jiraHost),
 		jiraClientKey:
 			installation.clientKey && `${installation.clientKey.substr(0, 5)}***`
 	});

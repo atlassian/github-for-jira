@@ -1,5 +1,6 @@
 import { Installation } from "models/installation";
 import { NextFunction, Request, Response } from "express";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 /**
  * Express middleware for connect app events
@@ -25,7 +26,7 @@ export const extractInstallationFromJiraCallback = async (req: Request, res: Res
 	const { jiraHost, clientKey } = installation;
 
 	req.addLogFields({
-		jiraHost,
+		jiraHost: createHashWithSharedSecret(jiraHost),
 		jiraClientKey: `${clientKey.substr(0, 5)}***}`
 	});
 	res.locals.installation = installation;

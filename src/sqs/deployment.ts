@@ -22,11 +22,10 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 	const messagePayload: DeploymentMessagePayload = context.payload;
 
 	const { webhookId, jiraHost, installationId } = messagePayload;
-	const jiraHostHash = createHashWithSharedSecret(jiraHost);
-	// TODO - ARC-1369
+
 	context.log = context.log.child({
+		jiraHost: createHashWithSharedSecret(jiraHost),
 		webhookId,
-		jiraHost: jiraHostHash,
 		installationId
 	});
 

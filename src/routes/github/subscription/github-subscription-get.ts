@@ -15,9 +15,10 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	if (!gitHubInstallationId || !jiraHost) {
 		return next(new Error("installationId and jiraHost must be provided to delete a subscription."));
 	}
-	// TODO - ARC-1369
-	const jiraHostHash = createHashWithSharedSecret(jiraHost);
-	const logger = req.log.child({ jiraHost: jiraHostHash, gitHubInstallationId });
+	const logger = req.log.child({
+		jiraHost: createHashWithSharedSecret(jiraHost),
+		gitHubInstallationId
+	});
 	const gitHubAppClient = await createAppClient(logger, jiraHost);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
 

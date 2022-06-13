@@ -95,15 +95,14 @@ export const GithubWebhookMiddleware = (
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
 
-		// TODO - ARC-1369
 		context.log = context.log.child({
 			name: "github.webhooks",
 			webhookId,
 			gitHubInstallationId,
 			event: webhookEvent,
 			webhookReceived,
-			repoName, // arc-1369 tohash
-			orgName // arc-1369 tohash
+			repoName: createHashWithSharedSecret(repoName),
+			orgName: createHashWithSharedSecret(orgName)
 		});
 		context.log.debug({ payload }, "Webhook payload");
 
@@ -171,9 +170,7 @@ export const GithubWebhookMiddleware = (
 				gitHubInstallationId.toString()
 			);
 			context.sentry?.setUser({ jiraHost, gitHubInstallationId });
-			// TODO - ARC-1369 - hashit yo
-			const jiraHostHash = createHashWithSharedSecret(jiraHost);
-			context.log = context.log.child({ jiraHost: jiraHostHash });
+			context.log = context.log.child({ jiraHost: createHashWithSharedSecret(jiraHost) });
 			context.log("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {

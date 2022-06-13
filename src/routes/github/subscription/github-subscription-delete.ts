@@ -7,9 +7,10 @@ import { createHashWithSharedSecret } from "utils/encryption";
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost } = res.locals;
 	const { installationId: gitHubInstallationId } = req.body;
-	// TODO - ARC-1369 - hash
-	const jiraHostHash = createHashWithSharedSecret(jiraHost);
-	const logger = req.log.child({ jiraHost: jiraHostHash, gitHubInstallationId });
+	const logger = req.log.child({
+		jiraHost: createHashWithSharedSecret(jiraHost),
+		gitHubInstallationId
+	});
 	const gitHubAppClient = await createAppClient(logger, jiraHost);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger);
 

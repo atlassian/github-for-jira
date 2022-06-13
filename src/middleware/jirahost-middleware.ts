@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { TokenType } from "~/src/jira/util/jwt";
 import { postInstallUrl } from "routes/jira/jira-atlassian-connect-get";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 const extractUnsafeJiraHost = (req: Request): string | null => {
 	if (req.path == postInstallUrl && req.method == "GET") {
@@ -36,7 +37,7 @@ export const jirahostMiddleware = async (req: Request, res: Response, next: Next
 
 	const unsafeJiraHost = extractUnsafeJiraHost(req);
 
-	req.addLogFields({ jiraHost: unsafeJiraHost });
+	req.addLogFields({ jiraHost:  createHashWithSharedSecret(unsafeJiraHost) });
 
 	// JWT validation makes sure "res.locals.jiraHost" is legit, not the cookie value. To avoid
 	// any temptation to use it later, let's remove it straight away!
