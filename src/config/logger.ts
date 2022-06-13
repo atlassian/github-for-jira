@@ -91,6 +91,11 @@ export const getLogger = (name: string): LoggerWithTarget => {
 	return logger.child({ name });
 };
 
+// This will log data to a restricted environment [env]-unsafe
+export const getUnsafeLogger = (name: string): LoggerWithTarget => {
+	return logger.child({ name, env_suffix: "unsafe" });
+};
+
 //Override console.log with bunyan logger.
 //we shouldn't use console.log in our code, but it is done to catch
 //possible logs from third party libraries
