@@ -3,6 +3,7 @@ import { Context, MessageHandler } from "./sqs";
 import { workerApp } from "../worker/app";
 import { processDeployment } from "../github/deployment";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 export type DeploymentMessagePayload = {
 	jiraHost: string,
@@ -21,10 +22,11 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 	const messagePayload: DeploymentMessagePayload = context.payload;
 
 	const { webhookId, jiraHost, installationId } = messagePayload;
-
+	const jiraHostHash = createHashWithSharedSecret(jiraHost);
+	// TODO - ARC-1369
 	context.log = context.log.child({
 		webhookId,
-		jiraHost,
+		jiraHost: jiraHostHash,
 		installationId
 	});
 

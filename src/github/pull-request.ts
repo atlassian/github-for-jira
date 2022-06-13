@@ -9,6 +9,7 @@ import { JiraPullRequestData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
@@ -24,13 +25,15 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	const baseUrl = jiraClient.baseUrl || "none";
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
 
+	// TODO - ARC-1369
+
+	const jiraHostHash = createHashWithSharedSecret(jiraClient.baseURL);
 	context.log = context.log.child({
-		jiraHostName: jiraClient.baseURL,
+		jiraHostName: jiraHostHash,
 		installationId: githubInstallationId,
-		orgName: owner,
-		pullRequestNumber,
-		pullRequestId,
-		payload: context.payload
+		orgName: owner,// TODO - ARC-1369
+		pullRequestNumber,// TODO - ARC-1369
+		pullRequestId
 	});
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

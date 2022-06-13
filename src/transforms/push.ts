@@ -9,6 +9,7 @@ import { sqsQueues } from "../sqs/queues";
 import { PushQueueMessagePayload } from "../sqs/push";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { isEmpty } from "lodash";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 // TODO: define better types for this file
 const mapFile = (
@@ -88,13 +89,15 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	const webhookId = payload.webhookId || "none";
 	const webhookReceived = payload.webhookReceived || undefined;
 
+	// TODO - ARC-1369
+	const jiraHostHash = createHashWithSharedSecret(jiraHost);
 	const log = rootLogger.child({
 		webhookId: webhookId,
 		repoName: repo,
 		orgName: owner.name,
 		installationId,
 		webhookReceived,
-		jiraHost
+		jiraHost: jiraHostHash
 	});
 
 	log.info("Processing push");

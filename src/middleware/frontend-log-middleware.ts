@@ -44,6 +44,7 @@ declare global {
 export const LogMiddleware = (req: Request, res: Response, next: NextFunction): void => {
 	req.addLogFields = (fields: Record<string, unknown>): void => {
 		if (req.log) {
+			// TODO - ARC-1369 - inspect logs on splunk and see if any ugc/pd is being logged
 			req.log = req.log.child(fields);
 		} else {
 			throw new Error(`No log found during request: ${req.method} ${req.path}`);

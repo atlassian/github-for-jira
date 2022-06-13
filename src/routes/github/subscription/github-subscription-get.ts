@@ -2,6 +2,7 @@ import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { githubToken, jiraHost } = res.locals;
@@ -14,8 +15,9 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	if (!gitHubInstallationId || !jiraHost) {
 		return next(new Error("installationId and jiraHost must be provided to delete a subscription."));
 	}
-
-	const logger = req.log.child({ jiraHost, gitHubInstallationId });
+	// TODO - ARC-1369
+	const jiraHostHash = createHashWithSharedSecret(jiraHost);
+	const logger = req.log.child({ jiraHost: jiraHostHash, gitHubInstallationId });
 	const gitHubAppClient = await createAppClient(logger, jiraHost);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
 

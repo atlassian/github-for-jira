@@ -31,7 +31,7 @@ export const processDeployment = async (
 	rootLogger: LoggerWithTarget) => {
 
 	const logger = rootLogger.child({
-		webhookId: webhookId,
+		webhookId,
 		installationId,
 		webhookReceived: webhookReceivedDate
 	});

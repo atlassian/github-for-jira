@@ -17,6 +17,7 @@ import {
 	createInstallationClient,
 	createUserClient
 } from "~/src/util/get-github-client-config";
+import { createHashWithSharedSecret } from "~/src/util/encryption";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -122,7 +123,9 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		githubToken,
 		github // user-authenticated GitHub client
 	} = res.locals;
-	const log = req.log.child({ jiraHost });
+	// TODO - ARC-1369
+	const jiraHostHash = createHashWithSharedSecret(jiraHost);
+	const log = req.log.child({ jiraHost: jiraHostHash });
 
 	if (!githubToken) {
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));

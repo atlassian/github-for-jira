@@ -30,13 +30,14 @@ ApiRouter.use(
 		const issuer = req.get("X-Slauth-Issuer");
 		const principal = req.get("X-Slauth-Principal");
 
+		// TODO - ARC-1369 - looks persnoal to me
 		req.log = req.log.child({ slauth: {
 			mechanism,
 			issuer,
 			principal,
-			userGroup: req.get("X-Slauth-User-Groups"),
+			userGroup: req.get("X-Slauth-User-Groups"), // arc-1368 tohash
 			aaid: req.get("X-Slauth-User-Aaid"),
-			username: req.get("X-Slauth-User-Username")
+			username: req.get("X-Slauth-User-Username") // arc-1368 tohash
 		} });
 
 		if (!mechanism || mechanism === "open") {

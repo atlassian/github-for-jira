@@ -4,6 +4,7 @@ import { processInstallation } from "../sync/installation";
 import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 export type BackfillMessagePayload = {
 	installationId: number,
@@ -21,7 +22,9 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	);
 
 	const { installationId, jiraHost } = context.payload;
-	context.log = context.log.child({ installationId, jiraHost });
+	const jiraHostHash = createHashWithSharedSecret(jiraHost);
+	// TODO - ARC-1369
+	context.log = context.log.child({ installationId, jiraHost: jiraHostHash });
 
 	try {
 		const processor = await processInstallation(workerApp);

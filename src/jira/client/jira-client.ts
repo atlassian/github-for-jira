@@ -9,6 +9,7 @@ import { JiraCommit, JiraIssue, JiraRemoteLink } from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -33,7 +34,9 @@ export const getJiraClient = async (
 	gitHubInstallationId: number,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
-	const logger = log.child({ jiraHost, gitHubInstallationId });
+	// TODO - ARC-1369
+	const jiraHostHash = createHashWithSharedSecret(jiraHost);
+	const logger = log.child({ jiraHost: jiraHostHash, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");

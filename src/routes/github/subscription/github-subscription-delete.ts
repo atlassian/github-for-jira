@@ -2,11 +2,14 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost } = res.locals;
 	const { installationId: gitHubInstallationId } = req.body;
-	const logger = req.log.child({ jiraHost, gitHubInstallationId });
+	// TODO - ARC-1369 - hash
+	const jiraHostHash = createHashWithSharedSecret(jiraHost);
+	const logger = req.log.child({ jiraHost: jiraHostHash, gitHubInstallationId });
 	const gitHubAppClient = await createAppClient(logger, jiraHost);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger);
 

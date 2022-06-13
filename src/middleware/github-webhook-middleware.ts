@@ -11,6 +11,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
@@ -94,14 +95,15 @@ export const GithubWebhookMiddleware = (
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
 
+		// TODO - ARC-1369
 		context.log = context.log.child({
 			name: "github.webhooks",
 			webhookId,
 			gitHubInstallationId,
 			event: webhookEvent,
 			webhookReceived,
-			repoName,
-			orgName
+			repoName, // arc-1369 tohash
+			orgName // arc-1369 tohash
 		});
 		context.log.debug({ payload }, "Webhook payload");
 
@@ -169,7 +171,9 @@ export const GithubWebhookMiddleware = (
 				gitHubInstallationId.toString()
 			);
 			context.sentry?.setUser({ jiraHost, gitHubInstallationId });
-			context.log = context.log.child({ jiraHost });
+			// TODO - ARC-1369 - hashit yo
+			const jiraHostHash = createHashWithSharedSecret(jiraHost);
+			context.log = context.log.child({ jiraHost: jiraHostHash });
 			context.log("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
