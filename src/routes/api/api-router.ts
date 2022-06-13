@@ -36,7 +36,7 @@ ApiRouter.use(
 			issuer,
 			principal,
 			userGroup: createHashWithSharedSecret(req.get("X-Slauth-User-Groups")),
-			aaid: req.get("X-Slauth-User-Aaid"),
+			aaid: createHashWithSharedSecret(req.get("X-Slauth-User-Aaid")),
 			username: createHashWithSharedSecret(req.get("X-Slauth-User-Username"))
 		} });
 

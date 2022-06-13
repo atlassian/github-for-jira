@@ -12,5 +12,5 @@ export const createHashWithSharedSecret = (data?: string | null): string => {
 };
 
 const removeNonAlphaNumericCharacters = (str: string): string => {
-	return str.replace(/[^\p{L}\p{N}]+/ug, "");
+	return str.replace(/[^\p{L}\p{N}]+/ug, ""); // Tests all unicode characters and only keeps Letters and Numbers
 };

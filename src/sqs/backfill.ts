@@ -23,8 +23,8 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 
 	const { installationId, jiraHost } = context.payload;
 	context.log = context.log.child({
-		installationId,
-		jiraHost: createHashWithSharedSecret(jiraHost)
+		jiraHost: createHashWithSharedSecret(jiraHost),
+		installationId
 	});
 
 	try {

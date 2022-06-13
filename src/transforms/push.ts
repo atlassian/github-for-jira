@@ -94,7 +94,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		repoName: createHashWithSharedSecret(repo),
 		orgName: createHashWithSharedSecret(owner.name),
 		installationId,
-		webhookId: webhookId,
+		webhookId,
 		webhookReceived
 	});
 
