@@ -1,7 +1,7 @@
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import { envVars }  from "./env";
-import crypto from "crypto";
+import { createHashWithSharedSecret } from "utils/encryption";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 const logger = getLogger("feature-flags");
@@ -17,6 +17,7 @@ export enum BooleanFlags {
 	TRACE_LOGGING = "trace-logging",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
+	LOG_UNSAFE_DATA = "log-unsafe-data",
 	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
 	BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS = "run-backfill-for-builds-and-deployments",
@@ -51,11 +52,8 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 		};
 	}
 
-	const hash = crypto.createHash("sha1");
-	hash.update(jiraHost);
-
 	return {
-		key: hash.digest("hex")
+		key: createHashWithSharedSecret(jiraHost)
 	};
 };
 
