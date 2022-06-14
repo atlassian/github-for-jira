@@ -18,16 +18,25 @@ const checkValidGHEUrl = inputURL => {
 		if (hostname.split('.').length < 2) {
 			return false;
 		}
-		if (GITHUB_CLOUD.includes(hostname)) {
-			// TODO: Need to alert the users that this URL is GitHub cloud and not Enterprise
-			// Waiting for design: https://softwareteams.atlassian.net/browse/ARC-1418
-			return false;
-		}
 
 		return true;
 	} catch (e) {
 		return false;
 	}
+};
+
+/**
+ * Checks if the passed valid URL is GitHub enterprise or GitHub Cloud
+ *
+ * @param {string} url
+ * @returns {boolean}
+ */
+const checkGHEServerUrl = url => {
+	const { hostname } = new URL(url);
+	if (GITHUB_CLOUD.includes(hostname)) {
+		return false;
+	}
+	return false;
 };
 
 $("#gheServerURL").on("keyup", event => {
@@ -56,10 +65,18 @@ $("#gheServerBtn").on("click", event => {
 		$("#gheServerBtnSpinner").show();
 		$("#gheServerURL").removeClass("has-error");
 
-		//	TODO: Need to add the action
-		console.log("Data for API: ", typedURL);
+		if (checkGHEServerUrl(typedURL)) {
+			//	TODO: Need to add the action for the GHE server
+			console.log("GHE server URL: ", typedURL);
+		} else {
+			// TODO: Need to alert the users that this URL is GitHub cloud and not Enterprise
+			// Waiting for design: https://softwareteams.atlassian.net/browse/ARC-1418
+			console.log('Cloud URL Entered', typedURL);
+		}
+
+
 	} else {
 		$("#gheServerURLError").show();
-		$("#gheServerURL").addClass("has-error");
+		$("#gheServerURL").addClass("has-error");24
 	}
 });
