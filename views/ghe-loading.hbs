@@ -4,6 +4,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
     <title>{{title}}</title>
+    <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
     <link rel="stylesheet" href="/public/css/ghe-loading.css" media="all" />
     <link
       rel="stylesheet"
@@ -15,21 +16,10 @@
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
   <body class="gheLoading___body">
-    <section class="gheLoading___container">
-      <h3 class="gheLoading___header">We're redirecting you to your GitHub Enterprise Server instance</h3>
-      <div class="gheLoading___imgContainer">
-          <img class="gheLoading___jiraImg" src="/public/assets/jira-logo.svg" alt="Jira">
-          <div class="gheLoading___imgDivider">-</div>
-          <div>
-            <aui-spinner size="large"></aui-spinner>
-          </div>
-          <div class="gheLoading___imgDivider">-</div>
-          <img class="gheLoading___GitHubImg" src="/public/assets/github-logo.svg" alt="Github">
-      </div>
-      <p class="gheLoading___message">
-        If your instance doesn't load, check that your URL configuration is correct.
-      </p>
-    </section>
+    {{> loading-screen
+      title="We're redirecting you to your GitHub Enterprise Server instance"
+      message="If your instance doesn't load, check that your URL configuration is correct."
+    }}
   </body>
 <script
   src="/public/aui/aui-prototyping.js"
