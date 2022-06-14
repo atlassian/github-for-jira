@@ -43,7 +43,7 @@ export const getInstallations = async (client: GitHubAPI, subscriptions: Subscri
 const getInstallation = async (client: GitHubAPI, subscription: Subscription, log: Logger): Promise<AppInstallation> => {
 
 	const { jiraHost } = subscription;
-	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION, true, jiraHost) ;
+	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION, false, jiraHost) ;
 	const { gitHubInstallationId } = subscription;
 	const gitHubAppClient = await createAppClient(gitHubInstallationId ,log, jiraHost);
 

@@ -11,7 +11,7 @@ module.exports = {
 	},
 
 	down: async (queryInterface, Sequelize) => {
-		await queryInterface.addColumn("Installations", "githubAppId", {
+		await queryInterface.addColumn("Installations", "gitHubAppId", {
 			type: Sequelize.INTEGER,
 			allowNull: true
 		});
