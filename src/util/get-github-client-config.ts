@@ -25,8 +25,8 @@ export async function getGitHubApiUrl(gitHubInstallationId: number, jiraHost: st
 }
 
 const getGitHubClientConfig = async (gitHubInstallationId: number): Promise<GitHubClientConfig> => {
-	const subscription = await Subscription.getAllForGitHubInstallationId(gitHubInstallationId);
-	const gitHubAppId = subscription?.length && subscription.map(sub => sub.gitHubAppId)[0];
+	const subscription = gitHubInstallationId && await Subscription.getAllForGitHubInstallationId(gitHubInstallationId);
+	const gitHubAppId = subscription && subscription?.length && subscription.map(sub => sub.gitHubAppId)[0];
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 	const gitHubServerAppBaseUrl = gitHubServerApp && gitHubServerApp.githubBaseUrl;
 

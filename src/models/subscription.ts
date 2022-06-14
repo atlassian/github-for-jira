@@ -80,11 +80,7 @@ export class Subscription extends Model {
 
 	static getAllForGitHubInstallationId(
 		gitHubInstallationId: number
-	): Promise<Subscription[] | null> | null {
-		if (!gitHubInstallationId) {
-			return null;
-		}
-
+	): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
 				gitHubInstallationId: gitHubInstallationId
