@@ -36,7 +36,7 @@ const checkGHEServerUrl = url => {
 	if (GITHUB_CLOUD.includes(hostname)) {
 		return false;
 	}
-	return false;
+	return true;
 };
 
 $("#gheServerURL").on("keyup", event => {
