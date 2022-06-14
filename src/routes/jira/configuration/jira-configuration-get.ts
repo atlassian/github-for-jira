@@ -42,7 +42,7 @@ const getInstallation = async (subscription: Subscription, log: Logger): Promise
 
 	const { jiraHost } = subscription;
 	const { gitHubInstallationId } = subscription;
-	const gitHubAppClient = await createAppClient(gitHubInstallationId ,log, jiraHost);
+	const gitHubAppClient = await createAppClient(log, jiraHost);
 
 	try {
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
