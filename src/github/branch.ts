@@ -9,6 +9,7 @@ import { getJiraClient } from "../jira/client/jira-client";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraBranchData } from "../interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
@@ -72,7 +73,13 @@ export const deleteBranchWebhookHandler = async (context: CustomContext, jiraCli
 		return;
 	}
 
-	context.log(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
+	context.log(
+		{
+			branchRef: createHashWithSharedSecret(context.payload.ref),
+			repoId: context.payload.repository?.id
+		},
+		"Deleting branch"
+	);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
 		`${payload.repository?.id}`,

@@ -22,7 +22,6 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		changes
 	} = context.payload;
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
-	const baseUrl = jiraClient.baseUrl || "none";
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
 
 	context.log = context.log.child({
@@ -84,7 +83,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		return;
 	}
 
-	context.log(`Sending pull request update to Jira ${baseUrl}`);
+	context.log("Sending pull request update to Jira");
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;

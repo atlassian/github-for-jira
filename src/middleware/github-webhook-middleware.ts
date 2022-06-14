@@ -147,7 +147,10 @@ export const GithubWebhookMiddleware = (
 
 		if (!subscriptions.length) {
 			context.log(
-				{ noop: "no_subscriptions", orgName: orgName },
+				{
+					noop: "no_subscriptions",
+					orgName: createHashWithSharedSecret(orgName)
+				},
 				"Halting further execution since no subscriptions were found."
 			);
 			return;
@@ -175,7 +178,7 @@ export const GithubWebhookMiddleware = (
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
 				context.log(
-					{ jiraHost, webhookEvent },
+					{ webhookEvent },
 					`Maintenance mode ENABLED - Ignoring event`
 				);
 				continue;
