@@ -22,12 +22,12 @@
 .jiraConnectGHE__error {
   display: none;
   color: #DE350B;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   margin-top: 0.125em;
 }
 
 .jiraConnectGHE__label {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #6B778C;
 }
