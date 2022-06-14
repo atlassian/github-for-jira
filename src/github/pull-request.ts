@@ -26,7 +26,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
 
 	context.log = context.log.child({
-		jiraHostName: createHashWithSharedSecret(jiraClient.baseURL),
+		jiraHost: createHashWithSharedSecret(jiraClient.baseURL),
 		installationId: githubInstallationId,
 		orgName: createHashWithSharedSecret(owner),
 		pullRequestNumber,
