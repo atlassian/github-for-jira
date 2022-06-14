@@ -5,23 +5,16 @@ import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 import * as PrivateKey from "probot/lib/private-key";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { envVars } from "config/env";
-import { getLogger } from "config/logger";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { createHashWithSharedSecret } from "utils/encryption";
+import { getLogger } from "config/logger";
 
 export type KeyLocator = (installationId: InstallationId) => string;
 
 /**
  * By default, we just look for a key in the `PRIVATE_KEY` env var.
  */
-let shouldUseNewSecret = false;
 export const cloudKeyLocator: KeyLocator = () => {
-	booleanFlag(BooleanFlags.USE_NEW_GITHUB_PRIVATE_KEY, false)?.then(newValue => shouldUseNewSecret = newValue);
-	if (shouldUseNewSecret) {
-		return Buffer.from(envVars.PRIVATE_KEY_VAULT, 'base64').toString();
-	}
 	return PrivateKey.findPrivateKey() || "";
 };
 

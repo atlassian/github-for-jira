@@ -225,15 +225,17 @@ export const getJiraClient = async (
 						}
 					}),
 				update: async (data, options?: { preventTransitions: boolean }) => {
-					dedupIssueKeys(data, logger);
+					dedupIssueKeys(data);
 
 					if (
 						!withinIssueKeyLimit(data.commits) ||
-						!withinIssueKeyLimit(data.branches)
+						!withinIssueKeyLimit(data.branches) ||
+						!withinIssueKeyLimit(data.pullRequests)
 					) {
 						logger.warn({
 							truncatedCommits: getTruncatedIssuekeys(data.commits),
-							truncatedBranches: getTruncatedIssuekeys(data.branches)
+							truncatedBranches: getTruncatedIssuekeys(data.branches),
+							truncatedPRs: getTruncatedIssuekeys(data.pullRequests)
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
@@ -397,12 +399,12 @@ const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
 /**
  * Deduplicates issueKeys field for branches and commits
  */
-const dedupIssueKeys = (repositoryObj, logger?) => {
-	updateRepositoryIssueKeys(repositoryObj, logger);
+const dedupIssueKeys = (repositoryObj) => {
+	updateRepositoryIssueKeys(repositoryObj, uniq);
 };
 
 /**
- * Truncates branches and commits to first 100 issue keys for branch or commit
+ * Truncates branches, commits and PRs to their first 100 issue keys
  */
 const truncateIssueKeys = (repositoryObj) => {
 	updateRepositoryIssueKeys(repositoryObj, truncate);
@@ -426,30 +428,30 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
 	}, []);
 
 /**
- * Runs a mutating function on all branches and commits
+ * Runs a mutating function on all branches, commits and PRs
  * with issue keys in a Jira Repository object
  */
-const updateRepositoryIssueKeys = (repositoryObj, logger?) => {
+const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
 	if (repositoryObj.commits) {
-		repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, uniq);
+		repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, mutatingFunc);
 	}
 
 	if (repositoryObj.branches) {
-		repositoryObj.branches = updateIssueKeysFor(repositoryObj.branches, uniq);
+		repositoryObj.branches = updateIssueKeysFor(repositoryObj.branches, mutatingFunc);
 		repositoryObj.branches.forEach((branch) => {
 			if (branch.lastCommit) {
-				branch.lastCommit = updateIssueKeysFor([branch.lastCommit], uniq)[0];
+				branch.lastCommit = updateIssueKeysFor([branch.lastCommit], mutatingFunc)[0];
 			}
 		});
 	}
 
-	if (!repositoryObj.commits && !repositoryObj.branches) {
-		logger?.debug({ data: repositoryObj }, "No branches or commits found. Cannot modify.");
+	if (repositoryObj.pullRequests) {
+		repositoryObj.pullRequests = updateIssueKeysFor(repositoryObj.pullRequests, mutatingFunc);
 	}
 };
 
 /**
- * Runs the mutatingFunc on the issue keys field for each branch or commit
+ * Runs the mutatingFunc on the issue keys field for each branch, commit or PR
  */
 const updateIssueKeysFor = (resources, func) => {
 	resources.forEach((resource) => {
