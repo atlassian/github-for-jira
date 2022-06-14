@@ -7,8 +7,8 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 	const { githubToken, jiraHost } = res.locals;
 	const { installationId: gitHubInstallationId } = req.body;
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
-	const gitHubAppClient = await createAppClient(gitHubInstallationId, logger, jiraHost);
-	const gitHubUserClient = await createUserClient(gitHubInstallationId, githubToken, logger, jiraHost);
+	const gitHubAppClient = await createAppClient(logger, jiraHost);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger);
 
 	if (!githubToken) {
 		res.sendStatus(401);

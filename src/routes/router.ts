@@ -56,7 +56,7 @@ RootRouter.use("/jira", JiraRouter);
 
 // On base path, redirect to Github App Marketplace URL
 RootRouter.get("/", async (req: Request, res: Response) => {
-	const gitHubAppClient = await createAppClient(req.body.gitHubInstallationId, req.log, res.locals.jiraHost);
+	const gitHubAppClient = await createAppClient(req.log, res.locals.jiraHost);
 	const { data: info } = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_REDIRECT, false) ?
 		await gitHubAppClient.getApp() :
 		await res.locals.client.apps.getAuthenticated();
