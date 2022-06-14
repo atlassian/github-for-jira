@@ -138,7 +138,7 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 |Repository|Activity related to a repository|
 |Workflow run|When a GitHub Actions workflow run is requested or completed|
 
-Have more questions about permissions? Please see our [FAQ documentation](https://github.com/atlassian/github-for-jira/blob/ARC-677-permissions-doc-update/docs/FAQs.md). If you can’t find the answer to a question, please feel free to [open an issue](https://github.com/atlassian/github-for-jira/issues/new) and send your question to our team. We’ll be more than happy to answer and will update our FAQ doc accordingly.
+Have more questions about permissions? Please see our [FAQ documentation](https://github.com/atlassian/github-for-jira/blob/main/docs/FAQs.md). If you can’t find the answer to a question, please feel free to [open an issue](https://github.com/atlassian/github-for-jira/issues/new) and send your question to our team. We’ll be more than happy to answer and will update our FAQ doc accordingly.
 
 ### Manage Jira subscriptions
 Additionally, admins of an installation can view and delete GitHub subscriptions to other Jira instances, without having to log in to the Jira instance itself. This is useful if your installation is set up to send Development information to a Jira instance you no longer have access to, or to audit instances that other admins in your org may have previously configured.

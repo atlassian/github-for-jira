@@ -2,7 +2,6 @@ import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { getInstallations, InstallationResults } from "../../jira/configuration/jira-configuration-get";
-import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
@@ -51,12 +50,11 @@ const mergeByLogin = (installationsWithAdmin: InstallationWithAdmin[], connected
 
 const installationConnectedStatus = async (
 	jiraHost: string,
-	client: GitHubAPI,
 	installationsWithAdmin: InstallationWithAdmin[],
 	reqLog: Logger
 ): Promise<MergedInstallation[]> => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const installationsWithSubscriptions = await getInstallations(client, subscriptions, reqLog);
+	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog);
 	const connectedStatuses = getConnectedStatus(installationsWithSubscriptions.fulfilled, jiraHost);
 
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
@@ -122,8 +120,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const {
 		jiraHost,
 		githubToken,
-		github, // user-authenticated GitHub client
-		client // app-authenticated GitHub client
+		github // user-authenticated GitHub client
 	} = res.locals;
 	const log = req.log.child({ jiraHost });
 
@@ -151,7 +148,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	// Remove any failed installations before a user attempts to reconnect
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const allInstallations = await getInstallations(client, subscriptions, log);
+	const allInstallations = await getInstallations(subscriptions, log);
 	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost);
 
 	tracer.trace(`removed failed installations`);
@@ -197,7 +194,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const connectedInstallations = await installationConnectedStatus(
 			jiraHost,
-			client,
 			installationsWithAdmin,
 			log
 		);

@@ -46,14 +46,14 @@ interface TaskProcessors {
 	) => Promise<TaskPayload>;
 }
 
-export interface TaskPayload {
-	edges: any[];
-	jiraPayload: any;
+export interface TaskPayload<E = any, P = any> {
+	edges?: E[];
+	jiraPayload?: P;
 }
 
 type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
 
-const taskTypes: TaskType[] = ["pull", "commit", "branch", "build", "deployment"];
+const taskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
@@ -110,7 +110,7 @@ const getStatusKey = (type: TaskType) => `${type}Status`;
 // Exported for testing
 export const updateJobStatus = async (
 	data: BackfillMessagePayload,
-	edges: any[] | undefined,
+	taskPayload: TaskPayload,
 	task: TaskType,
 	repositoryId: number,
 	logger: LoggerWithTarget,
@@ -128,13 +128,15 @@ export const updateJobStatus = async (
 		logger.info("Organization has been deleted. Other active syncs will continue.");
 		return;
 	}
+	const { edges } = taskPayload;
+	const isComplete = !edges?.length;
 
-	const status = edges?.length ? "pending" : "complete";
+	const status = isComplete ? "complete" : "pending";
 
 	logger.info({ status }, "Updating job status");
 	await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status);
 
-	if (edges?.length) {
+	if (!isComplete) {
 		// there's more data to get
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 		scheduleNextTask(0);
@@ -167,7 +169,7 @@ const getEnhancedGitHub = async (app: Application, installationId) =>
  */
 export const isRetryableWithSmallerRequest = async (err): Promise<boolean> => {
 	if (await booleanFlag(BooleanFlags.RETRY_ALL_ERRORS, false)) {
-		return  err?.isRetryable || false;
+		return err?.isRetryable || false;
 	}
 	if (err?.errors) {
 		const retryableErrors = err?.errors?.find(
@@ -253,7 +255,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	const processor = tasks[task];
 
-	const execute = async () => {
+	const execute = async (): Promise<TaskPayload> => {
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
@@ -267,7 +269,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 					await subscription?.update({ syncWarning: `Invalid permissions for ${task} task` });
 					logger.error({ err }, `Invalid permissions for ${task} task`);
 					// Return undefined objects so the sync can complete while skipping this task
-					return 	{ edges: undefined, jiraPayload: undefined };
+					return { edges: undefined, jiraPayload: undefined };
 				}
 				logger.error({
 					err,
@@ -289,18 +291,18 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	};
 
 	try {
-		const { edges, jiraPayload } = await execute();
-		if (jiraPayload) {
+		const taskPayload = await execute();
+		if (taskPayload.jiraPayload) {
 			try {
 				switch (task) {
 					case "build":
-						await jiraClient.workflow.submit(jiraPayload);
+						await jiraClient.workflow.submit(taskPayload.jiraPayload);
 						break;
 					case "deployment":
-						await jiraClient.deployment.submit(jiraPayload);
+						await jiraClient.deployment.submit(taskPayload.jiraPayload);
 						break;
 					default:
-						await jiraClient.devinfo.repository.update(jiraPayload, {
+						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, {
 							preventTransitions: true
 						});
 				}
@@ -335,7 +337,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 		await updateJobStatus(
 			data,
-			edges,
+			taskPayload,
 			task,
 			nextTask.repositoryId,
 			logger,
@@ -398,8 +400,8 @@ export const handleBackfillError = async (err,
 
 	// Continue sync when a 404/NOT_FOUND is returned
 	if (isNotFoundError(err, logger)) {
-		const edgesLeft = []; // No edges left to process since the repository doesn't exist
-		await updateJobStatus(data, edgesLeft, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
+		// No edges left to process since the repository doesn't exist
+		await updateJobStatus(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
 		return;
 	}
 

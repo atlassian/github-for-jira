@@ -107,6 +107,7 @@
           </div>
 
           {{#if successfulConnections}}
+          <div class="jiraConfiguration__tableContainer">
             <table class="jiraConfiguration__table aui">
               <thead class="jiraConfiguration__table__head">
                 <tr class="jiraConfiguration__table__head_row">
@@ -262,6 +263,7 @@
                 {{/each}}
               </tbody>
             </table>
+          </div>
           {{/if}}
 
         {{#each failedConnections}}
