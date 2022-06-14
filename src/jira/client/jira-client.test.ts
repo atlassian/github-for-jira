@@ -28,7 +28,7 @@ describe("Test getting a jira client", () => {
 		expect(await getJiraClient("https://non-existing-url.atlassian.net", gitHubInstallationId)).not.toBeDefined();
 	});
 
-	it("Should truncate issueKeys if over the limit", async () => {
+	it("Should truncate issueKeys for commits if over the limit", async () => {
 		jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
 
 		await client.devinfo.repository.update({
@@ -46,6 +46,71 @@ describe("Test getting a jira client", () => {
 					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
 					message: "commit message",
 					url: "some-url",
+					updateSequenceId: 1234567890
+				}
+			]
+		});
+		await subscription.reload();
+		expect(subscription.syncWarning).toEqual("Exceeded issue key reference limit. Some issues may not be linked.");
+	});
+
+	it("Should truncate issueKeys for branches if over the limit", async () => {
+		jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+
+		await client.devinfo.repository.update({
+			branches: [
+				{
+					createPullRequestUrl: "pr-url",
+					lastCommit: {
+						author: {
+							email: "blarg@email.com",
+							name: "foo"
+						},
+						authorTimestamp: "Tue Oct 19 2021 11:52:08 GMT+1100",
+						displayId: "oajfojwe",
+						fileCount: 0,
+						hash: "hashihashhash",
+						id: "id",
+						issueKeys: "TEST-123",
+						message: "commit message",
+						url: "some-url",
+						updateSequenceId: 1234567890
+					},
+					id: "jiraId",
+					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
+					name: "ref",
+					url: "branch-url",
+					updateSequenceId: 1234567890
+				}
+			]
+		});
+		await subscription.reload();
+		expect(subscription.syncWarning).toEqual("Exceeded issue key reference limit. Some issues may not be linked.");
+	});
+
+	it("Should truncate issueKeys for pull requests if over the limit", async () => {
+		jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+
+		await client.devinfo.repository.update({
+			pullRequests: [
+				{
+					author: {
+						email: "blarg@email.com",
+						name: "foo"
+					},
+					commentCount: 3,
+					destinationBranch: "dest-branch",
+					destinationBranchUrl: "dest-branch-url",
+					displayId: "#5",
+					id: 6,
+					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
+					reviewers: [],
+					sourceBranch: "source-branch",
+					sourceBranchUrl: "source-branch-url",
+					status: "MERGED",
+					timestamp: "Tue Oct 19 2021 11:52:08 GMT+1100",
+					title: "pr title",
+					url: "pr-url",
 					updateSequenceId: 1234567890
 				}
 			]
