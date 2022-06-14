@@ -54,12 +54,12 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubInstallatio
 
 	const logPayload = {
 		prTitle: prTitle || "none",
-		repoName: head?.repo.name || "none",
+		repoName: head?.repo?.name || "none",
 		prRef: pullRequest.head.ref || "none"
 	};
 
 	if (isEmpty(issueKeys) || !head?.repo) {
-		log?.info(logPayload, "Ignoring pullrequest hence it has no issue keys or repo");
+		log?.info(logPayload, "Ignoring pullrequest since it has no issue keys or repo");
 		return undefined;
 	}
 
