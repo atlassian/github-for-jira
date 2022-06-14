@@ -69,7 +69,7 @@ const getInstallationsWithAdmin = async (
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
+		const gitHubClient = await createInstallationClient(installation.id, log, jiraHost);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -129,7 +129,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	}
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, false);
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log);
+	const gitHubUserClient = await createUserClient(req.body.gitHubInstallationId, githubToken, log, jiraHost);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
@@ -154,7 +154,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	tracer.trace(`removed failed installations`);
 
 	try {
-
 		// we can get the jira client Key from the JWT's `iss` property
 		// so we'll decode the JWT here and verify it's the right key before continuing
 		const installation = await Installation.getForHost(jiraHost);
@@ -165,7 +164,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			return;
 		}
 
-		const gitHubAppClient = await createAppClient(log, jiraHost);
+		const gitHubAppClient = await createAppClient(req.body.gitHubInstallationId, log, jiraHost);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 

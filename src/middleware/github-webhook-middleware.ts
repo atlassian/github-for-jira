@@ -140,11 +140,11 @@ export const GithubWebhookMiddleware = (
 			return;
 		}
 
-		const subscriptions = await Subscription.getAllForInstallation(
+		const subscriptions = await Subscription.getAllForGitHubInstallationId(
 			gitHubInstallationId
 		);
 
-		if (!subscriptions.length) {
+		if (!subscriptions?.length) {
 			context.log(
 				{ noop: "no_subscriptions", orgName: orgName },
 				"Halting further execution since no subscriptions were found."

@@ -15,7 +15,6 @@ export class Installation extends Model {
 	clientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
-	githubAppId?: number;
 
 	static async getForClientKey(
 		clientKey: string
@@ -122,11 +121,7 @@ Installation.init({
 	},
 	enabled: BOOLEAN,
 	createdAt: DATE,
-	updatedAt: DATE,
-	githubAppId: {
-		type: DataTypes.INTEGER,
-		allowNull: true
-	}
+	updatedAt: DATE
 }, { sequelize });
 
 export interface InstallationPayload {
