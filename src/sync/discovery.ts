@@ -55,7 +55,7 @@ export const getRepositoryTask = async (
 	let edges: RepositoryNode[];
 	let repositories: Repository[];
 	if (await booleanFlag(BooleanFlags.USE_REST_API_FOR_DISCOVERY, false, jiraHost)) {
-		const page = Number(cursor);
+		const page = Number(cursor) || 1;
 		const response = await newGithub.getRepositoriesPageOld(page);
 		hasNextPage = response.hasNextPage;
 		totalCount = response.data.total_count;
