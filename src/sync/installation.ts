@@ -215,7 +215,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		logger
 	);
 
-	const gitHubInstallationClient = await createInstallationClient(installationId, logger, jiraHost);
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription, jiraHost);
 

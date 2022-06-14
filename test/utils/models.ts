@@ -22,7 +22,7 @@ export const mockModels = {
 		} as any
 	},
 	Subscription: {
-		getAllForGitHubInstallationId: [
+		getAllForInstallation: [
 			{
 				jiraHost: process.env.ATLASSIAN_URL
 			}
