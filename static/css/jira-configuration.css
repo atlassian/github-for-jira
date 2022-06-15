@@ -200,7 +200,7 @@
 }
 
 /*
-The tooltip for the first two rows are hidden due to the `overflow: auto`,
+The tooltip for the first two rows are hidden due to the `overflow: auto` of the parent div,
 so changing the position of the tooltips for the first two rows to bottom
  */
 .jiraConfiguration__table__row:nth-of-type(1) .jiraConfiguration__syncWarningMessage,
