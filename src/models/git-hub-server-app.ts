@@ -85,7 +85,7 @@ export class GitHubServerApp extends Model {
 				webhookSecret,
 				privateKey,
 				gitHubAppName,
-				installationId,
+				installationId
 			}
 		});
 
@@ -148,5 +148,5 @@ GitHubServerApp.init({
 	installationId: {
 		type: DataTypes.INTEGER,
 		allowNull: false
-	},
+	}
 }, { sequelize });
