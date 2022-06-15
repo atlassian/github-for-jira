@@ -6,14 +6,10 @@ import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { envVars }  from "config/env";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
 
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 
-describe.each([true, false])("Github Setup - GitHub Client is %s", (useNewGithubClient) => {
+describe("Github Setup", () => {
 	let frontendApp: Application;
 
 	beforeEach(async () => {
@@ -38,11 +34,6 @@ describe.each([true, false])("Github Setup - GitHub Client is %s", (useNewGithub
 				sharedSecret: "ghi345"
 			});
 
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(useNewGithubClient);
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
