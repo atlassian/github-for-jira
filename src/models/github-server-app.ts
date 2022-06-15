@@ -1,6 +1,7 @@
 import { Model, DataTypes, Sequelize } from "sequelize";
 import { sequelize } from "models/sequelize";
 import EncryptedField from "sequelize-encrypted";
+
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
 interface GitHubServerAppPayload {
@@ -28,7 +29,7 @@ export class GitHubServerApp extends Model {
 	createdAt: Date;
 
 	/**
-	 * Get GitHubServerApp
+	 * Get GithubServerApp
 	 *
 	 * @param {{gitHubServerAppId: number}} gitHubServerAppId
 	 * @returns {GitHubServerApp}
@@ -48,7 +49,7 @@ export class GitHubServerApp extends Model {
 	}
 
 	/**
-	 * Create a new GitHubServerApp object
+	 * Create a new GithubServerApp object
 	 *
 	 * @param {{
 	 * 		gitHubClientId: string,
@@ -93,7 +94,7 @@ export class GitHubServerApp extends Model {
 	}
 
 	/**
-	 * Get GitHubServerApp
+	 * Get GithubServerApp
 	 *
 	 * @param {{uuid: string}} uuid
 	 * @returns {GitHubServerApp}

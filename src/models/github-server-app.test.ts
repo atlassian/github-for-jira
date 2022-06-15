@@ -1,8 +1,8 @@
-import { GitHubServerApp } from "models/git-hub-server-app";
+import { GitHubServerApp } from "models/github-server-app";
 
 describe("GitHubServerApp", () => {
 
-	it("should create a new entry in the GitHubServerApp table", async () => {
+	it("should create a new entry in the GitHubServerApps table", async () => {
 		const uuid = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 
 		const payload = {
