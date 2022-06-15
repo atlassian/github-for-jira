@@ -68,6 +68,7 @@ export class Subscription extends Model {
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
+	gitHubAppId: number;
 
 	static async getAllForHost(host: string): Promise<Subscription[]> {
 		return this.findAll({
@@ -182,6 +183,9 @@ export class Subscription extends Model {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
 				jiraClientKey: payload.clientKey
+			},
+			defaults: {
+				gitHubAppId: payload.gitHubAppId
 			}
 		});
 
@@ -249,12 +253,17 @@ Subscription.init({
 	repositoryCursor: DataTypes.STRING,
 	repositoryStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	gitHubAppId: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	}
 }, { sequelize });
 
 export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
+	gitHubAppId?: number | null;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

@@ -51,10 +51,11 @@ const mergeByLogin = (installationsWithAdmin: InstallationWithAdmin[], connected
 const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
-	reqLog: Logger
+	reqLog: Logger,
+	gitHubAppId: number
 ): Promise<MergedInstallation[]> => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog);
+	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog, gitHubAppId);
 	const connectedStatuses = getConnectedStatus(installationsWithSubscriptions.fulfilled, jiraHost);
 
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
@@ -69,7 +70,7 @@ const getInstallationsWithAdmin = async (
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
+		const gitHubClient = await createInstallationClient(installation.id, log, jiraHost);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -149,7 +150,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	// Remove any failed installations before a user attempts to reconnect
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const allInstallations = await getInstallations(subscriptions, log);
+	const allInstallations = await getInstallations(subscriptions, log, gitHubAppId);
 	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost);
 
 	tracer.trace(`removed failed installations`);
@@ -197,7 +198,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		const connectedInstallations = await installationConnectedStatus(
 			jiraHost,
 			installationsWithAdmin,
-			log
+			log,
+			gitHubAppId
 		);
 
 		// Sort to that orgs ready to be connected are at the top

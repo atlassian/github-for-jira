@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { GithubConfigurationGet } from "./github-configuration-get";
 import { GithubConfigurationPost } from "./github-configuration-post";
-import {GithubConfigurationGitHubAppId} from "routes/github/configuration/github-configuration-githubAppId";
+import { GithubConfigurationGitHubAppId } from "./github-configuration-gitHubAppId";
 
 export const GithubConfigurationRouter = Router();
 

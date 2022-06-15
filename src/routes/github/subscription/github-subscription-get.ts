@@ -4,7 +4,7 @@ import { isUserAdminOfOrganization } from "utils/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { githubToken, jiraHost } = res.locals;
+	const { githubToken, jiraHost, gitHubAppId } = res.locals;
 
 	const gitHubInstallationId = Number(req.params.installationId);
 	if (!githubToken) {
@@ -16,8 +16,8 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	}
 
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
-	const gitHubAppClient = await createAppClient(logger, jiraHost);
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
+	const gitHubAppClient = await createAppClient(gitHubAppId, logger, jiraHost);
+	const gitHubUserClient = await createUserClient(gitHubAppId, githubToken, req.log, jiraHost);
 
 	try {
 		const { data: { login } } = await gitHubUserClient.getUser();

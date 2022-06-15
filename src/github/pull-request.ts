@@ -22,7 +22,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	} = context.payload;
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, context.log, jiraClient.baseURL);
 
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,
