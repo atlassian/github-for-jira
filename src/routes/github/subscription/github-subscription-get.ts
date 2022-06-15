@@ -16,8 +16,8 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	}
 
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
-	const gitHubAppClient = await createAppClient(gitHubInstallationId, logger, jiraHost);
-	const gitHubUserClient = await createUserClient(gitHubInstallationId, githubToken, req.log, jiraHost);
+	const gitHubAppClient = await createAppClient(logger, jiraHost);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
 
 	try {
 		const { data: { login } } = await gitHubUserClient.getUser();
@@ -26,7 +26,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
 		// get all subscriptions from the database for this installation ID
-		const subscriptions = await Subscription.getAllForGitHubInstallationId(gitHubInstallationId);
+		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
 
 		// Only show the page if the logged in user is an admin of this installation
 		if (await isUserAdminOfOrganization(
@@ -41,7 +41,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 				installation,
 				host: res.locals.jiraHost,
 				subscriptions,
-				hasSubscriptions: subscriptions && subscriptions.length > 0
+				hasSubscriptions: subscriptions.length > 0
 			});
 		} else {
 			return next(new Error("Unauthorized"));

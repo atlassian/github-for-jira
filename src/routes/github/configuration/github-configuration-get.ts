@@ -69,7 +69,7 @@ const getInstallationsWithAdmin = async (
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubClient = await createInstallationClient(installation.id, log, jiraHost);
+		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -155,6 +155,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	tracer.trace(`removed failed installations`);
 
 	try {
+
 		// we can get the jira client Key from the JWT's `iss` property
 		// so we'll decode the JWT here and verify it's the right key before continuing
 		const installation = await Installation.getForHost(jiraHost);
