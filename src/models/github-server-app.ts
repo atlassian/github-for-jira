@@ -29,7 +29,7 @@ export class GitHubServerApp extends Model {
 	createdAt: Date;
 
 	/**
-	 * Get GithubServerApp
+	 * Get GitHubServerApp
 	 *
 	 * @param {{gitHubServerAppId: number}} gitHubServerAppId
 	 * @returns {GitHubServerApp}
@@ -49,7 +49,7 @@ export class GitHubServerApp extends Model {
 	}
 
 	/**
-	 * Create a new GithubServerApp object
+	 * Create a new GitHubServerApp object
 	 *
 	 * @param {{
 	 * 		gitHubClientId: string,
@@ -94,7 +94,7 @@ export class GitHubServerApp extends Model {
 	}
 
 	/**
-	 * Get GithubServerApp
+	 * Get GitHubServerApp
 	 *
 	 * @param {{uuid: string}} uuid
 	 * @returns {GitHubServerApp}
