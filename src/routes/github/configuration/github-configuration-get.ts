@@ -120,7 +120,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const {
 		jiraHost,
 		githubToken,
-		github // user-authenticated GitHub client
+		github, // user-authenticated GitHub client
+		gitHubAppId
 	} = res.locals;
 	const log = req.log.child({ jiraHost });
 
@@ -129,7 +130,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	}
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, false);
-	const gitHubUserClient = await createUserClient(req.body.gitHubInstallationId, githubToken, log, jiraHost);
+	const gitHubUserClient = await createUserClient(gitHubAppId, githubToken, log, jiraHost);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
@@ -164,7 +165,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			return;
 		}
 
-		const gitHubAppClient = await createAppClient(req.body.gitHubInstallationId, log, jiraHost);
+		const gitHubAppClient = await createAppClient(gitHubAppId, log, jiraHost);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 

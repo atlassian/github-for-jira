@@ -88,6 +88,16 @@ export class Subscription extends Model {
 		});
 	}
 
+	static findOneForGitHubInstallationId(
+		gitHubInstallationId: number
+	): Promise<Subscription | null> {
+		return this.findOne({
+			where: {
+				gitHubInstallationId: gitHubInstallationId
+			}
+		});
+	}
+
 	static getAllFiltered(
 		installationIds: number[] = [],
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
