@@ -9,6 +9,7 @@ import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
 import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client-config";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
 
@@ -93,6 +94,8 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	const githubSecret = await booleanFlag(BooleanFlags.USE_NEW_CLIENT_SECRET, false, jiraHost)
 		? envVars.GITHUB_CLIENT_SECRET
 		: envVars.GITHUB_CLIENT_SECRET_VAULT;
+
+	logger.info(`${createHashWithSharedSecret(githubSecret)} is used`);
 
 	const gitHubHostname = await getGitHubHostname(gitHubInstallationId, jiraHost);
 

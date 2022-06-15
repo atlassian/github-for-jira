@@ -32,7 +32,6 @@ export enum BooleanFlags {
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
-	USE_NEW_GITHUB_PRIVATE_KEY = "use-new-github-private-key",
 	USE_NEW_CLIENT_SECRET = "use-new-github-secret"
 }
 
