@@ -33,7 +33,7 @@ export const getJiraErrorMessages = (status: number) => {
 		case 403:
 			return "HTTP 403 - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope";
 		case 404:
-			return "HTTP 404 - Bad REST path, or Jira instance not found or temporarily suspended.";
+			return "HTTP 404 - Bad REST path, or Jira instance not found, renamed or temporarily suspended.";
 		case 413:
 			return "HTTP 413 - Data is too large. Submit fewer devinfo entities in each payload.";
 		case 429:
@@ -153,6 +153,16 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 			} catch (e) {
 				if (e.response.status === 503) {
 					logger.info(`503 from Jira: Jira instance '${baseURL}' has been deactivated, is suspended or does not exist. Returning 404 to our application.`);
+					error.response.status = 404;
+				}
+			}
+		}
+		if (error.response?.status === 405) {
+			try {
+				await axios.get("/status", { baseURL });
+			} catch (e) {
+				if (e.response.status === 302) {
+					logger.info(`405 from Jira: Jira instance '${baseURL}' has been renamed. Returning 404 to our application.`);
 					error.response.status = 404;
 				}
 			}
