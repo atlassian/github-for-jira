@@ -1,6 +1,6 @@
 import { BOOLEAN, CountOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING } from "sequelize";
 import { Subscription, Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
-import { merge, pickBy } from "lodash";
+import { groupBy, merge, pickBy } from "lodash";
 import { sequelize } from "models/sequelize";
 
 export class RepoSyncState extends Model {
@@ -139,13 +139,28 @@ export class RepoSyncState extends Model {
 			}
 		});
 
+		const groupedIds = Object.values(groupBy(states, state => state.repoId));
+		const duplicateIds: number[] = groupedIds
+			.reduce((acc: number[], values) => {
+				if (values.length > 1) {
+					// Remove duplicates of repoIds
+					values.slice(1).forEach(state => acc.push(state.id));
+				}
+				return acc;
+			}, []);
+
 		return RepoSyncState.sequelize?.transaction(async (transaction) => {
-			// Delete all repos that's not in state anymore
+			// Delete all repos that's not in state anymore or are duplicates
 			await RepoSyncState.destroy({
 				where: {
 					subscriptionId: subscription.id,
-					repoId: {
-						[Op.notIn]: repoIds
+					[Op.or]: {
+						id: {
+							[Op.in]: duplicateIds
+						},
+						repoId: {
+							[Op.notIn]: repoIds
+						}
 					}
 				},
 				transaction
