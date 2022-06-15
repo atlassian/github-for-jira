@@ -71,7 +71,7 @@
 
 .jiraConfiguration_content > .jiraConfiguration__tableContainer {
   overflow: auto;
-  height: calc(100% - 175px); 
+  height: calc(100% - 175px);
   margin-top: 2.5em;
 }
 
@@ -197,6 +197,10 @@
   padding: 0.3em;
   position: absolute;
   top: -7.5em;
+}
+
+.jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
+  display: block;
 }
 
 .jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
