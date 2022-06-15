@@ -34,11 +34,11 @@ describe("Probot event middleware", () => {
 			}))
 		};
 
-		const subscriptions = [...mockModels.Subscription.getAllForGitHubInstallationId];
+		const subscriptions = [...mockModels.Subscription.getAllForInstallation];
 		// Repeat subscription 2 more times (3 total)
 		subscriptions.push(subscriptions[0]);
 		subscriptions.push(subscriptions[0]);
-		mocked(Subscription.getAllForGitHubInstallationId).mockResolvedValue(
+		mocked(Subscription.getAllForInstallation).mockResolvedValue(
 			subscriptions
 		);
 	});
