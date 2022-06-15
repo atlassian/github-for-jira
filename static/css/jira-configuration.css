@@ -203,10 +203,6 @@
   display: block;
 }
 
-.jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
-  display: block;
-}
-
 .jiraConfiguration__syncWarning__connectFailed__warningIcon {
   color: #ff9b20;
 }
