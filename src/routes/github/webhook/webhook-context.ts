@@ -1,11 +1,15 @@
 import Logger from "bunyan";
+import * as Sentry from "@sentry/node";
 
-export class WebhookContext <E = any> {
+export class WebhookContext<E = any> {
 	id: string;
 	name: string;
 	payload: E;
 	log: Logger;
 	action?: string;
+	sentry?: Sentry.Hub;
+	timedout?: number;
+	webhookReceived?: number;
 
 	constructor({ id, name, payload, log, action }) {
 		this.id = id;

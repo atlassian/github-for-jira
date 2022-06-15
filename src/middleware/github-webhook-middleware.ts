@@ -11,14 +11,16 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function(callback) {
-	return async (context) => {
+const withSentry = function (callback) {
+	return async (customContext?: CustomContext, webhookContext?: WebhookContext) => {
+		const context = webhookContext ? webhookContext : customContext!;
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry?.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
@@ -28,7 +30,7 @@ const withSentry = function(callback) {
 		);
 
 		try {
-			await callback(context);
+			await callback(customContext, webhookContext);
 		} catch (err) {
 			context.log.error({ err, context }, "Error while processing webhook");
 			emitWebhookFailedMetrics(extractWebhookEventNameFromContext(context));
@@ -59,7 +61,7 @@ export class CustomContext<E = any> extends Context<E> {
 	webhookReceived?: number;
 }
 
-function extractWebhookEventNameFromContext(context: CustomContext<any>): string {
+function extractWebhookEventNameFromContext(context: CustomContext<any> | WebhookContext): string {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {
 		webhookEvent = `${webhookEvent}.${context.payload.action}`;
@@ -69,9 +71,10 @@ function extractWebhookEventNameFromContext(context: CustomContext<any>): string
 
 // TODO: fix typings
 export const GithubWebhookMiddleware = (
-	callback: (context: CustomContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
+	callback: (customContext: CustomContext, jiraClient: any, util: any, githubInstallationId: number, webhookContext?: WebhookContext) => Promise<void>
 ) => {
-	return withSentry(async (context: CustomContext) => {
+	return withSentry(async (customContext: CustomContext, webhookContext?: WebhookContext) => {
+		const context = webhookContext ? webhookContext : customContext;
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size
@@ -84,7 +87,10 @@ export const GithubWebhookMiddleware = (
 			event: webhookEvent,
 			action: context.payload?.action,
 			id: context.id,
-			repo: context.payload?.repository ? context.repo() : undefined,
+			repo: context.payload?.repository ? {
+				owner: context.payload.repository.owner.login,
+				repo: context.payload.repository.name
+			} : undefined,
 			payload: context.payload,
 			webhookReceived
 		});
@@ -118,7 +124,7 @@ export const GithubWebhookMiddleware = (
 			!isStateChangeOrDeploymentAction(context.payload.action) &&
 			!isStateChangeOrDeploymentAction(context.name)
 		) {
-			context.log(
+			context.log.info(
 				{
 					noop: "bot",
 					botId: context.payload?.sender?.id,
@@ -130,7 +136,7 @@ export const GithubWebhookMiddleware = (
 		}
 
 		if (isFromIgnoredRepo(context.payload)) {
-			context.log(
+			context.log.info(
 				{
 					installation_id: context.payload?.installation?.id,
 					repository_id: context.payload?.repository?.id
@@ -145,14 +151,14 @@ export const GithubWebhookMiddleware = (
 		);
 
 		if (!subscriptions.length) {
-			context.log(
+			context.log.info(
 				{ noop: "no_subscriptions", orgName: orgName },
 				"Halting further execution since no subscriptions were found."
 			);
 			return;
 		}
 
-		context.log(
+		context.log.info(
 			`Processing event for ${subscriptions.length} jira instances`
 		);
 
@@ -170,10 +176,10 @@ export const GithubWebhookMiddleware = (
 			);
 			context.sentry?.setUser({ jiraHost, gitHubInstallationId });
 			context.log = context.log.child({ jiraHost });
-			context.log("Processing event for Jira Host");
+			context.log.info("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
-				context.log(
+				context.log.info(
 					{ jiraHost, webhookEvent },
 					`Maintenance mode ENABLED - Ignoring event`
 				);
@@ -210,7 +216,7 @@ export const GithubWebhookMiddleware = (
 			const util = getJiraUtil(jiraClient);
 
 			try {
-				await callback(context, jiraClient, util, gitHubInstallationId);
+				await callback(customContext, jiraClient, util, gitHubInstallationId, webhookContext);
 			} catch (err) {
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
 				if (!isWarning) {
