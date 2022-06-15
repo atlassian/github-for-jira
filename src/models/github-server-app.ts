@@ -1,6 +1,7 @@
 import { Model, DataTypes, Sequelize } from "sequelize";
 import { sequelize } from "models/sequelize";
 import EncryptedField from "sequelize-encrypted";
+
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
 interface GitHubServerAppPayload {

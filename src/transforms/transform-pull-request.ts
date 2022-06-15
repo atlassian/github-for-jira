@@ -29,7 +29,7 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 		if (!usernames[author?.login]) {
 			usernames[author?.login] = {
 				...getJiraAuthor(author),
-				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
+				approvalStatus: review?.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
 			};
 			acc.push(usernames[author?.login]);
 			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
