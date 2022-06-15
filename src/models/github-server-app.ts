@@ -94,7 +94,7 @@ export class GitHubServerApp extends Model {
 	}
 
 	/**
-	 * Get GithubServerApp
+	 * Get GitHubServerApp
 	 *
 	 * @param {{uuid: string}} uuid
 	 * @returns {GitHubServerApp}
