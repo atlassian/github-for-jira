@@ -25,11 +25,14 @@ export async function getGitHubApiUrl(gitHubInstallationId: number, jiraHost: st
 }
 
 const getGitHubClientConfigFromGitHubInstallationId = async (gitHubInstallationId: number): Promise<GitHubClientConfig> => {
-	const subscription = await Subscription.findOneForGitHubInstallationId(gitHubInstallationId);
-	const gitHubAppId = subscription?.gitHubAppId;
+	// need to try and remove these ampersands
+	const subscription = gitHubInstallationId && await Subscription.findOneForGitHubInstallationId(gitHubInstallationId);
+	const gitHubAppId = subscription && subscription?.gitHubAppId;
 
 	if (!gitHubAppId) {
-		throw new Error("No GitHubAppId found.")
+		// throw new Error("No GitHubAppId found.")
+		// @ts-ignore
+		return;
 	}
 
 	return getGitHubClientConfigFromAppId(gitHubAppId);
