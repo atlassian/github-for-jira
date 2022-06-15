@@ -2,9 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 
-// add id
-// no id = cloud
-// add middleware - check that app exists and that it correlates with the jiraHost
 export const GithubConfigurationGitHubAppId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
 	const { id } = req.params;

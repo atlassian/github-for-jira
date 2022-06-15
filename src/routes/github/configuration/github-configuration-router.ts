@@ -5,8 +5,7 @@ import { GithubConfigurationGitHubAppId } from "./github-configuration-gitHubApp
 
 export const GithubConfigurationRouter = Router();
 
-
 GithubConfigurationRouter.route("/:id?")
-	.all(GithubConfigurationGitHubAppId) // add middleware
+	.all(GithubConfigurationGitHubAppId)
 	.get(GithubConfigurationGet)
 	.post(GithubConfigurationPost);
