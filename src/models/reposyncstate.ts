@@ -130,7 +130,7 @@ export class RepoSyncState extends Model {
 		const repoIds = Object.keys(json.repos || {});
 
 		// Get states that are already in DB
-		const states: RepoSyncState[] = await RepoSyncState.findAll({
+		let states: RepoSyncState[] = await RepoSyncState.findAll({
 			where: {
 				subscriptionId: subscription.id,
 				repoId: {
@@ -148,6 +148,7 @@ export class RepoSyncState extends Model {
 				}
 				return acc;
 			}, []);
+		states = states.filter(state => !duplicateIds.includes(state.id));
 
 		return RepoSyncState.sequelize?.transaction(async (transaction) => {
 			// Delete all repos that's not in state anymore or are duplicates
