@@ -18,7 +18,7 @@ $(".add-organization-link").click(function(event) {
 	event.preventDefault();
 	window.AP.context.getToken(function(token) {
 		// update this by passing github app id from last page on click
-		const child = openChildWindow("/session/github/configuration");
+		const child = openChildWindow("/session/github/configuration/3");
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
 	});

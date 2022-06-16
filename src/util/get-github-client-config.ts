@@ -6,6 +6,7 @@ import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { Subscription } from "../models/subscription";
+import {getLogger} from "config/logger";
 
 export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
@@ -16,10 +17,12 @@ export interface GitHubClientConfig {
 	baseUrl: string;
 }
 
+const logger = getLogger("get-github-client-config")
+
 export async function getGitHubApiUrl(gitHubAppId: number, jiraHost: string) {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
 
-	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) && gitHubClientConfig
+	return await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost) && gitHubClientConfig
 		? `${gitHubClientConfig.baseUrl}`
 		: GITHUB_CLOUD_API_BASEURL;
 }
@@ -27,19 +30,19 @@ export async function getGitHubApiUrl(gitHubAppId: number, jiraHost: string) {
 const getGitHubClientConfigFromGitHubInstallationId = async (gitHubInstallationId: number): Promise<GitHubClientConfig> => {
 	const subscription = await Subscription.findOneForGitHubInstallationId(gitHubInstallationId);
 	const gitHubAppId = subscription?.gitHubAppId;
-
-	if (!gitHubAppId) {
-		throw new Error("No GitHubAppId found.");
-	}
-
 	return getGitHubClientConfigFromAppId(gitHubAppId);
 };
 
 const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): Promise<GitHubClientConfig> => {
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
+	const gitHubCloudUrls = {
+		hostname: GITHUB_CLOUD_HOSTNAME,
+		baseUrl: GITHUB_CLOUD_API_BASEURL
+	}
 
 	if (!gitHubServerApp) {
-		throw new Error("No GitHubServerApp found.");
+		logger.info("No GitHub server app found. Defaulting to cloud config.")
+		return gitHubCloudUrls;
 	}
 
 	const gitHubServerAppBaseUrl = gitHubServerApp.gitHubBaseUrl;
@@ -49,15 +52,12 @@ const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): 
 			hostname: gitHubServerAppBaseUrl,
 			baseUrl: gitHubServerAppBaseUrl
 		}
-		: {
-			hostname: GITHUB_CLOUD_HOSTNAME,
-			baseUrl: GITHUB_CLOUD_API_BASEURL
-		};
+		: gitHubCloudUrls;;
 };
 
 export async function getGitHubHostname(gitHubAppId: number, jiraHost: string) {
 	const gitHubClientConfig = gitHubAppId && await getGitHubClientConfigFromAppId(gitHubAppId);
-	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) && gitHubClientConfig
+	return await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost) && gitHubClientConfig
 		? gitHubClientConfig.hostname
 		: GITHUB_CLOUD_HOSTNAME;
 }
@@ -68,7 +68,7 @@ export async function getGitHubHostname(gitHubAppId: number, jiraHost: string) {
  */
 export async function createAppClient(gitHubAppId: number | undefined, logger: Logger, jiraHost: string): Promise<GitHubAppClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
-	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
+	return await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)
 		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl)
 		: new GitHubAppClient(logger);
 }
@@ -79,7 +79,7 @@ export async function createAppClient(gitHubAppId: number | undefined, logger: L
  */
 export async function createInstallationClient(githubInstallationId: number, logger: Logger, jiraHost: string): Promise<GitHubInstallationClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromGitHubInstallationId(githubInstallationId);
-	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
+	return await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)
 		? new GitHubInstallationClient(getCloudInstallationId(githubInstallationId, gitHubClientConfig.baseUrl), logger, gitHubClientConfig.baseUrl)
 		: new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), logger);
 }
@@ -89,7 +89,7 @@ export async function createInstallationClient(githubInstallationId: number, log
  */
 export async function createUserClient(gitHubAppId: number | undefined, githubToken: string, logger: Logger, jiraHost: string): Promise<GitHubUserClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
-	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
+	return await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)
 		? new GitHubUserClient(githubToken, logger, gitHubClientConfig.baseUrl)
 		: new GitHubUserClient(githubToken, logger);
 }
