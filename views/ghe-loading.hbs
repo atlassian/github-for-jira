@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
+    <link rel="stylesheet" href="/public/css/ghe-loading.css" media="all" />
+    <link
+      rel="stylesheet"
+      href="/public/aui/aui-prototyping.css"
+      integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+  </head>
+  <body class="gheLoading___body">
+    {{> loading-screen
+      title="We're redirecting you to your GitHub Enterprise Server instance"
+      message="If your instance doesn't load, check that your URL configuration is correct."
+    }}
+  </body>
+<script
+  src="/public/aui/aui-prototyping.js"
+  integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+  nonce="{{nonce}}"
+></script>
+</html>
