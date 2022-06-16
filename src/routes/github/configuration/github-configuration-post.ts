@@ -56,7 +56,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	req.log.info("Received add subscription request");
 
 	try {
-		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, true, jiraHost);
+		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, false, jiraHost);
 		const gitHubUserClient = await createUserClient(gitHubAppId, githubToken, req.log, jiraHost);
 		const gitHubAppClient = await createAppClient(gitHubAppId, req.log, jiraHost);
 

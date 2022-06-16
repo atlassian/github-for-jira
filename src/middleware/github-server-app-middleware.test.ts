@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Mock = jest.Mock;
 import { githubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { getLogger } from "config/logger";

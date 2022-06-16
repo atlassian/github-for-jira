@@ -23,6 +23,7 @@ export const githubServerAppMiddleware = async (req: Request, res: Response, nex
 		}
 
 		req.log.info("Found GitHub server app for installation");
+		res.locals.gitHubAppId = id;
 		next();
 	} else {
 		next();
