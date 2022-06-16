@@ -1,6 +1,6 @@
 // this will need to be updated later to check for database entry
 import { Installation } from "models/installation";
-import { GitHubServerApp } from "models/git-hub-server-app";
+import { GitHubServerApp } from "models/github-server-app";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getCloudInstallationId } from "../github/client/installation-id";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
@@ -33,8 +33,8 @@ const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConf
 
 	return gitHubServerApp
 		? {
-			hostname: gitHubServerApp?.githubBaseUrl,
-			baseUrl: `${gitHubServerApp?.githubBaseUrl}`
+			hostname: gitHubServerApp?.gitHubBaseUrl,
+			baseUrl: `${gitHubServerApp?.gitHubBaseUrl}`
 		}
 		: {
 			hostname: GITHUB_CLOUD_HOSTNAME,

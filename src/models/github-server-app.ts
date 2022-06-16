@@ -1,25 +1,30 @@
 import { Model, DataTypes, Sequelize } from "sequelize";
 import { sequelize } from "models/sequelize";
 import EncryptedField from "sequelize-encrypted";
+
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
 interface GitHubServerAppPayload {
 	uuid: string;
-	githubBaseUrl: string;
-	githubClientId: string;
-	githubClientSecret: string;
+	gitHubBaseUrl: string;
+	gitHubClientId: string;
+	gitHubClientSecret: string;
 	webhookSecret: string;
 	privateKey: string;
+	gitHubAppName: string;
+	installationId: number;
 }
 
 export class GitHubServerApp extends Model {
 	id: number;
 	uuid: string;
-	githubBaseUrl: string;
-	githubClientId: string;
-	githubClientSecret: string;
+	gitHubBaseUrl: string;
+	gitHubClientId: string;
+	gitHubClientSecret: string;
 	webhookSecret: string;
 	privateKey: string;
+	gitHubAppName: string;
+	installationId: number;
 	updatedAt: Date;
 	createdAt: Date;
 
@@ -47,19 +52,42 @@ export class GitHubServerApp extends Model {
 	 * Create a new GitHubServerApp object
 	 *
 	 * @param {{
+	 * 		gitHubClientId: string,
 	 * 		uuid: string,
-	 * 		githubBaseUrl:
-	 * 		string,
-	 * 		githubClientId: string,
-	 * 		githubClientSecret: string,
+	 * 		gitHubBaseUrl: string,
+	 * 		gitHubClientSecret: string,
 	 * 		webhookSecret: string,
-	 * 		privateKey: string
+	 * 		privateKey: string,
+	 * 		gitHubAppName: string,
+	 * 		installationId: number
 	 * 	}} payload
 	 * @returns {GitHubServerApp}
 	 */
 	static async install(payload: GitHubServerAppPayload): Promise<GitHubServerApp> {
-		const [gitHubServerApp] = await this.create({
-			...payload
+		const {
+			uuid,
+			gitHubAppName,
+			gitHubBaseUrl,
+			gitHubClientId,
+			gitHubClientSecret,
+			webhookSecret,
+			privateKey,
+			installationId
+		} = payload;
+
+		const [gitHubServerApp] = await this.findOrCreate({
+			where: {
+				gitHubClientId
+			},
+			defaults: {
+				uuid,
+				gitHubBaseUrl,
+				gitHubClientSecret,
+				webhookSecret,
+				privateKey,
+				gitHubAppName,
+				installationId
+			}
 		});
 
 		return gitHubServerApp;
@@ -93,16 +121,16 @@ GitHubServerApp.init({
 		unique: true,
 		allowNull: false
 	},
-	githubBaseUrl: {
+	gitHubBaseUrl: {
 		type: DataTypes.STRING,
 		allowNull: false
 	},
-	githubClientId: {
+	gitHubClientId: {
 		type: DataTypes.STRING,
 		allowNull: false
 	},
 	secrets: encrypted.vault("secrets"),
-	githubClientSecret: encrypted.field("githubClientSecret", {
+	gitHubClientSecret: encrypted.field("gitHubClientSecret", {
 		type: DataTypes.STRING,
 		allowNull: false
 	}),
@@ -113,5 +141,13 @@ GitHubServerApp.init({
 	privateKey: encrypted.field("privateKey", {
 		type: DataTypes.STRING,
 		allowNull: false
-	})
+	}),
+	gitHubAppName: {
+		type: DataTypes.STRING,
+		allowNull: false
+	},
+	installationId: {
+		type: DataTypes.INTEGER,
+		allowNull: false
+	}
 }, { sequelize });
