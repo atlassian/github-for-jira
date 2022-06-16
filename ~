@@ -1,0 +1,24 @@
+Revert "Revert "ARC-810: Emit analytics for config page (#1093)" (#1112)"
+
+This reverts commit f33878a8b501c325ca0a67ef31a4236027ecc59f.
+
+# Conflicts:
+#	package-lock.json
+#	package.json
+#	test/frontend/get-jira-configuration.test.ts
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch ARC-810-emit-analytic-for-customers-that-land-on-the-config-page
+# You are currently reverting commit f33878a8.
+#
+# Changes to be committed:
+#	modified:   .github/workflows/on-push.yml
+#	modified:   Dockerfile
+#	modified:   package-lock.json
+#	modified:   package.json
+#	modified:   src/interfaces/common.ts
+#	modified:   src/routes/jira/configuration/jira-configuration-get.ts
+#	new file:   src/util/analytics-client.ts
+#

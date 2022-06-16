@@ -28,4 +28,12 @@ describe("pullRequestLinkGenerator()", () => {
 
 		expect(generateCreatePullRequestUrl(BASE_URL, NAME, ISSUE_KEYS)).toBe(EXPECTED_RESULT);
 	});
+
+	it("should return undefined if length > 2000", async () => {
+		const BASE_URL = "github";
+		const NAME = "branch-7";
+		const ISSUE_KEYS = Array.from(new Array(250)).map((_, i) => `TEST-${i}`);
+
+		expect(generateCreatePullRequestUrl(BASE_URL, NAME, ISSUE_KEYS)).toBe(undefined);
+	});
 });
