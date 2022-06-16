@@ -59,7 +59,7 @@ describe("Probot event middleware", () => {
 			expect(anotherSpy).toHaveBeenCalledTimes(3);
 		});
 
-		it("when one call fails", async () => {
+		it("should when one call fails", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(
 				mockModels.Installation.getForHost
 			);
@@ -73,7 +73,7 @@ describe("Probot event middleware", () => {
 			expect(anotherSpy).toHaveBeenCalledTimes(3);
 		});
 
-		it("when all calls fail", async () => {
+		it("should when all calls fail", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(
 				mockModels.Installation.getForHost
 			);
