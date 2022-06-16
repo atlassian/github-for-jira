@@ -6,7 +6,7 @@ import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { Subscription } from "../models/subscription";
-import {getLogger} from "config/logger";
+import { getLogger } from "config/logger";
 
 export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
@@ -17,7 +17,7 @@ export interface GitHubClientConfig {
 	baseUrl: string;
 }
 
-const logger = getLogger("get-github-client-config")
+const logger = getLogger("get-github-client-config");
 
 export async function getGitHubApiUrl(gitHubAppId: number, jiraHost: string) {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
@@ -38,10 +38,10 @@ const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): 
 	const gitHubCloudUrls = {
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_API_BASEURL
-	}
+	};
 
 	if (!gitHubServerApp) {
-		logger.info("No GitHub server app found. Defaulting to cloud config.")
+		logger.info("No GitHub server app found. Defaulting to cloud config.");
 		return gitHubCloudUrls;
 	}
 
@@ -52,7 +52,7 @@ const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): 
 			hostname: gitHubServerAppBaseUrl,
 			baseUrl: gitHubServerAppBaseUrl
 		}
-		: gitHubCloudUrls;;
+		: gitHubCloudUrls;
 };
 
 export async function getGitHubHostname(gitHubAppId: number, jiraHost: string) {

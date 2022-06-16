@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 
-export const githubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void | string> => {
+export const githubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
 	const { id } = req.params;
 
@@ -23,8 +23,8 @@ export const githubServerAppMiddleware = async (req: Request, res: Response, nex
 		}
 
 		req.log.info("Found GitHub server app for installation");
-		return next();
+		next();
 	} else {
-		return next();
+		next();
 	}
 };
