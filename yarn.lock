@@ -801,6 +801,11 @@
   dependencies:
     "@octokit/openapi-types" "^7.2.3"
 
+"@octokit/webhooks-types@^5.8.0":
+  version "5.8.0"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@octokit/webhooks-types/-/webhooks-types-5.8.0.tgz#b76d1a3e3ad82cec5680d3c6c3443a620047a6ef"
+  integrity sha512-8adktjIb76A7viIdayQSFuBEwOzwhDC+9yxZpKNHjfzrlostHCw0/N7JWpWMObfElwvJMk2fY2l1noENCk9wmw==
+
 "@octokit/webhooks@^6.0.0":
   version "6.3.2"
   resolved "https://registry.yarnpkg.com/@octokit/webhooks/-/webhooks-6.3.2.tgz#72e940a0a1d19bd5afc2002d2a656dc1233c69df"
