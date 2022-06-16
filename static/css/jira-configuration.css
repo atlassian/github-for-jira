@@ -199,6 +199,14 @@
   top: -7.5em;
 }
 
+/*
+The tooltip for the first two rows are hidden due to the `overflow: auto` of the parent div,
+so changing the position of the tooltips for the first two rows to bottom
+ */
+.jiraConfiguration__table__row:nth-child(-n+2) .jiraConfiguration__syncWarningMessage {
+  top: 1.9em;
+}
+
 .jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
   display: block;
 }
