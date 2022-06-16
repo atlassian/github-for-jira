@@ -71,7 +71,7 @@
 
 .jiraConfiguration_content > .jiraConfiguration__tableContainer {
   overflow: auto;
-  height: calc(100% - 175px); 
+  height: calc(100% - 175px);
   margin-top: 2.5em;
 }
 
