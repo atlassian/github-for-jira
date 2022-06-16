@@ -89,6 +89,7 @@
 		"uuid": "^8.3.2"
 	},
 	"devDependencies": {
+		"@octokit/webhooks-types": "^5.8.0",
 		"@types/bunyan": "^1.8.6",
 		"@types/bunyan-format": "^0.2.4",
 		"@types/cache-manager": "^3.4.0",
