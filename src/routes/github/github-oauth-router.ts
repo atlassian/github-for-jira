@@ -115,6 +115,8 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		// Saving it to session be used later
 		req.session.githubToken = response.data.access_token;
 
+		logger.info(response.data);
+		logger.info(JSON.stringify(response.data));
 		if (!req.session.githubToken) {
 			tracer.trace(`didn't get access token from GitHub`);
 			return next(new Error("Missing Access Token from Github OAuth Flow."));
