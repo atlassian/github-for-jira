@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Subscription } from "models/subscription";
 import { GithubSubscriptionGet } from "routes/github/subscription/github-subscription-get";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
 
 const createGitHubNockGet = (url, status, response) => {
 	githubNock
@@ -22,12 +18,6 @@ describe("github-subscription-get", () => {
 			gitHubInstallationId,
 			jiraHost
 		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
 
 		next = jest.fn();
 
@@ -136,85 +126,5 @@ describe("github-subscription-get", () => {
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);
 		expect(next).toHaveBeenCalledWith(new Error("installationId and jiraHost must be provided to delete a subscription."));
-	});
-});
-
-describe("/github/subscription - octokit", () => {
-
-	const gitHubInstallationId = 15;
-	const jiraHost = "mock-host";
-	let req, res, next;
-
-	beforeEach(async () => {
-		await Subscription.create({
-			gitHubInstallationId,
-			jiraHost
-		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(false);
-
-		next = jest.fn();
-
-		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
-			params: {
-				installationId: gitHubInstallationId
-			},
-			csrfToken: jest.fn()
-		};
-
-		const githubAppGetAuthenticated = jest.fn().mockResolvedValue({ data: { things: "stuff" } });
-		const githubUsersGetAuthenticated = jest.fn().mockResolvedValue({ data: { login: "test-user" } });
-		const getInstallation = jest.fn().mockResolvedValue({
-			data: {
-				id: gitHubInstallationId,
-				target_type: "User",
-				account: { login: "test-user" }
-			}
-		});
-
-		res = {
-			render: jest.fn(),
-			sendStatus: jest.fn(),
-			status: jest.fn(),
-			json: jest.fn(),
-			locals: {
-				jiraHost,
-				githubToken: "abc-token",
-				isAdmin: jest.fn().mockResolvedValue(true),
-				nonce: "",
-				client: {
-					apps: {
-						getInstallation,
-						getAuthenticated: githubAppGetAuthenticated
-					}
-				},
-				github: {
-					users: { getAuthenticated: githubUsersGetAuthenticated }
-				}
-			}
-		};
-	});
-
-	it("Should get GitHub Subscriptions", async () => {
-
-		await GithubSubscriptionGet(req as any, res as any, next as any);
-
-		expect(res.render).toHaveBeenCalledWith("github-subscriptions.hbs", expect.objectContaining({
-			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
-			host: res.locals.jiraHost,
-			hasSubscriptions: true
-		}));
-	});
-
-	it("Should return Error inside Next when error is thrown inside try block", async () => {
-		res.locals.github.users.getAuthenticated = jest.fn().mockRejectedValue(new Error("Whoops"));
-		await GithubSubscriptionGet(req as any, res as any, next as any);
-		expect(next).toHaveBeenCalledWith(new Error("Unable to show subscription page"));
 	});
 });

@@ -302,5 +302,33 @@ describe("API Router", () => {
 					});
 			});
 		});
+
+		describe("Hash data", () => {
+
+			it("Should return error with message if no data provided", () => {
+				return supertest(app)
+					.post("/api/hash")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(400)
+					.then((response) => {
+						expect(response.body?.message).toEqual("Please provide a value to be hashed.");
+					});
+			});
+
+			it("Should return hashed value of data", () => {
+				return supertest(app)
+					.post("/api/hash")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({ data: "encrypt_this_yo" })
+					.expect(200)
+					.then((response) => {
+						expect(response.body?.originalValue).toEqual("encrypt_this_yo");
+						expect(response.body?.hashedValue).toEqual("a539e6c6809cabace5719df6c7fb52071ee15e722ba89675f6ad06840edaa287");
+					});
+			});
+
+		});
 	});
 });

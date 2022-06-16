@@ -26,7 +26,7 @@ Object {
         "key": "gh-addon-admin",
         "location": "admin_plugins_menu/gh-addon-admin-section",
         "name": Object {
-          "value": "Configure integration",
+          "value": "GitHub for Jira",
         },
         "url": "/jira/configuration",
       },

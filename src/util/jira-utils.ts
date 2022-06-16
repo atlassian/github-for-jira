@@ -5,7 +5,7 @@ import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
 import { booleanFlag, BooleanFlags, onFlagChange } from "config/feature-flags";
 import { Installation } from "models/installation";
-import { GitHubServerApp } from "models/git-hub-server-app";
+import { GitHubServerApp } from "models/github-server-app";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page` : "";

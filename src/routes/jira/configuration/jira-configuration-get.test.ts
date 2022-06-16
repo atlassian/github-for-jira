@@ -3,17 +3,11 @@ import { getInstallations, JiraConfigurationGet } from "./jira-configuration-get
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
-import { GithubAPI } from "config/github-api";
-import { GitHubAPI } from "probot";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 import { getLogger } from "config/logger";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-jest.mock("config/feature-flags");
-
-describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s", (useNewGithubClient) => {
+describe("Jira Configuration Suite", () => {
 	let subscription: Subscription;
 
 	beforeEach(async () => {
@@ -44,11 +38,6 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 			sharedSecret: "ghi345"
 		});
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
 	});
 
 	const mockRequest = (): any => ({
@@ -63,12 +52,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 
 	const mockResponse = (): any => ({
 		locals: {
-			jiraHost,
-			client: {
-				apps: {
-					getInstallation: jest.fn().mockReturnValue({ data: {} })
-				}
-			}
+			jiraHost
 		},
 		render: jest.fn().mockReturnValue({}),
 		status: jest.fn().mockReturnValue({}),
@@ -77,6 +61,10 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
+		githubNock
+			.get(`/app/installations/15`)
+			.reply(200, singleInstallation);
+
 		await JiraConfigurationGet(mockRequest(), response, jest.fn());
 		const data = response.render.mock.calls[0][1];
 		expect(data.hasConnections).toBe(true);
@@ -86,7 +74,6 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 
 	describe("getInstallations", () => {
 		let sub: Subscription;
-		const client = GithubAPI();
 		const logger = getLogger("MOCK");
 
 		beforeEach(async () => {
@@ -99,7 +86,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 		});
 
 		it("should return no success or failed connections if no subscriptions given", async () => {
-			expect(await getInstallations(client, [], logger)).toEqual({
+			expect(await getInstallations([], logger)).toEqual({
 				fulfilled: [],
 				rejected: [],
 				total: 0
@@ -111,7 +98,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(200, singleInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub], logger)).toMatchObject({
+			expect(await getInstallations([sub], logger)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
@@ -129,12 +116,11 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub], logger)).toMatchObject({
+			expect(await getInstallations([sub], logger)).toMatchObject({
 				fulfilled: [],
 				rejected: [{
 					error: {
-						status: 404,
-						documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
+						status: 404
 					},
 					id: sub.gitHubInstallationId,
 					deleted: true
@@ -157,7 +143,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 				.get(`/app/installations/${failedSub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub, failedSub], logger)).toMatchObject({
+			expect(await getInstallations([sub, failedSub], logger)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
@@ -168,8 +154,8 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 				}],
 				rejected: [{
 					error: {
-						status: 404,
-						documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
+						status: 404
+						// documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
 					},
 					id: failedSub.gitHubInstallationId,
 					deleted: true
@@ -192,21 +178,19 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 				.get(`/app/installations/${failedSub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub, failedSub], logger)).toMatchObject({
+			expect(await getInstallations([sub, failedSub], logger)).toMatchObject({
 				fulfilled: [],
 				rejected: [
 					{
 						error: {
-							status: 404,
-							documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
+							status: 404
 						},
 						id: sub.gitHubInstallationId,
 						deleted: true
 					},
 					{
 						error: {
-							status: 404,
-							documentation_url: "https://docs.github.com/rest/reference/apps#get-an-installation-for-the-authenticated-app"
+							status: 404
 						},
 						id: failedSub.gitHubInstallationId,
 						deleted: true
@@ -250,7 +234,7 @@ describe.each([true, false])("Jira Configuration Suite - use GitHub Client is %s
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(200, singleInstallation);
 
-			expect(await getInstallations(GitHubAPI(), [sub], logger)).toMatchObject({
+			expect(await getInstallations([sub], logger)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,

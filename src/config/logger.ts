@@ -26,7 +26,7 @@ const responseSerializer = (res: AxiosResponse) => ({
 	...stdSerializers.res(res),
 	config: JSON.parse(util.inspect(res?.config)), // removes circular dependency in json
 	request: requestSerializer(res.request)
-})
+});
 
 const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 	method: req.method,
@@ -89,6 +89,11 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 
 export const getLogger = (name: string): LoggerWithTarget => {
 	return logger.child({ name });
+};
+
+// This will log data to a restricted environment [env]-unsafe
+export const getUnsafeLogger = (name: string): LoggerWithTarget => {
+	return logger.child({ name, env_suffix: "unsafe" });
 };
 
 //Override console.log with bunyan logger.

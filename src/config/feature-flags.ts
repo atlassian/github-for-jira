@@ -1,7 +1,7 @@
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import { envVars }  from "./env";
-import crypto from "crypto";
+import { createHashWithSharedSecret } from "utils/encryption";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 const logger = getLogger("feature-flags");
@@ -17,11 +17,8 @@ export enum BooleanFlags {
 	TRACE_LOGGING = "trace-logging",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
+	LOG_UNSAFE_DATA = "log-unsafe-data",
 	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
-	USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION = "use-new-github-client-for-delete-subscription",
-	USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION = "use-new-github-client-for-get-subscription",
-	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation",
-	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
 	BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS = "run-backfill-for-builds-and-deployments",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST = "use-new-github-client-for-github-config-post",
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
@@ -29,9 +26,11 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_GET_REPO = "use-new-github-client-for-get-repo",
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
 	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect",
+	SEND_RELATED_COMMITS_WITH_DEPLOYMENT_ENTITIES = "send-related-commits-with-deployment-entities",
 	USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE = "use-new-github-client-for-pr-title",
 	RETRY_ALL_ERRORS = "retry-all-errors",
-	GHE_SERVER = "ghe_server"
+	GHE_SERVER = "ghe_server",
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery"
 }
 
 export enum StringFlags {
@@ -39,7 +38,9 @@ export enum StringFlags {
 }
 
 export enum NumberFlags {
-	GITHUB_CLIENT_TIMEOUT = "github-client-timeout"
+	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
+	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
+	SYNC_BRANCH_COMMIT_TIME_LIMIT= "sync-branch-commit-time-limit",
 }
 
 const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
@@ -49,11 +50,8 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 		};
 	}
 
-	const hash = crypto.createHash("sha1");
-	hash.update(jiraHost);
-
 	return {
-		key: hash.digest("hex")
+		key: createHashWithSharedSecret(jiraHost)
 	};
 };
 

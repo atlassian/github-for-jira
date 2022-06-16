@@ -69,9 +69,14 @@
   line-height: 1.6;
 }
 
-.jiraConfiguration_content > .jiraConfiguration__table {
-  color: #172b4d;
+.jiraConfiguration_content > .jiraConfiguration__tableContainer {
+  overflow: auto;
+  height: calc(100% - 175px);
   margin-top: 2.5em;
+}
+
+.jiraConfiguration_content > .jiraConfiguration__tableContainer > .jiraConfiguration__table {
+  color: #172b4d;
   table-layout: fixed;
   width: 100%;
 }
@@ -156,6 +161,13 @@
   padding: 0.2rem;
 }
 
+/* Hit box */
+.jiraConfiguration__syncWarning:before {
+  content: '';
+  padding: 1.25em;
+  position: absolute;
+}
+
 .jiraConfiguration__syncWarning:hover {
   background: #0914E208;
 }
@@ -185,6 +197,14 @@
   padding: 0.3em;
   position: absolute;
   top: -7.5em;
+}
+
+/*
+The tooltip for the first two rows are hidden due to the `overflow: auto` of the parent div,
+so changing the position of the tooltips for the first two rows to bottom
+ */
+.jiraConfiguration__table__row:nth-child(-n+2) .jiraConfiguration__syncWarningMessage {
+  top: 1.9em;
 }
 
 .jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
@@ -406,6 +426,27 @@
 .jiraConfiguration__empty__image {
   width: 100%;
   max-width: 332px;
+}
+
+.jiraConfiguration__table__editContainer,
+.jiraConfiguration__syncRetryModal__closeBtn {
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0.45em;
+  position: relative;
+}
+.jiraConfiguration__table__editContainer:hover,
+.jiraConfiguration__syncRetryModal__closeBtn:hover {
+  background: #091E4208;
+}
+
+.learn-more-link {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.learn-more-link:hover {
+  color: inherit;
 }
 
 /*  NOTE: We can't use standard breakpoints on GitHub config page

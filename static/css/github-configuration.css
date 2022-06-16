@@ -177,6 +177,13 @@
     position: relative;
 }
 
+.gitHubConfiguration__orgContent__editContainer {
+    border-radius: 3px;
+    cursor: pointer;
+    padding: 0.45em;
+    position: relative;
+}
+
 .gitHubConfiguration__orgContent__connectFailed__warningIcon {
     cursor: pointer;
 }
@@ -190,6 +197,11 @@
 .gitHubConfiguration__orgContent__settingsContainer:active,
 .gitHubConfiguration__orgContent__settingsContainer:focus {
     color: inherit;
+}
+
+.gitHubConfiguration__orgContent__editContainer:hover,
+.gitHubConfiguration__orgContent__settingsContainer:hover {
+    background: #091E4208;
 }
 
 .gitHubConfiguration__orgContent__settingsContainer:hover
@@ -212,8 +224,8 @@
 
 .gitHubConfiguration__manageSubscriptions {
     left: 3em;
-    top: -2.6em;
-    width: 12.8em;
+    top: -2.4em;
+    width: 13.8em;
 }
 
 .gitHubConfiguration__noOrganizations {
@@ -239,6 +251,11 @@
     border-radius: 3px;
     color: #172b4d;
     text-decoration: none;
+}
+
+.no-organization-in-github {
+    width: 80%;
+    margin: 0 auto 18px;
 }
 
 @keyframes spin {

@@ -5,10 +5,11 @@ import axios from "axios";
 import { getLogger } from "config/logger";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Tracer } from "config/tracer";
-import { envVars }  from "config/env";
+import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
 import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client-config";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
 
@@ -37,7 +38,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
 	const gitHubHostname = await getGitHubHostname(jiraHost);
 	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
-	req.log.info("redirectUrl:", redirectUrl)
+	req.log.info("redirectUrl:", redirectUrl);
 
 	req.log.info({
 		redirectUrl,
@@ -90,6 +91,8 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
 	const gitHubHostname = await getGitHubHostname(jiraHost);
+
+	logger.info(`${createHashWithSharedSecret(githubSecret)} is used`);
 
 	try {
 		const response = await axios.get(

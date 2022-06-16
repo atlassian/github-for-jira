@@ -29,7 +29,7 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 		if (!usernames[author?.login]) {
 			usernames[author?.login] = {
 				...getJiraAuthor(author),
-				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
+				approvalStatus: review?.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
 			};
 			acc.push(usernames[author?.login]);
 			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
@@ -54,12 +54,12 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubInstallatio
 
 	const logPayload = {
 		prTitle: prTitle || "none",
-		repoName: head?.repo.name || "none",
+		repoName: head?.repo?.name || "none",
 		prRef: pullRequest.head.ref || "none"
 	};
 
 	if (isEmpty(issueKeys) || !head?.repo) {
-		log?.info(logPayload, "Ignoring pullrequest hence it has no issue keys or repo");
+		log?.info(logPayload, "Ignoring pullrequest since it has no issue keys or repo");
 		return undefined;
 	}
 

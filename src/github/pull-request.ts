@@ -30,7 +30,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		orgName: owner,
 		pullRequestNumber,
 		pullRequestId,
-		payload: context.payload,
+		payload: context.payload
 	});
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
