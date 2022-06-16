@@ -154,8 +154,7 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 				if (e.response.status === 503) {
 					logger.info(`503 from Jira: Jira instance '${baseURL}' has been deactivated, is suspended or does not exist. Returning 404 to our application.`);
 					error.response.status = 404;
-				}
-				if (e.response.status === 302) {
+				} else if (e.response.status === 302) {
 					logger.info(`405 from Jira: Jira instance '${baseURL}' has been renamed. Returning 404 to our application.`);
 					error.response.status = 404;
 				}
