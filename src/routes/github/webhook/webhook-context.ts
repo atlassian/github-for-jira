@@ -1,17 +1,10 @@
-import Logger from "bunyan";
+import type { WebhookEvent, WebhookEventName } from "@octokit/webhooks-types";
 
-export class WebhookContext <E = any> {
+export class WebhookContext<E extends WebhookEvent = WebhookEvent> {
 	id: string;
-	name: string;
+	name: WebhookEventName;
 	payload: E;
-	log: Logger;
+	webhookReceived: number;
+	log: any; //TODO: proper typing to remove probot
 	action?: string;
-
-	constructor({ id, name, payload, log, action }) {
-		this.id = id;
-		this.name = name;
-		this.payload = payload;
-		this.log = log;
-		this.action = action;
-	}
 }
