@@ -92,19 +92,19 @@ export const getLogger = (name: string): LoggerWithTarget => {
 };
 
 // This will log data to a restricted environment [env]-unsafe
-export const getUnsafeLogger = (name: string): LoggerWithTarget => {
-	return logger.child({ name, env_suffix: "unsafe" });
-};
+// export const getUnsafeLogger = (name: string): LoggerWithTarget => {
+// 	return logger.child({ name, env_suffix: "unsafe" });
+// };
 
 //Override console.log with bunyan logger.
 //we shouldn't use console.log in our code, but it is done to catch
 //possible logs from third party libraries
-const consoleLogger = getLogger("console");
+// const consoleLogger = getLogger("console");
 // eslint-disable-next-line no-console
-console.debug = consoleLogger.debug.bind(consoleLogger);
-// eslint-disable-next-line no-console
-console.error = consoleLogger.error.bind(consoleLogger);
-// eslint-disable-next-line no-console
-console.log = consoleLogger.info.bind(consoleLogger);
-// eslint-disable-next-line no-console
-console.warn = consoleLogger.warn.bind(consoleLogger);
+// console.debug = consoleLogger.debug.bind(consoleLogger);
+// // eslint-disable-next-line no-console
+// console.error = consoleLogger.error.bind(consoleLogger);
+// // eslint-disable-next-line no-console
+// console.log = consoleLogger.info.bind(consoleLogger);
+// // eslint-disable-next-line no-console
+// console.warn = consoleLogger.warn.bind(consoleLogger);

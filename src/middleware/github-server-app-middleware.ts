@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 
-export const GithubConfigurationGitHubAppId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const githubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void | string> => {
 	const { jiraHost } = res.locals;
 	const { id } = req.params;
 
