@@ -10,11 +10,13 @@ import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentData } from "../interfaces/jira";
 
-export const deploymentWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+import type { DeploymentStatusEvent } from "@octokit/webhooks-types";
+
+export const deploymentWebhookHandler = async (context: CustomContext<DeploymentStatusEvent>, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
 		jiraHost: jiraClient.baseURL,
 		installationId: githubInstallationId,
-		webhookPayload: context.payload,
+		webhookPayload: context.payload as any, //TODO: fix potential bugs
 		webhookReceived: Date.now(),
 		webhookId: context.id
 	});

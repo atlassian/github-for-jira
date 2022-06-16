@@ -3,7 +3,8 @@ import { BinaryLike, createHmac } from "crypto";
 import { Request, Response } from "express";
 import { getLogger } from "~/src/config/logger";
 import { GitHubServerApp } from "models/github-server-app";
-import { WebhookContext } from "./webhook-context";
+import { CustomContext, GithubWebhookMiddleware } from '../../../middleware/github-webhook-middleware';
+import { pushWebhookHandler } from "../../../github/push";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -26,13 +27,13 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			return;
 		}
 
-		const webhookContext = new WebhookContext({
+		const webhookContext: CustomContext = {
 			id: id,
 			name: eventName,
 			payload: payload,
 			log: logger,
 			action: payload.action
-		});
+		};
 		webhookRouter(webhookContext);
 		response.sendStatus(204);
 
@@ -42,7 +43,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	}
 };
 
-const webhookRouter = (context: WebhookContext) => {
+const webhookRouter = (context: CustomContext) => {
 	if (context.action) {
 		invokeHandler(`${context.name}.${context.action}`, context.log);
 	}
@@ -53,6 +54,7 @@ const invokeHandler = (event: string, logger: Logger) => {
 	switch (event) {
 		case "push":
 			logger.info("push event Received!");
+			GithubWebhookMiddleware(pushWebhookHandler);
 			break;
 		case "pull_request":
 			logger.info("pull req event Received!");

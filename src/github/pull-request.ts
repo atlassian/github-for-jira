@@ -10,16 +10,18 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 
-export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
+import type { PullRequestEvent } from "@octokit/webhooks-types";
+
+export const pullRequestWebhookHandler = async (context: CustomContext<PullRequestEvent>, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
 			id: repositoryId,
 			name: repoName,
 			owner: { login: owner }
-		},
-		changes
+		}
 	} = context.payload;
+	const changes = context.payload["changes"]; //? Bugs?
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
@@ -47,7 +49,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		);
 	}
 
-	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request as any, reviews, context.log); //TODO: fix type pull_request
 
 	context.log.info("Pullrequest mapped to Jira Payload");
 

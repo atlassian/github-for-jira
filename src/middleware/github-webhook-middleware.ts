@@ -6,11 +6,12 @@ import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraUtil } from "../jira/util/jira-client-util";
-import { Context } from "probot/lib/context";
+//import { Context } from "probot/lib/context"; TODO: Hip-hip hooray!!!
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
+import { WebhookEvent } from "@octokit/webhooks-types";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
@@ -53,10 +54,15 @@ const isStateChangeOrDeploymentAction = (action) =>
 		action
 	);
 
-export class CustomContext<E = any> extends Context<E> {
+export class CustomContext<E extends WebhookEvent = WebhookEvent>{
+	id: string;
+	name: string;
+	payload: E;
+	log: any;
 	sentry?: Sentry.Hub;
 	timedout?: number;
 	webhookReceived?: number;
+	[key: string]: any;
 }
 
 function extractWebhookEventNameFromContext(context: CustomContext<any>): string {
@@ -68,8 +74,8 @@ function extractWebhookEventNameFromContext(context: CustomContext<any>): string
 }
 
 // TODO: fix typings
-export const GithubWebhookMiddleware = (
-	callback: (context: CustomContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
+export const GithubWebhookMiddleware = <T extends WebhookEvent = WebhookEvent>(
+	callback: (context: CustomContext<T>, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
 ) => {
 	return withSentry(async (context: CustomContext) => {
 		const webhookEvent = extractWebhookEventNameFromContext(context);
@@ -82,17 +88,17 @@ export const GithubWebhookMiddleware = (
 		context.webhookReceived = webhookReceived;
 		context.sentry?.setExtra("GitHub Payload", {
 			event: webhookEvent,
-			action: context.payload?.action,
+			action: context.payload?.["action"],
 			id: context.id,
-			repo: context.payload?.repository ? context.repo() : undefined,
+			//repo: context.payload?.['repository'] ? context.repo() : undefined, TODO: fix repo()
 			payload: context.payload,
 			webhookReceived
 		});
 
 		const { name, payload, id: webhookId } = context;
-		const repoName = payload?.repository?.name || "none";
-		const orgName = payload?.repository?.owner?.login || "none";
-		const gitHubInstallationId = Number(payload?.installation?.id);
+		const repoName = payload?.["repository"]?.name || "none";
+		const orgName = payload?.["repository"]?.owner?.login || "none";
+		const gitHubInstallationId = Number(payload?.["installation"]?.id);
 
 		context.log = context.log.child({
 			name: "github.webhooks",
@@ -108,21 +114,21 @@ export const GithubWebhookMiddleware = (
 		statsd.increment(metricWebhooks.webhookEvent, [
 			"name: webhooks",
 			`event: ${name}`,
-			`action: ${payload.action}`
+			`action: ${payload["action"]}`
 		]);
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
 		if (
-			context.payload?.sender?.type === "Bot" &&
-			!isStateChangeOrDeploymentAction(context.payload.action) &&
+			context.payload?.["sender"]?.type === "Bot" &&
+			!isStateChangeOrDeploymentAction(context.payload["action"]) &&
 			!isStateChangeOrDeploymentAction(context.name)
 		) {
 			context.log(
 				{
 					noop: "bot",
-					botId: context.payload?.sender?.id,
-					botLogin: context.payload?.sender?.login
+					botId: context.payload?.["sender"]?.id,
+					botLogin: context.payload?.["sender"]?.login
 				},
 				"Halting further execution since the sender is a bot and action is not a state change nor a deployment"
 			);
@@ -132,8 +138,8 @@ export const GithubWebhookMiddleware = (
 		if (isFromIgnoredRepo(context.payload)) {
 			context.log(
 				{
-					installation_id: context.payload?.installation?.id,
-					repository_id: context.payload?.repository?.id
+					installation_id: context.payload?.["installation"]?.id,
+					repository_id: context.payload?.["repository"]?.id
 				},
 				"Halting further execution since the repository is explicitly ignored"
 			);
@@ -158,7 +164,7 @@ export const GithubWebhookMiddleware = (
 
 		context.sentry?.setTag(
 			"transaction",
-			`webhook:${context.name}.${context.payload.action}`
+			`webhook:${context.name}.${context.payload["action"]}`
 		);
 
 		for (const subscription of subscriptions) {
@@ -210,7 +216,8 @@ export const GithubWebhookMiddleware = (
 			const util = getJiraUtil(jiraClient);
 
 			try {
-				await callback(context, jiraClient, util, gitHubInstallationId);
+				//TODO: fix it weird typing thing
+				await callback(context as any, jiraClient, util, gitHubInstallationId);
 			} catch (err) {
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
 				if (!isWarning) {

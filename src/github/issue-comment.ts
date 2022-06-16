@@ -3,8 +3,10 @@ import { CustomContext } from "middleware/github-webhook-middleware";
 import { GitHubIssue, GitHubIssueCommentData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 
+import type { IssueCommentEvent } from "@octokit/webhooks-types";
+
 export const issueCommentWebhookHandler = async (
-	context: CustomContext,
+	context: CustomContext<IssueCommentEvent>,
 	jiraClient,
 	util,
 	githubInstallationId: number

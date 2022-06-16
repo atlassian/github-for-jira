@@ -2,7 +2,7 @@ import { transformBranch } from "../transforms/transform-branch";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
-import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
+import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { sqsQueues } from "../sqs/queues";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { getJiraClient } from "../jira/client/jira-client";
@@ -10,16 +10,16 @@ import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraBranchData } from "../interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 
-export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+import type { CreateEvent, DeleteEvent } from "@octokit/webhooks-types";
 
-	const webhookPayload: WebhookPayloadCreate = context.payload;
+export const createBranchWebhookHandler = async (context: CustomContext<CreateEvent>, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
 	await sqsQueues.branch.sendMessage({
 		jiraHost: jiraClient.baseURL,
 		installationId: githubInstallationId,
 		webhookReceived: Date.now(),
 		webhookId: context.id,
-		webhookPayload
+		webhookPayload: context.payload as any //TODO: fix potential bugs
 	});
 };
 
@@ -63,8 +63,8 @@ export const processBranch = async (
 	);
 };
 
-export const deleteBranchWebhookHandler = async (context: CustomContext, jiraClient): Promise<void> => {
-	const payload: WebhookPayloadDelete = context.payload;
+export const deleteBranchWebhookHandler = async (context: CustomContext<DeleteEvent>, jiraClient): Promise<void> => {
+	const payload = context.payload;
 	const issueKeys = jiraIssueKeyParser(payload.ref);
 
 	if (isEmpty(issueKeys)) {

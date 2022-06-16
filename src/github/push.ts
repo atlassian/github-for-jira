@@ -1,10 +1,12 @@
 import { enqueuePush } from "../transforms/push";
-import { Context } from "probot/lib/context";
 import { getCurrentTime } from "utils/webhook-utils";
 import { hasJiraIssueKey } from "utils/jira-utils";
 import { GitHubPushData } from "../interfaces/github";
+import type { CustomContext } from "../middleware/github-webhook-middleware";
+import type { PushEvent } from "@octokit/webhooks-types";
 
-export const pushWebhookHandler = async (context: Context, jiraClient): Promise<void> => {
+export const pushWebhookHandler = async (context: CustomContext<PushEvent>, jiraClient): Promise<void> => {
+
 	const webhookReceived = getCurrentTime();
 
 	// Copy the shape of the context object for processing
@@ -13,14 +15,14 @@ export const pushWebhookHandler = async (context: Context, jiraClient): Promise<
 	const payload: GitHubPushData = {
 		webhookId: context.id,
 		webhookReceived,
-		repository: context.payload?.repository,
-		commits: context.payload?.commits?.reduce((acc, commit) => {
+		repository: context.payload?.["repository"] as any, //TODO: fix any
+		commits: context.payload?.commits?.reduce((acc: string[], commit) => {
 			if (hasJiraIssueKey(commit.message)) {
-				acc.push(commit);
+				acc.push(commit.message); //TODO ? Really? Fix it!
 			}
 			return acc;
 		}, []),
-		installation: context.payload?.installation
+		installation: context.payload?.installation as any //TODO: fix any
 	};
 
 	if (!payload.commits?.length) {
