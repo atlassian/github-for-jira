@@ -70,7 +70,7 @@ describe("github-server-app-middleware", () => {
 		};
 
 		installation = {
-			jiraHost: "https://test.atlassian.com",
+			jiraHost: "https://testatlassian.com",
 			id: 19
 		};
 
@@ -81,7 +81,7 @@ describe("github-server-app-middleware", () => {
 
 		await expect(GithubServerAppMiddleware(req, res, next))
 			.rejects
-			.toThrow('Installation ids do not match.');
+			.toThrow('Jira hosts do not match');
 	});
 
 	it("should call next() when GH app is found and installation id matches", async () => {
@@ -104,11 +104,12 @@ describe("github-server-app-middleware", () => {
 		};
 
 		installation = {
-			jiraHost: "https://test.atlassian.com",
-			id: 19
+			jiraHost: "https://testatlassian.net",
+			id: 19,
+			clientKey: "testkey"
 		};
 
-		mocked(Installation.getForHost).mockResolvedValue(installation);
+		mocked(Installation.findByPk).mockResolvedValue(installation);
 		mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(
 			payload
 		);
