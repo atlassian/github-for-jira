@@ -1,4 +1,4 @@
-import {jiraIssueKeyParser} from "utils/jira-utils";
+import { jiraIssueKeyParser } from "utils/jira-utils";
 
 /**
  * Generates a create pull request link for GH in the format [URL]/compare/[name]?title=[...keys]-[name]
