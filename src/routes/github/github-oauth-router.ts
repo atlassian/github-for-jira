@@ -14,6 +14,7 @@ import { createHashWithSharedSecret } from "utils/encryption";
 const logger = getLogger("github-oauth");
 
 const githubClient = envVars.GITHUB_CLIENT_ID;
+const githubSecret = envVars.GITHUB_CLIENT_SECRET;
 const baseURL = envVars.APP_URL;
 const scopes = ["user", "repo"];
 const callbackPath = "/callback";
@@ -91,10 +92,6 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
 	const gitHubHostname = await getGitHubHostname(gitHubAppId, jiraHost);
-
-	const githubSecret = await booleanFlag(BooleanFlags.USE_NEW_CLIENT_SECRET, false, jiraHost)
-		? envVars.GITHUB_CLIENT_SECRET
-		: envVars.GITHUB_CLIENT_SECRET_VAULT;
 
 	logger.info(`${createHashWithSharedSecret(githubSecret)} is used`);
 

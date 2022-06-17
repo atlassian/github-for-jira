@@ -349,8 +349,45 @@ describe("RepoSyncState", () => {
 				subscriptionId: Math.round(Math.random() * 10000)
 			});
 
+			expect(await RepoSyncState.count()).toEqual(3);
 			let result = await RepoSyncState.findAllFromSubscription(sub);
 			expect(result.length).toEqual(2);
+			await RepoSyncState.updateFromRepoJson(sub, {
+				numberOfSyncedRepos: 1,
+				jiraHost: sub.jiraHost,
+				installationId: sub.gitHubInstallationId,
+				repos: {
+					"2": json
+				}
+			});
+			result = await RepoSyncState.findAllFromSubscription(sub);
+			expect(result.length).toEqual(1);
+			expect(result[0].repoId).toEqual(2);
+			result = await RepoSyncState.findAll();
+			expect(result.length).toEqual(2);
+		});
+
+		it("Should remove duplicate repoIds within the same subscription", async () => {
+			await RepoSyncState.create({
+				...repo,
+				repoId: 1
+			});
+			await RepoSyncState.create({
+				...repo,
+				repoId: 2
+			});
+			await RepoSyncState.create({
+				...repo,
+				subscriptionId: Math.round(Math.random() * 10000)
+			});
+			await RepoSyncState.create({
+				...repo,
+				repoId: 2
+			});
+
+			expect(await RepoSyncState.count()).toEqual(4);
+			let result = await RepoSyncState.findAllFromSubscription(sub);
+			expect(result.length).toEqual(3);
 			await RepoSyncState.updateFromRepoJson(sub, {
 				numberOfSyncedRepos: 1,
 				jiraHost: sub.jiraHost,
