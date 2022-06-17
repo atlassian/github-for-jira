@@ -68,7 +68,7 @@ export class Subscription extends Model {
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
-	gitHubAppId: number;
+	gitHubAppId?: number;
 
 	static async getAllForHost(host: string): Promise<Subscription[]> {
 		return this.findAll({
@@ -263,7 +263,7 @@ Subscription.init({
 export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
-	gitHubAppId?: number | null;
+	gitHubAppId?: number;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

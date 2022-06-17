@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 
-export const githubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
 	const { id } = req.params;
 
@@ -15,9 +15,9 @@ export const githubServerAppMiddleware = async (req: Request, res: Response, nex
 			throw new Error("No GitHub app found for provided id.");
 		}
 
-		const installation = await Installation.getForHost(jiraHost);
+		const installation = Installation.findByPk(gitHubServerApp.installationId);
 
-		if (installation?.id !== gitHubServerApp?.installationId) {
+		if (installation.jiraHost !== jiraHost) {
 			req.log.error({ id, jiraHost }, "Installation ids do not match.");
 			throw new Error("Installation ids do not match.");
 		}
@@ -25,7 +25,7 @@ export const githubServerAppMiddleware = async (req: Request, res: Response, nex
 		req.log.info("Found GitHub server app for installation");
 		res.locals.gitHubAppId = id;
 		next();
-	} else {
-		next();
 	}
+
+	next();
 };
