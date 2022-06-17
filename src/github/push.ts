@@ -1,12 +1,10 @@
 import { enqueuePush } from "../transforms/push";
-import { Context } from "probot/lib/context";
 import { getCurrentTime } from "utils/webhook-utils";
 import { hasJiraIssueKey } from "utils/jira-utils";
 import { GitHubPushData } from "../interfaces/github";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const pushWebhookHandler = async (probotContext: Context, jiraClient, _util, _githubInstallationId: number, webhookContext?: WebhookContext): Promise<void> => {
-	const context = webhookContext ? webhookContext : probotContext;
+export const pushWebhookHandler = async (context: WebhookContext, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();
 
 	// Copy the shape of the context object for processing

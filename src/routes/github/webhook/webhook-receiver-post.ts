@@ -53,7 +53,7 @@ const webhookRouter = (context: WebhookContext) => {
 const invokeHandler = (event: string, context: WebhookContext) => {
 	switch (event) {
 		case "push":
-			GithubWebhookMiddleware(pushWebhookHandler)(undefined, context);
+			GithubWebhookMiddleware(pushWebhookHandler)(context);
 			break;
 		case "pull_request":
 			context.log.info("pull req event Received!");

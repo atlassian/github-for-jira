@@ -1,10 +1,10 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
 import { GitHubIssue, GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, jiraClient, util, githubInstallationId: number): Promise<void> => {
+export const issueWebhookHandler = async (context: WebhookContext<WebhookPayloadIssues>, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
 		issue,
 		repository: {
@@ -20,7 +20,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 	try {
 		linkifiedBody = await util.unfurl(issue.body);
 		if (!linkifiedBody) {
-			context.log("Halting further execution for issue since linkifiedBody is empty");
+			context.log.info("Halting further execution for issue since linkifiedBody is empty");
 			return;
 		}
 	} catch (err) {
@@ -30,7 +30,7 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		);
 	}
 
-	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);
+	context.log.info(`Updating issue in GitHub with issueId: ${issue.id}`);
 
 	const updatedIssue: GitHubIssueData = {
 		body: linkifiedBody,

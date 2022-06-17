@@ -19,8 +19,7 @@ const warnOnErrorCodes = ["401", "403", "404"];
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
 const withSentry = function (callback) {
-	return async (customContext?: CustomContext, webhookContext?: WebhookContext) => {
-		const context = webhookContext ? webhookContext : customContext!;
+	return async (context: WebhookContext) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry?.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
@@ -30,7 +29,7 @@ const withSentry = function (callback) {
 		);
 
 		try {
-			await callback(customContext, webhookContext);
+			await callback(context);
 		} catch (err) {
 			context.log.error({ err, context }, "Error while processing webhook");
 			emitWebhookFailedMetrics(extractWebhookEventNameFromContext(context));
@@ -61,7 +60,7 @@ export class CustomContext<E = any> extends Context<E> {
 	webhookReceived?: number;
 }
 
-function extractWebhookEventNameFromContext(context: CustomContext<any> | WebhookContext): string {
+function extractWebhookEventNameFromContext(context: WebhookContext): string {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {
 		webhookEvent = `${webhookEvent}.${context.payload.action}`;
@@ -71,10 +70,9 @@ function extractWebhookEventNameFromContext(context: CustomContext<any> | Webhoo
 
 // TODO: fix typings
 export const GithubWebhookMiddleware = (
-	callback: (customContext: CustomContext, jiraClient: any, util: any, githubInstallationId: number, webhookContext?: WebhookContext) => Promise<void>
+	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
 ) => {
-	return withSentry(async (customContext: CustomContext, webhookContext?: WebhookContext) => {
-		const context = webhookContext ? webhookContext : customContext;
+	return withSentry(async (context: WebhookContext) => {
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size
@@ -216,7 +214,7 @@ export const GithubWebhookMiddleware = (
 			const util = getJiraUtil(jiraClient);
 
 			try {
-				await callback(customContext, jiraClient, util, gitHubInstallationId, webhookContext);
+				await callback(context, jiraClient, util, gitHubInstallationId);
 			} catch (err) {
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
 				if (!isWarning) {

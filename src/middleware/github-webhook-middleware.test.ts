@@ -53,13 +53,9 @@ describe("Probot event middleware", () => {
 			const spy = jest.fn();
 			await expect(GithubWebhookMiddleware(spy)(context)).toResolve();
 			expect(spy).toHaveBeenCalledTimes(3);
-
-			const anotherSpy = jest.fn();
-			await expect(GithubWebhookMiddleware(anotherSpy)(undefined, context)).toResolve();
-			expect(anotherSpy).toHaveBeenCalledTimes(3);
 		});
 
-		it("should when one call fails", async () => {
+		it("when one call fails", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(
 				mockModels.Installation.getForHost
 			);
@@ -67,13 +63,9 @@ describe("Probot event middleware", () => {
 			const spy = jest.fn().mockRejectedValueOnce(new Error("Failed!"));
 			await expect(GithubWebhookMiddleware(spy)(context)).toResolve();
 			expect(spy).toHaveBeenCalledTimes(3);
-
-			const anotherSpy = jest.fn().mockRejectedValueOnce(new Error("Failed!"));
-			await expect(GithubWebhookMiddleware(anotherSpy)(undefined, context)).toResolve();
-			expect(anotherSpy).toHaveBeenCalledTimes(3);
 		});
 
-		it("should when all calls fail", async () => {
+		it("when all calls fail", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(
 				mockModels.Installation.getForHost
 			);
@@ -81,10 +73,6 @@ describe("Probot event middleware", () => {
 			const spy = jest.fn().mockRejectedValue(new Error("Failed!"));
 			await expect(GithubWebhookMiddleware(spy)(context)).toResolve();
 			expect(spy).toHaveBeenCalledTimes(3);
-
-			const anotherSpy = jest.fn().mockRejectedValue(new Error("Failed!"));
-			await expect(GithubWebhookMiddleware(anotherSpy)(undefined, context)).toResolve();
-			expect(anotherSpy).toHaveBeenCalledTimes(3);
 		});
 
 		it("should not call slo metrics when call fails with 401/404s", async () => {
@@ -95,11 +83,6 @@ describe("Probot event middleware", () => {
 			const spy = jest.fn().mockRejectedValue(new Error("Request Failed with 401"));
 			await expect(GithubWebhookMiddleware(spy)(context)).toResolve();
 			expect(spy).toHaveBeenCalledTimes(3);
-			expect(emitWebhookFailedMetrics).not.toHaveBeenCalled();
-
-			const anotherSpy = jest.fn().mockRejectedValue(new Error("Request Failed with 401"));
-			await expect(GithubWebhookMiddleware(anotherSpy)(undefined, context)).toResolve();
-			expect(anotherSpy).toHaveBeenCalledTimes(3);
 			expect(emitWebhookFailedMetrics).not.toHaveBeenCalled();
 		});
 
@@ -112,22 +95,12 @@ describe("Probot event middleware", () => {
 			await expect(GithubWebhookMiddleware(spy)(context)).toResolve();
 			expect(spy).toHaveBeenCalledTimes(3);
 			expect(emitWebhookFailedMetrics).toHaveBeenCalled();
-
-			const anotherSpy = jest.fn().mockRejectedValue(new Error("Request Failed with 500"));
-			await expect(GithubWebhookMiddleware(anotherSpy)(undefined, context)).toResolve();
-			expect(anotherSpy).toHaveBeenCalledTimes(3);
-			expect(emitWebhookFailedMetrics).toHaveBeenCalled();
 		});
 	});
 
 	it("preserves parent log", async () => {
 		context.log = context.log.child({ foo: 123 });
 		await GithubWebhookMiddleware(jest.fn())(context);
-		context.log.info("test");
-		expect(loggedStuff).toContain("foo");
-		expect(loggedStuff).toContain("123");
-
-		await GithubWebhookMiddleware(jest.fn())(undefined, context);
 		context.log.info("test");
 		expect(loggedStuff).toContain("foo");
 		expect(loggedStuff).toContain("123");
