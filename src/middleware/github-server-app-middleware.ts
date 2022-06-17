@@ -15,16 +15,16 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			throw new Error("No GitHub app found for provided id.");
 		}
 
-		const installation = Installation.findByPk(gitHubServerApp.installationId);
+		const installation = await Installation.findByPk(gitHubServerApp.installationId);
 
 		if (installation?.jiraHost !== jiraHost) {
-			req.log.error({ id, jiraHost }, "Installation ids do not match.");
-			throw new Error("Installation ids do not match.");
+			req.log.error({ id, jiraHost }, "Jira hosts do not match");
+			throw new Error("Jira hosts do not match.");
 		}
 
 		req.log.info("Found GitHub server app for installation");
 		res.locals.gitHubAppId = id;
-		next();
+		return next();
 	}
 
 	next();
