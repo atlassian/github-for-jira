@@ -74,7 +74,7 @@ describe("github-server-app-middleware", () => {
 			id: 19
 		};
 
-		mocked(Installation.getForHost).mockResolvedValue(installation);
+		mocked(Installation.findByPk).mockResolvedValue(installation);
 		mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(
 			payload
 		);
