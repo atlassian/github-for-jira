@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { getLogger } from "~/src/config/logger";
 import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
-import { GitHubServerApp } from "~/src/models/git-hub-server-app";
+import { GitHubServerApp } from "models/github-server-app";
 import { WebhookContext } from "./webhook-context";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
