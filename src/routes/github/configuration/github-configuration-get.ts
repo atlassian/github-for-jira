@@ -52,7 +52,7 @@ const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
 	reqLog: Logger,
-	gitHubAppId: number
+	gitHubAppId?: number
 ): Promise<MergedInstallation[]> => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog, gitHubAppId);

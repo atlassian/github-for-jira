@@ -1,5 +1,5 @@
 import Mock = jest.Mock;
-import { githubServerAppMiddleware } from "middleware/github-server-app-middleware";
+import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { getLogger } from "config/logger";
 import { mocked } from "ts-jest/utils";
 import { GitHubServerApp } from "../models/github-server-app";
@@ -33,7 +33,7 @@ describe("github-server-app-middleware", () => {
 			}
 		};
 
-		await githubServerAppMiddleware(req, res, next);
+		await GithubServerAppMiddleware(req, res, next);
 		expect(next).toBeCalledTimes(1);
 	});
 
@@ -45,7 +45,7 @@ describe("github-server-app-middleware", () => {
 			}
 		};
 
-		await expect(githubServerAppMiddleware(req, res, next))
+		await expect(GithubServerAppMiddleware(req, res, next))
 			.rejects
 			.toThrow('No GitHub app found for provided id.');
 	});
@@ -79,7 +79,7 @@ describe("github-server-app-middleware", () => {
 			payload
 		);
 
-		await expect(githubServerAppMiddleware(req, res, next))
+		await expect(GithubServerAppMiddleware(req, res, next))
 			.rejects
 			.toThrow('Installation ids do not match.');
 	});
@@ -113,7 +113,7 @@ describe("github-server-app-middleware", () => {
 			payload
 		);
 
-		await githubServerAppMiddleware(req, res, next);
+		await GithubServerAppMiddleware(req, res, next);
 		expect(next).toBeCalledTimes(1);
 	});
 });
