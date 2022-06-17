@@ -36,9 +36,9 @@ const getInstallationData = async (githubAppClient: GitHubAppClient, githubInsta
 };
 
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
-	const { jiraHost } = res.locals;
+	const { jiraHost, gitHubAppId } = res.locals;
 	const githubInstallationId = Number(req.query.installation_id);
-	const gitHubAppClient = await createAppClient(req.log, jiraHost);
+	const gitHubAppClient = await createAppClient(gitHubAppId, req.log, jiraHost);
 	const { githubInstallation, info } = await getInstallationData(gitHubAppClient, githubInstallationId, req.log);
 
 	req.addLogFields({ githubInstallationId, appInfo: info });
@@ -61,6 +61,6 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 		avatar: githubInstallation?.account?.avatar_url,
 		html_url: info.html_url,
 		id: githubInstallationId,
-		isGitHubCloudApp: await isGitHubCloudApp(jiraHost)
+		isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 	});
 };

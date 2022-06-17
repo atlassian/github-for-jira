@@ -4,7 +4,6 @@ import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
 import { booleanFlag, BooleanFlags, onFlagChange } from "config/feature-flags";
-import { Installation } from "models/installation";
 import { GitHubServerApp } from "models/github-server-app";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
@@ -108,22 +107,6 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 
 export const hasJiraIssueKey = (str: string): boolean => !isEmpty(jiraIssueKeyParser(str));
 
-export const isGitHubCloudApp = async (jiraHost: string): Promise<boolean>=> {
-	let isGitHubCloud = true;
-
-	/* 3 possible scenarios while we have the feature flag
-	*		- FF is set to false: isGitHubCloud default to true
-	* 	- FF is true but there is no gitHubAppId in the Installations table or no corresponding entry in the GitHubServerApps table - isGitHubCloud is true
-	* 	- FF is true and there is a gitHubAppId in the Installations table and an entry in the GitHubServerApps table - isGitHubCloud is false
-	*/
-	if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
-		const installation = await Installation.getForHost(jiraHost);
-		const gitHubAppId = installation?.githubAppId;
-
-		if (gitHubAppId) {
-			isGitHubCloud = !await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
-		}
-	}
-
-	return isGitHubCloud;
+export const isGitHubCloudApp = async (gitHubAppId: number | undefined): Promise<boolean>=> {
+	return !(gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId));
 }

@@ -52,10 +52,11 @@ const mergeByLogin = (installationsWithAdmin: InstallationWithAdmin[], connected
 const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
-	reqLog: Logger
+	reqLog: Logger,
+	gitHubAppId: number
 ): Promise<MergedInstallation[]> => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog);
+	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog, gitHubAppId);
 	const connectedStatuses = getConnectedStatus(installationsWithSubscriptions.fulfilled, jiraHost);
 
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
@@ -70,7 +71,7 @@ const getInstallationsWithAdmin = async (
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
+		const gitHubClient = await createInstallationClient(installation.id, log, jiraHost);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -121,7 +122,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const {
 		jiraHost,
 		githubToken,
-		github // user-authenticated GitHub client
+		github, // user-authenticated GitHub client
+		gitHubAppId
 	} = res.locals;
 	const log = req.log.child({ jiraHost });
 
@@ -129,8 +131,11 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
+	gitHubAppId ? req.log.info(`Displaying orgs that have GitHub Enterprise app ${gitHubAppId} installed.`)
+		: req.log.info("Displaying orgs that have GitHub Cloud app installed.");
+
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, false);
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log);
+	const gitHubUserClient = await createUserClient(gitHubAppId, githubToken, log, jiraHost);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
@@ -149,7 +154,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	// Remove any failed installations before a user attempts to reconnect
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const allInstallations = await getInstallations(subscriptions, log);
+	const allInstallations = await getInstallations(subscriptions, log, gitHubAppId);
 	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost);
 
 	tracer.trace(`removed failed installations`);
@@ -166,7 +171,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			return;
 		}
 
-		const gitHubAppClient = await createAppClient(log, jiraHost);
+		const gitHubAppClient = await createAppClient(gitHubAppId, log, jiraHost);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 
@@ -197,7 +202,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		const connectedInstallations = await installationConnectedStatus(
 			jiraHost,
 			installationsWithAdmin,
-			log
+			log,
+			gitHubAppId
 		);
 
 		// Sort to that orgs ready to be connected are at the top
@@ -219,7 +225,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			clientKey: installation.clientKey,
 			login,
 			repoUrl: envVars.GITHUB_REPO_URL,
-			isGitHubCloudApp: await isGitHubCloudApp(jiraHost)
+			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 		});
 
 		tracer.trace(`rendered page`);
