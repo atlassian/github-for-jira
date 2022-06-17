@@ -19,7 +19,7 @@
   </div>
 
   <div class="selectServer__list">
-    {{#each servers as server}}
+    {{#each servers as |server|}}
       <div class="selectServer__server">
         <!--TODO: Update the URL by actual data-->
         <div class="selectServer__serverURL">{{server.url}}</div>
