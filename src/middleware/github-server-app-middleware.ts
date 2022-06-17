@@ -17,7 +17,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 		const installation = Installation.findByPk(gitHubServerApp.installationId);
 
-		if (installation.jiraHost !== jiraHost) {
+		if (installation?.jiraHost !== jiraHost) {
 			req.log.error({ id, jiraHost }, "Installation ids do not match.");
 			throw new Error("Installation ids do not match.");
 		}
