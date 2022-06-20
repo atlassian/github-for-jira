@@ -12,7 +12,7 @@ const probot = createProbot({
 	secret: process.env.WEBHOOK_SECRET,
 	cert: PrivateKey.findPrivateKey() || undefined,
 	port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080,
-	webhookPath: "/github/events",
+	webhookPath: "/github/events-legacy",
 	webhookProxy: process.env.WEBHOOK_PROXY_URL,
 	throttleOptions: {
 		enabled: false
