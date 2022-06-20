@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Repositories, Repository, RepositoryData, Subscription, SyncStatus } from "models/subscription";
+import { Repository, Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { getJiraClient } from "../jira/client/jira-client";
-import { getRepositorySummary } from "./jobs";
 import { enhanceOctokit, RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
 import { statsd } from "config/statsd";
 import { getPullRequestTask } from "./pull-request";
@@ -55,15 +54,7 @@ type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deploym
 
 const taskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
-export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
-	Object.entries(repos).sort(
-		(a, b) =>
-			new Date(b[1].repository?.updated_at || 0).getTime() -
-			new Date(a[1].repository?.updated_at || 0).getTime()
-	);
-
 const getNextTask = async (subscription: Subscription, jiraHost: string): Promise<Task | undefined> => {
-
 	const includeBuildAndDeployments = await booleanFlag(BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS, false, jiraHost);
 	const tasks = taskTypes.filter(task => includeBuildAndDeployments || (task !== "build" && task !== "deployment"));
 
@@ -76,20 +67,25 @@ const getNextTask = async (subscription: Subscription, jiraHost: string): Promis
 		};
 	}
 
-	const repos = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
-	const sorted: [number, RepositoryData][] = repos.map(repo => [repo.repoId, repo.toRepositoryData()]);
+	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
 
-	for (const [repositoryId, repoData] of sorted) {
+	for (const syncState of repoSyncStates) {
 		const task = tasks.find(
-			(taskType) => repoData[getStatusKey(taskType)] === undefined || repoData[getStatusKey(taskType)] === "pending"
+			(taskType) => syncState[getStatusKey(taskType)] === undefined || syncState[getStatusKey(taskType)] === "pending"
 		);
 		if (!task) continue;
-		const { repository, [getCursorKey(task)]: cursor } = repoData;
 		return {
 			task,
-			repositoryId: repositoryId,
-			repository: repository as Repository,
-			cursor: cursor as any
+			repositoryId: syncState.repoId,
+			repository: {
+				id: syncState.repoId,
+				name: syncState.repoName,
+				full_name: syncState.repoFullName,
+				owner: { login: syncState.repoOwner },
+				html_url: syncState.repoUrl,
+				updated_at: syncState.repoUpdatedAt.toISOString()
+			},
+			cursor: syncState[getCursorKey(task)]
 		};
 	}
 	return undefined;
@@ -134,11 +130,11 @@ export const updateJobStatus = async (
 	const status = isComplete ? "complete" : "pending";
 
 	logger.info({ status }, "Updating job status");
-	await subscription.updateRepoSyncStateItem(repositoryId, getStatusKey(task), status);
+	await RepoSyncState.updateRepoFromSubscription(subscription, repositoryId, { [getStatusKey(task)]: status });
 
 	if (!isComplete) {
 		// there's more data to get
-		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
+		await RepoSyncState.updateRepoFromSubscription(subscription, repositoryId, { [getCursorKey(task)]: edges[edges.length - 1].cursor });
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription, jiraHost))) {
@@ -229,26 +225,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	await subscription.update({ syncStatus: "ACTIVE" });
 
-	const { task, cursor, repositoryId } = nextTask;
-	let { repository } = nextTask;
-
-	if (!nextTask.repository && repositoryId) {
-		// Old records don't have this info. New ones have it
-		const { data: repo } = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_REPO, false, subscription.jiraHost) ?
-			await gitHubInstallationClient.getRepository(nextTask.repositoryId) :
-			await github.request("GET /repositories/:id", {
-				id: nextTask.repositoryId
-			});
-
-		repository = getRepositorySummary(repo);
-		await subscription.updateSyncState({
-			repos: {
-				[repository.id]: {
-					repository
-				}
-			}
-		});
-	}
+	const { task, cursor, repository } = nextTask;
 
 	//TODO ARC-582 log task only if detailed logging enabled
 	logger.info({ task: nextTask }, "Starting task");
@@ -412,7 +389,7 @@ export const handleBackfillError = async (err,
 
 export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
-	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
+	await RepoSyncState.updateRepoFromSubscription(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 
 	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
 

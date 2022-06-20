@@ -1,6 +1,5 @@
 import { DataTypes, DATE, Model, Op, WhereOptions } from "sequelize";
-import { RepoSyncState } from "./reposyncstate";
-import { merge, uniq } from "lodash";
+import { uniq } from "lodash";
 import { sequelize } from "models/sequelize";
 
 export enum SyncStatus {
@@ -9,19 +8,19 @@ export enum SyncStatus {
 	ACTIVE = "ACTIVE",
 	FAILED = "FAILED",
 }
-
+/*
 export interface RepoSyncStateObject {
 	installationId?: number;
 	jiraHost?: string;
 	numberOfSyncedRepos?: number;
 	repos?: Repositories;
-}
+}*/
 
 interface SyncStatusCount {
 	syncStatus: string;
 	count: number;
 }
-
+/*
 export interface Repositories {
 	[id: string]: RepositoryData;
 }
@@ -41,7 +40,7 @@ export interface RepositoryData {
 
 	// TODO: need to get concrete typing
 	[key: string]: unknown;
-}
+}*/
 
 export type TaskStatus = "pending" | "complete" | "failed";
 
@@ -200,7 +199,7 @@ export class Subscription extends Model {
 	}
 
 	// TODO: need to remove "RepoJSON" as old code is now removed.  We can now just use RepoSyncState directly
-	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
+	/*async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
 		const state = merge(await RepoSyncState.toRepoJson(this), updatedState);
 		await RepoSyncState.updateFromRepoJson(this, state);
 		return this;
@@ -214,7 +213,7 @@ export class Subscription extends Model {
 			await RepoSyncState.updateRepoForSubscription(this, Number(repositoryId), key, value);
 		}
 		return this;
-	}
+	}*/
 
 	async uninstall(): Promise<void> {
 		await this.destroy();

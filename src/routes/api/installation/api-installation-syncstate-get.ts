@@ -24,7 +24,7 @@ export const ApiInstallationSyncstateGet = async (req: Request, res: Response): 
 			return;
 		}
 
-		res.json(await RepoSyncState.toRepoJson(subscription));
+		res.json(await RepoSyncState.findAllFromSubscription(subscription));
 	} catch (err) {
 		res.status(500).json(err);
 	}

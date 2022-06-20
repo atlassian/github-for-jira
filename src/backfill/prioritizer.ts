@@ -1,32 +1,32 @@
-import { RepositoryData } from "models/subscription";
 import { PullRequestProcessor } from "./pull-request-processor";
 import { BranchProcessor } from "./branch-processor";
 import { CommitProcessor } from "./commit-processor";
 import { JobId, JobState, Step, StepPrioritizer, StepProcessor } from "./backfill.types";
+import { RepoSyncState } from "models/reposyncstate";
 
 // TODO: clean up messy code
 export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 
-	private readonly commitsSkipCount;
-	private readonly pullrequestSkipCount;
+	// private readonly commitsSkipCount;
+	// private readonly pullrequestSkipCount;
 
 	constructor(
-		commitsSkipCount?: number,
-		pullrequestSkipCount?: number
+		/*commitsSkipCount?: number,
+		pullrequestSkipCount?: number*/
 	) {
-		this.commitsSkipCount = commitsSkipCount || 10;
-		this.pullrequestSkipCount = pullrequestSkipCount || 10;
+		// this.commitsSkipCount = commitsSkipCount || 10;
+		// this.pullrequestSkipCount = pullrequestSkipCount || 10;
 	}
 
-	private static hasWaitingPullrequests(repo: RepositoryData): boolean {
+	private static hasWaitingPullrequests(repo: RepoSyncState): boolean {
 		return repo.pullStatus === "pending" || repo.pullStatus === undefined;
 	}
 
-	private static hasWaitingBranches(repo: RepositoryData): boolean {
+	private static hasWaitingBranches(repo: RepoSyncState): boolean {
 		return repo.branchStatus === "pending" || repo.branchStatus == undefined;
 	}
 
-	private static hasWaitingCommits(repo: RepositoryData): boolean {
+	private static hasWaitingCommits(repo: RepoSyncState): boolean {
 		return repo.commitStatus === "pending" || repo.commitStatus === undefined;
 	}
 
@@ -46,10 +46,10 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 		const repo = jobState.repository;
 
 		if (Prioritizer.hasWaitingPullrequests(jobState.repository)) {
-			if (!repo.lastPullCursor) {
+			/*if (!repo.lastPullCursor) {
 				repo.lastPullCursor = 0;
 			}
-			repo.lastPullCursor += this.pullrequestSkipCount;
+			repo.lastPullCursor += this.pullrequestSkipCount;*/
 		} else if (Prioritizer.hasWaitingBranches(repo)) {
 			// Branches have an opaque cursor, so we can't skip a page.
 			// We have to mark the "sub task" to fetch branches as failed so we don't try to load branches from the same
@@ -58,7 +58,7 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 		} else {
 			// Commits have a partly opaque cursor (opaque cursor ID followed by a page number).
 			// If we don't have a cursor, yet, we can't skip and have to fail instead.
-			if (!repo.lastCommitCursor) {
+			/*if (!repo.lastCommitCursor) {
 				repo.commitStatus = "failed";
 			} else {
 				const commitCursorRegex = /^([^ ]+) ([0-9]+)$/;
@@ -70,7 +70,7 @@ export class Prioritizer implements StepPrioritizer<JobId, JobState> {
 					const index = cursorParts[2];
 					repo.lastCommitCursor = `${cursorId} ${+index + this.commitsSkipCount}`;
 				}
-			}
+			}*/
 		}
 
 		return jobState;
