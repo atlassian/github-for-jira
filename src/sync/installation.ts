@@ -23,6 +23,7 @@ import { sqsQueues } from "../sqs/queues";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { omit, pick } from "lodash";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -98,9 +99,7 @@ export interface Task {
 	cursor?: string | number;
 }
 
-const upperFirst = (str: string) =>
-	str.substring(0, 1).toUpperCase() + str.substring(1);
-const getCursorKey = (type: TaskType) => type === "repository" ? `${type}Cursor` : `last${upperFirst(type)}Cursor`;
+const getCursorKey = (type: TaskType) => `${type}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
 // Exported for testing
@@ -130,11 +129,11 @@ export const updateJobStatus = async (
 	const status = isComplete ? "complete" : "pending";
 
 	logger.info({ status }, "Updating job status");
-	await RepoSyncState.updateRepoFromSubscription(subscription, repositoryId, { [getStatusKey(task)]: status });
+	await updateRepo(subscription, repositoryId, { [getStatusKey(task)]: status });
 
 	if (!isComplete) {
 		// there's more data to get
-		await RepoSyncState.updateRepoFromSubscription(subscription, repositoryId, { [getCursorKey(task)]: edges[edges.length - 1].cursor });
+		await updateRepo(subscription, repositoryId, { [getCursorKey(task)]: edges[edges.length - 1].cursor });
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription, jiraHost))) {
@@ -389,7 +388,7 @@ export const handleBackfillError = async (err,
 
 export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
-	await RepoSyncState.updateRepoFromSubscription(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
+	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 
 	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
 
@@ -478,3 +477,16 @@ export const processInstallation =
 			}
 		};
 	};
+
+const updateRepo = async (subscription: Subscription, repoId: number, values: Record<string, unknown>) => {
+	const repoStates = pick(values, ["repositoryStatus", "repositoryCursor"]);
+	const rest = omit(values, ["repositoryStatus", "repositoryCursor"]);
+	await subscription.sequelize.transaction(async (transaction) => {
+		if (Object.keys(repoStates).length) {
+			await subscription.update(repoStates, { transaction });
+		}
+		if (Object.keys(repoStates).length) {
+			await RepoSyncState.updateRepoFromSubscription(subscription, repoId, rest, { transaction });
+		}
+	});
+};

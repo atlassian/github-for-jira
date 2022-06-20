@@ -101,7 +101,7 @@ export class RepoSyncState extends Model {
 		} as FindOptions));
 	}
 
-	static async updateFromSubscription(subscription: Subscription, values: Record<string, unknown>, options?: UpdateOptions): Promise<[number, RepoSyncState[]]> {
+	static async updateFromSubscription(subscription: Subscription, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
 		return RepoSyncState.update(values, merge(options || {}, {
 			where: {
 				subscriptionId: subscription.id
@@ -109,8 +109,8 @@ export class RepoSyncState extends Model {
 		} as UpdateOptions));
 	}
 
-	static async updateRepoFromSubscription(subscription: Subscription, repoId: number, values: Record<string, unknown>, options?: UpdateOptions): Promise<[number, RepoSyncState[]]> {
-		return RepoSyncState.updateFromSubscription(subscription, values, merge(options || {}, {
+	static async updateRepoFromSubscription(subscription: Subscription, repoId: number, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
+		return RepoSyncState.updateFromSubscription(subscription, values, merge(options, {
 			where: {
 				repoId
 			}
