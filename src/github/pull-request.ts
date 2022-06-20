@@ -1,6 +1,5 @@
 import { transformPullRequest } from "../transforms/transform-pull-request";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { GitHubAPI } from "probot";
@@ -9,8 +8,9 @@ import { JiraPullRequestData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
+export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
@@ -84,7 +84,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		return;
 	}
 
-	context.log(`Sending pull request update to Jira ${baseUrl}`);
+	context.log.info(`Sending pull request update to Jira ${baseUrl}`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
@@ -97,14 +97,14 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	);
 };
 
-const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, context: CustomContext, util, repoName, owner, pullRequest) => {
+const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, context: WebhookContext, util, repoName, owner, pullRequest) => {
 	const linkifiedBody = await util.unfurl(pullRequest.body);
 
 	if (!linkifiedBody) {
 		return;
 	}
 
-	context.log("Updating pull request");
+	context.log.info("Updating pull request");
 
 	const updatedPullRequest: GitHubIssueData = {
 		body: linkifiedBody,
