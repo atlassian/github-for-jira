@@ -5,6 +5,7 @@ import { LoggerWithTarget, wrapLogger } from "probot/lib/wrap-logger";
 import { Request } from "express";
 import * as util from "util";
 import { AxiosResponse } from "axios";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
@@ -45,6 +46,13 @@ const errorSerializer = (err) => (!err || !err.stack) ? err : {
 	stack: getFullErrorStack(err)
 };
 
+const hashSerializer = (data: string): string => {
+	if (!data) {
+		return "";
+	}
+	return createHashWithSharedSecret(data);
+};
+
 const getFullErrorStack = (ex) => {
 	let ret = ex.stack || ex.toString();
 	if (ex.cause && typeof (ex.cause) === "function") {
@@ -55,6 +63,15 @@ const getFullErrorStack = (ex) => {
 	}
 	return ret;
 };
+
+const unsafeDataSerilaizers = () => ({
+	jiraHost: hashSerializer,
+	orgName: hashSerializer,
+	repoName: hashSerializer,
+	userGroup: hashSerializer,
+	aaid: hashSerializer,
+	username: hashSerializer
+});
 
 const logLevel = process.env.LOG_LEVEL || "info";
 const globalLoggingLevel = levelFromName[logLevel] || INFO;
@@ -67,7 +84,8 @@ const logger = wrapLogger(createLogger(
 		serializers: {
 			err: errorSerializer,
 			res: responseSerializer,
-			req: requestSerializer
+			req: requestSerializer,
+			...unsafeDataSerilaizers
 		}
 	}
 ));
