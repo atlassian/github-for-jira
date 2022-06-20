@@ -1,7 +1,8 @@
-import Logger from "bunyan";
 import { BinaryLike, createHmac } from "crypto";
 import { Request, Response } from "express";
 import { getLogger } from "~/src/config/logger";
+import { pushWebhookHandler } from "~/src/github/push";
+import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
 import { GitHubServerApp } from "models/github-server-app";
 import { WebhookContext } from "./webhook-context";
 
@@ -44,21 +45,21 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 
 const webhookRouter = (context: WebhookContext) => {
 	if (context.action) {
-		invokeHandler(`${context.name}.${context.action}`, context.log);
+		invokeHandler(`${context.name}.${context.action}`, context);
 	}
-	invokeHandler(`${context.name}`, context.log);
+	invokeHandler(`${context.name}`, context);
 };
 
-const invokeHandler = (event: string, logger: Logger) => {
+const invokeHandler = (event: string, context: WebhookContext) => {
 	switch (event) {
 		case "push":
-			logger.info("push event Received!");
+			GithubWebhookMiddleware(pushWebhookHandler)(context);
 			break;
 		case "pull_request":
-			logger.info("pull req event Received!");
+			context.log.info("pull req event Received!");
 			break;
 		case "pull_request.opened":
-			logger.info("pull req opened event Received!");
+			context.log.info("pull req opened event Received!");
 			break;
 	}
 };

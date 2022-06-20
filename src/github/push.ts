@@ -1,10 +1,10 @@
 import { enqueuePush } from "../transforms/push";
-import { Context } from "probot/lib/context";
 import { getCurrentTime } from "utils/webhook-utils";
 import { hasJiraIssueKey } from "utils/jira-utils";
 import { GitHubPushData } from "../interfaces/github";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const pushWebhookHandler = async (context: Context, jiraClient): Promise<void> => {
+export const pushWebhookHandler = async (context: WebhookContext, jiraClient): Promise<void> => {
 	const webhookReceived = getCurrentTime();
 
 	// Copy the shape of the context object for processing
@@ -24,13 +24,13 @@ export const pushWebhookHandler = async (context: Context, jiraClient): Promise<
 	};
 
 	if (!payload.commits?.length) {
-		context.log(
+		context.log.info(
 			{ noop: "no_commits" },
 			"Halting further execution for push since no commits were found for the payload"
 		);
 		return;
 	}
 
-	context.log("Enqueueing push event");
+	context.log.info("Enqueueing push event");
 	await enqueuePush(payload, jiraClient.baseURL);
 };
