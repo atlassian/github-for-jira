@@ -67,18 +67,17 @@ export const getRepositoryTask = async (
 		repositories = edges.map(edge => edge?.node);
 	}
 
-	await RepoSyncState.sequelize?.transaction(async (transaction) => {
-		const promises = repositories.map(repo => RepoSyncState.createForSubscription(subscription, {
-			repoId: repo.id,
-			repoName: repo.name,
-			repoFullName: repo.full_name,
-			repoOwner: repo.owner.login,
-			repoUrl: repo.html_url,
-			repoUpdatedAt: new Date(repo.updated_at)
-		}));
-		promises.push(subscription.update({ totalNumberOfRepos: totalCount }, { transaction }));
-		await Promise.all(promises);
-	});
+	await subscription.update({ totalNumberOfRepos: totalCount });
+	await RepoSyncState.bulkCreate(repositories.map(repo => ({
+		subscriptionId: subscription.id,
+		repoId: repo.id,
+		repoName: repo.name,
+		repoFullName: repo.full_name,
+		repoOwner: repo.owner.login,
+		repoUrl: repo.html_url,
+		repoUpdatedAt: new Date(repo.updated_at)
+	})), { updateOnDuplicate: ["subscriptionId", "repoId"] });
+
 	logger.debug({ repositories }, `Added ${repositories.length} Repositories to state`);
 	logger.info(`Added ${repositories.length} Repositories to state`);
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
