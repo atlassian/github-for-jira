@@ -46,9 +46,9 @@ const errorSerializer = (err) => (!err || !err.stack) ? err : {
 	stack: getFullErrorStack(err)
 };
 
-const hashSerializer = (data: string): string => {
+const hashSerializer = (data) => {
 	if (!data) {
-		return "";
+		return data;
 	}
 	return createHashWithSharedSecret(data);
 };
