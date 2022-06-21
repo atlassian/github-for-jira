@@ -1,4 +1,4 @@
-/// <reference types="cypress" />
+
 
 context("Cookies", () => {
 	beforeEach(() => {
