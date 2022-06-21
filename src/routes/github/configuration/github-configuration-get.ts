@@ -70,7 +70,7 @@ const getInstallationsWithAdmin = async (
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubClient = await createInstallationClient(installation.id, log, jiraHost);
+		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -134,7 +134,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		: req.log.info("Displaying orgs that have GitHub Cloud app installed.");
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, false);
-	const gitHubUserClient = await createUserClient(gitHubAppId, githubToken, log, jiraHost);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log);
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
@@ -170,7 +170,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			return;
 		}
 
-		const gitHubAppClient = await createAppClient(gitHubAppId, log, jiraHost);
+		const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
 
 		tracer.trace(`found installation in DB with id ${installation.id}`);
 

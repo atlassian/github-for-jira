@@ -28,7 +28,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	const state = crypto.randomBytes(8).toString("hex");
 
 	req.session["timestamp_before_oauth"] = Date.now();
-	const { jiraHost, gitHubAppId } = res.locals;
+	const { jiraHost } = res.locals;
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
 	req.session[state] =
@@ -36,7 +36,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-	const gitHubHostname = await getGitHubHostname(gitHubAppId, jiraHost);
+	const gitHubHostname = await getGitHubHostname(jiraHost);
 	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 	req.log.info("redirectUrl:", redirectUrl);
 
@@ -56,7 +56,6 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		code,
 		state
 	} = req.query as Record<string, string>;
-	const { gitHubAppId } = res.locals;
 
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(logger, "callback", traceLogsEnabled);
@@ -91,7 +90,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
-	const gitHubHostname = await getGitHubHostname(gitHubAppId, jiraHost);
+	const gitHubHostname = await getGitHubHostname(jiraHost);
 
 	logger.info(`${createHashWithSharedSecret(githubSecret)} is used`);
 
@@ -134,14 +133,14 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { githubToken } = req.session;
-		const { jiraHost, gitHubAppId } = res.locals;
+		const { jiraHost } = res.locals;
 		if (!githubToken) {
 			req.log.info("github token missing, calling login()");
 			throw "Missing github token";
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		const url = await getGitHubApiUrl(gitHubAppId, jiraHost);
+		const url = await getGitHubApiUrl(jiraHost);
 
 		await axios.get(url, {
 			headers: {

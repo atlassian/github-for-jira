@@ -18,7 +18,7 @@ export const issueCommentWebhookHandler = async (
 	} = context.payload;
 	let linkifiedBody;
 
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, context.log, jiraClient.baseURL);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	try {

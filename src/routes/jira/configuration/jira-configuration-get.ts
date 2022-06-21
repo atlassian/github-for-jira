@@ -41,7 +41,7 @@ export const getInstallations = async (subscriptions: Subscription[], log: Logge
 const getInstallation = async (subscription: Subscription, log: Logger, gitHubAppId?: number): Promise<AppInstallation> => {
 	const { jiraHost } = subscription;
 	const { gitHubInstallationId } = subscription;
-	const gitHubAppClient = await createAppClient(gitHubAppId, log, jiraHost);
+	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
 
 	try {
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
