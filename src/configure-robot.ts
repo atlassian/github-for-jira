@@ -12,9 +12,6 @@ export async function setupApp(app: Application): Promise<Application> {
 	return app;
 }
 
-//for local testing
-//let c = 0;
-
 export const configureAndLoadApp = async (probot: Probot) => {
 
 	overrideProbotLoggingMethods(probot.logger);
@@ -45,21 +42,30 @@ const wrapProbotWithCustomWebhookHandler = async (probot: Probot) => {
 			return;
 		}
 
-		//if (c++ % 2 === 0) {
-		console.log(`hello wrapper`, { url: req.url, headers: req.headers, body: req.body });
-		/*
+		const eventName = req.headers["x-github-event"];
+
+		if (eventName === "issue_comment") {
+			console.log(`hello wrapper issue_comment`, { url: req.url, headers: req.headers, body: req.body });
+			/*
 			 * TODO:
 			 *		1. Directly handler webhook here
 			 *		2. Potentially we need to duplicate or temporary embedded any middleware we need here,
 			 *				as it won't go to the probot express at all
 			 */
-		res.send("ok");
-		//IMPORTANT!!!
-		//DO NOT CALL next here.
-		return;
-		//} else {
-		//	next();
-		//}
+			//IMPORTANT!!!
+			//DO NOT CALL next here.
+			res.send("ok");
+			return;
+		} else if (eventName === "push") {
+			console.log(`hello wrapper push`, { url: req.url, headers: req.headers, body: req.body });
+			//like above, handler push event ...
+			//IMPORTANT!!!
+			//DO NOT CALL next here.
+			res.send("ok");
+			return;
+		} else {
+			next();
+		}
 	});
 
 	wrapperApp.use(probot.server);
