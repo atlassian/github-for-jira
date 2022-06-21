@@ -1,4 +1,6 @@
-import "cypress";
+/// <reference types="cypress" />
+// @ts-ignore
+
 // ***********************************************
 // This example commands.ts shows you how to
 // create various custom commands and overwrite
@@ -27,8 +29,8 @@ import "cypress";
 //
 declare global {
   namespace Cypress {
-    interface Chainable {
-      console(level: string): Chainable<void>
+    interface Chainable<T> {
+      console(level: string): Chainable<void>;
       // login(email: string, password: string): Chainable<void>
       // drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
       // dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>

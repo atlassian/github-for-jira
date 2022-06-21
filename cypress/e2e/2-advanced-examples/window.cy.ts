@@ -1,4 +1,4 @@
-import "cypress";
+/// <reference types="cypress" />
 
 context("Window", () => {
 	beforeEach(() => {

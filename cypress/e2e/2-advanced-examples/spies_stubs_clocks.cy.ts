@@ -1,4 +1,4 @@
-import "cypress";
+/// <reference types="cypress" />
 // remove no check once Cypress.sinon is typed
 // https://github.com/cypress-io/cypress/issues/6720
 
@@ -105,7 +105,7 @@ context("Spies, Stubs, and Clock", () => {
 			 * Greets a person
 			 * @param {string} name
 			 */
-			greet(name) {
+			greet(name?) {
 				return `Hello, ${name}!`;
 			}
 		};
