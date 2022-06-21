@@ -12,7 +12,7 @@ const probot = createProbot({
 	secret: process.env.WEBHOOK_SECRET,
 	cert: PrivateKey.findPrivateKey() || undefined,
 	port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080,
-	webhookPath: "/github/events-legacy",
+	webhookPath: "/github/events",
 	webhookProxy: process.env.WEBHOOK_PROXY_URL,
 	throttleOptions: {
 		enabled: false
@@ -23,7 +23,7 @@ async function start() {
 	initializeSentry();
 	// We are always behind a proxy, but we want the source IP
 	probot.server.set("trust proxy", true);
-	configureAndLoadApp(probot);
+	await configureAndLoadApp(probot);
 	probot.start();
 }
 

@@ -4,6 +4,7 @@ import { overrideProbotLoggingMethods } from "config/logger";
 import { setupFrontend } from "./app";
 import express from "express";
 import bodyParser from "body-parser";
+import { booleanFlag, BooleanFlags } from "./config/feature-flags";
 
 export async function setupApp(app: Application): Promise<Application> {
 	setupGithubWebhooks(app);
@@ -11,22 +12,31 @@ export async function setupApp(app: Application): Promise<Application> {
 	return app;
 }
 
-let c = 0;
+//for local testing
+//let c = 0;
 
-export const configureAndLoadApp = (probot: Probot) => {
+export const configureAndLoadApp = async (probot: Probot) => {
+
 	overrideProbotLoggingMethods(probot.logger);
 	probot.load(setupApp);
 	probot.webhook.on("error", (error: Error) => {
 		probot.logger.error({ error }, "Webhook Error");
 	});
 
+	const deprecateProbotWebhook = await booleanFlag(BooleanFlags.DEPRECATE_PROBOT_WEBHOOK, false);
+	if (deprecateProbotWebhook === true) {
+		wrapProbotWithCustomWebhookHandler(probot);
+	}
+
+};
+
+const wrapProbotWithCustomWebhookHandler = async (probot: Probot) => {
+
 	const wrapperApp = express();
 
 	wrapperApp.use(bodyParser());
 
 	wrapperApp.use((req, res, next) => {
-
-		console.log(req.url);
 
 		const isWebHookReq = req.url === "/github/events" && req.method === "POST";
 
@@ -35,21 +45,24 @@ export const configureAndLoadApp = (probot: Probot) => {
 			return;
 		}
 
-		if (c++ % 2 === 0) {
-			console.log(`hello wrapper ${c}`, { url: req.url, body: req.body });
-			//do something webhook
-			res.send("ok");
-			return;
-		} else {
-			req.url = "/github/events-legacy";
-			next("route");
-		}
+		//if (c++ % 2 === 0) {
+		console.log(`hello wrapper`, { url: req.url, headers: req.headers, body: req.body });
+		/*
+			 * TODO:
+			 *		1. Directly handler webhook here
+			 *		2. Potentially we need to duplicate or temporary embedded any middleware we need here,
+			 *				as it won't go to the probot express at all
+			 */
+		res.send("ok");
+		//IMPORTANT!!!
+		//DO NOT CALL next here.
+		return;
+		//} else {
+		//	next();
+		//}
 	});
 
 	wrapperApp.use(probot.server);
 
 	probot.server = wrapperApp;
-
 };
-
-
