@@ -1,4 +1,4 @@
-/// <reference types="cypress" />
+import "cypress";
 
 context("Querying", () => {
 	beforeEach(() => {

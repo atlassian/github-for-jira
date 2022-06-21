@@ -39,7 +39,6 @@
 	},
 	"include": [
 		"src/**/*",
-		"test/**/*",
-		"cypress/**/*"
+		"test/**/*"
 	]
 }
