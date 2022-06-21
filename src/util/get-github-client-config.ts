@@ -7,6 +7,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
+import { getLogger } from "config/logger";
 
 export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
@@ -16,6 +17,8 @@ export interface GitHubClientConfig {
 	hostname: string;
 	baseUrl: string;
 }
+
+const logger = getLogger("get-github-client-config");
 
 export async function getGitHubApiUrl(jiraHost: string) {
 	const gitHubClientConfig = await getGitHubClientConfig(jiraHost);
@@ -42,6 +45,29 @@ const getGitHubClientConfig = async (jiraHost: string): Promise<GitHubClientConf
 		};
 };
 
+const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): Promise<GitHubClientConfig> => {
+	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
+	const gitHubCloudUrls = {
+		hostname: GITHUB_CLOUD_HOSTNAME,
+		baseUrl: GITHUB_CLOUD_API_BASEURL
+	};
+
+	if (!gitHubServerApp) {
+		logger.info("No GitHub server app found. Defaulting to cloud config.");
+		return gitHubCloudUrls;
+	}
+
+	const gitHubServerAppBaseUrl = gitHubServerApp.gitHubBaseUrl;
+
+	return gitHubServerAppBaseUrl
+		? {
+			hostname: gitHubServerAppBaseUrl,
+			baseUrl: gitHubServerAppBaseUrl
+		}
+		: gitHubCloudUrls;
+};
+
+
 export async function getGitHubHostname(jiraHost: string) {
 	const gitHubClientConfig = await getGitHubClientConfig(jiraHost);
 
@@ -55,8 +81,8 @@ export async function getGitHubHostname(jiraHost: string) {
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to
  * get all installation or get more info for the app
  */
-export async function createAppClient(logger: Logger, jiraHost: string): Promise<GitHubAppClient> {
-	const gitHubClientConfig = await getGitHubClientConfig(jiraHost);
+export async function createAppClient(logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> {
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl)
 		: new GitHubAppClient(logger);

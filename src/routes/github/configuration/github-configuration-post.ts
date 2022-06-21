@@ -28,7 +28,7 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitH
  * Handle the when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, client } = res.locals;
+	const { githubToken, jiraHost, client, gitHubAppId } = res.locals;
 	const gitHubInstallationId = Number(req.body.installationId);
 
 	if (!githubToken || !jiraHost) {
@@ -59,7 +59,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	try {
 		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, false, jiraHost);
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
-		const gitHubAppClient = await createAppClient(req.log, jiraHost);
+		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 
 		// Check if the user that posted this has access to the installation ID they're requesting
 		if (!await hasAdminAccess(useNewGithubClient ? gitHubAppClient : client, gitHubUserClient, gitHubInstallationId, req.log)) {

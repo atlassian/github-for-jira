@@ -4,10 +4,10 @@ import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost } = res.locals;
+	const { githubToken, jiraHost, gitHubAppId } = res.locals;
 	const { installationId: gitHubInstallationId } = req.body;
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
-	const gitHubAppClient = await createAppClient(logger, jiraHost);
+	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger);
 
 	if (!githubToken) {

@@ -5,7 +5,7 @@ import { GithubServerAppMiddleware } from "middleware/github-server-app-middlewa
 
 export const GithubConfigurationRouter = Router();
 
-GithubConfigurationRouter.route("/")
+GithubConfigurationRouter.route("/:id?")
 	.all(GithubServerAppMiddleware)
 	.get(GithubConfigurationGet)
 	.post(GithubConfigurationPost);

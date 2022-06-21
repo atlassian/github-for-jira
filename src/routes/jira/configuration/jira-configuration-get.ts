@@ -25,8 +25,8 @@ export interface InstallationResults {
 	total: number;
 }
 
-export const getInstallations = async (subscriptions: Subscription[], log: Logger): Promise<InstallationResults> => {
-	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, log)));
+export const getInstallations = async (subscriptions: Subscription[], log: Logger, gitHubAppId?: number): Promise<InstallationResults> => {
+	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, log, gitHubAppId)));
 	// Had to add "unknown" in between type as lodash types is incorrect for
 	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
 	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
@@ -38,11 +38,10 @@ export const getInstallations = async (subscriptions: Subscription[], log: Logge
 	};
 };
 
-const getInstallation = async (subscription: Subscription, log: Logger): Promise<AppInstallation> => {
-
+const getInstallation = async (subscription: Subscription, log: Logger, gitHubAppId?: number): Promise<AppInstallation> => {
 	const { jiraHost } = subscription;
 	const { gitHubInstallationId } = subscription;
-	const gitHubAppClient = await createAppClient(log, jiraHost);
+	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
 
 	try {
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
@@ -82,7 +81,7 @@ export const JiraConfigurationGet = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const jiraHost = res.locals.jiraHost;
+		const { jiraHost, gitHubAppId } = res.locals;
 
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
@@ -93,7 +92,7 @@ export const JiraConfigurationGet = async (
 		req.log.info("Received jira configuration page request");
 
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
-		const installations = await getInstallations(subscriptions, req.log);
+		const installations = await getInstallations(subscriptions, req.log, gitHubAppId);
 
 		const failedConnections: FailedConnection[] = await Promise.all(
 			installations.rejected.map(async (installation) => {
