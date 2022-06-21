@@ -22,13 +22,13 @@ const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWA
 	bformat({ outputMode, levelInString: true })
 );
 
-const responseSerializer = (res: AxiosResponse) => ({
+const responseSerializer = (res?: AxiosResponse) => ({
 	...stdSerializers.res(res),
-	config: JSON.parse(util.inspect(res?.config)), // removes circular dependency in json
-	request: requestSerializer(res.request)
+	config: util.inspect(res?.config), // removes circular dependency in json
+	request: requestSerializer(res?.request)
 });
 
-const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
+const requestSerializer = (req?: Request) => (!req || !req.socket) ? req : {
 	method: req.method,
 	url: req.originalUrl || req.url,
 	path: req.path,
@@ -38,9 +38,9 @@ const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 	body: req.body
 };
 
-const errorSerializer = (err) => (!err || !err.stack) ? err : {
+const errorSerializer = (err?) => (!err || !err.stack) ? err : {
 	...err,
-	response: stdSerializers.res(err.response),
+	response: responseSerializer(err.response),
 	request: requestSerializer(err.request),
 	stack: getFullErrorStack(err)
 };

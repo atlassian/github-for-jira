@@ -72,7 +72,7 @@ const getNextTask = async (subscription: Subscription, jiraHost: string): Promis
 
 	for (const syncState of repoSyncStates) {
 		const task = tasks.find(
-			(taskType) => syncState[getStatusKey(taskType)] === undefined || syncState[getStatusKey(taskType)] === "pending"
+			(taskType) => !syncState[getStatusKey(taskType)] || syncState[getStatusKey(taskType)] === "pending"
 		);
 		if (!task) continue;
 		return {
