@@ -42,7 +42,8 @@
 		"db:test": "run-s db:create:test db:migrate:test",
 		"prepare": "husky install",
 		"precommit": "run-p lint build",
-		"cypress": "cypress open"
+		"cypress": "cypress open",
+		"test:e2e": "cypress run"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
