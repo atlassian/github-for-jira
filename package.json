@@ -43,7 +43,7 @@
 		"prepare": "husky install",
 		"precommit": "run-p lint build",
 		"cypress": "cypress open",
-		"test:e2e": "cypress run"
+		"test:e2e": "cypress install && cypress run"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",

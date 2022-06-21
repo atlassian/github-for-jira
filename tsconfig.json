@@ -40,6 +40,6 @@
 	"include": [
 		"src/**/*",
 		"test/**/*",
-		"cypress/**/*",
+		"cypress/**/*"
 	]
 }
