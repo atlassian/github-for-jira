@@ -41,7 +41,8 @@
 		"db:dev": "run-s db:create:dev db:migrate:dev",
 		"db:test": "run-s db:create:test db:migrate:test",
 		"prepare": "husky install",
-		"precommit": "run-p lint build"
+		"precommit": "run-p lint build",
+		"cypress": "cypress open"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
@@ -107,6 +108,7 @@
 		"@types/supertest": "^2.0.11",
 		"@typescript-eslint/eslint-plugin": "~5.12.0",
 		"@typescript-eslint/parser": "~5.12.0",
+		"cypress": "^10.1.0",
 		"dotenv-cli": "^4.0.0",
 		"eslint": "~8.9.0",
 		"eslint-config-prettier": "~8.3.0",
