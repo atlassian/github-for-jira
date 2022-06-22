@@ -36,7 +36,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-	const gitHubHostname = await getGitHubHostname(gitHubAppId, jiraHost);
+	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
 	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 	req.log.info("redirectUrl:", redirectUrl);
 
@@ -56,8 +56,6 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		code,
 		state
 	} = req.query as Record<string, string>;
-	const { gitHubAppId } = res.locals;
-
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(logger, "callback", traceLogsEnabled);
 
@@ -86,12 +84,12 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 	if (!code) return next("Missing OAuth Code");
 
-	const { jiraHost } = res.locals;
+	const { jiraHost, gitHubAppId } = res.locals;
 
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
-	const gitHubHostname = await getGitHubHostname(gitHubAppId, jiraHost);
+	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
 
 	logger.info(`${createHashWithSharedSecret(githubSecret)} is used`);
 
@@ -141,7 +139,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		const url = await getGitHubApiUrl(gitHubAppId, jiraHost);
+		const url = await getGitHubApiUrl(jiraHost, gitHubAppId);
 
 		await axios.get(url, {
 			headers: {

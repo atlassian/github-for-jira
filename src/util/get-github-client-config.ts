@@ -19,9 +19,8 @@ export interface GitHubClientConfig {
 
 const logger = getLogger("get-github-client-config");
 
-export async function getGitHubApiUrl(gitHubAppId: number, jiraHost: string) {
+export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number) {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
-
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) && gitHubClientConfig
 		? `${gitHubClientConfig.baseUrl}`
 		: GITHUB_CLOUD_API_BASEURL;
@@ -55,7 +54,7 @@ const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): 
 		: gitHubCloudUrls;
 };
 
-export async function getGitHubHostname(gitHubAppId: number, jiraHost: string) {
+export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
 	const gitHubClientConfig = gitHubAppId && await getGitHubClientConfigFromAppId(gitHubAppId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) && gitHubClientConfig
 		? gitHubClientConfig.hostname
@@ -66,7 +65,7 @@ export async function getGitHubHostname(gitHubAppId: number, jiraHost: string) {
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to
  * get all installation or get more info for the app
  */
-export async function createAppClient(gitHubAppId: number | undefined, logger: Logger, jiraHost: string): Promise<GitHubAppClient> {
+export async function createAppClient(logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl)
@@ -87,12 +86,9 @@ export async function createInstallationClient(githubInstallationId: number, log
 /**
  * Factory function to create a GitHub client that authenticates as the user (with a user access token).
  */
-export async function createUserClient(gitHubAppId: number | undefined, githubToken: string, logger: Logger, jiraHost: string): Promise<GitHubUserClient> {
+export async function createUserClient(githubToken: string, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubUserClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 		? new GitHubUserClient(githubToken, logger, gitHubClientConfig.baseUrl)
 		: new GitHubUserClient(githubToken, logger);
 }
-
-
-

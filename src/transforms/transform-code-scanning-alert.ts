@@ -1,11 +1,11 @@
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { Context } from "probot/lib/context";
 import { JiraRemoteLinkData, JiraRemoteLinkStatusAppearance } from "interfaces/jira";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { GitHubAPI } from "probot";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { createInstallationClient } from "../util/get-github-client-config";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
 const MAX_STRING_LENGTH = 255;
 
@@ -43,7 +43,7 @@ const getEntityTitle = async (ref: string, repoName: string, repoOwner: string, 
 };
 
 // Status can be one of three things from the code_scanning_alert webhook: open, fixed, or dismissed
-const transformStatusToAppearance = (status: string, context: Context): JiraRemoteLinkStatusAppearance => {
+const transformStatusToAppearance = (status: string, context: WebhookContext): JiraRemoteLinkStatusAppearance => {
 	switch (status) {
 		case "open":
 			return "removed"; // red
@@ -57,7 +57,7 @@ const transformStatusToAppearance = (status: string, context: Context): JiraRemo
 	}
 };
 
-export const transformCodeScanningAlert = async (context: Context, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkData | undefined> => {
+export const transformCodeScanningAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkData | undefined> => {
 	const { action, alert, ref, repository } = context.payload;
 
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, context.log, jiraHost);
