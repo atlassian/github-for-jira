@@ -1,14 +1,10 @@
-// import  { envVars } from "config/env";
-// import axios, { AxiosError } from "axios";
+import  { envVars } from "config/env";
 import axios from "axios";
 import { statsd } from "config/statsd";
 import { cryptorMetrics } from "config/metric-names";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 import 'axios-debug-log/enable';
-// import config from 'axios-debug-log';
-
-
 
 export class CryptorHttpClient {
 
@@ -34,81 +30,28 @@ export class CryptorHttpClient {
 	}
 
 	async _post(operation, path, data: any, rootLogger: LoggerWithTarget) {
-
-		// config(({
-		// 	request: function (_, config) {
-		// 		rootLogger.info({ config }, 'request');
-		// 	},
-		// 	response: function (_, response) {
-		// 		rootLogger.info({ response }, "response");
-		// 	},
-		// 	error: function (_, error) {
-		// 		rootLogger.info({ error }, "error");
-		// 	}
-		// }));
-
 		const instance = axios.create({
-			baseURL: 'http://localhost:8083' //envVars.CRYPTOR_SIDECAR_BASE_URL,
-			// headers: {
-			// 	'X-Cryptor-Client': envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
-			// 	'Content-Type': 'application/json; charset=utf-8'
-			// },
-			// timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
+			baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
+			headers: {
+				'X-Cryptor-Client': envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
+				'Content-Type': 'application/json; charset=utf-8'
+			},
+			timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
 		});
 		const logger = rootLogger.child({ keyAlias: this.keyAlias, operation });
 		logger.info(`${operation} ${path} ${JSON.stringify(data)}`);
 
-		// instance.interceptors.request.use((config) => {
-		// 	// TODO: change to debug
-		// 	logger.info({ config }, "Cryptor Request Started");
-		// 	return config;
-		// });
-		// instance.interceptors.response.use(
-		// 	(response) => {
-		// 		logger.info(
-		// 			// TODO change to debug
-		// 			{
-		// 				res: response
-		// 			},
-		// 			`Successful Cryptor request`
-		// 		);
-		//
-		// 		return response;
-		// 	},
-		// 	(error: AxiosError): Promise<Error> => {
-		//
-		// 		const status = error?.response?.status;
-		// 		const errorMessage = "Error executing Axios Request " + (status || '') + ' ' + (error?.message || "");
-		// 		const isWarning = status && (status >= 300 && status < 500 && status !== 400);
-		//
-		// 		(isWarning ? logger.warn : logger.error)({ err: error, res: error?.response }, errorMessage);
-		// 		return Promise.reject(new Error(errorMessage));
-		// 	}
-		// );
-
-		const started = new Date().getTime();
 		try {
+			const started = new Date().getTime();
 			const result = (await instance.post(path, data)).data;
-			const finished = new  Date().getTime();
+			const finished = new Date().getTime();
+
 			statsd.histogram(cryptorMetrics.clientHttpCallDuration, finished - started, { operation });
 
 			return result;
-		}
-		catch (error) {
-			logger.info({ json: error.toJSON() }, "json");
-			if (error.response) {
-				// The request was made and the server responded with a status code
-				// that falls out of the range of 2xx
-				logger.info({ data: error.response.data, status: error.response.status, headers: error.response.headers }, "at 1");
-			} else if (error.request) {
-				// The request was made but no response was received
-				// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-				// http.ClientRequest in node.js
-				logger.info({ request: error.request }, "at 2");
-			} else {
-				// Something happened in setting up the request that triggered an Error
-				logger.info({ error: error.message }, "at 3");
-			}
+		} catch (e) {
+			logger.warn({ error: e.toJSON() }, "request failed");
+			throw e;
 		}
 	}
 }
