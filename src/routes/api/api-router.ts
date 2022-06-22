@@ -13,6 +13,7 @@ import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
+import { CryptorHttpClient } from "utils/cryptor-http-client";
 
 export const ApiRouter = Router();
 
@@ -109,3 +110,21 @@ ApiRouter.delete(
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
+
+ApiRouter.use("/cryptor/:data", param("data").isString(), async (req: Request, resp: Response) => {
+	const logger = req.log.child("testing-cryptor");
+	const cryptor = new CryptorHttpClient('micros/github-for-jira/github-server-app-secrets');
+
+	const startedTime = new Date().getTime();
+
+	const encrypted = await cryptor.encrypt(req.params.data);
+	logger.info({
+		elapsed: new Date().getTime() - startedTime
+	}, `Data encrypted: ${encrypted}`);
+
+	const decrypted = await cryptor.decrypt(encrypted);
+	logger.info({
+		elapsed: new Date().getTime() - startedTime
+	}, `Data decrypted (round-trip): ${decrypted}`);
+	resp.status(202);
+});

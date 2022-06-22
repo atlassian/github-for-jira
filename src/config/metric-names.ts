@@ -66,3 +66,7 @@ export const metricWebhooks = {
 	webhookFailure: `${server}.webhooks.failed`,
 	webhookLatency: `${server}.webhooks.processing-time.latency`
 };
+
+export const cryptorMetrics = {
+	clientHttpCallDuration: `cryptor.client.http.call.duration`
+};
