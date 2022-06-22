@@ -14,21 +14,21 @@ export class CryptorHttpClient {
 	}
 
 	async encrypt(plainText, logger: LoggerWithTarget) {
-		const { cipherText } = await this._post('encrypt', `/cryptor/encrypt/${this.keyAlias}`, JSON.stringify({
+		const { cipherText } = await this._post('encrypt', `/cryptor/encrypt/${this.keyAlias}`, {
 			plainText
-		}), logger);
+		}, logger);
 		return cipherText;
 	}
 
 	async decrypt(cipherText, logger: LoggerWithTarget) {
-		const { plainText } = await this._post('decrypt', `/cryptor/decrypt/${this.keyAlias}`, JSON.stringify({
+		const { plainText } = await this._post('decrypt', `/cryptor/decrypt`, {
 			cipherText
-		}), logger);
+		}, logger);
 
 		return plainText;
 	}
 
-	async _post(operation, path, bodyJsonStr: string, rootLogger: LoggerWithTarget) {
+	async _post(operation, path, data: any, rootLogger: LoggerWithTarget) {
 		const instance = axios.create({
 			baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
 			headers: {
@@ -38,7 +38,7 @@ export class CryptorHttpClient {
 			timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
 		});
 		const logger = rootLogger.child({ keyAlias: this.keyAlias, operation });
-		logger.info(`${operation} ${path} ${bodyJsonStr}`);
+		logger.info(`${operation} ${path} ${JSON.stringify(data)}`);
 
 		instance.interceptors.request.use((config) => {
 			// TODO: change to debug
@@ -69,7 +69,7 @@ export class CryptorHttpClient {
 		);
 
 		const started = new Date().getTime();
-		const result = (await instance.post(path, bodyJsonStr)).data;
+		const result = (await instance.post(path, data)).data;
 		const finished = new  Date().getTime();
 
 		statsd.histogram(cryptorMetrics.clientHttpCallDuration, finished - started, { operation });
