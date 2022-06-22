@@ -54,7 +54,7 @@ const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): 
 		: gitHubCloudUrls;
 };
 
-export async function getGitHubHostname(gitHubAppId: number, jiraHost: string) {
+export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
 	const gitHubClientConfig = gitHubAppId && await getGitHubClientConfigFromAppId(gitHubAppId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) && gitHubClientConfig
 		? gitHubClientConfig.hostname
