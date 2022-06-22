@@ -1,4 +1,4 @@
-/// <reference types="cypress" />
+
 
 context("Network Requests", () => {
 	beforeEach(() => {
