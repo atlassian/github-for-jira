@@ -17,7 +17,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppId);
 
 	try {
 		const { data: { login } } = await gitHubUserClient.getUser();

@@ -44,20 +44,5 @@ export const mockModels = {
 			id: 1,
 			jiraHost: process.env.ATLASSIAN_URL
 		} as any
-	},
-	GitHubServerApp: {
-		install: {
-			uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
-			gitHubAppName: "My GitHub Server App",
-			gitHubBaseUrl: "http://myinternalserver.com",
-			gitHubClientId: "lvl.1234",
-			gitHubClientSecret: "myghsecret",
-			webhookSecret: "mywebhooksecret",
-			privateKey: "myprivatekey",
-			installationId: 2
-		} as any,
-		getForGitHubServerAppId: {
-			gitHubServerAppId: 3
-		}
 	}
 };
