@@ -5,7 +5,7 @@ import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
 export const workflowWebhookHandler = async (context: WebhookContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId , context.log, jiraClient.baseURL);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
 	const jiraPayload = await transformWorkflow(gitHubInstallationClient, payload, logger);
 
 	if (!jiraPayload) {

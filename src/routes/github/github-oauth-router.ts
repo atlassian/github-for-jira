@@ -56,6 +56,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		code,
 		state
 	} = req.query as Record<string, string>;
+
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(logger, "callback", traceLogsEnabled);
 
