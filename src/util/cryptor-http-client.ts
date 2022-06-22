@@ -87,11 +87,16 @@ export class CryptorHttpClient {
 		// );
 
 		const started = new Date().getTime();
-		const result = (await instance.post(path, data)).data;
-		const finished = new  Date().getTime();
+		try {
+			const result = (await instance.post(path, data)).data;
+			const finished = new  Date().getTime();
+			statsd.histogram(cryptorMetrics.clientHttpCallDuration, finished - started, {operation});
 
-		statsd.histogram(cryptorMetrics.clientHttpCallDuration, finished - started, { operation });
-
-		return result;
+			return result;
+		}
+		catch (e) {
+			logger.info({ error: e }, "caught error");
+			throw e;
+		}
 	}
 }
