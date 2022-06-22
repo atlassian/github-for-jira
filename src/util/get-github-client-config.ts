@@ -106,4 +106,3 @@ export async function createUserClient(githubToken: string, jiraHost: string, lo
 		? new GitHubUserClient(githubToken, logger, gitHubClientConfig.baseUrl)
 		: new GitHubUserClient(githubToken, logger);
 }
-
