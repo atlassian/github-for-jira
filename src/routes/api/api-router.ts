@@ -108,9 +108,6 @@ ApiRouter.delete(
 	ApiInstallationDelete
 );
 
-ApiRouter.use("/jira", ApiJiraRouter);
-ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
-
 ApiRouter.use("/cryptor/:data", param("data").isString(), async (req: Request, resp: Response) => {
 	const logger = req.log.child("testing-cryptor");
 	const cryptor = new CryptorHttpClient('micros/github-for-jira/github-server-app-secrets');
@@ -128,3 +125,7 @@ ApiRouter.use("/cryptor/:data", param("data").isString(), async (req: Request, r
 	}, `Data decrypted (round-trip): ${decrypted}`);
 	resp.status(202);
 });
+
+ApiRouter.use("/jira", ApiJiraRouter);
+ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
+
