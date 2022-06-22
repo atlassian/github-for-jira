@@ -38,9 +38,7 @@ describe('Configure', () => {
 	it('passes', () => {
 
 		// TODO - Could be placed someer a tad more glabal?
-		Cypress.on('uncaught:exception', (err, runnable) => {
-			return false
-		})
+		Cypress.on('uncaught:exception', () => false)
 		// Will redirect to atlassian id
 		cy.visit('https://joshkaye2e.atlassian.net');
 
@@ -51,8 +49,7 @@ describe('Configure', () => {
 		cy.get("#password")
 			.type("password!{enter}");
 
-
-		// Top level menu APPS > MANAGE YOUR APPS 
+		// Top level menu APPS > MANAGE YOUR APPS
 		cy.get("[data-testid=\"overflow-menu-trigger\"]")
 			.click();
 		cy.get(":nth-child(3) > :nth-child(1) > .css-f6nuwn")
