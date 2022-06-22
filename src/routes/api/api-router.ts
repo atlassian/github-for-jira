@@ -14,6 +14,7 @@ import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
 import { CryptorHttpClient } from "utils/cryptor-http-client";
+import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 export const ApiRouter = Router();
 
@@ -109,17 +110,17 @@ ApiRouter.delete(
 );
 
 ApiRouter.use("/cryptor/:data", param("data").isString(), async (req: Request, resp: Response) => {
-	const logger = req.log.child("testing-cryptor");
+	const logger = req.log.child("testing-cryptor") as LoggerWithTarget;
 	const cryptor = new CryptorHttpClient('micros/github-for-jira/github-server-app-secrets');
 
 	const startedTime = new Date().getTime();
 
-	const encrypted = await cryptor.encrypt(req.params.data);
+	const encrypted = await cryptor.encrypt(req.params.data, logger);
 	logger.info({
 		elapsed: new Date().getTime() - startedTime
 	}, `Data encrypted: ${encrypted}`);
 
-	const decrypted = await cryptor.decrypt(encrypted);
+	const decrypted = await cryptor.decrypt(encrypted, logger);
 	logger.info({
 		elapsed: new Date().getTime() - startedTime
 	}, `Data decrypted (round-trip): ${decrypted}`);
