@@ -47,7 +47,7 @@ export class CryptorHttpClient {
 		}));
 
 		const instance = axios.create({
-			baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
+			baseURL: 'http://localhost:8083', //envVars.CRYPTOR_SIDECAR_BASE_URL,
 			headers: {
 				'X-Cryptor-Client': envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
 				'Content-Type': 'application/json; charset=utf-8'
