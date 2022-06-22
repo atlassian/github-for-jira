@@ -19,7 +19,7 @@ export interface GitHubClientConfig {
 
 const logger = getLogger("get-github-client-config");
 
-export async function getGitHubApiUrl(gitHubAppId: number, jiraHost: string) {
+export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number) {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
 
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) && gitHubClientConfig
