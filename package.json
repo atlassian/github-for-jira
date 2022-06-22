@@ -53,6 +53,7 @@
 		"atlassian-jwt": "^2.0.0",
 		"aws-sdk": "^2.999.0",
 		"axios": "^0.26.0",
+		"axios-debug-log": "^0.8.4",
 		"body-parser": "^1.19.2",
 		"bottleneck": "^2.19.5",
 		"bunyan": "^1.8.15",

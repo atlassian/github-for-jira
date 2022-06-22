@@ -4,6 +4,10 @@ import { statsd } from "config/statsd";
 import { cryptorMetrics } from "config/metric-names";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
+import 'axios-debug-log/enable';
+import config from 'axios-debug-log';
+
+
 
 export class CryptorHttpClient {
 
@@ -29,6 +33,19 @@ export class CryptorHttpClient {
 	}
 
 	async _post(operation, path, data: any, rootLogger: LoggerWithTarget) {
+
+		config(({
+			request: function (_, config) {
+				rootLogger.info({ config }, 'request');
+			},
+			response: function (_, response) {
+				rootLogger.info({ response }, "response");
+			},
+			error: function (_, error) {
+				rootLogger.info({ error }, "error");
+			}
+		}));
+
 		const instance = axios.create({
 			baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
 			headers: {
