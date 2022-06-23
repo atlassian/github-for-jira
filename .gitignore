@@ -47,3 +47,6 @@ test/**/*.js.map
 
 #Deployments
 .nebulae/
+
+# e2e tests
+test/e2e/.state.json

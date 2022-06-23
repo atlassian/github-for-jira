@@ -13,7 +13,7 @@ export default async function globalSetup(/*config: FullConfig*/) {
 	await passinput.fill("password!");
 	await passinput.press("Enter");
 	await page.waitForNavigation({ url: jiraUrl });
-	// Save signed-in state to 'storageState.json'.
-	await page.context().storageState({ path: "storageState.json" });
+	// Save signed-in state
+	await page.context().storageState({ path: "./test/e2e/.state.json" });
 	await browser.close();
 }

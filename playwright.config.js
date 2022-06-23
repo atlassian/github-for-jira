@@ -3,12 +3,10 @@ const { devices } = require("@playwright/test");
 module.exports = {
 	testDir: './test/e2e',
 	testMatch: /.*\.e2e\.ts/,
-
 	use: {
-		headless: false,
 		trace: "on-first-retry",
-		// Tell all tests to load signed-in state from 'storageState.json'.
-		storageState: 'storageState.json'
+		// Tell all tests to load signed-in state
+		storageState: './test/e2e/.state.json'
 	},
 	globalSetup: require.resolve('./test/e2e/setup'),
 	projects: [

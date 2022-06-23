@@ -44,7 +44,8 @@
 		"precommit": "run-p lint build",
 		"cypress": "cypress open",
 		"cypress:run": "cypress install && cypress run",
-		"test:e2e": "playwright install && playwright test"
+		"test:e2e": "playwright install && playwright test",
+		"test:e2e:headed": "playwright install && playwright test --headed"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
