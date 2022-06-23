@@ -40,14 +40,16 @@ describe('Configure', () => {
 		// TODO - Could be placed someer a tad more glabal?
 		Cypress.on('uncaught:exception', () => false)
 		// Will redirect to atlassian id
+		cy.loginToJira();
 		cy.visit('https://joshkaye2e.atlassian.net');
-
+		// cy.visit('https://id.atlassian.com/login?continue=https%3A%2F%2Fjoshkaye2e.atlassian.net%2Fplugins%2Fservlet%2Fac%2Fcom.github.integration.staging%2Fgh-addon-admin&application=jira');
+/*
 		// enter user email
 		cy.get("#username")
 			.type("jkay10@hotmail.com{enter}");
 		// enter user password & submit
 		cy.get("#password")
-			.type("password!{enter}");
+			.type("password!{enter}");*/
 
 		// Top level menu APPS > MANAGE YOUR APPS
 		cy.get("[data-testid=\"overflow-menu-trigger\"]")
