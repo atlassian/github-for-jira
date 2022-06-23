@@ -31,7 +31,7 @@ services:
       - "4566:4566"
     volumes:
       - ./.localstack:/docker-entrypoint-initaws.d
-
+# TODO: add cryptor mocked sidecar
   app:
     depends_on:
       - redis

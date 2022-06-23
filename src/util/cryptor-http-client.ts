@@ -29,28 +29,31 @@ export class CryptorHttpClient {
 		return plainText;
 	}
 
+	// TODO: add type for data
 	async _post(operation, path, data: any, rootLogger: LoggerWithTarget) {
-		const instance = axios.create({
-			baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
-			headers: {
-				'X-Cryptor-Client': envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
-				'Content-Type': 'application/json; charset=utf-8'
-			},
-			timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
-		});
 		const logger = rootLogger.child({ keyAlias: this.keyAlias, operation });
-		logger.info(`${operation} ${path} ${JSON.stringify(data)}`);
 
 		try {
 			const started = new Date().getTime();
-			const result = (await instance.post(path, data)).data;
+
+			const config = {
+				baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
+				headers: {
+					'X-Cryptor-Client': envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
+					'Content-Type': 'application/json; charset=utf-8'
+				},
+				timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
+			};
+			const result = (await axios.post(path, data, config)).data;
+
 			const finished = new Date().getTime();
 
 			statsd.histogram(cryptorMetrics.clientHttpCallDuration, finished - started, { operation });
 
 			return result;
 		} catch (e) {
-			logger.warn({ error: e.toJSON() }, "request failed");
+			// TODO: only log whitelisted data
+			logger.warn({ error: e.toJSON() }, "Cryptor request failed");
 			throw e;
 		}
 	}

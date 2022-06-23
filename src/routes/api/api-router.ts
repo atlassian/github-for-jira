@@ -110,21 +110,29 @@ ApiRouter.delete(
 );
 
 ApiRouter.use("/cryptor/:data", param("data").isString(), async (req: Request, resp: Response) => {
-	const logger = req.log.child("testing-cryptor") as LoggerWithTarget;
-	const cryptor = new CryptorHttpClient('micros/github-for-jira/github-server-app-secrets');
 
-	const startedTime = new Date().getTime();
+	resp.status(202).end();
+	while (resp) {
+		let data = "";
+		for (let i = 0; i < Math.random() * 10; i++) {
+			data = data + "-" + Math.random();
+		}
+		const logger = req.log.child("testing-cryptor") as LoggerWithTarget;
+		const cryptor = new CryptorHttpClient('micros/github-for-jira/github-server-app-secrets');
 
-	const encrypted = await cryptor.encrypt(req.params.data, logger);
-	logger.info({
-		elapsed: new Date().getTime() - startedTime
-	}, `Data encrypted: ${encrypted}`);
+		const startedTime = new Date().getTime();
 
-	const decrypted = await cryptor.decrypt(encrypted, logger);
-	logger.info({
-		elapsed: new Date().getTime() - startedTime
-	}, `Data decrypted (round-trip): ${decrypted}`);
-	resp.status(202);
+		const encrypted = await cryptor.encrypt(data, logger);
+
+		logger.info({
+			elapsed: new Date().getTime() - startedTime
+		}, `Data encrypted: ${encrypted}`);
+
+		const decrypted = await cryptor.decrypt(encrypted, logger);
+		logger.info({
+			elapsed: new Date().getTime() - startedTime
+		}, `Data decrypted (round-trip): ${decrypted}`);
+	}
 });
 
 ApiRouter.use("/jira", ApiJiraRouter);

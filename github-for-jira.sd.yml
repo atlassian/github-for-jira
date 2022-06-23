@@ -215,6 +215,8 @@ config:
     DEPLOYMENT_DATE: ${DEPLOYMENT_DATE}
     PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-stg
     GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-stg
+
+    GLOBAL_AGENT_NO_PROXY: cryptor-sidecar # needed because of proxy.ts
     CRYPTOR_SIDECAR_BASE_URL: http://cryptor-sidecar:26272
     CRYPTOR_SIDECAR_ENCRYPTION_KEY_ALIASES: micros/github-for-jira/github-server-app-secrets
     CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: 'GitHub for Jira client'
