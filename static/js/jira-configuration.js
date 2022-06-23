@@ -16,11 +16,31 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
+	// $.get("/jira/add", function(data, status){
+	// 	alert("Data: " + data + "\nStatus: " + status);
+	// });
+	const csrfToken = document.getElementById("_csrf").value;
+	console.log("CSRF: ", csrfToken)
 	window.AP.context.getToken(function(token) {
-		const child = openChildWindow("/session/github/configuration");
-		child.window.jiraHost = jiraHost;
-		child.window.jwt = token;
+		$.ajax({
+			type: "POST",
+			url: "/jira/select/version",
+			data: {
+				installationId: $(event.target).data("installation-id"),
+				jwt: token,
+				jiraHost: jiraHost,
+				_csrf: csrfToken
+			},
+			success: function(data) {
+				console.log('found');
+			}
+		});
 	});
+	// window.AP.context.getToken(function(token) {
+	// 	const child = openChildWindow("/session/github/configuration");
+	// 	child.window.jiraHost = jiraHost;
+	// 	child.window.jwt = token;
+	// });
 });
 
 $(".configure-connection-link").click(function(event) {

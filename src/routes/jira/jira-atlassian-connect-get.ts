@@ -85,7 +85,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 				logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
 				homeUrl: "https://github.com"
 			},
-			postInstallPage: {
+				postInstallPage: {
 				key: "github-post-install-page",
 				name: {
 					value: "GitHub Configuration"
