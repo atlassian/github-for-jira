@@ -5,6 +5,7 @@ import { TokenType } from "~/src/jira/util/jwt";
 import { postInstallUrl } from "routes/jira/jira-atlassian-connect-get";
 
 const extractUnsafeJiraHost = (req: Request): string | null => {
+		console.log("IN HERE")
 	if (req.path == postInstallUrl && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;

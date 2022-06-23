@@ -41,7 +41,8 @@
 		"db:dev": "run-s db:create:dev db:migrate:dev",
 		"db:test": "run-s db:create:test db:migrate:test",
 		"prepare": "husky install",
-		"precommit": "run-p lint build"
+		"precommit": "run-p lint build",
+		"test:e2e": "testcafe chrome --disable-web-security ./testcafe/ --skip-js-errors --live"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
@@ -128,6 +129,7 @@
 		"rimraf": "~3.0.2",
 		"smee-client": "^1.2.2",
 		"supertest": "^6.2.2",
+		"testcafe": "^1.19.0",
 		"ts-jest": "~27.1.3",
 		"ts-node": "^10.5.0",
 		"ts-node-dev": "^1.1.8",
