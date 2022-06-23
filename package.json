@@ -45,7 +45,8 @@
 		"cypress": "cypress open",
 		"cypress:run": "cypress install && cypress run",
 		"test:e2e": "playwright install && playwright test",
-		"test:e2e:headed": "playwright install && playwright test --headed"
+		"test:e2e:headed": "playwright install && playwright test --headed",
+		"test:e2e:watch": "playwright-watch test"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
@@ -126,6 +127,7 @@
 		"eslint-plugin-no-only-tests": "^2.6.0",
 		"eslint-plugin-node": "^11.1.0",
 		"eslint-plugin-promise": "^6.0.0",
+		"httplease": "^0.8.4",
 		"husky": "^6.0.0",
 		"jest": "^27.5.1",
 		"jest-diff": "^27.5.1",

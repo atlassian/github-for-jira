@@ -4153,6 +4153,11 @@ http-signature@~1.3.6:
     jsprim "^2.0.2"
     sshpk "^1.14.1"
 
+httplease@^0.8.4:
+  version "0.8.4"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/httplease/-/httplease-0.8.4.tgz#1189d6f371650c8c06ceb14edd170c8de8e1e04c"
+  integrity sha512-G4T5Sdnix7Vadc0Jf3MbncVx5ZDcgRfAg32bl8bm7gukfcF+dCalXtHObPh2k1u4lRUiIpKxxxYTLR6k4itmYw==
+
 https-proxy-agent@^5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/https-proxy-agent/-/https-proxy-agent-5.0.0.tgz#e2a90542abb68a762e0a0850f6c9edadfd8506b2"
