@@ -109,7 +109,19 @@ ApiRouter.delete(
 	ApiInstallationDelete
 );
 
-ApiRouter.use("/cryptor/:data", param("data").isString(), async (req: Request, resp: Response) => {
+// TODO: remove the debug endpoint
+/*
+How to invoke:
+
+% atlas slauth curl -a github-for-jira -g micros-sv--github-for-jira-dl-admins -- \
+-X GET \
+-v https://github-for-jira.ap-southeast-2.dev.atl-paas.net/api/cryptor
+
+`micros_github-for-jira` env=ddev "encrypted" , and then
+`micros_github-for-jira` env=ddev "<ID value from previous request>"
+
+ */
+ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
 
 	resp.status(202).end();
 	let data = "";
@@ -128,12 +140,12 @@ ApiRouter.use("/cryptor/:data", param("data").isString(), async (req: Request, r
 	}, `Data encrypted: ${encrypted}`);
 
 	try {
-		const decrypted = await cryptor.decrypt(logger, data, { a: "b" });
+		const decrypted = await cryptor.decrypt(logger, encrypted, { a: "b" });
 		logger.info({
 			elapsed: new Date().getTime() - startedTime
 		}, `Data decrypted (round-trip): ${decrypted}`);
 
-		await cryptor.decrypt(logger, data, { a: "b2" });
+		await cryptor.decrypt(logger, encrypted, { a: "b2" });
 		logger.info({
 			elapsed: new Date().getTime() - startedTime
 		}, `Data decrypted (round-trip): ${decrypted}`);
