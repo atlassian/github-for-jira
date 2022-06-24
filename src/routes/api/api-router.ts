@@ -127,12 +127,12 @@ ApiRouter.use("/cryptor/:data", param("data").isString(), async (req: Request, r
 		elapsed: new Date().getTime() - startedTime
 	}, `Data encrypted: ${encrypted}`);
 
-	const decrypted = await cryptor.decrypt(logger, data, { a: "b" });
-	logger.info({
-		elapsed: new Date().getTime() - startedTime
-	}, `Data decrypted (round-trip): ${decrypted}`);
-
 	try {
+		const decrypted = await cryptor.decrypt(logger, data, { a: "b" });
+		logger.info({
+			elapsed: new Date().getTime() - startedTime
+		}, `Data decrypted (round-trip): ${decrypted}`);
+
 		await cryptor.decrypt(logger, data, { a: "b2" });
 		logger.info({
 			elapsed: new Date().getTime() - startedTime

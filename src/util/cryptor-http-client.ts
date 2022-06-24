@@ -44,6 +44,7 @@ export class CryptorHttpClient {
 				},
 				timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
 			};
+			logger.info({ config, data });
 			const result = (await axios.post(path, data, config)).data;
 
 			const finished = new Date().getTime();
