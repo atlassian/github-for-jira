@@ -1,15 +1,25 @@
 import  { envVars } from "config/env";
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import { statsd } from "config/statsd";
 import { cryptorMetrics } from "config/metric-names";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
+// TODO: add description
 export class CryptorHttpClient {
 
 	private readonly keyAlias: string;
+	private readonly axiosRequestConfig: AxiosRequestConfig;
 
 	constructor(keyAlias) {
 		this.keyAlias = keyAlias;
+		this.axiosRequestConfig = {
+			baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
+			headers: {
+				'X-Cryptor-Client': envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
+				'Content-Type': 'application/json; charset=utf-8'
+			},
+			timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
+		};
 	}
 
 	async encrypt(logger: LoggerWithTarget, plainText: string, encryptionContext: any = {}): Promise<string> {
@@ -27,6 +37,12 @@ export class CryptorHttpClient {
 		return plainText;
 	}
 
+	static async healthcheck() {
+		await axios.get("/healthcheck", {
+			timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
+		});
+	}
+
 	// TODO: add type for data
 	async _post(operation, path, data: any, rootLogger: LoggerWithTarget) {
 		const logger = rootLogger.child({ keyAlias: this.keyAlias, operation });
@@ -34,16 +50,9 @@ export class CryptorHttpClient {
 		try {
 			const started = new Date().getTime();
 
-			const config = {
-				baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
-				headers: {
-					'X-Cryptor-Client': envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
-					'Content-Type': 'application/json; charset=utf-8'
-				},
-				timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
-			};
-			logger.info({ config, data });
-			const result = (await axios.post(path, data, config)).data;
+			// TODO: remove debug logging
+			logger.info({ config: this.axiosRequestConfig, data });
+			const result = (await axios.post(path, data, this.axiosRequestConfig)).data;
 
 			const finished = new Date().getTime();
 
@@ -52,10 +61,8 @@ export class CryptorHttpClient {
 
 			return result;
 		} catch (e) {
-			// Do not add { err: e } param because the error might contain
-			// TODO: check when decryption is failing
+			// Do not add { err: e } param to avoid logging payload
 			logger.warn("Cryptor request failed: " + e?.message?.replace(data, "<censored>"));
-			// TODO: add call to healthcheck in deepcheck
 			// TODO: add statsd counter
 			throw e;
 		}
