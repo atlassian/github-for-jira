@@ -31,9 +31,12 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	const { jiraHost, gitHubAppId } = res.locals;
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
-	req.session[state] =
-		res.locals.redirect ||
-		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
+	// req.session[state] =
+	// 	res.locals.redirect ||
+	// 	`/github/configuration${url.parse(req.originalUrl).search || ""}`;
+
+	await res.locals.encryptedSession.put(state, ....);
+
 	// Find callback URL based on current url of this route
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
 	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
