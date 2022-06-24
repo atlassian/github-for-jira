@@ -8,7 +8,7 @@ module.exports = {
 		// Tell all tests to load signed-in state
 		storageState: './test/e2e/.state.json'
 	},
-	globalSetup: require.resolve('./test/e2e/setup'),
+	globalSetup: './test/e2e/setup.ts',
 	projects: [
 		{
 			name: "chromium",
