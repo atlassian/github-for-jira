@@ -14,16 +14,16 @@ export class CryptorHttpClient {
 		this.keyAlias = keyAlias;
 	}
 
-	async encrypt(plainText, logger: LoggerWithTarget) {
+	async encrypt(logger: LoggerWithTarget, plainText: string, encryptionContext: any = {}): Promise<string> {
 		const { cipherText } = await this._post('encrypt', `/cryptor/encrypt/${this.keyAlias}`, {
-			plainText
+			plainText, encryptionContext
 		}, logger);
 		return cipherText;
 	}
 
-	async decrypt(cipherText, logger: LoggerWithTarget) {
+	async decrypt(logger: LoggerWithTarget, cipherText: string, encryptionContext: any = {}): Promise<string> {
 		const { plainText } = await this._post('decrypt', `/cryptor/decrypt`, {
-			cipherText
+			cipherText, encryptionContext
 		}, logger);
 
 		return plainText;
@@ -49,11 +49,15 @@ export class CryptorHttpClient {
 			const finished = new Date().getTime();
 
 			statsd.histogram(cryptorMetrics.clientHttpCallDuration, finished - started, { operation });
+			// TODO: add statsd counter
 
 			return result;
 		} catch (e) {
-			// TODO: only log whitelisted data
-			logger.warn({ error: e.toJSON() }, "Cryptor request failed");
+			// Do not add { err: e } param because the error might contain
+			// TODO: check when decryption is failing
+			logger.warn("Cryptor request failed: " + e?.message?.replace(data, "<censored>"));
+			// TODO: add call to healthcheck in deepcheck
+			// TODO: add statsd counter
 			throw e;
 		}
 	}

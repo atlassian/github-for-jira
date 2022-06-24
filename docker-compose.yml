@@ -31,12 +31,18 @@ services:
       - "4566:4566"
     volumes:
       - ./.localstack:/docker-entrypoint-initaws.d
-# TODO: add cryptor mocked sidecar
+
+  cryptor-sidecar:
+    build: etc/cryptor-mock
+    container_name: cryptor-sidecar
+    ports:
+      - "26272:26272"
   app:
     depends_on:
       - redis
       - postgres
       - localstack
+      - cryptor-sidecar
     volumes:
       - .:/app
     build:
