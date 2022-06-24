@@ -42,7 +42,7 @@
 		"db:test": "run-s db:create:test db:migrate:test",
 		"prepare": "husky install",
 		"precommit": "run-p lint build",
-		"test:e2e": "testcafe chrome --disable-web-security ./testcafe/ --skip-js-errors --live"
+		"test:e2e": "testcafe --live"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
