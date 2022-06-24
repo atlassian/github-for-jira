@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Logger from "bunyan";
-import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "utils/jira-utils";
+import { getJiraAppUrl, getJiraMarketplaceUrl, isGitHubCloudApp, jiraSiteExists } from "utils/jira-utils";
 import { Installation } from "models/installation";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient } from "~/src/util/get-github-client-config";
@@ -60,6 +60,7 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 		orgName: githubInstallation?.account?.login,
 		avatar: githubInstallation?.account?.avatar_url,
 		html_url: info.html_url,
-		id: githubInstallationId
+		id: githubInstallationId,
+		isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 	});
 };

@@ -67,11 +67,13 @@
           <div class="githubOrgs__table__row clearfix">
             {{! Organizations }}
             <div class="gitHubConfiguration__orgContent__account col1">
-              <img
-                class="gitHubConfiguration__orgContent__avatar"
-                src="{{account.avatar_url}}"
-                alt="GitHub organization avatar"
-              />
+              {{#if ../isGitHubCloudApp}}
+                <img
+                    class="gitHubConfiguration__orgContent__avatar"
+                    src="{{account.avatar_url}}"
+                    alt="GitHub organization avatar"
+                />
+              {{/if}}
               <span class="text-bold text-gray-dark">{{account.login}}</a></span>
             </div>
             <div class="col2">

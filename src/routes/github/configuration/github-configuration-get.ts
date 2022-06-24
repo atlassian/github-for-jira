@@ -17,6 +17,7 @@ import {
 	createInstallationClient,
 	createUserClient
 } from "~/src/util/get-github-client-config";
+import { isGitHubCloudApp } from "utils/jira-utils";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -135,7 +136,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG, false);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log, gitHubAppId);
-
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
 
@@ -223,7 +223,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			info,
 			clientKey: installation.clientKey,
 			login,
-			repoUrl: envVars.GITHUB_REPO_URL
+			repoUrl: envVars.GITHUB_REPO_URL,
+			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 		});
 
 		tracer.trace(`rendered page`);
