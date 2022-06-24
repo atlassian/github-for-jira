@@ -1,3 +1,7 @@
+/**
+ * Mimicks APIs from https://developer.atlassian.com/platform/cryptor/integration/integrating-sidecar/#rest-api
+ */
+
 const http = require("http");
 const crypto = require('crypto');
 
