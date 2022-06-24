@@ -1,13 +1,4 @@
 import { expect, test } from "@playwright/test";
-/*
-test.beforeEach(async ({ page }) => {
-	// Runs before each test and signs in each page.
-	await page.goto("https://github.com/login");
-	await page.click("text=Login");
-	await page.fill('input[name="login"]', "username");
-	await page.fill('input[name="password"]', "password");
-	await page.click("text=Submit");
-});*/
 
 // eslint-disable-next-line jest/no-done-callback
 test("test", async ({ page }) => {
