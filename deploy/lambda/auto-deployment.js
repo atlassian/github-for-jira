@@ -26,6 +26,7 @@ exports.handler = async function (event, context) {
         if (deployedCommitSHA !== mainCommitSHA) {
             console.log('Changes found, starting deployment...');
 
+            // TODO: Need to update this URL with the actual one
             const pipelinesURL = 'https://api.bitbucket.org/2.0/repositories/harminder5/bitbucket-pipeline/pipelines/';
             const body = {
                 "target": {
