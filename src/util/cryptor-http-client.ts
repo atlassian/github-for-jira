@@ -5,20 +5,25 @@ import { cryptorMetrics } from "config/metric-names";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 // TODO: add description
+// TODO: test that the local dev loop is not broken
 export class CryptorHttpClient {
 
 	private readonly keyAlias: string;
-	private readonly axiosRequestConfig: AxiosRequestConfig;
+	private readonly axiosCommonConfig: AxiosRequestConfig;
+	private readonly axiosPostConfig: AxiosRequestConfig;
 
 	constructor(keyAlias) {
 		this.keyAlias = keyAlias;
-		this.axiosRequestConfig = {
+		this.axiosCommonConfig = {
 			baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
+			timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
+		};
+		this.axiosPostConfig = {
+			...this.axiosCommonConfig,
 			headers: {
 				'X-Cryptor-Client': envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
 				'Content-Type': 'application/json; charset=utf-8'
-			},
-			timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
+			}
 		};
 	}
 
@@ -37,10 +42,8 @@ export class CryptorHttpClient {
 		return plainText;
 	}
 
-	static async healthcheck() {
-		await axios.get("/healthcheck", {
-			timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
-		});
+	async healthcheck() {
+		await axios.get("/healthcheck", this.axiosCommonConfig);
 	}
 
 	// TODO: add type for data
@@ -51,8 +54,8 @@ export class CryptorHttpClient {
 			const started = new Date().getTime();
 
 			// TODO: remove debug logging
-			logger.info({ config: this.axiosRequestConfig, data });
-			const result = (await axios.post(path, data, this.axiosRequestConfig)).data;
+			logger.info({ config: this.axiosPostConfig, data });
+			const result = (await axios.post(path, data, this.axiosPostConfig)).data;
 
 			const finished = new Date().getTime();
 
