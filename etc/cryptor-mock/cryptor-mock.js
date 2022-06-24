@@ -43,6 +43,12 @@ http.createServer(function(request, response) {
 	request.on('end', () => {
 		console.log(body);
 		try {
+			if (request.url.indexOf("healthcheck") >= 0) {
+				return writeOKResponse(response, {
+					ok: true
+				});
+			}
+
 			if (request.method !== 'POST') {
 				return writeError(response, 405, "Method not allowed");
 			}
