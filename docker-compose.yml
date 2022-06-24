@@ -35,6 +35,8 @@ services:
   cryptor-sidecar:
     build: etc/cryptor-mock
     container_name: cryptor-sidecar
+    environment:
+      CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "GitHub for Jira client"
     ports:
       - "26272:26272"
   app:

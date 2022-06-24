@@ -18,12 +18,14 @@ const decrypt = (cipherText) => {
 };
 
 function writeOKResponse(response, obj) {
+	console.log("OK", obj);
 	response.writeHead(200, {"Content-Type": "application/json"});
 	response.write(JSON.stringify(obj));
 	response.end();
 }
 
 function writeError(response, status, message) {
+	console.log("Error", status, message);
 	response.writeHead(status, {"Content-Type": "application/json"});
 	response.write(JSON.stringify({
 		error: message
@@ -39,7 +41,7 @@ http.createServer(function(request, response) {
 		body += chunk;
 	});
 	request.on('end', () => {
-
+		console.log(body);
 		try {
 			if (request.method !== 'POST') {
 				return writeError(response, 405, "Method not allowed");
@@ -49,8 +51,10 @@ http.createServer(function(request, response) {
 				return writeError(response, 415, "Unsupported media type");
 			}
 
-			if (request.headers['x-cryptor-client'].toLowerCase().indexOf(process.env.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE) < 0) {
-				return writeError(response, 403, "Identification challenge failed");
+			if (request.headers['x-cryptor-client'].indexOf(process.env.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE) < 0) {
+				return writeError(response, 403, "Identification challenge failed, expected \"" +
+					process.env.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE +
+					"\", but was \"" + request.headers['x-cryptor-client']);
 			}
 
 			if (request.url.indexOf("encrypt") >= 0) {

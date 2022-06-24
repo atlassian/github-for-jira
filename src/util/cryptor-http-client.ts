@@ -4,8 +4,6 @@ import { statsd } from "config/statsd";
 import { cryptorMetrics } from "config/metric-names";
 import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
-import 'axios-debug-log/enable';
-
 export class CryptorHttpClient {
 
 	private readonly keyAlias: string;
