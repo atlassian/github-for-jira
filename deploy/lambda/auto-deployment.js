@@ -11,10 +11,10 @@ exports.handler = async function (event, context) {
         const autoDeployToken = process.env.AUTO_DEPLOY_TOKEN;
 
         if (!autoDeployUsername) {
-            throw new Error('No auto deploy username was provided!');
+            console.error('No auto deploy username was provided!');
         }
         if (!autoDeployToken) {
-            throw new Error('No auto deploy token was provided!');
+            console.error('No auto deploy token was provided!');
         }
 
         const versionURL = `${process.env.PROD_URL}/version`;
@@ -76,7 +76,7 @@ function getRequest(url) {
         });
 
         req.on('error', (err) => {
-            reject(new Error(err.message));
+            reject(new Error(err));
         });
     });
 }
@@ -108,10 +108,9 @@ function postRequest(url, body, headers = {}) {
         });
 
         req.on('error', err => {
-            reject(new Error(err.message));
+            reject(new Error(err));
         });
 
-        // 👇️ write the body to the Request object
         req.write(JSON.stringify(body));
         req.end();
     });
