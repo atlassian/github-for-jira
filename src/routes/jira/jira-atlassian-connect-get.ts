@@ -93,6 +93,15 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 				url: postInstallUrl,
 				conditions
 			},
+			generalPages: [
+				{
+					url: "/jira/select-version",
+					name: {
+						value: "GitHub Select Version"
+					},
+					key: "select-version"
+				}
+			],
 			webSections: [
 				{
 					key: "gh-addon-admin-section",
@@ -112,7 +121,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 					key: "gh-addon-admin",
 					location: "admin_plugins_menu/gh-addon-admin-section"
 				}
-			]
+			],
 		}
 	});
 };

@@ -6,4 +6,4 @@ import { JiraSelectGet } from "routes/jira/select/jira-select-get";
 export const JiraSelectRouter = Router();
 
 JiraSelectRouter.route("/")
-	.post(JiraSelectGet)
+	.get(JiraSelectGet)

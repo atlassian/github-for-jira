@@ -12,4 +12,4 @@ JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 JiraRouter.use("/configuration", JiraConfigurationRouter);
 JiraRouter.post("/sync", JiraContextJwtTokenMiddleware, JiraSyncPost);
 JiraRouter.use("/events", JiraEventsRouter);
-JiraRouter.use("/select/version", JiraSelectRouter);
+JiraRouter.use("/select-version", JiraSelectRouter);
