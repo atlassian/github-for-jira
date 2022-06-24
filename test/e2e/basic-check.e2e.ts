@@ -11,6 +11,7 @@ const REPO_NAME = "e2e";
 const GITHUB_INSTALLATION_ID = "26788391";
 
 async function deleteGitHubRepo() {
+	console.log("deleting...")
 	await githubClient.deleteRepository(ORGANIZATION, REPO_NAME);
 }
 

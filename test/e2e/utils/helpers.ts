@@ -17,23 +17,27 @@ export async function deleteDevInfoDataByInstallationId(
 	)}`;
 	console.log(`Calling ${hostUrl}${path}`);
 
-	return httpClient
-		.withPath(path)
-		.withMethodDelete()
-		.withDiscardBodyResponseHandler()
-		.withHeaders({
-			Authorization: `Bearer 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`,
-		})
-		.send()
-		.catch((err) => {
-			if (err.response.statusCode === 401) {
-				console.error(
-					`calling DELETE /api/deleteInstallation returned 401. Make sure the fusion-arc-bot belongs to the Fusion Arc organisation and has admin permissions.`
-				);
-			}
+	return githubNock
+		.delete(path)
+		.matchHeader("Authorization", /^Bearer .+$/)
+		.reply(200)
 
-			console.error(JSON.stringify(err));
-
-			throw err;
-		});
+	// return httpClient
+	// 	.withPath(path)
+	// 	.withMethodDelete()
+	// 	.withDiscardBodyResponseHandler()
+	// 	.withHeaders({
+	// 		Authorization: `Bearer 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`,
+	// 	})
+	// 	.send()
+	// 	.catch((err) => {
+	// 		if (err.response.statusCode === 401) {
+	// 			console.error(
+	// 				`calling DELETE /api/deleteInstallation returned 401. Make sure the fusion-arc-bot belongs to the Fusion Arc organisation and has admin permissions.`
+	// 			);
+	// 		}
+	//
+	// 		console.error('Failed to delete dev info data:', err);
+	// 		throw err;
+	// 	});
 }

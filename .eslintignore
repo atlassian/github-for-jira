@@ -1,4 +1,2 @@
 /**/*.js
 prestart.ts
-## todo: fix eslint for cypress
-cypress/**/*
