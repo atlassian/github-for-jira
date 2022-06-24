@@ -148,12 +148,12 @@ resources:
         resource: rds
 
   - type: lambda
-    name: auto-deployment-gitHub-app
+    name: auto-deployment-github-app
     attributes:
       runtime: nodejs14.x
       architecture: arm64
       prefetchMicrosEnvVars: true
-      artifact: "github-for-jira/auto-deployment-gitHub-app-${BITBUCKET_BUILD_NUMBER}.zip"
+      artifact: "github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
       handler: auto-deployment.handler
       private: true
       concurrentExecutions: 2
