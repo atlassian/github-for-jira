@@ -7,6 +7,7 @@ import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { isGitHubCloudApp } from "~/src/util/jira-utils";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -118,7 +119,8 @@ export const JiraConfigurationGet = async (
 			hasConnections: !!installations.total,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 		});
 
 		req.log.info("Jira configuration rendered successfully.");

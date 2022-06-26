@@ -432,10 +432,6 @@ environmentOverrides:
                 Stat: Average
               Id: responseTime
               ReturnData: false
-    links:
-      runOnce:
-        - uuid: fea5d423-e21f-465b-aa67-54c8367b7777
-          description: Basic Check PDV (Staging)
     alarms:
       overrides:
         LatencyHigh: null
@@ -497,10 +493,6 @@ environmentOverrides:
       min: 5
       max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
       metrics: *CpuMemAlbScalingRules
-    links:
-      runOnce:
-        - uuid: d99d882f-74a9-4093-822a-9ddf38b5e523
-          description: Basic Check PDV (Prod)
     workers:
       - name: Worker
         scaling:
