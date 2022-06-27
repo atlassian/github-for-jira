@@ -22,22 +22,22 @@ export async function deleteDevInfoDataByInstallationId(
 		.matchHeader("Authorization", /^Bearer .+$/)
 		.reply(200)
 
-	// return httpClient
-	// 	.withPath(path)
-	// 	.withMethodDelete()
-	// 	.withDiscardBodyResponseHandler()
-	// 	.withHeaders({
-	// 		Authorization: `Bearer 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`,
-	// 	})
-	// 	.send()
-	// 	.catch((err) => {
-	// 		if (err.response.statusCode === 401) {
-	// 			console.error(
-	// 				`calling DELETE /api/deleteInstallation returned 401. Make sure the fusion-arc-bot belongs to the Fusion Arc organisation and has admin permissions.`
-	// 			);
-	// 		}
-	//
-	// 		console.error('Failed to delete dev info data:', err);
-	// 		throw err;
-	// 	});
+	return httpClient
+		.withPath(path)
+		.withMethodDelete()
+		.withDiscardBodyResponseHandler()
+		.withHeaders({
+			Authorization: `Bearer <halp>`,
+		})
+		.send()
+		.catch((err) => {
+			if (err.response.statusCode === 401) {
+				console.error(
+					`calling DELETE /api/deleteInstallation returned 401.`
+				);
+			}
+
+			console.error('Failed to delete dev info data:', err);
+			throw err;
+		});
 }

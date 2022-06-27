@@ -3,7 +3,7 @@ import { GithubClient } from "test/e2e/utils/github-client";
 import { deleteDevInfoDataByInstallationId } from "test/e2e/utils/helpers";
 
 const githubClient = new GithubClient({
-	oauthToken: "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",
+	oauthToken: process.env.GITHUB_OAUTH_TOKEN,
 });
 
 const ORGANIZATION = "e2e-testing";
@@ -11,7 +11,6 @@ const REPO_NAME = "e2e";
 const GITHUB_INSTALLATION_ID = "26788391";
 
 async function deleteGitHubRepo() {
-	console.log("deleting...")
 	await githubClient.deleteRepository(ORGANIZATION, REPO_NAME);
 }
 
