@@ -18,7 +18,6 @@ exports.handler = async function (event, context) {
         }
 
         const versionURL = `${process.env.PROD_URL}/version`;
-        // TODO: Need to store in Microscope
         const mainBranchURL = 'https://api.github.com/repos/atlassian/github-for-jira/branches/main';
 
         const deployedCommitSHA = (await getRequest(versionURL)).commit;
@@ -27,15 +26,13 @@ exports.handler = async function (event, context) {
         if (deployedCommitSHA !== mainCommitSHA) {
             console.log('Changes found, starting deployment...');
 
-            // TODO: Need to update this URL with the actual one and store in Microscope
-            const pipelinesURL = 'https://api.bitbucket.org/2.0/repositories/harminder5/bitbucket-pipeline/pipelines/';
+            const pipelinesURL = 'https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/';
             const body = {
                 "target": {
                     "type": "pipeline_ref_target",
                     "ref_type": "branch",
                     "ref_name": "master",
-                    // TODO: Change the pattern to the actual one from GH4J
-                    "selector": {"type": "custom", "pattern": "deployment-to-prod"}
+                    "selector": {"type": "custom", "pattern": "deploy-to-prod"}
                 }
             };
 
