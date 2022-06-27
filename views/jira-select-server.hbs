@@ -39,12 +39,12 @@
       </header>
 
       <section class="jiraSelectServer__content">
-        <!-- servers refer to the array of cloud/GHE apps/servers-->
         {{> select-server-header
             headerImgURL="/public/assets/jira-enterprise-server-connection.png"
             header="Select a GitHub Server"
             subHeader="We found the following GitHub servers"
         }}
+        <!-- servers refer to the array of cloud/GHE apps/servers-->
         {{> select-server-table
             installationId=id
             contentImgURL="/public/assets/github-logo.svg"
