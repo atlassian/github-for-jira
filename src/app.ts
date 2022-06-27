@@ -11,6 +11,7 @@ import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
 
+
 export const getFrontendApp = (octokitApp: App): Express => {
 	const app = express();
 

@@ -75,6 +75,20 @@ const getFullErrorStack = (ex) => {
 const logLevel = process.env.LOG_LEVEL || "info";
 const globalLoggingLevel = levelFromName[logLevel] || INFO;
 
+export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
+	// Remove  Default Probot Logging Stream
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(probotLogger as any).streams.pop();
+
+	// Replace with formatOut stream
+	probotLogger.addStream({
+		type: "stream",
+		stream: LOG_STREAM,
+		closeOnExit: false,
+		level: globalLoggingLevel
+	});
+};
+
 const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger => {
 	return createLogger(
 		{
