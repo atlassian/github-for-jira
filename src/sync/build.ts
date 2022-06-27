@@ -1,6 +1,6 @@
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { transformWorkflow } from "../transforms/transform-workflow";
@@ -22,7 +22,7 @@ const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logge
 };
 
 export const getBuildTask = async (
-	logger: LoggerWithTarget,
+	logger: Logger,
 	_github: GitHubAPI,
 	gitHubInstallationClient: GitHubInstallationClient,
 	_jiraHost: string,
