@@ -16,6 +16,15 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
+	window.AP.context.getToken(function(token) {
+		const child = openChildWindow("/session/github/configuration");
+		child.window.jiraHost = jiraHost;
+		child.window.jwt = token;
+	});
+});
+
+$(".select-github-version-link").click(function(event) {
+	event.preventDefault();
 
 	AP.navigator.go('addonmodule', { moduleKey: "github-select-version-page" });
 });
