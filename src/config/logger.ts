@@ -45,16 +45,14 @@ const errorSerializer = (err) => (!err || !err.stack) ? err : {
 	stack: getFullErrorStack(err)
 };
 
-// TODO TYPINGS
-const hashSerializer = (data) => {
-	if (!data) {
+const hashSerializer = (data: any): string => {
+	if (data === undefined || data == null) {
 		return data;
 	}
 	return createHashWithSharedSecret(data);
 };
 
-// TODO TYPINGS
-const unsafeDataSerilaizers = () => ({
+const unsafeDataSerilaizers = (): Record<string, unknown> => ({
 	jiraHost: hashSerializer,
 	orgName: hashSerializer,
 	repoName: hashSerializer,
