@@ -17,15 +17,10 @@ function openChildWindow(url) {
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
 	const installationId = $(event.target).data("installation-id");
-
-	// AP.navigator.go("addonmodule",
-	// 	{
-	// 		addonKey: "select",
-	// 		moduleKey: "version",
-	// 		customData: { installationId }
-	// 	}
-	// );
-	AP.navigator.go('addonmodule', { moduleKey: "select-version", customData: { installationId }});
+	const csrfToken = document.getElementById("_csrf").value;
+	window.AP.context.getToken(function(token) {
+	AP.navigator.go('addonmodule', { addonKey: "com.github.integration.rachelle-local", moduleKey: "github-select-version-page"});
+	});
 });
 
 $(".configure-connection-link").click(function(event) {

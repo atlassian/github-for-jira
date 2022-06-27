@@ -6,7 +6,7 @@ const instance = envVars.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira/configuration";
-export const selectVersionUrl = "/jira/select-version";
+export const selectVersionUrl = "/jira/version";
 
 const key = `com.github.integration${instance ? `.${instance}` : ""}`;
 const conditions = [
@@ -96,7 +96,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 			},
 			generalPages: [
 				{
-					key: "select-version",
+					key: "github-select-version-page",
 					name: {
 						value: "GitHub Select Version"
 					},
