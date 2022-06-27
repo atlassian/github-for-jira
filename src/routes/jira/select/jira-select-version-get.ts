@@ -8,7 +8,9 @@ export const JiraSelectVersionGet = async (
 	try {
 		req.log.info("Received Jira select GitHub version page request");
 
-		res.render("jira-select-github-version.hbs");
+		res.render("jira-select-github-version.hbs", {
+			previousPagePath: "github-post-install-page"
+		});
 
 		req.log.info("Jira select rendered successfully.");
 	} catch (error) {
