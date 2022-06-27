@@ -619,7 +619,6 @@ environmentOverrides:
           handler: auto-deployment.handler
           private: true
           concurrentExecutions: 2
-          memory: 128
           timeout: 60
           scheduledRules:
             - name: 'PipelinesExecutionForGH4J'

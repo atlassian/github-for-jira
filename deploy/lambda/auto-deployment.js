@@ -53,7 +53,7 @@ exports.handler = async function (event, context) {
 function getRequest(url) {
     const options = {
         headers: {
-            "User-Agent": "GitHub-for-Jira-App"
+            "User-Agent": "Auto-Deployment-Lambda-GitHub-for-Jira-App"
         }
     };
     return new Promise((resolve, reject) => {
