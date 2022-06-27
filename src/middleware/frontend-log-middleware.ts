@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME } from "config/logger";
+import { FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, getLogger } from "config/logger";
 
 /*
 
@@ -42,6 +42,7 @@ declare global {
 }
 
 export const LogMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+	req.log = getLogger(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME);
 	req.addLogFields = (fields: Record<string, unknown>): void => {
 		if (req.log) {
 			req.log = req.log.child(fields);
@@ -49,7 +50,6 @@ export const LogMiddleware = (req: Request, res: Response, next: NextFunction): 
 			throw new Error(`No log found during request: ${req.method} ${req.path}`);
 		}
 	};
-	req.addLogFields({ tag: FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME });
 	res.once("finish", async () => {
 		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {
 			req.log.warn({ res, req }, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);

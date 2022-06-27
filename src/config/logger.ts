@@ -2,7 +2,7 @@ import Logger, { createLogger, INFO, levelFromName, stdSerializers } from "bunya
 import bformat from "bunyan-format";
 import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
 import { Request } from "express";
-import * as util from "util";
+// import * as util from "util";
 import { AxiosResponse } from "axios";
 import { createHashWithSharedSecret } from "utils/encryption";
 
@@ -22,9 +22,21 @@ const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWA
 	bformat({ outputMode, levelInString: true })
 );
 
+// todo refacto to catch issues
+// const parseConfig = (res) => {
+// 	if (!res) {
+// 		return null;
+// 	}
+//
+// 	if (res.config?.data) {
+// 		return JSON.parse(util.inspect(res.config.data));
+// 	}
+// 	return JSON.parse(util.inspect(res.config)); // removes circular dependency in json
+// };
+
 const responseSerializer = (res: AxiosResponse) => ({
 	...stdSerializers.res(res),
-	config: JSON.parse(util.inspect(res?.config)), // removes circular dependency in json
+	// TODO make this work with frontend loggger too config: JSON.parse(util.inspect(res.config)), // removes circular dependency in json
 	request: requestSerializer(res.request)
 });
 
@@ -52,7 +64,7 @@ const hashSerializer = (data: any): string => {
 	return createHashWithSharedSecret(data);
 };
 
-const unsafeDataSerializers = (): Logger.Serializers => ({
+export const unsafeDataSerializers = (): Logger.Serializers => ({
 	jiraHost: hashSerializer,
 	orgName: hashSerializer,
 	repoName: hashSerializer,
