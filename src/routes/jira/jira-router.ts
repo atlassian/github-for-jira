@@ -4,8 +4,7 @@ import { JiraSyncPost } from "./jira-sync-post";
 import { JiraAtlassianConnectGet } from "./jira-atlassian-connect-get";
 import { JiraEventsRouter } from "./events/jira-events-router";
 import { JiraSelectVersionRouter } from "./events/jira-select-version-router";
-import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "middleware/jira-jwt-middleware";
-import { csrfMiddleware } from "middleware/csrf-middleware";
+import { JiraContextJwtTokenMiddleware } from "middleware/jira-jwt-middleware";
 
 export const JiraRouter = Router();
 
