@@ -638,3 +638,17 @@ environmentOverrides:
               - github-for-jira
             decryptingServices:
               - github-for-jira
+      - type: lambda
+        name: auto-deployment-github-app
+        attributes:
+          runtime: nodejs14.x
+          prefetchMicrosEnvVars: true
+          artifact: "github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
+          handler: auto-deployment.handler
+          private: true
+          concurrentExecutions: 2
+          timeout: 60
+          scheduledRules:
+            - name: 'PipelinesExecutionForGH4J'
+              # Cron for running 20 minutes
+              expression: 'cron(0/20 * * * ? *)'
