@@ -4,29 +4,6 @@ import { statsd } from "config/statsd";
 import { cryptorMetrics } from "config/metric-names";
 import Logger from "bunyan";
 
-// TODO: test that the local dev loop is not broken
-
-/**
- * This client calling using Cryptor side-car to encrypt/decrypt data.
- *
- * How to use:
- *
- * - With encryption context (https://developer.atlassian.com/platform/cryptor/concepts/encryption-context/):
- *
- *   const client = new CryptorHttpClient("micros/github-for-jira/github-server-app-secrets");
- *   // Encryption context values must be strings
- *   const encrypted = await client.encrypt(req.logger, "super-secret-secret", { "jiraHostname": "https://my-fancy-jira.atlassian.net" });
- *   ...
- *   const decrypted = await client.decrypt(req.logger, encrypted, { "jiraHostname": "https://my-fancy-jira.atlassian.net" });
- *   // decrypted now contains "super-secret-secret"
- *
- * - Without encryption context:
- *
- *   absolutely same, just don't pass the context
- *   const encrypted = await client.encrypt(req.logger, "super-secret-secret");
- *
- */
-
 type CryptorHttpClientOptions = {
 	keyAlias: string;
 	baseUrl?: string;
@@ -48,6 +25,22 @@ type DecryptionPayload = {
 	encryptionContext: EncryptionContext;
 }
 
+/**
+ * This client calling using Cryptor side-car to encrypt/decrypt data.
+ *
+ * How to use:
+ *
+ * - Create Client
+ *   const client = new CryptorHttpClient({keyAlias: "micros/github-for-jira/github-server-app-secrets"});
+ *
+ * - With encryption context (https://developer.atlassian.com/platform/cryptor/concepts/encryption-context/):
+ *   const encrypted = await client.encrypt(req.logger, "super-secret-secret", { "jiraHostname": "https://my-fancy-jira.atlassian.net" });
+ *   const decrypted = await client.decrypt(req.logger, encrypted, { "jiraHostname": "https://my-fancy-jira.atlassian.net" });
+ *
+ * - Without encryption context: Same, but just don't pass the context
+ *   const encrypted = await client.encrypt(req.logger, "super-secret-secret");
+ *
+ */
 export class CryptorHttpClient {
 
 	private readonly keyAlias: string;
@@ -88,8 +81,8 @@ export class CryptorHttpClient {
 		await axios.get("/healthcheck", this.axiosCommonConfig);
 	}
 
-	async _post(operation: string, path: string, payload: EncryptionPayload | DecryptionPayload, rootLogger: Logger) {
-		const logger = rootLogger.child({ keyAlias: this.keyAlias, operation });
+	async _post(operation: string, path: string, payload: EncryptionPayload | DecryptionPayload, logger: Logger) {
+		const childLogger = logger.child({ keyAlias: this.keyAlias, operation });
 
 		try {
 			const started = new Date().getTime();
@@ -105,7 +98,7 @@ export class CryptorHttpClient {
 			return result;
 		} catch (e) {
 			// Do not add { err: e } param to avoid logging payload
-			logger.warn("Cryptor request failed: " + e?.message?.replace(payload["plainText"], "<censored>"));
+			childLogger.warn("Cryptor request failed: " + e?.message?.replace(payload["plainText"], "<censored>"));
 			// TODO: add statsd counter
 			// statsd.increment(cryptorMetrics.clientHttpFailedCount, { operation });
 			throw e;
