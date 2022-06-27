@@ -16,11 +16,8 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	const installationId = $(event.target).data("installation-id");
-	const csrfToken = document.getElementById("_csrf").value;
-	window.AP.context.getToken(function(token) {
-	AP.navigator.go('addonmodule', { addonKey: "com.github.integration.rachelle-local", moduleKey: "github-select-version-page"});
-	});
+
+	AP.navigator.go('addonmodule', { moduleKey: "github-select-version-page" });
 });
 
 $(".configure-connection-link").click(function(event) {

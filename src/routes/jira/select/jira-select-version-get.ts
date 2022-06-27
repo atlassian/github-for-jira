@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { envVars } from "config/env";
 
 export const JiraSelectVersionGet = async (
 	req: Request,

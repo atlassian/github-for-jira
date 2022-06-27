@@ -6,7 +6,7 @@ const instance = envVars.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira/configuration";
-export const selectVersionUrl = "/jira/version";
+export const selectVersionUrl = "/jira/select-version";
 
 const key = `com.github.integration${instance ? `.${instance}` : ""}`;
 const conditions = [

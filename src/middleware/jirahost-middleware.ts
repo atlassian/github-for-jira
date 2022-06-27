@@ -60,7 +60,7 @@ export const jirahostMiddleware = async (req: Request, res: Response, next: Next
 			next();
 		});
 	} else {
-		res.locals.jiraHost = req.session.jiraHost;
+		res.locals.jiraHost = req.session.jiraHost || req.query.xdm_e;
 		next();
 	}
 };
