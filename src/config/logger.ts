@@ -2,7 +2,7 @@ import Logger, { createLogger, INFO, levelFromName, stdSerializers } from "bunya
 import bformat from "bunyan-format";
 import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
 import { Request } from "express";
-// import * as util from "util";
+import { inspect } from "util";
 import { AxiosResponse } from "axios";
 import { createHashWithSharedSecret } from "utils/encryption";
 
@@ -23,20 +23,21 @@ const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWA
 );
 
 // todo refacto to catch issues
-// const parseConfig = (res) => {
-// 	if (!res) {
-// 		return null;
-// 	}
-//
-// 	if (res.config?.data) {
-// 		return JSON.parse(util.inspect(res.config.data));
-// 	}
-// 	return JSON.parse(util.inspect(res.config)); // removes circular dependency in json
-// };
+const parseConfig = (config) => {
+
+	// if (typeof config === 'object') {
+	// 	return config;
+	// }
+
+	// if (config.data) {
+	// 	return JSON.parse(util.inspect(config.data));
+	// }
+	return JSON.parse(inspect(config, { showHidden: true })); // removes circular dependency in json
+};
 
 const responseSerializer = (res: AxiosResponse) => ({
 	...stdSerializers.res(res),
-	// TODO make this work with frontend loggger too config: JSON.parse(util.inspect(res.config)), // removes circular dependency in json
+	config: parseConfig(res.config),
 	request: requestSerializer(res.request)
 });
 
