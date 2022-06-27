@@ -49,6 +49,7 @@ export const LogMiddleware = (req: Request, res: Response, next: NextFunction): 
 			throw new Error(`No log found during request: ${req.method} ${req.path}`);
 		}
 	};
+	// TODO JK DUNNO
 	// req.log = req.log.child({ name: FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME });
 	res.once("finish", async () => {
 		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {

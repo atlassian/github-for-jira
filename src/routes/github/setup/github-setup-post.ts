@@ -24,7 +24,6 @@ const validateJiraSite = async (
 };
 
 export const GithubSetupPost = async (req: Request, res: Response): Promise<void> => {
-	console.log("GOT HERE ABC");
 	const { jiraHost, jiraDomain, jiraDomainMain, jiraDomainModal } = req.body;
 	const domain = jiraDomain || jiraDomainMain || jiraDomainModal || "";
 	const url = jiraHost || `https://${domain}.atlassian.net`;
