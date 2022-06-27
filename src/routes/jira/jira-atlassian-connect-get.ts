@@ -71,7 +71,15 @@ const modules = {
 			},
 			url: "/jira/select-version",
 			conditions: adminCondition
-		}
+		},
+		{
+			key: "github-server-url-page",
+			name: {
+				value: "GitHub Server Url"
+			},
+			url: "/jira/server-url",
+			conditions: adminCondition
+		},
 	],
 	webSections: [
 		{
