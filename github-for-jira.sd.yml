@@ -147,22 +147,6 @@ resources:
         # Name of the RDS resource from above
         resource: rds
 
-  - type: lambda
-    name: auto-deployment-github-app
-    attributes:
-      runtime: nodejs14.x
-      prefetchMicrosEnvVars: true
-      artifact: "github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
-      handler: auto-deployment.handler
-      private: true
-      concurrentExecutions: 2
-      memory: 128
-      timeout: 60
-      scheduledRules:
-        - name: 'PipelinesExecutionForGH4J'
-          # Cron for running 20 minutes
-          expression: 'cron(0/20 * * * ? *)'
-
 scaling:
   instance: t2.small
   min: 1
@@ -633,3 +617,19 @@ environmentOverrides:
             Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
+
+      - type: lambda
+        name: auto-deployment-github-app
+        attributes:
+          runtime: nodejs14.x
+          prefetchMicrosEnvVars: true
+          artifact: "github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
+          handler: auto-deployment.handler
+          private: true
+          concurrentExecutions: 2
+          memory: 128
+          timeout: 60
+          scheduledRules:
+            - name: 'PipelinesExecutionForGH4J'
+              # Cron for running 20 minutes
+              expression: 'cron(0/20 * * * ? *)'
