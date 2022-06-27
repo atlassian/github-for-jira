@@ -1,22 +1,23 @@
 const https = require('https');
 
 exports.handler = async function (event, context) {
+    const autoDeployUsername = process.env.AUTO_DEPLOY_USERNAME;
+    const autoDeployToken = process.env.AUTO_DEPLOY_TOKEN;
+
     if (!process.env.AUTO_DEPLOY_ENABLED) {
         console.log('Auto Deploying disabled');
         return;
     }
+    if (!autoDeployUsername) {
+        console.error('No auto deploy username was provided!');
+        return;
+    }
+    if (!autoDeployToken) {
+        console.error('No auto deploy token was provided!');
+        return;
+    }
 
     try {
-        const autoDeployUsername = process.env.AUTO_DEPLOY_USERNAME;
-        const autoDeployToken = process.env.AUTO_DEPLOY_TOKEN;
-
-        if (!autoDeployUsername) {
-            console.error('No auto deploy username was provided!');
-        }
-        if (!autoDeployToken) {
-            console.error('No auto deploy token was provided!');
-        }
-
         const versionURL = `${process.env.PROD_URL}/version`;
         const mainBranchURL = 'https://api.github.com/repos/atlassian/github-for-jira/branches/main';
 
