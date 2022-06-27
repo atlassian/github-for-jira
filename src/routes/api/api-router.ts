@@ -14,7 +14,6 @@ import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
 import { CryptorHttpClient } from "utils/cryptor-http-client";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 export const ApiRouter = Router();
 
@@ -123,18 +122,17 @@ How to invoke:
  */
 ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
 
-	resp.status(202).end();
+	resp.status(204).send("ack");
+
 	let data = "";
-	for (let i = 0; i < Math.random() * 10; i++) {
-		data = data + "-" + Math.random();
+	for (let i = 0; i < 10; i++) {
+		data = data + "-" + Math.floor((Math.random() * 10));
 	}
-	const logger = req.log.child("testing-cryptor") as LoggerWithTarget;
-	const cryptor = new CryptorHttpClient('micros/github-for-jira/github-server-app-secrets');
+	const logger = req.log.child("testing-cryptor");
+	const cryptor = new CryptorHttpClient({ keyAlias: "micros/github-for-jira/github-server-app-secrets" });
 
 	const startedTime = new Date().getTime();
-
 	const encrypted = await cryptor.encrypt(logger, data, { a: "b" });
-
 	logger.info({
 		elapsed: new Date().getTime() - startedTime
 	}, `Data encrypted: ${encrypted}`);

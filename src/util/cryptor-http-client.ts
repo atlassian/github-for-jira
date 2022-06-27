@@ -2,7 +2,7 @@ import  { envVars } from "config/env";
 import axios, { AxiosRequestConfig } from "axios";
 import { statsd } from "config/statsd";
 import { cryptorMetrics } from "config/metric-names";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 
 // TODO: test that the local dev loop is not broken
 
@@ -26,38 +26,58 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
  *   const encrypted = await client.encrypt(req.logger, "super-secret-secret");
  *
  */
+
+type CryptorHttpClientOptions = {
+	keyAlias: string;
+	baseUrl?: string;
+	timoutMSec?: number;
+	cryptorChanllenge?: string;
+}
+
+type EncryptionContext = {
+	[key: string]: string | number | undefined | null
+}
+
+type EncryptionPayload = {
+	plainText: string;
+	encryptionContext: EncryptionContext
+}
+
+type DecryptionPayload = {
+	cipherText: string;
+	encryptionContext: EncryptionContext;
+}
+
 export class CryptorHttpClient {
 
 	private readonly keyAlias: string;
 	private readonly axiosCommonConfig: AxiosRequestConfig;
 	private readonly axiosPostConfig: AxiosRequestConfig;
 
-	constructor(keyAlias) {
-		this.keyAlias = keyAlias;
+	constructor(opts: CryptorHttpClientOptions) {
+		this.keyAlias = opts.keyAlias;
 		this.axiosCommonConfig = {
-			baseURL: envVars.CRYPTOR_SIDECAR_BASE_URL,
-			timeout: Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
+			baseURL: opts.baseUrl || envVars.CRYPTOR_SIDECAR_BASE_URL,
+			timeout: opts.timoutMSec || Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
 		};
 		this.axiosPostConfig = {
 			...this.axiosCommonConfig,
 			headers: {
-				'X-Cryptor-Client': envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
-				'Content-Type': 'application/json; charset=utf-8'
+				"X-Cryptor-Client": opts.cryptorChanllenge || envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
+				"Content-Type": "application/json; charset=utf-8"
 			}
 		};
 	}
 
-	// TODO: add typing for encryption context
-	async encrypt(logger: LoggerWithTarget, plainText: string, encryptionContext: any = {}): Promise<string> {
-		const { cipherText } = await this._post('encrypt', `/cryptor/encrypt/${this.keyAlias}`, {
+	async encrypt(logger: Logger, plainText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
+		const { cipherText } = await this._post("encrypt", `/cryptor/encrypt/${this.keyAlias}`, {
 			plainText, encryptionContext
 		}, logger);
 		return cipherText;
 	}
 
-	// TODO: add typing for encryption context
-	async decrypt(logger: LoggerWithTarget, cipherText: string, encryptionContext: any = {}): Promise<string> {
-		const { plainText } = await this._post('decrypt', `/cryptor/decrypt`, {
+	async decrypt(logger: Logger, cipherText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
+		const { plainText } = await this._post("decrypt", `/cryptor/decrypt`, {
 			cipherText, encryptionContext
 		}, logger);
 
@@ -68,16 +88,13 @@ export class CryptorHttpClient {
 		await axios.get("/healthcheck", this.axiosCommonConfig);
 	}
 
-	// TODO: add type for data
-	async _post(operation, path, data: any, rootLogger: LoggerWithTarget) {
+	async _post(operation: string, path: string, payload: EncryptionPayload | DecryptionPayload, rootLogger: Logger) {
 		const logger = rootLogger.child({ keyAlias: this.keyAlias, operation });
 
 		try {
 			const started = new Date().getTime();
 
-			// TODO: remove debug logging
-			logger.info({ config: this.axiosPostConfig, data });
-			const result = (await axios.post(path, data, this.axiosPostConfig)).data;
+			const result = (await axios.post(path, payload, this.axiosPostConfig)).data;
 
 			const finished = new Date().getTime();
 
@@ -88,7 +105,7 @@ export class CryptorHttpClient {
 			return result;
 		} catch (e) {
 			// Do not add { err: e } param to avoid logging payload
-			logger.warn("Cryptor request failed: " + e?.message?.replace(data, "<censored>"));
+			logger.warn("Cryptor request failed: " + e?.message?.replace(payload["plainText"], "<censored>"));
 			// TODO: add statsd counter
 			// statsd.increment(cryptorMetrics.clientHttpFailedCount, { operation });
 			throw e;
