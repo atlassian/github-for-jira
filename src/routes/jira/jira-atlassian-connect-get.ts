@@ -95,7 +95,7 @@ const modules = {
 	]
 };
 
-export const moduleUrls = compact(map(modules, "url"));
+export const moduleUrls = compact(map([modules.postInstallPage, ...modules.generalPages], "url"));
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
 	res.status(200).json({
