@@ -52,7 +52,7 @@ const hashSerializer = (data: any): string => {
 	return createHashWithSharedSecret(data);
 };
 
-const unsafeDataSerilaizers = (): Record<string, unknown> => ({
+const unsafeDataSerializers = (): Logger.Serializers => ({
 	jiraHost: hashSerializer,
 	orgName: hashSerializer,
 	repoName: hashSerializer,
@@ -106,7 +106,7 @@ const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger
 
 export const getLogger = (name: string, fields?: Record<string, unknown>): Logger => {
 	const logger = createNewLogger(name, fields);
-	logger.addSerializers({ ...unsafeDataSerilaizers });
+	logger.addSerializers(unsafeDataSerializers());
 	return logger;
 };
 
