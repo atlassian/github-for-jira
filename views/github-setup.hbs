@@ -59,13 +59,15 @@
             </p>
             {{#if orgName}}
               <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
-                <img
-                  class="githubSetup__githubOrgConfirmation__avatar"
-                  src="{{avatar}}"
-                  height="24"
-                  width="24"
-                  data-installation-id="{{id}}"
-                />
+                {{#if isGitHubCloudApp}}
+                    <img
+                      class="githubSetup__githubOrgConfirmation__avatar"
+                      src="{{avatar}}"
+                      height="24"
+                      width="24"
+                      data-installation-id="{{id}}"
+                    />
+                {{/if}}
                 <span
                   class="githubSetup__githubOrgConfirmation__orgName"
                 >{{orgName}}</span>
@@ -135,13 +137,15 @@
             </p>
             {{#if orgName}}
               <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
-                <img
-                  class="githubSetup__githubOrgConfirmation__avatar"
-                  src="{{avatar}}"
-                  height="24"
-                  width="24"
-                  data-installation-id="{{id}}"
-                />
+                {{#if isGitHubCloudApp}}
+                  <img
+                    class="githubSetup__githubOrgConfirmation__avatar"
+                    src="{{avatar}}"
+                    height="24"
+                    width="24"
+                    data-installation-id="{{id}}"
+                  />
+                {{/if}}
                 <span
                   class="githubSetup__githubOrgConfirmation__orgName"
                 >{{orgName}}</span>

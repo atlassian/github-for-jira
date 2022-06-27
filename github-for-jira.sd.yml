@@ -412,10 +412,6 @@ environmentOverrides:
                 Stat: Average
               Id: responseTime
               ReturnData: false
-    links:
-      runOnce:
-        - uuid: fea5d423-e21f-465b-aa67-54c8367b7777
-          description: Basic Check PDV (Staging)
     alarms:
       overrides:
         LatencyHigh: null
@@ -476,10 +472,6 @@ environmentOverrides:
       min: 5
       max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
       metrics: *CpuMemAlbScalingRules
-    links:
-      runOnce:
-        - uuid: d99d882f-74a9-4093-822a-9ddf38b5e523
-          description: Basic Check PDV (Prod)
     workers:
       - name: Worker
         scaling:
@@ -617,3 +609,18 @@ environmentOverrides:
             Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
+
+      - type: lambda
+        name: auto-deployment-github-app
+        attributes:
+          runtime: nodejs14.x
+          prefetchMicrosEnvVars: true
+          artifact: "github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
+          handler: auto-deployment.handler
+          private: true
+          concurrentExecutions: 2
+          timeout: 60
+          scheduledRules:
+            - name: 'PipelinesExecutionForGH4J'
+              # Cron for running 20 minutes
+              expression: 'cron(0/20 * * * ? *)'
