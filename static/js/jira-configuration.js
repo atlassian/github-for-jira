@@ -18,13 +18,14 @@ $(".add-organization-link").click(function(event) {
 	event.preventDefault();
 	const installationId = $(event.target).data("installation-id");
 
-	AP.navigator.go("addonmodule",
-		{
-			addonKey: "jira",
-			moduleKey: "select-version",
-			customData: { installationId }
-		}
-	);
+	// AP.navigator.go("addonmodule",
+	// 	{
+	// 		addonKey: "select",
+	// 		moduleKey: "version",
+	// 		customData: { installationId }
+	// 	}
+	// );
+	AP.navigator.go('addonmodule', { moduleKey: "select-version", customData: { installationId }});
 });
 
 $(".configure-connection-link").click(function(event) {
