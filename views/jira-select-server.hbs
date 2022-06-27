@@ -20,11 +20,8 @@
     />
     <link rel="stylesheet" href="/public/css/global.css" media="all" />
     <link rel="stylesheet" href="/public/css/jira-select-server.css" media="all" />
-    <link
-      rel="stylesheet"
-      href="/public/css/select-server.css"
-      media="all"
-    />
+    <link rel="stylesheet" href="/public/css/select-server-header.css" media="all" />
+    <link rel="stylesheet" href="/public/css/select-server-table.css" media="all" />
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
@@ -43,11 +40,13 @@
 
       <section class="jiraSelectServer__content">
         <!-- servers refer to the array of cloud/GHE apps/servers-->
-        {{> select-server
-            installationId=id
+        {{> select-server-header
             headerImgURL="/public/assets/jira-enterprise-server-connection.png"
             header="Select a GitHub Server"
             subHeader="We found the following GitHub servers"
+        }}
+        {{> select-server-table
+            installationId=id
             contentImgURL="/public/assets/github-logo.svg"
             contentTitle="GitHub Enterprise Servers"
             addNewText="Connect a new server"

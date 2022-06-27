@@ -1,11 +1,3 @@
-<div class="selectServer__title">
-  {{#if headerImgURL}}
-    <img class="selectServer__headerImg" src="{{headerImgURL}}" alt="Jira and GitHub"/>
-  {{/if}}
-  <h2 class="selectServer__header">{{header}}</h2>
-  <p class="selectServer__subHeader">{{{subHeader}}}</p>
-</div>
-
 <div class="selectServer__content">
   <div class="selectServer__contentHead">
     <div class="selectServer__contentHeadTitle">
@@ -24,7 +16,7 @@
         <!--TODO: Update the URL by actual data-->
         <div class="selectServer__serverURL">{{server.url}}</div>
         <button
-          class="aui-button aui-button-label install-link"
+          class="aui-button aui-button-label select-server"
           data-installation-id="{{installationId}}"
           type="submit"
         >

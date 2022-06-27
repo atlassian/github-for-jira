@@ -1,21 +1,3 @@
-.selectServer__title {
-  margin-bottom: 2.5em;
-}
-
-.selectServer__headerImg {
-  height: 2.5em;
-}
-
-.selectServer__header {
-  font-size: 1.5rem;
-  font-weight: 500;
-  margin: 1em 0;
-}
-
-.selectServer__subHeader {
-  font-size: 0.9rem;
-}
-
 .selectServer__content {
   background-color: #F4F5F7;
   padding: 1.5em;
