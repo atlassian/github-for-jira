@@ -22,7 +22,7 @@ export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	// TODO: Probably not the best place to set things globally
 	res.locals.installation = installation;
 
-	req.log = req.log.child({
+	req.addLogFields({
 		jiraHost: installation.jiraHost,
 		jiraClientKey:
 			installation.clientKey && `${installation.clientKey.substr(0, 5)}***`

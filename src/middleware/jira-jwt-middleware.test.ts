@@ -122,7 +122,7 @@ describe("#verifyJiraMiddleware", () => {
 		it("adds installation details to log", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("host", testSharedSecret);
-			const logChildSpy = jest.spyOn(req.log, "child");
+			const logChildSpy = jest.spyOn(req, "addLogFields");
 
 			await JiraContextJwtTokenMiddleware(req, res, next);
 
