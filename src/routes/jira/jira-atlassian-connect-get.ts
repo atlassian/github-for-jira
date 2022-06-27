@@ -123,7 +123,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 					key: "gh-addon-admin",
 					location: "admin_plugins_menu/gh-addon-admin-section"
 				}
-			],
+			]
 		}
 	});
 };

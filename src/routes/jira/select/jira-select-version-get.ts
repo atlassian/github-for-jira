@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { envVars } from "config/env";
 
 export const JiraSelectVersionGet = async (
 	req: Request,
@@ -7,13 +6,12 @@ export const JiraSelectVersionGet = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-
-		req.log.info("Received Jira select page request");
+		req.log.info("Received Jira select GitHub version page request");
 
 		res.render("jira-select-github-version.hbs");
 
 		req.log.info("Jira select rendered successfully.");
 	} catch (error) {
-		return next(new Error(`Failed to render Jira select version page: ${error}`));
+		return next(new Error(`Failed to render Jira select GitHub version page: ${error}`));
 	}
 };
