@@ -1,3 +1,4 @@
+/* globals $, AP */
 const ALLOWED_PROTOCOLS = ["http:", "https:"];
 const GITHUB_CLOUD = ["github.com", "www.github.com"];
 const defaultError = {
@@ -74,8 +75,8 @@ $("#gheServerURL").on("keyup", event => {
 
 $("#gheServerBtn").on("click", event => {
 	const btn = event.target;
-	const typedURL = $("#gheServerURL").val().replace(/\/+$/, '');
-	const isValid = checkValidGHEUrl(typedURL);
+	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, '');
+	const isValid = checkValidGHEUrl(gheServerURL);
 
 	$(btn).attr({
 		"aria-disabled": !isValid,
@@ -89,7 +90,25 @@ $("#gheServerBtn").on("click", event => {
 		$("#gheServerBtnText").hide();
 		$("#gheServerBtnSpinner").show();
 
-		//	TODO: Need to add the action for the GHE server
-		console.log("GHE server URL: ", typedURL);
+		// todo - make request to url to make sure we can get a 200 response
+		// if that request fails, hide the spinner and show the text and render an error
+		// if request succeeds, call the following
+		AP.context.getToken(function() {
+			$.ajax({
+				type: "POST",
+				url: "/jira/app-creation",
+				data: {
+					gheServerURL
+				},
+				success: function(data) {
+					AP.navigator.go(
+						'addonmodule',
+						{
+							moduleKey: "github-app-creation-page"
+						}
+					);
+				}
+			});
+		});
 	}
 });
