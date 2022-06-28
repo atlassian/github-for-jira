@@ -12,7 +12,7 @@ export const JiraServerUrlGet = async (
 			previousPagePath: "github-select-version-page"
 		});
 
-		req.log.info("Jira select rendered Jira server url page successfully.");
+		req.log.info("Jira server url page rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira select GitHub version page: ${error}`));
 	}
