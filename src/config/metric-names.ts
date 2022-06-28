@@ -67,6 +67,3 @@ export const metricWebhooks = {
 	webhookLatency: `${server}.webhooks.processing-time.latency`
 };
 
-export const cryptorMetrics = {
-	clientHttpCallDuration: `cryptor.client.http.call.duration`
-};
