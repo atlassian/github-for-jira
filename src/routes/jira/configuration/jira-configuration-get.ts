@@ -7,6 +7,7 @@ import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isGitHubCloudApp } from "~/src/util/jira-utils";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
@@ -112,6 +113,10 @@ export const JiraConfigurationGet = async (
 				isGlobalInstall: installation.repository_selection === "all"
 			}));
 
+		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
+			? "select-github-version-link"
+			: "add-organization-link";
+
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
 			successfulConnections,
@@ -120,6 +125,7 @@ export const JiraConfigurationGet = async (
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,
+			handleNavigationClassName,
 			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 		});
 
