@@ -643,7 +643,7 @@ environmentOverrides:
         attributes:
           runtime: nodejs14.x
           prefetchMicrosEnvVars: true
-          artifact: "github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
+          artifact: "_sox/github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
           handler: auto-deployment.handler
           private: true
           concurrentExecutions: 2
@@ -652,3 +652,5 @@ environmentOverrides:
             - name: 'PipelinesExecutionForGH4J'
               # Cron for running 20 minutes
               expression: 'cron(0/20 * * * ? *)'
+          dataType:
+            - Atlassian/Configuration

@@ -1,5 +1,16 @@
 const ALLOWED_PROTOCOLS = ["http:", "https:"];
 const GITHUB_CLOUD = ["github.com", "www.github.com"];
+const defaultError = {
+	message: 'The entered URL is not valid.',
+	linkMessage: 'Learn more',
+	// TODO: add URL for this
+	linkUrl: '#'
+}
+const cloudURLError = {
+	message: 'The entered URL is a GitHub Cloud site.',
+	linkMessage: 'Connect a GitHub Cloud site',
+	linkUrl: '/session/github/configuration'
+}
 
 /**
  * Method that checks the validity of the passed URL
@@ -12,31 +23,44 @@ const checkValidGHEUrl = inputURL => {
 		const { protocol, hostname } = new URL(inputURL);
 
 		if (!ALLOWED_PROTOCOLS.includes(protocol)) {
+			setErrorMessage(defaultError);
 			return false;
 		}
 		// This checks whether the hostname whether there is an extension like `.com`, `.net` etc.
 		if (hostname.split('.').length < 2) {
+			setErrorMessage(defaultError);
+			return false;
+		}
+		if (GITHUB_CLOUD.includes(hostname)) {
+			setErrorMessage(cloudURLError);
 			return false;
 		}
 
 		return true;
 	} catch (e) {
+		setErrorMessage(defaultError);
 		return false;
 	}
 };
 
 /**
- * Checks if the passed valid URL is GitHub enterprise or GitHub Cloud
+ * Sets an error message with the passed parameters
  *
- * @param {string} url
- * @returns {boolean}
+ * @param {Object<defaultError | cloudURLError>} error
  */
-const checkGHEServerUrl = url => {
-	const { hostname } = new URL(url);
-	if (GITHUB_CLOUD.includes(hostname)) {
-		return false;
-	}
-	return true;
+const setErrorMessage = error => {
+	$("#gheServerURLError").show();
+	$("#gheServerURLError > span").html(error.message);
+	$("#gheServerURLError > a").html(error.linkMessage).attr("href", error.linkUrl);
+	$("#gheServerURL").addClass("has-error");
+};
+
+/**
+ * Hides the error messages
+ */
+const hideErrorMessage = () => {
+	$("#gheServerURLError").hide();
+	$("#gheServerURL").removeClass("has-error");
 };
 
 $("#gheServerURL").on("keyup", event => {
@@ -45,8 +69,7 @@ $("#gheServerURL").on("keyup", event => {
 		"aria-disabled": !hasUrl,
 		"disabled": !hasUrl
 	});
-	$("#gheServerURLError").hide();
-	$("#gheServerURL").removeClass("has-error");
+	hideErrorMessage();
 });
 
 $("#gheServerBtn").on("click", event => {
@@ -60,23 +83,13 @@ $("#gheServerBtn").on("click", event => {
 	});
 
 	if (isValid) {
-		$("#gheServerURLError").hide();
+		hideErrorMessage();
+
+		// Changing the text on the button and displaying the spinner
 		$("#gheServerBtnText").hide();
 		$("#gheServerBtnSpinner").show();
-		$("#gheServerURL").removeClass("has-error");
 
-		if (checkGHEServerUrl(typedURL)) {
-			//	TODO: Need to add the action for the GHE server
-			console.log("GHE server URL: ", typedURL);
-		} else {
-			// TODO: Need to alert the users that this URL is GitHub cloud and not Enterprise
-			// Waiting for design: https://softwareteams.atlassian.net/browse/ARC-1418
-			console.log('Cloud URL Entered', typedURL);
-		}
-
-
-	} else {
-		$("#gheServerURLError").show();
-		$("#gheServerURL").addClass("has-error");24
+		//	TODO: Need to add the action for the GHE server
+		console.log("GHE server URL: ", typedURL);
 	}
 });
