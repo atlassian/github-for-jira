@@ -21,7 +21,7 @@ export class CryptorHttpClient {
 
 	private static axiosConfig() {
 		return {
-			baseURL: envVars.CRYPTOR_BASE_URL,
+			baseURL: envVars.CRYPTOR_URL,
 			headers: {
 				"X-Cryptor-Client": envVars.CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE,
 				"Content-Type": "application/json; charset=utf-8"
