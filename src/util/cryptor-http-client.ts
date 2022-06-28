@@ -85,11 +85,11 @@ export class CryptorHttpClient {
 		const childLogger = logger.child({ keyAlias: this.keyAlias, operation });
 
 		try {
-			const started = new Date().getTime();
+			const started = Date.now();
 
 			const result = (await axios.post(path, payload, this.axiosPostConfig)).data;
 
-			const finished = new Date().getTime();
+			const finished = Date.now();
 
 			statsd.histogram(cryptorMetrics.clientHttpCallDuration, finished - started, { operation });
 			// TODO: add statsd counter (maybe check with #help-cryptor if we already have this metric in sfx)
