@@ -14,6 +14,6 @@ export const JiraServerUrlGet = async (
 
 		req.log.info("Jira server url page rendered successfully.");
 	} catch (error) {
-		return next(new Error(`Failed to render Jira select GitHub version page: ${error}`));
+		return next(new Error(`Failed to render Jira server url page: ${error}`));
 	}
 };
