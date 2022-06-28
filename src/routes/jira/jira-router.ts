@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import { JiraConfigurationRouter } from "./configuration/jira-configuration-router";
 import { JiraSyncPost } from "./jira-sync-post";
 import { JiraAtlassianConnectGet } from "./jira-atlassian-connect-get";
@@ -13,15 +13,3 @@ JiraRouter.use("/configuration", JiraConfigurationRouter);
 JiraRouter.post("/sync", JiraContextJwtTokenMiddleware, JiraSyncPost);
 JiraRouter.use("/events", JiraEventsRouter);
 JiraRouter.use("/select-version", JiraSelectVersionRouter);
-
-// TODO: remove this before merging this branch
-JiraRouter.get("/selectServer",  async (_: Request, res: Response): Promise<void> => {
-	res.render("jira-select-server.hbs", {
-		id: 1,
-		host: 'My Jira Instance',
-		csrfToken: 2,
-		nonce: res.locals.nonce,
-		failedConnections: [],
-		servers: [{ url: "http://github.company1.com" }, { url: "http://github.company2.com" }, { url: "http://github.company3.com" }]
-	});
-});
