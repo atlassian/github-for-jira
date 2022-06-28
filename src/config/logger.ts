@@ -22,10 +22,10 @@ const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWA
 	bformat({ outputMode, levelInString: true })
 );
 
-// Todo config serializer it throwing occasional error
+// Todo existing config serializer is throwing occasional error, investigate.
 const responseSerializer = (res: AxiosResponse) => ({
 	...stdSerializers.res(res),
-	config: JSON.parse(inspect(res.config)), // removes circular dependency in json
+	config: JSON.parse(inspect(res?.config)), // removes circular dependency in json
 	request: requestSerializer(res.request)
 });
 
@@ -76,6 +76,7 @@ const getFullErrorStack = (ex) => {
 const logLevel = process.env.LOG_LEVEL || "info";
 const globalLoggingLevel = levelFromName[logLevel] || INFO;
 
+// TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
 export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	// Remove  Default Probot Logging Stream
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
