@@ -14,7 +14,7 @@ export const DeepcheckGet = async (_: Request, res: Response): Promise<void> => 
 			Promise.all([
 				cache.ping().then(() => logger.info("redis works"), () => Promise.reject("Could not connect to Redis")),
 				sequelize.authenticate().then(() => logger.info("DB works"), () => Promise.reject("Could not connect to postgres DB")),
-				new CryptorHttpClient({ keyAlias: "" }).healthcheck().then(() => logger.info("Cryptor works"), () => Promise.reject("Could not connect to Cryptor"))
+				CryptorHttpClient.healthcheck().then(() => logger.info("Cryptor works"), () => Promise.reject("Could not connect to Cryptor"))
 			]),
 			new Promise((_, reject) => setTimeout(() => reject(`deepcheck timed out after ${timeout}ms`), timeout))
 		]);

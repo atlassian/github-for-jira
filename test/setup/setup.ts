@@ -127,7 +127,7 @@ const getCryptorNock = (): nock.Scope => {
 			"x-cryptor-client": envVars.CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE
 		}
 	});
-}
+};
 
 const setupCryptorNock = (scope: nock.Scope) => {
 	return () => {
@@ -136,14 +136,14 @@ const setupCryptorNock = (scope: nock.Scope) => {
 				plainText: "foo",
 				encryptionContext: {}
 			})
-			.reply(200, {cipherText: "bar"})
+			.reply(200, { cipherText: "bar" })
 			.post("/cryptor/decrypt", {
 				cipherText: "bar",
 				encryptionContext: {}
 			})
-			.reply(200, {plainText: "foo"});
-	}
-}
+			.reply(200, { plainText: "foo" });
+	};
+};
 
 
 beforeAll(async () => {
