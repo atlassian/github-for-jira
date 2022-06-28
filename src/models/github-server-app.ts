@@ -108,6 +108,10 @@ export class GitHubServerApp extends Model {
 	}
 }
 
+const directSetErrror = (field: string, method: string) =>{
+	return new Error(`Because of using cryptor, please do not directly set the value to the field [${field}] itself, but instead using method [${method}]`);
+};
+
 GitHubServerApp.init({
 	id: {
 		type: DataTypes.INTEGER,
@@ -130,18 +134,27 @@ GitHubServerApp.init({
 		allowNull: false
 	},
 	secrets: encrypted.vault("secrets"),
-	gitHubClientSecret: encrypted.field("gitHubClientSecret", {
+	gitHubClientSecret: {
 		type: DataTypes.STRING,
-		allowNull: false
-	}),
-	webhookSecret: encrypted.field("webhookSecret", {
+		allowNull: false,
+		set() {
+			throw directSetErrror("gitHubClientSecret", "setGitHubClientSecret");
+		}
+	},
+	webhookSecret: {
 		type: DataTypes.STRING,
-		allowNull: false
-	}),
-	privateKey: encrypted.field("privateKey", {
+		allowNull: false,
+		set() {
+			throw directSetErrror("webhookSecret", "setWebhookSecret");
+		}
+	},
+	privateKey: {
 		type: DataTypes.STRING,
-		allowNull: false
-	}),
+		allowNull: false,
+		set() {
+			throw directSetErrror("privateKey", "setPrivateKey");
+		}
+	},
 	gitHubAppName: {
 		type: DataTypes.STRING,
 		allowNull: false
