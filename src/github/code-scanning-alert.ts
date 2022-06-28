@@ -1,9 +1,9 @@
 import { transformCodeScanningAlert } from "../transforms/transform-code-scanning-alert";
-import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const codeScanningAlertWebhookHandler = async (context: Context, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const codeScanningAlertWebhookHandler = async (context: WebhookContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	if (!(await booleanFlag(BooleanFlags.SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS, false, jiraClient.baseUrl))) {
 		return;
 	}
