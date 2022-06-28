@@ -115,19 +115,31 @@ export class GitHubServerApp extends Model {
 		});
 	}
 
-	async setGitHubClientSecret(plainText: string, logger: Logger) {
+	async encryptAndSetGitHubClientSecret(plainText: string, logger: Logger) {
 		const encrypted = await getCryptorClient().encrypt(logger, plainText);
 		this.setDataValue("gitHubClientSecret", encrypted);
 	}
 
-	async setWebhookSecret(plainText: string, logger: Logger) {
+	async decryptAndGetGitHubClientSecret(logger: Logger) {
+		return await getCryptorClient().decrypt(logger, this.getDataValue("gitHubClientSecret"));
+	}
+
+	async encryptAndSetWebhookSecret(plainText: string, logger: Logger) {
 		const encrypted = await getCryptorClient().encrypt(logger, plainText);
 		this.setDataValue("webhookSecret", encrypted);
 	}
 
-	async setPrivateKey(plainText: string, logger: Logger) {
+	async decryptAndGetWebhookSecret(logger: Logger) {
+		return await getCryptorClient().decrypt(logger, this.getDataValue("webhookSecret"));
+	}
+
+	async encryptAndSetPrivateKey(plainText: string, logger: Logger) {
 		const encrypted = await getCryptorClient().encrypt(logger, plainText);
 		this.setDataValue("privateKey", encrypted);
+	}
+
+	async decryptAndGetPrivateKey(logger: Logger) {
+		return await getCryptorClient().decrypt(logger, this.getDataValue("privateKey"));
 	}
 }
 
