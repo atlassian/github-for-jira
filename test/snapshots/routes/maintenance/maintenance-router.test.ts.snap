@@ -31,6 +31,20 @@ Object {
         "url": "/jira/configuration",
       },
     ],
+    "generalPages": Array [
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-select-version-page",
+        "name": Object {
+          "value": "GitHub Select Version",
+        },
+        "url": "/jira/select-version",
+      },
+    ],
     "jiraBuildInfoProvider": Object {
       "homeUrl": "https://github.com/features/actions",
       "key": "github-actions",
