@@ -11,7 +11,7 @@ app.get("/healthcheck", (_, res)=>{
 	res.send({ok: true});
 });
 app.post("/cryptor/encrypt/*", (req, res) => {
-	if (req.headers["x-cryptor-client"] !== process.env.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE) {
+	if (req.headers["x-cryptor-client"] !== process.env.CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE) {
 		res.status(403).send("Wrong challenge");
 		return;
 	}
@@ -28,7 +28,7 @@ app.post("/cryptor/encrypt/*", (req, res) => {
 	res.status(200).json(ret);
 });
 app.post("/cryptor/decrypt", (req, res) => {
-	if (req.headers["x-cryptor-client"] !== process.env.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE) {
+	if (req.headers["x-cryptor-client"] !== process.env.CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE) {
 		res.status(403).send("Wrong challenge");
 		return;
 	}

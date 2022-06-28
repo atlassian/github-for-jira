@@ -50,13 +50,13 @@ export class CryptorHttpClient {
 	constructor(opts: CryptorHttpClientOptions) {
 		this.keyAlias = opts.keyAlias;
 		this.axiosCommonConfig = {
-			baseURL: opts.baseUrl || envVars.CRYPTOR_SIDECAR_BASE_URL,
-			timeout: opts.timoutMSec || Number(envVars.CRYPTOR_SIDECAR_TIMEOUT_MSEC)
+			baseURL: opts.baseUrl || envVars.CRYPTOR_BASE_URL,
+			timeout: opts.timoutMSec || Number(envVars.CRYPTOR_TIMEOUT_MSEC)
 		};
 		this.axiosPostConfig = {
 			...this.axiosCommonConfig,
 			headers: {
-				"X-Cryptor-Client": opts.cryptorChanllenge || envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
+				"X-Cryptor-Client": opts.cryptorChanllenge || envVars.CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE,
 				"Content-Type": "application/json; charset=utf-8"
 			}
 		};
