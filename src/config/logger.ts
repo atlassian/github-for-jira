@@ -22,22 +22,10 @@ const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWA
 	bformat({ outputMode, levelInString: true })
 );
 
-// todo refacto to catch issues
-const parseConfig = (config) => {
-
-	// if (typeof config === 'object') {
-	// 	return config;
-	// }
-
-	// if (config.data) {
-	// 	return JSON.parse(util.inspect(config.data));
-	// }
-	return JSON.parse(inspect(config, { showHidden: true })); // removes circular dependency in json
-};
-
+// Todo config serializer it throwing occasional error
 const responseSerializer = (res: AxiosResponse) => ({
 	...stdSerializers.res(res),
-	config: parseConfig(res.config),
+	config: JSON.parse(inspect(res.config)), // removes circular dependency in json
 	request: requestSerializer(res.request)
 });
 
