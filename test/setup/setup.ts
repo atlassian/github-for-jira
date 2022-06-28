@@ -17,7 +17,6 @@ const redis = new IORedis(getRedisInfo("test"));
 type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
 type GithubAppTokenNockFunc = () => void
 type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
-type CryptorNockFunc = () => void
 
 declare global {
 	let jiraHost: string;
@@ -26,14 +25,12 @@ declare global {
 	let jiraStagingNock: nock.Scope;
 	let githubNock: nock.Scope;
 	let gheNock: nock.Scope;
-	let cryptorNock: nock.Scope;
 	let gheUrl: string;
 	let githubUserTokenNock: GithubUserTokenNockFunc;
 	let githubAppTokenNock: GithubAppTokenNockFunc;
 	let gheUserTokenNock: GithubUserTokenNockFunc;
 	let gheAppTokenNock: GithubAppTokenNockFunc;
 	let mockSystemTime: MockSystemTimeFunc;
-	let cryptorEncryptDecryptNock: CryptorNockFunc;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
@@ -43,14 +40,12 @@ declare global {
 			jiraStagingNock: nock.Scope;
 			githubNock: nock.Scope;
 			gheNock: nock.Scope;
-			cryptorNock: nock.Scope;
 			gheUrl: string;
 			githubUserTokenNock: GithubUserTokenNockFunc;
 			githubAppTokenNock: GithubAppTokenNockFunc;
 			gheUserTokenNock: GithubUserTokenNockFunc;
 			gheAppTokenNock: GithubAppTokenNockFunc;
 			mockSystemTime: MockSystemTimeFunc;
-			cryptorEncryptDecryptNock: CryptorNockFunc;
 		}
 	}
 }
@@ -121,31 +116,6 @@ const githubAppToken = (scope: nock.Scope): GithubAppTokenNockFunc =>
 			});
 	};
 
-const getCryptorNock = (): nock.Scope => {
-	return nock(envVars.CRYPTOR_BASE_URL, {
-		reqheaders: {
-			"x-cryptor-client": envVars.CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE
-		}
-	});
-};
-
-const setupCryptorNock = (scope: nock.Scope) => {
-	return () => {
-		scope
-			.post("/cryptor/encrypt/mykey", {
-				plainText: "foo",
-				encryptionContext: {}
-			})
-			.reply(200, { cipherText: "bar" })
-			.post("/cryptor/decrypt", {
-				cipherText: "bar",
-				encryptionContext: {}
-			})
-			.reply(200, { plainText: "foo" });
-	};
-};
-
-
 beforeAll(async () => {
 	resetEnvVars();
 	await clearState();
@@ -162,7 +132,6 @@ beforeEach(() => {
 	global.githubNock = nock("https://api.github.com");
 	global.gheUrl = "https://github.mydomain.com/api/v3";
 	global.gheNock = nock(global.gheUrl);
-	global.cryptorNock = getCryptorNock();
 	global.githubUserTokenNock = githubUserToken(githubNock);
 	global.githubAppTokenNock = githubAppToken(githubNock);
 	global.gheUserTokenNock = githubUserToken(gheNock);
@@ -172,7 +141,6 @@ beforeEach(() => {
 		mock.mockReturnValue(new Date(time).getTime());
 		return mock;
 	};
-	global.cryptorEncryptDecryptNock = setupCryptorNock(cryptorNock);
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting
