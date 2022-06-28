@@ -1,6 +1,8 @@
 import { Model, DataTypes, Sequelize } from "sequelize";
 import { sequelize } from "models/sequelize";
 import EncryptedField from "sequelize-encrypted";
+import { CryptorHttpClient } from "../util/cryptor-http-client";
+import Logger from "bunyan";
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
@@ -14,6 +16,12 @@ interface GitHubServerAppPayload {
 	gitHubAppName: string;
 	installationId: number;
 }
+
+const getCryptorClient = () => {
+	return new CryptorHttpClient({
+		keyAlias: "micros/github-for-jira/github-server-app-secrets"
+	});
+};
 
 export class GitHubServerApp extends Model {
 	id: number;
@@ -106,9 +114,24 @@ export class GitHubServerApp extends Model {
 			}
 		});
 	}
+
+	async setGitHubClientSecret(plainText: string, logger: Logger) {
+		const encrypted = await getCryptorClient().encrypt(logger, plainText);
+		this.setDataValue("gitHubClientSecret", encrypted);
+	}
+
+	async setWebhookSecret(plainText: string, logger: Logger) {
+		const encrypted = await getCryptorClient().encrypt(logger, plainText);
+		this.setDataValue("webhookSecret", encrypted);
+	}
+
+	async setPrivateKey(plainText: string, logger: Logger) {
+		const encrypted = await getCryptorClient().encrypt(logger, plainText);
+		this.setDataValue("privateKey", encrypted);
+	}
 }
 
-const directSetErrror = (field: string, method: string) =>{
+const directSetErrror = (field: string, method: string) => {
 	return new Error(`Because of using cryptor, please do not directly set the value to the field [${field}] itself, but instead using method [${method}]`);
 };
 
