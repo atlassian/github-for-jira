@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="/public/css/global.css" media="all" />
     <link
       rel="stylesheet"
-      href="/public/css/jira-connect-ghe.css"
+      href="/public/css/jira-server-url.css"
       media="all"
     />
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
@@ -30,7 +30,7 @@
   <body class="aui-page-hybrid">
     <div class="jiraConnectGHE">
       <header class="jiraConnectGHE__header">
-         {{> navigation previousPageName="Select GitHub Version" }}
+         {{> navigation previousPageName="Select GitHub Version" previousPagePath=previousPagePath }}
       </header>
 
       <section class="jiraConnectGHE__content">
@@ -61,9 +61,8 @@
             <input type="text" class="jiraConnectGHE__input" id="gheServerURL" placeholder="https://example.com" />
             <div class="jiraConnectGHE__error" id="gheServerURLError">
               <i class="aui-icon aui-iconfont-error"></i>
-              The entered URL is not valid.
-              <!--TODO: Add a link here-->
-              <a href="" target="_blank">Learn more.</a>
+              <span></span>
+              <a href="" target="_blank"></a>
             </div>
           </div>
 
@@ -84,7 +83,8 @@
 
     </div>
 
-    <script src="/public/js/jira-connect-ghe.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/jira-server-url.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script

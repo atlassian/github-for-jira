@@ -79,7 +79,7 @@ const modules = {
 			},
 			url: "/jira/server-url",
 			conditions: adminCondition
-		},
+		}
 	],
 	webSections: [
 		{

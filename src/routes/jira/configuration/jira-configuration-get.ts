@@ -113,7 +113,7 @@ export const JiraConfigurationGet = async (
 				isGlobalInstall: installation.repository_selection === "all"
 			}));
 
-		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)
+		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 			? "select-github-version-link"
 			: "add-organization-link";
 

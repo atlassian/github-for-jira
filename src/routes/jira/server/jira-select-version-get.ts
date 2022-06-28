@@ -12,7 +12,7 @@ export const JiraSelectVersionGet = async (
 			previousPagePath: "github-post-install-page"
 		});
 
-		req.log.info("Jira select rendered successfully.");
+		req.log.info("Jira select rendered Jira select GitHub version page successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira select GitHub version page: ${error}`));
 	}
