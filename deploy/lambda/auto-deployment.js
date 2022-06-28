@@ -37,12 +37,16 @@ exports.handler = async function (event, context) {
                 }
             };
 
-            await postRequest(
-                pipelinesURL,
-                body,
-                {'Authorization': 'Basic ' + new Buffer(autoDeployUsername + ':' + autoDeployToken).toString('base64')}
+            const pipelineResponse = await postRequest(
+              pipelinesURL,
+              body,
+              {'Authorization': 'Basic ' + new Buffer(autoDeployUsername + ':' + autoDeployToken).toString('base64')}
             );
-            console.log('Pipeline triggered successfully!');
+            if (pipelineResponse.type === 'success') {
+                console.log('Pipeline triggered successfully!');
+            } else {
+                throw new Error(JSON.stringify(pipelineResponse));
+            }
         } else {
             console.log('No changes found, skipping deployment!');
         }
