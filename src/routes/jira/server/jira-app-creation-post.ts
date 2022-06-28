@@ -6,14 +6,13 @@ export const JiraAppCreationPost = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.info("Received Jira app creation page request");
-
-		res.render("jira-select-app-creation.hbs", {
-			previousPagePath: "github-server-url-page"
-		});
-
-		req.log.info("Jira app creation page rendered successfully.");
+		req.log.info("IN HERE")
+		// req.log.info(`Querying GHServerApps for existing GitHub apps with url: ${req.body}`);
+		// take the provided url and query the GH Apps server table
+		// if entry is found pass module key for that page (todo)
+		// if no entry is found pass module key to that page
+		res.sendStatus(200);
 	} catch (error) {
-		return next(new Error(`Failed to render Jira app creation page: ${error}`));
+		return next(new Error(`Something went wrong when querying the table: ${error}`));
 	}
 };

@@ -90,25 +90,26 @@ $("#gheServerBtn").on("click", event => {
 		$("#gheServerBtnText").hide();
 		$("#gheServerBtnSpinner").show();
 
+		console.log("gheServerURL: ", gheServerURL)
+
 		// todo - make request to url to make sure we can get a 200 response
 		// if that request fails, hide the spinner and show the text and render an error
 		// if request succeeds, call the following
-		AP.context.getToken(function() {
-			$.ajax({
-				type: "POST",
-				url: "/jira/app-creation",
-				data: {
-					gheServerURL
-				},
-				success: function(data) {
-					AP.navigator.go(
-						'addonmodule',
-						{
-							moduleKey: "github-app-creation-page"
-						}
-					);
-				}
-			});
+		$.ajax({
+			type: "POST",
+			url: "/jira/app-creation",
+			data: {
+				gheServerURL
+			},
+			success: function(data) {
+				console.log("SUCCESS!!")
+				AP.navigator.go(
+					'addonmodule',
+					{
+						moduleKey: "github-app-creation-page"
+					}
+				);
+			}
 		});
 	}
 });
