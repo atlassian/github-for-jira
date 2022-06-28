@@ -32,7 +32,7 @@ services:
     volumes:
       - ./.localstack:/docker-entrypoint-initaws.d
 
-  cryptor-sidecar:
+  cryptor:
     build: etc/cryptor-mock
     container_name: cryptor-sidecar
     environment:
@@ -44,7 +44,7 @@ services:
       - redis
       - postgres
       - localstack
-      - cryptor-sidecar
+      - cryptor
     volumes:
       - .:/app
     build:

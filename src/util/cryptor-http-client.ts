@@ -63,14 +63,14 @@ export class CryptorHttpClient {
 	}
 
 	async encrypt(logger: Logger, plainText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
-		const { cipherText } = await this._post("encrypt", `/cryptor/encrypt/${this.keyAlias}`, {
+		const { cipherText } = await this.post("encrypt", `/cryptor/encrypt/${this.keyAlias}`, {
 			plainText, encryptionContext
 		}, logger);
 		return cipherText;
 	}
 
 	async decrypt(logger: Logger, cipherText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
-		const { plainText } = await this._post("decrypt", `/cryptor/decrypt`, {
+		const { plainText } = await this.post("decrypt", `/cryptor/decrypt`, {
 			cipherText, encryptionContext
 		}, logger);
 
@@ -81,7 +81,7 @@ export class CryptorHttpClient {
 		await axios.get("/healthcheck", this.axiosCommonConfig);
 	}
 
-	async _post(operation: string, path: string, payload: EncryptionPayload | DecryptionPayload, logger: Logger) {
+	private async post(operation: string, path: string, payload: EncryptionPayload | DecryptionPayload, logger: Logger) {
 		const childLogger = logger.child({ keyAlias: this.keyAlias, operation });
 
 		try {
