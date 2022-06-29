@@ -56,12 +56,58 @@ const setErrorMessage = error => {
 	$("#gheServerURL").addClass("has-error");
 };
 
-/**
- * Hides the error messages
- */
 const hideErrorMessage = () => {
 	$("#gheServerURLError").hide();
 	$("#gheServerURL").removeClass("has-error");
+};
+
+const activeRequest = () => {
+	$("#gheServerBtnText").hide();
+	$("#gheServerBtnSpinner").show();
+};
+
+const requestFailed = () => {
+	$("#gheServerBtnText").show();
+	$("#gheServerBtnSpinner").hide();
+};
+
+const checkForOrCreateGitHubApp = (gheServerURL) => {
+	$.ajax({
+		type: "POST",
+		url: "/jira/app-creation",
+		data: {
+			gheServerURL
+		},
+		success: function(data) {
+			const pagePath =  data.moduleKey;
+			AP.navigator.go(
+				"addonmodule",
+				{
+					moduleKey: pagePath
+				}
+			);
+		},
+		error: function(err) {
+			console.error(`Failed to retrieve GH app data. ${err}`)
+		}
+	});
+}
+
+const verifyGitHubServerUrl = (gheServerURL) => {
+	$.ajax({
+		type: "POST",
+		url: "/jira/verify-server-url",
+		data: {
+			gheServerURL
+		},
+		success: function() {
+			checkForOrCreateGitHubApp(gheServerURL);
+		},
+		error: function() {
+			console.error(`Failed to verify GHE server url. ${gheServerURL}`);
+			requestFailed();
+		}
+	});
 };
 
 $("#gheServerURL").on("keyup", event => {
@@ -85,71 +131,7 @@ $("#gheServerBtn").on("click", event => {
 
 	if (isValid) {
 		hideErrorMessage();
-
-		// Changing the text on the button and displaying the spinner
-		$("#gheServerBtnText").hide();
-		$("#gheServerBtnSpinner").show();
-
-		// todo - make request to url to make sure we can get a 200 response
-		// if that request fails, hide the spinner and show the text and render an error
-		// if request succeeds, call the following
-		// $.ajax({
-		// 	"url": gheServerURL,
-		// 	"method": "GET",
-		// 	'cache': false,
-		// 	'dataType': "jsonp",
-		// 	"async": true,
-		// 	"crossDomain": true,
-		// 	"headers": {
-		// 		"accept": "application/json",
-		// 		"Access-Control-Allow-Origin":"*"
-		// 	},
-		// 	success: function(data) {
-		// 		console.log(`Request to ${gheServerURL} was successful.`);
-		// 	},
-		// 	error: function(err) {
-		// 		console.error(`Request to ${gheServerURL} failed: ${JSON.stringify(err)}`);
-		// 		$("#gheServerBtnText").show();
-		// 		$("#gheServerBtnSpinner").hide();
-		// 	}
-		// });
-
-		$.ajax({
-			type: "POST",
-			url: "/jira/verify-server-url",
-			data: {
-				gheServerURL
-			},
-			success: function(data) {
-				// AP.navigator.go(
-				// 	"addonmodule",
-				// 	{
-				// 		moduleKey: data.moduleKey
-				// 	}
-				// );
-			},
-			error: function(err) {
-				console.error(`Failed to retrieve GH app data. ${JSON.stringify(err)}`)
-			}
-		});
-
-		// $.ajax({
-		// 	type: "POST",
-		// 	url: "/jira/app-creation",
-		// 	data: {
-		// 		gheServerURL
-		// 	},
-		// 	success: function(data) {
-		// 		// AP.navigator.go(
-		// 		// 	"addonmodule",
-		// 		// 	{
-		// 		// 		moduleKey: data.moduleKey
-		// 		// 	}
-		// 		// );
-		// 	},
-		// 	error: function(err) {
-		// 		console.error(`Failed to retrieve GH app data. ${err}`)
-		// 	}
-		// });
+		activeRequest();
+		verifyGitHubServerUrl(gheServerURL);
 	}
 });

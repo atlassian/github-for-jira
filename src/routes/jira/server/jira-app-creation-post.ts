@@ -7,8 +7,7 @@ export const JiraAppCreationPost = async (
 	res: Response,
 	next: NextFunction
 ): Promise<e.Response<number, Record<string, string>> | void> => {
-		const { gheServerURL } = req.body;
-	// req.log.info("POSTING.............")
+	const { gheServerURL } = req.body;
 
 	try {
 		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL);
