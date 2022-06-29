@@ -132,7 +132,7 @@ ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
 		await CryptorHttpClient.decrypt(encrypted, req.log);
 		resp.status(204).send("ok");
 	} catch (_) {
-		resp.status(500).send('fail');
+		resp.status(500).send("fail");
 	}
 });
 

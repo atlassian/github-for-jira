@@ -31,6 +31,7 @@ export class CryptorHttpClient {
 
 	static async encrypt(secretKey: CryptorSecretKey, plainText: string, logger: Logger): Promise<string> {
 		try {
+			logger.info("------- cryptor config", { url: `/cryptor/encrypt/${KEY_ALIAS_PREFIX}/${secretKey}`, config: CryptorHttpClient.axiosConfig() });
 			const { cipherText }= (await axios.post(`/cryptor/encrypt/${KEY_ALIAS_PREFIX}/${secretKey}`, {
 				plainText,
 				encryptionContext: {}
@@ -44,6 +45,7 @@ export class CryptorHttpClient {
 
 	static async decrypt(cipherText: string, logger: Logger): Promise<string> {
 		try {
+			logger.info("------- cryptor config", { config: CryptorHttpClient.axiosConfig() });
 			const { plainText }= (await axios.post(`/cryptor/decrypt`, {
 				cipherText,
 				encryptionContext: {}
