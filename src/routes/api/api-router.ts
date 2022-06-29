@@ -128,29 +128,10 @@ ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
 	for (let i = 0; i < 10; i++) {
 		data = data + "-" + Math.floor((Math.random() * 10));
 	}
-	const logger = req.log.child("testing-cryptor");
-	const cryptor = new CryptorHttpClient({ keyAlias: "micros/github-for-jira/github-server-app-secrets" });
 
-	const startedTime = new Date().getTime();
-	const encrypted = await cryptor.encrypt(logger, data, { a: "b" });
-	logger.info({
-		elapsed: new Date().getTime() - startedTime
-	}, `Data encrypted: ${encrypted}`);
+	const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, data, req.log);
 
-	try {
-		const decrypted = await cryptor.decrypt(logger, encrypted, { a: "b" });
-		logger.info({
-			elapsed: new Date().getTime() - startedTime
-		}, `Data decrypted (round-trip): ${decrypted}`);
-
-		await cryptor.decrypt(logger, encrypted, { a: "b2" });
-		logger.info({
-			elapsed: new Date().getTime() - startedTime
-		}, `Data decrypted (round-trip): ${decrypted}`);
-	} catch (e) {
-		logger.error({ err: e });
-		logger.error({ error: e.toJSON() });
-	}
+	await CryptorHttpClient.decrypt(encrypted, req.log);
 });
 
 ApiRouter.use("/jira", ApiJiraRouter);

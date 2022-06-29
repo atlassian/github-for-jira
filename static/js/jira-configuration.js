@@ -23,6 +23,17 @@ $(".add-organization-link").click(function(event) {
 	});
 });
 
+$(".select-github-version-link").click(function(event) {
+	event.preventDefault();
+
+	AP.navigator.go(
+		'addonmodule',
+			{
+				moduleKey: "github-select-version-page"
+			}
+		);
+});
+
 $(".configure-connection-link").click(function(event) {
 	event.preventDefault();
 	openChildWindow($(event.target).data("installation-link"));
