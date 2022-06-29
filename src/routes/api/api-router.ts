@@ -13,6 +13,7 @@ import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
+import { CryptorHttpClient } from "utils/cryptor-http-client";
 
 export const ApiRouter = Router();
 
@@ -107,5 +108,32 @@ ApiRouter.delete(
 	ApiInstallationDelete
 );
 
+// TODO: remove the debug endpoint
+/*
+How to invoke:
+
+% atlas slauth curl -a github-for-jira -g micros-sv--github-for-jira-dl-admins -- \
+-X GET \
+-v https://github-for-jira.ap-southeast-2.dev.atl-paas.net/api/cryptor
+
+`micros_github-for-jira` env=ddev "encrypted" , and then
+`micros_github-for-jira` env=ddev "<ID value from previous request>"
+
+ */
+ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
+
+	resp.status(204).send("ack");
+
+	let data = "";
+	for (let i = 0; i < 10; i++) {
+		data = data + "-" + Math.floor((Math.random() * 10));
+	}
+
+	const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, data, req.log);
+
+	await CryptorHttpClient.decrypt(encrypted, req.log);
+});
+
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
+
