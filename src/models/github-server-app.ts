@@ -49,6 +49,26 @@ export class GitHubServerApp extends Model {
 	}
 
 	/**
+	 * Get all GitHubServerApps for gitHubBaseUrl
+	 *
+	 * @param {{gitHubBaseUrl: string}} gitHubBaseUrl
+	 * @returns {GitHubServerApp[]}
+	 */
+	static async getAllForGitHubBaseUrl(
+		gitHubBaseUrl: string
+	): Promise<GitHubServerApp[] | null> {
+		if (!gitHubBaseUrl) {
+			return null;
+		}
+
+		return this.findAll({
+			where: {
+				gitHubBaseUrl: gitHubBaseUrl
+			}
+		});
+	}
+
+	/**
 	 * Create a new GitHubServerApp object
 	 *
 	 * @param {{

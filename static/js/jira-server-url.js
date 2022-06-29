@@ -2,15 +2,15 @@
 const ALLOWED_PROTOCOLS = ["http:", "https:"];
 const GITHUB_CLOUD = ["github.com", "www.github.com"];
 const defaultError = {
-	message: 'The entered URL is not valid.',
-	linkMessage: 'Learn more',
+	message: "The entered URL is not valid.",
+	linkMessage: "Learn more",
 	// TODO: add URL for this
-	linkUrl: '#'
+	linkUrl: "#"
 }
 const cloudURLError = {
-	message: 'The entered URL is a GitHub Cloud site.',
-	linkMessage: 'Connect a GitHub Cloud site',
-	linkUrl: '/session/github/configuration'
+	message: "The entered URL is a GitHub Cloud site.",
+	linkMessage: "Connect a GitHub Cloud site",
+	linkUrl: "/session/github/configuration"
 }
 
 /**
@@ -28,7 +28,7 @@ const checkValidGHEUrl = inputURL => {
 			return false;
 		}
 		// This checks whether the hostname whether there is an extension like `.com`, `.net` etc.
-		if (hostname.split('.').length < 2) {
+		if (hostname.split(".").length < 2) {
 			setErrorMessage(defaultError);
 			return false;
 		}
@@ -75,7 +75,7 @@ $("#gheServerURL").on("keyup", event => {
 
 $("#gheServerBtn").on("click", event => {
 	const btn = event.target;
-	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, '');
+	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
 	const isValid = checkValidGHEUrl(gheServerURL);
 
 	$(btn).attr({
@@ -90,11 +90,24 @@ $("#gheServerBtn").on("click", event => {
 		$("#gheServerBtnText").hide();
 		$("#gheServerBtnSpinner").show();
 
-		console.log("gheServerURL: ", gheServerURL)
-
 		// todo - make request to url to make sure we can get a 200 response
 		// if that request fails, hide the spinner and show the text and render an error
 		// if request succeeds, call the following
+		jQuery.support.cors = true;
+		$.ajax({
+			type: "GET",
+			url: gheServerURL,
+			headers: {"Access-Control-Allow-Origin": "https://rachelle-local.public.atlastunnel.com/"},
+			success: function(data) {
+				console.log(`Request to ${gheServerURL} was successful.`);
+			},
+			error: function(err) {
+				console.error(`Request to ${gheServerURL} failed: ${JSON.stringify(err)}`);
+				$("#gheServerBtnText").show();
+				$("#gheServerBtnSpinner").hide();
+			}
+		});
+
 		$.ajax({
 			type: "POST",
 			url: "/jira/app-creation",
@@ -102,13 +115,15 @@ $("#gheServerBtn").on("click", event => {
 				gheServerURL
 			},
 			success: function(data) {
-				console.log("SUCCESS!!")
-				AP.navigator.go(
-					'addonmodule',
-					{
-						moduleKey: "github-app-creation-page"
-					}
-				);
+				// AP.navigator.go(
+				// 	"addonmodule",
+				// 	{
+				// 		moduleKey: data.moduleKey
+				// 	}
+				// );
+			},
+			error: function(err) {
+				console.error(`Failed to retrieve GH app data. ${err}`)
 			}
 		});
 	}
