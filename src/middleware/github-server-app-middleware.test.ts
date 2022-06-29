@@ -47,7 +47,7 @@ describe("github-server-app-middleware", () => {
 
 		await expect(GithubServerAppMiddleware(req, res, next))
 			.rejects
-			.toThrow('No GitHub app found for provided id.');
+			.toThrow("No GitHub app found for provided id.");
 	});
 
 	it("should throw an error if an id is provided and a GitHub server app is found but the installation id doesn't match",  async() => {
@@ -81,7 +81,7 @@ describe("github-server-app-middleware", () => {
 
 		await expect(GithubServerAppMiddleware(req, res, next))
 			.rejects
-			.toThrow('Jira hosts do not match');
+			.toThrow("Jira hosts do not match");
 	});
 
 	it("should call next() when GH app is found and installation id matches", async () => {
