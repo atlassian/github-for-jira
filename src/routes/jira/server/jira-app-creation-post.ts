@@ -1,13 +1,16 @@
 import e, { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
+import axios from "axios";
 
 export const JiraAppCreationPost = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ): Promise<e.Response<number, Record<string, string>> | void> => {
-	try {
 		const { gheServerURL } = req.body;
+	// req.log.info("POSTING.............")
+
+	try {
 		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL);
 
 		if (gitHubServerApps?.length) {

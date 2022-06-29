@@ -1,6 +1,6 @@
 /* globals $, AP */
 const ALLOWED_PROTOCOLS = ["http:", "https:"];
-const GITHUB_CLOUD = ["github.com", "www.github.com"];
+const GITHUB_CLOUD = [];
 const defaultError = {
 	message: "The entered URL is not valid.",
 	linkMessage: "Learn more",
@@ -93,24 +93,30 @@ $("#gheServerBtn").on("click", event => {
 		// todo - make request to url to make sure we can get a 200 response
 		// if that request fails, hide the spinner and show the text and render an error
 		// if request succeeds, call the following
-		jQuery.support.cors = true;
-		$.ajax({
-			type: "GET",
-			url: gheServerURL,
-			headers: {"Access-Control-Allow-Origin": "https://rachelle-local.public.atlastunnel.com/"},
-			success: function(data) {
-				console.log(`Request to ${gheServerURL} was successful.`);
-			},
-			error: function(err) {
-				console.error(`Request to ${gheServerURL} failed: ${JSON.stringify(err)}`);
-				$("#gheServerBtnText").show();
-				$("#gheServerBtnSpinner").hide();
-			}
-		});
+		// $.ajax({
+		// 	"url": gheServerURL,
+		// 	"method": "GET",
+		// 	'cache': false,
+		// 	'dataType': "jsonp",
+		// 	"async": true,
+		// 	"crossDomain": true,
+		// 	"headers": {
+		// 		"accept": "application/json",
+		// 		"Access-Control-Allow-Origin":"*"
+		// 	},
+		// 	success: function(data) {
+		// 		console.log(`Request to ${gheServerURL} was successful.`);
+		// 	},
+		// 	error: function(err) {
+		// 		console.error(`Request to ${gheServerURL} failed: ${JSON.stringify(err)}`);
+		// 		$("#gheServerBtnText").show();
+		// 		$("#gheServerBtnSpinner").hide();
+		// 	}
+		// });
 
 		$.ajax({
 			type: "POST",
-			url: "/jira/app-creation",
+			url: "/jira/verify-server-url",
 			data: {
 				gheServerURL
 			},
@@ -123,8 +129,27 @@ $("#gheServerBtn").on("click", event => {
 				// );
 			},
 			error: function(err) {
-				console.error(`Failed to retrieve GH app data. ${err}`)
+				console.error(`Failed to retrieve GH app data. ${JSON.stringify(err)}`)
 			}
 		});
+
+		// $.ajax({
+		// 	type: "POST",
+		// 	url: "/jira/app-creation",
+		// 	data: {
+		// 		gheServerURL
+		// 	},
+		// 	success: function(data) {
+		// 		// AP.navigator.go(
+		// 		// 	"addonmodule",
+		// 		// 	{
+		// 		// 		moduleKey: data.moduleKey
+		// 		// 	}
+		// 		// );
+		// 	},
+		// 	error: function(err) {
+		// 		console.error(`Failed to retrieve GH app data. ${err}`)
+		// 	}
+		// });
 	}
 });
