@@ -1,6 +1,6 @@
 /* globals $, AP */
 const ALLOWED_PROTOCOLS = ["http:", "https:"];
-const GITHUB_CLOUD = [];
+const GITHUB_CLOUD = ["github.com", "www.github.com"];
 const defaultError = {
 	message: "The entered URL is not valid.",
 	linkMessage: "Learn more",
