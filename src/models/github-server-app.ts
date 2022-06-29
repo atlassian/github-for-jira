@@ -51,7 +51,7 @@ export class GitHubServerApp extends Model {
 	/**
 	 * Get all GitHubServerApps for gitHubBaseUrl with installationId
 	 *
-	 * @param {{gitHubBaseUrl: string, installationId: number | undefined}}
+	 * @param {{gitHubBaseUrl: string, installationId: number}}
 	 * @returns {GitHubServerApp[]}
 	 */
 	// TODO - verify against installation id
