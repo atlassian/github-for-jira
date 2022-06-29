@@ -167,21 +167,21 @@ GitHubServerApp.init({
 		type: DataTypes.STRING,
 		allowNull: false,
 		set() {
-			throw directSetErrror("gitHubClientSecret", "setGitHubClientSecret");
+			throw directSetErrror("gitHubClientSecret", "encryptAndSetGitHubClientSecret");
 		}
 	},
 	webhookSecret: {
 		type: DataTypes.STRING,
 		allowNull: false,
 		set() {
-			throw directSetErrror("webhookSecret", "setWebhookSecret");
+			throw directSetErrror("webhookSecret", "encryptAndSetWebhookSecret");
 		}
 	},
 	privateKey: {
 		type: DataTypes.STRING,
 		allowNull: false,
 		set() {
-			throw directSetErrror("privateKey", "setPrivateKey");
+			throw directSetErrror("privateKey", "encryptAndSetPrivateKey");
 		}
 	},
 	gitHubAppName: {
