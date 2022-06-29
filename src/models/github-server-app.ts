@@ -17,12 +17,6 @@ interface GitHubServerAppPayload {
 	installationId: number;
 }
 
-const getCryptorClient = () => {
-	return new CryptorHttpClient({
-		keyAlias: "micros/github-for-jira/github-server-app-secrets"
-	});
-};
-
 export class GitHubServerApp extends Model {
 	id: number;
 	uuid: string;
@@ -116,30 +110,30 @@ export class GitHubServerApp extends Model {
 	}
 
 	async encryptAndSetGitHubClientSecret(plainText: string, logger: Logger) {
-		const encrypted = await getCryptorClient().encrypt(logger, plainText);
+		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, plainText, logger);
 		this.setDataValue("gitHubClientSecret", encrypted);
 	}
 
 	async decryptAndGetGitHubClientSecret(logger: Logger) {
-		return await getCryptorClient().decrypt(logger, this.getDataValue("gitHubClientSecret"));
+		return await CryptorHttpClient.decrypt(this.getDataValue("gitHubClientSecret"), logger);
 	}
 
 	async encryptAndSetWebhookSecret(plainText: string, logger: Logger) {
-		const encrypted = await getCryptorClient().encrypt(logger, plainText);
+		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, plainText, logger);
 		this.setDataValue("webhookSecret", encrypted);
 	}
 
 	async decryptAndGetWebhookSecret(logger: Logger) {
-		return await getCryptorClient().decrypt(logger, this.getDataValue("webhookSecret"));
+		return await CryptorHttpClient.decrypt(this.getDataValue("webhookSecret"), logger);
 	}
 
 	async encryptAndSetPrivateKey(plainText: string, logger: Logger) {
-		const encrypted = await getCryptorClient().encrypt(logger, plainText);
+		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, plainText, logger);
 		this.setDataValue("privateKey", encrypted);
 	}
 
 	async decryptAndGetPrivateKey(logger: Logger) {
-		return await getCryptorClient().decrypt(logger, this.getDataValue("privateKey"));
+		return await CryptorHttpClient.decrypt(this.getDataValue("privateKey"), logger);
 	}
 }
 

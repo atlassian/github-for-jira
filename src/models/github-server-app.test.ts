@@ -1,9 +1,5 @@
 import { GitHubServerApp } from "models/github-server-app";
 import { getLogger } from "../config/logger";
-import { CryptorHttpClient } from "../util/cryptor-http-client";
-
-jest.mock("../util/cryptor-http-client");
-const MockCryptorHttpClient = CryptorHttpClient as jest.Mock<CryptorHttpClient>;
 
 const UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 
@@ -29,10 +25,6 @@ describe("GitHubServerApp", () => {
 	});
 
 	describe("cryptor", () => {
-		beforeEach(() => {
-			MockCryptorHttpClient.mockClear();
-			mockCryptor();
-		});
 		describe("cryptor encryption", () => {
 			it("should throw error if directly setting gitHubClientSecret", async () => {
 				expect(() => {
@@ -58,33 +50,33 @@ describe("GitHubServerApp", () => {
 			it("should convert plain text into encrypted text when calling setGitHubClientSecret method", async () => {
 				const app = buildGitHubServerApp();
 				await app.encryptAndSetGitHubClientSecret("gh_client_secret", getLogger("test"));
-				expect(app.gitHubClientSecret).toBe("gh_client_secret_encrypted");
+				expect(app.gitHubClientSecret).toBe("encrypted:gh_client_secret");
 			});
 			it("should convert plain text into encrypted text when calling setWebhookSecret method", async () => {
 				const app = buildGitHubServerApp();
 				await app.encryptAndSetWebhookSecret("webhook_secret", getLogger("test"));
-				expect(app.webhookSecret).toBe("webhook_secret_encrypted");
+				expect(app.webhookSecret).toBe("encrypted:webhook_secret");
 			});
 			it("should convert plain text into encrypted text when calling setPrivateKey method", async () => {
 				const app = buildGitHubServerApp();
 				await app.encryptAndSetPrivateKey("private_key", getLogger("test"));
-				expect(app.privateKey).toBe("private_key_encrypted");
+				expect(app.privateKey).toBe("encrypted:private_key");
 			});
 		});
 		describe("cryptor decryption", () => {
 			it("should decrypt gitHubClientSecret", async () => {
 				const app = buildGitHubServerApp();
-				app.setDataValue("gitHubClientSecret", "gh_client_secret_encrypted");
+				app.setDataValue("gitHubClientSecret", "encrypted:gh_client_secret");
 				expect(await app.decryptAndGetGitHubClientSecret(getLogger("test"))).toBe("gh_client_secret");
 			});
 			it("should decrypt webhookSecret", async () => {
 				const app = buildGitHubServerApp();
-				app.setDataValue("webhookSecret", "webhook_secret_encrypted");
+				app.setDataValue("webhookSecret", "encrypted:webhook_secret");
 				expect(await app.decryptAndGetWebhookSecret(getLogger("test"))).toBe("webhook_secret");
 			});
 			it("should decrypt privateKey", async () => {
 				const app = buildGitHubServerApp();
-				app.setDataValue("privateKey", "private_key_encrypted");
+				app.setDataValue("privateKey", "encrypted:private_key");
 				expect(await app.decryptAndGetPrivateKey(getLogger("test"))).toBe("private_key");
 			});
 		});
@@ -97,18 +89,6 @@ describe("GitHubServerApp", () => {
 				gitHubAppName: "sample app",
 				installationId: 123,
 				...opts
-			});
-		};
-		const mockCryptor = () => {
-			MockCryptorHttpClient.mockImplementationOnce(() => {
-				return ({
-					encrypt: async (_: Logger, plainText: string): Promise<string> => {
-						return plainText + "_encrypted";
-					},
-					decrypt: async (_: Logger, cipherText: string): Promise<string> => {
-						return cipherText.replace("_encrypted", "");
-					}
-				} as any) as CryptorHttpClient;
 			});
 		};
 	});
