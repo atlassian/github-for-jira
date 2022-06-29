@@ -2,7 +2,6 @@ import Logger, { createLogger, INFO, levelFromName, stdSerializers } from "bunya
 import bformat from "bunyan-format";
 import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
 import { Request } from "express";
-import { inspect } from "util";
 import { AxiosResponse } from "axios";
 import { createHashWithSharedSecret } from "utils/encryption";
 
@@ -22,10 +21,8 @@ const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWA
 	bformat({ outputMode, levelInString: true })
 );
 
-// Todo existing config serializer is throwing occasional error, investigate.
 const responseSerializer = (res: AxiosResponse) => ({
 	...stdSerializers.res(res),
-	config: JSON.parse(inspect(res?.config)), // removes circular dependency in json
 	request: requestSerializer(res.request)
 });
 
@@ -46,14 +43,14 @@ const errorSerializer = (err) => (!err || !err.stack) ? err : {
 	stack: getFullErrorStack(err)
 };
 
-const hashSerializer = (data: any): string => {
+const hashSerializer = (data: any): string | undefined => {
 	if (data === undefined || data == null) {
-		return data;
+		return undefined;
 	}
 	return createHashWithSharedSecret(data);
 };
 
-export const unsafeDataSerializers = (): Logger.Serializers => ({
+export const sensitiveDataSerializers = (): Logger.Serializers => ({
 	jiraHost: hashSerializer,
 	orgName: hashSerializer,
 	repoName: hashSerializer,
@@ -102,19 +99,21 @@ const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger
 				res: responseSerializer,
 				req: requestSerializer
 			},
-			fields
+			...fields
 		});
 };
 
 export const getLogger = (name: string, fields?: Record<string, unknown>): Logger => {
-	const logger = createNewLogger(name, fields);
-	logger.addSerializers(unsafeDataSerializers());
-	return logger;
+	const logger = createNewLogger(name);
+
+	logger.addSerializers(sensitiveDataSerializers());
+	return logger.child({ ...fields });
 };
 
 // This will log data to a restricted environment [env]-unsafe and not serialize sensitive data
 export const getUnsafeLogger = (name: string, fields?: Record<string, unknown>): Logger => {
-	return createNewLogger(name, { ...fields, env_suffix: "unsafe" });
+	const logger = createNewLogger(name, { env_suffix: "unsafe" });
+	return logger.child({ ...fields });
 };
 
 //Override console.log with bunyan logger.

@@ -1,5 +1,5 @@
 import { Writable } from "stream";
-
+// import { inspect } from "util";
 /**
  * Creates a writable stream that prevents HTTP logs from being logged
  *
@@ -25,7 +25,11 @@ export const filteringHttpLogsStream = (filteringLoggerName: string, out) => {
 	const writable = new Writable({
 		write: function(chunk, encoding, next) {
 			if (!shouldBeFiltered(chunk)) {
+				// console.log('chunk');
+				// console.log(typeof chunk);
+				// console.log(chunk);
 				out.write(chunk, encoding);
+				// out.write(JSON.parse((chunk.toString())), encoding);
 			}
 			next();
 		}
