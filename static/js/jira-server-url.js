@@ -89,6 +89,7 @@ const checkForOrCreateGitHubApp = (gheServerURL) => {
 		},
 		error: function(err) {
 			console.error(`Failed to retrieve GH app data. ${err}`)
+			// TODO - build and render error component
 		}
 	});
 }

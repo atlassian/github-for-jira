@@ -66,3 +66,4 @@ export const metricWebhooks = {
 	webhookFailure: `${server}.webhooks.failed`,
 	webhookLatency: `${server}.webhooks.processing-time.latency`
 };
+

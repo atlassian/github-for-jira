@@ -9,7 +9,7 @@ function openChildWindow(url) {
 			clearInterval(interval);
 			AP.navigator.reload();
 		}
-	}, 100);
+	}, 1000);
 
 	return child;
 }
