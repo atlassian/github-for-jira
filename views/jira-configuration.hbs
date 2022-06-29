@@ -321,8 +321,9 @@
                 Shortcut
               </span>
             </a>
+            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
             <button
-              class="ak-button ak-button__appearance-primary add-organization-link"
+              class="ak-button ak-button__appearance-primary {{handleNavigationClassName}}"
             >Connect GitHub organization</button>
           </div>
         {{/if}}
