@@ -42,6 +42,7 @@ exports.handler = async function (event, context) {
               body,
               {'Authorization': 'Basic ' + new Buffer(autoDeployUsername + ':' + autoDeployToken).toString('base64')}
             );
+            console.log("Trigerring Pipeline API Response ", pipelineResponse);
             if (pipelineResponse.type === 'pipeline') {
                 console.log('Pipeline triggered successfully!');
             } else {
