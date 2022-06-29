@@ -650,6 +650,6 @@ environmentOverrides:
           scheduledRules:
             - name: 'PipelinesExecutionForGH4J'
               # Cron for running 20 minutes
-              expression: 'cron(0/20 * * * ? *)'
+              expression: 'cron(0/60 * * * ? *)'
           dataType:
             - Atlassian/Configuration
