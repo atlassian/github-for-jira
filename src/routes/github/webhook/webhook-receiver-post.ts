@@ -5,6 +5,9 @@ import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
 import { GitHubServerApp } from "models/github-server-app";
 import { WebhookContext } from "./webhook-context";
+import { webhookTimeout } from "~/src/util/webhook-timeout";
+import { issueCommentWebhookHandler } from "~/src/github/issue-comment";
+import { issueWebhookHandler } from "~/src/github/issue";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -44,22 +47,19 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 };
 
 const webhookRouter = (context: WebhookContext) => {
-	if (context.action) {
-		invokeHandler(`${context.name}.${context.action}`, context);
-	}
-	invokeHandler(`${context.name}`, context);
-};
-
-const invokeHandler = (event: string, context: WebhookContext) => {
-	switch (event) {
+	switch (context.name) {
 		case "push":
 			GithubWebhookMiddleware(pushWebhookHandler)(context);
 			break;
-		case "pull_request":
-			context.log.info("pull req event Received!");
+		case "issue_comment":
+			if (context.action === "created" || context.action === "edited") {
+				webhookTimeout(GithubWebhookMiddleware(issueCommentWebhookHandler))(context);
+			}
 			break;
-		case "pull_request.opened":
-			context.log.info("pull req opened event Received!");
+		case "issues":
+			if (context.action === "opened" || context.action === "edited") {
+				GithubWebhookMiddleware(issueWebhookHandler)(context);
+			}
 			break;
 	}
 };
