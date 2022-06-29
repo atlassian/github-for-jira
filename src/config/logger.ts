@@ -2,7 +2,6 @@ import Logger, { createLogger, INFO, levelFromName, stdSerializers } from "bunya
 import bformat from "bunyan-format";
 import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
 import { Request } from "express";
-import { inspect } from "util";
 import { AxiosResponse } from "axios";
 import { createHashWithSharedSecret } from "utils/encryption";
 
@@ -22,10 +21,9 @@ const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWA
 	bformat({ outputMode, levelInString: true })
 );
 
-// Todo existing config serializer is throwing occasional error, investigate.
 const responseSerializer = (res: AxiosResponse) => ({
 	...stdSerializers.res(res),
-	config: JSON.parse(inspect(res?.config)), // removes circular dependency in json
+	config: res?.config,
 	request: requestSerializer(res.request)
 });
 
@@ -39,11 +37,10 @@ const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
 	body: req.body
 };
 
-const errorSerializer = (err) => (!err || !err.stack) ? err : {
+const errorSerializer = (err) => err && {
 	...err,
 	response: stdSerializers.res(err.response),
-	request: requestSerializer(err.request),
-	stack: getFullErrorStack(err)
+	request: requestSerializer(err.request)
 };
 
 const hashSerializer = (data: any): string => {
@@ -61,17 +58,6 @@ export const unsafeDataSerializers = (): Logger.Serializers => ({
 	aaid: hashSerializer,
 	username: hashSerializer
 });
-
-const getFullErrorStack = (ex) => {
-	let ret = ex.stack || ex.toString();
-	if (ex.cause && typeof (ex.cause) === "function") {
-		const cex = ex.cause();
-		if (cex) {
-			ret += "\nCaused by: " + getFullErrorStack(cex);
-		}
-	}
-	return ret;
-};
 
 const logLevel = process.env.LOG_LEVEL || "info";
 const globalLoggingLevel = levelFromName[logLevel] || INFO;
