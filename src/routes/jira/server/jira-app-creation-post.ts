@@ -6,12 +6,12 @@ export const JiraAppCreationPost = async (
 	res: Response,
 	next: NextFunction
 ): Promise<e.Response<number, Record<string, string>> | void> => {
-	const { gheServerURL } = req.body;
+	const { gheServerURL, installationId } = req.body;
 
 	try {
-		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL);
+		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL, installationId);
 
-		if (gitHubServerApps?.length) {
+		if (gitHubServerApps && gitHubServerApps?.length > 0) {
 			req.log.info(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
 			return res.status(200).send({ moduleKey: "github-list-apps-page" });
 		} else {

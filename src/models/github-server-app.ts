@@ -49,21 +49,24 @@ export class GitHubServerApp extends Model {
 	}
 
 	/**
-	 * Get all GitHubServerApps for gitHubBaseUrl
+	 * Get all GitHubServerApps for gitHubBaseUrl with installationId
 	 *
-	 * @param {{gitHubBaseUrl: string}} gitHubBaseUrl
+	 * @param {{gitHubBaseUrl: string, installationId: number | undefined}}
 	 * @returns {GitHubServerApp[]}
 	 */
+	// TODO - verify against installation id
 	static async getAllForGitHubBaseUrl(
-		gitHubBaseUrl: string
+		gitHubBaseUrl: string,
+		installationId: number
 	): Promise<GitHubServerApp[] | null> {
-		if (!gitHubBaseUrl) {
+		if (!gitHubBaseUrl || !installationId) {
 			return null;
 		}
 
 		return this.findAll({
 			where: {
-				gitHubBaseUrl: gitHubBaseUrl
+				gitHubBaseUrl,
+				installationId
 			}
 		});
 	}
