@@ -130,7 +130,7 @@ ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
 		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, data, req.log);
 
 		await CryptorHttpClient.decrypt(encrypted, req.log);
-		resp.status(204).send("ok");
+		resp.status(200).send("ok");
 	} catch (_) {
 		resp.status(500).send("fail");
 	}
