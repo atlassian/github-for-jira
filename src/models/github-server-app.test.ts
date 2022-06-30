@@ -1,5 +1,7 @@
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
+import { CryptorHttpClient } from "../util/cryptor-http-client";
+import { getLogger } from "../config/logger";
 
 describe("GitHubServerApp", () => {
 
@@ -24,6 +26,38 @@ describe("GitHubServerApp", () => {
 	});
 
 	describe("cryptor", () => {
+		//--------- helpers
+		const defaults = (uuid: string, surfix?: string) => ({
+			uuid,
+			gitHubBaseUrl: "does not matter",
+			gitHubClientId: "sample id",
+			gitHubAppName: "sample app",
+			installationId: 123,
+			privateKey: "private-key-plain-text" + (surfix || ""),
+			webhookSecret: "webhook-secret-plain-text" + (surfix || ""),
+			gitHubClientSecret: "client-secret-plain-text" + (surfix || "")
+		});
+		describe("cryptor decryption", () => {
+			it("should return encrypted text when reading the field properties", async () => {
+				const uuid = newUUID();
+				const app = await GitHubServerApp.create({
+					...defaults(uuid)
+				});
+
+				expect(app.privateKey).toBe("encrypted:private-key-plain-text");
+				const decryptedPrivateKey = await CryptorHttpClient.decrypt(app.privateKey, getLogger("test"));
+				expect(decryptedPrivateKey).toBe("private-key-plain-text");
+
+				expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text");
+				const decryptedWebhookSecret = await CryptorHttpClient.decrypt(app.webhookSecret, getLogger("test"));
+				expect(decryptedWebhookSecret).toBe("webhook-secret-plain-text");
+
+				expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text");
+				const decryptedGitHubClient = await CryptorHttpClient.decrypt(app.gitHubClientSecret, getLogger("test"));
+				expect(decryptedGitHubClient).toBe("client-secret-plain-text");
+
+			});
+		});
 		describe("cryptor encryption", () => {
 			describe("Single entry", () => {
 				it("should convert plain text into encrypted text when calling CREATE", async () => {
@@ -94,17 +128,6 @@ describe("GitHubServerApp", () => {
 					}
 				});
 			});
-		});
-		//--------- helpers
-		const defaults = (uuid: string, surfix?: string) => ({
-			uuid,
-			gitHubBaseUrl: "does not matter",
-			gitHubClientId: "sample id",
-			gitHubAppName: "sample app",
-			installationId: 123,
-			privateKey: "private-key-plain-text" + (surfix || ""),
-			webhookSecret: "webhook-secret-plain-text" + (surfix || ""),
-			gitHubClientSecret: "client-secret-plain-text" + (surfix || "")
 		});
 	});
 });
