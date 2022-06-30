@@ -56,10 +56,6 @@
   color: #fff;
 }
 
-/**
-  TODO: These error blocks are shown only for the sake of purpose at the moment,
-        Please change this to `none` before merging
- */
 .jiraConnectGHE__validationError, .jiraConnectGHE__defaultError {
-  display: block;
+  display: none;
 }
