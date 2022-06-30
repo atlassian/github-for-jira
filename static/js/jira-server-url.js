@@ -1,4 +1,6 @@
 /* globals $, AP */
+const params = new URLSearchParams(window.location.search.substring(1));
+const jiraHost = params.get("xdm_e");
 const ALLOWED_PROTOCOLS = ["http:", "https:"];
 const GITHUB_CLOUD = ["github.com", "www.github.com"];
 const defaultError = {
@@ -71,46 +73,32 @@ const requestFailed = () => {
 	$("#gheServerBtnSpinner").hide();
 };
 
-const checkForOrCreateGitHubApp = (gheServerURL) => {
+const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 	const csrf = document.getElementById('_csrf').value;
 
-	$.ajax({
-		type: "POST",
-		url: "/jira/app-creation",
-		data: {
-			gheServerURL,
-			_csrf: csrf
-		},
-		success: function(data) {
-			const pagePath = data.moduleKey;
-			AP.navigator.go(
-				"addonmodule",
-				{
-					moduleKey: pagePath
+	window.AP.context.getToken(function(token) {
+		$.post("/jira/server-url", {
+				gheServerURL,
+				_csrf: csrf,
+				jwt: token,
+				jiraHost
+			},
+			function(data) {
+				if (data.err) {
+					console.error(`Failed to verify GHE server url. ${gheServerURL}`);
+					console.error(`Failed to retrieve GH app data. ${JSON.stringify(err)}`);
+					requestFailed();
+					// TODO - build and render error component
 				}
-			);
-		},
-		error: function(err) {
-			console.error(`Failed to retrieve GH app data. ${JSON.stringify(err)}`)
-			// TODO - build and render error component
-		}
-	});
-}
-
-const verifyGitHubServerUrl = (gheServerURL) => {
-	$.ajax({
-		type: "POST",
-		url: "/jira/verify-server-url",
-		data: {
-			gheServerURL
-		},
-		success: function() {
-			checkForOrCreateGitHubApp(gheServerURL);
-		},
-		error: function() {
-			console.error(`Failed to verify GHE server url. ${gheServerURL}`);
-			requestFailed();
-		}
+				const pagePath = data.moduleKey;
+				AP.navigator.go(
+					"addonmodule",
+					{
+						moduleKey: pagePath
+					}
+				);
+			}
+		);
 	});
 };
 
@@ -127,6 +115,7 @@ $("#gheServerBtn").on("click", event => {
 	const btn = event.target;
 	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
 	const isValid = checkValidGHEUrl(gheServerURL);
+	const installationId = $(event.currentTarget).data("installation-id");
 
 	$(btn).attr({
 		"aria-disabled": !isValid,
@@ -136,6 +125,6 @@ $("#gheServerBtn").on("click", event => {
 	if (isValid) {
 		hideErrorMessage();
 		activeRequest();
-		verifyGitHubServerUrl(gheServerURL);
+		verifyGitHubServerUrl(gheServerURL, installationId);
 	}
 });

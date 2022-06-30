@@ -3,11 +3,10 @@ import { JiraConfigurationRouter } from "./configuration/jira-configuration-rout
 import { JiraSyncPost } from "./jira-sync-post";
 import { JiraAtlassianConnectGet } from "./jira-atlassian-connect-get";
 import { JiraEventsRouter } from "./events/jira-events-router";
-import { JiraSelectVersionRouter } from "./events/jira-select-version-router";
+import { JiraSelectVersionRouter } from "./server/jira-select-version-router";
 import { JiraContextJwtTokenMiddleware } from "middleware/jira-jwt-middleware";
-import { JiraServerUrlRouter } from "./events/jira-server-url-router";
-import { JiraAppCreationRouter } from "./events/jira-app-creation-router";
-import { JiraVerifyServerUrlRouter } from "./events/jira-verify-server-url-router";
+import { JiraServerUrlRouter } from "./server/jira-server-url-router";
+import { JiraAppCreationRouter } from "./server/jira-app-creation-router";
 
 export const JiraRouter = Router();
 
@@ -18,4 +17,3 @@ JiraRouter.use("/events", JiraEventsRouter);
 JiraRouter.use("/select-version", JiraSelectVersionRouter);
 JiraRouter.use("/server-url", JiraServerUrlRouter);
 JiraRouter.use("/app-creation", JiraAppCreationRouter);
-JiraRouter.use("/verify-server-url", JiraVerifyServerUrlRouter);

@@ -10,7 +10,8 @@ export const JiraServerUrlGet = async (
 
 		res.render("jira-server-url.hbs", {
 			previousPagePath: "github-select-version-page",
-			csrfToken: req.csrfToken()
+			csrfToken: req.csrfToken(),
+			installationId: res.locals.installation.id
 		});
 
 		req.log.info("Jira server url page rendered successfully.");
