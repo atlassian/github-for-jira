@@ -97,13 +97,16 @@ $('.jiraConfiguration__option').click(function (event) {
 
 	switch ($(event.target).attr('id')) {
 		case 'jiraConfiguration__optionCloud':
-			console.log("Show only cloud");
+			$('.jiraConfiguration__CloudContainer').show();
+			$('.jiraConfiguration__EnterpriseContainer').hide();
 			break;
 		case 'jiraConfiguration__optionEnterprise':
-			console.log("Show only enterprise");
+			$('.jiraConfiguration__EnterpriseContainer').show();
+			$('.jiraConfiguration__CloudContainer').hide();
 			break;
 		default:
-			console.log("Show All");
+			$('.jiraConfiguration__CloudContainer').show();
+			$('.jiraConfiguration__EnterpriseContainer').show();
 	}
 });
 

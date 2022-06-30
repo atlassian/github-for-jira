@@ -1,7 +1,6 @@
 .jiraConfiguration {
   box-sizing: border-box;
   height: 100vh;
-  overflow-y: hidden;
   padding: 3.5em 4.5em;
 }
 
@@ -452,6 +451,11 @@ so changing the position of the tooltips for the first two rows to bottom
   align-items: center;
 }
 
+.jiraConfiguration__optionHeader {
+  font-size: 1.25rem;
+  margin: 1.5em 0;
+}
+
 .jiraConfiguration__selected {
   background-color: #DEEBFF;
   color: #0052CC;
@@ -462,6 +466,12 @@ so changing the position of the tooltips for the first two rows to bottom
   width: 24px;
   height: 17px;
   margin-right: 0.25em;
+}
+
+.jiraConfiguration__CloudConnections {
+  box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  border-radius: 12px;
+  padding: 1.5em 1.5em 2.4em;
 }
 
 .learn-more-link {
