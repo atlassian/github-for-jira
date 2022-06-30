@@ -1,39 +1,38 @@
-.jiraConnectGHE__content {
+.jiraServerUrl__content {
   margin: 4em auto 0;
   max-width: 560px;
 }
-
-.jiraConnectGHE__content__title {
+.jiraServerUrl__content__title {
   text-align: center;
   margin-bottom: 2em;
 }
 
-.jiraConnectGHE__options__subTitle {
+.jiraServerUrl__options__subTitle {
   font-size: 1.2rem;
   margin-bottom: 0.5em;
   display: inline-flex;
 }
 
-.jiraConnectGHE__prompt {
+.jiraServerUrl__prompt {
   color: #344563;
   font-size: 1.01rem;
   margin-bottom: 1.2em;
 }
 
-.jiraConnectGHE__error {
+.jiraServerUrl__error {
   display: none;
   color: #DE350B;
   font-size: 0.85rem;
   margin-top: 0.125em;
 }
 
-.jiraConnectGHE__label {
+.jiraServerUrl__label {
   font-size: 0.85rem;
   font-weight: 600;
   color: #6B778C;
 }
 
-.jiraConnectGHE__input {
+.jiraServerUrl__input {
   width: 100%;
   border: 2px solid #DFE1E6;
   border-radius: 3px;
@@ -46,7 +45,7 @@
   border-color: #DE350B;
 }
 
-.jiraConnectGHE__actionBtn__container {
+.jiraServerUrl__actionBtn__container {
   margin-top: 1.25em;
   text-align: right;
 }
@@ -56,6 +55,6 @@
   color: #fff;
 }
 
-.jiraConnectGHE__validationError, .jiraConnectGHE__defaultError {
+.jiraServerUrl__validationError, .jiraServerUrl__defaultError {
   display: none;
 }
