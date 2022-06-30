@@ -220,7 +220,8 @@ so changing the position of the tooltips for the first two rows to bottom
 }
 
 .jiraConfiguration__table__cell__settings
-  > .jiraConfiguration__table__cell__settings__ellipsis {
+  > .jiraConfiguration__table__cell__settings__ellipsis,
+.jiraConfiguration__appDropdown {
   background-color: #fff;
   border: none;
   box-shadow: none;
@@ -234,7 +235,8 @@ so changing the position of the tooltips for the first two rows to bottom
   width: 1em;
 }
 
-.jiraConfiguration__table__cell__settings__ellipsisSpan {
+.jiraConfiguration__table__cell__settings__ellipsisSpan,
+.jiraConfiguration__appDropdownIcon {
   position: absolute;
   right: 0.15em;
   top: -0.5em;
@@ -285,6 +287,7 @@ so changing the position of the tooltips for the first two rows to bottom
   padding: 0.6em 1em;
 }
 
+.jiraConfiguration__appDropdown:hover,
 .aui-dropdown2-item-group
   > .jiraConfiguration__table__cell__settings__dropdownItem:hover {
   background-color: #e9edf0;

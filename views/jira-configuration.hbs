@@ -342,6 +342,32 @@
                       <span class="aui-icon aui-iconfont-chevron-down"></span>
                       <span class="jiraConfiguration__optionHeader">{{app.name}}</span>
                     </div>
+                    <button
+                      class="aui-button aui-dropdown2-trigger aui-dropdown2-trigger-arrowless jiraConfiguration__appDropdown"
+                      aria-controls="settings-dropdown-{{id}}"
+                    >
+                      <span class="jiraConfiguration__appDropdownIcon">...</span>
+                    </button>
+                    <aui-dropdown-menu class="" id="settings-dropdown-{{id}}">
+                      <aui-section class="">
+                        <a
+                          class=""
+                          href="#"
+                          data-installation-link="{{html_url}}"
+                          target="_blank"
+                        >
+                          Edit
+                        </a>
+                        <a
+                          class=""
+                          href="#"
+                          data-installation-link="{{html_url}}"
+                          target="_blank"
+                        >
+                          Delete
+                        </a>
+                      </aui-section>
+                    </aui-dropdown-menu>
                   </summary>
                   <div class="jiraConfiguration__collapsibleBody">
                     {{#if app.successfulConnections}}
@@ -395,10 +421,10 @@
                                   </span>
                                 {{/if}}
                                 <a
-                                    class="jiraConfiguration__table__editContainer"
-                                    href="{{html_url}}"
-                                    data-installation-link="{{html_url}}"
-                                    target="_blank"
+                                  class="jiraConfiguration__table__editContainer"
+                                  href="{{html_url}}"
+                                  data-installation-link="{{html_url}}"
+                                  target="_blank"
                                 >
                                     <span
                                         class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit">
@@ -410,19 +436,18 @@
                               {{! Backfill status }}
                               <td class="jiraConfiguration__table__cell">
                                   <span
-                                      id="{{id}}-status"
-                                      class="jiraConfiguration__table__{{toLowerCase
-                                          (replaceSpaceWithHyphen syncStatus)
-                                      }}
-                                      jiraConfiguration__table__syncStatus"
+                                    id="{{id}}-status"
+                                    class="jiraConfiguration__table__{{toLowerCase
+                                        (replaceSpaceWithHyphen syncStatus)
+                                    }}
+                                    jiraConfiguration__table__syncStatus"
                                   >
                                     {{syncStatus}}
                                   </span>
                                 {{!-- Display any sync warnings --}}
                                 {{#if (isMissingPermissions syncWarning)}}
                                   <div class="jiraConfiguration__syncWarning">
-                                      <span
-                                          class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
+                                      <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
                                         Sync failed warnings
                                       </span>
                                     <div class="jiraConfiguration__syncWarningMessage warning-popup">
@@ -462,22 +487,15 @@
                                     class="jiraConfiguration__table__cell__settings__ellipsis aui-button aui-dropdown2-trigger"
                                     aria-controls="settings-dropdown-{{id}}"
                                 >
-                                    <span
-                                        class="jiraConfiguration__table__cell__settings__ellipsisSpan"
-                                    >...</span>
+                                    <span class="jiraConfiguration__table__cell__settings__ellipsisSpan">...</span>
                                 </button>
 
                                 <aui-dropdown-menu class="jiraConfiguration__table__dropdown"
                                                    id="settings-dropdown-{{id}}">
-                                  <h6
-                                      class="jiraConfiguration__table__cell__settings__header"
-                                  >
-                                    <span
-                                        class="jiraConfiguration__table__cell__settings__headerItem">Organization</span>
+                                  <h6 class="jiraConfiguration__table__cell__settings__header">
+                                    <span class="jiraConfiguration__table__cell__settings__headerItem">Organization</span>
                                   </h6>
-                                  <aui-section
-                                      class="jiraConfiguration__table__cell__settings__dropdownItems"
-                                  >
+                                  <aui-section class="jiraConfiguration__table__cell__settings__dropdownItems">
                                     <a
                                         class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
                                         href="{{html_url}}"
