@@ -121,19 +121,17 @@ How to invoke:
 
  */
 ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
-	try {
-		let data = "";
-		for (let i = 0; i < 10; i++) {
-			data = data + "-" + Math.floor((Math.random() * 10));
-		}
 
-		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, data, req.log);
+	resp.status(204).send("ack");
 
-		await CryptorHttpClient.decrypt(encrypted, req.log);
-		resp.status(200).send("ok");
-	} catch (_) {
-		resp.status(500).send("fail");
+	let data = "";
+	for (let i = 0; i < 10; i++) {
+		data = data + "-" + Math.floor((Math.random() * 10));
 	}
+
+	const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, data, req.log);
+
+	await CryptorHttpClient.decrypt(encrypted, req.log);
 });
 
 ApiRouter.use("/jira", ApiJiraRouter);

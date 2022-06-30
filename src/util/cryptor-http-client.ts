@@ -23,7 +23,7 @@ export class CryptorHttpClient {
 		return {
 			baseURL: envVars.CRYPTOR_URL,
 			headers: {
-				"X-Cryptor-Client": envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
+				"X-Cryptor-Client": envVars.CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE,
 				"Content-Type": "application/json; charset=utf-8"
 			}
 		};
