@@ -97,16 +97,16 @@ $('.jiraConfiguration__option').click(function (event) {
 
 	switch ($(event.target).attr('id')) {
 		case 'jiraConfiguration__optionCloud':
-			$('.jiraConfiguration__CloudContainer').show();
-			$('.jiraConfiguration__EnterpriseContainer').hide();
+			$('.jiraConfiguration__cloudContainer').show();
+			$('.jiraConfiguration__enterpriseContainer').hide();
 			break;
 		case 'jiraConfiguration__optionEnterprise':
-			$('.jiraConfiguration__EnterpriseContainer').show();
-			$('.jiraConfiguration__CloudContainer').hide();
+			$('.jiraConfiguration__enterpriseContainer').show();
+			$('.jiraConfiguration__cloudContainer').hide();
 			break;
 		default:
-			$('.jiraConfiguration__CloudContainer').show();
-			$('.jiraConfiguration__EnterpriseContainer').show();
+			$('.jiraConfiguration__cloudContainer').show();
+			$('.jiraConfiguration__enterpriseContainer').show();
 	}
 });
 

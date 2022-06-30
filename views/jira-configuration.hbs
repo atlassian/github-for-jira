@@ -125,9 +125,9 @@
         </button>
       </div>
 
-      <div class="jiraConfiguration__CloudContainer">
+      <div class="jiraConfiguration__cloudContainer">
         <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
-        <div class="jiraConfiguration__CloudConnections">
+        <div class="jiraConfiguration__cloudConnections">
           {{#if successfulConnections}}
             <div class="jiraConfiguration__tableContainer">
               <table class="jiraConfiguration__table aui">
@@ -326,206 +326,258 @@
           {{/each}}
         </div>
       </div>
-      <div class="jiraConfiguration__EnterpriseContainer">
+
+      <div class="jiraConfiguration__enterpriseContainer">
         <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
-        <div class="jiraConfiguration__EnterpriseConnections">
-          {{#if successfulConnections}}
-            <div class="jiraConfiguration__tableContainer">
-              <table class="jiraConfiguration__table aui">
-                <thead class="jiraConfiguration__table__head">
-                <tr class="jiraConfiguration__table__head_row">
-                  <th class="jiraConfiguration__table__head__title">Connected organization</th>
-                  <th class="jiraConfiguration__table__head__title">Repository access</th>
-                  <th class="jiraConfiguration__table__head__title">Backfill status
-                    <span class="jiraConfiguration__table__infoIcon aui-icon aui-iconfont-info-filled"
-                          id="sync-status-modal-btn">
-                      Information
-                    </span>
-                  </th>
-                  <th class="jiraConfiguration__table__head__title">Settings</th>
-                </tr>
-                </thead>
+        {{#each gheServers as |server|}}
+          <div class="jiraConfiguration__enterpriseServer">
+            <div class="jiraConfiguration__collapsibleHeaderTitle">{{server.url}}</div>
+            <div class="jiraConfiguration__enterpriseConnections">
+              <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATIONS</div>
+              {{#each server.applications as |app|}}
+                <details>
+                  <summary class="jiraConfiguration__collapsibleHeader jiraConfiguration__table__cell__settings">
+                    <div>
+                      <span class="aui-icon aui-iconfont-chevron-right"></span>
+                      <span class="aui-icon aui-iconfont-chevron-down"></span>
+                      <span class="jiraConfiguration__optionHeader">{{app.name}}</span>
+                    </div>
 
-                <tbody class="jiraConfiguration__table__body">
-                {{#each successfulConnections}}
-                  <tr class="jiraConfiguration__table__row">
-                    {{! Organization }}
-                    <td class="jiraConfiguration__table__cell">
-                      {{#if ../isGitHubCloudApp}}
-                        <img
-                            class="jiraConfiguration__table__cell__avatar"
-                            src="{{account.avatar_url}}"
-                            height="24"
-                            width="24"
-                            data-installation-id="{{id}}"
-                        />
-                      {{/if}}
-                      <span
-                          class="jiraConfiguration__table__cell__orgName"
-                      >{{account.login}}</span>
-                    </td>
+                    <button class="jiraConfiguration__table__cell__settings__ellipsis aui-button aui-dropdown2-trigger" aria-controls="settings-dropdown-{{id}}">
+                      <span class="jiraConfiguration__table__cell__settings__ellipsisSpan">...</span>
+                    </button>
 
-                    {{! Repos Synced }}
-                    <td class="jiraConfiguration__table__cell">
-                      {{#if isGlobalInstall}}
-                        <span>All repos</span>
-                      {{else}}
-                        <span>Only select repos</span>
-                      {{/if}}
-
-                      {{#if totalNumberOfRepos}}
-                        <span class="jiraConfiguration__table__syncCount">
-                          {{ifAllReposSynced
-                              numberOfSyncedRepos
-                              totalNumberOfRepos
-                          }}
-                        </span>
-                      {{/if}}
-                      <a
-                          class="jiraConfiguration__table__editContainer"
-                          href="{{html_url}}"
-                          data-installation-link="{{html_url}}"
-                          target="_blank"
-                      >
-                        <span
-                            class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit"
+                    <aui-dropdown-menu class="jiraConfiguration__table__dropdown" id="settings-dropdown-{{id}}">
+                      <aui-section class="jiraConfiguration__table__cell__settings__dropdownItems">
+                        <a
+                            class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
+                            href="{{html_url}}"
+                            data-installation-link="{{html_url}}"
+                            target="_blank"
                         >
-                          Edit
-                        </span>
-                      </a>
-                    </td>
-
-                    {{! Backfill status }}
-                    <td class="jiraConfiguration__table__cell">
-                      <span
-                          id="{{id}}-status"
-                          class="jiraConfiguration__table__{{toLowerCase
-                              (replaceSpaceWithHyphen syncStatus)
-                          }}
-                          jiraConfiguration__table__syncStatus"
-                      >
-                        {{syncStatus}}
-                      </span>
-                      {{!-- Display any sync warnings --}}
-                      {{#if (isMissingPermissions syncWarning)}}
-                        <div class="jiraConfiguration__syncWarning">
-                          <span
-                              class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
-                            Sync failed warnings
-                          </span>
-                          <div class="jiraConfiguration__syncWarningMessage warning-popup">
-                            <div>Some tasks have not been backfilled. Please
-                              <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
-                                 href="{{html_url}}"
-                                 data-installation-link="{{html_url}}"
-                                 target="_blank">accept permissions</a>
-                              on GitHub (you must be the admin of your organization), then retry backfill.
-                            </div>
-                          </div>
-                        </div>
-                      {{/if}}
-                      {{#if (inProgressOrPendingSync syncStatus)}}
-                        <div class="jiraConfiguration__loaderContainer">
-                          <aui-spinner size="small"></aui-spinner>
-                        </div>
-                      {{/if}}
-                      {{#if (failedSync syncStatus)}}
-                        <div class="jiraConfiguration__retryContainer">
+                          Configure
+                        </a>
+                        <div class="jiraConfiguration__table__cell__settings__dropdownItem">
                           <button
-                              class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
+                              class="sync-connection-link restart-backfill-button"
                               data-jira-host="{{ ../host }}"
                               data-installation-id="{{ id }}"
                               id="restart-backfill"
                           >
-                            &#x21bb;
+                            Restart backfill
                           </button>
                           <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                          <div class="jiraConfiguration__retryMsg">Retry</div>
                         </div>
-                      {{/if}}
-                    </td>
-                    {{! Settings }}
-                    <td class="jiraConfiguration__table__cell__settings">
-                      <button
-                          class="jiraConfiguration__table__cell__settings__ellipsis aui-button aui-dropdown2-trigger"
-                          aria-controls="settings-dropdown-{{id}}"
-                      >
-                        <span
-                            class="jiraConfiguration__table__cell__settings__ellipsisSpan"
-                        >...</span>
-                      </button>
+                        <button
+                            class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
+                            data-installation-id="{{ id }}">Disconnect
+                        </button>
+                      </aui-section>
+                    </aui-dropdown-menu>
 
-                      <aui-dropdown-menu class="jiraConfiguration__table__dropdown" id="settings-dropdown-{{id}}">
-                        <h6
-                            class="jiraConfiguration__table__cell__settings__header"
-                        >
-                          <span class="jiraConfiguration__table__cell__settings__headerItem">Organization</span>
-                        </h6>
-                        <aui-section
-                            class="jiraConfiguration__table__cell__settings__dropdownItems"
-                        >
-                          <a
-                              class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
-                              href="{{html_url}}"
-                              data-installation-link="{{html_url}}"
-                              target="_blank"
-                          >
-                            Configure
-                          </a>
-                          <div class="jiraConfiguration__table__cell__settings__dropdownItem">
-                            <button
-                                class="sync-connection-link restart-backfill-button"
-                                data-jira-host="{{ ../host }}"
-                                data-installation-id="{{ id }}"
-                                id="restart-backfill"
-                            >
-                              Restart backfill
-                            </button>
-                            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                          </div>
-                          <button class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
-                                  data-installation-id="{{ id }}">Disconnect
+                  </summary>
+                  <div class="jiraConfiguration__collapsibleBody">
+                    {{#if app.successfulConnections}}
+                      <div class="jiraConfiguration__tableContainer">
+                        <table class="jiraConfiguration__table aui">
+                          <thead class="jiraConfiguration__table__head">
+                          <tr class="jiraConfiguration__table__head_row">
+                            <th class="jiraConfiguration__table__head__title">Connected organization</th>
+                            <th class="jiraConfiguration__table__head__title">Repository access</th>
+                            <th class="jiraConfiguration__table__head__title">Backfill status
+                              <span class="jiraConfiguration__table__infoIcon aui-icon aui-iconfont-info-filled"
+                                    id="sync-status-modal-btn">
+                                Information
+                              </span>
+                            </th>
+                            <th class="jiraConfiguration__table__head__title">Settings</th>
+                          </tr>
+                          </thead>
+
+                          <tbody class="jiraConfiguration__table__body">
+                          {{#each app.successfulConnections}}
+                            <tr class="jiraConfiguration__table__row">
+                              {{! Organization }}
+                              <td class="jiraConfiguration__table__cell">
+                                {{#if ../isGitHubCloudApp}}
+                                  <img
+                                      class="jiraConfiguration__table__cell__avatar"
+                                      src="{{account.avatar_url}}"
+                                      height="24"
+                                      width="24"
+                                      data-installation-id="{{id}}"
+                                  />
+                                {{/if}}
+                                <span class="jiraConfiguration__table__cell__orgName">{{account.login}}</span>
+                              </td>
+
+                              {{! Repos Synced }}
+                              <td class="jiraConfiguration__table__cell">
+                                {{#if isGlobalInstall}}
+                                  <span>All repos</span>
+                                {{else}}
+                                  <span>Only select repos</span>
+                                {{/if}}
+
+                                {{#if totalNumberOfRepos}}
+                                  <span class="jiraConfiguration__table__syncCount">
+                                    {{ifAllReposSynced
+                                        numberOfSyncedRepos
+                                        totalNumberOfRepos
+                                    }}
+                                  </span>
+                                {{/if}}
+                                <a
+                                    class="jiraConfiguration__table__editContainer"
+                                    href="{{html_url}}"
+                                    data-installation-link="{{html_url}}"
+                                    target="_blank"
+                                >
+                                    <span
+                                        class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit">
+                                      Edit
+                                    </span>
+                                </a>
+                              </td>
+
+                              {{! Backfill status }}
+                              <td class="jiraConfiguration__table__cell">
+                                  <span
+                                      id="{{id}}-status"
+                                      class="jiraConfiguration__table__{{toLowerCase
+                                          (replaceSpaceWithHyphen syncStatus)
+                                      }}
+                                      jiraConfiguration__table__syncStatus"
+                                  >
+                                    {{syncStatus}}
+                                  </span>
+                                {{!-- Display any sync warnings --}}
+                                {{#if (isMissingPermissions syncWarning)}}
+                                  <div class="jiraConfiguration__syncWarning">
+                                      <span
+                                          class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
+                                        Sync failed warnings
+                                      </span>
+                                    <div class="jiraConfiguration__syncWarningMessage warning-popup">
+                                      <div>Some tasks have not been backfilled. Please
+                                        <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
+                                           href="{{html_url}}"
+                                           data-installation-link="{{html_url}}"
+                                           target="_blank">accept permissions</a>
+                                        on GitHub (you must be the admin of your organization), then retry backfill.
+                                      </div>
+                                    </div>
+                                  </div>
+                                {{/if}}
+                                {{#if (inProgressOrPendingSync syncStatus)}}
+                                  <div class="jiraConfiguration__loaderContainer">
+                                    <aui-spinner size="small"></aui-spinner>
+                                  </div>
+                                {{/if}}
+                                {{#if (failedSync syncStatus)}}
+                                  <div class="jiraConfiguration__retryContainer">
+                                    <button
+                                        class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
+                                        data-jira-host="{{ ../host }}"
+                                        data-installation-id="{{ id }}"
+                                        id="restart-backfill"
+                                    >
+                                      &#x21bb;
+                                    </button>
+                                    <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                                    <div class="jiraConfiguration__retryMsg">Retry</div>
+                                  </div>
+                                {{/if}}
+                              </td>
+                              {{! Settings }}
+                              <td class="jiraConfiguration__table__cell__settings">
+                                <button
+                                    class="jiraConfiguration__table__cell__settings__ellipsis aui-button aui-dropdown2-trigger"
+                                    aria-controls="settings-dropdown-{{id}}"
+                                >
+                                    <span
+                                        class="jiraConfiguration__table__cell__settings__ellipsisSpan"
+                                    >...</span>
+                                </button>
+
+                                <aui-dropdown-menu class="jiraConfiguration__table__dropdown"
+                                                   id="settings-dropdown-{{id}}">
+                                  <h6
+                                      class="jiraConfiguration__table__cell__settings__header"
+                                  >
+                                    <span
+                                        class="jiraConfiguration__table__cell__settings__headerItem">Organization</span>
+                                  </h6>
+                                  <aui-section
+                                      class="jiraConfiguration__table__cell__settings__dropdownItems"
+                                  >
+                                    <a
+                                        class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
+                                        href="{{html_url}}"
+                                        data-installation-link="{{html_url}}"
+                                        target="_blank"
+                                    >
+                                      Configure
+                                    </a>
+                                    <div class="jiraConfiguration__table__cell__settings__dropdownItem">
+                                      <button
+                                          class="sync-connection-link restart-backfill-button"
+                                          data-jira-host="{{ ../host }}"
+                                          data-installation-id="{{ id }}"
+                                          id="restart-backfill"
+                                      >
+                                        Restart backfill
+                                      </button>
+                                      <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                                    </div>
+                                    <button
+                                        class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
+                                        data-installation-id="{{ id }}">Disconnect
+                                    </button>
+                                  </aui-section>
+                                </aui-dropdown-menu>
+                              </td>
+                            </tr>
+                          {{/each}}
+                          </tbody>
+                        </table>
+                      </div>
+                    {{/if}}
+                    {{#each app.failedConnections}}
+                      <div class="jiraConfiguration__failedConnections__container">
+                        <div class="jiraConfiguration__failedConnections__errorIcon__container">
+                          <span
+                              class="jiraConfiguration__failedConnections__errorIcon aui-icon aui-icon-medium aui-iconfont-error">
+                            Failed connection error
+                          </span>
+                        </div>
+                        <div class="jiraConfiguration__failedConnections__orgInfo">
+                          {{#if orgName}}
+                            <p class="jiraConfiguration__failedConnections__header">
+                              There was an error for organization {{ orgName }}
+                            </p>
+                          {{else}}
+                            <p class="jiraConfiguration__failedConnections__header">
+                              There was an error for organization with ID: {{ id }}
+                            </p>
+                          {{/if}}
+                          <p class="jiraConfiguration__failedConnections__errorMsg">
+                            {{failedConnectionErrorMsg deleted}} You will need to reconnect.
+                          </p>
+
+                          <button class="jiraConfiguration__failedConnections__dismiss delete-connection-link"
+                                  data-installation-id="{{ id }}">
+                            Dismiss
                           </button>
-                        </aui-section>
-                      </aui-dropdown-menu>
-                    </td>
-                  </tr>
-                {{/each}}
-                </tbody>
-              </table>
+                        </div>
+                      </div>
+                    {{/each}}
+                  </div>
+                </details>
+              {{/each}}
             </div>
-          {{/if}}
-
-          {{#each failedConnections}}
-            <div class="jiraConfiguration__failedConnections__container">
-              <div class="jiraConfiguration__failedConnections__errorIcon__container">
-                <span
-                    class="jiraConfiguration__failedConnections__errorIcon aui-icon aui-icon-medium aui-iconfont-error">
-                  Failed connection error
-                </span>
-              </div>
-              <div class="jiraConfiguration__failedConnections__orgInfo">
-                {{#if orgName}}
-                  <p class="jiraConfiguration__failedConnections__header">
-                    There was an error for organization {{ orgName }}
-                  </p>
-                {{else}}
-                  <p class="jiraConfiguration__failedConnections__header">
-                    There was an error for organization with ID: {{ id }}
-                  </p>
-                {{/if}}
-                <p class="jiraConfiguration__failedConnections__errorMsg">
-                  {{failedConnectionErrorMsg deleted}} You will need to reconnect.
-                </p>
-
-                <button class="jiraConfiguration__failedConnections__dismiss delete-connection-link"
-                        data-installation-id="{{ id }}">
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          {{/each}}
-        </div>
+          </div>
+        {{/each}}
       </div>
 
     {{else}}
