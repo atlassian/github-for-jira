@@ -1,6 +1,7 @@
 import { BinaryLike, createHmac } from "crypto";
 import { Request, Response } from "express";
 import { getLogger } from "~/src/config/logger";
+import Logger from "bunyan";
 import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
 import { GitHubServerApp } from "models/github-server-app";
@@ -8,6 +9,7 @@ import { WebhookContext } from "./webhook-context";
 import { webhookTimeout } from "~/src/util/webhook-timeout";
 import { issueCommentWebhookHandler } from "~/src/github/issue-comment";
 import { issueWebhookHandler } from "~/src/github/issue";
+import { CryptorHttpClient } from "~/src/util/cryptor-http-client";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -24,7 +26,8 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			return;
 		}
 		webhookSecret = gitHubServerApp.webhookSecret;
-		const verification = createHash(JSON.stringify(payload), webhookSecret);
+		if (!webhookSecret) throw new Error("Cannot find webhookSecret for gitHubServerApp uuid: " + uuid);
+		const verification = createHash(JSON.stringify(payload), await decrypt(webhookSecret, logger));
 		if (verification != signatureSHA256) {
 			response.status(400).send("signature does not match event payload and secret");
 			return;
@@ -44,6 +47,10 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 		response.sendStatus(500);
 		logger.error(error);
 	}
+};
+
+const decrypt = async (plainText: string, logger: any) =>{
+	return CryptorHttpClient.decrypt(plainText, logger as Logger);
 };
 
 const webhookRouter = (context: WebhookContext) => {
