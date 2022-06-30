@@ -36,7 +36,7 @@ services:
     build: etc/cryptor-mock
     container_name: cryptor
     environment:
-      CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE: "random-string" #has to match the one in env.test
+      CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "random-string" #has to match the one in env.test
     ports:
       - "26272:26272"
   app:
