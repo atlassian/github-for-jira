@@ -23,7 +23,7 @@ const requiredEnvVars = [
 	"MICROS_AWS_REGION",
 	"GLOBAL_HASH_SECRET",
 	"CRYPTOR_URL",
-	"CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE"
+	"CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE"
 ];
 
 const filename = isNodeTest() ? ".env.test" : ".env";
@@ -116,5 +116,5 @@ export interface EnvVars {
 
 	// Cryptor
 	CRYPTOR_URL: string;
-	CRYPTOR_CLIENT_IDENTIFICATION_CHALLENGE: string;
+	CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: string;
 }
