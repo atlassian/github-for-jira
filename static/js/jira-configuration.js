@@ -90,6 +90,23 @@ $(".sync-connection-link").click(function(event) {
 	});
 });
 
+$('.jiraConfiguration__option').click(function (event) {
+	event.preventDefault();
+	$('.jiraConfiguration__option').removeClass('jiraConfiguration__selected');
+	$(event.target).addClass('jiraConfiguration__selected');
+
+	switch ($(event.target).attr('id')) {
+		case 'jiraConfiguration__optionCloud':
+			console.log("Show only cloud");
+			break;
+		case 'jiraConfiguration__optionEnterprise':
+			console.log("Show only enterprise");
+			break;
+		default:
+			console.log("Show All");
+	}
+});
+
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
 const syncStatusModal = document.getElementById("sync-status-modal");
 const syncStatusCloseBtn = document.getElementById("status-close");

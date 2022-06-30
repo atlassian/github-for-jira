@@ -142,7 +142,6 @@
   left: -0.8em;
   padding: 0.3em;
   position: absolute;
-  right: em;
   top: -2em;
 }
 
@@ -438,6 +437,31 @@ so changing the position of the tooltips for the first two rows to bottom
 .jiraConfiguration__table__editContainer:hover,
 .jiraConfiguration__syncRetryModal__closeBtn:hover {
   background: #091E4208;
+}
+
+.jiraConfiguration__optionContainer {
+  display: flex;
+  margin-top: 1.5em;
+}
+
+.jiraConfiguration__option {
+  padding: 0.5em 1em;
+  height: 40px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.jiraConfiguration__selected {
+  background-color: #DEEBFF;
+  color: #0052CC;
+  font-weight: 600;
+}
+
+.jiraConfiguration__optionsIcon {
+  width: 24px;
+  height: 17px;
+  margin-right: 0.25em;
 }
 
 .learn-more-link {
