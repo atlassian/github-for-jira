@@ -1,9 +1,5 @@
 import { Model, DataTypes } from "sequelize";
 import { sequelize } from "models/sequelize";
-import { CryptorHttpClient } from "../util/cryptor-http-client";
-import { getLogger } from "../config/logger";
-
-const SECRETS_FIELDS = ["gitHubClientSecret", "privateKey", "webhookSecret"];
 
 interface GitHubServerAppPayload {
 	uuid: string;
@@ -152,28 +148,3 @@ GitHubServerApp.init({
 		allowNull: false
 	}
 }, { sequelize });
-
-const log = getLogger("github-server-app-cryptor");
-
-const encrypt = async function (plainText: string) {
-	return CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, plainText, log);
-};
-GitHubServerApp.beforeSave(async (app, opts)=> {
-	for (const f of SECRETS_FIELDS) {
-		if (opts.fields?.includes(f)) {
-			const encrypted = await encrypt(app[f]);
-			app[f] = encrypted;
-		}
-	}
-});
-
-GitHubServerApp.beforeBulkCreate(async (apps, opts) => {
-	for (const app of apps) {
-		for (const f of SECRETS_FIELDS) {
-			if (opts.fields?.includes(f)) {
-				const encrypted = await encrypt(app[f]);
-				app[f] = encrypted;
-			}
-		}
-	}
-});

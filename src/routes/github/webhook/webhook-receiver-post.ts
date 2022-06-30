@@ -18,16 +18,15 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	const id = request.headers["x-github-delivery"] as string;
 	const uuid = request.params.uuid;
 	const payload = request.body;
-	let webhookSecret: string;
 	try {
+
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
 			response.status(400).send("GitHub app not found");
 			return;
 		}
-		webhookSecret = gitHubServerApp.webhookSecret;
-		if (!webhookSecret) throw new Error("Cannot find webhookSecret for gitHubServerApp uuid: " + uuid);
-		const verification = createHash(JSON.stringify(payload), await decrypt(webhookSecret, logger));
+
+		const verification = createHash(JSON.stringify(payload), await decrypt(gitHubServerApp.webhookSecret, logger));
 		if (verification != signatureSHA256) {
 			response.status(400).send("signature does not match event payload and secret");
 			return;

@@ -26,9 +26,9 @@ describe("webhook-receiver-post", () => {
 			gitHubAppName: "My GitHub Server App",
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
-			gitHubClientSecret: "myghsecret",
-			webhookSecret: "mywebhooksecret",
-			privateKey: "myprivatekey",
+			gitHubClientSecret: "encrypted:myghsecret",
+			webhookSecret: "encrypted:mywebhooksecret",
+			privateKey: "encrypted:myprivatekey",
 			installationId: 10
 		};
 		await GitHubServerApp.install(payload);
