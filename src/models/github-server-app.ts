@@ -1,10 +1,9 @@
-import { Model, DataTypes, Sequelize } from "sequelize";
+import { Model, DataTypes } from "sequelize";
 import { sequelize } from "models/sequelize";
-import EncryptedField from "sequelize-encrypted";
 import { CryptorHttpClient } from "../util/cryptor-http-client";
-import Logger from "bunyan";
+import { getLogger } from "../config/logger";
 
-const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
+const SECRETS_FIELDS = ["gitHubClientSecret", "privateKey", "webhookSecret"];
 
 interface GitHubServerAppPayload {
 	uuid: string;
@@ -109,37 +108,7 @@ export class GitHubServerApp extends Model {
 		});
 	}
 
-	async encryptAndSetGitHubClientSecret(plainText: string, logger: Logger) {
-		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, plainText, logger);
-		this.setDataValue("gitHubClientSecret", encrypted);
-	}
-
-	async decryptAndGetGitHubClientSecret(logger: Logger) {
-		return await CryptorHttpClient.decrypt(this.getDataValue("gitHubClientSecret"), logger);
-	}
-
-	async encryptAndSetWebhookSecret(plainText: string, logger: Logger) {
-		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, plainText, logger);
-		this.setDataValue("webhookSecret", encrypted);
-	}
-
-	async decryptAndGetWebhookSecret(logger: Logger) {
-		return await CryptorHttpClient.decrypt(this.getDataValue("webhookSecret"), logger);
-	}
-
-	async encryptAndSetPrivateKey(plainText: string, logger: Logger) {
-		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, plainText, logger);
-		this.setDataValue("privateKey", encrypted);
-	}
-
-	async decryptAndGetPrivateKey(logger: Logger) {
-		return await CryptorHttpClient.decrypt(this.getDataValue("privateKey"), logger);
-	}
 }
-
-const directSetErrror = (field: string, method: string) => {
-	return new Error(`Because of using cryptor, please do not directly set the value to the field [${field}] itself, but instead using method [${method}]`);
-};
 
 GitHubServerApp.init({
 	id: {
@@ -162,27 +131,17 @@ GitHubServerApp.init({
 		type: DataTypes.STRING,
 		allowNull: false
 	},
-	secrets: encrypted.vault("secrets"),
 	gitHubClientSecret: {
 		type: DataTypes.STRING,
-		allowNull: false,
-		set() {
-			throw directSetErrror("gitHubClientSecret", "encryptAndSetGitHubClientSecret");
-		}
+		allowNull: false
 	},
 	webhookSecret: {
 		type: DataTypes.STRING,
-		allowNull: false,
-		set() {
-			throw directSetErrror("webhookSecret", "encryptAndSetWebhookSecret");
-		}
+		allowNull: false
 	},
 	privateKey: {
 		type: DataTypes.STRING,
-		allowNull: false,
-		set() {
-			throw directSetErrror("privateKey", "encryptAndSetPrivateKey");
-		}
+		allowNull: false
 	},
 	gitHubAppName: {
 		type: DataTypes.STRING,
@@ -193,3 +152,28 @@ GitHubServerApp.init({
 		allowNull: false
 	}
 }, { sequelize });
+
+const log = getLogger("github-server-app-cryptor");
+
+const encrypt = async function (plainText: string) {
+	return CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, plainText, log);
+};
+GitHubServerApp.beforeSave(async (app, opts)=> {
+	for (const f of SECRETS_FIELDS) {
+		if (opts.fields?.includes(f)) {
+			const encrypted = await encrypt(app[f]);
+			app[f] = encrypted;
+		}
+	}
+});
+
+GitHubServerApp.beforeBulkCreate(async (apps, opts) => {
+	for (const app of apps) {
+		for (const f of SECRETS_FIELDS) {
+			if (opts.fields?.includes(f)) {
+				const encrypted = await encrypt(app[f]);
+				app[f] = encrypted;
+			}
+		}
+	}
+});

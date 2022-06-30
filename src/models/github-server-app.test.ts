@@ -1,14 +1,13 @@
 import { GitHubServerApp } from "models/github-server-app";
-import { getLogger } from "../config/logger";
-
-const UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
+import { v4 as newUUID } from "uuid";
 
 describe("GitHubServerApp", () => {
 
-	it.skip("should create a new entry in the GitHubServerApps table", async () => {
+	it("should create a new entry in the GitHubServerApps table", async () => {
 
+		const uuid = newUUID();
 		const payload = {
-			uuid: UUID,
+			uuid: uuid,
 			gitHubAppName: "My GitHub Server App",
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
@@ -19,77 +18,93 @@ describe("GitHubServerApp", () => {
 		};
 
 		await GitHubServerApp.install(payload);
-		const savedGitHubServerApp = await GitHubServerApp.findForUuid(UUID);
+		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 
 		expect(savedGitHubServerApp?.gitHubAppName).toEqual("My GitHub Server App");
 	});
 
 	describe("cryptor", () => {
 		describe("cryptor encryption", () => {
-			it("should throw error if directly setting gitHubClientSecret", async () => {
-				expect(() => {
-					buildGitHubServerApp({
-						gitHubClientSecret: "blah"
+			describe("Single entry", () => {
+				it("should convert plain text into encrypted text when calling CREATE", async () => {
+					const uuid = newUUID();
+					const app = await GitHubServerApp.create({
+						...defaults(uuid)
 					});
-				}).toThrowError(/Because of using cryptor/);
-			});
-			it("should throw error if directly setting webhookSecret", async () => {
-				expect(() => {
-					buildGitHubServerApp({
-						webhookSecret: "blah"
+					expect(app.privateKey).toBe("encrypted:private-key-plain-text");
+					expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text");
+					expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text");
+				});
+				it("should convert plain text into encrypted text when calling UPDATE", async () => {
+					const uuid = newUUID();
+					const existApp = await GitHubServerApp.install(GitHubServerApp.build({ ...defaults(uuid) }));
+					await existApp.update({
+						privateKey: "new-private-key-plain-text",
+						webhookSecret: "new-webhook-secret-plain-text",
+						gitHubClientSecret: "new-client-secret-plain-text"
 					});
-				}).toThrowError(/Because of using cryptor/);
-			});
-			it("should throw error if directly setting privateKey", async () => {
-				expect(() => {
-					buildGitHubServerApp({
-						privateKey: "blah"
+					expect(existApp.privateKey).toBe("encrypted:new-private-key-plain-text");
+					expect(existApp.webhookSecret).toBe("encrypted:new-webhook-secret-plain-text");
+					expect(existApp.gitHubClientSecret).toBe("encrypted:new-client-secret-plain-text");
+				});
+				it("should convert plain text into encrypted text when calling FIND OR CREATE", async () => {
+					const uuid = newUUID();
+					const [app, created] = await GitHubServerApp.findOrCreate({
+						where: {
+							uuid: uuid
+						},
+						defaults: {
+							...defaults(uuid)
+						}
 					});
-				}).toThrowError(/Because of using cryptor/);
+					expect(created).toBe(true);
+					expect(app.privateKey).toBe("encrypted:private-key-plain-text");
+					expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text");
+					expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text");
+				});
+				it("should convert plain text into encrypted text when calling BUILD and SAVE", async () => {
+					const uuid = newUUID();
+					const app = GitHubServerApp.build({ ...defaults(uuid) });
+					await app.save();
+					expect(app.privateKey).toBe("encrypted:private-key-plain-text");
+					expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text");
+					expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text");
+				});
 			});
-			it("should convert plain text into encrypted text when calling setGitHubClientSecret method", async () => {
-				const app = buildGitHubServerApp();
-				await app.encryptAndSetGitHubClientSecret("gh_client_secret", getLogger("test"));
-				expect(app.gitHubClientSecret).toBe("encrypted:gh_client_secret");
-			});
-			it("should convert plain text into encrypted text when calling setWebhookSecret method", async () => {
-				const app = buildGitHubServerApp();
-				await app.encryptAndSetWebhookSecret("webhook_secret", getLogger("test"));
-				expect(app.webhookSecret).toBe("encrypted:webhook_secret");
-			});
-			it("should convert plain text into encrypted text when calling setPrivateKey method", async () => {
-				const app = buildGitHubServerApp();
-				await app.encryptAndSetPrivateKey("private_key", getLogger("test"));
-				expect(app.privateKey).toBe("encrypted:private_key");
-			});
-		});
-		describe("cryptor decryption", () => {
-			it("should decrypt gitHubClientSecret", async () => {
-				const app = buildGitHubServerApp();
-				app.setDataValue("gitHubClientSecret", "encrypted:gh_client_secret");
-				expect(await app.decryptAndGetGitHubClientSecret(getLogger("test"))).toBe("gh_client_secret");
-			});
-			it("should decrypt webhookSecret", async () => {
-				const app = buildGitHubServerApp();
-				app.setDataValue("webhookSecret", "encrypted:webhook_secret");
-				expect(await app.decryptAndGetWebhookSecret(getLogger("test"))).toBe("webhook_secret");
-			});
-			it("should decrypt privateKey", async () => {
-				const app = buildGitHubServerApp();
-				app.setDataValue("privateKey", "encrypted:private_key");
-				expect(await app.decryptAndGetPrivateKey(getLogger("test"))).toBe("private_key");
+			describe("Bulk opreations", () => {
+				it("should convert plain text into encrypted text when calling BULK CREATE", async () => {
+					const uuid1 = newUUID();
+					const uuid2 = newUUID();
+					const apps = await GitHubServerApp.bulkCreate([{ ...defaults(uuid1, "-0") }, { ...defaults(uuid2, "-1") }]);
+					for (const [i, app] of apps.entries()) {
+						expect(app.privateKey).toBe("encrypted:private-key-plain-text-" + i);
+						expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text-" + i);
+						expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text-" + i);
+					}
+				});
+				it("should convert plain text into encrypted text when calling BULK BUILD", async () => {
+					const uuid1 = newUUID();
+					const uuid2 = newUUID();
+					const apps = GitHubServerApp.bulkBuild([{ ...defaults(uuid1, "-0") }, { ...defaults(uuid2, "-1") }]);
+					await Promise.all(apps.map(app => app.save()));
+					for (const [i, app] of apps.entries()) {
+						expect(app.privateKey).toBe("encrypted:private-key-plain-text-" + i);
+						expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text-" + i);
+						expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text-" + i);
+					}
+				});
 			});
 		});
 		//--------- helpers
-		const buildGitHubServerApp = (opts?: any) => {
-			return GitHubServerApp.build({
-				uuid: UUID,
-				gitHubBaseUrl: "does not matter",
-				gitHubClientId: "sample id",
-				gitHubAppName: "sample app",
-				installationId: 123,
-				...opts
-			});
-		};
+		const defaults = (uuid: string, surfix?: string) => ({
+			uuid,
+			gitHubBaseUrl: "does not matter",
+			gitHubClientId: "sample id",
+			gitHubAppName: "sample app",
+			installationId: 123,
+			privateKey: "private-key-plain-text" + (surfix || ""),
+			webhookSecret: "webhook-secret-plain-text" + (surfix || ""),
+			gitHubClientSecret: "client-secret-plain-text" + (surfix || "")
+		});
 	});
 });

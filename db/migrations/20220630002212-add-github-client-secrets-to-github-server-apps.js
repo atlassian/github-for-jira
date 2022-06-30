@@ -16,6 +16,7 @@ module.exports = {
 			type: Sequelize.STRING,
 			allowNull: false
 		});
+		await queryInterface.removeColumn(tableName, "secrets");
 	},
 
 	down: async (queryInterface) => {
