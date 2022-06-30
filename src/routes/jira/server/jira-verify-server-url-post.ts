@@ -14,6 +14,6 @@ export const JiraVerifyServerUrlPost = async (
 		return res.sendStatus(200);
 	} catch (e) {
 		req.log.error(`Failed to verify GHE server url: ${gheServerURL}`);
-		return res.status(401).send({ message: "Check your firewall configurtion and try again." });
+		return res.status(401).send({ message: "Check your firewall configuration and try again." });
 	}
 };

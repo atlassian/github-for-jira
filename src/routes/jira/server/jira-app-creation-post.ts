@@ -11,7 +11,7 @@ export const JiraAppCreationPost = async (
 	try {
 		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL, installationId);
 
-		if (gitHubServerApps && gitHubServerApps?.length > 0) {
+		if (gitHubServerApps?.length) {
 			req.log.info(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
 			return res.status(200).send({ moduleKey: "github-list-apps-page" });
 		} else {

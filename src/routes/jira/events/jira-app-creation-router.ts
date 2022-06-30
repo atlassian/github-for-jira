@@ -7,5 +7,5 @@ import { csrfMiddleware } from "middleware/csrf-middleware";
 export const JiraAppCreationRouter = Router();
 
 JiraAppCreationRouter.route("/")
-	.post(JiraAppCreationPost)
+	.post(csrfMiddleware, JiraJwtTokenMiddleware, JiraAppCreationPost)
 	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraAppCreationGet);

@@ -72,14 +72,17 @@ const requestFailed = () => {
 };
 
 const checkForOrCreateGitHubApp = (gheServerURL) => {
+	const csrf = document.getElementById('_csrf').value;
+
 	$.ajax({
 		type: "POST",
 		url: "/jira/app-creation",
 		data: {
-			gheServerURL
+			gheServerURL,
+			_csrf: csrf
 		},
 		success: function(data) {
-			const pagePath =  data.moduleKey;
+			const pagePath = data.moduleKey;
 			AP.navigator.go(
 				"addonmodule",
 				{
@@ -88,7 +91,7 @@ const checkForOrCreateGitHubApp = (gheServerURL) => {
 			);
 		},
 		error: function(err) {
-			console.error(`Failed to retrieve GH app data. ${err}`)
+			console.error(`Failed to retrieve GH app data. ${JSON.stringify(err)}`)
 			// TODO - build and render error component
 		}
 	});
