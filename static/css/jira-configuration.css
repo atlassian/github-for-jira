@@ -70,7 +70,7 @@
 
 .jiraConfiguration__tableContainer {
   overflow: auto;
-  margin: 0 0 2.5em;
+  padding: 0 0 2.5em;
 }
 
 .jiraConfiguration__tableContainer > .jiraConfiguration__table {
@@ -482,7 +482,7 @@ so changing the position of the tooltips for the first two rows to bottom
 
 .jiraConfiguration__enterpriseConnections {
   background-color: #fff;
-  padding: 1.5em;
+  padding: 1.5em 1.5em 0.8em;
   box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
   border-radius: 3px;
 }

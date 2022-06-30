@@ -342,39 +342,6 @@
                       <span class="aui-icon aui-iconfont-chevron-down"></span>
                       <span class="jiraConfiguration__optionHeader">{{app.name}}</span>
                     </div>
-
-                    <button class="jiraConfiguration__table__cell__settings__ellipsis aui-button aui-dropdown2-trigger" aria-controls="settings-dropdown-{{id}}">
-                      <span class="jiraConfiguration__table__cell__settings__ellipsisSpan">...</span>
-                    </button>
-
-                    <aui-dropdown-menu class="jiraConfiguration__table__dropdown" id="settings-dropdown-{{id}}">
-                      <aui-section class="jiraConfiguration__table__cell__settings__dropdownItems">
-                        <a
-                            class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
-                            href="{{html_url}}"
-                            data-installation-link="{{html_url}}"
-                            target="_blank"
-                        >
-                          Configure
-                        </a>
-                        <div class="jiraConfiguration__table__cell__settings__dropdownItem">
-                          <button
-                              class="sync-connection-link restart-backfill-button"
-                              data-jira-host="{{ ../host }}"
-                              data-installation-id="{{ id }}"
-                              id="restart-backfill"
-                          >
-                            Restart backfill
-                          </button>
-                          <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                        </div>
-                        <button
-                            class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
-                            data-installation-id="{{ id }}">Disconnect
-                        </button>
-                      </aui-section>
-                    </aui-dropdown-menu>
-
                   </summary>
                   <div class="jiraConfiguration__collapsibleBody">
                     {{#if app.successfulConnections}}
