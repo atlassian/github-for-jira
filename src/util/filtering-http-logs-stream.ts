@@ -1,5 +1,5 @@
 import { Writable } from "stream";
-// import { inspect } from "util";
+
 /**
  * Creates a writable stream that prevents HTTP logs from being logged
  *

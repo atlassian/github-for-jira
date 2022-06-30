@@ -50,7 +50,7 @@ const hashSerializer = (data: any): string | undefined => {
 	return createHashWithSharedSecret(data);
 };
 
-export const sensitiveDataSerializers = (): Logger.Serializers => ({
+const sensitiveDataSerializers = (): Logger.Serializers => ({
 	jiraHost: hashSerializer,
 	orgName: hashSerializer,
 	repoName: hashSerializer,
