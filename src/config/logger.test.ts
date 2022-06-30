@@ -37,6 +37,7 @@ describe('logger behaviour', () => {
 			logger.warn("Greetings");
 
 			expect(childLogger.fields.foo).toBe("bar");
+			expect(childLogger.fields.bingo).toBe("buzz");
 		});
 
 		it('Should write all logging methods to msg stream', () => {

@@ -94,7 +94,6 @@ const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger
 
 export const getLogger = (name: string, fields?: Record<string, unknown>): Logger => {
 	const logger = createNewLogger(name);
-
 	logger.addSerializers(sensitiveDataSerializers());
 	return logger.child({ ...fields });
 };

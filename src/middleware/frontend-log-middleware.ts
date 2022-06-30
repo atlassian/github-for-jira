@@ -40,24 +40,6 @@ declare global {
 		}
 	}
 }
-//
-// export const LogMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-// 	req.addLogFields = (fields: Record<string, unknown>): void => {
-// 		if (req.log) {
-// 			console.log(fields);
-// 			//req.log = req.log.child(fields);
-// 		} else {
-// 			throw new Error(`No log found during request: ${req.method} ${req.path}`);
-// 		}
-// 	};
-// 	// req.log = req.log.child({ name: FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME });
-// 	res.once("finish", async () => {
-// 		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {
-// 			req.log.warn({ res, req }, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
-// 		}
-// 	});
-// 	next();
-// };
 
 const cloneAllowedLogFields = (fields: Record<string, any>) => {
 	const allowedFields = { ...fields };
