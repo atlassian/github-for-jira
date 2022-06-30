@@ -2,6 +2,7 @@
   margin: 4em auto 0;
   max-width: 560px;
 }
+
 .jiraConnectGHE__content__title {
   text-align: center;
   margin-bottom: 2em;
@@ -53,4 +54,12 @@
 #gheServerBtnSpinner {
   display: none;
   color: #fff;
+}
+
+/**
+  TODO: These error blocks are shown only for the sake of purpose at the moment,
+        Please change this to `none` before merging
+ */
+.jiraConnectGHE__validationError, .jiraConnectGHE__defaultError {
+  display: block;
 }

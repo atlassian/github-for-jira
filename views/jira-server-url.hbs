@@ -19,6 +19,7 @@
       media="all"
     />
     <link rel="stylesheet" href="/public/css/global.css" media="all" />
+    <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
     <link
       rel="stylesheet"
       href="/public/css/jira-server-url.css"
@@ -65,7 +66,18 @@
               <a href="" target="_blank"></a>
             </div>
           </div>
-
+          <div class="jiraConnectGHE__validationError">
+            {{> server-error-message-box
+              title="URL validation failed"
+              message="Your URL couldn’t be verified. Please check that you have entered the correct URL and have configured the hole in your firewall correctly."
+            }}
+          </div>
+          <div class="jiraConnectGHE__defaultError">
+            {{> server-error-message-box
+              title="Error"
+              message="Something went wrong, please try again later."
+            }}
+          </div>
           <div class="jiraConnectGHE__actionBtn__container">
             <button
               id="gheServerBtn"
