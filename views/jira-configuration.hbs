@@ -77,56 +77,52 @@
           <p>Even if your organization is still backfilling historical data, you can start linking issue keys in your
             development work immediately.</p>
 
-          {{!-- Backfill Status Info Modal --}}
-          <div class='jiraConfiguration__syncRetryModal' id="sync-status-modal">
+         {{!-- Backfill Status Info Modal --}}
+          <div class='jiraConfiguration__syncRetryModal'  id="sync-status-modal">
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
                 <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status</h4>
-                <span id="status-close"
-                      class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
+                <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
               </div>
 
               <table class="jiraConfiguration__syncRetryModal__table">
                 <tbody class="jiraConfiguration__syncRetryModal__tableBody">
-                <tr class="jiraConfiguration__syncRetryModal__tableRow">
-                  <td class="jiraConfiguration__syncRetryModal__syncStatus__type">
-                    <span class="syncStatusInProgress">In progress</span>
-                  </td>
-                  <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
-                    Backfilling data has started and is still in progress for this account. New data may not immediately be
-                    displayed in Jira.
-                  </td>
-                </tr>
+                  <tr class="jiraConfiguration__syncRetryModal__tableRow">
+                    <td class="jiraConfiguration__syncRetryModal__syncStatus__type">
+                      <span class="syncStatusInProgress">In progress</span>
+                    </td>
+                    <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
+                      Backfilling data has started and is still in progress for this account. New data may not immediately be displayed in Jira.
+                    </td>
+                  </tr>
 
-                <tr class="jiraConfiguration__syncRetryModal__tableRow">
-                  <td class="jiraConfiguration__syncRetryModal__syncStatus__type">
-                    <span class="syncStatusFailed">Failed</span>
-                  </td>
-                  <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
-                    There was a problem backfilling data from your account. The backfill process will automatically retry.
-                    However, if this does not happen, click the retry button next to the status, or "restart backfill" in
-                    the dropdown menu.
-                  </td>
-                </tr>
+                  <tr class="jiraConfiguration__syncRetryModal__tableRow">
+                    <td class="jiraConfiguration__syncRetryModal__syncStatus__type">
+                      <span class="syncStatusFailed">Failed</span>
+                    </td>
+                    <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
+                      There was a problem backfilling data from your account. The backfill process will automatically retry.
+                      However, if this does not happen, click the retry button next to the status, or "restart backfill" in the dropdown menu.
+                    </td>
+                  </tr>
 
-                <tr class="jiraConfiguration__syncRetryModal__tableRow">
-                  <td class="jiraConfiguration__syncRetryModal__syncStatus__type">
-                    <span class="syncStatusPending">Pending</span>
-                  </td>
-                  <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
-                    The backfill has been queued, but is not actively backfilling data from GitHub.
-                  </td>
-                </tr>
+                  <tr class="jiraConfiguration__syncRetryModal__tableRow">
+                    <td class="jiraConfiguration__syncRetryModal__syncStatus__type">
+                      <span class="syncStatusPending">Pending</span>
+                    </td>
+                    <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
+                      The backfill has been queued, but is not actively backfilling data from GitHub.
+                    </td>
+                  </tr>
 
-                <tr class="jiraConfiguration__syncRetryModal__tableRow">
-                  <td class="jiraConfiguration__syncRetryModal__syncStatus__type">
-                    <span class="syncStatusFinished">Finished</span>
-                  </td>
-                  <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
-                    The backfill has finished. Information from selected repositories will be shown in Jira’s development
-                    information panel.
-                  </td>
-                </tr>
+                  <tr class="jiraConfiguration__syncRetryModal__tableRow">
+                    <td class="jiraConfiguration__syncRetryModal__syncStatus__type">
+                       <span class="syncStatusFinished">Finished</span>
+                    </td>
+                    <td class="jiraConfiguration__syncRetryModal__syncStatus__details">
+                      The backfill has finished. Information from selected repositories will be shown in Jira’s development information panel.
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -238,7 +234,7 @@
         {{/if}}
       </section>
 
-  </div>
+    </div>
 
     <script src="/public/js/jira-configuration.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
