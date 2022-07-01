@@ -515,6 +515,17 @@ so changing the position of the tooltips for the first two rows to bottom
   padding-left: 1.4em;
 }
 
+.aui-dropdown2-item-group > .jiraConfiguration__connectBtnDropdownOption {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.8em 1.4em;
+}
+
+.jiraConfiguration__header > .aui-dropdown2 {
+  width: 250px;
+  padding: 0.5em 0;
+}
+
 /* Collapsible Icon*/
 .aui-iconfont-chevron-down {
   display: none;

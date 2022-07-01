@@ -34,9 +34,29 @@
 
     {{#if hasConnections}}
       <button
-          class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary add-organization-link"
+          class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary aui-button aui-dropdown2-trigger"
+          aria-controls="connectBtnDropdown"
       >Connect GitHub organization
       </button>
+      <aui-dropdown-menu id="connectBtnDropdown">
+        <aui-section>
+          <a
+            class="jiraConfiguration__connectBtnDropdownOption add-organization-link"
+            target="_blank"
+          >
+            <span>Connect GitHub Cloud</span>
+            <i class="aui-icon aui-iconfont-question-filled"></i>
+          </a>
+          <a
+            class="jiraConfiguration__connectBtnDropdownOption select-github-version-link"
+            target="_blank"
+          >
+            <span>Connect GitHub Server</span>
+            <i class="aui-icon aui-iconfont-question-filled"></i>
+          </a>
+        </aui-section>
+      </aui-dropdown-menu>
+
     {{/if}}
   </header>
 
@@ -344,12 +364,12 @@
                     </div>
                     <button
                       class="aui-button aui-dropdown2-trigger aui-dropdown2-trigger-arrowless jiraConfiguration__appDropdown"
-                      aria-controls="settings-dropdown-{{id}}"
+                      aria-controls="app-settings-dropdown-{{id}}"
                     >
                       <span class="jiraConfiguration__appDropdownIcon">...</span>
                     </button>
-                    <aui-dropdown-menu class="" id="settings-dropdown-{{id}}">
-                      <aui-section class="">
+                    <aui-dropdown-menu class="" id="app-settings-dropdown-{{id}}">
+                      <aui-section>
                         <a
                           class=""
                           href="#"
