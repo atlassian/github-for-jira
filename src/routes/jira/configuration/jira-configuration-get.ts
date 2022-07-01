@@ -118,7 +118,7 @@ export const JiraConfigurationGet = async (
 		 **/
 		const gheServers = [];
 
-		const gheServerEnabled = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost);
+		const gheServerEnabled = await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost);
 
 		const handleNavigationClassName = gheServerEnabled ? "select-github-version-link" : "add-organization-link";
 		const config = gheServerEnabled ? {

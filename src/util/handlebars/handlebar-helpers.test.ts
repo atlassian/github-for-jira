@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper, compareOr } from "./handlebar-helpers";
+import { replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper, compareOr, compareAnd } from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
 	describe("toLowercaseHelper", () => {
@@ -54,16 +54,22 @@ describe("Handlebar Helpers", () => {
 	});
 
 	describe("compareOr", () => {
-		it("should return false when no parameters", () => {
-			expect(compareOr()).toEqual(false);
-		});
-
 		it("should return false only if all parameters are falsy", () => {
 			expect(compareOr(0, 1)).toEqual(true);
 			expect(compareOr(1, 1, 1)).toEqual(true);
 			expect(compareOr(1, 0, 0)).toEqual(true);
 			expect(compareOr(0, 0)).toEqual(false);
 			expect(compareOr(0)).toEqual(false);
+		});
+	});
+
+	describe("compareAnd", () => {
+		it("should return true only if all parameters are truthy", () => {
+			expect(compareAnd(1, 1, 1)).toEqual(true);
+			expect(compareAnd(0, 1)).toEqual(false);
+			expect(compareAnd(1, 0, 0)).toEqual(false);
+			expect(compareAnd(0, 0)).toEqual(false);
+			expect(compareAnd(0)).toEqual(false);
 		});
 	});
 });

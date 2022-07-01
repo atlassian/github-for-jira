@@ -76,7 +76,7 @@
           <p>Even if your organization is still backfilling historical data, you can start linking issue keys in your
             development work immediately.</p>
 
-         {{!-- Backfill Status Info Modal --}}
+          {{!-- Backfill Status Info Modal --}}
           <div class='jiraConfiguration__syncRetryModal'  id="sync-status-modal">
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
@@ -129,24 +129,22 @@
             <div class="jiraConfiguration__syncRetryModalOverlay"></div>
           </div>
 
-          <div class="jiraConfiguration__optionContainer">
-            <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
-                    id="jiraConfiguration__optionAll">All
-            </button>
-            {{#if (or ghCloud.successfulConnections.length ghCloud.failedConnections.length)}}
+          {{#if (and (or ghCloud.successfulConnections.length ghCloud.failedConnections.length) gheServers.length)}}
+            <div class="jiraConfiguration__optionContainer">
+              <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
+                      id="jiraConfiguration__optionAll">All
+              </button>
               <button class="aui-button jiraConfiguration__option" id="jiraConfiguration__optionCloud">
                 <img src="/public/assets/cloud.svg" class="jiraConfiguration__optionsIcon" alt="">
                 GitHub Cloud
               </button>
-            {{/if}}
-            {{#if gheServers.length}}
               <button class="aui-button jiraConfiguration__option" id="jiraConfiguration__optionEnterprise">
                 <img src="/public/assets/server.svg" class="jiraConfiguration__optionsIcon" alt="">
                 GitHub Enterprise Server
               </button>
-            {{/if}}
+            </div>
+          {{/if}}
 
-          </div>
           {{#if (or ghCloud.successfulConnections.length ghCloud.failedConnections.length)}}
             <div class="jiraConfiguration__cloudContainer">
               <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
@@ -226,7 +224,6 @@
               {{/each}}
             </div>
           {{/if}}
-
         {{else}}
           {{> jira-configuration-empty-connections csrfToken=csrfToken
               handleNavigationClassName=handleNavigationClassName}}
