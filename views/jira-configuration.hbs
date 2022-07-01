@@ -60,7 +60,6 @@
           </a>
         </aui-section>
       </aui-dropdown-menu>
-
     {{/if}}
   </header>
 
@@ -139,7 +138,7 @@
         <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
                 id="jiraConfiguration__optionAll">All
         </button>
-        {{#if (or gheCloud.successfulConnections.length gheCloud.failedConnections.length)}}
+        {{#if (or ghCloud.successfulConnections.length ghCloud.failedConnections.length)}}
           <button class="aui-button jiraConfiguration__option" id="jiraConfiguration__optionCloud">
             <img src="/public/assets/cloud.svg" class="jiraConfiguration__optionsIcon" alt="">
             GitHub Cloud
@@ -153,11 +152,11 @@
         {{/if}}
 
       </div>
-      {{#if (or gheCloud.successfulConnections.length gheCloud.failedConnections.length)}}
+      {{#if (or ghCloud.successfulConnections.length ghCloud.failedConnections.length)}}
         <div class="jiraConfiguration__cloudContainer">
         <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
         <div class="jiraConfiguration__cloudConnections">
-          {{#if gheCloud.successfulConnections}}
+          {{#if ghCloud.successfulConnections}}
             <div class="jiraConfiguration__tableContainer">
               <table class="jiraConfiguration__table aui">
                 <thead class="jiraConfiguration__table__head">
@@ -175,7 +174,7 @@
                 </thead>
 
                 <tbody class="jiraConfiguration__table__body">
-                {{#each gheCloud.successfulConnections}}
+                {{#each ghCloud.successfulConnections}}
                   <tr class="jiraConfiguration__table__row">
                     {{! Organization }}
                     <td class="jiraConfiguration__table__cell">
@@ -322,7 +321,7 @@
             </div>
           {{/if}}
 
-          {{#each gheCloud.failedConnections}}
+          {{#each ghCloud.failedConnections}}
             <div class="jiraConfiguration__failedConnections__container">
               <div class="jiraConfiguration__failedConnections__errorIcon__container">
                 <span

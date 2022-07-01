@@ -4,10 +4,11 @@ import { isPlainObject } from "lodash";
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
 export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
 export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
+export const compareOr = (...args: unknown[]) => args.some(Boolean);
 
 export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("toLowerCase", toLowercaseHelper);
-	hbs.registerHelper("or", (...args: unknown[]) => Array.prototype.slice.call(args, 0, -1).some(Boolean));
+	hbs.registerHelper("or", compareOr);
 
 	hbs.registerHelper("replaceSpaceWithHyphen", replaceSpaceWithHyphenHelper);
 	hbs.registerHelper("concat", concatStringHelper);

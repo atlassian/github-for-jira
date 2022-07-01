@@ -160,7 +160,7 @@ export const JiraConfigurationGet = async (
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
 			gheServers,
-			gheCloud: { successfulConnections, failedConnections },
+			ghCloud: { successfulConnections, failedConnections },
 			hasConnections: !!(installations.total || gheServers.length),
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),

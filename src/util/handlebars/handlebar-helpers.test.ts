@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { replaceSpaceWithHyphenHelper, toLowercaseHelper } from "./handlebar-helpers";
+import {replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper, compareOr} from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
 	describe("toLowercaseHelper", () => {
@@ -38,6 +38,32 @@ describe("Handlebar Helpers", () => {
 			expect(replaceSpaceWithHyphenHelper("baR")).toEqual("baR");
 			expect(replaceSpaceWithHyphenHelper(10943 as any)).toEqual("10943");
 			expect(replaceSpaceWithHyphenHelper(new Date(0) as any)).toMatch("Thu-Jan-01-1970");
+		});
+	});
+
+	describe("concatStringHelper", () => {
+		it("should return empty string with no parameter", () => {
+			expect(concatStringHelper()).toEqual("");
+		});
+
+		it("should return concatenated string of all the parameters separated by space", () => {
+			expect(concatStringHelper("I", "am", "Legend")).toEqual("I am Legend");
+			expect(concatStringHelper("Gotta", "catch", "'em", "all!")).toEqual("Gotta catch 'em all!");
+			expect(concatStringHelper("More", " ", "space")).toEqual("More   space");
+		});
+	});
+
+	describe("compareOr", () => {
+		it("should return false when no parameters", () => {
+			expect(compareOr()).toEqual(false);
+		});
+
+		it("should return false only if all parameters are falsy", () => {
+			expect(compareOr(0, 1)).toEqual(true);
+			expect(compareOr(1, 1, 1)).toEqual(true);
+			expect(compareOr(1, 0, 0)).toEqual(true);
+			expect(compareOr(0, 0)).toEqual(false);
+			expect(compareOr(0)).toEqual(false);
 		});
 	});
 });
