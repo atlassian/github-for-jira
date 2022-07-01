@@ -113,7 +113,45 @@ export const JiraConfigurationGet = async (
 				isGlobalInstall: installation.repository_selection === "all"
 			}));
 
-		// TODO: fetch the actual list of GHE servers of the following format
+		/**
+		 * TODO: fetch the actual list of GHE servers
+		 *
+		 * The following array is a sample
+		 * [
+		 * 		{
+		 * 			id: 1,
+		 * 			url: "https:/github.internal.company.com",
+		 * 			applications: [
+		 * 				{
+		 * 					id: 1,
+		 * 					name: "ghe-app-for-jira",
+		 * 					successfulConnections: [1, 2, 3].map(() => successfulConnections[0])
+		 * 				},
+		 * 				{
+		 * 					id: 2,
+		 * 					name: "inter-team-app",
+		 * 					successfulConnections: [1, 2, 3, 4].map(() => successfulConnections[0])
+		 * 				}
+		 * 			]
+		 * 		},
+		 * 		{
+		 * 			id: 2,
+		 * 			url: "https:/github.internal.oooohanothercompany.com",
+		 * 			applications: [
+		 * 				{
+		 * 					id: 1,
+		 * 					name: "apps-galore",
+		 * 					successfulConnections: [1, 2, 3, 4, 5].map(() => successfulConnections[0])
+		 * 				},
+		 * 				{
+		 * 					id: 2,
+		 * 					name: "loose-canon",
+		 * 					successfulConnections: [1, 2, 3, 4].map(() => successfulConnections[0])
+		 * 				}
+		 * 			]
+		 * 		}
+		 * ]
+ 		 */
 		const gheServers = [];
 
 		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
@@ -122,7 +160,7 @@ export const JiraConfigurationGet = async (
 
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
-			successfulConnections,
+			successfulConnections, // TODO: need to rename to indicate that this is only for GH cloud apps
 			failedConnections,
 			gheServers,
 			hasConnections: !!installations.total, // TODO: need to add the total of GHE servers too
