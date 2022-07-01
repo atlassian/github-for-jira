@@ -1,9 +1,9 @@
 <html>
-<head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="ap-local-base-url" content="{{localBaseUrl}}"/>
-    <meta name="public-url" content="{{APP_URL}}"/>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+    <meta name="public-url" content="{{APP_URL}}" />
     <title>{{title}}</title>
     <link
       rel="stylesheet"
@@ -12,13 +12,13 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all"/>
+    <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
     <link
       rel="stylesheet"
       href="/public/atlassian-ui-kit/bundle.css"
       media="all"
     />
-    <link rel="stylesheet" href="/public/css/global.css" media="all"/>
+    <link rel="stylesheet" href="/public/css/global.css" media="all" />
     <link
       rel="stylesheet"
       href="/public/css/jira-configuration.css"
@@ -244,14 +244,14 @@
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script
-        src="https://connect-cdn.atl-paas.net/all.js"
-        nonce="{{nonce}}"
+      src="https://connect-cdn.atl-paas.net/all.js"
+      nonce="{{nonce}}"
     ></script>
     <script
-        src="/public/aui/aui-prototyping.js"
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-        nonce="{{nonce}}"
+      src="/public/aui/aui-prototyping.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+      nonce="{{nonce}}"
     ></script>
   </body>
 </html>
