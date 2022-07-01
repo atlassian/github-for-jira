@@ -8,7 +8,6 @@ import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { isGitHubCloudApp } from "~/src/util/jira-utils";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -160,15 +159,13 @@ export const JiraConfigurationGet = async (
 
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
-			successfulConnections, // TODO: need to rename to indicate that this is only for GH cloud apps
-			failedConnections,
 			gheServers,
-			hasConnections: !!installations.total, // TODO: need to add the total of GHE servers too
+			gheCloud: { successfulConnections, failedConnections },
+			hasConnections: !!(installations.total || gheServers.length),
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,
-			handleNavigationClassName,
-			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
+			handleNavigationClassName
 		});
 
 		req.log.info("Jira configuration rendered successfully.");

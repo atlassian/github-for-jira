@@ -69,7 +69,6 @@
 }
 
 .jiraConfiguration__tableContainer {
-  overflow: auto;
   padding: 0 0 1em;
 }
 
@@ -94,7 +93,7 @@
 }
 
 .jiraConfiguration__table__head_row
-  > .jiraConfiguration__table__head__title:last-child {
+> .jiraConfiguration__table__head__title:last-child {
   padding-right: 1em;
   text-align: right;
 }
@@ -104,11 +103,11 @@
 }
 
 .jiraConfiguration__table__body
-  > .jiraConfiguration__table__row
-  > .jiraConfiguration__table__cell,
+> .jiraConfiguration__table__row
+> .jiraConfiguration__table__cell,
 .jiraConfiguration__table__body
-  > .jiraConfiguration__table__row
-  > .jiraConfiguration__table__cell__settings {
+> .jiraConfiguration__table__row
+> .jiraConfiguration__table__cell__settings {
   border-bottom: none;
   border-top: none;
   padding: 0.8em 0;
@@ -174,9 +173,9 @@
   box-sizing: border-box;
   z-index: 400;
   flex: 1 1 auto;
-  background-color: var(--ds-surface-overlay,#FFFFFF);
+  background-color: var(--ds-surface-overlay, #FFFFFF);
   border-radius: 3px;
-  box-shadow: var(--ds-shadow-overlay,0 4px 8px -2px rgba(9,30,66,0.25),0 0 1px rgba(9,30,66,0.31));
+  box-shadow: var(--ds-shadow-overlay, 0 4px 8px -2px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31));
   overflow: auto;
 }
 
@@ -196,14 +195,6 @@
   top: -7.5em;
 }
 
-/*
-The tooltip for the first two rows are hidden due to the `overflow: auto` of the parent div,
-so changing the position of the tooltips for the first two rows to bottom
- */
-.jiraConfiguration__table__row:nth-child(-n+2) .jiraConfiguration__syncWarningMessage {
-  top: 1.9em;
-}
-
 .jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
   display: block;
 }
@@ -213,14 +204,14 @@ so changing the position of the tooltips for the first two rows to bottom
 }
 
 .jiraConfiguration__table__body
-  > .jiraConfiguration__table__row
-  > .jiraConfiguration__table__cell__settings {
+> .jiraConfiguration__table__row
+> .jiraConfiguration__table__cell__settings {
   padding: 0;
   text-align: right;
 }
 
 .jiraConfiguration__table__cell__settings
-  > .jiraConfiguration__table__cell__settings__ellipsis,
+> .jiraConfiguration__table__cell__settings__ellipsis,
 .jiraConfiguration__appDropdown {
   background-color: #fff;
   border: none;
@@ -243,26 +234,26 @@ so changing the position of the tooltips for the first two rows to bottom
 }
 
 .jiraConfiguration__table__cell__settings
-  > .aui-dropdown2-trigger:not(.aui-dropdown2-trigger-arrowless) {
+> .aui-dropdown2-trigger:not(.aui-dropdown2-trigger-arrowless) {
   padding-right: 0.2em;
 }
 
 .jiraConfiguration__appDropdown:hover,
 .jiraConfiguration__table__cell__settings
-  > .jiraConfiguration__table__cell__settings__ellipsis:hover,
+> .jiraConfiguration__table__cell__settings__ellipsis:hover,
 .aui-button.active:not(.aui-button-link) {
   background-color: #091e4208;
 }
 
 .jiraConfiguration__table__cell__settings
-  > .jiraConfiguration__table__cell__settings__ellipsis.bob,
+> .jiraConfiguration__table__cell__settings__ellipsis.bob,
 .aui-button.active:not(.aui-button-link) {
   background-color: #263858;
   color: #fff;
 }
 
 .jiraConfiguration__table__cell__settings
-  > .jiraConfiguration__table__cell__settings__ellipsis::before {
+> .jiraConfiguration__table__cell__settings__ellipsis::before {
   content: none;
 }
 
@@ -283,20 +274,20 @@ so changing the position of the tooltips for the first two rows to bottom
 }
 
 .aui-dropdown2-item-group
-  > .jiraConfiguration__table__cell__settings__dropdownItem {
+> .jiraConfiguration__table__cell__settings__dropdownItem {
   cursor: pointer;
   padding: 0.6em 1em;
 }
 
 .aui-dropdown2-item-group
-  > .jiraConfiguration__table__cell__settings__dropdownItem:hover {
+> .jiraConfiguration__table__cell__settings__dropdownItem:hover {
   background-color: #e9edf0;
 }
 
 .aui-dropdown2-item-group
-  > .jiraConfiguration__table__cell__settings__dropdownItem:active,
+> .jiraConfiguration__table__cell__settings__dropdownItem:active,
 .aui-dropdown2-item-group
-  > .jiraConfiguration__table__cell__settings__dropdownItem:focus {
+> .jiraConfiguration__table__cell__settings__dropdownItem:focus {
   background-color: #ecedf0;
   box-shadow: none;
   color: #455570;
@@ -435,6 +426,7 @@ so changing the position of the tooltips for the first two rows to bottom
   padding: 0.45em;
   position: relative;
 }
+
 .jiraConfiguration__table__editContainer:hover,
 .jiraConfiguration__syncRetryModal__closeBtn:hover {
   background: #091E4208;
@@ -526,19 +518,50 @@ so changing the position of the tooltips for the first two rows to bottom
   padding: 0.5em 0;
 }
 
+.jiraConfiguration__connectGHCloudTooltip,
+.jiraConfiguration__connectGHETooltip {
+  display: none;
+  position: absolute;
+  background-color: #172B4D;
+  padding: 0.4em;
+  border-radius: 3px;
+  width: 454px;
+  color: #FFF;
+  right: 0;
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+.aui-iconfont-question-filled + .jiraConfiguration__connectGHCloudTooltip {
+  top: -1.8em;
+}
+
+.aui-iconfont-question-filled + .jiraConfiguration__connectGHETooltip {
+  bottom: 3.8em;
+}
+
+.aui-iconfont-question-filled:hover + .jiraConfiguration__connectGHCloudTooltip,
+.aui-iconfont-question-filled:hover + .jiraConfiguration__connectGHETooltip {
+  display: block;
+}
+
 /* Collapsible Icon*/
 .aui-iconfont-chevron-down {
   display: none;
 }
+
 details[open] summary div .aui-iconfont-chevron-right {
   display: none;
 }
+
 details[open] summary div .aui-iconfont-chevron-down {
   display: inline;
 }
+
 details summary div .aui-iconfont-chevron-down {
   display: none;
 }
+
 details summary div .aui-iconfont-chevron-right {
   display: inline;
 }
@@ -569,7 +592,7 @@ as the left panel navigation in Jira hijacks some of the screen */
   }
 
   .jiraConfiguration__table__cell__settings
-    > .jiraConfiguration__table__cell__settings__ellipsis {
+  > .jiraConfiguration__table__cell__settings__ellipsis {
     right: 0.2em;
   }
 }

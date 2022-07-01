@@ -7,6 +7,7 @@ export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str
 
 export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("toLowerCase", toLowercaseHelper);
+	hbs.registerHelper("or", (...args: unknown[]) => Array.prototype.slice.call(args, 0, -1).some(Boolean));
 
 	hbs.registerHelper("replaceSpaceWithHyphen", replaceSpaceWithHyphenHelper);
 	hbs.registerHelper("concat", concatStringHelper);
