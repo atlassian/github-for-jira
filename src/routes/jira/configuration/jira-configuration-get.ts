@@ -8,6 +8,7 @@ import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { isGitHubCloudApp } from "~/src/util/jira-utils";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -114,50 +115,13 @@ export const JiraConfigurationGet = async (
 
 		/**
 		 * TODO: fetch the actual list of GHE servers
-		 *
-		 * The following array is a sample
-		 * [
-		 * 		{
-		 * 			id: 1,
-		 * 			url: "https:/github.internal.company.com",
-		 * 			applications: [
-		 * 				{
-		 * 					id: 1,
-		 * 					name: "ghe-app-for-jira",
-		 * 					successfulConnections: [1, 2, 3].map(() => successfulConnections[0])
-		 * 				},
-		 * 				{
-		 * 					id: 2,
-		 * 					name: "inter-team-app",
-		 * 					successfulConnections: [1, 2, 3, 4].map(() => successfulConnections[0])
-		 * 				}
-		 * 			]
-		 * 		},
-		 * 		{
-		 * 			id: 2,
-		 * 			url: "https:/github.internal.oooohanothercompany.com",
-		 * 			applications: [
-		 * 				{
-		 * 					id: 1,
-		 * 					name: "apps-galore",
-		 * 					successfulConnections: [1, 2, 3, 4, 5].map(() => successfulConnections[0])
-		 * 				},
-		 * 				{
-		 * 					id: 2,
-		 * 					name: "loose-canon",
-		 * 					successfulConnections: [1, 2, 3, 4].map(() => successfulConnections[0])
-		 * 				}
-		 * 			]
-		 * 		}
-		 * ]
- 		 */
+		 **/
 		const gheServers = [];
 
-		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-			? "select-github-version-link"
-			: "add-organization-link";
+		const gheServerEnabled = await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost);
 
-		res.render("jira-configuration.hbs", {
+		const handleNavigationClassName = gheServerEnabled ? "select-github-version-link" : "add-organization-link";
+		const config = gheServerEnabled ? {
 			host: jiraHost,
 			gheServers,
 			ghCloud: { successfulConnections, failedConnections },
@@ -166,7 +130,19 @@ export const JiraConfigurationGet = async (
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,
 			handleNavigationClassName
-		});
+		} : {
+			host: jiraHost,
+			successfulConnections,
+			failedConnections,
+			hasConnections: !!installations.total,
+			APP_URL: process.env.APP_URL,
+			csrfToken: req.csrfToken(),
+			nonce: res.locals.nonce,
+			handleNavigationClassName,
+			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
+		};
+
+		res.render(gheServerEnabled ? "jira-configuration-new.hbs" : "jira-configuration.hbs", config);
 
 		req.log.info("Jira configuration rendered successfully.");
 	} catch (error) {

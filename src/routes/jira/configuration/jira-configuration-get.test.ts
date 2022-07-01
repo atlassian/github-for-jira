@@ -5,6 +5,7 @@ import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { getLogger } from "config/logger";
 
 describe("Jira Configuration Suite", () => {
@@ -65,11 +66,13 @@ describe("Jira Configuration Suite", () => {
 			.get(`/app/installations/15`)
 			.reply(200, singleInstallation);
 
+		const gheServerEnabled = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost);
+
 		await JiraConfigurationGet(mockRequest(), response, jest.fn());
 		const data = response.render.mock.calls[0][1];
 		expect(data.hasConnections).toBe(true);
-		expect(data.ghCloud.failedConnections.length).toBe(0);
-		expect(data.ghCloud.successfulConnections.length).toBe(1);
+		expect(gheServerEnabled ? data.ghCloud.failedConnections.length : data.failedConnections.length).toBe(0);
+		expect(gheServerEnabled ? data.ghCloud.successfulConnections.length : data.successfulConnections.length).toBe(1);
 	});
 
 	describe("getInstallations", () => {
