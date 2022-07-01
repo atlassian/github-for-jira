@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper, compareOr} from "./handlebar-helpers";
+import { replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper, compareOr } from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
 	describe("toLowercaseHelper", () => {
