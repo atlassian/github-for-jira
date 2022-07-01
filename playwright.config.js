@@ -5,10 +5,9 @@ module.exports = {
 	testMatch: /.*\.e2e\.ts/,
 	use: {
 		trace: "on-first-retry",
-		// Tell all tests to load signed-in state
-		storageState: './test/e2e/.state.json'
 	},
 	globalSetup: './test/e2e/setup.ts',
+	globalTeardown: './test/e2e/teardown.ts',
 	projects: [
 		{
 			name: "chromium",

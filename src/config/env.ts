@@ -97,7 +97,6 @@ export interface EnvVars {
 	GIT_BRANCH_NAME?: string;
 	GITHUB_REPO_URL: string;
 	DEPLOYMENT_DATE: string;
-	BULL_QUEUE_PREFIX?: string;
 	GLOBAL_HASH_SECRET: string;
 
 	// Test Vars

@@ -124,7 +124,6 @@
 		"eslint-plugin-no-only-tests": "^2.6.0",
 		"eslint-plugin-node": "^11.1.0",
 		"eslint-plugin-promise": "^6.0.0",
-		"httplease": "^0.8.4",
 		"husky": "^6.0.0",
 		"jest": "^27.5.1",
 		"jest-diff": "^27.5.1",

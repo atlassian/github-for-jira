@@ -1,33 +1,33 @@
-import { Builder as HttpClient } from "httplease/lib/builder";
+import { githubContext, hostUrl } from "test/e2e/setup";
 
-const hostUrl = "https://rachelle-local.public.atlastunnel.com";
+export const deleteDevInfoDataByInstallationId = async (installationId: string) => {
+	// const httpClient =
+	// 	.withBaseUrl(hostUrl)
+	// 	.withExpectStatus([200])
+	// 	.withBufferBodyResponseHandler()
+	// 	.withTimeout(10000)
+	// 	.withAgentOptions({ keepAlive: true });
 
-export async function deleteDevInfoDataByInstallationId(
-	installationId: string
-) {
-	const httpClient = new HttpClient()
-		.withBaseUrl(hostUrl)
-		.withExpectStatus([200])
-		.withBufferBodyResponseHandler()
-		.withTimeout(10000)
-		.withAgentOptions({ keepAlive: true });
-
-	const path = `/api/deleteInstallation/${installationId}/${encodeURIComponent(
-		"https://rachellerathbonee2e.atlassian.net"
-	)}`;
+	const path = `/api/deleteInstallation/${installationId}/${encodeURIComponent("https://rachellerathbonee2e.atlassian.net")}`;
 	console.log(`Calling ${hostUrl}${path}`);
 
-	return githubNock
+	/*return githubNock
 		.delete(path)
 		.matchHeader("Authorization", /^Bearer .+$/)
-		.reply(200)
+		.reply(200);*/
 
+	return await githubContext.post(path, {
+		data: {
+			title: "[Feature] request 1"
+		}
+	});
+/*
 	return httpClient
 		.withPath(path)
 		.withMethodDelete()
 		.withDiscardBodyResponseHandler()
 		.withHeaders({
-			Authorization: `Bearer <halp>`,
+			Authorization: `Bearer <halp>`
 		})
 		.send()
 		.catch((err) => {
@@ -37,7 +37,7 @@ export async function deleteDevInfoDataByInstallationId(
 				);
 			}
 
-			console.error('Failed to delete dev info data:', err);
+			console.error("Failed to delete dev info data:", err);
 			throw err;
-		});
-}
+		});*/
+};

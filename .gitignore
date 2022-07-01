@@ -49,4 +49,4 @@ test/**/*.js.map
 .nebulae/
 
 # e2e tests
-test/e2e/.state.json
+test/e2e/state/

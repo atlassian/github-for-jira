@@ -1,6 +1,6 @@
+/*
 import { expect, test } from "@playwright/test";
 
-// eslint-disable-next-line jest/no-done-callback
 test("test", async ({ page }) => {
 	await page.goto("https://rachellerathbonee2e.atlassian.net/plugins/servlet/upm");
 
@@ -12,3 +12,4 @@ test("test", async ({ page }) => {
 	expect(await frame.locator("text=Connect GitHub organization").isVisible()).toBeTruthy();
 	await frame.locator("text=Connect GitHub organization").click();
 });
+*/
