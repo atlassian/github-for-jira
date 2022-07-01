@@ -68,8 +68,8 @@ describe("Jira Configuration Suite", () => {
 		await JiraConfigurationGet(mockRequest(), response, jest.fn());
 		const data = response.render.mock.calls[0][1];
 		expect(data.hasConnections).toBe(true);
-		expect(data.failedConnections.length).toBe(0);
-		expect(data.successfulConnections.length).toBe(1);
+		expect(data.gheCloud.failedConnections.length).toBe(0);
+		expect(data.gheCloud.successfulConnections.length).toBe(1);
 	});
 
 	describe("getInstallations", () => {
