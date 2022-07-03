@@ -12,6 +12,7 @@ import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } f
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { getLogger } from "config/logger";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
@@ -98,8 +99,7 @@ export const GithubWebhookMiddleware = (
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
 
-		context.log = context.log.child({
-			name: "github.webhooks",
+		context.log = getLogger("github.webhooks",{
 			webhookId,
 			gitHubInstallationId,
 			event: webhookEvent,
@@ -107,6 +107,7 @@ export const GithubWebhookMiddleware = (
 			repoName,
 			orgName
 		});
+
 		context.log.debug({ payload }, "Webhook payload");
 
 		statsd.increment(metricWebhooks.webhookEvent, [

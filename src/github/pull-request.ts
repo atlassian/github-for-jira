@@ -29,8 +29,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		installationId: githubInstallationId,
 		orgName: owner,
 		pullRequestNumber,
-		pullRequestId,
-		payload: context.payload
+		pullRequestId
 	});
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,7 +83,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		return;
 	}
 
-	context.log.info(`Sending pull request update to Jira ${baseUrl}`);
+	context.log.info({ jiraJost : baseUrl }, `Sending pull request update to Jira`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;

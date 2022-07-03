@@ -32,3 +32,21 @@ export const filteringHttpLogsStream = (filteringLoggerName: string, out) => {
 	});
 	return writable;
 };
+
+export const unsafeStream = async (filteringLoggerName: string, out) => {
+	//TODO Remove this code when there will be convenient way to do it in Probot.
+	//See https://github.com/probot/probot/issues/1577
+	const shouldBeFiltered = (chunk: any): boolean => {
+		return !!chunk.toString().match(`${filteringLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`);
+	};
+
+	const writable = new Writable({
+		write: function(chunk, encoding, next) {
+			if (!shouldBeFiltered(chunk)) {
+				out.write(chunk, encoding);
+			}
+			next();
+		}
+	});
+	return writable;
+};
