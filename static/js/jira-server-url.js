@@ -81,22 +81,24 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 				gheServerURL,
 				_csrf: csrf,
 				jwt: token,
-				jiraHost
+				jiraHost,
+				installationId
 			},
 			function(data) {
-				if (data.err) {
+			console.log('data: ', data)
+				if (data.success) {
+					const pagePath = data.moduleKey;
+					AP.navigator.go(
+						"addonmodule",
+						{
+							moduleKey: pagePath
+						}
+					);
+				} else {
 					console.error(`Failed to verify GHE server url. ${gheServerURL}`);
-					console.error(`Failed to retrieve GH app data. ${JSON.stringify(err)}`);
 					requestFailed();
-					// TODO - build and render error component
+					// TODO - render error component
 				}
-				const pagePath = data.moduleKey;
-				AP.navigator.go(
-					"addonmodule",
-					{
-						moduleKey: pagePath
-					}
-				);
 			}
 		);
 	});
