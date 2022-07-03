@@ -17,8 +17,9 @@ export const generateCreatePullRequestUrl = (baseUrl: string, branchName: string
 	const branch = encodeURIComponent(branchName);
 	const url = `${baseUrl}/compare/${branch}?title=${title}&quick_pull=1`;
 
+	// Jira API has a 2000 character limit for createPullRequestUrl field.
 	if (url.length > 2000) {
-		return undefined;
+		return `${baseUrl}/compare/${branch}`;
 	}
 
 	return url;

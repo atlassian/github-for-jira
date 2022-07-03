@@ -28,11 +28,12 @@ describe("pullRequestLinkGenerator()", () => {
 		expect(generateCreatePullRequestUrl(BASE_URL, NAME, ISSUE_KEYS)).toBe(EXPECTED_RESULT);
 	});
 
-	it("should return undefined if length > 2000", async () => {
+	it("should return url without title query param if length > 2000", async () => {
 		const BASE_URL = "github";
-		const NAME = Array.from(new Array(250)).map((_, i) => `TEST-${i}`).toString();
-		const ISSUE_KEYS = ["TES-123"];
+		const LONG_BRANCH_NAME = new Array(1950).join("X");
+		const ISSUE_KEYS = ["TEST-222", "TEST-111"];
+		const EXPECTED_RESULT = `github/compare/${LONG_BRANCH_NAME}`;
 
-		expect(generateCreatePullRequestUrl(BASE_URL, NAME, ISSUE_KEYS)).toBe(undefined);
+		expect(generateCreatePullRequestUrl(BASE_URL, LONG_BRANCH_NAME, ISSUE_KEYS)).toBe(EXPECTED_RESULT);
 	});
 });
