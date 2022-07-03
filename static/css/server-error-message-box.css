@@ -1,0 +1,25 @@
+.errorMessageBox__container {
+  display: flex;
+  padding: 1em;
+  margin: 1em 0 1.75em;
+  border-radius: 3px;
+  background-color: #FFEBE6;
+}
+
+.aui-iconfont-error {
+  color: #BF2600;
+  margin-top: 4px;
+}
+
+.errorMessageBox__content {
+  margin-left: 1em;
+  color: #42526E;
+}
+
+.errorMessageBox__title {
+  font-weight: 600;
+}
+
+.errorMessageBox__message {
+  margin: 0.5em 0;
+}

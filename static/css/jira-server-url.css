@@ -54,3 +54,7 @@
   display: none;
   color: #fff;
 }
+
+.jiraServerUrl__validationError, .jiraServerUrl__defaultError {
+  display: none;
+}
