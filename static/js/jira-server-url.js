@@ -85,7 +85,6 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 				installationId
 			},
 			function(data) {
-			console.log('data: ', data)
 				if (data.success) {
 					const pagePath = data.moduleKey;
 					AP.navigator.go(

@@ -55,7 +55,6 @@ export class GitHubServerApp extends Model {
 	 * @param installationId
 	 * @returns {GitHubServerApp[]}
 	 */
-	// TODO - verify against installation id
 	static async getAllForGitHubBaseUrl(
 		gitHubBaseUrl: string,
 		installationId: number
