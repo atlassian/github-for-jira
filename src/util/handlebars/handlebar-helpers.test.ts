@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper, compareOr, compareAnd } from "./handlebar-helpers";
+import { replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper, logicalOrHelper, logicalAndHelper } from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
 	describe("toLowercaseHelper", () => {
@@ -53,23 +53,23 @@ describe("Handlebar Helpers", () => {
 		});
 	});
 
-	describe("compareOr", () => {
+	describe("logicalOrHelper", () => {
 		it("should return false only if all parameters are falsy", () => {
-			expect(compareOr(0, 1)).toEqual(true);
-			expect(compareOr(1, 1, 1)).toEqual(true);
-			expect(compareOr(1, 0, 0)).toEqual(true);
-			expect(compareOr(0, 0)).toEqual(false);
-			expect(compareOr(0)).toEqual(false);
+			expect(logicalOrHelper(0, 1)).toEqual(true);
+			expect(logicalOrHelper(1, 1, 1)).toEqual(true);
+			expect(logicalOrHelper(1, 0, 0)).toEqual(true);
+			expect(logicalOrHelper(0, 0)).toEqual(false);
+			expect(logicalOrHelper(0)).toEqual(false);
 		});
 	});
 
-	describe("compareAnd", () => {
+	describe("logicalAndHelper", () => {
 		it("should return true only if all parameters are truthy", () => {
-			expect(compareAnd(1, 1, 1)).toEqual(true);
-			expect(compareAnd(0, 1)).toEqual(false);
-			expect(compareAnd(1, 0, 0)).toEqual(false);
-			expect(compareAnd(0, 0)).toEqual(false);
-			expect(compareAnd(0)).toEqual(false);
+			expect(logicalAndHelper(1, 1, 1)).toEqual(true);
+			expect(logicalAndHelper(0, 1)).toEqual(false);
+			expect(logicalAndHelper(1, 0, 0)).toEqual(false);
+			expect(logicalAndHelper(0, 0)).toEqual(false);
+			expect(logicalAndHelper(0)).toEqual(false);
 		});
 	});
 });
