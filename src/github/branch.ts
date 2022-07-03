@@ -1,6 +1,5 @@
 import { transformBranch } from "../transforms/transform-branch";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { sqsQueues } from "../sqs/queues";
@@ -9,8 +8,9 @@ import { getJiraClient } from "../jira/client/jira-client";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraBranchData } from "../interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const createBranchWebhookHandler = async (context: WebhookContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 
 	const webhookPayload: WebhookPayloadCreate = context.payload;
 
@@ -63,16 +63,16 @@ export const processBranch = async (
 	);
 };
 
-export const deleteBranchWebhookHandler = async (context: CustomContext, jiraClient): Promise<void> => {
+export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraClient): Promise<void> => {
 	const payload: WebhookPayloadDelete = context.payload;
 	const issueKeys = jiraIssueKeyParser(payload.ref);
 
 	if (isEmpty(issueKeys)) {
-		context.log({ noop: "no_issue_keys" }, "Halting further execution for deleteBranch since issueKeys is empty");
+		context.log.info({ noop: "no_issue_keys" }, "Halting further execution for deleteBranch since issueKeys is empty");
 		return;
 	}
 
-	context.log(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
+	context.log.info(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
 		`${payload.repository?.id}`,

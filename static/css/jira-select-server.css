@@ -1,0 +1,8 @@
+.jiraSelectServer {
+  text-align: center;
+  height: 100%;
+}
+
+.jiraSelectServer__content {
+  margin: 10% auto 0;
+}

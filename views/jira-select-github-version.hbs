@@ -30,7 +30,7 @@
   <body class="aui-page-hybrid">
     <div class="jiraSelectGitHubVersion">
       <header class="jiraSelectGitHubVersion__header">
-         {{> navigation previousPageName="GitHub Configuration" }}
+         {{> navigation previousPageName="GitHub Configuration" previousPagePath=previousPagePath }}
       </header>
 
       <section class="jiraSelectGitHubVersion__content">
@@ -70,6 +70,7 @@
     </div>
 
     <script src="/public/js/jira-select-card-option.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script

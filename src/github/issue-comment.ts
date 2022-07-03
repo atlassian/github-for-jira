@@ -1,10 +1,10 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
 import { GitHubIssue, GitHubIssueCommentData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
 export const issueCommentWebhookHandler = async (
-	context: CustomContext,
+	context: WebhookContext,
 	jiraClient,
 	util,
 	githubInstallationId: number
@@ -34,7 +34,7 @@ export const issueCommentWebhookHandler = async (
 		);
 	}
 
-	context.log(`Updating comment in GitHub with ID ${comment.id}`);
+	context.log.info(`Updating comment in GitHub with ID ${comment.id}`);
 	const updatedIssueComment: GitHubIssueCommentData = {
 		body: linkifiedBody,
 		owner,

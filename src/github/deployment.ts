@@ -1,6 +1,5 @@
 import { transformDeployment } from "../transforms/transform-deployment";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
 import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
@@ -9,8 +8,9 @@ import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentData } from "../interfaces/jira";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const deploymentWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
 		jiraHost: jiraClient.baseURL,
 		installationId: githubInstallationId,
