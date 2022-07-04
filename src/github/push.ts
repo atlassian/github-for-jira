@@ -4,7 +4,7 @@ import { hasJiraIssueKey } from "utils/jira-utils";
 import { GitHubPushData } from "../interfaces/github";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const pushWebhookHandler = async (context: WebhookContext, jiraClient): Promise<void> => {
+export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	const webhookReceived = getCurrentTime();
 
 	// Copy the shape of the context object for processing
@@ -22,6 +22,11 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient): P
 		}, []),
 		installation: context.payload?.installation
 	};
+
+	context.log = context.log.child({
+		jiraHostName: jiraClient.baseURL,
+		gitHubInstallationId
+	});
 
 	if (!payload.commits?.length) {
 		context.log.info(

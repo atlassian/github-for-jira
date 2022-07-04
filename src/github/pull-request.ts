@@ -10,7 +10,7 @@ import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
+export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
@@ -20,19 +20,18 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		},
 		changes
 	} = context.payload;
+
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
-
 	context.log = context.log.child({
 		jiraHostName: jiraClient.baseURL,
-		installationId: githubInstallationId,
+		gitHubInstallationId,
 		orgName: owner,
 		pullRequestNumber,
-		pullRequestId,
-		payload: context.payload
+		pullRequestId
 	});
 
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: Octokit.PullsListReviewsResponse = [];
 	try {
