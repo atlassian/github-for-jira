@@ -28,7 +28,7 @@ export const GithubSetupPost = async (req: Request, res: Response): Promise<void
 	const domain = jiraDomain || jiraDomainMain || jiraDomainModal || "";
 	const url = jiraHost || `https://${domain}.atlassian.net`;
 
-	req.log.info({ jiraHost: url }, `Received github setup page request for jira`);
+	req.log.debug({ jiraHost: url }, `Received github setup page request for jira`);
 
 	if (!validJiraDomain(url)) {
 		res.status(400).send({ error: "The entered Jira Cloud site is not valid.", url });
