@@ -83,7 +83,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		return;
 	}
 
-	context.log.info({ jiraJost : baseUrl }, `Sending pull request update to Jira`);
+	context.log.info({ jiraHost : baseUrl }, `Sending pull request update to Jira`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
