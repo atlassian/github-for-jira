@@ -50,7 +50,7 @@ export interface JiraBuildData {
 }
 
 export interface JiraBranch {
-	createPullRequestUrl: string;
+	createPullRequestUrl?: string;
 	lastCommit: JiraCommit;
 	id: string;
 	issueKeys: string[];
