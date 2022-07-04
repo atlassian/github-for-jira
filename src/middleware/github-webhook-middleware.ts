@@ -12,7 +12,7 @@ import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } f
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
-import { getLogger } from "config/logger";
+import { cloneAllowedLogFields, getLogger } from "config/logger";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
@@ -94,21 +94,29 @@ export const GithubWebhookMiddleware = (
 			webhookReceived
 		});
 
-		const { payload, id: webhookId } = context;
+		const { name, payload, id: webhookId } = context;
 		const repoName = payload?.repository?.name || "none";
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
 
+		console.log("============");
+		console.log("============");
+		console.log("============");
+		console.log("============");
+		console.log("============");
+		console.log("=========FIELDS===");
+		console.log(context.log.fields);
 		context.log = getLogger("github.webhooks", {
 			webhookId,
 			gitHubInstallationId,
 			event: webhookEvent,
 			webhookReceived,
 			repoName,
-			orgName
+			orgName,
+			...cloneAllowedLogFields(context.log.fields)
 		});
 
-		// context.log.debug({ payload }, "Webhook payload");
+		context.log.debug({ payload }, "Webhook payload");
 
 		statsd.increment(metricWebhooks.webhookEvent, [
 			"name: webhooks",
