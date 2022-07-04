@@ -8,8 +8,7 @@ import { SentryScopeProxy } from "models/sentry-scope-proxy";
 export type BackfillMessagePayload = {
 	installationId: number,
 	jiraHost: string,
-	startTime?: string,
-	webhookId: string
+	startTime?: string
 }
 
 export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload> = async (context) => {
@@ -21,9 +20,8 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 		scope.addEventProcessor(SentryScopeProxy.processEvent)
 	);
 
-	const { webhookId, installationId, jiraHost } = context.payload;
+	const { installationId, jiraHost } = context.payload;
 	context.log = context.log.child({
-		webhookId,
 		jiraHost,
 		gitHubInstallationId: installationId
 	});
