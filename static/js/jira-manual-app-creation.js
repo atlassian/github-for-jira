@@ -4,7 +4,8 @@ $(".jiraManualAppCreation__formGroupIcon").click((event) => {
   console.log("Copy this URL: ", url);
 });
 
-$(".jiraManualAppCreation_formSubmitBtn").click((event) => {
+$("#jiraManualAppCreation__form").submit((event) => {
+  event.preventDefault();
   console.log("Submit this");
 });
 
