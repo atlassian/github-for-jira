@@ -2,17 +2,13 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { TokenType } from "~/src/jira/util/jwt";
-import { moduleUrls, postInstallUrl } from "routes/jira/jira-atlassian-connect-get";
-
-const REQUEST_PATHS = ["/jira/sync", "/jira/server-url"];
+import { moduleUrls } from "routes/jira/jira-atlassian-connect-get";
 
 const extractUnsafeJiraHost = (req: Request): string | null => {
-	const currentPath = REQUEST_PATHS.filter(path => path === req.path);
-
 	if (moduleUrls.includes(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
-	} else if ((req.path == postInstallUrl && req.method != "GET") || req.path == currentPath[0]) {
+	} else if (req.method != "GET") {
 		return req.body?.jiraHost;
 	} else if (req.cookies.jiraHost) {
 		return req.cookies.jiraHost;
