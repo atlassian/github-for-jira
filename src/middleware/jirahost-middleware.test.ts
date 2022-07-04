@@ -40,6 +40,17 @@ describe("await jirahostMiddleware", () => {
 			expect(next).toBeCalled();
 		});
 
+		it("cookie should have priority", async () => {
+
+			req.cookies.jiraHost = LEGIT_JIRA_HOST;
+			req.session.jiraHost = LEGIT_JIRA_HOST + "boo";
+
+			await jirahostMiddleware(req, res, next);
+
+			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
+			expect(next).toBeCalled();
+		});
+
 		it("xdm_e should have priority", async () => {
 
 			configureLegitJiraReq(req);
@@ -134,16 +145,6 @@ describe("await jirahostMiddleware", () => {
 			await jirahostMiddleware(req, res, next);
 
 			expect(next).not.toBeCalled();
-		});
-
-		it("cookie should have priority", async () => {
-			req.cookies.jiraHost = LEGIT_JIRA_HOST;
-			req.session.jiraHost = LEGIT_JIRA_HOST + "boo";
-
-			await jirahostMiddleware(req, res, next);
-
-			expect(res.locals.jiraHost).toBe(LEGIT_JIRA_HOST);
-			expect(next).toBeCalled();
 		});
 
 		it("should use \"context\" JWT token type", async () => {
