@@ -8,6 +8,7 @@ type TSecretField = typeof SECRETS_FIELDS[number];
 
 interface GitHubServerAppPayload {
 	uuid: string;
+	appId: number;
 	gitHubBaseUrl: string;
 	gitHubClientId: string;
 	gitHubClientSecret: string;
@@ -20,6 +21,7 @@ interface GitHubServerAppPayload {
 export class GitHubServerApp extends EncryptedModel<GitHubServerApp, TSecretField> {
 	id: number;
 	uuid: string;
+	appId: number;
 	gitHubBaseUrl: string;
 	gitHubClientId: string;
 	gitHubClientSecret: string;
@@ -92,6 +94,7 @@ export class GitHubServerApp extends EncryptedModel<GitHubServerApp, TSecretFiel
 	 * @param {{
 	 * 		gitHubClientId: string,
 	 * 		uuid: string,
+	 * 		appId: number;
 	 * 		gitHubBaseUrl: string,
 	 * 		gitHubClientSecret: string,
 	 * 		webhookSecret: string,
@@ -104,6 +107,7 @@ export class GitHubServerApp extends EncryptedModel<GitHubServerApp, TSecretFiel
 	static async install(payload: GitHubServerAppPayload): Promise<GitHubServerApp> {
 		const {
 			uuid,
+			appId,
 			gitHubAppName,
 			gitHubBaseUrl,
 			gitHubClientId,
@@ -119,6 +123,7 @@ export class GitHubServerApp extends EncryptedModel<GitHubServerApp, TSecretFiel
 			},
 			defaults: {
 				uuid,
+				appId,
 				gitHubBaseUrl,
 				gitHubClientSecret,
 				webhookSecret,
@@ -158,6 +163,10 @@ GitHubServerApp.init({
 		type: DataTypes.UUID,
 		defaultValue: DataTypes.UUIDV4,
 		unique: true,
+		allowNull: false
+	},
+	appId: {
+		type: DataTypes.INTEGER,
 		allowNull: false
 	},
 	gitHubBaseUrl: {
