@@ -8,7 +8,7 @@ const extractUnsafeJiraHost = (req: Request): string | null => {
 	if (moduleUrls.includes(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
-	} else if (req.method != "GET") {
+	} else if (["POST", "DELETE", "PUT"].includes(req.method)) {
 		return req.body?.jiraHost;
 	} else if (req.cookies.jiraHost) {
 		return req.cookies.jiraHost;
