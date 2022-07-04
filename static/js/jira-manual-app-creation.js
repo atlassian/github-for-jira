@@ -9,7 +9,6 @@ $("#jiraManualAppCreation__form").submit((event) => {
   console.log("Submit this");
 });
 
-
 $(".jiraManualAppCreation__formFileInput")
   .on("dragenter focus", () => {
     $(".jiraManualAppCreation__formFileDropArea").addClass("active");
@@ -22,7 +21,7 @@ $(".jiraManualAppCreation__formFileInput")
     $(".jiraManualAppCreation__formFileDropArea").hide();
     $("#jiraManualAppCreation__uploadedFile").text(fileName);
 
-  //  TODO: Validation and/or Upload
+    //  TODO: Validation and/or Upload
   });
 
 
