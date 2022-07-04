@@ -44,17 +44,17 @@
 
         <div class="field-group">
           <label for="app-name">GitHub app name</label>
-          <input class="text full-width-field" type="text" id="app-name" name="app-name" />
+          <input class="text full-width-field" type="text" required id="app-name" name="app-name" />
         </div>
 
         <div class="field-group ">
           <label for="app-id">GitHub app ID</label>
-          <input class="text full-width-field" type="text" id="app-id" name="app-id" />
+          <input class="text full-width-field" type="text" required id="app-id" name="app-id" />
         </div>
 
         <div class="field-group">
           <label for="client-id">GitHub client ID</label>
-          <input class="text full-width-field" type="text" id="client-id" name="client-id" />
+          <input class="text full-width-field" type="text" required id="client-id" name="client-id" />
         </div>
 
         <div class="jiraManualAppCreation__formTitle">URLs</div>
@@ -108,12 +108,12 @@
 
         <div class="field-group">
           <label for="client-secret">GitHub client secret</label>
-          <input class="text full-width-field" type="password" id="client-secret" name="client-secret" />
+          <input class="text full-width-field" type="password" required id="client-secret" name="client-secret" />
         </div>
 
         <div class="field-group">
           <label for="webhook-secret">Webhook secret</label>
-          <input class="text full-width-field" type="password" id="webhook-secret" name="webhook-secret" />
+          <input class="text full-width-field" type="password" required id="webhook-secret" name="webhook-secret" />
         </div>
 
         <div class="field-group">
@@ -125,7 +125,7 @@
               <div class="jiraManualAppCreation__formFileSubMsg">Upload your generated private key from GitHub</div>
             </div>
             <div class="aui-button">Upload</div>
-            <input class="jiraManualAppCreation__formFileInput" type="file">
+            <input class="jiraManualAppCreation__formFileInput" required type="file">
           </div>
           <div class="jiraManualAppCreation__formFileUploaded">
             <div id="jiraManualAppCreation__uploadedFile"></div>

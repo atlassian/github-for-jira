@@ -5,7 +5,6 @@ $(".jiraManualAppCreation__formGroupIcon").click((event) => {
 });
 
 $(".jiraManualAppCreation_formSubmitBtn").click((event) => {
-  event.preventDefault();
   console.log("Submit this");
 });
 
