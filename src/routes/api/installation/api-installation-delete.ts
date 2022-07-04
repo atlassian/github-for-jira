@@ -19,7 +19,7 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 	);
 
 	if (!subscription) {
-		req.log.info("no subscription");
+		req.log.debug("no subscription");
 		res.sendStatus(404);
 		return;
 	}

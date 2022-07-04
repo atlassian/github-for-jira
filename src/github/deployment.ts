@@ -4,7 +4,7 @@ import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentData } from "../interfaces/jira";
@@ -28,7 +28,7 @@ export const processDeployment = async (
 	webhookReceivedDate: Date,
 	jiraHost: string,
 	installationId: number,
-	rootLogger: LoggerWithTarget) => {
+	rootLogger: Logger) => {
 
 	const logger = rootLogger.child({
 		webhookId: webhookId,

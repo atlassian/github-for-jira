@@ -1,9 +1,9 @@
+import Logger from "bunyan";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit } from "interfaces/jira";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { isBlocked } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { PushQueueMessagePayload } from "../sqs/push";
@@ -71,7 +71,7 @@ export const createJobData = (payload, jiraHost: string): PushQueueMessagePayloa
 export const enqueuePush = async (payload: unknown, jiraHost: string) =>
 	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
 
-export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: LoggerWithTarget) => {
+export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {
 		repository,
 		repository: { owner, name: repo },
