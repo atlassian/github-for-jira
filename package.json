@@ -128,6 +128,7 @@
 		"prettier": "~2.5.1",
 		"rimraf": "~3.0.2",
 		"smee-client": "^1.2.2",
+		"sqlite3": "^5.0.8",
 		"supertest": "^6.2.2",
 		"ts-jest": "~27.1.3",
 		"ts-node": "^10.5.0",
