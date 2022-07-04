@@ -451,6 +451,8 @@ export const processInstallation =
 		return async (data: BackfillMessagePayload, sentry: Hub, logger: Logger): Promise<void> => {
 			const { installationId, jiraHost } = data;
 
+			logger.child({ gitHubInstallationId: installationId, jiraHost });
+
 			try {
 				if (await isBlocked(installationId, logger)) {
 					logger.warn("blocking installation job");
