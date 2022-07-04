@@ -28,6 +28,7 @@ describe("GitHubServerApp", () => {
 		//--------- helpers
 		const defaults = (uuid: string, surfix?: string) => ({
 			uuid,
+			appId: 123,
 			gitHubBaseUrl: "does not matter",
 			gitHubClientId: "sample id",
 			gitHubAppName: "sample app",
