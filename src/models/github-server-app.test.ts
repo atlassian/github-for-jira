@@ -1,7 +1,5 @@
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
-import { EncryptionClient } from "../util/encryption-client";
-import { getLogger } from "../config/logger";
 
 describe("GitHubServerApp", () => {
 
@@ -45,15 +43,15 @@ describe("GitHubServerApp", () => {
 				});
 
 				expect(app.privateKey).toBe("encrypted:private-key-plain-text");
-				const decryptedPrivateKey = await EncryptionClient.decrypt(app.privateKey, getLogger("test"));
+				const decryptedPrivateKey = await app.decrypt("privateKey");
 				expect(decryptedPrivateKey).toBe("private-key-plain-text");
 
 				expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text");
-				const decryptedWebhookSecret = await EncryptionClient.decrypt(app.webhookSecret, getLogger("test"));
+				const decryptedWebhookSecret = await app.decrypt("webhookSecret");
 				expect(decryptedWebhookSecret).toBe("webhook-secret-plain-text");
 
 				expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text");
-				const decryptedGitHubClient = await EncryptionClient.decrypt(app.gitHubClientSecret, getLogger("test"));
+				const decryptedGitHubClient = await app.decrypt("gitHubClientSecret");
 				expect(decryptedGitHubClient).toBe("client-secret-plain-text");
 
 			});

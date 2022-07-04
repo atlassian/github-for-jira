@@ -1,11 +1,10 @@
-import { Model, DataTypes } from "sequelize";
+import { DataTypes } from "sequelize";
 import { sequelize } from "models/sequelize";
 import { EncryptionClient } from "../util/encryption-client";
-import { getLogger } from "../config/logger";
 import { EncryptedModel } from "./encrypted-model";
 
-const SECRETS_FIELDS = ["gitHubClientSecret", "privateKey", "webhookSecret"];
-type TSecretFields = typeof SECRETS_FIELDS[number];
+const SECRETS_FIELDS  = ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
+type TSecretField = typeof SECRETS_FIELDS[number];
 
 interface GitHubServerAppPayload {
 	uuid: string;
@@ -18,7 +17,7 @@ interface GitHubServerAppPayload {
 	installationId: number;
 }
 
-export class GitHubServerApp extends EncryptedModel<TSecretFields> {
+export class GitHubServerApp extends EncryptedModel<GitHubServerApp, TSecretField> {
 	id: number;
 	uuid: string;
 	gitHubBaseUrl: string;
@@ -38,6 +37,10 @@ export class GitHubServerApp extends EncryptedModel<TSecretFields> {
 
 	async getEncryptContext(): Promise<Record<string, string | number>> {
 		return {};
+	}
+
+	getAllSecretFields() {
+		return (SECRETS_FIELDS as any) as TSecretField[];
 	}
 
 	/**
@@ -187,21 +190,12 @@ GitHubServerApp.init({
 	}
 }, { sequelize });
 
-const encryptSecretFields = async (app: GitHubServerApp, fields?: string[]) => {
-	for (const f of SECRETS_FIELDS) {
-		if (fields?.includes(f)) {
-			const encrypted = await app.encrypt(f, app[f]);
-			app[f] = encrypted;
-		}
-	}
-}
-
 GitHubServerApp.beforeSave(async (app, opts)=> {
-	await encryptSecretFields(app, opts.fields);
+	await app.encryptChangedSecretFields(app, (opts.fields as TSecretField[]) || []);
 });
 
 GitHubServerApp.beforeBulkCreate(async (apps, opts) => {
 	for (const app of apps) {
-		await encryptSecretFields(app, opts.fields);
+		await app.encryptChangedSecretFields(app, (opts.fields as TSecretField[]) || []);
 	}
 });

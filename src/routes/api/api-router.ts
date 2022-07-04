@@ -127,9 +127,9 @@ ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
 			data = data + "-" + Math.floor((Math.random() * 10));
 		}
 
-		const encrypted = await EncryptionClient.encrypt(EncryptionClient.GITHUB_SERVER_APP_SECRET, data, req.log);
+		const encrypted = await EncryptionClient.encrypt(EncryptionClient.GITHUB_SERVER_APP_SECRET, data, {}, req.log);
 
-		await EncryptionClient.decrypt(encrypted, req.log);
+		await EncryptionClient.decrypt(encrypted, {}, req.log);
 		resp.status(200).send("ok");
 	} catch (_) {
 		resp.status(500).send("fail");
