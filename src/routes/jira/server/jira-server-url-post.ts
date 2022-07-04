@@ -8,27 +8,24 @@ export const JiraServerUrlPost = async (
 	res: Response
 ): Promise<void> => {
 	const { gheServerURL, installationId } = req.body;
-	const isGheUrlValid = isValidUrl(gheServerURL);
 
-	req.log.info(`Verifying provided GHE server url: ${gheServerURL}`);
+	req.log.debug(`Verifying provided GHE server url ${gheServerURL} is a valid URL`);
+	const isGheUrlValid = isValidUrl(gheServerURL);
 
 	if (isGheUrlValid) {
 		try {
 			const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL, installationId);
 
 			if (gitHubServerApps?.length) {
-				req.log.info(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
+				req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
 				res.status(200).send({ success: true, moduleKey: "github-list-apps-page" });
 			} else {
-				req.log.info(`No existing GitHub apps found for url: ${gheServerURL}. Redirecting to Jira app creation page.`);
-
-				const isValid = await axios.get(gheServerURL);
-				req.log.info(`Successfully verified GHE server url: ${gheServerURL}`, isValid);
-
-				res.status(200).send({ success: true, moduleKey: "github-app-creation-page"  });
+				req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
+				await axios.get(gheServerURL);
+				res.status(200).send({ success: true, moduleKey: "github-app-creation-page" });
 			}
 		} catch (err) {
-			req.log.error(`Something went wrong: ${gheServerURL}`);
+			req.log.debug(`Something went wrong: ${gheServerURL}`, err);
 			// TODO - adding error mapping (create confluence page with error codes)
 			res.status(200).send({ success: false, error: "Something went wrong!!!!" });
 		}
