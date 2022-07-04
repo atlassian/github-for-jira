@@ -7,8 +7,8 @@ describe("Is valid url", () => {
 	});
 
 	it("should return false if invalid url is provided", async () => {
-		expect(isValidUrl("noprotocolortopleveldomain")).toBeFalsy();
-		expect(isValidUrl("https://www.ihavenottopleveldomain")).toBeFalsy();
+		expect(isValidUrl("accd://thatsnotavalidprotocol")).toBeFalsy();
+		expect(isValidUrl("thisaintaurlatall")).toBeFalsy();
 		expect(isValidUrl("www.wheresmyprotocol.com")).toBeFalsy();
 	});
 });
