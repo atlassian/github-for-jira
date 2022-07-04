@@ -12,5 +12,5 @@ export const cookieSessionMiddleware = cookieSession({
 	signed: true,
 	sameSite: "none",
 	secure: true,
-	httpOnly: false
+	httpOnly: true
 });
