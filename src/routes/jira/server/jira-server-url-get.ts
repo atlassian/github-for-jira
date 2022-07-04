@@ -6,7 +6,7 @@ export const JiraServerUrlGet = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.info("Received Jira server url page request");
+		req.log.debug("Received Jira server url page request");
 
 		res.render("jira-server-url.hbs", {
 			previousPagePath: "github-select-version-page",
@@ -14,7 +14,7 @@ export const JiraServerUrlGet = async (
 			installationId: res.locals.installation.id
 		});
 
-		req.log.info("Jira server url page rendered successfully.");
+		req.log.debug("Jira server url page rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira server url page: ${error}`));
 	}

@@ -25,15 +25,11 @@ const checkValidGHEUrl = inputURL => {
 	try {
 		const { protocol, hostname } = new URL(inputURL);
 
-		if (!ALLOWED_PROTOCOLS.includes(protocol)) {
+		if (!/^https?:$/.test(protocol)) {
 			setErrorMessage(defaultError);
 			return false;
 		}
-		// This checks whether the hostname whether there is an extension like `.com`, `.net` etc.
-		if (hostname.split(".").length < 2) {
-			setErrorMessage(defaultError);
-			return false;
-		}
+
 		if (GITHUB_CLOUD.includes(hostname)) {
 			setErrorMessage(cloudURLError);
 			return false;

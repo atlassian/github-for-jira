@@ -1,9 +1,7 @@
-const ALLOWED_PROTOCOLS = ["http:", "https:"];
-
 export const isValidUrl = (url: string): boolean => {
 	try {
-		const { protocol, hostname } = new URL(url);
-		return !(!ALLOWED_PROTOCOLS.includes(protocol) || hostname.split(".").length < 2);
+		const { protocol } = new URL(url);
+		return (/^https?:$/.test(protocol));
 	} catch (err) {
 		return false;
 	}

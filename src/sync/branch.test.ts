@@ -39,7 +39,7 @@ describe("sync/branches", () => {
 			{
 				branches: [
 					{
-						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123%20-%20${branchName}&quick_pull=1`,
+						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123-${branchName}&quick_pull=1`,
 						id: branchName,
 						issueKeys: ["TES-123"]
 							.concat(jiraIssueKeyParser(branchName))
@@ -207,7 +207,7 @@ describe("sync/branches", () => {
 					{
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123%20-%20dev&quick_pull=1",
+								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123-dev&quick_pull=1",
 								id: "dev",
 								issueKeys: ["PULL-123"],
 								lastCommit: {

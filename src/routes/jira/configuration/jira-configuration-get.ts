@@ -91,7 +91,7 @@ export const JiraConfigurationGet = async (
 			return;
 		}
 
-		req.log.info("Received jira configuration page request");
+		req.log.debug("Received jira configuration page request");
 
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
 		const installations = await getInstallations(subscriptions, req.log, gitHubAppId);
@@ -113,7 +113,7 @@ export const JiraConfigurationGet = async (
 				isGlobalInstall: installation.repository_selection === "all"
 			}));
 
-		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)
+		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
 			? "select-github-version-link"
 			: "add-organization-link";
 
@@ -129,7 +129,7 @@ export const JiraConfigurationGet = async (
 			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 		});
 
-		req.log.info("Jira configuration rendered successfully.");
+		req.log.debug("Jira configuration rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira configuration: ${error}`));
 	}
