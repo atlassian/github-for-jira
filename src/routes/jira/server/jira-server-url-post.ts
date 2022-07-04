@@ -7,7 +7,6 @@ export const JiraServerUrlPost = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {
-	// todo - validate url
 	const { gheServerURL, installationId } = req.body;
 	const isGheUrlValid = isValidUrl(gheServerURL);
 
@@ -19,7 +18,7 @@ export const JiraServerUrlPost = async (
 
 			if (gitHubServerApps?.length) {
 				req.log.info(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
-				res.status(200).send({ moduleKey: "github-list-apps-page" });
+				res.status(200).send({ success: true, moduleKey: "github-list-apps-page" });
 			} else {
 				req.log.info(`No existing GitHub apps found for url: ${gheServerURL}. Redirecting to Jira app creation page.`);
 
@@ -31,7 +30,7 @@ export const JiraServerUrlPost = async (
 		} catch (err) {
 			req.log.error(`Something went wrong: ${gheServerURL}`);
 			// TODO - adding error mapping (create confluence page with error codes)
-			res.status(200).send({ success: false, error: "Something went wrong!!!!", err });
+			res.status(200).send({ success: false, error: "Something went wrong!!!!" });
 		}
 	} else {
 		req.log.error(`Provided gheServerURL ${gheServerURL} is not a valid url`);
