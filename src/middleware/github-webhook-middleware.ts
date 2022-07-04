@@ -94,12 +94,12 @@ export const GithubWebhookMiddleware = (
 			webhookReceived
 		});
 
-		const { name, payload, id: webhookId } = context;
+		const { payload, id: webhookId } = context;
 		const repoName = payload?.repository?.name || "none";
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
 
-		context.log = getLogger("github.webhooks",{
+		context.log = getLogger("github.webhooks", {
 			webhookId,
 			gitHubInstallationId,
 			event: webhookEvent,
@@ -108,7 +108,7 @@ export const GithubWebhookMiddleware = (
 			orgName
 		});
 
-		context.log.debug({ payload }, "Webhook payload");
+		// context.log.debug({ payload }, "Webhook payload");
 
 		statsd.increment(metricWebhooks.webhookEvent, [
 			"name: webhooks",
