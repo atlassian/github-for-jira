@@ -135,7 +135,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		const { githubToken } = req.session;
 		const { jiraHost, gitHubAppId } = res.locals;
 		if (!githubToken) {
-			req.log.debug("github token missing, calling login()");
+			req.log.info("github token missing, calling login()");
 			throw "Missing github token";
 		}
 		req.log.debug("found github token in session. validating token with API.");
