@@ -15,10 +15,16 @@ export type BranchMessagePayload = {
 }
 
 export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = async (context: Context<BranchMessagePayload>) => {
+	const messagePayload: BranchMessagePayload = context.payload;
+	const { webhookId, installationId, jiraHost } = context.payload;
+	context.log = context.log.child({
+		webhookId,
+		jiraHost,
+		gitHubInstallationId: installationId
+	});
 	context.log.info("Handling branch message from the SQS queue");
 
-	const messagePayload: BranchMessagePayload = context.payload;
-	const gitHubInstallationClient = await createInstallationClient(messagePayload.installationId, messagePayload.jiraHost, context.log);
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log);
 
 	await processBranch(
 		gitHubInstallationClient,

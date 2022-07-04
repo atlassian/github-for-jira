@@ -16,16 +16,13 @@ export type DeploymentMessagePayload = {
 }
 
 export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayload> = async (context: Context<DeploymentMessagePayload>) => {
-
-
 	const messagePayload: DeploymentMessagePayload = context.payload;
-
 	const { webhookId, jiraHost, installationId } = messagePayload;
 
 	context.log = context.log.child({
 		webhookId,
 		jiraHost,
-		installationId
+		gitHubInstallationId: installationId
 	});
 
 	context.log.info("Handling deployment message from the SQS queue");
