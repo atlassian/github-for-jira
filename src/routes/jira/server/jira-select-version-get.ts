@@ -6,13 +6,13 @@ export const JiraSelectVersionGet = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.info("Received Jira select GitHub version page request");
+		req.log.debug("Received Jira select GitHub version page request");
 
 		res.render("jira-select-github-version.hbs", {
 			previousPagePath: "github-post-install-page"
 		});
 
-		req.log.info("Jira select GitHub version page rendered successfully.");
+		req.log.debug("Jira select GitHub version page rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira select GitHub version page: ${error}`));
 	}

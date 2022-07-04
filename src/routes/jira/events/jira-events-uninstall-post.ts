@@ -18,6 +18,6 @@ export const JiraEventsUninstallPost = async (req: Request, res: Response): Prom
 
 	await installation.uninstall();
 
-	req.log.info("App uninstalled on Jira.");
+	req.log.debug("App uninstalled on Jira.");
 	res.sendStatus(204);
 };
