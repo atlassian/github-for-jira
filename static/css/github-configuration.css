@@ -1,17 +1,3 @@
-.gitHubConfiguration__logout__container {
-    align-items: flex-end;
-    display: flex;
-    flex-direction: column;
-}
-
-.gitHubConfiguration__logout__link {
-    cursor: pointer;
-    color: #0366d6;
-}
-
-.gitHubConfiguration__logout__name {
-    font-weight: bold;
-}
 
 .gitHubConfiguration {
     margin: auto;
