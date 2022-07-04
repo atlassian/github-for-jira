@@ -7,6 +7,6 @@ import { csrfMiddleware } from "middleware/csrf-middleware";
 export const JiraServerUrlRouter = Router();
 
 JiraServerUrlRouter.route("/")
-	.all(csrfMiddleware)
-	.get(JiraJwtTokenMiddleware, JiraServerUrlGet)
+	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraServerUrlGet)
+	// TODO - add csrf middleware
 	.post(JiraContextJwtTokenMiddleware, JiraServerUrlPost);

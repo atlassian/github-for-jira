@@ -12,6 +12,7 @@ export const JiraRouter = Router();
 
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 JiraRouter.use("/configuration", JiraConfigurationRouter);
+// TODO - add csrf middleware
 JiraRouter.post("/sync", JiraContextJwtTokenMiddleware, JiraSyncPost);
 JiraRouter.use("/events", JiraEventsRouter);
 JiraRouter.use("/select-version", JiraSelectVersionRouter);
