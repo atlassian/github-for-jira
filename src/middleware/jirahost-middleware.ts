@@ -9,7 +9,6 @@ const extractUnsafeJiraHost = (req: Request): string | null => {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
 	} else if (req.method != "GET") {
-		// Only save the jiraHost from the body for specific routes that use it
 		return req.body?.jiraHost;
 	} else if (req.cookies.jiraHost) {
 		return req.cookies.jiraHost;
