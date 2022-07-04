@@ -7,6 +7,7 @@ describe("GitHubServerApp", () => {
 
 		const payload = {
 			uuid,
+			appId: 123,
 			gitHubAppName: "My GitHub Server App",
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
