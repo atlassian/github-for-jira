@@ -3,7 +3,7 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { sqsQueues } from "../sqs/queues";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { getJiraClient } from "../jira/client/jira-client";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraBranchData } from "../interfaces/jira";
@@ -30,7 +30,7 @@ export const processBranch = async (
 	webhookReceivedDate: Date,
 	jiraHost: string,
 	installationId: number,
-	rootLogger: LoggerWithTarget
+	rootLogger: Logger
 ) => {
 	const logger = rootLogger.child({
 		webhookId: webhookId,

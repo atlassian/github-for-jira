@@ -1,6 +1,7 @@
 import { transformCodeScanningAlert } from "./transform-code-scanning-alert";
 import codeScanningPayload from "./../../test/fixtures/api/code-scanning-alert.json";
 import { Context } from "probot/lib/context";
+import { wrapLogger } from "probot/lib/wrap-logger";
 import { getLogger } from "./../config/logger";
 import { GitHubAPI } from "probot";
 import { when } from "jest-when";
@@ -12,7 +13,7 @@ const buildContext = (payload): Context => {
 		"id": "hi",
 		"name": "hi",
 		"payload": payload
-	}, GitHubAPI(), getLogger("logger"));
+	}, GitHubAPI(), wrapLogger(getLogger("logger")));
 };
 
 describe("code_scanning_alert transform", () => {

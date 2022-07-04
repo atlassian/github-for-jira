@@ -1,6 +1,6 @@
+import Logger from "bunyan";
 import { JiraAssociation, JiraDeploymentData } from "interfaces/jira";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import {
@@ -19,7 +19,7 @@ const getLastSuccessfulDeployCommitSha = async(
 	repoName: string,
 	githubInstallationClient: GitHubInstallationClient,
 	deployments: Octokit.ReposListDeploymentsResponseItem[],
-	logger?: LoggerWithTarget
+	logger?: Logger
 ): Promise<string> => {
 
 	try {
@@ -48,7 +48,7 @@ const getCommitsSinceLastSuccessfulDeployment = async(
 	currentDeployId: number,
 	currentDeployEnv: string,
 	githubInstallationClient: GitHubInstallationClient,
-	logger: LoggerWithTarget
+	logger: Logger
 ): Promise<CommitSummary[] | undefined> => {
 
 	// Grab the last 10 deployments for this repo
@@ -166,7 +166,7 @@ const mapCommitSummariesToAssociationArray = (
 	];
 };
 
-export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger): Promise<JiraDeploymentData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);

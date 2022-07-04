@@ -1,4 +1,4 @@
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { GitHubPullRequest , GitHubWorkflowPayload } from "interfaces/github";
 import { JiraBuildData, JiraPullRequestHead } from "interfaces/jira";
 import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
@@ -53,7 +53,7 @@ function mapPullRequests(
 export const transformWorkflow = async (
 	githubClient: GitHubInstallationClient,
 	payload: GitHubWorkflowPayload,
-	logger: LoggerWithTarget
+	logger: Logger
 ): Promise<JiraBuildData | undefined> => {
 	const {
 		workflow_run: {
