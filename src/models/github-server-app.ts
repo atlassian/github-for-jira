@@ -1,8 +1,8 @@
 import { Model, DataTypes } from "sequelize";
 import { sequelize } from "models/sequelize";
-import { CryptorHttpClient } from "../util/cryptor-http-client";
+import { EncryptionClient } from "../util/encryption-client";
 import { getLogger } from "../config/logger";
-import { EncryptionModel } from './encryption-model';
+import { EncryptedModel } from "./encrypted-model";
 
 const SECRETS_FIELDS = ["gitHubClientSecret", "privateKey", "webhookSecret"];
 type TSecretFields = typeof SECRETS_FIELDS[number];
@@ -18,7 +18,7 @@ interface GitHubServerAppPayload {
 	installationId: number;
 }
 
-export class GitHubServerApp extends EncryptionModel<TSecretFields> {
+export class GitHubServerApp extends EncryptedModel<TSecretFields> {
 	id: number;
 	uuid: string;
 	gitHubBaseUrl: string;
@@ -33,7 +33,7 @@ export class GitHubServerApp extends EncryptionModel<TSecretFields> {
 
 
 	getCryptorKeyAlias() {
-		return CryptorHttpClient.GITHUB_SERVER_APP_SECRET;
+		return EncryptionClient.GITHUB_SERVER_APP_SECRET;
 	}
 
 	async getEncryptContext(): Promise<Record<string, string | number>> {

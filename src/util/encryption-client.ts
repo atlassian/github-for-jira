@@ -13,10 +13,10 @@ const KEY_ALIAS_PREFIX = "micros/github-for-jira";
  * How to use:
  *
  * - Without encryption context: Same, but just don't pass the context
- *   const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, "super-secret-secret", req.logger);
+ *   const encrypted = await EncryptionClient.encrypt(EncryptionClient.GITHUB_SERVER_APP_SECRET, "super-secret-secret", req.logger);
  *
  */
-export class CryptorHttpClient {
+export class EncryptionClient {
 
 	public static GITHUB_SERVER_APP_SECRET: CryptorSecretKey = "github-server-app-secrets";
 
@@ -35,7 +35,7 @@ export class CryptorHttpClient {
 			const { cipherText }= (await axios.post(`/cryptor/encrypt/${KEY_ALIAS_PREFIX}/${secretKey}`, {
 				plainText,
 				encryptionContext
-			}, CryptorHttpClient.axiosConfig())).data;
+			}, EncryptionClient.axiosConfig())).data;
 			return cipherText;
 		} catch (e) {
 			logger.warn("Cryptor request failed: " + (e?.message || "").replace(plainText, "<censored>"));
@@ -48,7 +48,7 @@ export class CryptorHttpClient {
 			const { plainText }= (await axios.post(`/cryptor/decrypt`, {
 				cipherText,
 				encryptionContext
-			}, CryptorHttpClient.axiosConfig())).data;
+			}, EncryptionClient.axiosConfig())).data;
 			return plainText;
 		} catch (e) {
 			logger.warn("Cryptor request failed: " + e?.message);
@@ -57,7 +57,7 @@ export class CryptorHttpClient {
 	}
 
 	static async healthcheck() {
-		await axios.get("/healthcheck", CryptorHttpClient.axiosConfig());
+		await axios.get("/healthcheck", EncryptionClient.axiosConfig());
 	}
 
 }

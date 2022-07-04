@@ -9,7 +9,7 @@ import { WebhookContext } from "./webhook-context";
 import { webhookTimeout } from "~/src/util/webhook-timeout";
 import { issueCommentWebhookHandler } from "~/src/github/issue-comment";
 import { issueWebhookHandler } from "~/src/github/issue";
-import { CryptorHttpClient } from "~/src/util/cryptor-http-client";
+import { EncryptionClient } from "~/src/util/encryption-client";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -52,7 +52,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 };
 
 const decrypt = async (plainText: string, logger: any) =>{
-	return CryptorHttpClient.decrypt(plainText, logger as Logger);
+	return EncryptionClient.decrypt(plainText, logger as Logger);
 };
 
 const webhookRouter = (context: WebhookContext) => {

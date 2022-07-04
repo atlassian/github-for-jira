@@ -13,7 +13,7 @@ import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
-import { CryptorHttpClient } from "utils/cryptor-http-client";
+import { EncryptionClient } from "utils/encryption-client";
 
 export const ApiRouter = Router();
 
@@ -127,9 +127,9 @@ ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
 			data = data + "-" + Math.floor((Math.random() * 10));
 		}
 
-		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, data, req.log);
+		const encrypted = await EncryptionClient.encrypt(EncryptionClient.GITHUB_SERVER_APP_SECRET, data, req.log);
 
-		await CryptorHttpClient.decrypt(encrypted, req.log);
+		await EncryptionClient.decrypt(encrypted, req.log);
 		resp.status(200).send("ok");
 	} catch (_) {
 		resp.status(500).send("fail");

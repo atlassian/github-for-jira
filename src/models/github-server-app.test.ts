@@ -1,6 +1,6 @@
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
-import { CryptorHttpClient } from "../util/cryptor-http-client";
+import { EncryptionClient } from "../util/encryption-client";
 import { getLogger } from "../config/logger";
 
 describe("GitHubServerApp", () => {
@@ -45,15 +45,15 @@ describe("GitHubServerApp", () => {
 				});
 
 				expect(app.privateKey).toBe("encrypted:private-key-plain-text");
-				const decryptedPrivateKey = await CryptorHttpClient.decrypt(app.privateKey, getLogger("test"));
+				const decryptedPrivateKey = await EncryptionClient.decrypt(app.privateKey, getLogger("test"));
 				expect(decryptedPrivateKey).toBe("private-key-plain-text");
 
 				expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text");
-				const decryptedWebhookSecret = await CryptorHttpClient.decrypt(app.webhookSecret, getLogger("test"));
+				const decryptedWebhookSecret = await EncryptionClient.decrypt(app.webhookSecret, getLogger("test"));
 				expect(decryptedWebhookSecret).toBe("webhook-secret-plain-text");
 
 				expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text");
-				const decryptedGitHubClient = await CryptorHttpClient.decrypt(app.gitHubClientSecret, getLogger("test"));
+				const decryptedGitHubClient = await EncryptionClient.decrypt(app.gitHubClientSecret, getLogger("test"));
 				expect(decryptedGitHubClient).toBe("client-secret-plain-text");
 
 			});
