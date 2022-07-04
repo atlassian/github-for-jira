@@ -1,10 +1,10 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "models/sequelize";
-import { EncryptionClient } from "../util/encryption-client";
+import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { EncryptedModel } from "./encrypted-model";
+import { Installation } from "models/installation";
 
-const SECRETS_FIELDS  = ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
-type TSecretField = typeof SECRETS_FIELDS[number];
+const SECRETS_FIELDS = ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
 
 interface GitHubServerAppPayload {
 	uuid: string;
@@ -18,7 +18,7 @@ interface GitHubServerAppPayload {
 	installationId: number;
 }
 
-export class GitHubServerApp extends EncryptedModel<GitHubServerApp, TSecretField> {
+export class GitHubServerApp extends EncryptedModel<GitHubServerApp, typeof SECRETS_FIELDS[number]> {
 	id: number;
 	uuid: string;
 	appId: number;
@@ -32,17 +32,19 @@ export class GitHubServerApp extends EncryptedModel<GitHubServerApp, TSecretFiel
 	updatedAt: Date;
 	createdAt: Date;
 
-
-	getCryptorKeyAlias() {
-		return EncryptionClient.GITHUB_SERVER_APP_SECRET;
+	getEncryptionSecretKey() {
+		return EncryptionSecretKeyEnum.GITHUB_SERVER_APP;
 	}
 
-	async getEncryptContext(): Promise<Record<string, string | number>> {
-		return {};
+	async getEncryptContext() {
+		const installation = await Installation.findByPk(this.installationId);
+		return {
+			installationSharedSecret: installation?.sharedSecret
+		};
 	}
 
-	getAllSecretFields() {
-		return (SECRETS_FIELDS as any) as TSecretField[];
+	getSecretFields() {
+		return SECRETS_FIELDS;
 	}
 
 	/**
@@ -197,14 +199,16 @@ GitHubServerApp.init({
 		type: DataTypes.INTEGER,
 		allowNull: false
 	}
-}, { sequelize });
-
-GitHubServerApp.beforeSave(async (app, opts)=> {
-	await app.encryptChangedSecretFields(app, (opts.fields as TSecretField[]) || []);
-});
-
-GitHubServerApp.beforeBulkCreate(async (apps, opts) => {
-	for (const app of apps) {
-		await app.encryptChangedSecretFields(app, (opts.fields as TSecretField[]) || []);
-	}
+}, {
+	hooks: {
+		beforeSave: async (app: GitHubServerApp, opts) => {
+			await app.encryptChangedSecretFields(opts.fields);
+		},
+		beforeBulkCreate: async (apps: GitHubServerApp[], opts) => {
+			for (const app of apps) {
+				await app.encryptChangedSecretFields(opts.fields);
+			}
+		}
+	},
+	sequelize
 });

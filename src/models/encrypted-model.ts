@@ -1,30 +1,32 @@
 import { Model } from "sequelize";
-import { EncryptionClient, CryptorSecretKey } from "../util/encryption-client";
-import Logger from "bunyan";
+import { EncryptionClient, EncryptionContext, EncryptionSecretKeyEnum } from "utils/encryption-client";
 
-export abstract class EncryptedModel<TModel extends EncryptedModel<TModel, TSecretField>, TSecretField extends keyof TModel> extends Model {
+type StringValues<Obj> = {
+	[Prop in keyof Obj]: Obj[Prop] extends string ? Prop : never
+}[keyof Obj];
 
-	abstract getEncryptContext(field: TSecretField): Promise<Record<string, string | number>>;
-	abstract getCryptorKeyAlias(): CryptorSecretKey;
-	abstract getAllSecretFields(): TSecretField[];
+export abstract class EncryptedModel<C extends Model, K extends keyof Pick<C, StringValues<C>>> extends Model {
 
-	async decrypt(field: TSecretField, logger?: Logger) {
-		const ctx = await this.getEncryptContext(field);
-		return await EncryptionClient.decrypt(this.getDataValue(field as any), ctx, logger);
+	abstract getEncryptContext(field: K): Promise<Record<string, string | number>>;
+
+	abstract getEncryptionSecretKey(): EncryptionSecretKeyEnum;
+
+	abstract getSecretFields(): readonly K[];
+
+	async decrypt(value: string, context?: EncryptionContext): Promise<string> {
+		return await EncryptionClient.decrypt(value, context);
 	}
 
-	protected async encrypt(field: TSecretField, logger?: Logger) {
-		const ctx = await this.getEncryptContext(field);
-		return await EncryptionClient.encrypt(this.getCryptorKeyAlias(), this.getDataValue(field as any), ctx, logger);
+	protected async encrypt(value: string, context?: EncryptionContext): Promise<string> {
+		return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, context);
 	}
 
-	async encryptChangedSecretFields(app: TModel, fieldsChanged: (keyof TModel)[], logger?: Logger) {
-		for (const f of this.getAllSecretFields()) {
-			if (fieldsChanged?.includes(f)) {
-				const encrypted = await app.encrypt(f, logger);
-				app.setDataValue(f, encrypted as any);
-			}
-		}
+	async encryptChangedSecretFields(fieldsChanged: string[] = []): Promise<void> {
+		await Promise.all(fieldsChanged
+			.filter(f => this.getSecretFields().includes(f as K))
+			.map(async (field) => {
+				const context = await this.getEncryptContext(field as K);
+				this[field] = await this.encrypt(this[field], context);
+			}));
 	}
-
 }

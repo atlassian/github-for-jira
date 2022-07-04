@@ -1,5 +1,5 @@
-import { Sequelize, DataTypes } from "sequelize";
-import { EncryptionClient } from "../util/encryption-client";
+import { DataTypes, Sequelize } from "sequelize";
+import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { EncryptedModel } from "./encrypted-model";
 
 jest.mock("../util/encryption-client", () => {
@@ -12,7 +12,7 @@ jest.mock("../util/encryption-client", () => {
 	};
 });
 
-const SECRETS_FIELDS  = ["a", "b"] as const;
+const SECRETS_FIELDS = ["a", "b"] as const;
 type TSecretField = typeof SECRETS_FIELDS[number];
 
 class Dummy extends EncryptedModel<Dummy, TSecretField> {
@@ -21,16 +21,16 @@ class Dummy extends EncryptedModel<Dummy, TSecretField> {
 	a: string;
 	b: string;
 
-	getCryptorKeyAlias() {
-		return EncryptionClient.GITHUB_SERVER_APP_SECRET;
+	getEncryptionSecretKey() {
+		return EncryptionSecretKeyEnum.GITHUB_SERVER_APP;
 	}
 
 	async getEncryptContext(): Promise<Record<string, string | number>> {
 		return { name: this.name };
 	}
 
-	getAllSecretFields() {
-		return (SECRETS_FIELDS as any) as TSecretField[];
+	getSecretFields() {
+		return SECRETS_FIELDS;
 	}
 
 }
@@ -53,18 +53,21 @@ Dummy.init({
 		type: DataTypes.STRING,
 		allowNull: false
 	}
-}, { sequelize: new Sequelize("sqlite::memory:", {
-	dialect: "postgres"
-}) });
+}, {
+	hooks: {
+		beforeSave: async (app, opts) => {
+			await app.encryptChangedSecretFields(opts.fields);
+		},
 
-Dummy.beforeSave(async (app, opts)=> {
-	await app.encryptChangedSecretFields(app, (opts.fields as TSecretField[]) || []);
-});
-
-Dummy.beforeBulkCreate(async (apps, opts) => {
-	for (const app of apps) {
-		await app.encryptChangedSecretFields(app, (opts.fields as TSecretField[]) || []);
-	}
+		beforeBulkCreate: async (apps, opts) => {
+			for (const app of apps) {
+				await app.encryptChangedSecretFields(opts.fields);
+			}
+		}
+	},
+	sequelize: new Sequelize("sqlite::memory:", {
+		dialect: "postgres"
+	})
 });
 
 const newId = () => {
@@ -72,7 +75,7 @@ const newId = () => {
 };
 
 describe("Encrypted model", () => {
-	beforeEach(()=>{
+	beforeEach(() => {
 		EncryptionClient.encrypt = jest.fn(() => "foo") as any;
 		EncryptionClient.decrypt = jest.fn(() => "bar") as any;
 	});
@@ -84,7 +87,7 @@ describe("Encrypted model", () => {
 		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(1, "secret-key-name", "aaa1", { "name": "test" }, undefined);
 		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(2, "secret-key-name", "bbb1", { "name": "test" }, undefined);
 	});
-	it("should decypt successfully", async ()=>{
+	it("should decypt successfully", async () => {
 		await Dummy.sync();
 		const id = newId();
 		Dummy.create({ id, name: "test", a: "aaa1", b: "bbb1" });

@@ -1,13 +1,21 @@
-import  { envVars } from "config/env";
-import axios from "axios";
-import Logger from "bunyan";
-import { getLogger } from "../config/logger";
+import { envVars } from "config/env";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { getLogger } from "config/logger";
 
-export type CryptorSecretKey = "github-server-app-secrets";
+export enum EncryptionSecretKeyEnum {
+	GITHUB_SERVER_APP = "github-server-app-secrets"
+}
+
 export type EncryptionContext = Record<string, string | number>;
+const logger = getLogger("encryption-client");
 
-const KEY_ALIAS_PREFIX = "micros/github-for-jira";
-const LOGGER_NAME = "encryption-client";
+interface EncryptResponse {
+	cipherText: string;
+}
+
+interface DecryptResponse {
+	plainText: string;
+}
 
 /**
  * This client calling using Cryptor side-car to encrypt/decrypt data.
@@ -15,51 +23,47 @@ const LOGGER_NAME = "encryption-client";
  * How to use:
  *
  * - Without encryption context: Same, but just don't pass the context
- *   const encrypted = await EncryptionClient.encrypt(EncryptionClient.GITHUB_SERVER_APP_SECRET, "super-secret-secret", req.logger);
+ *   const encrypted = await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "super-secret-secret");
  *
  */
 export class EncryptionClient {
 
-	public static GITHUB_SERVER_APP_SECRET: CryptorSecretKey = "github-server-app-secrets";
+	protected static readonly axios: AxiosInstance = axios.create({
+		baseURL: envVars.CRYPTOR_URL,
+		headers: {
+			"X-Cryptor-Client": envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
+			"Content-Type": "application/json; charset=utf-8"
+		}
+	});
 
-	private static axiosConfig() {
-		return {
-			baseURL: envVars.CRYPTOR_URL,
-			headers: {
-				"X-Cryptor-Client": envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
-				"Content-Type": "application/json; charset=utf-8"
-			}
-		};
-	}
-
-	static async encrypt(secretKey: CryptorSecretKey, plainText: string, encryptionContext: EncryptionContext, logger: Logger = getLogger(LOGGER_NAME)): Promise<string> {
+	static async encrypt(secretKey: EncryptionSecretKeyEnum, plainText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
 		try {
-			const { cipherText }= (await axios.post(`/cryptor/encrypt/${KEY_ALIAS_PREFIX}/${secretKey}`, {
+			const response = await this.axios.post<EncryptResponse>(`/cryptor/encrypt/micros/github-for-jira/${secretKey}`, {
 				plainText,
 				encryptionContext
-			}, EncryptionClient.axiosConfig())).data;
-			return cipherText;
+			});
+			return response.data.cipherText;
 		} catch (e) {
-			logger.warn("Cryptor request failed: " + (e?.message || "").replace(plainText, "<censored>"));
+			e.message = e.message?.replace(plainText, "<censored>");
+			logger.warn(e, "Cryptor request failed");
 			throw e;
 		}
 	}
 
-	static async decrypt(cipherText: string, encryptionContext: EncryptionContext, logger: Logger = getLogger(LOGGER_NAME)): Promise<string> {
+	static async decrypt(cipherText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
 		try {
-			const { plainText }= (await axios.post(`/cryptor/decrypt`, {
+			const response = await this.axios.post<DecryptResponse>(`/cryptor/decrypt`, {
 				cipherText,
 				encryptionContext
-			}, EncryptionClient.axiosConfig())).data;
-			return plainText;
+			});
+			return response.data.plainText;
 		} catch (e) {
-			logger.warn("Cryptor request failed: " + e?.message);
+			logger.warn(e, "Decryption request failed");
 			throw e;
 		}
 	}
 
-	static async healthcheck() {
-		await axios.get("/healthcheck", EncryptionClient.axiosConfig());
+	static async healthcheck(): Promise<AxiosResponse> {
+		return await this.axios.get("/healthcheck");
 	}
-
 }

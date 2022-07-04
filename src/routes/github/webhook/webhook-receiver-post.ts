@@ -24,7 +24,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			return;
 		}
 
-		webhookSecret = await gitHubServerApp.decrypt("webhookSecret", logger);
+		webhookSecret = await gitHubServerApp.decrypt("webhookSecret");
 
 		const verification = createHash(JSON.stringify(payload), webhookSecret);
 		if (verification != signatureSHA256) {
