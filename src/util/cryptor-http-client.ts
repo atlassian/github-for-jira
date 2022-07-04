@@ -2,7 +2,8 @@ import  { envVars } from "config/env";
 import axios from "axios";
 import Logger from "bunyan";
 
-type CryptorSecretKey = "github-server-app-secrets";
+export type CryptorSecretKey = "github-server-app-secrets";
+export type EncryptionContext = Record<string, string | number>;
 
 const KEY_ALIAS_PREFIX = "micros/github-for-jira";
 
@@ -29,11 +30,11 @@ export class CryptorHttpClient {
 		};
 	}
 
-	static async encrypt(secretKey: CryptorSecretKey, plainText: string, logger: Logger): Promise<string> {
+	static async encrypt(secretKey: CryptorSecretKey, plainText: string, encryptionContext: EncryptionContext, logger: Logger): Promise<string> {
 		try {
 			const { cipherText }= (await axios.post(`/cryptor/encrypt/${KEY_ALIAS_PREFIX}/${secretKey}`, {
 				plainText,
-				encryptionContext: {}
+				encryptionContext
 			}, CryptorHttpClient.axiosConfig())).data;
 			return cipherText;
 		} catch (e) {
@@ -42,11 +43,11 @@ export class CryptorHttpClient {
 		}
 	}
 
-	static async decrypt(cipherText: string, logger: Logger): Promise<string> {
+	static async decrypt(cipherText: string, encryptionContext: EncryptionContext, logger: Logger): Promise<string> {
 		try {
 			const { plainText }= (await axios.post(`/cryptor/decrypt`, {
 				cipherText,
-				encryptionContext: {}
+				encryptionContext
 			}, CryptorHttpClient.axiosConfig())).data;
 			return plainText;
 		} catch (e) {

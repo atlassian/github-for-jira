@@ -25,8 +25,10 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			response.status(400).send("GitHub app not found");
 			return;
 		}
-		webhookSecret = gitHubServerApp.webhookSecret;
+
+		webhookSecret = await gitHubServerApp.decrypt("webhookSecret", logger);
 		if (!webhookSecret) throw new Error("Cannot find webhookSecret for gitHubServerApp uuid: " + uuid);
+
 		const verification = createHash(JSON.stringify(payload), await decrypt(webhookSecret, logger));
 		if (verification != signatureSHA256) {
 			response.status(400).send("signature does not match event payload and secret");

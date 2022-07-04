@@ -2,8 +2,10 @@ import { Model, DataTypes } from "sequelize";
 import { sequelize } from "models/sequelize";
 import { CryptorHttpClient } from "../util/cryptor-http-client";
 import { getLogger } from "../config/logger";
+import { EncryptionModel } from './encryption-model';
 
 const SECRETS_FIELDS = ["gitHubClientSecret", "privateKey", "webhookSecret"];
+type TSecretFields = typeof SECRETS_FIELDS[number];
 
 interface GitHubServerAppPayload {
 	uuid: string;
@@ -16,7 +18,7 @@ interface GitHubServerAppPayload {
 	installationId: number;
 }
 
-export class GitHubServerApp extends Model {
+export class GitHubServerApp extends EncryptionModel<TSecretFields> {
 	id: number;
 	uuid: string;
 	gitHubBaseUrl: string;
@@ -28,6 +30,15 @@ export class GitHubServerApp extends Model {
 	installationId: number;
 	updatedAt: Date;
 	createdAt: Date;
+
+
+	getCryptorKeyAlias() {
+		return CryptorHttpClient.GITHUB_SERVER_APP_SECRET;
+	}
+
+	async getEncryptContext(): Promise<Record<string, string | number>> {
+		return {};
+	}
 
 	/**
 	 * Get GitHubServerApp
@@ -176,27 +187,21 @@ GitHubServerApp.init({
 	}
 }, { sequelize });
 
-const log = getLogger("github-server-app-cryptor");
-
-const encrypt = async function (plainText: string) {
-	return CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, plainText, log);
-};
-GitHubServerApp.beforeSave(async (app, opts)=> {
+const encryptSecretFields = async (app: GitHubServerApp, fields?: string[]) => {
 	for (const f of SECRETS_FIELDS) {
-		if (opts.fields?.includes(f)) {
-			const encrypted = await encrypt(app[f]);
+		if (fields?.includes(f)) {
+			const encrypted = await app.encrypt(f, app[f]);
 			app[f] = encrypted;
 		}
 	}
+}
+
+GitHubServerApp.beforeSave(async (app, opts)=> {
+	await encryptSecretFields(app, opts.fields);
 });
 
 GitHubServerApp.beforeBulkCreate(async (apps, opts) => {
 	for (const app of apps) {
-		for (const f of SECRETS_FIELDS) {
-			if (opts.fields?.includes(f)) {
-				const encrypted = await encrypt(app[f]);
-				app[f] = encrypted;
-			}
-		}
+		await encryptSecretFields(app, opts.fields);
 	}
 });
