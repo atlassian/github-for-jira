@@ -7,7 +7,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 	const { id } = req.params;
 
 	if (id) {
-		req.log.info(`Retrieving GitHub app with id ${id}`);
+		req.log.debug(`Retrieving GitHub app with id ${id}`);
 		const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(Number(id));
 
 		if (!gitHubServerApp) {
