@@ -169,15 +169,15 @@ GitHubServerApp.init({
 		allowNull: false
 	},
 	gitHubClientSecret: {
-		type: DataTypes.STRING,
+		type: DataTypes.TEXT,
 		allowNull: false
 	},
 	webhookSecret: {
-		type: DataTypes.STRING,
+		type: DataTypes.TEXT,
 		allowNull: false
 	},
 	privateKey: {
-		type: DataTypes.STRING,
+		type: DataTypes.TEXT,
 		allowNull: false
 	},
 	gitHubAppName: {

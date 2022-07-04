@@ -5,15 +5,15 @@ const tableName = "GitHubServerApps";
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
 		await queryInterface.addColumn(tableName, "gitHubClientSecret", {
-			type: Sequelize.STRING,
+			type: Sequelize.TEXT,
 			allowNull: false
 		});
 		await queryInterface.addColumn(tableName, "webhookSecret", {
-			type: Sequelize.STRING,
+			type: Sequelize.TEXT,
 			allowNull: false
 		});
 		await queryInterface.addColumn(tableName, "privateKey", {
-			type: Sequelize.STRING,
+			type: Sequelize.TEXT,
 			allowNull: false
 		});
 		await queryInterface.removeColumn(tableName, "secrets");
