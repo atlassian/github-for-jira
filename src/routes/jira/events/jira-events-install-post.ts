@@ -7,7 +7,7 @@ import { metricHttpRequest } from "config/metric-names";
  * Handle the install webhook from Jira
  */
 export const JiraEventsInstallPost = async (req: Request, res: Response): Promise<void> => {
-	req.log.debug("Received installation payload");
+	req.log.info("Received installation payload");
 
 	const { baseUrl: host, clientKey, sharedSecret } = req.body;
 	await Installation.install({
@@ -16,7 +16,7 @@ export const JiraEventsInstallPost = async (req: Request, res: Response): Promis
 		sharedSecret
 	});
 
-	req.log.debug("Installed installation");
+	req.log.info("Installed installation");
 
 	statsd.increment(metricHttpRequest.install);
 
