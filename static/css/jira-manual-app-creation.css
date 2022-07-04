@@ -1,0 +1,134 @@
+.jiraManualAppCreation {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  margin: 1.75em 0 2.5em;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.jiraManualAppCreation__formTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 1.25em 0 1em;
+  display: flex;
+  align-items: center;
+}
+
+.jiraManualAppCreation__formTitle > .aui-icon {
+  margin-left: 4px;
+}
+
+.jiraManualAppCreation__formSubTitle {
+  font-size: 1rem;
+  font-weight: 400;
+  margin: 1.25em 0;
+  color: #344563;
+}
+
+.field-group {
+  margin-bottom: 1.1em !important;
+}
+
+.jiraManualAppCreation__formGroupWithIcon {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.jiraManualAppCreation__formGroupInput {
+  max-width: 100% !important;
+}
+
+.jiraManualAppCreation__formGroupIcon {
+  border-radius: 3px;
+  background: rgba(9, 30, 66, 0.04);
+  padding: 7px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+.jiraManualAppCreation__formGroupIcon:hover {
+  background-color: #091E4208;
+}
+
+.jiraManualAppCreation__formGroupIcon:hover + .jiraManualAppCreation__formTooltip {
+  display: block;
+}
+
+.jiraManualAppCreation__formTooltip {
+  display: none;
+  background-color: #172B4D;
+  color: #FFF;
+  border-radius: 3px;
+  padding: 0.1em 0.5em;
+  position: absolute;
+  right: -2.5em;
+  top: 0;
+  font-size: 0.8rem;
+}
+
+.jiraManualAppCreation_formSubmitBtn {
+  margin-top: 3.1em;
+}
+
+
+/* Custom CSS for File Input */
+.jiraManualAppCreation__formFileDropArea {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.7em;
+  border: 2px dashed #EBECF0;
+  border-radius: 10px;
+}
+
+.jiraManualAppCreation__formFileDropArea.active {
+  background-color: #DEEBFF;
+  border: 2px dashed #2684FF;
+}
+
+.jiraManualAppCreation__formFileIcon {
+  height: 48px;
+}
+
+.jiraManualAppCreation__formFileMsg {
+  font-weight: 600;
+}
+
+.jiraManualAppCreation__formFileSubMsg {
+  color: #5E6C84;
+}
+
+.jiraManualAppCreation__formFileInput {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.jiraManualAppCreation__formFileUploaded {
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.7em;
+  border: 2px dashed #EBECF0;
+  border-radius: 10px;
+}
+
+.jiraManualAppCreation__formFileUploaded > .aui-icon {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 3px;
+}
+
+.jiraManualAppCreation__formFileUploaded > .aui-icon:hover {
+  background-color: #091E4208;
+}
