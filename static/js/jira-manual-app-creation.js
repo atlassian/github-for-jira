@@ -1,6 +1,7 @@
 $("#jiraManualAppCreation__form").submit((event) => {
   event.preventDefault();
-  console.log("Submit this");
+
+  // TODO: Form submission
 });
 
 $(".jiraManualAppCreation__formFileInput")
