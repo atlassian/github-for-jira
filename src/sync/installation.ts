@@ -13,7 +13,7 @@ import { getDeploymentTask } from "./deployment";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
@@ -36,7 +36,7 @@ const tasks: TaskProcessors = {
 
 interface TaskProcessors {
 	[task: string]: (
-		logger: LoggerWithTarget,
+		logger: Logger,
 		github: GitHubAPI,
 		gitHubInstallationClient: GitHubInstallationClient,
 		jiraHost: string,
@@ -113,7 +113,7 @@ export const updateJobStatus = async (
 	taskPayload: TaskPayload,
 	task: TaskType,
 	repositoryId: number,
-	logger: LoggerWithTarget,
+	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
 	const { installationId, jiraHost } = data;
@@ -187,7 +187,7 @@ export const isRetryableWithSmallerRequest = async (err): Promise<boolean> => {
 // - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
 export const isNotFoundError = (
 	err: any,
-	logger: LoggerWithTarget
+	logger: Logger
 ): boolean | undefined => {
 	const isNotFoundErrorType =
 		err?.errors && err.errors?.filter((error) => error.type === "NOT_FOUND");
@@ -201,7 +201,7 @@ export const isNotFoundError = (
 };
 
 // TODO: type queues
-async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: LoggerWithTarget, scheduleNextTask: (delayMs) => void): Promise<void> {
+async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId
@@ -358,7 +358,7 @@ export const handleBackfillError = async (err,
 	data: BackfillMessagePayload,
 	nextTask: Task,
 	subscription: Subscription,
-	logger: LoggerWithTarget,
+	logger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
 	const isRateLimitError = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
@@ -424,7 +424,7 @@ export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Sub
 export async function maybeScheduleNextTask(
 	jobData: BackfillMessagePayload,
 	nextTaskDelaysMs: Array<number>,
-	logger: LoggerWithTarget
+	logger: Logger
 ) {
 	if (nextTaskDelaysMs.length > 0) {
 		nextTaskDelaysMs.sort().reverse();
@@ -448,7 +448,7 @@ export const processInstallation =
 			inProgressStorage, 1_000
 		);
 
-		return async (data: BackfillMessagePayload, sentry: Hub, logger: LoggerWithTarget): Promise<void> => {
+		return async (data: BackfillMessagePayload, sentry: Hub, logger: Logger): Promise<void> => {
 			const { installationId, jiraHost } = data;
 
 			try {

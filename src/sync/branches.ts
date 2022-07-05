@@ -2,12 +2,12 @@ import { transformBranches } from "./transforms/branch";
 import { GitHubAPI } from "probot";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 
 // TODO: better typings
 export const getBranchTask = async (
-	logger: LoggerWithTarget,
+	logger: Logger,
 	_github: GitHubAPI,
 	newGithub: GitHubInstallationClient,
 	jiraHost: string,

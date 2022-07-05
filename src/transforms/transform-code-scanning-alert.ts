@@ -3,13 +3,13 @@ import { JiraRemoteLinkData, JiraRemoteLinkStatusAppearance } from "interfaces/j
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { GitHubAPI } from "probot";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { createInstallationClient } from "../util/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
 const MAX_STRING_LENGTH = 255;
 
-const getPullRequestTitle = async (repoName: string, prId: number, repoOwner: string, githubClient: GitHubInstallationClient | GitHubAPI, logger: LoggerWithTarget): Promise<string> => {
+const getPullRequestTitle = async (repoName: string, prId: number, repoOwner: string, githubClient: GitHubInstallationClient | GitHubAPI, logger: Logger): Promise<string> => {
 
 	const response = githubClient instanceof GitHubInstallationClient ?
 		await githubClient.getPullRequest(repoOwner, repoName, prId) :
@@ -27,7 +27,7 @@ const getPullRequestTitle = async (repoName: string, prId: number, repoOwner: st
 	}
 };
 
-const getEntityTitle = async (ref: string, repoName: string, repoOwner: string, githubClient: GitHubInstallationClient | GitHubAPI, logger: LoggerWithTarget): Promise<string> => {
+const getEntityTitle = async (ref: string, repoName: string, repoOwner: string, githubClient: GitHubInstallationClient | GitHubAPI, logger: Logger): Promise<string> => {
 	// ref can either be a branch reference or a PR reference
 	const components = ref.split("/");
 	switch (components[1]) {

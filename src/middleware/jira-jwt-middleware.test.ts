@@ -122,11 +122,11 @@ describe("#verifyJiraMiddleware", () => {
 		it("adds installation details to log", async () => {
 			mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("host", testSharedSecret);
-			const addLogFieldsSpy = jest.spyOn(req, "addLogFields");
+			const logChildSpy = jest.spyOn(req, "addLogFields");
 
 			await JiraContextJwtTokenMiddleware(req, res, next);
 
-			expect(addLogFieldsSpy).toHaveBeenCalledWith({
+			expect(logChildSpy).toHaveBeenCalledWith({
 				jiraHost,
 				jiraClientKey: "abc12***" // should be the shortened key
 			});

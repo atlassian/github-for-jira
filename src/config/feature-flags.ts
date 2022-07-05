@@ -2,7 +2,7 @@ import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import { envVars }  from "./env";
 import { createHashWithSharedSecret } from "utils/encryption";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 
 const logger = getLogger("feature-flags");
 
@@ -80,7 +80,7 @@ export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, li
 	launchdarklyClient.on(`update:${flag}`, listener);
 };
 
-export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
+export const isBlocked = async (installationId: number, logger: Logger): Promise<boolean> => {
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
