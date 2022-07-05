@@ -147,17 +147,6 @@ describe("await jirahostMiddleware", () => {
 			expect(next).not.toBeCalled();
 		});
 
-		it("should not be validated and used when wrong URL", async ()=>{
-
-			req.path = "/blah";
-
-			await jirahostMiddleware(req, res, next);
-
-			expect(res.locals.jiraHost).toBeUndefined();
-			expect(mockJwtVerificationFn).not.toBeCalled();
-			expect(next).toBeCalled();
-		});
-
 		it("should use \"context\" JWT token type", async () => {
 
 			await jirahostMiddleware(req, res, next);
