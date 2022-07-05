@@ -63,8 +63,8 @@ const newId = () => {
 
 describe("Encrypted model", () => {
 	beforeEach(() => {
-		EncryptionClient.encrypt = jest.fn(() => "foo") as any;
-		EncryptionClient.decrypt = jest.fn(() => "bar") as any;
+		EncryptionClient.encrypt = jest.fn((_, p) => "encrypted:" + p) as any;
+		EncryptionClient.decrypt = jest.fn((c) => c.substring("encrypted".length)) as any;
 	});
 	it("should encrypt successfully", async () => {
 		await Dummy.sync();
@@ -81,7 +81,7 @@ describe("Encrypted model", () => {
 		const dummy = await Dummy.findOne({ where: { name: "test" } });
 		await dummy.decrypt("a");
 		await dummy.decrypt("b");
-		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(1, "aaa1", { "name": "test" });
-		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(2, "bbb1", { "name": "test" });
+		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(1, "encrypted:aaa1", { "name": "test" });
+		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(2, "encrypted:bbb1", { "name": "test" });
 	});
 });
