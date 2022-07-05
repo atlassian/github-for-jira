@@ -99,13 +99,6 @@ export const GithubWebhookMiddleware = (
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
 
-		console.log("============");
-		console.log("============");
-		console.log("============");
-		console.log("============");
-		console.log("============");
-		console.log("=========FIELDS===");
-		console.log(context.log.fields);
 		context.log = getLogger("github.webhooks", {
 			webhookId,
 			gitHubInstallationId,
