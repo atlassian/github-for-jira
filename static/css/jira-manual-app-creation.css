@@ -40,6 +40,14 @@ form#jiraManualAppCreation__form > div.field-group {
 /* Custom CSS for File Input */
 .jiraManualAppCreation__formFileDropArea {
   position: relative;
+}
+
+.jiraManualAppCreation__formFileDropArea.active {
+  background-color: #DEEBFF;
+  border-radius: 10px;
+}
+
+.jiraManualAppCreation__formNoFileUploaded {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -48,10 +56,6 @@ form#jiraManualAppCreation__form > div.field-group {
   border-radius: 10px;
 }
 
-.jiraManualAppCreation__formFileDropArea.active {
-  background-color: #DEEBFF;
-  border: 2px dashed #2684FF;
-}
 
 .jiraManualAppCreation__formFileIcon {
   height: 48px;
@@ -85,21 +89,26 @@ form#jiraManualAppCreation__form > div.field-group {
   display: none;
   justify-content: space-between;
   align-items: center;
-  padding: 1.7em;
+  padding: 1em;
   border: 2px dashed #EBECF0;
   border-radius: 10px;
 }
 
 .jiraManualAppCreation__formFileUploaded > .aui-icon {
-  cursor: pointer;
   padding: 4px;
   border-radius: 3px;
 }
 
-.jiraManualAppCreation__formFileUploaded > .aui-icon:hover {
-  background-color: #091E4208;
-}
-
 .jiraManualAppCreation__serverError {
   display: none;
+  margin-top: 2.5em;
+}
+
+.jiraManualAppCreation__formFileErrorBorder {
+  display: none;
+}
+
+.jiraManualAppCreation__formFileInput + .error ~ .jiraManualAppCreation__formNoFileUploaded,
+.jiraManualAppCreation__formFileInput + .error ~ .jiraManualAppCreation__formFileUploaded {
+  border: 2px solid #DE350B;
 }

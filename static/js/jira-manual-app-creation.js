@@ -1,7 +1,6 @@
-$("#jiraManualAppCreation__form").submit((event) => {
-  event.preventDefault();
-
+$("#jiraManualAppCreation__form").submit(() => {
   // TODO: Form submission
+  console.log("Submit Form");
 });
 
 $(".jiraManualAppCreation__formFileInput")
@@ -13,16 +12,6 @@ $(".jiraManualAppCreation__formFileInput")
     const fileName = event.target.files[0].name;
 
     $(".jiraManualAppCreation__formFileUploaded").css('display', 'flex');
-    $(".jiraManualAppCreation__formFileDropArea").hide();
+    $(".jiraManualAppCreation__formNoFileUploaded").hide();
     $("#jiraManualAppCreation__uploadedFile").text(fileName);
-
-    //  TODO: Validation and/or Upload
   });
-
-
-$("#jiraManualAppCreation__clearUploadedFile").click(() => {
-  $("#jiraManualAppCreation__uploadedFile").text("");
-  $(".jiraManualAppCreation__formFileInput").val(null);
-  $(".jiraManualAppCreation__formFileDropArea").show();
-  $(".jiraManualAppCreation__formFileUploaded").hide();
-});

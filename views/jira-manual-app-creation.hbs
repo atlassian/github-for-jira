@@ -115,19 +115,30 @@
         <div class="field-group">
           <label>Private key</label>
           <div class="jiraManualAppCreation__formFileDropArea">
-            <img class="jiraManualAppCreation__formFileIcon" src="/public/assets/file-upload.svg" alt="Upload">
-            <div>
-              <div class="jiraManualAppCreation__formFileMsg">Upload your private key</div>
-              <div class="jiraManualAppCreation__formFileSubMsg">Upload your generated private key from GitHub</div>
-            </div>
-            <div class="aui-button">Upload</div>
+            <!--
+              Regex pattern for empty string or strings ending with these file extensions.
+              The empty string pattern is added to avoid showing validation pattern error message when this field is empty.
+              File extensions are referenced from https://www.microfocus.com/documentation/visual-cobol/vc60/VS2017/BKCJCJCERTS001.html
+            -->
             <input class="jiraManualAppCreation__formFileInput" id="private-key"
-                   data-aui-validation-field required type="file">
+                   data-aui-validation-pattern="^\s*$|^.*\.(der|DER|cer|CER|pem|PEM|spc|SPC|p7a|P7A|p7b|P7B|p7c|P7C|p8|P8|pfx|PFX|p12|P12)$"
+                   data-aui-validation-pattern-msg="We couldn&#x2019;t upload this file. Please try again."
+                   data-aui-validation-field
+                   required type="file">
+            <div class="jiraManualAppCreation__formNoFileUploaded">
+              <img class="jiraManualAppCreation__formFileIcon" src="/public/assets/file-upload.svg" alt="Upload">
+              <div>
+                <div class="jiraManualAppCreation__formFileMsg">Upload your private key</div>
+                <div class="jiraManualAppCreation__formFileSubMsg">Upload your generated private key from GitHub</div>
+              </div>
+              <div class="aui-button">Upload</div>
+            </div>
+            <div class="jiraManualAppCreation__formFileUploaded">
+              <div id="jiraManualAppCreation__uploadedFile"></div>
+              <span class="aui-icon aui-icon-small aui-iconfont-cross" id="jiraManualAppCreation__clearUploadedFile">Remove</span>
+            </div>
           </div>
-          <div class="jiraManualAppCreation__formFileUploaded">
-            <div id="jiraManualAppCreation__uploadedFile"></div>
-            <span class="aui-icon aui-icon-small aui-iconfont-cross" id="jiraManualAppCreation__clearUploadedFile">Remove</span>
-          </div>
+          <div class="jiraManualAppCreation__formFileErrorBorder"></div>
         </div>
 
         <div class="jiraManualAppCreation__serverError">
@@ -137,7 +148,7 @@
           }}
         </div>
 
-        <button class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary">Next</button>
+        <input type="submit" value="Next" class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary" />
       </form>
     </div>
 
