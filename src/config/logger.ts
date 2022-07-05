@@ -104,6 +104,13 @@ export const getUnsafeLogger = (name: string, fields?: Record<string, unknown>):
 	return logger.child({ ...fields });
 };
 
+
+export const cloneAllowedLogFields = (fields: Record<string, any>) => {
+	const allowedFields = { ...fields };
+	delete allowedFields.name;
+	return allowedFields;
+};
+
 //Override console.log with bunyan logger.
 //we shouldn't use console.log in our code, but it is done to catch
 //possible logs from third party libraries
