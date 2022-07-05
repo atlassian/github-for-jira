@@ -8,8 +8,10 @@ export const JiraServerUrlGet = async (
 	try {
 		req.log.debug("Received Jira server url page request");
 
-		res.render("jira-server-url.hbs", {
-			previousPagePath: "github-select-version-page"
+		res.render("jira-manual-app-creation.hbs", {
+			previousPagePath: "github-select-version-page",
+			githubBaseUrl: "https://kmaharjan4.atlassian.net/",
+			uuid: "UUID-TEST-FOR-GH4J"
 		});
 
 		req.log.debug("Jira server url page rendered successfully.");
