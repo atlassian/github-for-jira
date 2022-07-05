@@ -123,7 +123,6 @@ export const updateJobStatus = async (
 		installationId
 	);
 
-	logger.info("!");
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
 		logger.info("Organization has been deleted. Other active syncs will continue.");
