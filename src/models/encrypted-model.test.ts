@@ -2,16 +2,6 @@ import { DataTypes, Sequelize } from "sequelize";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { EncryptedModel } from "./encrypted-model";
 
-jest.mock("../util/encryption-client", () => {
-	return {
-		EncryptionClient: {
-			GITHUB_SERVER_APP_SECRET: "secret-key-name",
-			encrypt: jest.fn(),
-			decrypt: jest.fn()
-		}
-	};
-});
-
 class Dummy extends EncryptedModel {
 	id: number;
 	name: string;
@@ -81,17 +71,17 @@ describe("Encrypted model", () => {
 		const id = newId();
 		const dummy = Dummy.build({ id, name: "test", a: "aaa1", b: "bbb1" });
 		await dummy.save();
-		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(1, "secret-key-name", "aaa1", { "name": "test" }, undefined);
-		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(2, "secret-key-name", "bbb1", { "name": "test" }, undefined);
+		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(1, EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "aaa1", { "name": "test" });
+		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(2, EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "bbb1", { "name": "test" });
 	});
-	it("should decypt successfully", async () => {
+	it("should decrypt successfully", async () => {
 		await Dummy.sync();
 		const id = newId();
-		Dummy.create({ id, name: "test", a: "aaa1", b: "bbb1" });
+		await Dummy.create({ id, name: "test", a: "aaa1", b: "bbb1" });
 		const dummy = await Dummy.findOne({ where: { name: "test" } });
 		await dummy.decrypt("a");
 		await dummy.decrypt("b");
-		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(1, "foo", { "name": "test" }, undefined);
-		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(2, "foo", { "name": "test" }, undefined);
+		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(1, "aaa1", { "name": "test" });
+		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(2, "bbb1", { "name": "test" });
 	});
 });

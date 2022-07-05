@@ -2,7 +2,7 @@ import { DataTypes } from "sequelize";
 import { sequelize } from "models/sequelize";
 import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { EncryptedModel } from "./encrypted-model";
-import { Installation } from "models/installation";
+//import { Installation } from "models/installation";
 
 interface GitHubServerAppPayload {
 	uuid: string;
@@ -35,10 +35,12 @@ export class GitHubServerApp extends EncryptedModel {
 	}
 
 	async getEncryptContext() {
-		const installation = await Installation.findByPk(this.installationId);
-		return {
-			installationSharedSecret: installation?.sharedSecret
-		};
+		//For example: we can call database to fetch sharedSecret for use as EncryptionContext
+		//const installation = await Installation.findByPk(this.installationId);
+		//return {
+		//	installationSharedSecret: installation?.sharedSecret
+		//};
+		return {};
 	}
 
 	getSecretFields() {

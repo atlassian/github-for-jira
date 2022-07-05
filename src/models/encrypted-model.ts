@@ -33,7 +33,7 @@ export abstract class EncryptedModel extends Model {
 		await Promise.all(
 			this.getSecretFields()
 				.filter(f => fieldsChanged.includes(f as string))
-				.map(this.encrypt)
+				.map(this.encrypt.bind(this))
 		);
 	}
 }
