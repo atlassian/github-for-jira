@@ -181,14 +181,17 @@ GitHubServerApp.init({
 	},
 	gitHubClientSecret: {
 		type: DataTypes.TEXT,
+		field: "encryptedGitHubClientSecret",
 		allowNull: false
 	},
 	webhookSecret: {
 		type: DataTypes.TEXT,
+		field: "encryptedWebhookSecret",
 		allowNull: false
 	},
 	privateKey: {
 		type: DataTypes.TEXT,
+		field: "encryptedPrivateKey",
 		allowNull: false
 	},
 	gitHubAppName: {

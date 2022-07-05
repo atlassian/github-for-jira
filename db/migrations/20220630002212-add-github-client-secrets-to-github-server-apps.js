@@ -4,15 +4,15 @@ const tableName = "GitHubServerApps";
 
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
-		await queryInterface.addColumn(tableName, "gitHubClientSecret", {
+		await queryInterface.addColumn(tableName, "encryptedGitHubClientSecret", {
 			type: Sequelize.TEXT,
 			allowNull: false
 		});
-		await queryInterface.addColumn(tableName, "webhookSecret", {
+		await queryInterface.addColumn(tableName, "encryptedWebhookSecret", {
 			type: Sequelize.TEXT,
 			allowNull: false
 		});
-		await queryInterface.addColumn(tableName, "privateKey", {
+		await queryInterface.addColumn(tableName, "encryptedPrivateKey", {
 			type: Sequelize.TEXT,
 			allowNull: false
 		});
@@ -20,9 +20,9 @@ module.exports = {
 	},
 
 	down: async (queryInterface) => {
-		await queryInterface.removeColumn(tableName, "gitHubClientSecret");
-		await queryInterface.removeColumn(tableName, "webhookSecret");
-		await queryInterface.removeColumn(tableName, "privateKey");
+		await queryInterface.removeColumn(tableName, "encryptedGitHubClientSecret");
+		await queryInterface.removeColumn(tableName, "encryptedWebhookSecret");
+		await queryInterface.removeColumn(tableName, "encryptedPrivateKey");
 		/*
 		 * Please note, rollback of following won't work, or will have bugs in the app IF THE APP still use sequalize.encrypt, as data type is different (and allowNull will messup)
 		 * Assuming we are using Cryptor for this table in the future, so above concern need not to be worried.
