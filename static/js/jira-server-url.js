@@ -1,15 +1,17 @@
-const ALLOWED_PROTOCOLS = ["http:", "https:"];
+/* globals $, AP */
+const params = new URLSearchParams(window.location.search.substring(1));
+const jiraHost = params.get("xdm_e");
 const GITHUB_CLOUD = ["github.com", "www.github.com"];
 const defaultError = {
-	message: 'The entered URL is not valid.',
-	linkMessage: 'Learn more',
+	message: "The entered URL is not valid.",
+	linkMessage: "Learn more",
 	// TODO: add URL for this
-	linkUrl: '#'
+	linkUrl: "#"
 }
 const cloudURLError = {
-	message: 'The entered URL is a GitHub Cloud site.',
-	linkMessage: 'Connect a GitHub Cloud site',
-	linkUrl: '/session/github/configuration'
+	message: "The entered URL is a GitHub Cloud site.",
+	linkMessage: "Connect a GitHub Cloud site",
+	linkUrl: "/session/github/configuration"
 }
 
 /**
@@ -51,12 +53,66 @@ const setErrorMessage = error => {
 	$("#gheServerURL").addClass("has-error");
 };
 
-/**
- * Hides the error messages
- */
 const hideErrorMessage = () => {
 	$("#gheServerURLError").hide();
 	$("#gheServerURL").removeClass("has-error");
+};
+
+const activeRequest = () => {
+	$("#gheServerBtnText").hide();
+	$("#gheServerBtnSpinner").show();
+};
+
+const requestFailed = () => {
+	$("#gheServerBtnText").show();
+	$("#gheServerBtnSpinner").hide();
+};
+
+const handleGheUrlRequestErrors = (err) => {
+	console.log("error", err)
+	requestFailed();
+	$(".jiraServerUrl__validationError").show();
+
+	const { error, message, type } = err;
+	$(".errorMessageBox__title").append(error);
+	$(".errorMessageBox__message").append(message);
+	type && $(".errorMessageBox__link").show();
+}
+
+const verifyGitHubServerUrl = (gheServerURL, installationId) => {
+	const csrf = document.getElementById("_csrf").value
+
+	AP.context.getToken(function(token) {
+		$.ajax({
+			type: "POST",
+			url: "/jira/server-url",
+			data: {
+				gheServerURL,
+				_csrf: csrf,
+				jwt: token,
+				jiraHost,
+				installationId
+			},
+			success: function(data) {
+				if (data.success) {
+					const pagePath = data.moduleKey;
+					AP.navigator.go(
+						"addonmodule",
+						{
+							moduleKey: pagePath
+						}
+					);
+				} else {
+					const { error, message, type } = data;
+					const errorPayload = { error, message, type }
+					handleGheUrlRequestErrors(errorPayload)
+				}
+			},
+			error: function(err) {
+				handleGheUrlRequestErrors(JSON.parse(err.responseText));
+			}
+		});
+	});
 };
 
 $("#gheServerURL").on("keyup", event => {
@@ -70,8 +126,9 @@ $("#gheServerURL").on("keyup", event => {
 
 $("#gheServerBtn").on("click", event => {
 	const btn = event.target;
-	const typedURL = $("#gheServerURL").val().replace(/\/+$/, '');
-	const isValid = checkValidGHEUrl(typedURL);
+	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
+	const isValid = checkValidGHEUrl(gheServerURL);
+	const installationId = $(event.currentTarget).data("installation-id");
 
 	$(btn).attr({
 		"aria-disabled": !isValid,
@@ -80,12 +137,7 @@ $("#gheServerBtn").on("click", event => {
 
 	if (isValid) {
 		hideErrorMessage();
-
-		// Changing the text on the button and displaying the spinner
-		$("#gheServerBtnText").hide();
-		$("#gheServerBtnSpinner").show();
-
-		//	TODO: Need to add the action for the GHE server
-		console.log("GHE server URL: ", typedURL);
+		activeRequest();
+		verifyGitHubServerUrl(gheServerURL, installationId);
 	}
 });

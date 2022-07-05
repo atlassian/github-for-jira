@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from "uuid";
 import { statsd }  from "config/statsd";
 import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
 
 const logger = getLogger("sqs");
 
@@ -33,7 +32,7 @@ export type Context<MessagePayload> = {
 	/**
 	 * Context logger, which has parameters for the processing context (like message id, execution id, etc)
 	 */
-	log: LoggerWithTarget;
+	log: Logger;
 
 	/**
 	 * How many times this messages attempted to be processed, including the current attempt (always greater 0)
@@ -139,7 +138,7 @@ type ListenerContext = {
 	/**
 	 * Logger which contains listener debug parameters
 	 */
-	log: LoggerWithTarget;
+	log: Logger;
 }
 
 const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
@@ -167,7 +166,7 @@ export class SqsQueue<MessagePayload> {
 	readonly errorHandler: ErrorHandler<MessagePayload>;
 	readonly messageHandler: MessageHandler<MessagePayload>;
 	readonly sqs: SQS;
-	readonly log: LoggerWithTarget;
+	readonly log: Logger;
 	readonly metricsTags: Tags;
 
 	/**
@@ -195,7 +194,7 @@ export class SqsQueue<MessagePayload> {
 	 * @param delaySec Delay in seconds after which the message will be ready to be processed
 	 * @param log Logger to be used to log message sending status
 	 */
-	public async sendMessage(payload: MessagePayload, delaySec = 0, log: Logger | LoggerWithTarget = this.log) {
+	public async sendMessage(payload: MessagePayload, delaySec = 0, log: Logger | Logger = this.log) {
 		if (delaySec >= MAX_MESSAGE_DELAY_SEC) {
 			delaySec = MAX_MESSAGE_DELAY_SEC - 1;
 		}
@@ -402,7 +401,7 @@ export class SqsQueue<MessagePayload> {
 		}
 	}
 
-	private async handleSqsMessageExecutionError(err, context: Context<MessagePayload>, log: LoggerWithTarget, message: SQS.Message) {
+	private async handleSqsMessageExecutionError(err, context: Context<MessagePayload>, log: Logger, message: SQS.Message) {
 		try {
 			const errorHandlingResult = await this.errorHandler(err, context);
 

@@ -26,12 +26,12 @@ export const JiraServerUrlPost = async (
 				res.status(200).send({ success: true, moduleKey: "github-app-creation-page" });
 			}
 		} catch (err) {
-			req.log.error({ "ERROR": err, gheServerURL }, `Something went wrong`);
-			const { message, statusCode } = gheServerUrlErrors.codeOrStatus["default"];
-			res.status(statusCode).send({ success: false, error: message });
+			req.log.error({ err, gheServerURL }, `Something went wrong`);
+			const { error, message, statusCode, type } = gheServerUrlErrors.codeOrStatus[err.code || err.status || "default"];
+			res.status(statusCode).send({ success: false, error, message, type });
 		}
 	} else {
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
-		res.status(200).send({ success: false, error: "The entered URL is not valid." });
+		res.status(200).send({ success: false, error: "Invalid URL", message: "The entered URL is not valid." });
 	}
 };
