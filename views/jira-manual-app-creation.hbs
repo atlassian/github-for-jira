@@ -19,6 +19,7 @@
       media="all"
     />
     <link rel="stylesheet" href="/public/css/global.css" media="all" />
+    <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
     <link
       rel="stylesheet"
       href="/public/css/jira-manual-app-creation.css"
@@ -119,6 +120,13 @@
             <div id="jiraManualAppCreation__uploadedFile"></div>
             <span class="aui-icon aui-icon-small aui-iconfont-cross" id="jiraManualAppCreation__clearUploadedFile">Remove</span>
           </div>
+        </div>
+
+        <div class="jiraManualAppCreation__serverError">
+          {{> server-error-message-box
+              title="We couldn't create your GitHub app"
+              message="Please make sure all the details you entered are correct."
+          }}
         </div>
 
         <button class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary">Next</button>
