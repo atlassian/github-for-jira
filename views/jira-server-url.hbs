@@ -66,6 +66,7 @@
               <a href="" target="_blank"></a>
             </div>
           </div>
+
           <div class="jiraServerUrl__validationError">
             {{> server-error-message-box
                 title="URL validation failed"
@@ -78,17 +79,19 @@
                 message="Something went wrong, please try again later."
             }}
           </div>
+
+          <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
           <div class="jiraServerUrl__actionBtn__container">
             <button
               id="gheServerBtn"
               class="aui-button aui-button-primary"
               aria-disabled="true"
               disabled
+              data-installation-id={{installationId}}
             >
               <span id="gheServerBtnText">Next</span>
               <aui-spinner id="gheServerBtnSpinner" size="small"></aui-spinner>
             </button>
-
           </div>
         </div>
       </section>
@@ -103,6 +106,7 @@
       src="https://connect-cdn.atl-paas.net/all.js"
       nonce="{{nonce}}"
     ></script>
+
     <script
       src="/public/aui/aui-prototyping.js"
       crossorigin="anonymous"
