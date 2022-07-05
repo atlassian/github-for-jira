@@ -2,23 +2,7 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { GitHubServerApp } from "models/github-server-app";
 import { isValidUrl } from "utils/is-valid-url";
-
-const gheServerUrlErrors = {
-	codeOrStatus: {
-		ENOTFOUND: {
-			message: "Unable to make a request to provided URL. Please check the hole in your firewall and try again.",
-			statusCode: 200
-		},
-		502: {
-			message: "We weren't able to complete your request. Please try again.",
-			statusCode: 502
-		},
-		default: {
-			message: "Something went wrong",
-			statusCode: 200
-		}
-	}
-};
+import { gheServerUrlErrors } from "utils/jira-errors";
 
 export const JiraServerUrlPost = async (
 	req: Request,
