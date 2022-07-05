@@ -12,10 +12,7 @@ jest.mock("../util/encryption-client", () => {
 	};
 });
 
-const SECRETS_FIELDS = ["a", "b"] as const;
-type TSecretField = typeof SECRETS_FIELDS[number];
-
-class Dummy extends EncryptedModel<Dummy, TSecretField> {
+class Dummy extends EncryptedModel {
 	id: number;
 	name: string;
 	a: string;
@@ -30,7 +27,7 @@ class Dummy extends EncryptedModel<Dummy, TSecretField> {
 	}
 
 	getSecretFields() {
-		return SECRETS_FIELDS;
+		return  ["a", "b"] as const;
 	}
 
 }

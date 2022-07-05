@@ -1,32 +1,39 @@
 import { Model } from "sequelize";
-import { EncryptionClient, EncryptionContext, EncryptionSecretKeyEnum } from "utils/encryption-client";
+import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 
 type StringValues<Obj> = {
 	[Prop in keyof Obj]: Obj[Prop] extends string ? Prop : never
-}[keyof Obj];
+};
 
-export abstract class EncryptedModel<C extends Model, K extends keyof Pick<C, StringValues<C>>> extends Model {
+export abstract class EncryptedModel extends Model {
 
-	abstract getEncryptContext(field: K): Promise<Record<string, string | number>>;
+	abstract getEncryptContext(field: (keyof StringValues<this>)): Promise<Record<string, string | number>>;
 
 	abstract getEncryptionSecretKey(): EncryptionSecretKeyEnum;
 
-	abstract getSecretFields(): readonly K[];
+	abstract getSecretFields(): readonly (keyof StringValues<this>)[];
 
-	async decrypt(value: string, context?: EncryptionContext): Promise<string> {
-		return await EncryptionClient.decrypt(value, context);
+	async decrypt(field: (keyof StringValues<this>)): Promise<string> {
+		const value = this[field];
+		if (typeof value !== "string") {
+			throw new Error(`Cannot decrypt '${field}', it is not a string.`);
+		}
+		return await EncryptionClient.decrypt(value, await this.getEncryptContext(field));
 	}
 
-	protected async encrypt(value: string, context?: EncryptionContext): Promise<string> {
-		return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, context);
+	protected async encrypt(field: (keyof StringValues<this>)): Promise<string> {
+		const value = this[field];
+		if (typeof value !== "string") {
+			throw new Error(`Cannot encrypt '${field}', it is not a string.`);
+		}
+		return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, await this.getEncryptContext(field));
 	}
 
 	async encryptChangedSecretFields(fieldsChanged: string[] = []): Promise<void> {
-		await Promise.all(fieldsChanged
-			.filter(f => this.getSecretFields().includes(f as K))
-			.map(async (field) => {
-				const context = await this.getEncryptContext(field as K);
-				this[field] = await this.encrypt(this[field], context);
-			}));
+		await Promise.all(
+			this.getSecretFields()
+				.filter(f => fieldsChanged.includes(f as string))
+				.map(this.encrypt)
+		);
 	}
 }

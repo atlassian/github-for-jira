@@ -4,8 +4,6 @@ import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { EncryptedModel } from "./encrypted-model";
 import { Installation } from "models/installation";
 
-const SECRETS_FIELDS = ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
-
 interface GitHubServerAppPayload {
 	uuid: string;
 	appId: number;
@@ -18,7 +16,7 @@ interface GitHubServerAppPayload {
 	installationId: number;
 }
 
-export class GitHubServerApp extends EncryptedModel<GitHubServerApp, typeof SECRETS_FIELDS[number]> {
+export class GitHubServerApp extends EncryptedModel {
 	id: number;
 	uuid: string;
 	appId: number;
@@ -44,7 +42,7 @@ export class GitHubServerApp extends EncryptedModel<GitHubServerApp, typeof SECR
 	}
 
 	getSecretFields() {
-		return SECRETS_FIELDS;
+		return ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
 	}
 
 	/**
