@@ -196,7 +196,7 @@ const jiraMultipleJiraBulkResponse = {
 	],
 	properties: { installationId: 1234 }
 };
-jest.mock("config/feature-flags");
+
 describe("multiple Jira instances", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
