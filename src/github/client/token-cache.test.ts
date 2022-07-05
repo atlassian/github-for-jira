@@ -35,9 +35,9 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 		const appTokenHolder = new AppTokenHolder(keyLocator);
 
 		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
-		const token1 = appTokenHolder.getAppToken(getCloudInstallationId(4711));
+		const token1 = await appTokenHolder.getAppToken(getCloudInstallationId(4711));
 		expect(token1).toBeTruthy();
-		const token2 = appTokenHolder.getAppToken(getCloudInstallationId(4711));
+		const token2 = await appTokenHolder.getAppToken(getCloudInstallationId(4711));
 		expect(token2).toBeTruthy();
 		expect(keyLocator).toHaveBeenCalledTimes(2);
 	});

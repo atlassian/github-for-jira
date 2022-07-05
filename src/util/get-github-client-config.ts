@@ -7,6 +7,8 @@ import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { Subscription } from "models/subscription";
 import { getLogger } from "config/logger";
+import { envVars } from "~/src/config/env";
+import * as PrivateKey from "probot/lib/private-key";
 
 export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
@@ -15,6 +17,8 @@ export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
 export interface GitHubClientConfig {
 	hostname: string;
 	baseUrl: string;
+	appId: number;
+	privateKey: string;
 }
 
 const logger = getLogger("get-github-client-config");
@@ -34,14 +38,16 @@ const getGitHubClientConfigFromGitHubInstallationId = async (gitHubInstallationI
 
 const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): Promise<GitHubClientConfig> => {
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
-	const gitHubCloudUrls = {
+	const gitHubCloudConfig = {
 		hostname: GITHUB_CLOUD_HOSTNAME,
-		baseUrl: GITHUB_CLOUD_API_BASEURL
+		baseUrl: GITHUB_CLOUD_API_BASEURL,
+		appId: parseInt(envVars.APP_ID),
+		privateKey: PrivateKey.findPrivateKey() || ""
 	};
 
 	if (!gitHubServerApp) {
 		logger.info("No GitHub server app found. Defaulting to cloud config.");
-		return gitHubCloudUrls;
+		return gitHubCloudConfig;
 	}
 
 	const gitHubServerAppBaseUrl = gitHubServerApp.gitHubBaseUrl;
@@ -49,9 +55,11 @@ const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): 
 	return gitHubServerAppBaseUrl
 		? {
 			hostname: gitHubServerAppBaseUrl,
-			baseUrl: gitHubServerAppBaseUrl
+			baseUrl: gitHubServerAppBaseUrl,
+			appId: gitHubServerApp.appId,
+			privateKey: gitHubServerApp.privateKey
 		}
-		: gitHubCloudUrls;
+		: gitHubCloudConfig;
 };
 
 export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
@@ -68,7 +76,7 @@ export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
 export async function createAppClient(logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl)
+		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey)
 		: new GitHubAppClient(logger);
 }
 
@@ -79,7 +87,7 @@ export async function createAppClient(logger: Logger, jiraHost: string, gitHubAp
 export async function createInstallationClient(gitHubInstallationId: number, jiraHost: string, logger: Logger): Promise<GitHubInstallationClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromGitHubInstallationId(gitHubInstallationId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-		? new GitHubInstallationClient(getCloudInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl), logger, gitHubClientConfig.baseUrl)
+		? new GitHubInstallationClient(getCloudInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, gitHubClientConfig.baseUrl)
 		: new GitHubInstallationClient(getCloudInstallationId(gitHubInstallationId), logger);
 }
 

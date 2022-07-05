@@ -5,14 +5,35 @@ import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 import * as PrivateKey from "probot/lib/private-key";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
+import { Subscription } from "~/src/models/subscription";
+import { GitHubServerApp } from "~/src/models/github-server-app";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
-export type KeyLocator = (installationId: InstallationId) => string;
+export type KeyLocator = (installationId: InstallationId) => Promise<string>;
 
 /**
  * By default, we just look for a key in the `PRIVATE_KEY` env var.
  */
 export const cloudKeyLocator: KeyLocator = () => {
-	return PrivateKey.findPrivateKey() || "";
+	const privateKey = PrivateKey.findPrivateKey() || "";
+	return Promise.resolve(privateKey);
+};
+
+/**
+ * Look for a private key in GitHubServerApp table
+ */
+export const gheKeyLocator = async (gitHubInstallation: InstallationId) => {
+	const subscription = await Subscription.findOneForGitHubInstallationId(gitHubInstallation.installationId);
+	if (await booleanFlag(BooleanFlags.GHE_SERVER, false, subscription?.jiraHost)) {
+		const gitHubServerApp = subscription?.gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(subscription?.gitHubAppId);
+		// No github app found
+		if (!gitHubServerApp) {
+			return cloudKeyLocator(gitHubInstallation);
+		}
+		return gitHubServerApp.privateKey;
+	} else {
+		return cloudKeyLocator(gitHubInstallation);
+	}
 };
 
 /**
@@ -31,7 +52,7 @@ export class AppTokenHolder {
 
 	constructor(keyLocator?: KeyLocator) {
 		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
-		this.privateKeyLocator = keyLocator || cloudKeyLocator;
+		this.privateKeyLocator = keyLocator || gheKeyLocator;
 	}
 
 	public static getInstance(): AppTokenHolder {
@@ -66,11 +87,11 @@ export class AppTokenHolder {
 	/**
 	 * Gets the current app token or creates a new one if the old is about to expire.
 	 */
-	public getAppToken(appId: InstallationId): AuthToken {
+	public async getAppToken(appId: InstallationId): Promise<AuthToken> {
 		let currentToken = this.appTokenCache.get(appId.toString());
 
 		if (!currentToken || currentToken.isAboutToExpire()) {
-			const key = this.privateKeyLocator(appId);
+			const key = await this.privateKeyLocator(appId);
 			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString());
 			this.appTokenCache.set(appId.toString(), currentToken);
 		}

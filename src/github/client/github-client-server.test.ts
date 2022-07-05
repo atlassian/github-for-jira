@@ -79,7 +79,7 @@ describe("GitHub Client", () => {
 		const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
 			switch (installationId.githubBaseUrl) {
 				case gheUrl:
-					return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
+					return Promise.resolve(fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" }));
 				default:
 					throw new Error("unknown GitHub instance!");
 			}
