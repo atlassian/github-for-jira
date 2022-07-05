@@ -30,7 +30,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE = "use-new-github-client-for-pr-title",
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
-	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery"
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
+	TAG_BACKFILL_REQUESTS = "tag-backfill-requests"
 }
 
 export enum StringFlags {
@@ -89,4 +90,8 @@ export const isBlocked = async (installationId: number, logger: Logger): Promise
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
 	}
+};
+
+export const shouldTagBackfillRequests = async (): Promise<boolean> => {
+	return booleanFlag(BooleanFlags.TAG_BACKFILL_REQUESTS, false);
 };
