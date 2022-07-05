@@ -1,10 +1,10 @@
 const https = require('https');
 
 const pipelinesURL = 'https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/';
+const autoDeployUsername = process.env.AUTO_DEPLOY_USERNAME;
+const autoDeployToken = process.env.AUTO_DEPLOY_TOKEN;
 
 exports.handler = async function (event, context) {
-    const autoDeployUsername = process.env.AUTO_DEPLOY_USERNAME;
-    const autoDeployToken = process.env.AUTO_DEPLOY_TOKEN;
 
     if (!process.env.AUTO_DEPLOY_ENABLED) {
         console.log('Auto Deploying disabled');
