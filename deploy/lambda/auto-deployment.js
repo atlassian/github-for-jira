@@ -59,7 +59,7 @@ exports.handler = async function (event, context) {
 async function isPipelineRunning() {
     const url = "https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/?page=1&pagelen=20&sort=-created_on"
     const pipelines = await getRequest(url, {
-        'Authorization': 'Basic ' + new Buffer('fusion-release-bot:2nXHekMCpxc3T8rGPKwP').toString('base64')
+        'Authorization': 'Basic ' + new Buffer(autoDeployUsername + ':' + autoDeployToken).toString('base64')
     });
     const runningPipelines = pipelines.values.filter((pipeline) => {
         return (pipeline?.target?.selector?.type === "custom"
