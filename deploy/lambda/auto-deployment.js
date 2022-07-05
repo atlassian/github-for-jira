@@ -1,5 +1,7 @@
 const https = require('https');
 
+const pipelinesURL = 'https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/';
+
 exports.handler = async function (event, context) {
     const autoDeployUsername = process.env.AUTO_DEPLOY_USERNAME;
     const autoDeployToken = process.env.AUTO_DEPLOY_TOKEN;
@@ -27,7 +29,6 @@ exports.handler = async function (event, context) {
         if (deployedCommitSHA !== mainCommitSHA && ! await isPipelineRunning()) {
             console.log('Changes found, starting deployment...');
 
-            const pipelinesURL = 'https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/';
             const body = {
                 "target": {
                     "type": "pipeline_ref_target",
@@ -57,7 +58,7 @@ exports.handler = async function (event, context) {
 
 // Returns true if any pipline is running for deployment to stage/prod
 async function isPipelineRunning() {
-    const url = "https://api.bitbucket.org/2.0/repositories/atlassian/github-for-jira-deployment/pipelines/?page=1&pagelen=20&sort=-created_on"
+    const url = `${pipelinesURL}?page=1&pagelen=20&sort=-created_on`;
     const pipelines = await getRequest(url, {
         'Authorization': 'Basic ' + new Buffer(autoDeployUsername + ':' + autoDeployToken).toString('base64')
     });
@@ -136,3 +137,5 @@ function postRequest(url, body, headers = {}) {
         req.end();
     });
 }
+
+isPipelineRunning()
