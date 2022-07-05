@@ -4,7 +4,7 @@ $("#jiraManualAppCreation__form").submit(() => {
 });
 
 $(".jiraManualAppCreation__formFileInput")
-  .on("dragenter focus", () => {
+  .on("dragenter click", () => {
     $(".jiraManualAppCreation__formFileDropArea").addClass("active");
   }).on("dragleave blur drop", () => {
     $(".jiraManualAppCreation__formFileDropArea").removeClass("active");
