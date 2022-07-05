@@ -56,6 +56,18 @@ Object {
         },
         "url": "/jira/server-url",
       },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-app-creation-page",
+        "name": Object {
+          "value": "GitHub App Creation",
+        },
+        "url": "/jira/app-creation",
+      },
     ],
     "jiraBuildInfoProvider": Object {
       "homeUrl": "https://github.com/features/actions",
