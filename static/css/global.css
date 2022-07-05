@@ -211,12 +211,17 @@ a:focus {
   display: flex;
   justify-content: space-between;
   padding: 2em;
+  align-items: center;
 }
 
 .navigation__backButton__container {
   background: #fff;
   border: none;
   cursor: pointer;
+  height: 24px;
+  width: 24px;
+  display: flex;
+  justify-content: center;
 }
 
 .navigation__link {
