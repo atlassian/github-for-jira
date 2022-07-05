@@ -43,6 +43,7 @@ form#jiraManualAppCreation__form > div.field-group {
 }
 
 .jiraManualAppCreation__formFileDropArea.active {
+  border: 2px dashed #2684FF;
   background-color: #DEEBFF;
   border-radius: 10px;
 }
