@@ -10,7 +10,7 @@ $(".jiraManualAppCreation__formFileInput")
   }).on("dragleave blur drop", () => {
     $(".jiraManualAppCreation__formFileDropArea").removeClass("active");
   }).on("change", (event) => {
-    const fileName = $(event.target).val().split('\\').pop();
+    const fileName = event.target.files[0].name;
 
     $(".jiraManualAppCreation__formFileUploaded").css('display', 'flex');
     $(".jiraManualAppCreation__formFileDropArea").hide();
