@@ -230,6 +230,7 @@ a:focus {
 .navigation__help__container {
   align-items: center;
   display: flex;
+  padding: 0.25em 0.75em;
 }
 
 .navigation__help__container > :last-child {
