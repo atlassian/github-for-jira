@@ -6,15 +6,13 @@ export const JiraServerUrlGet = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.debug("Received Jira server url page request");
+		req.log.info("Received Jira server url page request");
 
-		res.render("jira-manual-app-creation.hbs", {
-			previousPagePath: "github-select-version-page",
-			githubBaseUrl: "https://kmaharjan4.atlassian.net/",
-			uuid: "UUID-TEST-FOR-GH4J"
+		res.render("jira-server-url.hbs", {
+			previousPagePath: "github-select-version-page"
 		});
 
-		req.log.debug("Jira server url page rendered successfully.");
+		req.log.info("Jira server url page rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira server url page: ${error}`));
 	}
