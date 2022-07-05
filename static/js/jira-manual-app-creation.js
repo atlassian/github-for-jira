@@ -15,3 +15,14 @@ $(".jiraManualAppCreation__formFileInput")
     $(".jiraManualAppCreation__formNoFileUploaded").hide();
     $("#jiraManualAppCreation__uploadedFile").text(fileName);
   });
+
+$("#jiraManualAppCreation__clearUploadedFile").click(() => {
+  $("#jiraManualAppCreation__uploadedFile").text("");
+  $(".jiraManualAppCreation__formNoFileUploaded").show();
+  $(".jiraManualAppCreation__formFileUploaded").hide();
+
+  // Resetting the input field and its errors
+  $(".jiraManualAppCreation__formFileInput").val(null)
+    .attr("data-aui-validation-state", "unvalidated");
+  $(".jiraManualAppCreation__formFileDropArea .error").remove();
+});

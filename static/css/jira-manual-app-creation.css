@@ -95,8 +95,13 @@ form#jiraManualAppCreation__form > div.field-group {
 }
 
 .jiraManualAppCreation__formFileUploaded > .aui-icon {
+  cursor: pointer;
   padding: 4px;
   border-radius: 3px;
+}
+
+.jiraManualAppCreation__formFileUploaded > .aui-icon:hover {
+  background-color: #091E4208;
 }
 
 .jiraManualAppCreation__serverError {
