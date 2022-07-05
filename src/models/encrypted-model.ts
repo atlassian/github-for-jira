@@ -30,10 +30,13 @@ export abstract class EncryptedModel extends Model {
 	}
 
 	async encryptChangedSecretFields(fieldsChanged: string[] = []): Promise<void> {
+		const fieldsChangedTyped = fieldsChanged as (keyof StringValues<this>)[];
 		await Promise.all(
 			this.getSecretFields()
-				.filter(f => fieldsChanged.includes(f as string))
-				.map(this.encrypt.bind(this))
+				.filter(f => fieldsChangedTyped.includes(f))
+				.map(async (f) => {
+					this[f] = await this.encrypt(f) as any;
+				})
 		);
 	}
 }
