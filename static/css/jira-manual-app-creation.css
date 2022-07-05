@@ -29,8 +29,8 @@ h1 {
   color: #344563;
 }
 
-.field-group {
-  margin-bottom: 1.1em !important;
+form#jiraManualAppCreation__form > div.field-group {
+  margin-bottom: 1.1em;
 }
 
 .jiraManualAppCreation_formSubmitBtn {
