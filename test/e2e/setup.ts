@@ -36,7 +36,7 @@ export default async function setup(/*config: FullConfig*/) {
 			{
 				...testData.github.urls,
 				...testData.github.roles.admin
-			}c
+			}
 		)
 	]);
 

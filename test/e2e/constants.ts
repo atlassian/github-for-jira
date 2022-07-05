@@ -16,7 +16,9 @@ export const testData: TestData = {
 			base: testVars.ATLASSIAN_URL,
 			login: `${testVars.ATLASSIAN_URL}/login`,
 			logout: `${testVars.ATLASSIAN_URL}/logout`,
-			dashboard: `${testVars.ATLASSIAN_URL}/jira/your-work`
+			dashboard: `${testVars.ATLASSIAN_URL}/jira/your-work`,
+			manageApps: `${testVars.ATLASSIAN_URL}/plugins/servlet/upm`,
+			connectJson: `${testVars.ATLASSIAN_URL}/jira/atlassian-connect.json`
 		},
 		roles: {
 			admin: {
@@ -43,13 +45,13 @@ export const testData: TestData = {
 };
 
 export interface TestData {
-	jira: TestDataEntry<JiraTestDataURLs>;
+	jira: TestDataEntry<JiraTestDataURLs, JiraTestDataRoles>;
 	github: TestDataEntry;
 }
 
-export interface TestDataEntry<U = TestDataURLs> {
+export interface TestDataEntry<U extends TestDataURLs = TestDataURLs, R extends TestDataRoles = TestDataRoles> {
 	urls: U;
-	roles: TestDataRoles;
+	roles: R;
 }
 
 export interface TestDataURLs {
@@ -60,17 +62,19 @@ export interface TestDataURLs {
 
 export interface JiraTestDataURLs extends TestDataURLs {
 	dashboard: string;
+	manageApps: string;
+	connectJson: string;
 }
 
-interface TestDataRoles {
+export interface TestDataRoles {
 	admin: TestDataRole;
-	[key: string]: TestDataRole;
 }
+
+export type GithubTestDataRoles = TestDataRoles;
+export type JiraTestDataRoles = TestDataRoles;
 
 export interface TestDataRole {
 	username: string;
 	password: string;
 	storage?: string;
 }
-
-export type LoginData<U = TestDataURLs> = TestDataRole & U;

@@ -1,22 +1,24 @@
 import { Browser } from "@playwright/test";
-import { LoginData } from "test/e2e/constants";
+import { GithubTestDataRoles, testData } from "test/e2e/constants";
 
-export const githubLogin = async (browser: Browser, data: LoginData) => {
-	if (!data.username || !data.password) {
+const data = testData.github;
+export const githubLogin = async (browser: Browser, roleName: keyof GithubTestDataRoles) => {
+	const role = data.roles[roleName];
+	if (!role.username || !role.password) {
 		throw "github username or github password missing";
 	}
 	const page = await browser.newPage();
-	await page.goto(data.login);
+	await page.goto(data.urls.login);
 	const userinput = await page.locator("#login_field");
 	const passinput = await page.locator("#password");
-	await userinput.fill(data.username);
+	await userinput.fill(role.username);
 	await userinput.press("Tab");
-	await passinput.fill(data.password);
+	await passinput.fill(role.password);
 	await passinput.press("Tab");
 	await passinput.press("Enter");
-	await page.waitForNavigation({ url: data.base });
-	if (data.storage) {
-		await page.context().storageState({ path: data.storage });
+	await page.waitForNavigation({ url: data.urls.base });
+	if (role.storage) {
+		await page.context().storageState({ path: role.storage });
 	}
 	return page;
 };
