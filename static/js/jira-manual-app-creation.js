@@ -1,9 +1,3 @@
-$(".jiraManualAppCreation__formGroupIcon").click((event) => {
-  const url = $(event.target).prev().val();
-  // TODO: Enable iFrame Permissions and copy this URL to clipboard
-  console.log("Copy this URL: ", url);
-});
-
 $("#jiraManualAppCreation__form").submit((event) => {
   event.preventDefault();
   console.log("Submit this");
