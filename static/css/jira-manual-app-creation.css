@@ -33,6 +33,10 @@ h1 {
   margin-bottom: 1.1em !important;
 }
 
+.jiraManualAppCreation_formSubmitBtn {
+  margin-top: 3.1em;
+}
+
 /* Custom CSS for File Input */
 .jiraManualAppCreation__formFileDropArea {
   position: relative;
@@ -69,6 +73,12 @@ h1 {
   width: 100%;
   cursor: pointer;
   opacity: 0;
+}
+
+.jiraManualAppCreation__formFileInput + .error {
+  position: absolute;
+  bottom: -2.2em;
+  left: 0;
 }
 
 .jiraManualAppCreation__formFileUploaded {
