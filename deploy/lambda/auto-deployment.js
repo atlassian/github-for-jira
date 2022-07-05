@@ -137,5 +137,3 @@ function postRequest(url, body, headers = {}) {
         req.end();
     });
 }
-
-isPipelineRunning()
