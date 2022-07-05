@@ -9,6 +9,7 @@ export const JiraServerUrlPost = async (
 	res: Response
 ): Promise<void> => {
 	const { gheServerURL, installationId } = req.body;
+	console.log("in here yall ", gheServerURL)
 
 	req.log.debug(`Verifying provided GHE server url ${gheServerURL} is a valid URL`);
 	const isGheUrlValid = isValidUrl(gheServerURL);
@@ -31,6 +32,7 @@ export const JiraServerUrlPost = async (
 			res.status(statusCode).send({ success: false, error, message, type });
 		}
 	} else {
+		console.log("INVLAID!")
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
 		res.status(200).send({ success: false, error: "Invalid URL", message: "The entered URL is not valid." });
 	}
