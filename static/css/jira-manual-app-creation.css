@@ -35,6 +35,7 @@ form#jiraManualAppCreation__form > div.field-group {
 
 .jiraManualAppCreation_formSubmitBtn {
   margin-top: 3.1em;
+  float: right;
 }
 
 /* Custom CSS for File Input */
