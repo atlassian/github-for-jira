@@ -81,7 +81,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	} = payload;
 
 	if (await isBlocked(installationId, rootLogger)) {
-		rootLogger.warn({ payload, installationId }, "blocking processing of push message because installationId is on the blocklist");
+		rootLogger.warn({ installationId }, "blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
 
