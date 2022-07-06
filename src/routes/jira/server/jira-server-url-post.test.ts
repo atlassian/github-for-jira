@@ -58,18 +58,37 @@ describe("Jira Server Url Suite", () => {
 		}, installation.sharedSecret);
 	});
 
-	it("should return error message when invalid url is sent in request", async () => {
-		return supertest(app)
-			.post("/jira/server-url")
-			.send({
-				installationId: installation.id,
-				jiraHost,
-				jwt,
-				gheServerURL: "notaurl"
-			})
-			.expect(200)
-			.then((res) => {
-				expect(res.body).toEqual({ success: true, error: "Invalid URL", message: "That URL doesn't look right. Please check and try again." });
-			});
+	describe("Successful responses", () => {
+		it("should return success response with app creation page moduleKey when no apps are found and request to gheServerURL succeeds", async () => {
+			return supertest(app)
+				.post("/jira/server-url")
+				.send({
+					installationId: installation.id,
+					jiraHost,
+					jwt,
+					gheServerURL: "http://mygheurl.com"
+				})
+				.expect(200)
+				.then((res) => {
+					expect(res.body).toEqual({ success: true, error: "Invalid URL", message: "That URL doesn't look right. Please check and try again." });
+				});
+		});
+	});
+
+	describe("Failure responses", () => {
+		it("should return error message when invalid url is sent in request", async () => {
+			return supertest(app)
+				.post("/jira/server-url")
+				.send({
+					installationId: installation.id,
+					jiraHost,
+					jwt,
+					gheServerURL: "notaurl"
+				})
+				.expect(200)
+				.then((res) => {
+					expect(res.body).toEqual({ success: false, error: "Invalid URL", message: "That URL doesn't look right. Please check and try again." });
+				});
+		});
 	});
 });

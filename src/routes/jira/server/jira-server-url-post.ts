@@ -4,10 +4,9 @@ import { GitHubServerApp } from "models/github-server-app";
 import { isValidUrl } from "utils/is-valid-url";
 
 interface MessageAndCode {
-	error: string;
+	errorCode: string;
 	message: string;
 	statusCode: number;
-	type?: string;
 }
 
 interface GheServerUrlErrorResponses {
@@ -21,25 +20,24 @@ interface GheServerUrlErrors {
 export const gheServerUrlErrors: GheServerUrlErrors = {
 	codeOrStatus: {
 		ENOTFOUND: {
-			error: "We couldn't verify this URL",
-			message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
-			statusCode: 200,
-			type: "FIREWALL_ERROR"
+			errorCode: "GHE_ERROR_2",
+			message: "Request to URL failed",
+			statusCode: 200
 		},
 		502: {
-			error: "Request failed",
-			message: "We weren't able to complete your request. Please try again.",
+			errorCode: "GHE_ERROR_3",
+			message: "Bad gateway",
 			statusCode: 502
 		},
 		default: {
-			error: "Something went wrong",
-			message: "We ran into a hiccup while verifying your details. Please try again later.",
+			errorCode: "GHE_ERROR_4",
+			message: "Something went wrong",
 			statusCode: 200
 		}
 	}
 };
 
-const getGheErrorMessages = (codeOrStatus: number | string) => {
+const getGheErrorMessages = (codeOrStatus: number | string | null) => {
 	switch (codeOrStatus) {
 		case "ENOTFOUND":
 			return gheServerUrlErrors.codeOrStatus["ENOTFOUND"];
@@ -54,8 +52,8 @@ export const JiraServerUrlPost = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {
-	// update to get installationId from locals
-	const { gheServerURL, installationId } = req.body;
+	const { gheServerURL } = req.body;
+	const { installationId } = res.locals;
 
 	req.log.debug(`Verifying provided GHE server url ${gheServerURL} is a valid URL`);
 	const isGheUrlValid = isValidUrl(gheServerURL);
@@ -74,11 +72,11 @@ export const JiraServerUrlPost = async (
 			}
 		} catch (err) {
 			req.log.error({ err, gheServerURL }, `Something went wrong`);
-			const { error, message, statusCode, type } = getGheErrorMessages(err.code || err.status);
-			res.status(statusCode).send({ success: false, error, message, type });
+			const { errorCode, message, statusCode } = getGheErrorMessages(err.code || err.status);
+			res.status(statusCode).send({ success: false, errorCode, message });
 		}
 	} else {
+		res.status(200).send({ success: false, errorCode: "GHE_ERROR_1", message: "Invalid URL" });
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
-		res.status(200).send({ success: false, error: "Invalid URL", message: "That URL doesn't look right. Please check and try again." });
 	}
 };

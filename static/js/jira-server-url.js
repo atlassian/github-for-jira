@@ -68,15 +68,35 @@ const requestFailed = () => {
 	$("#gheServerBtnSpinner").hide();
 };
 
+const gheServerUrlErrors = {
+	errorCode: {
+		GHE_ERROR_1: {
+			title: "Invalid URL",
+			message: "That URL doesn't look right. Please check and try again.",
+		},
+		GHE_ERROR_2: {
+			title: "We couldn't verify this URL",
+			message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
+		},
+		GHE_ERROR_3: {
+			title: "Request failed",
+			message: "We weren't able to complete your request. Please try again."
+		},
+		GHE_ERROR_4: {
+			title: "Something went wrong",
+			message: "We ran into a hiccup while verifying your details. Please try again later."
+		}
+	}
+};
+
 const handleGheUrlRequestErrors = (err) => {
-	console.log("error", err)
 	requestFailed();
 	$(".jiraServerUrl__validationError").show();
-
-	const { error, message, type } = err;
-	$(".errorMessageBox__title").append(error);
+	console.log("HERE: ", err)
+	const { title, message } = err;
+	$(".errorMessageBox__title").append(title);
 	$(".errorMessageBox__message").append(message);
-	type && $(".errorMessageBox__link").show();
+	title === gheServerUrlErrors.errorCode.GHE_ERROR_2.title && $(".errorMessageBox__link").show();
 }
 
 const verifyGitHubServerUrl = (gheServerURL, installationId) => {
@@ -103,13 +123,20 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 						}
 					);
 				} else {
-					const { error, message, type } = data;
-					const errorPayload = { error, message, type }
-					handleGheUrlRequestErrors(errorPayload)
+					console.log("data", data)
+					const { errorCode } = data;
+					const errorMessage = gheServerUrlErrors.errorCode[errorCode];
+					console.log("errorCode", errorCode, "errorMessage", errorMessage)
+					handleGheUrlRequestErrors({ ...errorMessage })
 				}
 			},
 			error: function(err) {
-				handleGheUrlRequestErrors(JSON.parse(err.responseText));
+				console.log("SHJDFBSDFSF", JSON.parse(err.responseText))
+				const { errorCode } = JSON.parse(err.responseText);
+				console.log("errorCode", errorCode)
+				const errorMessage = gheServerUrlErrors.errorCode[errorCode];
+				console.log("errorMessage", errorMessage)
+				handleGheUrlRequestErrors(errorMessage);
 			}
 		});
 	});
