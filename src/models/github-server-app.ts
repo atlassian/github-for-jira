@@ -1,8 +1,11 @@
-import { DataTypes } from "sequelize";
+import { DataTypes, Sequelize } from "sequelize";
 import { sequelize } from "models/sequelize";
 import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { EncryptedModel } from "./encrypted-model";
-//import { Installation } from "models/installation";
+
+import EncryptedField from "sequelize-encrypted";
+
+const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
 interface GitHubServerAppPayload {
 	uuid: string;
@@ -179,6 +182,7 @@ GitHubServerApp.init({
 		type: DataTypes.STRING,
 		allowNull: false
 	},
+	secrets: encrypted.vault("secrets"),
 	gitHubClientSecret: {
 		type: DataTypes.TEXT,
 		field: "encryptedGitHubClientSecret",
