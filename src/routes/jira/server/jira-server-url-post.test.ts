@@ -9,6 +9,7 @@ import { getGheErrorMessages } from "routes/jira/server/jira-server-url-post";
 import { GitHubServerApp } from "models/github-server-app";
 
 jest.mock("axios");
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe("Jira Server Url Suite", () => {
 	let app: Express;
@@ -131,6 +132,15 @@ describe("Jira Server Url Suite", () => {
 		});
 
 		it("should return error message when unable to make a request to URL", async () => {
+			mockedAxios.get.mockImplementationOnce(() =>
+				Promise.reject({
+					message: "getaddrinfo ENOTFOUND github.internal.atlassian.com",
+					name: "Error",
+					code: "ENOTFOUND",
+					status: null
+				})
+			);
+
 			return supertest(app)
 				.post("/jira/server-url")
 				.send({
@@ -147,6 +157,10 @@ describe("Jira Server Url Suite", () => {
 		});
 
 		it("should return 502 error when there is a server or connection error", async () => {
+			mockedAxios.get.mockImplementationOnce(() =>
+				Promise.reject({ status: 502 })
+			);
+
 			return supertest(app)
 				.post("/jira/server-url")
 				.send({
@@ -155,7 +169,7 @@ describe("Jira Server Url Suite", () => {
 					jwt,
 					gheServerURL
 				})
-				.expect(200)
+				.expect(502)
 				.then((res) => {
 					const { errorCode, message } = getGheErrorMessages(502);
 					expect(res.body).toEqual({ success: false, errorCode, message });
@@ -163,6 +177,10 @@ describe("Jira Server Url Suite", () => {
 		});
 
 		it("should return default error for all other errors", async () => {
+			mockedAxios.get.mockImplementationOnce(() =>
+				Promise.reject({ error: "Oh no! This didn't work for some unknown reason :(" })
+			);
+
 			return supertest(app)
 				.post("/jira/server-url")
 				.send({

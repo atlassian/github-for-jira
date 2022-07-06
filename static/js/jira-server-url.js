@@ -92,8 +92,6 @@ const gheServerUrlErrors = {
 const handleGheUrlRequestErrors = (err) => {
 	requestFailed();
 	$(".jiraServerUrl__validationError").show();
-	console.log("HERE: ", err)
-	const { title, message } = err;
 	$(".errorMessageBox__title").append(title);
 	$(".errorMessageBox__message").append(message);
 	title === gheServerUrlErrors.errorCode.GHE_ERROR_2.title && $(".errorMessageBox__link").show();
@@ -123,19 +121,14 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 						}
 					);
 				} else {
-					console.log("data", data)
 					const { errorCode } = data;
 					const errorMessage = gheServerUrlErrors.errorCode[errorCode];
-					console.log("errorCode", errorCode, "errorMessage", errorMessage)
 					handleGheUrlRequestErrors({ ...errorMessage })
 				}
 			},
 			error: function(err) {
-				console.log("SHJDFBSDFSF", JSON.parse(err.responseText))
 				const { errorCode } = JSON.parse(err.responseText);
-				console.log("errorCode", errorCode)
 				const errorMessage = gheServerUrlErrors.errorCode[errorCode];
-				console.log("errorMessage", errorMessage)
 				handleGheUrlRequestErrors(errorMessage);
 			}
 		});
