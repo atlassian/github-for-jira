@@ -16,6 +16,16 @@ describe("Installation", () => {
 				const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
 				expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret");
 			});
+			it("should auto set and encrypted the new 'encryptedSharedSecret' when create", async () => {
+				const clientKey = UUID();
+				await Installation.create({
+					host: "whatever.abc",
+					clientKey: getHashedKey(clientKey),
+					sharedSecret: "some-plain-shared-secret"
+				});
+				const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
+				expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret");
+			});
 			it("can decrypted the new safeSharedSecret column successfully", async () => {
 				const clientKey = UUID();
 				await insertNewInstallation({ clientKey });
