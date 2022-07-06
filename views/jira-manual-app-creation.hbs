@@ -116,12 +116,11 @@
           <label>Private key</label>
           <div class="jiraManualAppCreation__formFileDropArea">
             <!--
-              Regex pattern for empty string or strings ending with these file extensions.
+              Regex pattern for empty string or strings ending with .pem
               The empty string pattern is added to avoid showing validation pattern error message when this field is empty.
-              File extensions are referenced from https://www.microfocus.com/documentation/visual-cobol/vc60/VS2017/BKCJCJCERTS001.html
             -->
             <input class="jiraManualAppCreation__formFileInput" id="private-key"
-                   data-aui-validation-pattern="^\s*$|^.*\.(der|DER|cer|CER|pem|PEM|spc|SPC|p7a|P7A|p7b|P7B|p7c|P7C|p8|P8|pfx|PFX|p12|P12)$"
+                   data-aui-validation-pattern="^\s*$|^.*\.(pem|PEM)$"
                    data-aui-validation-pattern-msg="We couldn&#x2019;t upload this file. Please try again."
                    data-aui-validation-field
                    required type="file">
