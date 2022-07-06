@@ -1,41 +1,20 @@
-// import { JiraServerUrlPost } from "routes/jira/server/jira-server-url-post";
-//
-// describe("Jira Server Url Suite", () => {
-// 	it("should return error message when invalid url is sent in request", async () => {
-// 		const mockRequest = (): any => ({
-// 			body: {
-// 				installationId: 2,
-// 				gheServerURL: "thisisntaurl"
-// 			}
-// 		});
-//
-// 		const mockResponse = (): any => ({
-// 			locals: {
-// 				jiraHost
-// 			},
-// 			render: jest.fn().mockReturnValue({}),
-// 			status: () => ({
-// 				send: jest.fn().mockReturnValue({ success: false, error: "Invalid URL", message: "The entered URL is not valid." })
-// 			}),
-// 			send: jest.fn().mockReturnValue({})
-// 		});
-//
-// 		await JiraServerUrlPost(mockRequest(), mockResponse());
-// 		expect(mockResponse().status().send()).toEqual({ success: false, error: "Invalid URL", message: "That URL doesn't look right. Please check and try again." });
-// 	});
-// });
-// import { JiraServerUrlPost } from "routes/jira/server/jira-server-url-post";
+import axios from "axios";
 import { Installation } from "models/installation";
 import express, { Express, NextFunction, Request, Response } from "express";
 import { RootRouter } from "../../router";
 import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { encodeSymmetric } from "atlassian-jwt";
+import { getGheErrorMessages } from "routes/jira/server/jira-server-url-post";
+import { GitHubServerApp } from "models/github-server-app";
+
+jest.mock("axios");
 
 describe("Jira Server Url Suite", () => {
 	let app: Express;
 	let installation: Installation;
 	let jwt: string;
+	const gheServerURL = "http://mygheurl.com";
 
 	beforeEach(async () => {
 		installation = await Installation.install({
@@ -66,11 +45,70 @@ describe("Jira Server Url Suite", () => {
 					installationId: installation.id,
 					jiraHost,
 					jwt,
-					gheServerURL: "http://mygheurl.com"
+					gheServerURL
 				})
 				.expect(200)
 				.then((res) => {
-					expect(res.body).toEqual({ success: true, error: "Invalid URL", message: "That URL doesn't look right. Please check and try again." });
+					expect(axios.get).toHaveBeenCalledWith(gheServerURL);
+					expect(res.body).toEqual({ success: true, moduleKey: "github-app-creation-page" });
+				});
+		});
+
+		it("should return success response with list gh apps page moduleKey when apps are found (mismatched url and id)", async () => {
+			const payload = {
+				uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
+				appId: 123,
+				gitHubAppName: "My GitHub Server App",
+				gitHubBaseUrl: gheServerURL,
+				gitHubClientId: "lvl.1234",
+				gitHubClientSecret: "myghsecret",
+				webhookSecret: "mywebhooksecret",
+				privateKey: "myprivatekey",
+				installationId: 1
+			};
+			await GitHubServerApp.install(payload);
+
+			return supertest(app)
+				.post("/jira/server-url")
+				.send({
+					installationId: installation.id,
+					jiraHost,
+					jwt,
+					gheServerURL
+				})
+				.expect(200)
+				.then((res) => {
+					expect(axios.get).toHaveBeenCalledWith(gheServerURL);
+					expect(res.body).toEqual({ success: true, moduleKey: "github-app-creation-page" });
+				});
+		});
+
+		it("should return success response with list gh apps page moduleKey when apps are found (matching url and id)", async () => {
+			const payload = {
+				uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
+				appId: 123,
+				gitHubAppName: "My GitHub Server App",
+				gitHubBaseUrl: gheServerURL,
+				gitHubClientId: "lvl.1234",
+				gitHubClientSecret: "myghsecret",
+				webhookSecret: "mywebhooksecret",
+				privateKey: "myprivatekey",
+				installationId: installation.id
+			};
+			await GitHubServerApp.install(payload);
+
+			return supertest(app)
+				.post("/jira/server-url")
+				.send({
+					installationId: installation.id,
+					jiraHost,
+					jwt,
+					gheServerURL
+				})
+				.expect(200)
+				.then((res) => {
+					expect(axios.get).not.toHaveBeenCalledWith(gheServerURL);
+					expect(res.body).toEqual({ success: true, moduleKey: "github-list-apps-page" });
 				});
 		});
 	});
@@ -87,7 +125,56 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					expect(res.body).toEqual({ success: false, error: "Invalid URL", message: "That URL doesn't look right. Please check and try again." });
+					const { errorCode, message } = getGheErrorMessages("invalidUrl");
+					expect(res.body).toEqual({ success: false, errorCode, message });
+				});
+		});
+
+		it("should return error message when unable to make a request to URL", async () => {
+			return supertest(app)
+				.post("/jira/server-url")
+				.send({
+					installationId: installation.id,
+					jiraHost,
+					jwt,
+					gheServerURL
+				})
+				.expect(200)
+				.then((res) => {
+					const { errorCode, message } = getGheErrorMessages("ENOTFOUND");
+					expect(res.body).toEqual({ success: false, errorCode, message });
+				});
+		});
+
+		it("should return 502 error when there is a server or connection error", async () => {
+			return supertest(app)
+				.post("/jira/server-url")
+				.send({
+					installationId: installation.id,
+					jiraHost,
+					jwt,
+					gheServerURL
+				})
+				.expect(200)
+				.then((res) => {
+					const { errorCode, message } = getGheErrorMessages(502);
+					expect(res.body).toEqual({ success: false, errorCode, message });
+				});
+		});
+
+		it("should return default error for all other errors", async () => {
+			return supertest(app)
+				.post("/jira/server-url")
+				.send({
+					installationId: installation.id,
+					jiraHost,
+					jwt,
+					gheServerURL
+				})
+				.expect(200)
+				.then((res) => {
+					const { errorCode, message } = getGheErrorMessages("someothererror");
+					expect(res.body).toEqual({ success: false, errorCode, message });
 				});
 		});
 	});

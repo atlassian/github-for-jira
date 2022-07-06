@@ -17,8 +17,13 @@ interface GheServerUrlErrors {
 	codeOrStatus: GheServerUrlErrorResponses
 }
 
-export const gheServerUrlErrors: GheServerUrlErrors = {
+const gheServerUrlErrors: GheServerUrlErrors = {
 	codeOrStatus: {
+		invalidUrl: {
+			errorCode: "GHE_ERROR_1",
+			message: "Invalid URL",
+			statusCode: 200
+		},
 		ENOTFOUND: {
 			errorCode: "GHE_ERROR_2",
 			message: "Request to URL failed",
@@ -37,8 +42,10 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 	}
 };
 
-const getGheErrorMessages = (codeOrStatus: number | string | null) => {
+export const getGheErrorMessages = (codeOrStatus: number | string | null) => {
 	switch (codeOrStatus) {
+		case "invalidUrl":
+			return gheServerUrlErrors.codeOrStatus["invalidUrl"];
 		case "ENOTFOUND":
 			return gheServerUrlErrors.codeOrStatus["ENOTFOUND"];
 		case 502:
@@ -53,7 +60,7 @@ export const JiraServerUrlPost = async (
 	res: Response
 ): Promise<void> => {
 	const { gheServerURL } = req.body;
-	const { installationId } = res.locals;
+	const { id: installationId } = res.locals.installation;
 
 	req.log.debug(`Verifying provided GHE server url ${gheServerURL} is a valid URL`);
 	const isGheUrlValid = isValidUrl(gheServerURL);
@@ -76,7 +83,8 @@ export const JiraServerUrlPost = async (
 			res.status(statusCode).send({ success: false, errorCode, message });
 		}
 	} else {
-		res.status(200).send({ success: false, errorCode: "GHE_ERROR_1", message: "Invalid URL" });
+		const { errorCode, message, statusCode } = getGheErrorMessages("invalidUrl");
+		res.status(statusCode).send({ success: false, errorCode, message });
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
 	}
 };
