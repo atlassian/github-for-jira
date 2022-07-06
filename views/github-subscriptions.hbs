@@ -20,7 +20,9 @@
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
 
-<body class="px-3 py-6">
+<body>
+  {{> navigation previousPageName="GitHub Configuration" }}
+
   <section class="mx-auto" style="max-width: 570px">
     <div class="headerImage">
       <img src="/public/assets/jira-and-github.png" />
@@ -64,6 +66,7 @@
     </div>
 
   </section>
+  <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   <script src="/public/js/github-configuration.js" nonce="{{nonce}}"></script>
 </body>
 
