@@ -1,29 +1,36 @@
 import { EnvVars, envVars } from "config/env";
+import path from "path";
+import { config } from "dotenv";
 
 interface TestVars extends EnvVars {
-	JIRA_USERNAME: string;
-	JIRA_PASSWORD: string;
+	JIRA_ADMIN_USERNAME: string;
+	JIRA_ADMIN_PASSWORD: string;
 	GITHUB_URL: string;
 	GITHUB_USERNAME: string;
 	GITHUB_PASSWORD: string;
 }
 
-const testVars = envVars as TestVars;
+const testVars = {
+	...envVars,
+	...config({ path: path.resolve(process.cwd(), ".env.e2e") })
+} as TestVars;
 
 export const testData: TestData = {
+	env: testVars,
 	jira: {
 		urls: {
 			base: testVars.ATLASSIAN_URL,
 			login: `${testVars.ATLASSIAN_URL}/login`,
 			logout: `${testVars.ATLASSIAN_URL}/logout`,
-			dashboard: `${testVars.ATLASSIAN_URL}/jira/your-work`,
+			dashboard: `${testVars.ATLASSIAN_URL}/jira/dashboards`,
+			yourWork: `${testVars.ATLASSIAN_URL}/jira/your-work`,
 			manageApps: `${testVars.ATLASSIAN_URL}/plugins/servlet/upm`,
 			connectJson: `${testVars.ATLASSIAN_URL}/jira/atlassian-connect.json`
 		},
 		roles: {
 			admin: {
-				username: testVars.JIRA_USERNAME,
-				password: testVars.JIRA_PASSWORD,
+				username: testVars.JIRA_ADMIN_USERNAME,
+				password: testVars.JIRA_ADMIN_PASSWORD,
 				storage: "./test/e2e/state/jira-admin.json"
 			}
 		}
@@ -32,7 +39,8 @@ export const testData: TestData = {
 		urls: {
 			base: testVars.GITHUB_URL,
 			login: `${testVars.GITHUB_URL}/login`,
-			logout: `${testVars.GITHUB_URL}/logout`
+			logout: `${testVars.GITHUB_URL}/logout`,
+			apps: `${testVars.GITHUB_URL}/user/settings/apps`
 		},
 		roles: {
 			admin: {
@@ -45,8 +53,9 @@ export const testData: TestData = {
 };
 
 export interface TestData {
+	env: TestVars;
 	jira: TestDataEntry<JiraTestDataURLs, JiraTestDataRoles>;
-	github: TestDataEntry;
+	github: TestDataEntry<GithubTestDataURLs>;
 }
 
 export interface TestDataEntry<U extends TestDataURLs = TestDataURLs, R extends TestDataRoles = TestDataRoles> {
@@ -61,9 +70,14 @@ export interface TestDataURLs {
 }
 
 export interface JiraTestDataURLs extends TestDataURLs {
+	yourWork: string;
 	dashboard: string;
 	manageApps: string;
 	connectJson: string;
+}
+
+export interface GithubTestDataURLs extends TestDataURLs {
+	apps: string;
 }
 
 export interface TestDataRoles {

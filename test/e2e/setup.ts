@@ -1,8 +1,7 @@
 // global-setup.ts
 import { chromium } from "@playwright/test";
-import { jiraAppInstall, jiraLogin } from "test/e2e/utils/jira";
-import { testData } from "test/e2e/constants";
-import { githubLogin } from "test/e2e/utils/github";
+// import { jiraAppInstall, jiraLogin } from "test/e2e/utils/jira";
+// import { githubLogin } from "test/e2e/utils/github";
 
 export default async function setup(/*config: FullConfig*/) {
 	/*githubContext = await request.newContext({
@@ -21,25 +20,12 @@ export default async function setup(/*config: FullConfig*/) {
 	});*/
 	const browser = await chromium.launch();
 
-	await Promise.all([
+	/*await Promise.all([
 		// login to jira and save signed-in state
-		jiraLogin(
-			browser,
-			{
-				...testData.jira.urls,
-				...testData.jira.roles.admin
-			}
-		),
+		jiraLogin(await browser.newPage(), "admin").then(jiraAppInstall),
 		// login to github and save signed-in state
-		githubLogin(
-			browser,
-			{
-				...testData.github.urls,
-				...testData.github.roles.admin
-			}
-		)
-	]);
+		githubLogin(await browser.newPage(), "admin")/!*.then(githubAppInstall)*!/
+	]);*/
 
-	await jiraAppInstall(browser);
 	await browser.close();
 }

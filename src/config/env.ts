@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import { config } from "dotenv";
 import path from "path";
 import { LogLevelString } from "bunyan";
 import { getNodeEnv, isNodeTest } from "utils/is-node-env";
@@ -25,7 +25,7 @@ const requiredEnvVars = [
 ];
 
 const filename = isNodeTest() ? ".env.test" : ".env";
-const env = dotenv.config({
+const env = config({
 	path: path.resolve(process.cwd(), filename)
 });
 
