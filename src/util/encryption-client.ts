@@ -45,10 +45,7 @@ export class EncryptionClient {
 			});
 			return response.data.cipherText;
 		} catch (e) {
-			e.message = e.message?.replace(plainText, "<censored>");
-			const isErrorOfPlainTextEmpty = (plainText || "").length === 0;
-			const encryptionContextKeys = Object.keys(encryptionContext).join(",");
-			logger.error({ keyAlias: secretKey, isErrorOfPlainTextEmpty, encryptionContextKeys }, "Cryptor encrypt request failed");
+			logger.error("Cryptor encrypt request failed");
 			throw e;
 		}
 	}
@@ -61,9 +58,7 @@ export class EncryptionClient {
 			});
 			return response.data.plainText;
 		} catch (e) {
-			const isErrorOfCipherTextEmpty = (cipherText || "").length === 0;
-			const encryptionContextKeys = Object.keys(encryptionContext).join(",");
-			logger.error({ isErrorOfCipherTextEmpty, encryptionContextKeys }, "Cryptor decrypt request failed");
+			logger.error("Cryptor decrypt request failed");
 			throw e;
 		}
 	}
