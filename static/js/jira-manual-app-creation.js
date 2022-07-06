@@ -1,6 +1,13 @@
-$("#jiraManualAppCreation__form").submit(() => {
-  // TODO: Form submission
-  console.log("Submit Form");
+$("#jiraManualAppCreation__form").submit((event) => {
+  const form = event.target;
+  const requiredValidation = $(form)[0].checkValidity();
+  const fileValidation = $("input#private-key").attr("data-aui-validation-state") === "valid";
+  const data = new FormData(form);
+
+  if (requiredValidation && fileValidation) {
+    // TODO: Form submission
+    console.log("Submit Form", data);
+  }
 });
 
 $(".jiraManualAppCreation__formFileInput")
