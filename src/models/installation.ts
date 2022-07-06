@@ -14,6 +14,7 @@ export class Installation extends EncryptedModel {
 	jiraHost: string;
 	secrets: string;
 	sharedSecret: string;
+	encryptedSharedSecret: string;
 	clientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
@@ -28,7 +29,7 @@ export class Installation extends EncryptedModel {
 	}
 
 	getSecretFields() {
-		return ["safeSharedSecret"] as const;
+		return ["encryptedSharedSecret"] as const;
 	}
 
 	static async getForClientKey(
@@ -81,16 +82,13 @@ export class Installation extends EncryptedModel {
 			},
 			defaults: {
 				jiraHost: payload.host,
-				sharedSecret: payload.sharedSecret,
-				safeSharedSecret: payload.safeSharedSecret
+				sharedSecret: payload.sharedSecret
 			}
 		});
-
 		if (!created) {
 			await installation
 				.update({
 					sharedSecret: payload.sharedSecret,
-					safeSharedSecret: payload.safeSharedSecret,
 					jiraHost: payload.host
 				})
 				.then(async (record) => {
@@ -131,7 +129,7 @@ Installation.init({
 		type: DataTypes.STRING,
 		allowNull: false
 	}),
-	safeSharedSecret: {
+	encryptedSharedSecret: {
 		type: DataTypes.TEXT,
 		allowNull: true
 	},
@@ -148,14 +146,24 @@ Installation.init({
 	}
 }, {
 	hooks: {
-		beforeSave: async (app: Installation, opts) => {
-			await app.encryptChangedSecretFields(opts.fields);
-			if (!app["safeSharedSecret"]) throw new Error("Fail saving app as safeSharedSecret is empty");
+		beforeSave: async (instance: Installation, opts) => {
+			if (opts.fields?.includes("sharedSecret")) {
+				if (!instance.encryptedSharedSecret) {
+					//if caller only set the sharedSecret, copy it to encryptedSharedSecret;
+					instance.encryptedSharedSecret = instance.sharedSecret;
+				}
+			}
+			await instance.encryptChangedSecretFields(opts.fields);
 		},
-		beforeBulkCreate: async (apps: Installation[], opts) => {
-			for (const app of apps) {
-				await app.encryptChangedSecretFields(opts.fields);
-				if (!app["safeSharedSecret"]) throw new Error("Fail saving app as safeSharedSecret is empty");
+		beforeBulkCreate: async (instances: Installation[], opts) => {
+			for (const instance of instances) {
+				if (opts.fields?.includes("sharedSecret")) {
+					if (!instance.encryptedSharedSecret) {
+						//if caller only set the sharedSecret, copy it to encryptedSharedSecret;
+						instance.encryptedSharedSecret = instance.sharedSecret;
+					}
+				}
+				await instance.encryptChangedSecretFields(opts.fields);
 			}
 		}
 	},

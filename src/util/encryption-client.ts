@@ -3,7 +3,8 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { getLogger } from "config/logger";
 
 export enum EncryptionSecretKeyEnum {
-	GITHUB_SERVER_APP = "github-server-app-secrets"
+	GITHUB_SERVER_APP = "github-server-app-secrets",
+	JIRA_INSTANCE_SECRETS = "jira-instance-secrets",
 }
 
 export type EncryptionContext = Record<string, string | number>;
