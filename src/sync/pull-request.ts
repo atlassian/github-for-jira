@@ -7,14 +7,14 @@ import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getGithubUser } from "services/github/user";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { AxiosResponseHeaders } from "axios";
 import { Octokit } from "@octokit/rest";
 
 /**
  * Find the next page number from the response headers.
  */
-export const getNextPage = (logger: LoggerWithTarget, headers: Headers = {}): number | undefined => {
+export const getNextPage = (logger: Logger, headers: Headers = {}): number | undefined => {
 	const nextUrl = ((headers.link || "").match(/<([^>]+)>;\s*rel="next"/) ||
 		[])[1];
 	if (!nextUrl) {
@@ -39,7 +39,7 @@ type Headers = AxiosResponseHeaders & {
 type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 
 export const getPullRequestTask = async (
-	logger: LoggerWithTarget,
+	logger: Logger,
 	_oldGithub: GitHubAPI,
 	newGithub: GitHubInstallationClient,
 	_jiraHost: string,

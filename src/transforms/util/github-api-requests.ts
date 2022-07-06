@@ -1,5 +1,5 @@
 import { GitHubAPI } from "probot";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { GitHubInstallationClient } from "../../github/client/github-installation-client";
 
 interface CompareCommitsPayload {
@@ -19,7 +19,7 @@ export type CommitSummary = {
 export const getAllCommitMessagesBetweenReferences = async (
 	payload: CompareCommitsPayload,
 	github: GitHubAPI | GitHubInstallationClient,
-	logger: LoggerWithTarget
+	logger: Logger
 ): Promise<string> => {
 	const commitSummaries = await getAllCommitsBetweenReferences(payload, github, logger);
 	return extractMessagesFromCommitSummaries(commitSummaries);
@@ -30,7 +30,7 @@ export const getAllCommitMessagesBetweenReferences = async (
 export const getAllCommitsBetweenReferences = async (
 	payload: CompareCommitsPayload,
 	github: GitHubAPI | GitHubInstallationClient,
-	logger: LoggerWithTarget
+	logger: Logger
 ): Promise<CommitSummary[] | undefined> => {
 	let commitSummaries;
 	try {

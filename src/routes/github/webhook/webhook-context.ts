@@ -1,12 +1,12 @@
 import * as Sentry from "@sentry/node";
 import { GitHubAPI } from "probot";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 
 export class WebhookContext<E = any> {
 	id: string;
 	name: string;
 	payload: E;
-	log: LoggerWithTarget;
+	log: Logger;
 	action?: string;
 	sentry?: Sentry.Hub;
 	timedout?: number;
