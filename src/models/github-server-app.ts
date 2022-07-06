@@ -1,11 +1,15 @@
-import { Model, DataTypes, Sequelize } from "sequelize";
+import { DataTypes, Sequelize } from "sequelize";
 import { sequelize } from "models/sequelize";
+import { EncryptionSecretKeyEnum } from "utils/encryption-client";
+import { EncryptedModel } from "./encrypted-model";
+
 import EncryptedField from "sequelize-encrypted";
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
 interface GitHubServerAppPayload {
 	uuid: string;
+	appId: number;
 	gitHubBaseUrl: string;
 	gitHubClientId: string;
 	gitHubClientSecret: string;
@@ -15,9 +19,10 @@ interface GitHubServerAppPayload {
 	installationId: number;
 }
 
-export class GitHubServerApp extends Model {
+export class GitHubServerApp extends EncryptedModel {
 	id: number;
 	uuid: string;
+	appId: number;
 	gitHubBaseUrl: string;
 	gitHubClientId: string;
 	gitHubClientSecret: string;
@@ -27,6 +32,23 @@ export class GitHubServerApp extends Model {
 	installationId: number;
 	updatedAt: Date;
 	createdAt: Date;
+
+	getEncryptionSecretKey() {
+		return EncryptionSecretKeyEnum.GITHUB_SERVER_APP;
+	}
+
+	async getEncryptContext() {
+		//For example: we can call database to fetch sharedSecret for use as EncryptionContext
+		//const installation = await Installation.findByPk(this.installationId);
+		//return {
+		//	installationSharedSecret: installation?.sharedSecret
+		//};
+		return {};
+	}
+
+	getSecretFields() {
+		return ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
+	}
 
 	/**
 	 * Get GitHubServerApp
@@ -77,6 +99,7 @@ export class GitHubServerApp extends Model {
 	 * @param {{
 	 * 		gitHubClientId: string,
 	 * 		uuid: string,
+	 * 		appId: number;
 	 * 		gitHubBaseUrl: string,
 	 * 		gitHubClientSecret: string,
 	 * 		webhookSecret: string,
@@ -89,6 +112,7 @@ export class GitHubServerApp extends Model {
 	static async install(payload: GitHubServerAppPayload): Promise<GitHubServerApp> {
 		const {
 			uuid,
+			appId,
 			gitHubAppName,
 			gitHubBaseUrl,
 			gitHubClientId,
@@ -104,6 +128,7 @@ export class GitHubServerApp extends Model {
 			},
 			defaults: {
 				uuid,
+				appId,
 				gitHubBaseUrl,
 				gitHubClientSecret,
 				webhookSecret,
@@ -129,6 +154,7 @@ export class GitHubServerApp extends Model {
 			}
 		});
 	}
+
 }
 
 GitHubServerApp.init({
@@ -144,6 +170,10 @@ GitHubServerApp.init({
 		unique: true,
 		allowNull: false
 	},
+	appId: {
+		type: DataTypes.INTEGER,
+		allowNull: false
+	},
 	gitHubBaseUrl: {
 		type: DataTypes.STRING,
 		allowNull: false
@@ -153,18 +183,21 @@ GitHubServerApp.init({
 		allowNull: false
 	},
 	secrets: encrypted.vault("secrets"),
-	gitHubClientSecret: encrypted.field("gitHubClientSecret", {
-		type: DataTypes.STRING,
+	gitHubClientSecret: {
+		type: DataTypes.TEXT,
+		field: "encryptedGitHubClientSecret",
 		allowNull: false
-	}),
-	webhookSecret: encrypted.field("webhookSecret", {
-		type: DataTypes.STRING,
+	},
+	webhookSecret: {
+		type: DataTypes.TEXT,
+		field: "encryptedWebhookSecret",
 		allowNull: false
-	}),
-	privateKey: encrypted.field("privateKey", {
-		type: DataTypes.STRING,
+	},
+	privateKey: {
+		type: DataTypes.TEXT,
+		field: "encryptedPrivateKey",
 		allowNull: false
-	}),
+	},
 	gitHubAppName: {
 		type: DataTypes.STRING,
 		allowNull: false
@@ -173,4 +206,16 @@ GitHubServerApp.init({
 		type: DataTypes.INTEGER,
 		allowNull: false
 	}
-}, { sequelize });
+}, {
+	hooks: {
+		beforeSave: async (app: GitHubServerApp, opts) => {
+			await app.encryptChangedSecretFields(opts.fields);
+		},
+		beforeBulkCreate: async (apps: GitHubServerApp[], opts) => {
+			for (const app of apps) {
+				await app.encryptChangedSecretFields(opts.fields);
+			}
+		}
+	},
+	sequelize
+});

@@ -79,6 +79,14 @@ const modules = {
 			},
 			url: "/jira/server-url",
 			conditions: adminCondition
+		},
+		{
+			key: "github-app-creation-page",
+			name: {
+				value: "GitHub App Creation"
+			},
+			url: "/jira/app-creation",
+			conditions: adminCondition
 		}
 	],
 	webSections: [
