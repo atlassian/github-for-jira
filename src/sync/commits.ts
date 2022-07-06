@@ -2,7 +2,7 @@ import { transformCommit } from "../transforms/transform-commit";
 import { GitHubAPI } from "probot";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitData } from "src/interfaces/jira";
 import { numberFlag, NumberFlags } from "config/feature-flags";
@@ -20,7 +20,7 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 };
 
 export const getCommitTask = async (
-	logger: LoggerWithTarget,
+	logger: Logger,
 	_github: GitHubAPI,
 	gitHubClient: GitHubInstallationClient,
 	jiraHost: string,

@@ -1,5 +1,5 @@
 import { Repositories, Repository, Subscription } from "models/subscription";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { GitHubAPI } from "probot";
 import { TaskPayload } from "~/src/sync/installation";
@@ -29,7 +29,7 @@ const updateSyncState = async (subscription: Subscription, repositories: Reposit
 };
 
 export const getRepositoryTask = async (
-	logger: LoggerWithTarget,
+	logger: Logger,
 	_github: GitHubAPI,
 	newGithub: GitHubInstallationClient,
 	jiraHost: string,
