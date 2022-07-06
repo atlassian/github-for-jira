@@ -21,7 +21,7 @@ export class Installation extends EncryptedModel {
 	githubAppId?: number;
 
 	getEncryptionSecretKey() {
-		return EncryptionSecretKeyEnum.GITHUB_SERVER_APP;
+		return EncryptionSecretKeyEnum.JIRA_INSTANCE_SECRETS;
 	}
 
 	async getEncryptContext() {
