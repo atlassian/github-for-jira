@@ -50,11 +50,11 @@ const getGheErrorMessages = (codeOrStatus: number | string) => {
 	}
 };
 
-
 export const JiraServerUrlPost = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {
+	// update to get installationId from locals
 	const { gheServerURL, installationId } = req.body;
 
 	req.log.debug(`Verifying provided GHE server url ${gheServerURL} is a valid URL`);
@@ -79,6 +79,6 @@ export const JiraServerUrlPost = async (
 		}
 	} else {
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
-		res.status(200).send({ success: false, error: "Invalid URL", message: "The entered URL is not valid." });
+		res.status(200).send({ success: false, error: "Invalid URL", message: "That URL doesn't look right. Please check and try again." });
 	}
 };
