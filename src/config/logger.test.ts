@@ -1,7 +1,6 @@
 import { getLogger, getUnsafeLogger } from "config/logger";
 import { Stream, RingBuffer } from "bunyan";
-
-describe("logger behaviour", () => {
+describe('logger behaviour', () => {
 
 	describe("safe logger", () => {
 		let ringBuffer: RingBuffer;
