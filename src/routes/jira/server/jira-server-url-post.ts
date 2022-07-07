@@ -20,22 +20,22 @@ interface GheServerUrlErrors {
 const gheServerUrlErrors: GheServerUrlErrors = {
 	codeOrStatus: {
 		invalidUrl: {
-			errorCode: "GHE_ERROR_1",
+			errorCode: "GHE_ERROR_INVALID_URL",
 			message: "Invalid URL",
 			statusCode: 200
 		},
 		ENOTFOUND: {
-			errorCode: "GHE_ERROR_2",
+			errorCode: "GHE_ERROR_ENOTFOUND",
 			message: "Request to URL failed",
 			statusCode: 200
 		},
 		502: {
-			errorCode: "GHE_ERROR_3",
+			errorCode: "GHE_SERVER_BAD_GATEWAY",
 			message: "Bad gateway",
 			statusCode: 502
 		},
 		default: {
-			errorCode: "GHE_ERROR_4",
+			errorCode: "GHE_ERROR_DEFAULT",
 			message: "Something went wrong",
 			statusCode: 200
 		}

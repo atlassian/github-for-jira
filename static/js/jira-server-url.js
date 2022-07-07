@@ -70,19 +70,19 @@ const requestFailed = () => {
 
 const gheServerUrlErrors = {
 	errorCode: {
-		GHE_ERROR_1: {
+		GHE_ERROR_INVALID_URL: {
 			title: "Invalid URL",
 			message: "That URL doesn't look right. Please check and try again.",
 		},
-		"GHE_ERROR_2": {
+		GHE_ERROR_ENOTFOUND: {
 			title: "We couldn't verify this URL",
 			message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
 		},
-		GHE_ERROR_3: {
+		GHE_SERVER_BAD_GATEWAY: {
 			title: "Request failed",
 			message: "We weren't able to complete your request. Please try again."
 		},
-		GHE_ERROR_4: {
+		GHE_ERROR_DEFAULT: {
 			title: "Something went wrong",
 			message: "We ran into a hiccup while verifying your details. Please try again later."
 		}
@@ -95,7 +95,7 @@ const handleGheUrlRequestErrors = (err) => {
 	$(".jiraServerUrl__validationError").show();
 	$(".errorMessageBox__title").empty().append(title);
 	$(".errorMessageBox__message").empty().append(message);
-	title === gheServerUrlErrors.errorCode.GHE_ERROR_2.title && $(".errorMessageBox__link").show();
+	title === gheServerUrlErrors.errorCode.GHE_ERROR_ENOTFOUND.title && $(".errorMessageBox__link").show();
 }
 
 const mapErrorCode = (errorCode) => gheServerUrlErrors.errorCode[errorCode];
