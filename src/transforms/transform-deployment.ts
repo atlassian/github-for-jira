@@ -13,6 +13,8 @@ import { AxiosResponse } from "axios";
 import { deburr, isEmpty } from "lodash";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 
+const MAX_ASSOCIATIONS_PER_ENTITY = 500;
+
 // https://docs.github.com/en/rest/reference/repos#list-deployments
 const getLastSuccessfulDeployCommitSha = async(
 	owner: string,
@@ -159,8 +161,9 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 	];
 
 	if (commitSummaries && commitSummaries.length) {
+		const maximumCommitsToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - issueIds.length;
 		const commitKeys = commitSummaries
-			.slice(0, 500 - issueIds.length)
+			.slice(0, maximumCommitsToSubmit)
 			.map((commitSummary) => {
 				return {
 					commitHash: commitSummary.sha,
