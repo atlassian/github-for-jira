@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { groupBy } from "lodash";
+import { groupBy, chain } from "lodash";
 import { NextFunction, Request, Response } from "express";
 import { Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
@@ -9,6 +9,7 @@ import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isGitHubCloudApp } from "~/src/util/jira-utils";
+import { GitHubServerApp } from "models/github-server-app";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -67,6 +68,29 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 	}
 };
 
+const getConnectionsAndInstallations = async (subscriptions, req, id) => {
+	const installations = await getInstallations(subscriptions, req.log, id);
+
+	const failedConnections: FailedConnection[] = await Promise.all(
+		installations.rejected.map(async (installation) => {
+			const sub = subscriptions.find((sub: Subscription) => installation.id === sub.gitHubInstallationId);
+			const repo = sub && await RepoSyncState.findOneFromSubscription(sub);
+			return {
+				id: installation.id,
+				deleted: installation.deleted,
+				orgName: repo?.repoOwner
+			};
+		}));
+
+	const successfulConnections: SuccessfulConnection[] = installations.fulfilled
+		.map((installation) => ({
+			...installation,
+			isGlobalInstall: installation.repository_selection === "all"
+		}));
+
+	return { installations, successfulConnections, failedConnections };
+};
+
 interface FailedConnection {
 	id: number;
 	deleted: boolean;
@@ -94,38 +118,40 @@ export const JiraConfigurationGet = async (
 		req.log.debug("Received jira configuration page request");
 
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
-		const installations = await getInstallations(subscriptions, req.log, gitHubAppId);
-
-		const failedConnections: FailedConnection[] = await Promise.all(
-			installations.rejected.map(async (installation) => {
-				const sub = subscriptions.find((sub: Subscription) => installation.id === sub.gitHubInstallationId);
-				const repo = sub && await RepoSyncState.findOneFromSubscription(sub);
-				return {
-					id: installation.id,
-					deleted: installation.deleted,
-					orgName: repo?.repoOwner
-				};
-			}));
-
-		const successfulConnections: SuccessfulConnection[] = installations.fulfilled
-			.map((installation) => ({
-				...installation,
-				isGlobalInstall: installation.repository_selection === "all"
-			}));
+		const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
 
 		/**
-		 * TODO: fetch the actual list of GHE servers
+		 * TODO: Need to fetch the list of `gitHubBaseUrl` for the current instance
 		 **/
-		const gheServers = [];
+		const gitHubBaseUrl = "";
+		const gheServers = await GitHubServerApp.getAllForGitHubBaseUrl(gitHubBaseUrl, res.locals.installation.id);
+
+		// Grouping the list of servers by `gitHubBaseUrl`
+		const modifiedGHEServers = await Promise.all(chain(gheServers).groupBy("gitHubBaseUrl")
+			.map(async (value, key) => ({
+				gitHubBaseUrl: key,
+				// Fetching the subscriptions for each GH Server App
+				applications: await Promise.all(value.map(async (app) => {
+					const {
+						successfulConnections,
+						failedConnections
+					} = await getConnectionsAndInstallations(subscriptions, req, app.id);
+					app["successfulConnections"] = successfulConnections;
+					app["failedConnections"] = failedConnections;
+
+					return app;
+				}))
+			})).value());
+
 
 		const gheServerEnabled = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost);
 
 		const handleNavigationClassName = gheServerEnabled ? "select-github-version-link" : "add-organization-link";
 		const config = gheServerEnabled ? {
 			host: jiraHost,
-			gheServers,
+			gheServers: modifiedGHEServers,
 			ghCloud: { successfulConnections, failedConnections },
-			hasConnections: !!(installations.total || gheServers.length),
+			hasConnections: !!(installations.total || gheServers?.length),
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
 			nonce: res.locals.nonce,

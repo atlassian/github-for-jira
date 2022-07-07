@@ -166,7 +166,7 @@
               <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
               {{#each gheServers as |server|}}
                 <div class="jiraConfiguration__enterpriseServer">
-                  <div class="jiraConfiguration__collapsibleHeaderTitle">{{server.url}}</div>
+                  <div class="jiraConfiguration__collapsibleHeaderTitle">{{server.gitHubBaseUrl}}</div>
                   <div class="jiraConfiguration__enterpriseConnections">
                     <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATIONS</div>
                     {{#each server.applications as |app|}}
@@ -175,7 +175,7 @@
                           <div>
                             <span class="aui-icon aui-iconfont-chevron-right"></span>
                             <span class="aui-icon aui-iconfont-chevron-down"></span>
-                            <span class="jiraConfiguration__optionHeader">{{app.name}}</span>
+                            <span class="jiraConfiguration__optionHeader">{{app.gitHubAppName}}</span>
                           </div>
                           <button
                               class="aui-button aui-dropdown2-trigger aui-dropdown2-trigger-arrowless jiraConfiguration__appDropdown"
