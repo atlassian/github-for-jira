@@ -19,9 +19,9 @@
   margin-bottom: 1.2em;
 }
 
-.jiraServerUrl__actionBtn__container {
+.jiraServerUrl__actionBtn {
   margin-top: 1.25em;
-  text-align: right;
+  float: right;
 }
 
 #gheServerBtnSpinner {

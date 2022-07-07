@@ -81,18 +81,16 @@
 
             <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
 
-            <div class="jiraServerUrl__actionBtn__container">
-              <button
-                  type="submit"
-                  id="gheServerBtn"
-                  disabled
-                  class="aui-button aui-button-primary"
-                  data-installation-id={{installationId}}
-              >
-                <span id="gheServerBtnText">Next</span>
-                <aui-spinner id="gheServerBtnSpinner" size="small"></aui-spinner>
-              </button>
-            </div>
+            <button
+                type="submit"
+                id="gheServerBtn"
+                disabled
+                class="aui-button aui-button-primary jiraServerUrl__actionBtn"
+                data-installation-id={{installationId}}
+            >
+              <span id="gheServerBtnText">Next</span>
+              <aui-spinner id="gheServerBtnSpinner" size="small"></aui-spinner>
+            </button>
           </form>
         </div>
       </section>
