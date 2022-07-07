@@ -28,7 +28,7 @@ interface DecryptResponse {
  */
 export class EncryptionClient {
 
-	protected static readonly axios: AxiosInstance = axios.create({
+	protected static readonly axiosInst: AxiosInstance = axios.create({
 		baseURL: envVars.CRYPTOR_URL,
 		headers: {
 			"X-Cryptor-Client": envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
@@ -38,7 +38,8 @@ export class EncryptionClient {
 
 	static async encrypt(secretKey: EncryptionSecretKeyEnum, plainText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
 		try {
-			const response = await this.axios.post<EncryptResponse>(`/cryptor/encrypt/micros/github-for-jira/${secretKey}`, {
+			console.log("-------", { inst: EncryptionClient.axiosInst });
+			const response = await EncryptionClient.axiosInst.post<EncryptResponse>(`/cryptor/encrypt/micros/github-for-jira/${secretKey}`, {
 				plainText,
 				encryptionContext
 			});
@@ -52,7 +53,7 @@ export class EncryptionClient {
 
 	static async decrypt(cipherText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
 		try {
-			const response = await this.axios.post<DecryptResponse>(`/cryptor/decrypt`, {
+			const response = await EncryptionClient.axiosInst.post<DecryptResponse>(`/cryptor/decrypt`, {
 				cipherText,
 				encryptionContext
 			});
@@ -64,6 +65,6 @@ export class EncryptionClient {
 	}
 
 	static async healthcheck(): Promise<AxiosResponse> {
-		return await this.axios.get("/healthcheck");
+		return await EncryptionClient.axiosInst.get("/healthcheck");
 	}
 }
