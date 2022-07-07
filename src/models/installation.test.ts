@@ -24,6 +24,20 @@ describe("Installation", () => {
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret-install");
 		});
+		it("should auto set and encrypted the new 'encryptedSharedSecret' when update", async () => {
+			const clientKey = UUID();
+			await Installation.install({
+				host: "whatever.abc",
+				clientKey,
+				sharedSecret: "old-shared-secret"
+			});
+			const installation = await Installation.findOne({ where: { clientKey: getHashedKey(clientKey) } });
+			await installation.update({
+				sharedSecret: "new-shared-secret"
+			});
+			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
+			expect(encryptedSharedSecretInDB).toEqual("encrypted:new-shared-secret");
+		});
 		it("should auto set and encrypted the new 'encryptedSharedSecret' when create", async () => {
 			const clientKey = UUID();
 			await Installation.create({

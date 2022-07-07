@@ -150,9 +150,13 @@ Installation.init({
 }, {
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
-			if (opts.fields?.includes("sharedSecret")) {
+			if (!opts.fields) return;
+			if (opts.fields.includes("sharedSecret")) {
 				//Always cope the sharedSecret to encryptedSharedSecret
 				instance.encryptedSharedSecret = instance.sharedSecret;
+				if (!opts.fields.includes("encryptedSharedSecret")) {
+					opts.fields.push("encryptedSharedSecret");
+				}
 			}
 			try {
 				await instance.encryptChangedSecretFields(opts.fields);
@@ -164,9 +168,13 @@ Installation.init({
 		},
 		beforeBulkCreate: async (instances: Installation[], opts) => {
 			for (const instance of instances) {
-				if (opts.fields?.includes("sharedSecret")) {
+				if (!opts.fields) return;
+				if (opts.fields.includes("sharedSecret")) {
 					//Always cope the sharedSecret to encryptedSharedSecret
 					instance.encryptedSharedSecret = instance.sharedSecret;
+					if (!opts.fields.includes("encryptedSharedSecret")) {
+						opts.fields.push("encryptedSharedSecret");
+					}
 				}
 				try {
 					await instance.encryptChangedSecretFields(opts.fields);
