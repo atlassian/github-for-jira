@@ -4,7 +4,7 @@ import { RootRouter } from "../../router";
 import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { encodeSymmetric } from "atlassian-jwt";
-import { getGheErrorMessages } from "routes/jira/server/jira-server-url-post";
+import { gheServerUrlErrors } from "routes/jira/server/jira-server-url-post";
 import { GitHubServerApp } from "models/github-server-app";
 
 describe("Jira Server Url Suite", () => {
@@ -118,7 +118,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					const { errorCode, message } = getGheErrorMessages("invalidUrl");
+					const { errorCode, message } = gheServerUrlErrors["invalidUrl"];
 					expect(res.body).toEqual({ success: false, errorCode, message });
 				});
 		});
@@ -141,7 +141,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					const { errorCode, message } = getGheErrorMessages("ENOTFOUND");
+					const { errorCode, message } = gheServerUrlErrors["ENOTFOUND"];
 					expect(res.body).toEqual({ success: false, errorCode, message });
 				});
 		});
@@ -159,7 +159,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(502)
 				.then((res) => {
-					const { errorCode, message } = getGheErrorMessages(502);
+					const { errorCode, message } = gheServerUrlErrors[502];
 					expect(res.body).toEqual({ success: false, errorCode, message });
 				});
 		});
@@ -177,7 +177,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					const { errorCode, message } = getGheErrorMessages("someothererror");
+					const { errorCode, message } = gheServerUrlErrors["someothererror"];
 					expect(res.body).toEqual({ success: false, errorCode, message });
 				});
 		});
