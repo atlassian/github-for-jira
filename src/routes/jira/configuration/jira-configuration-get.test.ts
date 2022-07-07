@@ -13,6 +13,7 @@ jest.mock("config/feature-flags");
 
 describe("Jira Configuration Suite", () => {
 	let subscription: Subscription;
+	let installation: Installation;
 
 	beforeEach(async () => {
 		subscription = await Subscription.create({
@@ -35,7 +36,7 @@ describe("Jira Configuration Suite", () => {
 			commitStatus: "complete"
 		});
 
-		await Installation.create({
+		installation = await Installation.create({
 			jiraHost,
 			clientKey: "abc123",
 			secrets: "def234",
@@ -57,7 +58,8 @@ describe("Jira Configuration Suite", () => {
 
 	const mockResponse = (): any => ({
 		locals: {
-			jiraHost
+			jiraHost,
+			installation
 		},
 		render: jest.fn().mockReturnValue({}),
 		status: jest.fn().mockReturnValue({}),
