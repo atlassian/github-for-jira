@@ -321,6 +321,16 @@
           "readOnly" : true,
           "default" : false
         },
+				"operationType": {
+					"type" : "string",
+					"description" : "",
+					"readOnly" : true,
+					"default" : "NORMAL",
+					"enum" : [
+						"NORMAL",
+						"BACKFILL"
+					]
+				},
         "properties" : {
           "type" : "object",
           "description" : "Properties that are assigned to all the development entities contained in this update",
