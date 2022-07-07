@@ -190,3 +190,9 @@ export interface JiraRemoteLinkStatus {
 // https://atlassian.design/components/lozenge/examples
 export type JiraRemoteLinkStatusAppearance = "default" | "inprogress" | "moved" | "new" | "removed" | "prototype" | "success";
 
+export type JiraOperationType = "NORMAL" | "BACKFILL"
+
+export interface JiraSubmitOptions {
+	preventTransitions: boolean;
+	operationType: JiraOperationType;
+}
