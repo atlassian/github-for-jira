@@ -151,10 +151,8 @@ Installation.init({
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
 			if (opts.fields?.includes("sharedSecret")) {
-				if (!instance.encryptedSharedSecret) {
-					//if caller only set the sharedSecret, copy it to encryptedSharedSecret;
-					instance.encryptedSharedSecret = instance.sharedSecret;
-				}
+				//Always cope the sharedSecret to encryptedSharedSecret
+				instance.encryptedSharedSecret = instance.sharedSecret;
 			}
 			try {
 				await instance.encryptChangedSecretFields(opts.fields);
@@ -167,10 +165,8 @@ Installation.init({
 		beforeBulkCreate: async (instances: Installation[], opts) => {
 			for (const instance of instances) {
 				if (opts.fields?.includes("sharedSecret")) {
-					if (!instance.encryptedSharedSecret) {
-						//if caller only set the sharedSecret, copy it to encryptedSharedSecret;
-						instance.encryptedSharedSecret = instance.sharedSecret;
-					}
+					//Always cope the sharedSecret to encryptedSharedSecret
+					instance.encryptedSharedSecret = instance.sharedSecret;
 				}
 				try {
 					await instance.encryptChangedSecretFields(opts.fields);

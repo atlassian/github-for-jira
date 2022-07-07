@@ -44,7 +44,7 @@ describe("Installation", () => {
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret-build");
 		});
-		it("should use the specific set encryptedSharedSecret when both set", async () => {
+		it("should use the sharedSecret when both set", async () => {
 			const clientKey = UUID();
 			await Installation.create({
 				host: "whatever.abc",
@@ -53,7 +53,7 @@ describe("Installation", () => {
 				encryptedSharedSecret: "secret-B"
 			});
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
-			expect(encryptedSharedSecretInDB).toEqual("encrypted:secret-B");
+			expect(encryptedSharedSecretInDB).toEqual("encrypted:secret-A");
 		});
 	});
 	const insertNewInstallation = async ({ clientKey }) => {
