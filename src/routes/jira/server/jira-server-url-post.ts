@@ -36,12 +36,6 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 	}
 };
 
-// interface ResponseObject  {
-// 	success: boolean,
-// 	appExists: boolean,
-// 	errors?: Error[]
-// }
-
 export const JiraServerUrlPost = async (
 	req: Request,
 	res: Response
