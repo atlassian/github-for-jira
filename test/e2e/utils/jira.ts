@@ -7,7 +7,7 @@ const data = testData.jira;
 export const jiraLogin = async (page: Page, roleName: keyof JiraTestDataRoles): Promise<Page> => {
 	const role = data.roles[roleName];
 	if (!role.username || !role.password) {
-		throw "JIRA_USERNAME or JIRA_PASSWORD missing from .env.test file";
+		throw "Jira username or password missing";
 	}
 	await page.goto(data.urls.login);
 	await page.waitForLoadState();
@@ -44,7 +44,7 @@ export const jiraAppInstall = async (page: Page): Promise<Page> => {
 export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 	await jiraLogin(page, "admin");
 	await page.goto(data.urls.manageApps);
-	const pluginRow = await page.locator(`[data-key="${APP_KEY}"]`);
+	const pluginRow = await page.locator(`.upm-plugin[data-key="${APP_KEY}"] .upm-plugin-row`);
 	// await pluginRow.waitFor({ timeout: 30000 });
 	await pluginRow.click();
 	const uninstallButton = await pluginRow.locator(`[data-action="UNINSTALL"]`);

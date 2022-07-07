@@ -5,7 +5,7 @@ import { testData } from "test/e2e/constants";
 
 test.describe("setup functions", () => {
 	test.describe("jira", () => {
-
+		test.setTimeout(90000);
 		for (const useState of [false, true]) {
 			test.describe(useState ? "with state" : "without state", () => {
 				if (useState) {
