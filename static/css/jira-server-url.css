@@ -19,32 +19,6 @@
   margin-bottom: 1.2em;
 }
 
-.jiraServerUrl__error {
-  display: none;
-  color: #DE350B;
-  font-size: 0.85rem;
-  margin-top: 0.125em;
-}
-
-.jiraServerUrl__label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #6B778C;
-}
-
-.jiraServerUrl__input {
-  width: 100%;
-  border: 2px solid #DFE1E6;
-  border-radius: 3px;
-  background: #FAFBFC;
-  padding: 0.625em 0.5em;
-  margin-top: 0.5em;
-}
-
-.has-error {
-  border-color: #DE350B;
-}
-
 .jiraServerUrl__actionBtn__container {
   margin-top: 1.25em;
   text-align: right;

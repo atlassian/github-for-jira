@@ -57,48 +57,48 @@
           <div class="jiraServerUrl__prompt">
             Enter the URL for the server of the GitHub Enterprise organization that you want to connect. This is unique to your server.
           </div>
-          <div>
-            <label class="jiraServerUrl__label" for="gheServerURL">Server URL</label>
-            <input type="text" class="jiraServerUrl__input" id="gheServerURL" placeholder="https://example.com" />
-            <div class="jiraServerUrl__error" id="gheServerURLError">
-              <i class="aui-icon aui-iconfont-error"></i>
-              <span></span>
-              <a href="" target="_blank"></a>
+          <form id="jiraServerUrl__form" class="aui top-label">
+            <div class="field-group">
+              <label for="gheServerURL">GitHub app name</label>
+              <input class="text full-width-field" type="text"
+                     data-aui-validation-field
+                     data-aui-validation-ghe-url
+                     placeholder="https://example.com"
+                     id="gheServerURL" name="gheServerURL" />
             </div>
-          </div>
+            <div class="jiraServerUrl__validationError">
+              {{> server-error-message-box
+                  title="URL validation failed"
+                  message="Your URL couldn’t be verified. Please check that you have entered the correct URL and have configured the hole in your firewall correctly."
+              }}
+            </div>
+            <div class="jiraServerUrl__defaultError">
+              {{> server-error-message-box
+                  title="Error"
+                  message="Something went wrong, please try again later."
+              }}
+            </div>
 
-          <div class="jiraServerUrl__validationError">
-            {{> server-error-message-box
-                title="URL validation failed"
-                message="Your URL couldn’t be verified. Please check that you have entered the correct URL and have configured the hole in your firewall correctly."
-            }}
-          </div>
-          <div class="jiraServerUrl__defaultError">
-            {{> server-error-message-box
-                title="Error"
-                message="Something went wrong, please try again later."
-            }}
-          </div>
+            <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
 
-          <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
-          <div class="jiraServerUrl__actionBtn__container">
-            <button
-              id="gheServerBtn"
-              class="aui-button aui-button-primary"
-              aria-disabled="true"
-              disabled
-              data-installation-id={{installationId}}
-            >
-              <span id="gheServerBtnText">Next</span>
-              <aui-spinner id="gheServerBtnSpinner" size="small"></aui-spinner>
-            </button>
-          </div>
+            <div class="jiraServerUrl__actionBtn__container">
+              <button
+                  type="submit"
+                  id="gheServerBtn"
+                  disabled
+                  class="aui-button aui-button-primary"
+                  data-installation-id={{installationId}}
+              >
+                <span id="gheServerBtnText">Next</span>
+                <aui-spinner id="gheServerBtnSpinner" size="small"></aui-spinner>
+              </button>
+            </div>
+          </form>
         </div>
       </section>
 
     </div>
 
-    <script src="/public/js/jira-server-url.js" nonce="{{nonce}}"></script>
     <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
@@ -113,5 +113,6 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
+    <script src="/public/js/jira-server-url.js" nonce="{{nonce}}"></script>
   </body>
 </html>

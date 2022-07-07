@@ -2,61 +2,28 @@
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 const GITHUB_CLOUD = ["github.com", "www.github.com"];
-const defaultError = {
-	message: "The entered URL is not valid.",
-	linkMessage: "Learn more",
-	// TODO: add URL for this
-	linkUrl: "#"
-}
-const cloudURLError = {
-	message: "The entered URL is a GitHub Cloud site.",
-	linkMessage: "Connect a GitHub Cloud site",
-	linkUrl: "/session/github/configuration"
-}
 
-/**
- * Method that checks the validity of the passed URL
- *
- * @param {string} inputURL
- * @returns {boolean}
- */
-const checkValidGHEUrl = inputURL => {
+AJS.formValidation.register(['ghe-url'], (field) => {
+	const inputURL = field.el.value;
 	try {
 		const { protocol, hostname } = new URL(inputURL);
 
 		if (!/^https?:$/.test(protocol)) {
-			setErrorMessage(defaultError);
-			return false;
+			field.invalidate(AJS.format('The entered URL is not valid. <a href="#">Learn more</a>.'));
 		}
-
-		if (GITHUB_CLOUD.includes(hostname)) {
-			setErrorMessage(cloudURLError);
-			return false;
+		else if (GITHUB_CLOUD.includes(hostname)) {
+			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration" target="_blank">Connect a GitHub Cloud site<a/>.'));
+		} else {
+			field.validate();
 		}
-
-		return true;
 	} catch (e) {
-		setErrorMessage(defaultError);
-		return false;
+    if (!inputURL.trim().length) {
+      field.invalidate(AJS.format('This is a required field.'));
+    } else {
+      field.invalidate(AJS.format('The entered URL is not valid. Learn more.'));
+    }
 	}
-};
-
-/**
- * Sets an error message with the passed parameters
- *
- * @param {Object<defaultError | cloudURLError>} error
- */
-const setErrorMessage = error => {
-	$("#gheServerURLError").show();
-	$("#gheServerURLError > span").html(error.message);
-	$("#gheServerURLError > a").html(error.linkMessage).attr("href", error.linkUrl);
-	$("#gheServerURL").addClass("has-error");
-};
-
-const hideErrorMessage = () => {
-	$("#gheServerURLError").hide();
-	$("#gheServerURL").removeClass("has-error");
-};
+});
 
 const activeRequest = () => {
 	$("#gheServerBtnText").hide();
@@ -69,8 +36,9 @@ const requestFailed = () => {
 };
 
 const verifyGitHubServerUrl = (gheServerURL, installationId) => {
-	const csrf = document.getElementById('_csrf').value;
+  $("#jiraServerUrl__form :input").prop("disabled", true);
 
+  const csrf = document.getElementById('_csrf').value;
 	window.AP.context.getToken(function(token) {
 		$.post("/jira/server-url", {
 				gheServerURL,
@@ -91,9 +59,11 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 				} else {
 					console.error(`Failed to verify GHE server url. ${gheServerURL}`);
 					requestFailed();
-					// TODO - render error component
+          $(".jiraServerUrl__validationError").show();
 				}
-			}
+
+        $("#jiraServerUrl__form :input").prop("disabled", false);
+      }
 		);
 	});
 };
@@ -104,23 +74,14 @@ $("#gheServerURL").on("keyup", event => {
 		"aria-disabled": !hasUrl,
 		"disabled": !hasUrl
 	});
-	hideErrorMessage();
 });
 
-$("#gheServerBtn").on("click", event => {
-	const btn = event.target;
+
+AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
+	event.preventDefault();
 	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
-	const isValid = checkValidGHEUrl(gheServerURL);
 	const installationId = $(event.currentTarget).data("installation-id");
 
-	$(btn).attr({
-		"aria-disabled": !isValid,
-		"disabled": !isValid
-	});
-
-	if (isValid) {
-		hideErrorMessage();
-		activeRequest();
-		verifyGitHubServerUrl(gheServerURL, installationId);
-	}
+	activeRequest();
+	verifyGitHubServerUrl(gheServerURL, installationId);
 });
