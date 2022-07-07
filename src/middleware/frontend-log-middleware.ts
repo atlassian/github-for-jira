@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, getLogger } from "config/logger";
+import { FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, getLogger, cloneAllowedLogFields } from "config/logger";
 
 /*
 
@@ -40,12 +40,6 @@ declare global {
 		}
 	}
 }
-
-const cloneAllowedLogFields = (fields: Record<string, any>) => {
-	const allowedFields = { ...fields };
-	delete allowedFields.name;
-	return allowedFields;
-};
 
 export const LogMiddleware = (req: Request, res: Response, next: NextFunction): void => {
 	req.log = getLogger(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, cloneAllowedLogFields(req.log?.fields));
