@@ -69,23 +69,21 @@ const requestFailed = () => {
 };
 
 const gheServerUrlErrors = {
-	errorCode: {
-		GHE_ERROR_INVALID_URL: {
-			title: "Invalid URL",
-			message: "That URL doesn't look right. Please check and try again.",
-		},
-		GHE_ERROR_ENOTFOUND: {
-			title: "We couldn't verify this URL",
-			message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
-		},
-		GHE_SERVER_BAD_GATEWAY: {
-			title: "Request failed",
-			message: "We weren't able to complete your request. Please try again."
-		},
-		GHE_ERROR_DEFAULT: {
-			title: "Something went wrong",
-			message: "We ran into a hiccup while verifying your details. Please try again later."
-		}
+	GHE_ERROR_INVALID_URL: {
+		title: "Invalid URL",
+		message: "That URL doesn't look right. Please check and try again.",
+	},
+	GHE_ERROR_ENOTFOUND: {
+		title: "We couldn't verify this URL",
+		message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
+	},
+	GHE_SERVER_BAD_GATEWAY: {
+		title: "Something went wrong",
+		message: "We weren't able to complete your request. Please try again."
+	},
+	GHE_ERROR_DEFAULT: {
+		title: "Something went wrong",
+		message: "We ran into a hiccup while verifying your details. Please try again later."
 	}
 };
 
@@ -95,10 +93,14 @@ const handleGheUrlRequestErrors = (err) => {
 	$(".jiraServerUrl__validationError").show();
 	$(".errorMessageBox__title").empty().append(title);
 	$(".errorMessageBox__message").empty().append(message);
-	title === gheServerUrlErrors.errorCode.GHE_ERROR_ENOTFOUND.title && $(".errorMessageBox__link").show();
+	title === gheServerUrlErrors.GHE_ERROR_ENOTFOUND.title && $(".errorMessageBox__link").show();
 }
 
-const mapErrorCode = (errorCode) => gheServerUrlErrors.errorCode[errorCode];
+const mapErrorCode = (errorCode) => {
+	const errorMessage = gheServerUrlErrors[errorCode]
+	handleGheUrlRequestErrors(errorMessage);
+}
+
 
 const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 	const csrf = document.getElementById("_csrf").value
@@ -116,7 +118,7 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 			},
 			success: function(data) {
 				if (data.success) {
-					const pagePath = data.moduleKey;
+					const pagePath = data.appExists ? "github-list-apps-page" : "github-app-creation-page";
 					AP.navigator.go(
 						"addonmodule",
 						{
@@ -124,15 +126,11 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 						}
 					);
 				} else {
-					const { errorCode } = data;
-					const errorMessage = mapErrorCode(errorCode);
-					handleGheUrlRequestErrors(errorMessage);
+					mapErrorCode(data.errorCode);
 				}
 			},
 			error: function(err) {
-				const { errorCode } = JSON.parse(err.responseText);
-				const errorMessage = mapErrorCode(errorCode);
-				handleGheUrlRequestErrors(errorMessage);
+				mapErrorCode(err.responseJSON.errorCode);
 			}
 		});
 	});

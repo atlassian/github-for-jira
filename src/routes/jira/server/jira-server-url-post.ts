@@ -36,6 +36,12 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 	}
 };
 
+// interface ResponseObject  {
+// 	success: boolean,
+// 	appExists: boolean,
+// 	errors?: Error[]
+// }
+
 export const JiraServerUrlPost = async (
 	req: Request,
 	res: Response
@@ -57,12 +63,13 @@ export const JiraServerUrlPost = async (
 
 		if (gitHubServerApps?.length) {
 			req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
-			res.status(200).send({ success: true, moduleKey: "github-list-apps-page" });
+			res.status(200).send({ success: true, appExists: true });
 			return;
 		}
+
 		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
 		await axios.get(gheServerURL);
-		res.status(200).send({ success: true, moduleKey: "github-app-creation-page" });
+		res.status(200).send({ success: true, appExists: false });
 	} catch (err) {
 		req.log.error({ err, gheServerURL }, `Something went wrong`);
 		const codeOrStatus = err.code || err.response.status;

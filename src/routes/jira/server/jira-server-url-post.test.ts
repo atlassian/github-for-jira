@@ -46,7 +46,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					expect(res.body).toEqual({ success: true, moduleKey: "github-app-creation-page" });
+					expect(res.body).toEqual({ success: true, appExists: false });
 				});
 		});
 
@@ -74,7 +74,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					expect(res.body).toEqual({ success: true, moduleKey: "github-app-creation-page" });
+					expect(res.body).toEqual({ success: true, appExists: false });
 				});
 		});
 
@@ -101,7 +101,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					expect(res.body).toEqual({ success: true, moduleKey: "github-list-apps-page" });
+					expect(res.body).toEqual({ success: true, appExists: true });
 				});
 		});
 	});
@@ -177,7 +177,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					const { errorCode, message } = gheServerUrlErrors["someothererror"];
+					const { errorCode, message } = gheServerUrlErrors["default"];
 					expect(res.body).toEqual({ success: false, errorCode, message });
 				});
 		});
