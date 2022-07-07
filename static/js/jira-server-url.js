@@ -74,7 +74,7 @@ const gheServerUrlErrors = {
 			title: "Invalid URL",
 			message: "That URL doesn't look right. Please check and try again.",
 		},
-		GHE_ERROR_2: {
+		"GHE_ERROR_2": {
 			title: "We couldn't verify this URL",
 			message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
 		},
@@ -91,11 +91,14 @@ const gheServerUrlErrors = {
 
 const handleGheUrlRequestErrors = (err) => {
 	requestFailed();
+	const { title, message } = err;
 	$(".jiraServerUrl__validationError").show();
-	$(".errorMessageBox__title").append(title);
-	$(".errorMessageBox__message").append(message);
+	$(".errorMessageBox__title").empty().append(title);
+	$(".errorMessageBox__message").empty().append(message);
 	title === gheServerUrlErrors.errorCode.GHE_ERROR_2.title && $(".errorMessageBox__link").show();
 }
+
+const mapErrorCode = (errorCode) => gheServerUrlErrors.errorCode[errorCode];
 
 const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 	const csrf = document.getElementById("_csrf").value
@@ -122,13 +125,13 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 					);
 				} else {
 					const { errorCode } = data;
-					const errorMessage = gheServerUrlErrors.errorCode[errorCode];
-					handleGheUrlRequestErrors({ ...errorMessage })
+					const errorMessage = mapErrorCode(errorCode);
+					handleGheUrlRequestErrors(errorMessage);
 				}
 			},
 			error: function(err) {
 				const { errorCode } = JSON.parse(err.responseText);
-				const errorMessage = gheServerUrlErrors.errorCode[errorCode];
+				const errorMessage = mapErrorCode(errorCode);
 				handleGheUrlRequestErrors(errorMessage);
 			}
 		});

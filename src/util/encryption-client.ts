@@ -64,6 +64,6 @@ export class EncryptionClient {
 	}
 
 	static async healthcheck(): Promise<AxiosResponse> {
-		return await EncryptionClient.axios.get("/healthcheck");
+		return await this.axios.get("/healthcheck");
 	}
 }
