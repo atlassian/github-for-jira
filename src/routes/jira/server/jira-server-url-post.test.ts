@@ -8,7 +8,10 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { getGheErrorMessages } from "routes/jira/server/jira-server-url-post";
 import { GitHubServerApp } from "models/github-server-app";
 
-jest.mock("axios");
+jest.mock("axios", () => ({
+	...jest.requireActual("axios"),
+	get: jest.fn()
+}));
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe("Jira Server Url Suite", () => {
