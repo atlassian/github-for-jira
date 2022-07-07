@@ -126,11 +126,11 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 						}
 					);
 				} else {
-					mapErrorCode(data.errorCode);
+					mapErrorCode(data.errors[0].code);
 				}
 			},
 			error: function(err) {
-				mapErrorCode(err.responseJSON.errorCode);
+				mapErrorCode(err.responseJSON.errors[0].code);
 			}
 		});
 	});
