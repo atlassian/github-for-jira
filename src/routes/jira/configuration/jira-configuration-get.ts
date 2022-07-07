@@ -120,11 +120,7 @@ export const JiraConfigurationGet = async (
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
 		const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
 
-		/**
-		 * TODO: Need to fetch the list of `gitHubBaseUrl` for the current instance
-		 **/
-		const gitHubBaseUrl = "";
-		const gheServers = await GitHubServerApp.getAllForGitHubBaseUrl(gitHubBaseUrl, res.locals.installation.id);
+		const gheServers = await GitHubServerApp.getForInstallationId(res.locals.installation.id);
 
 		// Grouping the list of servers by `gitHubBaseUrl`
 		const modifiedGHEServers = await Promise.all(chain(gheServers).groupBy("gitHubBaseUrl")
@@ -144,7 +140,7 @@ export const JiraConfigurationGet = async (
 			})).value());
 
 
-		const gheServerEnabled = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost);
+		const gheServerEnabled = await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost);
 
 		const handleNavigationClassName = gheServerEnabled ? "select-github-version-link" : "add-organization-link";
 		const config = gheServerEnabled ? {
