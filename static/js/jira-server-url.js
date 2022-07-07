@@ -9,6 +9,7 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 		const { protocol, hostname } = new URL(inputURL);
 
 		if (!/^https?:$/.test(protocol)) {
+			// TODO: add URL for this
 			field.invalidate(AJS.format('The entered URL is not valid. <a href="#">Learn more</a>.'));
 		}
 		else if (GITHUB_CLOUD.includes(hostname)) {
