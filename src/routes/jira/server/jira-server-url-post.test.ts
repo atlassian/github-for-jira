@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Installation } from "models/installation";
 import express, { Express, NextFunction, Request, Response } from "express";
 import { RootRouter } from "../../router";
@@ -8,17 +7,10 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { getGheErrorMessages } from "routes/jira/server/jira-server-url-post";
 import { GitHubServerApp } from "models/github-server-app";
 
-jest.mock("axios", () => ({
-	...jest.requireActual("axios"),
-	get: jest.fn()
-}));
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-
 describe("Jira Server Url Suite", () => {
 	let app: Express;
 	let installation: Installation;
 	let jwt: string;
-	const gheServerURL = "http://mygheurl.com";
 
 	beforeEach(async () => {
 		installation = await Installation.install({
@@ -43,34 +35,34 @@ describe("Jira Server Url Suite", () => {
 
 	describe("Successful responses", () => {
 		it("should return success response with app creation page moduleKey when no apps are found and request to gheServerURL succeeds", async () => {
+			gheNock.get("/").reply(200);
 			return supertest(app)
 				.post("/jira/server-url")
 				.send({
 					installationId: installation.id,
 					jiraHost,
 					jwt,
-					gheServerURL
+					gheServerURL: gheUrl
 				})
 				.expect(200)
 				.then((res) => {
-					expect(axios.get).toHaveBeenCalledWith(gheServerURL);
 					expect(res.body).toEqual({ success: true, moduleKey: "github-app-creation-page" });
 				});
 		});
 
 		it("should return success response with list gh apps page moduleKey when apps are found (mismatched url and id)", async () => {
-			const payload = {
+			gheNock.get("/").reply(200);
+			await GitHubServerApp.install({
 				uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
 				appId: 123,
 				gitHubAppName: "My GitHub Server App",
-				gitHubBaseUrl: gheServerURL,
+				gitHubBaseUrl: gheUrl,
 				gitHubClientId: "lvl.1234",
 				gitHubClientSecret: "myghsecret",
 				webhookSecret: "mywebhooksecret",
 				privateKey: "myprivatekey",
 				installationId: 1
-			};
-			await GitHubServerApp.install(payload);
+			});
 
 			return supertest(app)
 				.post("/jira/server-url")
@@ -78,28 +70,26 @@ describe("Jira Server Url Suite", () => {
 					installationId: installation.id,
 					jiraHost,
 					jwt,
-					gheServerURL
+					gheServerURL: gheUrl
 				})
 				.expect(200)
 				.then((res) => {
-					expect(axios.get).toHaveBeenCalledWith(gheServerURL);
 					expect(res.body).toEqual({ success: true, moduleKey: "github-app-creation-page" });
 				});
 		});
 
 		it("should return success response with list gh apps page moduleKey when apps are found (matching url and id)", async () => {
-			const payload = {
+			await GitHubServerApp.install({
 				uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
 				appId: 123,
 				gitHubAppName: "My GitHub Server App",
-				gitHubBaseUrl: gheServerURL,
+				gitHubBaseUrl: gheUrl,
 				gitHubClientId: "lvl.1234",
 				gitHubClientSecret: "myghsecret",
 				webhookSecret: "mywebhooksecret",
 				privateKey: "myprivatekey",
 				installationId: installation.id
-			};
-			await GitHubServerApp.install(payload);
+			});
 
 			return supertest(app)
 				.post("/jira/server-url")
@@ -107,11 +97,10 @@ describe("Jira Server Url Suite", () => {
 					installationId: installation.id,
 					jiraHost,
 					jwt,
-					gheServerURL
+					gheServerURL: gheUrl
 				})
 				.expect(200)
 				.then((res) => {
-					expect(axios.get).not.toHaveBeenCalledWith(gheServerURL);
 					expect(res.body).toEqual({ success: true, moduleKey: "github-list-apps-page" });
 				});
 		});
@@ -135,14 +124,12 @@ describe("Jira Server Url Suite", () => {
 		});
 
 		it("should return error message when unable to make a request to URL", async () => {
-			mockedAxios.get.mockImplementationOnce(() =>
-				Promise.reject({
-					message: "getaddrinfo ENOTFOUND github.internal.atlassian.com",
-					name: "Error",
-					code: "ENOTFOUND",
-					status: null
-				})
-			);
+			gheNock.get("/").replyWithError({
+				message: "getaddrinfo ENOTFOUND github.internal.atlassian.com",
+				name: "Error",
+				code: "ENOTFOUND",
+				status: null
+			});
 
 			return supertest(app)
 				.post("/jira/server-url")
@@ -150,7 +137,7 @@ describe("Jira Server Url Suite", () => {
 					installationId: installation.id,
 					jiraHost,
 					jwt,
-					gheServerURL
+					gheServerURL: gheUrl
 				})
 				.expect(200)
 				.then((res) => {
@@ -160,9 +147,7 @@ describe("Jira Server Url Suite", () => {
 		});
 
 		it("should return 502 error when there is a server or connection error", async () => {
-			mockedAxios.get.mockImplementationOnce(() =>
-				Promise.reject({ status: 502 })
-			);
+			gheNock.get("/").reply(502);
 
 			return supertest(app)
 				.post("/jira/server-url")
@@ -170,7 +155,7 @@ describe("Jira Server Url Suite", () => {
 					installationId: installation.id,
 					jiraHost,
 					jwt,
-					gheServerURL
+					gheServerURL: gheUrl
 				})
 				.expect(502)
 				.then((res) => {
@@ -180,9 +165,7 @@ describe("Jira Server Url Suite", () => {
 		});
 
 		it("should return default error for all other errors", async () => {
-			mockedAxios.get.mockImplementationOnce(() =>
-				Promise.reject({ error: "Oh no! This didn't work for some unknown reason :(" })
-			);
+			gheNock.get("/").reply(400, { error: "Oh no! This didn't work for some unknown reason :(" });
 
 			return supertest(app)
 				.post("/jira/server-url")
@@ -190,7 +173,7 @@ describe("Jira Server Url Suite", () => {
 					installationId: installation.id,
 					jiraHost,
 					jwt,
-					gheServerURL
+					gheServerURL: gheUrl
 				})
 				.expect(200)
 				.then((res) => {
