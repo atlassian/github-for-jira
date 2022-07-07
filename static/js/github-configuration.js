@@ -29,16 +29,6 @@ $('.delete-link').click(function (event) {
   })
 })
 
-$('.logout-link').click(function (event) {
-  event.preventDefault();
-
-	window.open('https://github.com/logout','_blank');
-
-	window.setTimeout(function() {
-		this.close()
-	}, 100)
-})
-
 $(".sync-connection-link").click(function (event) {
 	event.preventDefault();
 	const installationId = $(event.target).data("installation-id");
