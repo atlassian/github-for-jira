@@ -38,7 +38,6 @@ export class EncryptionClient {
 
 	static async encrypt(secretKey: EncryptionSecretKeyEnum, plainText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
 		try {
-			console.log("-------", { inst: EncryptionClient.axiosInst });
 			const response = await EncryptionClient.axiosInst.post<EncryptResponse>(`/cryptor/encrypt/micros/github-for-jira/${secretKey}`, {
 				plainText,
 				encryptionContext

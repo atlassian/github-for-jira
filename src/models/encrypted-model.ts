@@ -26,7 +26,6 @@ export abstract class EncryptedModel extends Model {
 		if (typeof value !== "string") {
 			throw new Error(`Cannot encrypt '${field}', it is not a string.`);
 		}
-		console.log("=========", { EncryptionClient });
 		return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, await this.getEncryptContext(field));
 	}
 
