@@ -5,10 +5,11 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import { JiraCommit, JiraIssue, JiraRemoteLink } from "interfaces/jira";
+import { JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptions } from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
+import { shouldTagBackfillRequests } from "config/feature-flags";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -220,7 +221,7 @@ export const getJiraClient = async (
 							repositoryId
 						}
 					}),
-				update: async (data, options?: { preventTransitions: boolean }) => {
+				update: async (data, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
 
 					if (
@@ -251,7 +252,7 @@ export const getJiraClient = async (
 			}
 		},
 		workflow: {
-			submit: async (data) => {
+			submit: async (data, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
@@ -261,22 +262,37 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				const payload = {
-					builds: data.builds,
-					properties: {
-						gitHubInstallationId
-					},
-					providerMetadata: {
-						product: data.product
-					}
-				};
+				let payload;
+				if (await shouldTagBackfillRequests()) {
+					payload = {
+						builds: data.builds,
+						properties: {
+							gitHubInstallationId
+						},
+						providerMetadata: {
+							product: data.product
+						},
+						preventTransitions: options?.preventTransitions || false,
+						operationType: options?.operationType || "NORMAL"
+					};
+				} else {
+					payload = {
+						builds: data.builds,
+						properties: {
+							gitHubInstallationId
+						},
+						providerMetadata: {
+							product: data.product
+						}
+					};
+				}
 				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
 				logger?.info("Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
 			}
 		},
 		deployment: {
-			submit: async (data): Promise<DeploymentsResult> => {
+			submit: async (data, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
@@ -286,12 +302,24 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				const payload = {
-					deployments: data.deployments,
-					properties: {
-						gitHubInstallationId
-					}
-				};
+				let payload;
+				if (await shouldTagBackfillRequests()) {
+					payload = {
+						deployments: data.deployments,
+						properties: {
+							gitHubInstallationId
+						},
+						preventTransitions: options?.preventTransitions || false,
+						operationType: options?.operationType || "NORMAL"
+					};
+				} else {
+					payload = {
+						deployments: data.deployments,
+						properties: {
+							gitHubInstallationId
+						}
+					};
+				}
 				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
 				logger?.info("Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
@@ -302,7 +330,7 @@ export const getJiraClient = async (
 			}
 		},
 		remoteLink: {
-			submit: async (data) => {
+			submit: async (data, options?: JiraSubmitOptions) => {
 				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
 				updateIssueKeyAssociationValuesFor(data.remoteLinks, dedup);
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
@@ -310,12 +338,24 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				const payload = {
-					remoteLinks: data.remoteLinks,
-					properties: {
-						gitHubInstallationId
-					}
-				};
+				let payload;
+				if (await shouldTagBackfillRequests()) {
+					payload = {
+						remoteLinks: data.remoteLinks,
+						properties: {
+							gitHubInstallationId
+						},
+						preventTransitions: options?.preventTransitions || false,
+						operationType: options?.operationType || "NORMAL"
+					};
+				} else {
+					payload = {
+						remoteLinks: data.remoteLinks,
+						properties: {
+							gitHubInstallationId
+						}
+					};
+				}
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
@@ -333,7 +373,7 @@ const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
 	installationId: number,
-	options?: { preventTransitions: boolean }
+	options?: JiraSubmitOptions
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
 
@@ -343,17 +383,30 @@ const batchedBulkUpdate = async (
 		commitChunks.push(dedupedCommits.splice(0, 400));
 	} while (dedupedCommits.length);
 
+	const shouldTagBackfillRequestsValue = await shouldTagBackfillRequests();
 	const batchedUpdates = commitChunks.map((commitChunk) => {
 		if (commitChunk.length) {
 			data.commits = commitChunk;
 		}
-		const body = {
-			preventTransitions: options?.preventTransitions || false,
-			repositories: [data],
-			properties: {
-				installationId
-			}
-		};
+		let body;
+		if (shouldTagBackfillRequestsValue) {
+			body = {
+				preventTransitions: options?.preventTransitions || false,
+				operationType: options?.operationType || "NORMAL",
+				repositories: [data],
+				properties: {
+					installationId
+				}
+			};
+		} else {
+			body = {
+				preventTransitions: options?.preventTransitions || false,
+				repositories: [data],
+				properties: {
+					installationId
+				}
+			};
+		}
 		return instance.post("/rest/devinfo/0.10/bulk", body);
 	});
 	return Promise.all(batchedUpdates);
