@@ -30,7 +30,7 @@ describe("GitHub Client", () => {
 		perPage: number,
 		page: number,
 		expectedInstallationTokenInHeader?: string,
-		scope: nock.Scope = gheNock
+		scope: nock.Scope = gheApiNock
 	) {
 		scope
 			.get(`/repos/${owner}/${repo}/pulls`)
@@ -72,8 +72,7 @@ describe("GitHub Client", () => {
 			repo,
 			pageSize,
 			page,
-			"installation token",
-			gheNock
+			"installation token"
 		);
 
 		const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
