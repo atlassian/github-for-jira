@@ -59,6 +59,7 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 				} else {
 					console.error(`Failed to verify GHE server url. ${gheServerURL}`);
 					requestFailed();
+					// TODO - Update the error from backend and render the correct component
           $(".jiraServerUrl__validationError").show();
 				}
 
