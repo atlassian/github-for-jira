@@ -10,7 +10,6 @@ export const JiraManualAppCreationGet = async (
 
 		// TODO: Need to fetch the newly created GH server and use its id to fetch the following data
 		res.render("jira-manual-app-creation.hbs", {
-			previousPagePath: "github-server-url-page",
 			gitHubBaseUrl: "",
 			uuid: ""
 		});
