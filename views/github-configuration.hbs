@@ -196,6 +196,12 @@
 </section>
 <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
 <script src="/public/js/github-configuration.js" nonce="{{nonce}}"></script>
+<!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+<!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+<script
+    src="https://connect-cdn.atl-paas.net/all.js"
+    nonce="{{nonce}}"
+></script>
 <script
   src="/public/aui/aui-prototyping.js"
   integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="

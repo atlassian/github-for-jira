@@ -1,4 +1,14 @@
-/* globals $ */
+/**
+ * This method passes a value to the Parent Window,
+ * which is used to change the url of the Parent Window
+ */
+const updateParentWindowURL = () => {
+  if (window.opener != null && !window.opener.closed) {
+    window.opener.document.getElementById("redirectToGitHubConfigPage").value = true;
+  }
+  window.close();
+};
+
 $('.install-link').click(function (event) {
   event.preventDefault()
 
@@ -10,7 +20,8 @@ $('.install-link').click(function (event) {
     if (data.err) {
       return console.log(data.err)
     }
-    window.close()
+    updateParentWindowURL();
+    window.close();
   })
 })
 
