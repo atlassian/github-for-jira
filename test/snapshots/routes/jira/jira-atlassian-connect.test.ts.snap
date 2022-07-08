@@ -68,6 +68,18 @@ Object {
         },
         "url": "/jira/app-creation",
       },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-manual-app-creation-page",
+        "name": Object {
+          "value": "GitHub Manual App Creation",
+        },
+        "url": "/jira/manual-app-creation",
+      },
     ],
     "jiraBuildInfoProvider": Object {
       "homeUrl": "https://github.com/features/actions",
