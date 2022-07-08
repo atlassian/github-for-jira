@@ -9,7 +9,7 @@ export const JiraManualAppCreationGet = async (
 		req.log.debug("Received Jira app creation page request");
 
 		// TODO: add data
-		res.render("jira-manual-app-creation.js", {
+		res.render("jira-manual-app-creation.hbs", {
 			previousPagePath: "github-server-url-page",
 			gitHubBaseUrl: "",
 			uuid: ""
