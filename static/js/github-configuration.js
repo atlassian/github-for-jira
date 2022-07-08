@@ -3,7 +3,7 @@
  * which is used to change the url of the Parent Window
  */
 const updateParentWindowURL = () => {
-  if (window.opener != null && !window.opener.closed) {
+  if (window.opener != null && !window.opener.closed && window.opener.document.getElementById("redirectToGitHubConfigPage")) {
     window.opener.document.getElementById("redirectToGitHubConfigPage").value = true;
   }
   window.close();
