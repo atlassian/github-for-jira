@@ -30,26 +30,32 @@ export const jiraLogin = async (page: Page, roleName: keyof JiraTestDataRoles): 
 export const jiraAppInstall = async (page: Page): Promise<Page> => {
 	await jiraLogin(page, "admin");
 	await page.goto(data.urls.manageApps);
-	await (await page.locator("#upm-upload")).click();
-	await (await page.locator("#upm-upload-url")).fill(data.urls.connectJson);
-	await (await page.locator("#upm-upload-dialog .aui-button-primary")).click();
-	const getStarted = await page.locator(`#upm-plugin-status-dialog .confirm`);
-	// await getStarted.waitFor({ timeout: 30000 });
-	await getStarted.click();
-	const iframe = await page.frameLocator("#ak-main-content iframe");
-	await (await iframe.locator(".jiraConfiguration")).waitFor({ timeout: 10000 });
+	await page.waitForSelector("#upm-manage-plugins-user-installed");
+	const pluginRow = await page.locator(`.upm-plugin[data-key="${APP_KEY}"] .upm-plugin-row`);
+	if (!(await pluginRow.isVisible())) {
+		await page.click("#upm-upload");
+		await page.fill("#upm-upload-url", data.urls.connectJson);
+		await page.click("#upm-upload-dialog .aui-button-primary");
+		await page.click(`#upm-plugin-status-dialog .confirm`);
+		const iframe = await page.frameLocator("#ak-main-content iframe");
+		await (await iframe.locator(".jiraConfiguration")).waitFor({ timeout: 10000 });
+	}
 	return page;
 };
 
 export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 	await jiraLogin(page, "admin");
 	await page.goto(data.urls.manageApps);
-	const pluginRow = await page.locator(`.upm-plugin[data-key="${APP_KEY}"] .upm-plugin-row`);
-	// await pluginRow.waitFor({ timeout: 30000 });
-	await pluginRow.click();
-	const uninstallButton = await pluginRow.locator(`[data-action="UNINSTALL"]`);
-	await uninstallButton.click();
-	await (await page.locator("#upm-confirm-dialog .confirm")).click();
-	await uninstallButton.isDisabled();
+	await page.waitForSelector("#upm-manage-plugins-user-installed");
+	const pluginRow = await page.locator(`.upm-plugin[data-key="${APP_KEY}"]`);
+	if (await pluginRow.isVisible()) {
+		await pluginRow.click();
+		await page.pause();
+		const uninstallButton = await pluginRow.locator(`a[data-action="UNINSTALL"]`);
+		await uninstallButton.click();
+		await page.click("#upm-confirm-dialog .confirm");
+		await uninstallButton.isDisabled();
+	}
+
 	return page;
 };

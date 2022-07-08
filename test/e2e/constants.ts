@@ -10,10 +10,28 @@ interface TestVars extends EnvVars {
 	GITHUB_PASSWORD: string;
 }
 
+const requiredEnvVars = [
+	"JIRA_ADMIN_USERNAME",
+	"JIRA_ADMIN_PASSWORD",
+	"GITHUB_URL",
+	"GITHUB_USERNAME",
+	"GITHUB_PASSWORD"
+];
+
+const e2eVars = config({ path: path.resolve(process.cwd(), ".env.e2e") });
+if (e2eVars.error) {
+	throw e2eVars.error;
+}
 const testVars = {
 	...envVars,
-	...config({ path: path.resolve(process.cwd(), ".env.e2e") })
+	...process.env
 } as TestVars;
+
+// Check to see if all required environment variables are set
+const missingVars = requiredEnvVars.filter(key => testVars[key] === undefined);
+if (missingVars.length) {
+	throw new Error(`Missing required E2E Environment Variables: ${missingVars.join(", ")}`);
+}
 
 export const testData: TestData = {
 	env: testVars,

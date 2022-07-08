@@ -13,9 +13,9 @@ test.describe("setup functions", () => {
 						storageState: testData.jira.roles.admin.storage
 					});
 
-					test.beforeAll(async ({ page }) => {
+					test.beforeAll(async ({ browser }) => {
 						// login and save state before tests
-						await jiraLogin(page, "admin");
+						await jiraLogin(await browser.newPage(), "admin");
 					});
 				}
 

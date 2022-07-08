@@ -15,7 +15,6 @@ export const githubLogin = async (page: Page, roleName: keyof GithubTestDataRole
 		await userinput.fill(role.username);
 		await userinput.press("Tab");
 		await passinput.fill(role.password);
-		await passinput.press("Tab");
 		await passinput.press("Enter");
 		await page.waitForURL(data.urls.base);
 	}
