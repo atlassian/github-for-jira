@@ -6,9 +6,9 @@ export const JiraManualAppCreationGet = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.debug("Received Jira app creation page request");
+		req.log.debug("Received Jira manual app creation page request");
 
-		// TODO: add data
+		// TODO: Need to fetch the newly created GH server and use its id to fetch the following data
 		res.render("jira-manual-app-creation.hbs", {
 			previousPagePath: "github-server-url-page",
 			gitHubBaseUrl: "",
@@ -17,6 +17,6 @@ export const JiraManualAppCreationGet = async (
 
 		req.log.debug("Jira manual app creation page rendered successfully.");
 	} catch (error) {
-		return next(new Error(`Failed to render Jira app creation page: ${error}`));
+		return next(new Error(`Failed to render Jira manual app creation page: ${error}`));
 	}
 };
