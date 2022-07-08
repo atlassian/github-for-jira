@@ -37,7 +37,6 @@ export const JiraServerUrlPost = async (
 ): Promise<void> => {
 	const { gheServerURL } = req.body;
 	const { id: installationId } = res.locals.installation;
-	req.log.info("INSTALLATIONID: ", installationId);
 
 	req.log.debug(`Verifying provided GHE server url ${gheServerURL} is a valid URL`);
 	const isGheUrlValid = isValidUrl(gheServerURL);

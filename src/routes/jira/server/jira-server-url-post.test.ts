@@ -107,7 +107,7 @@ describe("Jira Server Url Suite", () => {
 	});
 
 	describe("Failure responses", () => {
-		it("should return error message when invalid url is sent in request", async () => {
+		it("should send error message when invalid url is sent in request", async () => {
 			return supertest(app)
 				.post("/jira/server-url")
 				.send({
@@ -123,7 +123,7 @@ describe("Jira Server Url Suite", () => {
 				});
 		});
 
-		it("should return error message when unable to make a request to URL", async () => {
+		it("should send error message when unable to make a request to URL", async () => {
 			gheNock.get("/").replyWithError({
 				message: "getaddrinfo ENOTFOUND github.internal.atlassian.com",
 				name: "Error",
@@ -146,7 +146,7 @@ describe("Jira Server Url Suite", () => {
 				});
 		});
 
-		it("should return 502 error when there is a server or connection error", async () => {
+		it("should sent error message when there is a server or connection error", async () => {
 			gheNock.get("/").reply(502);
 
 			return supertest(app)
@@ -164,7 +164,7 @@ describe("Jira Server Url Suite", () => {
 				});
 		});
 
-		it("should return default error for all other errors", async () => {
+		it("should send default error message for all other errors", async () => {
 			gheNock.get("/").reply(400, { error: "Oh no! This didn't work for some unknown reason :(" });
 
 			return supertest(app)
