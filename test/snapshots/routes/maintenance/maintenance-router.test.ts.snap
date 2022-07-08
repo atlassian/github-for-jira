@@ -78,7 +78,7 @@ Object {
         "name": Object {
           "value": "GitHub Manual App Creation",
         },
-        "url": "/jira/manual-app-creation",
+        "url": "/jira/manual-app-creation/?gitHubServerAppId={ac.ghsaId}",
       },
     ],
     "jiraBuildInfoProvider": Object {
