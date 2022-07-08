@@ -6,7 +6,6 @@ import { isValidUrl } from "utils/is-valid-url";
 interface MessageAndCode {
 	errorCode: string;
 	message: string;
-	statusCode: number;
 }
 
 interface GheServerUrlErrors {
@@ -16,23 +15,19 @@ interface GheServerUrlErrors {
 export const gheServerUrlErrors: GheServerUrlErrors = {
 	invalidUrl: {
 		errorCode: "GHE_ERROR_INVALID_URL",
-		message: "Invalid URL",
-		statusCode: 200
+		message: "Invalid URL"
 	},
 	ENOTFOUND: {
 		errorCode: "GHE_ERROR_ENOTFOUND",
-		message: "Request to URL failed",
-		statusCode: 200
+		message: "Request to URL failed"
 	},
 	502: {
 		errorCode: "GHE_SERVER_BAD_GATEWAY",
-		message: "Bad gateway",
-		statusCode: 502
+		message: "Bad gateway"
 	},
 	default: {
 		errorCode: "GHE_ERROR_DEFAULT",
-		message: "Something went wrong",
-		statusCode: 200
+		message: "Something went wrong"
 	}
 };
 
@@ -42,13 +37,14 @@ export const JiraServerUrlPost = async (
 ): Promise<void> => {
 	const { gheServerURL } = req.body;
 	const { id: installationId } = res.locals.installation;
+	req.log.info("INSTALLATIONID: ", installationId);
 
 	req.log.debug(`Verifying provided GHE server url ${gheServerURL} is a valid URL`);
 	const isGheUrlValid = isValidUrl(gheServerURL);
 
 	if (!isGheUrlValid) {
-		const { errorCode, message, statusCode } = gheServerUrlErrors.invalidUrl;
-		res.status(statusCode).send({ success: false, errors: [{ code: errorCode, message }] });
+		const { errorCode, message } = gheServerUrlErrors.invalidUrl;
+		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
 	}
 
@@ -67,7 +63,7 @@ export const JiraServerUrlPost = async (
 	} catch (err) {
 		req.log.error({ err, gheServerURL }, `Something went wrong`);
 		const codeOrStatus = err.code || err.response.status;
-		const { errorCode, message, statusCode } = gheServerUrlErrors[codeOrStatus] || gheServerUrlErrors.default;
-		res.status(statusCode).send({ success: false, errors: [{ code: errorCode, message }] });
+		const { errorCode, message } = gheServerUrlErrors[codeOrStatus] || gheServerUrlErrors.default;
+		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
 	}
 };

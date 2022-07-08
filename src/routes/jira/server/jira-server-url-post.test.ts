@@ -157,7 +157,7 @@ describe("Jira Server Url Suite", () => {
 					jwt,
 					gheServerURL: gheUrl
 				})
-				.expect(502)
+				.expect(200)
 				.then((res) => {
 					const { errorCode, message } = gheServerUrlErrors[502];
 					expect(res.body).toEqual({ success: false, errors: [{ code: errorCode, message }] });

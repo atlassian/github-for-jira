@@ -106,17 +106,13 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 	const csrf = document.getElementById("_csrf").value
 
 	AP.context.getToken(function(token) {
-		$.ajax({
-			type: "POST",
-			url: "/jira/server-url",
-			data: {
+		$.post("/jira/server-url", {
 				gheServerURL,
 				_csrf: csrf,
 				jwt: token,
-				jiraHost,
-				installationId
+				jiraHost
 			},
-			success: function(data) {
+			function(data) {
 				if (data.success) {
 					const pagePath = data.appExists ? "github-list-apps-page" : "github-app-creation-page";
 					AP.navigator.go(
@@ -128,11 +124,8 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 				} else {
 					mapErrorCode(data.errors[0].code);
 				}
-			},
-			error: function(err) {
-				mapErrorCode(err.responseJSON.errors[0].code);
 			}
-		});
+		);
 	});
 };
 
