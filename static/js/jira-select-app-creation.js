@@ -4,7 +4,9 @@ $(".optionBtn").click(function (event) {
 		AP.navigator.go(
 			'addonmodule',
 			{
-				moduleKey: "github-manual-app-creation-page"
+				moduleKey: "github-manual-app-creation-page",
+				// TODO: Need to fetch the gitHubServerAppId
+				customData: { ghsaId: 1 }
 			}
 		);
 	} else {

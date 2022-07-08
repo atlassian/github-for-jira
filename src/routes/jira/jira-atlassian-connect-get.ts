@@ -93,7 +93,7 @@ const modules = {
 			name: {
 				value: "GitHub Manual App Creation"
 			},
-			url: "/jira/manual-app-creation",
+			url: "/jira/manual-app-creation/?gitHubServerAppId={ac.ghsaId}",
 			conditions: adminCondition
 		}
 	],
