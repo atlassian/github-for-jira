@@ -47,7 +47,7 @@ export const JiraServerUrlPost = async (
 	const isGheUrlValid = isValidUrl(gheServerURL);
 
 	if (!isGheUrlValid) {
-		const { errorCode, message, statusCode } = gheServerUrlErrors["invalidUrl"];
+		const { errorCode, message, statusCode } = gheServerUrlErrors.invalidUrl;
 		res.status(statusCode).send({ success: false, errors: [{ code: errorCode, message }] });
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
 	}

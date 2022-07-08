@@ -118,7 +118,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					const { errorCode, message } = gheServerUrlErrors["invalidUrl"];
+					const { errorCode, message } = gheServerUrlErrors.invalidUrl;
 					expect(res.body).toEqual({ success: false, errors: [{ code: errorCode, message }] });
 				});
 		});
@@ -141,7 +141,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					const { errorCode, message } = gheServerUrlErrors["ENOTFOUND"];
+					const { errorCode, message } = gheServerUrlErrors.ENOTFOUND;
 					expect(res.body).toEqual({ success: false, errors: [{ code: errorCode, message }] });
 				});
 		});
@@ -177,7 +177,7 @@ describe("Jira Server Url Suite", () => {
 				})
 				.expect(200)
 				.then((res) => {
-					const { errorCode, message } = gheServerUrlErrors["default"];
+					const { errorCode, message } = gheServerUrlErrors.default;
 					expect(res.body).toEqual({ success: false, errors: [{ code: errorCode, message }] });
 				});
 		});
