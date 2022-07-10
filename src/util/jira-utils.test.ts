@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { envVars } from "config/env";
-import { getJiraAppUrl, getJiraMarketplaceUrl, isGitHubCloudApp, jiraIssueKeyParser } from "./jira-utils";
+import {
+	getJiraAppUrl,
+	getJiraMarketplaceUrl,
+	isGitHubCloudApp,
+	jiraIssueKeyParser
+} from "./jira-utils";
 import { mocked } from "ts-jest/utils";
 import { GitHubServerApp } from "models/github-server-app";
 
