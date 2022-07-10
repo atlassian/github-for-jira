@@ -122,7 +122,7 @@ export interface JiraDeployment {
 	schemaVersion: string;
 	deploymentSequenceNumber: number;
 	updateSequenceNumber: number;
-	issueKeys: string[];
+	issueKeys?: string[];
 	displayName: string;
 	url: string;
 	description: string;
