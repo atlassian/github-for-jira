@@ -66,21 +66,11 @@
                      placeholder="https://example.com"
                      id="gheServerURL" name="gheServerURL" />
             </div>
+
             <div class="jiraServerUrl__validationError">
-              {{> server-error-message-box
-                  title="URL validation failed"
-                  message="Your URL couldn’t be verified. Please check that you have entered the correct URL and have configured the hole in your firewall correctly."
-              }}
+                {{> server-error-message-box }}
             </div>
-            <div class="jiraServerUrl__defaultError">
-              {{> server-error-message-box
-                  title="Error"
-                  message="Something went wrong, please try again later."
-              }}
-            </div>
-
             <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
-
             <button
                 type="submit"
                 id="gheServerBtn"

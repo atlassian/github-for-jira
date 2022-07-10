@@ -24,8 +24,10 @@ declare global {
 	let jiraNock: nock.Scope;
 	let jiraStagingNock: nock.Scope;
 	let githubNock: nock.Scope;
-	let gheNock: nock.Scope;
 	let gheUrl: string;
+	let gheNock: nock.Scope;
+	let gheApiUrl: string;
+	let gheApiNock: nock.Scope;
 	let githubUserTokenNock: GithubUserTokenNockFunc;
 	let githubAppTokenNock: GithubAppTokenNockFunc;
 	let gheUserTokenNock: GithubUserTokenNockFunc;
@@ -39,8 +41,10 @@ declare global {
 			jiraNock: nock.Scope;
 			jiraStagingNock: nock.Scope;
 			githubNock: nock.Scope;
-			gheNock: nock.Scope;
 			gheUrl: string;
+			gheNock: nock.Scope;
+			gheApiUrl: string;
+			gheApiNock: nock.Scope;
 			githubUserTokenNock: GithubUserTokenNockFunc;
 			githubAppTokenNock: GithubAppTokenNockFunc;
 			gheUserTokenNock: GithubUserTokenNockFunc;
@@ -49,7 +53,6 @@ declare global {
 		}
 	}
 }
-
 
 const resetEnvVars = () => {
 	// Assign defaults to process.env, but don't override existing values if they
@@ -130,12 +133,14 @@ beforeEach(() => {
 	global.jiraNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
-	global.gheUrl = "https://github.mydomain.com/api/v3";
+	global.gheUrl = "https://github.mydomain.com";
 	global.gheNock = nock(global.gheUrl);
+	global.gheApiUrl = `${global.gheUrl}/api/v3`;
+	global.gheApiNock = nock(global.gheApiUrl);
 	global.githubUserTokenNock = githubUserToken(githubNock);
 	global.githubAppTokenNock = githubAppToken(githubNock);
-	global.gheUserTokenNock = githubUserToken(gheNock);
-	global.gheAppTokenNock = githubAppToken(gheNock);
+	global.gheUserTokenNock = githubUserToken(gheApiNock);
+	global.gheAppTokenNock = githubAppToken(gheApiNock);
 	global.mockSystemTime = (time: number | string | Date) => {
 		const mock = jest.isMockFunction(Date.now) ? mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());

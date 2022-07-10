@@ -36,21 +36,53 @@ const requestFailed = () => {
 	$("#gheServerBtnSpinner").hide();
 };
 
-const verifyGitHubServerUrl = (gheServerURL, installationId) => {
-  $("#jiraServerUrl__form :input").prop("disabled", true);
+const gheServerUrlErrors = {
+	GHE_ERROR_INVALID_URL: {
+		title: "Invalid URL",
+		message: "That URL doesn't look right. Please check and try again.",
+	},
+	GHE_ERROR_ENOTFOUND: {
+		title: "We couldn't verify this URL",
+		message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
+	},
+	GHE_SERVER_BAD_GATEWAY: {
+		title: "Something went wrong",
+		message: "We weren't able to complete your request. Please try again."
+	},
+	GHE_ERROR_DEFAULT: {
+		title: "Something went wrong",
+		message: "We ran into a hiccup while verifying your details. Please try again later."
+	}
+};
 
-  const csrf = document.getElementById('_csrf').value;
-	window.AP.context.getToken(function(token) {
+const handleGheUrlRequestErrors = (err) => {
+	requestFailed();
+	const { title, message } = err;
+	$(".jiraServerUrl__validationError").show();
+	$(".errorMessageBox__title").empty().append(title);
+	$(".errorMessageBox__message").empty().append(message);
+	title === gheServerUrlErrors.GHE_ERROR_ENOTFOUND.title && $(".errorMessageBox__link").show();
+}
+
+const mapErrorCode = (errorCode) => {
+	const errorMessage = gheServerUrlErrors[errorCode]
+	handleGheUrlRequestErrors(errorMessage);
+}
+
+
+const verifyGitHubServerUrl = (gheServerURL) => {
+	const csrf = document.getElementById("_csrf").value
+
+	AP.context.getToken(function(token) {
 		$.post("/jira/server-url", {
 				gheServerURL,
 				_csrf: csrf,
 				jwt: token,
-				jiraHost,
-				installationId
+				jiraHost
 			},
 			function(data) {
 				if (data.success) {
-					const pagePath = data.moduleKey;
+					const pagePath = data.appExists ? "github-list-apps-page" : "github-app-creation-page";
 					AP.navigator.go(
 						"addonmodule",
 						{
@@ -58,13 +90,8 @@ const verifyGitHubServerUrl = (gheServerURL, installationId) => {
 						}
 					);
 				} else {
-					console.error(`Failed to verify GHE server url. ${gheServerURL}`);
-					requestFailed();
-					// TODO - Update the error from backend and render the correct component
-          $(".jiraServerUrl__validationError").show();
+					mapErrorCode(data.errors[0].code);
 				}
-
-        $("#jiraServerUrl__form :input").prop("disabled", false);
       }
 		);
 	});
