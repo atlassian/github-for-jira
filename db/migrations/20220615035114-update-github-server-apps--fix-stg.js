@@ -4,10 +4,10 @@ const tableName = "GitHubServerApps";
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.addColumn('Installations', 'secrets', Sequelize.BLOB)
+    return queryInterface.addColumn(tableName, 'secrets', Sequelize.BLOB)
   },
 
   down: (queryInterface, Sequelize) => {
-    return queryInterface.removeColumn('Installations', 'secrets')
+    return queryInterface.removeColumn(tableName, 'secrets')
   }
 };
