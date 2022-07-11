@@ -2,41 +2,46 @@ import { Request, Response } from "express";
 import { WhereOptions } from "sequelize";
 import { Installation } from "models/installation";
 
-const MAX_BATCH_SIZE = 10;
-const MAX_TOTAL_LIMIT = 1_000;
+const MAX_BATCH_SIZE = 100;
+const MAX_TOTAL_LIMIT = 10_000;
 const SAFE_GUARD_LOOP_COUNT = 100;
 
 export const CryptorMigrationInstallationPost = async (req: Request, res: Response): Promise<void> => {
 
 	const startTime = Date.now();
 
-	req.log = req.log.child({
-		operation: "migrate-installations-shared-secret"
-	});
-
 	let batchSize = parseInt(req.query.batchSize as string);
 	let totalLimit = parseInt(req.query.totalLimit as string);
 	const jiraHost = req.query.jiraHost as string;
 
-	req.log.info(`Received to migration installation sharedSecret for`, { batchSize, totalLimit, jiraHost });
+	req.log = req.log.child({
+		operation: "migrate-installations-shared-secret",
+		batchSize,
+		totalLimit,
+		jiraHost
+	});
+
+	req.log.info(`Received to migration installation sharedSecret for`);
 	if (jiraHost) {
 		if (batchSize || totalLimit) {
-			req.log.warn("Invalid params", { batchSize, totalLimit, jiraHost });
+			req.log.warn("Invalid params");
 			res.status(400).send("Since 'jiraHost' is provided, we are only migrating one record for a time. Please do not specify 'batchSize' nor 'totalLimit'");
 			return;
 		}
 		//updating single entry, hard code it to one
 		totalLimit = 1;
 		batchSize = 1;
-		req.log.debug(`Found jiraHost, now hardcoded totalLimit and batchSize to 1`, { totalLimit, batchSize });
+		req.log.fields.batchSize = 1;
+		req.log.fields.totalLimit = 1;
+		req.log.debug(`Found jiraHost, now hardcoded totalLimit and batchSize to 1`);
 	} else {
 		if (isNaN(batchSize) || batchSize < 0 || batchSize > MAX_BATCH_SIZE) {
-			req.log.warn("Invalid params", { batchSize, totalLimit, jiraHost });
+			req.log.warn("Invalid params");
 			res.status(400).send(`Please provide a valid batchSize between 0 and ${MAX_BATCH_SIZE}, got ${batchSize}`);
 			return;
 		}
 		if (isNaN(totalLimit) || totalLimit < 0 || totalLimit > MAX_BATCH_SIZE) {
-			req.log.warn("Invalid params", { batchSize, totalLimit, jiraHost });
+			req.log.warn("Invalid params");
 			res.status(400).send(`Please provide a valid totalLimit between 0 and ${MAX_TOTAL_LIMIT}, got ${totalLimit}`);
 			return;
 		}
@@ -48,16 +53,15 @@ export const CryptorMigrationInstallationPost = async (req: Request, res: Respon
 	} else {
 		toMigrateWhere.encryptedSharedSecret = null;
 	}
-	req.log.debug(`Using where to find installations`, { toMigrateWhere });
 
-	req.log.info(`About to start migrating installation sharedSecret`);
+	req.log.info("About to start migrating installation sharedSecret");
 	let count = 0;
 	let safeGuardLoopCount = 0;
 	while (count < totalLimit) {
 
 		const batchStart = Date.now();
 
-		const loopInfo = { batchSize, totalLimit, count, safeGuardLoopCount };
+		const loopInfo = { count, safeGuardLoopCount };
 
 		//safe guard
 		if (safeGuardLoopCount++ > SAFE_GUARD_LOOP_COUNT) {
@@ -83,11 +87,12 @@ export const CryptorMigrationInstallationPost = async (req: Request, res: Respon
 			inst.encryptedSharedSecret = inst.sharedSecret;
 			//update db
 			await inst.save();
+			req.log.info("Successfully migrated sharedSecret to encryptedSharedSecret");
 			count++;
 		}
 
 		const batchElapsed = stopTimer(batchStart);
-		const msg = `Successfully processed a batch of size ${batchSize}, batch index: ${count}, spent ${batchElapsed}\n`;
+		const msg = `Successfully processed a batch of size ${batchSize}, next batch index: ${count}, spent ${batchElapsed}\n`;
 		req.log.info(msg);
 		res.write(msg);
 
@@ -96,9 +101,9 @@ export const CryptorMigrationInstallationPost = async (req: Request, res: Respon
 	req.log.debug("All processed, now fetching remaining...");
 	const remainingCount = await Installation.count({ where: { encryptedSharedSecret: null } });
 
-	const finalMsg = `Successfully processed all batches for jiraHost: ${jiraHost}, batchSize: ${batchSize}, totalLimit: ${totalLimit}, with ${remainingCount} remaining. Spent ${stopTimer(startTime)}`;
+	const finalMsg = `Successfully processed all batches batchSize: ${batchSize}, totalLimit: ${totalLimit}, with ${remainingCount} remaining. Spent ${stopTimer(startTime)}`;
 	req.log.info(finalMsg);
-	res.status(200).write(finalMsg);
+	res.status(200).write(finalMsg + (jiraHost ? ` for jiraHost ${jiraHost}` : ""));
 	res.end();
 
 };
