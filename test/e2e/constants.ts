@@ -18,13 +18,13 @@ const requiredEnvVars = [
 	"GITHUB_PASSWORD"
 ];
 
+// Ignore errors if the file is missing
 const e2eVars = config({ path: path.resolve(process.cwd(), ".env.e2e") });
-if (e2eVars.error) {
-	throw e2eVars.error;
-}
+
 const testVars = {
+	...process.env,
 	...envVars,
-	...process.env
+	...e2eVars.parsed
 } as TestVars;
 
 // Check to see if all required environment variables are set
