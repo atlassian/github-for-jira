@@ -24,7 +24,7 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 	};
 
 	context.log = context.log.child({
-		jiraHostName: jiraClient.baseURL,
+		jiraHost: jiraClient.baseURL,
 		gitHubInstallationId
 	});
 
