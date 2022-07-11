@@ -9,6 +9,7 @@ RUN apk add --update --upgrade libretls
 RUN apk add --update --upgrade openssl
 
 COPY . /app
+COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
 WORKDIR /app
 
 # Installing packages
