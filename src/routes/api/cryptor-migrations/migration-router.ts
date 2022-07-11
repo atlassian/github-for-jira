@@ -8,9 +8,9 @@ const SAFE_GUARD_LOOP_COUNT = 100;
 
 export const CryptorMigrationInstallationPost = async (req: Request, res: Response): Promise<void> => {
 
-	let batchSize = parseInt(req.params.batchSize);
-	let totalLimit = parseInt(req.params.totalLimit);
-	const jiraHost = req.params.jiraHost;
+	let batchSize = parseInt(req.query.batchSize as string);
+	let totalLimit = parseInt(req.query.totalLimit as string);
+	const jiraHost = req.query.jiraHost as string;
 
 	if (jiraHost) {
 		if (batchSize || totalLimit) {
