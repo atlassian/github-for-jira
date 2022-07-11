@@ -3,7 +3,8 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { getLogger } from "config/logger";
 
 export enum EncryptionSecretKeyEnum {
-	GITHUB_SERVER_APP = "github-server-app-secrets"
+	GITHUB_SERVER_APP = "github-server-app-secrets",
+	JIRA_INSTANCE_SECRETS = "jira-instance-secrets",
 }
 
 export type EncryptionContext = Record<string, string | number>;
@@ -44,8 +45,7 @@ export class EncryptionClient {
 			});
 			return response.data.cipherText;
 		} catch (e) {
-			e.message = e.message?.replace(plainText, "<censored>");
-			logger.warn(e, "Cryptor request failed");
+			logger.error("Cryptor encrypt request failed");
 			throw e;
 		}
 	}
@@ -58,7 +58,7 @@ export class EncryptionClient {
 			});
 			return response.data.plainText;
 		} catch (e) {
-			logger.warn(e, "Decryption request failed");
+			logger.error("Cryptor decrypt request failed");
 			throw e;
 		}
 	}
