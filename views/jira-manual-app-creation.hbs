@@ -29,7 +29,7 @@
   </head>
 
   <body class="aui-page-hybrid">
-  {{> navigation previousPageName="Jira Select App Creation" previousPagePath="github-app-creation-page" }}
+  {{> navigation previousPageName="Jira Select App Creation" }}
 
   <div class="jiraManualAppCreation">
 
@@ -72,7 +72,7 @@
         <div class="field-group">
           <label for="callback-url">Callback URL</label>
           <input class="text full-width-field" type="text" id="callback-url"
-                 name="callback-url" value="{{gitHubBaseUrl}}/github/callback/{{uuid}}"
+                 name="callback-url" value="{{githubBaseUrl}}/github/callback/{{uuid}}"
                  readonly
           />
         </div>
@@ -80,7 +80,7 @@
         <div class="field-group">
           <label for="setup-url">Setup URL</label>
           <input class="text full-width-field" type="text" id="setup-url"
-                 name="setup-url" value="{{gitHubBaseUrl}}/github/setup/{{uuid}}"
+                 name="setup-url" value="{{githubBaseUrl}}/github/setup/{{uuid}}"
                  readonly
           />
         </div>
@@ -88,7 +88,7 @@
         <div class="field-group">
           <label for="webhook-url">Webhook URL</label>
           <input class="text full-width-field" type="text" id="webhook-url"
-                 name="webhook-url" value="{{gitHubBaseUrl}}/github/webhook/{{uuid}}"
+                 name="webhook-url" value="{{githubBaseUrl}}/github/webhook/{{uuid}}"
                  readonly
           />
         </div>
@@ -164,7 +164,5 @@
       nonce="{{nonce}}"
     ></script>
   <script src="/public/js/jira-manual-app-creation.js" nonce="{{nonce}}"></script>
-  <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
-
   </body>
 </html>

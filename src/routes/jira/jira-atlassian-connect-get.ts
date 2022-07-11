@@ -87,14 +87,6 @@ const modules = {
 			},
 			url: "/jira/app-creation",
 			conditions: adminCondition
-		},
-		{
-			key: "github-manual-app-creation-page",
-			name: {
-				value: "GitHub Manual App Creation"
-			},
-			url: "/jira/manual-app-creation/?gitHubServerAppId={ac.ghsaId}",
-			conditions: adminCondition
 		}
 	],
 	webSections: [

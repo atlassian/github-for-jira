@@ -55,11 +55,8 @@ export const JiraServerUrlPost = async (
 			res.status(200).send({ success: true, appExists: true });
 			return;
 		}
-
 		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
 		await axios.get(gheServerURL);
-		// TODO: need to install the GithubServerApp and pass that id in the response
-		// This id needs to be passed in the frontend, as it is needed for GH Manual app page
 		res.status(200).send({ success: true, appExists: false });
 	} catch (err) {
 		req.log.error({ err, gheServerURL }, `Something went wrong`);
