@@ -109,13 +109,66 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 	return { installations, successfulConnections, failedConnections };
 };
 
+const JiraCloudConfiguration = async (res: Response, req: Request): Promise<object> => {
+	const { jiraHost, gitHubAppId, nonce } = res.locals;
+	const subscriptions = await Subscription.getAllForHost(jiraHost);
+	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
+
+	return {
+		host: jiraHost,
+		successfulConnections,
+		failedConnections,
+		hasConnections: !!installations.total,
+		APP_URL: process.env.APP_URL,
+		csrfToken: req.csrfToken(),
+		nonce,
+		handleNavigationClassName: "add-organization-link",
+		isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
+	};
+};
+
+const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request): Promise<object> => {
+	const { jiraHost, gitHubAppId, nonce } = res.locals;
+	const subscriptions = await Subscription.getAllForHost(jiraHost);
+	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
+	const gheServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) as GitHubAppServerAppWithConnections[];
+
+	// Grouping the list of servers by `gitHubBaseUrl`
+	const modifiedGHEServers = await Promise.all(chain(gheServers).groupBy("gitHubBaseUrl")
+		.map(async (value, key) => ({
+			gitHubBaseUrl: key,
+			// Fetching the subscriptions for each GH Server App
+			applications: await Promise.all(value.map(async (app) => {
+				const {
+					successfulConnections,
+					failedConnections
+				} = await getConnectionsAndInstallations(subscriptions, req, app.id);
+				app.successfulConnections = successfulConnections;
+				app.failedConnections = failedConnections;
+
+				return app;
+			}))
+		})).value());
+
+	return {
+		host: jiraHost,
+		gheServers: modifiedGHEServers,
+		ghCloud: { successfulConnections, failedConnections },
+		hasConnections: !!(installations.total || gheServers?.length),
+		APP_URL: process.env.APP_URL,
+		csrfToken: req.csrfToken(),
+		nonce,
+		handleNavigationClassName: "select-github-version-link"
+	};
+};
+
 export const JiraConfigurationGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const { jiraHost, gitHubAppId } = res.locals;
+		const { jiraHost } = res.locals;
 
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
@@ -125,55 +178,11 @@ export const JiraConfigurationGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		const subscriptions = await Subscription.getAllForHost(jiraHost);
-		const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
-
-		const gheServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) as GitHubAppServerAppWithConnections[];
-
-		// Grouping the list of servers by `gitHubBaseUrl`
-		const modifiedGHEServers = await Promise.all(chain(gheServers).groupBy("gitHubBaseUrl")
-			.map(async (value, key) => ({
-				gitHubBaseUrl: key,
-				// Fetching the subscriptions for each GH Server App
-				applications: await Promise.all(value.map(async (app) => {
-					const {
-						successfulConnections,
-						failedConnections
-					} = await getConnectionsAndInstallations(subscriptions, req, app.id);
-					app.successfulConnections = successfulConnections;
-					app.failedConnections = failedConnections;
-
-					return app;
-				}))
-			})).value());
-
-
-		const gheServerEnabled = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost);
-
-		const handleNavigationClassName = gheServerEnabled ? "select-github-version-link" : "add-organization-link";
-		const config = gheServerEnabled ? {
-			host: jiraHost,
-			gheServers: modifiedGHEServers,
-			ghCloud: { successfulConnections, failedConnections },
-			hasConnections: !!(installations.total || gheServers?.length),
-			APP_URL: process.env.APP_URL,
-			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
-			handleNavigationClassName
-		} : {
-			host: jiraHost,
-			successfulConnections,
-			failedConnections,
-			hasConnections: !!installations.total,
-			APP_URL: process.env.APP_URL,
-			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce,
-			handleNavigationClassName,
-			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
-		};
-
-		res.render(gheServerEnabled ? "jira-configuration-new.hbs" : "jira-configuration.hbs", config);
-
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
+			res.render("jira-configuration-new.hbs", await JiraCloudAndEnterpriseConfiguration(res, req));
+		} else {
+			res.render("jira-configuration.hbs", await JiraCloudConfiguration(res, req));
+		}
 		req.log.debug("Jira configuration rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira configuration: ${error}`));
