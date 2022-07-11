@@ -14,6 +14,7 @@ import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
+import { ApiPingGet } from "routes/api/api-ping-get";
 
 export const ApiRouter = Router();
 
@@ -98,6 +99,8 @@ ApiRouter.post(
 
 // Hash incoming values with GLOBAL_HASH_SECRET.
 ApiRouter.post("/hash", ApiHashPost);
+
+ApiRouter.get("/ping", ApiPingGet);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
