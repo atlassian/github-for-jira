@@ -1,0 +1,168 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+    <meta name="public-url" content="{{APP_URL}}" />
+    <title>{{title}}</title>
+    <link
+      rel="stylesheet"
+      href="/public/aui/aui-prototyping.css"
+      integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+    <link
+      rel="stylesheet"
+      href="/public/atlassian-ui-kit/bundle.css"
+      media="all"
+    />
+    <link rel="stylesheet" href="/public/css/global.css" media="all" />
+    <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
+    <link
+      rel="stylesheet"
+      href="/public/css/jira-manual-app-creation.css"
+      media="all"
+    />
+    <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+  </head>
+
+  <body class="aui-page-hybrid">
+  {{> navigation previousPageName="Jira Select App Creation" }}
+
+  <div class="jiraManualAppCreation">
+
+      <h1>Manual app Creation</h1>
+
+      <div>Learn how to <a href="#">manually set up a GitHub app</a>. All fields are required.</div>
+
+      <form id="jiraManualAppCreation__form" class="aui top-label" enctype="multipart/form-data">
+        <div class="jiraManualAppCreation__formTitle">
+          Details
+          <i class="aui-icon aui-iconfont-question-filled"></i>
+        </div>
+
+        <div class="field-group">
+          <label for="app-name">GitHub app name</label>
+          <input class="text full-width-field" type="text"
+                 data-aui-validation-field required
+                 id="app-name" name="app-name" />
+        </div>
+
+        <div class="field-group ">
+          <label for="app-id">GitHub app ID</label>
+          <input class="text full-width-field" type="text"
+                 data-aui-validation-field required
+                 id="app-id" name="app-id" />
+        </div>
+
+        <div class="field-group">
+          <label for="client-id">GitHub client ID</label>
+          <input class="text full-width-field" type="text"
+                 data-aui-validation-field required
+                 id="client-id" name="client-id" />
+        </div>
+
+        <div class="jiraManualAppCreation__formTitle">URLs</div>
+        <div class="jiraManualAppCreation__formSubTitle">
+          Copy and paste the following URLs into your GitHub Enterprise Server configuration. This is unique to your site.
+        </div>
+
+        <div class="field-group">
+          <label for="callback-url">Callback URL</label>
+          <input class="text full-width-field" type="text" id="callback-url"
+                 name="callback-url" value="{{githubBaseUrl}}/github/callback/{{uuid}}"
+                 readonly
+          />
+        </div>
+
+        <div class="field-group">
+          <label for="setup-url">Setup URL</label>
+          <input class="text full-width-field" type="text" id="setup-url"
+                 name="setup-url" value="{{githubBaseUrl}}/github/setup/{{uuid}}"
+                 readonly
+          />
+        </div>
+
+        <div class="field-group">
+          <label for="webhook-url">Webhook URL</label>
+          <input class="text full-width-field" type="text" id="webhook-url"
+                 name="webhook-url" value="{{githubBaseUrl}}/github/webhook/{{uuid}}"
+                 readonly
+          />
+        </div>
+
+        <div class="jiraManualAppCreation__formTitle">Secrets</div>
+        <div class="jiraManualAppCreation__formSubTitle">
+          Paste secrets from your GitHub Enterprise Server configuration.
+        </div>
+
+        <div class="field-group">
+          <label for="client-secret">GitHub client secret</label>
+          <input class="text full-width-field" type="password"
+                 data-aui-validation-field required
+                 id="client-secret" name="client-secret" />
+        </div>
+
+        <div class="field-group">
+          <label for="webhook-secret">Webhook secret</label>
+          <input class="text full-width-field" type="password"
+                 data-aui-validation-field required
+                 id="webhook-secret" name="webhook-secret" />
+        </div>
+
+        <div class="field-group">
+          <label>Private key</label>
+          <div class="jiraManualAppCreation__formFileDropArea">
+            <!--
+              Regex pattern for empty string or strings ending with .pem
+              The empty string pattern is added to avoid showing validation pattern error message when this field is empty.
+            -->
+            <input class="jiraManualAppCreation__formFileInput" id="private-key"
+                   data-aui-validation-pattern="^\s*$|^.*\.(pem|PEM)$"
+                   data-aui-validation-pattern-msg="We couldn&#x2019;t upload this file. Please try again."
+                   data-aui-validation-field
+                   required type="file">
+            <div class="jiraManualAppCreation__formNoFileUploaded">
+              <img class="jiraManualAppCreation__formFileIcon" src="/public/assets/file-upload.svg" alt="Upload">
+              <div>
+                <div class="jiraManualAppCreation__formFileMsg">Upload your private key</div>
+                <div class="jiraManualAppCreation__formFileSubMsg">Upload your generated private key from GitHub</div>
+              </div>
+              <div class="aui-button">Upload</div>
+            </div>
+            <div class="jiraManualAppCreation__formFileUploaded">
+              <div id="jiraManualAppCreation__uploadedFile"></div>
+              <span class="aui-icon aui-icon-small aui-iconfont-cross" id="jiraManualAppCreation__clearUploadedFile">Remove</span>
+            </div>
+          </div>
+          <div class="jiraManualAppCreation__formFileErrorBorder"></div>
+        </div>
+
+        <div class="jiraManualAppCreation__serverError">
+          {{> server-error-message-box
+              title="We couldn't create your GitHub app"
+              message="Please make sure all the details you entered are correct."
+          }}
+        </div>
+
+        <input type="submit" value="Next" class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary" />
+      </form>
+    </div>
+
+    <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+    <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+    <script
+      src="https://connect-cdn.atl-paas.net/all.js"
+      nonce="{{nonce}}"
+    ></script>
+    <script
+      src="/public/aui/aui-prototyping.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+      nonce="{{nonce}}"
+    ></script>
+  <script src="/public/js/jira-manual-app-creation.js" nonce="{{nonce}}"></script>
+  </body>
+</html>

@@ -263,7 +263,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				schemaVersion: "1.0",
 				deploymentSequenceNumber: 1234,
 				updateSequenceNumber: 123456,
-				issueKeys: ["ABC-1", "ABC-2"],
 				displayName: "deploy",
 				url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
 				description: "deploy",
@@ -280,6 +279,10 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					type: "production"
 				},
 				associations: [
+					{
+						associationType: "issueIdOrKeys",
+						values: ["ABC-1", "ABC-2"]
+					},
 					{
 						associationType: "commit",
 						values: [

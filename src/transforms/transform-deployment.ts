@@ -13,6 +13,8 @@ import { AxiosResponse } from "axios";
 import { deburr, isEmpty } from "lodash";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 
+const MAX_ASSOCIATIONS_PER_ENTITY = 500;
+
 // https://docs.github.com/en/rest/reference/repos#list-deployments
 const getLastSuccessfulDeployCommitSha = async(
 	owner: string,
@@ -139,31 +141,44 @@ export const mapEnvironment = (environment: string): string => {
 	return jiraEnv;
 };
 
-// Maps commit summaries to an array of a single association containing the commit keys (commit hash and repository id).
-// Returns undefined when there are no commit summaries to map.
-const mapCommitSummariesToAssociationArray = (
+// Maps issue ids and commit summaries to an array of associations (one for issue ids, and one for commits).
+// Returns undefined when there are no issue ids to map.
+const mapJiraIssueIdsAndCommitsToAssociationArray = (
+	issueIds: string[],
 	repositoryId: string,
 	commitSummaries?: CommitSummary[]
 ): JiraAssociation[] | undefined => {
 
-	if (!(commitSummaries && commitSummaries.length)) {
+	if (!(issueIds && issueIds.length)) {
 		return undefined;
 	}
 
-	const commitKeys = commitSummaries
-		.map((commitSummary) => {
-			return {
-				commitHash: commitSummary.sha,
-				repositoryId: repositoryId
-			};
-		});
-
-	return [
+	const associations: JiraAssociation[] = [
 		{
-			associationType: "commit",
-			values: commitKeys
+			associationType: "issueIdOrKeys",
+			values: issueIds
 		}
 	];
+
+	if (commitSummaries && commitSummaries.length) {
+		const maximumCommitsToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - issueIds.length;
+		const commitKeys = commitSummaries
+			.slice(0, maximumCommitsToSubmit)
+			.map((commitSummary) => {
+				return {
+					commitHash: commitSummary.sha,
+					repositoryId: repositoryId
+				};
+			});
+		associations.push(
+			{
+				associationType: "commit",
+				values: commitKeys
+			}
+		);
+	}
+
+	return associations;
 };
 
 export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger): Promise<JiraDeploymentData | undefined> => {
@@ -185,17 +200,22 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		);
 
 		const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
-		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`);
 
 		const shouldSendCommitsWithDeploymentEntities = await booleanFlag(BooleanFlags.SEND_RELATED_COMMITS_WITH_DEPLOYMENT_ENTITIES, false, jiraHost);
 		if (shouldSendCommitsWithDeploymentEntities) {
-			associations = mapCommitSummariesToAssociationArray(payload.repository.id.toString(), commitSummaries);
+			associations = mapJiraIssueIdsAndCommitsToAssociationArray(
+				jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
+				payload.repository.id.toString(),
+				commitSummaries
+			);
+		} else {
+			issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`);
 		}
 	} else {
 		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}`);
 	}
 
-	if (isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys) && isEmpty(associations)) {
 		return undefined;
 	}
 

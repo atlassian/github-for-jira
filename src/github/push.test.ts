@@ -20,6 +20,8 @@ import moreThanTenFiles from "fixtures/more-than-10-files.json";
 import pushNoIssues from "fixtures/push-no-issues.json";
 import pushNoIssuekeyCommits from "fixtures/push-no-issuekey-commits.json";
 import pushMergeCommit from "fixtures/push-merge-commit.json";
+import { shouldTagBackfillRequests } from "config/feature-flags";
+import { mocked } from "ts-jest/utils";
 
 const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
 	payload: createJobData(payload, jiraHost),
@@ -29,10 +31,13 @@ const createMessageProcessingContext = (payload, jiraHost: string): Context<Push
 	lastAttempt: false
 });
 
+jest.mock("config/feature-flags");
+
 describe("Push Webhook", () => {
 
 	let app: Application;
 	beforeEach(async () => {
+		mocked(shouldTagBackfillRequests).mockResolvedValue(true);
 		app = await createWebhookApp();
 		const clientKey = "client-key";
 		await Installation.create({
@@ -66,6 +71,7 @@ describe("Push Webhook", () => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories: [
 					{
 						name: "test-repo-name",
@@ -130,6 +136,7 @@ describe("Push Webhook", () => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories: [
 					{
 						name: "test-repo-name",
@@ -261,6 +268,7 @@ describe("Push Webhook", () => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories: [
 					{
 						name: "test-repo-name",
@@ -324,6 +332,7 @@ describe("Push Webhook", () => {
 			// flag property should not be present
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories: [
 					{
 						name: "test-repo-name",
@@ -404,6 +413,7 @@ describe("Push Webhook", () => {
 			// flag property should not be present
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories: [
 					{
 						name: "test-repo-name",
