@@ -4,7 +4,7 @@ import axios from "axios";
 /**
  * Makes a call to the URL passed into the "url" field of the body JSON.
  */
-export const ApiPingGet = async (req: Request, res: Response): Promise<void> => {
+export const ApiPingPost = async (req: Request, res: Response): Promise<void> => {
 
 	const { data } = req.body;
 
