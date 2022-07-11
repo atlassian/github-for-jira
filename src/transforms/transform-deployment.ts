@@ -170,12 +170,14 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 					repositoryId: repositoryId
 				};
 			});
-		associations.push(
-			{
-				associationType: "commit",
-				values: commitKeys
-			}
-		);
+		if (commitKeys.length) {
+			associations.push(
+				{
+					associationType: "commit",
+					values: commitKeys
+				}
+			);
+		}
 	}
 
 	return associations;
