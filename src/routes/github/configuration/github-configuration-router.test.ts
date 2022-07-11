@@ -31,7 +31,9 @@ describe("Github Configuration", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "abc123",
-			secrets: "def234",
+			//TODO: why? Comment this out make test works?
+			//setting both fields make sequelize confused as it internally storage is just the "secrets"
+			//secrets: "def234",
 			sharedSecret: "ghi345"
 		});
 
