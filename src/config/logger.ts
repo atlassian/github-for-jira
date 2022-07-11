@@ -1,25 +1,9 @@
 import Logger, { createLogger, INFO, levelFromName, stdSerializers } from "bunyan";
-import bformat from "bunyan-format";
-import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
+import { RawLogStream } from "utils/logger-utils";
 import { Request } from "express";
 import { AxiosResponse } from "axios";
-import { createHashWithSharedSecret } from "utils/encryption";
 
-// For any Micros env we want the logs to be in JSON format.
-// Otherwise, if local development, we want human readable logs.
-const outputMode = process.env.MICROS_ENV ? "json" : "short";
-
-// We cannot redefine the stream on middleware level (when we create the child logger),
-// therefore we have to do it here, on global level, for all loggers :(
-// And there's no way to disable those for webhooks, see:
-//   https://github.com/probot/probot/issues/1577
-//   https://github.com/probot/probot/issues/598
-//
 export const FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME = "frontend-log-middleware";
-// add levelInString to include DEBUG | ERROR | INFO | WARN
-const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME,
-	bformat({ outputMode, levelInString: true })
-);
 
 const responseSerializer = (res: AxiosResponse) => ({
 	...stdSerializers.res(res),
@@ -43,22 +27,6 @@ const errorSerializer = (err) => err && {
 	request: requestSerializer(err.request)
 };
 
-const hashSerializer = (data: any): string | undefined => {
-	if (data === undefined || data == null) {
-		return undefined;
-	}
-	return createHashWithSharedSecret(data);
-};
-
-const sensitiveDataSerializers = (): Logger.Serializers => ({
-	jiraHost: hashSerializer,
-	orgName: hashSerializer,
-	repoName: hashSerializer,
-	userGroup: hashSerializer,
-	aaid: hashSerializer,
-	username: hashSerializer
-});
-
 const logLevel = process.env.LOG_LEVEL || "info";
 const globalLoggingLevel = levelFromName[logLevel] || INFO;
 
@@ -69,9 +37,17 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	(probotLogger as any).streams.pop();
 
 	// Replace with formatOut stream
+	// Add standard stream
 	probotLogger.addStream({
-		type: "stream",
-		stream: LOG_STREAM,
+		type: "raw",
+		stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
+		closeOnExit: false,
+		level: globalLoggingLevel
+	});
+	// add unsafe stream
+	probotLogger.addStream({
+		type: "raw",
+		stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, true),
 		closeOnExit: false,
 		level: globalLoggingLevel
 	});
@@ -81,7 +57,20 @@ const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger
 	return createLogger(
 		{
 			name,
-			stream: LOG_STREAM,
+			streams: [
+				{
+					type: "raw",
+					stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
+					closeOnExit: false, // todo whats this do
+					level: globalLoggingLevel
+				},
+				{
+					type: "raw",
+					stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, true),
+					closeOnExit: false,
+					level: globalLoggingLevel
+				}
+			],
 			level: globalLoggingLevel,
 			serializers: {
 				err: errorSerializer,
@@ -94,16 +83,8 @@ const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger
 
 export const getLogger = (name: string, fields?: Record<string, unknown>): Logger => {
 	const logger = createNewLogger(name);
-	logger.addSerializers(sensitiveDataSerializers());
 	return logger.child({ ...fields });
 };
-
-// This will log data to a restricted environment [env]-unsafe and not serialize sensitive data
-export const getUnsafeLogger = (name: string, fields?: Record<string, unknown>): Logger => {
-	const logger = createNewLogger(name, { env_suffix: "unsafe" });
-	return logger.child({ ...fields });
-};
-
 
 export const cloneAllowedLogFields = (fields: Record<string, any>) => {
 	const allowedFields = { ...fields };
