@@ -55,6 +55,7 @@ export const JiraServerUrlPost = async (
 			res.status(200).send({ success: true, appExists: true });
 			return;
 		}
+
 		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
 		await axios.get(gheServerURL);
 		res.status(200).send({ success: true, appExists: false });
