@@ -12,15 +12,18 @@ interface GheServerUrlErrors {
 	[key: string | number]: MessageAndCode;
 }
 
+const GHE_ERROR_ENOTFOUND = {
+	errorCode: "GHE_ERROR_ENOTFOUND",
+	message: "Request to URL failed"
+};
+
 export const gheServerUrlErrors: GheServerUrlErrors = {
 	invalidUrl: {
 		errorCode: "GHE_ERROR_INVALID_URL",
 		message: "Invalid URL"
 	},
-	ENOTFOUND: {
-		errorCode: "GHE_ERROR_ENOTFOUND",
-		message: "Request to URL failed"
-	},
+	ENOTFOUND: GHE_ERROR_ENOTFOUND,
+	403: GHE_ERROR_ENOTFOUND,
 	502: {
 		errorCode: "GHE_SERVER_BAD_GATEWAY",
 		message: "Bad gateway"
