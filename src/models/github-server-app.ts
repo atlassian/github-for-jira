@@ -76,7 +76,7 @@ export class GitHubServerApp extends EncryptedModel {
 	 * @param {{installationId: number}} installationId
 	 * @returns {GitHubServerApp[]}
 	 */
-	static async getForInstallationId(
+	static async findForInstallationId(
 		installationId: number
 	): Promise<GitHubServerApp[] | null> {
 		if (!installationId) {

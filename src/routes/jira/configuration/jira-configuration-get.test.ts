@@ -5,9 +5,9 @@ import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
-import { booleanFlag } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { getLogger } from "config/logger";
-import { mocked } from "ts-jest/utils";
+import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
 
@@ -70,7 +70,11 @@ describe("Jira Configuration Suite", () => {
 
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
-		mocked(booleanFlag).mockResolvedValue(true);
+		when(booleanFlag).calledWith(
+			BooleanFlags.GHE_SERVER,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
 		githubNock
 			.get(`/app/installations/15`)
 			.reply(200, singleInstallation);

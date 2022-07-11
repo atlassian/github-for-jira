@@ -11,6 +11,30 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isGitHubCloudApp } from "~/src/util/jira-utils";
 import { GitHubServerApp } from "models/github-server-app";
 
+interface FailedConnection {
+	id: number;
+	deleted: boolean;
+	orgName?: string;
+}
+
+interface SuccessfulConnection extends AppInstallation {
+	isGlobalInstall: boolean;
+}
+
+interface ConnectionsAndInstallations {
+	successfulConnections: SuccessfulConnection[]
+	failedConnections: FailedConnection[]
+	installations: InstallationResults
+}
+
+export interface InstallationResults {
+	fulfilled: AppInstallation[];
+	rejected: FailedAppInstallation[];
+	total: number;
+}
+
+type GitHubAppServerAppWithConnections = GitHubServerApp & ConnectionsAndInstallations;
+
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
 		case "ACTIVE":
@@ -21,12 +45,6 @@ const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 			return syncStatus;
 	}
 };
-
-export interface InstallationResults {
-	fulfilled: AppInstallation[];
-	rejected: FailedAppInstallation[];
-	total: number;
-}
 
 export const getInstallations = async (subscriptions: Subscription[], log: Logger, gitHubAppId?: number): Promise<InstallationResults> => {
 	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, log, gitHubAppId)));
@@ -68,7 +86,7 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 	}
 };
 
-const getConnectionsAndInstallations = async (subscriptions, req, id) => {
+const getConnectionsAndInstallations = async (subscriptions: Subscription[], req: Request, id: number): Promise<ConnectionsAndInstallations> => {
 	const installations = await getInstallations(subscriptions, req.log, id);
 
 	const failedConnections: FailedConnection[] = await Promise.all(
@@ -91,16 +109,6 @@ const getConnectionsAndInstallations = async (subscriptions, req, id) => {
 	return { installations, successfulConnections, failedConnections };
 };
 
-interface FailedConnection {
-	id: number;
-	deleted: boolean;
-	orgName?: string;
-}
-
-interface SuccessfulConnection extends AppInstallation {
-	isGlobalInstall: boolean;
-}
-
 export const JiraConfigurationGet = async (
 	req: Request,
 	res: Response,
@@ -120,7 +128,7 @@ export const JiraConfigurationGet = async (
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
 		const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
 
-		const gheServers = await GitHubServerApp.getForInstallationId(res.locals.installation.id);
+		const gheServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) as GitHubAppServerAppWithConnections[];
 
 		// Grouping the list of servers by `gitHubBaseUrl`
 		const modifiedGHEServers = await Promise.all(chain(gheServers).groupBy("gitHubBaseUrl")
@@ -132,8 +140,8 @@ export const JiraConfigurationGet = async (
 						successfulConnections,
 						failedConnections
 					} = await getConnectionsAndInstallations(subscriptions, req, app.id);
-					app["successfulConnections"] = successfulConnections;
-					app["failedConnections"] = failedConnections;
+					app.successfulConnections = successfulConnections;
+					app.failedConnections = failedConnections;
 
 					return app;
 				}))
