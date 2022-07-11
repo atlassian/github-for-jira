@@ -1,6 +1,6 @@
 import { GitHubServerApp } from "models/github-server-app";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
+import { getInstallationId } from "../github/client/installation-id";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
@@ -87,8 +87,8 @@ export async function createAppClient(logger: Logger, jiraHost: string, gitHubAp
 export async function createInstallationClient(gitHubInstallationId: number, jiraHost: string, logger: Logger): Promise<GitHubInstallationClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromGitHubInstallationId(gitHubInstallationId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-		? new GitHubInstallationClient(getCloudInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, gitHubClientConfig.baseUrl)
-		: new GitHubInstallationClient(getCloudInstallationId(gitHubInstallationId), logger);
+		? new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, gitHubClientConfig.baseUrl)
+		: new GitHubInstallationClient(getInstallationId(gitHubInstallationId), logger);
 }
 
 /**

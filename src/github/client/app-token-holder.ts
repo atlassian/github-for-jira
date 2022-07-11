@@ -1,40 +1,12 @@
 import { AsymmetricAlgorithm, encodeAsymmetric } from "atlassian-jwt";
 import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 
-//TODO: Remove Probot dependency to find privateKey
-import * as PrivateKey from "probot/lib/private-key";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
-import { Subscription } from "~/src/models/subscription";
-import { GitHubServerApp } from "~/src/models/github-server-app";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { defaultKeyLocator } from "~/src/github/client/default-key-locator";
 
 export type KeyLocator = (installationId: InstallationId) => Promise<string>;
 
-/**
- * By default, we just look for a key in the `PRIVATE_KEY` env var.
- */
-export const cloudKeyLocator: KeyLocator = () => {
-	const privateKey = PrivateKey.findPrivateKey() || "";
-	return Promise.resolve(privateKey);
-};
-
-/**
- * Look for a private key in GitHubServerApp table
- */
-export const gheKeyLocator = async (gitHubInstallation: InstallationId) => {
-	const subscription = await Subscription.findOneForGitHubInstallationId(gitHubInstallation.installationId);
-	if (await booleanFlag(BooleanFlags.GHE_SERVER, false, subscription?.jiraHost)) {
-		const gitHubServerApp = subscription?.gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(subscription?.gitHubAppId);
-		// No github app found
-		if (!gitHubServerApp) {
-			return cloudKeyLocator(gitHubInstallation);
-		}
-		return gitHubServerApp.privateKey;
-	} else {
-		return cloudKeyLocator(gitHubInstallation);
-	}
-};
 
 /**
  * Holds app tokens for all GitHub apps that are connected and creates new tokens if necessary.
@@ -52,7 +24,7 @@ export class AppTokenHolder {
 
 	constructor(keyLocator?: KeyLocator) {
 		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
-		this.privateKeyLocator = keyLocator || gheKeyLocator;
+		this.privateKeyLocator = keyLocator || defaultKeyLocator;
 	}
 
 	public static getInstance(): AppTokenHolder {
