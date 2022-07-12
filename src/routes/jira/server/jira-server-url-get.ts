@@ -8,7 +8,7 @@ export const JiraServerUrlGet = async (
 	try {
 		req.log.debug("Received Jira server url page request");
 
-		res.render("jira-manual-app-creation.hbs", {
+		res.render("jira-server-url.hbs", {
 			previousPagePath: "github-select-version-page",
 			csrfToken: req.csrfToken(),
 			installationId: res.locals.installation.id
