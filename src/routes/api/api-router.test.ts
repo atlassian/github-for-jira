@@ -335,7 +335,7 @@ describe("API Router", () => {
 
 			it("Should fail on missing url", () => {
 				return supertest(app)
-					.get("/api/ping")
+					.post("/api/ping")
 					.set("host", "127.0.0.1")
 					.set("X-Slauth-Mechanism", "slauthtoken")
 					.expect(400)
@@ -346,7 +346,7 @@ describe("API Router", () => {
 
 			it("Should return error on failed ping", () => {
 				return supertest(app)
-					.get("/api/ping")
+					.post("/api/ping")
 					.set("host", "127.0.0.1")
 					.set("X-Slauth-Mechanism", "slauthtoken")
 					.send({ data: { url: "http://github-does-not-exist.internal.atlassian.com" } })
@@ -359,7 +359,7 @@ describe("API Router", () => {
 			// skipped out because I just used it as a manual test and don't want to make real calls in CI
 			it.skip("Should return 200 on successful ping", () => {
 				return supertest(app)
-					.get("/api/ping")
+					.post("/api/ping")
 					.set("host", "127.0.0.1")
 					.set("X-Slauth-Mechanism", "slauthtoken")
 					.send({ data: { url: "https://google.com" } })
