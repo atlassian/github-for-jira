@@ -6,7 +6,6 @@ import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { Subscription } from "models/subscription";
-import { getLogger } from "config/logger";
 import { envVars } from "~/src/config/env";
 import * as PrivateKey from "probot/lib/private-key";
 
@@ -20,8 +19,6 @@ export interface GitHubClientConfig {
 	appId: number;
 	privateKey: string;
 }
-
-const logger = getLogger("get-github-client-config");
 
 export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number) {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
@@ -38,28 +35,21 @@ const getGitHubClientConfigFromGitHubInstallationId = async (gitHubInstallationI
 
 const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): Promise<GitHubClientConfig> => {
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
-	const gitHubCloudConfig = {
+	if (gitHubServerApp) {
+		return	{
+			hostname: gitHubServerApp.gitHubBaseUrl,
+			baseUrl: gitHubServerApp.gitHubBaseUrl,
+			appId: gitHubServerApp.appId,
+			privateKey: await gitHubServerApp.decrypt("privateKey")
+		};
+	}
+	// cloud config
+	return {
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_API_BASEURL,
 		appId: parseInt(envVars.APP_ID),
 		privateKey: PrivateKey.findPrivateKey() || ""
 	};
-
-	if (!gitHubServerApp) {
-		logger.info("No GitHub server app found. Defaulting to cloud config.");
-		return gitHubCloudConfig;
-	}
-
-	const gitHubServerAppBaseUrl = gitHubServerApp.gitHubBaseUrl;
-
-	return gitHubServerAppBaseUrl
-		? {
-			hostname: gitHubServerAppBaseUrl,
-			baseUrl: gitHubServerAppBaseUrl,
-			appId: gitHubServerApp.appId,
-			privateKey: await gitHubServerApp.decrypt("privateKey")
-		}
-		: gitHubCloudConfig;
 };
 
 export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
