@@ -68,6 +68,9 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 	// Grab branch names or PR titles
 	const entityTitles: string[] = [];
 	if (action === "closed_by_user" || action === "reopened_by_user") {
+		if (!alert.instances?.length) {
+			return undefined;
+		}
 		// These are manual operations done by users and are not associated to a specific Issue.
 		// The webhook contains ALL instances of this alert, so we need to grab the ref from each instance.
 		entityTitles.push(...await Promise.all(alert.instances.map(
