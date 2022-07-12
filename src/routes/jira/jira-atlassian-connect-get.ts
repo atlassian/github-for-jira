@@ -70,6 +70,7 @@ const modules = {
 				value: "GitHub Select Version"
 			},
 			url: "/jira/select-version",
+			location: "none",
 			conditions: adminCondition
 		},
 		{
@@ -78,6 +79,7 @@ const modules = {
 				value: "GitHub Server Url"
 			},
 			url: "/jira/server-url",
+			location: "none",
 			conditions: adminCondition
 		},
 		{
@@ -86,6 +88,7 @@ const modules = {
 				value: "GitHub App Creation"
 			},
 			url: "/jira/app-creation",
+			location: "none",
 			conditions: adminCondition
 		}
 	],

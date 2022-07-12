@@ -21,7 +21,7 @@ app.post("/cryptor/encrypt/*", (req, res) => {
 		return;
 	}
 	const ret = {
-		cipherText: plainText.split('').reverse().join(''),
+		cipherText: `encrypted:${plainText}`,
 		originPlainText: plainText
 	};
 	console.log('-- cyrptor mock encrypt', {ret});
@@ -37,8 +37,12 @@ app.post("/cryptor/decrypt", (req, res) => {
 		res.status(400).send("Missing cipherText in body");
 		return;
 	}
+	if (!cipherText.startsWith("encrypted:")) {
+		res.status(400).end("Cipher text should startsWith 'encrypted:' in this mock cryptor");
+		return;
+	}
 	const ret = {
-		plainText: cipherText.split('').reverse().join(''),
+		plainText: cipherText.substring("encrypted:".length),
 		originCipherText: cipherText
 	};
 	console.log('-- cyrptor mock decrypt', {ret});

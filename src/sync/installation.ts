@@ -296,14 +296,21 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			try {
 				switch (task) {
 					case "build":
-						await jiraClient.workflow.submit(taskPayload.jiraPayload);
+						await jiraClient.workflow.submit(taskPayload.jiraPayload, {
+							preventTransitions: true,
+							operationType: "BACKFILL"
+						});
 						break;
 					case "deployment":
-						await jiraClient.deployment.submit(taskPayload.jiraPayload);
+						await jiraClient.deployment.submit(taskPayload.jiraPayload, {
+							preventTransitions: true,
+							operationType: "BACKFILL"
+						});
 						break;
 					default:
 						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, {
-							preventTransitions: true
+							preventTransitions: true,
+							operationType: "BACKFILL"
 						});
 				}
 			} catch (err) {
