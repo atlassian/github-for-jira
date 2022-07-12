@@ -7,7 +7,7 @@ export const issueCommentWebhookHandler = async (
 	context: WebhookContext,
 	jiraClient,
 	util,
-	githubInstallationId: number
+	gitHubInstallationId: number
 ): Promise<void> => {
 	const {
 		comment,
@@ -16,9 +16,14 @@ export const issueCommentWebhookHandler = async (
 			owner: { login: owner }
 		}
 	} = context.payload;
-	let linkifiedBody;
 
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
+	context.log = context.log.child({
+		gitHubInstallationId,
+		jiraHost: jiraClient.baseURL
+	});
+
+	let linkifiedBody;
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	try {
