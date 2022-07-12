@@ -39,6 +39,7 @@ Object {
           },
         ],
         "key": "github-select-version-page",
+        "location": "none",
         "name": Object {
           "value": "GitHub Select Version",
         },
@@ -51,6 +52,7 @@ Object {
           },
         ],
         "key": "github-server-url-page",
+        "location": "none",
         "name": Object {
           "value": "GitHub Server Url",
         },
@@ -63,6 +65,7 @@ Object {
           },
         ],
         "key": "github-app-creation-page",
+        "location": "none",
         "name": Object {
           "value": "GitHub App Creation",
         },

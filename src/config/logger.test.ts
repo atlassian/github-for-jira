@@ -1,6 +1,6 @@
 import { getLogger } from "config/logger";
 import { Stream, RingBuffer } from "bunyan";
-describe('logger behaviour', () => {
+describe("logger behaviour", () => {
 
 	let ringBuffer: RingBuffer;
 
@@ -8,18 +8,18 @@ describe('logger behaviour', () => {
 		ringBuffer = new RingBuffer({ limit: 5 });
 	});
 
-	it.skip('should serialize sensitive data as part of getlogger', () => {
-		const logger = getLogger('name', { jiraHost: "CATS" });
-		expect(logger.fields.jiraHost).toBe("8fc7392715b5a41d57eae37981e736cdca9165861b9ad0a79b4114a0b2e889e2");
-	});
+	// it.skip('should serialize sensitive data as part of getlogger', () => {
+	// 	const logger = getLogger('name', { jiraHost: "CATS" });
+	// 	expect(logger.fields.jiraHost).toBe("8fc7392715b5a41d57eae37981e736cdca9165861b9ad0a79b4114a0b2e889e2");
+	// });
 
-	it.skip('should serialize sensitive data as part of logging action', () => {
-		const logger = getLogger('name', { orgName: "CATS" });
-		logger.addStream({ stream: ringBuffer as Stream });
-		logger.info({ jiraHost: "CATS" },"Good day");
+	// it.skip('should serialize sensitive data as part of logging action', () => {
+	// 	const logger = getLogger('name', { orgName: "CATS" });
+	// 	logger.addStream({ stream: ringBuffer as Stream });
+	// 	logger.info({ jiraHost: "CATS" },"Good day");
 
-		expect(JSON.parse(ringBuffer.records[0]).jiraHost).toEqual("8fc7392715b5a41d57eae37981e736cdca9165861b9ad0a79b4114a0b2e889e2");
-	});
+	// 	expect(JSON.parse(ringBuffer.records[0]).jiraHost).toEqual("8fc7392715b5a41d57eae37981e736cdca9165861b9ad0a79b4114a0b2e889e2");
+	// });
 
 	it('should write out logging action text to msg stream', () => {
 		const logger = getLogger('name');

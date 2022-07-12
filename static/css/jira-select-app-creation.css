@@ -39,6 +39,7 @@
     padding: 2em 1.5em;
     position: relative;
     width: 41.5%;
+    border: 2px solid transparent;
 }
 
 .jiraSelectAppCreation__options__card:hover {

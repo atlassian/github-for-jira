@@ -39,6 +39,7 @@ services:
       CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "random-string" #has to match the one in env.test
     ports:
       - "26272:26272"
+
   app:
     depends_on:
       - redis

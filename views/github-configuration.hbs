@@ -21,7 +21,7 @@
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
 
-<body class="px-3 py-6">
+<body>
 <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
 <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
 <input
@@ -31,14 +31,7 @@
   value="{{clientKey}}"
 />
 
-<section class="gitHubConfiguration__logout__container">
-  <p class="gitHubConfiguration__logout__account">GitHub Account:
-    <span class="gitHubConfiguration__logout__name">{{login}}</span></p>
-  <p
-    class="gitHubConfiguration__logout__link logout-link"
-    target="_blank"
-  >Logout</p>
-</section>
+{{> navigation previousPageName="Jira Configuration" closeOnBack="true" }}
 
 <section class="gitHubConfiguration">
   <div class="headerImage">
@@ -201,6 +194,7 @@
   </div>
 
 </section>
+<script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
 <script src="/public/js/github-configuration.js" nonce="{{nonce}}"></script>
 <script
   src="/public/aui/aui-prototyping.js"

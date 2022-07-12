@@ -23,9 +23,14 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	const { installationId, jiraHost } = context.payload;
 	context.log = context.log.child({ installationId, jiraHost });
 
+	const backfillData = { ...context.payload };
+	if (!backfillData.startTime) {
+		backfillData.startTime = new Date().toISOString();
+	}
+
 	try {
 		const processor = await processInstallation(workerApp);
-		await processor(context.payload, sentry, context.log);
+		await processor(backfillData, sentry, context.log);
 	} catch (err) {
 		sentry.setExtra("job", {
 			id: context.message.MessageId,

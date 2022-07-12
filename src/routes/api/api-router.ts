@@ -13,7 +13,8 @@ import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
-import { CryptorHttpClient } from "utils/cryptor-http-client";
+import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
+import { ApiPingPost } from "routes/api/api-ping-post";
 
 export const ApiRouter = Router();
 
@@ -99,6 +100,8 @@ ApiRouter.post(
 // Hash incoming values with GLOBAL_HASH_SECRET.
 ApiRouter.post("/hash", ApiHashPost);
 
+ApiRouter.post("/ping", ApiPingPost);
+
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost",
@@ -120,16 +123,16 @@ How to invoke:
 `micros_github-for-jira` env=ddev "<ID value from previous request>"
 
  */
-ApiRouter.use("/cryptor", async (req: Request, resp: Response) => {
+ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 	try {
 		let data = "";
 		for (let i = 0; i < 10; i++) {
 			data = data + "-" + Math.floor((Math.random() * 10));
 		}
 
-		const encrypted = await CryptorHttpClient.encrypt(CryptorHttpClient.GITHUB_SERVER_APP_SECRET, data, req.log);
+		const encrypted = await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, data);
 
-		await CryptorHttpClient.decrypt(encrypted, req.log);
+		await EncryptionClient.decrypt(encrypted);
 		resp.status(200).send("ok");
 	} catch (_) {
 		resp.status(500).send("fail");
