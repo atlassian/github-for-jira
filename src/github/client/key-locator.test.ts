@@ -2,6 +2,7 @@ import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { existsSync, readFileSync } from "fs";
 import { mocked } from "ts-jest/utils";
+import { envVars } from "~/src/config/env";
 
 jest.mock("config/feature-flags");
 jest.mock("fs");
@@ -37,15 +38,12 @@ describe("key-locator", () => {
 	});
 
 	it("should return cloud app private key using PRIVATE_KEY", async () => {
-		const envPrivateKey = process.env.PRIVATE_KEY;
-		const envPrivateKeyPath = process.env.PRIVATE_KEY_PATH;
-		process.env.PRIVATE_KEY = "cloud-private-key";
-		process.env.PRIVATE_KEY_PATH = undefined;
+		const envPrivateKey = envVars.PRIVATE_KEY;
+		envVars.PRIVATE_KEY = "cloud-private-key";
 
 		const privateKey = await keyLocator();
 		expect(privateKey).toBe("cloud-private-key");
-		process.env.PRIVATE_KEY = envPrivateKey;
-		process.env.PRIVATE_KEY_PATH = envPrivateKeyPath;
+		envVars.PRIVATE_KEY = envPrivateKey;
 
 	});
 
