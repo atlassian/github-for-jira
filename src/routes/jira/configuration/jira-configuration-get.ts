@@ -8,7 +8,6 @@ import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { isGitHubCloudApp } from "~/src/util/jira-utils";
 import { GitHubServerApp } from "models/github-server-app";
 
 interface FailedConnection {
@@ -25,6 +24,28 @@ interface ConnectionsAndInstallations {
 	successfulConnections: SuccessfulConnection[]
 	failedConnections: FailedConnection[]
 	installations: InstallationResults
+}
+
+interface GitHubCloudObj {
+	successfulConnections: SuccessfulConnection[]
+	failedConnections: FailedConnection[]
+}
+
+interface GitHubServerObj {
+	gitHubBaseUrl: string
+	applications: GitHubAppServerAppWithConnections[]
+}
+
+interface ViewConfiguration {
+	host: string
+	successfulConnections?: SuccessfulConnection[]
+	failedConnections?: FailedConnection[]
+	ghCloud?: GitHubCloudObj
+	gheServers?: GitHubServerObj[]
+	hasConnections: boolean
+	APP_URL?: string
+	csrfToken: string
+	nonce: string
 }
 
 export interface InstallationResults {
@@ -86,8 +107,8 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 	}
 };
 
-const getConnectionsAndInstallations = async (subscriptions: Subscription[], req: Request, id: number): Promise<ConnectionsAndInstallations> => {
-	const installations = await getInstallations(subscriptions, req.log, id);
+const getConnectionsAndInstallations = async (subscriptions: Subscription[], req: Request, githubAppId?: number): Promise<ConnectionsAndInstallations> => {
+	const installations = await getInstallations(subscriptions, req.log, githubAppId);
 
 	const failedConnections: FailedConnection[] = await Promise.all(
 		installations.rejected.map(async (installation) => {
@@ -109,10 +130,10 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 	return { installations, successfulConnections, failedConnections };
 };
 
-const JiraCloudConfiguration = async (res: Response, req: Request): Promise<object> => {
-	const { jiraHost, gitHubAppId, nonce } = res.locals;
+const JiraCloudConfiguration = async (res: Response, req: Request): Promise<ViewConfiguration> => {
+	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
+	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
 
 	return {
 		host: jiraHost,
@@ -121,13 +142,11 @@ const JiraCloudConfiguration = async (res: Response, req: Request): Promise<obje
 		hasConnections: !!installations.total,
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
-		nonce,
-		handleNavigationClassName: "add-organization-link",
-		isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
+		nonce
 	};
 };
 
-const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request): Promise<object> => {
+const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request): Promise<ViewConfiguration> => {
 	const { jiraHost, gitHubAppId, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
@@ -157,8 +176,7 @@ const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request):
 		hasConnections: !!(installations.total || gheServers?.length),
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
-		nonce,
-		handleNavigationClassName: "select-github-version-link"
+		nonce
 	};
 };
 
