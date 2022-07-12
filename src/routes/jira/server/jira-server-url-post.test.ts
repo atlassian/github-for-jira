@@ -123,13 +123,31 @@ describe("Jira Server Url Suite", () => {
 				});
 		});
 
-		it("should send error message when unable to make a request to URL", async () => {
+		it("should send error message when unable to make a request to URL with ENOTFOUND response", async () => {
 			gheNock.get("/").replyWithError({
 				message: "getaddrinfo ENOTFOUND github.internal.atlassian.com",
 				name: "Error",
 				code: "ENOTFOUND",
 				status: null
 			});
+
+			return supertest(app)
+				.post("/jira/server-url")
+				.send({
+					installationId: installation.id,
+					jiraHost,
+					jwt,
+					gheServerURL: gheUrl
+				})
+				.expect(200)
+				.then((res) => {
+					const { errorCode, message } = gheServerUrlErrors.ENOTFOUND;
+					expect(res.body).toEqual({ success: false, errors: [{ code: errorCode, message }] });
+				});
+		});
+
+		it("should send error message when unable to make a request to URL with 403 response", async () => {
+			gheNock.get("/").reply(403);
 
 			return supertest(app)
 				.post("/jira/server-url")
