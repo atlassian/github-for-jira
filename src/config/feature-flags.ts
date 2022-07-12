@@ -2,10 +2,8 @@ import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { envVars }  from "./env";
 import { createHashWithSharedSecret } from "utils/encryption";
 import Logger from "bunyan";
-// import Logger, { createLogger } from "bunyan";
 import { getLogger } from "config/logger";
 
-// const logger = createLogger({ name: "feature-flags" });
 const logger = getLogger("feature-flags");
 
 const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {

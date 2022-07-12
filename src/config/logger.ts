@@ -30,6 +30,11 @@ const errorSerializer = (err) => err && {
 const logLevel = process.env.LOG_LEVEL || "info";
 const globalLoggingLevel = levelFromName[logLevel] || INFO;
 
+const loggerStream = (unsafe) => ({
+	type: "raw",
+	stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, unsafe)
+});
+
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
 export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	// Remove  Default Probot Logging Stream
@@ -38,19 +43,9 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 
 	// Replace with formatOut stream
 	// Add standard stream
-	probotLogger.addStream({
-		type: "raw",
-		stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
-		closeOnExit: false,
-		level: globalLoggingLevel
-	});
+	probotLogger.addStream(loggerStream(true));
 	// add unsafe stream
-	probotLogger.addStream({
-		type: "raw",
-		stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, true),
-		closeOnExit: false,
-		level: globalLoggingLevel
-	});
+	probotLogger.addStream(loggerStream(true));
 };
 
 const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger => {
@@ -58,18 +53,8 @@ const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger
 		{
 			name,
 			streams: [
-				{
-					type: "raw",
-					stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
-					closeOnExit: false, // todo whats this do
-					level: globalLoggingLevel
-				},
-				{
-					type: "raw",
-					stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, true),
-					closeOnExit: false,
-					level: globalLoggingLevel
-				}
+				loggerStream(false),
+				loggerStream(true)
 			],
 			level: globalLoggingLevel,
 			serializers: {
