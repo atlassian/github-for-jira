@@ -36,12 +36,19 @@ interface GitHubServerObj {
 	applications: GitHubAppServerAppWithConnections[]
 }
 
-interface ViewConfiguration {
+interface ViewConfigurationForGHCloud {
 	host: string
-	successfulConnections?: SuccessfulConnection[]
-	failedConnections?: FailedConnection[]
-	ghCloud?: GitHubCloudObj
-	gheServers?: GitHubServerObj[]
+	successfulConnections: SuccessfulConnection[]
+	failedConnections: FailedConnection[]
+	hasConnections: boolean
+	APP_URL?: string
+	csrfToken: string
+	nonce: string
+}
+interface ViewConfigurationForGHE {
+	host: string
+	gheServers: GitHubServerObj[]
+	ghCloud: GitHubCloudObj
 	hasConnections: boolean
 	APP_URL?: string
 	csrfToken: string
@@ -130,7 +137,7 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 	return { installations, successfulConnections, failedConnections };
 };
 
-const JiraCloudConfiguration = async (res: Response, req: Request): Promise<ViewConfiguration> => {
+const JiraCloudConfiguration = async (res: Response, req: Request): Promise<ViewConfigurationForGHCloud> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
@@ -146,7 +153,7 @@ const JiraCloudConfiguration = async (res: Response, req: Request): Promise<View
 	};
 };
 
-const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request): Promise<ViewConfiguration> => {
+const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request): Promise<ViewConfigurationForGHE> => {
 	const { jiraHost, gitHubAppId, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
