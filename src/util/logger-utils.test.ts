@@ -1,5 +1,8 @@
 import { filterHttpRequests, RawLogStream } from "./logger-utils";
-import * as featureFlag from "config/feature-flags";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("Logger Utils", () => {
 
@@ -52,7 +55,12 @@ describe("Logger Utils", () => {
 
 			beforeEach(async() => {
 				mock = jest.spyOn(process.stdout, "write").mockImplementation(next);
-				jest.spyOn(featureFlag, "booleanFlag").mockReturnValue(Promise.resolve(true));
+
+				when(booleanFlag).calledWith(
+					BooleanFlags.LOG_UNSAFE_DATA,
+					expect.anything(),
+					expect.anything()
+				).mockResolvedValue(true);
 				safeStream = new RawLogStream("FRONT_END_MIDDLEWARE_LOGGER", unsafeStream);
 			});
 
@@ -113,7 +121,12 @@ describe("Logger Utils", () => {
 
 				beforeEach(() => {
 					mock = jest.spyOn(process.stdout, "write").mockImplementation(next);
-					jest.spyOn(featureFlag, "booleanFlag").mockReturnValue(Promise.resolve(true));
+
+					when(booleanFlag).calledWith(
+						BooleanFlags.LOG_UNSAFE_DATA,
+						expect.anything(),
+						expect.anything()
+					).mockResolvedValue(true);
 					safeStream = new RawLogStream("FRONT_END_MIDDLEWARE_LOGGER", true);
 				});
 
@@ -151,7 +164,12 @@ describe("Logger Utils", () => {
 				let unsafeStream;
 				beforeEach(async() => {
 					jest.spyOn(process.stdout, "write").mockImplementation(next);
-					jest.spyOn(featureFlag, "booleanFlag").mockReturnValue(Promise.resolve(false));
+
+					when(booleanFlag).calledWith(
+						BooleanFlags.LOG_UNSAFE_DATA,
+						expect.anything(),
+						expect.anything()
+					).mockResolvedValue(false);
 					unsafeStream = new RawLogStream("FRONT_END_MIDDLEWARE_LOGGER", true);
 				});
 

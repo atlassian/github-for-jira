@@ -1,7 +1,6 @@
 import { Writable } from "stream";
 import safeJsonStringify from "safe-json-stringify";
 import bformat from "bunyan-format";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createHashWithSharedSecret } from "utils/encryption";
 
 const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "userGroup", "aaid", "username"];
@@ -32,6 +31,8 @@ export class RawLogStream extends Writable {
 	}
 
 	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
+		const featureFlags = await import("config/feature-flags");
+		const { booleanFlag, BooleanFlags } = featureFlags;
 
 		// Skip unwanted logs
 		if (filterHttpRequests(record, this.filteredHttpLoggerName)) {
@@ -39,6 +40,7 @@ export class RawLogStream extends Writable {
 		}
 
 		// Skip unsafe logging if no jiraHost or false feature flag for JiraHost
+		// if (this.unsafeStream && !record.jiraHost) {
 		if (this.unsafeStream && (!record.jiraHost || !await booleanFlag(BooleanFlags.LOG_UNSAFE_DATA, false, record.jiraHost))) {
 			return next();
 		}
