@@ -1,109 +1,52 @@
 import { Request, Response } from "express";
-import { WhereOptions } from "sequelize";
 import { Installation } from "models/installation";
 
-const MAX_BATCH_SIZE = 100;
-const MAX_TOTAL_LIMIT = 10_000;
-const SAFE_GUARD_LOOP_COUNT = 100;
+const MAX_BATCH_SIZE = 10_000;
+const DEFAULT_BATCH_SIZE = 10;
+const RESPONSE_BATCH_SIZE = 1000;
 
 export const CryptorMigrationInstallationPost = async (req: Request, res: Response): Promise<void> => {
 
 	const startTime = Date.now();
 
-	let batchSize = parseInt(req.query.batchSize as string);
-	let totalLimit = parseInt(req.query.totalLimit as string);
-	const jiraHost = req.query.jiraHost as string;
+	const batchSize = getValidBatchSize(req);
 
-	req.log = req.log.child({
-		operation: "migrate-installations-shared-secret",
-		batchSize,
-		totalLimit,
-		jiraHost
-	});
+	req.log = req.log.child({ operation: "migrate-installations-shared-secret", batchSize });
 
-	req.log.info(`Received to migration installation sharedSecret for`);
-	if (jiraHost) {
-		if (batchSize || totalLimit) {
-			req.log.warn("Invalid params");
-			res.status(400).send("Since 'jiraHost' is provided, we are only migrating one record for a time. Please do not specify 'batchSize' nor 'totalLimit'");
-			return;
-		}
-		//updating single entry, hard code it to one
-		totalLimit = 1;
-		batchSize = 1;
-		req.log.fields.batchSize = 1;
-		req.log.fields.totalLimit = 1;
-		req.log.debug(`Found jiraHost, now hardcoded totalLimit and batchSize to 1`);
-	} else {
-		if (isNaN(batchSize) || batchSize < 0 || batchSize > MAX_BATCH_SIZE) {
-			req.log.warn("Invalid params");
-			res.status(400).send(`Please provide a valid batchSize between 0 and ${MAX_BATCH_SIZE}, got ${batchSize}`);
-			return;
-		}
-		if (isNaN(totalLimit) || totalLimit < 0 || totalLimit > MAX_BATCH_SIZE) {
-			req.log.warn("Invalid params");
-			res.status(400).send(`Please provide a valid totalLimit between 0 and ${MAX_TOTAL_LIMIT}, got ${totalLimit}`);
-			return;
-		}
-	}
-
-	const toMigrateWhere: WhereOptions = {};
-	if (jiraHost) {
-		toMigrateWhere.jiraHost = jiraHost;
-	} else {
-		toMigrateWhere.encryptedSharedSecret = null;
-	}
-
+	//--------- finding all in current batch to process --------------
 	req.log.info("About to start migrating installation sharedSecret");
+	const installations: Installation[] = await Installation.findAll({
+		limit: batchSize,
+		where: {
+			encryptedSharedSecret: null
+		}
+	});
+	if (installations.length === 0) {
+		req.log.info("No matching batch found, all done, returning now...");
+		res.status(200).send("No matching found, nothing to do");
+		return;
+	}
+	req.log.debug("Found matching installations to migrate, length " + installations.length);
+
+	//--------- loop and save each one of them --------------
 	let count = 0;
-	let safeGuardLoopCount = 0;
-	while (count < totalLimit) {
-
-		const batchStart = Date.now();
-
-		const loopInfo = { count, safeGuardLoopCount };
-
-		//safe guard
-		if (safeGuardLoopCount++ > SAFE_GUARD_LOOP_COUNT) {
-			req.log.warn(`Seems something wrong with the code and it max out the safe guard loop`, loopInfo);
-			throw new Error("Safe guard count exceeded " + SAFE_GUARD_LOOP_COUNT + ", right now is " + safeGuardLoopCount);
+	for (const inst of installations) {
+		//copy from shared secret to encryptedSharedSecret to enable encryption
+		inst.encryptedSharedSecret = inst.sharedSecret;
+		//update db
+		await inst.save();
+		req.log.info("Successfully migrated sharedSecret to encryptedSharedSecret");
+		if (count++ % RESPONSE_BATCH_SIZE === 0) {
+			res.write(`Successfully migrated ${count} records now, still processing...`);
 		}
-
-		//fetch next batch
-		req.log.debug(`To find for next batch of matching installation`, loopInfo);
-		const toMigratedInstallations: Installation[] = await Installation.findAll({
-			where: toMigrateWhere,
-			limit: batchSize
-		});
-
-		if (toMigratedInstallations.length === 0) {
-			req.log.info("No more matching batch found, all done, returning now...", loopInfo);
-			break;
-		}
-		req.log.debug("Found matching installations to migrate", { ...loopInfo, found: toMigratedInstallations.length });
-
-		for (const inst of toMigratedInstallations) {
-			//copy from shared secret to encryptedSharedSecret to enable encryption
-			inst.encryptedSharedSecret = inst.sharedSecret;
-			//update db
-			await inst.save();
-			req.log.info("Successfully migrated sharedSecret to encryptedSharedSecret");
-			count++;
-		}
-
-		const batchElapsed = stopTimer(batchStart);
-		const msg = `Successfully processed a batch of size ${batchSize}, next batch index: ${count}, spent ${batchElapsed}\n`;
-		req.log.info(msg);
-		res.write(msg);
-
 	}
 
 	req.log.debug("All processed, now fetching remaining...");
 	const remainingCount = await Installation.count({ where: { encryptedSharedSecret: null } });
 
-	const finalMsg = `Successfully processed all batches batchSize: ${batchSize}, totalLimit: ${totalLimit}, with ${remainingCount} remaining. Spent ${stopTimer(startTime)}`;
+	const finalMsg = `Successfully processed all batches batchSize: ${batchSize}, with ${remainingCount} remaining. Spent ${stopTimer(startTime)}`;
 	req.log.info(finalMsg);
-	res.status(200).write(finalMsg + (jiraHost ? ` for jiraHost ${jiraHost}` : ""));
+	res.status(200).write(finalMsg);
 	res.end();
 
 };
@@ -112,4 +55,12 @@ const stopTimer = (startTime: number): string => {
 	const endTime = Date.now();
 	const milliSecondsDelta = endTime - startTime;
 	return `${milliSecondsDelta} milli seconds`;
+};
+
+const getValidBatchSize = (req: Request): number => {
+	const num = parseInt(req.body.batchSize);
+	if (isNaN(num)) return DEFAULT_BATCH_SIZE;
+	if (num < 0) return DEFAULT_BATCH_SIZE;
+	if (num > MAX_BATCH_SIZE) return DEFAULT_BATCH_SIZE;
+	return num;
 };
