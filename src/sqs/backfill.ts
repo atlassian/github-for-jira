@@ -21,7 +21,10 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	);
 
 	const { installationId, jiraHost } = context.payload;
-	context.log = context.log.child({ installationId, jiraHost });
+	context.log = context.log.child({
+		jiraHost,
+		gitHubInstallationId: installationId
+	});
 
 	const backfillData = { ...context.payload };
 	if (!backfillData.startTime) {
