@@ -36,7 +36,7 @@ export const CryptorMigrationInstallationPost = async (req: Request, res: Respon
 		//update db
 		await inst.save();
 		req.log.info("Successfully migrated sharedSecret to encryptedSharedSecret");
-		if (count++ % RESPONSE_BATCH_SIZE === 0) {
+		if (++count % RESPONSE_BATCH_SIZE === 0) {
 			res.write(`Successfully migrated ${count} records now, still processing...`);
 		}
 	}
