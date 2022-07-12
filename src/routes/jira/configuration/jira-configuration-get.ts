@@ -16,6 +16,12 @@ interface FailedConnection {
 	orgName?: string;
 }
 
+export interface InstallationResults {
+	fulfilled: AppInstallation[];
+	rejected: FailedAppInstallation[];
+	total: number;
+}
+
 interface SuccessfulConnection extends AppInstallation {
 	isGlobalInstall: boolean;
 }
@@ -32,8 +38,8 @@ interface GitHubCloudObj {
 }
 
 interface GitHubServerObj {
-	gitHubBaseUrl: string
-	applications: GitHubAppServerAppWithConnections[]
+	gitHubBaseUrl:string
+	applications: ConnectionsAndInstallations[]
 }
 
 interface ViewConfigurationForGHCloud {
@@ -54,14 +60,6 @@ interface ViewConfigurationForGHE {
 	csrfToken: string
 	nonce: string
 }
-
-export interface InstallationResults {
-	fulfilled: AppInstallation[];
-	rejected: FailedAppInstallation[];
-	total: number;
-}
-
-type GitHubAppServerAppWithConnections = GitHubServerApp & ConnectionsAndInstallations;
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -154,31 +152,30 @@ const JiraCloudConfiguration = async (res: Response, req: Request): Promise<View
 };
 
 const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request): Promise<ViewConfigurationForGHE> => {
-	const { jiraHost, gitHubAppId, nonce } = res.locals;
+	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, gitHubAppId);
-	const gheServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) as GitHubAppServerAppWithConnections[];
+	const gheServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
+	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
+
+	const gheServersWithConnections = await Promise.all(gheServers.map(async (server) => {
+		const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, server.id);
+		/**
+		 * Directly fetching the values using `dataValues`,
+		 * Couldn't get the value using `{plan: true}`, it throws a crypto error,
+		 */
+		return { ...(server as any).dataValues, successfulConnections, failedConnections, installations };
+	}));
 
 	// Grouping the list of servers by `gitHubBaseUrl`
-	const modifiedGHEServers = await Promise.all(chain(gheServers).groupBy("gitHubBaseUrl")
-		.map(async (value, key) => ({
+	const groupedGheServers = chain(gheServersWithConnections).groupBy("gitHubBaseUrl")
+		.map((value, key) => ({
 			gitHubBaseUrl: key,
-			// Fetching the subscriptions for each GH Server App
-			applications: await Promise.all(value.map(async (app) => {
-				const {
-					successfulConnections,
-					failedConnections
-				} = await getConnectionsAndInstallations(subscriptions, req, app.id);
-				app.successfulConnections = successfulConnections;
-				app.failedConnections = failedConnections;
-
-				return app;
-			}))
-		})).value());
+			applications: value
+		})).value();
 
 	return {
 		host: jiraHost,
-		gheServers: modifiedGHEServers,
+		gheServers: groupedGheServers,
 		ghCloud: { successfulConnections, failedConnections },
 		hasConnections: !!(installations.total || gheServers?.length),
 		APP_URL: process.env.APP_URL,
@@ -203,7 +200,7 @@ export const JiraConfigurationGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)) {
 			res.render("jira-configuration-new.hbs", await JiraCloudAndEnterpriseConfiguration(res, req));
 		} else {
 			res.render("jira-configuration.hbs", await JiraCloudConfiguration(res, req));
