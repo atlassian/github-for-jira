@@ -8,7 +8,13 @@ import { AppTokenHolder } from "./app-token-holder";
 import fs from "fs";
 import { envVars }  from "config/env";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { keyLocator } from "./key-locator";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { mocked } from "ts-jest/utils";
+
 jest.mock("config/feature-flags");
+jest.mock("./key-locator");
 
 describe("GitHub Client", () => {
 	const githubInstallationId = 17979017;
@@ -75,14 +81,17 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
-			switch (installationId.githubBaseUrl) {
-				case gheUrl:
-					return Promise.resolve(fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" }));
-				default:
-					throw new Error("unknown GitHub instance!");
-			}
+		when(booleanFlag).calledWith(
+			BooleanFlags.GHE_SERVER,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
+
+		mocked(keyLocator).mockImplementation(async()=> {
+			return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
 		});
+
+		const appTokenHolder = new AppTokenHolder();
 
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),

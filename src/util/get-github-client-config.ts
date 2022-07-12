@@ -57,7 +57,7 @@ const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): 
 			hostname: gitHubServerAppBaseUrl,
 			baseUrl: gitHubServerAppBaseUrl,
 			appId: gitHubServerApp.appId,
-			privateKey: gitHubServerApp.privateKey
+			privateKey: await gitHubServerApp.decrypt("privateKey")
 		}
 		: gitHubCloudConfig;
 };

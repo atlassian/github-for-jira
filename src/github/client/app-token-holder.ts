@@ -1,11 +1,11 @@
 import { AsymmetricAlgorithm, encodeAsymmetric } from "atlassian-jwt";
 import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
-
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
-import { defaultKeyLocator } from "~/src/github/client/default-key-locator";
-
-export type KeyLocator = (installationId: InstallationId) => Promise<string>;
+import { keyLocator } from "~/src/github/client/key-locator";
+import { Subscription } from "~/src/models/subscription";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import * as PrivateKey from "probot/lib/private-key";
 
 
 /**
@@ -19,12 +19,10 @@ export type KeyLocator = (installationId: InstallationId) => Promise<string>;
 export class AppTokenHolder {
 
 	private static instance: AppTokenHolder;
-	private readonly privateKeyLocator: KeyLocator;
 	private readonly appTokenCache: LRUCache<string, AuthToken>;
 
-	constructor(keyLocator?: KeyLocator) {
+	constructor() {
 		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
-		this.privateKeyLocator = keyLocator || defaultKeyLocator;
 	}
 
 	public static getInstance(): AppTokenHolder {
@@ -61,9 +59,17 @@ export class AppTokenHolder {
 	 */
 	public async getAppToken(appId: InstallationId): Promise<AuthToken> {
 		let currentToken = this.appTokenCache.get(appId.toString());
-
 		if (!currentToken || currentToken.isAboutToExpire()) {
-			const key = await this.privateKeyLocator(appId);
+			const subscription = await Subscription.findOneForGitHubInstallationId(appId.installationId);
+			let key;
+			if (await booleanFlag(BooleanFlags.GHE_SERVER, false, subscription?.jiraHost)) {
+				key = await keyLocator(subscription?.gitHubAppId);
+			} else {
+				key = PrivateKey.findPrivateKey();
+			}
+			if (!key) {
+				throw new Error(`No private key found for GitHub app ${appId.toString}`);
+			}
 			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString());
 			this.appTokenCache.set(appId.toString(), currentToken);
 		}
