@@ -19,10 +19,6 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	const payload = request.body;
 	try {
 		const webhookSecret = await getWebhookSecret(uuid);
-		if (!webhookSecret) {
-			response.status(400).send("GitHub app not found");
-			return;
-		}
 		const verification = createHash(JSON.stringify(payload), webhookSecret);
 		if (verification != signatureSHA256) {
 			response.status(400).send("signature does not match event payload and secret");
@@ -40,7 +36,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 		response.sendStatus(204);
 
 	} catch (error) {
-		response.sendStatus(500);
+		response.sendStatus(400);
 		logger.error(error);
 	}
 };
@@ -72,7 +68,13 @@ const createHash = (data: BinaryLike, secret: string): string => {
 const getWebhookSecret = async (uuid?: string) => {
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
-		return gitHubServerApp && await gitHubServerApp.decrypt("webhookSecret");
+		if (!gitHubServerApp) {
+			throw new Error(`GitHub app not found for uuid ${uuid}`);
+		}
+		return await gitHubServerApp.decrypt("webhookSecret");
+	}
+	if (!envVars.WEBHOOK_SECRET) {
+		throw new Error("Environment variable 'WEBHOOK_SECRET' not defined");
 	}
 	return envVars.WEBHOOK_SECRET;
 };
