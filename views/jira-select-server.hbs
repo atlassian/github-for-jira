@@ -44,20 +44,19 @@
             header="Select a GitHub Server"
             subHeader="We found the following GitHub servers"
         }}
-        <!-- servers refer to the array of GHE apps/servers-->
+        <!-- servers refer to the array of GHE apps-->
         {{> select-server-table
             installationId=id
             contentImgURL="/public/assets/github-logo.svg"
             contentTitle="GitHub Enterprise Servers"
-            addNewText="Connect a new server"
-            addNewURL="#"
+            textForAddNew="Connect a new server"
+            pathNameForAddNew="github-server-url-page"
             servers=servers
         }}
       </section>
 
     </div>
 
-    <script src="/public/js/jira-select-server.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script
@@ -70,5 +69,7 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
+    <script src="/public/js/jira-select-server.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/select-server-table.js" nonce="{{nonce}}"></script>
   </body>
 </html>

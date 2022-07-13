@@ -11,7 +11,7 @@ export const JiraGheServers = async (
 		req.log.debug("Received Jira GHE servers page request");
 
 		const allServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
-		const gheServers = chain(groupBy(allServers, "gitHubBaseUrl")).map((_, key) => ({ gitHubBaseUrl: key })).value();
+		const gheServers = chain(groupBy(allServers, "gitHubBaseUrl")).map((_, key) => ({ displayName: key })).value();
 
 		res.render("jira-select-server.hbs", {
 			servers: gheServers
