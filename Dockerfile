@@ -15,5 +15,3 @@ WORKDIR /app
 RUN yarn install --frozen-lockfile
 
 CMD ["yarn", "start"]
-
-COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
