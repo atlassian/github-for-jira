@@ -50,7 +50,6 @@ export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 	const pluginRow = await page.locator(`.upm-plugin[data-key="${APP_KEY}"]`);
 	if (await pluginRow.isVisible()) {
 		await pluginRow.click();
-		await page.pause();
 		const uninstallButton = await pluginRow.locator(`a[data-action="UNINSTALL"]`);
 		await uninstallButton.click();
 		await page.click("#upm-confirm-dialog .confirm");
