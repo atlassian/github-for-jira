@@ -17,17 +17,11 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	const id = request.headers["x-github-delivery"] as string;
 	const uuid = request.params.uuid;
 	const payload = request.body;
-	let webhookSecret: string;
 	try {
-		if (uuid) {
-			const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
-			if (!gitHubServerApp) {
-				response.status(400).send("GitHub app not found");
-				return;
-			}
-			webhookSecret = await gitHubServerApp.decrypt("webhookSecret");
-		} else {
-			webhookSecret = envVars.WEBHOOK_SECRET;
+		const webhookSecret = await getWebhookSecret(uuid);
+		if (!webhookSecret) {
+			response.status(400).send("GitHub app not found");
+			return;
 		}
 		const verification = createHash(JSON.stringify(payload), webhookSecret);
 		if (verification != signatureSHA256) {
@@ -73,4 +67,12 @@ const createHash = (data: BinaryLike, secret: string): string => {
 	return `sha256=${createHmac("sha256", secret)
 		.update(data)
 		.digest("hex")}`;
+};
+
+const getWebhookSecret = async (uuid?: string) => {
+	if (uuid) {
+		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+		return gitHubServerApp && await gitHubServerApp.decrypt("webhookSecret");
+	}
+	return envVars.WEBHOOK_SECRET;
 };
