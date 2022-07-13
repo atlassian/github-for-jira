@@ -10,13 +10,13 @@ import { JiraBranchData } from "../interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const createBranchWebhookHandler = async (context: WebhookContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const createBranchWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
 	const webhookPayload: WebhookPayloadCreate = context.payload;
 
 	await sqsQueues.branch.sendMessage({
 		jiraHost: jiraClient.baseURL,
-		installationId: githubInstallationId,
+		installationId: gitHubInstallationId,
 		webhookReceived: Date.now(),
 		webhookId: context.id,
 		webhookPayload
@@ -29,12 +29,13 @@ export const processBranch = async (
 	webhookPayload: WebhookPayloadCreate,
 	webhookReceivedDate: Date,
 	jiraHost: string,
-	installationId: number,
+	gitHubInstallationId: number,
 	rootLogger: Logger
 ) => {
 	const logger = rootLogger.child({
 		webhookId: webhookId,
-		installationId,
+		gitHubInstallationId,
+		jiraHost,
 		webhookReceived: webhookReceivedDate
 	});
 
@@ -49,7 +50,7 @@ export const processBranch = async (
 
 	const jiraClient = await getJiraClient(
 		jiraHost,
-		installationId,
+		gitHubInstallationId,
 		logger
 	);
 
