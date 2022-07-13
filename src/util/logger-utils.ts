@@ -39,8 +39,7 @@ export class RawLogStream extends Writable {
 			return next();
 		}
 
-		// Skip unsafe logging if no jiraHost or false feature flag for JiraHost
-		// if (this.unsafeStream && !record.jiraHost) {
+		// JiraHost and active feature flag required for unsafe stream
 		if (this.unsafeStream && (!record.jiraHost || !await booleanFlag(BooleanFlags.LOG_UNSAFE_DATA, false, record.jiraHost))) {
 			return next();
 		}
@@ -55,11 +54,7 @@ export class RawLogStream extends Writable {
 		}
 
 		const chunk = safeJsonStringify(recordClone) + "\n";
-		this.writeStream.write(chunk, encoding, (err) => {
-			if (err) {
-				console.error(err);
-			}
-		});
+		this.writeStream.write(chunk, encoding);
 		next();
 	}
 

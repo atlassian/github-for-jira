@@ -30,9 +30,9 @@ const errorSerializer = (err) => err && {
 const logLevel = process.env.LOG_LEVEL || "info";
 const globalLoggingLevel = levelFromName[logLevel] || INFO;
 
-const loggerStream = (unsafe) => ({
+const loggerStream = (isUnsafe) => ({
 	type: "raw",
-	stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, unsafe)
+	stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, isUnsafe)
 });
 
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
@@ -41,10 +41,7 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(probotLogger as any).streams.pop();
 
-	// Replace with formatOut stream
-	// Add standard stream
-	probotLogger.addStream(loggerStream(true));
-	// add unsafe stream
+	probotLogger.addStream(loggerStream(false));
 	probotLogger.addStream(loggerStream(true));
 };
 
@@ -68,6 +65,12 @@ const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger
 
 export const getLogger = (name: string, fields?: Record<string, unknown>): Logger => {
 	const logger = createNewLogger(name);
+	return logger.child({ ...fields });
+};
+
+// This will log data to a restricted environment [env]-unsafe and not serialize sensitive data
+export const getUnsafeLogger = (name: string, fields?: Record<string, unknown>): Logger => {
+	const logger = createNewLogger(name, { env_suffix: "unsafe" });
 	return logger.child({ ...fields });
 };
 
