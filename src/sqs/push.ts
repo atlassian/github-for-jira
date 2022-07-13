@@ -20,8 +20,14 @@ export type PushQueueMessagePayload = {
 }
 
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
-	context.log.info("Handling push message from the SQS queue");
 	const { payload, log } = context;
-	const gitHubInstallationClient = await createInstallationClient(payload.installationId, payload.jiraHost, log);
+	const { webhookId, installationId, jiraHost } = payload;
+	context.log = context.log.child({
+		webhookId,
+		jiraHost,
+		gitHubInstallationId: installationId
+	});
+	context.log.info("Handling push message from the SQS queue");
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, log);
 	await processPush(gitHubInstallationClient, payload, log);
 };
