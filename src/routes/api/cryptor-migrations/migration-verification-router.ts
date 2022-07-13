@@ -3,7 +3,9 @@ import { Installation } from "models/installation";
 
 export const CryptorMigrationInstallationVerificationPost = async (req: Request, res: Response): Promise<any> => {
 
-	const jiraHost: string[] = req.body?.jiraHost;
+	const jiraHost: string = req.body?.jiraHost;
+
+	req.log = req.log.child({ operation: "migrate-installations-verification" });
 
 	req.log.info("---verifying----- 1");
 	if (!jiraHost) {

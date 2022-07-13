@@ -113,6 +113,10 @@ ApiRouter.delete(
 	ApiInstallationDelete
 );
 
+//migrate secrets
+ApiRouter.post("/migration-installations-shared-secret", CryptorMigrationInstallationPost);
+ApiRouter.post("/migration-installations-verification", CryptorMigrationInstallationVerificationPost);
+
 // TODO: remove the debug endpoint
 /*
 How to invoke:
@@ -140,8 +144,6 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 		resp.status(500).send("fail");
 	}
 });
-ApiRouter.post("/migration-installations-shared-secret", CryptorMigrationInstallationPost);
-ApiRouter.post("/migration-installations-verification", CryptorMigrationInstallationVerificationPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
