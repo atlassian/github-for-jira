@@ -35,7 +35,7 @@
     />
     <div class="jiraSelectServer">
       <header class="jiraSelectServer__header">
-         {{> navigation previousPathPage="github-server-url-page" previousPageName="GitHub Server Url" }}
+         {{> navigation previousPagePath="github-server-url-page" previousPageName="GitHub Server Url" }}
       </header>
 
       <section class="jiraSelectServer__content">
@@ -69,6 +69,7 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
     <script src="/public/js/jira-select-server.js" nonce="{{nonce}}"></script>
     <script src="/public/js/select-server-table.js" nonce="{{nonce}}"></script>
   </body>
