@@ -20,19 +20,18 @@ export const filterHttpRequests = (record: Record<string, any>, filteredLoggerNa
 
 export class RawLogStream extends Writable {
 	private readonly  filteredHttpLoggerName: string;
-	private readonly unsafeStream: boolean;
+	private readonly isUnsafeStream: boolean;
 	private writeStream: NodeJS.WritableStream;
 
-	public constructor(filteredHttpLoggerName: string, unsafeStream = false) {
+	public constructor(filteredHttpLoggerName: string, isUnsafeStream = false) {
 		super({ objectMode: true });
 		this.filteredHttpLoggerName = filteredHttpLoggerName;
-		this.unsafeStream = unsafeStream;
+		this.isUnsafeStream = isUnsafeStream;
 		this.writeStream = bformat({ outputMode, levelInString: true });
 	}
 
 	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
-		const featureFlags = await import("config/feature-flags");
-		const { booleanFlag, BooleanFlags } = featureFlags;
+		const { booleanFlag, BooleanFlags } = await import("config/feature-flags");
 
 		// Skip unwanted logs
 		if (filterHttpRequests(record, this.filteredHttpLoggerName)) {
@@ -40,14 +39,14 @@ export class RawLogStream extends Writable {
 		}
 
 		// JiraHost and active feature flag required for unsafe stream
-		if (this.unsafeStream && (!record.jiraHost || !await booleanFlag(BooleanFlags.LOG_UNSAFE_DATA, false, record.jiraHost))) {
+		if (this.isUnsafeStream && (!record.jiraHost || !await booleanFlag(BooleanFlags.LOG_UNSAFE_DATA, false, record.jiraHost))) {
 			return next();
 		}
 
 		const recordClone = { ...record };
 
 		// hash sensitive data or tag it unsafe
-		if (this.unsafeStream) {
+		if (this.isUnsafeStream) {
 			this.tagUnsafeData(recordClone);
 		} else {
 			this.hashSensitiveData(recordClone);

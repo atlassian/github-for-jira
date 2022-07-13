@@ -32,7 +32,9 @@ const globalLoggingLevel = levelFromName[logLevel] || INFO;
 
 const loggerStream = (isUnsafe) => ({
 	type: "raw",
-	stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, isUnsafe)
+	stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, isUnsafe),
+	closeOnExit: false,
+	level: globalLoggingLevel
 });
 
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
