@@ -55,7 +55,7 @@ describe("webhook-receiver-post", () => {
 
 	});
 
-	it("should throw an error if signature doesn't match", async () => {
+	it("should throw an error if signature doesn't match for GHE app", async () => {
 		const mockResSendFunc = jest.fn();
 		res = {
 			status: jest.fn().mockReturnValue({
@@ -68,6 +68,28 @@ describe("webhook-receiver-post", () => {
 			},
 			params: {
 				uuid
+			},
+			body: {}
+		};
+
+		await WebhookReceiverPost(req, res);
+		expect(res.status).toBeCalledWith(400);
+		expect(mockResSendFunc).toBeCalledWith("signature does not match event payload and secret");
+
+	});
+
+	it("should throw an error if signature doesn't match for GitHub cloud", async () => {
+		const mockResSendFunc = jest.fn();
+		res = {
+			status: jest.fn().mockReturnValue({
+				send: mockResSendFunc
+			})
+		};
+		req = {
+			headers: {
+				"x-hub-signature-256": "signature123"
+			},
+			params: {
 			},
 			body: {}
 		};

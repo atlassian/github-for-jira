@@ -8,6 +8,7 @@ import { WebhookContext } from "./webhook-context";
 import { webhookTimeout } from "~/src/util/webhook-timeout";
 import { issueCommentWebhookHandler } from "~/src/github/issue-comment";
 import { issueWebhookHandler } from "~/src/github/issue";
+import { envVars } from "~/src/config/env";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -18,14 +19,16 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	const payload = request.body;
 	let webhookSecret: string;
 	try {
-		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
-		if (!gitHubServerApp) {
-			response.status(400).send("GitHub app not found");
-			return;
+		if (uuid) {
+			const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+			if (!gitHubServerApp) {
+				response.status(400).send("GitHub app not found");
+				return;
+			}
+			webhookSecret = await gitHubServerApp.decrypt("webhookSecret");
+		} else {
+			webhookSecret = envVars.WEBHOOK_SECRET;
 		}
-
-		webhookSecret = await gitHubServerApp.decrypt("webhookSecret");
-
 		const verification = createHash(JSON.stringify(payload), webhookSecret);
 		if (verification != signatureSHA256) {
 			response.status(400).send("signature does not match event payload and secret");
