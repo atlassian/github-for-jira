@@ -62,7 +62,7 @@ describe("Migrate Installations sharedSecret", () => {
 			await Installation.sequelize?.query(`update "Installations" set "encryptedSharedSecret" = 'do_not_migrate_this' where "clientKey" = '${getHashedKey(clientKey)}'`);
 			//By calling the api with large batch size
 			await supertest(app).post("/migrate").send({ batchSize: 1000 }).expect(200);
-			//now we can asserting that the 30 records should NOT migrate that new 1 records.
+			//now we can asserting that the api should NOT migrate that new record.
 			const shouldNotMigrate = await Installation.findOne({ where: { clientKey: getHashedKey(clientKey) } });
 			expect(shouldNotMigrate.encryptedSharedSecret).toBe("do_not_migrate_this");
 		});
