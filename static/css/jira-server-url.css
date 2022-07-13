@@ -29,6 +29,6 @@
   color: #fff;
 }
 
-.jiraServerUrl__validationError, .errorMessageBox__link {
+.jiraServerUrl__validationError {
   display: none;
 }
