@@ -35,7 +35,7 @@
 
       <h1>Manual app Creation</h1>
 
-      <div>Learn how to <a href="#">manually set up a GitHub app</a>. All fields are required.</div>
+      <div>Enter all the fields to create your app. <a href="#">Learn more about manual GitHub app creation.</a></div>
 
       <form id="jiraManualAppCreation__form" class="aui top-label" enctype="multipart/form-data">
         <div class="jiraManualAppCreation__formTitle">
@@ -48,20 +48,6 @@
           <input class="text full-width-field" type="text"
                  data-aui-validation-field required
                  id="app-name" name="app-name" />
-        </div>
-
-        <div class="field-group ">
-          <label for="app-id">GitHub app ID</label>
-          <input class="text full-width-field" type="text"
-                 data-aui-validation-field required
-                 id="app-id" name="app-id" />
-        </div>
-
-        <div class="field-group">
-          <label for="client-id">GitHub client ID</label>
-          <input class="text full-width-field" type="text"
-                 data-aui-validation-field required
-                 id="client-id" name="client-id" />
         </div>
 
         <div class="jiraManualAppCreation__formTitle">URLs</div>
@@ -93,9 +79,30 @@
           />
         </div>
 
-        <div class="jiraManualAppCreation__formTitle">Secrets</div>
+        <div class="field-group">
+          <label for="webhook-secret">Webhook secret</label>
+          <input class="text full-width-field" type="password"
+                 data-aui-validation-field required
+                 id="webhook-secret" name="webhook-secret" />
+        </div>
+
+        <div class="jiraManualAppCreation__formTitle">Secrets and IDs</div>
         <div class="jiraManualAppCreation__formSubTitle">
-          Paste secrets from your GitHub Enterprise Server configuration.
+          Copy and paste the following details from your GitHub Enterprise Server configuration
+        </div>
+
+        <div class="field-group ">
+          <label for="app-id">GitHub app ID</label>
+          <input class="text full-width-field" type="text"
+                 data-aui-validation-field required
+                 id="app-id" name="app-id" />
+        </div>
+
+        <div class="field-group">
+          <label for="client-id">GitHub client ID</label>
+          <input class="text full-width-field" type="text"
+                 data-aui-validation-field required
+                 id="client-id" name="client-id" />
         </div>
 
         <div class="field-group">
@@ -103,13 +110,6 @@
           <input class="text full-width-field" type="password"
                  data-aui-validation-field required
                  id="client-secret" name="client-secret" />
-        </div>
-
-        <div class="field-group">
-          <label for="webhook-secret">Webhook secret</label>
-          <input class="text full-width-field" type="password"
-                 data-aui-validation-field required
-                 id="webhook-secret" name="webhook-secret" />
         </div>
 
         <div class="field-group">
