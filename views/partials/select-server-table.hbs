@@ -13,8 +13,7 @@
   <div class="selectServer__list">
     {{#each servers as |server|}}
       <div class="selectServer__server">
-        <!--TODO: Update the URL by actual data-->
-        <div class="selectServer__serverURL">{{server.url}}</div>
+        <div class="selectServer__serverURL">{{server.gitHubBaseUrl}}</div>
         <button
           class="aui-button aui-button-label select-server"
           data-installation-id="{{installationId}}"

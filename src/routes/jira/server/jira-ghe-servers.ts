@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
+import { groupBy, chain } from "lodash";
 
 export const JiraGheServers = async (
 	req: Request,
@@ -9,10 +10,11 @@ export const JiraGheServers = async (
 	try {
 		req.log.debug("Received Jira GHE servers page request");
 
-		const servers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
+		const allServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
+		const gheServers = chain(groupBy(allServers, "gitHubBaseUrl")).map((_, key) => ({ gitHubBaseUrl: key })).value();
 
 		res.render("jira-select-server.hbs", {
-			servers
+			servers: gheServers
 		});
 
 		req.log.debug("Jira GHE servers rendered successfully.");
