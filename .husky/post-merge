@@ -1,0 +1,10 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+DIR=$(dirname "$0")
+OLDFILE="${DIR}/../.env"
+NEWFILE="${DIR}/../.env.development.local"
+if [ -f "$OLDFILE" ] && [ !  -f "$NEWFILE" ]; then
+  echo "Detected old .env file, moving to .env.development.local"
+  mv "$OLDFILE" "$NEWFILE"
+fi
