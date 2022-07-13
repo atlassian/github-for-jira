@@ -1,5 +1,6 @@
 import { getLogger } from "config/logger";
 import { Stream, RingBuffer } from "bunyan";
+
 describe("logger behaviour", () => {
 
 	let ringBuffer: RingBuffer;
@@ -16,7 +17,7 @@ describe("logger behaviour", () => {
 		expect(JSON.parse(ringBuffer.records[0]).msg).toEqual("Greetings");
 	});
 
-	it('should keep parent fields on new child logger', () => {
+	it('should persist parent fields on new child logger', () => {
 		const logger = getLogger('name', { foo: "bar" });
 		const childLogger = logger.child({ bingo: "buzz" });
 		logger.warn("Greetings");

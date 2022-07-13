@@ -1,5 +1,5 @@
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
-import { getLogger } from "config/logger";
+import { getLogger } from "./logger";
 import { envVars }  from "./env";
 import { createHashWithSharedSecret } from "utils/encryption";
 import Logger from "bunyan";
