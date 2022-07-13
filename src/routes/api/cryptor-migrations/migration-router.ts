@@ -6,7 +6,6 @@ const DEFAULT_BATCH_SIZE = 10;
 const RESPONSE_BATCH_SIZE = 1000;
 
 export const CryptorMigrationInstallationPost = async (req: Request, res: Response): Promise<void> => {
-
 	const startTime = Date.now();
 
 	const batchSize = getValidBatchSize(req);
@@ -58,7 +57,7 @@ const stopTimer = (startTime: number): string => {
 };
 
 const getValidBatchSize = (req: Request): number => {
-	const num = parseInt(req.body.batchSize);
+	const num = parseInt((req.body || {}).batchSize);
 	if (isNaN(num)) return DEFAULT_BATCH_SIZE;
 	if (num < 0) return DEFAULT_BATCH_SIZE;
 	if (num > MAX_BATCH_SIZE) return DEFAULT_BATCH_SIZE;
