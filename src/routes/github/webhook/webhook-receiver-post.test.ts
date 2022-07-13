@@ -36,11 +36,8 @@ describe("webhook-receiver-post", () => {
 	});
 
 	it("should throw an error if github app not found", async () => {
-		const mockResSendFunc = jest.fn();
 		res = {
-			status: jest.fn().mockReturnValue({
-				send: mockResSendFunc
-			})
+			sendStatus: jest.fn()
 		};
 		req = {
 			headers: {},
@@ -50,8 +47,7 @@ describe("webhook-receiver-post", () => {
 		};
 
 		await WebhookReceiverPost(req, res);
-		expect(res.status).toBeCalledWith(400);
-		expect(mockResSendFunc).toBeCalledWith("GitHub app not found");
+		expect(res.sendStatus).toBeCalledWith(400);
 
 	});
 
