@@ -15,6 +15,7 @@ import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { CryptorMigrationInstallationPost } from "./cryptor-migrations/migration-router";
+import { CryptorMigrationInstallationVerificationPost } from "./cryptor-migrations/migration-verification-router";
 import { ApiPingPost } from "routes/api/api-ping-post";
 
 export const ApiRouter = Router();
@@ -140,6 +141,7 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 	}
 });
 ApiRouter.post("/migration-installations-shared-secret", CryptorMigrationInstallationPost);
+ApiRouter.post("/migration-installations-verification", CryptorMigrationInstallationVerificationPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
