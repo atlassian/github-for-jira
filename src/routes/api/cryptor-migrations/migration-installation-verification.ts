@@ -5,14 +5,12 @@ export const CryptorMigrationInstallationVerificationPost = async (req: Request,
 
 	const jiraHost: string = req.body?.jiraHost;
 
-	req.log = req.log.child({ operation: "migrate-installations-verification" });
-
 	if (!jiraHost) {
 		res.status(200).json({ ok: false, reason: "invalid jiraHost param in body" });
 		return;
 	}
 
-	const inst: Installation = await Installation.findOne({ where: { jiraHost } });
+	const inst = await Installation.getForHost(jiraHost);
 	if (!inst) {
 		res.status(200).json({ ok: false, reason: "Could not find installation for jiraHost" });
 		return;
