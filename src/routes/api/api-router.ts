@@ -139,7 +139,8 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 		resp.status(500).send("fail");
 	}
 });
+ApiRouter.use("/migration", CryptorMigrationRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
+//TODO: Following `use(/:installationId)` seems block any more routers to be used bellow, need fix
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
-ApiRouter.use("/migration", CryptorMigrationRouter);
