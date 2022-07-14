@@ -99,6 +99,15 @@ const modules = {
 			url: "/jira/manual-app?ghsaId={ac.ghsaId}",
 			location: "none",
 			conditions: adminCondition
+		},
+		{
+			key: "github-list-servers-page",
+			name: {
+				value: "GitHub Enterprise Servers"
+			},
+			url: "/jira/ghe-servers",
+			location: "none",
+			conditions: adminCondition
 		}
 	],
 	webSections: [

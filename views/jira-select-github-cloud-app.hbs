@@ -35,7 +35,7 @@
     />
     <div class="jiraSelectGitHubCloudApp">
       <header>
-         {{> navigation previousPageName="GitHub APplication Creation" }}
+         {{> navigation previousPageName="GitHub Application Creation" }}
       </header>
 
       <section class="jiraSelectGitHubCloudApp__content">
@@ -48,15 +48,14 @@
             installationId=id
             contentImgURL="/public/assets/addon.svg"
             contentTitle="Applications in your server"
-            addNewText="Create new application"
-            addNewURL="#"
+            textForAddNew="Create new application"
+            pathNameForAddNew="github-app-creation-page"
             servers=servers
         }}
       </section>
 
     </div>
 
-    <script src="/public/js/jira-select-github-cloud-app.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script
@@ -69,5 +68,7 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
+    <script src="/public/js/jira-select-github-cloud-app.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/select-server-table.js" nonce="{{nonce}}"></script>
   </body>
 </html>
