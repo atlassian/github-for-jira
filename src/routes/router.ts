@@ -30,6 +30,9 @@ RootRouter.use(cookieParser());
 // Add pertinent information to logger for all subsequent routes
 RootRouter.use(LogMiddleware);
 
+// Static Assets
+RootRouter.use("/public", PublicRouter);
+
 // These 2 need to be first (above maintenance mode) to make sure they're always accessible
 RootRouter.use(HealthcheckRouter);
 RootRouter.get("/version", VersionGet);
@@ -41,9 +44,6 @@ RootRouter.use("/api", ApiRouter);
 
 // Maintenance mode - needs to be before all other routes
 RootRouter.use(MaintenanceRouter);
-
-// Static Assets
-RootRouter.use("/public", PublicRouter);
 
 // Session redirect
 RootRouter.get(["/session", "/session/*"], SessionGet);
