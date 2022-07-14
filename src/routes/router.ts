@@ -30,6 +30,11 @@ RootRouter.use(cookieParser());
 // Add pertinent information to logger for all subsequent routes
 RootRouter.use(LogMiddleware);
 
+// Api needs to be before maintenance
+// Api needs to be before cookieSessionMiddleware, jirahostMiddleware, etc
+// as those are for apps logic, api SHOULD NOT rely on any cookie/session/jiraHost header etc.
+RootRouter.use("/api", ApiRouter);
+
 // Static Assets
 RootRouter.use("/public", PublicRouter);
 
@@ -44,9 +49,6 @@ RootRouter.use(jirahostMiddleware);
 // These 2 need to be first (above maintenance mode) to make sure they're always accessible
 RootRouter.use(HealthcheckRouter);
 RootRouter.get("/version", VersionGet);
-
-// Api needs to be before maintenance
-RootRouter.use("/api", ApiRouter);
 
 // Maintenance mode - needs to be before all other routes
 RootRouter.use(MaintenanceRouter);

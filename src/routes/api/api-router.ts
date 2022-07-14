@@ -14,9 +14,8 @@ import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
-import { CryptorMigrationInstallationPost } from "./cryptor-migrations/migration-router";
-import { CryptorMigrationInstallationVerificationPost } from "./cryptor-migrations/migration-verification-router";
 import { ApiPingPost } from "routes/api/api-ping-post";
+import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
 
 export const ApiRouter = Router();
 
@@ -113,10 +112,6 @@ ApiRouter.delete(
 	ApiInstallationDelete
 );
 
-//migrate secrets
-ApiRouter.post("/migration-installations-shared-secret", CryptorMigrationInstallationPost);
-ApiRouter.post("/migration-installations-verification", CryptorMigrationInstallationVerificationPost);
-
 // TODO: remove the debug endpoint
 /*
 How to invoke:
@@ -147,4 +142,4 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
-
+ApiRouter.use("/migration", CryptorMigrationRouter);

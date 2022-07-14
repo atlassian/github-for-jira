@@ -1,6 +1,6 @@
 import express, { Application } from "express";
 import bodyParser from "body-parser";
-import { CryptorMigrationInstallationPost } from "./migration-router";
+import { CryptorMigrationInstallationPost } from "./migration-installation";
 import { Installation } from "models/installation";
 import { getLogger } from "config/logger";
 import supertest from "supertest";

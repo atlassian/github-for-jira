@@ -3,7 +3,7 @@ import { Installation } from "models/installation";
 
 export const CryptorMigrationInstallationVerificationPost = async (req: Request, res: Response): Promise<any> => {
 
-	const jiraHost: string = req.body?.target;
+	const jiraHost: string = req.body?.jirahost;
 
 	req.log = req.log.child({ operation: "migrate-installations-verification" });
 
