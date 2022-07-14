@@ -58,8 +58,8 @@ const stopTimer = (startTime: number): string => {
 
 const getValidBatchSize = (req: Request): number => {
 	const num = parseInt((req.body || {}).batchSize);
-	if (isNaN(num)) return DEFAULT_BATCH_SIZE;
-	if (num < 0) return DEFAULT_BATCH_SIZE;
-	if (num > MAX_BATCH_SIZE) return DEFAULT_BATCH_SIZE;
+	if (isNaN(num) || num < 0 || num > MAX_BATCH_SIZE) {
+		return DEFAULT_BATCH_SIZE;
+	}
 	return num;
 };
