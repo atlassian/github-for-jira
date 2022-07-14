@@ -7,27 +7,33 @@ import { GithubConfigurationRouter } from "routes/github/configuration/github-co
 import { returnOnValidationError } from "../api/api-utils";
 import { header } from "express-validator";
 import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
+import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 
 export const GithubRouter = Router();
 
+const GithubRouterWithUUID  = Router({mergeParams: true});
+GithubRouter.use("/:gitHubServerAppUUID?", GithubRouterWithUUID);
+
+GithubRouterWithUUID.use(GithubServerAppMiddleware);
+
 // OAuth Routes
-GithubRouter.use(GithubOAuthRouter);
+GithubRouterWithUUID.use(GithubOAuthRouter);
 
 // Webhook Route
-GithubRouter.post("/webhooks/:uuid",
+GithubRouterWithUUID.post("/webhooks/:uuid",
 	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
 	returnOnValidationError,
 	WebhookReceiverPost);
 
 // CSRF Protection Middleware for all following routes
-GithubRouter.use(csrfMiddleware);
+GithubRouterWithUUID.use(csrfMiddleware);
 
-GithubRouter.use("/setup", GithubSetupRouter);
+GithubRouterWithUUID.use("/setup", GithubSetupRouter);
 
 // All following routes need Github Auth
-GithubRouter.use(GithubAuthMiddleware);
+GithubRouterWithUUID.use(GithubAuthMiddleware);
 
-GithubRouter.use("/configuration", GithubConfigurationRouter);
+GithubRouterWithUUID.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
-GithubRouter.use("/subscriptions?", GithubSubscriptionRouter);
+GithubRouterWithUUID.use("/subscriptions?", GithubSubscriptionRouter);

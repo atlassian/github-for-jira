@@ -8,7 +8,7 @@ import { Tracer } from "config/tracer";
 import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client-config";
+import { getGitHubHostname, getGitHubApiUrl } from "utils/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
@@ -139,8 +139,9 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 			throw "Missing github token";
 		}
 		req.log.debug("found github token in session. validating token with API.");
-
+console.log('-------------------------', {jiraHost, gitHubAppId});
 		const url = await getGitHubApiUrl(jiraHost, gitHubAppId);
+console.log('-------------------------', {url});
 
 		await axios.get(url, {
 			headers: {

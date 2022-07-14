@@ -19,8 +19,8 @@ export interface GitHubClientConfig {
 
 const logger = getLogger("get-github-client-config");
 
-export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number) {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId);
+export async function getGitHubApiUrl(jiraHost: string, gitHubAppUUDId: string | undefined) {
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppUUDId);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) && gitHubClientConfig
 		? `${gitHubClientConfig.baseUrl}`
 		: GITHUB_CLOUD_API_BASEURL;
@@ -32,8 +32,8 @@ const getGitHubClientConfigFromGitHubInstallationId = async (gitHubInstallationI
 	return getGitHubClientConfigFromAppId(gitHubAppId);
 };
 
-const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined): Promise<GitHubClientConfig> => {
-	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
+const getGitHubClientConfigFromAppId = async (gitHubAppUUIDId: string | undefined): Promise<GitHubClientConfig> => {
+	const gitHubServerApp = gitHubAppUUIDId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppUUIDId);
 	const gitHubCloudUrls = {
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_API_BASEURL
