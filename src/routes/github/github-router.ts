@@ -10,30 +10,36 @@ import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 
 export const GithubRouter = Router();
-
 const GithubRouterWithUUID  = Router({mergeParams: true});
-GithubRouter.use("/:gitHubServerAppUUID?", GithubRouterWithUUID);
 
-GithubRouterWithUUID.use(GithubServerAppMiddleware);
+const attachRouterToRoute = (router: Router) => {
 
-// OAuth Routes
-GithubRouterWithUUID.use(GithubOAuthRouter);
+	router.use(GithubServerAppMiddleware);
 
-// Webhook Route
-GithubRouterWithUUID.post("/webhooks/:uuid",
-	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
-	returnOnValidationError,
-	WebhookReceiverPost);
+	// OAuth Routes
+	router.use(GithubOAuthRouter);
 
-// CSRF Protection Middleware for all following routes
-GithubRouterWithUUID.use(csrfMiddleware);
+	// Webhook Route
+	router.post("/webhooks/:uuid",
+		header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
+		returnOnValidationError,
+		WebhookReceiverPost);
 
-GithubRouterWithUUID.use("/setup", GithubSetupRouter);
+	// CSRF Protection Middleware for all following routes
+	router.use(csrfMiddleware);
 
-// All following routes need Github Auth
-GithubRouterWithUUID.use(GithubAuthMiddleware);
+	router.use("/setup", GithubSetupRouter);
 
-GithubRouterWithUUID.use("/configuration", GithubConfigurationRouter);
+	// All following routes need Github Auth
+	router.use(GithubAuthMiddleware);
 
-// TODO: remove optional "s" once we change the frontend to use the proper delete method
-GithubRouterWithUUID.use("/subscriptions?", GithubSubscriptionRouter);
+	router.use("/configuration", GithubConfigurationRouter);
+
+	// TODO: remove optional "s" once we change the frontend to use the proper delete method
+	router.use("/subscriptions?", GithubSubscriptionRouter);
+}
+
+attachRouterToRoute(GithubRouterWithUUID);
+attachRouterToRoute(GithubRouter);
+
+GithubRouter.use("/:gitHubAppId", GithubRouterWithUUID);

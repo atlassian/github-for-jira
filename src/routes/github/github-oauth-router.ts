@@ -139,9 +139,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 			throw "Missing github token";
 		}
 		req.log.debug("found github token in session. validating token with API.");
-console.log('-------------------------', {jiraHost, gitHubAppId});
 		const url = await getGitHubApiUrl(jiraHost, gitHubAppId);
-console.log('-------------------------', {url});
 
 		await axios.get(url, {
 			headers: {
@@ -150,7 +148,6 @@ console.log('-------------------------', {url});
 		});
 
 		req.log.debug(`Github token is valid, continuing...`);
-
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
 		// TODO: Not a great place to put this, but it'll do for now

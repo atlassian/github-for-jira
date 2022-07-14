@@ -4,28 +4,37 @@ import { Installation } from "models/installation";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
-	const { gitHubServerAppUUID } = req.params;
+	const { gitHubAppId: id} = req.params;
 
-	if (gitHubServerAppUUID) {
-		req.log.debug(`Retrieving GitHub app with id ${gitHubServerAppUUID}`);
-		const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(Number(gitHubServerAppUUID));
+	console.log('----- check id path ----', {id, path: req.path});
 
-		if (!gitHubServerApp) {
-			req.log.error({ gitHubServerAppUUID, jiraHost }, "No GitHub app found for provided id.");
-			throw new Error("No GitHub app found for provided id.");
-		}
+	if(!id) return next();
 
-		const installation = await Installation.findByPk(gitHubServerApp.installationId);
-
-		if (installation?.jiraHost !== jiraHost) {
-			req.log.error({ gitHubServerAppUUID, jiraHost }, "Jira hosts do not match");
-			throw new Error("Jira hosts do not match.");
-		}
-
-		req.log.info("Found GitHub server app for installation");
-		res.locals.gitHubAppId = gitHubServerAppUUID;
-		return next();
+	//TODO: ARC-1515 fix it to parse uuid xxx-xxx-xxx
+	const isNonRecognizableId = isNaN(parseInt(id));
+	if(isNonRecognizableId) {
+		console.log('wrong path, just return;');
+		next('route');
+		return;
 	}
 
-	next();
+	req.log.debug(`Retrieving GitHub app with id ${id}`);
+	const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(Number(id));
+
+	if (!gitHubServerApp) {
+		req.log.error({ id, jiraHost }, "No GitHub app found for provided id.");
+		throw new Error("No GitHub app found for provided id.");
+	}
+
+	const installation = await Installation.findByPk(gitHubServerApp.installationId);
+
+	if (installation?.jiraHost !== jiraHost) {
+		req.log.error({ id, jiraHost }, "Jira hosts do not match");
+		throw new Error("Jira hosts do not match.");
+	}
+
+	req.log.info("Found GitHub server app for installation");
+	res.locals.gitHubAppId = Number(id);
+	return next();
+
 };
