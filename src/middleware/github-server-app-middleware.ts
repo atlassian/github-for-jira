@@ -2,13 +2,10 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 
-type GitHubAppConfig = {
-	gitHubAppId: string;
-}
-
 export type GitHubAppReqLocals<T = Record<string, any>> = T & {
 	gitHubAppConfig: {
 		gitHubAppId: number | undefined;
+		uuid: string;
 	}
 }
 
@@ -34,10 +31,10 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		}
 
 		req.log.info("Found GitHub server app for installation");
-		const gitHubAppConfig: GitHubAppConfig = {
-			gitHubAppId: id
-		}
-		res.locals.gitHubAppConfig = gitHubAppConfig;
+		(res.locals as GitHubAppReqLocals).gitHubAppConfig = {
+			gitHubAppId: parseInt(id),
+			uuid: gitHubServerApp.uuid
+		};
 		return next();
 	}
 
