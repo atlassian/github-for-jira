@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
@@ -10,24 +11,31 @@ import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
 
 export const GithubRouter = Router();
 
+//attach GitHub Server App optional uuid
+const routerWithOptionalGHAppUUID = Router();
+GithubRouter.use("/:uuid?", routerWithOptionalGHAppUUID);
+
+//With optional uuid, veirfy for GitHub Server App and put config in locals
+routerWithOptionalGHAppUUID.use(GithubServerAppMiddleware);
+
 // OAuth Routes
-GithubRouter.use(GithubOAuthRouter);
+routerWithOptionalGHAppUUID.use(GithubOAuthRouter);
 
 // Webhook Route
-GithubRouter.post("/webhooks/:uuid",
+routerWithOptionalGHAppUUID.post("/webhooks/:uuid",
 	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
 	returnOnValidationError,
 	WebhookReceiverPost);
 
 // CSRF Protection Middleware for all following routes
-GithubRouter.use(csrfMiddleware);
+routerWithOptionalGHAppUUID.use(csrfMiddleware);
 
-GithubRouter.use("/setup", GithubSetupRouter);
+routerWithOptionalGHAppUUID.use("/setup", GithubSetupRouter);
 
 // All following routes need Github Auth
-GithubRouter.use(GithubAuthMiddleware);
+routerWithOptionalGHAppUUID.use(GithubAuthMiddleware);
 
-GithubRouter.use("/configuration", GithubConfigurationRouter);
+routerWithOptionalGHAppUUID.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
-GithubRouter.use("/subscriptions?", GithubSubscriptionRouter);
+routerWithOptionalGHAppUUID.use("/subscriptions?", GithubSubscriptionRouter);

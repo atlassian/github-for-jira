@@ -172,5 +172,6 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
 export const GithubOAuthRouter = Router();
-GithubOAuthRouter.get("/login", GithubOAuthLoginGet);
+//TODO: ARC-1515 confirm this is not used anymore and delete the line
+//GithubOAuthRouter.get("/login", GithubOAuthLoginGet);
 GithubOAuthRouter.get(callbackPath, GithubOAuthCallbackGet);
