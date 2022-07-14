@@ -12,8 +12,6 @@ export const JiraManualAppCreationGet = async (
 		const gitHubServerAppId = req.query.ghsaId as string;
 		const app = await GitHubServerApp.getForGitHubServerAppId(parseInt(gitHubServerAppId));
 
-		req.log.debug("Received query Parameter------------>", app);
-
 		res.render("jira-manual-app-creation.hbs", {
 			previousPagePath: "github-app-creation-page",
 			app
