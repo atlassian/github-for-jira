@@ -13,6 +13,8 @@ import { JiraEditAppGet } from "routes/jira/server/jira-edit-app-get";
 
 export const JiraRouter = Router();
 
+// TODO: Need to cleanup the URLs and Routers
+
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 JiraRouter.get("/ghe-servers", csrfMiddleware, JiraJwtTokenMiddleware, JiraGheServers);
 JiraRouter.get("/edit-app/:id", csrfMiddleware, JiraJwtTokenMiddleware, JiraEditAppGet);
