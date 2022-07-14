@@ -8,12 +8,12 @@ import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "middlewar
 import { JiraServerUrlRouter } from "routes/jira/server/jira-server-url-router";
 import { JiraAppCreationRouter } from "./server/jira-app-creation-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
-import { JiraManualAppCreationGet } from "routes/jira/server/jira-manual-app-creation-get";
+import { JiraManualAppGet } from "routes/jira/server/jira-manual-app-get";
 
 export const JiraRouter = Router();
 
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
-JiraRouter.get("/manual-app-creation", csrfMiddleware, JiraJwtTokenMiddleware, JiraManualAppCreationGet);
+JiraRouter.get("/manual-app", csrfMiddleware, JiraJwtTokenMiddleware, JiraManualAppGet);
 
 JiraRouter.use("/configuration", JiraConfigurationRouter);
 // TODO - add csrf middleware

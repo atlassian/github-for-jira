@@ -92,11 +92,11 @@ const modules = {
 			conditions: adminCondition
 		},
 		{
-			key: "github-manual-app-creation-page",
+			key: "github-manual-app-page",
 			name: {
-				value: "GitHub Manual App Creation"
+				value: "GitHub Manual App"
 			},
-			url: "/jira/manual-app-creation?ghsaId={ac.ghsaId}",
+			url: "/jira/manual-app?ghsaId={ac.ghsaId}",
 			location: "none",
 			conditions: adminCondition
 		}

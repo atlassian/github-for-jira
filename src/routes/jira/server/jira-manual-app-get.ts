@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 
-export const JiraManualAppCreationGet = async (
+export const JiraManualAppGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
