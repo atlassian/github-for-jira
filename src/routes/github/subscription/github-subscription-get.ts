@@ -5,7 +5,7 @@ import { createAppClient, createUserClient } from "~/src/util/get-github-client-
 import { GitHubAppReqLocals } from "middleware/github-server-app-middleware";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const {githubToken, jiraHost, gitHubAppConfig: {gitHubAppId}} = res.locals as GitHubAppReqLocals;
+	const { githubToken, jiraHost, gitHubAppConfig: { gitHubAppId } } = res.locals as GitHubAppReqLocals;
 
 	const gitHubInstallationId = Number(req.params.installationId);
 	if (!githubToken) {

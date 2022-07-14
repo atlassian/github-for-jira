@@ -29,7 +29,7 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitH
  * Handle the when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, client, gitHubAppConfig: { gitHubAppId} } = res.locals as GitHubAppReqLocals;
+	const { githubToken, jiraHost, client, gitHubAppConfig: { gitHubAppId } } = res.locals as GitHubAppReqLocals;
 	const gitHubInstallationId = Number(req.body.installationId);
 
 	if (!githubToken || !jiraHost) {

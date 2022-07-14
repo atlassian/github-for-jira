@@ -30,7 +30,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	const state = crypto.randomBytes(8).toString("hex");
 
 	req.session["timestamp_before_oauth"] = Date.now();
-	const { jiraHost, gitHubAppConfig: {uuid, gitHubAppId} } = res.locals as GitHubAppReqLocals;
+	const { jiraHost, gitHubAppConfig: { uuid, gitHubAppId } } = res.locals as GitHubAppReqLocals;
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
 	req.session[state] =
@@ -87,7 +87,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 	if (!code) return next("Missing OAuth Code");
 
-	const { jiraHost, gitHubAppConfig: { uuid, gitHubAppId } } = res.locals as GitHubAppReqLocals;
+	const { jiraHost, gitHubAppConfig: { gitHubAppId } } = res.locals as GitHubAppReqLocals;
 
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);

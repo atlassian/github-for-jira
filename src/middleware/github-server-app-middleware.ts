@@ -11,7 +11,7 @@ export type GitHubAppReqLocals<T = Record<string, any>> = T & {
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
-	const {githubAppId: id} = req.params;
+	const { githubAppId: id } = req.params;
 
 	if (id) {
 		req.log.debug(`Retrieving GitHub app with id ${id}`);
