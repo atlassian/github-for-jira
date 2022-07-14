@@ -33,7 +33,13 @@
 
   <div class="jiraManualAppCreation">
 
-      <h1>Manual app Creation</h1>
+      <h1>
+      {{#if app.id}}
+        Edit {{app.gitHubAppName}}
+      {{else}}
+        Manual app Creation
+      {{/if}}
+      </h1>
 
       <div>
         {{#if app.id}}
