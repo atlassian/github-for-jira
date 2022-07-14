@@ -2,12 +2,23 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 
+type GitHubAppConfig = {
+	gitHubAppId: string;
+}
+
+export type GitHubAppReqLocals<T = Record<string, any>> = T & {
+	gitHubAppConfig: {
+		gitHubAppId: number | undefined;
+	}
+}
+
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
-	const { id } = req.params;
+	const {githubAppId: id} = req.params;
 
 	if (id) {
 		req.log.debug(`Retrieving GitHub app with id ${id}`);
+		//TODO: ARC-1515 confirm the unique id and possibly change it to uuid
 		const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(Number(id));
 
 		if (!gitHubServerApp) {
@@ -23,9 +34,13 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		}
 
 		req.log.info("Found GitHub server app for installation");
-		res.locals.gitHubAppId = id;
+		const gitHubAppConfig: GitHubAppConfig = {
+			gitHubAppId: id
+		}
+		res.locals.gitHubAppConfig = gitHubAppConfig;
 		return next();
 	}
 
 	next();
 };
+

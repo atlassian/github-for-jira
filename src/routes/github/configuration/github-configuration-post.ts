@@ -9,6 +9,7 @@ import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { GitHubAppReqLocals } from "middleware/github-server-app-middleware";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
@@ -28,7 +29,7 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitH
  * Handle the when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, client, gitHubAppId } = res.locals;
+	const { githubToken, jiraHost, client, gitHubAppConfig: { gitHubAppId} } = res.locals as GitHubAppReqLocals;
 	const gitHubInstallationId = Number(req.body.installationId);
 
 	if (!githubToken || !jiraHost) {

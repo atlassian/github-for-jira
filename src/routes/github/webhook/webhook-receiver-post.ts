@@ -14,7 +14,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
 	const id = request.headers["x-github-delivery"] as string;
-	const uuid = request.params.uuid;
+	const uuid = request.params.githubAppId;
 	const payload = request.body;
 	let webhookSecret: string;
 	try {

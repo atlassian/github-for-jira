@@ -4,6 +4,7 @@ import { getJiraAppUrl, getJiraMarketplaceUrl, isGitHubCloudApp, jiraSiteExists 
 import { Installation } from "models/installation";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { GitHubAppReqLocals } from "middleware/github-server-app-middleware";
 
 /*
 	Handles redirects for both the installation flow from Jira and
@@ -36,9 +37,9 @@ const getInstallationData = async (githubAppClient: GitHubAppClient, githubInsta
 };
 
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
-	const { jiraHost, gitHubAppId } = res.locals;
+	const { jiraHost, gitHubAppConfig } = res.locals as GitHubAppReqLocals;
 	const githubInstallationId = Number(req.query.installation_id);
-	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
+	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppConfig.gitHubAppId);
 	const { githubInstallation, info } = await getInstallationData(gitHubAppClient, githubInstallationId, req.log);
 
 	req.addLogFields({ githubInstallationId, appInfo: info });

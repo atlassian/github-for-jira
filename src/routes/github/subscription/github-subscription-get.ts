@@ -2,9 +2,10 @@ import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { GitHubAppReqLocals } from "middleware/github-server-app-middleware";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppId } = res.locals;
+	const {githubToken, jiraHost, gitHubAppConfig: {gitHubAppId}} = res.locals as GitHubAppReqLocals;
 
 	const gitHubInstallationId = Number(req.params.installationId);
 	if (!githubToken) {

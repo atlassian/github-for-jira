@@ -11,6 +11,8 @@ import { Errors } from "config/errors";
 import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 
+import { GitHubAppReqLocals } from "middleware/github-server-app-middleware";
+
 const logger = getLogger("github-oauth");
 
 const githubClient = envVars.GITHUB_CLIENT_ID;
@@ -28,7 +30,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	const state = crypto.randomBytes(8).toString("hex");
 
 	req.session["timestamp_before_oauth"] = Date.now();
-	const { jiraHost, gitHubAppId } = res.locals;
+	const { jiraHost, gitHubAppConfig } = res.locals as GitHubAppReqLocals;
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
 	req.session[state] =
@@ -85,7 +87,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 	if (!code) return next("Missing OAuth Code");
 
-	const { jiraHost, gitHubAppId } = res.locals;
+	const { jiraHost, gitHubAppConfig } = res.locals as GitHubAppReqLocals;
 
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
@@ -133,14 +135,14 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { githubToken } = req.session;
-		const { jiraHost, gitHubAppId } = res.locals;
+		const { jiraHost, gitHubAppConfig } = res.locals as GitHubAppReqLocals;
 		if (!githubToken) {
 			req.log.info("github token missing, calling login()");
 			throw "Missing github token";
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		const url = await getGitHubApiUrl(jiraHost, gitHubAppId);
+		const url = await getGitHubApiUrl(jiraHost, gitHubAppConfig.gitHubAppId);
 
 		await axios.get(url, {
 			headers: {

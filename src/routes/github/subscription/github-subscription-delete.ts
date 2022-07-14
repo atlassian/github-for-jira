@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { GitHubAppReqLocals } from "middleware/github-server-app-middleware";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppId } = res.locals;
+	const {githubToken, jiraHost, gitHubAppConfig: {gitHubAppId}} = res.locals as GitHubAppReqLocals;
 	const { installationId: gitHubInstallationId } = req.body;
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);

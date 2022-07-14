@@ -23,7 +23,7 @@ const validateJiraSite = async (
 	res.json({ redirect: installation ? getJiraAppUrl(jiraHost) : getJiraMarketplaceUrl(jiraHost) });
 };
 
-export const GithubSetupPost = async (req: Request, res: Response): Promise<void> => {
+export const GithubSetupPost = async (req: Request<Locals  = {}>, res: Response): Promise<void> => {
 	const { jiraHost, jiraDomain, jiraDomainMain, jiraDomainModal } = req.body;
 	const domain = jiraDomain || jiraDomainMain || jiraDomainModal || "";
 	const url = jiraHost || `https://${domain}.atlassian.net`;

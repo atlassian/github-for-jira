@@ -18,6 +18,7 @@ import {
 	createUserClient
 } from "~/src/util/get-github-client-config";
 import { isGitHubCloudApp } from "utils/jira-utils";
+import { GitHubAppReqLocals } from "middleware/github-server-app-middleware";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -123,8 +124,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		jiraHost,
 		githubToken,
 		github, // user-authenticated GitHub client
-		gitHubAppId
-	} = res.locals;
+		gitHubAppConfig : { gitHubAppId }
+	} = res.locals as GitHubAppReqLocals;
 	const log = req.log.child({ jiraHost });
 
 	if (!githubToken) {

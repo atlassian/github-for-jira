@@ -12,4 +12,5 @@ GithubSubscriptionRouter.route("/:installationId")
 	.delete(GithubSubscriptionDelete);
 
 // TODO: remove legacy route
-GithubSubscriptionRouter.post("/", GithubSubscriptionDelete);
+// TODO ARC-1515 remove this?
+//GithubSubscriptionRouter.post("/", GithubSubscriptionDelete);
