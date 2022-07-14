@@ -7,7 +7,7 @@ export const JiraManualAppCreationGet = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.debug("Received Jira app creation page request");
+		req.log.debug("Received Jira manual app page request");
 
 		const gitHubServerAppId = req.query.ghsaId as string;
 		const app = await GitHubServerApp.getForGitHubServerAppId(parseInt(gitHubServerAppId));
@@ -17,8 +17,8 @@ export const JiraManualAppCreationGet = async (
 			app
 		});
 
-		req.log.debug("Jira manual app creation page rendered successfully.");
+		req.log.debug("Jira manual app page rendered successfully.");
 	} catch (error) {
-		return next(new Error(`Failed to render Jira app creation page: ${error}`));
+		return next(new Error(`Failed to render Jira manual app page: ${error}`));
 	}
 };
