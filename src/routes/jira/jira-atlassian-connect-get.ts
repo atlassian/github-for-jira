@@ -90,6 +90,15 @@ const modules = {
 			url: "/jira/app-creation",
 			location: "none",
 			conditions: adminCondition
+		},
+		{
+			key: "github-manual-app-creation-page",
+			name: {
+				value: "GitHub Manual App Creation"
+			},
+			url: "/jira/manual-app-creation?ghsaId={ac.ghsaId}",
+			location: "none",
+			conditions: adminCondition
 		}
 	],
 	webSections: [
