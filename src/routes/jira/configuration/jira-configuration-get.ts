@@ -9,6 +9,8 @@ import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isGitHubCloudApp } from "~/src/util/jira-utils";
+import { sendAnalytics } from "../../../util/analytics-client";
+import { AnalyticsEventTypesEnum, AnalyticsScreenEventsEnum } from "../../../interfaces/common";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -129,7 +131,12 @@ export const JiraConfigurationGet = async (
 			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 		});
 
-		req.log.debug("Jira configuration rendered successfully.");
+		sendAnalytics(AnalyticsEventTypesEnum.ScreenEvent, {
+			name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
+			jiraHost, connectedOrgCount: installations.total
+		});
+
+		req.log.info("Jira configuration rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira configuration: ${error}`));
 	}
