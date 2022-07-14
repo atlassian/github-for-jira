@@ -92,11 +92,11 @@ const modules = {
 			conditions: adminCondition
 		},
 		{
-			key: "github-manual-app-page",
+			key: "github-edit-app-page",
 			name: {
-				value: "GitHub Manual App"
+				value: "GitHub Edit App"
 			},
-			url: "/jira/manual-app?ghsaId={ac.ghsaId}",
+			url: "/jira/edit-app/{ac.ghsaId}",
 			location: "none",
 			conditions: adminCondition
 		},

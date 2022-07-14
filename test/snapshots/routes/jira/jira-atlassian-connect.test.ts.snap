@@ -77,12 +77,12 @@ Object {
             "condition": "user_is_admin",
           },
         ],
-        "key": "github-manual-app-page",
+        "key": "github-edit-app-page",
         "location": "none",
         "name": Object {
-          "value": "GitHub Manual App",
+          "value": "GitHub Edit App",
         },
-        "url": "/jira/manual-app?ghsaId={ac.ghsaId}",
+        "url": "/jira/edit-app/{ac.ghsaId}",
       },
       Object {
         "conditions": Array [
