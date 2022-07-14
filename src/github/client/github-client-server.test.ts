@@ -9,7 +9,6 @@ import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
 jest.mock("config/feature-flags");
-jest.mock("./key-locator");
 
 describe("GitHub Client", () => {
 	const githubInstallationId = 17979017;
