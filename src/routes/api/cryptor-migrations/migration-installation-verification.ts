@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Installation } from "models/installation";
 
-export const CryptorMigrationInstallationVerificationPost = async (req: Request, res: Response): Promise<any> => {
+export const CryptorMigrationInstallationVerificationPost = async (req: Request, res: Response): Promise<void> => {
 
 	const jiraHost: string = req.body?.jiraHost;
 
