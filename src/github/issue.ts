@@ -4,7 +4,7 @@ import { GitHubIssue, GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const issueWebhookHandler = async (context: WebhookContext<WebhookPayloadIssues>, jiraClient, util, githubInstallationId: number): Promise<void> => {
+export const issueWebhookHandler = async (context: WebhookContext<WebhookPayloadIssues>, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
 		issue,
 		repository: {
@@ -13,7 +13,12 @@ export const issueWebhookHandler = async (context: WebhookContext<WebhookPayload
 		}
 	} = context.payload;
 
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraClient.baseURL, context.log);
+	context.log = context.log.child({
+		gitHubInstallationId,
+		jiraHost: jiraClient.baseURL
+	});
+
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;
