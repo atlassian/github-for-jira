@@ -1,10 +1,9 @@
+import Logger from "bunyan";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
-import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit } from "interfaces/jira";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { isBlocked } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { PushQueueMessagePayload } from "../sqs/push";
@@ -51,16 +50,12 @@ export const createJobData = (payload, jiraHost: string): PushQueueMessagePayloa
 
 	const shas: { id: string, issueKeys: string[] }[] = [];
 	for (const commit of payload.commits) {
-		const issueKeys = issueKeyParser().parse(commit.message) || [];
-
-		if (isEmpty(issueKeys)) {
-			// Don't add this commit to the queue since it doesn't have issue keys
-			continue;
+		const issueKeys = jiraIssueKeyParser(commit.message);
+		if (!isEmpty(issueKeys)) {
+			// Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
+			// Creates an array of shas for the job processor to work on
+			shas.push({ id: commit.id, issueKeys });
 		}
-
-		// Only store the sha and issue keys. All other data will be requested from GitHub as part of the job
-		// Creates an array of shas for the job processor to work on
-		shas.push({ id: commit.id, issueKeys });
 	}
 
 	return {
@@ -76,7 +71,7 @@ export const createJobData = (payload, jiraHost: string): PushQueueMessagePayloa
 export const enqueuePush = async (payload: unknown, jiraHost: string) =>
 	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
 
-export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: LoggerWithTarget) => {
+export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {
 		repository,
 		repository: { owner, name: repo },
@@ -86,7 +81,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	} = payload;
 
 	if (await isBlocked(installationId, rootLogger)) {
-		rootLogger.warn({ payload, installationId }, "blocking processing of push message because installationId is on the blocklist");
+		rootLogger.warn({ installationId }, "blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
 
@@ -98,7 +93,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		repoName: repo,
 		orgName: owner.name,
 		installationId,
-		webhookReceived
+		webhookReceived,
+		jiraHost
 	});
 
 	log.info("Processing push");
@@ -147,7 +143,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					log.info("GitHub call succeeded");
 					return {
 						hash: commitSha,
-						message,
+						message: limitCommitMessage(message),
 						author: getJiraAuthor(author, githubCommitAuthor),
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),

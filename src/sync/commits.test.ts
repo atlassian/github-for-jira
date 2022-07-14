@@ -12,12 +12,11 @@ import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/backfill";
-
 import commitNodesFixture from "fixtures/api/graphql/commit-nodes.json";
-
 import mixedCommitNodes from "fixtures/api/graphql/commit-nodes-mixed.json";
-
 import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
+import { when } from "jest-when";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -44,18 +43,18 @@ describe("sync/commits", () => {
 		}
 	});
 
-	const getCommitsQuery = () => {
+	const getCommitsQuery = (variables?: Record<string, any>) => {
 		return commitsNoLastCursor({
 			owner: "integrations",
 			repo: "test-repo-name",
-			per_page: 20
+			per_page: 20,
+			...variables
 		});
 	};
 
-	const createGitHubNock = (commitsResponse?) => {
-
+	const createGitHubNock = (commitsResponse?, variables?: Record<string, any>) => {
 		githubNock
-			.post("/graphql", getCommitsQuery())
+			.post("/graphql", getCommitsQuery(variables))
 			.query(true)
 			.reply(200, commitsResponse);
 	};
@@ -80,7 +79,8 @@ describe("sync/commits", () => {
 		const subscription = await Subscription.create({
 			gitHubInstallationId: installationId,
 			jiraHost,
-			syncStatus: "ACTIVE"
+			syncStatus: "ACTIVE",
+			repositoryStatus: "complete"
 		});
 
 		await RepoSyncState.create({
@@ -99,9 +99,7 @@ describe("sync/commits", () => {
 
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
-
 		githubUserTokenNock(installationId);
-
 	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
@@ -231,4 +229,48 @@ describe("sync/commits", () => {
 		removeInterceptor(interceptor);
 	});
 
+	describe("SYNC_MAIN_COMMIT_TIME_LIMIT FF is enabled", () => {
+		let dateCutoff: Date;
+		beforeEach(() => {
+			const time = Date.now();
+			const cutoff = 1000 * 60 * 60 * 24;
+			mockSystemTime(time);
+			dateCutoff = new Date(time - cutoff);
+
+			when(numberFlag).calledWith(
+				NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(cutoff);
+		});
+
+		it("should only get commits since date specified", async () => {
+			const data: BackfillMessagePayload = { installationId, jiraHost };
+
+			createGitHubNock(commitNodesFixture, { commitSince: dateCutoff.toISOString() });
+			const commits = [
+				{
+					"author": {
+						"name": "test-author-name",
+						"email": "test-author-email@example.com"
+					},
+					"authorTimestamp": "test-authored-date",
+					"displayId": "test-o",
+					"fileCount": 0,
+					"hash": "test-oid",
+					"id": "test-oid",
+					"issueKeys": [
+						"TES-17"
+					],
+					"message": "[TES-17] test-commit-message",
+					"url": "https://github.com/test-login/test-repo/commit/test-sha",
+					"updateSequenceId": 12345678
+				}
+			];
+			createJiraNock(commits);
+
+			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			verifyMessageSent(data);
+		});
+	});
 });

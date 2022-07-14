@@ -2,7 +2,7 @@ import Logger from "bunyan";
 import axios, { AxiosError, AxiosInstance } from "axios";
 
 import url from "url";
-import { statsd }  from "config/statsd";
+import { statsd } from "config/statsd";
 import { getLogger } from "config/logger";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
@@ -32,6 +32,8 @@ export const getJiraErrorMessages = (status: number) => {
 			return "HTTP 401 - Missing a JWT token, or token is invalid.";
 		case 403:
 			return "HTTP 403 - The JWT token used does not correspond to an app that defines the jiraDevelopmentTool module, or the app does not define the 'WRITE' scope";
+		case 404:
+			return "HTTP 404 - Bad REST path, or Jira instance not found, renamed or temporarily suspended.";
 		case 413:
 			return "HTTP 413 - Data is too large. Submit fewer devinfo entities in each payload.";
 		case 429:
@@ -61,11 +63,7 @@ const getErrorMiddleware = (logger: Logger) =>
 
 		// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
 		// Log exception only if it is error, because AxiosError contains the request payload
-		if (isWarning) {
-			logger.warn(errorMessage);
-		} else {
-			logger.error({ err: error }, errorMessage);
-		}
+		(isWarning ? logger.warn : logger.error)({ err: error, res: error?.response }, errorMessage);
 
 		return Promise.reject(new JiraClientError(errorMessage, error, status));
 	};
@@ -85,12 +83,9 @@ const getSuccessMiddleware = (logger: Logger) =>
 	(response) => {
 		logger.debug(
 			{
-				params: response.config.urlParams
+				res: response
 			},
-			`Jira request: ${response.config.method.toUpperCase()} ${
-				response.config.originalUrl
-			} - ${response.status} ${response.statusText}
-				Response data: ${JSON.stringify(response.data)}`
+			`Successful Jira request`
 		);
 
 		return response;
@@ -104,6 +99,11 @@ const getSuccessMiddleware = (logger: Logger) =>
  */
 const setRequestStartTime = (config) => {
 	config.requestStartTime = new Date();
+	return config;
+};
+
+const logRequest = (logger: Logger) => (config) => {
+	logger.debug({ config }, "Jira Request Started");
 	return config;
 };
 
@@ -143,13 +143,23 @@ const instrumentRequest = (response) => {
 
 /**
  * Submit statsd metrics on failed requests.
- *
- * @param {import("axios").AxiosError} error - The Axios error response object.
- * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-const instrumentFailedRequest = () => {
-	return (error) => {
+const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
+	return async (error: AxiosError) => {
 		instrumentRequest(error?.response);
+		if (error.response?.status === 503 || error.response?.status === 405) {
+			try {
+				await axios.get("/status", { baseURL });
+			} catch (e) {
+				if (e.response.status === 503) {
+					logger.info(`503 from Jira: Jira instance '${baseURL}' has been deactivated, is suspended or does not exist. Returning 404 to our application.`);
+					error.response.status = 404;
+				} else if (e.response.status === 302) {
+					logger.info(`405 from Jira: Jira instance '${baseURL}' has been renamed. Returning 404 to our application.`);
+					error.response.status = 404;
+				}
+			}
+		}
 		return Promise.reject(error);
 	};
 };
@@ -176,6 +186,7 @@ export const getAxiosInstance = (
 	// *** IMPORTANT: Interceptors are executed in reverse order. ***
 	// the last one specified is the first to executed.
 
+	instance.interceptors.request.use(logRequest(logger));
 	instance.interceptors.request.use(setRequestStartTime);
 
 	// This has to be the before any middleware that might change the URL
@@ -188,7 +199,7 @@ export const getAxiosInstance = (
 
 	instance.interceptors.response.use(
 		instrumentRequest,
-		instrumentFailedRequest()
+		instrumentFailedRequest(baseURL, logger)
 	);
 
 	instance.interceptors.response.use(

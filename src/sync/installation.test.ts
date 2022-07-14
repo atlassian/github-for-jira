@@ -29,15 +29,15 @@ describe("sync/installation", () => {
 	const JOB_DATA = { installationId: 1, jiraHost: "http://foo" };
 
 	const TEST_REPO: Repository = {
-		id: "123",
+		id: 123,
 		name: "Test",
 		full_name: "Test/Test",
 		owner: { login: "test" },
 		html_url: "https://test",
-		updated_at: 1234
+		updated_at: "1234"
 	};
 
-	const TASK: installation.Task = { task: "commit", repositoryId: "123", repository: TEST_REPO };
+	const TASK: installation.Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
 
 	const TEST_SUBSCRIPTION: Subscription = {} as any;
 
@@ -62,7 +62,7 @@ describe("sync/installation", () => {
 				]
 			};
 
-			expect(isRetryableWithSmallerRequest(err)).toBeTruthy();
+			expect(await isRetryableWithSmallerRequest(err)).toBeTruthy();
 		});
 
 		it("should return true for 'something went wrong' error", async () => {
@@ -74,7 +74,7 @@ describe("sync/installation", () => {
 				]
 			};
 
-			expect(isRetryableWithSmallerRequest(err)).toBeTruthy();
+			expect(await isRetryableWithSmallerRequest(err)).toBeTruthy();
 		});
 
 		it("should return false for unknown error", async () => {
@@ -86,7 +86,7 @@ describe("sync/installation", () => {
 				]
 			};
 
-			expect(isRetryableWithSmallerRequest(err)).toBeFalsy();
+			expect(await isRetryableWithSmallerRequest(err)).toBeFalsy();
 		});
 	});
 

@@ -58,7 +58,7 @@
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
                 <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status</h4>
-                <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn">&times;</span>
+                <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
               </div>
 
               <table class="jiraConfiguration__syncRetryModal__table">
@@ -107,6 +107,7 @@
           </div>
 
           {{#if successfulConnections}}
+          <div class="jiraConfiguration__tableContainer">
             <table class="jiraConfiguration__table aui">
               <thead class="jiraConfiguration__table__head">
                 <tr class="jiraConfiguration__table__head_row">
@@ -126,13 +127,15 @@
                   <tr class="jiraConfiguration__table__row">
                     {{! Organization }}
                     <td class="jiraConfiguration__table__cell">
-                      <img
-                        class="jiraConfiguration__table__cell__avatar"
-                        src="{{account.avatar_url}}"
-                        height="24"
-                        width="24"
-                        data-installation-id="{{id}}"
-                      />
+                      {{#if ../isGitHubCloudApp}}
+                        <img
+                            class="jiraConfiguration__table__cell__avatar"
+                            src="{{account.avatar_url}}"
+                            height="24"
+                            width="24"
+                            data-installation-id="{{id}}"
+                        />
+                      {{/if}}
                       <span
                         class="jiraConfiguration__table__cell__orgName"
                       >{{account.login}}</span>
@@ -146,14 +149,16 @@
                         <span>Only select repos</span>
                       {{/if}}
 
+                      {{#if totalNumberOfRepos}}
                       <span class="jiraConfiguration__table__syncCount">
                         {{ifAllReposSynced
                           numberOfSyncedRepos
                           totalNumberOfRepos
                         }}
                       </span>
-
+                      {{/if}}
                       <a
+                        class="jiraConfiguration__table__editContainer"
                         href="{{html_url}}"
                         data-installation-link="{{html_url}}"
                         target="_blank"
@@ -177,6 +182,22 @@
                       >
                         {{syncStatus}}
                       </span>
+                      {{!-- Display any sync warnings --}}
+                      {{#if (isMissingPermissions syncWarning)}}
+                        <div class="jiraConfiguration__syncWarning">
+                          <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
+                            Sync failed warnings
+                          </span>
+                          <div class="jiraConfiguration__syncWarningMessage warning-popup">
+                            <div>Some tasks have not been backfilled. Please
+                              <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
+                                  href="{{html_url}}"
+                                  data-installation-link="{{html_url}}"
+                                  target="_blank">accept permissions</a>
+                               on GitHub (you must be the admin of your organization), then retry backfill.</div>
+                            </div>
+                        </div>
+                      {{/if}}
                       {{#if (inProgressOrPendingSync syncStatus)}}
                         <div class="jiraConfiguration__loaderContainer">
                           <aui-spinner size="small"></aui-spinner>
@@ -197,7 +218,6 @@
                         </div>
                       {{/if}}
                     </td>
-
                     {{! Settings }}
                     <td class="jiraConfiguration__table__cell__settings">
                       <button
@@ -245,6 +265,7 @@
                 {{/each}}
               </tbody>
             </table>
+          </div>
           {{/if}}
 
         {{#each failedConnections}}
@@ -288,8 +309,21 @@
               organization to connect and start including issue keys in
               branches, commit messages or pull requests to see development
               insights in Jira.</p>
+            <a
+              href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/"
+              class="ak-button ak-button__appearance-default learn-more-link"
+              target="_blank"
+            >
+              Learn more
+              <span
+                class="aui-icon aui-iconfont-shortcut"
+              >
+                Shortcut
+              </span>
+            </a>
+            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
             <button
-              class="ak-button ak-button__appearance-primary add-organization-link"
+              class="ak-button ak-button__appearance-primary {{handleNavigationClassName}}"
             >Connect GitHub organization</button>
           </div>
         {{/if}}

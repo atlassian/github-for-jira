@@ -14,6 +14,8 @@ import { cookieSessionMiddleware } from "middleware/cookiesession-middleware";
 import { ErrorRouter } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { createAppClient } from "~/src/util/get-github-client-config";
 
 export const RootRouter = Router();
 
@@ -53,8 +55,13 @@ RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
 
 // On base path, redirect to Github App Marketplace URL
-RootRouter.get("/", async (_: Request, res: Response) => {
-	const { data: info } = await res.locals.client.apps.getAuthenticated();
+RootRouter.get("/", async (req: Request, res: Response) => {
+	const { jiraHost, gitHubAppId } = res.locals;
+	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
+	const { data: info } = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_REDIRECT, false) ?
+		await gitHubAppClient.getApp() :
+		await res.locals.client.apps.getAuthenticated();
+
 	return res.redirect(info.external_url);
 });
 

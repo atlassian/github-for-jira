@@ -19,16 +19,16 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 	);
 
 	if (!subscription) {
-		req.log.info("no subscription");
+		req.log.debug("no subscription");
 		res.sendStatus(404);
 		return;
 	}
 
 	try {
 		const jiraClient = await getJiraClient(jiraHost, Number(githubInstallationId), req.log);
-		req.log.info(`Deleting dev info for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
+		req.log.info({ jiraHost, githubInstallationId }, `Deleting DevInfo`);
 		await jiraClient.devinfo.installation.delete(githubInstallationId);
-		res.status(200).send(`devinfo deleted for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
+		res.status(200).send(`DevInfo deleted for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
 	} catch (err) {
 		res.status(500).json(err);
 	}

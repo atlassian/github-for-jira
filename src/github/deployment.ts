@@ -1,18 +1,19 @@
 import { transformDeployment } from "../transforms/transform-deployment";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
 import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
+import { JiraDeploymentData } from "../interfaces/jira";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const deploymentWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
 		jiraHost: jiraClient.baseURL,
-		installationId: githubInstallationId,
+		installationId: gitHubInstallationId,
 		webhookPayload: context.payload,
 		webhookReceived: Date.now(),
 		webhookId: context.id
@@ -20,29 +21,30 @@ export const deploymentWebhookHandler = async (context: CustomContext, jiraClien
 };
 
 export const processDeployment = async (
-	github: GitHubAPI,
+	_github: GitHubAPI,
 	newGitHubClient: GitHubInstallationClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadDeploymentStatus,
 	webhookReceivedDate: Date,
 	jiraHost: string,
-	installationId: number,
-	rootLogger: LoggerWithTarget) => {
+	gitHubInstallationId: number,
+	rootLogger: Logger) => {
 
 	const logger = rootLogger.child({
 		webhookId: webhookId,
-		installationId,
+		gitHubInstallationId,
+		jiraHost,
 		webhookReceived: webhookReceivedDate
 	});
 
-	if (await isBlocked(installationId, logger)) {
+	if (await isBlocked(gitHubInstallationId, logger)) {
 		logger.warn("blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
 
 	logger.info("processing deployment message!");
 
-	const jiraPayload = await transformDeployment(github, newGitHubClient, webhookPayload, jiraHost, logger);
+	const jiraPayload: JiraDeploymentData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger);
 
 	if (!jiraPayload) {
 		logger.info(
@@ -54,7 +56,7 @@ export const processDeployment = async (
 
 	const jiraClient = await getJiraClient(
 		jiraHost,
-		installationId,
+		gitHubInstallationId,
 		logger
 	);
 

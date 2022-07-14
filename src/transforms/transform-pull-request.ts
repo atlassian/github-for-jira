@@ -1,15 +1,14 @@
-import issueKeyParser from "jira-issue-key-parser";
 import { isEmpty, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
 import { Octokit } from "@octokit/rest";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
-import { getJiraAuthor } from "utils/jira-utils";
+import Logger from "bunyan";
+import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubAPI } from "probot";
 import { getGithubUser } from "services/github/user";
-import { JiraAuthor } from "interfaces/jira";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
+import { JiraReview } from "../interfaces/jira";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -19,22 +18,18 @@ function mapStatus(status: string, merged_at?: string) {
 	return "UNKNOWN";
 }
 
-interface Review extends JiraAuthor {
-	approvalStatus: string;
-}
-
 // TODO: define arguments and return
 function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
-	const usernames: Record<string, Review> = {};
+	const usernames: Record<string, JiraReview> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
-	return sortedReviews.reduce((acc: Review[], review) => {
+	return sortedReviews.reduce((acc: JiraReview[], review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
 		const author = review?.user;
 		if (!usernames[author?.login]) {
 			usernames[author?.login] = {
 				...getJiraAuthor(author),
-				approvalStatus: review.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
+				approvalStatus: review?.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
 			};
 			acc.push(usernames[author?.login]);
 			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
@@ -50,22 +45,21 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 }
 
 // TODO: define arguments and return
-export const transformPullRequest = async (github: GitHubAPI | GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: LoggerWithTarget) => {
+export const transformPullRequest = async (github: GitHubAPI | GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger) => {
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
 	const prBody = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? body : "";
-	const textToSearch = `${prTitle}\n${head.ref}\n${prBody}}`;
-	const issueKeys = issueKeyParser().parse(textToSearch) || [];
+	const issueKeys = jiraIssueKeyParser(`${prTitle}\n${head.ref}\n${prBody}}`);
 
 	const logPayload = {
 		prTitle: prTitle || "none",
-		repoName: head?.repo.name || "none",
+		repoName: head?.repo?.name || "none",
 		prRef: pullRequest.head.ref || "none"
 	};
 
 	if (isEmpty(issueKeys) || !head?.repo) {
-		log?.info(logPayload, "Ignoring pullrequest hence it has no issue keys or repo");
+		log?.info(logPayload, "Ignoring pullrequest since it has no issue keys or repo");
 		return undefined;
 	}
 

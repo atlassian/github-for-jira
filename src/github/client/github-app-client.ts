@@ -4,30 +4,36 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders, AxiosRes
 import { AppTokenHolder } from "./app-token-holder";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
-import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
-import { InstallationId } from "./installation-id";
+import * as PrivateKey from "probot/lib/private-key";
+import { envVars } from "config/env";
+import { AuthToken } from "~/src/github/client/auth-token";
+import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
+import { GitHubClient } from "./github-client";
+
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
+ * This is the top level app API: get all installations of this app, or get more info on this app
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
-export class GitHubAppClient {
+export class GitHubAppClient extends GitHubClient {
 	private readonly axios: AxiosInstance;
-	private readonly appTokenHolder: AppTokenHolder;
-	private readonly githubInstallationId: InstallationId;
-	private readonly logger: Logger;
+	private readonly appToken: AuthToken;
 
 	constructor(
-		githubInstallationId: InstallationId,
-		logger: Logger,
-		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
+		logger?: Logger,
+		baseUrl?: string,
+		appId = envVars.APP_ID
 	) {
-		this.logger = logger || getLogger("github.app.client");
+		super(logger, baseUrl);
+		// TODO - change this for GHE, to get from github apps table
+		const privateKey = PrivateKey.findPrivateKey() || "";
+		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios = axios.create({
-			baseURL: githubInstallationId.githubBaseUrl,
+			baseURL: this.restApiUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			}
@@ -54,8 +60,6 @@ export class GitHubAppClient {
 				}
 			};
 		});
-		this.appTokenHolder = appTokenHolder;
-		this.githubInstallationId = githubInstallationId;
 	}
 
 	public getUserMembershipForOrg = async (username: string, org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
@@ -75,16 +79,12 @@ export class GitHubAppClient {
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
-		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
-			Accept: "application/vnd.github.v3+json",
-			Authorization: `Bearer ${appToken.token}`
+			Accept: GITHUB_ACCEPT_HEADER,
+			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}
-	
-	/**
-	 * This path requires JWT, therefore passing the token directly into the header.
-	 */
+
 	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
 		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations/{installationId}`, {
 			urlParams: {

@@ -50,20 +50,26 @@ describe("RepoSyncState", () => {
 				...repo,
 				pullStatus: "complete",
 				commitStatus: "complete",
-				branchStatus: "complete"
+				branchStatus: "complete",
+				buildStatus: "complete",
+				deploymentStatus: "complete"
 			});
 			await RepoSyncState.create({
 				...repo,
 				pullStatus: "pending",
 				commitStatus: "complete",
-				branchStatus: "complete"
+				branchStatus: "complete",
+				buildStatus: "complete",
+				deploymentStatus: "complete"
 			});
 			await RepoSyncState.create({
 				...repo,
 				subscriptionId: Math.round(Math.random() * 10000),
 				pullStatus: "complete",
 				commitStatus: "complete",
-				branchStatus: "complete"
+				branchStatus: "complete",
+				buildStatus: "complete",
+				deploymentStatus: "complete"
 			});
 			const result = await RepoSyncState.countSyncedReposFromSubscription(sub);
 			expect(result).toEqual(1);
@@ -292,14 +298,14 @@ describe("RepoSyncState", () => {
 			lastCommitCursor: "2",
 			lastPullCursor: 3,
 			repository: {
-				id: "2",
+				id: 2,
 				name: "bar",
 				full_name: "foo/bar",
 				html_url: "github.com/foo/bar",
 				owner: {
 					login: "foo"
 				},
-				updated_at: Date.now()
+				updated_at: new Date(Date.now()).toISOString()
 			}
 		};
 
@@ -319,7 +325,7 @@ describe("RepoSyncState", () => {
 			expect(data.repoName).toEqual(json.repository?.name);
 			expect(data.repoOwner).toEqual(json.repository?.owner.login);
 			expect(data.repoFullName).toEqual(json.repository?.full_name);
-			expect(data.repoUpdatedAt?.getTime()).toEqual(json.repository?.updated_at);
+			expect(data.repoUpdatedAt?.toISOString()).toEqual(json.repository?.updated_at);
 			expect(data.repoUrl).toEqual(json.repository?.html_url);
 			expect(data.branchStatus).toEqual(json.branchStatus);
 			expect(data.branchCursor).toEqual(json.lastBranchCursor);
@@ -343,8 +349,45 @@ describe("RepoSyncState", () => {
 				subscriptionId: Math.round(Math.random() * 10000)
 			});
 
+			expect(await RepoSyncState.count()).toEqual(3);
 			let result = await RepoSyncState.findAllFromSubscription(sub);
 			expect(result.length).toEqual(2);
+			await RepoSyncState.updateFromRepoJson(sub, {
+				numberOfSyncedRepos: 1,
+				jiraHost: sub.jiraHost,
+				installationId: sub.gitHubInstallationId,
+				repos: {
+					"2": json
+				}
+			});
+			result = await RepoSyncState.findAllFromSubscription(sub);
+			expect(result.length).toEqual(1);
+			expect(result[0].repoId).toEqual(2);
+			result = await RepoSyncState.findAll();
+			expect(result.length).toEqual(2);
+		});
+
+		it("Should remove duplicate repoIds within the same subscription", async () => {
+			await RepoSyncState.create({
+				...repo,
+				repoId: 1
+			});
+			await RepoSyncState.create({
+				...repo,
+				repoId: 2
+			});
+			await RepoSyncState.create({
+				...repo,
+				subscriptionId: Math.round(Math.random() * 10000)
+			});
+			await RepoSyncState.create({
+				...repo,
+				repoId: 2
+			});
+
+			expect(await RepoSyncState.count()).toEqual(4);
+			let result = await RepoSyncState.findAllFromSubscription(sub);
+			expect(result.length).toEqual(3);
 			await RepoSyncState.updateFromRepoJson(sub, {
 				numberOfSyncedRepos: 1,
 				jiraHost: sub.jiraHost,
@@ -372,6 +415,10 @@ describe("RepoSyncState", () => {
 				commitCursor: "bar",
 				pullStatus: "complete",
 				pullCursor: "12",
+				buildStatus: "complete",
+				buildCursor: "22",
+				deploymentStatus: "complete",
+				deploymentCursor: "buzz",
 				repoUpdatedAt: new Date(0)
 			});
 			await RepoSyncState.create({
@@ -395,11 +442,13 @@ describe("RepoSyncState", () => {
 						pullStatus: "complete",
 						branchStatus: "complete",
 						commitStatus: "complete",
+						buildStatus: "complete",
+						deploymentStatus: "complete",
 						lastBranchCursor: "foo",
 						lastCommitCursor: "bar",
 						lastPullCursor: 12,
 						repository: {
-							id: "1",
+							id: 1,
 							name: "github-for-jira",
 							full_name: "atlassian/github-for-jira",
 							html_url: "github.com/atlassian/github-for-jira",
@@ -412,7 +461,7 @@ describe("RepoSyncState", () => {
 					"2": {
 						branchStatus: "failed",
 						repository: {
-							id: "2",
+							id: 2,
 							name: "github-for-jira",
 							full_name: "atlassian/github-for-jira",
 							html_url: "github.com/atlassian/github-for-jira",
@@ -461,14 +510,14 @@ describe("RepoSyncState", () => {
 				lastCommitCursor: "bar",
 				lastPullCursor: 12,
 				repository: {
-					id: "1",
+					id: 1,
 					name: "github-for-jira",
 					full_name: "atlassian/github-for-jira",
 					html_url: "github.com/atlassian/github-for-jira",
 					owner: {
 						login: "atlassian"
 					},
-					updated_at: 0
+					updated_at: "0"
 				}
 			});
 			expect(result).toMatchObject({
@@ -494,14 +543,14 @@ describe("RepoSyncState", () => {
 				lastCommitCursor: "bar",
 				lastPullCursor: 12,
 				repository: {
-					id: "1",
+					id: 1,
 					name: "github-for-jira",
 					full_name: "atlassian/github-for-jira",
 					html_url: "github.com/atlassian/github-for-jira",
 					owner: {
 						login: "atlassian"
 					},
-					updated_at: 0
+					updated_at: new Date(0).toISOString()
 				}
 			});
 			expect(state).toMatchObject({
@@ -536,7 +585,7 @@ describe("RepoSyncState", () => {
 				lastCommitCursor: "bar",
 				lastPullCursor: 12,
 				repository: {
-					id: "1",
+					id: 1,
 					name: "github-for-jira",
 					full_name: "atlassian/github-for-jira",
 					html_url: "github.com/atlassian/github-for-jira",

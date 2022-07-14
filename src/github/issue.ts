@@ -1,20 +1,31 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
-import { GitHubInstallationClient } from "./client/github-installation-client";
-import { getCloudInstallationId } from "./client/installation-id";
 import { WebhookPayloadIssues } from "@octokit/webhooks";
+import { GitHubIssue, GitHubIssueData } from "interfaces/github";
+import { createInstallationClient } from "utils/get-github-client-config";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadIssues>, _jiraClient, util, githubInstallationId: number): Promise<void> => {
-	const { issue, repository } = context.payload;
+export const issueWebhookHandler = async (context: WebhookContext<WebhookPayloadIssues>, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
+	const {
+		issue,
+		repository: {
+			name: repoName,
+			owner: { login: owner }
+		}
+	} = context.payload;
 
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+	context.log = context.log.child({
+		gitHubInstallationId,
+		jiraHost: jiraClient.baseURL
+	});
+
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;
 	try {
 		linkifiedBody = await util.unfurl(issue.body);
 		if (!linkifiedBody) {
-			context.log("Halting further execution for issue since linkifiedBody is empty");
+			context.log.info("Halting further execution for issue since linkifiedBody is empty");
 			return;
 		}
 	} catch (err) {
@@ -24,14 +35,16 @@ export const issueWebhookHandler = async (context: CustomContext<WebhookPayloadI
 		);
 	}
 
-	context.log(`Updating issue in GitHub with issueId: ${issue.id}`);
+	context.log.info(`Updating issue in GitHub with issueId: ${issue.id}`);
 
-	const githubResponse = await githubClient.updateIssue({
+	const updatedIssue: GitHubIssueData = {
 		body: linkifiedBody,
-		owner: repository.owner.login,
-		repo: repository.name,
+		owner,
+		repo: repoName,
 		issue_number: issue.number
-	});
+	};
+
+	const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssue(updatedIssue);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(

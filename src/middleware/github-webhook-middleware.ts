@@ -5,21 +5,22 @@ import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
-import { getJiraUtil } from "../jira/util/jira-util";
-import { enhanceOctokit } from "config/enhance-octokit";
+import { getJiraUtil } from "../jira/util/jira-client-util";
 import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
-
-const LOGGER_NAME = "github.webhooks";
+import { statsd } from "config/statsd";
+import { metricWebhooks } from "config/metric-names";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { cloneAllowedLogFields, getLogger } from "config/logger";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function(callback) {
-	return async (context) => {
+const withSentry = function (callback) {
+	return async (context: WebhookContext) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry?.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
@@ -60,7 +61,7 @@ export class CustomContext<E = any> extends Context<E> {
 	webhookReceived?: number;
 }
 
-function extractWebhookEventNameFromContext(context: CustomContext<any>): string {
+function extractWebhookEventNameFromContext(context: WebhookContext): string {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {
 		webhookEvent = `${webhookEvent}.${context.payload.action}`;
@@ -70,10 +71,9 @@ function extractWebhookEventNameFromContext(context: CustomContext<any>): string
 
 // TODO: fix typings
 export const GithubWebhookMiddleware = (
-	callback: (context: CustomContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
+	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
 ) => {
-	return withSentry(async (context: CustomContext) => {
-		enhanceOctokit(context.github);
+	return withSentry(async (context: WebhookContext) => {
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size
@@ -86,28 +86,36 @@ export const GithubWebhookMiddleware = (
 			event: webhookEvent,
 			action: context.payload?.action,
 			id: context.id,
-			repo: context.payload?.repository ? context.repo() : undefined,
+			repo: context.payload?.repository ? {
+				owner: context.payload.repository.owner.login,
+				repo: context.payload.repository.name
+			} : undefined,
 			payload: context.payload,
 			webhookReceived
 		});
 
-		const repoName = context.payload?.repository?.name || "none";
-		const orgName = context.payload?.repository?.owner?.name || "none";
-		const gitHubInstallationId = Number(context.payload?.installation?.id);
+		const { name, payload, id: webhookId } = context;
+		const repoName = payload?.repository?.name || "none";
+		const orgName = payload?.repository?.owner?.login || "none";
+		const gitHubInstallationId = Number(payload?.installation?.id);
 
-		const webhookParams = {
-			webhookId: context.id,
+		context.log = getLogger("github.webhooks", {
+			webhookId,
 			gitHubInstallationId,
 			event: webhookEvent,
-			webhookReceived
-		};
-		context.log = context.log.child({ name: LOGGER_NAME, ...webhookParams });
-		// TODO: log only for local dev and for those who has enabled verbose logging
-		context.log.info({
+			webhookReceived,
 			repoName,
 			orgName,
-			payload: context.payload
-		}, "Webhook verbose data");
+			...cloneAllowedLogFields(context.log.fields)
+		});
+
+		context.log.debug({ payload }, "Webhook payload");
+
+		statsd.increment(metricWebhooks.webhookEvent, [
+			"name: webhooks",
+			`event: ${name}`,
+			`action: ${payload.action}`
+		]);
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
@@ -116,7 +124,7 @@ export const GithubWebhookMiddleware = (
 			!isStateChangeOrDeploymentAction(context.payload.action) &&
 			!isStateChangeOrDeploymentAction(context.name)
 		) {
-			context.log(
+			context.log.info(
 				{
 					noop: "bot",
 					botId: context.payload?.sender?.id,
@@ -128,7 +136,7 @@ export const GithubWebhookMiddleware = (
 		}
 
 		if (isFromIgnoredRepo(context.payload)) {
-			context.log(
+			context.log.info(
 				{
 					installation_id: context.payload?.installation?.id,
 					repository_id: context.payload?.repository?.id
@@ -143,14 +151,14 @@ export const GithubWebhookMiddleware = (
 		);
 
 		if (!subscriptions.length) {
-			context.log(
+			context.log.info(
 				{ noop: "no_subscriptions", orgName: orgName },
 				"Halting further execution since no subscriptions were found."
 			);
 			return;
 		}
 
-		context.log(
+		context.log.info(
 			`Processing event for ${subscriptions.length} jira instances`
 		);
 
@@ -168,10 +176,10 @@ export const GithubWebhookMiddleware = (
 			);
 			context.sentry?.setUser({ jiraHost, gitHubInstallationId });
 			context.log = context.log.child({ jiraHost });
-			context.log("Processing event for Jira Host");
+			context.log.info("Processing event for Jira Host");
 
 			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
-				context.log(
+				context.log.info(
 					{ jiraHost, webhookEvent },
 					`Maintenance mode ENABLED - Ignoring event`
 				);

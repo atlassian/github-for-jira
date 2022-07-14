@@ -1,14 +1,16 @@
+import Logger from "bunyan";
+import { groupBy } from "lodash";
+import { NextFunction, Request, Response } from "express";
 import { Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
-import { NextFunction, Request, Response } from "express";
 import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
-import { GitHubAPI } from "probot";
-import Logger from "bunyan";
-import { groupBy } from "lodash";
-import {sendAnalytics} from "../../../util/analytics-client";
-import {AnalyticsEventTypesEnum, AnalyticsScreenEventsEnum} from "../../../interfaces/common";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypesEnum, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { createAppClient } from "~/src/util/get-github-client-config";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { isGitHubCloudApp } from "~/src/util/jira-utils";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -27,8 +29,8 @@ export interface InstallationResults {
 	total: number;
 }
 
-export const getInstallations = async (client: GitHubAPI, subscriptions: Subscription[], log?: Logger): Promise<InstallationResults> => {
-	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(client, sub, log)));
+export const getInstallations = async (subscriptions: Subscription[], log: Logger, gitHubAppId?: number): Promise<InstallationResults> => {
+	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, log, gitHubAppId)));
 	// Had to add "unknown" in between type as lodash types is incorrect for
 	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
 	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
@@ -40,28 +42,30 @@ export const getInstallations = async (client: GitHubAPI, subscriptions: Subscri
 	};
 };
 
-const getInstallation = async (client: GitHubAPI, subscription: Subscription, log?: Logger): Promise<AppInstallation> => {
-	const id = subscription.gitHubInstallationId;
-	try {
-		const response = await client.apps.getInstallation({ installation_id: id });
+const getInstallation = async (subscription: Subscription, log: Logger, gitHubAppId?: number): Promise<AppInstallation> => {
+	const { jiraHost } = subscription;
+	const { gitHubInstallationId } = subscription;
+	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
 
+	try {
+		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
 		return {
 			...response.data,
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
-			totalNumberOfRepos: await RepoSyncState.countFromSubscription(subscription),
+			totalNumberOfRepos: subscription.totalNumberOfRepos,
 			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
-			jiraHost: subscription.jiraHost
+			jiraHost
 		};
 
 	} catch (err) {
-		log?.error(
-			{ installationId: id, error: err, uninstalled: err.code === 404 },
+		log.error(
+			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"
 		);
 		statsd.increment(metricError.failedConnection);
 
-		return Promise.reject({ error: err, id, deleted: err.code === 404 });
+		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.status === 404 });
 	}
 };
 
@@ -81,7 +85,7 @@ export const JiraConfigurationGet = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const jiraHost = res.locals.jiraHost;
+		const { jiraHost, gitHubAppId } = res.locals;
 
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
@@ -89,11 +93,10 @@ export const JiraConfigurationGet = async (
 			return;
 		}
 
-		req.log.info("Received jira configuration page request");
+		req.log.debug("Received jira configuration page request");
 
-		const { client } = res.locals;
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
-		const installations = await getInstallations(client, subscriptions, req.log);
+		const installations = await getInstallations(subscriptions, req.log, gitHubAppId);
 
 		const failedConnections: FailedConnection[] = await Promise.all(
 			installations.rejected.map(async (installation) => {
@@ -112,6 +115,10 @@ export const JiraConfigurationGet = async (
 				isGlobalInstall: installation.repository_selection === "all"
 			}));
 
+		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
+			? "select-github-version-link"
+			: "add-organization-link";
+
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
 			successfulConnections,
@@ -119,10 +126,18 @@ export const JiraConfigurationGet = async (
 			hasConnections: !!installations.total,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			handleNavigationClassName,
+			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 		});
 
-		sendAnalytics(AnalyticsEventTypesEnum.ScreenEvent, { name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName, jiraHost, connectedOrgCount: installations.total })
+		sendAnalytics(AnalyticsEventTypesEnum.ScreenEvent,
+			{
+				name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
+				jiraHost,
+				connectedOrgCount: installations.total
+			}
+		);
 
 		req.log.info("Jira configuration rendered successfully.");
 	} catch (error) {

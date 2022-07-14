@@ -3,8 +3,6 @@ import { createWebhookApp } from "test/utils/probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { Application } from "probot";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { waitUntil } from "test/utils/wait-until";
 import { sqsQueues } from "../sqs/queues";
 
@@ -46,13 +44,6 @@ describe("Branch Webhook", () => {
 
 	describe("Create Branch", () => {
 		it("should queue and process a create webhook", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_SQS_FOR_BRANCH,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(true);
-
 			const ref = encodeURIComponent("heads/TES-123-test-ref");
 			const sha = "test-branch-ref-sha";
 
@@ -87,7 +78,7 @@ describe("Branch Webhook", () => {
 						id: "test-repo-id",
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123%20-%20TES-123-test-ref&quick_pull=1",
+								createPullRequestUrl: "test-repo-url/compare/TES-123-test-ref?title=TES-123-test-ref&quick_pull=1",
 								lastCommit: {
 									author: {
 										name: "test-branch-author-name",

@@ -163,6 +163,10 @@ describe("API Router", () => {
 					commitCursor: "bar",
 					pullStatus: "complete",
 					pullCursor: "12",
+					buildStatus: "complete",
+					buildCursor: "bang",
+					deploymentStatus: "complete",
+					deploymentCursor: "buzz",
 					repoUpdatedAt: new Date(0)
 				});
 			});
@@ -194,11 +198,15 @@ describe("API Router", () => {
 									pullStatus: "complete",
 									branchStatus: "complete",
 									commitStatus: "complete",
+									buildStatus: "complete",
+									deploymentStatus: "complete",
 									lastBranchCursor: "foo",
 									lastCommitCursor: "bar",
+									lastDeploymentCursor: "buzz",
+									lastBuildCursor: "bang",
 									lastPullCursor: 12,
 									repository: {
-										id: "1",
+										id: 1,
 										name: "github-for-jira",
 										full_name: "atlassian/github-for-jira",
 										html_url: "github.com/atlassian/github-for-jira",
@@ -293,6 +301,74 @@ describe("API Router", () => {
 						expect(response.body).toMatchSnapshot();
 					});
 			});
+		});
+
+		describe("Hash data", () => {
+
+			it("Should return error with message if no data provided", () => {
+				return supertest(app)
+					.post("/api/hash")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(400)
+					.then((response) => {
+						expect(response.body?.message).toEqual("Please provide a value to be hashed.");
+					});
+			});
+
+			it("Should return hashed value of data", () => {
+				return supertest(app)
+					.post("/api/hash")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({ data: "encrypt_this_yo" })
+					.expect(200)
+					.then((response) => {
+						expect(response.body?.originalValue).toEqual("encrypt_this_yo");
+						expect(response.body?.hashedValue).toEqual("a539e6c6809cabace5719df6c7fb52071ee15e722ba89675f6ad06840edaa287");
+					});
+			});
+
+		});
+
+		describe("Ping", () => {
+
+			it("Should fail on missing url", () => {
+				return supertest(app)
+					.post("/api/ping")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(400)
+					.then((response) => {
+						expect(response.body?.message).toEqual("Please provide a JSON object with the field 'url'.");
+					});
+			});
+
+			it("Should return error on failed ping", () => {
+				return supertest(app)
+					.post("/api/ping")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({ data: { url: "http://github-does-not-exist.internal.atlassian.com" } })
+					.expect(200)
+					.then((response) => {
+						expect(response.body?.error.code).toEqual("ENOTFOUND");
+					});
+			});
+
+			// skipped out because I just used it as a manual test and don't want to make real calls in CI
+			it.skip("Should return 200 on successful ping", () => {
+				return supertest(app)
+					.post("/api/ping")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({ data: { url: "https://google.com" } })
+					.expect(200)
+					.then((response) => {
+						expect(response.body?.statusCode).toEqual(200);
+					});
+			});
+
 		});
 	});
 });

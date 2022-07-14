@@ -2,7 +2,7 @@ import path from "path";
 
 const rootPath = process.cwd();
 const srcPath = path.resolve(rootPath, "src");
-const snapshotDirPath = path.resolve(rootPath, "test/snapshots/")
+const snapshotDirPath = path.resolve(rootPath, "test/snapshots/");
 
 module.exports = {
 	/**

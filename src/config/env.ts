@@ -16,13 +16,14 @@ const requiredEnvVars = [
 	"SQS_BACKFILL_QUEUE_REGION",
 	"SQS_PUSH_QUEUE_URL",
 	"SQS_PUSH_QUEUE_REGION",
-	"SQS_DISCOVERY_QUEUE_URL",
-	"SQS_DISCOVERY_QUEUE_REGION",
 	"SQS_DEPLOYMENT_QUEUE_URL",
 	"SQS_DEPLOYMENT_QUEUE_REGION",
 	"SQS_BRANCH_QUEUE_URL",
 	"SQS_BRANCH_QUEUE_REGION",
-	"MICROS_AWS_REGION"
+	"MICROS_AWS_REGION",
+	"GLOBAL_HASH_SECRET",
+	"CRYPTOR_URL",
+	"CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE"
 ];
 
 const filename = isNodeTest() ? ".env.test" : ".env";
@@ -45,12 +46,12 @@ export const envVars: EnvVars = {
 	...process.env,
 	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
 	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
+	MICROS_GROUP: process.env.MICROS_GROUP || "",
 	NODE_ENV: nodeEnv,
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
-	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira",
-	GITHUB_HOSTNAME: process.env.GHE_HOST || "github.com"
+	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira"
 } as EnvVars;
 
 // TODO: Make envvars dynamic
@@ -64,12 +65,11 @@ export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,
 	MICROS_ENV: EnvironmentEnum;
 	MICROS_SERVICE_VERSION?: string;
+  MICROS_GROUP: string;
 	SQS_BACKFILL_QUEUE_URL: string;
 	SQS_BACKFILL_QUEUE_REGION: string;
 	SQS_PUSH_QUEUE_URL: string;
 	SQS_PUSH_QUEUE_REGION: string;
-	SQS_DISCOVERY_QUEUE_URL: string;
-	SQS_DISCOVERY_QUEUE_REGION: string;
 	SQS_DEPLOYMENT_QUEUE_URL: string;
 	SQS_DEPLOYMENT_QUEUE_REGION: string;
 	SQS_BRANCH_QUEUE_URL: string;
@@ -98,9 +98,9 @@ export interface EnvVars {
 	GIT_COMMIT_DATE?: string;
 	GIT_BRANCH_NAME?: string;
 	GITHUB_REPO_URL: string;
-	GITHUB_HOSTNAME: string;
 	DEPLOYMENT_DATE: string;
 	BULL_QUEUE_PREFIX?: string;
+	GLOBAL_HASH_SECRET: string;
 
 	// Test Vars
 	ATLASSIAN_SECRET?: string;
@@ -113,4 +113,8 @@ export interface EnvVars {
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_NAME?: string;
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION?: string;
+
+	// Cryptor
+	CRYPTOR_URL: string;
+	CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: string;
 }

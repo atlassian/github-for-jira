@@ -1,18 +1,29 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
-import { GitHubInstallationClient } from "./client/github-installation-client";
-import { getCloudInstallationId } from "./client/installation-id";
+import { GitHubIssue, GitHubIssueCommentData } from "interfaces/github";
+import { createInstallationClient } from "utils/get-github-client-config";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
 export const issueCommentWebhookHandler = async (
-	context: CustomContext,
-	_jiraClient,
+	context: WebhookContext,
+	jiraClient,
 	util,
-	githubInstallationId: number
+	gitHubInstallationId: number
 ): Promise<void> => {
-	const { comment, repository } = context.payload;
-	let linkifiedBody;
+	const {
+		comment,
+		repository: {
+			name: repoName,
+			owner: { login: owner }
+		}
+	} = context.payload;
 
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+	context.log = context.log.child({
+		gitHubInstallationId,
+		jiraHost: jiraClient.baseURL
+	});
+
+	let linkifiedBody;
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log);
 
 	// TODO: need to create reusable function for unfurling
 	try {
@@ -28,13 +39,15 @@ export const issueCommentWebhookHandler = async (
 		);
 	}
 
-	context.log(`Updating comment in GitHub with ID ${comment.id}`);
-	const githubResponse = await githubClient.updateIssueComment({
+	context.log.info(`Updating comment in GitHub with ID ${comment.id}`);
+	const updatedIssueComment: GitHubIssueCommentData = {
 		body: linkifiedBody,
-		owner: repository.owner.login,
-		repo: repository.name,
+		owner,
+		repo: repoName,
 		comment_id: comment.id
-	});
+	};
+
+	const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssueComment(updatedIssueComment);
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(

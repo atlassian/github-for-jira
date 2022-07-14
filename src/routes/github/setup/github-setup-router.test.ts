@@ -1,3 +1,4 @@
+/* eslint-disable jest/expect-expect */
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { getFrontendApp } from "~/src/app";
@@ -29,9 +30,13 @@ describe("Github Setup", () => {
 			await Installation.create({
 				jiraHost,
 				clientKey: "abc123",
-				secrets: "def234",
+				//TODO: why? Comment this out make test works?
+				//setting both fields make sequelize confused as it internally storage is just the "secrets"
+				//secrets: "def234",
+				//secrets: "def234",
 				sharedSecret: "ghi345"
 			});
+
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
@@ -106,7 +111,9 @@ describe("Github Setup", () => {
 		it("should return a 200 with the redirect url to the app if a valid domain is given and an installation already exists", async () => {
 			await Installation.create({
 				jiraHost,
-				secrets: "secret",
+				//TODO: why? Comment this out make test works?
+				//setting both fields make sequelize confused as it internally storage is just the "secrets"
+				//secrets: "secret",
 				sharedSecret: "sharedSecret",
 				clientKey: "clientKey"
 			});

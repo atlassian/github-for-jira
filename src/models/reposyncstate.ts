@@ -1,6 +1,6 @@
 import { BOOLEAN, CountOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING } from "sequelize";
 import { Subscription, Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
-import { merge, pickBy } from "lodash";
+import { groupBy, merge, pickBy } from "lodash";
 import { sequelize } from "models/sequelize";
 
 export class RepoSyncState extends Model {
@@ -51,7 +51,9 @@ export class RepoSyncState extends Model {
 			where: {
 				pullStatus: "complete",
 				branchStatus: "complete",
-				commitStatus: "complete"
+				commitStatus: "complete",
+				buildStatus: "complete",
+				deploymentStatus: "complete"
 			}
 		});
 	}
@@ -62,7 +64,9 @@ export class RepoSyncState extends Model {
 				[Op.or]: {
 					pullStatus: "failed",
 					branchStatus: "failed",
-					commitStatus: "failed"
+					commitStatus: "failed",
+					buildStatus: "failed",
+					deploymentStatus: "failed"
 				}
 			}
 		});
@@ -110,7 +114,11 @@ export class RepoSyncState extends Model {
 			commitStatus: null,
 			commitCursor: null,
 			pullStatus: null,
-			pullCursor: null
+			pullCursor: null,
+			buildStatus: null,
+			buildCursor: null,
+			deploymentStatus: null,
+			deploymentCursor: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
@@ -122,7 +130,7 @@ export class RepoSyncState extends Model {
 		const repoIds = Object.keys(json.repos || {});
 
 		// Get states that are already in DB
-		const states: RepoSyncState[] = await RepoSyncState.findAll({
+		let states: RepoSyncState[] = await RepoSyncState.findAll({
 			where: {
 				subscriptionId: subscription.id,
 				repoId: {
@@ -131,13 +139,29 @@ export class RepoSyncState extends Model {
 			}
 		});
 
+		const groupedIds = Object.values(groupBy(states, state => state.repoId));
+		const duplicateIds: number[] = groupedIds
+			.reduce((acc: number[], values) => {
+				if (values.length > 1) {
+					// Remove duplicates of repoIds
+					values.slice(1).forEach(state => acc.push(state.id));
+				}
+				return acc;
+			}, []);
+		states = states.filter(state => !duplicateIds.includes(state.id));
+
 		return RepoSyncState.sequelize?.transaction(async (transaction) => {
-			// Delete all repos that's not in state anymore
+			// Delete all repos that's not in state anymore or are duplicates
 			await RepoSyncState.destroy({
 				where: {
 					subscriptionId: subscription.id,
-					repoId: {
-						[Op.notIn]: repoIds
+					[Op.or]: {
+						id: {
+							[Op.in]: duplicateIds
+						},
+						repoId: {
+							[Op.notIn]: repoIds
+						}
 					}
 				},
 				transaction
@@ -195,6 +219,7 @@ export class RepoSyncState extends Model {
 		return model?.setFromRepositoryData(repo)?.save();
 	}
 
+	// TODO: revert this back to not using 'lastSomethingCursor'
 	setFromRepositoryData(repo?: RepositoryData): RepoSyncState {
 		if (repo) {
 			this.repoUpdatedAt = new Date(repo.repository?.updated_at ?? Date.now());
@@ -204,14 +229,18 @@ export class RepoSyncState extends Model {
 			this.commitCursor = repo.lastCommitCursor;
 			this.pullStatus = repo.pullStatus;
 			this.pullCursor = repo.lastPullCursor?.toString();
+			this.buildStatus = repo.buildStatus;
+			this.buildCursor = repo.lastBuildCursor?.toString();
+			this.deploymentStatus = repo.deploymentStatus;
+			this.deploymentCursor = repo.lastDeploymentCursor;
 		}
 		return this;
 	}
 
 	toRepositoryData(): RepositoryData {
-		return pickBy({
+		return pickBy<RepositoryData>({
 			repository: {
-				id: this.repoId.toString(),
+				id: this.repoId,
 				name: this.repoName,
 				full_name: this.repoFullName,
 				owner: {
@@ -226,7 +255,11 @@ export class RepoSyncState extends Model {
 			commitStatus: this.commitStatus,
 			lastCommitCursor: this.commitCursor,
 			branchStatus: this.branchStatus,
-			lastBranchCursor: this.branchCursor
+			lastBranchCursor: this.branchCursor,
+			buildStatus: this.buildStatus,
+			lastBuildCursor: this.buildCursor,
+			deploymentStatus: this.deploymentStatus,
+			lastDeploymentCursor: this.deploymentCursor
 		});
 	}
 }

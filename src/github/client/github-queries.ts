@@ -1,4 +1,4 @@
-import { Repository } from "@octokit/graphql-schema";
+import { Repository } from "models/subscription";
 
 export const ViewerRepositoryCountQuery = `
 query {
@@ -9,22 +9,28 @@ query {
 	}
 }`;
 
-type RepositoryNode = {
-	node: Repository
+export interface RepositoryNode {
+	node: Repository;
+	cursor?: string;
 }
 
-export type GetRepositoriesResponse = {
+export interface GetRepositoriesResponse {
 	viewer: {
 		repositories: {
-			pageInfo,
-			edges: RepositoryNode[]
+			totalCount: number;
+			pageInfo: {
+				endCursor: string;
+				hasNextPage: boolean;
+			};
+			edges: RepositoryNode[];
 		}
-	}
-};
+	};
+}
 
 export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
   viewer {
     repositories(first: $per_page, after: $cursor) {
+      totalCount
       pageInfo {
         endCursor
         hasNextPage
@@ -107,12 +113,12 @@ export type getCommitsResponse = {
 	}
 };
 
-export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
   repository(owner: $owner, name: $repo){
     defaultBranchRef {
       target {
         ... on Commit {
-          history(first: $per_page, after: $cursor) {
+          history(first: $per_page, after: $cursor, since: $commitSince) {
             edges {
               cursor
               node {
@@ -138,12 +144,12 @@ export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: S
   }
 }`;
 
-export const getCommitsQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getCommitsQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
   repository(owner: $owner, name: $repo){
     defaultBranchRef {
       target {
         ... on Commit {
-          history(first: $per_page, after: $cursor) {
+          history(first: $per_page, after: $cursor, since: $commitSince) {
             edges {
               cursor
               node {
@@ -168,8 +174,51 @@ export const getCommitsQueryWithoutChangedFiles = `query ($owner: String!, $repo
   }
   }`;
 
-export type getBranchesResponse = { repository: Repository };
-export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export type getBranchesResponse = {
+	repository: {
+		refs: {
+			edges: {
+				cursor: string;
+				node: {
+					associatedPullRequests: {
+						nodes: { title: string }[];
+					},
+					name: string;
+					target: {
+						author: {
+							avatarUrl: string;
+							email: string;
+							name: string;
+						},
+						authoredDate: string;
+						changedFiles: number;
+						oid: string;
+						message: string;
+						url: string;
+						history: {
+							nodes: {
+								message: string;
+								oid: string;
+								authoredDate: string;
+								author: {
+									avatarUrl: string;
+									email: string;
+									name: string;
+									user: {
+										url: string;
+									}
+								},
+								url: string;
+							}[]
+						}
+					}
+				}
+			}[]
+		}
+	}
+};
+
+export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
         edges {
@@ -190,7 +239,7 @@ export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: 
                 }
                 authoredDate
                 changedFiles
-                history(first: 50) {
+                history(since: $commitSince, first: 50) {
                   nodes {
                     message
                     oid
@@ -217,7 +266,7 @@ export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: 
     }
   }`;
 
-export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
         edges {
@@ -237,7 +286,7 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
                   name
                 }
                 authoredDate
-                history(first: 50) {
+                history(since: $commitSince, first: 50) {
                   nodes {
                     message
                     oid
@@ -263,3 +312,68 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
       }
     }
   }`;
+
+export type DeploymentQueryNode = {
+	cursor: string,
+	node: {
+		repository: Repository,
+		databaseId: string,
+		commitOid: string,
+		task: string,
+		ref: {
+			name: string,
+			id: string
+		},
+		environment: string,
+		description: string,
+		latestStatus: {
+			environmentUrl: string,
+			logUrl: string,
+			state: string,
+			id: string,
+			updatedAt: string
+		}
+	}
+}
+
+export type getDeploymentsResponse = {
+	repository: {
+		deployments: {
+			edges: DeploymentQueryNode[]
+		}
+	}
+};
+
+export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo){
+    deployments(first: $per_page, after: $cursor) {
+      edges {
+        cursor
+        node {
+          repository {
+            name
+            owner {
+              login
+            }
+          }
+          databaseId
+          commitOid
+          task
+          ref {
+            name
+            id
+          }
+          environment
+          description
+          latestStatus {
+            environmentUrl
+            logUrl
+            state
+            id
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+}`;

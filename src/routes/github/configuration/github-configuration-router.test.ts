@@ -1,3 +1,4 @@
+/* eslint-disable jest/expect-expect */
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
@@ -6,8 +7,11 @@ import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
-
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("Github Configuration", () => {
 	let frontendApp: Application;
@@ -27,7 +31,9 @@ describe("Github Configuration", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "abc123",
-			secrets: "def234",
+			//TODO: why? Comment this out make test works?
+			//setting both fields make sequelize confused as it internally storage is just the "secrets"
+			//secrets: "def234",
 			sharedSecret: "ghi345"
 		});
 
@@ -108,7 +114,16 @@ describe("Github Configuration", () => {
 		});
 	});
 
-	describe("#GET", () => {
+	describe.each([true, false])("#GET - GithubClient - %s", (useNewGithubClient) => {
+
+		beforeEach(async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(useNewGithubClient);
+		});
+
 		it("should return 200 when calling with valid Github Token", async () => {
 			githubNock
 				.get("/")
@@ -173,7 +188,6 @@ describe("Github Configuration", () => {
 						}
 					}
 				});
-
 
 			await supertest(frontendApp)
 				.get("/github/configuration")
@@ -250,7 +264,16 @@ describe("Github Configuration", () => {
 		});
 	});
 
-	describe("#POST", () => {
+	describe.each([true, false])("#POST - GitHub Client is %s", (useNewGithubClient) => {
+
+		beforeEach(async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(useNewGithubClient);
+		});
+
 		it("should return a 401 if no GitHub token present in session", async () => {
 			await supertest(frontendApp)
 				.post("/github/configuration")
@@ -288,6 +311,10 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
+				.get("/user")
+				.reply(200, { login: "test-user" });
+
+			githubNock
 				.get("/app/installations/2")
 				.reply(404);
 
@@ -305,7 +332,7 @@ describe("Github Configuration", () => {
 						jiraHost
 					})
 				)
-				.expect(404);
+				.expect(401);
 		});
 
 		it("should return a 401 if the user is not an admin of the Org", async () => {
@@ -316,14 +343,17 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
-				.get("/app/installations/1")
-				.reply(200, installationResponse);
-			githubNock
 				.get("/user")
 				.reply(200, authenticatedUserResponse);
+
 			githubNock
-				.get("/orgs/fake-account/memberships/test-user")
+				.get("/app/installations/1")
+				.reply(200, installationResponse);
+
+			githubNock
+				.get("/user/memberships/orgs/fake-account")
 				.reply(200, organizationMembershipResponse);
+
 			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({
@@ -370,13 +400,15 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
-				.get("/app/installations/1")
-				.reply(200, installationResponse);
-			githubNock
 				.get("/user")
 				.reply(200, adminUserResponse);
+
 			githubNock
-				.get("/orgs/fake-account/memberships/admin-user")
+				.get("/app/installations/1")
+				.reply(200, installationResponse);
+
+			githubNock
+				.get("/user/memberships/orgs/fake-account")
 				.reply(200, organizationAdminResponse);
 
 			const jiraClientKey = "a-unique-client-key";

@@ -18,14 +18,6 @@
 
 ![Pull request and issue comment links](./images/read-and-write-permissions-issues-and-prs.png)
 
-<h3>Q: Why do you need read and **write** access for deployments? It appears that sending deployment data to Jira would only require read access.</h3>
-
-**A:** To correctly map the status of your deployments (pending, in progress, successful etc) we need to access the `state` property which only exists on the `deployment_status` webhook event which occurs when a deployment is created. The [GitHub API](https://docs.github.com/en/rest/reference/repos#create-a-deployment-status) requires that GitHub apps have read and write access to listen to deployment creation events. Unfortunately, the GitHub documentation doesn’t specify why write access is needed but we have raised the concern with them. You can follow the discussion [here](https://github.community/t/write-access-to-deployment-creation-events/215078/1).
-
-<h3>Q: I do not wish to give Jira read and write access to deployments. What are the consequences of that? Does it affect existing functionality?</h3>
-
-**A:** You won't be able to see deployments in Jira. If you choose to ignore the request for these permissions you will be able to use the integration and will still see branch, commit, pull request, and merge data show up in the dev panel in Jira. However, if you would like to data for builds and deployments, this access will need to be granted.
-
 <h3>Q: What happens if another change is made to the app in the future that requires new permissions? Can I choose to accept the new permission but ignore previously requested permissions that I don’t want/feel comfortable with?</h3>
 
 **A:** Unfortunately not. GitHub apps are limited in this sense as permissions are not granular.

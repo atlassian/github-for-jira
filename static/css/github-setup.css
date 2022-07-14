@@ -1,9 +1,8 @@
+body {
+  background: #fff;
+}
 .gitHubSetup__subHeader {
   color: #586069;
-}
-
-.githubSetup__githubOrgConfirmation__outerContainer {
-  margin: 4em 0;
 }
 
 .githubSetup__githubOrgConfirmation__container {
@@ -33,7 +32,7 @@
 }
 
 .githubSetup__container {
-  margin: 4em auto;
+  margin: 2em auto;
   width: 500px;
 }
 
@@ -116,7 +115,6 @@
 
 .githubSetup__table__row {
   display: flex;
-  padding: 2.5em 0;
 }
 
 .githubSetup__table__row__jiraHostContainer {

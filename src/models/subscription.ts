@@ -31,9 +31,13 @@ export interface RepositoryData {
 	pullStatus?: TaskStatus;
 	branchStatus?: TaskStatus;
 	commitStatus?: TaskStatus;
+	buildStatus?: TaskStatus;
+	deploymentStatus?: TaskStatus;
 	lastBranchCursor?: string;
 	lastCommitCursor?: string;
 	lastPullCursor?: number;
+	lastBuildCursor?: string;
+	lastDeploymentCursor?: string;
 
 	// TODO: need to get concrete typing
 	[key: string]: unknown;
@@ -42,12 +46,12 @@ export interface RepositoryData {
 export type TaskStatus = "pending" | "complete" | "failed";
 
 export interface Repository {
-	id: string;
+	id: number;
 	name: string;
 	full_name: string;
 	owner: { login: string };
 	html_url: string;
-	updated_at: number; // TODO: is this a date object or a timestamp?  Different places uses different things
+	updated_at: string; // TODO: is this a date object or a timestamp?  Different places uses different things
 }
 
 export class Subscription extends Model {
@@ -60,7 +64,11 @@ export class Subscription extends Model {
 	jiraClientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
+	totalNumberOfRepos?: number;
 	numberOfSyncedRepos?: number;
+	repositoryCursor?: string;
+	repositoryStatus?: TaskStatus;
+	gitHubAppId?: number;
 
 	static async getAllForHost(host: string): Promise<Subscription[]> {
 		return this.findAll({
@@ -76,6 +84,16 @@ export class Subscription extends Model {
 		return this.findAll({
 			where: {
 				gitHubInstallationId: installationId
+			}
+		});
+	}
+
+	static findOneForGitHubInstallationId(
+		gitHubInstallationId: number
+	): Promise<Subscription | null> {
+		return this.findOne({
+			where: {
+				gitHubInstallationId: gitHubInstallationId
 			}
 		});
 	}
@@ -165,6 +183,9 @@ export class Subscription extends Model {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
 				jiraClientKey: payload.clientKey
+			},
+			defaults: {
+				gitHubAppId: payload.gitHubAppId
 			}
 		});
 
@@ -192,16 +213,20 @@ export class Subscription extends Model {
 		return results[0] as SyncStatusCount[];
 	}
 
-	// This is a workaround to fix a long standing bug in sequelize for JSON data types
-	// https://github.com/sequelize/sequelize/issues/4387
+	// TODO: need to remove "RepoJSON" as old code is now removed.  We can now just use RepoSyncState directly
 	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
 		const state = merge(await RepoSyncState.toRepoJson(this), updatedState);
 		await RepoSyncState.updateFromRepoJson(this, state);
 		return this;
 	}
 
-	async updateRepoSyncStateItem(repositoryId: string, key: keyof RepositoryData, value: unknown) {
-		await RepoSyncState.updateRepoForSubscription(this, Number(repositoryId), key, value);
+	async updateRepoSyncStateItem(repositoryId: number, key: keyof RepositoryData | "repositoryCursor" | "repositoryStatus", value: unknown) {
+		// TODO: this is temporary until we redo sync
+		if (key === "repositoryStatus" || key === "repositoryCursor") {
+			await this.update({ [key]: value });
+		} else {
+			await RepoSyncState.updateRepoForSubscription(this, Number(repositoryId), key, value);
+		}
 		return this;
 	}
 
@@ -223,13 +248,22 @@ Subscription.init({
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
 	jiraClientKey: DataTypes.STRING,
+	numberOfSyncedRepos: DataTypes.INTEGER,
+	totalNumberOfRepos: DataTypes.INTEGER,
+	repositoryCursor: DataTypes.STRING,
+	repositoryStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	gitHubAppId: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	}
 }, { sequelize });
 
 export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
+	gitHubAppId?: number;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

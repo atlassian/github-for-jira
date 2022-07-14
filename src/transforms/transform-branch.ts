@@ -1,6 +1,5 @@
 import { getJiraId } from "../jira/util/id";
-import issueKeyParser from "jira-issue-key-parser";
-import { getJiraAuthor } from "utils/jira-utils";
+import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
@@ -19,7 +18,7 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: W
 		hash: sha,
 		id: sha,
 		issueKeys,
-		message: commit.message,
+		message: limitCommitMessage(commit.message),
 		url,
 		updateSequenceId: Date.now()
 	};
@@ -31,7 +30,7 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 	}
 
 	const { ref, repository } = webhookPayload;
-	const issueKeys = issueKeyParser().parse(ref) || [];
+	const issueKeys = jiraIssueKeyParser(ref);
 
 	if (isEmpty(issueKeys)) {
 		return;
@@ -39,7 +38,7 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 
 	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
 	return {
-		id: repository.id,
+		id: repository.id.toString(),
 		name: repository.full_name,
 		url: repository.html_url,
 		branches: [

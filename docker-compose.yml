@@ -8,7 +8,7 @@ services:
     ports: [ "6379:6379" ]
 
   postgres:
-    image: postgres
+    image: postgres:14.2-alpine
     container_name: postgres
     ports: [ "5432:5432" ]
     environment:
@@ -21,8 +21,8 @@ services:
     command: ngrok http --authtoken $NGROK_AUTHTOKEN app:8080
 
   localstack:
+    image: localstack/localstack:0.14.2
     container_name: localstack
-    image: localstack/localstack
     environment:
       - DEFAULT_REGION=us-west-1
       - SERVICES=sqs
@@ -32,11 +32,20 @@ services:
     volumes:
       - ./.localstack:/docker-entrypoint-initaws.d
 
+  cryptor:
+    build: etc/cryptor-mock
+    container_name: cryptor
+    environment:
+      CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "random-string" #has to match the one in env.test
+    ports:
+      - "26272:26272"
+
   app:
     depends_on:
       - redis
       - postgres
       - localstack
+      - cryptor
     volumes:
       - .:/app
     build:
@@ -52,6 +61,5 @@ services:
       SQS_PUSH_QUEUE_URL: http://localstack:4566/000000000000/push
       SQS_DEPLOYMENT_QUEUE_URL: http://localstack:4566/000000000000/deployment
       SQS_BRANCH_QUEUE_URL: http://localstack:4566/000000000000/branch
-      SQS_DISCOVERY_QUEUE_URL: http://localstack:4566/000000000000/discovery
       SQS_TEST_QUEUE_URL: http://localstack:4566/000000000000/test-sqs-client
       REDISX_CACHE_HOST: redis

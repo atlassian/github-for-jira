@@ -44,8 +44,7 @@ describe("sync", () => {
 		return supertest(app)
 			.post("/jira/sync")
 			.query({
-				jwt,
-				xdm_e: jiraHost
+				jwt
 			})
 			.send({
 				installationId: installation.id,
@@ -54,7 +53,7 @@ describe("sync", () => {
 			})
 			.expect(202)
 			.then(() => {
-				expect(sqsQueues.discovery.sendMessage).toBeCalledWith({ installationId: installation.id, jiraHost }, expect.anything(), expect.anything());
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith({ installationId: installation.id, jiraHost, startTime: expect.anything() }, expect.anything(), expect.anything());
 			});
 	});
 });
