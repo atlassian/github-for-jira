@@ -7,6 +7,10 @@ import singleInstallation from "fixtures/jira-configuration/single-installation.
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 import { getLogger } from "config/logger";
 
+jest.mock("../../src/util/analytics-client");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { sendAnalytics } = require("../../src/util/analytics-client");
+
 describe("Jira Configuration Suite", () => {
 	let subscription: Subscription;
 
@@ -73,6 +77,7 @@ describe("Jira Configuration Suite", () => {
 		expect(data.hasConnections).toBe(true);
 		expect(data.failedConnections.length).toBe(0);
 		expect(data.successfulConnections.length).toBe(1);
+		expect(sendAnalytics).toHaveBeenCalledTimes(1);
 	});
 
 	describe("getInstallations", () => {

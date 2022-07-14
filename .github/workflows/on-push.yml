@@ -16,7 +16,7 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --frozen-lockfile --no-optional
       - run: yarn run lint
       - run: yarn run build
 
@@ -34,7 +34,7 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --frozen-lockfile --no-optional
       - run: yarn run db:test
       - name: Run tests
         env:
