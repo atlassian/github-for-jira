@@ -4,14 +4,9 @@ import { GitHubInstallationClient } from "./github-installation-client";
 import { statsd }  from "config/statsd";
 import { InstallationId } from "./installation-id";
 import nock from "nock";
-import { AppTokenHolder } from "./app-token-holder";
-import fs from "fs";
-import { envVars }  from "config/env";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
-import { keyLocator } from "./key-locator";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
-import { mocked } from "ts-jest/utils";
 
 jest.mock("config/feature-flags");
 jest.mock("./key-locator");
@@ -87,17 +82,10 @@ describe("GitHub Client", () => {
 			expect.anything()
 		).mockResolvedValue(true);
 
-		mocked(keyLocator).mockImplementation(async()=> {
-			return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
-		});
-
-		const appTokenHolder = new AppTokenHolder();
-
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
 			getLogger("test"),
-			"https://github.mydomain.com",
-			appTokenHolder
+			"https://github.mydomain.com"
 		);
 
 		const pullrequests = await client.getPullRequests(owner, repo, {
