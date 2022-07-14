@@ -90,6 +90,15 @@ const modules = {
 			url: "/jira/app-creation",
 			location: "none",
 			conditions: adminCondition
+		},
+		{
+			key: "github-list-servers-page",
+			name: {
+				value: "GitHub Enterprise Servers"
+			},
+			url: "/jira/ghe-servers",
+			location: "none",
+			conditions: adminCondition
 		}
 	],
 	webSections: [
