@@ -61,7 +61,6 @@ const handleGheUrlRequestErrors = (err) => {
 	$(".jiraServerUrl__validationError").show();
 	$(".errorMessageBox__title").empty().append(title);
 	$(".errorMessageBox__message").empty().append(message);
-	title === gheServerUrlErrors.GHE_ERROR_ENOTFOUND.title && $(".errorMessageBox__link").show();
 }
 
 const mapErrorCode = (errorCode) => {
