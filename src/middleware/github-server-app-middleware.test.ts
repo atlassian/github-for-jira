@@ -28,7 +28,7 @@ describe("github-server-app-middleware", () => {
 	it("should call next() when no gitHupAppId is provided",  async() => {
 		req = {
 			log: getLogger("request"),
-			params: {
+			query: {
 				id: undefined
 			}
 		};
@@ -40,7 +40,7 @@ describe("github-server-app-middleware", () => {
 	it("should throw an error if an id is provided but no GitHub server app is found", async () => {
 		req = {
 			log: getLogger("request"),
-			params: {
+			query: {
 				id: 3
 			}
 		};
@@ -53,7 +53,7 @@ describe("github-server-app-middleware", () => {
 	it("should throw an error if an id is provided and a GitHub server app is found but the installation id doesn't match",  async() => {
 		req = {
 			log: getLogger("request"),
-			params: {
+			query: {
 				id: 3
 			}
 		};
@@ -87,7 +87,7 @@ describe("github-server-app-middleware", () => {
 	it("should call next() when GH app is found and installation id matches", async () => {
 		req = {
 			log: getLogger("request"),
-			params: {
+			query: {
 				id: 3
 			}
 		};

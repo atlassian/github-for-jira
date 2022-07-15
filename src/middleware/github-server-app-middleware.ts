@@ -4,11 +4,17 @@ import { Installation } from "models/installation";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
-	const { ghaid: id } = req.query;
+	const { id: idStr } = req.query;
+	const id = parseInt(idStr as string);
+
+	if (id && isNaN(id)) {
+		req.log.warn({ id, jiraHost }, "Provided id found but not a number " + id);
+		throw new Error("Provided id found but not a number " + id);
+	}
 
 	if (id) {
 		req.log.debug(`Retrieving GitHub app with id ${id}`);
-		const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(Number(id));
+		const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(id);
 
 		if (!gitHubServerApp) {
 			req.log.error({ id, jiraHost }, "No GitHub app found for provided id.");

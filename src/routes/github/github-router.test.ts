@@ -65,11 +65,6 @@ const mockPrerequistApp = () => {
 	return app;
 };
 
-const mockConfigurationGetProceed = ()=>{
-	jest.mocked(GithubConfigurationGet).mockClear();
-	jest.mocked(GithubConfigurationGet).mockImplementation(async (_req, _res, next) => {next();});
-};
-
 const mockGetGitHubApiUrl = () => {
 	when(getGitHubApiUrl)
 		.calledWith(JIRA_HOST, GITHUB_SERVER_APP_ID)
@@ -92,6 +87,13 @@ const mockInstallationFindByPK = () => {
 	when(Installation.findByPk)
 		.calledWith(JIRA_INSTALLATION_ID as any)
 		.mockResolvedValue(getServerApptInstallationModel());
+};
+
+const mockConfigurationGetProceed = ()=>{
+	jest.mocked(GithubConfigurationGet).mockClear();
+	jest.mocked(GithubConfigurationGet).mockImplementation(async (_req, _res, next) => {
+		next();
+	});
 };
 
 describe("GitHub router", () => {
@@ -129,7 +131,7 @@ describe("GitHub router", () => {
 				mockConfigurationGetProceed();
 			});
 			it("should extract uuid when present", async () => {
-				await supertest(app).get(`/github/configuration?ghaid=${GITHUB_SERVER_APP_ID}`);
+				await supertest(app).get(`/github/configuration?id=${GITHUB_SERVER_APP_ID}`);
 				expect(GithubConfigurationGet).toBeCalledWith(
 					expect.anything(), //not matching req
 					expect.objectContaining({ //matching res locals
