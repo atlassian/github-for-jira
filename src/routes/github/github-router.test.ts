@@ -14,7 +14,7 @@ jest.mock("./configuration/github-configuration-get");
 jest.mock("utils/get-github-client-config");
 jest.mock("axios", () => ({ get: jest.fn(), create: jest.fn() }));
 jest.mock("models/github-server-app");
-jest.mock("models/Installation");
+jest.mock("models/installation");
 
 const JIRA_HOST = "https://gh4j.test.atlassian.net";
 const VALID_TOKEN = "valid-token";
