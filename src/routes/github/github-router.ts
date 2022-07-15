@@ -12,7 +12,7 @@ import { GithubServerAppMiddleware } from "middleware/github-server-app-middlewa
 export const GithubRouter = Router();
 
 const GithubAppProvidedRouter = Router({ mergeParams: true });
-GithubRouter.use("/:appId", GithubAppProvidedRouter);
+GithubRouter.use("/:appId?", GithubAppProvidedRouter);
 
 //Have an cover all middleware to extract the optional gitHubAppId
 GithubAppProvidedRouter.use(GithubServerAppMiddleware);
