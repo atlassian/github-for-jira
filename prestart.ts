@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import * as fs from "fs";
 import * as path from "path";
+import { isNodeProd } from "./src/util/is-node-env";
 
 const envFileName = ".env";
 const envFilePath = path.resolve(__dirname, envFileName);
@@ -86,7 +87,7 @@ const waitForQueues = async () => {
 };
 
 const createEnvFile = () => {
-	if (!fs.existsSync(envFilePath)) {
+	if (!isNodeProd() && !fs.existsSync(envFilePath)) {
 		console.info(`${envFileName} missing, creating it with defaults...`);
 		fs.writeFileSync(envFilePath, `APP_URL=http://localhost\nWEBHOOK_PROXY_URL=http://localhost/github/events\nNGROK_AUTHTOKEN=insert ngrok token here\n`);
 		console.info(`${envFileName} file created.`);
