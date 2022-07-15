@@ -1,10 +1,8 @@
-import { envVars } from "./src/config/env";
 import axios, { AxiosResponse } from "axios";
 import * as fs from "fs";
 import * as path from "path";
-import { isNodeDev } from "./src/util/is-node-env";
 
-const envFileName = ".env.local";
+const envFileName = ".env";
 const envFilePath = path.resolve(__dirname, envFileName);
 
 const callTunnel = async () => {
@@ -23,12 +21,6 @@ const wait = async (time = 0) => {
 };
 
 const waitForTunnel = async () => {
-	// Does .env exist?
-	if (isNodeDev() && !fs.existsSync(envFilePath)) {
-		console.error(`${envFileName} file doesn't exist. Please create it following the steps in the CONTRIBUTING.md file.`);
-		process.exit(1);
-	}
-
 	// Call the service 3 times until ready
 	const response = await callTunnel()
 		.catch(callTunnel)
@@ -36,31 +28,26 @@ const waitForTunnel = async () => {
 		.catch(() => undefined);
 	if (response) {
 		try {
-			const envFileExists = fs.existsSync(envFilePath);
-			let envContents = envFileExists ?
-				fs.readFileSync(envFilePath, { encoding: "utf-8" }) :
-				`APP_URL=http://localhost\nWEBHOOK_PROXY_URL=http://localhost/github/events\n`;
+			let envContents = fs.readFileSync(envFilePath, { encoding: "utf-8" });
 			const tunnel = response.data.tunnels.find(tunnel => tunnel.public_url.startsWith("https"));
 			const ngrokDomain = tunnel.public_url;
 			console.info(`ngrok forwarding ${ngrokDomain} to ${tunnel.config.addr}`);
 			envContents = envContents.replace(/APP_URL=.*/, `APP_URL=${ngrokDomain}`);
 			envContents = envContents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/events`);
 			fs.writeFileSync(envFilePath, envContents);
-			envFileExists ?
-				console.info(`Updated ${envFileName} file to use ngrok domain '${ngrokDomain}'.`) :
-				console.info(`Created ${envFileName} with defaults and setting ngrok domain '${ngrokDomain}'.`);
+			console.info(`Updated ${envFileName} file to use ngrok domain '${ngrokDomain}'.`);
 		} catch (e) {
 			console.info(`'${envFilePath}' not found, skipping...`);
 		}
 	} else {
-		console.info("Ngrok not running, skipping updating .env file.");
+		console.info(`Ngrok not running, skipping updating ${envFileName} file.`);
 	}
 };
 
 const callQueues = async () => {
-	const queueUrls = Object.keys(envVars)
-		.filter(key => /^SQS_.*_QUEUE_URL$/.test(key))
-		.map(key => envVars[key]);
+	const queueUrls = Object.entries(process.env)
+		.filter(([key, value]) => /^SQS_.*_QUEUE_URL$/.test(key) && value)
+		.map(([_key, value]) => value as string);
 	console.info(`Checking for localstack initialization...`);
 	if (queueUrls.length) {
 		const url = new URL(queueUrls[0]);
@@ -98,9 +85,18 @@ const waitForQueues = async () => {
 	console.info("All queues ready.");
 };
 
+const createEnvFile = () => {
+	if (!fs.existsSync(envFilePath)) {
+		console.info(`${envFileName} missing, creating it with defaults...`);
+		fs.writeFileSync(envFilePath, `APP_URL=http://localhost\nWEBHOOK_PROXY_URL=http://localhost/github/events\nNGROK_AUTHTOKEN=insert ngrok token here\n`);
+		console.info(`${envFileName} file created.`);
+	}
+};
+
 // Check to see if ngrok is up and running
 (async function main() {
 	try {
+		await createEnvFile();
 		await Promise.all([
 			waitForTunnel(),
 			waitForQueues()

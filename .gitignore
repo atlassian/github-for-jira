@@ -2,6 +2,7 @@
 db/config.json
 
 # Environment Files
+.env
 .env.local
 .env.local.*
 .env.*.local
