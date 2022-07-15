@@ -54,6 +54,6 @@ export const keyLocator = async (gitHubAppId?: number) => {
 
 const addNewlines = (privateKey: string): string => {
 	const middleLength = privateKey.length - begin.length - end.length - 2;
-	const middle = privateKey.substring(begin.length + 1, middleLength);
+	const middle = privateKey.substring(begin.length + 1, begin.length + middleLength + 1);
 	return `${begin}\n${middle.trim().replace(/\s+/g, "\n")}\n${end}`;
 };

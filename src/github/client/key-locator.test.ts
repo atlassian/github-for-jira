@@ -46,7 +46,14 @@ describe("key-locator", () => {
 		const privateKey = await keyLocator();
 		expect(privateKey).toBe(privateKetCert);
 		envVars.PRIVATE_KEY = envPrivateKey;
+	});
 
+	it("should throw error for invalid private key", async () => {
+		const privateKetCert = `privatekeycertificate`;
+		const envPrivateKey = envVars.PRIVATE_KEY;
+		envVars.PRIVATE_KEY = privateKetCert;
+		await expect(keyLocator()).rejects.toThrow("The contents of 'env.PRIVATE_KEY' could not be validated");
+		envVars.PRIVATE_KEY = envPrivateKey;
 	});
 
 	it("should throw error on invalid private key path", async () => {
