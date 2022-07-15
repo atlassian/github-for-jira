@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { groupBy, chain } from "lodash";
+import { groupBy, chain, difference } from "lodash";
 import { NextFunction, Request, Response } from "express";
 import { Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
@@ -86,8 +86,7 @@ export const getInstallations = async (subscriptions: Subscription[], log: Logge
 };
 
 const getInstallation = async (subscription: Subscription, log: Logger, gitHubAppId?: number): Promise<AppInstallation> => {
-	const { jiraHost } = subscription;
-	const { gitHubInstallationId } = subscription;
+	const { jiraHost, gitHubInstallationId } = subscription;
 	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
 
 	try {
@@ -155,10 +154,19 @@ const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request):
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
-	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
 
+	// Separating the subscriptions for GH cloud and GHE servers
+	const ghCloudSubscriptions = subscriptions.filter(subscription => !subscription.gitHubAppId);
+	const gheServerSubscriptions = difference(subscriptions, ghCloudSubscriptions);
+
+	// Connections for GHCloud
+	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(ghCloudSubscriptions, req);
+
+	// Connections for GH Enterprise
 	const gheServersWithConnections = await Promise.all(gheServers.map(async (server) => {
-		const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req, server.id);
+		const subscriptionsForServer = gheServerSubscriptions.filter(subscription => subscription.gitHubAppId === server.id);
+		const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptionsForServer, req, server.id);
+
 		/**
 		 * Directly fetching the values using `dataValues`,
 		 * Couldn't get the value using `{plan: true}`, it throws a crypto error,
@@ -200,7 +208,7 @@ export const JiraConfigurationGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)) {
 			res.render("jira-configuration-new.hbs", await JiraCloudAndEnterpriseConfiguration(res, req));
 		} else {
 			res.render("jira-configuration.hbs", await JiraCloudConfiguration(res, req));
