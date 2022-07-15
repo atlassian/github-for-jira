@@ -4,8 +4,8 @@ import { existsSync, readFileSync } from "fs";
 import { envVars } from "~/src/config/env";
 import isBase64 from "is-base64";
 
-const begin = "-----BEGIN RSA PRIVATE KEY-----";
-const end = "-----END RSA PRIVATE KEY-----";
+const PRIVATE_KEY_BEGIN = "-----BEGIN RSA PRIVATE KEY-----";
+const PRIVATE_KEY_END = "-----END RSA PRIVATE KEY-----";
 /**
  * Look for a Github app's private key
  */
@@ -24,7 +24,7 @@ export const keyLocator = async (gitHubAppId?: number) => {
 				privateKey = Buffer.from(privateKey, "base64").toString();
 			}
 
-			if (privateKey.includes(begin) && privateKey.includes(end)) {
+			if (privateKey.includes(PRIVATE_KEY_BEGIN) && privateKey.includes(PRIVATE_KEY_END)) {
 				// newlines are escaped
 				if (privateKey.indexOf("\\n") !== -1) {
 					privateKey = privateKey.replace(/\\n/g, "\n");
@@ -53,7 +53,7 @@ export const keyLocator = async (gitHubAppId?: number) => {
 };
 
 const addNewlines = (privateKey: string): string => {
-	const middleLength = privateKey.length - begin.length - end.length - 2;
-	const middle = privateKey.substring(begin.length + 1, begin.length + middleLength + 1);
-	return `${begin}\n${middle.trim().replace(/\s+/g, "\n")}\n${end}`;
+	const middleLength = privateKey.length - PRIVATE_KEY_BEGIN.length - PRIVATE_KEY_END.length - 2;
+	const middle = privateKey.substring(PRIVATE_KEY_BEGIN.length + 1, PRIVATE_KEY_BEGIN.length + middleLength + 1);
+	return `${PRIVATE_KEY_BEGIN}\n${middle.trim().replace(/\s+/g, "\n")}\n${PRIVATE_KEY_END}`;
 };
