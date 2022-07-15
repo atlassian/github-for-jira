@@ -38,11 +38,13 @@ describe("key-locator", () => {
 	});
 
 	it("should return cloud app private key using PRIVATE_KEY", async () => {
+		const privateKetCert = `-----BEGIN RSA PRIVATE KEY-----
+		privatekeycertificate
+		-----END RSA PRIVATE KEY-----`;
 		const envPrivateKey = envVars.PRIVATE_KEY;
-		envVars.PRIVATE_KEY = "cloud-private-key";
-
+		envVars.PRIVATE_KEY = privateKetCert;
 		const privateKey = await keyLocator();
-		expect(privateKey).toBe("cloud-private-key");
+		expect(privateKey).toBe(privateKetCert);
 		envVars.PRIVATE_KEY = envPrivateKey;
 
 	});
