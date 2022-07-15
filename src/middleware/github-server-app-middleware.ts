@@ -4,17 +4,15 @@ import { Installation } from "models/installation";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
-	const { gitHubAppId: id} = req.params;
+	const { ghaid: id } = req.query;
 
-	console.log('----- check id path ----', {id, path: req.path});
-
-	if(!id) return next();
+	if (!id) return next();
 
 	//TODO: ARC-1515 fix it to parse uuid xxx-xxx-xxx
-	const isNonRecognizableId = isNaN(parseInt(id));
-	if(isNonRecognizableId) {
-		console.log('wrong path, just return;');
-		next('route');
+	const isNonRecognizableId = isNaN(parseInt(id as string));
+	if (isNonRecognizableId) {
+		console.log("wrong path, just return;");
+		next();
 		return;
 	}
 
