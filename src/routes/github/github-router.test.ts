@@ -98,14 +98,14 @@ describe("GitHub router", () => {
 	beforeEach(()=>{
 	});
 	describe("Common route utilities", () => {
-		describe("Cloud scenario", ()=>{
+		describe.only("Cloud scenario", ()=>{
 			let app: Application;
 			beforeEach(() => {
 				app = mockPrerequistApp();
-				app.use("/github-cloud", GithubRouter);
+				app.use("/github", GithubRouter);
 			});
 			it("should skip uuid when absent", async () => {
-				await supertest(app).get(`/github-cloud/configuration`);
+				await supertest(app).get(`/github/configuration`);
 				expect(GithubConfigurationGet).toBeCalledWith(
 					expect.anything(), //not matching req
 					expect.objectContaining({ //matching res locals
@@ -122,14 +122,14 @@ describe("GitHub router", () => {
 			let app: Application;
 			beforeEach(() => {
 				app = mockPrerequistApp();
-				app.use("/github-server", GithubRouter);
+				app.use("/github", GithubRouter);
 				mockGetGitHubApiUrl();
 				mockGetForGitHubServerAppId();
 				mockAxiosPingURL();
 				mockInstallationFindByPK();
 			});
 			it("should extract uuid when present", async () => {
-				await supertest(app).get(`/github-server/${GITHUB_SERVER_APP_ID}/configuration`);
+				await supertest(app).get(`/github/appid-${GITHUB_SERVER_APP_ID}/configuration`);
 				expect(GithubConfigurationGet).toBeCalledWith(
 					expect.anything(), //not matching req
 					expect.objectContaining({ //matching res locals

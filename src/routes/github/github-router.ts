@@ -11,32 +11,34 @@ import {GithubServerAppMiddleware} from "middleware/github-server-app-middleware
 
 export const GithubRouter = Router();
 
-//Having an sub route  to extract optional :gitHubAppId for GitHub Server App
-//TODO: ARC-1515 chagne this to uuid instead of github app id
-const GithubRouterWithUUID = Router({mergeParams: true});
-GithubRouter.use("/appid-:gitHubAppId?", GithubRouterWithUUID);
 //Have an cover all middleware to extract the optional gitHubAppId
-GithubRouterWithUUID.use(GithubServerAppMiddleware);
+GithubRouter.use(GithubServerAppMiddleware);
 
 // OAuth Routes
-GithubRouterWithUUID.use(GithubOAuthRouter);
+GithubRouter.use(GithubOAuthRouter);
 
 // Webhook Route
-GithubRouterWithUUID.post("/webhooks/:uuid",
+GithubRouter.post("/webhooks/:uuid",
 	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
 	returnOnValidationError,
 	WebhookReceiverPost);
 
 // CSRF Protection Middleware for all following routes
-GithubRouterWithUUID.use(csrfMiddleware);
+GithubRouter.use(csrfMiddleware);
 
-GithubRouterWithUUID.use("/setup", GithubSetupRouter);
+GithubRouter.use("/setup", GithubSetupRouter);
 
 // All following routes need Github Auth
-GithubRouterWithUUID.use(GithubAuthMiddleware);
+GithubRouter.use(GithubAuthMiddleware);
 
-GithubRouterWithUUID.use("/configuration", GithubConfigurationRouter);
+GithubRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
-GithubRouterWithUUID.use("/subscriptions?", GithubSubscriptionRouter);
+GithubRouter.use("/subscriptions?", GithubSubscriptionRouter);
 
+/*
+ *
+ *	/github (From Root Router)
+ *
+ *
+ */
