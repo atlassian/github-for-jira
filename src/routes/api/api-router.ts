@@ -15,6 +15,7 @@ import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { ApiPingPost } from "routes/api/api-ping-post";
+import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
 
 export const ApiRouter = Router();
 
@@ -138,7 +139,7 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 		resp.status(500).send("fail");
 	}
 });
+ApiRouter.use("/migration", CryptorMigrationRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
-
