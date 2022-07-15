@@ -55,7 +55,7 @@ jobs:
         uses: docker/build-push-action@v2.7.0
         with:
           file: Dockerfile
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2.7.0
-        with:
-          file: Dockerfile.prod
+#      - name: Build and push Docker image
+#        uses: docker/build-push-action@v2.7.0
+#        with:
+#          file: Dockerfile.prod
