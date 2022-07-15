@@ -7,16 +7,12 @@ function openChildWindow(url) {
 	const interval = setInterval(function () {
 		if (child.closed) {
 			clearInterval(interval);
-			if (Boolean($("#redirectToGitHubConfigPage").val())) {
-				AP.navigator.go(
-					'addonmodule',
-					{
-						moduleKey: "github-post-install-page"
-					}
-				);
-			} else {
-				AP.navigator.reload();
-			}
+			AP.navigator.go(
+				'addonmodule',
+				{
+					moduleKey: "github-post-install-page"
+				}
+			);
 		}
 	}, 1000);
 
