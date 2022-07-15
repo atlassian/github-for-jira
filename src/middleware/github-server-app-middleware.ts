@@ -3,14 +3,26 @@ import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { jiraHost } = res.locals;
-	const { id: idStr } = req.query;
-	const id = parseInt(idStr as string);
 
-	if (id && isNaN(id)) {
-		req.log.warn({ id, jiraHost }, "Provided id found but not a number " + id);
-		throw new Error("Provided id found but not a number " + id);
+
+	const { jiraHost } = res.locals;
+	const { appId: idStr } = req.params;
+	const id = parseInt(idStr as string);
+	console.log('--- new route, app server middleware ---', {
+		jiraHost: res.locals.jiraHost,
+		appId: req.params.appId,
+		id,
+		baseUrl: req.baseUrl,
+		path: req.path,
+	});
+
+	if (idStr && isNaN(id)) {
+		//throw new Error("Provided id found but not a number " + id);
+		next();
+		return;
 	}
+
+	console.log('--- gsam 1', {id, idStr});
 
 	if (id) {
 		req.log.debug(`Retrieving GitHub app with id ${id}`);
@@ -33,6 +45,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		return next();
 	}
 
+	console.log('--- gsam 2');
 	next();
 };
 

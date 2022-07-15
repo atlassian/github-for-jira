@@ -92,6 +92,7 @@ const mockInstallationFindByPK = () => {
 const mockConfigurationGetProceed = ()=>{
 	jest.mocked(GithubConfigurationGet).mockClear();
 	jest.mocked(GithubConfigurationGet).mockImplementation(async (_req, _res, next) => {
+		console.log('------ cofig mock get');
 		next();
 	});
 };
@@ -105,7 +106,7 @@ describe("GitHub router", () => {
 				app.use("/github", GithubRouter);
 				mockConfigurationGetProceed();
 			});
-			it("should skip uuid when absent", async () => {
+			it.only("should skip uuid when absent", async () => {
 				await supertest(app).get(`/github/configuration`);
 				expect(GithubConfigurationGet).toBeCalledWith(
 					expect.anything(), //not matching req

@@ -11,28 +11,31 @@ import { GithubServerAppMiddleware } from "middleware/github-server-app-middlewa
 
 export const GithubRouter = Router();
 
+const GithubAppProvidedRouter = Router({ mergeParams: true });
+GithubRouter.use("/:appId", GithubAppProvidedRouter);
+
 //Have an cover all middleware to extract the optional gitHubAppId
-GithubRouter.use(GithubServerAppMiddleware);
+GithubAppProvidedRouter.use(GithubServerAppMiddleware);
 
 // OAuth Routes
-GithubRouter.use(GithubOAuthRouter);
+GithubAppProvidedRouter.use(GithubOAuthRouter);
 
 // Webhook Route
-GithubRouter.post("/webhooks/:uuid",
+GithubAppProvidedRouter.post("/webhooks/:uuid",
 	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
 	returnOnValidationError,
 	WebhookReceiverPost);
 
 // CSRF Protection Middleware for all following routes
-GithubRouter.use(csrfMiddleware);
+GithubAppProvidedRouter.use(csrfMiddleware);
 
-GithubRouter.use("/setup", GithubSetupRouter);
+GithubAppProvidedRouter.use("/setup", GithubSetupRouter);
 
 // All following routes need Github Auth
-GithubRouter.use(GithubAuthMiddleware);
+GithubAppProvidedRouter.use(GithubAuthMiddleware);
 
-GithubRouter.use("/configuration", GithubConfigurationRouter);
+GithubAppProvidedRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
-GithubRouter.use("/subscriptions?", GithubSubscriptionRouter);
+GithubAppProvidedRouter.use("/subscriptions?", GithubSubscriptionRouter);
 
