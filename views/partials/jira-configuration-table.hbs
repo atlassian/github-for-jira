@@ -20,16 +20,17 @@
         <tr class="jiraConfiguration__table__row">
           {{! Organization }}
           <td class="jiraConfiguration__table__cell">
-            <img
-                class="jiraConfiguration__table__cell__avatar"
-                src="{{connection.account.avatar_url}}"
-                height="24"
-                width="24"
-                data-installation-id="{{id}}"
-            />
+            {{#unless hideAvatar}}
+              <img
+                  class="jiraConfiguration__table__cell__avatar"
+                  src="{{connection.account.avatar_url}}"
+                  height="24"
+                  width="24"
+                  data-installation-id="{{id}}"
+              />
+            {{/unless}}
             <span class="jiraConfiguration__table__cell__orgName">{{connection.account.login}}</span>
           </td>
-
           {{! Repos Synced }}
           <td class="jiraConfiguration__table__cell">
             {{#if connection.isGlobalInstall}}
@@ -73,7 +74,8 @@
             {{!-- Display any sync warnings --}}
             {{#if (isMissingPermissions connection.syncWarning)}}
               <div class="jiraConfiguration__syncWarning">
-                  <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
+                  <span
+                      class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
                     Sync failed warnings
                   </span>
                 <div class="jiraConfiguration__syncWarningMessage warning-popup">
