@@ -12,7 +12,7 @@ import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
+import { isBlocked, booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import Logger from "bunyan";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import IORedis from "ioredis";
@@ -24,6 +24,7 @@ import { sqsQueues } from "../sqs/queues";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { intersection } from "lodash";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -51,7 +52,7 @@ export interface TaskPayload<E = any, P = any> {
 	jiraPayload?: P;
 }
 
-type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
+export type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
 
 const taskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
@@ -62,8 +63,25 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-const getNextTask = async (subscription: Subscription): Promise<Task | undefined> => {
-	const tasks = taskTypes;
+const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[]): Promise<TaskType[]> => {
+	// For a single selection task
+	if (targetTasks) {
+		return targetTasks;
+	}
+	// flag defaults to all tasks
+	const filteredTasks = await stringFlag(StringFlags.TARGETTED_BACKFILL_TASKS, taskTypes.join(), jiraHost);
+	const flaggedTasks = filteredTasks.split(",") as TaskType[];
+	return intersection(taskTypes, flaggedTasks);
+};
+
+const getNextTask = async (subscription: Subscription, jiraHost: string, targetTasks?: TaskType[]): Promise<Task | undefined> => {
+	const tasks = await getTargetTasks(jiraHost, targetTasks);
+
+	console.log("TASKS THAT IM GOING TO DO");
+	console.log("TASKS THAT IM GOING TO DO");
+	console.log("TASKS THAT IM GOING TO DO");
+	console.log("TASKS THAT IM GOING TO DO");
+	console.log(tasks);
 
 	if (subscription.repositoryStatus !== "complete") {
 		return {
@@ -139,7 +157,7 @@ export const updateJobStatus = async (
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
-	} else if (!(await getNextTask(subscription))) {
+	} else if (!(await getNextTask(subscription, jiraHost))) {
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
@@ -215,7 +233,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
-	const nextTask = await getNextTask(subscription);
+	const nextTask = await getNextTask(subscription, jiraHost, data.targetTasks);
 
 	if (!nextTask) {
 		await subscription.update({ syncStatus: "COMPLETE" });
