@@ -4,8 +4,15 @@ import { validationResult } from "express-validator";
 import { envVars } from "config/env";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+
 	const { jiraHost } = res.locals;
 	const { uuid } = req.params;
+
+	console.log('----- server middleware-----', {
+		path: req.path,
+		uuid: req.params.uuid,
+		result: JSON.stringify(validationResult(req))
+	});
 
 	req.log = req.log.child({ uuid, jiraHost });
 

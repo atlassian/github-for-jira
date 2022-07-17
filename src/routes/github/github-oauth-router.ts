@@ -132,25 +132,21 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-	console.log('--- gam 1');
 		const { githubToken } = req.session;
 		const { jiraHost, gitHubAppId } = res.locals;
 		if (!githubToken) {
-			console.log('--- gam token');
 			req.log.info("github token missing, calling login()");
 			throw "Missing github token";
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
 		const url = await getGitHubApiUrl(jiraHost, gitHubAppId);
-		console.log('--- gam got url', {url, gitHubAppId, jiraHost});
 
 		await axios.get(url, {
 			headers: {
 				Authorization: `Bearer ${githubToken}`
 			}
 		});
-		console.log('--- gam pinged url', {url, gitHubAppId, jiraHost});
 
 		req.log.debug(`Github token is valid, continuing...`);
 
@@ -158,7 +154,6 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		res.locals.githubToken = githubToken;
 		// TODO: Not a great place to put this, but it'll do for now
 		res.locals.github = GithubAPI({ auth: githubToken });
-		console.log('--- gam calling next', {url, gitHubAppId, jiraHost});
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);
