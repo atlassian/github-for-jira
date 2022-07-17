@@ -208,7 +208,7 @@ export const JiraConfigurationGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)) {
 			res.render("jira-configuration-new.hbs", await JiraCloudAndEnterpriseConfiguration(res, req));
 		} else {
 			res.render("jira-configuration.hbs", await JiraCloudConfiguration(res, req));
