@@ -52,8 +52,8 @@ RootRouter.use(cookieSessionMiddleware);
 
 // Saves the jiraHost cookie to the secure session if available
 RootRouter.use(jirahostMiddleware);
-
-RootRouter.use("/github/:uuid?", GithubRouter);
+const uuidRegex = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/;
+RootRouter.use(`/github/:uuid(${uuidRegex})?`, GithubRouter);
 RootRouter.use("/jira", JiraRouter);
 
 // On base path, redirect to Github App Marketplace URL
