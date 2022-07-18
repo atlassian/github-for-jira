@@ -3,6 +3,6 @@ $('.select-server').click(function (event) {
 
   AP.navigator.go("addonmodule", {
     moduleKey: "github-list-server-apps-page",
-    customData: { serverUrl: $(event.target).data("server-name") }
+    customData: { serverUrl: $(event.target).data("identifier") }
   })
 });
