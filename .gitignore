@@ -10,6 +10,7 @@ db/config.json
 
 # DB Secret File
 *.pem
+**/*.pem
 
 # Transpiled files
 build/
