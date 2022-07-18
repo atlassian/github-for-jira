@@ -5,6 +5,7 @@ import { metricError } from "config/metric-names";
 import { AxiosError, AxiosRequestConfig } from "axios";
 import { extractPath } from "../../jira/client/axios";
 import { numberFlag, NumberFlags } from "config/feature-flags";
+import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -33,7 +34,7 @@ export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<Axi
 
 //TODO Move to util/axios/common-github-webhook-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sendResponseMetrics = (metricName: string, response?: any, status?: string | number) => {
+const sendResponseMetrics = (metricName: string, gitHubVersion: string, response?: any, status?: string | number) => {
 	status = `${status || response?.status}`;
 	const requestDurationMs = Number(
 		Date.now() - (response?.config?.requestStartTime || 0)
@@ -42,6 +43,7 @@ const sendResponseMetrics = (metricName: string, response?: any, status?: string
 	// using client tag to separate GH client from Octokit
 	const tags = {
 		client: "axios",
+		gitHubVersion,
 		method: response?.config?.method?.toUpperCase(),
 		path: extractPath(response?.config?.originalUrl),
 		status: status
@@ -53,12 +55,14 @@ const sendResponseMetrics = (metricName: string, response?: any, status?: string
 	return response;
 };
 
-export const instrumentRequest = (metricName) =>
+export const instrumentRequest = (metricName, host) =>
 	(response) => {
 		if (!response) {
 			return;
 		}
-		return sendResponseMetrics(metricName, response);
+
+		const gitHubVersion = getCloudOrServerFromHost(host);
+		return sendResponseMetrics(metricName, gitHubVersion, response);
 	};
 
 /**
@@ -66,21 +70,23 @@ export const instrumentRequest = (metricName) =>
  *
  * @param {import("axios").AxiosError} error - The Axios error response object.
  * @param metricName - Name for the response metric
+ * @param host - The rest API url for cloud/server
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-export const instrumentFailedRequest = (metricName) =>
+export const instrumentFailedRequest = (metricName: string, host: string) =>
 	(error) => {
+		const gitHubVersion = getCloudOrServerFromHost(host);
 		if (error instanceof RateLimitingError) {
-			sendResponseMetrics(metricName, error.cause?.response, "rateLimiting");
+			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "rateLimiting");
 		} else if (error instanceof BlockedIpError) {
-			sendResponseMetrics(metricName, error.cause?.response, "blockedIp");
-			statsd.increment(metricError.blockedByGitHubAllowlist);
+			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "blockedIp");
+			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubVersion });
 		} else if (error instanceof GithubClientTimeoutError) {
-			sendResponseMetrics(metricName, error.cause?.response, "timeout");
+			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "timeout");
 		} else if (error instanceof GithubClientError) {
-			sendResponseMetrics(metricName, error.cause?.response);
+			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response);
 		} else {
-			sendResponseMetrics(metricName, error.response);
+			sendResponseMetrics(metricName, gitHubVersion, error.response);
 		}
 		return Promise.reject(error);
 	};
