@@ -8,6 +8,7 @@ export async function findOrStartSync(
 	subscription: Subscription,
 	logger: Logger,
 	syncType?: "full" | "partial",
+	commitHistoryDepth?: number,
 	targetTasks?: TaskType[]
 ): Promise<void> {
 	let fullSyncStartTime;
@@ -35,6 +36,7 @@ export async function findOrStartSync(
 		installationId,
 		jiraHost,
 		startTime: fullSyncStartTime,
+		commitHistoryDepth,
 		targetTasks
 	}, 0, logger);
 }

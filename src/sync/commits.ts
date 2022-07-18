@@ -19,6 +19,13 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 	};
 };
 
+const getCommitHistoryDepth = async (jiraHost: string, commitHistoryDepth?: number): Promise<number> => {
+	if (commitHistoryDepth) {
+		return commitHistoryDepth;
+	}
+	return await numberFlag(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, NaN, jiraHost);
+};
+
 export const getCommitTask = async (
 	logger: Logger,
 	_github: GitHubAPI,
@@ -26,11 +33,12 @@ export const getCommitTask = async (
 	jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
-	perPage?: number): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
+	perPage?: number,
+	messagePayload?: any): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
 
-	logger.info("Syncing commits: started");
-	const timeCutoffMsecs = await numberFlag(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, NaN, jiraHost);
+	const timeCutoffMsecs = await getCommitHistoryDepth(jiraHost, messagePayload?.commitHistoryDepth);
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, timeCutoffMsecs, cursor, perPage);
+
 	const jiraPayload = await transformCommit({ commits, repository });
 	logger.info("Syncing commits: finished");
 

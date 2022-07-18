@@ -272,5 +272,42 @@ describe("sync/commits", () => {
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 			verifyMessageSent(data);
 		});
+
+
+		describe("commit history value is passed", () => {
+			it("should use commit history depth parameter before feature flag time", async () => {
+
+				const time = Date.now();
+				const commitHistoryDepthCutoff = 1000 * 60 * 60 * 72;
+				mockSystemTime(time);
+				const commitHistoryDepth = new Date(time - commitHistoryDepthCutoff);
+				const data: BackfillMessagePayload = { installationId, jiraHost, commitHistoryDepth: commitHistoryDepthCutoff };
+
+				createGitHubNock(commitNodesFixture, { commitSince: commitHistoryDepth.toISOString() });
+				const commits = [
+					{
+						"author": {
+							"name": "test-author-name",
+							"email": "test-author-email@example.com"
+						},
+						"authorTimestamp": "test-authored-date",
+						"displayId": "test-o",
+						"fileCount": 0,
+						"hash": "test-oid",
+						"id": "test-oid",
+						"issueKeys": [
+							"TES-17"
+						],
+						"message": "[TES-17] test-commit-message",
+						"url": "https://github.com/test-login/test-repo/commit/test-sha",
+						"updateSequenceId": 12345678
+					}
+				];
+				createJiraNock(commits);
+
+				await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+				verifyMessageSent(data);
+			});
+		});
 	});
 });
