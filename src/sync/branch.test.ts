@@ -298,14 +298,14 @@ describe("sync/branches", () => {
 			verifyMessageSent(data);
 		});
 
-		describe("SYNC_BRANCH_COMMIT_TIME_LIMIT FF is enabled", () => {
+		describe("Branch commit history value is passed", () => {
 			beforeEach(() => {
 				const time = Date.now();
 				const cutoff = 1000 * 60 * 60 * 24;
 				mockSystemTime(time);
 				dateCutoff = new Date(time - cutoff);
 			});
-			it("should sync to Jira when branch refs have jira references", async () => {
+			it("should use commit history depth parameter before feature flag time", async () => {
 				const time = Date.now();
 				const commitHistoryDepthCutoff = 1000 * 60 * 60 * 96;
 				mockSystemTime(time);

@@ -274,7 +274,7 @@ describe("sync/commits", () => {
 		});
 
 
-		describe("commit history value is passed", () => {
+		describe("Commit history value is passed", () => {
 			it("should use commit history depth parameter before feature flag time", async () => {
 
 				const time = Date.now();

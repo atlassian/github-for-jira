@@ -28,7 +28,7 @@ ApiRouter.use(LogMiddleware);
 // And also log how the request was authenticated
 
 ApiRouter.use(
-	async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+	async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 		const mechanism = req.get("X-Slauth-Mechanism");
 		const issuer = req.get("X-Slauth-Issuer");
 		const principal = req.get("X-Slauth-Principal");
@@ -42,11 +42,11 @@ ApiRouter.use(
 			username: req.get("X-Slauth-User-Username")
 		} });
 
-		// if (!mechanism || mechanism === "open") {
-		// 	req.log.warn("Attempt to access Admin API without authentication");
-		// 	res.status(401).json({ error: "Open access not allowed" });
-		// 	return;
-		// }
+		if (!mechanism || mechanism === "open") {
+			req.log.warn("Attempt to access Admin API without authentication");
+			res.status(401).json({ error: "Open access not allowed" });
+			return;
+		}
 
 		req.log.info("API Request successfully authenticated");
 
@@ -82,11 +82,16 @@ ApiRouter.post(
 		const offset = Number(req.body.offset) || 0;
 		// only resync installations whose "updatedAt" date is older than x seconds
 		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
-		// How far back to fetch commit history in milliseconds
+		// How far back to fetch commit history(main and branch) in milliseconds.
 		const commitHistoryDepth = Number(req.body.commitHistoryDepth) || undefined;
 
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
 			res.status(400).send("please provide at least one of the filter parameters!");
+			return;
+		}
+
+		if (commitHistoryDepth !== undefined && (commitHistoryDepth <= 0 || isNaN(commitHistoryDepth))){
+			res.status(400).send("Invalid commitHistoryDepth value, please enter a natural number.");
 			return;
 		}
 
