@@ -1,10 +1,9 @@
-import { DataTypes, Sequelize, WhereOptions } from "sequelize";
+import { DataTypes, Sequelize } from "sequelize";
 import { sequelize } from "models/sequelize";
 import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { EncryptedModel } from "./encrypted-model";
 
 import EncryptedField from "sequelize-encrypted";
-import { pickBy } from "lodash";
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
@@ -162,14 +161,20 @@ export class GitHubServerApp extends EncryptedModel {
 		return gitHubServerApp;
 	}
 
-	static async findForUuid(uuid: string, installationId?: number): Promise<GitHubServerApp | null> {
+	/**
+	 * Get GitHubServerApp
+	 *
+	 * @param {{uuid: string}} uuid
+	 * @returns {GitHubServerApp}
+	 */
+	static async findForUuid(uuid: string): Promise<GitHubServerApp | null> {
 		return this.findOne({
-			where: pickBy({
-				uuid,
-				installationId
-			}) as WhereOptions
+			where: {
+				uuid
+			}
 		});
 	}
+
 }
 
 GitHubServerApp.init({
