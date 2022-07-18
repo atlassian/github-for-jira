@@ -56,7 +56,8 @@ describe("GitHub Client", () => {
 			client: "axios",
 			method: "GET",
 			path,
-			status
+			status,
+			gitHubVersion: "server"
 		}));
 	}
 
