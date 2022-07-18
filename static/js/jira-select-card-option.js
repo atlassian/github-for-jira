@@ -7,7 +7,12 @@ function openChildWindow(url) {
 	const interval = setInterval(function () {
 		if (child.closed) {
 			clearInterval(interval);
-			AP.navigator.reload();
+			AP.navigator.go(
+				'addonmodule',
+				{
+					moduleKey: "github-post-install-page"
+				}
+			);
 		}
 	}, 1000);
 
