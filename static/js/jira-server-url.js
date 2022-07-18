@@ -81,11 +81,13 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 			},
 			function(data) {
 				if (data.success) {
-					const pagePath = data.appExists ? "github-list-servers-page" : "github-app-creation-page";
+					const pagePath = data.appExists ? "github-list-server-apps-page" : "github-app-creation-page";
+					const customData = data.appExists ?  { serverUrl: gheServerURL } : {};
 					AP.navigator.go(
 						"addonmodule",
 						{
-							moduleKey: pagePath
+							moduleKey: pagePath,
+							customData
 						}
 					);
 				} else {
