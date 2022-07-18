@@ -220,10 +220,10 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription, jiraHost);
+	const gitHubVersion = isCloudOrServerSubscription(subscription.gitHubAppId);
 
 	if (!nextTask) {
 		await subscription.update({ syncStatus: "COMPLETE" });
-		const gitHubVersion = isCloudOrServerSubscription(subscription.gitHubAppId);
 		statsd.increment(metricSyncStatus.complete, { gitHubVersion });
 		logger.info({ gitHubVersion }, "Sync complete");
 
@@ -354,7 +354,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			scheduleNextTask
 		);
 
-		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`]);
+		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`, `${gitHubVersion}`]);
 
 	} catch (err) {
 		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
@@ -423,8 +423,8 @@ export const handleBackfillError = async (err,
 export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
 	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
-
-	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`]);
+	const gitHubVersion = isCloudOrServerSubscription(subscription.gitHubAppId);
+	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`, `${gitHubVersion}`]);
 
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
