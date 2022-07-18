@@ -29,6 +29,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		res.locals.gitHubAppId = gitHubServerApp.appId;
 		res.locals.gitHubAppConfig = {
 			appId: gitHubServerApp.appId,
+			uuid: gitHubServerApp.uuid,
 			clientId: gitHubServerApp.gitHubClientId,
 			gitHubClientSecret: await gitHubServerApp.decrypt("gitHubClientSecret"),
 			webhookSecret: await gitHubServerApp.decrypt("webhookSecret"),
@@ -39,6 +40,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		// is cloud app
 		res.locals.gitHubAppConfig = {
 			appId: envVars.APP_ID,
+			uuid: undefined, //undefined for cloud
 			clientId: envVars.GITHUB_CLIENT_ID,
 			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
 			webhookSecret: envVars.WEBHOOK_SECRET

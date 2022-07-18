@@ -53,7 +53,7 @@ RootRouter.use(cookieSessionMiddleware);
 // Saves the jiraHost cookie to the secure session if available
 RootRouter.use(jirahostMiddleware);
 
-RootRouter.use(`/github`, GithubRouter);
+RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
 
 // On base path, redirect to Github App Marketplace URL

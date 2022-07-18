@@ -131,6 +131,7 @@ describe("github-server-app-middleware", () => {
 		expect(res.locals.gitHubAppId).toBe(SERVER_APP_ID);
 		expect(res.locals.gitHubAppConfig).toEqual({
 			appId: SERVER_APP_ID,
+			uuid: UUID,
 			clientId: "lvl.1234",
 			gitHubClientSecret: "gitHubClientSecret",
 			privateKey: "privateKey",

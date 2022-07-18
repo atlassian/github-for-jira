@@ -148,6 +148,7 @@ describe("GitHub router", () => {
 							gitHubAppId: GITHUB_SERVER_APP_ID,
 							gitHubAppConfig: expect.objectContaining({
 								appId: GITHUB_SERVER_APP_ID,
+								uuid: GITHUB_SERVER_APP_UUID,
 								gitHubClientSecret: "gitHubClientSecret",
 								webhookSecret: "webhookSecret",
 								privateKey: "privateKey"

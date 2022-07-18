@@ -11,7 +11,7 @@ import { GithubServerAppMiddleware } from "middleware/github-server-app-middlewa
 
 const UUID_REGEX = "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}";
 
-export const GithubRouter = Router({ mergeParams: true });
+export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 
