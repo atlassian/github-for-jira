@@ -299,12 +299,7 @@ describe("sync/branches", () => {
 		});
 
 		describe("Branch commit history value is passed", () => {
-			beforeEach(() => {
-				const time = Date.now();
-				const cutoff = 1000 * 60 * 60 * 24;
-				mockSystemTime(time);
-				dateCutoff = new Date(time - cutoff);
-			});
+
 			it("should use commit history depth parameter before feature flag time", async () => {
 				const time = Date.now();
 				const commitHistoryDepthCutoff = 1000 * 60 * 60 * 96;
