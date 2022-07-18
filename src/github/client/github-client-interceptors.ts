@@ -43,10 +43,10 @@ const sendResponseMetrics = (metricName: string, gitHubVersion: string, response
 	// using client tag to separate GH client from Octokit
 	const tags = {
 		client: "axios",
+		gitHubVersion,
 		method: response?.config?.method?.toUpperCase(),
 		path: extractPath(response?.config?.originalUrl),
-		status: status,
-		gitHubVersion
+		status: status
 	};
 
 	statsd.histogram(metricName, requestDurationMs, tags);
@@ -61,7 +61,7 @@ export const instrumentRequest = (metricName, url) =>
 			return;
 		}
 		const gitHubVersion = isCloudOrServerUrl(url);
-		return sendResponseMetrics(metricName, gitHubVersion, response, gitHubVersion);
+		return sendResponseMetrics(metricName, gitHubVersion, response);
 	};
 
 /**
