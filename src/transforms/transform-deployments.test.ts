@@ -5,7 +5,7 @@ import { getLogger } from "config/logger";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
+import { getInstallationId } from "../github/client/installation-id";
 import deployment_status from "fixtures/deployment_status-basic.json";
 
 jest.mock("config/feature-flags");
@@ -81,7 +81,7 @@ const TEST_INSTALLATION_ID = 1234;
 describe("transform GitHub webhook payload to Jira payload", () => {
 
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
+	const githubClient = new GitHubInstallationClient(getInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
 
 	it(`supports branch and merge workflows, sending related commits in deployment`, async () => {
 
