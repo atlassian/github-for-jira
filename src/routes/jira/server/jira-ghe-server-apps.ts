@@ -21,13 +21,10 @@ export const JiraGheServerApps = async (
 
 		if (serverApps.length) {
 			res.render("jira-select-github-cloud-app.hbs", {
-				servers: serverApps,
-				previousPagePath: "github-list-servers-page"
+				servers: serverApps
 			});
 		} else {
-			res.render("jira-select-app-creation.hbs", {
-				previousPagePath: "github-list-servers-page"
-			});
+			res.render("jira-select-app-creation.hbs");
 		}
 
 		req.log.debug("Jira GHE server apps rendered successfully.");
