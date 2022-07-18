@@ -5,7 +5,7 @@ import { metricError } from "config/metric-names";
 import { AxiosError, AxiosRequestConfig } from "axios";
 import { extractPath } from "../../jira/client/axios";
 import { numberFlag, NumberFlags } from "config/feature-flags";
-import { isCloudOrServerUrl } from "utils/is-cloud-or-server";
+import { isCloudOrServerHost } from "utils/is-cloud-or-server";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -60,7 +60,7 @@ export const instrumentRequest = (metricName, url) =>
 		if (!response) {
 			return;
 		}
-		const gitHubVersion = isCloudOrServerUrl(url);
+		const gitHubVersion = isCloudOrServerHost(url);
 		return sendResponseMetrics(metricName, gitHubVersion, response);
 	};
 
@@ -74,7 +74,7 @@ export const instrumentRequest = (metricName, url) =>
  */
 export const instrumentFailedRequest = (metricName: string, url: string) =>
 	(error) => {
-		const gitHubVersion = isCloudOrServerUrl(url);
+		const gitHubVersion = isCloudOrServerHost(url);
 		if (error instanceof RateLimitingError) {
 			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "rateLimiting");
 		} else if (error instanceof BlockedIpError) {
