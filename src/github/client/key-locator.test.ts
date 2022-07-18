@@ -1,11 +1,9 @@
 import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubServerApp } from "~/src/models/github-server-app";
-import { existsSync, readFileSync } from "fs";
-import { mocked } from "ts-jest/utils";
 import { envVars } from "~/src/config/env";
+import { readFileSync } from "fs";
 
 jest.mock("config/feature-flags");
-jest.mock("fs");
 
 describe("key-locator", () => {
 
@@ -28,12 +26,18 @@ describe("key-locator", () => {
 	});
 
 	it("should return cloud app private key using PRIVATE_KEY_PATH", async () => {
-		mocked(existsSync).mockReturnValue(true);
-		mocked(readFileSync).mockReturnValue("my-private-key-from-key-path");
-
+		const privateKeyContents = readFileSync(`${process.cwd()}/test/setup/test-key.pem`, "utf-8");
 		const privateKey = await keyLocator();
-		expect(readFileSync).toBeCalled();
-		expect(privateKey).toBe("my-private-key-from-key-path");
+		expect(privateKey).toBe(privateKeyContents);
+
+	});
+
+	it("should throw error on invalid private key path", async () => {
+		const envPrivateKeyPath = envVars.PRIVATE_KEY_PATH;
+		envVars.PRIVATE_KEY_PATH = "cloud-private-key-invalid-path.pem";
+
+		await expect(keyLocator()).rejects.toThrow("Private key does not exists");
+		envVars.PRIVATE_KEY_PATH = envPrivateKeyPath;
 
 	});
 
@@ -46,23 +50,6 @@ describe("key-locator", () => {
 		const privateKey = await keyLocator();
 		expect(privateKey).toBe(privateKetCert);
 		envVars.PRIVATE_KEY = envPrivateKey;
-	});
-
-	it("should throw error for invalid private key", async () => {
-		const privateKetCert = `privatekeycertificate`;
-		const envPrivateKey = envVars.PRIVATE_KEY;
-		envVars.PRIVATE_KEY = privateKetCert;
-		await expect(keyLocator()).rejects.toThrow("The contents of 'env.PRIVATE_KEY' could not be validated");
-		envVars.PRIVATE_KEY = envPrivateKey;
-	});
-
-	it("should throw error on invalid private key path", async () => {
-		const envPrivateKeyPath = process.env.PRIVATE_KEY_PATH;
-		process.env.PRIVATE_KEY_PATH = "cloud-private-key-invalid-path.pem";
-
-		await expect(keyLocator()).rejects.toThrow("Private key does not exists");
-		process.env.PRIVATE_KEY_PATH = envPrivateKeyPath;
-
 	});
 
 });
