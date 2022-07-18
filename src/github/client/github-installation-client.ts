@@ -60,8 +60,8 @@ export class GitHubInstallationClient extends GitHubClient {
 			handleFailedRequest(this.logger)
 		);
 		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github),
-			instrumentFailedRequest(metricHttpRequest.github)
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
 		);
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
