@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import * as fs from "fs";
 import * as path from "path";
+import { exec } from "child_process";
 import { isNodeProd } from "./src/util/is-node-env";
 
 const envFileName = ".env";
@@ -86,11 +87,18 @@ const waitForQueues = async () => {
 	console.info("All queues ready.");
 };
 
-const createEnvFile = () => {
+const createEnvFile = async () => {
 	if (!isNodeProd() && !fs.existsSync(envFilePath)) {
-		console.info(`${envFileName} missing, creating it with defaults...`);
-		fs.writeFileSync(envFilePath, `APP_URL=http://localhost\nWEBHOOK_PROXY_URL=http://localhost/github/events\nNGROK_AUTHTOKEN=insert ngrok token here\n`);
-		console.info(`${envFileName} file created.`);
+		return new Promise<void>((resolve, reject) => {
+			exec("./.husky/create-env.sh", (error, stdout) => {
+				if (error) {
+					reject(error);
+					return;
+				}
+				console.info(stdout);
+				resolve();
+			});
+		})
 	}
 };
 

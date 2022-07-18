@@ -13,3 +13,5 @@ if [ -f "$OLDFILE" ] && [ !  -f "$NEWFILE" ]; then
   echo "Removing moved from .env.development.local file"
   sed -i -E "s/${REGEX}//" "$NEWFILE"
 fi
+
+. "$(dirname "$0")/create-env.sh"
