@@ -5,7 +5,7 @@ import { metricError } from "config/metric-names";
 import { AxiosError, AxiosRequestConfig } from "axios";
 import { extractPath } from "../../jira/client/axios";
 import { numberFlag, NumberFlags } from "config/feature-flags";
-import { isCloudOrServerUrl } from "utils/is-cloud-or-server";
+import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -55,12 +55,12 @@ const sendResponseMetrics = (metricName: string, gitHubVersion: string, response
 	return response;
 };
 
-export const instrumentRequest = (metricName, url) =>
+export const instrumentRequest = (metricName, host) =>
 	(response) => {
 		if (!response) {
 			return;
 		}
-		const gitHubVersion = isCloudOrServerUrl(url);
+		const gitHubVersion = getCloudOrServerFromHost(host);
 		return sendResponseMetrics(metricName, gitHubVersion, response);
 	};
 
@@ -69,12 +69,12 @@ export const instrumentRequest = (metricName, url) =>
  *
  * @param {import("axios").AxiosError} error - The Axios error response object.
  * @param metricName - Name for the response metric
- * @param url - The rest API url for cloud/server
+ * @param host - The rest API url for cloud/server
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-export const instrumentFailedRequest = (metricName: string, url: string) =>
+export const instrumentFailedRequest = (metricName: string, host: string) =>
 	(error) => {
-		const gitHubVersion = isCloudOrServerUrl(url);
+		const gitHubVersion = getCloudOrServerFromHost(host);
 		if (error instanceof RateLimitingError) {
 			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "rateLimiting");
 		} else if (error instanceof BlockedIpError) {
