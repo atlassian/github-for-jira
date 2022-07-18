@@ -8,7 +8,8 @@ import { SentryScopeProxy } from "models/sentry-scope-proxy";
 export type BackfillMessagePayload = {
 	installationId: number,
 	jiraHost: string,
-	startTime?: string
+	startTime?: string,
+	commitHistoryDepth?: number
 }
 
 export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload> = async (context) => {

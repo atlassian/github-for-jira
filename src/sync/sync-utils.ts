@@ -6,7 +6,8 @@ import Logger from "bunyan";
 export async function findOrStartSync(
 	subscription: Subscription,
 	logger: Logger,
-	syncType?: "full" | "partial"
+	syncType?: "full" | "partial",
+	commitHistoryDepth?: number
 ): Promise<void> {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
@@ -29,5 +30,5 @@ export async function findOrStartSync(
 	}
 
 	// Start sync
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime }, 0, logger);
+	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime, commitHistoryDepth }, 0, logger);
 }

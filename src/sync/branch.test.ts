@@ -297,5 +297,32 @@ describe("sync/branches", () => {
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 			verifyMessageSent(data);
 		});
+
+		describe("SYNC_BRANCH_COMMIT_TIME_LIMIT FF is enabled", () => {
+			beforeEach(() => {
+				const time = Date.now();
+				const cutoff = 1000 * 60 * 60 * 24;
+				mockSystemTime(time);
+				dateCutoff = new Date(time - cutoff);
+			});
+			it("should sync to Jira when branch refs have jira references", async () => {
+				const time = Date.now();
+				const commitHistoryDepthCutoff = 1000 * 60 * 60 * 96;
+				mockSystemTime(time);
+				const commitHistoryDepth = new Date(time - commitHistoryDepthCutoff);
+				const data: BackfillMessagePayload = { installationId, jiraHost, commitHistoryDepth: commitHistoryDepthCutoff };
+
+				nockBranchRequest(branchNodesFixture, { commitSince: commitHistoryDepth.toISOString() });
+				jiraNock
+					.post(
+						"/rest/devinfo/0.10/bulk",
+						makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
+					)
+					.reply(200);
+
+				await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+				verifyMessageSent(data);
+			});
+		});
 	});
 });

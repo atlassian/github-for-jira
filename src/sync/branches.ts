@@ -5,6 +5,13 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import Logger from "bunyan";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 
+const getBranchCommitHistoryDepth = async (jiraHost: string, branchCommitHistoryDepth?: number): Promise<number> => {
+	if (branchCommitHistoryDepth) {
+		return branchCommitHistoryDepth;
+	}
+	return await numberFlag(NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, NaN, jiraHost);
+};
+
 // TODO: better typings
 export const getBranchTask = async (
 	logger: Logger,
@@ -13,11 +20,12 @@ export const getBranchTask = async (
 	jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
-	perPage?: number) => {
+	perPage?: number,
+	messagePayload?: Record<string, any>) => {
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
 	perPage = perPage || 20;
-	const timeCutoffMsecs = await numberFlag(NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, NaN, jiraHost);
+	const timeCutoffMsecs = await getBranchCommitHistoryDepth(jiraHost, messagePayload?.commitHistoryDepth);
 	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, timeCutoffMsecs, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
