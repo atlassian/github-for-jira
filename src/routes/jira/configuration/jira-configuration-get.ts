@@ -9,6 +9,7 @@ import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 interface FailedConnection {
 	id: number;
@@ -88,6 +89,7 @@ export const getInstallations = async (subscriptions: Subscription[], log: Logge
 const getInstallation = async (subscription: Subscription, log: Logger, gitHubAppId?: number): Promise<AppInstallation> => {
 	const { jiraHost, gitHubInstallationId } = subscription;
 	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
+	const gitHubVersion = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	try {
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
@@ -105,8 +107,7 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"
 		);
-		statsd.increment(metricError.failedConnection);
-
+		statsd.increment(metricError.failedConnection, { gitHubVersion });
 		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.status === 404 });
 	}
 };
