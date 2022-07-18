@@ -8,6 +8,8 @@ import { Installation } from "models/installation";
 jest.mock("models/installation");
 jest.mock("models/github-server-app");
 
+const UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
+
 describe("github-server-app-middleware", () => {
 
 	let req;
@@ -28,7 +30,7 @@ describe("github-server-app-middleware", () => {
 	it("should call next() when no gitHupAppId is provided",  async() => {
 		req = {
 			log: getLogger("request"),
-			query: {
+			params: {
 				id: undefined
 			}
 		};
@@ -40,8 +42,8 @@ describe("github-server-app-middleware", () => {
 	it("should throw an error if an id is provided but no GitHub server app is found", async () => {
 		req = {
 			log: getLogger("request"),
-			query: {
-				id: 3
+			params: {
+				uuid: 3
 			}
 		};
 
@@ -53,13 +55,13 @@ describe("github-server-app-middleware", () => {
 	it("should throw an error if an id is provided and a GitHub server app is found but the installation id doesn't match",  async() => {
 		req = {
 			log: getLogger("request"),
-			query: {
-				id: 3
+			params: {
+				uuid: UUID
 			}
 		};
 
 		payload = {
-			uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
+			uuid: UUID,
 			gitHubAppName: "My GitHub Server App",
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
@@ -75,7 +77,7 @@ describe("github-server-app-middleware", () => {
 		};
 
 		mocked(Installation.findByPk).mockResolvedValue(installation);
-		mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(
+		mocked(GitHubServerApp.findForUuid).mockResolvedValue(
 			payload
 		);
 
@@ -87,13 +89,13 @@ describe("github-server-app-middleware", () => {
 	it("should call next() when GH app is found and installation id matches", async () => {
 		req = {
 			log: getLogger("request"),
-			query: {
-				id: 3
+			params: {
+				uuid: 3
 			}
 		};
 
 		payload = {
-			uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
+			uuid: UUID,
 			gitHubAppName: "My GitHub Server App",
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
@@ -110,7 +112,7 @@ describe("github-server-app-middleware", () => {
 		};
 
 		mocked(Installation.findByPk).mockResolvedValue(installation);
-		mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(
+		mocked(GitHubServerApp.findForUuid).mockResolvedValue(
 			payload
 		);
 

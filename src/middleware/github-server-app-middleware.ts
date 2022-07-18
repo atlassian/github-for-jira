@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
+import {Installation} from "models/installation";
 import { validationResult } from "express-validator";
 import { envVars } from "config/env";
 
@@ -19,8 +20,13 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			req.log.error("No GitHub app found for provided uuid.");
 			throw new Error("No GitHub app found for provided id.");
 		}
-
+		const installation = await Installation.findByPk(gitHubServerApp.installationId);
+		if (installation?.jiraHost !== jiraHost) {
+			req.log.error({uuid, jiraHost}, "Jira hosts do not match");
+			throw new Error("Jira hosts do not match.");
+		}
 		req.log.info("Found GitHub server app for installation");
+
 		res.locals.githubAppConfig = {
 			appId: gitHubServerApp.appId,
 			clientId: gitHubServerApp.gitHubClientId,
@@ -28,6 +34,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			webhookSecret: await gitHubServerApp.decrypt("webhookSecret"),
 			privateKey: await gitHubServerApp.decrypt("privateKey")
 		};
+
 	} else {
 		// is cloud app
 		res.locals.githubAppConfig = {
@@ -39,6 +46,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			// privateKey: keyLocator
 		};
 	}
+
 	next();
 };
 
