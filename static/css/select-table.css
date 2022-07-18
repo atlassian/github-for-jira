@@ -40,7 +40,7 @@
   padding: 0.5em 0;
 }
 
-.selectTable__server {
+.selectTable__itemContainer {
   display: flex;
   padding: 0.5em 1.5em;
   align-items: center;
