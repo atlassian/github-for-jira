@@ -24,6 +24,7 @@ import { sqsQueues } from "../sqs/queues";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { isCloudOrServerSubscription } from "~/src/util/is-cloud-or-server";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -147,12 +148,13 @@ export const updateJobStatus = async (
 		const startTime = data?.startTime || 0;
 		const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
 		if (startTime) {
+			const gitHubVersion = isCloudOrServerSubscription(subscription.gitHubAppId);
 			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
 			// startTime will be passed in when this sync job is queued from the discovery
-			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff);
+			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff, { gitHubVersion });
 		}
 
-		logger.info({ startTime, endTime, timeDiff }, "Sync status is complete");
+		logger.info({ startTime, endTime, timeDiff, gitHubVersion }, "Sync status is complete");
 	} else {
 		logger.info("Sync status is pending");
 		scheduleNextTask(0);
@@ -221,8 +223,9 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	if (!nextTask) {
 		await subscription.update({ syncStatus: "COMPLETE" });
-		statsd.increment(metricSyncStatus.complete);
-		logger.info("Sync complete");
+		const gitHubVersion = isCloudOrServerSubscription(subscription.gitHubAppId);
+		statsd.increment(metricSyncStatus.complete, { gitHubVersion });
+		logger.info({ gitHubVersion }, "Sync complete");
 
 		return;
 	}
