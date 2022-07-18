@@ -25,11 +25,10 @@ export class GitHubAppClient extends GitHubClient {
 	constructor(
 		logger?: Logger,
 		baseUrl?: string,
-		appId = envVars.APP_ID
+		appId = envVars.APP_ID,
+		privateKey = PrivateKey.findPrivateKey() || ""
 	) {
 		super(logger, baseUrl);
-		// TODO - change this for GHE, to get from github apps table
-		const privateKey = PrivateKey.findPrivateKey() || "";
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios = axios.create({
