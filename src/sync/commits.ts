@@ -36,6 +36,8 @@ export const getCommitTask = async (
 	perPage?: number,
 	messagePayload?: Record<string, any>): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
 
+	logger.info("STARTED COMMITS");
+
 	const timeCutoffMsecs = await getCommitHistoryDepth(jiraHost, messagePayload?.commitHistoryDepth);
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, timeCutoffMsecs, cursor, perPage);
 	const jiraPayload = await transformCommit({ commits, repository });

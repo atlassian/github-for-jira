@@ -54,7 +54,6 @@ export interface TaskPayload<E = any, P = any> {
 }
 
 export type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
-
 const taskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
@@ -64,19 +63,31 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[]): Promise<TaskType[]> => {
+// todo jk write test for this function
+export const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[]): Promise<TaskType[]> => {
+	console.log("TARGET TASKS UP FIRST");
+	console.log(targetTasks);
 	// For a single selection task
 	if (targetTasks) {
 		return targetTasks;
 	}
 	// flag defaults to all tasks
-	const filteredTasks = await stringFlag(StringFlags.TARGETTED_BACKFILL_TASKS, taskTypes.join(), jiraHost);
+	const filteredTasks = await stringFlag(StringFlags.TARGET_BACKFILL_TASKS, taskTypes.join(), jiraHost);
+	console.log("FF RESULT");
+	console.log(filteredTasks);
 	const flaggedTasks = filteredTasks.split(",") as TaskType[];
 	return intersection(taskTypes, flaggedTasks);
 };
 
 const getNextTask = async (subscription: Subscription, jiraHost: string, targetTasks?: TaskType[]): Promise<Task | undefined> => {
 	const tasks = await getTargetTasks(jiraHost, targetTasks);
+
+	console.log("I ONLY ALLOW THE FOLLOWING 333");
+	console.log("I ONLY ALLOW THE FOLLOWING 33");
+	console.log(Date.now());
+	console.log("I ONLY ALLOW THE FOLLOWING 333");
+	console.log("I ONLY ALLOW THE FOLLOWING 333");
+	console.log(tasks);
 	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
@@ -126,7 +137,7 @@ export const updateJobStatus = async (
 	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
-	const { installationId, jiraHost } = data;
+	const { installationId, jiraHost, targetTasks } = data;
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
@@ -151,7 +162,7 @@ export const updateJobStatus = async (
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
-	} else if (!(await getNextTask(subscription, jiraHost))) {
+	} else if (!(await getNextTask(subscription, jiraHost, targetTasks))) {
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
