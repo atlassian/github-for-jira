@@ -9,7 +9,7 @@ import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isGitHubCloudApp } from "~/src/util/jira-utils";
-import { getCloudOrServerFromSubscription } from "utils/get-cloud-or-server";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -45,7 +45,7 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 	const { jiraHost } = subscription;
 	const { gitHubInstallationId } = subscription;
 	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
-	const gitHubVersion = getCloudOrServerFromSubscription(gitHubAppId);
+	const gitHubVersion = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	try {
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);

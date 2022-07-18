@@ -6,7 +6,7 @@ import { envVars }  from "config/env";
 import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { v4 as uuidv4 } from "uuid";
-import { getCloudOrServerFromSubscription } from "utils/get-cloud-or-server";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const ErrorRouter = Router();
 
@@ -70,7 +70,7 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 
 	const errorStatusCode = errorCodes[err.message] || 500;
 	const message = messages[err.message];
-	const gitHubVersion = getCloudOrServerFromSubscription(res.locals.gitHubAppId);
+	const gitHubVersion = getCloudOrServerFromGitHubAppId(res.locals.gitHubAppId);
 	const tags = [`status: ${errorStatusCode}`, `gitHubVersion: ${gitHubVersion}`];
 
 	statsd.increment(metricError.githubErrorRendered, tags);

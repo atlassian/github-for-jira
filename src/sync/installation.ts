@@ -24,7 +24,7 @@ import { sqsQueues } from "../sqs/queues";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
-import { getCloudOrServerFromSubscription } from "utils/get-cloud-or-server";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -145,7 +145,7 @@ export const updateJobStatus = async (
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
 		const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
-		const gitHubVersion = getCloudOrServerFromSubscription(subscription.gitHubAppId);
+		const gitHubVersion = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 		if (startTime) {
 			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
@@ -219,7 +219,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription);
-	const gitHubVersion = getCloudOrServerFromSubscription(subscription.gitHubAppId);
+	const gitHubVersion = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
 		await subscription.update({ syncStatus: "COMPLETE" });
@@ -422,7 +422,7 @@ export const handleBackfillError = async (err,
 export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
 	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
-	const gitHubVersion = getCloudOrServerFromSubscription(subscription.gitHubAppId);
+	const gitHubVersion = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`, `gitHubVersion: ${gitHubVersion}`]);
 
 	// queueing the job again to pick up the next task
