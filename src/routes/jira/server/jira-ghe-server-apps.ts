@@ -10,7 +10,7 @@ export const JiraGheServerApps = async (
 		req.log.debug("Received Jira GHE server apps page request");
 
 		const { id: installationId } = res.locals.installation;
-		const githubServerBaseUrl = req?.query.serverUrl as string;
+		const githubServerBaseUrl = req.query.serverUrl as string;
 
 		if (!githubServerBaseUrl) {
 			throw new Error("No server URL passed!");
