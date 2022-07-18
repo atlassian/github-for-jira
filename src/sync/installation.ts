@@ -147,8 +147,9 @@ export const updateJobStatus = async (
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
 		const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
+		const gitHubVersion = isCloudOrServerSubscription(subscription.gitHubAppId);
+
 		if (startTime) {
-			const gitHubVersion = isCloudOrServerSubscription(subscription.gitHubAppId);
 			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
 			// startTime will be passed in when this sync job is queued from the discovery
 			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff, { gitHubVersion });
@@ -354,7 +355,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			scheduleNextTask
 		);
 
-		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`, `${gitHubVersion}`]);
+		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`, `gitHubVersion: ${gitHubVersion}`]);
 
 	} catch (err) {
 		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
@@ -424,7 +425,7 @@ export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Sub
 	// marking the current task as failed
 	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
 	const gitHubVersion = isCloudOrServerSubscription(subscription.gitHubAppId);
-	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`, `${gitHubVersion}`]);
+	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`, `gitHubVersion: ${gitHubVersion}`]);
 
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);

@@ -45,8 +45,8 @@ export class GitHubUserClient extends GitHubClient {
 		);
 
 		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github),
-			instrumentFailedRequest(metricHttpRequest.github)
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
 		);
 	}
 
