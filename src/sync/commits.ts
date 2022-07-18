@@ -34,11 +34,10 @@ export const getCommitTask = async (
 	repository: Repository,
 	cursor?: string | number,
 	perPage?: number,
-	messagePayload?: any): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
+	messagePayload?: Record<string, any>): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
 
 	const timeCutoffMsecs = await getCommitHistoryDepth(jiraHost, messagePayload?.commitHistoryDepth);
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, timeCutoffMsecs, cursor, perPage);
-
 	const jiraPayload = await transformCommit({ commits, repository });
 	logger.info("Syncing commits: finished");
 

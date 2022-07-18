@@ -44,7 +44,7 @@ interface TaskProcessors {
 		repository: Repository,
 		cursor?: string | number,
 		perPage?: number,
-		messagePayload?: any
+		messagePayload?: Record<string, any>
 	) => Promise<TaskPayload>;
 }
 
@@ -223,7 +223,6 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		jiraHost,
 		installationId
 	);
-
 	// TODO: should this reject instead? it's just ignoring an error
 	if (!subscription) return;
 
@@ -277,7 +276,6 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
-
 				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
 				// TODO - need a better way to manage GitHub errors globally
