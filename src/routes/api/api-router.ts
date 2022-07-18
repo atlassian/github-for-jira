@@ -98,6 +98,11 @@ ApiRouter.post(
 			return;
 		}
 
+		if (targetTasks !== undefined && targetTasks.length === 0) {
+			res.status(400).send("Invalid targetTasks values, please enter valid task types.");
+			return;
+		}
+
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>

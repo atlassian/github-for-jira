@@ -77,13 +77,6 @@ const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[]): Promi
 
 const getNextTask = async (subscription: Subscription, jiraHost: string, targetTasks?: TaskType[]): Promise<Task | undefined> => {
 	const tasks = await getTargetTasks(jiraHost, targetTasks);
-
-	console.log("TASKS THAT IM GOING TO DO");
-	console.log("TASKS THAT IM GOING TO DO");
-	console.log("TASKS THAT IM GOING TO DO");
-	console.log("TASKS THAT IM GOING TO DO");
-	console.log(tasks);
-
 	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
