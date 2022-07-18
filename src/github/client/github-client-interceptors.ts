@@ -60,6 +60,7 @@ export const instrumentRequest = (metricName, host) =>
 		if (!response) {
 			return;
 		}
+
 		const gitHubVersion = getCloudOrServerFromHost(host);
 		return sendResponseMetrics(metricName, gitHubVersion, response);
 	};
