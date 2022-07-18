@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
-import {Installation} from "models/installation";
+import { Installation } from "models/installation";
 import { validationResult } from "express-validator";
 import { envVars } from "config/env";
 
@@ -22,12 +22,12 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		}
 		const installation = await Installation.findByPk(gitHubServerApp.installationId);
 		if (installation?.jiraHost !== jiraHost) {
-			req.log.error({uuid, jiraHost}, "Jira hosts do not match");
+			req.log.error({ uuid, jiraHost }, "Jira hosts do not match");
 			throw new Error("Jira hosts do not match.");
 		}
 		req.log.info("Found GitHub server app for installation");
-
-		res.locals.githubAppConfig = {
+		res.locals.gitHubAppId = gitHubServerApp.appId;
+		res.locals.gitHubAppConfig = {
 			appId: gitHubServerApp.appId,
 			clientId: gitHubServerApp.gitHubClientId,
 			gitHubClientSecret: await gitHubServerApp.decrypt("gitHubClientSecret"),
@@ -37,11 +37,11 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 	} else {
 		// is cloud app
-		res.locals.githubAppConfig = {
+		res.locals.gitHubAppConfig = {
 			appId: envVars.APP_ID,
 			clientId: envVars.GITHUB_CLIENT_ID,
 			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-			webhookSecret: envVars.WEBHOOK_SECRET,
+			webhookSecret: envVars.WEBHOOK_SECRET
 			// once keylocator is merged
 			// privateKey: keyLocator
 		};

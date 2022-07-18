@@ -119,7 +119,7 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: Instal
 };
 
 export const GithubConfigurationGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	console.log('---- config get real');
+	console.log("---- config get real");
 	const {
 		jiraHost,
 		githubToken,

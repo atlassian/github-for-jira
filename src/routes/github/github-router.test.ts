@@ -38,7 +38,7 @@ const getGitHubServerAppModel = (): GitHubServerApp => {
 		installationId: JIRA_INSTALLATION_ID,
 		updatedAt: new Date(),
 		createdAt: new Date(),
-		decrypt: async (s) => s,
+		decrypt: async (s) => s
 	} as GitHubServerApp;
 };
 
@@ -93,7 +93,9 @@ const mockInstallationFindByPK = () => {
 
 const mockConfigurationGetProceed = ()=>{
 	jest.mocked(GithubConfigurationGet).mockClear();
-	jest.mocked(GithubConfigurationGet).mockImplementation(async (_req, _res, next) => {next();});
+	jest.mocked(GithubConfigurationGet).mockImplementation(async (_req, _res, next) => {
+		next();
+	});
 };
 
 describe("GitHub router", () => {
@@ -113,10 +115,10 @@ describe("GitHub router", () => {
 						locals: expect.objectContaining({
 							githubToken: VALID_TOKEN,
 							jiraHost: JIRA_HOST,
-							githubAppConfig: expect.objectContaining({
+							gitHubAppConfig: expect.objectContaining({
 								appId: envVars.APP_ID,
 								gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-								webhookSecret: envVars.WEBHOOK_SECRET,
+								webhookSecret: envVars.WEBHOOK_SECRET
 							})
 						})
 					}),
@@ -143,12 +145,13 @@ describe("GitHub router", () => {
 						locals: expect.objectContaining({
 							githubToken: VALID_TOKEN,
 							jiraHost: JIRA_HOST,
-							githubAppConfig: expect.objectContaining({
+							gitHubAppId: GITHUB_SERVER_APP_ID,
+							gitHubAppConfig: expect.objectContaining({
 								appId: GITHUB_SERVER_APP_ID,
 								gitHubClientSecret: "gitHubClientSecret",
 								webhookSecret: "webhookSecret",
 								privateKey: "privateKey"
-							}),
+							})
 						})
 					}),
 					expect.anything()
