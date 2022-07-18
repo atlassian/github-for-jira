@@ -17,17 +17,15 @@ export const JiraGheServerApps = async (
 		}
 
 		const servers = await GitHubServerApp.getAllForGitHubBaseUrl(githubServerBaseUrl, installationId) || [];
-		const serverApps = servers.map(server => ({ displayName: server.gitHubAppName }));
+		// `identifier` is the githubAppName for the GH server app
+		const serverApps = servers.map(server => ({ identifier: server.gitHubAppName }));
 
 		if (serverApps.length) {
 			res.render("jira-select-github-cloud-app.hbs", {
-				servers: serverApps,
-				previousPagePath: "github-list-servers-page"
+				list: serverApps
 			});
 		} else {
-			res.render("jira-select-app-creation.hbs", {
-				previousPagePath: "github-list-servers-page"
-			});
+			res.render("jira-select-app-creation.hbs");
 		}
 
 		req.log.debug("Jira GHE server apps rendered successfully.");
