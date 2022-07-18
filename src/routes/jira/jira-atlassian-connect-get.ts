@@ -99,6 +99,15 @@ const modules = {
 			url: "/jira/ghe-servers",
 			location: "none",
 			conditions: adminCondition
+		},
+		{
+			key: "github-list-server-apps-page",
+			name: {
+				value: "GitHub Enterprise Server Apps"
+			},
+			url: "/jira/ghe-servers/apps?serverUrl={ac.serverUrl}",
+			location: "none",
+			conditions: adminCondition
 		}
 	],
 	webSections: [
