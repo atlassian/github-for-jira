@@ -84,6 +84,7 @@ export interface EnvVars {
 	DATABASE_URL: string;
 	STORAGE_SECRET: string;
 	PRIVATE_KEY_PATH: string;
+	PRIVATE_KEY: string;
 	ATLASSIAN_URL: string;
 	WEBHOOK_PROXY_URL: string;
 	MICROS_AWS_REGION: string;
