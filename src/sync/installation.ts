@@ -63,7 +63,6 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-// todo jk write test for this function
 export const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[]): Promise<TaskType[]> => {
 	console.log("TARGET TASKS UP FIRST");
 	console.log(targetTasks);
@@ -79,6 +78,7 @@ export const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[])
 	return intersection(taskTypes, flaggedTasks);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getNextTask = async (subscription: Subscription, jiraHost: string, targetTasks?: TaskType[]): Promise<Task | undefined> => {
 	const tasks = await getTargetTasks(jiraHost, targetTasks);
 

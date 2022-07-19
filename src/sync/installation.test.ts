@@ -371,16 +371,16 @@ describe("sync/installation", () => {
 
 	describe("getTargetTasks", () => {
 		const jiraHost = "not-a-real-jirahost";
+		const DEFAULT_BACKFILL_FLAG = "pull,branch,commit,build,deployment";
 
 		describe("Default feature flag", () => {
 
-			const DEFAULT_FLAG = "pull,branch,commit,build,deployment";
 			beforeEach(() => {
 				when(stringFlag).calledWith(
 					StringFlags.TARGET_BACKFILL_TASKS,
 					expect.anything(),
 					expect.anything()
-				).mockResolvedValue(DEFAULT_FLAG);
+				).mockResolvedValue(DEFAULT_BACKFILL_FLAG);
 			});
 
 			it("should return all tasks if no feature flag or target tasks present", async () => {

@@ -22,7 +22,7 @@ import associatedPRhasKeys from "fixtures/api/graphql/branch-associated-pr-has-k
 import branchNoIssueKeys from "fixtures/api/graphql/branch-no-issue-keys.json";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { when } from "jest-when";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags, stringFlag, StringFlags } from "config/feature-flags";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -153,6 +153,12 @@ describe("sync/branches", () => {
 		});
 
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
+
+		when(stringFlag).calledWith(
+			StringFlags.TARGET_BACKFILL_TASKS,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue("pull,branch,commit,build,deployment");
 
 		app = await createWebhookApp();
 

@@ -12,7 +12,7 @@ import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/backfill";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 
 import buildFixture from "fixtures/api/build.json";
 import multiBuildFixture from "fixtures/api/build-multi.json";
@@ -81,6 +81,12 @@ describe("sync/builds", () => {
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
+
+		when(stringFlag).calledWith(
+			StringFlags.TARGET_BACKFILL_TASKS,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue("pull,branch,commit,build,deployment");
 
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
