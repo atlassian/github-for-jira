@@ -8,7 +8,7 @@ import { Tracer } from "config/tracer";
 import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import { getGitHubHostname, getGitHubApiUrl } from "utils/get-github-client-config";
+import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
@@ -172,6 +172,5 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
 export const GithubOAuthRouter = Router();
-//TODO: ARC-1515 confirm this is not used at all.
 GithubOAuthRouter.get("/login", GithubOAuthLoginGet);
 GithubOAuthRouter.get(callbackPath, GithubOAuthCallbackGet);
