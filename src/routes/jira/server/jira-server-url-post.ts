@@ -68,7 +68,7 @@ export const JiraServerUrlPost = async (
 		req.log.error({ err, gheServerURL }, `Something went wrong`);
 		const codeOrStatus = err.code || err.response.status;
 		const { errorCode, message } = gheServerUrlErrors[codeOrStatus] || gheServerUrlErrors.default;
-		statsd.increment(metricError.gheServerUrlError, { errorCode, status: err.response.status	 });
 		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
+		statsd.increment(metricError.gheServerUrlError, { errorCode, status: err.response.status	 });
 	}
 };
