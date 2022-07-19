@@ -60,8 +60,8 @@ export class GitHubInstallationClient extends GitHubClient {
 			handleFailedRequest(this.logger)
 		);
 		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github),
-			instrumentFailedRequest(metricHttpRequest.github)
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
 		);
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
@@ -281,8 +281,8 @@ export class GitHubInstallationClient extends GitHubClient {
 	/**
 	 * Use this config in a request to authenticate with the app token.
 	 */
-	private appAuthenticationHeaders(): Partial<AxiosRequestConfig> {
-		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
+	private async appAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
+		const appToken = await this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,
@@ -313,7 +313,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	// NEW APP CLient
 	private async createInstallationToken(githubInstallationId: number): Promise<AuthToken> {
 		const response = await this.axios.post<Octokit.AppsCreateInstallationTokenResponse>(`/app/installations/{githubInstallationId}/access_tokens`, {}, {
-			...this.appAuthenticationHeaders(),
+			...await this.appAuthenticationHeaders(),
 			urlParams: {
 				githubInstallationId
 			}

@@ -9,8 +9,9 @@ import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isGitHubCloudApp } from "~/src/util/jira-utils";
-import { sendAnalytics } from "../../../util/analytics-client";
-import { AnalyticsEventTypesEnum, AnalyticsScreenEventsEnum } from "../../../interfaces/common";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypesEnum, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -46,6 +47,7 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 	const { jiraHost } = subscription;
 	const { gitHubInstallationId } = subscription;
 	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
+	const gitHubVersion = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	try {
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
@@ -63,8 +65,7 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"
 		);
-		statsd.increment(metricError.failedConnection);
-
+		statsd.increment(metricError.failedConnection, { gitHubVersion });
 		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.status === 404 });
 	}
 };
