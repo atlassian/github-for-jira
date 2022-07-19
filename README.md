@@ -1,5 +1,5 @@
 # GitHub For Jira
-
+Minor change
 ## About
 
 Connect your GitHub code with your project management in Jira. A separate Jira subscription is required. With two of
