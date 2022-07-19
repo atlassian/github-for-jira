@@ -9,6 +9,7 @@ import { JiraServerUrlRouter } from "routes/jira/server/jira-server-url-router";
 import { JiraAppCreationRouter } from "./server/jira-app-creation-router";
 import { JiraGheServerRouter } from "routes/jira/server/jira-ghe-server-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
+import { JiraEditAppGet } from "routes/jira/server/jira-edit-app-get";
 
 export const JiraRouter = Router();
 
@@ -23,4 +24,6 @@ JiraRouter.use("/events", JiraEventsRouter);
 JiraRouter.use("/select-version", JiraSelectVersionRouter);
 JiraRouter.use("/server-url", JiraServerUrlRouter);
 JiraRouter.use("/app-creation", JiraAppCreationRouter);
+
+JiraRouter.get("/edit-app/:id", csrfMiddleware, JiraJwtTokenMiddleware, JiraEditAppGet);
 JiraRouter.use("/ghe-servers", csrfMiddleware, JiraJwtTokenMiddleware, JiraGheServerRouter);
