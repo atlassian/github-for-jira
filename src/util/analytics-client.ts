@@ -35,6 +35,8 @@ function sendAnalytics(eventType: string, attributes?: Record<string, unknown>):
 
 	attributes!.appKey = appKey;
 
+	logger.debug({ eventType }, "Sending analytics");
+
 	switch (eventType) {
 		case "screen":
 			wrapPromise(analyticsNodeClient.sendScreenEvent({
