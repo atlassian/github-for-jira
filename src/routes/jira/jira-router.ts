@@ -16,6 +16,7 @@ export const JiraRouter = Router();
 // TODO: Need to cleanup the URLs and Routers
 
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
+JiraRouter.get("/edit-app/:id", csrfMiddleware, JiraJwtTokenMiddleware, JiraEditAppGet);
 
 JiraRouter.use("/configuration", JiraConfigurationRouter);
 // TODO - add csrf middleware
@@ -25,5 +26,4 @@ JiraRouter.use("/select-version", JiraSelectVersionRouter);
 JiraRouter.use("/server-url", JiraServerUrlRouter);
 JiraRouter.use("/app-creation", JiraAppCreationRouter);
 
-JiraRouter.get("/edit-app/:id", csrfMiddleware, JiraJwtTokenMiddleware, JiraEditAppGet);
 JiraRouter.use("/ghe-servers", csrfMiddleware, JiraJwtTokenMiddleware, JiraGheServerRouter);
