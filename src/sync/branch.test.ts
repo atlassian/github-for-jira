@@ -158,7 +158,7 @@ describe("sync/branches", () => {
 			StringFlags.TARGET_BACKFILL_TASKS,
 			expect.anything(),
 			expect.anything()
-		).mockResolvedValue("pull,branch,commit,build,deployment");
+		).mockResolvedValue("*");
 
 		app = await createWebhookApp();
 

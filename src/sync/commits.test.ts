@@ -101,7 +101,7 @@ describe("sync/commits", () => {
 			StringFlags.TARGET_BACKFILL_TASKS,
 			expect.anything(),
 			expect.anything()
-		).mockResolvedValue("pull,branch,commit,build,deployment");
+		).mockResolvedValue("*");
 
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());

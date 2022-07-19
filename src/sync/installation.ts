@@ -64,16 +64,17 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	);
 
 export const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[]): Promise<TaskType[]> => {
-	console.log("TARGET TASKS UP FIRST");
-	console.log(targetTasks);
 	// For a single selection task
 	if (targetTasks) {
 		return targetTasks;
 	}
+
 	// flag defaults to all tasks
-	const filteredTasks = await stringFlag(StringFlags.TARGET_BACKFILL_TASKS, taskTypes.join(), jiraHost);
-	console.log("FF RESULT");
-	console.log(filteredTasks);
+	const filteredTasks = await stringFlag(StringFlags.TARGET_BACKFILL_TASKS, "*", jiraHost);
+	if (filteredTasks === "*") {
+		return taskTypes;
+	}
+
 	const flaggedTasks = filteredTasks.split(",") as TaskType[];
 	return intersection(taskTypes, flaggedTasks);
 };

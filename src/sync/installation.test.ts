@@ -371,7 +371,7 @@ describe("sync/installation", () => {
 
 	describe("getTargetTasks", () => {
 		const jiraHost = "not-a-real-jirahost";
-		const DEFAULT_BACKFILL_FLAG = "pull,branch,commit,build,deployment";
+		const DEFAULT_BACKFILL_FLAG = "*";
 
 		describe("Default feature flag", () => {
 
