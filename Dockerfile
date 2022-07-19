@@ -12,8 +12,8 @@ COPY . /app
 WORKDIR /app
 
 #ARG YARNRC=.yarnrc
-#ADD $YARNRC /root/
-#RUN rm -f /app/.yarnrc.yml
+ADD .yarnrc.yml /root/
+RUN rm -f /app/.yarnrc.yml
 
 # Installing packages
 RUN yarn install --frozen-lockfile --ignore-optional
