@@ -12,6 +12,8 @@ import { csrfMiddleware } from "middleware/csrf-middleware";
 
 export const JiraRouter = Router();
 
+// TODO: Need to cleanup the URLs and Routers
+
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 
 JiraRouter.use("/configuration", JiraConfigurationRouter);
