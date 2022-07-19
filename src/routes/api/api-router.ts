@@ -83,22 +83,22 @@ ApiRouter.post(
 		// only resync installations whose "updatedAt" date is older than x seconds
 		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
 		// How far back to fetch commit history(main and branch) in milliseconds.
-		const commitHistoryDepth = Number(req.body.commitHistoryDepth) || undefined;
+		const commitTimeLimit = Number(req.body.commitTimeLimit) || undefined;
 
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
 			res.status(400).send("please provide at least one of the filter parameters!");
 			return;
 		}
 
-		if (commitHistoryDepth !== undefined && (commitHistoryDepth <= 0 || isNaN(commitHistoryDepth))){
-			res.status(400).send("Invalid commitHistoryDepth value, please enter a natural number.");
+		if (commitTimeLimit !== undefined && (commitTimeLimit <= 0 || isNaN(commitTimeLimit))){
+			res.status(400).send("Invalid commitTimeLimit value, please enter a natural number.");
 			return;
 		}
 
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
-			findOrStartSync(subscription, req.log, syncType, commitHistoryDepth)
+			findOrStartSync(subscription, req.log, syncType, commitTimeLimit)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));

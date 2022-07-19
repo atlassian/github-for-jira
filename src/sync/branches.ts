@@ -5,9 +5,9 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import Logger from "bunyan";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 
-const getBranchCommitHistoryDepth = async (jiraHost: string, branchCommitHistoryDepth?: number): Promise<number> => {
-	if (branchCommitHistoryDepth) {
-		return branchCommitHistoryDepth;
+const getBranchCommitTimeLimit = async (jiraHost: string, branchCommitTimeLimit?: number): Promise<number> => {
+	if (branchCommitTimeLimit) {
+		return branchCommitTimeLimit;
 	}
 	return await numberFlag(NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, NaN, jiraHost);
 };
@@ -25,7 +25,7 @@ export const getBranchTask = async (
 	// TODO: fix typings for graphql
 	logger.info("Syncing branches: started");
 	perPage = perPage || 20;
-	const timeCutoffMsecs = await getBranchCommitHistoryDepth(jiraHost, messagePayload?.commitHistoryDepth);
+	const timeCutoffMsecs = await getBranchCommitTimeLimit(jiraHost, messagePayload?.commitTimeLimit);
 	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, timeCutoffMsecs, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);

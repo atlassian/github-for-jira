@@ -278,12 +278,12 @@ describe("sync/commits", () => {
 			it("should use commit history depth parameter before feature flag time", async () => {
 
 				const time = Date.now();
-				const commitHistoryDepthCutoff = 1000 * 60 * 60 * 72;
+				const commitTimeLimitCutoff = 1000 * 60 * 60 * 72;
 				mockSystemTime(time);
-				const commitHistoryDepth = new Date(time - commitHistoryDepthCutoff);
-				const data: BackfillMessagePayload = { installationId, jiraHost, commitHistoryDepth: commitHistoryDepthCutoff };
+				const commitTimeLimit = new Date(time - commitTimeLimitCutoff);
+				const data: BackfillMessagePayload = { installationId, jiraHost, commitTimeLimit: commitTimeLimitCutoff };
 
-				createGitHubNock(commitNodesFixture, { commitSince: commitHistoryDepth.toISOString() });
+				createGitHubNock(commitNodesFixture, { commitSince: commitTimeLimit.toISOString() });
 				const commits = [
 					{
 						"author": {

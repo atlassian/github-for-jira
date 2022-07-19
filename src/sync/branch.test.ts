@@ -302,12 +302,12 @@ describe("sync/branches", () => {
 
 			it("should use commit history depth parameter before feature flag time", async () => {
 				const time = Date.now();
-				const commitHistoryDepthCutoff = 1000 * 60 * 60 * 96;
+				const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
 				mockSystemTime(time);
-				const commitHistoryDepth = new Date(time - commitHistoryDepthCutoff);
-				const data: BackfillMessagePayload = { installationId, jiraHost, commitHistoryDepth: commitHistoryDepthCutoff };
+				const commitTimeLimit = new Date(time - commitTimeLimitCutoff);
+				const data: BackfillMessagePayload = { installationId, jiraHost, commitTimeLimit: commitTimeLimitCutoff };
 
-				nockBranchRequest(branchNodesFixture, { commitSince: commitHistoryDepth.toISOString() });
+				nockBranchRequest(branchNodesFixture, { commitSince: commitTimeLimit.toISOString() });
 				jiraNock
 					.post(
 						"/rest/devinfo/0.10/bulk",
