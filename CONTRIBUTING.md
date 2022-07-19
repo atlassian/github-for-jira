@@ -67,6 +67,8 @@ Your new GitHub app will need the following repository permissions & events:
 
 ### Setting up your environment file
 
+The environment files work in a fairly standardized way of having a "global" `.env` that holds information needed across all environments but is not committed. Then we have `NODE_ENV` specific environment files like `.env.development`, `.env.test`, etc, as they are non-sensitive default variables needed for those environments to work.  Since they are committed, please be careful not to add sensitive information to these files - if you need to add sensitive information or you want to overwrite the environment defaults, you can create a `.local` version of that file and that will never be committed. 
+
 Once you've set up your GitHub app and cloned this repo, copy the file `.env.development.local-example` to a new file called `.env.development.local`.  Fill in the blank fields in the file:
 
 + `APP_ID` and `GITHUB_CLIENT_ID`: Copy these values over from your new GitHub app page.
