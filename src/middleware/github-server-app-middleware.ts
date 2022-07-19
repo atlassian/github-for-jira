@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
-import { validationResult } from "express-validator";
 import { envVars } from "config/env";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -11,7 +10,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 	req.log = req.log.child({ uuid, jiraHost });
 
-	if (uuid && validationResult(req).isEmpty()) {
+	if (uuid) {
 		// uuid param exist, must be github server app
 		req.log.debug(`Retrieving GitHub app with uuid ${uuid}`);
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);

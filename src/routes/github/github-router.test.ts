@@ -93,8 +93,8 @@ const mockInstallationFindByPK = () => {
 
 const mockConfigurationGetProceed = ()=>{
 	jest.mocked(GithubConfigurationGet).mockClear();
-	jest.mocked(GithubConfigurationGet).mockImplementation(async (_req, _res, next) => {
-		next();
+	jest.mocked(GithubConfigurationGet).mockImplementation(async (_req, res) => {
+		res.end("ok");
 	});
 };
 
@@ -108,7 +108,9 @@ describe("GitHub router", () => {
 				mockConfigurationGetProceed();
 			});
 			it("should skip uuid when absent", async () => {
-				await supertest(app).get(`/github/configuration`);
+				await supertest(app)
+					.get(`/github/configuration`)
+					.expect(200);
 				expect(GithubConfigurationGet).toBeCalledWith(
 					expect.anything(), //not matching req
 					expect.objectContaining({ //matching res locals
@@ -138,7 +140,9 @@ describe("GitHub router", () => {
 				mockConfigurationGetProceed();
 			});
 			it("should extract uuid when present", async () => {
-				await supertest(app).get(`/github/${GITHUB_SERVER_APP_UUID}/configuration`);
+				await supertest(app)
+					.get(`/github/${GITHUB_SERVER_APP_UUID}/configuration`)
+					.expect(200);
 				expect(GithubConfigurationGet).toBeCalledWith(
 					expect.anything(), //not matching req
 					expect.objectContaining({ //matching res locals
@@ -157,6 +161,12 @@ describe("GitHub router", () => {
 					}),
 					expect.anything()
 				);
+			});
+			it("should not match route, return empty if uuid present but invalid", async ()=>{
+				await supertest(app)
+					.get(`/github/${GITHUB_SERVER_APP_UUID + "random-gibberish"}/configuration`)
+					.expect(404);
+				expect(GithubConfigurationGet).not.toHaveBeenCalled();
 			});
 		});
 	});
