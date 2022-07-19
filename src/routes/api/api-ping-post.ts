@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import axios from "axios";
+import { NO_PROXY_CONFIG } from "config/proxy";
 
 /**
  * Makes a call to the URL passed into the "url" field of the body JSON.
  */
 export const ApiPingPost = async (req: Request, res: Response): Promise<void> => {
 
-	const { data } = req.body;
+	const data = req.body;
 
 	if (!data || !data.url) {
 		res.status(400)
@@ -17,7 +18,7 @@ export const ApiPingPost = async (req: Request, res: Response): Promise<void> =>
 	}
 
 	try {
-		const pingResponse = await axios.get(data.url);
+		const pingResponse = await axios.get(data.url, NO_PROXY_CONFIG);
 		res.json({
 			url: data.url,
 			method: "GET",

@@ -51,6 +51,8 @@ export const envVars: EnvVars = {
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
 	PROXY: getProxyFromEnvironment(),
+	OUTBOUND_PROXY_HOST: process.env.EXTERNAL_ONLY_PROXY_HOST,
+	OUTBOUND_PROXY_PORT: process.env.EXTERNAL_ONLY_PROXY_PORT,
 	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira"
 } as EnvVars;
 
@@ -102,6 +104,8 @@ export interface EnvVars {
 	DEPLOYMENT_DATE: string;
 	BULL_QUEUE_PREFIX?: string;
 	GLOBAL_HASH_SECRET: string;
+	OUTBOUND_PROXY_HOST: string;
+	OUTBOUND_PROXY_PORT: string;
 
 	// Test Vars
 	ATLASSIAN_SECRET?: string;
