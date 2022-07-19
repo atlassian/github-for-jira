@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { GitHubServerApp } from "models/github-server-app";
 import { isValidUrl } from "utils/is-valid-url";
+import { statsd } from "config/statsd";
+import { metricError } from "config/metric-names";
 
 interface MessageAndCode {
 	errorCode: string;
@@ -66,6 +68,7 @@ export const JiraServerUrlPost = async (
 		req.log.error({ err, gheServerURL }, `Something went wrong`);
 		const codeOrStatus = err.code || err.response.status;
 		const { errorCode, message } = gheServerUrlErrors[codeOrStatus] || gheServerUrlErrors.default;
+		statsd.increment(metricError.gheServerUrlError, { errorCode, status: err.response.status	 });
 		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
 	}
 };

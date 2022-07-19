@@ -4,7 +4,6 @@ import { NextFunction, Request, Response } from "express";
 import { isNodeDev, isNodeTest } from "utils/is-node-env";
 import { metricHttpRequest } from "./metric-names";
 import { envVars } from "./env";
-import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const globalTags = {
 	environment: isNodeTest() ? "test" : process.env.MICROS_ENV || "",
@@ -68,8 +67,7 @@ export const elapsedTimeMetrics = (
 		const elapsedTime = elapsedTimeInMs();
 		const statusCode = `${res.statusCode}`;
 		const path = (req.baseUrl || "") + (req.route?.path || "/*");
-		const gitHubVersion = getCloudOrServerFromGitHubAppId(res.locals.gitHubAppId);
-		const tags = { path, method, statusCode, gitHubVersion };
+		const tags = { path, method, statusCode };
 		(req.log || logger).debug(`${method} request executed in ${elapsedTime} with status ${statusCode} path ${path}`);
 
 		//Count response time metric
