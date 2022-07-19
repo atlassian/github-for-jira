@@ -11,14 +11,14 @@ RUN apk add --update --upgrade openssl
 COPY . /app
 WORKDIR /app
 
-ARG YARNRC=.yarnrc
-ADD $YARNRC /root/
-RUN rm -f /app/.yarnrc.yml
+#ARG YARNRC=.yarnrc
+#ADD $YARNRC /root/
+#RUN rm -f /app/.yarnrc.yml
 
 # Installing packages
 RUN yarn install --frozen-lockfile --ignore-optional
 
-FROM node:14.19-alpine3.15
-WORKDIR /app
-COPY --from=builder /app .
+#FROM node:14.19-alpine3.15
+#WORKDIR /app
+#COPY --from=builder /app .
 CMD ["yarn", "start"]
