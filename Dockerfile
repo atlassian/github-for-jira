@@ -14,4 +14,7 @@ WORKDIR /app
 # Installing packages
 RUN yarn install --frozen-lockfile --ignore-optional
 
+FROM node:14.19-alpine3.15
+WORKDIR /app
+COPY --from=builder /app .
 CMD ["yarn", "start"]
