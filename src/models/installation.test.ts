@@ -5,13 +5,9 @@ import { getHashedKey } from "models/sequelize";
 
 describe("Installation", () => {
 	describe("Decryption with cryptor", () => {
-		it("can decrypted the new encryptedSharedSecret column directly", async () => {
+		it("can decrypted the new safeSharedSecret column successfully", async () => {
 			const clientKey = UUID();
-			await inserRawInstallation({
-				clientKey,
-				secretsColumn: "non-sense",
-				encryptedSharedSecretColumn: "encrypted:some-plain-text"
-			});
+			await insertNewInstallation({ clientKey });
 			const installation = await Installation.findOne({ where: { clientKey } });
 			expect(installation.encryptedSharedSecret).toBe("encrypted:some-plain-text");
 			expect(await installation.decrypt("encryptedSharedSecret")).toBe("some-plain-text");
@@ -74,13 +70,12 @@ describe("Installation", () => {
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:secret-A");
 		});
 	});
-
-	const inserRawInstallation = async ({ clientKey, secretsColumn, encryptedSharedSecretColumn }) => {
+	const insertNewInstallation = async ({ clientKey }) => {
 		return await Installation.sequelize?.query(`
 					insert into "Installations"
 					("secrets", "encryptedSharedSecret", "clientKey", "createdAt", "updatedAt")
 					values
-					('${secretsColumn}', '${encryptedSharedSecretColumn}', '${clientKey}', now(), now())
+					('xxxxx', 'encrypted:some-plain-text', '${clientKey}', now(), now())
 				`, {
 			type: Sequelize.QueryTypes.INSERT
 		});
@@ -94,5 +89,4 @@ describe("Installation", () => {
 		if (!found) throw new Error("Cannot find installation by clientKey " + clientKey);
 		return found.encryptedSharedSecret;
 	};
-
 });

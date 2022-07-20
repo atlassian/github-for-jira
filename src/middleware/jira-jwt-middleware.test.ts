@@ -40,8 +40,7 @@ describe("#verifyJiraMiddleware", () => {
 			enabled: true,
 			secrets: "def234",
 			sharedSecret: testSharedSecret,
-			subscriptions: jest.fn().mockResolvedValue([]),
-			decryptAndGetSecrets: jest.fn()
+			subscriptions: jest.fn().mockResolvedValue([])
 		};
 	});
 

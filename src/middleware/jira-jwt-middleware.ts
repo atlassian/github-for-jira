@@ -9,6 +9,7 @@ export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	next: NextFunction
 ): Promise<void> => {
 	const { jiraHost } = res.locals;
+
 	if (!jiraHost) {
 		sendError(res, 401, "Unauthorised");
 		return;
