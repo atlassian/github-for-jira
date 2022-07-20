@@ -264,16 +264,7 @@ describe("Github Configuration", () => {
 		});
 	});
 
-	describe.each([true, false])("#POST - GitHub Client is %s", (useNewGithubClient) => {
-
-		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(useNewGithubClient);
-		});
-
+	describe("#POST - GitHub Client is %s", () => {
 		it("should return a 401 if no GitHub token present in session", async () => {
 			await supertest(frontendApp)
 				.post("/github/configuration")
