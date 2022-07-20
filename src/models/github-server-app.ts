@@ -71,6 +71,26 @@ export class GitHubServerApp extends EncryptedModel {
 	}
 
 	/**
+	 * Get all GitHubServerApps with installationId
+	 *
+	 * @param {{installationId: number}} installationId
+	 * @returns {GitHubServerApp[]}
+	 */
+	static async findForInstallationId(
+		installationId: number
+	): Promise<GitHubServerApp[] | null> {
+		if (!installationId) {
+			return null;
+		}
+
+		return this.findAll({
+			where: {
+				installationId: installationId
+			}
+		});
+	}
+
+	/**
 	 * Get all GitHubServerApps for gitHubBaseUrl with installationId
 	 *
 	 * @param gitHubBaseUrl

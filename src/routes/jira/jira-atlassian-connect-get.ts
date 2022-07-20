@@ -90,6 +90,24 @@ const modules = {
 			url: "/jira/app-creation",
 			location: "none",
 			conditions: adminCondition
+		},
+		{
+			key: "github-edit-app-page",
+			name: {
+				value: "GitHub Edit App"
+			},
+			url: "/jira/edit-app/{ac.ghsaId}",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-list-servers-page",
+			name: {
+				value: "GitHub Enterprise Servers"
+			},
+			url: "/jira/ghe-servers",
+			location: "none",
+			conditions: adminCondition
 		}
 	],
 	webSections: [
