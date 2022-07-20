@@ -5,25 +5,25 @@ import { getHashedKey } from "models/sequelize";
 
 describe("Installation", () => {
 	describe("Decryption with cryptor", () => {
-		it("can directly decrypted the new safeSharedSecret column successfully", async () => {
+		it("can decrypted the new encryptedSharedSecret column directly", async () => {
 			const clientKey = UUID();
 			await inserRawInstallation({
 				clientKey,
 				secretsColumn: "non-sense",
 				encryptedSharedSecretColumn: "encrypted:some-plain-text"
 			});
-			const installation = await Installation.findOne({ where: { clientKey } });
+			const installation = await Installation.findOne({where: {clientKey}});
 			expect(installation.encryptedSharedSecret).toBe("encrypted:some-plain-text");
 			expect(await installation.decrypt("encryptedSharedSecret")).toBe("some-plain-text");
 		});
-		it("can decrypt the secret from new encryptedSharedSecret column via a FF controlled method", async ()=>{
+		it("can decrypt the new encryptedSharedSecret column via method", async () => {
 			const clientKey = UUID();
 			await inserRawInstallation({
 				clientKey,
 				secretsColumn: "non-sense",
 				encryptedSharedSecretColumn: "encrypted:some-plain-text"
 			});
-			const installation = await Installation.findOne({ where: { clientKey } });
+			const installation = await Installation.findOne({where: {clientKey}});
 			expect(installation.encryptedSharedSecret).toBe("encrypted:some-plain-text");
 			expect(await installation.decryptAndGetSecrets()).toBe("some-plain-text");
 		});
@@ -36,7 +36,7 @@ describe("Installation", () => {
 				clientKey,
 				sharedSecret: "some-plain-shared-secret-install"
 			});
-			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
+			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({clientKey});
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret-install");
 		});
 		it("should auto set and encrypted the new 'encryptedSharedSecret' when update", async () => {
@@ -46,11 +46,11 @@ describe("Installation", () => {
 				clientKey,
 				sharedSecret: "old-shared-secret"
 			});
-			const installation = await Installation.findOne({ where: { clientKey: getHashedKey(clientKey) } });
+			const installation = await Installation.findOne({where: {clientKey: getHashedKey(clientKey)}});
 			await installation.update({
 				sharedSecret: "new-shared-secret"
 			});
-			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
+			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({clientKey});
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:new-shared-secret");
 		});
 		it("should auto set and encrypted the new 'encryptedSharedSecret' when create", async () => {
@@ -60,7 +60,7 @@ describe("Installation", () => {
 				clientKey: getHashedKey(clientKey),
 				sharedSecret: "some-plain-shared-secret-create"
 			});
-			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
+			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({clientKey});
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret-create");
 		});
 		it("should auto set and encrypted the new 'encryptedSharedSecret' when build", async () => {
@@ -70,7 +70,7 @@ describe("Installation", () => {
 				clientKey: getHashedKey(clientKey),
 				sharedSecret: "some-plain-shared-secret-build"
 			}).save();
-			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
+			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({clientKey});
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret-build");
 		});
 		it("should use the sharedSecret when both set", async () => {
@@ -81,11 +81,12 @@ describe("Installation", () => {
 				sharedSecret: "secret-A",
 				encryptedSharedSecret: "secret-B"
 			});
-			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
+			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({clientKey});
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:secret-A");
 		});
 	});
-	const inserRawInstallation = async ({ clientKey, secretsColumn, encryptedSharedSecretColumn}) => {
+
+	const inserRawInstallation = async ({clientKey, secretsColumn, encryptedSharedSecretColumn}) => {
 		return await Installation.sequelize?.query(`
 					insert into "Installations"
 					("secrets", "encryptedSharedSecret", "clientKey", "createdAt", "updatedAt")
@@ -96,12 +97,13 @@ describe("Installation", () => {
 		});
 	};
 
-	const findEncryptedSharedSecretBy = async ({ clientKey }) => {
+	const findEncryptedSharedSecretBy = async ({clientKey}) => {
 		const hashedClientKey = getHashedKey(clientKey);
 		const found = await Installation.sequelize?.query(`
 			select "encryptedSharedSecret" from "Installations" where "clientKey" = '${hashedClientKey}'
-		`, { plain: true });
+		`, {plain: true});
 		if (!found) throw new Error("Cannot find installation by clientKey " + clientKey);
 		return found.encryptedSharedSecret;
 	};
+
 });
