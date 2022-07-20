@@ -9,21 +9,9 @@ if [ -f "$OLDFILE" ] && [ !  -f "$NEWFILE" ]; then
   echo "Detected old .env file, moving to .env.development.local"
   mv "$OLDFILE" "$NEWFILE"
   echo "Moving global values back to .env file"
-  if [ "$(uname)" == "Darwin" ]; then
-    # Mac doesn't support -P, has to be -E
-    cat "$NEWFILE" | grep -oE "${REGEX}" > "$OLDFILE"
-  else
-    # Else, just linux for now
-    cat "$NEWFILE" | grep -oP "${REGEX}" > "$OLDFILE"
-  fi
+  cat "$NEWFILE" | grep -oE "${REGEX}" > "$OLDFILE"
   echo "Removing moved from .env.development.local file"
-  if [ "$(uname)" == "Darwin" ]; then
-    # use -i '' so that it doesn't create `.env.development.local-E` file
-    # https://stackoverflow.com/a/40104534
-    sed -i '' -E "s/${REGEX}//" "$NEWFILE"
-  else
-    sed -i -E "s/${REGEX}//" "$NEWFILE"
-  fi
+  sed -i '' -E "s/${REGEX}//" "$NEWFILE"
 fi
 
 . "$(dirname "$0")/create-env.sh"
