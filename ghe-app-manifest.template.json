@@ -1,0 +1,34 @@
+{
+  "name": "ghe-app-for-jira",
+  "url": "<<GHE_HOST>>/apps/ghe-app-for-jira",
+  "redirect_url": "<<APP_HOST>>/jira/manifest/complete/<<UUID>>",
+  "hook_attributes": {
+    "url": "<<APP_HOST>>/github/events/<<UUID>>"
+  },
+  "setup_url": "<<APP_HOST>>/github/setup/<<UUID>>",
+  "public": true,
+  "default_permissions": {
+    "actions": "read",
+    "security_events": "read",
+    "contents": "read",
+    "deployments": "read",
+    "issues": "write",
+    "metadata": "read",
+    "pull_requests":  "write",
+    "members": "read"
+  },
+  "default_events": [
+    "code_scanning_alert",
+    "commit_comment",
+    "create",
+    "delete",
+    "deployment_status",
+    "issue_comment",
+    "issues",
+    "pull_request",
+    "pull_request_review",
+    "push",
+    "repository",
+    "workflow_run"
+  ]
+}
