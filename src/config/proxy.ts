@@ -1,30 +1,27 @@
 import { envVars }  from "./env";
 import { AxiosRequestConfig } from "axios";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
-// if (envVars.PROXY) {
-// 	logger.info(`configuring proxy: ${envVars.PROXY} for outbound calls`);
-// 	process.env.GLOBAL_AGENT_HTTP_PROXY = envVars.PROXY;
-// 	bootstrap();
-// } else {
-// 	logger.info("configuring no proxy for outbound calls");
-// }
+const outboundProxyHttpsAgent = envVars.PROXY ? new HttpsProxyAgent(envVars.PROXY) : undefined;
 
 /**
  * Use this Axios config to make HTTP(S) requests via the configured outbound proxy.
  */
 export const OUTBOUND_PROXY_CONFIG: Partial<AxiosRequestConfig> = {
-	proxy: {
-		protocol: "http",
-		host: envVars.OUTBOUND_PROXY_HOST,
-		port: Number(envVars.OUTBOUND_PROXY_PORT)
-	}
+	// Even though Axios provides the `proxy` option to configure a proxy, this doesn't work and will
+	// always cause an HTTP 501 (see https://github.com/axios/axios/issues/3459). The workaround is to
+	// create an HttpsProxyAgent and set the `proxy` option to false.
+	httpsAgent: outboundProxyHttpsAgent,
+	proxy: false
 };
 
 /**
  * Use this Axios config to NOT use a proxy for HTTP(S) calls.
  */
 export const NO_PROXY_CONFIG: Partial<AxiosRequestConfig> = {
-	proxy: undefined
+	// Not strictly necessary to set the agent to undefined, just to make it visible.
+	httpsAgent: undefined,
+	proxy: false
 };
 
 

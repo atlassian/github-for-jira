@@ -16,8 +16,8 @@ export class GitHubUserClient extends GitHubClient {
 	constructor(
 		userToken: string,
 		logger?: Logger,
-		baseUrl?: string,
-		axiosConfig?: Partial<AxiosRequestConfig>) {
+		axiosConfig?: Partial<AxiosRequestConfig>,
+		baseUrl?: string) {
 		super(logger, baseUrl, axiosConfig);
 		this.userToken = userToken;
 

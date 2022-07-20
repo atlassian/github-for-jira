@@ -72,10 +72,10 @@ export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
  */
 export async function createAppClient(logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-	const axiosConfig = await getProxyConfig(gitHubClientConfig.baseUrl, jiraHost);
+	const axiosConfig = await getProxyConfig(gitHubClientConfig.baseUrl);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey, axiosConfig)
-		: new GitHubAppClient(logger, axiosConfig);
+		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl, axiosConfig, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey)
+		: new GitHubAppClient(logger, undefined, axiosConfig);
 }
 
 /**
@@ -84,9 +84,9 @@ export async function createAppClient(logger: Logger, jiraHost: string, gitHubAp
  */
 export async function createInstallationClient(gitHubInstallationId: number, jiraHost: string, logger: Logger): Promise<GitHubInstallationClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromGitHubInstallationId(gitHubInstallationId);
-	const axiosConfig = await getProxyConfig(gitHubClientConfig.baseUrl, jiraHost);
+	const axiosConfig = await getProxyConfig(gitHubClientConfig.baseUrl);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-		? new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, gitHubClientConfig.baseUrl, axiosConfig)
+		? new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, axiosConfig, gitHubClientConfig.baseUrl)
 		: new GitHubInstallationClient(getInstallationId(gitHubInstallationId), logger, axiosConfig);
 }
 
@@ -95,19 +95,15 @@ export async function createInstallationClient(gitHubInstallationId: number, jir
  */
 export async function createUserClient(githubToken: string, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubUserClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-	const axiosConfig = await getProxyConfig(gitHubClientConfig.baseUrl, jiraHost);
+	const axiosConfig = await getProxyConfig(gitHubClientConfig.baseUrl);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-		? new GitHubUserClient(githubToken, logger, gitHubClientConfig.baseUrl, axiosConfig)
+		? new GitHubUserClient(githubToken, logger, axiosConfig, gitHubClientConfig.baseUrl)
 		: new GitHubUserClient(githubToken, logger, axiosConfig);
 }
 
-const getProxyConfig = async (baseUrl: string, jiraHost: string): Promise<Partial<AxiosRequestConfig>> => {
-	if (await booleanFlag(BooleanFlags.CONDITIONAL_PROXY, true, jiraHost)) {
-		if (baseUrl.includes("github.internal.atlassian.com")) {
-			return NO_PROXY_CONFIG;
-		}
-		return OUTBOUND_PROXY_CONFIG;
-	} else {
-		return OUTBOUND_PROXY_CONFIG;
+const getProxyConfig = async (baseUrl: string): Promise<Partial<AxiosRequestConfig>> => {
+	if (baseUrl.includes("github.internal.atlassian.com")) {
+		return NO_PROXY_CONFIG;
 	}
-}
+	return OUTBOUND_PROXY_CONFIG;
+};

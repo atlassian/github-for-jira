@@ -7,6 +7,7 @@ import nock from "nock";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { NO_PROXY_CONFIG } from "config/proxy";
 
 jest.mock("config/feature-flags");
 
@@ -85,6 +86,7 @@ describe("GitHub Client", () => {
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
 			getLogger("test"),
+			NO_PROXY_CONFIG,
 			"https://github.mydomain.com"
 		);
 

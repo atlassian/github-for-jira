@@ -40,8 +40,8 @@ export class GitHubInstallationClient extends GitHubClient {
 	constructor(
 		githubInstallationId: InstallationId,
 		logger?: Logger,
-		baseUrl?: string,
 		axiosConfig?: Partial<AxiosRequestConfig>,
+		baseUrl?: string,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		super(logger, baseUrl, axiosConfig);

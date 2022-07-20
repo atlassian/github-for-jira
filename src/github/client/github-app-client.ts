@@ -24,9 +24,9 @@ export class GitHubAppClient extends GitHubClient {
 	constructor(
 		logger?: Logger,
 		baseUrl?: string,
+		axiosConfig?: Partial<AxiosRequestConfig>,
 		appId = envVars.APP_ID,
-		privateKey = PrivateKey.findPrivateKey() || "",
-		axiosConfig?: Partial<AxiosRequestConfig>
+		privateKey = PrivateKey.findPrivateKey() || ""
 	) {
 		super(logger, baseUrl, axiosConfig);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);

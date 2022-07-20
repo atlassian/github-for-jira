@@ -30,6 +30,8 @@ export class GitHubClient {
 			this.graphqlUrl = `${baseUrl}/api/graphql`;
 		}
 
+		logger.info(`axios config: ${JSON.stringify(axiosConfig)}`);
+
 		this.axios = axios.create({
 			baseURL: this.restApiUrl,
 			transitional: {

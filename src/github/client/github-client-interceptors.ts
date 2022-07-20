@@ -6,6 +6,7 @@ import { AxiosError, AxiosRequestConfig } from "axios";
 import { extractPath } from "../../jira/client/axios";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
+import { toUpper } from "lodash";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -104,7 +105,7 @@ export const handleFailedRequest = (logger: Logger) =>
 
 		if (response) {
 			const status = response?.status;
-			const errorMessage = `Error executing Axios Request ` + error.message;
+			const errorMessage = `Error executing Axios Request (${toUpper(config.method)} ${config.baseURL}${config.url}): ` + error.message;
 
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
