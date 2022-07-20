@@ -134,7 +134,8 @@ export const JiraConfigurationGet = async (
 
 		sendAnalytics(AnalyticsEventTypesEnum.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
-			jiraHost, connectedOrgCount: installations.total
+			jiraHost,
+			connectedOrgCount: installations.total
 		});
 
 		req.log.info("Jira configuration rendered successfully.");
