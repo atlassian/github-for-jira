@@ -34,7 +34,7 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 	}
 };
 
-export const JiraServerUrlPost = async (
+export const JiraConnectEnterprisePost = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {

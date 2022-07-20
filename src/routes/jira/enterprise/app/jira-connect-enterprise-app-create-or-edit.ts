@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 
-export const JiraEditAppGet = async (
+export const JiraConnectEnterpriseAppCreateOrEdit = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -9,8 +9,8 @@ export const JiraEditAppGet = async (
 	try {
 		req.log.debug("Received Jira edit app page request");
 
-		const gitHubServerAppId = req.params.id as string;
-		const app = await GitHubServerApp.getForGitHubServerAppId(parseInt(gitHubServerAppId));
+		const uuid = req.params.uuid as string;
+		const app = uuid ? await GitHubServerApp.findForUuid(uuid) : null;
 
 		res.render("jira-manual-app-creation.hbs", {
 			previousPagePath: "github-app-creation-page",
