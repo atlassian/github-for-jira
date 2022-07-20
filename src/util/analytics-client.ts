@@ -10,10 +10,10 @@ const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 let analyticsNodeClient;
 
-function sendAnalytics(eventType: "trait")
-function sendAnalytics(eventType: "screen", attributes:{name:string} & Record<string,unknown>)
-function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string,unknown>)
-function sendAnalytics(eventType: string, attributes?: Record<string, unknown>): void {
+export function sendAnalytics(eventType: "trait")
+export function sendAnalytics(eventType: "screen", attributes:{name:string} & Record<string,unknown>)
+export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string,unknown>)
+export function sendAnalytics(eventType: string, attributes?: Record<string, unknown>): void {
 	if (!analyticsClient && !isNodeProd()){
 		return;
 	}
@@ -90,5 +90,3 @@ function wrapPromise(promise: Promise<unknown>) {
 		logger.warn(`Cannot sendAnalytics event: ${error}`);
 	});
 }
-
-export { sendAnalytics };
