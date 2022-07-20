@@ -56,7 +56,9 @@ interface ViewConfigurationForGHCloud extends ViewConfiguration {
 
 interface ViewConfigurationForGHE extends ViewConfiguration {
 	gheServers: GitHubServerObj[]
+	hasCloudAndEnterpriseServers: boolean
 	ghCloud: GitHubCloudObj
+	hasCloudServers: boolean
 }
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
@@ -183,6 +185,8 @@ const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request):
 		host: jiraHost,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulConnections, failedConnections },
+		hasCloudAndEnterpriseServers: !!((successfulConnections.length || failedConnections.length) && gheServers.length),
+		hasCloudServers: !!(successfulConnections.length || failedConnections.length),
 		hasConnections: !!(installations.total || gheServers?.length),
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
@@ -206,7 +210,7 @@ export const JiraConfigurationGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)) {
 			res.render("jira-configuration-new.hbs", await JiraCloudAndEnterpriseConfiguration(res, req));
 		} else {
 			res.render("jira-configuration.hbs", await JiraCloudConfiguration(res, req));

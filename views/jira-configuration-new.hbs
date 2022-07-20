@@ -129,7 +129,7 @@
             <div class="jiraConfiguration__syncRetryModalOverlay"></div>
           </div>
 
-          {{#if (and (or ghCloud.successfulConnections.length ghCloud.failedConnections.length) gheServers.length)}}
+          {{#if hasCloudAndEnterpriseServers}}
             <div class="jiraConfiguration__optionContainer">
               <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
                       id="jiraConfiguration__optionAll">All
@@ -145,7 +145,7 @@
             </div>
           {{/if}}
 
-          {{#if (or ghCloud.successfulConnections.length ghCloud.failedConnections.length)}}
+          {{#if hasCloudServers}}
             <div class="jiraConfiguration__cloudContainer">
               <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
               <div class="jiraConfiguration__cloudConnections">

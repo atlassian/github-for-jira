@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper, logicalOrHelper, logicalAndHelper } from "./handlebar-helpers";
+import { replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper } from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
 	describe("toLowercaseHelper", () => {
@@ -50,26 +50,6 @@ describe("Handlebar Helpers", () => {
 			expect(concatStringHelper("I", "am", "Legend")).toEqual("I am Legend");
 			expect(concatStringHelper("Gotta", "catch", "'em", "all!")).toEqual("Gotta catch 'em all!");
 			expect(concatStringHelper("More", " ", "space")).toEqual("More   space");
-		});
-	});
-
-	describe("logicalOrHelper", () => {
-		it("should return false only if all parameters are falsy", () => {
-			expect(logicalOrHelper(0, 1)).toEqual(true);
-			expect(logicalOrHelper(1, 1, 1)).toEqual(true);
-			expect(logicalOrHelper(1, 0, 0)).toEqual(true);
-			expect(logicalOrHelper(0, 0)).toEqual(false);
-			expect(logicalOrHelper(0)).toEqual(false);
-		});
-	});
-
-	describe("logicalAndHelper", () => {
-		it("should return true only if all parameters are truthy", () => {
-			expect(logicalAndHelper(1, 1, 1)).toEqual(true);
-			expect(logicalAndHelper(0, 1)).toEqual(false);
-			expect(logicalAndHelper(1, 0, 0)).toEqual(false);
-			expect(logicalAndHelper(0, 0)).toEqual(false);
-			expect(logicalAndHelper(0)).toEqual(false);
 		});
 	});
 });
