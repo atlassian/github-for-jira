@@ -2,14 +2,13 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { TokenType } from "~/src/jira/util/jwt";
-import { postInstallUrl } from "routes/jira/jira-atlassian-connect-get";
+import { moduleUrls } from "routes/jira/jira-atlassian-connect-get";
 
 const extractUnsafeJiraHost = (req: Request): string | null => {
-	if (req.path == postInstallUrl && req.method == "GET") {
+	if (moduleUrls.includes(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
-	} else if ((req.path == postInstallUrl && req.method != "GET") || req.path == "/jira/sync") {
-		// Only save the jiraHost from the body for specific routes that use it
+	} else if (["POST", "DELETE", "PUT"].includes(req.method)) {
 		return req.body?.jiraHost;
 	} else if (req.cookies.jiraHost) {
 		return req.cookies.jiraHost;
@@ -46,7 +45,7 @@ export const jirahostMiddleware = async (req: Request, res: Response, next: Next
 	if (unsafeJiraHost) {
 		// Even though it is unsafe, we are verifying it straight away below (in "verifyJwtBlahBlah" call)
 		res.locals.jiraHost = unsafeJiraHost;
-		verifyJiraJwtMiddleware(detectJwtTokenType(req))(req, res, () => {
+		await verifyJiraJwtMiddleware(detectJwtTokenType(req))(req, res, () => {
 
 			// Cannot hold and rely on cookies because the issued context JWTs are short-lived
 			// (enough to validate once but not enough for long-running routines)

@@ -2,12 +2,15 @@
 db/config.json
 
 # Environment Files
-.env*
-!.env.example
-!.env.test
+.env
+.env.local
+.env.local.*
+.env.*.local
+.env.*.local.*
 
 # DB Secret File
 *.pem
+**/*.pem
 
 # Transpiled files
 build/

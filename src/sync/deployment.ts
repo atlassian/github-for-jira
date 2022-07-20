@@ -2,7 +2,7 @@ import { GitHubAPI } from "probot";
 import { Repository } from "models/subscription";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { transformDeployment } from "../transforms/transform-deployment";
 
 const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
@@ -16,7 +16,7 @@ const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClie
 	};
 };
 
-const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: LoggerWithTarget) => {
+const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger) => {
 
 	const transformTasks = deployments.map((deployment) => {
 		const deploymentStatus = {
@@ -47,7 +47,7 @@ const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHub
 		.flat();
 };
 
-export const getDeploymentTask = async (logger: LoggerWithTarget, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+export const getDeploymentTask = async (logger: Logger, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 
 	logger.info("Syncing Deployments: started");
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);

@@ -7,7 +7,8 @@ export const metricError = {
 	failedConnection: `${server}.error.failed-connection`,
 	queueError: `${server}.error.queue-error`,
 	queueFailed: `${server}.error.queue-failed`,
-	blockedByGitHubAllowlist: `${server}.error.blocked-by-github-allowlist`
+	blockedByGitHubAllowlist: `${server}.error.blocked-by-github-allowlist`,
+	gheServerUrlError: `${server}.error.ghe.server.url.request.failed`
 };
 
 /**
@@ -66,3 +67,4 @@ export const metricWebhooks = {
 	webhookFailure: `${server}.webhooks.failed`,
 	webhookLatency: `${server}.webhooks.processing-time.latency`
 };
+

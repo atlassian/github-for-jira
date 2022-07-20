@@ -40,6 +40,7 @@
     flex-direction: column;
     max-width: 330px;
     padding: 2em;
+    border: 4px solid transparent;
 }
 
 .jiraSelectGitHubVersion__options__card:hover {

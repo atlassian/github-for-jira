@@ -31,6 +31,73 @@ Object {
         "url": "/jira/configuration",
       },
     ],
+    "generalPages": Array [
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-select-version-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Select Version",
+        },
+        "url": "/jira/select-version",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-server-url-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Server Url",
+        },
+        "url": "/jira/server-url",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-app-creation-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub App Creation",
+        },
+        "url": "/jira/app-creation",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-edit-app-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Edit App",
+        },
+        "url": "/jira/edit-app/{ac.ghsaId}",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-list-servers-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Enterprise Servers",
+        },
+        "url": "/jira/ghe-servers",
+      },
+    ],
     "jiraBuildInfoProvider": Object {
       "homeUrl": "https://github.com/features/actions",
       "key": "github-actions",

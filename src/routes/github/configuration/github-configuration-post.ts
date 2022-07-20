@@ -53,12 +53,11 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	}
 
 	req.addLogFields({ gitHubInstallationId });
-	req.log.info("Received add subscription request");
-
+	req.log.debug("Received add subscription request");
 
 	try {
 		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, false, jiraHost);
-		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log);
+		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppId);
 		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 
 		// Check if the user that posted this has access to the installation ID they're requesting

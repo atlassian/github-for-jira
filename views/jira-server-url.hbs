@@ -19,83 +19,88 @@
       media="all"
     />
     <link rel="stylesheet" href="/public/css/global.css" media="all" />
+    <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
     <link
       rel="stylesheet"
-      href="/public/css/jira-connect-ghe.css"
+      href="/public/css/jira-server-url.css"
       media="all"
     />
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
   <body class="aui-page-hybrid">
-    <div class="jiraConnectGHE">
-      <header class="jiraConnectGHE__header">
-         {{> navigation previousPageName="Select GitHub Version" }}
+    <div class="jiraServerUrl">
+      <header class="jiraServerUrl__header">
+         {{> navigation previousPageName="Select GitHub Version" previousPagePath=previousPagePath }}
       </header>
 
-      <section class="jiraConnectGHE__content">
+      <section class="jiraServerUrl__content">
         <div class="headerImage">
           <img
             src="/public/assets/jira-and-github.png"
             alt="Jira and GitHub logos"
           />
         </div>
-        <h2 class="jiraConnectGHE__content__title">GitHub Enterprise Server</h2>
+        <h2 class="jiraServerUrl__content__title">GitHub Enterprise Server</h2>
 
-        <div class="jiraConnectGHE__prompt">
+        <div class="jiraServerUrl__prompt">
             Connecting GitHub Enterprise Server to Jira requires opening a hole in your firewall,
             as Atlassian’s IP addresses must be able to call your GitHub Enterprise Server.
           <!--TODO: Add a link here-->
-          <a href="" target="_blank">Learn more.</a>
+          <a href="" target="_blank">Learn more about network configuration for GitHub for Jira.</a>
         </div>
 
         <div>
-          <h3 class="jiraConnectGHE__options__subTitle">
+          <h3 class="jiraServerUrl__options__subTitle">
             GitHub Enterprise Server URL
           </h3>
-          <div class="jiraConnectGHE__prompt">
+          <div class="jiraServerUrl__prompt">
             Enter the URL for the server of the GitHub Enterprise organization that you want to connect. This is unique to your server.
           </div>
-          <div>
-            <label class="jiraConnectGHE__label" for="gheServerURL">Server URL</label>
-            <input type="text" class="jiraConnectGHE__input" id="gheServerURL" placeholder="https://example.com" />
-            <div class="jiraConnectGHE__error" id="gheServerURLError">
-              <i class="aui-icon aui-iconfont-error"></i>
-              The entered URL is not valid.
-              <!--TODO: Add a link here-->
-              <a href="" target="_blank">Learn more.</a>
+          <form id="jiraServerUrl__form" class="aui top-label">
+            <div class="field-group">
+              <label for="gheServerURL">Server URL</label>
+              <input class="text full-width-field" type="text"
+                     data-aui-validation-field
+                     data-aui-validation-ghe-url
+                     placeholder="https://example.com"
+                     id="gheServerURL" name="gheServerURL" />
             </div>
-          </div>
 
-          <div class="jiraConnectGHE__actionBtn__container">
+            <div class="jiraServerUrl__validationError">
+                {{> server-error-message-box }}
+            </div>
+            <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
             <button
-              id="gheServerBtn"
-              class="aui-button aui-button-primary"
-              aria-disabled="true"
-              disabled
+                type="submit"
+                id="gheServerBtn"
+                disabled
+                class="aui-button aui-button-primary jiraServerUrl__actionBtn"
+                data-installation-id={{installationId}}
             >
               <span id="gheServerBtnText">Next</span>
               <aui-spinner id="gheServerBtnSpinner" size="small"></aui-spinner>
             </button>
-
-          </div>
+          </form>
         </div>
       </section>
 
     </div>
 
-    <script src="/public/js/jira-connect-ghe.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script
       src="https://connect-cdn.atl-paas.net/all.js"
       nonce="{{nonce}}"
     ></script>
+
     <script
       src="/public/aui/aui-prototyping.js"
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
+    <script src="/public/js/jira-server-url.js" nonce="{{nonce}}"></script>
   </body>
 </html>

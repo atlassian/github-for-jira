@@ -2,7 +2,7 @@ import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
 import { envVars }  from "./env";
 import { createHashWithSharedSecret } from "utils/encryption";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 
 const logger = getLogger("feature-flags");
 
@@ -30,7 +30,8 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE = "use-new-github-client-for-pr-title",
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
-	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery"
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
+	TAG_BACKFILL_REQUESTS = "tag-backfill-requests"
 }
 
 export enum StringFlags {
@@ -80,7 +81,7 @@ export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, li
 	launchdarklyClient.on(`update:${flag}`, listener);
 };
 
-export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
+export const isBlocked = async (installationId: number, logger: Logger): Promise<boolean> => {
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
@@ -89,4 +90,8 @@ export const isBlocked = async (installationId: number, logger: LoggerWithTarget
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
 	}
+};
+
+export const shouldTagBackfillRequests = async (): Promise<boolean> => {
+	return booleanFlag(BooleanFlags.TAG_BACKFILL_REQUESTS, false);
 };

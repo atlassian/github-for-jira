@@ -7,6 +7,9 @@ import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { isGitHubCloudApp } from "~/src/util/jira-utils";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
@@ -42,6 +45,7 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 	const { jiraHost } = subscription;
 	const { gitHubInstallationId } = subscription;
 	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
+	const gitHubVersion = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	try {
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
@@ -59,8 +63,7 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"
 		);
-		statsd.increment(metricError.failedConnection);
-
+		statsd.increment(metricError.failedConnection, { gitHubVersion });
 		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.status === 404 });
 	}
 };
@@ -89,7 +92,7 @@ export const JiraConfigurationGet = async (
 			return;
 		}
 
-		req.log.info("Received jira configuration page request");
+		req.log.debug("Received jira configuration page request");
 
 		const subscriptions = await Subscription.getAllForHost(jiraHost);
 		const installations = await getInstallations(subscriptions, req.log, gitHubAppId);
@@ -111,6 +114,10 @@ export const JiraConfigurationGet = async (
 				isGlobalInstall: installation.repository_selection === "all"
 			}));
 
+		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
+			? "select-github-version-link"
+			: "add-organization-link";
+
 		res.render("jira-configuration.hbs", {
 			host: jiraHost,
 			successfulConnections,
@@ -118,10 +125,12 @@ export const JiraConfigurationGet = async (
 			hasConnections: !!installations.total,
 			APP_URL: process.env.APP_URL,
 			csrfToken: req.csrfToken(),
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			handleNavigationClassName,
+			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 		});
 
-		req.log.info("Jira configuration rendered successfully.");
+		req.log.debug("Jira configuration rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira configuration: ${error}`));
 	}

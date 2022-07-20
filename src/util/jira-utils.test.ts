@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { envVars } from "config/env";
-import { getJiraAppUrl, getJiraMarketplaceUrl, jiraIssueKeyParser } from "./jira-utils";
+import {
+	getJiraAppUrl,
+	getJiraMarketplaceUrl,
+	isGitHubCloudApp,
+	jiraIssueKeyParser
+} from "./jira-utils";
+import { mocked } from "ts-jest/utils";
+import { GitHubServerApp } from "models/github-server-app";
+
+jest.mock("models/github-server-app");
 
 describe("Jira Utils", () => {
 	describe("getJiraAppUrl", () => {
@@ -116,6 +125,35 @@ describe("Jira Utils", () => {
 
 		it("should extract multiple issue keys in a single string", () => {
 			expect(jiraIssueKeyParser("JRA-123 Jra-456-jra-901\n[bah-321]")).toEqual(["JRA-123", "JRA-456", "JRA-901", "BAH-321"]);
+		});
+	});
+
+	describe("isGitHubCloudApp", () => {
+
+		let payload;
+
+		it("should return true if no gitHubAppId is provided", async () => {
+			expect(await isGitHubCloudApp(undefined)).toBeTruthy();
+		});
+
+		it("should return true if gitHubAppId is provided but no GitHub app is found", async () => {
+			expect(await isGitHubCloudApp(1)).toBeTruthy();
+		});
+
+		it("should return false if gitHubAppId is provided and a GitHub app is found", async () => {
+			payload = {
+				uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
+				gitHubAppName: "My GitHub Server App",
+				gitHubBaseUrl: "http://myinternalserver.com",
+				gitHubClientId: "lvl.1234",
+				gitHubClientSecret: "myghsecret",
+				webhookSecret: "mywebhooksecret",
+				privateKey: "myprivatekey",
+				installationId: 2
+			};
+
+			mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(payload);
+			expect(await isGitHubCloudApp(1)).toBeFalsy();
 		});
 	});
 });

@@ -4,10 +4,10 @@ import { GitHubInstallationClient } from "./github-installation-client";
 import { statsd }  from "config/statsd";
 import { InstallationId } from "./installation-id";
 import nock from "nock";
-import { AppTokenHolder } from "./app-token-holder";
-import fs from "fs";
-import { envVars }  from "config/env";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+
 jest.mock("config/feature-flags");
 
 describe("GitHub Client", () => {
@@ -30,7 +30,7 @@ describe("GitHub Client", () => {
 		perPage: number,
 		page: number,
 		expectedInstallationTokenInHeader?: string,
-		scope: nock.Scope = gheNock
+		scope: nock.Scope = gheApiNock
 	) {
 		scope
 			.get(`/repos/${owner}/${repo}/pulls`)
@@ -56,7 +56,8 @@ describe("GitHub Client", () => {
 			client: "axios",
 			method: "GET",
 			path,
-			status
+			status,
+			gitHubVersion: "server"
 		}));
 	}
 
@@ -72,24 +73,19 @@ describe("GitHub Client", () => {
 			repo,
 			pageSize,
 			page,
-			"installation token",
-			gheNock
+			"installation token"
 		);
 
-		const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
-			switch (installationId.githubBaseUrl) {
-				case gheUrl:
-					return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
-				default:
-					throw new Error("unknown GitHub instance!");
-			}
-		});
+		when(booleanFlag).calledWith(
+			BooleanFlags.GHE_SERVER,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
 
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
 			getLogger("test"),
-			"https://github.mydomain.com",
-			appTokenHolder
+			"https://github.mydomain.com"
 		);
 
 		const pullrequests = await client.getPullRequests(owner, repo, {
