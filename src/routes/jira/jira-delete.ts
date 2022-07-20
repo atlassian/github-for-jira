@@ -7,7 +7,7 @@ import { Request, Response } from "express";
  */
 export const JiraDelete = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost } = res.locals;
-	const installationId = Number(req.params.id);
+	const installationId = Number(req.params.installationId);
 
 	if (!jiraHost) {
 		req.log.error("Missing Jira Host");

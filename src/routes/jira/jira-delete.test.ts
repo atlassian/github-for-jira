@@ -53,8 +53,10 @@ describe("DELETE /jira/configuration", () => {
 		const req = {
 			log: getLogger("request"),
 			body: {
-				installationId: subscription.githubInstallationId,
 				jiraHost: subscription.jiraHost
+			},
+			params: {
+				installationId: subscription.githubInstallationId
 			}
 		};
 

@@ -14,7 +14,7 @@ export const JiraRouter = Router();
 JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, JiraGet);
 
 // TODO: Cleanup - Move this route to a separate API
-JiraRouter.delete("/subscription/:id", JiraContextJwtTokenMiddleware, JiraDelete);
+JiraRouter.delete("/subscription/:installationId", JiraContextJwtTokenMiddleware, JiraDelete);
 
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 
@@ -26,6 +26,6 @@ JiraRouter.use("/events", JiraEventsRouter);
 
 
 /********************************************************************************************************************
- * TODO: remove this later, keeping this for now cause its out in Prod
+ * TODO: remove this later, keeping this for now cause its out in `Prod`
 * *******************************************************************************************************************/
 JiraRouter.use("/configuration", JiraConfigurationRouter);

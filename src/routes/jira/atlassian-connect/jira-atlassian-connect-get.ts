@@ -6,7 +6,7 @@ import { compact, map } from "lodash";
 const instance = envVars.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
-export const postInstallUrl = "/jira/configuration";
+export const postInstallUrl = "/jira";
 const key = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 const adminCondition = [
@@ -141,6 +141,15 @@ const modules = {
 	adminPages: [
 		{
 			url: postInstallUrl,
+			conditions: adminCondition,
+			name: {
+				value: "GitHub for Jira"
+			},
+			key: "gh-addon-admin",
+			location: "admin_plugins_menu/gh-addon-admin-section"
+		},
+		{
+			url: "/jira/configuration",
 			conditions: adminCondition,
 			name: {
 				value: "GitHub for Jira"

@@ -9,7 +9,7 @@ export const JiraConnectEnterpriseGet = async (
 ): Promise<void> => {
 	try {
 		const { id: installationId } = res.locals.installation;
-		const isNew = req.query.new;
+		const isNew = req.query?.new;
 		req.log.debug("Received Jira Connect Enterprise get page request");
 
 		const gheServers = await GitHubServerApp.findForInstallationId(installationId);
@@ -22,7 +22,6 @@ export const JiraConnectEnterpriseGet = async (
 			});
 		} else {
 			res.render("jira-server-url.hbs", {
-				previousPagePath: "github-select-version-page",
 				csrfToken: req.csrfToken(),
 				installationId: res.locals.installation.id
 			});
