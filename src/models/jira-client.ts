@@ -14,8 +14,12 @@ export class JiraClient {
 		return jiraClient;
 	}
 
+	// Prevent constructing from outside
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	private constructor() { }
+
 	private static async getSharedSecret(installation: Installation) {
-		if(await booleanFlag(BooleanFlags.INSTALLATIONS_SECRETS_READ_WRITE_WITH_CRYPTOR, false, installation.jiraHost)) {
+		if (await booleanFlag(BooleanFlags.INSTALLATIONS_SECRETS_READ_WRITE_WITH_CRYPTOR, false, installation.jiraHost)) {
 			return await installation.decrypt("encryptedSharedSecret");
 		} else {
 			return installation.sharedSecret;

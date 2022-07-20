@@ -3,8 +3,8 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { Installation } from "models/installation";
 import { JiraContextJwtTokenMiddleware } from "./jira-jwt-middleware";
 import { getLogger } from "config/logger";
-import {BooleanFlags, booleanFlag}  from "config/feature-flags";
-import {when} from "jest-when";
+import { BooleanFlags, booleanFlag }  from "config/feature-flags";
+import { when } from "jest-when";
 
 const logger = getLogger("jwt-middleware.test");
 jest.mock("models/installation");
@@ -184,7 +184,7 @@ describe("#verifyJiraMiddleware", () => {
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.INSTALLATIONS_SECRETS_READ_WRITE_WITH_CRYPTOR, expect.anything(), expect.anything())
 				.mockResolvedValue(status);
-		}
+		};
 		let installation: Installation;
 		beforeEach(()=>{
 			installation = {
