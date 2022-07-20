@@ -10,5 +10,3 @@ JiraConnectRouter.route("/")
 	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectGet);
 
 JiraConnectRouter.use("/enterprise", JiraConnectEnterpriseRouter);
-
-
