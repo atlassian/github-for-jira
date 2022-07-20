@@ -182,7 +182,7 @@ describe("#verifyJiraMiddleware", () => {
 	describe("decyrpting installation sharedSecret", ()=>{
 		const turnFFOnOff = (status: boolean) =>{
 			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.INSTALLATIONS_SECRETS_READ_WRITE_WITH_CRYPTOR, expect.anything(), expect.anything())
+				.calledWith(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, expect.anything(), expect.anything())
 				.mockResolvedValue(status);
 		};
 		let installation: Installation;

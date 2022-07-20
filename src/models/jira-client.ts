@@ -19,7 +19,7 @@ export class JiraClient {
 	private constructor() { }
 
 	private static async getSharedSecret(installation: Installation) {
-		if (await booleanFlag(BooleanFlags.INSTALLATIONS_SECRETS_READ_WRITE_WITH_CRYPTOR, false, installation.jiraHost)) {
+		if (await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost)) {
 			return await installation.decrypt("encryptedSharedSecret");
 		} else {
 			return installation.sharedSecret;

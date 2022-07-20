@@ -32,7 +32,7 @@ export enum BooleanFlags {
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
-	INSTALLATIONS_SECRETS_READ_WRITE_WITH_CRYPTOR = "installations-secrets-read-write-with-cryptor"
+	READ_SHARED_SECRET_FROM_CRYPTOR = "read-shared-secret-from-cryptor"
 }
 
 export enum StringFlags {

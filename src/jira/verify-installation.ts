@@ -2,11 +2,16 @@ import * as Sentry from "@sentry/node";
 import { getAxiosInstance } from "./client/axios";
 import { Installation } from "models/installation";
 import Logger from "bunyan";
+import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
 export const verifyJiraInstallation = (installation: Installation, log: Logger) => {
 	return async (): Promise<boolean> => {
-		const instance = getAxiosInstance(installation.jiraHost, installation.sharedSecret, log);
-
+		const ffShouldreadFromCryptor = await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost);
+		const instance = getAxiosInstance(
+			installation.jiraHost,
+			ffShouldreadFromCryptor ? await installation.decrypt("encryptedSharedSecret") : installation.sharedSecret,
+			log
+		);
 		try {
 			const result = await instance.get("/rest/devinfo/0.10/existsByProperties?fakeProperty=1");
 			if (result.status === 200) {
