@@ -10,21 +10,19 @@ export class JiraClient {
 
 	static async getNewClient(installation: Installation, log: Logger) {
 		const jiraClient = new JiraClient();
-		jiraClient.axios = getAxiosInstance(installation.jiraHost, await JiraClient.getSharedSecret(installation), log);
+		jiraClient.axios = getAxiosInstance(
+			installation.jiraHost,
+			await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost)
+				? await installation.decrypt("encryptedSharedSecret")
+				: installation.sharedSecret,
+			log
+		);
 		return jiraClient;
 	}
 
 	// Prevent constructing from outside
 	// eslint-disable-next-line @typescript-eslint/no-empty-function
 	private constructor() { }
-
-	private static async getSharedSecret(installation: Installation) {
-		if (await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost)) {
-			return await installation.decrypt("encryptedSharedSecret");
-		} else {
-			return installation.sharedSecret;
-		}
-	}
 
 	/*
 	 * Tests credentials by making a request to the Jira API

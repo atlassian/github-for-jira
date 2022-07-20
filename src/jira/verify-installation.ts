@@ -6,10 +6,11 @@ import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
 export const verifyJiraInstallation = (installation: Installation, log: Logger) => {
 	return async (): Promise<boolean> => {
-		const ffShouldreadFromCryptor = await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost);
 		const instance = getAxiosInstance(
 			installation.jiraHost,
-			ffShouldreadFromCryptor ? await installation.decrypt("encryptedSharedSecret") : installation.sharedSecret,
+			await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost)
+				? await installation.decrypt("encryptedSharedSecret")
+				: installation.sharedSecret,
 			log
 		);
 		try {

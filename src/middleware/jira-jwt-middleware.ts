@@ -29,7 +29,8 @@ export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	});
 
 	verifySymmetricJwtTokenMiddleware(
-		await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost) ? await installation.decrypt("encryptedSharedSecret")
+		await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost)
+			? await installation.decrypt("encryptedSharedSecret")
 			: installation.sharedSecret,
 		tokenType,
 		req,
