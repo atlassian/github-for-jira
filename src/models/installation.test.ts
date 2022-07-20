@@ -16,17 +16,6 @@ describe("Installation", () => {
 			expect(installation.encryptedSharedSecret).toBe("encrypted:some-plain-text");
 			expect(await installation.decrypt("encryptedSharedSecret")).toBe("some-plain-text");
 		});
-		it("can decrypt the new encryptedSharedSecret column via method", async () => {
-			const clientKey = UUID();
-			await inserRawInstallation({
-				clientKey,
-				secretsColumn: "non-sense",
-				encryptedSharedSecretColumn: "encrypted:some-plain-text"
-			});
-			const installation = await Installation.findOne({ where: { clientKey } });
-			expect(installation.encryptedSharedSecret).toBe("encrypted:some-plain-text");
-			expect(await installation.decryptAndGetSecrets()).toBe("some-plain-text");
-		});
 	});
 	describe("Encryption with cryptor", () => {
 		it("should auto set and encrypted the new 'encryptedSharedSecret' when install", async () => {

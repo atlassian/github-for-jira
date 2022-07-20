@@ -35,10 +35,6 @@ export class Installation extends EncryptedModel {
 		return ["encryptedSharedSecret"] as const;
 	}
 
-	async decryptAndGetSecrets(): Promise<string> {
-		return await this.decrypt("encryptedSharedSecret");
-	}
-
 	static async getForClientKey(
 		clientKey: string
 	): Promise<Installation | null> {
