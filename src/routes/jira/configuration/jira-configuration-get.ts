@@ -27,9 +27,7 @@ interface SuccessfulConnection extends AppInstallation {
 	isGlobalInstall: boolean;
 }
 
-interface ConnectionsAndInstallations {
-	successfulConnections: SuccessfulConnection[]
-	failedConnections: FailedConnection[]
+interface ConnectionsAndInstallations extends GitHubCloudObj{
 	installations: InstallationResults
 }
 
@@ -43,23 +41,22 @@ interface GitHubServerObj {
 	applications: ConnectionsAndInstallations[]
 }
 
-interface ViewConfigurationForGHCloud {
+interface ViewConfiguration {
 	host: string
-	successfulConnections: SuccessfulConnection[]
-	failedConnections: FailedConnection[]
 	hasConnections: boolean
 	APP_URL?: string
 	csrfToken: string
 	nonce: string
 }
-interface ViewConfigurationForGHE {
-	host: string
+
+interface ViewConfigurationForGHCloud extends ViewConfiguration {
+	successfulConnections: SuccessfulConnection[]
+	failedConnections: FailedConnection[]
+}
+
+interface ViewConfigurationForGHE extends ViewConfiguration {
 	gheServers: GitHubServerObj[]
 	ghCloud: GitHubCloudObj
-	hasConnections: boolean
-	APP_URL?: string
-	csrfToken: string
-	nonce: string
 }
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
