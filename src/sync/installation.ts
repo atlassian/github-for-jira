@@ -44,7 +44,7 @@ interface TaskProcessors {
 		repository: Repository,
 		cursor?: string | number,
 		perPage?: number,
-		messagePayload?: Record<string, any>
+		messagePayload?: BackfillMessagePayload
 	) => Promise<TaskPayload>;
 }
 

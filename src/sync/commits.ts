@@ -7,9 +7,10 @@ import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitData } from "src/interfaces/jira";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { TaskPayload } from "~/src/sync/installation";
+import { BackfillMessagePayload } from "~/src/sqs/backfill";
 
-const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, timeCutoffMsecs?: number, cursor?: string | number, perPage?: number) => {
-	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, timeCutoffMsecs, cursor);
+const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
+	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
 	const edges = commitsData.repository?.defaultBranchRef?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
 
@@ -19,11 +20,16 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 	};
 };
 
-const getCommitTimeLimit = async (jiraHost: string, commitTimeLimit?: number): Promise<number> => {
-	if (commitTimeLimit) {
-		return commitTimeLimit;
+// export this so branches can re-use
+export const getCommitSinceDate = async (jiraHost: string, commitFromDate?: Date): Promise<Date | undefined> => {
+	if (commitFromDate) {
+		return commitFromDate;
 	}
-	return await numberFlag(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, NaN, jiraHost);
+	const timeCutoffMsecs = await numberFlag(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, NaN, jiraHost);
+	if (!timeCutoffMsecs) {
+		return;
+	}
+	return new Date(Date.now() - timeCutoffMsecs);
 };
 
 export const getCommitTask = async (
@@ -34,10 +40,10 @@ export const getCommitTask = async (
 	repository: Repository,
 	cursor?: string | number,
 	perPage?: number,
-	messagePayload?: Record<string, any>): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
+	messagePayload?: BackfillMessagePayload): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
 
-	const timeCutoffMsecs = await getCommitTimeLimit(jiraHost, messagePayload?.commitTimeLimit);
-	const { edges, commits } = await fetchCommits(gitHubClient, repository, timeCutoffMsecs, cursor, perPage);
+	const commitSince = await getCommitSinceDate(jiraHost, messagePayload?.commitsFromDate);
+	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
 	const jiraPayload = await transformCommit({ commits, repository });
 	logger.info("Syncing commits: finished");
 

@@ -304,10 +304,10 @@ describe("sync/branches", () => {
 				const time = Date.now();
 				const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
 				mockSystemTime(time);
-				const commitTimeLimit = new Date(time - commitTimeLimitCutoff);
-				const data: BackfillMessagePayload = { installationId, jiraHost, commitTimeLimit: commitTimeLimitCutoff };
+				const commitsFromDate = new Date(time - commitTimeLimitCutoff);
+				const data: BackfillMessagePayload = { installationId, jiraHost, commitsFromDate };
 
-				nockBranchRequest(branchNodesFixture, { commitSince: commitTimeLimit.toISOString() });
+				nockBranchRequest(branchNodesFixture, { commitSince: commitsFromDate.toISOString() });
 				jiraNock
 					.post(
 						"/rest/devinfo/0.10/bulk",

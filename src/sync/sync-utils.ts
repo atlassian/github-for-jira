@@ -7,7 +7,7 @@ export async function findOrStartSync(
 	subscription: Subscription,
 	logger: Logger,
 	syncType?: "full" | "partial",
-	commitTimeLimit?: number
+	commitsFromDate?: Date
 ): Promise<void> {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
@@ -30,5 +30,5 @@ export async function findOrStartSync(
 	}
 
 	// Start sync
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime, commitTimeLimit }, 0, logger);
+	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime, commitsFromDate }, 0, logger);
 }
