@@ -13,12 +13,8 @@ import { GitHubClient } from "./github-client";
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(
-		userToken: string,
-		logger?: Logger,
-		axiosConfig?: Partial<AxiosRequestConfig>,
-		baseUrl?: string) {
-		super(logger, baseUrl, axiosConfig);
+	constructor(userToken: string, logger?: Logger, baseUrl?: string) {
+		super(logger, baseUrl);
 		this.userToken = userToken;
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {

@@ -9,8 +9,6 @@ import { Subscription } from "models/subscription";
 import { envVars } from "~/src/config/env";
 import * as PrivateKey from "probot/lib/private-key";
 import { keyLocator } from "~/src/github/client/key-locator";
-import { AxiosRequestConfig } from "axios";
-import { NO_PROXY_CONFIG, OUTBOUND_PROXY_CONFIG } from "config/proxy";
 
 export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
@@ -39,7 +37,7 @@ const getGitHubClientConfigFromGitHubInstallationId = async (gitHubInstallationI
 const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, jiraHost?: string): Promise<GitHubClientConfig> => {
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 	if (gitHubServerApp) {
-		return {
+		return	{
 			hostname: gitHubServerApp.gitHubBaseUrl,
 			baseUrl: gitHubServerApp.gitHubBaseUrl,
 			appId: gitHubServerApp.appId,
@@ -47,7 +45,7 @@ const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, j
 		};
 	}
 	// cloud config
-	const privateKey = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost) ? await keyLocator() : PrivateKey.findPrivateKey();
+	const privateKey = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)? await keyLocator(): PrivateKey.findPrivateKey();
 	if (!privateKey) {
 		throw new Error("Private key not found for github cloud");
 	}
@@ -72,10 +70,9 @@ export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
  */
 export async function createAppClient(logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-	const axiosConfig = await getProxyConfig(gitHubClientConfig.baseUrl);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl, axiosConfig, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey)
-		: new GitHubAppClient(logger, undefined, axiosConfig);
+		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey)
+		: new GitHubAppClient(logger);
 }
 
 /**
@@ -84,10 +81,9 @@ export async function createAppClient(logger: Logger, jiraHost: string, gitHubAp
  */
 export async function createInstallationClient(gitHubInstallationId: number, jiraHost: string, logger: Logger): Promise<GitHubInstallationClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromGitHubInstallationId(gitHubInstallationId);
-	const axiosConfig = await getProxyConfig(gitHubClientConfig.baseUrl);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-		? new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, axiosConfig, gitHubClientConfig.baseUrl)
-		: new GitHubInstallationClient(getInstallationId(gitHubInstallationId), logger, axiosConfig);
+		? new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, gitHubClientConfig.baseUrl)
+		: new GitHubInstallationClient(getInstallationId(gitHubInstallationId), logger);
 }
 
 /**
@@ -95,15 +91,7 @@ export async function createInstallationClient(gitHubInstallationId: number, jir
  */
 export async function createUserClient(githubToken: string, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubUserClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-	const axiosConfig = await getProxyConfig(gitHubClientConfig.baseUrl);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-		? new GitHubUserClient(githubToken, logger, axiosConfig, gitHubClientConfig.baseUrl)
-		: new GitHubUserClient(githubToken, logger, axiosConfig);
+		? new GitHubUserClient(githubToken, logger, gitHubClientConfig.baseUrl)
+		: new GitHubUserClient(githubToken, logger);
 }
-
-const getProxyConfig = async (baseUrl: string): Promise<Partial<AxiosRequestConfig>> => {
-	if (baseUrl.includes("github.internal.atlassian.com")) {
-		return NO_PROXY_CONFIG;
-	}
-	return OUTBOUND_PROXY_CONFIG;
-};

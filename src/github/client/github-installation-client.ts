@@ -40,11 +40,10 @@ export class GitHubInstallationClient extends GitHubClient {
 	constructor(
 		githubInstallationId: InstallationId,
 		logger?: Logger,
-		axiosConfig?: Partial<AxiosRequestConfig>,
 		baseUrl?: string,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
-		super(logger, baseUrl, axiosConfig);
+		super(logger, baseUrl);
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);

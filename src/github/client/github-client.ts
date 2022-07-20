@@ -2,6 +2,7 @@ import Logger from "bunyan";
 import { GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "~/src/config/logger";
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import { NO_PROXY_CONFIG, OUTBOUND_PROXY_CONFIG } from "config/proxy";
 
 /**
  * A GitHub client superclass to encapsulate what differs between our GH clients
@@ -14,8 +15,7 @@ export class GitHubClient {
 
 	constructor(
 		logger: Logger = getLogger("gitHub-client"),
-		baseUrl?: string,
-		axiosConfig?: Partial<AxiosRequestConfig>
+		baseUrl?: string
 	) {
 		this.logger = logger;
 
@@ -30,14 +30,21 @@ export class GitHubClient {
 			this.graphqlUrl = `${baseUrl}/api/graphql`;
 		}
 
-		logger.info(`axios config: ${JSON.stringify(axiosConfig)}`);
+		const proxyConfig = this.getProxyConfig(this.restApiUrl);
 
 		this.axios = axios.create({
 			baseURL: this.restApiUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			},
-			...axiosConfig
+			... proxyConfig
 		});
 	}
+
+	private getProxyConfig = (baseUrl: string): Partial<AxiosRequestConfig> => {
+		if (baseUrl.includes("github.internal.atlassian.com")) {
+			return NO_PROXY_CONFIG;
+		}
+		return OUTBOUND_PROXY_CONFIG;
+	};
 }

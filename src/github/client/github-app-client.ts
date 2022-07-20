@@ -24,11 +24,10 @@ export class GitHubAppClient extends GitHubClient {
 	constructor(
 		logger?: Logger,
 		baseUrl?: string,
-		axiosConfig?: Partial<AxiosRequestConfig>,
 		appId = envVars.APP_ID,
 		privateKey = PrivateKey.findPrivateKey() || ""
 	) {
-		super(logger, baseUrl, axiosConfig);
+		super(logger, baseUrl);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios.interceptors.request.use(setRequestStartTime);
