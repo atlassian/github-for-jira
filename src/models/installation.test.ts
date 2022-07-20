@@ -5,12 +5,27 @@ import { getHashedKey } from "models/sequelize";
 
 describe("Installation", () => {
 	describe("Decryption with cryptor", () => {
-		it("can decrypted the new safeSharedSecret column successfully", async () => {
+		it("can directly decrypted the new safeSharedSecret column successfully", async () => {
 			const clientKey = UUID();
-			await insertNewInstallation({ clientKey });
+			await inserRawInstallation({
+				clientKey,
+				secretsColumn: "non-sense",
+				encryptedSharedSecretColumn: "encrypted:some-plain-text"
+			});
 			const installation = await Installation.findOne({ where: { clientKey } });
 			expect(installation.encryptedSharedSecret).toBe("encrypted:some-plain-text");
 			expect(await installation.decrypt("encryptedSharedSecret")).toBe("some-plain-text");
+		});
+		it("can decrypt the secret from new encryptedSharedSecret column via a FF controlled method", async ()=>{
+			const clientKey = UUID();
+			await inserRawInstallation({
+				clientKey,
+				secretsColumn: "non-sense",
+				encryptedSharedSecretColumn: "encrypted:some-plain-text"
+			});
+			const installation = await Installation.findOne({ where: { clientKey } });
+			expect(installation.encryptedSharedSecret).toBe("encrypted:some-plain-text");
+			expect(await installation.decryptAndGetSecrets()).toBe("some-plain-text");
 		});
 	});
 	describe("Encryption with cryptor", () => {
@@ -70,12 +85,12 @@ describe("Installation", () => {
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:secret-A");
 		});
 	});
-	const insertNewInstallation = async ({ clientKey }) => {
+	const inserRawInstallation = async ({ clientKey, secretsColumn, encryptedSharedSecretColumn}) => {
 		return await Installation.sequelize?.query(`
 					insert into "Installations"
 					("secrets", "encryptedSharedSecret", "clientKey", "createdAt", "updatedAt")
 					values
-					('xxxxx', 'encrypted:some-plain-text', '${clientKey}', now(), now())
+					('${secretsColumn}', '${encryptedSharedSecretColumn}', '${clientKey}', now(), now())
 				`, {
 			type: Sequelize.QueryTypes.INSERT
 		});
