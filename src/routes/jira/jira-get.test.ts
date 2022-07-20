@@ -251,4 +251,3 @@ describe("Jira Configuration Suite", () => {
 		});
 	});
 });
-
