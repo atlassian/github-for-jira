@@ -2,7 +2,8 @@ import Logger from "bunyan";
 import { GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "~/src/config/logger";
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
-import { NO_PROXY_CONFIG, OUTBOUND_PROXY_CONFIG } from "config/proxy";
+import { envVars } from "config/env";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
 /**
  * A GitHub client superclass to encapsulate what differs between our GH clients
@@ -30,21 +31,41 @@ export class GitHubClient {
 			this.graphqlUrl = `${baseUrl}/api/graphql`;
 		}
 
-		const proxyConfig = this.getProxyConfig(this.restApiUrl);
-
 		this.axios = axios.create({
 			baseURL: this.restApiUrl,
 			transitional: {
 				clarifyTimeoutError: true
 			},
-			... proxyConfig
+			... this.getProxyConfig(this.restApiUrl)
 		});
 	}
 
 	private getProxyConfig = (baseUrl: string): Partial<AxiosRequestConfig> => {
-		if (baseUrl.includes("github.internal.atlassian.com")) {
-			return NO_PROXY_CONFIG;
+		if (baseUrl
+			.replace(RegExp("/$"), "")
+			.endsWith("atlassian.com")) {
+			return this.noProxyConfig();
+		} else {
+			return this.outboundProxyConfig();
 		}
-		return OUTBOUND_PROXY_CONFIG;
+	};
+
+	private noProxyConfig = (): Partial<AxiosRequestConfig> => {
+		return {
+			// Not strictly necessary to set the agent to undefined, just to make it visible.
+			httpsAgent: undefined,
+			proxy: false
+		};
+	};
+
+	private outboundProxyConfig = (): Partial<AxiosRequestConfig> => {
+		const outboundProxyHttpsAgent = envVars.PROXY ? new HttpsProxyAgent(envVars.PROXY) : undefined;
+		return {
+			// Even though Axios provides the `proxy` option to configure a proxy, this doesn't work and will
+			// always cause an HTTP 501 (see https://github.com/axios/axios/issues/3459). The workaround is to
+			// create an HttpsProxyAgent and set the `proxy` option to false.
+			httpsAgent: outboundProxyHttpsAgent,
+			proxy: false
+		};
 	};
 }
