@@ -1,7 +1,8 @@
-import dotenv from "dotenv";
+import { config } from "dotenv";
+import { expand } from "dotenv-expand";
 import path from "path";
 import { LogLevelString } from "bunyan";
-import { getNodeEnv, isNodeTest } from "utils/is-node-env";
+import { getNodeEnv } from "utils/is-node-env";
 import { EnvironmentEnum } from "interfaces/common";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
@@ -26,15 +27,16 @@ const requiredEnvVars = [
 	"CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE"
 ];
 
-const filename = isNodeTest() ? ".env.test" : ".env";
-const env = dotenv.config({
-	path: path.resolve(process.cwd(), filename)
-});
-
-// TODO: add checks for environment variables here and error out if missing any
-if (env.error && nodeEnv !== EnvironmentEnum.production) {
-	throw env.error;
-}
+// Load environment files
+const envFile = ".env";
+[
+	`${envFile}.${nodeEnv}.local`,
+	`${envFile}.local`,
+	`${envFile}.${nodeEnv}`,
+	envFile
+].map((env) => expand(config({
+	path: path.resolve(__dirname, "../..", env)
+})));
 
 const getProxyFromEnvironment = (): string | undefined => {
 	const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
@@ -65,7 +67,7 @@ export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,
 	MICROS_ENV: EnvironmentEnum;
 	MICROS_SERVICE_VERSION?: string;
-  MICROS_GROUP: string;
+	MICROS_GROUP: string;
 	SQS_BACKFILL_QUEUE_URL: string;
 	SQS_BACKFILL_QUEUE_REGION: string;
 	SQS_PUSH_QUEUE_URL: string;
@@ -84,6 +86,7 @@ export interface EnvVars {
 	DATABASE_URL: string;
 	STORAGE_SECRET: string;
 	PRIVATE_KEY_PATH: string;
+	PRIVATE_KEY: string;
 	ATLASSIAN_URL: string;
 	WEBHOOK_PROXY_URL: string;
 	MICROS_AWS_REGION: string;
