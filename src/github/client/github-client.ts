@@ -1,18 +1,21 @@
 import Logger from "bunyan";
 import { GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "~/src/config/logger";
+import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 
 /**
  * A GitHub client superclass to encapsulate what differs between our GH clients
  */
 export class GitHubClient {
 	protected readonly logger: Logger;
-	protected restApiUrl: string;
-	protected graphqlUrl: string;
+	protected readonly restApiUrl: string;
+	protected readonly graphqlUrl: string;
+	protected readonly axios: AxiosInstance;
 
-	constructor (
+	constructor(
 		logger: Logger = getLogger("gitHub-client"),
-		baseUrl?: string
+		baseUrl?: string,
+		axiosConfig?: Partial<AxiosRequestConfig>
 	) {
 		this.logger = logger;
 
@@ -26,5 +29,13 @@ export class GitHubClient {
 			this.restApiUrl = `${baseUrl}/api/v3`;
 			this.graphqlUrl = `${baseUrl}/api/graphql`;
 		}
+
+		this.axios = axios.create({
+			baseURL: this.restApiUrl,
+			transitional: {
+				clarifyTimeoutError: true
+			},
+			...axiosConfig
+		});
 	}
 }
