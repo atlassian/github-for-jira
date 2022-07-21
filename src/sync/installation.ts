@@ -145,15 +145,15 @@ export const updateJobStatus = async (
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
 		const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
-		const gitHubVersion = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
+		const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 		if (startTime) {
 			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
 			// startTime will be passed in when this sync job is queued from the discovery
-			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff, { gitHubVersion });
+			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff, { gitHubProduct });
 		}
 
-		logger.info({ startTime, endTime, timeDiff, gitHubVersion }, "Sync status is complete");
+		logger.info({ startTime, endTime, timeDiff, gitHubProduct }, "Sync status is complete");
 	} else {
 		logger.info("Sync status is pending");
 		scheduleNextTask(0);
@@ -219,12 +219,12 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription);
-	const gitHubVersion = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
 		await subscription.update({ syncStatus: "COMPLETE" });
-		statsd.increment(metricSyncStatus.complete, { gitHubVersion });
-		logger.info({ gitHubVersion }, "Sync complete");
+		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
+		logger.info({ gitHubProduct }, "Sync complete");
 
 		return;
 	}
@@ -353,7 +353,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			scheduleNextTask
 		);
 
-		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`, `gitHubVersion: ${gitHubVersion}`]);
+		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`, `gitHubProduct: ${gitHubProduct}`]);
 
 	} catch (err) {
 		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
@@ -422,8 +422,8 @@ export const handleBackfillError = async (err,
 export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
 	await subscription.updateRepoSyncStateItem(nextTask.repositoryId, getStatusKey(nextTask.task as TaskType), "failed");
-	const gitHubVersion = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
-	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`, `gitHubVersion: ${gitHubVersion}`]);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
+	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`, `gitHubProduct: ${gitHubProduct}`]);
 
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
