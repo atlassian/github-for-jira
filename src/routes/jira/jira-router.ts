@@ -23,6 +23,6 @@ JiraRouter.use("/configuration", JiraConfigurationRouter);
 // TODO - add csrf middleware
 JiraRouter.post("/sync", JiraContextJwtTokenMiddleware, JiraSyncPost);
 JiraRouter.use("/events", JiraEventsRouter);
-JiraRouter.use("/select-version", JiraSelectProductRouter);
+JiraRouter.use("/select-product", JiraSelectProductRouter);
 JiraRouter.use("/server-url", JiraServerUrlRouter);
 JiraRouter.use("/app-creation", JiraAppCreationRouter);
