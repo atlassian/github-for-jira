@@ -57,7 +57,7 @@ describe("GitHub Client", () => {
 			method: "GET",
 			path,
 			status,
-			gitHubVersion: "server"
+			gitHubProduct: "server"
 		}));
 	}
 
