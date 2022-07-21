@@ -10,11 +10,11 @@ const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 let analyticsNodeClient;
 
-export function sendAnalytics(eventType: "trait")
-export function sendAnalytics(eventType: "screen", attributes:{name:string} & Record<string,unknown>)
-export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string,unknown>)
-export function sendAnalytics(eventType: string, attributes?: Record<string, unknown>): void {
-	if (!analyticsClient && !isNodeProd()){
+export function sendAnalytics(eventType: "trait", attributes: Record<string, unknown>)
+export function sendAnalytics(eventType: "screen", attributes: { name: string } & Record<string, unknown>)
+export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>)
+export function sendAnalytics(eventType: string, attributes: Record<string, unknown>): void {
+	if (!analyticsClient || !isNodeProd()){
 		return;
 	}
 
@@ -33,13 +33,13 @@ export function sendAnalytics(eventType: string, attributes?: Record<string, unk
 		tenantId: "NONE"
 	};
 
-	attributes!.appKey = appKey;
+	attributes.appKey = appKey;
 
 	logger.debug({ eventType }, "Sending analytics");
 
 	switch (eventType) {
 		case "screen":
-			wrapPromise(analyticsNodeClient.sendScreenEvent({
+			sendEvent(analyticsNodeClient.sendScreenEvent({
 				...baseAttributes,
 				name: attributes?.name,
 				screenEvent: {
@@ -49,7 +49,7 @@ export function sendAnalytics(eventType: string, attributes?: Record<string, unk
 			}));
 			break;
 		case "ui":
-			wrapPromise(analyticsNodeClient.sendUIEvent({
+			sendEvent(analyticsNodeClient.sendUIEvent({
 				...baseAttributes,
 				uiEvent: {
 					attributes
@@ -57,7 +57,7 @@ export function sendAnalytics(eventType: string, attributes?: Record<string, unk
 			}));
 			break;
 		case "track":
-			wrapPromise(analyticsNodeClient.sendTrackEvent({
+			sendEvent(analyticsNodeClient.sendTrackEvent({
 				...baseAttributes,
 				trackEvent: {
 					attributes
@@ -65,14 +65,14 @@ export function sendAnalytics(eventType: string, attributes?: Record<string, unk
 			}));
 			break;
 		case "trait":
-			wrapPromise(analyticsNodeClient.sendTraitEvent({
+			sendEvent(analyticsNodeClient.sendTraitEvent({
 				entityType: attributes?.entityType,
 				entityId: attributes?.entityId,
 				entityTraits: attributes?.entityTraits
 			}));
 			break;
 		case "operational":
-			wrapPromise(analyticsNodeClient.sendOperationalEvent({
+			sendEvent(analyticsNodeClient.sendOperationalEvent({
 				...baseAttributes,
 				operationalEvent: {
 					attributes
@@ -85,7 +85,7 @@ export function sendAnalytics(eventType: string, attributes?: Record<string, unk
 	}
 }
 
-function wrapPromise(promise: Promise<unknown>) {
+function sendEvent(promise: Promise<unknown>) {
 	promise.catch((error) => {
 		logger.warn(`Cannot sendAnalytics event: ${error}`);
 	});

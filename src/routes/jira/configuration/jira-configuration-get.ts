@@ -10,7 +10,7 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { isGitHubCloudApp } from "~/src/util/jira-utils";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypesEnum, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
@@ -132,7 +132,7 @@ export const JiraConfigurationGet = async (
 			isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 		});
 
-		sendAnalytics(AnalyticsEventTypesEnum.ScreenEvent, {
+		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
 			jiraHost,
 			connectedOrgCount: installations.total
