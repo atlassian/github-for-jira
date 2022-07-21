@@ -6,12 +6,12 @@ export const JiraConnectEnterpriseAppDelete = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.debug("Received Jira Connect Enterprise App Delete page request");
+		req.log.debug("Received Jira Connect Enterprise App DELETE request");
 
 		// TODO: Add logic for deleting apps
 
-		req.log.debug("Jira Connect Enterprise App Delete page rendered successfully.", res.locals);
+		req.log.debug("Jira Connect Enterprise App deleted successfully.", res.locals);
 	} catch (error) {
-		return next(new Error(`Failed to render Jira Connect Enterprise App Delete page: ${error}`));
+		return next(new Error(`Failed to render Jira Connect Enterprise App DELETE request : ${error}`));
 	}
 };

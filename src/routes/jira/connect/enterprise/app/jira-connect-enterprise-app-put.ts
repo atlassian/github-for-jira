@@ -6,12 +6,12 @@ export const JiraConnectEnterpriseAppPut = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.debug("Received Jira Connect Enterprise App Update page request");
+		req.log.debug("Received Jira Connect Enterprise App PUT request");
 
 		// TODO: Add logic for updating apps
 
-		req.log.debug("Jira Connect Enterprise App Update page rendered successfully.", res.locals);
+		req.log.debug("Jira Connect Enterprise App updated successfully.", res.locals);
 	} catch (error) {
-		return next(new Error(`Failed to render Jira Connect Enterprise App Update page: ${error}`));
+		return next(new Error(`Failed to render Jira Connect Enterprise App PUT request: ${error}`));
 	}
 };

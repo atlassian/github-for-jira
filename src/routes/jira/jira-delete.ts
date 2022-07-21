@@ -23,7 +23,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 		return;
 	}
 
-	req.log.info({ installationId }, "Received delete jira configuration request");
+	req.log.info({ installationId }, "Received Jira DELETE request");
 
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,

@@ -10,7 +10,7 @@ export const JiraConnectEnterpriseGet = async (
 	try {
 		const { id: installationId } = res.locals.installation;
 		const isNew = req.query?.new;
-		req.log.debug("Received Jira Connect Enterprise get page request");
+		req.log.debug("Received Jira Connect Enterprise GET page request");
 
 		const gheServers = await GitHubServerApp.findForInstallationId(installationId);
 
@@ -27,8 +27,8 @@ export const JiraConnectEnterpriseGet = async (
 			});
 		}
 
-		req.log.debug("Jira Connect Enterprise get page rendered successfully.");
+		req.log.debug("Jira Connect Enterprise GET page rendered successfully.");
 	} catch (error) {
-		return next(new Error(`Failed to render Jira Connect Enterprise get page: ${error}`));
+		return next(new Error(`Failed to render Jira Connect Enterprise GET page: ${error}`));
 	}
 };

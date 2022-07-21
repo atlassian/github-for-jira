@@ -6,12 +6,12 @@ export const JiraConnectEnterpriseAppPost = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.debug("Received Jira Connect Enterprise App Post page request");
+		req.log.debug("Received Jira Connect Enterprise App POST request");
 
 		// TODO: Add logic for adding new manual apps
 
-		req.log.debug("Jira Connect Enterprise App Post page rendered successfully.", res.locals);
+		req.log.debug("Jira Connect Enterprise App added successfully.", res.locals);
 	} catch (error) {
-		return next(new Error(`Failed to render Jira Connect Enterprise App Post page: ${error}`));
+		return next(new Error(`Failed to render Jira Connect Enterprise App POST request: ${error}`));
 	}
 };

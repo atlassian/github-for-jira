@@ -11,7 +11,6 @@ export const JiraConnectEnterpriseServerAppGet = async (
 
 		const baseUrl = req.params.serverUrl as string;
 		const isNew = req.query.new;
-		req.log.debug("How---------", req.params, req.query);
 
 		if (!baseUrl) {
 			throw new Error("No server URL passed!");

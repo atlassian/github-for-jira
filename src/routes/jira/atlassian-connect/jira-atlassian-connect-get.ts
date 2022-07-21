@@ -14,71 +14,6 @@ const adminCondition = [
 		condition: "user_is_admin"
 	}
 ];
-const generalPages = [
-	{
-		key: "github-select-version-page",
-		name: {
-			value: "GitHub Select Version"
-		},
-		url: "/jira/connect",
-		location: "none",
-		conditions: adminCondition
-	},
-	{
-		key: "github-server-url-page",
-		name: {
-			value: "GitHub Server Url"
-		},
-		url: "/jira/connect/enterprise?new={ac.new}",
-		location: "none",
-		conditions: adminCondition
-	},
-	{
-		key: "github-list-servers-page",
-		name: {
-			value: "GitHub Enterprise Servers"
-		},
-		url: "/jira/connect/enterprise",
-		location: "none",
-		conditions: adminCondition
-	},
-	{
-		key: "github-app-creation-page",
-		name: {
-			value: "GitHub App Creation"
-		},
-		url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
-		location: "none",
-		conditions: adminCondition
-	},
-	{
-		key: "github-list-server-apps-page",
-		name: {
-			value: "GitHub Server Apps"
-		},
-		url: "/jira/connect/enterprise/{ac.serverUrl}/app",
-		location: "none",
-		conditions: adminCondition
-	},
-	{
-		key: "github-manual-app-page",
-		name: {
-			value: "GitHub Manual App"
-		},
-		url: "/jira/connect/enterprise/{ac.serverUrl}/app/new",
-		location: "none",
-		conditions: adminCondition
-	},
-	{
-		key: "github-edit-app-page",
-		name: {
-			value: "GitHub Edit App"
-		},
-		url: "/jira/connect/enterprise/app/{ac.uuid}",
-		location: "none",
-		conditions: adminCondition
-	}
-];
 const modules = {
 	jiraDevelopmentTool: {
 		application: {
@@ -128,7 +63,71 @@ const modules = {
 		url: postInstallUrl,
 		conditions: adminCondition
 	},
-	generalPages,
+	generalPages: [
+		{
+			key: "github-select-version-page",
+			name: {
+				value: "GitHub Select Version"
+			},
+			url: "/jira/connect",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-server-url-page",
+			name: {
+				value: "GitHub Server Url"
+			},
+			url: "/jira/connect/enterprise?new={ac.new}",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-list-servers-page",
+			name: {
+				value: "GitHub Enterprise Servers"
+			},
+			url: "/jira/connect/enterprise",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-app-creation-page",
+			name: {
+				value: "GitHub App Creation"
+			},
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-list-server-apps-page",
+			name: {
+				value: "GitHub Server Apps"
+			},
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-manual-app-page",
+			name: {
+				value: "GitHub Manual App"
+			},
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app/new",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-edit-app-page",
+			name: {
+				value: "GitHub Edit App"
+			},
+			url: "/jira/connect/enterprise/app/{ac.uuid}",
+			location: "none",
+			conditions: adminCondition
+		}
+	],
 	webSections: [
 		{
 			key: "gh-addon-admin-section",
