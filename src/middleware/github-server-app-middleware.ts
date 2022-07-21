@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { envVars } from "config/env";
+import { keyLocator } from "../github/client/key-locator";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
@@ -42,9 +43,8 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			uuid: undefined, //undefined for cloud
 			clientId: envVars.GITHUB_CLIENT_ID,
 			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-			webhookSecret: envVars.WEBHOOK_SECRET
-			// once keylocator is merged
-			// privateKey: keyLocator
+			webhookSecret: envVars.WEBHOOK_SECRET,
+			privateKey: await keyLocator()
 		};
 	}
 
