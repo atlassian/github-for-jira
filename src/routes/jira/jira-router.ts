@@ -11,9 +11,7 @@ import { JiraConfigurationRouter } from "routes/jira/configuration/jira-configur
 
 export const JiraRouter = Router();
 
-JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, JiraGet);
-
-// TODO: Cleanup - Move this route to a separate API
+// TODO: The params `installationId` needs to be replaced by `subscriptionId`
 JiraRouter.delete("/subscription/:installationId", JiraContextJwtTokenMiddleware, JiraDelete);
 
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
@@ -24,6 +22,7 @@ JiraRouter.post("/sync", JiraContextJwtTokenMiddleware, JiraSyncPost);
 
 JiraRouter.use("/events", JiraEventsRouter);
 
+JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, JiraGet);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`

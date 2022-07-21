@@ -4,10 +4,12 @@ import { Request, Response } from "express";
 
 /**
  * Handle the when a user deletes an entry in the UI
+ *
  */
 export const JiraDelete = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost } = res.locals;
-	const installationId = Number(req.params.installationId);
+	// TODO: The params `installationId` needs to be replaced by `subscriptionId`
+	const installationId = Number(req.params.installationId) || Number(req.body.installationId);
 
 	if (!jiraHost) {
 		req.log.error("Missing Jira Host");

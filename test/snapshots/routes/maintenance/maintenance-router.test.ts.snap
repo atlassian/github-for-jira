@@ -36,8 +36,8 @@ Object {
             "condition": "user_is_admin",
           },
         ],
-        "key": "gh-addon-admin",
-        "location": "admin_plugins_menu/gh-addon-admin-section",
+        "key": "gh-addon-admin-old",
+        "location": "none",
         "name": Object {
           "value": "GitHub for Jira",
         },

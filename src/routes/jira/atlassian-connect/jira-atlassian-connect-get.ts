@@ -154,13 +154,13 @@ const modules = {
 			name: {
 				value: "GitHub for Jira"
 			},
-			key: "gh-addon-admin",
-			location: "admin_plugins_menu/gh-addon-admin-section"
+			key: "gh-addon-admin-old",
+			location: "none"
 		}
 	]
 };
 
-export const moduleUrls = compact(map([modules.postInstallPage, ...modules.generalPages], "url"));
+export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
 	res.status(200).json({
