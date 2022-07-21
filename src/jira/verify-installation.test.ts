@@ -7,10 +7,7 @@ import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { when } from "jest-when";
 
 jest.mock("./client/axios");
-jest.mock("config/feature-flags", ()=>({
-	...jest.requireActual("config/feature-flags"),
-	booleanFlag: jest.fn()
-}));
+jest.mock("config/feature-flags");
 
 describe("verify-installation", () => {
 	let installation: Installation;

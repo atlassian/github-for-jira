@@ -6,15 +6,12 @@ import * as Axios from "./axios";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { when } from "jest-when";
 
-jest.mock("config/feature-flags", ()=>({
-	...jest.requireActual("config/feature-flags"),
-	booleanFlag: jest.fn()
-}));
+jest.mock("config/feature-flags");
 
 describe("Test getting a jira client", () => {
 	const gitHubInstallationId = Math.round(Math.random() * 10000);
 	let subscription: Subscription;
-	let client;
+	let client: any;
 
 	beforeEach(async () => {
 		await Installation.install({
