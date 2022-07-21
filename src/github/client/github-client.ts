@@ -40,7 +40,7 @@ export class GitHubClient {
 		});
 	}
 
-	private getProxyConfig = (baseUrl: string): Partial<AxiosRequestConfig> => {
+	public getProxyConfig = (baseUrl: string): Partial<AxiosRequestConfig> => {
 		if (baseUrl
 			.replace(RegExp("/$"), "")
 			.endsWith("atlassian.com")) {
