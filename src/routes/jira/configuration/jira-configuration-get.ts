@@ -9,6 +9,8 @@ import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 interface FailedConnection {
@@ -123,6 +125,11 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 		csrfToken: req.csrfToken(),
 		nonce
 	});
+	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
+		jiraHost,
+		connectedOrgCount: installations.total
+	});
 };
 
 const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
@@ -166,6 +173,11 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
+	});
+	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
+		jiraHost,
+		connectedOrgCount: installations.total
 	});
 };
 

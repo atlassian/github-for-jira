@@ -16,7 +16,7 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --frozen-lockfile --ignore-optional
       - run: yarn run lint
       - run: yarn run build
 
@@ -34,7 +34,7 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --frozen-lockfile --ignore-optional
       - run: yarn run db:test
       - name: Run tests
         env:
@@ -55,7 +55,3 @@ jobs:
         uses: docker/build-push-action@v2.7.0
         with:
           file: Dockerfile
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2.7.0
-        with:
-          file: Dockerfile.prod
