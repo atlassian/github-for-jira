@@ -177,7 +177,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
 		jiraHost,
-		connectedOrgCount: installations.total
+		connectedOrgCount: installations.total + gheServers.length
 	});
 };
 
