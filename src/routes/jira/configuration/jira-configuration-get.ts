@@ -36,31 +36,6 @@ interface GitHubCloudObj {
 	failedConnections: FailedConnection[]
 }
 
-interface GitHubServerObj {
-	gitHubBaseUrl:string
-	applications: ConnectionsAndInstallations[]
-}
-
-interface ViewConfiguration {
-	host: string
-	hasConnections: boolean
-	APP_URL?: string
-	csrfToken: string
-	nonce: string
-}
-
-interface ViewConfigurationForGHCloud extends ViewConfiguration {
-	successfulConnections: SuccessfulConnection[]
-	failedConnections: FailedConnection[]
-}
-
-interface ViewConfigurationForGHE extends ViewConfiguration {
-	gheServers: GitHubServerObj[]
-	hasCloudAndEnterpriseServers: boolean
-	ghCloud: GitHubCloudObj
-	hasCloudServers: boolean
-}
-
 const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	switch (syncStatus) {
 		case "ACTIVE":
@@ -134,12 +109,12 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 	return { installations, successfulConnections, failedConnections };
 };
 
-const JiraCloudConfiguration = async (res: Response, req: Request): Promise<ViewConfigurationForGHCloud> => {
+const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
 
-	return {
+	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		successfulConnections,
 		failedConnections,
@@ -147,10 +122,10 @@ const JiraCloudConfiguration = async (res: Response, req: Request): Promise<View
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
-	};
+	});
 };
 
-const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request): Promise<ViewConfigurationForGHE> => {
+const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
@@ -181,7 +156,7 @@ const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request):
 			applications: value
 		})).value();
 
-	return {
+	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulConnections, failedConnections },
@@ -191,7 +166,7 @@ const JiraCloudAndEnterpriseConfiguration = async (res: Response, req: Request):
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
-	};
+	});
 };
 
 export const JiraConfigurationGet = async (
@@ -211,9 +186,9 @@ export const JiraConfigurationGet = async (
 		req.log.debug("Received jira configuration page request");
 
 		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
-			res.render("jira-configuration-new.hbs", await JiraCloudAndEnterpriseConfiguration(res, req));
+			await renderJiraCloudAndEnterpriseServer(res, req);
 		} else {
-			res.render("jira-configuration.hbs", await JiraCloudConfiguration(res, req));
+			await renderJiraCloud(res, req);
 		}
 		req.log.debug("Jira configuration rendered successfully.");
 	} catch (error) {
