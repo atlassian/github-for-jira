@@ -41,9 +41,9 @@ Object {
         "key": "github-select-product-page",
         "location": "none",
         "name": Object {
-          "value": "GitHub Select Version",
+          "value": "GitHub Select Product",
         },
-        "url": "/jira/select-version",
+        "url": "/jira/select-product",
       },
       Object {
         "conditions": Array [
