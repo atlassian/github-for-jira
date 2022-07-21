@@ -47,7 +47,7 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 	const { jiraHost } = subscription;
 	const { gitHubInstallationId } = subscription;
 	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
-	const gitHubVersion = getCloudOrServerFromGitHubAppId(gitHubAppId);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	try {
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
@@ -65,7 +65,7 @@ const getInstallation = async (subscription: Subscription, log: Logger, gitHubAp
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"
 		);
-		statsd.increment(metricError.failedConnection, { gitHubVersion });
+		statsd.increment(metricError.failedConnection, { gitHubProduct });
 		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.status === 404 });
 	}
 };
