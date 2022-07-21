@@ -1,4 +1,4 @@
-.selectServer__content {
+.selectTable__content {
   background-color: #F4F5F7;
   padding: 1.5em;
   width: 656px;
@@ -6,7 +6,7 @@
   border-radius: 10px;
 }
 
-.selectServer__contentHead {
+.selectTable__contentHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -14,33 +14,33 @@
   margin-bottom: 1.2em;
 }
 
-.selectServer__contentHeadTitle {
+.selectTable__contentHeadTitle {
   display: flex;
   align-items: center;
 }
 
-.selectServer__addNew {
+.selectTable__addNew {
   color: #42526E;
 }
 
-.selectServer__contentImg {
+.selectTable__contentImg {
   margin-right: 0.8em;
   height: 26px;
 }
 
-.selectServer__contentTitle {
+.selectTable__contentTitle {
   font-weight: 600;
   font-size: 1.1rem;
 }
 
-.selectServer__list {
+.selectTable__list {
   background-color: #fff;
   border-radius: 3px;
   box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
   padding: 0.5em 0;
 }
 
-.selectServer__server {
+.selectTable__itemContainer {
   display: flex;
   padding: 0.5em 1.5em;
   align-items: center;
