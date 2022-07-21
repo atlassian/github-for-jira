@@ -6,6 +6,10 @@ import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 import { getLogger } from "config/logger";
+import express from "express";
+import supertest from "supertest";
+import { encodeSymmetric } from "atlassian-jwt";
+import { getFrontendApp } from "~/src/app";
 
 describe("Jira Configuration Suite", () => {
 	let subscription: Subscription;
@@ -249,5 +253,57 @@ describe("Jira Configuration Suite", () => {
 				rejected: []
 			});
 		});
+	});
+});
+
+describe.each([
+	{
+		url: "/jira/configuration",
+		testSharedSecret: "test-secret",
+		testQsh: "db37a424af6f7376d21db2662904db65628a7c2e4af73b67fa13df5e4bedbae3"
+	}, {
+		url: "/jira",
+		testSharedSecret: "test-secret",
+		testQsh: "220ebb06872fa43907db98520b898b10f3509824e84602d342d202a1d6c392e6"
+	}
+])("Jira Route", (testData) => {
+	const { url, testSharedSecret, testQsh } = testData;
+	let frontendApp, installation;
+
+	beforeEach(async () => {
+		installation = await Installation.install({
+			host: jiraHost,
+			sharedSecret: testSharedSecret,
+			clientKey: "client-key"
+		});
+		frontendApp = express();
+		frontendApp.use((request, res, next) => {
+			res.locals = { jiraHost, installation };
+			request.log = getLogger("test");
+			request.query = {
+				xdm_e: jiraHost,
+				jwt: encodeSymmetric({
+					qsh: testQsh,
+					iss: "jira"
+				}, testSharedSecret)
+			};
+			request.addLogFields = jest.fn();
+			request.csrfToken = jest.fn();
+
+			next();
+		});
+		frontendApp.use(getFrontendApp({
+			getSignedJsonWebToken: () => "",
+			getInstallationAccessToken: async () => ""
+		}));
+	});
+
+	it(`Testing route: ${url}`, async () => {
+		await supertest(frontendApp)
+			.get(url)
+			.expect(200)
+			.then(response => {
+				expect(response.text).toContain("<h1 class=\"jiraConfiguration__header__title\">GitHub configuration</h1>");
+			});
 	});
 });
