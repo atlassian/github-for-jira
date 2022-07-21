@@ -9,9 +9,9 @@ if [ -f "$OLDFILE" ] && [ !  -f "$NEWFILE" ]; then
   echo "Detected old .env file, moving to .env.development.local"
   mv "$OLDFILE" "$NEWFILE"
   echo "Moving global values back to .env file"
-  cat "$NEWFILE" | grep -oP "${REGEX}" > "$OLDFILE"
+  cat "$NEWFILE" | grep -oE "${REGEX}" > "$OLDFILE"
   echo "Removing moved from .env.development.local file"
-  sed -i -E "s/${REGEX}//" "$NEWFILE"
+  sed -i '' -E "s/${REGEX}//" "$NEWFILE"
 fi
 
 . "$(dirname "$0")/create-env.sh"
