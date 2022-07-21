@@ -9,12 +9,13 @@ export const JiraConnectEnterpriseServerAppGet = async (
 	try {
 		req.log.debug("Received Jira Connect Enterprise App page request");
 
-		// This parameter needs to be URI encoded when passing
 		const baseUrl = req.params.serverUrl as string;
 		const isNew = req.query.new;
+		req.log.debug("How---------", req.params, req.query);
 
 		if (!baseUrl) {
 			throw new Error("No server URL passed!");
+
 		}
 
 		const gheServers = await GitHubServerApp.getAllForGitHubBaseUrl(decodeURIComponent(baseUrl), res.locals.installation.id);

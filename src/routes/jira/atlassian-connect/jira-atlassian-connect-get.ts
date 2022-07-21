@@ -29,7 +29,7 @@ const generalPages = [
 		name: {
 			value: "GitHub Server Url"
 		},
-		url: "/jira/connect/enterprise?{ac.new}",
+		url: "/jira/connect/enterprise?new={ac.new}",
 		location: "none",
 		conditions: adminCondition
 	},
@@ -47,7 +47,7 @@ const generalPages = [
 		name: {
 			value: "GitHub App Creation"
 		},
-		url: "/jira/connect/enterprise/{ac.serverUrl}/app?{ac.new}",
+		url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
 		location: "none",
 		conditions: adminCondition
 	},
