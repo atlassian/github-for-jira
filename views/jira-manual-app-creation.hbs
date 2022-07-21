@@ -33,9 +33,22 @@
 
   <div class="jiraManualAppCreation">
 
-      <h1>Manual app Creation</h1>
+      <h1>
+      {{#if app.id}}
+        Edit {{app.gitHubAppName}}
+      {{else}}
+        Manual app creation
+      {{/if}}
+      </h1>
 
-      <div>Learn how to <a href="#">manually set up a GitHub app</a>. All fields are required.</div>
+      <div>
+        {{#if app.id}}
+            Edit your fields to update your app configuration.
+          {{else}}
+            Enter all the fields to create your app.
+        {{/if}}
+        <a href="#">Learn more about manual GitHub app creation.</a>
+      </div>
 
       <form id="jiraManualAppCreation__form" class="aui top-label" enctype="multipart/form-data">
         <div class="jiraManualAppCreation__formTitle">
@@ -47,21 +60,8 @@
           <label for="app-name">GitHub app name</label>
           <input class="text full-width-field" type="text"
                  data-aui-validation-field required
+                 value="{{app.gitHubAppName}}"
                  id="app-name" name="app-name" />
-        </div>
-
-        <div class="field-group ">
-          <label for="app-id">GitHub app ID</label>
-          <input class="text full-width-field" type="text"
-                 data-aui-validation-field required
-                 id="app-id" name="app-id" />
-        </div>
-
-        <div class="field-group">
-          <label for="client-id">GitHub client ID</label>
-          <input class="text full-width-field" type="text"
-                 data-aui-validation-field required
-                 id="client-id" name="client-id" />
         </div>
 
         <div class="jiraManualAppCreation__formTitle">URLs</div>
@@ -72,7 +72,7 @@
         <div class="field-group">
           <label for="callback-url">Callback URL</label>
           <input class="text full-width-field" type="text" id="callback-url"
-                 name="callback-url" value="{{githubBaseUrl}}/github/callback/{{uuid}}"
+                 name="callback-url" value="{{app.gitHubBaseUrl}}/github/callback/{{app.uuid}}"
                  readonly
           />
         </div>
@@ -80,7 +80,7 @@
         <div class="field-group">
           <label for="setup-url">Setup URL</label>
           <input class="text full-width-field" type="text" id="setup-url"
-                 name="setup-url" value="{{githubBaseUrl}}/github/setup/{{uuid}}"
+                 name="setup-url" value="{{app.gitHubBaseUrl}}/github/setup/{{app.uuid}}"
                  readonly
           />
         </div>
@@ -88,28 +88,46 @@
         <div class="field-group">
           <label for="webhook-url">Webhook URL</label>
           <input class="text full-width-field" type="text" id="webhook-url"
-                 name="webhook-url" value="{{githubBaseUrl}}/github/webhook/{{uuid}}"
+                 name="webhook-url" value="{{app.gitHubBaseUrl}}/github/webhook/{{app.uuid}}"
                  readonly
           />
-        </div>
-
-        <div class="jiraManualAppCreation__formTitle">Secrets</div>
-        <div class="jiraManualAppCreation__formSubTitle">
-          Paste secrets from your GitHub Enterprise Server configuration.
-        </div>
-
-        <div class="field-group">
-          <label for="client-secret">GitHub client secret</label>
-          <input class="text full-width-field" type="password"
-                 data-aui-validation-field required
-                 id="client-secret" name="client-secret" />
         </div>
 
         <div class="field-group">
           <label for="webhook-secret">Webhook secret</label>
           <input class="text full-width-field" type="password"
                  data-aui-validation-field required
+                 value="{{app.webhookSecret}}"
                  id="webhook-secret" name="webhook-secret" />
+        </div>
+
+        <div class="jiraManualAppCreation__formTitle">Secrets and IDs</div>
+        <div class="jiraManualAppCreation__formSubTitle">
+          Copy and paste the following details from your GitHub Enterprise Server configuration
+        </div>
+
+        <div class="field-group ">
+          <label for="app-id">GitHub app ID</label>
+          <input class="text full-width-field" type="text"
+                 data-aui-validation-field required
+                 value="{{app.appId}}"
+                 id="app-id" name="app-id" />
+        </div>
+
+        <div class="field-group">
+          <label for="client-id">GitHub client ID</label>
+          <input class="text full-width-field" type="text"
+                 data-aui-validation-field required
+                 value="{{app.gitHubClientId}}"
+                 id="client-id" name="client-id" />
+        </div>
+
+        <div class="field-group">
+          <label for="client-secret">GitHub client secret</label>
+          <input class="text full-width-field" type="password"
+                 data-aui-validation-field required
+                 value="{{app.gitHubClientSecret}}"
+                 id="client-secret" name="client-secret" />
         </div>
 
         <div class="field-group">
@@ -147,7 +165,7 @@
           }}
         </div>
 
-        <input type="submit" value="Next" class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary" />
+        <input type="submit" value="{{#if app.id}}Update{{else}}Next{{/if}}" class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary" />
       </form>
     </div>
 
