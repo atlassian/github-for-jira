@@ -8,6 +8,8 @@ export const JiraConnectEnterpriseServerAppGet = async (
 ): Promise<void> => {
 	try {
 		req.log.debug("Received Jira Connect Enterprise App page request");
+
+		// This parameter needs to be URI encoded when passing
 		const baseUrl = req.params.serverUrl as string;
 		const isNew = req.query.new;
 

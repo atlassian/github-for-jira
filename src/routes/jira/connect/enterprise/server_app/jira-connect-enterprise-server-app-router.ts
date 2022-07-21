@@ -9,8 +9,6 @@ export const JiraConnectEnterpriseServerAppRouter = Router();
 JiraConnectEnterpriseServerAppRouter.use(csrfMiddleware);
 JiraConnectEnterpriseServerAppRouter.use(JiraJwtTokenMiddleware);
 
-JiraConnectEnterpriseServerAppRouter.route("/")
-	.get(csrfMiddleware, JiraConnectEnterpriseServerAppGet);
-
-JiraConnectEnterpriseServerAppRouter.route("/new")
-	.get(csrfMiddleware, JiraConnectEnterpriseAppCreateOrEdit);
+JiraConnectEnterpriseServerAppRouter
+	.get("/",JiraConnectEnterpriseServerAppGet)
+	.get("/new", JiraConnectEnterpriseAppCreateOrEdit);
