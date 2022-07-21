@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="/public/css/global.css" media="all" />
     <link rel="stylesheet" href="/public/css/jira-select-server.css" media="all" />
     <link rel="stylesheet" href="/public/css/select-server-header.css" media="all" />
-    <link rel="stylesheet" href="/public/css/select-server-table.css" media="all" />
+    <link rel="stylesheet" href="/public/css/select-table.css" media="all" />
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
@@ -35,7 +35,7 @@
     />
     <div class="jiraSelectServer">
       <header class="jiraSelectServer__header">
-         {{> navigation previousPagePath="github-server-url-page" previousPageName="GitHub Server Url" }}
+         {{> navigation previousPageName="GitHub Server Url" }}
       </header>
 
       <section class="jiraSelectServer__content">
@@ -45,13 +45,13 @@
             subHeader="We found the following GitHub servers"
         }}
         <!-- servers refer to the array of GHE apps-->
-        {{> select-server-table
+        {{> select-table
             installationId=id
             contentImgURL="/public/assets/github-logo.svg"
             contentTitle="GitHub Enterprise Servers"
             textForAddNew="Connect a new server"
             pathNameForAddNew="github-server-url-page"
-            servers=servers
+            list=list
         }}
       </section>
 
@@ -69,8 +69,8 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
-    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
     <script src="/public/js/jira-select-server.js" nonce="{{nonce}}"></script>
-    <script src="/public/js/select-server-table.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/select-table.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   </body>
 </html>
