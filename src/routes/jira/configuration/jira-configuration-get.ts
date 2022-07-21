@@ -115,7 +115,7 @@ export const JiraConfigurationGet = async (
 			}));
 
 		const handleNavigationClassName = await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)
-			? "select-github-version-link"
+			? "select-github-product-link"
 			: "add-organization-link";
 
 		res.render("jira-configuration.hbs", {
