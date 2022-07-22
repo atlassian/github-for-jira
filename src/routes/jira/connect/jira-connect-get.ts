@@ -8,7 +8,7 @@ export const JiraConnectGet = async (
 	try {
 		req.log.info("Received Jira Connect page request");
 
-		res.render("jira-select-github-version.hbs", {
+		res.render("jira-select-github-product.hbs", {
 			previousPagePath: "github-post-install-page"
 		});
 

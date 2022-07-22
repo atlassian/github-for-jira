@@ -22,6 +22,6 @@ describe("GET /jira/connect", () => {
 	it("Get Jira Configuration", async () => {
 		const response = mockResponse();
 		await JiraConnectGet(mockRequest(), response, jest.fn());
-		expect(response.render.mock.calls[0][0]).toBe("jira-select-github-version.hbs");
+		expect(response.render.mock.calls[0][0]).toBe("jira-select-github-product.hbs");
 	});
 });
