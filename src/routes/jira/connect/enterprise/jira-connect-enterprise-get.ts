@@ -15,7 +15,7 @@ export const JiraConnectEnterpriseGet = async (
 		const gheServers = await GitHubServerApp.findForInstallationId(installationId);
 
 		if (!isNew && gheServers?.length) {
-			const servers = chain(groupBy(gheServers, "gitHubBaseUrl")).map((_, key) => ({ displayName: key })).value();
+			const servers = chain(groupBy(gheServers, "gitHubBaseUrl")).map((_, key) => ({ identifier: key })).value();
 
 			res.render("jira-select-server.hbs", {
 				list: servers
