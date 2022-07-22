@@ -26,6 +26,11 @@ GithubRouter.use(csrfMiddleware);
 
 GithubRouter.use("/setup", GithubSetupRouter);
 
+// App Manifest flow routes
+GithubRouter.use("/manifest", GithubManifestRouter);
+
+GithubRouter.use("/redirect", GithubRedirectGet);
+
 // All following routes need Github Auth
 GithubRouter.use(GithubAuthMiddleware);
 
@@ -33,8 +38,3 @@ GithubRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 GithubRouter.use("/subscriptions?", GithubSubscriptionRouter);
-
-// App Manifest flow routes
-GithubRouter.use("/manifest", GithubManifestRouter);
-
-GithubRouter.use("/redirect", GithubRedirectGet);
