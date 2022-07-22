@@ -20,7 +20,6 @@ export enum BooleanFlags {
 	LOG_UNSAFE_DATA = "log-unsafe-data",
 	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
 	BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS = "run-backfill-for-builds-and-deployments",
-	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
 	REGEX_FIX = "regex-fix",
 	USE_NEW_GITHUB_CLIENT_FOR_GET_REPO = "use-new-github-client-for-get-repo",
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
@@ -29,7 +28,8 @@ export enum BooleanFlags {
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
-	TAG_BACKFILL_REQUESTS = "tag-backfill-requests"
+	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
+	READ_SHARED_SECRET_FROM_CRYPTOR = "read-shared-secret-from-cryptor"
 }
 
 export enum StringFlags {

@@ -114,16 +114,7 @@ describe("Github Configuration", () => {
 		});
 	});
 
-	describe.each([true, false])("#GET - GithubClient - %s", (useNewGithubClient) => {
-
-		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(useNewGithubClient);
-		});
-
+	describe("#GET - GithubClient - %s", () => {
 		it("should return 200 when calling with valid Github Token", async () => {
 			githubNock
 				.get("/")
