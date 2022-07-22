@@ -90,6 +90,26 @@ $(".sync-connection-link").click(function(event) {
 	});
 });
 
+$('.jiraConfiguration__option').click(function (event) {
+	event.preventDefault();
+	$('.jiraConfiguration__option').removeClass('jiraConfiguration__selected');
+	$(event.target).addClass('jiraConfiguration__selected');
+
+	switch ($(event.target).attr('id')) {
+		case 'jiraConfiguration__optionCloud':
+			$('.jiraConfiguration__cloudContainer').show();
+			$('.jiraConfiguration__enterpriseContainer').hide();
+			break;
+		case 'jiraConfiguration__optionEnterprise':
+			$('.jiraConfiguration__enterpriseContainer').show();
+			$('.jiraConfiguration__cloudContainer').hide();
+			break;
+		default:
+			$('.jiraConfiguration__cloudContainer').show();
+			$('.jiraConfiguration__enterpriseContainer').show();
+	}
+});
+
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
 const syncStatusModal = document.getElementById("sync-status-modal");
 const syncStatusCloseBtn = document.getElementById("status-close");
