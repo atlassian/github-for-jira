@@ -23,7 +23,7 @@ $(".add-organization-link").click(function(event) {
 	});
 });
 
-$(".select-github-version-link").click(function(event) {
+$(".select-github-product-link").click(function(event) {
 	event.preventDefault();
 
 	AP.navigator.go(
