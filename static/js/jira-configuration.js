@@ -29,7 +29,7 @@ $(".select-github-version-link").click(function(event) {
 	AP.navigator.go(
 		'addonmodule',
 			{
-				moduleKey: "github-select-version-page"
+				moduleKey: "github-select-product-page"
 			}
 		);
 });
