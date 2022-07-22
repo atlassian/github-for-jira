@@ -38,12 +38,12 @@ Object {
             "condition": "user_is_admin",
           },
         ],
-        "key": "github-select-version-page",
+        "key": "github-select-product-page",
         "location": "none",
         "name": Object {
-          "value": "GitHub Select Version",
+          "value": "GitHub Select Product",
         },
-        "url": "/jira/select-version",
+        "url": "/jira/select-product",
       },
       Object {
         "conditions": Array [
@@ -96,6 +96,19 @@ Object {
           "value": "GitHub Enterprise Servers",
         },
         "url": "/jira/ghe-servers",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-list-server-apps-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Enterprise Server Apps",
+        },
+        "url": "/jira/ghe-servers/apps?serverUrl={ac.serverUrl}",
       },
     ],
     "jiraBuildInfoProvider": Object {
