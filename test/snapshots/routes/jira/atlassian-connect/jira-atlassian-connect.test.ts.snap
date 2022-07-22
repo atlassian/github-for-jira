@@ -51,10 +51,10 @@ Object {
             "condition": "user_is_admin",
           },
         ],
-        "key": "github-select-version-page",
+        "key": "github-select-product-page",
         "location": "none",
         "name": Object {
-          "value": "GitHub Select Version",
+          "value": "GitHub Select Product",
         },
         "url": "/jira/connect",
       },

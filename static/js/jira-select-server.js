@@ -1,5 +1,8 @@
 $('.select-server').click(function (event) {
   event.preventDefault();
 
-  // TODO: Need to add the logic for navigation
+  AP.navigator.go("addonmodule", {
+    moduleKey: "github-list-server-apps-page",
+    customData: { serverUrl: $(event.target).data("identifier") }
+  })
 });

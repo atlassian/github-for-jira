@@ -65,9 +65,9 @@ const modules = {
 	},
 	generalPages: [
 		{
-			key: "github-select-version-page",
+			key: "github-select-product-page",
 			name: {
-				value: "GitHub Select Version"
+				value: "GitHub Select Product"
 			},
 			url: "/jira/connect",
 			location: "none",
