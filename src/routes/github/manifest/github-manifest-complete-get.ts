@@ -3,16 +3,17 @@ import axios from "axios";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { Installation } from "~/src/models/installation";
 
-export const JiraManifestCompleteGet = async (req: Request, res: Response) => {
+export const GithubManifestCompleteGet = async (req: Request, res: Response) => {
 	const uuid = req.params.uuid;
-	const jiraHost = "https://harminder.atlassian.net";
+	const jiraHost = res.locals.jiraHost;
 	if (!jiraHost) {
 		throw new Error("Jira Host not found");
 	}
-	const gheHost = req.cookies.ghe_host;
+	const gheHost = req.session.temp?.gheHost;
 	if (!gheHost) {
-		throw new Error("GitHub Enterprise Host not found in cookie");
+		throw new Error("GitHub Enterprise Host not found");
 	}
+	// complete GitHub app manifest flow
 	const apiUrl = `${gheHost}/api/v3/app-manifests/${req.query.code}/conversions`;
 	const gitHubAppConfig = (await axios.post(apiUrl, {}, { headers: { Accept: "application/vnd.github.v3+json" } })).data;
 	const installation = await Installation.getForHost(jiraHost);
@@ -30,5 +31,6 @@ export const JiraManifestCompleteGet = async (req: Request, res: Response) => {
 		privateKey:  gitHubAppConfig.pem,
 		installationId: installation.id
 	});
+	req.session.temp = undefined;
 	res.json({ success:true });
 };

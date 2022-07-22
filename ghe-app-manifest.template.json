@@ -1,11 +1,11 @@
 {
   "name": "ghe-app-for-jira",
-  "url": "<<GHE_HOST>>/apps/ghe-app-for-jira",
-  "redirect_url": "<<APP_HOST>>/jira/manifest/complete/<<UUID>>",
+  "url": "https://github.com/marketplace/jira-software-github",
+  "redirect_url": "<<APP_HOST>>/github/manifest/<<UUID>>/complete",
   "hook_attributes": {
-    "url": "<<APP_HOST>>/github/events/<<UUID>>"
+    "url": "<<APP_HOST>>/github/<<UUID>>/events"
   },
-  "setup_url": "<<APP_HOST>>/github/setup/<<UUID>>",
+  "setup_url": "<<APP_HOST>>/github/<<UUID>>/setup",
   "public": true,
   "default_permissions": {
     "actions": "read",

@@ -7,6 +7,8 @@ import { GithubConfigurationRouter } from "routes/github/configuration/github-co
 import { returnOnValidationError } from "../api/api-utils";
 import { header } from "express-validator";
 import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
+import { GithubRedirectGet } from "~/src/routes/github/github-redirect-get";
+import { GithubManifestRouter } from "~/src/routes/github/manifest/github-manifest-router";
 
 export const GithubRouter = Router();
 
@@ -31,3 +33,8 @@ GithubRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 GithubRouter.use("/subscriptions?", GithubSubscriptionRouter);
+
+// App Manifest flow routes
+GithubRouter.use("/manifest", GithubManifestRouter);
+
+GithubRouter.use("/redirect", GithubRedirectGet);

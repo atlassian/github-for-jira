@@ -1,4 +1,18 @@
 /* globals $, AP */
+const params = new URLSearchParams(window.location.search.substring(1));
+const jiraHost = params.get("xdm_e");
+
+function openChildWindow(url) {
+	const child = window.open(url);
+	const interval = setInterval(function () {
+		if (child.closed) {
+			clearInterval(interval);
+			AP.navigator.reload();
+		}
+	}, 100);
+
+	return child;
+}
 
 $(document).ready(function () {
 
@@ -15,28 +29,11 @@ $(document).ready(function () {
 
 	$(".optionBtn").click(function (event) {
 		event.preventDefault();
-
-		console.log("selectedOption", selectedOption);
 		 if(selectedOption === "automatic") {
-			$.ajax({
-				type: "GET",
-				url: "/jira/manifest",
-				success: function(appManifest) {
-					console.log(JSON.stringify(appManifest));
-
-					const newForm = jQuery('<form>', {
-						'action': 'http://github.internal.atlassian.com/settings/apps/new', // Todo: read from query param
-						'method': 'post',
-						'target': '_blank'
-				}).append(jQuery('<input>', {
-						'name': 'manifest',
-						'id': 'manifest',
-						'value': JSON.stringify(appManifest),
-						'type': 'text'
-				}));
-				$(document.body).append(newForm);
-				newForm.submit(); 
-				}
+			AP.context.getToken(function(token) {
+				const child = openChildWindow("/session/github/redirect");
+				child.window.jiraHost = jiraHost;
+				child.window.jwt = token;
 			});
 		} 
 	});
