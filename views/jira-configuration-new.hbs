@@ -168,7 +168,7 @@
                 <div class="jiraConfiguration__enterpriseServer">
                   <div class="jiraConfiguration__collapsibleHeaderTitle">{{server.gitHubBaseUrl}}</div>
                   <div class="jiraConfiguration__enterpriseConnections">
-                    <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATIONS</div>
+                    <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATION</div>
                     {{#each server.applications as |app|}}
                       <details>
                         <summary class="jiraConfiguration__collapsibleHeader jiraConfiguration__table__cell__settings">
@@ -207,16 +207,26 @@
                           </aui-dropdown-menu>
                         </summary>
                         <div class="jiraConfiguration__collapsibleBody">
-                          <!--TODO: Need to update the passed variables later-->
-                          {{> jira-configuration-table
-                              id=id
-                              hideAvatar=true
-                              elementIdPrefix="gheServer-"
-                              html_url=html_url
-                              csrfToken=csrfToken
-                              successfulConnections=app.successfulConnections
-                              failedConnections=app.failedConnections
-                          }}
+                          {{#if app.installations.total}}
+                            {{> jira-configuration-table
+                                id=id
+                                hideAvatar=true
+                                elementIdPrefix="gheServer-"
+                                html_url=html_url
+                                csrfToken=csrfToken
+                                successfulConnections=app.successfulConnections
+                                failedConnections=app.failedConnections
+                            }}
+                          {{else}}
+                            <div class="jiraConfiguration__collapsibleBody">
+                              <div class="jiraConfiguration__noOrgsTitle">Connected organizations</div>
+                              <div class="jiraConfiguration__noOrgsBody">
+                                No connected organizations.
+                                <!--TODO: Need to add the URL or action for this link-->
+                                <a href="#">Connect a GitHub organization.</a>
+                              </div>
+                            </div>
+                          {{/if}}
                         </div>
                       </details>
                     {{/each}}
