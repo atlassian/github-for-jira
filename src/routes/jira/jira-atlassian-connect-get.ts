@@ -65,11 +65,11 @@ const modules = {
 	},
 	generalPages: [
 		{
-			key: "github-select-version-page",
+			key: "github-select-product-page",
 			name: {
-				value: "GitHub Select Version"
+				value: "GitHub Select Product"
 			},
-			url: "/jira/select-version",
+			url: "/jira/select-product",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -92,11 +92,29 @@ const modules = {
 			conditions: adminCondition
 		},
 		{
+			key: "github-edit-app-page",
+			name: {
+				value: "GitHub Edit App"
+			},
+			url: "/jira/edit-app/{ac.ghsaId}",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
 			key: "github-list-servers-page",
 			name: {
 				value: "GitHub Enterprise Servers"
 			},
 			url: "/jira/ghe-servers",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-list-server-apps-page",
+			name: {
+				value: "GitHub Enterprise Server Apps"
+			},
+			url: "/jira/ghe-servers/apps?serverUrl={ac.serverUrl}",
 			location: "none",
 			conditions: adminCondition
 		}

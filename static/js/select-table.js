@@ -1,4 +1,5 @@
-$(".selectServer__addNew").click(function (event) {
+$(".selectTable__addNew").click(function (event) {
   event.preventDefault();
   AP.navigator.go("addonmodule", {moduleKey: $(event.target).data("path")});
 });
+1
