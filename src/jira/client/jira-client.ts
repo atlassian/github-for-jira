@@ -9,7 +9,7 @@ import { JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptions } from "interf
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
-import { shouldTagBackfillRequests } from "config/feature-flags";
+import { shouldTagBackfillRequests, BooleanFlags, booleanFlag } from "config/feature-flags";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -42,7 +42,9 @@ export const getJiraClient = async (
 	}
 	const instance = getAxiosInstance(
 		installation.jiraHost,
-		installation.sharedSecret,
+		await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, jiraHost)
+			? await installation.decrypt("encryptedSharedSecret")
+			: installation.sharedSecret,
 		logger
 	);
 
