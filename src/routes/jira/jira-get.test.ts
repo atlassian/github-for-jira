@@ -5,13 +5,15 @@ import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { getLogger } from "config/logger";
 import express from "express";
 import supertest from "supertest";
 import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("Jira Configuration Suite", () => {
 	let subscription: Subscription;
@@ -72,14 +74,15 @@ describe("Jira Configuration Suite", () => {
 
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
+		githubNock
+			.get(`/app/installations/15`)
+			.reply(200, singleInstallation);
+
 		when(booleanFlag).calledWith(
 			BooleanFlags.GHE_SERVER,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
-		githubNock
-			.get(`/app/installations/15`)
-			.reply(200, singleInstallation);
 
 		await JiraGet(mockRequest(), response, jest.fn());
 		const data = response.render.mock.calls[0][1];
