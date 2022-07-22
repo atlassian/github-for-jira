@@ -23,7 +23,6 @@ export enum BooleanFlags {
 	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST = "use-new-github-client-for-github-config-post",
 	REGEX_FIX = "regex-fix",
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
-	USE_NEW_GITHUB_CLIENT_FOR_REDIRECT = "use-new-github-client-for-redirect",
 	SEND_RELATED_COMMITS_WITH_DEPLOYMENT_ENTITIES = "send-related-commits-with-deployment-entities",
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
