@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { JiraJwtTokenMiddleware } from "middleware/jira-jwt-middleware";
+import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "middleware/jira-jwt-middleware";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { JiraConnectEnterpriseGet } from "./jira-connect-enterprise-get";
 import { JiraConnectEnterprisePost } from "routes/jira/connect/enterprise/jira-connect-enterprise-post";
@@ -9,12 +9,12 @@ import { JiraConnectEnterpriseAppCreateOrEdit } from "routes/jira/connect/enterp
 
 export const JiraConnectEnterpriseRouter = Router();
 
-JiraConnectEnterpriseRouter.use(csrfMiddleware);
-JiraConnectEnterpriseRouter.use(JiraJwtTokenMiddleware);
+JiraConnectEnterpriseRouter.post("/", JiraContextJwtTokenMiddleware, JiraConnectEnterprisePost);
 
-JiraConnectEnterpriseRouter.route("/")
-	.get(JiraConnectEnterpriseGet)
-	.post(JiraConnectEnterprisePost);
+
+JiraConnectEnterpriseRouter.use(csrfMiddleware).use(JiraJwtTokenMiddleware);
+
+JiraConnectEnterpriseRouter.route("/").get(JiraConnectEnterpriseGet);
 
 JiraConnectEnterpriseRouter.use("/app", JiraConnectEnterpriseAppRouter);
 
