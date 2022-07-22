@@ -17,11 +17,9 @@ jest.mock("axios", () => ({ get: jest.fn(), create: jest.fn() }));
 jest.mock("models/github-server-app");
 jest.mock("models/installation");
 
-const JIRA_HOST = "https://gh4j.test.atlassian.net";
 const VALID_TOKEN = "valid-token";
 const GITHUB_SERVER_APP_UUID: string = v4uuid();
 const GITHUB_SERVER_APP_ID = 789;
-const GITHUB_SERVER_APP_URL = "https://default.internal.github.atlassian.net";
 const JIRA_INSTALLATION_ID = 444444;
 
 const getGitHubServerAppModel = (): GitHubServerApp => {
@@ -29,7 +27,7 @@ const getGitHubServerAppModel = (): GitHubServerApp => {
 		id: 1,
 		uuid: GITHUB_SERVER_APP_UUID,
 		appId: GITHUB_SERVER_APP_ID,
-		gitHubBaseUrl: GITHUB_SERVER_APP_URL,
+		gitHubBaseUrl: gheUrl,
 		gitHubClientId: "client-id",
 		gitHubClientSecret: "gitHubClientSecret",
 		webhookSecret: "webhookSecret",
@@ -45,7 +43,7 @@ const getGitHubServerAppModel = (): GitHubServerApp => {
 const getServerApptInstallationModel = (): Installation => {
 	return {
 		id: JIRA_INSTALLATION_ID,
-		jiraHost: JIRA_HOST,
+		jiraHost,
 		secrets: "secrets",
 		sharedSecret: "sharedSecret",
 		encryptedSharedSecret: "encryptedSharedSecret",
@@ -60,7 +58,7 @@ const mockPrerequistApp = () => {
 	const app = express();
 	app.use((req, res, next) => {
 		req.session = { githubToken: VALID_TOKEN };
-		res.locals = { jiraHost: JIRA_HOST };
+		res.locals = { jiraHost };
 		req.log = getLogger("test");
 		next();
 	});
@@ -69,8 +67,8 @@ const mockPrerequistApp = () => {
 
 const mockGetGitHubApiUrl = () => {
 	when(getGitHubApiUrl)
-		.calledWith(JIRA_HOST, GITHUB_SERVER_APP_ID)
-		.mockResolvedValue(GITHUB_SERVER_APP_URL);
+		.calledWith(jiraHost, GITHUB_SERVER_APP_ID)
+		.mockResolvedValue(gheUrl);
 };
 
 const mockGetForGitHubServerAppId = () => {
@@ -81,7 +79,7 @@ const mockGetForGitHubServerAppId = () => {
 
 const mockAxiosPingURL = () => {
 	when(axios.get)
-		.calledWith(JIRA_HOST)
+		.calledWith(jiraHost)
 		.mockResolvedValue(undefined);
 };
 
@@ -116,7 +114,7 @@ describe("GitHub router", () => {
 					expect.objectContaining({ //matching res locals
 						locals: expect.objectContaining({
 							githubToken: VALID_TOKEN,
-							jiraHost: JIRA_HOST,
+							jiraHost,
 							gitHubAppConfig: expect.objectContaining({
 								appId: envVars.APP_ID,
 								gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
@@ -148,7 +146,7 @@ describe("GitHub router", () => {
 					expect.objectContaining({ //matching res locals
 						locals: expect.objectContaining({
 							githubToken: VALID_TOKEN,
-							jiraHost: JIRA_HOST,
+							jiraHost,
 							gitHubAppId: GITHUB_SERVER_APP_ID,
 							gitHubAppConfig: expect.objectContaining({
 								appId: GITHUB_SERVER_APP_ID,
