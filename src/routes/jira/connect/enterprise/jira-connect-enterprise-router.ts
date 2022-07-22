@@ -11,7 +11,6 @@ export const JiraConnectEnterpriseRouter = Router();
 
 JiraConnectEnterpriseRouter.post("/", JiraContextJwtTokenMiddleware, JiraConnectEnterprisePost);
 
-
 JiraConnectEnterpriseRouter.use(csrfMiddleware).use(JiraJwtTokenMiddleware);
 
 JiraConnectEnterpriseRouter.route("/").get(JiraConnectEnterpriseGet);
