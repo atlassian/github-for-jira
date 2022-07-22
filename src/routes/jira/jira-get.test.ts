@@ -5,14 +5,17 @@ import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { getLogger } from "config/logger";
 import express from "express";
 import supertest from "supertest";
 import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
+import { when } from "jest-when";
 
 describe("Jira Configuration Suite", () => {
 	let subscription: Subscription;
+	let installation: Installation;
 
 	beforeEach(async () => {
 		subscription = await Subscription.create({
@@ -35,7 +38,7 @@ describe("Jira Configuration Suite", () => {
 			commitStatus: "complete"
 		});
 
-		await Installation.create({
+		installation = await Installation.create({
 			jiraHost,
 			clientKey: "abc123",
 			//TODO: why? Comment this out make test works?
@@ -59,7 +62,8 @@ describe("Jira Configuration Suite", () => {
 
 	const mockResponse = (): any => ({
 		locals: {
-			jiraHost
+			jiraHost,
+			installation
 		},
 		render: jest.fn().mockReturnValue({}),
 		status: jest.fn().mockReturnValue({}),
@@ -68,6 +72,11 @@ describe("Jira Configuration Suite", () => {
 
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
+		when(booleanFlag).calledWith(
+			BooleanFlags.GHE_SERVER,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
 		githubNock
 			.get(`/app/installations/15`)
 			.reply(200, singleInstallation);
@@ -75,8 +84,8 @@ describe("Jira Configuration Suite", () => {
 		await JiraGet(mockRequest(), response, jest.fn());
 		const data = response.render.mock.calls[0][1];
 		expect(data.hasConnections).toBe(true);
-		expect(data.failedConnections.length).toBe(0);
-		expect(data.successfulConnections.length).toBe(1);
+		expect(data.ghCloud.failedConnections.length).toBe(0);
+		expect(data.ghCloud.successfulConnections.length).toBe(1);
 	});
 
 	describe("getInstallations", () => {
