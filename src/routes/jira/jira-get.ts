@@ -197,7 +197,7 @@ export const JiraGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
 			await renderJiraCloudAndEnterpriseServer(res, req);
 		} else {
 			await renderJiraCloud(res, req);
