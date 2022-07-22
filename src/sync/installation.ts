@@ -236,11 +236,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	if (!nextTask.repository && repositoryId) {
 		// Old records don't have this info. New ones have it
-		const { data: repo } = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_REPO, false, subscription.jiraHost) ?
-			await gitHubInstallationClient.getRepository(nextTask.repositoryId) :
-			await github.request("GET /repositories/:id", {
-				id: nextTask.repositoryId
-			});
+		const { data: repo } = await gitHubInstallationClient.getRepository(nextTask.repositoryId);
 
 		repository = getRepositorySummary(repo);
 		await subscription.updateSyncState({
