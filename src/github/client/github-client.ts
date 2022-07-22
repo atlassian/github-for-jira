@@ -43,9 +43,8 @@ export class GitHubClient {
 	public getProxyConfig = (baseUrl: string): Partial<AxiosRequestConfig> => {
 		if (new URL(baseUrl).host.endsWith("atlassian.com")) {
 			return this.noProxyConfig();
-		} else {
-			return this.outboundProxyConfig();
 		}
+		return this.outboundProxyConfig();
 	};
 
 	private noProxyConfig = (): Partial<AxiosRequestConfig> => {
