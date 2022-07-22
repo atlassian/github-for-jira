@@ -19,7 +19,7 @@ describe("GitHub Client", () => {
 
 	it("configures no proxy for calls to the Atlassian network", async () => {
 		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), getLogger("test"));
-		const outboundProxyConfig = client.getProxyConfig("http://github.internal.atlassian.com");
+		const outboundProxyConfig = client.getProxyConfig("http://github.internal.atlassian.com/api");
 		expect(outboundProxyConfig.proxy).toBe(false);
 		expect(outboundProxyConfig.httpsAgent).toBeUndefined();
 	});
