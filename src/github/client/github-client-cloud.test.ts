@@ -124,7 +124,7 @@ describe("GitHub Client", () => {
 	function verifyMetricsSent(path: string, status) {
 		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", expect.anything(), expect.objectContaining({
 			client: "axios",
-			gitHubVersion: "cloud",
+			gitHubProduct: "cloud",
 			method: "GET",
 			path,
 			status
@@ -134,7 +134,7 @@ describe("GitHub Client", () => {
 	function verifyMetricStatus(status) {
 		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", expect.anything(), expect.objectContaining({
 			client: "axios",
-			gitHubVersion: "cloud",
+			gitHubProduct: "cloud",
 			status
 		}));
 	}
@@ -210,7 +210,7 @@ describe("GitHub Client", () => {
 		}
 
 		expect(error).toBeInstanceOf(BlockedIpError);
-		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist", { gitHubVersion: "cloud" });
+		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist", { gitHubProduct: "cloud" });
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "blockedIp");
 	});
 
