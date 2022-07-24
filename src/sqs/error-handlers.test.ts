@@ -4,7 +4,7 @@ import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handle
 import { Context, ErrorHandlingResult } from "./sqs";
 import { getLogger } from "config/logger";
 import { JiraClientError } from "../jira/client/axios";
-import { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
+import { RateLimitingError as OldRateLimitingError } from "config/rate-limiting-error";
 import { Octokit } from "probot";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { AxiosResponse, AxiosResponseHeaders } from "axios";

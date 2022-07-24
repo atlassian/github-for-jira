@@ -1,7 +1,7 @@
 import { Context, ErrorHandler, ErrorHandlingResult } from "./sqs";
 import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
-import { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
+import { RateLimitingError as OldRateLimitingError } from "config/rate-limiting-error";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 import { PushQueueMessagePayload } from "./push";
 import { RateLimitingError } from "../github/client/github-client-errors";

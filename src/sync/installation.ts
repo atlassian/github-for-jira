@@ -3,7 +3,7 @@ import { Repositories, Repository, RepositoryData, Subscription, SyncStatus } fr
 import { RepoSyncState } from "models/reposyncstate";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getRepositorySummary } from "./jobs";
-import { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
+import { RateLimitingError as OldRateLimitingError } from "config/rate-limiting-error";
 import { statsd } from "config/statsd";
 import { getPullRequestTask } from "./pull-request";
 import { getBranchTask } from "./branches";
