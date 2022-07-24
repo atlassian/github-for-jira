@@ -3,14 +3,14 @@ import { Repositories, Repository, RepositoryData, Subscription, SyncStatus } fr
 import { RepoSyncState } from "models/reposyncstate";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getRepositorySummary } from "./jobs";
-import { enhanceOctokit, RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
+import { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
 import { statsd } from "config/statsd";
 import { getPullRequestTask } from "./pull-request";
 import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
 import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
-import { Application, GitHubAPI } from "probot";
+import { Application } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import Logger from "bunyan";
@@ -38,7 +38,6 @@ const tasks: TaskProcessors = {
 interface TaskProcessors {
 	[task: string]: (
 		logger: Logger,
-		github: GitHubAPI,
 		gitHubInstallationClient: GitHubInstallationClient,
 		jiraHost: string,
 		repository: Repository,
@@ -160,9 +159,6 @@ export const updateJobStatus = async (
 	}
 };
 
-const getEnhancedGitHub = async (app: Application, installationId) =>
-	enhanceOctokit(await app.auth(installationId));
-
 /**
  * Determines if an an error returned by the GitHub API means that we should retry it
  * with a smaller request (i.e. with fewer pages).
@@ -202,7 +198,7 @@ export const isNotFoundError = (
 };
 
 // TODO: type queues
-async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> {
+async function doProcessInstallation(_app, data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId
@@ -217,7 +213,6 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 	);
 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
-	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
@@ -257,7 +252,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
-				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
+				return await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
 			} catch (err) {
 				// TODO - need a better way to manage GitHub errors globally
 				// In the event that the customer has not accepted the required permissions.
@@ -272,7 +267,6 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 				logger.error({
 					err,
 					payload: data,
-					github,
 					repository,
 					cursor,
 					task
@@ -480,7 +474,7 @@ export const processInstallation =
 				switch (result) {
 					case DeduplicatorResult.E_OK:
 						logger.info("Job was executed by deduplicator");
-						maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
+						await maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
 						break;
 					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 						logger.warn("Possible duplicate job was detected, rescheduling");

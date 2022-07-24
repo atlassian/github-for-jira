@@ -1,5 +1,4 @@
 import { transformCommit } from "../transforms/transform-commit";
-import { GitHubAPI } from "probot";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
@@ -21,7 +20,6 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 
 export const getCommitTask = async (
 	logger: Logger,
-	_github: GitHubAPI,
 	gitHubClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,

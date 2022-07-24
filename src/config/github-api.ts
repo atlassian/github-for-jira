@@ -1,6 +1,5 @@
 import { GitHubAPI } from "probot";
 import { getLogger } from "./logger";
-import { enhanceOctokit } from "./enhance-octokit";
 import { Options } from "probot/lib/github";
 
 export const GithubAPI = (options: Partial<Options> = {}): GitHubAPI => {
@@ -8,5 +7,5 @@ export const GithubAPI = (options: Partial<Options> = {}): GitHubAPI => {
 	options.throttle = {
 		enabled: false
 	};
-	return enhanceOctokit(GitHubAPI(options as Options));
+	return GitHubAPI(options as Options);
 };
