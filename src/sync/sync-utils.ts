@@ -2,6 +2,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { sqsQueues } from "../sqs/queues";
 import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 export async function findOrStartSync(
 	subscription: Subscription,
@@ -32,3 +33,14 @@ export async function findOrStartSync(
 	// Start sync
 	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime, commitsFromDate }, 0, logger);
 }
+
+export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags, commitFromDate?: Date): Promise<Date | undefined> => {
+	if (commitFromDate) {
+		return commitFromDate;
+	}
+	const timeCutoffMsecs = await numberFlag(flagName, NaN, jiraHost);
+	if (!timeCutoffMsecs) {
+		return;
+	}
+	return new Date(Date.now() - timeCutoffMsecs);
+};

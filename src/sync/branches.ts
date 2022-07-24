@@ -4,7 +4,8 @@ import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
 import { BackfillMessagePayload } from "~/src/sqs/backfill";
-import { getCommitSinceDate } from "~/src/sync/commits";
+import { NumberFlags } from "config/feature-flags";
+import { getCommitSinceDate } from "~/src/sync/sync-utils";
 
 // TODO: better typings
 export const getBranchTask = async (
@@ -20,7 +21,7 @@ export const getBranchTask = async (
 	logger.info("Syncing branches: started");
 	perPage = perPage || 20;
 
-	const commitSince = await getCommitSinceDate(jiraHost, messagePayload?.commitsFromDate);
+	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
 	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
