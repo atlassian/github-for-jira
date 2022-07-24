@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import format from "date-fns/format";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { TypeC } from "~/src/github/client/github-app-client";
+import { FailedAppInstallation } from "config/interfaces";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId } = req.params;
-	const { client, jiraHost, gitHubAppId } = res.locals;
+	const { jiraHost, gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 
 	try {
@@ -18,33 +19,39 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 		}
 
 		const { jiraHost } = subscriptions[0];
-		const installations = await Promise.all(
-			subscriptions.map(async (subscription) => {
-				const id = subscription.gitHubInstallationId;
-				try {
-					const response = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API, false) ?
-						await gitHubAppClient.getInstallation(id) :
-						await client.apps.getInstallation({ installation_id: id });
 
-					response.data.syncStatus = subscription.syncStatus;
-					return response.data;
-				} catch (err) {
-					return { error: err, id, deleted: err.status === 404 };
-				}
-			})
-		);
-		const connections = installations
-			.filter((response) => !response.error)
+		const tasks = subscriptions.map(async (subscription): Promise<TypeC | FailedAppInstallation> => {
+			const id = subscription.gitHubInstallationId;
+			try {
+				const response = await gitHubAppClient.getInstallation(id);
+
+				response.data.syncStatus = subscription.syncStatus;
+				return response.data;
+			} catch (err) {
+				return { error: err, id, deleted: err.status === 404 };
+			}
+		});
+
+		const installations = await Promise.all(tasks);
+
+		const getValidInstallations = (installations: (TypeC | FailedAppInstallation)[]): (TypeC)[] => {
+			return installations
+				.filter((response) => {
+					return !('error' in response);
+				}) as TypeC[];
+		};
+
+		const connections = getValidInstallations(installations)
 			.map((data) => ({
 				...data,
 				isGlobalInstall: data.repository_selection === "all",
 				updated_at: format(data.updated_at, "MMMM D, YYYY h:mm a"),
-				syncState: data.syncState
+				syncState: data.syncStatus
 			}));
 
 		const failedConnections = installations.filter((response) => {
 			req.log.error({ ...response }, "Failed installation");
-			return response.error;
+			return ('error' in response);
 		});
 
 		res.json({

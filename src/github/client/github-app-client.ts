@@ -10,7 +10,16 @@ import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
 import { GitHubClient } from "./github-client";
+import { SyncStatus } from "models/subscription";
 
+// TODO - JK move to types
+export interface InterfaceA {
+	syncStatus?: SyncStatus,
+	updated_at: string
+}
+
+// TODO - JK move to types
+export type TypeC = InterfaceA & Octokit.AppsGetInstallationResponse;
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -84,8 +93,8 @@ export class GitHubAppClient extends GitHubClient {
 		};
 	}
 
-	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
-		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations/{installationId}`, {
+	public getInstallation = async (installationId: number): Promise<AxiosResponse<TypeC>> => {
+		return await this.axios.get<TypeC>(`/app/installations/{installationId}`, {
 			urlParams: {
 				installationId
 			}
