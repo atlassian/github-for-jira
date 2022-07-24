@@ -23,13 +23,13 @@ $(".add-organization-link").click(function(event) {
 	});
 });
 
-$(".select-github-version-link").click(function(event) {
+$(".select-github-product-link").click(function(event) {
 	event.preventDefault();
 
 	AP.navigator.go(
 		'addonmodule',
 			{
-				moduleKey: "github-select-version-page"
+				moduleKey: "github-select-product-page"
 			}
 		);
 });
@@ -88,6 +88,26 @@ $(".sync-connection-link").click(function(event) {
 			}
 		});
 	});
+});
+
+$('.jiraConfiguration__option').click(function (event) {
+	event.preventDefault();
+	$('.jiraConfiguration__option').removeClass('jiraConfiguration__selected');
+	$(event.target).addClass('jiraConfiguration__selected');
+
+	switch ($(event.target).attr('id')) {
+		case 'jiraConfiguration__optionCloud':
+			$('.jiraConfiguration__cloudContainer').show();
+			$('.jiraConfiguration__enterpriseContainer').hide();
+			break;
+		case 'jiraConfiguration__optionEnterprise':
+			$('.jiraConfiguration__enterpriseContainer').show();
+			$('.jiraConfiguration__cloudContainer').hide();
+			break;
+		default:
+			$('.jiraConfiguration__cloudContainer').show();
+			$('.jiraConfiguration__enterpriseContainer').show();
+	}
 });
 
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
