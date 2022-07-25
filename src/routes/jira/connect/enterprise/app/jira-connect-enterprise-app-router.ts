@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { JiraJwtTokenMiddleware } from "middleware/jira-jwt-middleware";
+import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "middleware/jira-jwt-middleware";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import {
 	JiraConnectEnterpriseAppCreateOrEdit
@@ -10,12 +10,9 @@ import { JiraConnectEnterpriseAppDelete } from "routes/jira/connect/enterprise/a
 
 export const JiraConnectEnterpriseAppRouter = Router();
 
-JiraConnectEnterpriseAppRouter.use(csrfMiddleware);
-JiraConnectEnterpriseAppRouter.use(JiraJwtTokenMiddleware);
-
-JiraConnectEnterpriseAppRouter.post("/", JiraConnectEnterpriseAppPost);
+JiraConnectEnterpriseAppRouter.post("/", csrfMiddleware, JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPost);
 
 JiraConnectEnterpriseAppRouter.route("/:uuid")
-	.get(JiraConnectEnterpriseAppCreateOrEdit)
-	.put(JiraConnectEnterpriseAppPut)
-	.delete(JiraConnectEnterpriseAppDelete);
+	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseAppCreateOrEdit)
+	.put(csrfMiddleware, JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPut)
+	.delete(csrfMiddleware, JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppDelete);

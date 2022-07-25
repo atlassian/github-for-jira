@@ -11,14 +11,12 @@ export const JiraConnectEnterpriseRouter = Router();
 
 JiraConnectEnterpriseRouter.post("/", JiraContextJwtTokenMiddleware, JiraConnectEnterprisePost);
 
-JiraConnectEnterpriseRouter.use(csrfMiddleware).use(JiraJwtTokenMiddleware);
-
-JiraConnectEnterpriseRouter.route("/").get(JiraConnectEnterpriseGet);
+JiraConnectEnterpriseRouter.route("/").get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseGet);
 
 JiraConnectEnterpriseRouter.use("/app", JiraConnectEnterpriseAppRouter);
 
-JiraConnectEnterpriseRouter.get("/:serverUrl/app/new", JiraConnectEnterpriseAppCreateOrEdit);
+JiraConnectEnterpriseRouter.get("/:serverUrl/app/new", csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseAppCreateOrEdit);
 
-JiraConnectEnterpriseRouter.get("/:serverUrl/app", JiraConnectEnterpriseServerAppGet);
+JiraConnectEnterpriseRouter.get("/:serverUrl/app", csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseServerAppGet);
 
 
