@@ -124,10 +124,6 @@ describe("sync/deployments", () => {
 				schemaVersion: "1.0",
 				deploymentSequenceNumber: 500226426,
 				updateSequenceNumber: 500226426,
-				issueKeys:
-					[
-						"TEST-123"
-					],
 				displayName: "deploy",
 				url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
 				description: "deploy",
@@ -144,7 +140,13 @@ describe("sync/deployments", () => {
 						id: "prod",
 						displayName: "prod",
 						type: "production"
+					},
+				associations: [
+					{
+						associationType: "issueIdOrKeys",
+						values: ["TEST-123"]
 					}
+				]
 			}
 		];
 
@@ -193,10 +195,6 @@ describe("sync/deployments", () => {
 				schemaVersion: "1.0",
 				deploymentSequenceNumber: 500226426,
 				updateSequenceNumber: 500226426,
-				issueKeys:
-					[
-						"TEST-123"
-					],
 				displayName: "deploy",
 				url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
 				description: "deploy",
@@ -213,20 +211,20 @@ describe("sync/deployments", () => {
 						id: "prod",
 						displayName: "prod",
 						type: "production"
-					}
+					},
+				associations: [{
+					associationType: "issueIdOrKeys",
+					values: ["TEST-123"]
+				}]
 			},
 			{
 				schemaVersion: "1.0",
 				deploymentSequenceNumber: 1234,
 				updateSequenceNumber: 1234,
-				issueKeys:
-					[
-						"TEST-222"
-					],
 				displayName: "deploy",
 				url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
 				description: "deploy",
-				lastUpdated: "2022-02-03T22:45:04.000Z",
+				lastUpdated: new Date("2022-02-03T22:45:04.000Z"),
 				state: "successful",
 				pipeline:
 					{
@@ -239,7 +237,11 @@ describe("sync/deployments", () => {
 						id: "prod",
 						displayName: "prod",
 						type: "production"
-					}
+					},
+				associations: [{
+					associationType: "issueIdOrKeys",
+					values: ["TEST-222"]
+				}]
 			}
 		];
 		createJiraNock(deployments);

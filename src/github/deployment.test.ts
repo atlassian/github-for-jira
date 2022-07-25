@@ -8,8 +8,6 @@ import { sqsQueues } from "../sqs/queues";
 
 import deploymentStatusBasic from "fixtures/deployment_status-basic.json";
 
-jest.mock("config/feature-flags");
-
 describe("Deployment Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
@@ -33,7 +31,6 @@ describe("Deployment Webhook", () => {
 		});
 
 		await sqsQueues.deployment.start();
-
 	});
 
 	afterEach(async () => {
@@ -46,6 +43,9 @@ describe("Deployment Webhook", () => {
 		it("should queue and process a deployment event", async () => {
 			const sha = deploymentStatusBasic.payload.deployment.sha;
 
+			githubUserTokenNock(1234);
+			githubUserTokenNock(1234);
+			githubUserTokenNock(1234);
 			githubUserTokenNock(1234);
 
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
@@ -61,34 +61,105 @@ describe("Deployment Webhook", () => {
 					html_url: `test-repo-url/commits/${sha}`
 				});
 
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments`)
+				.query(true)
+				.reply(200, [
+					{
+						"id": 1,
+						"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+						"ref": "topic-branch",
+						"task": "deploy",
+						"payload": {},
+						"original_environment": "staging",
+						"environment": "production",
+						"description": "Deploy request from hubot",
+						"creator": {
+							"login": "test-repo-owner",
+							"id": 1,
+							"type": "User"
+						},
+						"created_at": "2012-07-20T01:19:13Z",
+						"updated_at": "2012-07-20T01:19:13Z",
+						"statuses_url": "https://api.github.com/repos/octocat/example/deployments/1/statuses",
+						"repository_url": "https://api.github.com/repos/octocat/example",
+						"transient_environment": false,
+						"production_environment": true
+					}
+				]);
+
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/compare/a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d...f95f852bd8fca8fcc58a9a2d6c842781e32a215e`)
+				.reply(200, {
+					"total_commits": 2,
+					"commits": [
+						{
+							"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+							"commit": {
+								"message": "base commit"
+							}
+						},
+						{
+							"sha": "f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
+							"commit": {
+								"message": "head commit"
+							}
+						}
+					]
+				});
+
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/1/statuses`)
+				.query(true)
+				.reply(200, [
+					{
+						"id": 1,
+						"state": "success",
+						"description": "Deployment finished successfully.",
+						"environment": "production"
+					}
+				]);
+
 			jiraNock.post("/rest/deployments/0.1/bulk", {
 				deployments:
 					[
 						{
-							schemaVersion: "1.0",
-							deploymentSequenceNumber: 1234,
-							updateSequenceNumber: 123456,
-							issueKeys:
-								[
-									"TEST-123"
-								],
-							displayName: "deploy",
-							url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
-							description: "deploy",
-							lastUpdated: "2021-06-28T12:15:18.000Z",
-							state: "successful",
-							pipeline:
+							"schemaVersion": "1.0",
+							"deploymentSequenceNumber": 1234,
+							"updateSequenceNumber": 123456,
+							"displayName": "deploy",
+							"url": "test-repo-url/commit/885bee1-commit-id-1c458/checks",
+							"description": "deploy",
+							"lastUpdated": "2021-06-28T12:15:18.000Z",
+							"state": "successful",
+							"pipeline": {
+								"id": "deploy",
+								"displayName": "deploy",
+								"url": "test-repo-url/commit/885bee1-commit-id-1c458/checks"
+							},
+							"environment": {
+								"id": "Production",
+								"displayName": "Production",
+								"type": "production"
+							},
+							"associations": [
 								{
-									id: "deploy",
-									displayName: "deploy",
-									url: "test-repo-url/commit/885bee1-commit-id-1c458/checks"
+									"associationType": "issueIdOrKeys",
+									"values": [
+										"TEST-123"
+									]
 								},
-							environment:
 								{
-									id: "Production",
-									displayName: "Production",
-									type: "production"
+									"associationType": "commit",
+									"values": [
+										{
+											"commitHash": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+											"repositoryId": "test-repo-id"
+										},
+										{
+											"commitHash": "f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
+											"repositoryId": "test-repo-id"
+										}
+									]
 								}
+							]
 						}
 					],
 				properties:
@@ -100,8 +171,8 @@ describe("Deployment Webhook", () => {
 			await expect(app.receive(deploymentStatusBasic as any)).toResolve();
 
 			await waitUntil(async () => {
-				expect(githubNock).toBeDone();
 				expect(jiraNock).toBeDone();
+				expect(githubNock).toBeDone();
 			});
 		});
 	});

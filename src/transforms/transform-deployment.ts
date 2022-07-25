@@ -5,7 +5,7 @@ import { Octokit } from "@octokit/rest";
 import { CommitSummary, extractMessagesFromCommitSummaries, getAllCommitsBetweenReferences } from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { AxiosResponse } from "axios";
-import { deburr, isEmpty } from "lodash";
+import { deburr } from "lodash";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
@@ -144,7 +144,7 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 	commitSummaries?: CommitSummary[]
 ): JiraAssociation[] | undefined => {
 
-	if (!(issueIds && issueIds.length)) {
+	if (!issueIds?.length) {
 		return undefined;
 	}
 
@@ -155,7 +155,7 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 		}
 	];
 
-	if (commitSummaries && commitSummaries.length) {
+	if (commitSummaries?.length) {
 		const maximumCommitsToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - issueIds.length;
 		const commitKeys = commitSummaries
 			.slice(0, maximumCommitsToSubmit)
@@ -200,7 +200,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		commitSummaries
 	);
 
-	if (isEmpty(associations)) {
+	if (!associations?.length) {
 		return undefined;
 	}
 
