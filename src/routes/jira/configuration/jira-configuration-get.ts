@@ -114,6 +114,7 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 const countStatus = (connections, syncStatus: string): number =>
 	connections && connections.filter(org => org?.syncStatus === syncStatus).length || 0;
 
+// TODO - needs to be updated to only check if finished
 const countNumberSkippedRepos = (connections): number => {
 	return connections.reduce((acc, obj) => obj.totalNumberOfRepos && obj.numberOfSyncedRepos ?
 		acc + obj.totalNumberOfRepos - obj?.numberOfSyncedRepos : acc, 0);
