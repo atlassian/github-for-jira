@@ -8,7 +8,7 @@ export async function findOrStartSync(
 	subscription: Subscription,
 	logger: Logger,
 	syncType?: "full" | "partial",
-	commitsFromDate?: string
+	commitsFromDate?: Date
 ): Promise<void> {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
@@ -31,16 +31,16 @@ export async function findOrStartSync(
 	}
 
 	// Start sync
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime, commitsFromDate }, 0, logger);
+	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime, commitsFromDate: commitsFromDate?.toISOString() }, 0, logger);
 }
 
-export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags, commitFromDate?: string): Promise<string | undefined> => {
-	if (commitFromDate) {
-		return commitFromDate;
+export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags, commitsFromDate?: Date): Promise<Date | undefined> => {
+	if (commitsFromDate) {
+		return commitsFromDate;
 	}
 	const timeCutoffMsecs = await numberFlag(flagName, NaN, jiraHost);
 	if (!timeCutoffMsecs) {
 		return;
 	}
-	return new Date(Date.now() - timeCutoffMsecs).toISOString();
+	return new Date(Date.now() - timeCutoffMsecs);
 };

@@ -83,15 +83,15 @@ ApiRouter.post(
 		// only resync installations whose "updatedAt" date is older than x seconds
 		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
 		// A date to start fetching commit history(main and branch) from.
-		const commitsFromDate = req.body.commitsFromDate;
+		const commitsFromDate = req.body.commitsFromDate && Date.parse(req.body.commitsFromDate);
 
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
 			res.status(400).send("please provide at least one of the filter parameters!");
 			return;
 		}
 
-		if (commitsFromDate && !Date.parse(commitsFromDate)) {
-			res.status(400).send("Invalid commitsFromDate value, please enter valid time .");
+		if (commitsFromDate && commitsFromDate.valueOf() < Date.now()) {
+			res.status(400).send("Invalid commitsFromDate value, please enter valid historical date");
 			return;
 		}
 

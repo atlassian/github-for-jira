@@ -10,7 +10,7 @@ import { TaskPayload } from "~/src/sync/installation";
 import { BackfillMessagePayload } from "~/src/sqs/backfill";
 import { getCommitSinceDate } from "~/src/sync/sync-utils";
 
-const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: string, cursor?: string | number, perPage?: number) => {
+const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
 	const edges = commitsData.repository?.defaultBranchRef?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
@@ -31,7 +31,8 @@ export const getCommitTask = async (
 	perPage?: number,
 	messagePayload?: BackfillMessagePayload): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
 
-	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
+	const commitsFromDate = messagePayload?.commitsFromDate && Date.parse(messagePayload?.commitsFromDate) ? new Date(messagePayload?.commitsFromDate) : undefined;
+	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate);
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
 	const jiraPayload = await transformCommit({ commits, repository });
 	logger.info("Syncing commits: finished");
