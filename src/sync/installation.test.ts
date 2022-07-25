@@ -389,7 +389,7 @@ describe("sync/installation", () => {
 				});
 			});
 
-			it("should return single target tasks with deafult feature flag", async () => {
+			it("should return single target tasks with default feature flag", async () => {
 				return getTargetTasks(jiraHost, ["pull"]).then((tasks) => {
 					expect(tasks).toEqual(["pull"]);
 				});

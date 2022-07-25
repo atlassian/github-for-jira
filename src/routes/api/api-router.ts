@@ -86,17 +86,13 @@ ApiRouter.post(
 		// restrict sync to a subset of tasks
 		const targetTasks = req.body.targetTasks as TaskType[];
 
-		console.log('targetTasks');
-		console.log(targetTasks);
-
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
 			res.status(400).send("please provide at least one of the filter parameters!");
 			return;
 		}
 
-		//todo probs better check here too??
-		if (targetTasks !== undefined && targetTasks.length === 0) {
-			res.status(400).send("Invalid targetTasks values, please enter valid task types.");
+		if (targetTasks?.length === 0) {
+			res.status(400).send("Empty targetTasks values, please enter valid task types.");
 			return;
 		}
 
