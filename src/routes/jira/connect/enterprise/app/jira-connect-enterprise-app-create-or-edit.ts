@@ -18,13 +18,15 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 				previousPagePath: "github-app-creation-page",
 				app,
 				serverUrl: app?.gitHubBaseUrl,
-				uuid
+				uuid,
+				csrfToken: req.csrfToken()
 			};
 		} else {
 			config = {
 				previousPagePath: "github-app-creation-page",
 				serverUrl: req.params.serverUrl,
-				uuid: newUUID()
+				uuid: newUUID(),
+				csrfToken: req.csrfToken()
 			};
 		}
 

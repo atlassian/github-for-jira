@@ -1,10 +1,22 @@
 AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
   event.preventDefault();
   const form = event.target;
-  const data = new FormData(form);
 
-  // TODO: Form submission
-  console.log("Submit Form", data);
+  const callbackUrl = $("#callback-url").val();
+  const jiraHost = new URL(callbackUrl).origin;
+  const csrf = $("#_csrf").val();
+
+  AP.context.getToken((token) => {
+    $.post("/jira/connect/enterprise/app", {
+      data: $(form).serialize(),
+      dataType: "json",
+      jwt: token,
+      _csrf: csrf,
+      jiraHost
+    }, (res) => {
+      console.log("Success: ", res);
+    });
+  });
 });
 
 $(".jiraManualAppCreation__formFileInput")

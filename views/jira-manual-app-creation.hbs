@@ -158,6 +158,8 @@
           <div class="jiraManualAppCreation__formFileErrorBorder"></div>
         </div>
 
+        <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
+
         <div class="jiraManualAppCreation__serverError">
           {{> server-error-message-box
               title="We couldn't create your GitHub app"
