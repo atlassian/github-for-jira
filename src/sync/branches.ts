@@ -21,8 +21,7 @@ export const getBranchTask = async (
 	logger.info("Syncing branches: started");
 	perPage = perPage || 20;
 
-	const commitsFromDate = messagePayload?.commitsFromDate && Date.parse(messagePayload.commitsFromDate) ? new Date(messagePayload.commitsFromDate) : undefined;
-	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate);
+	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
 	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);

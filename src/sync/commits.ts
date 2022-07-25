@@ -31,8 +31,7 @@ export const getCommitTask = async (
 	perPage?: number,
 	messagePayload?: BackfillMessagePayload): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
 
-	const commitsFromDate = messagePayload?.commitsFromDate && Date.parse(messagePayload?.commitsFromDate) ? new Date(messagePayload?.commitsFromDate) : undefined;
-	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate);
+	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
 	const jiraPayload = await transformCommit({ commits, repository });
 	logger.info("Syncing commits: finished");
