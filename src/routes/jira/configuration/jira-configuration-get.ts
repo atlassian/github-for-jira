@@ -142,7 +142,11 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	const gheServerSubscriptions = difference(subscriptions, ghCloudSubscriptions);
 
 	// Connections for GHCloud
-	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(ghCloudSubscriptions, req);
+	const {
+		installations,
+		successfulConnections: successfulCloudConnections,
+		failedConnections: failedCloudConnections
+	} = await getConnectionsAndInstallations(ghCloudSubscriptions, req);
 
 	// Connections for GH Enterprise
 	const gheServersWithConnections = await Promise.all(gheServers.map(async (server) => {
@@ -166,18 +170,28 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
 		gheServers: groupedGheServers,
-		ghCloud: { successfulConnections, failedConnections },
-		hasCloudAndEnterpriseServers: !!((successfulConnections.length || failedConnections.length) && gheServers.length),
-		hasCloudServers: !!(successfulConnections.length || failedConnections.length),
+		ghCloud: { successfulCloudConnections, failedCloudConnections },
+		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
+		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 		hasConnections: !!(installations.total || gheServers?.length),
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
 	});
+
+	const successfulServerConnections = gheServersWithConnections
+		.reduce((acc, obj) => acc + obj.successfulConnections.length, 0);
+
+	req.log.info("successfulCloudConnections", successfulCloudConnections)
+
+	// const syncStatusCountCloud =
+
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
 		jiraHost,
-		connectedOrgCount: installations.total + gheServers.length
+		connectedOrgCountCloud: successfulCloudConnections.length,
+		connectedOrgCountServer: successfulServerConnections,
+		totalOrgCount: successfulCloudConnections.length + successfulServerConnections
 	});
 };
 
@@ -197,7 +211,7 @@ export const JiraConfigurationGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)) {
 			await renderJiraCloudAndEnterpriseServer(res, req);
 		} else {
 			await renderJiraCloud(res, req);
