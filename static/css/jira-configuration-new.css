@@ -504,7 +504,20 @@
 }
 
 .jiraConfiguration__collapsibleBody {
-  padding-left: 1.4em;
+  padding-left: 0.8em;
+}
+
+.jiraConfiguration__noOrgsTitle {
+  font-weight: 600;
+  color: #6B778C;
+  font-size: 12px;
+  border-bottom: 2px solid #DFE1E6;
+  padding: 0.5em 0;
+}
+
+.jiraConfiguration__noOrgsBody {
+  border-bottom: 2px solid #DFE1E6;
+  padding: 1em 0;
 }
 
 .aui-dropdown2-item-group > .jiraConfiguration__connectBtnDropdownOption {
