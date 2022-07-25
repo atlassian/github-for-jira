@@ -12,6 +12,8 @@ import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/backfill";
+import { when } from "jest-when";
+import { stringFlag, StringFlags } from "config/feature-flags";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
@@ -86,6 +88,12 @@ describe("sync/deployments", () => {
 			updatedAt: new Date(),
 			createdAt: new Date()
 		});
+
+		when(stringFlag).calledWith(
+			StringFlags.TARGET_BACKFILL_TASKS,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue("*");
 
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());

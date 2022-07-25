@@ -16,7 +16,7 @@ import commitNodesFixture from "fixtures/api/graphql/commit-nodes.json";
 import mixedCommitNodes from "fixtures/api/graphql/commit-nodes-mixed.json";
 import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
 import { when } from "jest-when";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags, stringFlag, StringFlags } from "config/feature-flags";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -96,6 +96,12 @@ describe("sync/commits", () => {
 			updatedAt: new Date(),
 			createdAt: new Date()
 		});
+
+		when(stringFlag).calledWith(
+			StringFlags.TARGET_BACKFILL_TASKS,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue("*");
 
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());

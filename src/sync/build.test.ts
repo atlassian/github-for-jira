@@ -11,6 +11,8 @@ import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/backfill";
+import { when } from "jest-when";
+import { stringFlag, StringFlags } from "config/feature-flags";
 
 import buildFixture from "fixtures/api/build.json";
 import multiBuildFixture from "fixtures/api/build-multi.json";
@@ -18,6 +20,7 @@ import noKeysBuildFixture from "fixtures/api/build-no-keys.json";
 import compareReferencesFixture from "fixtures/api/compare-references.json";
 
 jest.mock("../sqs/queues");
+jest.mock("config/feature-flags");
 
 describe("sync/builds", () => {
 	let app: Application;
@@ -75,6 +78,12 @@ describe("sync/builds", () => {
 
 		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
+
+		when(stringFlag).calledWith(
+			StringFlags.TARGET_BACKFILL_TASKS,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue("*");
 
 		githubUserTokenNock(installationId);
 

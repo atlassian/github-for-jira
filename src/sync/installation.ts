@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { intersection } from "lodash";
+import IORedis from "ioredis";
+import Logger from "bunyan";
 import { Repositories, Repository, RepositoryData, Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { getJiraClient } from "../jira/client/jira-client";
@@ -12,10 +15,8 @@ import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
-import Logger from "bunyan";
+import { isBlocked, booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
-import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { BackfillMessagePayload } from "../sqs/backfill";
@@ -43,7 +44,8 @@ interface TaskProcessors {
 		jiraHost: string,
 		repository: Repository,
 		cursor?: string | number,
-		perPage?: number
+		perPage?: number,
+		messagePayload?: BackfillMessagePayload
 	) => Promise<TaskPayload>;
 }
 
@@ -52,7 +54,7 @@ export interface TaskPayload<E = any, P = any> {
 	jiraPayload?: P;
 }
 
-type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
+export type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
 
 const taskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
@@ -63,8 +65,24 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-const getNextTask = async (subscription: Subscription): Promise<Task | undefined> => {
-	const tasks = taskTypes;
+export const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[]): Promise<TaskType[]> => {
+	// For a single selection task
+	if (targetTasks) {
+		return targetTasks;
+	}
+
+	// flag defaults to all tasks
+	const filteredTasks = await stringFlag(StringFlags.TARGET_BACKFILL_TASKS, "*", jiraHost);
+	if (filteredTasks === "*") {
+		return taskTypes;
+	}
+
+	const flaggedTasks = filteredTasks.split(",") as TaskType[];
+	return intersection(taskTypes, flaggedTasks);
+};
+
+const getNextTask = async (subscription: Subscription, jiraHost: string, targetTasks?: TaskType[]): Promise<Task | undefined> => {
+	const tasks = await getTargetTasks(jiraHost, targetTasks);
 
 	if (subscription.repositoryStatus !== "complete") {
 		return {
@@ -115,7 +133,7 @@ export const updateJobStatus = async (
 	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
-	const { installationId, jiraHost } = data;
+	const { installationId, jiraHost, targetTasks } = data;
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
@@ -140,7 +158,7 @@ export const updateJobStatus = async (
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
-	} else if (!(await getNextTask(subscription))) {
+	} else if (!(await getNextTask(subscription, jiraHost, targetTasks))) {
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
@@ -218,7 +236,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
-	const nextTask = await getNextTask(subscription);
+	const nextTask = await getNextTask(subscription, jiraHost, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
@@ -257,7 +275,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
-				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
+				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
 				// TODO - need a better way to manage GitHub errors globally
 				// In the event that the customer has not accepted the required permissions.
