@@ -28,7 +28,7 @@ ApiRouter.use(LogMiddleware);
 // And also log how the request was authenticated
 
 ApiRouter.use(
-	async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+	async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 		const mechanism = req.get("X-Slauth-Mechanism");
 		const issuer = req.get("X-Slauth-Issuer");
 		const principal = req.get("X-Slauth-Principal");
@@ -42,11 +42,11 @@ ApiRouter.use(
 			username: req.get("X-Slauth-User-Username")
 		} });
 
-		// if (!mechanism || mechanism === "open") {
-		// 	req.log.warn("Attempt to access Admin API without authentication");
-		// 	res.status(401).json({ error: "Open access not allowed" });
-		// 	return;
-		// }
+		if (!mechanism || mechanism === "open") {
+			req.log.warn("Attempt to access Admin API without authentication");
+			res.status(401).json({ error: "Open access not allowed" });
+			return;
+		}
 
 		req.log.info("API Request successfully authenticated");
 
