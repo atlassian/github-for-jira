@@ -35,7 +35,7 @@ export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<Axi
 
 //TODO Move to util/axios/common-github-webhook-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sendResponseMetrics = (metricName: string, gitHubVersion: string, response?: any, status?: string | number) => {
+const sendResponseMetrics = (metricName: string, gitHubProduct: string, response?: any, status?: string | number) => {
 	status = `${status || response?.status}`;
 	const requestDurationMs = Number(
 		Date.now() - (response?.config?.requestStartTime || 0)
@@ -44,7 +44,7 @@ const sendResponseMetrics = (metricName: string, gitHubVersion: string, response
 	// using client tag to separate GH client from Octokit
 	const tags = {
 		client: "axios",
-		gitHubVersion,
+		gitHubProduct,
 		method: response?.config?.method?.toUpperCase(),
 		path: extractPath(response?.config?.originalUrl),
 		status: status
@@ -62,8 +62,8 @@ export const instrumentRequest = (metricName, host) =>
 			return;
 		}
 
-		const gitHubVersion = getCloudOrServerFromHost(host);
-		return sendResponseMetrics(metricName, gitHubVersion, response);
+		const gitHubProduct = getCloudOrServerFromHost(host);
+		return sendResponseMetrics(metricName, gitHubProduct, response);
 	};
 
 /**
@@ -76,18 +76,18 @@ export const instrumentRequest = (metricName, host) =>
  */
 export const instrumentFailedRequest = (metricName: string, host: string) =>
 	(error) => {
-		const gitHubVersion = getCloudOrServerFromHost(host);
+		const gitHubProduct = getCloudOrServerFromHost(host);
 		if (error instanceof RateLimitingError) {
-			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "rateLimiting");
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "rateLimiting");
 		} else if (error instanceof BlockedIpError) {
-			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "blockedIp");
-			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubVersion });
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "blockedIp");
+			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubProduct });
 		} else if (error instanceof GithubClientTimeoutError) {
-			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "timeout");
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "timeout");
 		} else if (error instanceof GithubClientError) {
-			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response);
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response);
 		} else {
-			sendResponseMetrics(metricName, gitHubVersion, error.response);
+			sendResponseMetrics(metricName, gitHubProduct, error.response);
 		}
 		return Promise.reject(error);
 	};

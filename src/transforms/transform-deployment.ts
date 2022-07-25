@@ -202,17 +202,11 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		);
 
 		const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
-
-		const shouldSendCommitsWithDeploymentEntities = await booleanFlag(BooleanFlags.SEND_RELATED_COMMITS_WITH_DEPLOYMENT_ENTITIES, false, jiraHost);
-		if (shouldSendCommitsWithDeploymentEntities) {
-			associations = mapJiraIssueIdsAndCommitsToAssociationArray(
-				jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
-				payload.repository.id.toString(),
-				commitSummaries
-			);
-		} else {
-			issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`);
-		}
+		associations = mapJiraIssueIdsAndCommitsToAssociationArray(
+			jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
+			payload.repository.id.toString(),
+			commitSummaries
+		);
 	} else {
 		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}`);
 	}
