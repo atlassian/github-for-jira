@@ -90,7 +90,7 @@ ApiRouter.post(
 			return;
 		}
 
-		if (commitsFromDate && commitsFromDate.valueOf() < Date.now()) {
+		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()) {
 			res.status(400).send("Invalid commitsFromDate value, please enter valid historical date");
 			return;
 		}
