@@ -1,5 +1,4 @@
 import "./config/env"; // Important to be before other dependencies
-import "./config/proxy"; // Important to be before other dependencies
 import throng from "throng";
 import { isNodeProd } from "utils/is-node-env";
 import { listenToMicrosLifecycle } from "./services/micros/lifecycle";
