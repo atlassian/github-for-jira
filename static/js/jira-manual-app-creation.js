@@ -1,22 +1,29 @@
 AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
   event.preventDefault();
   const form = event.target;
-
-  const callbackUrl = $("#callback-url").val();
-  const jiraHost = new URL(callbackUrl).origin;
   const csrf = $("#_csrf").val();
+  const data = $(form).serializeObject();
 
-  AP.context.getToken((token) => {
-    $.post("/jira/connect/enterprise/app", {
-      data: $(form).serialize(),
-      dataType: "json",
-      jwt: token,
-      _csrf: csrf,
-      jiraHost
-    }, (res) => {
-      console.log("Success: ", res);
+  // Reading the content of the file
+  const file = $("#privateKeyFile")[0].files[0];
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+
+  reader.onload = () => {
+    data.privateKey = reader.result;
+
+    AP.context.getToken((token) => {
+      data.jwt = token;
+      data._csrf = csrf;
+      data.jiraHost = $("#gitHubBaseUrl").val();
+
+      $.post("/jira/connect/enterprise/app", data, (_message, _status, response) => {
+        if (response.status === 201) {
+          // TODO: Redirect to the App connection
+        }
+      });
     });
-  });
+  };
 });
 
 $(".jiraManualAppCreation__formFileInput")
