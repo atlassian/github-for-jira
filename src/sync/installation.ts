@@ -26,6 +26,7 @@ import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { TaskType } from "./sync.types";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -54,8 +55,6 @@ export interface TaskPayload<E = any, P = any> {
 	jiraPayload?: P;
 }
 
-export type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
-
 const taskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
@@ -66,13 +65,13 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	);
 
 export const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[]): Promise<TaskType[]> => {
-	// For a single selection task
 	if (targetTasks) {
 		return targetTasks;
 	}
 
-	// flag defaults to all tasks
+
 	const filteredTasks = await stringFlag(StringFlags.TARGET_BACKFILL_TASKS, "*", jiraHost);
+	// flag default return all tasks
 	if (filteredTasks === "*") {
 		return taskTypes;
 	}

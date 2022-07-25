@@ -2,7 +2,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { sqsQueues } from "../sqs/queues";
 import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
-import { TaskType } from "~/src/sync/installation";
+import { TaskType } from "~/src/sync/sync.types";
 
 export async function findOrStartSync(
 	subscription: Subscription,

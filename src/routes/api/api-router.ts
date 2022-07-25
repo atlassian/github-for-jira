@@ -16,7 +16,7 @@ import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { ApiPingPost } from "routes/api/api-ping-post";
 import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
-import { TaskType } from "~/src/sync/installation";
+import { TaskType } from "~/src/sync/sync.types";
 
 export const ApiRouter = Router();
 
