@@ -10,11 +10,10 @@ const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 let analyticsNodeClient;
 
-export function sendAnalytics(eventType: "trait", attributes: Record<string, unknown>)
-export function sendAnalytics(eventType: "screen", attributes: { name: string } & Record<string, unknown>)
+export function sendAnalytics(eventType: "screen", attributes?: { name: string } & Record<string, unknown>)
 export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>)
-export function sendAnalytics(eventType: string, attributes: Record<string, unknown>): void {
-	if (!analyticsClient || !isNodeProd()){
+export function sendAnalytics(eventType: string, attributes?: Record<string, unknown>): void {
+	if (!analyticsClient && !isNodeProd()){
 		return;
 	}
 
@@ -33,7 +32,7 @@ export function sendAnalytics(eventType: string, attributes: Record<string, unkn
 		tenantId: "NONE"
 	};
 
-	attributes.appKey = appKey;
+	attributes!.appKey = appKey;
 
 	logger.debug({ eventType }, "Sending analytics");
 
@@ -42,6 +41,7 @@ export function sendAnalytics(eventType: string, attributes: Record<string, unkn
 			sendEvent(analyticsNodeClient.sendScreenEvent({
 				...baseAttributes,
 				name: attributes?.name,
+				attributes,
 				screenEvent: {
 					platform: "web",
 					attributes: omit(attributes, "name")
@@ -62,13 +62,6 @@ export function sendAnalytics(eventType: string, attributes: Record<string, unkn
 				trackEvent: {
 					attributes
 				}
-			}));
-			break;
-		case "trait":
-			sendEvent(analyticsNodeClient.sendTraitEvent({
-				entityType: attributes?.entityType,
-				entityId: attributes?.entityId,
-				entityTraits: attributes?.entityTraits
 			}));
 			break;
 		case "operational":

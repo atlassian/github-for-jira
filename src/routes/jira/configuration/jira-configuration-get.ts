@@ -111,6 +111,14 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 	return { installations, successfulConnections, failedConnections };
 };
 
+const countStatus = (connections, syncStatus: string): number =>
+	connections && connections.filter(org => org?.syncStatus === syncStatus).length || 0;
+
+const countNumberSkippedRepos = (connections): number => {
+	return connections.reduce((acc, obj) => obj.totalNumberOfRepos && obj.numberOfSyncedRepos ?
+		acc + obj.totalNumberOfRepos - obj?.numberOfSyncedRepos : acc, 0);
+};
+
 const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
@@ -125,10 +133,14 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 		csrfToken: req.csrfToken(),
 		nonce
 	});
+
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
 		jiraHost,
-		connectedOrgCount: installations.total
+		connectedOrgCount: installations.total,
+		failedCloudBackfillCount: countStatus(failedConnections, "FAILED"),
+		successfulCloudBackfillCount: countStatus(successfulConnections, "FINISHED"),
+		numberOfSkippedRepos: countNumberSkippedRepos(successfulConnections)
 	});
 };
 
@@ -180,18 +192,22 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	});
 
 	const successfulServerConnections = gheServersWithConnections
-		.reduce((acc, obj) => acc + obj.successfulConnections.length, 0);
-
-	req.log.info("successfulCloudConnections", successfulCloudConnections)
-
-	// const syncStatusCountCloud =
+		.reduce((acc, obj) => acc + obj.successfulConnections?.length, 0);
+	const failedServerConnections = gheServersWithConnections
+		.reduce((acc, obj) => acc + obj.failedConnection?.length, 0);
+	const allSuccessfulConnections = [...successfulCloudConnections, ...gheServersWithConnections];
 
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
 		jiraHost,
-		connectedOrgCountCloud: successfulCloudConnections.length,
-		connectedOrgCountServer: successfulServerConnections,
-		totalOrgCount: successfulCloudConnections.length + successfulServerConnections
+		connectedOrgCountCloudCount: successfulCloudConnections.length,
+		connectedOrgCountServerCount: successfulServerConnections,
+		totalOrgCount: successfulCloudConnections.length + successfulServerConnections,
+		failedCloudBackfillCount: countStatus(failedCloudConnections, "FAILED"),
+		failedServerBackfillCount: countStatus(failedServerConnections, "FAILED"),
+		successfulCloudBackfillCount: countStatus(successfulCloudConnections, "FINISHED"),
+		successfulServerBackfillCount: countStatus(successfulServerConnections, "FINISHED"),
+		numberOfSkippedRepos: countNumberSkippedRepos(allSuccessfulConnections)
 	});
 };
 
