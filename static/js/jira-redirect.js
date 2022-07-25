@@ -1,6 +1,5 @@
 const params = new URLSearchParams(window.location.search.substring(1));
-//const gheHost = params.get("gheHost");
-const gheHost = "http://github.internal.atlassian.com";
+const gheHost = params.get("serverUrl");
 $(document).ready(() => {
   $.ajax({
     type: "GET",
