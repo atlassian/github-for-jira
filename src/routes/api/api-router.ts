@@ -98,7 +98,7 @@ ApiRouter.post(
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
-			findOrStartSync(subscription, req.log, syncType, new Date(commitsFromDate))
+			findOrStartSync(subscription, req.log, syncType, commitsFromDate)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));

@@ -280,10 +280,10 @@ describe("sync/commits", () => {
 				const time = Date.now();
 				const commitTimeLimitCutoff = 1000 * 60 * 60 * 72;
 				mockSystemTime(time);
-				const commitsFromDate = new Date(time - commitTimeLimitCutoff);
+				const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
 				const data: BackfillMessagePayload = { installationId, jiraHost, commitsFromDate };
 
-				createGitHubNock(commitNodesFixture, { commitSince: commitsFromDate.toISOString() });
+				createGitHubNock(commitNodesFixture, { commitSince: commitsFromDate });
 				const commits = [
 					{
 						"author": {

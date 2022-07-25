@@ -10,7 +10,7 @@ import { TaskPayload } from "~/src/sync/installation";
 import { BackfillMessagePayload } from "~/src/sqs/backfill";
 import { getCommitSinceDate } from "~/src/sync/sync-utils";
 
-const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
+const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: string, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
 	const edges = commitsData.repository?.defaultBranchRef?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];

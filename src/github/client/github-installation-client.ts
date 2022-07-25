@@ -213,12 +213,18 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: Date, cursor?: string): Promise<getBranchesResponse> {
+	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: string, cursor?: string): Promise<getBranchesResponse> {
+		console.log("THIS IS THE REQUESTED DATE");
+		console.log("THIS IS THE REQUESTED DATE");
+		console.log("THIS IS THE REQUESTED DATE");
+		console.log("THIS IS THE REQUESTED DATE");
+		console.log("THIS IS THE REQUESTED DATE");
+		console.log(commitSince);
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
-			commitSince: commitSince?.toISOString(),
+			commitSince: commitSince,
 			cursor
 		};
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, variables)
@@ -247,13 +253,13 @@ export class GitHubInstallationClient extends GitHubClient {
 	/**
 	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
 	 */
-	public async getCommitsPage(owner: string, repoName: string, perPage?: number, commitSince?: Date, cursor?: string | number): Promise<getCommitsResponse> {
+	public async getCommitsPage(owner: string, repoName: string, perPage?: number, commitSince?: string, cursor?: string | number): Promise<getCommitsResponse> {
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
 			cursor,
-			commitSince: commitSince?.toISOString()
+			commitSince: commitSince
 		};
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, variables)
 			.catch((err) => {
