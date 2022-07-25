@@ -14,7 +14,6 @@ import { cookieSessionMiddleware } from "middleware/cookiesession-middleware";
 import { ErrorRouter } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient } from "~/src/util/get-github-client-config";
 
 export const RootRouter = Router();
@@ -60,9 +59,7 @@ RootRouter.use("/jira", JiraRouter);
 RootRouter.get("/", async (req: Request, res: Response) => {
 	const { jiraHost, gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
-	const { data: info } = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_REDIRECT, false) ?
-		await gitHubAppClient.getApp() :
-		await res.locals.client.apps.getAuthenticated();
+	const { data: info } = await gitHubAppClient.getApp();
 
 	return res.redirect(info.external_url);
 });

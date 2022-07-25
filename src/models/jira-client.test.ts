@@ -6,13 +6,13 @@ describe("JiraClient", () => {
 	describe("isAuthorized()", () => {
 		let jiraClient: any;
 
-		beforeEach(() => {
+		beforeEach(async () => {
 			const installation: any = {
 				jiraHost,
 				sharedSecret: "secret"
 			};
 
-			jiraClient = new JiraClient(installation, logger);
+			jiraClient = await JiraClient.getNewClient(installation, logger);
 		});
 
 		it("is true when response is 200", async () => {
