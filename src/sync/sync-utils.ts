@@ -34,7 +34,7 @@ export async function findOrStartSync(
 	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime, commitsFromDate: commitsFromDate?.toISOString() }, 0, logger);
 }
 
-export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags, commitsFromDate?: Date): Promise<Date | undefined> => {
+export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: Date): Promise<Date | undefined> => {
 	if (commitsFromDate) {
 		return commitsFromDate;
 	}
