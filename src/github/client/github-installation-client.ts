@@ -214,17 +214,11 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: string, cursor?: string): Promise<getBranchesResponse> {
-		console.log("THIS IS THE REQUESTED DATE");
-		console.log("THIS IS THE REQUESTED DATE");
-		console.log("THIS IS THE REQUESTED DATE");
-		console.log("THIS IS THE REQUESTED DATE");
-		console.log("THIS IS THE REQUESTED DATE");
-		console.log(commitSince);
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
-			commitSince: commitSince,
+			commitSince,
 			cursor
 		};
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, variables)
@@ -259,7 +253,7 @@ export class GitHubInstallationClient extends GitHubClient {
 			repo: repoName,
 			per_page: perPage,
 			cursor,
-			commitSince: commitSince
+			commitSince
 		};
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, variables)
 			.catch((err) => {

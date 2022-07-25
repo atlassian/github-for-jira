@@ -82,7 +82,7 @@ ApiRouter.post(
 		const offset = Number(req.body.offset) || 0;
 		// only resync installations whose "updatedAt" date is older than x seconds
 		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
-		// How far back to fetch commit history(main and branch) in milliseconds.
+		// A date to start fetching commit history(main and branch) from.
 		const commitsFromDate = req.body.commitsFromDate;
 
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
