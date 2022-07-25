@@ -207,16 +207,25 @@
                           </aui-dropdown-menu>
                         </summary>
                         <div class="jiraConfiguration__collapsibleBody">
-                          <!--TODO: Need to update the passed variables later-->
-                          {{> jira-configuration-table
-                              id=id
-                              hideAvatar=true
-                              elementIdPrefix="gheServer-"
-                              html_url=html_url
-                              csrfToken=csrfToken
-                              successfulConnections=app.successfulConnections
-                              failedConnections=app.failedConnections
-                          }}
+                          {{#if app.installations.total}}
+                            {{> jira-configuration-table
+                                id=id
+                                hideAvatar=true
+                                elementIdPrefix="gheServer-"
+                                html_url=html_url
+                                csrfToken=csrfToken
+                                successfulConnections=app.successfulConnections
+                                failedConnections=app.failedConnections
+                            }}
+                          {{else}}
+                            <div class="jiraConfiguration__collapsibleBody">
+                              <div class="jiraConfiguration__noOrgsTitle">Connected organizations</div>
+                              <div class="jiraConfiguration__noOrgsBody">
+                                No connected organizations.
+                                <a href="#" class="jiraConfiguration__connectNewApp" data-server-baseurl="{{server.gitHubBaseUrl}}">Connect a GitHub organization.</a>
+                              </div>
+                            </div>
+                          {{/if}}
                         </div>
                       </details>
                     {{/each}}
