@@ -58,6 +58,29 @@ $(".delete-connection-link").click(function(event) {
 	});
 });
 
+
+// const demo1 = document.getElementById('demo-range-1');
+// const el = document.querySelector('#demo-range-1');
+//
+// const controller = new AJS.DatePicker(demo1,{
+// 	minDate: '24 Jun 2000',
+// 	maxDate: '28 Jun 2000',
+// 	dateFormat: 'd M yy',
+// 	defaultDate: '26 Jun 2000',
+// 	hint: 'This will be a hint message below the calendar.'
+// });
+//
+console.log('controller');
+// console.log(AJS);
+
+const restartBackfillModal = document.getElementById("restart-backfill-modal");
+window.addEventListener('click', function(event) {
+	if (event.target.className === "jiraConfiguration__restartBackfillModalOverlay") {
+		restartBackfillModal.style.display = "none";
+	}
+});
+
+
 $(".sync-connection-link").click(function(event) {
 	event.preventDefault();
 	const installationId = $(event.target).data("installation-id");
@@ -65,29 +88,39 @@ $(".sync-connection-link").click(function(event) {
 	const csrfToken = document.getElementById("_csrf").value;
 	const $el = $("#restart-backfill");
 
-	$el.prop("disabled", true);
-	$el.attr("aria-disabled", "true");
-
-	window.AP.context.getToken(function(token) {
-		$.ajax({
-			type: "POST",
-			url: "/jira/sync",
-			data: {
-				installationId,
-				jiraHost,
-				syncType: "full",
-				jwt: token,
-				_csrf: csrfToken
-			},
-			success: function(data) {
-				AP.navigator.reload();
-			},
-			error: function(error) {
-				$el.prop("disabled", false);
-				$el.attr("aria-disabled", "false");
-			}
-		});
-	});
+//
+// 	const controller = AJS.$(el).datePicker({
+// 		minDate: '24 Jun 2000',
+// 		maxDate: '28 Jun 2000',
+// 		dateFormat: 'd M yy',
+// 		defaultDate: '26 Jun 2000',
+// 		hint: 'This will be a hint message below the calendar.'
+// 	});
+	// todo feature flag here for new / old flow
+	restartBackfillModal.style.display = "block";
+	// $el.prop("disabled", true);
+	// $el.attr("aria-disabled", "true");
+	//
+	// window.AP.context.getToken(function(token) {
+	// 	$.ajax({
+	// 		type: "POST",
+	// 		url: "/jira/sync",
+	// 		data: {
+	// 			installationId,
+	// 			jiraHost,
+	// 			syncType: "full",
+	// 			jwt: token,
+	// 			_csrf: csrfToken
+	// 		},
+	// 		success: function(data) {
+	// 			AP.navigator.reload();
+	// 		},
+	// 		error: function(error) {
+	// 			$el.prop("disabled", false);
+	// 			$el.attr("aria-disabled", "false");
+	// 		}
+	// 	});
+	// });
 });
 
 $('.jiraConfiguration__option').click(function (event) {
@@ -138,8 +171,8 @@ if (syncStatusCloseBtn != null) {
 }
 
 // When the user clicks anywhere outside of the modal, close it
-window.onclick = function(event) {
+window.addEventListener('click', function(event) {
 	if (event.target.className === "jiraConfiguration__syncRetryModalOverlay") {
 		syncStatusModal.style.display = "none";
 	}
-};
+});

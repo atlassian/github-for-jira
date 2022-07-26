@@ -68,6 +68,47 @@
   line-height: 1.6;
 }
 
+/*// todo check if this calss is used before pushing to git*/
+.jiraConfiguration__restartBackfillModal__headerContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.2em;
+}
+
+/*// todo check if this calss is used before pushing to git*/
+.jiraConfiguration__restartBackfillModal__header {
+  font-size: 20px;
+}
+
+/*// todo check if this calss is used before pushing to git*/
+.jiraConfiguration__restartBackfillModal__table {
+  border-collapse: separate;
+  border-spacing: 0 15px;
+}
+
+/*// todo check if this calss is used before pushing to git*/
+.jiraConfiguration__restartBackfillModal__tableBody {
+  border-bottom: none;
+}
+
+/*// todo check if this calss is used before pushing to git*/
+.jiraConfiguration__restartBackfillModal__tableRow {
+  margin-bottom: 1em;
+}
+
+/*// todo check if this calss is used before pushing to git*/
+.jiraConfiguration__restartBackfillModal__syncStatus__type {
+  display: flex;
+  text-transform: uppercase;
+  width: 9em;
+}
+
+/*// todo check if this calss is used before pushing to git*/
+.jiraConfiguration__restartBackfillModal__syncStatus__details {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
 .jiraConfiguration__tableContainer {
   padding: 0 0 1em;
 }

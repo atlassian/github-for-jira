@@ -80,7 +80,7 @@
           <div class='jiraConfiguration__syncRetryModal'  id="sync-status-modal">
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
-                <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status</h4>
+                <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status 1</h4>
                 <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
               </div>
 
@@ -127,6 +127,33 @@
             </div>
 
             <div class="jiraConfiguration__syncRetryModalOverlay"></div>
+          </div>
+
+          <!-- Restart backfill modal-->
+          <div class='jiraConfiguration__restartBackfillModal'  id="restart-backfill-modal">
+            <div class='jiraConfiguration__restartBackfillModalContent'>
+              <div class="jiraConfiguration__restartBackfillModal__headerContainer">
+                <h4 class="jiraConfiguration__restartBackfillModal__header">Backfill your data</h4>
+              </div>
+              <div class="jiraConfiguration__restartBackfillModal__headerContainer">
+                <p>Backfilling commits can take a long time, so we’ll only backfill your commits from the last year. If you want to backfill more commits, choose a date below. Pull requests and branches will all be backfilled regardless of their age.</p>
+              </div>
+              <div class="jiraConfiguration__restartBackfillModal__headerContainer">
+                <input class="aui-date-picker" id="demo-range-1" type="date" max="2012-01-25" min="2011-12-25" />
+                <hr>
+                <input type="date" max="2022-01-25" min="2011-12-25" />
+              </div>
+              <div class="jiraConfiguration__restartBackfillModal__headerContainer">
+                <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
+                    id="jiraConfiguration__optionAll">Cancel
+                </button>
+                <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
+                    id="jiraConfiguration__optionAll">Backfill data
+                </button>
+              </div>
+            </div>
+            <!-- Overlay -->
+            <div class="jiraConfiguration__restartBackfillModalOverlay"></div>
           </div>
 
           {{#if hasCloudAndEnterpriseServers}}
