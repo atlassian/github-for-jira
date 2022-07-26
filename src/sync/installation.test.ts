@@ -403,6 +403,14 @@ describe("sync/installation", () => {
 					expect(tasks).toEqual(["pull", "commit"]);
 				});
 			});
+
+			it("should return set of target tasks and filter out invalid values", async () => {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				return getTargetTasks(jiraHost, ALL_TASKS, ["pull", "commit", "cats"]).then((tasks) => {
+					expect(tasks).toEqual(["pull", "commit"]);
+				});
+			});
 		});
 
 		describe("Variable feature flag", () => {
