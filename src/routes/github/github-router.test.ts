@@ -1,44 +1,24 @@
-import express, { Application } from "express";
+import { Application } from "express";
+import { getFrontendApp } from "../../app";
 import supertest from "supertest";
 import { GithubRouter } from "./github-router";
-import { getLogger } from "config/logger";
 import { when } from "jest-when";
 import { GithubConfigurationGet } from "./configuration/github-configuration-get";
-import { getGitHubApiUrl } from "utils/get-github-client-config";
-import axios from "axios";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { v4 as v4uuid } from "uuid";
 import { envVars } from "config/env";
+import { getSignedCookieHeader } from "test/utils/cookies";
+import {BooleanFlags, booleanFlag} from "config/feature-flags";
 
 jest.mock("./configuration/github-configuration-get");
-jest.mock("utils/get-github-client-config");
-jest.mock("axios", () => ({ get: jest.fn(), create: jest.fn() }));
-jest.mock("models/github-server-app");
 jest.mock("models/installation");
+jest.mock("config/feature-flags");
 
 const VALID_TOKEN = "valid-token";
 const GITHUB_SERVER_APP_UUID: string = v4uuid();
 const GITHUB_SERVER_APP_ID = 789;
 const JIRA_INSTALLATION_ID = 444444;
-
-const getGitHubServerAppModel = (): GitHubServerApp => {
-	return {
-		id: 1,
-		uuid: GITHUB_SERVER_APP_UUID,
-		appId: GITHUB_SERVER_APP_ID,
-		gitHubBaseUrl: gheUrl,
-		gitHubClientId: "client-id",
-		gitHubClientSecret: "gitHubClientSecret",
-		webhookSecret: "webhookSecret",
-		privateKey: "privateKey",
-		gitHubAppName: "test-app-name",
-		installationId: JIRA_INSTALLATION_ID,
-		updatedAt: new Date(),
-		createdAt: new Date(),
-		decrypt: async (s) => s
-	} as GitHubServerApp;
-};
 
 const getServerApptInstallationModel = (): Installation => {
 	return {
@@ -54,33 +34,42 @@ const getServerApptInstallationModel = (): Installation => {
 	} as Installation;
 };
 
-const mockPrerequistApp = () => {
-	const app = express();
-	app.use((req, res, next) => {
-		req.session = { githubToken: VALID_TOKEN };
-		res.locals = { jiraHost };
-		req.log = getLogger("test");
-		next();
+const turnGHE_FF_OnOff = (newStatus: boolean) => {
+	when(jest.mocked(booleanFlag))
+		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+		.mockResolvedValue(newStatus);
+}
+
+const setupAppAndRouter = () => {
+	return getFrontendApp({
+		getSignedJsonWebToken: () => "",
+		getInstallationAccessToken: async () => ""
 	});
-	return app;
 };
 
-const mockGetGitHubApiUrl = () => {
-	when(getGitHubApiUrl)
-		.calledWith(jiraHost, GITHUB_SERVER_APP_ID)
-		.mockResolvedValue(gheUrl);
+const prepreGitHubServerAppInDB = async () => {
+	const existed = await GitHubServerApp.findForUuid(GITHUB_SERVER_APP_UUID);
+	if(!existed) {
+		GitHubServerApp.install({
+			uuid: GITHUB_SERVER_APP_UUID,
+			appId: GITHUB_SERVER_APP_ID,
+			gitHubBaseUrl: gheUrl,
+			gitHubClientId: "client-id",
+			gitHubClientSecret: "gitHubClientSecret",
+			webhookSecret: "webhookSecret",
+			privateKey: "privateKey",
+			gitHubAppName: "test-app-name",
+			installationId: JIRA_INSTALLATION_ID,
+		});
+	}
 };
 
-const mockGetForGitHubServerAppId = () => {
-	when(GitHubServerApp.findForUuid)
-		.calledWith(GITHUB_SERVER_APP_UUID)
-		.mockResolvedValue(getGitHubServerAppModel());
+const setupGitHubCloudPingNock = () => {
+	githubNock.get("/").reply(200);
 };
 
-const mockAxiosPingURL = () => {
-	when(axios.get)
-		.calledWith(jiraHost)
-		.mockResolvedValue(undefined);
+const setupGHEPingNock = () => {
+	gheNock.get("/").reply(200);
 };
 
 const mockInstallationFindByPK = () => {
@@ -98,42 +87,47 @@ const mockConfigurationGetProceed = ()=>{
 
 describe("GitHub router", () => {
 	describe("Common route utilities", () => {
-		describe("Cloud scenario", ()=>{
+		describe.only("Cloud scenario", () => {
 			let app: Application;
 			beforeEach(() => {
-				app = mockPrerequistApp();
-				app.use(`/github`, GithubRouter);
+				turnGHE_FF_OnOff(true);
+				app = setupAppAndRouter();
+				setupGitHubCloudPingNock();
 				mockConfigurationGetProceed();
 			});
 			it("should skip uuid when absent", async () => {
 				await supertest(app)
 					.get(`/github/configuration`)
-					.expect(200);
-				expect(GithubConfigurationGet).toBeCalledWith(
-					expect.anything(), //not matching req
-					expect.objectContaining({ //matching res locals
-						locals: expect.objectContaining({
-							githubToken: VALID_TOKEN,
+					.set(
+						"Cookie",
+						getSignedCookieHeader({
 							jiraHost,
-							gitHubAppConfig: expect.objectContaining({
-								appId: envVars.APP_ID,
-								gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-								webhookSecret: envVars.WEBHOOK_SECRET
-							})
+							githubToken: VALID_TOKEN
 						})
-					}),
-					expect.anything()
-				);
+					)
+					.expect(200);
+				expect(GithubConfigurationGet).toBeCalledTimes(1);
+				const actualLocals = jest.mocked(GithubConfigurationGet)
+					.mock.calls[0][1].locals;
+				expect(actualLocals)
+					.toEqual(expect.objectContaining({
+						githubToken: VALID_TOKEN,
+						jiraHost,
+						gitHubAppConfig: expect.objectContaining({
+							appId: envVars.APP_ID,
+							gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
+							webhookSecret: envVars.WEBHOOK_SECRET
+						})
+					}));
 			});
 		});
 		describe("GitHubServer", () => {
 			let app: Application;
-			beforeEach(() => {
-				app = mockPrerequistApp();
+			beforeEach(async () => {
+				app = setupAppAndRouter();
 				app.use("/github", GithubRouter);
-				mockGetGitHubApiUrl();
-				mockGetForGitHubServerAppId();
-				mockAxiosPingURL();
+				await prepreGitHubServerAppInDB();
+				setupGHEPingNock();
 				mockInstallationFindByPK();
 				mockConfigurationGetProceed();
 			});

@@ -5,7 +5,6 @@ import { envVars } from "config/env";
 import { keyLocator } from "../github/client/key-locator";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-
 	const { jiraHost } = res.locals;
 	const { uuid } = req.params;
 
