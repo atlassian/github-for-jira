@@ -8,7 +8,8 @@ import { when } from "jest-when";
 jest.mock("models/installation");
 jest.mock("models/github-server-app");
 
-const SERVER_APP_ID = 789;
+const GIT_HUB_SERVER_APP_ID = 123;
+const GIT_HUB_SERVER_APP_APP_ID = 789;
 const UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 const JIRA_INSTALLATION_ID = 1;
 
@@ -99,8 +100,9 @@ describe("github-server-app-middleware", () => {
 		};
 
 		payload = {
+			id: GIT_HUB_SERVER_APP_ID,
 			uuid: UUID,
-			appId: SERVER_APP_ID,
+			appId: GIT_HUB_SERVER_APP_APP_ID,
 			gitHubAppName: "My GitHub Server App",
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
@@ -128,9 +130,9 @@ describe("github-server-app-middleware", () => {
 
 		expect(next).toBeCalledTimes(1);
 
-		expect(res.locals.gitHubAppId).toBe(SERVER_APP_ID);
+		expect(res.locals.gitHubAppId).toBe(GIT_HUB_SERVER_APP_ID);
 		expect(res.locals.gitHubAppConfig).toEqual({
-			appId: SERVER_APP_ID,
+			appId: GIT_HUB_SERVER_APP_APP_ID,
 			uuid: UUID,
 			clientId: "lvl.1234",
 			gitHubClientSecret: "gitHubClientSecret",

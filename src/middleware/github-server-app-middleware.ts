@@ -25,7 +25,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			throw new Error("Jira hosts do not match.");
 		}
 		req.log.info("Found GitHub server app for installation");
-		res.locals.gitHubAppId = gitHubServerApp.appId;
+		res.locals.gitHubAppId = gitHubServerApp.id;
 		res.locals.gitHubAppConfig = {
 			appId: gitHubServerApp.appId,
 			uuid: gitHubServerApp.uuid,
