@@ -8,13 +8,13 @@ import * as Sentry from "@sentry/node";
 import { json, urlencoded } from "body-parser";
 import cookieParser from "cookie-parser";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
-import { SessionGet } from "./session/session-get";
 import { jirahostMiddleware } from "middleware/jirahost-middleware";
 import { cookieSessionMiddleware } from "middleware/cookiesession-middleware";
 import { ErrorRouter } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { SessionRouter } from "routes/session/session-router";
 
 export const RootRouter = Router();
 
@@ -45,7 +45,7 @@ RootRouter.use("/api", ApiRouter);
 RootRouter.use(MaintenanceRouter);
 
 // Session redirect
-RootRouter.get(["/session", "/session/*"], SessionGet);
+RootRouter.use("/session", SessionRouter);
 
 RootRouter.use(cookieSessionMiddleware);
 
