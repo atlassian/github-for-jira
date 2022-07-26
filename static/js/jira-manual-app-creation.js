@@ -20,7 +20,6 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 
       if (isUpdate) {
         // TODO: Do a put request to update the existing app
-        $.put()
       } else {
         $.post("/jira/connect/enterprise/app", data, (_message, _status, response) => {
           if (response.status === 201) {
