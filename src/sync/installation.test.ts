@@ -17,11 +17,13 @@ import { Hub } from "@sentry/types/dist/hub";
 import { mocked } from "ts-jest/utils";
 import { RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Subscription, Repository } from "models/subscription";
+import { when } from "jest-when";
+import { stringFlag, StringFlags } from "config/feature-flags";
+import { TaskType } from "~/src/sync/sync.types";
+
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 import unsortedReposJson from "fixtures/repositories.json";
 import sortedReposJson from "fixtures/sorted-repos.json";
-import { when } from "jest-when";
-import { stringFlag, StringFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
@@ -372,6 +374,7 @@ describe("sync/installation", () => {
 	describe("getTargetTasks", () => {
 		const jiraHost = "not-a-real-jirahost";
 		const DEFAULT_BACKFILL_FLAG = "*";
+		const ALL_TASKS = ["pull", "branch", "commit", "build", "deployment"] as TaskType[];
 
 		describe("Default feature flag", () => {
 
@@ -384,19 +387,19 @@ describe("sync/installation", () => {
 			});
 
 			it("should return all tasks if no feature flag or target tasks present", async () => {
-				return getTargetTasks(jiraHost).then((tasks) => {
+				return getTargetTasks(jiraHost, ALL_TASKS).then((tasks) => {
 					expect(tasks).toEqual(["pull", "branch", "commit", "build", "deployment"]);
 				});
 			});
 
 			it("should return single target tasks with default feature flag", async () => {
-				return getTargetTasks(jiraHost, ["pull"]).then((tasks) => {
+				return getTargetTasks(jiraHost, ALL_TASKS, ["pull"]).then((tasks) => {
 					expect(tasks).toEqual(["pull"]);
 				});
 			});
 
 			it("should return set of target tasks with default feature flag", async () => {
-				return getTargetTasks(jiraHost, ["pull", "commit"]).then((tasks) => {
+				return getTargetTasks(jiraHost, ALL_TASKS, ["pull", "commit"]).then((tasks) => {
 					expect(tasks).toEqual(["pull", "commit"]);
 				});
 			});
@@ -410,7 +413,7 @@ describe("sync/installation", () => {
 					expect.anything(),
 					expect.anything()
 				).mockResolvedValue("build");
-				return getTargetTasks(jiraHost).then((tasks) => {
+				return getTargetTasks(jiraHost, ALL_TASKS).then((tasks) => {
 					expect(tasks).toEqual(["build"]);
 				});
 			});
@@ -421,7 +424,7 @@ describe("sync/installation", () => {
 					expect.anything()
 				).mockResolvedValue("branch,commit");
 
-				return getTargetTasks(jiraHost).then((tasks) => {
+				return getTargetTasks(jiraHost, ALL_TASKS).then((tasks) => {
 					expect(tasks).toEqual(["branch", "commit"]);
 				});
 			});

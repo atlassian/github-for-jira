@@ -55,7 +55,7 @@ export interface TaskPayload<E = any, P = any> {
 	jiraPayload?: P;
 }
 
-const taskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
@@ -64,24 +64,23 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-export const getTargetTasks = async (jiraHost: string, targetTasks?: TaskType[]): Promise<TaskType[]> => {
+export const getTargetTasks = async (jiraHost: string, allTasks: TaskType[], targetTasks?: TaskType[]): Promise<TaskType[]> => {
 	if (targetTasks) {
 		return targetTasks;
 	}
 
-
 	const filteredTasks = await stringFlag(StringFlags.TARGET_BACKFILL_TASKS, "*", jiraHost);
 	// flag default return all tasks
 	if (filteredTasks === "*") {
-		return taskTypes;
+		return allTasks;
 	}
 
 	const flaggedTasks = filteredTasks.split(",") as TaskType[];
-	return intersection(taskTypes, flaggedTasks);
+	return intersection(allTasks, flaggedTasks);
 };
 
 const getNextTask = async (subscription: Subscription, jiraHost: string, targetTasks?: TaskType[]): Promise<Task | undefined> => {
-	const tasks = await getTargetTasks(jiraHost, targetTasks);
+	const tasks = await getTargetTasks(jiraHost, allTaskTypes, targetTasks);
 
 	if (subscription.repositoryStatus !== "complete") {
 		return {
