@@ -1,12 +1,17 @@
 import Mock = jest.Mock;
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { getLogger } from "config/logger";
-import { mocked } from "ts-jest/utils";
 import { GitHubServerApp } from "../models/github-server-app";
 import { Installation } from "models/installation";
+import { when } from "jest-when";
 
 jest.mock("models/installation");
 jest.mock("models/github-server-app");
+
+const GIT_HUB_SERVER_APP_ID = 123;
+const GIT_HUB_SERVER_APP_APP_ID = 789;
+const UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
+const JIRA_INSTALLATION_ID = 1;
 
 describe("github-server-app-middleware", () => {
 
@@ -25,11 +30,11 @@ describe("github-server-app-middleware", () => {
 		};
 	});
 
-	it("should call next() when no gitHupAppId is provided",  async() => {
+	it("should call next() when no uuid is provided",  async() => {
 		req = {
 			log: getLogger("request"),
 			params: {
-				id: undefined
+				uuid: undefined
 			}
 		};
 
@@ -37,11 +42,11 @@ describe("github-server-app-middleware", () => {
 		expect(next).toBeCalledTimes(1);
 	});
 
-	it("should throw an error if an id is provided but no GitHub server app is found", async () => {
+	it("should throw an error if an uuid is provided but no GitHub server app is found", async () => {
 		req = {
 			log: getLogger("request"),
 			params: {
-				id: 3
+				uuid: UUID
 			}
 		};
 
@@ -50,34 +55,36 @@ describe("github-server-app-middleware", () => {
 			.toThrow("No GitHub app found for provided id.");
 	});
 
-	it("should throw an error if an id is provided and a GitHub server app is found but the installation id doesn't match",  async() => {
+	it("should throw an error if an uuid is provided and a GitHub server app is found but the installation id doesn't match",  async() => {
 		req = {
 			log: getLogger("request"),
 			params: {
-				id: 3
+				uuid: UUID
 			}
 		};
 
 		payload = {
-			uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
+			uuid: UUID,
 			gitHubAppName: "My GitHub Server App",
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
 			gitHubClientSecret: "myghsecret",
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
-			installationId: 2
+			installationId: JIRA_INSTALLATION_ID
 		};
 
 		installation = {
 			jiraHost: "https://testatlassian.com",
-			id: 19
+			id: JIRA_INSTALLATION_ID + 1
 		};
 
-		mocked(Installation.findByPk).mockResolvedValue(installation);
-		mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(
-			payload
-		);
+		when(Installation.findByPk)
+			.expectCalledWith(JIRA_INSTALLATION_ID as any)
+			.mockResolvedValue(installation);
+		when(GitHubServerApp.findForUuid)
+			.expectCalledWith(UUID)
+			.mockResolvedValue(payload);
 
 		await expect(GithubServerAppMiddleware(req, res, next))
 			.rejects
@@ -88,33 +95,49 @@ describe("github-server-app-middleware", () => {
 		req = {
 			log: getLogger("request"),
 			params: {
-				id: 3
+				uuid: UUID
 			}
 		};
 
 		payload = {
-			uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
+			id: GIT_HUB_SERVER_APP_ID,
+			uuid: UUID,
+			appId: GIT_HUB_SERVER_APP_APP_ID,
 			gitHubAppName: "My GitHub Server App",
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
 			gitHubClientSecret: "myghsecret",
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
-			installationId: 19
+			installationId: JIRA_INSTALLATION_ID,
+			decrypt: async (s: any) => s
 		};
 
 		installation = {
 			jiraHost: "https://testatlassian.net",
-			id: 19,
+			id: JIRA_INSTALLATION_ID,
 			clientKey: "testkey"
 		};
 
-		mocked(Installation.findByPk).mockResolvedValue(installation);
-		mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(
-			payload
-		);
+		when(Installation.findByPk)
+			.expectCalledWith(JIRA_INSTALLATION_ID as any)
+			.mockResolvedValue(installation);
+		when(GitHubServerApp.findForUuid)
+			.expectCalledWith(UUID)
+			.mockResolvedValue(payload);
 
 		await GithubServerAppMiddleware(req, res, next);
+
 		expect(next).toBeCalledTimes(1);
+
+		expect(res.locals.gitHubAppId).toBe(GIT_HUB_SERVER_APP_ID);
+		expect(res.locals.gitHubAppConfig).toEqual({
+			appId: GIT_HUB_SERVER_APP_APP_ID,
+			uuid: UUID,
+			clientId: "lvl.1234",
+			gitHubClientSecret: "gitHubClientSecret",
+			privateKey: "privateKey",
+			webhookSecret: "webhookSecret"
+		});
 	});
 });
