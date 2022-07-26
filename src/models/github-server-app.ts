@@ -65,7 +65,7 @@ export class GitHubServerApp extends EncryptedModel {
 
 		return this.findOne({
 			where: {
-				id: gitHubServerAppId
+				appId: gitHubServerAppId
 			}
 		});
 	}
