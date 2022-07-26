@@ -66,7 +66,7 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 
 export const getTargetTasks = async (jiraHost: string, allTasks: TaskType[], targetTasks?: TaskType[]): Promise<TaskType[]> => {
 	if (targetTasks) {
-		return targetTasks;
+		return intersection(allTasks, targetTasks);
 	}
 
 	const filteredTasks = await stringFlag(StringFlags.TARGET_BACKFILL_TASKS, "*", jiraHost);
