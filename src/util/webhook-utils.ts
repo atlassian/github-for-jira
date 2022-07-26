@@ -1,6 +1,7 @@
 import { statsd }  from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import Logger from "bunyan";
+import { getLogger } from "config/logger";
 
 export const getCurrentTime = () => Date.now();
 
@@ -17,7 +18,7 @@ export const getCurrentTime = () => Date.now();
 export const emitWebhookProcessedMetrics = (
 	webhookReceivedTime: number,
 	webhookName: string,
-	contextLogger: Logger,
+	contextLogger: Logger = getLogger("webhook-metrics"),
 	status?: number
 ): number | undefined | void => {
 	const currentTime = getCurrentTime();
@@ -61,14 +62,14 @@ export const emitWebhookProcessedMetrics = (
 
 			return timeToProcessWebhookEvent;
 		} else {
-			contextLogger?.error(
+			contextLogger.error(
 				{ webhookReceivedTime },
 				`Failed to send timeToProcessWebhookEvent metric. webhookReceivedTime: ${webhookReceivedTime}; current time: ${currentTime}.`
 			);
 			return undefined;
 		}
 	} catch (err) {
-		contextLogger?.error(
+		contextLogger.error(
 			{ err },
 			"Failed to send webhook processing time metrics."
 		);

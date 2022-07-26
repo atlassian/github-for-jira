@@ -127,13 +127,7 @@ export const mapEnvironment = (environment: string): string => {
 		production: ["production", "prod", "prd", "live"]
 	};
 
-	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key]));
-
-	if (!jiraEnv) {
-		return "unmapped";
-	}
-
-	return jiraEnv;
+	return Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key])) || "unmapped";
 };
 
 // Maps issue ids and commit summaries to an array of associations (one for issue ids, and one for commits).

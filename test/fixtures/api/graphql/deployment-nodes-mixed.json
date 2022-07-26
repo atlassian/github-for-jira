@@ -7,6 +7,7 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "repository": {
+								"id": 1,
                 "name": "test-repo-name",
                 "owner": {
                   "login": "test-repo-owner"
@@ -34,13 +35,14 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "repository": {
+								"id": 1,
                 "name": "test-repo-name",
                 "owner": {
                   "login": "test-repo-owner"
                 }
               },
               "databaseId": 1234,
-              "commitOid": "51e16759cdac67b0d2a94e0674c9603b75a840f6",
+              "commitOid": "7544f2fec0321a32d5effd421682463c2ebd5018",
               "task": "deploy",
               "ref": {
                 "name": "main",
@@ -50,7 +52,7 @@
               "description": "",
               "latestStatus": {
                 "environmentUrl": "",
-                "logUrl": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
+                "logUrl": "https://github.com/test-repo-owner/test-repo-name/commit/7544f2fec0321a32d5effd421682463c2ebd5018/checks",
                 "state": "success",
                 "id": "DES_kwDOGtdD5840PkSo",
                 "updatedAt": "2022-02-03T22:45:04Z"

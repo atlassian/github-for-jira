@@ -171,8 +171,8 @@ describe("Deployment Webhook", () => {
 			await expect(app.receive(deploymentStatusBasic as any)).toResolve();
 
 			await waitUntil(async () => {
-				expect(jiraNock).toBeDone();
 				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
 			});
 		});
 	});
