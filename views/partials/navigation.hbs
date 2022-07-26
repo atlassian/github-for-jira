@@ -1,11 +1,12 @@
-<nav class="navigation">
-    <button class="navigation__backButton__container navigation__link go-back">
-        <img src="/public/assets/arrow-left.svg"
-             alt="Go back to {{previousPageName}}"
-             data-previous-page-path="{{previousPagePath}}"
-             data-close-on-back="{{closeOnBack}}"
-        />
-    </button>
+<nav class="navigation {{#if hideBackButton}}no-back-btn{{/if}}">
+    {{#unless hideBackButton}}
+        <button class="navigation__backButton__container navigation__link go-back">
+            <img src="/public/assets/arrow-left.svg"
+                 alt="Go back to {{previousPageName}}"
+                 data-previous-page-path="{{previousPagePath}}"
+            />
+        </button>
+    {{/unless}}
     <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-jenkins" class="navigation__help__container navigation__link">
         <img class="navigation__icon" src="/public/assets/question.svg" alt="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-jenkins" />
         <p class="navigation__help__message">Help</p>
