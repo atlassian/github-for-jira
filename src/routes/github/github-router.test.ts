@@ -32,19 +32,18 @@ const setupAppAndRouter = () => {
 
 const prepareGitHubServerAppInDB = async (jiraInstallaionId: number) => {
 	const existed = await GitHubServerApp.findForUuid(GITHUB_SERVER_APP_UUID);
-	if (!existed) {
-		await GitHubServerApp.install({
-			uuid: GITHUB_SERVER_APP_UUID,
-			appId: GITHUB_SERVER_APP_ID,
-			gitHubBaseUrl: gheUrl,
-			gitHubClientId: "client-id",
-			gitHubClientSecret: "gitHubClientSecret",
-			webhookSecret: "webhookSecret",
-			privateKey: "privateKey",
-			gitHubAppName: "test-app-name",
-			installationId: jiraInstallaionId
-		});
-	}
+	if (existed) return existed;
+	return await GitHubServerApp.install({
+		uuid: GITHUB_SERVER_APP_UUID,
+		appId: GITHUB_SERVER_APP_ID,
+		gitHubBaseUrl: gheUrl,
+		gitHubClientId: "client-id",
+		gitHubClientSecret: "gitHubClientSecret",
+		webhookSecret: "webhookSecret",
+		privateKey: "privateKey",
+		gitHubAppName: "test-app-name",
+		installationId: jiraInstallaionId
+	});
 };
 
 const setupGitHubCloudPingNock = () => {
@@ -126,11 +125,13 @@ describe("GitHub router", () => {
 		describe("GitHubServer", () => {
 			let app: Application;
 			let jiraInstallaionId: number;
+			let gitHubAppId: number;
 			beforeEach(async () => {
 				app = setupAppAndRouter();
 				const installation = await prepareNewInstallationInDB();
 				jiraInstallaionId = installation.id;
-				await prepareGitHubServerAppInDB(jiraInstallaionId);
+				const gitHubApp = await prepareGitHubServerAppInDB(jiraInstallaionId);
+				gitHubAppId = gitHubApp.id;
 				mockConfigurationGetProceed();
 			});
 			it("should extract uuid when present", async () => {
@@ -151,7 +152,7 @@ describe("GitHub router", () => {
 						locals: expect.objectContaining({
 							githubToken: VALID_TOKEN,
 							jiraHost,
-							gitHubAppId: GITHUB_SERVER_APP_ID,
+							gitHubAppId: gitHubAppId,
 							gitHubAppConfig: expect.objectContaining({
 								appId: GITHUB_SERVER_APP_ID,
 								uuid: GITHUB_SERVER_APP_UUID,

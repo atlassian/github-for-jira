@@ -20,7 +20,7 @@ describe("key-locator", () => {
 			installationId: 1
 		});
 
-		const privateKey = await keyLocator(gitHubServerApp.appId);
+		const privateKey = await keyLocator(gitHubServerApp.id);
 		expect(privateKey).toBe("myprivatekey");
 
 	});
