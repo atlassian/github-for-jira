@@ -3,6 +3,7 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
   const form = event.target;
   const csrf = $("#_csrf").val();
   const data = $(form).serializeObject();
+  const isUpdate = $('input[type=submit]').val() === "Update";
 
   // Reading the content of the file
   const file = $("#privateKeyFile")[0].files[0];
@@ -17,11 +18,16 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
       data._csrf = csrf;
       data.jiraHost = $("#gitHubBaseUrl").val();
 
-      $.post("/jira/connect/enterprise/app", data, (_message, _status, response) => {
-        if (response.status === 201) {
-          // TODO: Redirect to the App connection
-        }
-      });
+      if (isUpdate) {
+        // TODO: Do a put request to update the existing app
+        $.put()
+      } else {
+        $.post("/jira/connect/enterprise/app", data, (_message, _status, response) => {
+          if (response.status === 201) {
+            // TODO: Redirect to the App connection
+          }
+        });
+      }
     });
   };
 });
