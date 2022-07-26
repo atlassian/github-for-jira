@@ -24,6 +24,27 @@ describe("GitHubServerApp", () => {
 		expect(savedGitHubServerApp?.gitHubAppName).toEqual("My GitHub Server App");
 	});
 
+	it("should find app record by gitHubAppId", async () => {
+
+		const uuid = newUUID();
+		const payload = {
+			uuid: uuid,
+			appId: 123,
+			gitHubAppName: "My GitHub Server App",
+			gitHubBaseUrl: "http://myinternalserver.com",
+			gitHubClientId: "lvl.1234",
+			gitHubClientSecret: "myghsecret",
+			webhookSecret: "mywebhooksecret",
+			privateKey: "myprivatekey",
+			installationId: 10
+		};
+
+		await GitHubServerApp.install(payload);
+		const savedGitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(123);
+
+		expect(savedGitHubServerApp?.gitHubAppName).toEqual("My GitHub Server App");
+	});
+
 	describe("cryptor", () => {
 		//--------- helpers
 		const defaults = (uuid: string, surfix?: string) => ({
