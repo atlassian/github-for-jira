@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2022-07-26T05:50:55.963Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/19.0.2 Chrome/102.0.5005.63 Electron/19.0.3 Safari/537.36" etag="s24paYIEiRfBukXRnTDS" compressed="false" version="19.0.2" type="device">
+<mxfile host="Electron" modified="2022-07-26T06:31:55.122Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/19.0.2 Chrome/102.0.5005.63 Electron/19.0.3 Safari/537.36" etag="V7DSleQjnvrMroWrx9AH" compressed="false" version="19.0.2" type="device">
   <diagram id="dun09WMIp-Qr-0l5YfAu" name="Page-1">
-    <mxGraphModel dx="1234" dy="1891" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1377" dy="1925" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -74,7 +74,7 @@
             <mxRectangle x="405.5" y="150" width="70" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="j9X3w0Fw8t5LKd1pTGYZ-31" value="id (internal, db pk)&#xa;uuid (globally unique)&#xa;appId (from github, unique per server)&#xa;installationId (from github, unique per server)&#xa;     --&gt; githubInstallationId&#xa;gitHubClientId&#xa;privateKey&#xa;webhookSecret&#xa;gitHubBaseUrl" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;fontColor=#1A1A1A;" parent="j9X3w0Fw8t5LKd1pTGYZ-30" vertex="1">
+        <mxCell id="j9X3w0Fw8t5LKd1pTGYZ-31" value="id (internal, db pk)&#xa;uuid (globally unique)&#xa;appId (from github, unique per server)&#xa;installationId (jira installation id)&#xa;gitHubClientId&#xa;privateKey&#xa;webhookSecret&#xa;gitHubBaseUrl" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;fontColor=#1A1A1A;" parent="j9X3w0Fw8t5LKd1pTGYZ-30" vertex="1">
           <mxGeometry y="30" width="324.5" height="170" as="geometry" />
         </mxCell>
         <mxCell id="j9X3w0Fw8t5LKd1pTGYZ-37" value="&lt;font color=&quot;#000000&quot; style=&quot;font-size: 12px&quot;&gt;1&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;shadow=0;glass=0;fontSize=28;fontColor=#007FFF;" parent="1" vertex="1">
@@ -142,47 +142,8 @@
         <mxCell id="kT0_zXmX2DJVB-VJs5Uh-3" value="&lt;font color=&quot;#000000&quot; style=&quot;font-size: 12px&quot;&gt;*&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;shadow=0;glass=0;fontSize=28;fontColor=#007FFF;" parent="1" vertex="1">
           <mxGeometry x="531" y="98" width="19" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-6" value="Are we putting three entities (app &amp;amp; installation) into one table?" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;" parent="1" vertex="1">
-          <mxGeometry x="631" y="40" width="120" height="100" as="geometry" />
-        </mxCell>
         <mxCell id="kT0_zXmX2DJVB-VJs5Uh-7" value="The relation is not 1:N in this schema" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;" parent="1" vertex="1">
           <mxGeometry x="180" y="140" width="120" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-17" value="" style="group" parent="1" vertex="1" connectable="0">
-          <mxGeometry x="620" y="-140" width="100" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-20" value="" style="group" parent="kT0_zXmX2DJVB-VJs5Uh-17" vertex="1" connectable="0">
-          <mxGeometry width="70" height="40.00181818181819" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-18" value="" style="html=1;verticalLabelPosition=bottom;align=center;labelBackgroundColor=#ffffff;verticalAlign=top;strokeWidth=2;strokeColor=#0080F0;shadow=0;dashed=0;shape=mxgraph.ios7.icons.cloud;" parent="kT0_zXmX2DJVB-VJs5Uh-20" vertex="1">
-          <mxGeometry width="70" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-19" value="&lt;span style=&quot;background-color: rgb(255, 255, 255); font-size: 12px; line-height: 0.9;&quot;&gt;Installation&lt;br style=&quot;font-size: 12px;&quot;&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#007FFF;" parent="kT0_zXmX2DJVB-VJs5Uh-20" vertex="1">
-          <mxGeometry x="20.175879396984925" y="18.183636363636367" width="29.64824120603015" height="21.81818181818182" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-23" value="" style="group" parent="1" vertex="1" connectable="0">
-          <mxGeometry x="531" y="-140" width="100" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-24" value="" style="group" parent="kT0_zXmX2DJVB-VJs5Uh-23" vertex="1" connectable="0">
-          <mxGeometry width="70" height="40.00181818181819" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-25" value="" style="html=1;verticalLabelPosition=bottom;align=center;labelBackgroundColor=#ffffff;verticalAlign=top;strokeWidth=2;strokeColor=#0080F0;shadow=0;dashed=0;shape=mxgraph.ios7.icons.cloud;" parent="kT0_zXmX2DJVB-VJs5Uh-24" vertex="1">
-          <mxGeometry width="70" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-26" value="&lt;span style=&quot;background-color: rgb(255, 255, 255); font-size: 12px; line-height: 0.9;&quot;&gt;App&lt;br style=&quot;font-size: 12px;&quot;&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#007FFF;" parent="kT0_zXmX2DJVB-VJs5Uh-24" vertex="1">
-          <mxGeometry x="20.175879396984925" y="18.183636363636367" width="29.64824120603015" height="21.81818181818182" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-27" value="" style="group" parent="1" vertex="1" connectable="0">
-          <mxGeometry x="439.5" y="-140" width="100" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-28" value="" style="group" parent="kT0_zXmX2DJVB-VJs5Uh-27" vertex="1" connectable="0">
-          <mxGeometry width="70" height="40.00181818181819" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-29" value="" style="html=1;verticalLabelPosition=bottom;align=center;labelBackgroundColor=#ffffff;verticalAlign=top;strokeWidth=2;strokeColor=#0080F0;shadow=0;dashed=0;shape=mxgraph.ios7.icons.cloud;" parent="kT0_zXmX2DJVB-VJs5Uh-28" vertex="1">
-          <mxGeometry width="70" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="kT0_zXmX2DJVB-VJs5Uh-30" value="&lt;span style=&quot;background-color: rgb(255, 255, 255); font-size: 10px; line-height: 0.9;&quot;&gt;Github&lt;br&gt;Server&lt;br style=&quot;font-size: 12px;&quot;&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#007FFF;" parent="kT0_zXmX2DJVB-VJs5Uh-28" vertex="1">
-          <mxGeometry x="20.175879396984925" y="18.183636363636367" width="29.64824120603015" height="21.81818181818182" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
