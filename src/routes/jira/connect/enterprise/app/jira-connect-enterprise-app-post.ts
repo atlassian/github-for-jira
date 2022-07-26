@@ -34,10 +34,11 @@ export const JiraConnectEnterpriseAppPost = async (
 		});
 
 		res.status(201).json({
-			message: `Successfully added GitHub Server App for ${installation.id}`
+			message: `Successfully added GitHub Server App for ${installation.id}`,
+			data: githubServerApp
 		});
 
-		req.log.debug("Jira Connect Enterprise App added successfully.", githubServerApp);
+		req.log.debug("Jira Connect Enterprise App added successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira Connect Enterprise App POST request: ${error}`));
 	}

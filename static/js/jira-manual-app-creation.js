@@ -1,3 +1,20 @@
+const openChildWindow = (url) => {
+  const child = window.open(url);
+  const interval = setInterval(function () {
+    if (child.closed) {
+      clearInterval(interval);
+      AP.navigator.go(
+        'addonmodule',
+        {
+          moduleKey: "github-post-install-page"
+        }
+      );
+    }
+  }, 1000);
+
+  return child;
+}
+
 AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
   event.preventDefault();
   const form = event.target;
@@ -21,9 +38,11 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
       if (isUpdate) {
         // TODO: Do a put request to update the existing app
       } else {
-        $.post("/jira/connect/enterprise/app", data, (_message, _status, response) => {
-          if (response.status === 201) {
-            // TODO: Redirect to the App connection
+        $.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
+          if (result.status === 201) {
+            const child = openChildWindow("/session/github/configuration/" + response.data.id);
+            child.window.jiraHost = jiraHost;
+            child.window.jwt = token;
           }
         });
       }
