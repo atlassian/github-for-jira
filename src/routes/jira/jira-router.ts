@@ -10,8 +10,12 @@ import { JiraAppCreationRouter } from "./server/jira-app-creation-router";
 import { JiraGheServerRouter } from "routes/jira/server/jira-ghe-server-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { JiraEditAppGet } from "routes/jira/server/jira-edit-app-get";
+import { JiraDelete } from "routes/jira/jira-delete";
 
 export const JiraRouter = Router();
+
+// TODO: The params `installationId` needs to be replaced by `subscriptionId`
+JiraRouter.delete("/subscription/:installationId", JiraContextJwtTokenMiddleware, JiraDelete);
 
 // TODO: Need to cleanup the URLs and Routers
 
