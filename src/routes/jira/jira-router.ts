@@ -18,13 +18,6 @@ export const JiraRouter = Router();
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 JiraRouter.get("/edit-app/:id", csrfMiddleware, JiraJwtTokenMiddleware, JiraEditAppGet);
 
-JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, JiraGet);
-
-/********************************************************************************************************************
- * TODO: remove this later, keeping this for now cause its out in `Prod`
- * *******************************************************************************************************************/
-JiraRouter.use("/configuration", JiraConfigurationRouter);
-
 // TODO - add csrf middleware
 JiraRouter.post("/sync", JiraContextJwtTokenMiddleware, JiraSyncPost);
 JiraRouter.use("/events", JiraEventsRouter);
@@ -33,3 +26,10 @@ JiraRouter.use("/server-url", JiraServerUrlRouter);
 JiraRouter.use("/app-creation", JiraAppCreationRouter);
 
 JiraRouter.use("/ghe-servers", csrfMiddleware, JiraJwtTokenMiddleware, JiraGheServerRouter);
+
+JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, JiraGet);
+
+/********************************************************************************************************************
+ * TODO: remove this later, keeping this for now cause its out in `Prod`
+ * *******************************************************************************************************************/
+JiraRouter.use("/configuration", JiraConfigurationRouter);
