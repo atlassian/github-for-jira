@@ -96,6 +96,11 @@ ApiRouter.post(
 			return;
 		}
 
+		if (commitsFromDate?.valueOf() > Date.now()){
+			res.status(400).send("Invalid date, please select historical date!");
+			return;
+		}
+
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
