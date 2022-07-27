@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { param } from "express-validator";
+import { body, param } from "express-validator";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import IORedis from "ioredis";
@@ -70,6 +70,8 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 // RESYNC ALL INSTANCES
 ApiRouter.post(
 	"/resync",
+	body("targetTasks").optional().isArray().not().isEmpty(),
+	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
@@ -88,11 +90,6 @@ ApiRouter.post(
 
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
 			res.status(400).send("please provide at least one of the filter parameters!");
-			return;
-		}
-
-		if (targetTasks?.length === 0) {
-			res.status(400).send("Empty targetTasks values, please enter valid task types.");
 			return;
 		}
 

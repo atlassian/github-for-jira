@@ -17,15 +17,10 @@ import { Hub } from "@sentry/types/dist/hub";
 import { mocked } from "ts-jest/utils";
 import { RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Subscription, Repository } from "models/subscription";
-import { when } from "jest-when";
-import { stringFlag, StringFlags } from "config/feature-flags";
-import { TaskType } from "~/src/sync/sync.types";
 
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 import unsortedReposJson from "fixtures/repositories.json";
 import sortedReposJson from "fixtures/sorted-repos.json";
-
-jest.mock("config/feature-flags");
 
 const TEST_LOGGER = getLogger("test");
 
@@ -372,71 +367,32 @@ describe("sync/installation", () => {
 	});
 
 	describe("getTargetTasks", () => {
-		const jiraHost = "not-a-real-jirahost";
-		const DEFAULT_BACKFILL_FLAG = "*";
-		const ALL_TASKS = ["pull", "branch", "commit", "build", "deployment"] as TaskType[];
-
-		describe("Default feature flag", () => {
-
-			beforeEach(() => {
-				when(stringFlag).calledWith(
-					StringFlags.TARGET_BACKFILL_TASKS,
-					expect.anything(),
-					expect.anything()
-				).mockResolvedValue(DEFAULT_BACKFILL_FLAG);
-			});
-
-			it("should return all tasks if no feature flag or target tasks present", async () => {
-				return getTargetTasks(jiraHost, ALL_TASKS).then((tasks) => {
-					expect(tasks).toEqual(["pull", "branch", "commit", "build", "deployment"]);
-				});
-			});
-
-			it("should return single target tasks with default feature flag", async () => {
-				return getTargetTasks(jiraHost, ALL_TASKS, ["pull"]).then((tasks) => {
-					expect(tasks).toEqual(["pull"]);
-				});
-			});
-
-			it("should return set of target tasks with default feature flag", async () => {
-				return getTargetTasks(jiraHost, ALL_TASKS, ["pull", "commit"]).then((tasks) => {
-					expect(tasks).toEqual(["pull", "commit"]);
-				});
-			});
-
-			it("should return set of target tasks and filter out invalid values", async () => {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
-				return getTargetTasks(jiraHost, ALL_TASKS, ["pull", "commit", "cats"]).then((tasks) => {
-					expect(tasks).toEqual(["pull", "commit"]);
-				});
+		it("should return all tasks if no target tasks present", async () => {
+			return getTargetTasks().then((tasks) => {
+				expect(tasks).toEqual(["pull", "branch", "commit", "build", "deployment"]);
 			});
 		});
 
-		describe("Variable feature flag", () => {
-
-			it("should return single task from feature flag", async () => {
-				when(stringFlag).calledWith(
-					StringFlags.TARGET_BACKFILL_TASKS,
-					expect.anything(),
-					expect.anything()
-				).mockResolvedValue("build");
-				return getTargetTasks(jiraHost, ALL_TASKS).then((tasks) => {
-					expect(tasks).toEqual(["build"]);
-				});
-			});
-			it("should return subset of tasks from feature flag", async () => {
-				when(stringFlag).calledWith(
-					StringFlags.TARGET_BACKFILL_TASKS,
-					expect.anything(),
-					expect.anything()
-				).mockResolvedValue("branch,commit");
-
-				return getTargetTasks(jiraHost, ALL_TASKS).then((tasks) => {
-					expect(tasks).toEqual(["branch", "commit"]);
-				});
+		it("should return single target task", async () => {
+			return getTargetTasks(["pull"]).then((tasks) => {
+				expect(tasks).toEqual(["pull"]);
 			});
 		});
+
+		it("should return set of target tasks", async () => {
+			return getTargetTasks(["pull", "commit"]).then((tasks) => {
+				expect(tasks).toEqual(["pull", "commit"]);
+			});
+		});
+
+		it("should return set of target tasks and filter out invalid values", async () => {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			return getTargetTasks(["pull", "commit", "cats"]).then((tasks) => {
+				expect(tasks).toEqual(["pull", "commit"]);
+			});
+		});
+
 
 	});
 });

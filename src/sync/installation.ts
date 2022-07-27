@@ -15,7 +15,7 @@ import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { isBlocked, booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
+import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -64,23 +64,16 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-export const getTargetTasks = async (jiraHost: string, allTasks: TaskType[], targetTasks?: TaskType[]): Promise<TaskType[]> => {
+export const getTargetTasks = async (targetTasks?: TaskType[]): Promise<TaskType[]> => {
 	if (targetTasks) {
-		return intersection(allTasks, targetTasks);
+		return intersection(allTaskTypes, targetTasks);
 	}
 
-	const filteredTasks = await stringFlag(StringFlags.TARGET_BACKFILL_TASKS, "*", jiraHost);
-	// flag default return all tasks
-	if (filteredTasks === "*") {
-		return allTasks;
-	}
-
-	const flaggedTasks = filteredTasks.split(",") as TaskType[];
-	return intersection(allTasks, flaggedTasks);
+	return allTaskTypes;
 };
 
-const getNextTask = async (subscription: Subscription, jiraHost: string, targetTasks?: TaskType[]): Promise<Task | undefined> => {
-	const tasks = await getTargetTasks(jiraHost, allTaskTypes, targetTasks);
+const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
+	const tasks = await getTargetTasks(targetTasks);
 
 	if (subscription.repositoryStatus !== "complete") {
 		return {
@@ -156,7 +149,7 @@ export const updateJobStatus = async (
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
-	} else if (!(await getNextTask(subscription, jiraHost, targetTasks))) {
+	} else if (!(await getNextTask(subscription, targetTasks))) {
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
@@ -234,7 +227,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
-	const nextTask = await getNextTask(subscription, jiraHost, data.targetTasks);
+	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {

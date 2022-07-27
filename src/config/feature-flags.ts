@@ -29,8 +29,7 @@ export enum BooleanFlags {
 }
 
 export enum StringFlags {
-	BLOCKED_INSTALLATIONS = "blocked-installations",
-	TARGET_BACKFILL_TASKS = "target-backfill-tasks"
+	BLOCKED_INSTALLATIONS = "blocked-installations"
 }
 
 export enum NumberFlags {
