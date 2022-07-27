@@ -56,7 +56,20 @@ Object {
         "name": Object {
           "value": "GitHub Server Url",
         },
-        "url": "/jira/server-url",
+        "url": "/jira/connect/enterprise?new={ac.new}",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-list-servers-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Enterprise Servers",
+        },
+        "url": "/jira/connect/enterprise",
       },
       Object {
         "conditions": Array [
@@ -83,19 +96,6 @@ Object {
           "value": "GitHub Edit App",
         },
         "url": "/jira/edit-app/{ac.ghsaId}",
-      },
-      Object {
-        "conditions": Array [
-          Object {
-            "condition": "user_is_admin",
-          },
-        ],
-        "key": "github-list-servers-page",
-        "location": "none",
-        "name": Object {
-          "value": "GitHub Enterprise Servers",
-        },
-        "url": "/jira/ghe-servers",
       },
       Object {
         "conditions": Array [
