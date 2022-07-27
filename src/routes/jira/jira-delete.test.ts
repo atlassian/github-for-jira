@@ -2,7 +2,7 @@
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { mocked } from "ts-jest/utils";
-import { JiraConfigurationDelete } from "./jira-configuration-delete";
+import { JiraDelete } from "./jira-delete";
 import { getLogger } from "config/logger";
 
 jest.mock("models/installation");
@@ -53,13 +53,15 @@ describe("DELETE /jira/configuration", () => {
 		const req = {
 			log: getLogger("request"),
 			body: {
-				installationId: subscription.githubInstallationId,
 				jiraHost: subscription.jiraHost
+			},
+			params: {
+				installationId: subscription.githubInstallationId
 			}
 		};
 
 		const res = { sendStatus: jest.fn(), locals: { installation, jiraHost } };
-		await JiraConfigurationDelete(req as any, res as any);
+		await JiraDelete(req as any, res as any);
 		expect(subscription.destroy).toHaveBeenCalled();
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 	});

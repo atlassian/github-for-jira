@@ -56,7 +56,7 @@ Object {
         "name": Object {
           "value": "GitHub Select Product",
         },
-        "url": "/jira/select-product",
+        "url": "/jira/connect",
       },
       Object {
         "conditions": Array [
