@@ -41,7 +41,6 @@ export function sendAnalytics(eventType: string, attributes?: Record<string, unk
 			sendEvent(analyticsNodeClient.sendScreenEvent({
 				...baseAttributes,
 				name: attributes?.name,
-				attributes,
 				screenEvent: {
 					platform: "web",
 					attributes: omit(attributes, "name")
