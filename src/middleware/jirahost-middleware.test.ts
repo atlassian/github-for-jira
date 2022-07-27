@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { jirahostMiddleware } from "./jirahost-middleware";
 import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
-import { postInstallUrl } from "routes/jira/jira-atlassian-connect-get";
+import { postInstallUrl } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { TokenType } from "~/src/jira/util/jwt";
 import { booleanFlag } from "../config/feature-flags";
 
