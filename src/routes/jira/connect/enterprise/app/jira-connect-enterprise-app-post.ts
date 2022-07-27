@@ -8,7 +8,7 @@ export const JiraConnectEnterpriseAppPost = async (
 	try {
 		req.log.debug("Received Jira Connect Enterprise App POST request");
 
-		// TODO: Add logic for adding new manual apps
+		// TODO: Add logic for adding new manual apps, will be done in ARC 1457
 
 		req.log.debug("Jira Connect Enterprise App added successfully.", res.locals);
 	} catch (error) {
