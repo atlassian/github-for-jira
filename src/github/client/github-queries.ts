@@ -351,6 +351,7 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
         cursor
         node {
           repository {
+            full_name: nameWithOwner
             name
             owner {
               login
