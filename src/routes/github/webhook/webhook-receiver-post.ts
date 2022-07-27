@@ -9,6 +9,9 @@ import { webhookTimeout } from "~/src/util/webhook-timeout";
 import { issueCommentWebhookHandler } from "~/src/github/issue-comment";
 import { issueWebhookHandler } from "~/src/github/issue";
 import { envVars } from "~/src/config/env";
+import { pullRequestWebhookHandler } from "~/src/github/pull-request";
+import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
+import { deleteRepository } from "~/src/github/repository";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -55,6 +58,21 @@ const webhookRouter = (context: WebhookContext) => {
 			if (context.action === "opened" || context.action === "edited") {
 				GithubWebhookMiddleware(issueWebhookHandler)(context);
 			}
+			break;
+		case "pull_request":
+			if (context.action === "opened" || context.action === "closed"
+				|| context.action === "reopened" || context.action === "edited") {
+				GithubWebhookMiddleware(pullRequestWebhookHandler)(context);
+			}
+			break;
+		case "pull_request_review":
+			GithubWebhookMiddleware(pullRequestWebhookHandler)(context);
+			break;
+		case "create":
+			GithubWebhookMiddleware(createBranchWebhookHandler)(context);
+			break;
+		case "delete":
+			GithubWebhookMiddleware(deleteBranchWebhookHandler)(context);
 			break;
 	}
 };

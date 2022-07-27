@@ -3,6 +3,8 @@ import { GitHubServerApp } from "models/github-server-app";
 import { issueWebhookHandler } from "~/src/github/issue";
 import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
+import { pullRequestWebhookHandler } from "~/src/github/pull-request";
+import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
 
@@ -52,10 +54,9 @@ describe("webhook-receiver-post", () => {
 	});
 
 	it("should throw an error if signature doesn't match for GHE app", async () => {
-		const mockResSendFunc = jest.fn();
 		res = {
 			status: jest.fn().mockReturnValue({
-				send: mockResSendFunc
+				send: jest.fn()
 			})
 		};
 		req = {
@@ -70,15 +71,14 @@ describe("webhook-receiver-post", () => {
 
 		await WebhookReceiverPost(req, res);
 		expect(res.status).toBeCalledWith(400);
-		expect(mockResSendFunc).toBeCalledWith("signature does not match event payload and secret");
+		expect(res.status().send).toBeCalledWith("signature does not match event payload and secret");
 
 	});
 
 	it("should throw an error if signature doesn't match for GitHub cloud", async () => {
-		const mockResSendFunc = jest.fn();
 		res = {
 			status: jest.fn().mockReturnValue({
-				send: mockResSendFunc
+				send: jest.fn()
 			})
 		};
 		req = {
@@ -92,7 +92,7 @@ describe("webhook-receiver-post", () => {
 
 		await WebhookReceiverPost(req, res);
 		expect(res.status).toBeCalledWith(400);
-		expect(mockResSendFunc).toBeCalledWith("signature does not match event payload and secret");
+		expect(res.status().send).toBeCalledWith("signature does not match event payload and secret");
 
 	});
 
@@ -130,6 +130,75 @@ describe("webhook-receiver-post", () => {
 
 		await WebhookReceiverPost(req, res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(issueWebhookHandler);
+	});
+
+	it("should call pull handler", async () => {
+		req = {
+			headers: {
+				"x-hub-signature-256": "sha256=b3c1c0ce21666c0349b8f3010ce81299adcc9c4ee09b904f20f712292c19b792",
+				"x-github-event": "pull_request"
+			},
+			params: {
+				uuid
+			},
+			body: {
+				action: "opened"
+			}
+		};
+
+		await WebhookReceiverPost(req, res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(pullRequestWebhookHandler);
+	});
+
+	it("should call pull request review handler", async () => {
+		req = {
+			headers: {
+				"x-hub-signature-256": "sha256=a4059a1df2d84fdd1808458a7dc27efe0d63ab7309585b23fbf473c045c5aa81",
+				"x-github-event": "pull_request_review"
+			},
+			params: {
+				uuid
+			},
+			body: {
+			}
+		};
+
+		await WebhookReceiverPost(req, res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(pullRequestWebhookHandler);
+	});
+
+	it("should call create branch handler", async () => {
+		req = {
+			headers: {
+				"x-hub-signature-256": "sha256=a4059a1df2d84fdd1808458a7dc27efe0d63ab7309585b23fbf473c045c5aa81",
+				"x-github-event": "create"
+			},
+			params: {
+				uuid
+			},
+			body: {
+			}
+		};
+
+		await WebhookReceiverPost(req, res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(createBranchWebhookHandler);
+	});
+
+	it("should call delete branch handler", async () => {
+		req = {
+			headers: {
+				"x-hub-signature-256": "sha256=a4059a1df2d84fdd1808458a7dc27efe0d63ab7309585b23fbf473c045c5aa81",
+				"x-github-event": "delete"
+			},
+			params: {
+				uuid
+			},
+			body: {
+			}
+		};
+
+		await WebhookReceiverPost(req, res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(deleteBranchWebhookHandler);
 	});
 
 });
