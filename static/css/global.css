@@ -214,6 +214,10 @@ a:focus {
   align-items: center;
 }
 
+.navigation.no-back-btn {
+  justify-content: flex-end;
+}
+
 .navigation__backButton__container {
   background: #fff;
   border: none;
