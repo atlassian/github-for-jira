@@ -31,12 +31,12 @@ export async function findOrStartSync(
 	}
 
 	// Start sync
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime, commitsFromDate: commitsFromDate }, 0, logger);
+	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime, commitsFromDate: commitsFromDate?.toISOString() }, 0, logger);
 }
 
-export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: Date): Promise<Date | undefined> => {
+export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {
 	if (commitsFromDate) {
-		return commitsFromDate;
+		return new Date(commitsFromDate);
 	}
 	const timeCutoffMsecs = await numberFlag(flagName, NaN, jiraHost);
 	if (!timeCutoffMsecs) {

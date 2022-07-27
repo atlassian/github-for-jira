@@ -9,7 +9,7 @@ export type BackfillMessagePayload = {
 	installationId: number,
 	jiraHost: string,
 	startTime?: string,
-	commitsFromDate?: Date
+	commitsFromDate?: string
 }
 
 export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload> = async (context) => {

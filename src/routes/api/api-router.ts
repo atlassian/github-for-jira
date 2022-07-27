@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { param } from "express-validator";
+import { body, param } from "express-validator";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import IORedis from "ioredis";
@@ -69,6 +69,9 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 // RESYNC ALL INSTANCES
 ApiRouter.post(
 	"/resync",
+	body("commitsFromDate").optional().isISO8601(),
+	returnOnValidationError,
+	// look at docs to check
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
@@ -83,15 +86,14 @@ ApiRouter.post(
 		// only resync installations whose "updatedAt" date is older than x seconds
 		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
 		// A date to start fetching commit history(main and branch) from.
-		const commitsFromDate = req.body.commitsFromDate && new Date(req.body.commitsFromDate);
+		let commitsFromDate = req.body.commitsFromDate;
+
+		if (commitsFromDate) {
+			commitsFromDate = new Date(req.body.commitsFromDate);
+		}
 
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
 			res.status(400).send("please provide at least one of the filter parameters!");
-			return;
-		}
-
-		if (isNaN(commitsFromDate) || commitsFromDate.valueOf() > Date.now()) {
-			res.status(400).send("Invalid commitsFromDate value, please enter valid historical date");
 			return;
 		}
 
