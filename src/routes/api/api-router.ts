@@ -71,7 +71,6 @@ ApiRouter.post(
 	"/resync",
 	body("commitsFromDate").optional().isISO8601(),
 	returnOnValidationError,
-	// look at docs to check
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
