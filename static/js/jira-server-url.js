@@ -73,7 +73,7 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 	const csrf = document.getElementById("_csrf").value
 
 	AP.context.getToken(function(token) {
-		$.post("/jira/server-url", {
+		$.post("/jira/connect/enterprise", {
 				gheServerURL,
 				_csrf: csrf,
 				jwt: token,
