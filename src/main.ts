@@ -3,7 +3,6 @@ import throng from "throng";
 import * as PrivateKey from "probot/lib/private-key";
 import { createProbot } from "probot";
 import { initializeSentry } from "config/sentry";
-import "config/proxy";
 import { isNodeProd } from "utils/is-node-env";
 import { configureAndLoadApp } from "./configure-robot";
 
