@@ -3,9 +3,9 @@ import { JiraJwtTokenMiddleware, JiraContextJwtTokenMiddleware } from "middlewar
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { JiraConnectEnterpriseGet } from "./jira-connect-enterprise-get";
 import { JiraConnectEnterprisePost } from "routes/jira/connect/enterprise/jira-connect-enterprise-post";
+import { JiraConnectEnterpriseAppRouter } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-router";
 import { JiraConnectEnterpriseServerAppGet } from "routes/jira/connect/enterprise/server_app/jira-connect-enterprise-server-app-get";
 import { JiraConnectEnterpriseAppCreateOrEdit } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-create-or-edit";
-import { JiraConnectEnterpriseAppRouter } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-router";
 
 export const JiraConnectEnterpriseRouter = Router();
 
