@@ -78,7 +78,16 @@ const modules = {
 			name: {
 				value: "GitHub Server Url"
 			},
-			url: "/jira/server-url",
+			url: "/jira/connect/enterprise?new={ac.new}",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-list-servers-page",
+			name: {
+				value: "GitHub Enterprise Servers"
+			},
+			url: "/jira/connect/enterprise",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -87,7 +96,16 @@ const modules = {
 			name: {
 				value: "GitHub App Creation"
 			},
-			url: "/jira/app-creation",
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-list-server-apps-page",
+			name: {
+				value: "GitHub Server Apps"
+			},
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app",
 			location: "none",
 			conditions: adminCondition
 		},

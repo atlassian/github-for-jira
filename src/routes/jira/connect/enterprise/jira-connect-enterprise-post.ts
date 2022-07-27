@@ -36,7 +36,7 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 	}
 };
 
-export const JiraServerUrlPost = async (
+export const JiraConnectEnterprisePost = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {
@@ -50,6 +50,7 @@ export const JiraServerUrlPost = async (
 		const { errorCode, message } = gheServerUrlErrors.invalidUrl;
 		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
+		return;
 	}
 
 	try {
