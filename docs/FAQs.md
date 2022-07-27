@@ -1,24 +1,86 @@
 # GitHub for Jira FAQs
 
+### General
+<h3>**Q:** Does the GitHub for Jira app support GitLab?</h3>
+
+**A:** No. If you want to integrate GitLab with your Jira instance, you need to install the [GitLab.com for Jira Cloud app](https://docs.gitlab.com/ee/integration/jira/connect-app.html#install-the-gitlabcom-for-jira-cloud-app-for-self-managed-instances) for self-managed instances.
+
+<h3>**Q:** Backfilling my data is taking a long time. When will I see my data in Jira?</h3>
+
+**A:** When you conect a GitHub organization to Jira via the GitHub for Jira app, a process called “backfilling” begins. This process looks for issue keys in your historical data in GitHub. If it finds issue keys, it links your development data to existing issues in Jira.
+
+When an organization contains a small amount of data, the backfilling process is relatively fast and may only take a few minutes. But when an organization contains a large amount of data, the backfilling process will take longer. The good news is you can start using issue keys in new branches, commits, and pull requests as soon as you’ve connected a Github organization to Jira - and this new data will be visible in Jira immediately.
+
 ### Permissions
 
-<h3>Q: The permission scope for code and metadata suggests data is read to synchronize development information. Is code stored on Jira? Should I be concerned that, were the app to be compromised, an actor could exfiltrate all our code from GitHub?</h3>
+<h3>**Q:** The permission scope for code and metadata suggests data is read to synchronize development information. Is code stored on Jira? Should I be concerned that, were the app to be compromised, an actor could exfiltrate all our code from GitHub?</h3>
 
 **A:** Commits, branches, and merges that occur in a connected GitHub repository will be seen on the dev panel in associated Jira issues. Whenever a commit message includes an issue key, it generates an event that is sent to Jira so the issue specified in the commit message can be updated. Our app needs code access to read commit messages and branch names to correctly link your data to your Jira issues. Our app simply sends data through to Jira, no code is stored during this process.
 
-<h3>Q: Why does the app need metadata access to my repositories?</h3>
+<h3>**Q:** Why does the app need metadata access to my repositories?</h3>
 
 **A:** [Read-only access to metadata](https://docs.github.com/en/rest/reference/permissions-required-for-github-apps#metadata-permissions) is a mandatory requirement by GitHub for all GitHub apps. This access makes it possible for GitHub apps to access various read-only endpoints for a number of resources. Our app will be able to see the repository’s code, however, Atlassian takes the security of our software very seriously. We constantly monitor our code for vulnerabilities and have processes in place of making sure that it is safe to use. Additionally, GitHub documentation for metadata permissions states: “These endpoints do not leak sensitive private repository information.” If there are repositories you still don’t want our app to have access to, you have to option to select the repositories you want to grant access to when installing the app or by navigating to your GitHub settings page via the editing icon found on the GitHub configuration page or the connect an org page.
 
 ![Edit GitHub settings](./images/edit-github-settings.png)
 
-<h3>Q: What about pull requests and issues? I noticed I need to grant read and write permissions. Why is this needed?</h3>
+<h3>**Q:** What about pull requests and issues? I noticed I need to grant read and write permissions. Why is this needed?</h3>
 
 **A:** This is needed so our app can create links to Jira issues from pull request or issue comments. When you create a comment and include the issue key surrounded by square brackets, our app while ping Jira to see if that issue key exists in a project in Jira and, if it finds a matching issue, will create a link for easy navigation.
 
 ![Pull request and issue comment links](./images/read-and-write-permissions-issues-and-prs.png)
 
-<h3>Q: What happens if another change is made to the app in the future that requires new permissions? Can I choose to accept the new permission but ignore previously requested permissions that I don’t want/feel comfortable with?</h3>
+<h3>**Q:** What happens if another change is made to the app in the future that requires new permissions? Can I choose to accept the new permission but ignore previously requested permissions that I don’t want/feel comfortable with?</h3>
 
 **A:** Unfortunately not. GitHub apps are limited in this sense as permissions are not granular.
+
+### GitHub Enterprise Server
+<h3>**Q:** How do I set up a hole in my firewall?</h3>
+
+**A:** <TODO link to hole in firewall doc> -> [draft](https://hello.atlassian.net/wiki/spaces/PF/pages/1806044336/Draft+for+our+customers+regarding+their+Firewall). There is 1 pending tickets that need to be completed to finalise this.
+
+<h3>**Q:** Why can’t I connect my GitHub Enterprise Server to the GitHub for Jira app?</h3>
+
+**A:** There are a few reasons why you might have trouble connecting your GitHub Enterprise Server account to the GitHub for Jira app:
+
+- **Atlassian IP address ranges need whitelisting** - Please see the above FAQ  - <TODO - Link to above question>
+
+- **GitHub Enterprise Server Edition does not currently support application access via SAML SSO.** Only Github Enterprise Cloud offers this ability. [Learn more about authentication with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso).
+
+- **Reverse proxy support** - GitHub for Jira does not support reverse proxies.
+
+<h3>**Q:** Can I connect multiple GitHub Enterprise Servers or GitHub Apps to Jira? </h3>
+
+**A:** Yes. The GitHub for Jira app allows you to connect multiple GitHub servers. So you can connect more than one internal GitHub instance to a single Jira account.
+
+You can also add multiple GitHub Apps for a connected server to connect any GitHub organizations to Jira.
+
+<h3>**Q:** Can I create one master GitHub App in my GitHub Enterprise Server instance and connect it to multiple Jira instances?</h3>
+
+**A:** No. A GitHub App can only be connected to one Jira instance. This is to limit access and prevent data leaks.
+
+<h3>**Q:** What’s the difference between creating a GitHub App automatically vs manually? </h3>
+
+**A:** We recommend that you create a GitHub App automatically, as this process is relatively simple. All you need to do is enter an app name and make a few selections - we’ll use a combination of the GitHub API and a manifest file to pre-populate the app creation form for you.
+
+If you want to create a GitHub app manually, you can do so, but the process is less simple. You’ll need to create a GitHub App within your GitHub Enterprise Server account, copy several values from the new app into Jira, and copy several URLs from Jira into the app. Learn more about manually creating a GitHub App. <TODO link to new support doc>
+
+<h3>**Q:** I want to create a GitHub App automatically, but it says my GitHub Enterprise Server must be version 2.19.18 or higher. Why?</h3>
+
+**A:** In version 2.19.18, GitHub resolved an issue that impeded the manifest creation flow in some scenarios when a SameSite cookie policy was applied. You must be using this version or higher for the automatic app creation option to work.
+
+<h3>**Q:** How do I upgrade my GitHub Enterprise version?</h3>
+
+**A:** Learn how to [upgrade GitHub Enterprise Server](https://docs.github.com/en/enterprise-server@3.4/admin/enterprise-management/updating-the-virtual-machine-and-physical-resources/upgrading-github-enterprise-server.
+
+<h3>**Q:** I rotated the private key and GitHub client secret in a GitHub App in my internal instance. How do I update them in the GitHub for Jira app?</h3>
+
+**A:** Here’s how to update your GitHub client secret or upload a new private key, or do both:
+
+Navigate to the GitHub configuration screen in your Jira instance.
+
+Select the 3 dots to the right of the GitHub App you want to update, then select **Edit**.
+
+Enter a new GitHub client secret, or upload a new private key (or both).
+
+Select **Update**.
 
