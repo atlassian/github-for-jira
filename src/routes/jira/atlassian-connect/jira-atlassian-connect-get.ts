@@ -114,25 +114,7 @@ const modules = {
 			name: {
 				value: "GitHub Edit App"
 			},
-			url: "/jira/edit-app/{ac.ghsaId}",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-list-servers-page",
-			name: {
-				value: "GitHub Enterprise Servers"
-			},
-			url: "/jira/ghe-servers",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-list-server-apps-page",
-			name: {
-				value: "GitHub Enterprise Server Apps"
-			},
-			url: "/jira/ghe-servers/apps?serverUrl={ac.serverUrl}",
+			url: "/jira/connect/enterprise/app/{ac.uuid}",
 			location: "none",
 			conditions: adminCondition
 		}
