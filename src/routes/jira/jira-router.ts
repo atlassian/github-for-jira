@@ -16,17 +16,17 @@ export const JiraRouter = Router();
 // TODO: The params `installationId` needs to be replaced by `subscriptionId`
 JiraRouter.delete("/subscription/:installationId", JiraContextJwtTokenMiddleware, JiraDelete);
 
-// TODO: Need to cleanup the URLs and Routers
-
 JiraRouter.use("/connect", JiraConnectRouter);
 
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
-JiraRouter.get("/edit-app/:id", csrfMiddleware, JiraJwtTokenMiddleware, JiraEditAppGet);
 
+// TODO: Need to cleanup the URLs and Routers
+JiraRouter.get("/edit-app/:id", csrfMiddleware, JiraJwtTokenMiddleware, JiraEditAppGet);
 // TODO - add csrf middleware
 JiraRouter.post("/sync", JiraContextJwtTokenMiddleware, JiraSyncPost);
 JiraRouter.use("/events", JiraEventsRouter);
 JiraRouter.use("/app-creation", JiraAppCreationRouter);
+
 
 JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, JiraGet);
 
