@@ -39,3 +39,10 @@
     color: #344563;
     font-size: 1rem;
 }
+
+/**
+CSS property for `github-session.hbs`
+ */
+.gitHubSession___body {
+    background: #fff;
+}
