@@ -43,7 +43,8 @@ interface TaskProcessors {
 		jiraHost: string,
 		repository: Repository,
 		cursor?: string | number,
-		perPage?: number
+		perPage?: number,
+		messagePayload?: BackfillMessagePayload
 	) => Promise<TaskPayload>;
 }
 
@@ -257,7 +258,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
-				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
+				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
 				// TODO - need a better way to manage GitHub errors globally
 				// In the event that the customer has not accepted the required permissions.
@@ -438,7 +439,6 @@ export async function maybeScheduleNextTask(
 		}
 		const delayMs = nextTaskDelaysMs.shift();
 		logger.info("Scheduling next job with a delay = " + delayMs);
-
 		await sqsQueues.backfill.sendMessage(jobData, Math.ceil((delayMs || 0) / 1000), logger);
 	}
 }
