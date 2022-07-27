@@ -59,19 +59,6 @@ $(".delete-connection-link").click(function(event) {
 });
 
 
-// const demo1 = document.getElementById('demo-range-1');
-// const el = document.querySelector('#demo-range-1');
-//
-// const controller = new AJS.DatePicker(demo1,{
-// 	minDate: '24 Jun 2000',
-// 	maxDate: '28 Jun 2000',
-// 	dateFormat: 'd M yy',
-// 	defaultDate: '26 Jun 2000',
-// 	hint: 'This will be a hint message below the calendar.'
-// });
-//
-console.log('controller');
-// console.log(AJS);
 
 const restartBackfillModal = document.getElementById("restart-backfill-modal");
 window.addEventListener('click', function(event) {
@@ -80,47 +67,62 @@ window.addEventListener('click', function(event) {
 	}
 });
 
+// Create the backfill date picker
+const backfillDatePicker = document.getElementById('backfill-date-picker');
+new AJS.DatePicker(backfillDatePicker, {'overrideBrowserDefault': true, placeholder: new Date().toLocaleDateString()});
 
 $(".sync-connection-link").click(function(event) {
 	event.preventDefault();
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
-	const $el = $("#restart-backfill");
+	const $restartBackfillOpenModalEl = $("#restart-backfill");
+	const $restartBackfillEl = $("#submit-restart-backfill");
+	const $cancelBackfillEl = $("#cancel-backfill");
 
-//
-// 	const controller = AJS.$(el).datePicker({
-// 		minDate: '24 Jun 2000',
-// 		maxDate: '28 Jun 2000',
-// 		dateFormat: 'd M yy',
-// 		defaultDate: '26 Jun 2000',
-// 		hint: 'This will be a hint message below the calendar.'
-// 	});
+
+
+
 	// todo feature flag here for new / old flow
 	restartBackfillModal.style.display = "block";
-	// $el.prop("disabled", true);
-	// $el.attr("aria-disabled", "true");
-	//
-	// window.AP.context.getToken(function(token) {
-	// 	$.ajax({
-	// 		type: "POST",
-	// 		url: "/jira/sync",
-	// 		data: {
-	// 			installationId,
-	// 			jiraHost,
-	// 			syncType: "full",
-	// 			jwt: token,
-	// 			_csrf: csrfToken
-	// 		},
-	// 		success: function(data) {
-	// 			AP.navigator.reload();
-	// 		},
-	// 		error: function(error) {
-	// 			$el.prop("disabled", false);
-	// 			$el.attr("aria-disabled", "false");
-	// 		}
-	// 	});
-	// });
+
+	$restartBackfillEl.click(function() {
+
+		$restartBackfillOpenModalEl.prop("disabled", true);
+		$restartBackfillOpenModalEl.attr("aria-disabled", "true");
+ 		window.AP.context.getToken(function(token) {
+			console.log('token');
+			console.log(token);
+			$.ajax({
+				type: "POST",
+				url: "/jira/sync",
+				data: {
+					installationId,
+					jiraHost,
+					// commitsFromDate: backfillDatePicker,
+					syncType: "full",
+					jwt: token,
+					_csrf: csrfToken
+				},
+				success: function(data) {
+					console.log('data');
+					console.log(data);
+					AP.navigator.reload();
+				},
+				error: function(error) {
+					console.log('error');
+					console.log(error);
+					$restartBackfillOpenModalEl.prop("disabled", true);
+					$restartBackfillOpenModalEl.attr("aria-disabled", "true");
+				}
+			});
+		});
+
+	})
+
+	$cancelBackfillEl.click(function() {
+		restartBackfillModal.style.display = "none";
+	})
 });
 
 $('.jiraConfiguration__option').click(function (event) {

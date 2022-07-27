@@ -139,16 +139,14 @@
                 <p>Backfilling commits can take a long time, so we’ll only backfill your commits from the last year. If you want to backfill more commits, choose a date below. Pull requests and branches will all be backfilled regardless of their age.</p>
               </div>
               <div class="jiraConfiguration__restartBackfillModal__headerContainer">
-                <input class="aui-date-picker" id="demo-range-1" type="date" max="2012-01-25" min="2011-12-25" />
-                <hr>
-                <input type="date" max="2022-01-25" min="2011-12-25" />
+                <input class="aui-date-picker" id="backfill-date-picker" type="date" />
               </div>
               <div class="jiraConfiguration__restartBackfillModal__headerContainer">
                 <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
-                    id="jiraConfiguration__optionAll">Cancel
+                    id="cancel-backfill">Cancel
                 </button>
                 <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
-                    id="jiraConfiguration__optionAll">Backfill data
+                    id="submit-restart-backfill">Backfill data
                 </button>
               </div>
             </div>
@@ -268,7 +266,6 @@
 
     </div>
 
-    <script src="/public/js/jira-configuration.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script
@@ -281,5 +278,6 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
+    <script src="/public/js/jira-configuration.js" nonce="{{nonce}}"></script>
   </body>
 </html>

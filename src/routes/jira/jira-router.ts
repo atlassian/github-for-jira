@@ -10,6 +10,8 @@ import { JiraAppCreationRouter } from "./server/jira-app-creation-router";
 import { JiraGheServerRouter } from "routes/jira/server/jira-ghe-server-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { JiraEditAppGet } from "routes/jira/server/jira-edit-app-get";
+import { body } from "express-validator";
+import { returnOnValidationError } from "routes/api/api-utils";
 
 export const JiraRouter = Router();
 
@@ -20,7 +22,12 @@ JiraRouter.get("/edit-app/:id", csrfMiddleware, JiraJwtTokenMiddleware, JiraEdit
 
 JiraRouter.use("/configuration", JiraConfigurationRouter);
 // TODO - add csrf middleware
-JiraRouter.post("/sync", JiraContextJwtTokenMiddleware, JiraSyncPost);
+JiraRouter.post("/sync",
+	body("commitsFromDate").optional().isISO8601(),
+	returnOnValidationError,
+	JiraContextJwtTokenMiddleware,
+	JiraSyncPost);
+
 JiraRouter.use("/events", JiraEventsRouter);
 JiraRouter.use("/select-product", JiraSelectProductRouter);
 JiraRouter.use("/server-url", JiraServerUrlRouter);

@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { installationId: gitHubInstallationId, syncType } = req.body;
+	const { installationId: gitHubInstallationId, syncType, commitsFromDate } = req.body;
 	Sentry.setExtra("Body", req.body);
 
 	req.log.info({ syncType }, "Received sync request");
@@ -19,7 +19,14 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			res.status(404).send("Subscription not found, cannot resync.");
 			return;
 		}
-		await findOrStartSync(subscription, req.log, syncType);
+		const newdate = commitsFromDate ? new Date(commitsFromDate) : undefined;
+
+		if (newdate && newdate.valueOf() > Date.now()){
+			res.status(400).send("Invalid date, please select historical date!");
+			return;
+		}
+
+		await findOrStartSync(subscription, req.log, syncType, newdate);
 
 		res.sendStatus(202);
 	} catch (error) {
