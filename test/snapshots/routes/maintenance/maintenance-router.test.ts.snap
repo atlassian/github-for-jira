@@ -82,7 +82,20 @@ Object {
         "name": Object {
           "value": "GitHub App Creation",
         },
-        "url": "/jira/app-creation",
+        "url": "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}\\"",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-list-server-apps-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Server Apps",
+        },
+        "url": "/jira/connect/enterprise/{ac.serverUrl}/app",
       },
       Object {
         "conditions": Array [
@@ -109,19 +122,6 @@ Object {
           "value": "GitHub Enterprise Servers",
         },
         "url": "/jira/ghe-servers",
-      },
-      Object {
-        "conditions": Array [
-          Object {
-            "condition": "user_is_admin",
-          },
-        ],
-        "key": "github-list-server-apps-page",
-        "location": "none",
-        "name": Object {
-          "value": "GitHub Enterprise Server Apps",
-        },
-        "url": "/jira/ghe-servers/apps?serverUrl={ac.serverUrl}",
       },
     ],
     "jiraBuildInfoProvider": Object {
