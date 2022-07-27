@@ -2,7 +2,7 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { TokenType } from "~/src/jira/util/jwt";
-import { moduleUrls } from "routes/jira/jira-atlassian-connect-get";
+import { moduleUrls } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 
 const extractUnsafeJiraHost = (req: Request): string | null => {
 	if (moduleUrls.includes(req.path) && req.method == "GET") {
