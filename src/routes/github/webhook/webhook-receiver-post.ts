@@ -11,7 +11,6 @@ import { issueWebhookHandler } from "~/src/github/issue";
 import { envVars } from "~/src/config/env";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
-import { deleteRepository } from "~/src/github/repository";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
