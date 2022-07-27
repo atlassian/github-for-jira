@@ -64,8 +64,8 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-export const getTargetTasks = async (targetTasks?: TaskType[]): Promise<TaskType[]> => {
-	if (targetTasks) {
+export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
+	if (targetTasks?.length) {
 		return intersection(allTaskTypes, targetTasks);
 	}
 
@@ -73,7 +73,7 @@ export const getTargetTasks = async (targetTasks?: TaskType[]): Promise<TaskType
 };
 
 const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
-	const tasks = await getTargetTasks(targetTasks);
+	const tasks = getTargetTasks(targetTasks);
 
 	if (subscription.repositoryStatus !== "complete") {
 		return {

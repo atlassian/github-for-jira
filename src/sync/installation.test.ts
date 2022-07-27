@@ -1,14 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as installation from "~/src/sync/installation";
-import {
-	getTargetTasks,
-	handleBackfillError,
-	isNotFoundError,
-	isRetryableWithSmallerRequest,
-	maybeScheduleNextTask,
-	processInstallation,
-	sortedRepos
-} from "~/src/sync/installation";
+import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation, sortedRepos } from "~/src/sync/installation";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { Application } from "probot";
 import { getLogger } from "config/logger";
@@ -368,31 +360,22 @@ describe("sync/installation", () => {
 
 	describe("getTargetTasks", () => {
 		it("should return all tasks if no target tasks present", async () => {
-			return getTargetTasks().then((tasks) => {
-				expect(tasks).toEqual(["pull", "branch", "commit", "build", "deployment"]);
-			});
+			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment"]);
+			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment"]);
 		});
 
 		it("should return single target task", async () => {
-			return getTargetTasks(["pull"]).then((tasks) => {
-				expect(tasks).toEqual(["pull"]);
-			});
+			expect(getTargetTasks(["pull"])).toEqual(["pull"]);
 		});
 
 		it("should return set of target tasks", async () => {
-			return getTargetTasks(["pull", "commit"]).then((tasks) => {
-				expect(tasks).toEqual(["pull", "commit"]);
-			});
+			expect(getTargetTasks(["pull", "commit"])).toEqual(["pull", "commit"]);
 		});
 
 		it("should return set of target tasks and filter out invalid values", async () => {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			return getTargetTasks(["pull", "commit", "cats"]).then((tasks) => {
-				expect(tasks).toEqual(["pull", "commit"]);
-			});
+			expect(getTargetTasks(["pull", "commit", "cats"])).toEqual(["pull", "commit"]);
 		});
-
-
 	});
 });

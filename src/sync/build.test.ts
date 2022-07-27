@@ -18,7 +18,6 @@ import noKeysBuildFixture from "fixtures/api/build-no-keys.json";
 import compareReferencesFixture from "fixtures/api/compare-references.json";
 
 jest.mock("../sqs/queues");
-jest.mock("config/feature-flags");
 
 describe("sync/builds", () => {
 	let app: Application;

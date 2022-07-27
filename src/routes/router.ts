@@ -40,7 +40,6 @@ RootRouter.get("/version", VersionGet);
 // Api needs to be before cookieSessionMiddleware, jirahostMiddleware, etc
 // as those are for apps logic, api SHOULD NOT rely on any cookie/session/jiraHost header etc.
 RootRouter.use("/api", ApiRouter);
-RootRouter.use("/admin", ApiRouter);
 
 // Maintenance mode - needs to be before all other routes
 RootRouter.use(MaintenanceRouter);
