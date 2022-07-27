@@ -378,5 +378,13 @@ describe("jwt", () => {
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
+
+		it("should return 200 with encoded URI in the path", async () => {
+			const req = buildRequestWithJwt("629dd55929f23ea619f465d40e02b394f57acfc6deeecd2024428f9c31f8b55c");
+			req.path = encodeURIComponent("https://whatever.fake");
+			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			expect(res.status).toHaveBeenCalledTimes(0);
+			expect(next).toBeCalledTimes(1);
+		});
 	});
 });
