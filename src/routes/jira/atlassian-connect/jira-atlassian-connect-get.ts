@@ -69,7 +69,7 @@ const modules = {
 			name: {
 				value: "GitHub Select Product"
 			},
-			url: "/jira/select-product",
+			url: "/jira/connect",
 			location: "none",
 			conditions: adminCondition
 		},
