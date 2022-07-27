@@ -28,6 +28,19 @@ Object {
         "name": Object {
           "value": "GitHub for Jira",
         },
+        "url": "/jira",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "gh-addon-admin-old",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub for Jira",
+        },
         "url": "/jira/configuration",
       },
     ],
@@ -161,7 +174,7 @@ Object {
       "name": Object {
         "value": "GitHub Configuration",
       },
-      "url": "/jira/configuration",
+      "url": "/jira",
     },
     "webSections": Array [
       Object {

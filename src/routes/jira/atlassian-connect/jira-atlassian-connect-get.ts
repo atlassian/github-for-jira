@@ -6,7 +6,7 @@ import { compact, map } from "lodash";
 const instance = envVars.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
-export const postInstallUrl = "/jira/configuration";
+export const postInstallUrl = "/jira";
 const key = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 const adminCondition = [
@@ -137,11 +137,19 @@ const modules = {
 			},
 			key: "gh-addon-admin",
 			location: "admin_plugins_menu/gh-addon-admin-section"
+		}, {
+			url: "/jira/configuration",
+			conditions: adminCondition,
+			name: {
+				value: "GitHub for Jira"
+			},
+			key: "gh-addon-admin-old",
+			location: "none"
 		}
 	]
 };
 
-export const moduleUrls = compact(map([modules.postInstallPage, ...modules.generalPages], "url"));
+export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
 	res.status(200).json({
