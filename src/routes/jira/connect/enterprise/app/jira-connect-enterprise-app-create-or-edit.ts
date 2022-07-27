@@ -10,12 +10,8 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 		req.log.debug("Received Jira create or edit app page request");
 
 		const uuid = req.params.uuid;
-		if (!uuid) {
-			res.status(401).send("Missing UUID");
-			return;
-		}
 
-		const app = await GitHubServerApp.findForUuid(uuid);
+		const app = uuid ? await GitHubServerApp.findForUuid(uuid) : null;
 
 		res.render("jira-manual-app-creation.hbs", {
 			previousPagePath: "github-app-creation-page",
