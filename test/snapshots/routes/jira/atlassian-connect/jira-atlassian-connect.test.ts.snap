@@ -82,7 +82,7 @@ Object {
         "name": Object {
           "value": "GitHub App Creation",
         },
-        "url": "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}\\"",
+        "url": "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
       },
       Object {
         "conditions": Array [

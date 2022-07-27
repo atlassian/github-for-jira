@@ -87,7 +87,7 @@ const modules = {
 			name: {
 				value: "GitHub App Creation"
 			},
-			url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}\"",
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
 			location: "none",
 			conditions: adminCondition
 		},
