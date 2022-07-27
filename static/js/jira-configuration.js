@@ -23,6 +23,16 @@ $(".add-organization-link").click(function(event) {
 	});
 });
 
+$(".add-enterprise-link").click(function(event) {
+	event.preventDefault();
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "github-list-servers-page"
+		}
+	);
+});
+
 $(".select-github-product-link").click(function(event) {
 	event.preventDefault();
 
