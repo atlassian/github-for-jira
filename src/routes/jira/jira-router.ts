@@ -11,9 +11,14 @@ import { JiraGheServerRouter } from "routes/jira/server/jira-ghe-server-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { JiraGet } from "routes/jira/jira-get";
 import { JiraEditAppGet } from "routes/jira/server/jira-edit-app-get";
+import { JiraDelete } from "routes/jira/jira-delete";
 
 export const JiraRouter = Router();
 
+// TODO: The params `installationId` needs to be replaced by `subscriptionId`
+JiraRouter.delete("/subscription/:installationId", JiraContextJwtTokenMiddleware, JiraDelete);
+
+// TODO: Need to cleanup the URLs and Routers
 
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 JiraRouter.get("/edit-app/:id", csrfMiddleware, JiraJwtTokenMiddleware, JiraEditAppGet);
