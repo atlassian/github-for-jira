@@ -110,6 +110,15 @@ const modules = {
 			conditions: adminCondition
 		},
 		{
+			key: "github-manual-app-page",
+			name: {
+				value: "GitHub Manual App"
+			},
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app/new",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
 			key: "github-edit-app-page",
 			name: {
 				value: "GitHub Edit App"

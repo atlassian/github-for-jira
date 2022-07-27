@@ -116,6 +116,19 @@ Object {
             "condition": "user_is_admin",
           },
         ],
+        "key": "github-manual-app-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Manual App",
+        },
+        "url": "/jira/connect/enterprise/{ac.serverUrl}/app/new",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
         "key": "github-edit-app-page",
         "location": "none",
         "name": Object {
