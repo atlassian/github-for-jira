@@ -114,10 +114,8 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 const countStatus = (connections, syncStatus: string): number =>
 	connections && connections.filter(org => org?.syncStatus === syncStatus).length || 0;
 
-// TODO - needs to be updated to only check if finished
 const countNumberSkippedRepos = (connections): number => {
-	return connections.reduce((acc, obj) => obj.totalNumberOfRepos && obj.numberOfSyncedRepos ?
-		acc + obj.totalNumberOfRepos - obj?.numberOfSyncedRepos : acc, 0);
+	return connections.reduce((acc, obj) => acc + obj.totalNumberOfRepos - obj.numberOfSyncedRepos, 0);
 };
 
 const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
@@ -135,13 +133,15 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 		nonce
 	});
 
+	const completeConnections = successfulConnections.filter(connection => connection.syncStatus === "FINISHED");
+
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
 		jiraHost,
 		connectedOrgCount: installations.total,
 		failedCloudBackfillCount: countStatus(failedConnections, "FAILED"),
 		successfulCloudBackfillCount: countStatus(successfulConnections, "FINISHED"),
-		numberOfSkippedRepos: countNumberSkippedRepos(successfulConnections)
+		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections)
 	});
 };
 
@@ -197,6 +197,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	const failedServerConnections = gheServersWithConnections
 		.reduce((acc, obj) => acc + obj.failedConnection?.length, 0);
 	const allSuccessfulConnections = [...successfulCloudConnections, ...gheServersWithConnections];
+	const completeConnections = allSuccessfulConnections.filter(connection => connection.syncStatus === "FINISHED");
 
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
@@ -208,7 +209,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		failedServerBackfillCount: countStatus(failedServerConnections, "FAILED"),
 		successfulCloudBackfillCount: countStatus(successfulCloudConnections, "FINISHED"),
 		successfulServerBackfillCount: countStatus(successfulServerConnections, "FINISHED"),
-		numberOfSkippedRepos: countNumberSkippedRepos(allSuccessfulConnections)
+		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections)
 	});
 };
 
@@ -228,7 +229,7 @@ export const JiraConfigurationGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, true, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
 			await renderJiraCloudAndEnterpriseServer(res, req);
 		} else {
 			await renderJiraCloud(res, req);
