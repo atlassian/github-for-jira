@@ -25,7 +25,6 @@ import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { inspect } from "util";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -261,8 +260,6 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
 			} catch (err) {
 				const log = logger.child({
-					errorJSON: inspect(err),
-					error: err,
 					err,
 					payload: data,
 					github,

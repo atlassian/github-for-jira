@@ -7,7 +7,7 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "repository": {
-								"id": 1,
+								"full_name": "test-repo-owner/test-repo-name",
                 "name": "test-repo-name",
                 "owner": {
                   "login": "test-repo-owner"

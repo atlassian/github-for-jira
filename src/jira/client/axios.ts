@@ -63,7 +63,7 @@ const getErrorMiddleware = (logger: Logger) =>
 
 		// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
 		// Log exception only if it is error, because AxiosError contains the request payload
-		(isWarning ? logger.warn : logger.error)({ err: error, res: error?.response }, errorMessage);
+		logger[isWarning ? "warn" : "error"]({ err: error, res: error?.response }, errorMessage);
 
 		return Promise.reject(new JiraClientError(errorMessage, error, status));
 	};

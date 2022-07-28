@@ -142,20 +142,18 @@ describe("Deployment Webhook", () => {
 							"associations": [
 								{
 									"associationType": "issueIdOrKeys",
-									"values": [
-										"TEST-123"
-									]
+									"values": ["TEST-123"]
 								},
 								{
 									"associationType": "commit",
 									"values": [
 										{
 											"commitHash": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
-											"repositoryId": "test-repo-id"
+											"repositoryId": "test-repo-owner/test-repo-name"
 										},
 										{
 											"commitHash": "f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
-											"repositoryId": "test-repo-id"
+											"repositoryId": "test-repo-owner/test-repo-name"
 										}
 									]
 								}

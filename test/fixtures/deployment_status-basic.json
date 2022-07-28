@@ -35,7 +35,7 @@
 		"repository": {
 			"id": "test-repo-id",
 			"name": "test-repo-name",
-			"full_name": "example/test-repo-name",
+			"full_name": "test-repo-owner/test-repo-name",
 			"html_url": "test-repo-url",
 			"owner": {
 				"login": "test-repo-owner"
