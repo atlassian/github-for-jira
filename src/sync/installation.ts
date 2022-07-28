@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { intersection } from "lodash";
+import IORedis from "ioredis";
+import Logger from "bunyan";
 import { Repositories, Repository, RepositoryData, Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { getJiraClient } from "../jira/client/jira-client";
@@ -13,9 +16,7 @@ import { getDeploymentTask } from "./deployment";
 import { Application, GitHubAPI } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
-import Logger from "bunyan";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
-import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { BackfillMessagePayload } from "../sqs/backfill";
@@ -25,6 +26,7 @@ import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { TaskType } from "./sync.types";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -43,7 +45,8 @@ interface TaskProcessors {
 		jiraHost: string,
 		repository: Repository,
 		cursor?: string | number,
-		perPage?: number
+		perPage?: number,
+		messagePayload?: BackfillMessagePayload
 	) => Promise<TaskPayload>;
 }
 
@@ -52,9 +55,7 @@ export interface TaskPayload<E = any, P = any> {
 	jiraPayload?: P;
 }
 
-type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
-
-const taskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
 export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 	Object.entries(repos).sort(
@@ -63,8 +64,16 @@ export const sortedRepos = (repos: Repositories): [string, RepositoryData][] =>
 			new Date(a[1].repository?.updated_at || 0).getTime()
 	);
 
-const getNextTask = async (subscription: Subscription): Promise<Task | undefined> => {
-	const tasks = taskTypes;
+export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
+	if (targetTasks?.length) {
+		return intersection(allTaskTypes, targetTasks);
+	}
+
+	return allTaskTypes;
+};
+
+const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
+	const tasks = getTargetTasks(targetTasks);
 
 	if (subscription.repositoryStatus !== "complete") {
 		return {
@@ -115,7 +124,7 @@ export const updateJobStatus = async (
 	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
-	const { installationId, jiraHost } = data;
+	const { installationId, jiraHost, targetTasks } = data;
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
@@ -140,7 +149,7 @@ export const updateJobStatus = async (
 		await subscription.updateRepoSyncStateItem(repositoryId, getCursorKey(task), edges[edges.length - 1].cursor);
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
-	} else if (!(await getNextTask(subscription))) {
+	} else if (!(await getNextTask(subscription, targetTasks))) {
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
@@ -218,7 +227,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const github = await getEnhancedGitHub(app, installationId);
-	const nextTask = await getNextTask(subscription);
+	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
@@ -236,11 +245,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 
 	if (!nextTask.repository && repositoryId) {
 		// Old records don't have this info. New ones have it
-		const { data: repo } = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GET_REPO, false, subscription.jiraHost) ?
-			await gitHubInstallationClient.getRepository(nextTask.repositoryId) :
-			await github.request("GET /repositories/:id", {
-				id: nextTask.repositoryId
-			});
+		const { data: repo } = await gitHubInstallationClient.getRepository(nextTask.repositoryId);
 
 		repository = getRepositorySummary(repo);
 		await subscription.updateSyncState({
@@ -261,7 +266,7 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
-				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
+				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
 				// TODO - need a better way to manage GitHub errors globally
 				// In the event that the customer has not accepted the required permissions.
