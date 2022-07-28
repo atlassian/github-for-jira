@@ -23,7 +23,9 @@ export const JiraConnectEnterpriseServerAppGet = async (
 			const serverApps = gheServers.map(server => ({ identifier: server.gitHubAppName }));
 
 			res.render("jira-select-github-cloud-app.hbs", {
-				list: serverApps
+				list: serverApps,
+				// Passing these query parameters for the route when clicking `Create new application`
+				queryStringForPath: JSON.stringify({ new: 1, serverUrl: baseUrl })
 			});
 		} else {
 			res.render("jira-select-app-creation.hbs", {

@@ -18,7 +18,9 @@ export const JiraConnectEnterpriseGet = async (
 			const servers = chain(groupBy(gheServers, "gitHubBaseUrl")).map((_, key) => ({ identifier: key })).value();
 
 			res.render("jira-select-server.hbs", {
-				list: servers
+				list: servers,
+				// Passing these query parameters for the route when clicking `Connect a new server`
+				queryStringForPath: JSON.stringify({ new: 1 })
 			});
 		} else {
 			res.render("jira-server-url.hbs", {
