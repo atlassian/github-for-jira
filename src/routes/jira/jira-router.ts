@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { JiraConfigurationRouter } from "./configuration/jira-configuration-router";
-import { JiraSyncPost } from "./jira-sync-post";
+import { JiraSyncPost } from "./sync/jira-sync-post";
 import { JiraAtlassianConnectGet } from "./atlassian-connect/jira-atlassian-connect-get";
 import { JiraEventsRouter } from "./events/jira-events-router";
 import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "middleware/jira-jwt-middleware";
