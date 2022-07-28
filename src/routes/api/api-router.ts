@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { param } from "express-validator";
+import { body, param } from "express-validator";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import IORedis from "ioredis";
@@ -16,6 +16,7 @@ import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { ApiPingPost } from "routes/api/api-ping-post";
 import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
+import { TaskType } from "~/src/sync/sync.types";
 
 export const ApiRouter = Router();
 
@@ -69,6 +70,8 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 // RESYNC ALL INSTANCES
 ApiRouter.post(
 	"/resync",
+	body("targetTasks").optional().isArray(),
+	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
@@ -82,6 +85,8 @@ ApiRouter.post(
 		const offset = Number(req.body.offset) || 0;
 		// only resync installations whose "updatedAt" date is older than x seconds
 		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
+		// restrict sync to a subset of tasks
+		const targetTasks = req.body.targetTasks as TaskType[];
 
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
 			res.status(400).send("please provide at least one of the filter parameters!");
@@ -91,7 +96,7 @@ ApiRouter.post(
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
-			findOrStartSync(subscription, req.log, syncType)
+			findOrStartSync(subscription, req.log, syncType, targetTasks)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));

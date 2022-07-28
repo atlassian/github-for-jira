@@ -2,11 +2,13 @@ import { RepoSyncState } from "models/reposyncstate";
 import { sqsQueues } from "../sqs/queues";
 import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
+import { TaskType } from "~/src/sync/sync.types";
 
 export async function findOrStartSync(
 	subscription: Subscription,
 	logger: Logger,
-	syncType?: "full" | "partial"
+	syncType?: "full" | "partial",
+	targetTasks?: TaskType[]
 ): Promise<void> {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
@@ -29,5 +31,10 @@ export async function findOrStartSync(
 	}
 
 	// Start sync
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime }, 0, logger);
+	await sqsQueues.backfill.sendMessage({
+		installationId,
+		jiraHost,
+		startTime: fullSyncStartTime,
+		targetTasks
+	}, 0, logger);
 }
