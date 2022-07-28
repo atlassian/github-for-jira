@@ -127,7 +127,12 @@ export const handleFailedRequest = (logger: Logger) =>
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
-			(isWarning ? logger.warn : logger.error)(errorMessage);
+			if (isWarning){
+				logger.warn(errorMessage);
+			} else {
+				logger.error(errorMessage);
+			}
+
 			return Promise.reject(new GithubClientError(errorMessage, status, error));
 		}
 
