@@ -32,7 +32,7 @@ $(document).ready(function() {
 		selectedVersion = currentTarget.data('type');
 	});
 
-	$(".optionBtn").click(function (event) {
+	$(".jiraSelectGitHubProduct__actionBtn").click(function (event) {
 		event.preventDefault();
 
 		if (selectedVersion === "cloud") {
@@ -50,4 +50,22 @@ $(document).ready(function() {
 			);
 		}
 	});
+
+	$(".jiraAppCreation__actionBtn").click(function (event) {
+		event.preventDefault();
+
+		if (selectedVersion === "automatic") {
+			// TODO: Implement Auto App Creation, ARC-1456
+		} else {
+			AP.navigator.go(
+				'addonmodule',
+				{
+					moduleKey: "github-manual-app-page",
+					customData: { serverUrl: $("#baseUrl").val() }
+				}
+			);
+		}
+	});
+
+
 });

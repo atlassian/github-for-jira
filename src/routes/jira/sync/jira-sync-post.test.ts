@@ -1,7 +1,7 @@
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import express, { Express, NextFunction, Request, Response } from "express";
-import { RootRouter } from "../../router";
+import { RootRouter } from "routes/router";
 import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { encodeSymmetric } from "atlassian-jwt";

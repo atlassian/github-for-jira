@@ -13,13 +13,13 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 
 	if (!jiraHost) {
 		req.log.error("Missing Jira Host");
-		res.status(401).send("Missing jiraHost in body");
+		res.status(401).send("Missing jiraHost");
 		return;
 	}
 
 	if (!installationId) {
 		req.log.error("Missing Github Installation ID");
-		res.status(401).send("Missing Github Installation ID in params");
+		res.status(401).send("Missing Github Installation ID");
 		return;
 	}
 

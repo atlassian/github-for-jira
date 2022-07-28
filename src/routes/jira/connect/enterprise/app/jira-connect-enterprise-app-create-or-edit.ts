@@ -8,9 +8,9 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		req.log.debug("Received Jira edit app page request");
+		req.log.debug("Received Jira create or edit app page request");
 		let config;
-		const uuid = req.params.uuid as string ;
+		const uuid = req.params.uuid;
 
 		if (uuid) {
 			const app = await GitHubServerApp.findForUuid(uuid);
@@ -31,8 +31,8 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 		}
 
 		res.render("jira-manual-app-creation.hbs", config);
-		req.log.debug("Jira edit app page rendered successfully.");
+		req.log.debug("Jira create or edit app page rendered successfully.");
 	} catch (error) {
-		return next(new Error(`Failed to render Jira edit app page: ${error}`));
+		return next(new Error(`Failed to render Jira create or edit app page: ${error}`));
 	}
 };

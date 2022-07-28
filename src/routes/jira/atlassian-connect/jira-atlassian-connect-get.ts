@@ -146,8 +146,7 @@ const modules = {
 			},
 			key: "gh-addon-admin",
 			location: "admin_plugins_menu/gh-addon-admin-section"
-		},
-		{
+		}, {
 			url: "/jira/configuration",
 			conditions: adminCondition,
 			name: {
