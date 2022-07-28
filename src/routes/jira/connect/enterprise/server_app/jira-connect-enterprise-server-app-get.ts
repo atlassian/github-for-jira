@@ -29,6 +29,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 			});
 		} else {
 			res.render("jira-select-app-creation.hbs", {
+				baseUrl,
 				previousPagePath: "github-server-url-page"
 			});
 		}
