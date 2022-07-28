@@ -4,12 +4,14 @@ import { processInstallation } from "../sync/installation";
 import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
+import { TaskType } from "~/src/sync/sync.types";
 
 export type BackfillMessagePayload = {
 	installationId: number,
 	jiraHost: string,
 	startTime?: string,
 	commitsFromDate?: string
+	targetTasks?: TaskType[]
 }
 
 export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload> = async (context) => {

@@ -16,6 +16,7 @@ import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { ApiPingPost } from "routes/api/api-ping-post";
 import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
+import { TaskType } from "~/src/sync/sync.types";
 
 export const ApiRouter = Router();
 
@@ -70,6 +71,7 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 ApiRouter.post(
 	"/resync",
 	body("commitsFromDate").optional().isISO8601(),
+	body("targetTasks").optional().isArray(),
 	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
@@ -85,21 +87,24 @@ ApiRouter.post(
 		// only resync installations whose "updatedAt" date is older than x seconds
 		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
 		// A date to start fetching commit history(main and branch) from.
-		let commitsFromDate = req.body.commitsFromDate;
-
-		if (commitsFromDate) {
-			commitsFromDate = new Date(req.body.commitsFromDate);
-		}
+		const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
+		// restrict sync to a subset of tasks
+		const targetTasks = req.body.targetTasks as TaskType[];
 
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
 			res.status(400).send("please provide at least one of the filter parameters!");
 			return;
 		}
 
+		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()){
+			res.status(400).send("Invalid date, please select historical date!");
+			return;
+		}
+
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
-			findOrStartSync(subscription, req.log, syncType, commitsFromDate)
+			findOrStartSync(subscription, req.log, syncType, commitsFromDate, targetTasks)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));
