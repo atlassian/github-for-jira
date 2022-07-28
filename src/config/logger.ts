@@ -7,7 +7,7 @@ import { isArray, isString } from "lodash";
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const outputMode: any = process.env.MICROS_ENV ? "inspect" : "short";
+const outputMode: any = process.env.MICROS_ENV ? "json" : "short";
 
 // We cannot redefine the stream on middleware level (when we create the child logger),
 // therefore we have to do it here, on global level, for all loggers :(
