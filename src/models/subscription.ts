@@ -79,11 +79,19 @@ export class Subscription extends Model {
 	}
 
 	static getAllForInstallation(
-		installationId: number
+		installationId: number,
+		gitHubAppId?: number
 	): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
-				gitHubInstallationId: installationId
+				gitHubInstallationId: installationId,
+				...(gitHubAppId ? {
+					gitHubAppId
+				} : {
+					gitHubAppId: {
+						[Op.eq]: null
+					}
+				})
 			}
 		});
 	}

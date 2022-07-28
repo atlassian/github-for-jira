@@ -153,8 +153,29 @@ describe("Subscription", () => {
 			});
 		});
 		it("should only fetch cloud records when gitHubAppId not present", async ()=>{
-			const records = await Subscription.getAllForInstallation(GITHUHB_INSTALLATION_ID);
+			const records = await Subscription.getAllForInstallation(
+				GITHUHB_INSTALLATION_ID
+			);
 			expect(records.length).toBe(1);
+			expect(records[0]).toEqual(expect.objectContaining({
+				jiraHost,
+				jiraClientKey: "myClientKey",
+				gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+				gitHubAppId: null
+			}));
+		});
+		it("should fetch correct github server app", async ()=>{
+			const records = await Subscription.getAllForInstallation(
+				GITHUHB_INSTALLATION_ID,
+				GHEH_GITHUB_SERVER_APP_PK_ID_1
+			);
+			expect(records.length).toBe(1);
+			expect(records[0]).toEqual(expect.objectContaining({
+				jiraHost,
+				jiraClientKey: "myClientKey_ghe_1",
+				gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+				gitHubAppId: GHEH_GITHUB_SERVER_APP_PK_ID_1
+			}));
 		});
 	});
 });
