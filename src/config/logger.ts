@@ -33,8 +33,8 @@ const requestSerializer = (req) => req && ({
 	url: req.originalUrl || req.url,
 	path: req.path,
 	headers: req.headers,
-	remoteAddress: req.socket.remoteAddress,
-	remotePort: req.socket.remotePort,
+	remoteAddress: req.socket?.remoteAddress,
+	remotePort: req.socket?.remotePort,
 	body: req.body
 });
 
