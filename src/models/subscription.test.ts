@@ -1,12 +1,14 @@
 import { Subscription } from "./subscription";
 import { RepoSyncState } from "./reposyncstate";
 
+const GITHUHB_INSTALLATION_ID = 123;
+
 describe("Subscription", () => {
 	let sub: Subscription;
 
 	beforeEach(async () => {
 		sub = await Subscription.create({
-			gitHubInstallationId: 123,
+			gitHubInstallationId: GITHUHB_INSTALLATION_ID ,
 			jiraHost,
 			jiraClientKey: "myClientKey"
 		});
@@ -15,10 +17,10 @@ describe("Subscription", () => {
 	describe("updateSyncState", () => {
 		it("should return empty repos object when updating state with no repos", async () => {
 			await sub.updateSyncState({
-				installationId: 123
+				installationId: GITHUHB_INSTALLATION_ID
 			});
 			expect(await RepoSyncState.toRepoJson(sub)).toEqual({
-				installationId: 123,
+				installationId: GITHUHB_INSTALLATION_ID ,
 				jiraHost,
 				numberOfSyncedRepos: 0,
 				repos: {}
@@ -39,11 +41,11 @@ describe("Subscription", () => {
 				}
 			};
 			await sub.updateSyncState({
-				installationId: 123,
+				installationId: GITHUHB_INSTALLATION_ID ,
 				repos
 			});
 			expect(await RepoSyncState.toRepoJson(sub)).toMatchObject({
-				installationId: 123,
+				installationId: GITHUHB_INSTALLATION_ID ,
 				jiraHost,
 				numberOfSyncedRepos: 0,
 				repos: {
@@ -131,6 +133,28 @@ describe("Subscription", () => {
 					}
 				}
 			});
+		});
+	});
+	describe("Fetching subscription for mix of cloud and ghe with conflicting gitHubInstallationId", () => {
+		const GHEH_GITHUB_SERVER_APP_PK_ID_1 = 10001;
+		const GHEH_GITHUB_SERVER_APP_PK_ID_2 = 10002;
+		beforeEach(async () => {
+			await Subscription.create({
+				gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+				gitHubAppId: GHEH_GITHUB_SERVER_APP_PK_ID_1,
+				jiraHost,
+				jiraClientKey: "myClientKey_ghe_1"
+			});
+			await Subscription.create({
+				gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+				gitHubAppId: GHEH_GITHUB_SERVER_APP_PK_ID_2,
+				jiraHost,
+				jiraClientKey: "myClientKey_ghe_2"
+			});
+		});
+		it("should only fetch cloud records when gitHubAppId not present", async ()=>{
+			const records = await Subscription.getAllForInstallation(GITHUHB_INSTALLATION_ID);
+			expect(records.length).toBe(1);
 		});
 	});
 });
