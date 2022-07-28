@@ -90,16 +90,18 @@ $(".sync-connection-link").click(function(event) {
 
 		$restartBackfillOpenModalEl.prop("disabled", true);
 		$restartBackfillOpenModalEl.attr("aria-disabled", "true");
+
  		window.AP.context.getToken(function(token) {
 			console.log('token');
 			console.log(token);
+			const commitsFromDate = document.getElementById('backfill-date-picker').value;
 			$.ajax({
 				type: "POST",
 				url: "/jira/sync",
 				data: {
 					installationId,
 					jiraHost,
-					// commitsFromDate: backfillDatePicker,
+					commitsFromDate,
 					syncType: "full",
 					jwt: token,
 					_csrf: csrfToken

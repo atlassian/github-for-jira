@@ -133,19 +133,21 @@
           <div class='jiraConfiguration__restartBackfillModal'  id="restart-backfill-modal">
             <div class='jiraConfiguration__restartBackfillModalContent'>
               <div class="jiraConfiguration__restartBackfillModal__headerContainer">
-                <h4 class="jiraConfiguration__restartBackfillModal__header">Backfill your data</h4>
+                <h3 class="jiraConfiguration__restartBackfillModal__header__title">Backfill your data</h3>
               </div>
-              <div class="jiraConfiguration__restartBackfillModal__headerContainer">
+              <div class="jiraConfiguration__restartBackfillModal__header__content">
                 <p>Backfilling commits can take a long time, so we’ll only backfill your commits from the last year. If you want to backfill more commits, choose a date below. Pull requests and branches will all be backfilled regardless of their age.</p>
               </div>
-              <div class="jiraConfiguration__restartBackfillModal__headerContainer">
+<!--      todo ranem this class jiraConfiguration__restartBackfillModal__backfillOptions          -->
+              <div class="jiraConfiguration__restartBackfillModal__backfillOptions">
+                <label for="backfill-date-picker">Backfill commits from *</label>
                 <input class="aui-date-picker" id="backfill-date-picker" type="date" />
               </div>
-              <div class="jiraConfiguration__restartBackfillModal__headerContainer">
-                <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
+              <div class="jiraConfiguration__restartBackfillModal__actions">
+                <button class="aui-button aui-button-secondary"
                     id="cancel-backfill">Cancel
                 </button>
-                <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
+                <button class="aui-button aui-button-primary"
                     id="submit-restart-backfill">Backfill data
                 </button>
               </div>

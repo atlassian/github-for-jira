@@ -5,6 +5,13 @@ import { findOrStartSync } from "~/src/sync/sync-utils";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, syncType, commitsFromDate } = req.body;
+
+	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
+	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
+	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
+	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
+	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
+	console.log(commitsFromDate);
 	Sentry.setExtra("Body", req.body);
 
 	req.log.info({ syncType }, "Received sync request");

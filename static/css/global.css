@@ -201,6 +201,10 @@ a:focus {
   width: 56%;
 }
 
+.jiraConfiguration__restartBackfillModalContent {
+  max-width: 540px;
+}
+
 .githubSetup__newJiraSiteModalContent {
   top: 30%;
   width: 30%;
