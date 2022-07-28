@@ -190,7 +190,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
 	const associations = mapJiraIssueIdsAndCommitsToAssociationArray(
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
-		payload.repository.full_name,
+		payload.repository.node_id,
 		commitSummaries
 	);
 

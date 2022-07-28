@@ -7,7 +7,7 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "repository": {
-								"full_name": "test-repo-owner/test-repo-name",
+								"node_id": "pK0MjAyMi0wMi0wM1QyMj",
                 "name": "test-repo-name",
                 "owner": {
                   "login": "test-repo-owner"
@@ -35,7 +35,7 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "repository": {
-								"full_name": "test-repo-owner/test-repo-name",
+								"node_id": "pK0MjAyMi0wMi0wM1QyMj",
                 "name": "test-repo-name",
                 "owner": {
                   "login": "test-repo-owner"
