@@ -74,15 +74,14 @@ describe("Jira Configuration Suite", () => {
 
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
-		githubNock
-			.get(`/app/installations/15`)
-			.reply(200, singleInstallation);
-
 		when(booleanFlag).calledWith(
 			BooleanFlags.GHE_SERVER,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
+		githubNock
+			.get(`/app/installations/15`)
+			.reply(200, singleInstallation);
 
 		await JiraGet(mockRequest(), response, jest.fn());
 		const data = response.render.mock.calls[0][1];
