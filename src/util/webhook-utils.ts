@@ -12,13 +12,13 @@ export const getCurrentTime = () => Date.now();
  *
  * @param webhookReceivedTime time when GitHub for Jira app received a webhook from GitHub
  * @param webhookName name of the webhook (type)
- * @param contextLogger logger for the function logs
+ * @param logger logger for the function logs
  * @param status http response code if applicable to this webhook type
  */
 export const emitWebhookProcessedMetrics = (
 	webhookReceivedTime: number,
 	webhookName: string,
-	contextLogger: Logger = getLogger("webhook-metrics"),
+	logger: Logger = getLogger("webhook-metrics"),
 	status?: number
 ): number | undefined | void => {
 	const currentTime = getCurrentTime();
@@ -29,7 +29,7 @@ export const emitWebhookProcessedMetrics = (
 		if (Number.isInteger(webhookReceivedTime) && webhookReceivedTime <= currentTime) {
 			const timeToProcessWebhookEvent = currentTime - webhookReceivedTime;
 
-			contextLogger.info(
+			logger.info(
 				{ webhookName },
 				`Webhook processed in ${timeToProcessWebhookEvent} milliseconds`
 			);
@@ -62,14 +62,14 @@ export const emitWebhookProcessedMetrics = (
 
 			return timeToProcessWebhookEvent;
 		} else {
-			contextLogger.error(
+			logger.error(
 				{ webhookReceivedTime },
 				`Failed to send timeToProcessWebhookEvent metric. webhookReceivedTime: ${webhookReceivedTime}; current time: ${currentTime}.`
 			);
 			return undefined;
 		}
 	} catch (err) {
-		contextLogger.error(
+		logger.error(
 			{ err },
 			"Failed to send webhook processing time metrics."
 		);

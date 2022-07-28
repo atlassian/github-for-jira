@@ -33,8 +33,8 @@ const requestSerializer = (req) => req && ({
 	url: req.originalUrl || req.url,
 	path: req.path,
 	headers: req.headers,
-	remoteAddress: req.socket.remoteAddress,
-	remotePort: req.socket.remotePort,
+	remoteAddress: req.socket?.remoteAddress,
+	remotePort: req.socket?.remotePort,
 	body: req.body
 });
 
@@ -56,8 +56,8 @@ const errorSerializer = (err) => {
 	};
 };
 
-const hashSerializer = (data: any): string | undefined => {
-	if (data === undefined || data == null) {
+const hashSerializer = (data?: string): string | undefined => {
+	if (!data) {
 		return undefined;
 	}
 	return createHashWithSharedSecret(data);
@@ -118,7 +118,7 @@ export const getUnsafeLogger = (name: string, fields?: Record<string, unknown>):
 };
 
 
-export const cloneAllowedLogFields = (fields: Record<string, any>) => {
+export const cloneAllowedLogFields = (fields: Record<string, unknown>) => {
 	const allowedFields = { ...fields };
 	delete allowedFields.name;
 	return allowedFields;
