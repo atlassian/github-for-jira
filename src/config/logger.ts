@@ -57,7 +57,7 @@ const errorSerializer = (err) => {
 };
 
 const hashSerializer = (data?: string): string | undefined => {
-	if (!data || isString(data)) {
+	if (!data || !isString(data)) {
 		return undefined;
 	}
 	return createHashWithSharedSecret(data);
