@@ -8,7 +8,7 @@ $(document).ready(() => {
       const newForm = jQuery("<form>", {
         "action": `${gheHost}/settings/apps/new`,
         "method": "post",
-        "target": "_top"
+        "target": "_self"
       }).append(jQuery("<input>", {
         "name": "manifest",
         "id": "manifest",

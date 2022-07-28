@@ -1,6 +1,7 @@
 import { Installation } from "~/src/models/installation";
 import { GithubManifestCompleteGet } from "~/src/routes/github/manifest/github-manifest-complete-get";
 import { v4 as UUID } from "uuid";
+import { GitHubServerApp } from "~/src/models/github-server-app";
 
 
 const createGheNockPost = (url, status, response) => {
@@ -61,14 +62,6 @@ describe("github-manifest-complete-get", () => {
 	});
 
 	it("should throw error if installation not found", async () => {
-		createGheNockPost(`/app-manifests/${req.query.code}/conversions`, 200, {
-			id: "100",
-			name: "github-for-jira",
-			client_id: "client_id_test",
-			client_secret: "client_secret_test",
-			webhook_secret: "webhook_secret_test",
-			pem: "private_key_test"
-		});
 		await expect(GithubManifestCompleteGet(req, res))
 			.rejects
 			.toThrow("No Installation found ");
@@ -89,6 +82,19 @@ describe("github-manifest-complete-get", () => {
 			clientKey: "client-key"
 		});
 		await GithubManifestCompleteGet(req, res);
+		const githubServerApp = await GitHubServerApp.findForUuid(uuid);
+		expect(githubServerApp).toEqual(expect.objectContaining({
+			appId: 100,
+			gitHubAppName: "github-for-jira",
+			gitHubClientId: "client_id_test",
+			gitHubBaseUrl: "https://github.mydomain.com"
+		}));
+		const webhookSecret = await githubServerApp?.decrypt("webhookSecret");
+		expect(webhookSecret).toEqual("webhook_secret_test");
+		const clientSecret = await githubServerApp?.decrypt("gitHubClientSecret");
+		expect(clientSecret).toEqual("client_secret_test");
+		const privateKey = await githubServerApp?.decrypt("privateKey");
+		expect(privateKey).toEqual("private_key_test");
 		expect(res.json).toBeCalled();
 	});
 

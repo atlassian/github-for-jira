@@ -13,13 +13,13 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 	if (!gheHost) {
 		throw new Error("GitHub Enterprise Host not found");
 	}
-	// complete GitHub app manifest flow
-	const apiUrl = `${gheHost}/api/v3/app-manifests/${req.query.code}/conversions`;
-	const gitHubAppConfig = (await axios.post(apiUrl, {}, { headers: { Accept: "application/vnd.github.v3+json" } })).data;
 	const installation = await Installation.getForHost(jiraHost);
 	if (!installation) {
 		throw new Error(`No Installation found for ${jiraHost}`);
 	}
+	// complete GitHub app manifest flow
+	const apiUrl = `${gheHost}/api/v3/app-manifests/${req.query.code}/conversions`;
+	const gitHubAppConfig = (await axios.post(apiUrl, {}, { headers: { Accept: "application/vnd.github.v3+json" } })).data;
 	await GitHubServerApp.install({
 		uuid,
 		appId: gitHubAppConfig.id,
