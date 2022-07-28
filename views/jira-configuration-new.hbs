@@ -139,18 +139,29 @@
                 <p>Backfilling commits can take a long time, so we’ll only backfill your commits from the last year. If you want to backfill more commits, choose a date below. Pull requests and branches will all be backfilled regardless of their age.</p>
               </div>
 <!--      todo ranem this class jiraConfiguration__restartBackfillModal__backfillOptions          -->
-              <div class="jiraConfiguration__restartBackfillModal__backfillOptions">
-                <label for="backfill-date-picker">Backfill commits from *</label>
-                <input class="aui-date-picker" id="backfill-date-picker" type="date" />
+            <form id="jiraServssserUrl__form" class="aui top-label">
+              <div class="field-group">
+                <label for="backfill-date-picker">Backfill commits from <span class="aui-iconfont-error">*</span></label>
+                <input class="text full-width-field"
+                       type="date"
+                       id="backfill-date-picker"
+                       name="backfill-date-picker"
+                />
               </div>
               <div class="jiraConfiguration__restartBackfillModal__actions">
                 <button class="aui-button aui-button-secondary"
                     id="cancel-backfill">Cancel
                 </button>
-                <button class="aui-button aui-button-primary"
-                    id="submit-restart-backfill">Backfill data
+                <button
+                    type="submit"
+                    id="button as"
+                    class="aui-button aui-button-primary"
+                >Backfill data
                 </button>
               </div>
+            </form>
+
+
             </div>
             <!-- Overlay -->
             <div class="jiraConfiguration__restartBackfillModalOverlay"></div>
