@@ -10,6 +10,7 @@ export type BackfillMessagePayload = {
 	installationId: number,
 	jiraHost: string,
 	startTime?: string,
+	commitsFromDate?: string,
 	targetTasks?: TaskType[]
 }
 
