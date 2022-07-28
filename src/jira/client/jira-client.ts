@@ -472,7 +472,7 @@ interface IssueKeyObject {
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
 	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
 		// Filter out anything that doesn't have issue keys or are not over the limit
-		if (value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
+		if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
 			// Create copy of object and add the issue keys that are truncated
 			acc.push({
 				...value,
@@ -480,7 +480,7 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
 			});
 		}
 		const association = findIssueKeyAssociation(value);
-		if (association && association.values.length  > ISSUE_KEY_API_LIMIT) {
+		if (association?.values && association.values.length > ISSUE_KEY_API_LIMIT) {
 			// Create copy of object and add the issue keys that are truncated
 			acc.push({
 				...value,
