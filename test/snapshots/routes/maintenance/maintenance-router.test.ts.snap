@@ -116,38 +116,25 @@ Object {
             "condition": "user_is_admin",
           },
         ],
+        "key": "github-manual-app-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Manual App",
+        },
+        "url": "/jira/connect/enterprise/{ac.serverUrl}/app/new",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
         "key": "github-edit-app-page",
         "location": "none",
         "name": Object {
           "value": "GitHub Edit App",
         },
-        "url": "/jira/edit-app/{ac.ghsaId}",
-      },
-      Object {
-        "conditions": Array [
-          Object {
-            "condition": "user_is_admin",
-          },
-        ],
-        "key": "github-list-servers-page",
-        "location": "none",
-        "name": Object {
-          "value": "GitHub Enterprise Servers",
-        },
-        "url": "/jira/ghe-servers",
-      },
-      Object {
-        "conditions": Array [
-          Object {
-            "condition": "user_is_admin",
-          },
-        ],
-        "key": "github-list-server-apps-page",
-        "location": "none",
-        "name": Object {
-          "value": "GitHub Enterprise Server Apps",
-        },
-        "url": "/jira/ghe-servers/apps?serverUrl={ac.serverUrl}",
+        "url": "/jira/connect/enterprise/app/{ac.uuid}",
       },
     ],
     "jiraBuildInfoProvider": Object {
