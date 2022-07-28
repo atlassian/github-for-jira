@@ -470,7 +470,7 @@ export const processInstallation =
 				switch (result) {
 					case DeduplicatorResult.E_OK:
 						logger.info("Job was executed by deduplicator");
-						await maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
+						maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
 						break;
 					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 						logger.warn("Possible duplicate job was detected, rescheduling");
