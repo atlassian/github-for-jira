@@ -219,7 +219,14 @@ export class Subscription extends Model {
 		await this.destroy({
 			where: {
 				gitHubInstallationId: payload.installationId,
-				jiraHost: payload.host
+				jiraHost: payload.host,
+				...(payload.gitHubAppId ? {
+					gitHubAppId: payload.gitHubAppId
+				} : {
+					gitHubAppId: {
+						[Op.is]: null
+					}
+				})
 			}
 		});
 	}

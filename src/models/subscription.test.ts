@@ -258,5 +258,32 @@ describe("Subscription", () => {
 				}));
 			});
 		});
+		describe("uninstall", () => {
+			it("should only uninstall cloud records when gitHubAppId not present", async () => {
+				await Subscription.uninstall({
+					host: jiraHost,
+					installationId: GITHUHB_INSTALLATION_ID
+				});
+				const [results] = await Subscription.sequelize!.query('select * from "Subscriptions"');
+				expect(results).toEqual([expect.objectContaining({
+					jiraClientKey: "myClientKey_ghe_1"
+				}), expect.objectContaining({
+					jiraClientKey: "myClientKey_ghe_2"
+				})]);
+			});
+			it("should uninstall correct github server app", async () => {
+				await Subscription.uninstall({
+					host: jiraHost,
+					installationId: GITHUHB_INSTALLATION_ID,
+					gitHubAppId: GHEH_GITHUB_SERVER_APP_PK_ID_1
+				});
+				const [results] = await Subscription.sequelize!.query('select * from "Subscriptions"');
+				expect(results).toEqual([expect.objectContaining({
+					jiraClientKey: "myClientKey"
+				}), expect.objectContaining({
+					jiraClientKey: "myClientKey_ghe_2"
+				})]);
+			});
+		});
 	});
 });
