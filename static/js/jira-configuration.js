@@ -1,4 +1,5 @@
 /* globals $, AP */
+
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
@@ -69,71 +70,66 @@ $(".delete-connection-link").click(function(event) {
 });
 
 
+const getInitialBackfillDate = function () {
+	const date = new Date();
+	date.setFullYear(date.getFullYear() - 1);
+	return date.toISOString().split('T')[0];
+}
 
+// Restart backfill block
 const restartBackfillModal = document.getElementById("restart-backfill-modal");
+const backfillDatePicker = document.getElementById('backfill-date-picker');
+const csrfToken = document.getElementById("_csrf").value;
+backfillDatePicker.value = getInitialBackfillDate();
+
+const restartBackfillPost = function (token, csrfToken, jiraHost, installationId, commitsFromDate) {
+	$.ajax({
+		type: "POST",
+		url: "/jira/sync",
+		data: {
+			installationId,
+			jiraHost,
+			commitsFromDate,
+			syncType: "full",
+			jwt: token,
+			_csrf: csrfToken
+		},
+		success: function () {
+			AP.navigator.reload();
+		},
+		error: function () {
+
+		}
+	});
+};
+
+$(".sync-connection-link").click(function (event) {
+	const $cancelBackfillEl = $("#cancel-backfill");
+	const installationId = $(event.target).data("installation-id");
+	const jiraHost = $(event.target).data("jira-host");
+
+	// Display modal and setup
+	restartBackfillModal.style.display = "block";
+	$cancelBackfillEl.click(function () {
+		restartBackfillModal.style.display = "none";
+	});
+
+	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
+		event.preventDefault();
+		const commitsFromDate = document.getElementById('backfill-date-picker').value;
+		window.AP.context.getToken(function (token) {
+			restartBackfillPost(token, csrfToken, jiraHost, installationId, commitsFromDate);
+		});
+	});
+
+});
+
 window.addEventListener('click', function(event) {
 	if (event.target.className === "jiraConfiguration__restartBackfillModalOverlay") {
 		restartBackfillModal.style.display = "none";
 	}
 });
 
-// Create the backfill date picker
-const backfillDatePicker = document.getElementById('backfill-date-picker');
-new AJS.DatePicker(backfillDatePicker, {'overrideBrowserDefault': true, placeholder: new Date().toLocaleDateString()});
-backfillDatePicker.value = new Date().toLocaleDateString();
-
-$(".sync-connection-link").click(function(event) {
-	event.preventDefault();
-	const installationId = $(event.target).data("installation-id");
-	const jiraHost = $(event.target).data("jira-host");
-	const csrfToken = document.getElementById("_csrf").value;
-	const $restartBackfillOpenModalEl = $("#restart-backfill");
-	const $restartBackfillEl = $("#submit-restart-backfill");
-	const $cancelBackfillEl = $("#cancel-backfill");
-
-	// todo feature flag here for new / old flow
-	restartBackfillModal.style.display = "block";
-
-	$restartBackfillEl.click(function() {
-
-		$restartBackfillOpenModalEl.prop("disabled", true);
-		$restartBackfillOpenModalEl.attr("aria-disabled", "true");
-
- 		window.AP.context.getToken(function(token) {
-			console.log('token');
-			console.log(token);
-			const commitsFromDate = document.getElementById('backfill-date-picker').value;
-			$.ajax({
-				type: "POST",
-				url: "/jira/sync",
-				data: {
-					installationId,
-					jiraHost,
-					commitsFromDate,
-					syncType: "full",
-					jwt: token,
-					_csrf: csrfToken
-				},
-				success: function(data) {
-					console.log('data');
-					console.log(data);
-					AP.navigator.reload();
-				},
-				error: function(error) {
-					console.log('error');
-					console.log(error);
-					$restartBackfillOpenModalEl.prop("disabled", true);
-					$restartBackfillOpenModalEl.attr("aria-disabled", "true");
-				}
-			});
-		});
-
-	})
-
-	$cancelBackfillEl.click(function() {
-		restartBackfillModal.style.display = "none";
-	})
-});
 
 $('.jiraConfiguration__option').click(function (event) {
 	event.preventDefault();

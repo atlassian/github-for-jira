@@ -68,14 +68,8 @@
   line-height: 1.6;
 }
 
-.jiraConfiguration__restartBackfillModal__headerContainer {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.2em;
-}
-
-/*// todo check if this calss is used before pushing to git*/
-.jiraConfiguration__restartBackfillModal__header__title {
+.jiraConfiguration__restartBackfillModal__header__container {
+  margin-bottom: 1.3em;
 }
 
 .jiraConfiguration__restartBackfillModal__header__content {
@@ -84,25 +78,21 @@
   margin-bottom: 1.2em;
 }
 
-.jiraConfiguration__restartBackfillModal__backfillOptions {
-  display: flex;
-  flex-direction: column;
-}
-
-.jiraConfiguration__restartBackfillModal__backfillOptions > input {
+.jiraConfiguration__restartBackfillModal__date {
   padding: 0.2em;
   min-height: 40px;
+  width: 100%;
+}
+
+.jiraConfiguration__restartBackfillModal__required
+{
+  color: #bf2600;
 }
 
 .jiraConfiguration__restartBackfillModal__actions {
   display: flex;
   justify-content: flex-end;
-}
-
-/*// todo check if this calss is used before pushing to git*/
-.jiraConfiguration__restartBackfillModal__syncStatus__details {
-  font-size: 1rem;
-  line-height: 1.6;
+  margin-top: 1em;
 }
 
 .jiraConfiguration__tableContainer {
