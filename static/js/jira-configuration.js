@@ -80,6 +80,7 @@ window.addEventListener('click', function(event) {
 // Create the backfill date picker
 const backfillDatePicker = document.getElementById('backfill-date-picker');
 new AJS.DatePicker(backfillDatePicker, {'overrideBrowserDefault': true, placeholder: new Date().toLocaleDateString()});
+backfillDatePicker.value = new Date().toLocaleDateString();
 
 $(".sync-connection-link").click(function(event) {
 	event.preventDefault();
@@ -89,9 +90,6 @@ $(".sync-connection-link").click(function(event) {
 	const $restartBackfillOpenModalEl = $("#restart-backfill");
 	const $restartBackfillEl = $("#submit-restart-backfill");
 	const $cancelBackfillEl = $("#cancel-backfill");
-
-
-
 
 	// todo feature flag here for new / old flow
 	restartBackfillModal.style.display = "block";

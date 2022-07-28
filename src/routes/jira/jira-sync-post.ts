@@ -4,8 +4,10 @@ import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { installationId: gitHubInstallationId, syncType, commitsFromDate } = req.body;
+	const { installationId: gitHubInstallationId, syncType } = req.body;
 
+	// A date to start fetching commit history(main and branch) from.
+	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
 	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
 	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
 	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
@@ -26,14 +28,13 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			res.status(404).send("Subscription not found, cannot resync.");
 			return;
 		}
-		const newdate = commitsFromDate ? new Date(commitsFromDate) : undefined;
 
-		if (newdate && newdate.valueOf() > Date.now()){
+		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()){
 			res.status(400).send("Invalid date, please select historical date!");
 			return;
 		}
 
-		await findOrStartSync(subscription, req.log, syncType, newdate);
+		await findOrStartSync(subscription, req.log, syncType, commitsFromDate);
 
 		res.sendStatus(202);
 	} catch (error) {
