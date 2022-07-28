@@ -22,7 +22,8 @@ import {
 	getDeploymentsQuery
 } from "./github-queries";
 import {
-	ActionsListRepoWorkflowRunsResponseEnhanced,GetPullRequestParams,
+	ActionsListRepoWorkflowRunsResponseEnhanced,
+	GetPullRequestParams,
 	GraphQlQueryResponse,
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse
