@@ -297,5 +297,27 @@ describe("sync/branches", () => {
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 			verifyMessageSent(data);
 		});
+
+		describe("Branch commit history value is passed", () => {
+
+			it("should use commit history depth parameter before feature flag time", async () => {
+				const time = Date.now();
+				const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
+				mockSystemTime(time);
+				const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
+				const data: BackfillMessagePayload = { installationId, jiraHost, commitsFromDate };
+
+				nockBranchRequest(branchNodesFixture, { commitSince: commitsFromDate });
+				jiraNock
+					.post(
+						"/rest/devinfo/0.10/bulk",
+						makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
+					)
+					.reply(200);
+
+				await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+				verifyMessageSent(data);
+			});
+		});
 	});
 });
