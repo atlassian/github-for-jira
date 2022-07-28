@@ -70,7 +70,7 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 // RESYNC ALL INSTANCES
 ApiRouter.post(
 	"/resync",
-	body("targetTasks").optional().isArray().not().isEmpty(),
+	body("targetTasks").optional().isArray(),
 	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
