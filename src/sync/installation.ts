@@ -447,7 +447,6 @@ export async function maybeScheduleNextTask(
 		}
 		const delayMs = nextTaskDelaysMs.shift();
 		logger.info("Scheduling next job with a delay = " + delayMs);
-
 		await sqsQueues.backfill.sendMessage(jobData, Math.ceil((delayMs || 0) / 1000), logger);
 	}
 }
