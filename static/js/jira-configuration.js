@@ -68,8 +68,7 @@ $(".delete-connection-link").click(function(event) {
 	});
 });
 
-// Restart backfill block
-const setInitialBackfillDate = function () {
+const initializeBackfillDateInput = function () {
 	const dateElement = document.getElementById('backfill-date-picker');
 	const date = new Date();
 	date.setFullYear(date.getFullYear() - 1);
@@ -113,7 +112,7 @@ $(".sync-connection-link").click(event => {
 	});
 });
 
-setInitialBackfillDate();
+initializeBackfillDateInput();
 
 $('.jiraConfiguration__option').click(function (event) {
 	event.preventDefault();
