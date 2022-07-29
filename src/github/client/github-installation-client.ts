@@ -303,7 +303,6 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Calls the GitHub API in the name of the GitHub app to generate a token that in turn can be used to call the GitHub
 	 * API in the name of an installation of that app (to access the users' data).
 	 */
-	// NEW APP CLient
 	private async createInstallationToken(githubInstallationId: number): Promise<AuthToken> {
 		const response = await this.axios.post<Octokit.AppsCreateInstallationTokenResponse>(`/app/installations/{githubInstallationId}/access_tokens`, {}, {
 			...await this.appAuthenticationHeaders(),
