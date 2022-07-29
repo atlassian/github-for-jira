@@ -41,7 +41,7 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
         $.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
           if (result.status === 201) {
             // TODO: Change this url to `/session/enterprise/github/configuration` once ARC-1552 is merged
-            const child = openChildWindow("/session/github/configuration/" + response.data.id);
+            const child = openChildWindow(`/session/github/${response.data.uuid}/configuration/`);
             child.window.jiraHost = jiraHost;
             child.window.jwt = token;
           }
