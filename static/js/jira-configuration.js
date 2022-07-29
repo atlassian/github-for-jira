@@ -70,10 +70,11 @@ $(".delete-connection-link").click(function(event) {
 
 // Restart backfill block
 const setInitialBackfillDate = function () {
+	const dateElement = document.getElementById('backfill-date-picker');
 	const date = new Date();
 	date.setFullYear(date.getFullYear() - 1);
-	document.getElementById('backfill-date-picker').value = date.toISOString().split('T')[0];ß
-	document.getElementById('backfill-date-picker').max = new Date().toISOString().split('T')[0];
+	dateElement.value = date.toISOString().split('T')[0];
+	dateElement.max = new Date().toISOString().split('T')[0];
 }
 
 const setDisabledStatus = (el, status) => {
@@ -81,31 +82,27 @@ const setDisabledStatus = (el, status) => {
 	el.attr("aria-disabled", status.toString());
 }
 
-const restartBackfillModal = document.getElementById("restart-backfill-modal");
-const backfillSubmitButton = $("#submit-backfill-data");
-setInitialBackfillDate();
-
 const restartBackfillPost = (data, url = "/jira/sync") => {
-	setDisabledStatus(backfillSubmitButton, true);
+	setDisabledStatus($("#submit-backfill-data"), true);
 	$.post(url, data)
 		.done(() => {
 			AP.navigator.reload();
 		})
 		.fail(() => {
-			setDisabledStatus(backfillSubmitButton, false);
+			setDisabledStatus($("#submit-backfill-data"), false);
 		});
 };
 
-$("#cancel-backfill").click(function () {
-	restartBackfillModal.style.display = "none";
+$("#cancel-backfill").click(() => {
+	document.getElementById("restart-backfill-modal").style.display = "none";
 });
 
-$(".sync-connection-link").click(function (event) {
+$(".sync-connection-link").click(event => {
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
 
-	restartBackfillModal.style.display = "block";
+	document.getElementById("restart-backfill-modal").style.display = "block";
 
 	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
 		event.preventDefault();
@@ -115,6 +112,8 @@ $(".sync-connection-link").click(function (event) {
 		});
 	});
 });
+
+setInitialBackfillDate();
 
 $('.jiraConfiguration__option').click(function (event) {
 	event.preventDefault();
@@ -164,7 +163,7 @@ if (syncStatusCloseBtn != null) {
 }
 
 // When the user clicks anywhere outside of the modal, close it
-window.onclick =function(event) {
+window.onclick = function(event) {
 	if (event.target.className === "jiraConfiguration__syncRetryModalOverlay") {
 		syncStatusModal.style.display = "none";
 	} else if (event.target.className === "jiraConfiguration__restartBackfillModalOverlay") {
