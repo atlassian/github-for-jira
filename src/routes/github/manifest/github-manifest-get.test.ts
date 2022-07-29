@@ -1,13 +1,9 @@
 import { GithubManifestGet } from "~/src/routes/github/manifest/github-manifest-get";
-import { readFileSync, existsSync } from "fs";
-import { envVars } from "~/src/config/env";
-
-jest.mock("fs");
 
 describe("github-manifest-complete-get", () => {
 	let req, res;
 
-	beforeEach(async() => {
+	beforeEach(async () => {
 		req = {
 			query: {
 				gheHost: "http://example.com"
@@ -21,43 +17,47 @@ describe("github-manifest-complete-get", () => {
 		};
 	});
 
-	it("Should get manifest configuration", async () => {
-		const manifestTemplateJson = {
-			"name": "ghe-app-for-jira",
-			"redirect_url": "<<APP_HOST>>/github/manifest"
-		};
-		jest.mocked(existsSync).mockReturnValue(true);
-		jest.mocked(readFileSync).mockReturnValue(JSON.stringify(manifestTemplateJson));
 
-		await GithubManifestGet(req, res);
-		const manifestJson = {
-			"name": "ghe-app-for-jira",
-			"redirect_url": `${envVars.APP_URL}/github/manifest`
-		};
-		expect(res.json).toBeCalledWith(manifestJson);
-	});
-
-	it("Should set session object", async () => {
-		const manifestTemplateJson = {
-			"name": "ghe-app-for-jira",
-			"redirect_url": "<<APP_HOST>>/github/manifest"
-		};
-		jest.mocked(existsSync).mockReturnValue(true);
-		jest.mocked(readFileSync).mockReturnValue(JSON.stringify(manifestTemplateJson));
-
-		await GithubManifestGet(req, res);
-
-		expect(req.session).toEqual(expect.objectContaining({
-			temp: { gheHost: req.query.gheHost }
-		}));
-	});
-
-	it("Should throw error if manifest template missing", async () => {
-		jest.mocked(existsSync).mockReturnValue(false);
-
+	it("Should throw error if GHE host missing", async () => {
+		req.query.gheHost = undefined;
 		await expect(GithubManifestGet(req, res))
 			.rejects
-			.toThrow("GHE app manifest template not found");
+			.toThrow("GHE URL not found");
+	});
 
+	it("Should return App manifest", async () => {
+		await GithubManifestGet(req, res);
+		expect(res.json).toBeCalledWith(expect.objectContaining({
+			url: expect.any(String),
+			redirect_url: expect.any(String),
+			hook_attributes: expect.objectContaining({
+				url: expect.any(String)
+			}),
+			setup_url: expect.any(String),
+			default_permissions: expect.objectContaining({
+				"actions": "read",
+				"security_events": "read",
+				"contents": "read",
+				"deployments": "read",
+				"issues": "write",
+				"metadata": "read",
+				"pull_requests": "write",
+				"members": "read"
+			}),
+			default_events: expect.arrayContaining([
+				"code_scanning_alert",
+				"commit_comment",
+				"create",
+				"delete",
+				"deployment_status",
+				"issue_comment",
+				"issues",
+				"pull_request",
+				"pull_request_review",
+				"push",
+				"repository",
+				"workflow_run"
+			])
+		}));
 	});
 });

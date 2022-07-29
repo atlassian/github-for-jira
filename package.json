@@ -70,7 +70,6 @@
 		"helmet": "^3.21.2",
 		"hot-shots": "^8.3.2",
 		"ioredis": "^4.16.3",
-		"json-placeholder-replacer": "^1.0.35",
 		"is-base64": "^1.1.0",
 		"launchdarkly-node-server-sdk": "^6.2.0",
 		"lodash": "^4.17.21",

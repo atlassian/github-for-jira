@@ -1,23 +1,53 @@
 import { Request, Response } from "express";
-import { existsSync, readFileSync } from "fs";
-import { JsonPlaceholderReplacer } from "json-placeholder-replacer";
-import { resolve } from "path";
 import { v4 as uuidv4 } from "uuid";
 import { envVars } from "~/src/config/env";
 
 export const GithubManifestGet = async (req: Request, res: Response) => {
-	const filepath = resolve(process.cwd(), "ghe-app-manifest.template.json");
 	const gheHost = req.query.gheHost;
-	if (existsSync(filepath)) {
-		const gheAppManifest = JSON.parse(readFileSync(filepath, "utf-8"));
-		const placeHolderReplacer = new JsonPlaceholderReplacer();
-		placeHolderReplacer.addVariableMap({
-			APP_HOST: envVars.APP_URL,
-			UUID: uuidv4()
-		});
-		req.session.temp = { gheHost };
-		res.json(placeHolderReplacer.replace(gheAppManifest));
-	} else {
-		throw new Error(`GHE app manifest template not found.`);
+	if (!gheHost) {
+		throw new Error("GHE URL not found");
 	}
+	const manifest = getAppManifest();
+	req.session.temp = { gheHost };
+	res.json(manifest);
+};
+
+const getAppManifest = () => {
+	const appHost = envVars.APP_URL;
+	const uuid=  uuidv4();
+	return {
+		"name": "ghe-app-for-jira",
+		"url": "https://github.com/marketplace/jira-software-github",
+		"redirect_url": `${appHost}/github/manifest/${uuid}/complete`,
+		"hook_attributes": {
+			"url": `${appHost}/github/${uuid}/webhooks`
+		},
+		"setup_url": `${appHost}/github/${uuid}/setup`,
+		"public": true,
+		"default_permissions": {
+			"actions": "read",
+			"security_events": "read",
+			"contents": "read",
+			"deployments": "read",
+			"issues": "write",
+			"metadata": "read",
+			"pull_requests": "write",
+			"members": "read"
+		},
+		"default_events": [
+			"code_scanning_alert",
+			"commit_comment",
+			"create",
+			"delete",
+			"deployment_status",
+			"issue_comment",
+			"issues",
+			"pull_request",
+			"pull_request_review",
+			"push",
+			"repository",
+			"workflow_run"
+		]
+	};
+
 };
