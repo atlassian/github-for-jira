@@ -80,7 +80,7 @@
           <div class='jiraConfiguration__syncRetryModal'  id="sync-status-modal">
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
-                <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status 1</h4>
+                <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status</h4>
                 <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
               </div>
 
@@ -270,6 +270,7 @@
 
     </div>
 
+    <script src="/public/js/jira-configuration.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script
@@ -282,6 +283,5 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
-    <script src="/public/js/jira-configuration.js" nonce="{{nonce}}"></script>
   </body>
 </html>

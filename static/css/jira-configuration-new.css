@@ -84,8 +84,7 @@
   width: 100%;
 }
 
-.jiraConfiguration__restartBackfillModal__required
-{
+.jiraConfiguration__restartBackfillModal__required {
   color: #bf2600;
 }
 

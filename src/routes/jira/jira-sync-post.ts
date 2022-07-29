@@ -8,12 +8,6 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 
 	// A date to start fetching commit history(main and branch) from.
 	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
-	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
-	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
-	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
-	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
-	console.log('commitsFromDatecommitsFromDatecommitsFromDatecommitsFromDate');
-	console.log(commitsFromDate);
 	Sentry.setExtra("Body", req.body);
 
 	req.log.info({ syncType }, "Received sync request");
