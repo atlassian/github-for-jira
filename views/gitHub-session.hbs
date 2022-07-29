@@ -16,15 +16,9 @@
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
   <body class="gitHubSession___body">
-    {{#if isGitHubCloud}}
-      {{> loading-screen
-          title="Redirecting to your GitHub Cloud instance"
-      }}
-    {{else}}
-      {{> loading-screen
-          title="Redirecting to your GitHub Enterprise Server instance"
-      }}
-    {{/if}}
+    {{> loading-screen
+        title=titleForLoading
+    }}
   </body>
 
   <script nonce="{{nonce}}">
