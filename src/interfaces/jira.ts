@@ -122,7 +122,6 @@ export interface JiraDeployment {
 	schemaVersion: string;
 	deploymentSequenceNumber: number;
 	updateSequenceNumber: number;
-	issueKeys?: string[];
 	displayName: string;
 	url: string;
 	description: string;
@@ -138,7 +137,7 @@ export interface JiraDeployment {
 		displayName: string;
 		type: string;
 	};
-	associations?: JiraAssociation[];
+	associations: JiraAssociation[];
 }
 
 export interface JiraDeploymentData {
