@@ -5,11 +5,11 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import { JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptions } from "interfaces/jira";
+import { JiraAssociation, JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptions } from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
-import { shouldTagBackfillRequests, BooleanFlags, booleanFlag } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldTagBackfillRequests } from "config/feature-flags";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -334,7 +334,7 @@ export const getJiraClient = async (
 		remoteLink: {
 			submit: async (data, options?: JiraSubmitOptions) => {
 				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
-				updateIssueKeyAssociationValuesFor(data.remoteLinks, dedup);
+				updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
 					updateIssueKeyAssociationValuesFor(data.remoteLinks, truncate);
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
@@ -414,13 +414,16 @@ const batchedBulkUpdate = async (
 	return Promise.all(batchedUpdates);
 };
 
+const findIssueKeyAssociation = (resource: IssueKeyObject): JiraAssociation | undefined =>
+	resource.associations?.find(a => a.associationType == "issueIdOrKeys");
+
 /**
  * Returns if the max length of the issue
  * key field is within the limit
  */
-const withinIssueKeyLimit = (resources: { issueKeys: string[] }[]): boolean => {
+const withinIssueKeyLimit = (resources: IssueKeyObject[]): boolean => {
 	if (!resources) return true;
-	const issueKeyCounts = resources.map((resource) => resource.issueKeys.length);
+	const issueKeyCounts = resources.map((r) => r.issueKeys?.length || findIssueKeyAssociation(r)?.values?.length || 0);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
 
@@ -463,16 +466,25 @@ const truncateIssueKeys = (repositoryObj) => {
 
 interface IssueKeyObject {
 	issueKeys?: string[];
+	associations?: JiraAssociation[];
 }
 
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
 	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
 		// Filter out anything that doesn't have issue keys or are not over the limit
-		if (value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
+		if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
 			// Create copy of object and add the issue keys that are truncated
 			acc.push({
 				...value,
 				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
+			});
+		}
+		const association = findIssueKeyAssociation(value);
+		if (association?.values && association.values.length > ISSUE_KEY_API_LIMIT) {
+			// Create copy of object and add the issue keys that are truncated
+			acc.push({
+				...value,
+				associations: [association]
 			});
 		}
 		return acc;
@@ -505,8 +517,14 @@ const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
  * Runs the mutatingFunc on the issue keys field for each branch, commit or PR
  */
 const updateIssueKeysFor = (resources, func) => {
-	resources.forEach((resource) => {
-		resource.issueKeys = func(resource.issueKeys);
+	resources.forEach((r) => {
+		if (r.issueKeys) {
+			r.issueKeys = func(r.issueKeys);
+		}
+		const association = findIssueKeyAssociation(r);
+		if (association) {
+			association.values = func(association.values);
+		}
 	});
 	return resources;
 };
@@ -518,19 +536,13 @@ const updateIssueKeysFor = (resources, func) => {
  */
 const updateIssueKeyAssociationValuesFor = (resources: JiraRemoteLink[], mutatingFunc: any): JiraRemoteLink[] => {
 	resources?.forEach(resource => {
-		if (resource.associations?.length > 0) {
-			resource.associations[0].values = mutatingFunc(resource.associations[0].values);
+		const association = findIssueKeyAssociation(resource);
+		if (association) {
+			association.values = mutatingFunc(resource.associations[0].values);
 		}
 	});
-
-
 	return resources;
 };
-
-/**
- * Deduplicates elements in an array
- */
-const dedup = (array) => [...new Set(array)];
 
 /**
  * Truncates to 100 elements in an array
