@@ -1,9 +1,32 @@
 {
   "allow": [
     {
+      "description": "Open version and healthcheck endpoints",
+      "paths": [
+        "/version",
+        "/healthcheck",
+        "/deepcheck"
+      ],
+      "methods": [
+        "GET"
+      ],
+      "principals": {
+        "open": {
+          "reason": "Allow requests for version and healthcheck endpoints"
+        }
+      }
+    },
+    {
       "description": "Open all endpoints used in the App logic",
       "paths": [
-        "/**"
+        "/",
+        "/github/**",
+        "/jira",
+        "/jira/**",
+        "/maintenance",
+        "/public/**",
+        "/session/**",
+        "/setup"
       ],
       "methods": [
         "*"
