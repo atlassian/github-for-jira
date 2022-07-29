@@ -38,10 +38,10 @@ $(".select-github-product-link").click(function(event) {
 
 	AP.navigator.go(
 		'addonmodule',
-			{
-				moduleKey: "github-select-product-page"
-			}
-		);
+		{
+			moduleKey: "github-select-product-page"
+		}
+	);
 });
 
 $(".configure-connection-link").click(function(event) {
@@ -68,67 +68,53 @@ $(".delete-connection-link").click(function(event) {
 	});
 });
 
-
-const getInitialBackfillDate = function () {
+// Restart backfill block
+const setInitialBackfillDate = function () {
 	const date = new Date();
 	date.setFullYear(date.getFullYear() - 1);
-	return date.toISOString().split('T')[0];
+	const defaultValue = date.toISOString().split('T')[0];
+	document.getElementById('backfill-date-picker').value = defaultValue;
 }
 
-// Restart backfill block
+const setDisabledStatus = (el, status) => {
+	el.prop("disabled", status);
+	el.attr("aria-disabled", status.toString());
+}
+
 const restartBackfillModal = document.getElementById("restart-backfill-modal");
-const backfillDatePicker = document.getElementById('backfill-date-picker');
-const csrfToken = document.getElementById("_csrf").value;
-backfillDatePicker.value = getInitialBackfillDate();
+const backfillSubmitButton = $("#submit-backfill-data");
+setInitialBackfillDate();
 
-const restartBackfillPost = function (token, csrfToken, jiraHost, installationId, commitsFromDate) {
-	$.ajax({
-		type: "POST",
-		url: "/jira/sync",
-		data: {
-			installationId,
-			jiraHost,
-			commitsFromDate,
-			syncType: "full",
-			jwt: token,
-			_csrf: csrfToken
-		},
-		success: function () {
+const restartBackfillPost = (data, url = "/jira/sync") => {
+	setDisabledStatus(backfillSubmitButton, true);
+	$.post(url, data)
+		.done(() => {
 			AP.navigator.reload();
-		},
-		error: function () {
-
-		}
-	});
+		})
+		.fail(() => {
+			setDisabledStatus(backfillSubmitButton, false);
+		});
 };
 
+$("#cancel-backfill").click(function () {
+	restartBackfillModal.style.display = "none";
+});
+
 $(".sync-connection-link").click(function (event) {
-	const $cancelBackfillEl = $("#cancel-backfill");
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
+	const csrfToken = document.getElementById("_csrf").value;
 
-	// Display modal and setup
 	restartBackfillModal.style.display = "block";
-	$cancelBackfillEl.click(function () {
-		restartBackfillModal.style.display = "none";
-	});
 
 	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
 		event.preventDefault();
 		const commitsFromDate = document.getElementById('backfill-date-picker').value;
-		window.AP.context.getToken(function (token) {
-			restartBackfillPost(token, csrfToken, jiraHost, installationId, commitsFromDate);
+		window.AP.context.getToken(function (jwt) {
+			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate});
 		});
 	});
-
 });
-
-window.addEventListener('click', function(event) {
-	if (event.target.className === "jiraConfiguration__restartBackfillModalOverlay") {
-		restartBackfillModal.style.display = "none";
-	}
-});
-
 
 $('.jiraConfiguration__option').click(function (event) {
 	event.preventDefault();
@@ -178,8 +164,11 @@ if (syncStatusCloseBtn != null) {
 }
 
 // When the user clicks anywhere outside of the modal, close it
-window.addEventListener('click', function(event) {
+window.onclick =function(event) {
 	if (event.target.className === "jiraConfiguration__syncRetryModalOverlay") {
 		syncStatusModal.style.display = "none";
+	} else if (event.target.className === "jiraConfiguration__restartBackfillModalOverlay") {
+		restartBackfillModal.style.display = "none";
 	}
-});
+};
+
