@@ -72,8 +72,8 @@ $(".delete-connection-link").click(function(event) {
 const setInitialBackfillDate = function () {
 	const date = new Date();
 	date.setFullYear(date.getFullYear() - 1);
-	const defaultValue = date.toISOString().split('T')[0];
-	document.getElementById('backfill-date-picker').value = defaultValue;
+	document.getElementById('backfill-date-picker').value = date.toISOString().split('T')[0];;
+	document.getElementById('backfill-date-picker').max = new Date().toISOString().split('T')[0];;
 }
 
 const setDisabledStatus = (el, status) => {
