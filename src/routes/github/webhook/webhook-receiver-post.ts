@@ -76,7 +76,7 @@ const webhookRouter = (context: WebhookContext) => {
 	}
 };
 
-const createHash = (data: BinaryLike, secret: string): string => {
+export const createHash = (data: BinaryLike, secret: string): string => {
 	return `sha256=${createHmac("sha256", secret)
 		.update(data)
 		.digest("hex")}`;

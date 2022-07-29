@@ -1,4 +1,4 @@
-import { WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
+import { createHash, WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
 import { GitHubServerApp } from "models/github-server-app";
 import { issueWebhookHandler } from "~/src/github/issue";
 import { pushWebhookHandler } from "~/src/github/push";
@@ -9,6 +9,7 @@ import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/gi
 jest.mock("~/src/middleware/github-webhook-middleware");
 
 const uuid = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
+const webhookSeret = "webhookSecret";
 
 describe("webhook-receiver-post", () => {
 
@@ -30,7 +31,7 @@ describe("webhook-receiver-post", () => {
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
 			gitHubClientSecret: "myghsecret",
-			webhookSecret: "mywebhooksecret",
+			webhookSecret: webhookSeret,
 			privateKey: "myprivatekey",
 			installationId: 10
 		};
@@ -97,108 +98,95 @@ describe("webhook-receiver-post", () => {
 	});
 
 	it("should call push handler", async () => {
-		req = {
-			headers: {
-				"x-hub-signature-256": "sha256=a4059a1df2d84fdd1808458a7dc27efe0d63ab7309585b23fbf473c045c5aa81",
-				"x-github-event": "push"
-			},
-			params: {
-				uuid
-			},
-			body: {
-			}
-		};
-
+		req = createReqForEvent("push");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
 		await WebhookReceiverPost(req, res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(pushWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "push"
+		}));
 	});
 
 
 	it("should call issue handler", async () => {
-		req = {
-			headers: {
-				"x-hub-signature-256": "sha256=b3c1c0ce21666c0349b8f3010ce81299adcc9c4ee09b904f20f712292c19b792",
-				"x-github-event": "issues"
-			},
-			params: {
-				uuid
-			},
-			body: {
-				action: "opened"
-			}
-		};
-
+		req = createReqForEvent("issues", "opened");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
 		await WebhookReceiverPost(req, res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(issueWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "issues",
+			action: "opened"
+		}));
 	});
 
 	it("should call pull handler", async () => {
-		req = {
-			headers: {
-				"x-hub-signature-256": "sha256=b3c1c0ce21666c0349b8f3010ce81299adcc9c4ee09b904f20f712292c19b792",
-				"x-github-event": "pull_request"
-			},
-			params: {
-				uuid
-			},
-			body: {
-				action: "opened"
-			}
-		};
-
+		req = createReqForEvent("pull_request", "opened");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
 		await WebhookReceiverPost(req, res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(pullRequestWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "pull_request",
+			action: "opened"
+		}));
 	});
 
 	it("should call pull request review handler", async () => {
-		req = {
-			headers: {
-				"x-hub-signature-256": "sha256=a4059a1df2d84fdd1808458a7dc27efe0d63ab7309585b23fbf473c045c5aa81",
-				"x-github-event": "pull_request_review"
-			},
-			params: {
-				uuid
-			},
-			body: {
-			}
-		};
-
+		req = createReqForEvent("pull_request_review");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
 		await WebhookReceiverPost(req, res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(pullRequestWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "pull_request_review"
+		}));
 	});
 
 	it("should call create branch handler", async () => {
-		req = {
-			headers: {
-				"x-hub-signature-256": "sha256=a4059a1df2d84fdd1808458a7dc27efe0d63ab7309585b23fbf473c045c5aa81",
-				"x-github-event": "create"
-			},
-			params: {
-				uuid
-			},
-			body: {
-			}
-		};
-
+		req = createReqForEvent("create");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
 		await WebhookReceiverPost(req, res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(createBranchWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "create"
+		}));
 	});
 
 	it("should call delete branch handler", async () => {
-		req = {
-			headers: {
-				"x-hub-signature-256": "sha256=a4059a1df2d84fdd1808458a7dc27efe0d63ab7309585b23fbf473c045c5aa81",
-				"x-github-event": "delete"
-			},
-			params: {
-				uuid
-			},
-			body: {
-			}
-		};
-
+		req = createReqForEvent("delete");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
 		await WebhookReceiverPost(req, res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(deleteBranchWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "delete"
+		}));
 	});
 
 });
+
+const createReqForEvent = (event: string, action?: string) => {
+	const body = action ? { action } : {};
+
+	const req = {
+		headers: {
+			"x-hub-signature-256": createHash(JSON.stringify(body), webhookSeret),
+			"x-github-event": event,
+			"x-github-delivery": "100"
+		},
+		params: {
+			uuid
+		},
+		body
+	};
+	return req;
+};
