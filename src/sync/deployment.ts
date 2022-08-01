@@ -15,7 +15,7 @@ const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClie
 	};
 };
 
-const getTransformedDeployments = async (deployments, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger) => {
+const getTransformedDeployments = async (deployments, gitHubInstallationClient: GitHubInstallationClient, logger: Logger) => {
 
 	const transformTasks = deployments.map((deployment) => {
 		const deploymentStatus = {
@@ -36,7 +36,7 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 				state: deployment.latestStatus?.state
 			}
 		} as WebhookPayloadDeploymentStatus;
-		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, logger);
+		return transformDeployment(gitHubInstallationClient, deploymentStatus, logger);
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);
@@ -46,8 +46,8 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 		.flat();
 };
 
-export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 
+export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient: GitHubInstallationClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 	logger.info("Syncing Deployments: started");
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 
@@ -57,8 +57,8 @@ export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient
 			jiraPayload: undefined
 		};
 	}
-	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, jiraHost, logger);
 
+	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, logger);
 	logger.info("Syncing Deployments: finished");
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;

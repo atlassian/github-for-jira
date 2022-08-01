@@ -4,11 +4,13 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import Logger from "bunyan";
 import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitData } from "src/interfaces/jira";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { NumberFlags } from "config/feature-flags";
 import { TaskPayload } from "~/src/sync/installation";
+import { BackfillMessagePayload } from "~/src/sqs/backfill";
+import { getCommitSinceDate } from "~/src/sync/sync-utils";
 
-const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, timeCutoffMsecs?: number, cursor?: string | number, perPage?: number) => {
-	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, timeCutoffMsecs, cursor);
+const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
+	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
 	const edges = commitsData.repository?.defaultBranchRef?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
 
@@ -24,11 +26,11 @@ export const getCommitTask = async (
 	jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
-	perPage?: number): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
+	perPage?: number,
+	messagePayload?: BackfillMessagePayload): Promise<TaskPayload<CommitQueryNode, JiraCommitData>> => {
 
-	logger.info("Syncing commits: started");
-	const timeCutoffMsecs = await numberFlag(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, NaN, jiraHost);
-	const { edges, commits } = await fetchCommits(gitHubClient, repository, timeCutoffMsecs, cursor, perPage);
+	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
+	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
 	const jiraPayload = await transformCommit({ commits, repository });
 	logger.info("Syncing commits: finished");
 

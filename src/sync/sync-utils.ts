@@ -2,11 +2,15 @@ import { RepoSyncState } from "models/reposyncstate";
 import { sqsQueues } from "../sqs/queues";
 import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
+import { numberFlag, NumberFlags } from "config/feature-flags";
+import { TaskType } from "~/src/sync/sync.types";
 
 export async function findOrStartSync(
 	subscription: Subscription,
 	logger: Logger,
-	syncType?: "full" | "partial"
+	syncType?: "full" | "partial",
+	commitsFromDate?: Date,
+	targetTasks?: TaskType[]
 ): Promise<void> {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
@@ -29,5 +33,22 @@ export async function findOrStartSync(
 	}
 
 	// Start sync
-	await sqsQueues.backfill.sendMessage({ installationId, jiraHost, startTime: fullSyncStartTime }, 0, logger);
+	await sqsQueues.backfill.sendMessage({
+		installationId,
+		jiraHost,
+		startTime: fullSyncStartTime,
+		commitsFromDate: commitsFromDate?.toISOString(),
+		targetTasks
+	}, 0, logger);
 }
+
+export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {
+	if (commitsFromDate) {
+		return new Date(commitsFromDate);
+	}
+	const timeCutoffMsecs = await numberFlag(flagName, NaN, jiraHost);
+	if (!timeCutoffMsecs) {
+		return;
+	}
+	return new Date(Date.now() - timeCutoffMsecs);
+};
