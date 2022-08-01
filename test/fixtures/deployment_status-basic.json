@@ -33,9 +33,8 @@
 		},
 		"action": "created",
 		"repository": {
-			"id": "test-repo-id",
 			"name": "test-repo-name",
-			"full_name": "example/test-repo-name",
+			"node_id": "MDEwOkRlcGxveW1lbnQxNDU5ODg3NDY",
 			"html_url": "test-repo-url",
 			"owner": {
 				"login": "test-repo-owner"
