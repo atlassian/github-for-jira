@@ -11,8 +11,6 @@ import branchBasic from "fixtures/branch-basic.json";
 import branchNoIssues from "fixtures/branch-no-issues.json";
 import branchDelete from "fixtures/branch-delete.json";
 
-jest.mock("config/feature-flags");
-
 describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
