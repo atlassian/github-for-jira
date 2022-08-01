@@ -85,13 +85,7 @@ export class Subscription extends Model {
 		return this.findAll({
 			where: {
 				gitHubInstallationId: installationId,
-				...(gitHubAppId ? {
-					gitHubAppId
-				} : {
-					gitHubAppId: {
-						[Op.is]: null
-					}
-				})
+				gitHubAppId: gitHubAppId || null
 			}
 		});
 	}
@@ -103,13 +97,7 @@ export class Subscription extends Model {
 		return this.findOne({
 			where: {
 				gitHubInstallationId: gitHubInstallationId,
-				...(gitHubAppId ? {
-					gitHubAppId
-				} : {
-					gitHubAppId: {
-						[Op.is]: null
-					}
-				})
+				gitHubAppId: gitHubAppId || null
 			}
 		});
 	}
@@ -153,13 +141,7 @@ export class Subscription extends Model {
 		}
 
 		andFilter.push({
-			...(gitHubAppId ? {
-				gitHubAppId
-			} : {
-				gitHubAppId: {
-					[Op.is]: null
-				}
-			})
+			gitHubAppId: gitHubAppId || null
 		});
 
 		return this.findAll({
@@ -189,13 +171,7 @@ export class Subscription extends Model {
 			where: {
 				jiraHost,
 				gitHubInstallationId,
-				...(gitHubAppId ? {
-					gitHubAppId
-				} : {
-					gitHubAppId: {
-						[Op.is]: null
-					}
-				})
+				gitHubAppId: gitHubAppId || null
 			}
 		});
 	}
@@ -220,13 +196,7 @@ export class Subscription extends Model {
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				...(payload.gitHubAppId ? {
-					gitHubAppId: payload.gitHubAppId
-				} : {
-					gitHubAppId: {
-						[Op.is]: null
-					}
-				})
+				gitHubAppId: payload.gitHubAppId || null
 			}
 		});
 	}
