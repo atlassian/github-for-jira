@@ -206,12 +206,12 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage = 1, timeCutoffMsecs?: number, cursor?: string): Promise<getBranchesResponse> {
+	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: Date, cursor?: string): Promise<getBranchesResponse> {
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
-			commitSince: timeCutoffMsecs ? new Date(Date.now() - timeCutoffMsecs).toISOString() : undefined,
+			commitSince: commitSince?.toISOString(),
 			cursor
 		};
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, variables)
@@ -240,13 +240,13 @@ export class GitHubInstallationClient extends GitHubClient {
 	/**
 	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
 	 */
-	public async getCommitsPage(owner: string, repoName: string, perPage?: number, timeCutoffMsecs?: number, cursor?: string | number): Promise<getCommitsResponse> {
+	public async getCommitsPage(owner: string, repoName: string, perPage?: number, commitSince?: Date, cursor?: string | number): Promise<getCommitsResponse> {
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
 			cursor,
-			commitSince: timeCutoffMsecs ? new Date(Date.now() - timeCutoffMsecs).toISOString() : undefined
+			commitSince: commitSince?.toISOString()
 		};
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, variables)
 			.catch((err) => {
@@ -303,7 +303,6 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Calls the GitHub API in the name of the GitHub app to generate a token that in turn can be used to call the GitHub
 	 * API in the name of an installation of that app (to access the users' data).
 	 */
-	// NEW APP CLient
 	private async createInstallationToken(githubInstallationId: number): Promise<AuthToken> {
 		const response = await this.axios.post<Octokit.AppsCreateInstallationTokenResponse>(`/app/installations/{githubInstallationId}/access_tokens`, {}, {
 			...await this.appAuthenticationHeaders(),

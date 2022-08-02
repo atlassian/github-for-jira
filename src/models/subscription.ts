@@ -79,21 +79,25 @@ export class Subscription extends Model {
 	}
 
 	static getAllForInstallation(
-		installationId: number
+		installationId: number,
+		gitHubAppId?: number
 	): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
-				gitHubInstallationId: installationId
+				gitHubInstallationId: installationId,
+				gitHubAppId: gitHubAppId || null
 			}
 		});
 	}
 
 	static findOneForGitHubInstallationId(
-		gitHubInstallationId: number
+		gitHubInstallationId: number,
+		gitHubAppId?: number
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
-				gitHubInstallationId: gitHubInstallationId
+				gitHubInstallationId: gitHubInstallationId,
+				gitHubAppId: gitHubAppId || null
 			}
 		});
 	}
@@ -103,7 +107,8 @@ export class Subscription extends Model {
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
 		offset = 0,
 		limit?: number,
-		inactiveForSeconds?: number
+		inactiveForSeconds?: number,
+		gitHubAppId?: number
 	): Promise<Subscription[]> {
 
 		const andFilter: WhereOptions[] = [];
@@ -135,6 +140,10 @@ export class Subscription extends Model {
 			});
 		}
 
+		andFilter.push({
+			gitHubAppId: gitHubAppId || null
+		});
+
 		return this.findAll({
 			where: {
 				[Op.and]: andFilter
@@ -155,24 +164,14 @@ export class Subscription extends Model {
 
 	static getSingleInstallation(
 		jiraHost: string,
-		gitHubInstallationId: number
+		gitHubInstallationId: number,
+		gitHubAppId?: number
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
 				jiraHost,
-				gitHubInstallationId
-			}
-		});
-	}
-
-	static async getInstallationForClientKey(
-		clientKey: string,
-		installationId: string
-	): Promise<Subscription | null> {
-		return this.findOne({
-			where: {
-				jiraClientKey: clientKey,
-				gitHubInstallationId: installationId
+				gitHubInstallationId,
+				gitHubAppId: gitHubAppId || null
 			}
 		});
 	}
@@ -196,7 +195,8 @@ export class Subscription extends Model {
 		await this.destroy({
 			where: {
 				gitHubInstallationId: payload.installationId,
-				jiraHost: payload.host
+				jiraHost: payload.host,
+				gitHubAppId: payload.gitHubAppId || null
 			}
 		});
 	}

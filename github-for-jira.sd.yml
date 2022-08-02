@@ -26,6 +26,8 @@ compose:
     links:
       - pgbouncer
       - cryptor
+    depends_on:
+      - cryptor
   cryptor:
     image: docker.atl-paas.net/sox/cryptor-sidecar-application
     tag: 1.1-stable-release

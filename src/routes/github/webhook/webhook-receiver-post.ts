@@ -9,6 +9,8 @@ import { webhookTimeout } from "~/src/util/webhook-timeout";
 import { issueCommentWebhookHandler } from "~/src/github/issue-comment";
 import { issueWebhookHandler } from "~/src/github/issue";
 import { envVars } from "~/src/config/env";
+import { pullRequestWebhookHandler } from "~/src/github/pull-request";
+import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -42,6 +44,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 };
 
 const webhookRouter = (context: WebhookContext) => {
+	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited"];
 	switch (context.name) {
 		case "push":
 			GithubWebhookMiddleware(pushWebhookHandler)(context);
@@ -56,10 +59,24 @@ const webhookRouter = (context: WebhookContext) => {
 				GithubWebhookMiddleware(issueWebhookHandler)(context);
 			}
 			break;
+		case "pull_request":
+			if (context.action && VALID_PULL_REQUEST_ACTIONS.includes(context.action)) {
+				GithubWebhookMiddleware(pullRequestWebhookHandler)(context);
+			}
+			break;
+		case "pull_request_review":
+			GithubWebhookMiddleware(pullRequestWebhookHandler)(context);
+			break;
+		case "create":
+			GithubWebhookMiddleware(createBranchWebhookHandler)(context);
+			break;
+		case "delete":
+			GithubWebhookMiddleware(deleteBranchWebhookHandler)(context);
+			break;
 	}
 };
 
-const createHash = (data: BinaryLike, secret: string): string => {
+export const createHash = (data: BinaryLike, secret: string): string => {
 	return `sha256=${createHmac("sha256", secret)
 		.update(data)
 		.digest("hex")}`;
