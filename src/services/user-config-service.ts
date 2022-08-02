@@ -7,7 +7,7 @@ import { InstallationId } from "../github/client/installation-id";
 
 const USER_CONFIG_FILE = ".jira/config.yml";
 const logger = getLogger("services.user-config");
-const MAX_PATTERNS_PER_ENVIRONMENT = 10;
+const MAX_PATTERNS_PER_ENVIRONMENT = 100;
 
 export const updateRepoConfig = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, modifiedFiles: string[] = []): Promise<void> => {
 	// Only get save the latest repo config if the file in the repository changed (added, modified or removed)
@@ -34,7 +34,6 @@ const getRepoConfigFromGitHub = async (githubInstallationId: InstallationId, own
 	if (!contents) {
 		return undefined;
 	}
-
 	return Buffer.from(contents, "base64").toString("utf-8");
 };
 

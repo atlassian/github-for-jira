@@ -283,10 +283,10 @@ export class GitHubInstallationClient extends GitHubClient {
 	 */
 	public async getRepositoryFile(owner: string, repo: string, path: string): Promise<string | undefined> {
 		try {
-			const response = await this.get<ReposGetContentsResponse>(`/repos/:owner/:repo/contents/:path`, {}, {
+			// can't pass the path as a path param, because "/"s would be url encoded
+			const response = await this.get<ReposGetContentsResponse>(`/repos/{owner}/{repo}/contents/${path}`, {}, {
 				owner,
-				repo,
-				path
+				repo
 			});
 
 			return response.data.content;
