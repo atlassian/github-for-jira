@@ -1,5 +1,5 @@
 import { envVars } from "config/env";
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosInstance } from "axios";
 import { getLogger } from "config/logger";
 
 export enum EncryptionSecretKeyEnum {
@@ -63,7 +63,14 @@ export class EncryptionClient {
 		}
 	}
 
-	static async healthcheck(): Promise<AxiosResponse> {
-		return await this.axios.get("/healthcheck");
+	static async encryptAndDecryptCheck() {
+		try {
+			const plainText = `plain-text-${Date.now()}`;
+			const cipherText = await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, plainText);
+			const decryptedText = await EncryptionClient.decrypt(cipherText);
+			if (plainText !== decryptedText) throw new Error(`Decrypted text ${decryptedText} is not the same as orign dummy plain text ${plainText}`);
+		} catch (e) {
+			throw new Error(`Cryptor is not ready. detail: ${e}`);
+		}
 	}
 }
