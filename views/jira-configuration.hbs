@@ -128,11 +128,11 @@
                     {{! Organization }}
                     <td class="jiraConfiguration__table__cell">
                       <img
-                        class="jiraConfiguration__table__cell__avatar"
-                        src="{{account.avatar_url}}"
-                        height="24"
-                        width="24"
-                        data-installation-id="{{id}}"
+                          class="jiraConfiguration__table__cell__avatar"
+                          src="{{account.avatar_url}}"
+                          height="24"
+                          width="24"
+                          data-installation-id="{{id}}"
                       />
                       <span
                         class="jiraConfiguration__table__cell__orgName"
@@ -319,6 +319,7 @@
                 Shortcut
               </span>
             </a>
+            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
             <button
               class="ak-button ak-button__appearance-primary add-organization-link"
             >Connect GitHub organization</button>

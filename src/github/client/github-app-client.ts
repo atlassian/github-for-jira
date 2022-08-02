@@ -1,6 +1,6 @@
 import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from "axios";
+import { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
@@ -19,25 +19,16 @@ import { GitHubClient } from "./github-client";
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
 export class GitHubAppClient extends GitHubClient {
-	private readonly axios: AxiosInstance;
 	private readonly appToken: AuthToken;
 
 	constructor(
 		logger?: Logger,
 		baseUrl?: string,
-		appId = envVars.APP_ID
+		appId = envVars.APP_ID,
+		privateKey = PrivateKey.findPrivateKey() || ""
 	) {
 		super(logger, baseUrl);
-		// TODO - change this for GHE, to get from github apps table
-		const privateKey = PrivateKey.findPrivateKey() || "";
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
-
-		this.axios = axios.create({
-			baseURL: this.restApiUrl,
-			transitional: {
-				clarifyTimeoutError: true
-			}
-		});
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
@@ -47,8 +38,8 @@ export class GitHubAppClient extends GitHubClient {
 			handleFailedRequest(this.logger)
 		);
 		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github),
-			instrumentFailedRequest(metricHttpRequest.github)
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
 		);
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {

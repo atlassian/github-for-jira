@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation, Task } from "~/src/sync/installation";
 import * as installation from "~/src/sync/installation";
-import { handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation, sortedRepos } from "~/src/sync/installation";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { Application } from "probot";
 import { getLogger } from "config/logger";
 import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
-import { mocked } from "ts-jest/utils";
 import { RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Subscription, Repository } from "models/subscription";
+
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
-import unsortedReposJson from "fixtures/repositories.json";
-import sortedReposJson from "fixtures/sorted-repos.json";
 
 const TEST_LOGGER = getLogger("test");
 
@@ -37,7 +35,7 @@ describe("sync/installation", () => {
 		updated_at: "1234"
 	};
 
-	const TASK: installation.Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
+	const TASK: Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
 
 	const TEST_SUBSCRIPTION: Subscription = {} as any;
 
@@ -48,7 +46,7 @@ describe("sync/installation", () => {
 	let mockBackfillQueueSendMessage;
 
 	beforeEach(() => {
-		mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
+		mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
 	});
 
 	describe("isRetryableWithSmallerRequest()", () => {
@@ -294,10 +292,6 @@ describe("sync/installation", () => {
 
 	});
 
-	it("sortedRepos should sort repos by updated_at", () => {
-		expect(sortedRepos(unsortedReposJson as any)).toEqual(sortedReposJson);
-	});
-
 	describe("handleNotFoundErrors", () => {
 		it("should continue sync if 404 status is sent in response from octokit/request", (): void => {
 			// returns true if status is 404 so sync will continue
@@ -357,4 +351,24 @@ describe("sync/installation", () => {
 		});
 	});
 
+	describe("getTargetTasks", () => {
+		it("should return all tasks if no target tasks present", async () => {
+			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment"]);
+			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment"]);
+		});
+
+		it("should return single target task", async () => {
+			expect(getTargetTasks(["pull"])).toEqual(["pull"]);
+		});
+
+		it("should return set of target tasks", async () => {
+			expect(getTargetTasks(["pull", "commit"])).toEqual(["pull", "commit"]);
+		});
+
+		it("should return set of target tasks and filter out invalid values", async () => {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			expect(getTargetTasks(["pull", "commit", "cats"])).toEqual(["pull", "commit"]);
+		});
+	});
 });

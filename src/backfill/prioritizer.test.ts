@@ -5,9 +5,9 @@ import { JobId, JobState, Step } from "./backfill.types";
 import { CommitProcessor } from "./commit-processor";
 import { BranchProcessor } from "./branch-processor";
 import { PullRequestProcessor } from "./pull-request-processor";
+import { RepoSyncState } from "models/reposyncstate";
 
 describe("Prioritizer", () => {
-
 
 	it("processes pullrequests with priority 1", async () => {
 		const prioritizer = new Prioritizer();
@@ -26,7 +26,7 @@ describe("Prioritizer", () => {
 
 	it("skips pullrequests", async () => {
 		const prioritizer = new Prioritizer();
-		expect(prioritizer.skip(step(), jobStateWithWaitingPullrequests()).repository.lastPullCursor).toEqual(20);
+		expect(prioritizer.skip(step(), jobStateWithWaitingPullrequests()).repository.pullCursor).toEqual("d384b094c49adcd9d2887b25f9fd7d31025b824d 20");
 		expect(prioritizer.skip(step(), jobStateWithWaitingPullrequests()).repository.pullStatus).toEqual("pending");
 	});
 
@@ -37,89 +37,78 @@ describe("Prioritizer", () => {
 
 	it("skips commits", async () => {
 		const prioritizer = new Prioritizer();
-		expect(prioritizer.skip(step(), jobStateWithWaitingCommits()).repository.lastCommitCursor).toEqual("25f9fd7d31025b824dd384b094c49adcd9d2887b 49");
+		expect(prioritizer.skip(step(), jobStateWithWaitingCommits()).repository.commitCursor).toEqual("25f9fd7d31025b824dd384b094c49adcd9d2887b 49");
 		expect(prioritizer.skip(step(), jobStateWithWaitingCommits()).repository.commitStatus).toEqual("pending");
 	});
 
 	it("fails commits sub task when invalid cursor", async () => {
 		const prioritizer = new Prioritizer();
 		const jobState = jobStateWithWaitingCommits();
-		jobState.repository.lastCommitCursor = undefined;
+		jobState.repository.commitCursor = undefined;
 		expect(prioritizer.skip(step(), jobState).repository.commitStatus).toEqual("failed");
 	});
 
-	function step(): Step<JobId> {
+	const step = (): Step<JobId> => {
 		return {
 			jobId: {
 				installationId: 1234,
 				jiraHost: "https://foo.atlassian.net"
 			}
 		};
-	}
+	};
 
-	function jobStateWithWaitingPullrequests(): JobState {
-		return jobState(
+	const jobStateWithWaitingPullrequests = (): JobState =>
+		jobState(
 			"pending",
 			"25f9fd7d31025b824dd384b094c49adcd9d2887b 39",
 			"pending",
 			"foo",
 			"pending",
-			10);
-	}
+			"d384b094c49adcd9d2887b25f9fd7d31025b824d 10");
 
-	function jobStateWithWaitingBranches(): JobState {
-		return jobState(
+	const jobStateWithWaitingBranches = (): JobState =>
+		jobState(
 			"pending",
 			"25f9fd7d31025b824dd384b094c49adcd9d2887b 39",
 			"pending",
 			"foo",
 			"complete",
-			10);
-	}
+			"d384b094c49adcd9d2887b25f9fd7d31025b824d 10");
 
-	function jobStateWithWaitingCommits(): JobState {
-		return jobState(
+	const jobStateWithWaitingCommits = (): JobState =>
+		jobState(
 			"pending",
 			"25f9fd7d31025b824dd384b094c49adcd9d2887b 39",
 			"complete",
 			"foo",
 			"complete",
-			10);
-	}
+			"d384b094c49adcd9d2887b25f9fd7d31025b824d 10");
 
-	function jobState(
+	const jobState = (
 		commitStatus: TaskStatus,
-		lastCommitCursor: string,
+		commitCursor: string,
 		branchStatus: TaskStatus,
-		lastBranchCursor: string,
+		branchCursor: string,
 		pullrequestStatus: TaskStatus,
-		lastPullrequestCursor: number
-	): JobState {
-		return {
-			installationId: 4711,
-			jiraHost: "https://foo.atlassian.net",
-			numberOfSyncedRepos: 0,
-			repository: {
-				lastCommitCursor: lastCommitCursor,
-				lastPullCursor: lastPullrequestCursor,
-				lastBranchCursor: lastBranchCursor,
-				commitStatus: commitStatus,
-				branchStatus: branchStatus,
-				pullStatus: pullrequestStatus,
-				repository: {
-					id: 1234,
-					name: "repo1",
-					full_name: "repo1",
-					owner: {
-						login: "owner"
-					},
-					html_url: "https://github.com/foo",
-					updated_at: "42"
-				}
-			}
-		};
-	}
-
-
+		pullCursor: string
+	): JobState => ({
+		installationId: 4711,
+		jiraHost: "https://foo.atlassian.net",
+		numberOfSyncedRepos: 0,
+		repository: {
+			commitCursor,
+			pullCursor,
+			branchCursor,
+			commitStatus: commitStatus,
+			branchStatus: branchStatus,
+			pullStatus: pullrequestStatus,
+			id: 1234,
+			repoName: "repo1",
+			repoFullName: "repo1",
+			repoOwner: "owner",
+			repoUrl: "https://github.com/foo",
+			repoUpdatedAt: new Date()
+		} as RepoSyncState
+	});
 });
 

@@ -50,7 +50,7 @@ export interface JiraBuildData {
 }
 
 export interface JiraBranch {
-	createPullRequestUrl: string;
+	createPullRequestUrl?: string;
 	lastCommit: JiraCommit;
 	id: string;
 	issueKeys: string[];
@@ -122,7 +122,6 @@ export interface JiraDeployment {
 	schemaVersion: string;
 	deploymentSequenceNumber: number;
 	updateSequenceNumber: number;
-	issueKeys: string[];
 	displayName: string;
 	url: string;
 	description: string;
@@ -138,7 +137,7 @@ export interface JiraDeployment {
 		displayName: string;
 		type: string;
 	};
-	associations?: JiraAssociation[];
+	associations: JiraAssociation[];
 }
 
 export interface JiraDeploymentData {
@@ -190,3 +189,9 @@ export interface JiraRemoteLinkStatus {
 // https://atlassian.design/components/lozenge/examples
 export type JiraRemoteLinkStatusAppearance = "default" | "inprogress" | "moved" | "new" | "removed" | "prototype" | "success";
 
+export type JiraOperationType = "NORMAL" | "BACKFILL"
+
+export interface JiraSubmitOptions {
+	preventTransitions: boolean;
+	operationType: JiraOperationType;
+}

@@ -1,8 +1,16 @@
 import { InstallationTokenCache } from "./installation-token-cache";
 import { AuthToken, TEN_MINUTES } from "./auth-token";
-import * as PrivateKey from "probot/lib/private-key";
 import { AppTokenHolder } from "./app-token-holder";
-import { getCloudInstallationId } from "./installation-id";
+import { getInstallationId } from "./installation-id";
+import { keyLocator } from "./key-locator";
+import { mocked } from "ts-jest/utils";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { Subscription } from "~/src/models/subscription";
+import * as PrivateKey from "probot/lib/private-key";
+
+jest.mock("./key-locator");
+jest.mock("~/src/config/feature-flags");
 
 describe("InstallationTokenCache & AppTokenHolder", () => {
 	const githubInstallationId = 123456;
@@ -31,13 +39,30 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 	});
 
 	it("should not cache any tokens when testing AppTokenHolder", async () => {
-		const keyLocator = jest.fn().mockReturnValue(PrivateKey.findPrivateKey());
-		const appTokenHolder = new AppTokenHolder(keyLocator);
+		mocked(keyLocator).mockImplementation(async () => PrivateKey.findPrivateKey() || "");
+		await Subscription.install({
+			host: "http://github.com",
+			installationId: 1234,
+			clientKey: "client-key"
+		});
+
+		await Subscription.install({
+			host: "http://github.com",
+			installationId: 4711,
+			clientKey: "client-key"
+		});
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.GHE_SERVER,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
+		const appTokenHolder = new AppTokenHolder();
 
 		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
-		const token1 = appTokenHolder.getAppToken(getCloudInstallationId(4711));
+		const token1 = await appTokenHolder.getAppToken(getInstallationId(1234));
 		expect(token1).toBeTruthy();
-		const token2 = appTokenHolder.getAppToken(getCloudInstallationId(4711));
+		const token2 = await appTokenHolder.getAppToken(getInstallationId(4711));
 		expect(token2).toBeTruthy();
 		expect(keyLocator).toHaveBeenCalledTimes(2);
 	});

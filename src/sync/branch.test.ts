@@ -39,7 +39,7 @@ describe("sync/branches", () => {
 			{
 				branches: [
 					{
-						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123%20-%20${branchName}&quick_pull=1`,
+						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123-${branchName}&quick_pull=1`,
 						id: branchName,
 						issueKeys: ["TES-123"]
 							.concat(jiraIssueKeyParser(branchName))
@@ -207,7 +207,7 @@ describe("sync/branches", () => {
 					{
 						branches: [
 							{
-								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123%20-%20dev&quick_pull=1",
+								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123-dev&quick_pull=1",
 								id: "dev",
 								issueKeys: ["PULL-123"],
 								lastCommit: {
@@ -296,6 +296,28 @@ describe("sync/branches", () => {
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 			verifyMessageSent(data);
+		});
+
+		describe("Branch commit history value is passed", () => {
+
+			it("should use commit history depth parameter before feature flag time", async () => {
+				const time = Date.now();
+				const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
+				mockSystemTime(time);
+				const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
+				const data: BackfillMessagePayload = { installationId, jiraHost, commitsFromDate };
+
+				nockBranchRequest(branchNodesFixture, { commitSince: commitsFromDate });
+				jiraNock
+					.post(
+						"/rest/devinfo/0.10/bulk",
+						makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
+					)
+					.reply(200);
+
+				await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+				verifyMessageSent(data);
+			});
 		});
 	});
 });

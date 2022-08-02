@@ -4,11 +4,14 @@ import { processInstallation } from "../sync/installation";
 import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
+import { TaskType } from "~/src/sync/sync.types";
 
 export type BackfillMessagePayload = {
 	installationId: number,
 	jiraHost: string,
-	startTime?: string
+	startTime?: string,
+	commitsFromDate?: string,
+	targetTasks?: TaskType[]
 }
 
 export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload> = async (context) => {
@@ -21,11 +24,19 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	);
 
 	const { installationId, jiraHost } = context.payload;
-	context.log = context.log.child({ installationId, jiraHost });
+	context.log = context.log.child({
+		jiraHost,
+		gitHubInstallationId: installationId
+	});
+
+	const backfillData = { ...context.payload };
+	if (!backfillData.startTime) {
+		backfillData.startTime = new Date().toISOString();
+	}
 
 	try {
 		const processor = await processInstallation(workerApp);
-		await processor(context.payload, sentry, context.log);
+		await processor(backfillData, sentry, context.log);
 	} catch (err) {
 		sentry.setExtra("job", {
 			id: context.message.MessageId,

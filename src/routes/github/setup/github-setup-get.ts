@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Logger from "bunyan";
-import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "utils/jira-utils";
+import { getJiraAppUrl, getJiraMarketplaceUrl, isGitHubCloudApp, jiraSiteExists } from "utils/jira-utils";
 import { Installation } from "models/installation";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient } from "~/src/util/get-github-client-config";
@@ -36,13 +36,13 @@ const getInstallationData = async (githubAppClient: GitHubAppClient, githubInsta
 };
 
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
-	const { jiraHost } = res.locals;
+	const { jiraHost, gitHubAppId } = res.locals;
 	const githubInstallationId = Number(req.query.installation_id);
-	const gitHubAppClient = await createAppClient(req.log, jiraHost);
+	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 	const { githubInstallation, info } = await getInstallationData(gitHubAppClient, githubInstallationId, req.log);
 
 	req.addLogFields({ githubInstallationId, appInfo: info });
-	req.log.info("Received get github setup page request");
+	req.log.debug("Received get github setup page request");
 
 	// If we know enough about user and site, redirect to the app
 	const [siteExists, jiraInstallation] = await Promise.all([
@@ -60,6 +60,7 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 		orgName: githubInstallation?.account?.login,
 		avatar: githubInstallation?.account?.avatar_url,
 		html_url: info.html_url,
-		id: githubInstallationId
+		id: githubInstallationId,
+		isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 	});
 };

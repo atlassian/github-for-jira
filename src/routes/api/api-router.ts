@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { param } from "express-validator";
+import { body, param } from "express-validator";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import IORedis from "ioredis";
@@ -13,6 +13,10 @@ import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
 import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
+import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
+import { ApiPingPost } from "routes/api/api-ping-post";
+import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
+import { TaskType } from "~/src/sync/sync.types";
 
 export const ApiRouter = Router();
 
@@ -66,6 +70,9 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 // RESYNC ALL INSTANCES
 ApiRouter.post(
 	"/resync",
+	body("commitsFromDate").optional().isISO8601(),
+	body("targetTasks").optional().isArray(),
+	returnOnValidationError,
 	async (req: Request, res: Response): Promise<void> => {
 		// Partial by default, can be made full
 		const syncType = req.body.syncType || "partial";
@@ -79,16 +86,25 @@ ApiRouter.post(
 		const offset = Number(req.body.offset) || 0;
 		// only resync installations whose "updatedAt" date is older than x seconds
 		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
+		// A date to start fetching commit history(main and branch) from.
+		const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
+		// restrict sync to a subset of tasks
+		const targetTasks = req.body.targetTasks as TaskType[];
 
 		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
 			res.status(400).send("please provide at least one of the filter parameters!");
 			return;
 		}
 
+		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()){
+			res.status(400).send("Invalid date, please select historical date!");
+			return;
+		}
+
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
-			findOrStartSync(subscription, req.log, syncType)
+			findOrStartSync(subscription, req.log, syncType, commitsFromDate, targetTasks)
 		));
 
 		res.json(subscriptions.map(serializeSubscription));
@@ -98,6 +114,8 @@ ApiRouter.post(
 // Hash incoming values with GLOBAL_HASH_SECRET.
 ApiRouter.post("/hash", ApiHashPost);
 
+ApiRouter.post("/ping", ApiPingPost);
+
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost",
@@ -106,6 +124,35 @@ ApiRouter.delete(
 	returnOnValidationError,
 	ApiInstallationDelete
 );
+
+// TODO: remove the debug endpoint
+/*
+How to invoke:
+
+% atlas slauth curl -a github-for-jira -g micros-sv--github-for-jira-dl-admins -- \
+-X GET \
+-v https://github-for-jira.ap-southeast-2.dev.atl-paas.net/api/cryptor
+
+`micros_github-for-jira` env=ddev "encrypted" , and then
+`micros_github-for-jira` env=ddev "<ID value from previous request>"
+
+ */
+ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
+	try {
+		let data = "";
+		for (let i = 0; i < 10; i++) {
+			data = data + "-" + Math.floor((Math.random() * 10));
+		}
+
+		const encrypted = await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, data);
+
+		await EncryptionClient.decrypt(encrypted);
+		resp.status(200).send("ok");
+	} catch (_) {
+		resp.status(500).send("fail");
+	}
+});
+ApiRouter.use("/migration", CryptorMigrationRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

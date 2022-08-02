@@ -1,18 +1,16 @@
 import { transformCodeScanningAlert } from "./transform-code-scanning-alert";
 import codeScanningPayload from "./../../test/fixtures/api/code-scanning-alert.json";
 import { Context } from "probot/lib/context";
+import { wrapLogger } from "probot/lib/wrap-logger";
 import { getLogger } from "./../config/logger";
 import { GitHubAPI } from "probot";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-jest.mock("config/feature-flags");
 
 const buildContext = (payload): Context => {
 	return new Context({
 		"id": "hi",
 		"name": "hi",
 		"payload": payload
-	}, GitHubAPI(), getLogger("logger"));
+	}, GitHubAPI(), wrapLogger(getLogger("logger")));
 };
 
 describe("code_scanning_alert transform", () => {
@@ -59,34 +57,9 @@ describe("code_scanning_alert transform", () => {
 		expect(remoteLinks?.remoteLinks[0].description).toHaveLength(255);
 	});
 
-	it("code_scanning_alert with pr reference queries Pull Request title - OctoKit", async () => {
-		const payload = { ...codeScanningPayload, ref: "refs/pull/8/merge" };
-		const context = buildContext(payload);
-		const mySpy = jest.spyOn(context.github.pulls, "get");
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(false);
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(mySpy as jest.MockInstance<any, any>).mockResolvedValue({
-			data: {
-				title: "GH-10"
-			},
-			status: 200
-		});
-		const remoteLinks = await transformCodeScanningAlert(context, gitHubInstallationId, jiraHost);
-		expect(remoteLinks?.remoteLinks[0].associations[0].values[0]).toEqual("GH-10");
-	});
-
 	it("code_scanning_alert with pr reference queries Pull Request title - GH Client", async () => {
 		const payload = { ...codeScanningPayload, ref: "refs/pull/8/merge" };
 		const context = buildContext(payload);
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
 
 		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/repos/TerryAg/github-jira-test/pulls/8`)

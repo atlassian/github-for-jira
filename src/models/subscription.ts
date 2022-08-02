@@ -8,39 +8,11 @@ export enum SyncStatus {
 	ACTIVE = "ACTIVE",
 	FAILED = "FAILED",
 }
-/*
-export interface RepoSyncStateObject {
-	installationId?: number;
-	jiraHost?: string;
-	numberOfSyncedRepos?: number;
-	repos?: Repositories;
-}*/
 
 interface SyncStatusCount {
 	syncStatus: string;
 	count: number;
 }
-/*
-export interface Repositories {
-	[id: string]: RepositoryData;
-}
-
-export interface RepositoryData {
-	repository?: Repository;
-	pullStatus?: TaskStatus;
-	branchStatus?: TaskStatus;
-	commitStatus?: TaskStatus;
-	buildStatus?: TaskStatus;
-	deploymentStatus?: TaskStatus;
-	lastBranchCursor?: string;
-	lastCommitCursor?: string;
-	lastPullCursor?: number;
-	lastBuildCursor?: string;
-	lastDeploymentCursor?: string;
-
-	// TODO: need to get concrete typing
-	[key: string]: unknown;
-}*/
 
 export type TaskStatus = "pending" | "complete" | "failed";
 
@@ -67,21 +39,32 @@ export class Subscription extends Model {
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
+	gitHubAppId?: number;
 
-	static async getAllForHost(host: string): Promise<Subscription[]> {
+	static async getAllForHost(jiraHost: string): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
-				jiraHost: host
+				jiraHost
 			}
 		});
 	}
 
 	static getAllForInstallation(
-		installationId: number
+		gitHubInstallationId: number
 	): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
-				gitHubInstallationId: installationId
+				gitHubInstallationId
+			}
+		});
+	}
+
+	static findOneForGitHubInstallationId(
+		gitHubInstallationId: number
+	): Promise<Subscription | null> {
+		return this.findOne({
+			where: {
+				gitHubInstallationId
 			}
 		});
 	}
@@ -171,6 +154,9 @@ export class Subscription extends Model {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
 				jiraClientKey: payload.clientKey
+			},
+			defaults: {
+				gitHubAppId: payload.gitHubAppId
 			}
 		});
 
@@ -198,23 +184,7 @@ export class Subscription extends Model {
 		return results[0] as SyncStatusCount[];
 	}
 
-	// TODO: need to remove "RepoJSON" as old code is now removed.  We can now just use RepoSyncState directly
-	/*async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
-		const state = merge(await RepoSyncState.toRepoJson(this), updatedState);
-		await RepoSyncState.updateFromRepoJson(this, state);
-		return this;
-	}
-
-	async updateRepoSyncStateItem(repositoryId: number, key: keyof RepositoryData | "repositoryCursor" | "repositoryStatus", value: unknown) {
-		// TODO: this is temporary until we redo sync
-		if (key === "repositoryStatus" || key === "repositoryCursor") {
-			await this.update({ [key]: value });
-		} else {
-			await RepoSyncState.updateRepoForSubscription(this, Number(repositoryId), key, value);
-		}
-		return this;
-	}*/
-
+	// TODO: remove this, not necessary
 	async uninstall(): Promise<void> {
 		await this.destroy();
 	}
@@ -238,12 +208,17 @@ Subscription.init({
 	repositoryCursor: DataTypes.STRING,
 	repositoryStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	gitHubAppId: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	}
 }, { sequelize });
 
 export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
+	gitHubAppId?: number;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

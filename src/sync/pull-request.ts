@@ -7,14 +7,15 @@ import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getGithubUser } from "services/github/user";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { AxiosResponseHeaders } from "axios";
 import { Octokit } from "@octokit/rest";
+import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 
 /**
  * Find the next page number from the response headers.
  */
-export const getNextPage = (logger: LoggerWithTarget, headers: Headers = {}): number | undefined => {
+export const getNextPage = (logger: Logger, headers: Headers = {}): number | undefined => {
 	const nextUrl = ((headers.link || "").match(/<([^>]+)>;\s*rel="next"/) ||
 		[])[1];
 	if (!nextUrl) {
@@ -39,7 +40,7 @@ type Headers = AxiosResponseHeaders & {
 type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 
 export const getPullRequestTask = async (
-	logger: LoggerWithTarget,
+	logger: Logger,
 	_oldGithub: GitHubAPI,
 	newGithub: GitHubInstallationClient,
 	_jiraHost: string,
@@ -55,7 +56,8 @@ export const getPullRequestTask = async (
 	const {
 		data: edges,
 		status,
-		headers
+		headers,
+		request
 	} =	await newGithub
 		.getPullRequests(repository.owner.login, repository.name,
 			{
@@ -66,7 +68,12 @@ export const getPullRequestTask = async (
 				direction: SortDirection.DES
 			});
 
-	statsd.timing(metricHttpRequest.syncPullRequest, Date.now() - startTime, 1, [`status:${status}`]);
+	const gitHubProduct = getCloudOrServerFromHost(request.host);
+	statsd.timing(
+		metricHttpRequest.syncPullRequest,
+		Date.now() - startTime,
+		1,
+		[`status:${status}`, `gitHubProduct: ${gitHubProduct}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPage = getNextPage(logger, headers) || cursor + 1;
