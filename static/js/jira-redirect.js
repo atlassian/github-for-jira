@@ -1,5 +1,4 @@
-const params = new URLSearchParams(window.location.search.substring(1));
-const gheHost = params.get("serverUrl");
+const gheHost = $("#baseUrl").val();
 $(document).ready(() => {
   $.ajax({
     type: "GET",

@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 
 export const GithubRedirectGet = async (
-	_req: Request,
+	req: Request,
 	res: Response
 ): Promise<void> => {
 
 	res.render("jira-redirect.hbs", {
-		title: "Redirecting"
+		title: "Redirecting",
+		baseUrl: req.query?.baseUrl
 	});
 };
