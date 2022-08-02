@@ -55,6 +55,8 @@ export const JiraConnectEnterprisePost = async (
 		return;
 	}
 
+	const jiraHost = res.locals.jiraHost;
+
 	try {
 		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL, installationId);
 
@@ -70,7 +72,7 @@ export const JiraConnectEnterprisePost = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
-			jiraHost: res.locals.jiraHost
+			jiraHost: jiraHost
 		});
 	} catch (err) {
 		req.log.error({ err, gheServerURL }, `Something went wrong`);
