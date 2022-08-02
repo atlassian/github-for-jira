@@ -32,6 +32,9 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
+				temp?:  {
+					[key: string]: any;
+				}
 			};
 		}
 	}

@@ -41,7 +41,7 @@ $(document).ready(function() {
 				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
 			});
-		} else {
+		} else if(selectedVersion === "server"){
 			AP.navigator.go(
 				'addonmodule',
 				{
@@ -55,7 +55,11 @@ $(document).ready(function() {
 		event.preventDefault();
 
 		if (selectedVersion === "automatic") {
-			// TODO: Implement Auto App Creation, ARC-1456
+			AP.context.getToken(function(token) {
+				const child = openChildWindow("/session/github/redirect");
+				child.window.jiraHost = jiraHost;
+				child.window.jwt = token;
+			});
 		} else {
 			AP.navigator.go(
 				'addonmodule',
@@ -66,6 +70,4 @@ $(document).ready(function() {
 			);
 		}
 	});
-
-
 });
