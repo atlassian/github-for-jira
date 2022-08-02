@@ -48,6 +48,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 };
 
 const webhookRouter = (context: WebhookContext) => {
+	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited"];
 	switch (context.name) {
 		case "push":
 			GithubWebhookMiddleware(pushWebhookHandler)(context);
@@ -63,8 +64,7 @@ const webhookRouter = (context: WebhookContext) => {
 			}
 			break;
 		case "pull_request":
-			if (context.action === "opened" || context.action === "closed"
-				|| context.action === "reopened" || context.action === "edited") {
+			if (context.action && VALID_PULL_REQUEST_ACTIONS.includes(context.action)) {
 				GithubWebhookMiddleware(pullRequestWebhookHandler)(context);
 			}
 			break;
