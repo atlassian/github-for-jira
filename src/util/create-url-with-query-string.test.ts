@@ -1,4 +1,4 @@
-import { checkAndAddQueryString } from "./check-and-add-query-string";
+import { createUrlWithQueryString } from "./create-url-with-query-string";
 
 describe("check-and-add-query-string", () => {
 	let request;
@@ -18,13 +18,13 @@ describe("check-and-add-query-string", () => {
 
 	it("Check and add all the query string which are available as the query parameter in the Request", async () => {
 
-		const urlWithQS = checkAndAddQueryString(request, URL,["son", "uzumaki", "ketchum"]);
+		const urlWithQS = createUrlWithQueryString(request, URL,["son", "uzumaki", "ketchum"]);
 
 		expect(decodeURIComponent(urlWithQS)).toBe("https://mysite.com?son=goku&uzumaki=naruto&ketchum=ash");
 	});
 
 	it("Check and only add those query string which are available as the query parameter in the Request", async () => {
-		const urlWithQS = checkAndAddQueryString(request, URL, ["one", "two", "three"]);
+		const urlWithQS = createUrlWithQueryString(request, URL, ["one", "two", "three"]);
 
 		expect(decodeURIComponent(urlWithQS)).toBe("https://mysite.com?one=1&three=3");
 	});

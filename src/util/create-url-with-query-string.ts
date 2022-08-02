@@ -9,7 +9,7 @@ import { Request } from "express";
  * @param URL
  * @param keys
  */
-export const checkAndAddQueryString = (req: Request, URL: string, keys: string[]): string => {
+export const createUrlWithQueryString = (req: Request, URL: string, keys: string[]): string => {
 	let queryString = "";
 
 	return encodeURIComponent(URL + keys.reduce((_, current, index, array) => {

@@ -1,12 +1,12 @@
 import { NextFunction, Request, Response } from "express";
-import { checkAndAddQueryString } from "utils/check-and-add-query-string";
+import { createUrlWithQueryString } from "utils/create-url-with-query-string";
 
 export const SessionGet = (req: Request, res: Response, next: NextFunction) => {
 	if (!req.params[0]) {
 		return next(new Error("Missing redirect url for session.  Needs to be in format `/session/:redirectUrl`"));
 	}
 
-	const url = checkAndAddQueryString(req, req.params[0], ["baseUrl"]);
+	const url = createUrlWithQueryString(req, req.params[0], ["baseUrl"]);
 
 	return res.render("session.hbs", {
 		title: "Logging you into GitHub",
