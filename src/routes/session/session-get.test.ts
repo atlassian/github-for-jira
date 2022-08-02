@@ -35,7 +35,7 @@ describe("Session GET", () => {
 			it("should return error asking for redirect url", () =>
 				supertest(app)
 					.get("/session/enterprise")
-					.expect(500)
+					.expect(400)
 					.then(response => {
 						expect(response.text.includes("Missing redirect url for session enterprise")).toBeTruthy();
 						expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeFalsy();
@@ -55,7 +55,7 @@ describe("Session GET", () => {
 			it("should return error asking for redirect url", () =>
 				supertest(app)
 					.get("/session")
-					.expect(500)
+					.expect(400)
 					.then(response => {
 						expect(response.text.includes("Missing redirect url for session cloud")).toBeTruthy();
 						expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeFalsy();

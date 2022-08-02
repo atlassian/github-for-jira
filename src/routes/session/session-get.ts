@@ -1,8 +1,9 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 
-export const SessionEnterpriseGet = (req: Request, res: Response, next: NextFunction) => {
+export const SessionEnterpriseGet = (req: Request, res: Response) => {
 	if (!req.params[0]) {
-		return next(new Error("Missing redirect url for session enterprise. Needs to be in format `/session/enterprise/:redirectUrl`"));
+		res.status(400).send("Missing redirect url for session enterprise. Needs to be in format `/session/:redirectUrl`");
+		return;
 	}
 
 	// TODO: This title is different for different scenarios, need to add the different scenarios
@@ -16,9 +17,10 @@ export const SessionEnterpriseGet = (req: Request, res: Response, next: NextFunc
 	});
 };
 
-export const SessionGet = (req: Request, res: Response, next: NextFunction) => {
+export const SessionGet = (req: Request, res: Response) => {
 	if (!req.params[0]) {
-		return next(new Error("Missing redirect url for session cloud. Needs to be in format `/session/:redirectUrl`"));
+		res.status(400).send("Missing redirect url for session cloud. Needs to be in format `/session/:redirectUrl`");
+		return;
 	}
 
 	res.render("gitHub-session.hbs", {
