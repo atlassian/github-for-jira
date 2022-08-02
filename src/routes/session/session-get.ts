@@ -6,7 +6,7 @@ export const SessionGet = (req: Request, res: Response, next: NextFunction) => {
 		return next(new Error("Missing redirect url for session.  Needs to be in format `/session/:redirectUrl`"));
 	}
 
-	const url =  checkAndAddQueryString(req, req.params[0], ["baseUrl"]);
+	const url = checkAndAddQueryString(req, req.params[0], ["baseUrl"]);
 
 	return res.render("session.hbs", {
 		title: "Logging you into GitHub",
