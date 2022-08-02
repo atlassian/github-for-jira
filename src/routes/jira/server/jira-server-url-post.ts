@@ -54,6 +54,8 @@ export const JiraServerUrlPost = async (
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
 	}
 
+	const jiraHost = res.locals.jiraHost;
+
 	try {
 		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL, installationId);
 
@@ -69,7 +71,7 @@ export const JiraServerUrlPost = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
-			jiraHost: res.locals.jiraHost
+			jiraHost: jiraHost
 		});
 	} catch (err) {
 		req.log.error({ err, gheServerURL }, `Something went wrong`);
