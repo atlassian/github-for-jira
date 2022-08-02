@@ -259,7 +259,7 @@ async function doProcessInstallation(data: BackfillMessagePayload, sentry: Hub, 
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
-				return await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
+				return await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
 				const log = logger.child({
 					err,
