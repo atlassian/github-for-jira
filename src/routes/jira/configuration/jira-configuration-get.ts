@@ -111,10 +111,10 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 	return { installations, successfulConnections, failedConnections };
 };
 
-const countStatus = (connections, syncStatus: string): number =>
-	connections && connections.filter(org => org?.syncStatus === syncStatus).length || 0;
+const countStatus = (connections: SuccessfulConnection[] | FailedConnection[], syncStatus: string): number =>
+	connections.filter(org => org?.syncStatus === syncStatus).length || 0;
 
-const countNumberSkippedRepos = (connections): number => {
+const countNumberSkippedRepos = (connections: SuccessfulConnection[]): number => {
 	return connections.reduce((acc, obj) => acc + obj.totalNumberOfRepos - obj.numberOfSyncedRepos, 0);
 };
 

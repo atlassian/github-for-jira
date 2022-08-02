@@ -1,7 +1,7 @@
 import { getLogger 	} from "config/logger";
 import { omit } from "lodash";
 import { optionalRequire } from "optional-require";
-import { isNodeProd } from "utils/is-node-env";
+import { isNodeDev } from "utils/is-node-env";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
 const logger = getLogger("analytics");
@@ -12,8 +12,8 @@ let analyticsNodeClient;
 
 export function sendAnalytics(eventType: "screen", attributes?: { name: string } & Record<string, unknown>)
 export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>)
-export function sendAnalytics(eventType: string, attributes?: Record<string, unknown>): void {
-	if (!analyticsClient && !isNodeProd()){
+export function sendAnalytics(eventType: string, attributes: Record<string, unknown> = {}): void {
+	if (!analyticsClient || isNodeDev()){
 		return;
 	}
 
@@ -32,7 +32,7 @@ export function sendAnalytics(eventType: string, attributes?: Record<string, unk
 		tenantId: "NONE"
 	};
 
-	attributes!.appKey = appKey;
+	attributes.appKey = appKey;
 
 	logger.debug({ eventType }, "Sending analytics");
 
@@ -40,7 +40,7 @@ export function sendAnalytics(eventType: string, attributes?: Record<string, unk
 		case "screen":
 			sendEvent(analyticsNodeClient.sendScreenEvent({
 				...baseAttributes,
-				name: attributes?.name,
+				name: attributes.name,
 				screenEvent: {
 					platform: "web",
 					attributes: omit(attributes, "name")
