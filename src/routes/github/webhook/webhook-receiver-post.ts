@@ -11,6 +11,10 @@ import { issueWebhookHandler } from "~/src/github/issue";
 import { envVars } from "~/src/config/env";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
+import { deleteRepository } from "~/src/github/repository";
+import { workflowWebhookHandler } from "~/src/github/workflow";
+import { deploymentWebhookHandler } from "~/src/github/deployment";
+import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -72,6 +76,20 @@ const webhookRouter = (context: WebhookContext) => {
 			break;
 		case "delete":
 			GithubWebhookMiddleware(deleteBranchWebhookHandler)(context);
+			break;
+		case "repository":
+			if (context.action === "deleted") {
+				GithubWebhookMiddleware(deleteRepository)(context);
+			}
+			break;
+		case "workflow_run":
+			GithubWebhookMiddleware(workflowWebhookHandler)(context);
+			break;
+		case "deployment_status":
+			GithubWebhookMiddleware(deploymentWebhookHandler)(context);
+			break;
+		case "code_scanning_alert":
+			GithubWebhookMiddleware(codeScanningAlertWebhookHandler)(context);
 			break;
 	}
 };

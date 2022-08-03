@@ -32,7 +32,7 @@ $(document).ready(function() {
 		selectedVersion = currentTarget.data('type');
 	});
 
-	$(".optionBtn").click(function (event) {
+	$(".jiraSelectGitHubProduct__actionBtn").click(function (event) {
 		event.preventDefault();
 
 		if (selectedVersion === "cloud") {
@@ -60,6 +60,14 @@ $(document).ready(function() {
 				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
 			});
-		} 
+		} else {
+			AP.navigator.go(
+				'addonmodule',
+				{
+					moduleKey: "github-manual-app-page",
+					customData: { serverUrl: $("#baseUrl").val() }
+				}
+			);
+		}
 	});
 });

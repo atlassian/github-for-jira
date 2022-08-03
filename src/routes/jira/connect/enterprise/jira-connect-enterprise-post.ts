@@ -38,7 +38,7 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 	}
 };
 
-export const JiraServerUrlPost = async (
+export const JiraConnectEnterprisePost = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {
@@ -52,7 +52,10 @@ export const JiraServerUrlPost = async (
 		const { errorCode, message } = gheServerUrlErrors.invalidUrl;
 		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
+		return;
 	}
+
+	const jiraHost = res.locals.jiraHost;
 
 	try {
 		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL, installationId);
@@ -69,7 +72,7 @@ export const JiraServerUrlPost = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
-			jiraHost: res.locals.jiraHost
+			jiraHost: jiraHost
 		});
 	} catch (err) {
 		req.log.error({ err, gheServerURL }, `Something went wrong`);
