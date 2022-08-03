@@ -1,3 +1,6 @@
+const params = new URLSearchParams(window.location.search.substring(1));
+const jiraHost = params.get("xdm_e");
+
 const openChildWindow = (url) => {
   const child = window.open(url);
   const interval = setInterval(function () {
@@ -33,12 +36,12 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
     AP.context.getToken((token) => {
       data.jwt = token;
       data._csrf = csrf;
-      data.jiraHost = $("#gitHubBaseUrl").val();
+      data.jiraHost = jiraHost;
 
       if (isUpdate) {
         // TODO: Do a put request to update the existing app
       } else {
-        $.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
+         $.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
           if (result.status === 201) {
             // TODO: Change this url to `/session/enterprise/github/configuration` once ARC-1552 is merged
             const child = openChildWindow(`/session/github/${response.data.uuid}/configuration/`);
