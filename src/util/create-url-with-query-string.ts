@@ -7,17 +7,18 @@ import { Request } from "express";
  *
  * @param req
  * @param URL
- * @param keys
  */
-export const createUrlWithQueryString = (req: Request, URL: string, keys: string[]): string => {
+export const createUrlWithQueryString = (req: Request, URL: string): string => {
 	let queryString = "";
-
-	return encodeURIComponent(URL + keys.reduce((_, current, index, array) => {
+	const keys = Object.keys(req.query);
+	const queryStrings = keys.reduce((_, current, index, array) => {
 		if (req.query[current]) {
 			queryString += index === 0 ? "?" : "";
 			queryString += current + "=" + req.query[current];
 			queryString += index !== array.length - 1 ? "&" : "";
 		}
 		return queryString;
-	}, ""));
+	}, "");
+
+	return encodeURIComponent(URL + queryStrings);
 };

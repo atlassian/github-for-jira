@@ -1,32 +1,19 @@
 import { createUrlWithQueryString } from "./create-url-with-query-string";
 
 describe("check-and-add-query-string", () => {
-	let request;
-	const URL = "https://mysite.com";
+	const request =  {
+		query: {
+			son: "goku",
+			uzumaki: "naruto",
+			ketchum: "ash"
+		}
+	} as any;
+	const URL = "http://myrandomSite.com";
 
-	beforeEach(async () => {
-		request = {
-			query: {
-				son: "goku",
-				uzumaki: "naruto",
-				ketchum: "ash",
-				one: 1,
-				three: 3
-			}
-		};
-	});
+	it(`Should return URL with all the query parameters`, async () => {
+		const resultUrl = createUrlWithQueryString(request, URL);
 
-	it("Check and add all the query string which are available as the query parameter in the Request", async () => {
-
-		const urlWithQS = createUrlWithQueryString(request, URL,["son", "uzumaki", "ketchum"]);
-
-		expect(decodeURIComponent(urlWithQS)).toBe("https://mysite.com?son=goku&uzumaki=naruto&ketchum=ash");
-	});
-
-	it("Check and only add those query string which are available as the query parameter in the Request", async () => {
-		const urlWithQS = createUrlWithQueryString(request, URL, ["one", "two", "three"]);
-
-		expect(decodeURIComponent(urlWithQS)).toBe("https://mysite.com?one=1&three=3");
+		expect(decodeURIComponent(resultUrl)).toBe(`${URL}?son=goku&uzumaki=naruto&ketchum=ash`);
 	});
 });
 
