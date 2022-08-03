@@ -12,7 +12,7 @@ describe("check-and-add-query-string", () => {
 		const URL = "http://myrandomSite.com";
 		const resultUrl = createUrlWithQueryString(request, URL);
 
-		expect(decodeURIComponent(resultUrl)).toBe(`${URL}?son=goku&uzumaki=naruto&ketchum=ash`);
+		expect(resultUrl).toBe(`${URL}?son=goku&uzumaki=naruto&ketchum=ash`);
 	});
 
 	it(`Should return just URL for empty query`, async () => {
@@ -20,7 +20,7 @@ describe("check-and-add-query-string", () => {
 		const URL = "http://myrandomSite.com";
 		const resultUrl = createUrlWithQueryString(request, URL);
 
-		expect(decodeURIComponent(resultUrl)).toBe(`${URL}`);
+		expect(resultUrl).toBe(`${URL}`);
 	});
 
 	it(`Should return just URL for null query`, async () => {
@@ -28,7 +28,7 @@ describe("check-and-add-query-string", () => {
 		const URL = "http://myrandomSite.com";
 		const resultUrl = createUrlWithQueryString(request, URL);
 
-		expect(decodeURIComponent(resultUrl)).toBe(`${URL}`);
+		expect(resultUrl).toBe(`${URL}`);
 	});
 });
 
