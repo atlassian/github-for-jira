@@ -1,7 +1,7 @@
 import { getLogger 	} from "config/logger";
 import { omit } from "lodash";
 import { optionalRequire } from "optional-require";
-import { isNodeDev } from "utils/is-node-env";
+import { getNodeEnv, isNodeProd } from "utils/is-node-env";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
 const logger = getLogger("analytics");
@@ -13,9 +13,14 @@ let analyticsNodeClient;
 export function sendAnalytics(eventType: "screen", attributes: { name: string } & Record<string, unknown>)
 export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>)
 export function sendAnalytics(eventType: string, attributes: Record<string, unknown> = {}): void {
-	if (!analyticsClient || isNodeDev()){
+	logger.debug(analyticsClient ? "Found analytics client." : `No analytics client found.`);
+	// logger.debug("WTF????....")
+	if (!analyticsClient || isNodeProd()) {
+		logger.debug("returning....")
 		return;
 	}
+
+	logger.debug("here 1....")
 
 	if (!analyticsNodeClient){
 		// Values defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
@@ -24,6 +29,8 @@ export function sendAnalytics(eventType: string, attributes: Record<string, unkn
 			product: "gitHubForJira"
 		});
 	}
+
+	logger.debug("here 2....")
 
 	const baseAttributes = {
 		userId: "anonymousId",

@@ -140,7 +140,7 @@
 		"yaml-lint": "^1.2.4"
 	},
 	"optionalDependencies": {
-		"@atlassiansox/analytics-node-client": "^3.0.1"
+		"@atlassiansox/analytics-node-client": "^2.2.2"
 	},
 	"volta": {
 		"node": "14.17.0",
