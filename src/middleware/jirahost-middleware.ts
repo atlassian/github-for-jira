@@ -7,8 +7,6 @@ import { matchRouteWithPattern } from "utils/match-route-with-pattern";
 
 /**
  * Checks if the URL matches any of the URL patterns defined in `moduleUrls`
- *
- * @param url
  */
 const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
 

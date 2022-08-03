@@ -6,8 +6,6 @@ import matchstick from "matchstick";
  *
  * Source: https://github.com/edj-boston/matchstick
  *
- * @param route
- * @param pattern
  */
 export const matchRouteWithPattern = (pattern: string, route: string): boolean => {
 	pattern = pattern.replace(/ac\./gm, ""); // Remove all the `ac.`
