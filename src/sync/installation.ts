@@ -93,7 +93,7 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 				html_url: syncState.repoUrl,
 				updated_at: syncState.repoUpdatedAt.toISOString()
 			},
-			cursor: syncState[getCursorKey(task)]
+			cursor: syncState[getCursorKey(task)] || undefined
 		};
 	}
 	return undefined;

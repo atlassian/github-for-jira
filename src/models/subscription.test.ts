@@ -9,6 +9,10 @@ describe.skip("Subscription", () => {
 		});*/
 	});
 
+	it("should have tests in here", () => {
+		// TODO: add tests
+	});
+
 	describe.skip("getAllForHost", () => {
 		// TODO: add tests
 	});

@@ -85,11 +85,12 @@ export class RepoSyncState extends Model {
 	}
 
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
-		return RepoSyncState.findAll(merge(options, {
+		const result = await RepoSyncState.findAll(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			}
 		}));
+		return result || [];
 	}
 
 	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState> {

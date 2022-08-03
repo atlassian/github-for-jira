@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
+import { pick } from "lodash";
 
 export const ApiInstallationSyncstateGet = async (req: Request, res: Response): Promise<void> => {
 	const githubInstallationId = Number(req.params.installationId);
@@ -24,7 +25,29 @@ export const ApiInstallationSyncstateGet = async (req: Request, res: Response): 
 			return;
 		}
 
-		res.json(await RepoSyncState.findAllFromSubscription(subscription));
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+
+		res.json({
+			jiraHost: subscription.jiraHost,
+			githubInstallationId: subscription.gitHubInstallationId,
+			numberOfSyncedRepos: subscription.numberOfSyncedRepos,
+			totalNumberOfRepos: subscription.totalNumberOfRepos,
+			repositories: repoSyncStates.map(repo => pick(repo,
+				"branchStatus",
+				"commitStatus",
+				"pullStatus",
+				"deploymentStatus",
+				"buildStatus",
+				"repoId",
+				"repoName",
+				"repoOwner",
+				"repoFullName",
+				"repoUrl",
+				"repoPushedAt",
+				"repoUpdatedAt",
+				"repoCreatedAt"
+			))
+		});
 	} catch (err) {
 		res.status(500).json(err);
 	}
