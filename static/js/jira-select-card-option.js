@@ -32,7 +32,7 @@ $(document).ready(function() {
 		selectedVersion = currentTarget.data('type');
 	});
 
-	$(".optionBtn").click(function (event) {
+	$(".jiraSelectGitHubProduct__actionBtn").click(function (event) {
 		event.preventDefault();
 
 		if (selectedVersion === "cloud") {
@@ -41,11 +41,31 @@ $(document).ready(function() {
 				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
 			});
-		} else {
+		} else if(selectedVersion === "server"){
 			AP.navigator.go(
 				'addonmodule',
 				{
 					moduleKey: "github-server-url-page"
+				}
+			);
+		}
+	});
+
+	$(".jiraAppCreation__actionBtn").click(function (event) {
+		event.preventDefault();
+
+		if (selectedVersion === "automatic") {
+			AP.context.getToken(function(token) {
+				const child = openChildWindow("/session/github/redirect");
+				child.window.jiraHost = jiraHost;
+				child.window.jwt = token;
+			});
+		} else {
+			AP.navigator.go(
+				'addonmodule',
+				{
+					moduleKey: "github-manual-app-page",
+					customData: { serverUrl: $("#baseUrl").val() }
 				}
 			);
 		}

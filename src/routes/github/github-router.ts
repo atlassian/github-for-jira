@@ -7,27 +7,44 @@ import { GithubConfigurationRouter } from "routes/github/configuration/github-co
 import { returnOnValidationError } from "../api/api-utils";
 import { header } from "express-validator";
 import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
+import { GithubRedirectGet } from "~/src/routes/github/github-redirect-get";
+import { GithubManifestRouter } from "~/src/routes/github/manifest/github-manifest-router";
+import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
+
+const UUID_REGEX = "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}";
 
 export const GithubRouter = Router();
+const subRouter = Router({ mergeParams: true });
+GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
+
+//Have an cover all middleware to extract the optional gitHubAppId
+//subRouter.use(param("uuid").isUUID('all'), GithubServerAppMiddleware);
+subRouter.use(GithubServerAppMiddleware);
 
 // OAuth Routes
-GithubRouter.use(GithubOAuthRouter);
+subRouter.use(GithubOAuthRouter);
 
 // Webhook Route
-GithubRouter.post("/webhooks/:uuid",
+subRouter.post("/webhooks",
 	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
 	returnOnValidationError,
 	WebhookReceiverPost);
 
 // CSRF Protection Middleware for all following routes
-GithubRouter.use(csrfMiddleware);
+subRouter.use(csrfMiddleware);
 
-GithubRouter.use("/setup", GithubSetupRouter);
+subRouter.use("/setup", GithubSetupRouter);
+
+// App Manifest flow routes
+GithubRouter.use("/manifest", GithubManifestRouter);
+
+GithubRouter.use("/redirect", GithubRedirectGet);
 
 // All following routes need Github Auth
-GithubRouter.use(GithubAuthMiddleware);
+subRouter.use(GithubAuthMiddleware);
 
-GithubRouter.use("/configuration", GithubConfigurationRouter);
+subRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
-GithubRouter.use("/subscriptions?", GithubSubscriptionRouter);
+subRouter.use("/subscriptions?", GithubSubscriptionRouter);
+

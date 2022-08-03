@@ -1,7 +1,7 @@
 import { getLogger 	} from "config/logger";
 import { omit } from "lodash";
 import { optionalRequire } from "optional-require";
-import { isNodeProd } from "utils/is-node-env";
+import { isNodeDev } from "utils/is-node-env";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
 const logger = getLogger("analytics");
@@ -10,11 +10,10 @@ const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 let analyticsNodeClient;
 
-export function sendAnalytics(eventType: "trait", attributes: Record<string, unknown>)
 export function sendAnalytics(eventType: "screen", attributes: { name: string } & Record<string, unknown>)
 export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>)
-export function sendAnalytics(eventType: string, attributes: Record<string, unknown>): void {
-	if (!analyticsClient || !isNodeProd()){
+export function sendAnalytics(eventType: string, attributes: Record<string, unknown> = {}): void {
+	if (!analyticsClient || isNodeDev()){
 		return;
 	}
 
@@ -41,7 +40,7 @@ export function sendAnalytics(eventType: string, attributes: Record<string, unkn
 		case "screen":
 			sendEvent(analyticsNodeClient.sendScreenEvent({
 				...baseAttributes,
-				name: attributes?.name,
+				name: attributes.name,
 				screenEvent: {
 					platform: "web",
 					attributes: omit(attributes, "name")
@@ -62,13 +61,6 @@ export function sendAnalytics(eventType: string, attributes: Record<string, unkn
 				trackEvent: {
 					attributes
 				}
-			}));
-			break;
-		case "trait":
-			sendEvent(analyticsNodeClient.sendTraitEvent({
-				entityType: attributes?.entityType,
-				entityId: attributes?.entityId,
-				entityTraits: attributes?.entityTraits
 			}));
 			break;
 		case "operational":

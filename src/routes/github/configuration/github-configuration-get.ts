@@ -1,7 +1,7 @@
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
-import { getInstallations, InstallationResults } from "../../jira/configuration/jira-configuration-get";
+import { getInstallations, InstallationResults } from "routes/jira/jira-get";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
@@ -18,6 +18,8 @@ import {
 	createUserClient
 } from "~/src/util/get-github-client-config";
 import { isGitHubCloudApp } from "utils/jira-utils";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -132,6 +134,14 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	gitHubAppId ? req.log.debug(`Displaying orgs that have GitHub Enterprise app ${gitHubAppId} installed.`)
 		: req.log.debug("Displaying orgs that have GitHub Cloud app installed.");
+
+	const gitHubProduct = gitHubAppId ? "server" : "cloud";
+
+	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.ConnectAnOrgScreenEventName,
+		jiraHost,
+		gitHubProduct
+	});
 
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log, gitHubAppId);
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
