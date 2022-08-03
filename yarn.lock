@@ -5281,6 +5281,11 @@ makeerror@1.0.12:
   dependencies:
     tmpl "1.0.5"
 
+matchstick@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/matchstick/-/matchstick-1.2.1.tgz#23b2168e6916d8a1f05edc1db359612738788b23"
+  integrity sha512-shyh9IWHF0XbWZ3zK4pcIWTkick+qcNIV+ZWNcFHgwFG3fxUxksdYkA46FlkTpKltG3ug/b1ZKq/tsNMfQyv4A==
+
 md5@^2.2.1:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/md5/-/md5-2.3.0.tgz#c3da9a6aae3a30b46b7b0c349b87b110dc3bda4f"

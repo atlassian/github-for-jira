@@ -9,7 +9,7 @@ import { createWebhookApp } from "test/utils/probot";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import { BackfillMessagePayload } from "../sqs/backfill";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
@@ -208,11 +208,11 @@ describe("sync/deployments", () => {
 					"values": [
 						{
 							"commitHash": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
-							"repositoryId": "AyMi0wMi0wM1QyMjo0NT"
+							"repositoryId": "19"
 						},
 						{
 							"commitHash": "51e16759cdac67b0d2a94e0674c9603b75a840f6",
-							"repositoryId": "AyMi0wMi0wM1QyMjo0NT"
+							"repositoryId": "19"
 						}
 					]
 				}]
@@ -340,11 +340,11 @@ describe("sync/deployments", () => {
 						values: [
 							{
 								commitHash: "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
-								repositoryId: "pK0MjAyMi0wMi0wM1QyMj"
+								repositoryId: "24"
 							},
 							{
 								commitHash: "51e16759cdac67b0d2a94e0674c9603b75a840f6",
-								repositoryId: "pK0MjAyMi0wMi0wM1QyMj"
+								repositoryId: "24"
 							}
 						]
 					}
@@ -379,11 +379,11 @@ describe("sync/deployments", () => {
 						values: [
 							{
 								commitHash: "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
-								repositoryId: "pK0MjAyMi0wMi0wM1QyMj"
+								repositoryId: "42"
 							},
 							{
 								commitHash: "7544f2fec0321a32d5effd421682463c2ebd5018",
-								repositoryId: "pK0MjAyMi0wMi0wM1QyMj"
+								repositoryId: "42"
 							}
 						]
 					}
