@@ -10,7 +10,7 @@ import { createWebhookApp } from "test/utils/probot";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import { BackfillMessagePayload } from "../sqs/backfill";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 import buildFixture from "fixtures/api/build.json";
 import multiBuildFixture from "fixtures/api/build-multi.json";

@@ -1,19 +1,7 @@
-import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { Context, MessageHandler } from "./sqs";
 import { processBranch } from "../github/branch";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
-import { GitHubAppConfigPayload } from "./github-app-config-payload";
-
-export type BranchMessagePayload = GitHubAppConfigPayload & {
-	jiraHost: string,
-	installationId: number,
-	webhookReceived: number,
-	webhookId: string,
-
-	// The original webhook payload from GitHub. We don't need to worry about the SQS size limit because metrics show
-	// that payload size for deployment_status webhooks maxes out at 9KB.
-	webhookPayload: WebhookPayloadCreate,
-}
+import { BranchMessagePayload } from "./sqs.types";
 
 export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = async (context: Context<BranchMessagePayload>) => {
 	const messagePayload: BranchMessagePayload = context.payload;

@@ -9,7 +9,7 @@ import { createWebhookApp } from "test/utils/probot";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import { BackfillMessagePayload } from "../sqs/backfill";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
