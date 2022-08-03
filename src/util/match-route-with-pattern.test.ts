@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { matchUrlWithPattern } from "utils/match-url-with-pattern";
+import { matchRouteWithPattern } from "utils/match-route-with-pattern";
 
 const testData = [
 	{
@@ -84,11 +84,11 @@ const testData = [
 	}
 ];
 
-describe("Test for matchUrlWithPattern", () => {
+describe("Test for matchRouteWithPattern", () => {
 	testData.forEach(datum => {
 		const { pattern, route, match } = datum;
 		it(`Testing ${pattern} for ${route}`, () => {
-			expect(matchUrlWithPattern(pattern, route)).toBe(match);
+			expect(matchRouteWithPattern(pattern, route)).toBe(match);
 		});
 	});
 });

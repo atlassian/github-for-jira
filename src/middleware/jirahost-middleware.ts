@@ -3,14 +3,14 @@ import { NextFunction, Request, Response } from "express";
 import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { TokenType } from "~/src/jira/util/jwt";
 import { moduleUrls } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
-import { matchUrlWithPattern } from "utils/match-url-with-pattern";
+import { matchRouteWithPattern } from "utils/match-route-with-pattern";
 
 /**
  * Checks if the URL matches any of the URL patterns defined in `moduleUrls`
  *
  * @param url
  */
-const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchUrlWithPattern(moduleUrl, url));
+const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
 
 const extractUnsafeJiraHost = (req: Request): string | null => {
 	if (checkPathValidity(req.path) && req.method == "GET") {

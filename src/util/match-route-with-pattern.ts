@@ -9,7 +9,7 @@ import matchstick from "matchstick";
  * @param route
  * @param pattern
  */
-export const matchUrlWithPattern = (pattern: string, route: string): boolean => {
+export const matchRouteWithPattern = (pattern: string, route: string): boolean => {
 	pattern = pattern.replace(/ac\./gm, ""); // Remove all the `ac.`
 	pattern = pattern.split("?")[0]; // Removing the query parameters
 	route = route.split("?")[0]; // Removing the query parameters
