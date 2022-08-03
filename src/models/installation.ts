@@ -1,7 +1,6 @@
 import { BOOLEAN, DataTypes, DATE } from "sequelize";
 import { Subscription } from "./subscription";
 import { encrypted, getHashedKey, sequelize } from "models/sequelize";
-import { Config } from "interfaces/common";
 import { EncryptedModel } from "models/encrypted-model";
 import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { getLogger } from "config/logger";
@@ -23,7 +22,6 @@ export class Installation extends EncryptedModel {
 	updatedAt: Date;
 	createdAt: Date;
 	githubAppId?: number;
-	config: Config;
 
 	getEncryptionSecretKey() {
 		return EncryptionSecretKeyEnum.JIRA_INSTANCE_SECRETS;

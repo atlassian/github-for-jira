@@ -37,6 +37,10 @@ declare global {
 	}
 }
 
+/**
+ * Provides some configuration parameters that a user can define for a given repo. It's stored
+ * against a repo in the database.
+ */
 export interface Config {
 	deployments?: {
 

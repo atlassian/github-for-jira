@@ -1,6 +1,6 @@
 "use strict";
 
-const tableNames = ["Installations", "Subscriptions", "RepoSyncStates"];
+const tableNames = ["RepoSyncStates"];
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
 		await Promise.all([
