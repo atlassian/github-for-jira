@@ -5,7 +5,6 @@ import "./matchers/to-promise";
 import "./matchers/to-have-sent-metrics";
 import "./matchers/to-be-called-with-delay";
 import { sequelize } from "models/sequelize";
-import { mocked } from "ts-jest/utils";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 // WARNING: Be very careful what you import here as it might affect test
@@ -68,9 +67,9 @@ const clearState = async () => Promise.all([
 ]);
 
 const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>
-	(installationId: number | string, returnToken = "token", expires = Date.now() + 3600, expectedAuthToken?: string) => {
+	(githubInstallationId: number | string, returnToken = "token", expires = Date.now() + 3600, expectedAuthToken?: string) => {
 		scope
-			.post(`/app/installations/${installationId}/access_tokens`)
+			.post(`/app/installations/${githubInstallationId}/access_tokens`)
 			.matchHeader(
 				"Authorization",
 				expectedAuthToken ? `Bearer ${expectedAuthToken}` : /^(Bearer|token) .+$/i
@@ -142,7 +141,7 @@ beforeEach(() => {
 	global.gheUserTokenNock = githubUserToken(gheApiNock);
 	global.gheAppTokenNock = githubAppToken(gheApiNock);
 	global.mockSystemTime = (time: number | string | Date) => {
-		const mock = jest.isMockFunction(Date.now) ? mocked(Date.now) : jest.spyOn(Date, "now");
+		const mock = jest.isMockFunction(Date.now) ? jest.mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());
 		return mock;
 	};

@@ -2,14 +2,14 @@
 // eslint-disable-next-line import/no-duplicates
 import { transformDeployment, mapEnvironment } from "./transform-deployment";
 import { getLogger } from "config/logger";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getInstallationId } from "../github/client/installation-id";
 import deployment_status from "fixtures/deployment_status-basic.json";
 import deployment_status_staging from "fixtures/deployment_status_staging.json";
 import { getConfig } from "services/user-config-service";
 import { Subscription } from "models/subscription";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 jest.mock("services/user-config-service");
@@ -159,14 +159,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			}
 			);
 
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-
-		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, getLogger("deploymentLogger"));
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
@@ -198,11 +191,11 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 						values: [
 							{
 								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
-								repositoryId: "test-repo-id"
+								repositoryId: "65"
 							},
 							{
 								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
-								repositoryId: "test-repo-id"
+								repositoryId: "65"
 							}
 						]
 					}
@@ -271,14 +264,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			}
 			);
 
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-
-		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, getLogger("deploymentLogger"));
 
 		// make expected issue id array
 		const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + number);
@@ -317,7 +303,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 		await Subscription.create({
 			gitHubInstallationId: TEST_INSTALLATION_ID,
-			jiraHost: "testing.atlassian.net",
+			jiraHost: "https://test-atlassian-instance.atlassian.net",
 			jiraClientKey: "client-key"
 		});
 
@@ -383,12 +369,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			);
 
 		when(booleanFlag).calledWith(
-			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-
-		when(booleanFlag).calledWith(
 			BooleanFlags.CONFIG_AS_CODE,
 			expect.anything(),
 			expect.anything()
@@ -399,7 +379,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			expect.anything()
 		).mockResolvedValue(mockConfig);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, getLogger("deploymentLogger"));
 		expect(jiraPayload?.deployments[0].environment.type).toBe("development");
 	});
 
@@ -473,12 +453,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			);
 
 		when(booleanFlag).calledWith(
-			BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-
-		when(booleanFlag).calledWith(
 			BooleanFlags.CONFIG_AS_CODE,
 			expect.anything(),
 			expect.anything()
@@ -489,7 +463,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			expect.anything()
 		).mockResolvedValue(mockConfig);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, "testing.atlassian.net", getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, getLogger("deploymentLogger"));
 		expect(jiraPayload?.deployments[0].environment.type).toBe("unmapped");
 	});
 

@@ -19,7 +19,7 @@ import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { BackfillMessagePayload } from "../sqs/backfill";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
 import { RateLimitingError } from "../github/client/github-client-errors";
@@ -268,24 +268,25 @@ async function doProcessInstallation(app, data: BackfillMessagePayload, sentry: 
 			try {
 				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
-				// TODO - need a better way to manage GitHub errors globally
-				// In the event that the customer has not accepted the required permissions.
-				// We will continue to process the data per usual while omitting the tasks the app does not have access too.
-				// The GraphQL errors do not return a status so we check 403 or undefined
-				if ((err.status === 403 || err.status === undefined) && err.message?.includes("Resource not accessible by integration")) {
-					await subscription?.update({ syncWarning: `Invalid permissions for ${task} task` });
-					logger.error({ err }, `Invalid permissions for ${task} task`);
-					// Return undefined objects so the sync can complete while skipping this task
-					return { edges: undefined, jiraPayload: undefined };
-				}
-				logger.error({
+				const log = logger.child({
 					err,
 					payload: data,
 					github,
 					repository,
 					cursor,
 					task
-				}, `Error processing job with page size ${perPage}, retrying with next smallest page size`);
+				});
+				// TODO - need a better way to manage GitHub errors globally
+				// In the event that the customer has not accepted the required permissions.
+				// We will continue to process the data per usual while omitting the tasks the app does not have access too.
+				// The GraphQL errors do not return a status so we check 403 or undefined
+				if ((err.status === 403 || err.status === undefined) && err.message?.includes("Resource not accessible by integration")) {
+					await subscription?.update({ syncWarning: `Invalid permissions for ${task} task` });
+					log.error(`Invalid permissions for ${task} task`);
+					// Return undefined objects so the sync can complete while skipping this task
+					return { edges: undefined, jiraPayload: undefined };
+				}
+				log.error(`Error processing job with page size ${perPage}, retrying with next smallest page size`);
 				if (!(await isRetryableWithSmallerRequest(err))) {
 					// error is not retryable, re-throwing it
 					throw err;
@@ -454,65 +455,64 @@ export async function maybeScheduleNextTask(
 const redis = new IORedis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
-export const processInstallation =
-	(app: Application) => {
-		const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
-		const deduplicator = new Deduplicator(
-			inProgressStorage, 1_000
-		);
+export const processInstallation = (app: Application) => {
+	const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
+	const deduplicator = new Deduplicator(
+		inProgressStorage, 1_000
+	);
 
-		return async (data: BackfillMessagePayload, sentry: Hub, logger: Logger): Promise<void> => {
-			const { installationId, jiraHost } = data;
+	return async (data: BackfillMessagePayload, sentry: Hub, logger: Logger): Promise<void> => {
+		const { installationId, jiraHost } = data;
 
-			logger.child({ gitHubInstallationId: installationId, jiraHost });
+		logger.child({ gitHubInstallationId: installationId, jiraHost });
 
-			try {
-				if (await isBlocked(installationId, logger)) {
-					logger.warn("blocking installation job");
-					return;
-				}
-
-				sentry.setUser({
-					gitHubInstallationId: installationId,
-					jiraHost
-				});
-
-				const nextTaskDelaysMs: Array<number> = [];
-
-				const result = await deduplicator.executeWithDeduplication(
-					"i-" + installationId + "-" + jiraHost,
-					() => doProcessInstallation(app, data, sentry, installationId, jiraHost, logger, (delay: number) =>
-						nextTaskDelaysMs.push(delay)
-					));
-
-				switch (result) {
-					case DeduplicatorResult.E_OK:
-						logger.info("Job was executed by deduplicator");
-						maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
-						break;
-					case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
-						logger.warn("Possible duplicate job was detected, rescheduling");
-						await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC, logger);
-						break;
-					}
-					case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
-						logger.warn("Duplicate job was detected, rescheduling");
-						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
-						// Worker A - doing a long-running task
-						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
-						// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
-						// Worker A dies (e.g. node is rotated).
-						// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
-						//
-						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
-						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
-						// is finished.
-						await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
-						break;
-					}
-				}
-			} catch (err) {
-				logger.warn({ err }, "Process installation failed");
+		try {
+			if (await isBlocked(installationId, logger)) {
+				logger.warn("blocking installation job");
+				return;
 			}
-		};
+
+			sentry.setUser({
+				gitHubInstallationId: installationId,
+				jiraHost
+			});
+
+			const nextTaskDelaysMs: Array<number> = [];
+
+			const result = await deduplicator.executeWithDeduplication(
+				"i-" + installationId + "-" + jiraHost,
+				() => doProcessInstallation(app, data, sentry, installationId, jiraHost, logger, (delay: number) =>
+					nextTaskDelaysMs.push(delay)
+				));
+
+			switch (result) {
+				case DeduplicatorResult.E_OK:
+					logger.info("Job was executed by deduplicator");
+					maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
+					break;
+				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
+					logger.warn("Possible duplicate job was detected, rescheduling");
+					await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC, logger);
+					break;
+				}
+				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
+					logger.warn("Duplicate job was detected, rescheduling");
+					// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
+					// Worker A - doing a long-running task
+					// Redis/SQS - reports that the task execution takes too long and sends it to another worker
+					// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
+					// Worker A dies (e.g. node is rotated).
+					// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
+					//
+					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
+					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
+					// is finished.
+					await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
+					break;
+				}
+			}
+		} catch (err) {
+			logger.warn({ err }, "Process installation failed");
+		}
 	};
+};
