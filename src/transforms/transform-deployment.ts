@@ -1,11 +1,13 @@
 import Logger from "bunyan";
-import { JiraAssociation,JiraDeploymentData } from "interfaces/jira";
+import { JiraAssociation, JiraDeploymentData } from "interfaces/jira";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { CommitSummary,
+import {
+	CommitSummary,
 	extractMessagesFromCommitSummaries,
-	getAllCommitsBetweenReferences } from "./util/github-api-requests";
+	getAllCommitsBetweenReferences
+} from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { AxiosResponse } from "axios";
 import _, { deburr, isEmpty } from "lodash";
@@ -120,15 +122,9 @@ const matchesEnvironment = (environment: string, globPatterns: string[] = []): b
 /**
  * Maps a given environment name to a Jira environment name using the custom mapping defined in a RepoConfig.
  */
-export const mapEnvironmentWithConfig = (environment: string, config: Config): string => {
-	const jiraEnvironment = _.keys(config?.deployments?.environmentMapping)
+export const mapEnvironmentWithConfig = (environment: string, config: Config): string | undefined => {
+	return _.keys(config?.deployments?.environmentMapping)
 		.find(jiraEnvironmentType => matchesEnvironment(environment, config.deployments?.environmentMapping?.[jiraEnvironmentType]));
-
-	if (!jiraEnvironment) {
-		return "unmapped";
-	}
-
-	return jiraEnvironment;
 };
 
 // We need to map the environment of a GitHub deployment back to a valid deployment environment in Jira.
@@ -150,22 +146,22 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 		return envNamesPattern.test(deburr(environment));
 	};
 
-	let environmentMapping = {
+	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality", "uat", "sit"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
 		production: ["production", "prod", "prd", "live"]
 	};
 
+	// if there is a user-defined config, we use that config for the mapping
 	if (config) {
-		environmentMapping = _.merge(environmentMapping, config.deployments?.environmentMapping);
-		mapEnvironmentWithConfig(environment, {
-			deployments: {
-				environmentMapping
-			}
-		});
+		const environmentType = mapEnvironmentWithConfig(environment, config);
+		if (environmentType){
+			return environmentType;
+		}
 	}
 
+	// if there is no user-defined config, we fall back to hardcoded mapping
 	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key]));
 
 	if (!jiraEnv) {
@@ -256,7 +252,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		if (subscription){
 			config = await getConfig(subscription, payload.repository.id);
 		} else {
-			logger.warn({ jiraHost, githubInstallationId: githubInstallationClient.githubInstallationId.installationId }, "could not find subscription - not loading user config!");
+			logger.warn({ jiraHost, githubInstallationId: githubInstallationClient.githubInstallationId.installationId }, "could not find subscription - not using user config to map environments!");
 		}
 	}
 
