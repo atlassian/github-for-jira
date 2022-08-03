@@ -9,7 +9,7 @@ import { Request } from "express";
  */
 export const createUrlWithQueryString = (req: Request, URL: string): string => {
 	let queryString = "";
-	const keys = Object.keys(req.query);
+	const keys = req.query ? Object.keys(req.query) : [];
 	const queryStrings = keys.reduce((_, current, index, array) => {
 		if (req.query[current]) {
 			queryString += index === 0 ? "?" : "";
