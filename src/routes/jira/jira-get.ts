@@ -204,14 +204,14 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		connectedOrgCountServerCount: successfulServerConnections,
 		totalOrgCount: successfulCloudConnections.length + successfulServerConnections,
 		failedCloudBackfillCount: countStatus(successfulCloudConnections, "FAILED"),
-		failedServerBackfillCount: countStatus(successfulServerConnections, "FAILED"),
+		failedServerBackfillCount: countStatus(gheServersWithConnections, "FAILED"),
 		successfulCloudBackfillCount: countStatus(successfulCloudConnections, "FINISHED"),
-		successfulServerBackfillCount: countStatus(successfulServerConnections, "FINISHED"),
+		successfulServerBackfillCount: countStatus(gheServersWithConnections, "FINISHED"),
 		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections)
 	});
 };
 
-export const JiraConfigurationGet = async (
+export const JiraGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction

@@ -149,11 +149,11 @@ describe("Deployment Webhook", () => {
 									"values": [
 										{
 											"commitHash": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
-											"repositoryId": "MDEwOkRlcGxveW1lbnQxNDU5ODg3NDY"
+											"repositoryId": "65"
 										},
 										{
 											"commitHash": "f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
-											"repositoryId": "MDEwOkRlcGxveW1lbnQxNDU5ODg3NDY"
+											"repositoryId": "65"
 										}
 									]
 								}

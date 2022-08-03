@@ -4,17 +4,26 @@ import { Request, Response } from "express";
 
 /**
  * Handle the when a user deletes an entry in the UI
+ *
  */
-export const JiraConfigurationDelete = async (req: Request, res: Response): Promise<void> => {
+export const JiraDelete = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost } = res.locals;
-	const installationId = Number(req.body.installationId);
+	// TODO: The params `installationId` needs to be replaced by `subscriptionId`
+	const installationId = Number(req.params.installationId) || Number(req.body.installationId);
+
 	if (!jiraHost) {
 		req.log.error("Missing Jira Host");
-		res.status(401).send("Missing jiraHost in body");
+		res.status(401).send("Missing jiraHost");
 		return;
 	}
 
-	req.log.info({ installationId }, "Received delete jira configuration request");
+	if (!installationId) {
+		req.log.error("Missing Github Installation ID");
+		res.status(401).send("Missing Github Installation ID");
+		return;
+	}
+
+	req.log.info({ installationId }, "Received Jira DELETE request");
 
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,

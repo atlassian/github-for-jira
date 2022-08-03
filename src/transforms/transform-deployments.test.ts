@@ -176,11 +176,11 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 						values: [
 							{
 								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
-								repositoryId: "MDEwOkRlcGxveW1lbnQxNDU5ODg3NDY"
+								repositoryId: "65"
 							},
 							{
 								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
-								repositoryId: "MDEwOkRlcGxveW1lbnQxNDU5ODg3NDY"
+								repositoryId: "65"
 							}
 						]
 					}
