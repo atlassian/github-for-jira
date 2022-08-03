@@ -69,11 +69,12 @@ const getInstallationsWithAdmin = async (
 	log: Logger,
 	login: string,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
-	jiraHost: string
+	jiraHost: string,
+	gitHubAppId?: number
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log);
+		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log, gitHubAppId);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -190,7 +191,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		tracer.trace(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost);
+		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost, gitHubAppId);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
