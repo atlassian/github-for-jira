@@ -76,7 +76,7 @@ export async function createInstallationClient(gitHubInstallationId: number, jir
 
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
 		const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId, gitHubAppId), logger, gitHubClientConfig.baseUrl)
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, gitHubClientConfig.baseUrl);
 	} else {
 		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), logger);
 	}
