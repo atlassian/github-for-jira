@@ -150,7 +150,8 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 		}
 	}
 
-	// if there is no user-defined config, we fall back to hardcoded mapping
+	// if there is no user-defined config (or the user-defined config didn't match anything),
+	// we fall back to hardcoded mapping
 
 	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
