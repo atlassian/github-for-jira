@@ -19,5 +19,5 @@ export const createUrlWithQueryString = (req: Request, URL: string): string => {
 		return queryString;
 	}, "");
 
-	return encodeURIComponent(URL + queryStrings);
+	return URL + queryStrings;
 };
