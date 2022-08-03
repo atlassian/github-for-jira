@@ -2,8 +2,7 @@ import { Request } from "express";
 
 /**
  * This method creates a URL with queryParameters that are available within the request
- * It firstly checks if the passed Request `req` has the query parameters defined in the array `keys`
- * And will add the query parameters as queryString within the URL
+ * It will add all the available query parameters as queryString within the URL
  *
  * @param req
  * @param URL
