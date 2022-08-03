@@ -211,7 +211,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	});
 };
 
-export const JiraConfigurationGet = async (
+export const JiraGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
