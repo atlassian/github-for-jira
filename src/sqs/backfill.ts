@@ -5,8 +5,9 @@ import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { TaskType } from "~/src/sync/sync.types";
+import { GitHubAppConfigPayload } from "./github-app-config-payload";
 
-export type BackfillMessagePayload = {
+export type BackfillMessagePayload = GitHubAppConfigPayload & {
 	installationId: number,
 	jiraHost: string,
 	startTime?: string,

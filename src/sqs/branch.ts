@@ -2,8 +2,9 @@ import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { Context, MessageHandler } from "./sqs";
 import { processBranch } from "../github/branch";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { GitHubAppConfigPayload } from "./github-app-config-payload";
 
-export type BranchMessagePayload = {
+export type BranchMessagePayload = GitHubAppConfigPayload & {
 	jiraHost: string,
 	installationId: number,
 	webhookReceived: number,

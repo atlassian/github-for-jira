@@ -3,8 +3,9 @@ import { Context, MessageHandler } from "./sqs";
 import { workerApp } from "../worker/app";
 import { processDeployment } from "../github/deployment";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { GitHubAppConfigPayload } from "./github-app-config-payload";
 
-export type DeploymentMessagePayload = {
+export type DeploymentMessagePayload = GitHubAppConfigPayload & {
 	jiraHost: string,
 	installationId: number,
 	webhookReceived: number,

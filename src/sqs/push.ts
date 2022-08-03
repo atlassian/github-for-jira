@@ -1,6 +1,7 @@
 import { Context, MessageHandler } from "./sqs";
 import { processPush } from "../transforms/push";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { GitHubAppConfigPayload } from "./github-app-config-payload";
 
 export type PayloadRepository = {
 	id: number,
@@ -10,7 +11,7 @@ export type PayloadRepository = {
 	owner: { name: string, login: string },
 }
 
-export type PushQueueMessagePayload = {
+export type PushQueueMessagePayload = GitHubAppConfigPayload & {
 	repository: PayloadRepository,
 	shas: { id: string, issueKeys: string[] }[],
 	jiraHost: string,
