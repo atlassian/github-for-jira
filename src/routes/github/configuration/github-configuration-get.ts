@@ -70,7 +70,7 @@ const getInstallationsWithAdmin = async (
 	login: string,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
 	jiraHost: string,
-	gitHubAppId: number
+	gitHubAppId?: number
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
