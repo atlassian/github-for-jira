@@ -11,9 +11,9 @@ import { AxiosResponse } from "axios";
 import _, { deburr, isEmpty } from "lodash";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { Config } from "interfaces/common";
-import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
+import { getConfig } from "services/user-config-service";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -249,19 +249,18 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		return undefined;
 	}
 
-	let config: undefined | Config = undefined;
+	let config: Config | undefined;
 
 	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
 		const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId);
 		if (subscription){
-			const repoSyncState = await RepoSyncState.findByRepoId(subscription, payload.repository.id);
-			config = repoSyncState.config;
+			config = await getConfig(subscription, payload.repository.id);
 		} else {
 			logger.warn({ jiraHost, githubInstallationId: githubInstallationClient.githubInstallationId.installationId }, "could not find subscription - not loading user config!");
 		}
 	}
 
-	const environment = await mapEnvironment(deployment_status.environment, config);
+	const environment = mapEnvironment(deployment_status.environment, config);
 	if (environment === "unmapped") {
 		logger?.info({
 			environment: deployment_status.environment,

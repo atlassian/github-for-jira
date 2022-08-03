@@ -4,24 +4,54 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { Config } from "interfaces/common";
 import YAML from "yaml";
 import { InstallationId } from "../github/client/installation-id";
+import { Subscription } from "models/subscription";
 
 const USER_CONFIG_FILE = ".jira/config.yml";
 const logger = getLogger("services.user-config");
-const MAX_PATTERNS_PER_ENVIRONMENT = 100;
+const MAX_PATTERNS_PER_ENVIRONMENT = 10;
 
-export const updateRepoConfig = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, modifiedFiles: string[] = []): Promise<void> => {
-	// Only get save the latest repo config if the file in the repository changed (added, modified or removed)
+/**
+ * Checks whether a list of modified files contains the config file. If yes, reads that config file
+ * from the GitHub repository, parses it, and stores the config against the given repository
+ * in the database.
+ *
+ * This function is meant to be called whenever there is a change in the repository so we can check
+ * if the config file has changed.
+ *
+ * @param subscription the subscription to which the repository belongs.
+ * @param repositoryId the ID of the repository.
+ * @param githubInstallationId the ID of the installation to which the repository belongs.
+ * @param modifiedFiles list of modified files (added, modified, or removed). The config will only be updated if this list contains
+ * the config file.
+ */
+export const updateRepoConfig = async (
+	subscription: Subscription,
+	repositoryId: number,
+	githubInstallationId: InstallationId,
+	modifiedFiles: string[] = []): Promise<void> => {
+
 	if (modifiedFiles.includes(USER_CONFIG_FILE)) {
 		try {
+			const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
 			await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId);
 		} catch (err) {
 			logger.error({
 				err,
 				githubInstallationId,
-				repoSyncStateId: repoSyncState.id
+				repositoryId
 			}, "error while updating the repo config");
 		}
 	}
+};
+
+/**
+ * Returns the config for a given repo.
+ */
+export const getConfig = async (subscription: Subscription, repositoryId: number): Promise<Config | undefined> => {
+	// In the future, we may look in other places for a config than just in the RepoSyncState (for example,
+	// we might fall back to default configs on the level of a subscription or an installation).
+	const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
+	return repoSyncState.config;
 };
 
 /**

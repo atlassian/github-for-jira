@@ -75,7 +75,7 @@ describe("User Config Service", () => {
 	};
 
 	it("should not update config in database when config file hasn't been touched", async () => {
-		await updateRepoConfig(repoSyncState, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml"]);
+		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml"]);
 		const freshRepoSyncState = await RepoSyncState.findByRepoId(subscription, repoSyncState.repoId);
 		expect(freshRepoSyncState.config).toBeFalsy();
 	});
@@ -83,7 +83,7 @@ describe("User Config Service", () => {
 	it("should update config in database when config file has been touched", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile();
-		await updateRepoConfig(repoSyncState, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
 		const freshRepoSyncState = await RepoSyncState.findByRepoId(subscription, repoSyncState.repoId);
 		expect(freshRepoSyncState.config).toBeTruthy();
 		expect(freshRepoSyncState.config.deployments?.environmentMapping?.development).toHaveLength(4);
