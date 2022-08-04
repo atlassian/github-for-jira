@@ -19,6 +19,17 @@ describe("webhook-receiver-post", () => {
 
 	let req;
 	let res;
+	let gitHubApp: GitHubServerApp;
+
+	const gitHubAppConfig = () => {
+		return expect.objectContaining({
+			gitHubAppId: gitHubApp.id,
+			appId: gitHubApp.appId,
+			clientId: gitHubApp.gitHubClientId,
+			gitHubBaseUrl: gitHubApp.gitHubBaseUrl,
+			uuid: gitHubApp.uuid
+		});
+	};
 
 	beforeEach(async () => {
 		res = {
@@ -39,7 +50,7 @@ describe("webhook-receiver-post", () => {
 			privateKey: "myprivatekey",
 			installationId: 10
 		};
-		await GitHubServerApp.install(payload);
+		gitHubApp = await GitHubServerApp.install(payload);
 	});
 
 	it("should throw an error if github app not found", async () => {
@@ -109,7 +120,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(pushWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "push"
+			name: "push",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -123,7 +135,8 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "issues",
-			action: "opened"
+			action: "opened",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -136,7 +149,8 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "pull_request",
-			action: "opened"
+			action: "opened",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -148,7 +162,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(pullRequestWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "pull_request_review"
+			name: "pull_request_review",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -160,7 +175,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(createBranchWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "create"
+			name: "create",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -172,7 +188,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(deleteBranchWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "delete"
+			name: "delete",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -185,7 +202,8 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "repository",
-			action: "deleted"
+			action: "deleted",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -197,7 +215,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(workflowWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "workflow_run"
+			name: "workflow_run",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -209,7 +228,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(deploymentWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "deployment_status"
+			name: "deployment_status",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -221,7 +241,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(codeScanningAlertWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "code_scanning_alert"
+			name: "code_scanning_alert",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
