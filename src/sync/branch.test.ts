@@ -10,7 +10,7 @@ import { processInstallation } from "./installation";
 import { getLogger } from "config/logger";
 import { cleanAll } from "nock";
 import { Hub } from "@sentry/types/dist/hub";
-import { BackfillMessagePayload } from "../sqs/backfill";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { sqsQueues } from "../sqs/queues";
 
 import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
