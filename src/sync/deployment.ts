@@ -16,7 +16,7 @@ const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClie
 	};
 };
 
-const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, logger: Logger) => {
+const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger) => {
 
 	const transformTasks = deployments.map((deployment) => {
 		const deploymentStatus = {
@@ -37,7 +37,7 @@ const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHub
 				state: deployment.latestStatus?.state
 			}
 		} as WebhookPayloadDeploymentStatus;
-		return transformDeployment(gitHubInstallationClient, deploymentStatus, logger);
+		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, logger);
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);
@@ -47,7 +47,7 @@ const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHub
 		.flat();
 };
 
-export const getDeploymentTask = async (logger: Logger, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, _jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
+export const getDeploymentTask = async (logger: Logger, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 
 	logger.info("Syncing Deployments: started");
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
@@ -58,7 +58,7 @@ export const getDeploymentTask = async (logger: Logger, _github: GitHubAPI, gitH
 			jiraPayload: undefined
 		};
 	}
-	const transformedDeployments = await getTransformedDeployments(deployments, _github, gitHubInstallationClient, logger);
+	const transformedDeployments = await getTransformedDeployments(deployments, _github, gitHubInstallationClient, jiraHost, logger);
 
 	logger.info("Syncing Deployments: finished");
 
