@@ -15,7 +15,7 @@ export function sendAnalytics(eventType: "ui" | "track" | "operational", attribu
 export function sendAnalytics(eventType: string, attributes: Record<string, unknown> = {}): void {
 	logger.debug(analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
-	if (!analyticsClient || isNodeProd()) {
+	if (!analyticsClient || !isNodeProd()) {
 		return;
 	}
 
