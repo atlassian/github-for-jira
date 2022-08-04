@@ -13,7 +13,7 @@ let analyticsNodeClient;
 export function sendAnalytics(eventType: "screen", attributes: { name: string } & Record<string, unknown>)
 export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>)
 export function sendAnalytics(eventType: string, attributes: Record<string, unknown> = {}): void {
-	logger.debug(analyticsClient ? "Found analytics client." : `No analytics client found.`);
+	logger.info(analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
 	if (!analyticsClient || !isNodeProd()) {
 		return;
