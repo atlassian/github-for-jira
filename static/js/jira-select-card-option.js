@@ -1,6 +1,7 @@
 /* globals $, AP */
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
+const gitHubServerBaseUrl = $("#baseUrl").val();
 
 function openChildWindow(url) {
 	const child = window.open(url);
@@ -32,7 +33,7 @@ $(document).ready(function() {
 		selectedVersion = currentTarget.data('type');
 	});
 
-	$(".optionBtn").click(function (event) {
+	$(".jiraSelectGitHubProduct__actionBtn").click(function (event) {
 		event.preventDefault();
 
 		if (selectedVersion === "cloud") {
@@ -56,10 +57,18 @@ $(document).ready(function() {
 
 		if (selectedVersion === "automatic") {
 			AP.context.getToken(function(token) {
-				const child = openChildWindow("/session/github/redirect");
+				const child = openChildWindow("/session/github/redirect?baseUrl=" + gitHubServerBaseUrl);
 				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
 			});
-		} 
+		} else {
+			AP.navigator.go(
+				'addonmodule',
+				{
+					moduleKey: "github-manual-app-page",
+					customData: { serverUrl: gitHubServerBaseUrl }
+				}
+			);
+		}
 	});
 });

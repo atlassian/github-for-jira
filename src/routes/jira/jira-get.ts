@@ -6,7 +6,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
-import { createAppClient } from "~/src/util/get-github-client-config";
+import { createAppClient } from "utils/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
@@ -211,7 +211,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	});
 };
 
-export const JiraConfigurationGet = async (
+export const JiraGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
