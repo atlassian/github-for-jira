@@ -69,6 +69,7 @@ export const getPullRequestTask = async (
 			});
 
 	const gitHubProduct = getCloudOrServerFromHost(request.host);
+
 	statsd.timing(
 		metricHttpRequest.syncPullRequest,
 		Date.now() - startTime,

@@ -36,6 +36,11 @@ export const getJiraClient = async (
 ): Promise<any> => {
 	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
+	const subscription = await Subscription.getSingleInstallation(
+		jiraHost,
+		gitHubInstallationId,
+		gitHubAppId
+	);
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
 		return undefined;
@@ -52,13 +57,13 @@ export const getJiraClient = async (
 	const client = {
 		baseURL: installation.jiraHost,
 		issues: {
-			// get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
-			// 	instance.get("/rest/api/latest/issue/{issue_id}", {
-			// 		params: query,
-			// 		urlParams: {
-			// 			issue_id: issueId
-			// 		}
-			// 	}),
+			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
+				instance.get("/rest/api/latest/issue/{issue_id}", {
+					params: query,
+					urlParams: {
+						issue_id: issueId
+					}
+				}),
 			getAll: async (issueIds: string[], query?: { fields: string }): Promise<JiraIssue[]> => {
 				const responses = await Promise.all<AxiosResponse<JiraIssue> | undefined>(
 					issueIds.map((issueId) => client.issues.get(issueId, query)
@@ -77,13 +82,6 @@ export const getJiraClient = async (
 				return jiraIssueKeyParser(text);
 			},
 			comments: {
-				// // eslint-disable-next-line camelcase
-				// getForIssue: (issue_id: string) =>
-				// 	instance.get("/rest/api/latest/issue/{issue_id}/comment", {
-				// 		urlParams: {
-				// 			issue_id
-				// 		}
-				// 	}),
 				// eslint-disable-next-line camelcase
 				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
@@ -117,13 +115,6 @@ export const getJiraClient = async (
 					)
 			},
 			worklogs: {
-				// // eslint-disable-next-line camelcase
-				// getForIssue: (issue_id: string) =>
-				// 	instance.get("/rest/api/latest/issue/{issue_id}/worklog", {
-				// 		urlParams: {
-				// 			issue_id
-				// 		}
-				// 	}),
 				// eslint-disable-next-line camelcase
 				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/{issue_id}/worklog", payload, {
@@ -151,15 +142,6 @@ export const getJiraClient = async (
 			},
 			// Add methods for handling installationId properties that exist in Jira
 			installation: {
-				// exists: (gitHubInstallationId: string | number) =>
-				// 	instance.get(
-				// 		`/rest/devinfo/0.10/existsByProperties`,
-				// 		{
-				// 			params: {
-				// 				installationId: gitHubInstallationId
-				// 			}
-				// 		}
-				// 	),
 				delete: async (gitHubInstallationId: string | number) =>
 					Promise.all([
 
