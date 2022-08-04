@@ -338,6 +338,7 @@ const doProcessInstallation = async (app, data: BackfillMessagePayload, sentry: 
 			scheduleNextTask
 		);
 
+
 		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`, `gitHubProduct: ${gitHubProduct}`]);
 
 	} catch (err) {
@@ -501,6 +502,6 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 	const rest = omit(values, ["repositoryStatus", "repositoryCursor"]);
 	await Promise.all([
 		Object.keys(repoStates).length && subscription.update(repoStates),
-		Object.keys(repoStates).length && RepoSyncState.updateRepoFromSubscription(subscription, repoId, rest)
+		Object.keys(rest).length && RepoSyncState.updateRepoFromSubscription(subscription, repoId, rest)
 	]);
 };
