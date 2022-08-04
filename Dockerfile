@@ -12,6 +12,6 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
-RUN yarn install --prod
+RUN yarn install --frozen-lockfile
 
 CMD ["yarn", "start"]

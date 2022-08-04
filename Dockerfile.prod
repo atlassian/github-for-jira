@@ -12,7 +12,7 @@ COPY . /app
 WORKDIR /app
 
 # Installing packages
-RUN yarn install --prod --force
+RUN yarn install --frozen-lockfile --force
 
 # Building TypeScript files
 RUN yarn run build:release
