@@ -1,4 +1,4 @@
-FROM node:14.19-alpine3.15 as build
+FROM node:14.19-alpine3.16 as build
 
 # adding python for node-gyp
 RUN apk add g++ make python3
@@ -17,7 +17,7 @@ RUN yarn install --frozen-lockfile
 # Building TypeScript files
 RUN yarn run build:release
 
-FROM node:14.19-alpine3.15
+FROM node:14.19-alpine3.16
 USER node
 COPY --chown=node:node --from=build /app /app
 WORKDIR /app
