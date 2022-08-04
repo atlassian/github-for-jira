@@ -141,7 +141,6 @@ Installation.init({
 		allowNull: false
 	},
 	enabled: BOOLEAN,
-	config: DataTypes.JSON,
 	createdAt: DATE,
 	updatedAt: DATE,
 	githubAppId: {

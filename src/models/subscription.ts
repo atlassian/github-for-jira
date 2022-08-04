@@ -257,7 +257,6 @@ Subscription.init({
 	totalNumberOfRepos: DataTypes.INTEGER,
 	repositoryCursor: DataTypes.STRING,
 	repositoryStatus: DataTypes.ENUM("pending", "complete", "failed"),
-	config: DataTypes.JSON,
 	createdAt: DATE,
 	updatedAt: DATE,
 	gitHubAppId: {
