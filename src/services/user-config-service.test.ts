@@ -17,11 +17,6 @@ describe("User Config Service", () => {
 		"      - \"Entwicklung\"\n" +
 		"      - \"desenvolvimento\"\n" +
 		"      - \"дев\"\n" +
-		"    testing:\n" +
-		"      - \"testes\"\n" +
-		"      - \"Test\"\n" +
-		"      - \"TST-*\"\n" +
-		"      - \"тест\"\n" +
 		"    staging:\n" +
 		"      - \"Pre-Prod\"\n" +
 		"      - \"STG-*\"\n" +
