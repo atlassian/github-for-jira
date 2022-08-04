@@ -56,9 +56,11 @@ interface GitHubWorkflowRunHeadCommit {
 	committer: GitHubWorkflowRunAuthorAndCommitter;
 }
 
+//refer from https://docs.github.com/en/rest/repos/repos#get-a-repository
 interface GitHubWorkflowRunRepositoryOwner {
 	login: string;
 	id: number;
+	name: string | null;
 	node_id: string;
 	avatar_url: string;
 	gravatar_id: string;

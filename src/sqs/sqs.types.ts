@@ -62,6 +62,6 @@ type PayloadRepository = {
 	name: string,
 	full_name: string,
 	html_url: string,
-	owner: { login: string },
+	owner: { name: string | null, login: string },
 }
 

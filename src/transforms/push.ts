@@ -93,7 +93,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	const log = rootLogger.child({
 		webhookId: webhookId,
 		repoName: repo,
-		orgName: owner["name"], //Less bold, still maintain it, but guess it would be empty
+		orgName: owner.name,
 		installationId,
 		webhookReceived,
 		jiraHost
@@ -150,7 +150,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
-						files: filesToSend.map((file) => mapFile(file, repo, owner["name"], sha.id)),
+						files: filesToSend.map((file) => mapFile(file, repo, owner.name || "", sha.id)),
 						id: commitSha,
 						issueKeys: sha.issueKeys,
 						url: html_url,
