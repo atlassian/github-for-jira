@@ -6,7 +6,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { getInstallationId } from "../github/client/installation-id";
 import deployment_status from "fixtures/deployment_status-basic.json";
 import deployment_status_staging from "fixtures/deployment_status_staging.json";
-import { getConfig } from "services/user-config-service";
+import { getRepoConfig } from "services/user-config-service";
 import { Subscription } from "models/subscription";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
@@ -374,7 +374,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			expect.anything()
 		).mockResolvedValue(true);
 
-		when(getConfig).calledWith(
+		when(getRepoConfig).calledWith(
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(mockConfig);
@@ -458,7 +458,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			expect.anything()
 		).mockResolvedValue(false);
 
-		when(getConfig).calledWith(
+		when(getRepoConfig).calledWith(
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(mockConfig);

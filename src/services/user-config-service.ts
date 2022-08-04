@@ -47,7 +47,7 @@ export const updateRepoConfig = async (
 /**
  * Returns the config for a given repo.
  */
-export const getConfig = async (subscription: Subscription, repositoryId: number): Promise<Config | undefined> => {
+export const getRepoConfig = async (subscription: Subscription, repositoryId: number): Promise<Config | undefined> => {
 	// In the future, we may look in other places for a config than just in the RepoSyncState (for example,
 	// we might fall back to default configs on the level of a subscription or an installation).
 	const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);

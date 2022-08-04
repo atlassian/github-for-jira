@@ -10,7 +10,7 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 import { Config } from "interfaces/common";
 import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
-import { getConfig } from "services/user-config-service";
+import { getRepoConfig } from "services/user-config-service";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
@@ -236,7 +236,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
 		const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId);
 		if (subscription){
-			config = await getConfig(subscription, payload.repository.id);
+			config = await getRepoConfig(subscription, payload.repository.id);
 		} else {
 			logger.warn({ jiraHost, githubInstallationId: githubInstallationClient.githubInstallationId.installationId }, "could not find subscription - not using user config to map environments!");
 		}
