@@ -13,6 +13,7 @@ WORKDIR /app
 
 # Installing packages
 RUN yarn install --frozen-lockfile --force
+RUN yarn list
 
 # Building TypeScript files
 RUN yarn run build:release
