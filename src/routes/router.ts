@@ -8,7 +8,7 @@ import * as Sentry from "@sentry/node";
 import { json, urlencoded } from "body-parser";
 import cookieParser from "cookie-parser";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
-import { SessionGet } from "routes/session/session-get";
+import { SessionGet } from "./session/session-get";
 import { jirahostMiddleware } from "middleware/jirahost-middleware";
 import { cookieSessionMiddleware } from "middleware/cookiesession-middleware";
 import { ErrorRouter } from "./error-router";
