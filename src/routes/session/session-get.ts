@@ -29,7 +29,7 @@ const titleForPage = (req: Request) => {
 			title = "Redirecting to your GitHub Enterprise Server instance";
 			break;
 		case "from":
-			title = "Receiving data from your GitHub Enterprise Server";
+			title = "Retrieving data from your GitHub Enterprise Server";
 			break;
 		default:
 			title = "Loading...";
