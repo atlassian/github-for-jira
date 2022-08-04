@@ -9,6 +9,12 @@
     font-weight: 500;
 }
 
+.gitHubConfiguration__gitHubServerApp {
+    color: #6B778C;
+    margin: 0.8em 0;
+    text-align: center;
+}
+
 .gitHubConfiguration__wrapper {
     display: flex;
     flex-direction: column;
