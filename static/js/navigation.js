@@ -2,7 +2,7 @@
 $(".go-back").click(function (event) {
   event.preventDefault();
 
-  if (AP.history) {
+  if (AP && AP.history) {
     AP.history.back();
   } else {
     history.back();
