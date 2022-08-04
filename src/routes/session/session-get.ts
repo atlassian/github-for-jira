@@ -20,7 +20,7 @@ export const SessionGet = (req: Request, res: Response) => {
  * This method returns the title for the session loading page,
  * based upon the query parameters `ghRedirect`
  */
-const titleForPage = (req: Request) => {
+export const titleForPage = (req: Request) => {
 	let title;
 	const redirect = req.query?.ghRedirect ?? null;
 

@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
+import { titleForPage } from "routes/session/session-get";
 
 export const GithubRedirectGet = async (
-	_req: Request,
+	req: Request,
 	res: Response
 ): Promise<void> => {
 
-	res.render("jira-redirect.hbs", {
-		title: "Redirecting"
+	res.render("session.hbs", {
+		titleForLoading: titleForPage(req)
 	});
 };
