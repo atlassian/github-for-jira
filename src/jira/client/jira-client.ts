@@ -36,11 +36,11 @@ export const getJiraClient = async (
 ): Promise<any> => {
 	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
-	const subscription = await Subscription.getSingleInstallation(
-		jiraHost,
-		gitHubInstallationId,
-		gitHubAppId
-	);
+	// const subscription = await Subscription.getSingleInstallation(
+	// 	jiraHost,
+	// 	gitHubInstallationId,
+	// 	gitHubAppId
+	// );
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
 		return undefined;
@@ -192,10 +192,6 @@ export const getJiraClient = async (
 					)
 			},
 			repository: {
-				// get: (repositoryId: string) =>
-				// 	instance.get("/rest/devinfo/0.10/repository/{repositoryId}", {
-				// 		urlParams: { repositoryId }
-				// 	}),
 				delete: (repositoryId: string) =>
 					instance.delete("/rest/devinfo/0.10/repository/{repositoryId}", {
 						params: {
