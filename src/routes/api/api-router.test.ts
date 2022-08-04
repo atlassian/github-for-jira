@@ -156,6 +156,7 @@ describe("API Router", () => {
 
 		describe("Repo Sync State", () => {
 			beforeEach(async () => {
+				await subscription.update({ numberOfSyncedRepos: 1 });
 				await RepoSyncState.create({
 					subscriptionId: subscription.id,
 					repoId: 1,
