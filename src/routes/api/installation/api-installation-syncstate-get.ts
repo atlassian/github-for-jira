@@ -29,9 +29,9 @@ export const ApiInstallationSyncstateGet = async (req: Request, res: Response): 
 
 		res.json({
 			jiraHost: subscription.jiraHost,
-			githubInstallationId: subscription.gitHubInstallationId,
-			numberOfSyncedRepos: subscription.numberOfSyncedRepos,
-			totalNumberOfRepos: subscription.totalNumberOfRepos,
+			gitHubInstallationId: subscription.gitHubInstallationId,
+			numberOfSyncedRepos: subscription.numberOfSyncedRepos || 0,
+			totalNumberOfRepos: repoSyncStates.length,
 			repositories: repoSyncStates.map(repo => pick(repo,
 				"branchStatus",
 				"commitStatus",

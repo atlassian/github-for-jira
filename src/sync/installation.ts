@@ -91,7 +91,7 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 				full_name: syncState.repoFullName,
 				owner: { login: syncState.repoOwner },
 				html_url: syncState.repoUrl,
-				updated_at: syncState.repoUpdatedAt.toISOString()
+				updated_at: syncState.repoUpdatedAt?.toISOString()
 			},
 			cursor: syncState[getCursorKey(task)] || undefined
 		};
