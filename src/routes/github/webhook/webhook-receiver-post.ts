@@ -24,19 +24,27 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	const uuid = request.params.uuid;
 	const payload = request.body;
 	try {
-		const webhookSecret = await getWebhookSecret(uuid);
+		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
 		const verification = createHash(JSON.stringify(payload), webhookSecret);
 		if (verification != signatureSHA256) {
 			response.status(400).send("signature does not match event payload and secret");
 			return;
 		}
-
 		const webhookContext = new WebhookContext({
 			id: id,
 			name: eventName,
 			payload: payload,
 			log: logger,
-			action: payload.action
+			action: payload.action,
+			...(!gitHubServerApp ? undefined : {
+				gitHubAppConfig: {
+					gitHubAppId: gitHubServerApp.id,
+					appId: gitHubServerApp.appId,
+					clientId: gitHubServerApp.gitHubClientId,
+					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
+					uuid
+				}
+			})
 		});
 		webhookRouter(webhookContext);
 		response.sendStatus(204);
@@ -100,16 +108,17 @@ export const createHash = (data: BinaryLike, secret: string): string => {
 		.digest("hex")}`;
 };
 
-const getWebhookSecret = async (uuid?: string) => {
+const getWebhookSecret = async (uuid?: string): Promise<{webhookSecret: string, gitHubServerApp?: GitHubServerApp }> => {
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
-		return await gitHubServerApp.decrypt("webhookSecret");
+		const webhookSecret = await gitHubServerApp.decrypt("webhookSecret");
+		return { webhookSecret, gitHubServerApp };
 	}
 	if (!envVars.WEBHOOK_SECRET) {
 		throw new Error("Environment variable 'WEBHOOK_SECRET' not defined");
 	}
-	return envVars.WEBHOOK_SECRET;
+	return { webhookSecret: envVars.WEBHOOK_SECRET } ;
 };
