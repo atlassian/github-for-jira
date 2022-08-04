@@ -37,5 +37,5 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 	}
 
 	context.log.info("Enqueueing push event");
-	await enqueuePush(payload, jiraClient.baseURL);
+	await enqueuePush(payload, jiraClient.baseURL, context.gitHubAppConfig);
 };

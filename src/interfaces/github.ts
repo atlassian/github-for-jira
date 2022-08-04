@@ -224,10 +224,17 @@ interface GitHubInstallation {
 	node_id: number;
 }
 
+//refer from here https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
+//TODO: tbh, I think we should use a better typing, something more official
+interface GitHubCommit {
+	id: string;
+	message: string;
+}
+
 export interface GitHubPushData {
 	webhookId: string;
 	webhookReceived: number;
 	repository: GitHubRepository;
-	commits: string[];
+	commits: GitHubCommit[];
 	installation: GitHubInstallation;
 }

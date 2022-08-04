@@ -56,11 +56,12 @@ export type GitHubAppConfig = {
 	//privateKey: string
 }
 
+//refer from https://docs.github.com/en/rest/repos/repos#get-a-repository
 type PayloadRepository = {
 	id: number,
 	name: string,
 	full_name: string,
 	html_url: string,
-	owner: { name: string, login: string },
+	owner: { login: string },
 }
 
