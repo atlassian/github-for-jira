@@ -563,6 +563,11 @@
   display: none;
 }
 
+/* This hides the default arrow, which is displayed in Safari */
+details summary::-webkit-details-marker {
+  display:none;
+}
+
 details[open] summary div .aui-iconfont-chevron-right {
   display: none;
 }
