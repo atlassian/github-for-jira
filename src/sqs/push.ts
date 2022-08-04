@@ -1,23 +1,7 @@
 import { Context, MessageHandler } from "./sqs";
 import { processPush } from "../transforms/push";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
-
-export type PayloadRepository = {
-	id: number,
-	name: string,
-	full_name: string,
-	html_url: string,
-	owner: { name: string, login: string },
-}
-
-export type PushQueueMessagePayload = {
-	repository: PayloadRepository,
-	shas: { id: string, issueKeys: string[] }[],
-	jiraHost: string,
-	installationId: number,
-	webhookId: string,
-	webhookReceived?: number,
-}
+import { PushQueueMessagePayload } from "./sqs.types";
 
 export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
 	const { payload, log } = context;

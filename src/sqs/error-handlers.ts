@@ -3,7 +3,7 @@ import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
-import { PushQueueMessagePayload } from "./push";
+import { PushQueueMessagePayload } from "./sqs.types";
 import { RateLimitingError } from "../github/client/github-client-errors";
 
 /**
