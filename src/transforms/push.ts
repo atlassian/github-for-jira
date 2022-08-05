@@ -15,7 +15,7 @@ import { GitHubPushData } from "../interfaces/github";
 const mapFile = (
 	githubFile,
 	repoName: string,
-	repoOwner: string,
+	repoOwner: string | null,
 	commitHash: string
 ) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
@@ -150,7 +150,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
-						files: filesToSend.map((file) => mapFile(file, repo, owner.name || "", sha.id)),
+						files: filesToSend.map((file) => mapFile(file, repo, owner.name, sha.id)),
 						id: commitSha,
 						issueKeys: sha.issueKeys,
 						url: html_url,
