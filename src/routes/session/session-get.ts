@@ -2,11 +2,11 @@ import { Request, Response } from "express";
 import { createUrlWithQueryString } from "utils/create-url-with-query-string";
 
 export const SessionGet = (req: Request, res: Response) => {
-	const url = req.params[0] ? createUrlWithQueryString(req, req.params[0]) : null;
+	const url = createUrlWithQueryString(req, req.params[0] || "");
 	const { title, appCreation } = configForPage(req);
 
 	res.render("session.hbs", {
-		redirectUrl: url ? new URL(url, process.env.APP_URL).href : null,
+		redirectUrl: new URL(url, process.env.APP_URL).href,
 		nonce: res.locals.nonce,
 		title,
 		appCreation
