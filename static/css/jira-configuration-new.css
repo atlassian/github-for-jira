@@ -68,6 +68,32 @@
   line-height: 1.6;
 }
 
+.jiraConfiguration__restartBackfillModal__header__container {
+  margin-bottom: 1.3em;
+}
+
+.jiraConfiguration__restartBackfillModal__header__content {
+  color: #344563;
+  font-size: 1.01rem;
+  margin-bottom: 1.2em;
+}
+
+.jiraConfiguration__restartBackfillModal__date {
+  padding: 0.2em;
+  min-height: 40px;
+  width: 100%;
+}
+
+.jiraConfiguration__restartBackfillModal__required {
+  color: #bf2600;
+}
+
+.jiraConfiguration__restartBackfillModal__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1em;
+}
+
 .jiraConfiguration__tableContainer {
   padding: 0 0 1em;
 }
