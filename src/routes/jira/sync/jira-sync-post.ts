@@ -5,6 +5,9 @@ import { findOrStartSync } from "~/src/sync/sync-utils";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, syncType } = req.body;
+
+	// A date to start fetching commit history(main and branch) from.
+	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
 	Sentry.setExtra("Body", req.body);
 
 	req.log.info({ syncType }, "Received sync request");
@@ -19,7 +22,13 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			res.status(404).send("Subscription not found, cannot resync.");
 			return;
 		}
-		await findOrStartSync(subscription, req.log, syncType);
+
+		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()){
+			res.status(400).send("Invalid date value, cannot select a future date!");
+			return;
+		}
+
+		await findOrStartSync(subscription, req.log, syncType, commitsFromDate);
 
 		res.sendStatus(202);
 	} catch (error) {
