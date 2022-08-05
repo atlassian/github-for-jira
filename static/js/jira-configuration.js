@@ -39,10 +39,10 @@ $(".select-github-product-link").click(function(event) {
 
 	AP.navigator.go(
 		'addonmodule',
-			{
-				moduleKey: "github-select-product-page"
-			}
-		);
+		{
+			moduleKey: "github-select-product-page"
+		}
+	);
 });
 
 $(".configure-connection-link").click(function(event) {
@@ -69,37 +69,51 @@ $(".delete-connection-link").click(function(event) {
 	});
 });
 
-$(".sync-connection-link").click(function(event) {
-	event.preventDefault();
+const initializeBackfillDateInput = function () {
+	const dateElement = document.getElementById('backfill-date-picker');
+	const date = new Date();
+	date.setFullYear(date.getFullYear() - 1);
+	dateElement.value = date.toISOString().split('T')[0];
+	dateElement.max = new Date().toISOString().split('T')[0];
+}
+
+const setDisabledStatus = (el, status) => {
+	el.prop("disabled", status);
+	el.attr("aria-disabled", status.toString());
+}
+
+const restartBackfillPost = (data, url = "/jira/sync") => {
+	setDisabledStatus($("#submit-backfill-data"), true);
+	$.post(url, data)
+		.done(() => {
+			AP.navigator.reload();
+		})
+		.fail(() => {
+			setDisabledStatus($("#submit-backfill-data"), false);
+		});
+};
+
+$("#cancel-backfill").click(() => {
+	document.getElementById("restart-backfill-modal").style.display = "none";
+});
+
+$(".sync-connection-link").click(event => {
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
-	const $el = $("#restart-backfill");
 
-	$el.prop("disabled", true);
-	$el.attr("aria-disabled", "true");
+	document.getElementById("restart-backfill-modal").style.display = "block";
 
-	window.AP.context.getToken(function(token) {
-		$.ajax({
-			type: "POST",
-			url: "/jira/sync",
-			data: {
-				installationId,
-				jiraHost,
-				syncType: "full",
-				jwt: token,
-				_csrf: csrfToken
-			},
-			success: function(data) {
-				AP.navigator.reload();
-			},
-			error: function(error) {
-				$el.prop("disabled", false);
-				$el.attr("aria-disabled", "false");
-			}
+	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
+		event.preventDefault();
+		const commitsFromDate = document.getElementById('backfill-date-picker').value;
+		window.AP.context.getToken(function (jwt) {
+			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate});
 		});
 	});
 });
+
+initializeBackfillDateInput();
 
 $('.jiraConfiguration__option').click(function (event) {
 	event.preventDefault();
@@ -152,5 +166,8 @@ if (syncStatusCloseBtn != null) {
 window.onclick = function(event) {
 	if (event.target.className === "jiraConfiguration__syncRetryModalOverlay") {
 		syncStatusModal.style.display = "none";
+	} else if (event.target.className === "jiraConfiguration__restartBackfillModalOverlay") {
+		restartBackfillModal.style.display = "none";
 	}
 };
+
