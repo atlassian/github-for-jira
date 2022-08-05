@@ -53,5 +53,15 @@ describe("Session GET", () => {
 					expect(response.text.includes("Retrieving data from your GitHub Enterprise Server")).toBeFalsy();
 					expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeFalsy();
 				}));
+
+		it("Testing the route just `session` when no query params", () =>
+			supertest(app)
+				.get("/session")
+				.expect(200)
+				.then(response => {
+					expect(response.text.includes("Redirecting to GitHub Cloud")).toBeTruthy();
+					expect(response.text.includes("Retrieving data from your GitHub Enterprise Server")).toBeFalsy();
+					expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeFalsy();
+				}));
 	});
 });

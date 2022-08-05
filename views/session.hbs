@@ -17,32 +17,26 @@
 </head>
 <body class="session___body">
 {{> loading-screen
-    title=titleForLoading
+    title=title
 }}
 </body>
-
-<script nonce="{{nonce}}">
-  $(function() {
-    if (window.jiraHost) {
-      {{!--/*
-            We cannot pass jwt as a query string parameter because of security considerations!
-            (E.g. they can be stored in browser's session or hijacked.)
-            More secure is to pass it using the cookies.
-      */--}}
-      document.cookie = "jiraHost=" + window.jiraHost + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
-      document.cookie = "jwt=" + window.jwt + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
-    }
-    window.location = "{{{redirectUrl}}}";
-  });
-</script>
-<script
-    src="/public/aui/aui-prototyping.js"
-    integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-    nonce="{{nonce}}"
-></script>
-{{#if gitHubRedirect}}
-  <script src="/public/js/github-redirect.js" nonce="{{nonce}}"></script>
+{{#if redirectUrl}}
+  <script nonce="{{nonce}}">
+    $(function() {
+      if (window.jiraHost) {
+        {{!--/*
+              We cannot pass jwt as a query string parameter because of security considerations!
+              (E.g. they can be stored in browser's session or hijacked.)
+              More secure is to pass it using the cookies.
+        */--}}
+        document.cookie = "jiraHost=" + window.jiraHost + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
+        document.cookie = "jwt=" + window.jwt + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
+      }
+      window.location = "{{{redirectUrl}}}";
+    });
+  </script>
+{{/if}}
+{{#if appCreation}}
+    <script src="/public/js/github-redirect.js" nonce="{{nonce}}"></script>
 {{/if}}
 </html>

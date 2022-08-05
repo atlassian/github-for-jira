@@ -2,17 +2,15 @@ import { Request, Response } from "express";
 import { createUrlWithQueryString } from "utils/create-url-with-query-string";
 
 export const SessionGet = (req: Request, res: Response) => {
-	if (!req.params[0]) {
-		res.status(400).send("Missing redirect url for session cloud. Needs to be in format `/session/:redirectUrl`");
-		return;
-	}
-	const url = createUrlWithQueryString(req, req.params[0]);
+	const url = req.params[0] ? createUrlWithQueryString(req, req.params[0]) : null;
+	const { title, appCreation } = configForPage(req);
 
 	res.render("session.hbs", {
 		APP_URL: process.env.APP_URL,
-		redirectUrl: new URL(url, process.env.APP_URL).href,
+		redirectUrl: url ? new URL(url, process.env.APP_URL).href : null,
 		nonce: res.locals.nonce,
-		titleForLoading: titleForPage(req)
+		title,
+		appCreation
 	});
 };
 
@@ -20,21 +18,25 @@ export const SessionGet = (req: Request, res: Response) => {
  * This method returns the title for the session loading page,
  * based upon the query parameters `ghRedirect`
  */
-export const titleForPage = (req: Request) => {
-	let title;
+export const configForPage = (req: Request) => {
+	const config = {
+		title: "",
+		appCreation: false
+	};
 	const redirect = req.query?.ghRedirect ?? null;
 
 	switch (redirect) {
 		case "to":
-			title = "Redirecting to your GitHub Enterprise Server instance";
+			config.title = "Redirecting to your GitHub Enterprise Server instance";
+			config.appCreation = true;
 			break;
 		case "from":
-			title = "Retrieving data from your GitHub Enterprise Server";
+			config.title = "Retrieving data from your GitHub Enterprise Server";
 			break;
 		default:
-			title = "Redirecting to GitHub Cloud";
+			config.title = "Redirecting to GitHub Cloud";
 			break;
 	}
 
-	return title;
+	return config;
 };
