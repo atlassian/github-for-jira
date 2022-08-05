@@ -1,3 +1,13 @@
-import { SessionGet } from "routes/session/session-get";
+import { Request, Response } from "express";
+import { titleForPage } from "routes/session/session-get";
 
-export const GithubRedirectGet = SessionGet;
+export const GithubRedirectGet = async (
+	req: Request,
+	res: Response
+): Promise<void> => {
+
+	res.render("session.hbs", {
+		titleForLoading: titleForPage(req),
+		gitHubRedirect: true
+	});
+};
