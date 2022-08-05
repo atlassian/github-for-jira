@@ -170,3 +170,43 @@ window.onclick = function(event) {
 	}
 };
 
+$(".jiraConfiguration__deleteGitHubApp").click(function(event) {
+	event.preventDefault();
+	const uuid = $(event.target).data("app-uuid");
+
+	AP.context.getToken(function(token) {
+		$.ajax({
+			type: "DELETE",
+			url: `/jira/connect/enterprise/app/:${uuid}`,
+			data: {
+				uuid,
+				jwt: token,
+				jiraHost: jiraHost
+			},
+			success: function(data) {
+				if (data.success) {
+					AP.navigator.reload();
+				}
+			},
+			error: function (error) {
+				console.log(error);
+			},
+		});
+	});
+});
+
+$(".jiraConfiguration__editGitHubApp").click(function(event) {
+	event.preventDefault();
+	const uuid = $(event.target).data("app-uuid");
+
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "github-edit-app-page",
+			customData: { uuid }
+		}
+	);
+});
+
+
+

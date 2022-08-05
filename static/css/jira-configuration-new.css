@@ -259,6 +259,10 @@
   top: -0.5em;
 }
 
+.jiraConfiguration__table__cell__gitHubAppItem {
+  padding: 0.1em 0.3em;
+}
+
 .jiraConfiguration__table__cell__settings
 > .aui-dropdown2-trigger:not(.aui-dropdown2-trigger-arrowless) {
   padding-right: 0.2em;
