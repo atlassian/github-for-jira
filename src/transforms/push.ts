@@ -66,7 +66,7 @@ export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubA
 		installationId: payload.installation.id,
 		webhookId: payload.webhookId || "none",
 		webhookReceived: payload.webhookReceived || undefined,
-		...(!gitHubAppConfig ? undefined : { gitHubAppConfig })
+		gitHubAppConfig
 	};
 };
 
