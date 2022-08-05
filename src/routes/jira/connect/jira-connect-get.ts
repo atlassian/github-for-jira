@@ -15,9 +15,7 @@ export const JiraConnectGet = async (
 			jiraHost: res.locals.jiraHost
 		});
 
-		res.render("jira-select-github-product.hbs", {
-			previousPagePath: "github-post-install-page"
-		});
+		res.render("jira-select-github-product.hbs");
 
 		req.log.info("Jira Connect page rendered successfully.");
 	} catch (error) {
