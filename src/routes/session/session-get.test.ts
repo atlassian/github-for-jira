@@ -29,7 +29,7 @@ describe("Session GET", () => {
 				.then(response => {
 					expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeTruthy();
 					expect(response.text.includes("Receiving data from your GitHub Enterprise Server")).toBeFalsy();
-					expect(response.text.includes("Loading...")).toBeFalsy();
+					expect(response.text.includes("Redirecting to GitHub Cloud")).toBeFalsy();
 				})
 		);
 
@@ -40,7 +40,7 @@ describe("Session GET", () => {
 				.then(response => {
 					expect(response.text.includes("Retrieving data from your GitHub Enterprise Server")).toBeTruthy();
 					expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeFalsy();
-					expect(response.text.includes("Loading...")).toBeFalsy();
+					expect(response.text.includes("Redirecting to GitHub Cloud")).toBeFalsy();
 				})
 		);
 
@@ -49,7 +49,7 @@ describe("Session GET", () => {
 				.get("/session/jira/atlassian-connect.json")
 				.expect(200)
 				.then(response => {
-					expect(response.text.includes("Loading...")).toBeTruthy();
+					expect(response.text.includes("Redirecting to GitHub Cloud")).toBeTruthy();
 					expect(response.text.includes("Retrieving data from your GitHub Enterprise Server")).toBeFalsy();
 					expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeFalsy();
 				}));
