@@ -6,7 +6,6 @@ export const SessionGet = (req: Request, res: Response) => {
 	const { title, appCreation } = configForPage(req);
 
 	res.render("session.hbs", {
-		APP_URL: process.env.APP_URL,
 		redirectUrl: url ? new URL(url, process.env.APP_URL).href : null,
 		nonce: res.locals.nonce,
 		title,

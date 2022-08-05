@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { Installation } from "~/src/models/installation";
+import { configForPage } from "routes/session/session-get";
 
 export const GithubManifestCompleteGet = async (req: Request, res: Response) => {
 	const uuid = req.params.uuid;
@@ -32,5 +33,13 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		installationId: installation.id
 	});
 	req.session.temp = undefined;
-	res.json({ success:true });
+
+	// TODO: Need to handle the step after this, redirected to a loader screen for now
+	req.query.ghRedirect = "from";
+	const { title, appCreation } = configForPage(req);
+	res.render("session.hbs", {
+		nonce: res.locals.nonce,
+		title,
+		appCreation
+	});
 };
