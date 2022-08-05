@@ -37,7 +37,7 @@ const mapFile = (
 	};
 };
 
-export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubAppConfig: GitHubAppConfig | undefined): PushQueueMessagePayload => {
+export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig): PushQueueMessagePayload => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 
@@ -70,7 +70,7 @@ export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubA
 	};
 };
 
-export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, gitHubAppConfig: GitHubAppConfig | undefined) =>
+export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig) =>
 	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost, gitHubAppConfig));
 
 export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
