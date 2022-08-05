@@ -155,6 +155,7 @@ a:focus {
 
 /* Modals */
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModalOverlay {
   background: #091e42;
   opacity: 54%;
@@ -162,12 +163,15 @@ a:focus {
 }
 
 .jiraConfiguration__syncRetryModal,
+.jiraConfiguration__restartBackfillModal,
 .githubSetup__newJiraSiteModal {
   display: none;
 }
 
 .jiraConfiguration__syncRetryModal,
+.jiraConfiguration__restartBackfillModal,
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModal,
 .githubSetup__newJiraSiteModalOverlay {
   position: absolute;
@@ -178,6 +182,7 @@ a:focus {
 }
 
 .jiraConfiguration__syncRetryModalContent,
+.jiraConfiguration__restartBackfillModalContent,
 .githubSetup__newJiraSiteModalContent {
   -webkit-transform: translateX(-50%);
   background-color: #fff;
@@ -190,9 +195,14 @@ a:focus {
   z-index: 1000;
 }
 
-.jiraConfiguration__syncRetryModalContent {
+.jiraConfiguration__syncRetryModalContent,
+.jiraConfiguration__restartBackfillModalContent {
   top: 15%;
   width: 56%;
+}
+
+.jiraConfiguration__restartBackfillModalContent {
+  max-width: 540px;
 }
 
 .githubSetup__newJiraSiteModalContent {
@@ -201,6 +211,7 @@ a:focus {
 }
 
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModalOverlay {
   background: #091e42;
   opacity: 54%;
