@@ -37,7 +37,7 @@ const mapFile = (
 	};
 };
 
-export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig): PushQueueMessagePayload => {
+export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubAppConfig: GitHubAppConfig | undefined): PushQueueMessagePayload => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 

@@ -25,7 +25,7 @@ import { shouldTagBackfillRequests } from "config/feature-flags";
 import { mocked } from "ts-jest/utils";
 
 const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
-	payload: createJobData(payload, jiraHost),
+	payload: createJobData(payload, jiraHost, undefined),
 	log: getLogger("test"),
 	message: {} as Message,
 	receiveCount: 1,
