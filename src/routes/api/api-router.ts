@@ -97,7 +97,7 @@ ApiRouter.post(
 		}
 
 		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()){
-			res.status(400).send("Invalid date, please select historical date!");
+			res.status(400).send("Invalid date value, cannot select a future date!");
 			return;
 		}
 
