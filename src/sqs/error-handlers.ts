@@ -2,7 +2,7 @@ import { Context, ErrorHandler, ErrorHandlingResult } from "./sqs";
 import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
-import { PushQueueMessagePayload } from "./push";
+import { PushQueueMessagePayload } from "./sqs.types";
 import { RateLimitingError } from "../github/client/github-client-errors";
 
 /**

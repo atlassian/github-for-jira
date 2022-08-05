@@ -9,7 +9,7 @@ import { mocked } from "ts-jest/utils";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import { BackfillMessagePayload } from "../sqs/backfill";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 import commitNodesFixture from "fixtures/api/graphql/commit-nodes.json";
 import mixedCommitNodes from "fixtures/api/graphql/commit-nodes-mixed.json";
 import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";

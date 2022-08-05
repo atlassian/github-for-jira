@@ -6,8 +6,8 @@ import { RepoSyncState } from "models/reposyncstate";
 import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
-import { createAppClient } from "~/src/util/get-github-client-config";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { createAppClient } from "utils/get-github-client-config";
+import { booleanFlag, BooleanFlags, GHE_SERVER_GLOBAL } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -211,7 +211,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	});
 };
 
-export const JiraConfigurationGet = async (
+export const JiraGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -227,7 +227,7 @@ export const JiraConfigurationGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
 			await renderJiraCloudAndEnterpriseServer(res, req);
 		} else {
 			await renderJiraCloud(res, req);

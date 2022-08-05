@@ -1,13 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-var-requires */
-import { getInstallations, JiraConfigurationGet } from "./jira-configuration-get";
+import { getInstallations, JiraGet } from "./jira-get";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { getLogger } from "config/logger";
+import express from "express";
+import supertest from "supertest";
+import { encodeSymmetric } from "atlassian-jwt";
+import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
@@ -79,7 +83,7 @@ describe("Jira Configuration Suite", () => {
 			.get(`/app/installations/15`)
 			.reply(200, singleInstallation);
 
-		await JiraConfigurationGet(mockRequest(), response, jest.fn());
+		await JiraGet(mockRequest(), response, jest.fn());
 		const data = response.render.mock.calls[0][1];
 		expect(data.hasConnections).toBe(true);
 		expect(data.ghCloud.failedCloudConnections.length).toBe(0);
@@ -260,5 +264,57 @@ describe("Jira Configuration Suite", () => {
 				rejected: []
 			});
 		});
+	});
+});
+
+describe.each([
+	{
+		url: "/jira/configuration",
+		testSharedSecret: "test-secret",
+		testQsh: "db37a424af6f7376d21db2662904db65628a7c2e4af73b67fa13df5e4bedbae3"
+	}, {
+		url: "/jira",
+		testSharedSecret: "test-secret",
+		testQsh: "220ebb06872fa43907db98520b898b10f3509824e84602d342d202a1d6c392e6"
+	}
+])("Jira Route", (testData) => {
+	const { url, testSharedSecret, testQsh } = testData;
+	let frontendApp, installation;
+
+	beforeEach(async () => {
+		installation = await Installation.install({
+			host: jiraHost,
+			sharedSecret: testSharedSecret,
+			clientKey: "client-key"
+		});
+		frontendApp = express();
+		frontendApp.use((request, res, next) => {
+			res.locals = { jiraHost, installation };
+			request.log = getLogger("test");
+			request.query = {
+				xdm_e: jiraHost,
+				jwt: encodeSymmetric({
+					qsh: testQsh,
+					iss: "jira"
+				}, testSharedSecret)
+			};
+			request.addLogFields = jest.fn();
+			request.csrfToken = jest.fn();
+
+			next();
+		});
+		frontendApp.use(getFrontendApp({
+			getSignedJsonWebToken: () => "",
+			getInstallationAccessToken: async () => ""
+		}));
+	});
+
+	it(`Testing route: ${url}`, async () => {
+		await supertest(frontendApp)
+			.get(url)
+			.expect(200)
+			.then(response => {
+				expect(response.text).toContain("<h1 class=\"jiraConfiguration__header__title\">GitHub configuration</h1>");
+			});
 	});
 });
