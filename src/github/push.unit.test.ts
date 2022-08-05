@@ -56,15 +56,13 @@ describe("PushWebhookHandler", ()=>{
 			name: "push",
 			log: getLogger("test"),
 			payload,
-			...(cloud ? undefined : {
-				gitHubAppConfig: {
-					uuid: GHES_GITHUB_UUID,
-					gitHubAppId: GHES_GITHUB_APP_ID,
-					appId: GHES_GITHUB_APP_APP_ID,
-					clientId: GHES_GITHUB_APP_CLIENT_ID,
-					gitHubBaseUrl: gheUrl
-				}
-			})
+			gitHubAppConfig: cloud ? undefined : {
+				uuid: GHES_GITHUB_UUID,
+				gitHubAppId: GHES_GITHUB_APP_ID,
+				appId: GHES_GITHUB_APP_APP_ID,
+				clientId: GHES_GITHUB_APP_CLIENT_ID,
+				gitHubBaseUrl: gheUrl
+			}
 		});
 	};
 });
