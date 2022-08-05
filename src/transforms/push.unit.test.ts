@@ -2,13 +2,7 @@ import { enqueuePush } from "./push";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubPushData } from "../interfaces/github";
 
-jest.mock("../sqs/queues", () => ({
-	sqsQueues: {
-		push: {
-			sendMessage: jest.fn()
-		}
-	}
-}));
+jest.mock("../sqs/queues");
 
 describe("Enqueue push", ()=>{
 	describe("GitHub Enterprise Server", ()=>{
