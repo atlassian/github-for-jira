@@ -32,7 +32,7 @@ export const titleForPage = (req: Request) => {
 			title = "Retrieving data from your GitHub Enterprise Server";
 			break;
 		default:
-			title = "Loading...";
+			title = "Redirecting to GitHub Cloud";
 			break;
 	}
 

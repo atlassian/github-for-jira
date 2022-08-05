@@ -35,6 +35,7 @@
         {{#if hasConnections}}
           <button
             class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary add-organization-link"
+            data-gh-cloud="true"
           >Connect GitHub organization</button>
         {{/if}}
       </header>
@@ -321,7 +322,8 @@
             </a>
             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
             <button
-              class="ak-button ak-button__appearance-primary add-organization-link"
+              class="ak-button ak-button__appearance-primary add-organization-link".
+              data-gh-cloud="true"
             >Connect GitHub organization</button>
           </div>
         {{/if}}
