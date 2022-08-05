@@ -8,8 +8,9 @@ describe("Session GET", () => {
 
 	beforeEach(() => {
 		app = express();
-		app.use((request, _, next) => {
+		app.use((request, res, next) => {
 			request.log = getLogger("test");
+			res.redirect = jest.fn();
 			next();
 		});
 	});
