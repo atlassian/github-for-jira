@@ -15,7 +15,6 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 		if (uuid) {
 			const app = await GitHubServerApp.findForUuid(uuid);
 			config = {
-				previousPagePath: "github-app-creation-page",
 				app,
 				serverUrl: app?.gitHubBaseUrl,
 				uuid,
@@ -23,7 +22,6 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 			};
 		} else {
 			config = {
-				previousPagePath: "github-app-creation-page",
 				serverUrl: req.params.serverUrl,
 				uuid: newUUID(),
 				csrfToken: req.csrfToken()
