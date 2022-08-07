@@ -2,10 +2,10 @@ import { Repository, Subscription } from "models/subscription";
 import Logger from "bunyan";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { GitHubAPI } from "probot";
-import { TaskPayload } from "~/src/sync/installation";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { RepositoryNode } from "../github/client/github-queries";
 import { RepoSyncState } from "models/reposyncstate";
+import { TaskPayload } from "~/src/sync/sync.types";
 
 /*
 * Update the sync status of a batch of repos.

@@ -12,12 +12,11 @@ import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
 import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
-import { Application, GitHubAPI } from "probot";
+import { Application } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { booleanFlag, BooleanFlags, isBlocked } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
-import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
@@ -25,7 +24,7 @@ import { RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { TaskType } from "./sync.types";
+import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -35,24 +34,6 @@ const tasks: TaskProcessors = {
 	build: getBuildTask,
 	deployment: getDeploymentTask
 };
-
-interface TaskProcessors {
-	[task: string]: (
-		logger: Logger,
-		github: GitHubAPI,
-		gitHubInstallationClient: GitHubInstallationClient,
-		jiraHost: string,
-		repository: Repository,
-		cursor?: string | number,
-		perPage?: number,
-		messagePayload?: BackfillMessagePayload
-	) => Promise<TaskPayload>;
-}
-
-export interface TaskPayload<E = any, P = any> {
-	edges?: E[];
-	jiraPayload?: P;
-}
 
 const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
@@ -98,13 +79,6 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 	}
 	return undefined;
 };
-
-export interface Task {
-	task: TaskType;
-	repositoryId: number;
-	repository: Repository;
-	cursor?: string | number;
-}
 
 const getCursorKey = (type: TaskType) => `${type}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
