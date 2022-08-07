@@ -27,23 +27,22 @@
     referrerpolicy="no-referrer"
     nonce="{{nonce}}"
 ></script>
-{{#if redirectUrl}}
-  <script nonce="{{nonce}}">
-    $(function() {
-      if (window.jiraHost) {
-        {{!--/*
-              We cannot pass jwt as a query string parameter because of security considerations!
-              (E.g. they can be stored in browser's session or hijacked.)
-              More secure is to pass it using the cookies.
-        */--}}
-        document.cookie = "jiraHost=" + window.jiraHost + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
-        document.cookie = "jwt=" + window.jwt + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
-      }
-      window.location = "{{{redirectUrl}}}";
-    });
-  </script>
-{{/if}}
-{{#if appCreation}}
-    <script src="/public/js/github-redirect.js" nonce="{{nonce}}"></script>
+{{#if loadAutoAppCreation}}
+      <script src="/public/js/github-redirect.js" nonce="{{nonce}}"></script>
+    {{else}}
+      <script nonce="{{nonce}}">
+        $(function() {
+          if (window.jiraHost) {
+            {{!--/*
+                  We cannot pass jwt as a query string parameter because of security considerations!
+                  (E.g. they can be stored in browser's session or hijacked.)
+                  More secure is to pass it using the cookies.
+            */--}}
+            document.cookie = "jiraHost=" + window.jiraHost + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
+            document.cookie = "jwt=" + window.jwt + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
+          }
+          window.location = "{{{redirectUrl}}}";
+        });
+      </script>
 {{/if}}
 </html>
