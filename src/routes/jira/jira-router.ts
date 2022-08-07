@@ -8,6 +8,8 @@ import { csrfMiddleware } from "middleware/csrf-middleware";
 import { JiraGet } from "routes/jira/jira-get";
 import { JiraDelete } from "routes/jira/jira-delete";
 import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
+import { body } from "express-validator";
+import { returnOnValidationError } from "routes/api/api-utils";
 
 export const JiraRouter = Router();
 
@@ -18,7 +20,11 @@ JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 
 JiraRouter.use("/connect", JiraConnectRouter);
 
-JiraRouter.post("/sync", JiraContextJwtTokenMiddleware, JiraSyncPost);
+JiraRouter.post("/sync",
+	body("commitsFromDate").optional().isISO8601(),
+	returnOnValidationError,
+	JiraContextJwtTokenMiddleware,
+	JiraSyncPost);
 
 JiraRouter.use("/events", JiraEventsRouter);
 
