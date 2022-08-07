@@ -77,8 +77,6 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 			break;
 		case Errors.MISSING_GITHUB_APP_NAME:
 			message = "There was a problem creating your GitHub App. Please make sure you filled the GitHub App name and try again.";
-			req.query.ghRedirect = "to";
-			req.query.autoApp = "1";
 			ctaUrl = {
 				text: "Retry",
 				action: createUrlWithQueryString(req, "/session")
