@@ -32,5 +32,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		installationId: installation.id
 	});
 	req.session.temp = undefined;
-	res.json({ success:true });
+
+	// TODO: Update the URL to redirect to the Connect an Org Screen
+	res.redirect("/session?ghRedirect=from");
 };
