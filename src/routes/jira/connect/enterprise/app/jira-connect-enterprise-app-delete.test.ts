@@ -61,7 +61,7 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 		next = jest.fn();
 	});
 
-	it("should DELETE GitHub app when uuid is found", async () => {
+	it("should delete GitHub app when uuid is found", async () => {
 		const records = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gitHubBaseUrl, installationId);
 		expect(records.length).toBe(2);
 
