@@ -20,7 +20,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 
 		if (!isNew && gheServers?.length) {
 			// `identifier` is the githubAppName for the GH server app
-			const serverApps = gheServers.map(server => ({ identifier: server.gitHubAppName }));
+			const serverApps = gheServers.map(server => ({ identifier: server.gitHubAppName, uuid: server.uuid }));
 
 			res.render("jira-select-github-cloud-app.hbs", {
 				list: serverApps,
