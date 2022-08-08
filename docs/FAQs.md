@@ -48,11 +48,11 @@ When an organization contains a small amount of data, the backfilling process is
 
 - **Reverse proxy support** - GitHub for Jira does not support reverse proxies.
 
-<h3>**Q:** Can I connect multiple GitHub Enterprise Servers or GitHub Apps to Jira? </h3>
+<h3>**Q:** Can I connect multiple GitHub Enterprise Servers or GitHub Apps to Jira?</h3>
 
 **A:** Yes. The GitHub for Jira app allows you to connect multiple GitHub servers. So you can connect more than one internal GitHub instance to a single Jira account.
 
-You can also add multiple GitHub Apps for a connected server to connect any GitHub organizations to Jira.
+You can also add multiple GitHub Apps for a connected server to connect any GitHub organizations to Jira. We recommend doing this as GitHub applies rate limits for GitHub Apps. Learn more about [Rate limits for GitHub Apps - GitHub Docs](https://docs.github.com/en/developers/apps/building-github-apps/rate-limits-for-github-apps).
 
 <h3>**Q:** Can I create one master GitHub App in my GitHub Enterprise Server instance and connect it to multiple Jira instances?</h3>
 
@@ -64,9 +64,15 @@ You can also add multiple GitHub Apps for a connected server to connect any GitH
 
 If you want to create a GitHub app manually, you can do so, but the process is less simple. You’ll need to create a GitHub App within your GitHub Enterprise Server account, copy several values from the new app into Jira, and copy several URLs from Jira into the app. Learn more about manually creating a GitHub App. <TODO link to new support doc>
 
-<h3>**Q:** I want to create a GitHub App automatically, but it says my GitHub Enterprise Server must be version 2.19.18 or higher. Why?</h3>
+<h3>**Q:** I want to create a GitHub App automatically, but it says my GitHub Enterprise Server must be version 3.0 or higher. Why?</h3>
 
-**A:** In version 2.19.18, GitHub resolved an issue that impeded the manifest creation flow in some scenarios when a SameSite cookie policy was applied. You must be using this version or higher for the automatic app creation option to work.
+**A:** There are several reasons you might want to upgrade your GitHub version:
+
+1. **Automatic GitHub App creation:** In version 2.19.18, GitHub resolved an issue that impeded the manifest creation flow in some scenarios when a SameSite cookie policy was applied. You must be using this version or higher for the automatic app creation option to work.
+2. **Subscribe to GitHub action events:** The GitHub for Jira app subscribes to three events that are dependent upon GitHub Actions: workflow run, deployment status, and code scanning alert. GitHub Actions is available in GitHub Enterprise Server 3.0 or higher.
+3. **Stay up-to-date with GitHub releases:** GitHub routinely releases new versions and discontinues support for older versions. We recommend that you regularly update your server version for better performance, improved security, and new features. From September 28, 2022, version 3.2 will have discounted support, while versions 3.3 - 3.6 will have continued support and updates.
+
+In version 2.19.18, GitHub resolved an issue that impeded the manifest creation flow in some scenarios when a SameSite cookie policy was applied. You must be using this version or higher for the automatic app creation option to work.
 
 <h3>**Q:** How do I upgrade my GitHub Enterprise version?</h3>
 
