@@ -81,7 +81,7 @@ describe("User Config Service", () => {
 		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
 		const freshRepoSyncState = await RepoSyncState.findByRepoId(subscription, repoSyncState.repoId);
 		expect(freshRepoSyncState.config).toBeTruthy();
-		expect(freshRepoSyncState.config.deployments?.environmentMapping?.development).toHaveLength(4);
+		expect(freshRepoSyncState.config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});
 
 });

@@ -31,7 +31,7 @@ export class RepoSyncState extends Model {
 	repoCreatedAt?: Date;
 	syncUpdatedAt?: Date;
 	syncCompletedAt?: Date;
-	config: Config;
+	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
 
