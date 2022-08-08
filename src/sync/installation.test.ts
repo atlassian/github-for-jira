@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation, Task } from "~/src/sync/installation";
 import * as installation from "~/src/sync/installation";
+import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
+import { Task } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { Application } from "probot";
 import { getLogger } from "config/logger";
 import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
 import { RateLimitingError } from "~/src/github/client/github-client-errors";
-import { Subscription, Repository } from "models/subscription";
+import { Repository, Subscription } from "models/subscription";
 
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 
