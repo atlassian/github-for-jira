@@ -89,4 +89,4 @@ export const shouldTagBackfillRequests = async (): Promise<boolean> => {
 	return booleanFlag(BooleanFlags.TAG_BACKFILL_REQUESTS, false);
 };
 
-export const GHE_SERVER_GLOBAL = true;
+export const GHE_SERVER_GLOBAL = false;

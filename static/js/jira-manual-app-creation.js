@@ -65,7 +65,7 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
          $.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
           if (response.success) {
             // TODO: This doesn't work, will be done in ARC-1565
-            const child = openChildWindow(`/session/github/${response.data.uuid}/configuration?ghRedirect=from`);
+            const child = openChildWindow(`/session/github/${response.data.uuid}/configuration?ghRedirect=to`);
             child.window.jiraHost = jiraHost;
             child.window.jwt = token;
           } else {

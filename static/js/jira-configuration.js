@@ -16,8 +16,9 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	window.AP.context.getToken(function(token) {
-		const child = openChildWindow("/session/github/configuration?ghRedirect=to");
+	const queryParameter = $(this).data("gh-cloud") ? "" : "?ghRedirect=to";
+	AP.context.getToken(function(token) {
+	const child = openChildWindow("/session/github/configuration" + queryParameter);
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
 	});

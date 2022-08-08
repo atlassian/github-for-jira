@@ -7,7 +7,6 @@ import { GithubConfigurationRouter } from "routes/github/configuration/github-co
 import { returnOnValidationError } from "../api/api-utils";
 import { header } from "express-validator";
 import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
-import { GithubRedirectGet } from "~/src/routes/github/github-redirect-get";
 import { GithubManifestRouter } from "~/src/routes/github/manifest/github-manifest-router";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 
@@ -37,8 +36,6 @@ subRouter.use("/setup", GithubSetupRouter);
 
 // App Manifest flow routes
 GithubRouter.use("/manifest", GithubManifestRouter);
-
-GithubRouter.use("/redirect", GithubRedirectGet);
 
 // All following routes need Github Auth
 subRouter.use(GithubAuthMiddleware);
