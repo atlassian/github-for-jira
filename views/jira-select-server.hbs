@@ -35,7 +35,7 @@
     />
     <div class="jiraSelectServer">
       <header class="jiraSelectServer__header">
-         {{> navigation previousPageName="GitHub Server Url" }}
+         {{> navigation }}
       </header>
 
       <section class="jiraSelectServer__content">
@@ -51,6 +51,7 @@
             contentTitle="GitHub Enterprise Servers"
             textForAddNew="Connect a new server"
             pathNameForAddNew="github-server-url-page"
+            queryStringForPath=queryStringForPath
             list=list
         }}
       </section>

@@ -20,7 +20,7 @@
 
   <body>
 
-  {{> navigation previousPageName="Github Configuration" }}
+  {{> navigation }}
 
   <div class="headerImage">
       <img
@@ -151,6 +151,8 @@
         {{> github-setup-form csrfToken=csrfToken error=error id="jiraDomainMain" className="inputMain" }}
       {{/if}}
   </section>
+  <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+  <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   <script src="/public/js/github-setup.js" nonce="{{nonce}}"></script>
   </body>
 </html>

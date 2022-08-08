@@ -6,8 +6,8 @@ import { RepoSyncState } from "models/reposyncstate";
 import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
-import { createAppClient } from "~/src/util/get-github-client-config";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { createAppClient } from "utils/get-github-client-config";
+import { booleanFlag, BooleanFlags, GHE_SERVER_GLOBAL } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -29,7 +29,7 @@ interface SuccessfulConnection extends AppInstallation {
 	isGlobalInstall: boolean;
 }
 
-interface ConnectionsAndInstallations extends GitHubCloudObj{
+interface ConnectionsAndInstallations extends GitHubCloudObj {
 	installations: InstallationResults
 }
 
@@ -111,6 +111,13 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 	return { installations, successfulConnections, failedConnections };
 };
 
+const countStatus = (connections: SuccessfulConnection[], syncStatus: string): number =>
+	connections.filter(org => org?.syncStatus === syncStatus).length || 0;
+
+const countNumberSkippedRepos = (connections: SuccessfulConnection[]): number => {
+	return connections.reduce((acc, obj) => acc + (obj?.totalNumberOfRepos || 0) - (obj?.numberOfSyncedRepos || 0) , 0);
+};
+
 const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
@@ -125,10 +132,16 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 		csrfToken: req.csrfToken(),
 		nonce
 	});
+
+	const completeConnections = successfulConnections.filter(connection => connection.syncStatus === "FINISHED");
+
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
 		jiraHost,
-		connectedOrgCount: installations.total
+		connectedOrgCount: installations.total,
+		failedCloudBackfillCount: countStatus(successfulConnections, "FAILED"),
+		successfulCloudBackfillCount: countStatus(successfulConnections, "FINISHED"),
+		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections)
 	});
 };
 
@@ -142,7 +155,11 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	const gheServerSubscriptions = difference(subscriptions, ghCloudSubscriptions);
 
 	// Connections for GHCloud
-	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(ghCloudSubscriptions, req);
+	const {
+		installations,
+		successfulConnections: successfulCloudConnections,
+		failedConnections: failedCloudConnections
+	} = await getConnectionsAndInstallations(ghCloudSubscriptions, req);
 
 	// Connections for GH Enterprise
 	const gheServersWithConnections = await Promise.all(gheServers.map(async (server) => {
@@ -166,22 +183,35 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
 		gheServers: groupedGheServers,
-		ghCloud: { successfulConnections, failedConnections },
-		hasCloudAndEnterpriseServers: !!((successfulConnections.length || failedConnections.length) && gheServers.length),
-		hasCloudServers: !!(successfulConnections.length || failedConnections.length),
+		ghCloud: { successfulCloudConnections, failedCloudConnections },
+		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
+		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 		hasConnections: !!(installations.total || gheServers?.length),
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
 	});
+
+	const successfulServerConnections = gheServersWithConnections
+		.reduce((acc, obj) => acc + obj.successfulConnections?.length, 0);
+	const allSuccessfulConnections = [...successfulCloudConnections, ...gheServersWithConnections];
+	const completeConnections = allSuccessfulConnections.filter(connection => connection.syncStatus === "FINISHED");
+
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
 		jiraHost,
-		connectedOrgCount: installations.total + gheServers.length
+		connectedOrgCountCloudCount: successfulCloudConnections.length,
+		connectedOrgCountServerCount: successfulServerConnections,
+		totalOrgCount: successfulCloudConnections.length + successfulServerConnections,
+		failedCloudBackfillCount: countStatus(successfulCloudConnections, "FAILED"),
+		failedServerBackfillCount: countStatus(gheServersWithConnections, "FAILED"),
+		successfulCloudBackfillCount: countStatus(successfulCloudConnections, "FINISHED"),
+		successfulServerBackfillCount: countStatus(gheServersWithConnections, "FINISHED"),
+		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections)
 	});
 };
 
-export const JiraConfigurationGet = async (
+export const JiraGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -197,7 +227,7 @@ export const JiraConfigurationGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
 			await renderJiraCloudAndEnterpriseServer(res, req);
 		} else {
 			await renderJiraCloud(res, req);

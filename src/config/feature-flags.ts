@@ -13,7 +13,6 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS = "support-branch-and-merge-workflows-for-deployments",
 	TRACE_LOGGING = "trace-logging",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
@@ -89,3 +88,5 @@ export const isBlocked = async (installationId: number, logger: Logger): Promise
 export const shouldTagBackfillRequests = async (): Promise<boolean> => {
 	return booleanFlag(BooleanFlags.TAG_BACKFILL_REQUESTS, false);
 };
+
+export const GHE_SERVER_GLOBAL = false;

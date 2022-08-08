@@ -6,7 +6,7 @@ import { compact, map } from "lodash";
 const instance = envVars.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
-export const postInstallUrl = "/jira/configuration";
+export const postInstallUrl = "/jira";
 const key = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 const adminCondition = [
@@ -69,7 +69,7 @@ const modules = {
 			name: {
 				value: "GitHub Select Product"
 			},
-			url: "/jira/select-product",
+			url: "/jira/connect",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -78,25 +78,7 @@ const modules = {
 			name: {
 				value: "GitHub Server Url"
 			},
-			url: "/jira/server-url",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-app-creation-page",
-			name: {
-				value: "GitHub App Creation"
-			},
-			url: "/jira/app-creation",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-edit-app-page",
-			name: {
-				value: "GitHub Edit App"
-			},
-			url: "/jira/edit-app/{ac.ghsaId}",
+			url: "/jira/connect/enterprise?new={ac.new}",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -105,16 +87,43 @@ const modules = {
 			name: {
 				value: "GitHub Enterprise Servers"
 			},
-			url: "/jira/ghe-servers",
+			url: "/jira/connect/enterprise",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-app-creation-page",
+			name: {
+				value: "GitHub App Creation"
+			},
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
 			location: "none",
 			conditions: adminCondition
 		},
 		{
 			key: "github-list-server-apps-page",
 			name: {
-				value: "GitHub Enterprise Server Apps"
+				value: "GitHub Server Apps"
 			},
-			url: "/jira/ghe-servers/apps?serverUrl={ac.serverUrl}",
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-manual-app-page",
+			name: {
+				value: "GitHub Manual App"
+			},
+			url: "/jira/connect/enterprise/{ac.serverUrl}/app/new",
+			location: "none",
+			conditions: adminCondition
+		},
+		{
+			key: "github-edit-app-page",
+			name: {
+				value: "GitHub Edit App"
+			},
+			url: "/jira/connect/enterprise/app/{ac.uuid}",
 			location: "none",
 			conditions: adminCondition
 		}
@@ -137,11 +146,19 @@ const modules = {
 			},
 			key: "gh-addon-admin",
 			location: "admin_plugins_menu/gh-addon-admin-section"
+		}, {
+			url: "/jira/configuration",
+			conditions: adminCondition,
+			name: {
+				value: "GitHub for Jira"
+			},
+			key: "gh-addon-admin-old",
+			location: "none"
 		}
 	]
 };
 
-export const moduleUrls = compact(map([modules.postInstallPage, ...modules.generalPages], "url"));
+export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
 	res.status(200).json({

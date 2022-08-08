@@ -10,7 +10,7 @@ import { processInstallation } from "./installation";
 import { getLogger } from "config/logger";
 import { cleanAll } from "nock";
 import { Hub } from "@sentry/types/dist/hub";
-import { BackfillMessagePayload } from "../sqs/backfill";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { sqsQueues } from "../sqs/queues";
 
 import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
@@ -296,6 +296,28 @@ describe("sync/branches", () => {
 
 			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
 			verifyMessageSent(data);
+		});
+
+		describe("Branch commit history value is passed", () => {
+
+			it("should use commit history depth parameter before feature flag time", async () => {
+				const time = Date.now();
+				const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
+				mockSystemTime(time);
+				const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
+				const data: BackfillMessagePayload = { installationId, jiraHost, commitsFromDate };
+
+				nockBranchRequest(branchNodesFixture, { commitSince: commitsFromDate });
+				jiraNock
+					.post(
+						"/rest/devinfo/0.10/bulk",
+						makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
+					)
+					.reply(200);
+
+				await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+				verifyMessageSent(data);
+			});
 		});
 	});
 });

@@ -1,11 +1,12 @@
 import { envVars }  from "config/env";
 import { SqsQueue } from "./sqs";
-import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
-import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
+import { backfillQueueMessageHandler } from "./backfill";
+import { pushQueueMessageHandler } from "./push";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
-import { DeploymentMessagePayload, deploymentQueueMessageHandler } from "./deployment";
-import { BranchMessagePayload, branchQueueMessageHandler } from "./branch";
+import { deploymentQueueMessageHandler } from "./deployment";
+import { branchQueueMessageHandler } from "./branch";
 import { getLogger } from "config/logger";
+import type { BackfillMessagePayload, PushQueueMessagePayload, DeploymentMessagePayload, BranchMessagePayload } from "./sqs.types";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 const logger = getLogger("sqs-queues");
