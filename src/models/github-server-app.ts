@@ -7,7 +7,7 @@ import EncryptedField from "sequelize-encrypted";
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
-interface GitHubServerAppPayload {
+export interface GitHubServerAppPayload {
 	uuid: string;
 	appId: number;
 	gitHubBaseUrl: string;
@@ -177,7 +177,6 @@ export class GitHubServerApp extends EncryptedModel {
 	 * 		gitHubAppName: string,
 	 * 		installationId: number
 	 * 	}} payload
-	 * @returns {GitHubServerApp}
 	 */
 	static async updateGitHubApp(payload: GitHubServerAppPayload): Promise<void> {
 		const {
@@ -223,7 +222,6 @@ export class GitHubServerApp extends EncryptedModel {
 			}
 		});
 	}
-
 }
 
 GitHubServerApp.init({

@@ -8,6 +8,7 @@ export const JiraConnectEnterpriseAppPut = async (
 ): Promise<void> => {
 	try {
 		req.log.debug("Received Jira Connect Enterprise App PUT request");
+		console.log("BODY", req.body);
 
 		await GitHubServerApp.updateGitHubApp(req.body);
 
