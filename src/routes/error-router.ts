@@ -75,17 +75,13 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(res.locals.gitHubAppId);
 	const tags = [`status: ${errorStatusCode}`, `gitHubProduct: ${gitHubProduct}`];
 
-
-	// Add a call to action for retrying based upon the query parameters
-	const ctaUrl = Object.keys(req.query).length ? createUrlWithQueryString(req, "/session") : null;
-
 	statsd.increment(metricError.githubErrorRendered, tags);
 
 	return res.status(errorStatusCode).render("error.hbs", {
 		title: "GitHub + Jira integration",
 		errorReference,
 		message,
-		ctaUrl,
+		ctaUrl: req.query.retryUrl ? createUrlWithQueryString(req, req.query.retryUrl as string) : null,
 		nonce: res.locals.nonce,
 		githubRepoUrl: envVars.GITHUB_REPO_URL
 	});

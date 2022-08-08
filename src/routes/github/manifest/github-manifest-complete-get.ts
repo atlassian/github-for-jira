@@ -39,7 +39,11 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 	} catch (error) {
 		const errorQueryParam = error.response.status === 422 ? Errors.MISSING_GITHUB_APP_NAME : "";
 		req.log.error({ reason: error }, "Error during GitHub App manifest flow");
-		res.redirect(`/error/${errorQueryParam}?baseUrl=${gheHost}&ghRedirect=to&autoApp=1`); // The query parameters here are used for call to action `retry`
+		/**
+		 * The query parameters here are used for call to action `retry`
+		 * `retryUrl` is the URL/the action of the button
+		 * And the rest of the queryParameters are simply forwarded to the new `retryUrl`
+		 */
+		res.redirect(`/error/${errorQueryParam}?retryUrl=/session&baseUrl=${gheHost}&ghRedirect=to&autoApp=1`);
 	}
-
 };
