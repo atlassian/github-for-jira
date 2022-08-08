@@ -97,14 +97,10 @@ export class GitHubServerApp extends EncryptedModel {
 	 * @param installationId
 	 * @returns {GitHubServerApp[]}
 	 */
-	static async getAllForGitHubBaseUrl(
+	static getAllForGitHubBaseUrlAndInstallationId(
 		gitHubBaseUrl: string,
 		installationId: number
-	): Promise<GitHubServerApp[] | null> {
-		if (!gitHubBaseUrl || !installationId) {
-			return null;
-		}
-
+	): Promise<GitHubServerApp[]> {
 		return this.findAll({
 			where: {
 				gitHubBaseUrl,
