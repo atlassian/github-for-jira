@@ -168,6 +168,53 @@ export class GitHubServerApp extends EncryptedModel {
 	}
 
 	/**
+	 * Update existing GitHubServerApp object
+	 *
+	 * @param {{
+	 * 		gitHubClientId: string,
+	 * 		uuid: string,
+	 * 		appId: number;
+	 * 		gitHubBaseUrl: string,
+	 * 		gitHubClientSecret: string,
+	 * 		webhookSecret: string,
+	 * 		privateKey: string,
+	 * 		gitHubAppName: string,
+	 * 		installationId: number
+	 * 	}} payload
+	 * @returns {GitHubServerApp}
+	 */
+	static async updateGitHubApp(payload: GitHubServerAppPayload): Promise<void> {
+		const {
+			uuid,
+			appId,
+			gitHubAppName,
+			gitHubBaseUrl,
+			gitHubClientId,
+			gitHubClientSecret,
+			webhookSecret,
+			privateKey,
+			installationId
+		} = payload;
+
+		await this.update(
+			{
+				uuid,
+				appId,
+				gitHubClientId,
+				gitHubBaseUrl,
+				gitHubClientSecret,
+				webhookSecret,
+				privateKey,
+				gitHubAppName,
+				installationId
+			},
+			{
+				where: { uuid }
+			}
+		);
+	}
+
+	/**
 	 * Get GitHubServerApp
 	 *
 	 * @param {{uuid: string}} uuid

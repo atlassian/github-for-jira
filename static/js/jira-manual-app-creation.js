@@ -18,6 +18,15 @@ const openChildWindow = (url) => {
   return child;
 }
 
+const handleFormErrors = (isUpdate) => {
+	$(".jiraManualAppCreation__serverError").show();
+	$(".errorMessageBox__message").empty().append("Please make sure all the details you entered are correct.");
+	isUpdate
+		? $(".errorMessageBox__title").empty().append("We couldn't update your GitHub app.")
+		: $(".errorMessageBox__title").empty().append("We couldn't create your GitHub app.");
+}
+
+
 AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
   event.preventDefault();
   const form = event.target;
@@ -31,8 +40,6 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
   const reader = new FileReader();
   reader.readAsDataURL(file);
 
-	console.log("DATA", data)
-
   reader.onload = () => {
     data.privateKey = reader.result;
 
@@ -42,17 +49,28 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
       data.jiraHost = jiraHost;
 
       if (isUpdate) {
-				$.post(`/jira/connect/enterprise/app/${uuid}`, data, (response) => {
-					console.log(response)
+				$.ajax({
+					type: "PUT",
+					url: `/jira/connect/enterprise/app/${uuid}`,
+					data,
+					success: function (response) {
+						if (response.success) {
+							AP.history.back();
+						} else {
+							handleFormErrors(isUpdate);
+						}
+					}
 				});
       } else {
          $.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
-          if (result.status === 201) {
+          if (response.success) {
             // TODO: This doesn't work, will be done in ARC-1565
             const child = openChildWindow(`/session/github/${response.data.uuid}/configuration?ghRedirect=from`);
             child.window.jiraHost = jiraHost;
             child.window.jwt = token;
-          }
+          } else {
+						handleFormErrors(isUpdate);
+					}
         });
       }
     });

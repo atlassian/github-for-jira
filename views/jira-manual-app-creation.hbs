@@ -148,7 +148,7 @@
                 <div class="jiraManualAppCreation__formFileMsg">Upload your private key</div>
                 <div class="jiraManualAppCreation__formFileSubMsg">Upload your generated private key from GitHub</div>
               </div>
-              <div class="aui-button" data-app-uuid="{{app.uuid}}">Upload</div>
+              <div class="aui-button"></div>
             </div>
             <div class="jiraManualAppCreation__formFileUploaded">
               <div id="jiraManualAppCreation__uploadedFile"></div>
@@ -163,15 +163,13 @@
         <input type="hidden" id="gitHubBaseUrl" name="gitHubBaseUrl" value="{{serverUrl}}">
 
         <div class="jiraManualAppCreation__serverError">
-          {{> server-error-message-box
-              title="We couldn't create your GitHub app"
-              message="Please make sure all the details you entered are correct."
-          }}
+          {{> server-error-message-box }}
         </div>
 
         <input
             type="submit"
             value="{{#if app.id}}Update{{else}}Next{{/if}}"
+            data-app-uuid="{{app.uuid}}"
             class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary"
         />
       </form>
