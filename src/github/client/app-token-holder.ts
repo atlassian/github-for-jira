@@ -4,7 +4,7 @@ import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
 import { keyLocator } from "~/src/github/client/key-locator";
 import { Subscription } from "~/src/models/subscription";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { booleanFlag, BooleanFlags, GHE_SERVER_GLOBAL } from "~/src/config/feature-flags";
 import * as PrivateKey from "probot/lib/private-key";
 
 
@@ -62,7 +62,7 @@ export class AppTokenHolder {
 		if (!currentToken || currentToken.isAboutToExpire()) {
 			const subscription = await Subscription.findOneForGitHubInstallationId(appId.installationId);
 			let key;
-			if (await booleanFlag(BooleanFlags.GHE_SERVER, false, subscription?.jiraHost)) {
+			if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, subscription?.jiraHost)) {
 				key = await keyLocator(subscription?.gitHubAppId);
 			} else {
 				key = PrivateKey.findPrivateKey();
