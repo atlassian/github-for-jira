@@ -34,7 +34,8 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			installationId: installation.id
 		});
 		req.session.temp = undefined;
-		res.json({ success:true });
+		// TODO: Update the URL to redirect to the Connect an Org Screen
+		res.redirect("/session?ghRedirect=from");
 	} catch (error) {
 		const errorQueryParam = error.response.status === 422 ? Errors.MISSING_GITHUB_APP_NAME : "";
 		req.log.error({ reason: error }, "Error during GitHub App manifest flow");
