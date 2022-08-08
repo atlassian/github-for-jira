@@ -148,7 +148,7 @@
                 <div class="jiraManualAppCreation__formFileMsg">Upload your private key</div>
                 <div class="jiraManualAppCreation__formFileSubMsg">Upload your generated private key from GitHub</div>
               </div>
-              <div class="aui-button">Upload</div>
+              <div class="aui-button" data-app-uuid="{{app.uuid}}">Upload</div>
             </div>
             <div class="jiraManualAppCreation__formFileUploaded">
               <div id="jiraManualAppCreation__uploadedFile"></div>
@@ -169,7 +169,11 @@
           }}
         </div>
 
-        <input type="submit" value="{{#if app.id}}Update{{else}}Next{{/if}}" class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary" />
+        <input
+            type="submit"
+            value="{{#if app.id}}Update{{else}}Next{{/if}}"
+            class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary"
+        />
       </form>
     </div>
 

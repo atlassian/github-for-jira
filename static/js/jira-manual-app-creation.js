@@ -24,11 +24,14 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
   const csrf = $("#_csrf").val();
   const data = $(form).serializeObject();
   const isUpdate = $('input[type=submit]').val() === "Update";
+	const uuid = $(event.target).data("app-uuid");
 
   // Reading the content of the file
   const file = $("#privateKeyFile")[0].files[0];
   const reader = new FileReader();
   reader.readAsDataURL(file);
+
+	console.log("DATA", data)
 
   reader.onload = () => {
     data.privateKey = reader.result;
@@ -39,7 +42,9 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
       data.jiraHost = jiraHost;
 
       if (isUpdate) {
-        // TODO: Do a put request to update the existing app
+				$.post(`/jira/connect/enterprise/app/${uuid}`, data, (response) => {
+					console.log(response)
+				});
       } else {
          $.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
           if (result.status === 201) {
