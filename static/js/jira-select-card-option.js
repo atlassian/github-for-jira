@@ -57,7 +57,7 @@ $(document).ready(function() {
 
 		if (selectedVersion === "automatic") {
 			AP.context.getToken(function(token) {
-				const child = openChildWindow("/session/github/redirect?ghRedirect=to&baseUrl=" + gitHubServerBaseUrl);
+				const child = openChildWindow("/session?ghRedirect=to&autoApp=1&baseUrl=" + gitHubServerBaseUrl);
 				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
 			});
