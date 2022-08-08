@@ -28,10 +28,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 				queryStringForPath: JSON.stringify({ new: 1, serverUrl: baseUrl })
 			});
 		} else {
-			res.render("jira-select-app-creation.hbs", {
-				baseUrl,
-				previousPagePath: "github-server-url-page"
-			});
+			res.render("jira-select-app-creation.hbs", { baseUrl });
 		}
 
 		req.log.debug("Jira Connect Enterprise App page rendered successfully.");
