@@ -9,11 +9,6 @@ import { v4 as uuidv4 } from "uuid";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { createUrlWithQueryString } from "utils/create-url-with-query-string";
 
-interface Cta {
-	text: string;
-	action: string;
-}
-
 export const ErrorRouter = Router();
 
 // Error endpoints to test out different error pages and messages
@@ -69,29 +64,20 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 		"Not Found": 404
 	};
 
-	let message: string | null = null;
-	let ctaUrl: Cta | null = null;
-	switch (err.message) {
-		case Errors.MISSING_JIRA_HOST:
-			message = "Session information missing - please enable all cookies in your browser settings.";
-			break;
-		case Errors.MISSING_GITHUB_APP_NAME:
-			message = "There was a problem creating your GitHub App. Please make sure you filled the GitHub App name and try again.";
-			ctaUrl = {
-				text: "Retry",
-				action: createUrlWithQueryString(req, "/session")
-			};
-			break;
-		case Errors.IP_ALLOWLIST_MISCONFIGURED:
-			message = `The GitHub org you are trying to connect is currently blocking our requests. To configure the GitHub IP Allow List correctly, <a href="${envVars.GITHUB_REPO_URL}/blob/main/docs/ip-allowlist.md">please follow these instructions</a>.`;
-			break;
-		default:
-			break;
-	}
+	const messages = {
+		[Errors.MISSING_JIRA_HOST]: "Session information missing - please enable all cookies in your browser settings.",
+		[Errors.IP_ALLOWLIST_MISCONFIGURED]: `The GitHub org you are trying to connect is currently blocking our requests. To configure the GitHub IP Allow List correctly, <a href="${envVars.GITHUB_REPO_URL}/blob/main/docs/ip-allowlist.md">please follow these instructions</a>.`,
+		[Errors.MISSING_GITHUB_APP_NAME]: "There was a problem creating your GitHub App. Please make sure you filled the GitHub App name and try again."
+	};
 
 	const errorStatusCode = errorCodes[err.message] || 500;
+	const message = messages[err.message];
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(res.locals.gitHubAppId);
 	const tags = [`status: ${errorStatusCode}`, `gitHubProduct: ${gitHubProduct}`];
+
+
+	// Add a call to action for retrying based upon the query parameters
+	const ctaUrl = Object.keys(req.query).length ? createUrlWithQueryString(req, "/session") : null;
 
 	statsd.increment(metricError.githubErrorRendered, tags);
 
