@@ -25,8 +25,8 @@
         "/jira/**",
         "/maintenance",
         "/public/**",
-        "/session/**",
         "/session",
+        "/session/**",
         "/setup"
       ],
       "methods": [

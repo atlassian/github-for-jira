@@ -43,6 +43,10 @@
 {{#if loadAutoAppCreation}}
       <script src="/public/js/github-redirect.js" nonce="{{nonce}}"></script>
     {{else}}
-      <script>window.location = "{{{redirectUrl}}}";</script>
+      <script nonce="{{nonce}}">
+        $(function() {
+          window.location = "{{{redirectUrl}}}";
+        });
+      </script>
 {{/if}}
 </html>
