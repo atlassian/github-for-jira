@@ -19,7 +19,7 @@ export enum AnalyticsEventTypes {
 
 // All variables below were defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
 export enum AnalyticsScreenEventsEnum {
-	GitHubConfigScreenEventName = "githubConfigurationScreen",
+	GitHubConfigScreenEventName = "gitHubConfigurationScreen",
 	ConnectAnOrgScreenEventName = "connectAnOrgProductCount",
 	SelectGitHubProductEventName = "selectGitHubProductScreen"
 }

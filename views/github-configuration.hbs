@@ -31,7 +31,7 @@
   value="{{clientKey}}"
 />
 
-{{> navigation previousPageName="Jira Configuration" hideBackButton=true }}
+{{> navigation hideBackButton=true }}
 
 <section class="gitHubConfiguration">
   <div class="headerImage">
@@ -199,8 +199,8 @@
   </div>
 
 </section>
-<script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
-<script src="/public/js/github-configuration.js" nonce="{{nonce}}"></script>
+
+<script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
 <script
   src="/public/aui/aui-prototyping.js"
   integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
@@ -208,6 +208,8 @@
   referrerpolicy="no-referrer"
   nonce="{{nonce}}"
 ></script>
+<script src="/public/js/github-configuration.js" nonce="{{nonce}}"></script>
+<script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
 </body>
 
 </html>
