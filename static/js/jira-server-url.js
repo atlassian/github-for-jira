@@ -13,7 +13,7 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 			field.invalidate(AJS.format('The entered URL is not valid. <a href="#">Learn more</a>.'));
 		}
 		else if (GITHUB_CLOUD.includes(hostname)) {
-			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration" target="_blank">Connect a GitHub Cloud site<a/>.'));
+			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
 		} else {
 			field.validate();
 		}
