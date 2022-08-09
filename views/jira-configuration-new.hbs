@@ -177,6 +177,7 @@
           {{/if}}
 
           {{#if hasCloudServers}}
+            {{> modal installationId=id modalType="cloud-modal" }}
             <div class="jiraConfiguration__cloudContainer">
               <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
               <div class="jiraConfiguration__cloudConnections">
@@ -193,6 +194,12 @@
           {{/if}}
 
           {{#if gheServers.length}}
+            {{> modal
+                appUuid=app.uuid
+                serverBaseUrl=server.gitHubBaseUrl
+                modalType="server-modal"
+            }}
+
             <div class="jiraConfiguration__enterpriseContainer">
               <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
               {{#each gheServers as |server|}}
@@ -242,6 +249,7 @@
                                   target="_blank"
                                   id="disconnect-app-btn"
                                   data-app-name="{{app.gitHubAppName}}"
+                                  data-uuid="{{app.uuid}}"
                               >
                                 Delete
                               </a>
@@ -280,8 +288,6 @@
         {{else}}
           {{> jira-configuration-empty-connections csrfToken=csrfToken}}
         {{/if}}
-
-        {{> modal }}
       </section>
 
     </div>

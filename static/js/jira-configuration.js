@@ -150,7 +150,6 @@ if (syncStatusCloseBtn != null) {
 }
 
 const handleDisconnectRequest = (path, data) => {
-	console.log("data", data)
 	$.ajax({
 		type: "DELETE",
 		url: path,
@@ -161,24 +160,24 @@ const handleDisconnectRequest = (path, data) => {
 	});
 }
 
-const mapDisconnectRequest = (disconnectType) => {
+const mapDisconnectRequest = (disconnectType, disconnectData) => {
 	AP.context.getToken(function(token) {
 		let data = {
 			jwt: token,
-			jiraHost: jiraHost
+			jiraHost
 		}
 
 		switch (disconnectType) {
 			case "server":
+				data.serverUrl = disconnectData;
 				// TODO - handle deleting server
-				console.log("handle delete server")
 				return;
 			case "app":
+				data.uuid = disconnectData;
 				// TODO -merge delete PR
-				console.log("merge delete pr");
 				return;
 			default:
-				data.installationId = $(this).data("installation-id");
+				data.installationId = disconnectData;
 				handleDisconnectRequest("/jira/configuration", data);
 				return;
 		}
@@ -189,18 +188,17 @@ if (genericModalAction != null) {
 	$(genericModalAction).click((event) => {
 		event.preventDefault();
 		const disconnectType = $(event.target).data("disconnect-type");
-		console.log("ACTION BUTTON TYPE: ", disconnectType)
-		mapDisconnectRequest(disconnectType);
+		const disconnectData = $(event.target).data("modal-data");
+		mapDisconnectRequest(disconnectType, disconnectData);
 	});
 }
 
-const handleModalDisplay = (title, info, type) => {
+const handleModalDisplay = (title, info, type, data) => {
 	$(genericModal).show();
 	$(".modal__header__icon").addClass("aui-iconfont-warning").empty().append("Warning icon");
 	$(".modal__header__title").empty().append(title);
 	$(".modal__information").empty().append(info);
-	console.log("TYPE:", type)
-	$(".modal__footer__actionBtn").empty().append("Disconnect").attr("data-disconnect-type", type);
+	$(".modal__footer__actionBtn").empty().append("Disconnect").attr("data-disconnect-type", type).attr("data-modal-data", data);
 }
 
 if (disconnectServerBtn != null) {
@@ -219,10 +217,11 @@ if (disconnectAppBtn != null) {
 	$(disconnectAppBtn).click((event) => {
 		event.preventDefault();
 		const appName = $(event.target).data("app-name");
+		const uuid = $(event.target).data("app-name");
 		const modalTitle = `Disconnect ${appName}?`;
 		const modalInfo = `Are you sure you want to delete your application, ${appName}? You’ll need to backfill your historical data again if you ever want to reconnect.`;
 		const disconnectType = "app";
-		handleModalDisplay(modalTitle, modalInfo, disconnectType);
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, uuid);
 	});
 }
 
@@ -230,10 +229,11 @@ if (disconnectOrgBtn != null) {
 	$(disconnectOrgBtn).click((event) => {
 		event.preventDefault();
 		const orgName = $(event.target).data("org-name");
+		const installationId = $(event.target).data("installation-id");
 		const modalTitle = `Disconnect ${orgName}?`;
 		const modalInfo = `Are you sure you want to disconnect your organization ${orgName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
 		const disconnectType = "org";
-		handleModalDisplay(modalTitle, modalInfo, disconnectType);
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, installationId);
 	});
 }
 
