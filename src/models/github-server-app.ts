@@ -178,7 +178,7 @@ export class GitHubServerApp extends EncryptedModel {
 	 * 		installationId: number
 	 * 	}} payload
 	 */
-	
+
 	static async updateGitHubApp(payload: GitHubServerAppPayload): Promise<void> {
 		const {
 			uuid,
