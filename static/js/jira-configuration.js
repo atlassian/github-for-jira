@@ -50,25 +50,6 @@ $(".configure-connection-link").click(function(event) {
 	openChildWindow($(event.target).data("installation-link"));
 });
 
-$(".delete-connection-link").click(function(event) {
-	event.preventDefault();
-
-	window.AP.context.getToken(function(token) {
-		$.ajax({
-			type: "DELETE",
-			url: "/jira/configuration",
-			data: {
-				installationId: $(event.target).data("installation-id"),
-				jwt: token,
-				jiraHost: jiraHost
-			},
-			success: function(data) {
-				AP.navigator.reload();
-			}
-		});
-	});
-});
-
 const initializeBackfillDateInput = function () {
 	const dateElement = document.getElementById('backfill-date-picker');
 	const date = new Date();
@@ -150,7 +131,10 @@ const syncStatusBtn = document.getElementById("sync-status-modal-btn");
 const syncStatusModal = document.getElementById("sync-status-modal");
 const syncStatusCloseBtn = document.getElementById("status-close");
 const genericModal = document.getElementById("modal");
+const genericModalClose = document.getElementById("modal-close-btn");
+const genericModalAction = document.getElementById("modal-action-btn");
 const disconnectServerBtn = document.getElementById("disconnect-server-btn");
+const disconnectAppBtn = document.getElementById("disconnect-app-btn");
 const disconnectOrgBtn = document.getElementById("disconnect-org-btn");
 
 if (syncStatusBtn != null) {
@@ -165,21 +149,100 @@ if (syncStatusCloseBtn != null) {
 	};
 }
 
+const handleDisconnectRequest = (path, data) => {
+	console.log("data", data)
+	$.ajax({
+		type: "DELETE",
+		url: path,
+		data,
+		success: function() {
+			AP.navigator.reload();
+		}
+	});
+}
+
+const mapDisconnectRequest = (disconnectType) => {
+	AP.context.getToken(function(token) {
+		let data = {
+			jwt: token,
+			jiraHost: jiraHost
+		}
+
+		switch (disconnectType) {
+			case "server":
+				// TODO - handle deleting server
+				console.log("handle delete server")
+				return;
+			case "app":
+				// TODO -merge delete PR
+				console.log("merge delete pr");
+				return;
+			default:
+				data.installationId = $(this).data("installation-id");
+				handleDisconnectRequest("/jira/configuration", data);
+				return;
+		}
+	});
+};
+
+if (genericModalAction != null) {
+	$(genericModalAction).click((event) => {
+		event.preventDefault();
+		const disconnectType = $(event.target).data("disconnect-type");
+		console.log("ACTION BUTTON TYPE: ", disconnectType)
+		mapDisconnectRequest(disconnectType);
+	});
+}
+
+const handleModalDisplay = (title, info, type) => {
+	$(genericModal).show();
+	$(".modal__header__icon").addClass("aui-iconfont-warning").empty().append("Warning icon");
+	$(".modal__header__title").empty().append(title);
+	$(".modal__information").empty().append(info);
+	console.log("TYPE:", type)
+	$(".modal__footer__actionBtn").empty().append("Disconnect").attr("data-disconnect-type", type);
+}
+
 if (disconnectServerBtn != null) {
 	$(disconnectServerBtn).click((event) => {
 		event.preventDefault();
-
 		const serverUrl = $(event.target).data("server-baseurl");
+		const modalTitle = "Disconnect server?";
+		const modalInfo = "Are you sure you want to disconnect your server? You'll need to recreate your GitHub apps and backfill historical data from your GitHub organisations and repositories again if you ever want to reconnect."
+		const disconnectType = "server";
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, serverUrl);
+		$(".modal__additionalContent").append(serverUrl).css('font-weight', 'bold');
+	});
+}
 
-		console.log("url: ", serverUrl, $(event.target))
-		$(genericModal).show();
-		$(".modal__header__icon").addClass("aui-iconfont-warning").empty().append("Warning icon");
-		$(".modal__header__title").empty().append("Disconnect server?");
-		$(".modal__information")
-			.empty()
-			.append("Are you sure you want to disconnect your server? You'll need to recreate your GitHub apps and backfill historical data from your GitHub organisations and repositories again if you ever want to reconnect.");
-		$(".modal__footer__actionBtn").empty().append("Disconnect");
-		$(".modal__additionalContent").empty().append(serverUrl).css('font-weight', 'bold');
+if (disconnectAppBtn != null) {
+	$(disconnectAppBtn).click((event) => {
+		event.preventDefault();
+		const appName = $(event.target).data("app-name");
+		const modalTitle = `Disconnect ${appName}?`;
+		const modalInfo = `Are you sure you want to delete your application, ${appName}? You’ll need to backfill your historical data again if you ever want to reconnect.`;
+		const disconnectType = "app";
+		handleModalDisplay(modalTitle, modalInfo, disconnectType);
+	});
+}
+
+if (disconnectOrgBtn != null) {
+	$(disconnectOrgBtn).click((event) => {
+		event.preventDefault();
+		const orgName = $(event.target).data("org-name");
+		const modalTitle = `Disconnect ${orgName}?`;
+		const modalInfo = `Are you sure you want to disconnect your organization ${orgName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
+		const disconnectType = "org";
+		handleModalDisplay(modalTitle, modalInfo, disconnectType);
+	});
+}
+
+if (genericModalClose != null) {
+	$(genericModalClose).click((event) => {
+		event.preventDefault();
+		$(genericModal).hide();
+		$(".modal__footer__actionBtn").removeAttr("data-disconnect-type");
+		$(".modal__additionalContent").empty();
 	});
 }
 
