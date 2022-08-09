@@ -33,5 +33,5 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 	});
 	req.session.temp = undefined;
 
-	res.redirect(`/session/github/${uuid}/configuration?ghRedirect=to`);
+	res.redirect(`/github/${uuid}/configuration`);
 };

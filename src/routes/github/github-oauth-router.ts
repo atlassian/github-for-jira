@@ -8,7 +8,11 @@ import { Tracer } from "config/tracer";
 import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client-config";
+import {
+	getGitHubHostname,
+	getGitHubApiUrl,
+	getGitHubClientConfigFromAppId
+} from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
@@ -19,6 +23,14 @@ const baseURL = envVars.APP_URL;
 const scopes = ["user", "repo"];
 const callbackPath = "/callback";
 
+const getRedirectUrl = async (req, res, state) => {
+	const { jiraHost, gitHubAppId } = res.locals;
+	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
+	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
+	const { gitHubClientId } = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
+	return `${gitHubHostname}/login/oauth/authorize?client_id=${gitHubClientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+};
+
 const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> => {
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
 	const tracer = new Tracer(logger, "login", traceLogsEnabled);
@@ -28,16 +40,13 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	const state = crypto.randomBytes(8).toString("hex");
 
 	req.session["timestamp_before_oauth"] = Date.now();
-	const { jiraHost, gitHubAppId } = res.locals;
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
 	req.session[state] =
 		res.locals.redirect ||
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 	// Find callback URL based on current url of this route
-	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
-	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+	const redirectUrl = await getRedirectUrl(req, res, state);
 	req.log.info("redirectUrl:", redirectUrl);
 
 	req.log.info({

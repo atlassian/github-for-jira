@@ -18,6 +18,7 @@ export interface GitHubClientConfig {
 	baseUrl: string;
 	appId: number;
 	privateKey: string;
+	gitHubClientId: string;
 }
 
 export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number) {
@@ -27,13 +28,14 @@ export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number) {
 		: GITHUB_CLOUD_API_BASEURL;
 }
 
-const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, jiraHost?: string): Promise<GitHubClientConfig> => {
+export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, jiraHost?: string): Promise<GitHubClientConfig> => {
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 	if (gitHubServerApp) {
 		return	{
 			hostname: gitHubServerApp.gitHubBaseUrl,
-			baseUrl: gitHubServerApp.gitHubBaseUrl,
+			baseUrl: `${gitHubServerApp.gitHubBaseUrl}/api/v3`,
 			appId: gitHubServerApp.appId,
+			gitHubClientId: gitHubServerApp.gitHubClientId,
 			privateKey: await gitHubServerApp.decrypt("privateKey")
 		};
 	}
@@ -46,6 +48,7 @@ const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, j
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_API_BASEURL,
 		appId: parseInt(envVars.APP_ID),
+		gitHubClientId: envVars.GITHUB_CLIENT_ID,
 		privateKey: privateKey
 	};
 };
