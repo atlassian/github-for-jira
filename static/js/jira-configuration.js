@@ -178,7 +178,7 @@ $(".jiraConfiguration__deleteGitHubApp").click(function(event) {
 	AP.context.getToken(function(token) {
 		$.ajax({
 			type: "DELETE",
-			url: `/jira/connect/enterprise/app/:${uuid}`,
+			url: `/jira/connect/enterprise/app/${uuid}`,
 			data: {
 				uuid,
 				jwt: token,

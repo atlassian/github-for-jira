@@ -18,7 +18,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 
 		const gheServers = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(decodeURIComponent(baseUrl), res.locals.installation.id);
 
-		if (!isNew && gheServers?.length > 0) {
+		if (!isNew && gheServers?.length) {
 			// `identifier` is the githubAppName for the GH server app
 			const serverApps = gheServers.map(server => ({ identifier: server.gitHubAppName }));
 
