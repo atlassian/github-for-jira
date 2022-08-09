@@ -5,14 +5,12 @@ import Logger from "bunyan";
 import { Repository, Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { getJiraClient } from "../jira/client/jira-client";
-import { enhanceOctokit, RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
 import { statsd } from "config/statsd";
 import { getPullRequestTask } from "./pull-request";
 import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
 import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
-import { Application } from "probot";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { booleanFlag, BooleanFlags, isBlocked } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
@@ -137,9 +135,6 @@ export const updateJobStatus = async (
 	}
 };
 
-const getEnhancedGitHub = async (app: Application, installationId) =>
-	enhanceOctokit(await app.auth(installationId));
-
 /**
  * Determines if an an error returned by the GitHub API means that we should retry it
  * with a smaller request (i.e. with fewer pages).
@@ -179,7 +174,7 @@ export const isNotFoundError = (
 };
 
 // TODO: type queues
-const doProcessInstallation = async (app, data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId
@@ -194,7 +189,6 @@ const doProcessInstallation = async (app, data: BackfillMessagePayload, sentry: 
 	);
 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
-	const github = await getEnhancedGitHub(app, installationId);
 	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
@@ -219,12 +213,11 @@ const doProcessInstallation = async (app, data: BackfillMessagePayload, sentry: 
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
-				return await processor(logger, github, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
+				return await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
 				const log = logger.child({
 					err,
 					payload: data,
-					github,
 					repository,
 					cursor,
 					task
@@ -239,6 +232,7 @@ const doProcessInstallation = async (app, data: BackfillMessagePayload, sentry: 
 					// Return undefined objects so the sync can complete while skipping this task
 					return { edges: undefined, jiraPayload: undefined };
 				}
+
 				log.error(`Error processing job with page size ${perPage}, retrying with next smallest page size`);
 				if (!(await isRetryableWithSmallerRequest(err))) {
 					// error is not retryable, re-throwing it
@@ -330,10 +324,10 @@ export const handleBackfillError = async (err,
 	logger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
-	const isRateLimitError = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
+	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {
-		const rateLimit = (err instanceof RateLimitingError || err instanceof OldRateLimitingError) ? err.rateLimitReset : Number(err?.headers?.["x-ratelimit-reset"]);
+		const rateLimit = err instanceof RateLimitingError ? err.rateLimitReset : Number(err?.headers?.["x-ratelimit-reset"]);
 		const delay = Math.max(rateLimit * 1000 - Date.now(), 0);
 
 		if (delay) {
@@ -409,7 +403,8 @@ export const maybeScheduleNextTask = async (
 const redis = new IORedis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
-export const processInstallation = (app: Application) => {
+
+export const processInstallation = () => {
 	const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
 	const deduplicator = new Deduplicator(
 		inProgressStorage, 1_000
@@ -435,7 +430,7 @@ export const processInstallation = (app: Application) => {
 
 			const result = await deduplicator.executeWithDeduplication(
 				"i-" + installationId + "-" + jiraHost,
-				() => doProcessInstallation(app, data, sentry, installationId, jiraHost, logger, (delay: number) =>
+				() => doProcessInstallation(data, sentry, installationId, jiraHost, logger, (delay: number) =>
 					nextTaskDelaysMs.push(delay)
 				));
 

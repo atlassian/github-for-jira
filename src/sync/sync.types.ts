@@ -1,5 +1,4 @@
 import { Repository } from "models/subscription";
-import { GitHubAPI } from "probot";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import Logger from "bunyan";
@@ -10,7 +9,6 @@ export type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "
 export interface TaskProcessors {
 	[task: string]: (
 		logger: Logger,
-		github: GitHubAPI,
 		gitHubInstallationClient: GitHubInstallationClient,
 		jiraHost: string,
 		repository: Repository,

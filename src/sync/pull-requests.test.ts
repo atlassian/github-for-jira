@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { Subscription } from "models/subscription";
-import { Application } from "probot";
 import { processInstallation } from "./installation";
 import nock from "nock";
-import { createWebhookApp } from "test/utils/probot";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 
@@ -13,7 +11,6 @@ jest.mock("models/subscription");
 
 describe.skip("sync/pull-request", () => {
 	const installationId = 1234;
-	let app: Application;
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
@@ -29,7 +26,6 @@ describe.skip("sync/pull-request", () => {
 
 		mockSystemTime(12345678);
 
-		app = await createWebhookApp();
 	});
 
 	describe.each([
@@ -82,7 +78,7 @@ describe.skip("sync/pull-request", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		});
 	});
 
@@ -95,7 +91,7 @@ describe.skip("sync/pull-request", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});
@@ -110,7 +106,7 @@ describe.skip("sync/pull-request", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(pullRequestList as any, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(pullRequestList as any, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});

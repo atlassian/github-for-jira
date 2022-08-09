@@ -1,7 +1,6 @@
 import { Repository, Subscription } from "models/subscription";
 import Logger from "bunyan";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { GitHubAPI } from "probot";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { RepositoryNode } from "../github/client/github-queries";
 import { RepoSyncState } from "models/reposyncstate";
@@ -21,7 +20,6 @@ import { TaskPayload } from "~/src/sync/sync.types";
 
 export const getRepositoryTask = async (
 	logger: Logger,
-	_github: GitHubAPI,
 	newGithub: GitHubInstallationClient,
 	jiraHost: string,
 	_repository: Repository,

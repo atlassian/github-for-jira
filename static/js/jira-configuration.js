@@ -16,8 +16,9 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	window.AP.context.getToken(function(token) {
-		const child = openChildWindow("/session/github/configuration");
+	const queryParameter = $(this).data("gh-cloud") ? "" : "?ghRedirect=to";
+	AP.context.getToken(function(token) {
+		const child = openChildWindow("/session/github/configuration" + queryParameter);
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
 	});
@@ -59,9 +60,9 @@ $(".delete-connection-link").click(function(event) {
 			data: {
 				installationId: $(event.target).data("installation-id"),
 				jwt: token,
-				jiraHost: jiraHost
+				jiraHost
 			},
-			success: function(data) {
+			success: function() {
 				AP.navigator.reload();
 			}
 		});
@@ -169,4 +170,43 @@ window.onclick = function(event) {
 		restartBackfillModal.style.display = "none";
 	}
 };
+
+$(".jiraConfiguration__deleteGitHubApp").click(function(event) {
+	event.preventDefault();
+	const uuid = $(event.target).data("app-uuid");
+
+	AP.context.getToken(function(token) {
+		$.ajax({
+			type: "DELETE",
+			url: `/jira/connect/enterprise/app/${uuid}`,
+			data: {
+				uuid,
+				jwt: token,
+				jiraHost
+			},
+			success: function(data) {
+				if (data.success) {
+					AP.navigator.reload();
+				}
+			},
+			error: function (error) {
+				// TODO - we should render an error here when the app fails to delete
+			},
+		});
+	});
+});
+
+$(".jiraConfiguration__editGitHubApp").click(function(event) {
+	event.preventDefault();
+	const uuid = $(event.target).data("app-uuid");
+
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "github-edit-app-page",
+			customData: { uuid }
+		}
+	);
+});
+
 
