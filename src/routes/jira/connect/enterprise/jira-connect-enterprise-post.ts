@@ -58,9 +58,9 @@ export const JiraConnectEnterprisePost = async (
 	const jiraHost = res.locals.jiraHost;
 
 	try {
-		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL, installationId);
+		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
 
-		if (gitHubServerApps?.length) {
+		if (gitHubServerApps?.length > 0) {
 			req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
 			res.status(200).send({ success: true, appExists: true });
 			return;
