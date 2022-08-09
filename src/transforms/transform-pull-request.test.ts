@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { transformPullRequest } from "./transform-pull-request";
-import { GitHubAPI } from "probot";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
+import { getInstallationId } from "~/src/github/client/installation-id";
+import { getLogger } from "config/logger";
 
 describe("pull_request transform", () => {
+	const githubInstallationId = 1234;
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
 		const fixture = transformPullRequestList[0];
 		fixture.title = "[TES-123] Branch payload Test";
@@ -16,7 +19,8 @@ describe("pull_request transform", () => {
 				name: "Some User Name"
 			});
 
-		const data = await transformPullRequest(GitHubAPI(), fixture as any);
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), getLogger("test"));
+		const data = await transformPullRequest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -73,7 +77,8 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequest(GitHubAPI(), fixture as any);
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), getLogger("test"));
+		const data = await transformPullRequest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -157,7 +162,8 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequest(GitHubAPI(), fixture as any);
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), getLogger("test"));
+		const data = await transformPullRequest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 

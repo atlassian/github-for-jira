@@ -16,10 +16,7 @@ describe("Session GET", () => {
 
 	describe("Frontend", () => {
 		beforeEach(() => {
-			app.use(getFrontendApp({
-				getSignedJsonWebToken: () => "",
-				getInstallationAccessToken: async () => ""
-			}));
+			app.use(getFrontendApp());
 		});
 
 		it("Testing loading when redirecting to GitHub", () =>

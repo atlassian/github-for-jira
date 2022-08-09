@@ -18,10 +18,7 @@ describe("Github Setup", () => {
 			request.log = getLogger("test");
 			next();
 		});
-		frontendApp.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => "access-token"
-		}));
+		frontendApp.use(getFrontendApp());
 	});
 
 	describe("#GET", () => {

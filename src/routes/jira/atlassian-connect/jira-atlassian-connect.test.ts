@@ -17,10 +17,7 @@ describe("Atlassian Connect", () => {
 
 	describe("Frontend", () => {
 		beforeEach(() => {
-			app.use(getFrontendApp({
-				getSignedJsonWebToken: () => "",
-				getInstallationAccessToken: async () => ""
-			}));
+			app.use(getFrontendApp());
 		});
 
 		describe("Atlassian Connect", () => {

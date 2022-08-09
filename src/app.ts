@@ -1,7 +1,5 @@
 import express, { Express, NextFunction, Request, Response, Router } from "express";
 import path from "path";
-import { getGithubClientMiddleware } from "./middleware/github-client-middleware";
-import { App } from "@octokit/app";
 import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
 import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
 import crypto from "crypto";
@@ -11,7 +9,7 @@ import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
 
-export const getFrontendApp = (octokitApp: App): Express => {
+export const getFrontendApp = (): Express => {
 	const app = express();
 
 	// We run behind ngrok.io so we need to trust the proxy always
@@ -23,10 +21,6 @@ export const getFrontendApp = (octokitApp: App): Express => {
 	app.set("views", viewPath);
 	registerHandlebarsPartials(path.resolve(viewPath, "partials"));
 	registerHandlebarsHelpers();
-
-	// Add github client middleware which uses the octokit app
-	app.use(getGithubClientMiddleware(octokitApp));
-
 	// Add all routes
 	app.use(RootRouter);
 
@@ -92,7 +86,7 @@ export const setupFrontend = (app: Application): void => {
 		router.use(sslify.HTTPS({ trustProtoHeader: true }));
 	}
 
-	const frontendApp = getFrontendApp(app.app);
+	const frontendApp = getFrontendApp();
 	secureHeaders(router, frontendApp);
 	router.use(frontendApp);
 };

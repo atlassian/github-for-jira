@@ -1,7 +1,6 @@
 import { mocked } from "ts-jest/utils";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import { GithubAPI } from "config/github-api";
 import { GithubWebhookMiddleware } from "./github-webhook-middleware";
 import { mockModels } from "test/utils/models";
 import { createLogger } from "bunyan";
@@ -19,7 +18,6 @@ describe("Probot event middleware", () => {
 				sender: { type: "not bot" },
 				installation: { id: 1234 }
 			},
-			github: GithubAPI(),
 			log: createLogger({ name: "test" })
 		};
 
