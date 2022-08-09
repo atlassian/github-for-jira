@@ -7,7 +7,7 @@ import EncryptedField from "sequelize-encrypted";
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
-interface GitHubServerAppPayload {
+export interface GitHubServerAppPayload {
 	uuid: string;
 	appId: number;
 	gitHubBaseUrl: string;
@@ -164,6 +164,52 @@ export class GitHubServerApp extends EncryptedModel {
 	}
 
 	/**
+	 * Update existing GitHubServerApp object
+	 *
+	 * @param {{
+	 * 		gitHubClientId: string,
+	 * 		uuid: string,
+	 * 		appId: number;
+	 * 		gitHubBaseUrl: string,
+	 * 		gitHubClientSecret: string,
+	 * 		webhookSecret: string,
+	 * 		privateKey: string,
+	 * 		gitHubAppName: string,
+	 * 		installationId: number
+	 * 	}} payload
+	 */
+	static async updateGitHubApp(payload: GitHubServerAppPayload): Promise<void> {
+		const {
+			uuid,
+			appId,
+			gitHubAppName,
+			gitHubBaseUrl,
+			gitHubClientId,
+			gitHubClientSecret,
+			webhookSecret,
+			privateKey,
+			installationId
+		} = payload;
+
+		await this.update(
+			{
+				uuid,
+				appId,
+				gitHubClientId,
+				gitHubBaseUrl,
+				gitHubClientSecret,
+				webhookSecret,
+				privateKey,
+				gitHubAppName,
+				installationId
+			},
+			{
+				where: { uuid }
+			}
+		);
+	}
+
+	/**
 	 * Get GitHubServerApp
 	 *
 	 * @param {{uuid: string}} uuid
@@ -176,7 +222,6 @@ export class GitHubServerApp extends EncryptedModel {
 			}
 		});
 	}
-
 }
 
 GitHubServerApp.init({
