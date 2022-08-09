@@ -169,11 +169,10 @@ const mapDisconnectRequest = (disconnectType, disconnectData) => {
 			jwt: token,
 			jiraHost
 		}
-		console.log("disconnectData", disconnectData)
+
 		switch (disconnectType) {
 			case "server":
 				data.serverUrl = disconnectData;
-				console.log('DATA', data)
 				handleDisconnectRequest(`/jira/connect/enterprise`, data);
 				return;
 			case "app":
@@ -193,7 +192,6 @@ if (genericModalAction != null) {
 		event.preventDefault();
 		const disconnectType = $(event.target).data("disconnect-type");
 		const disconnectData = $(event.target).data("modal-data");
-		console.log("in here: ", disconnectType, disconnectData)
 		mapDisconnectRequest(disconnectType, disconnectData);
 	});
 }

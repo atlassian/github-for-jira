@@ -60,7 +60,7 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 		const records = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gitHubBaseUrl, installationId);
 		expect(records.length).toBe(2);
 
-		await GitHubServerApp.uninstall(appOneUuid);
+		await GitHubServerApp.uninstallApp(appOneUuid);
 
 		const appOne = await GitHubServerApp.findForUuid(appOneUuid);
 		expect(appOne).toBeNull();
