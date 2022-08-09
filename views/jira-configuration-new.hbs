@@ -197,7 +197,16 @@
               <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
               {{#each gheServers as |server|}}
                 <div class="jiraConfiguration__enterpriseServer">
-                  <div class="jiraConfiguration__collapsibleHeaderTitle">{{server.gitHubBaseUrl}}</div>
+                  <div class="jiraConfiguration__enterpriseServer__header__container" data-server-baseUrl="{{server.gitHubBaseUrl}}">
+                    <div class="jiraConfiguration__enterpriseServere__header">{{server.gitHubBaseUrl}}</div>
+                    <button
+                        class="aui-button jiraConfiguration__enterpriseServer__disconnectButton"
+                        id="disconnect-server-btn"
+                        data-server-baseurl="{{server.gitHubBaseUrl}}"
+                    >
+                      Disconnect server
+                    </button>
+                  </div>
                   <div class="jiraConfiguration__enterpriseConnections">
                     <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATIONS</div>
                     {{#each server.applications as |app|}}
@@ -262,12 +271,15 @@
                     {{/each}}
                   </div>
                 </div>
+
               {{/each}}
             </div>
           {{/if}}
         {{else}}
           {{> jira-configuration-empty-connections csrfToken=csrfToken}}
         {{/if}}
+
+        {{> modal }}
       </section>
 
     </div>

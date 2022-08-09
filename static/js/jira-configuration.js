@@ -149,6 +149,9 @@ $(".jiraConfiguration__connectNewApp").click((event) => {
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
 const syncStatusModal = document.getElementById("sync-status-modal");
 const syncStatusCloseBtn = document.getElementById("status-close");
+const genericModal = document.getElementById("modal");
+const disconnectServerBtn = document.getElementById("disconnect-server-btn");
+const disconnectOrgBtn = document.getElementById("disconnect-org-btn");
 
 if (syncStatusBtn != null) {
 	syncStatusBtn.onclick = function() {
@@ -160,6 +163,24 @@ if (syncStatusCloseBtn != null) {
 	syncStatusCloseBtn.onclick = function() {
 		syncStatusModal.style.display = "none";
 	};
+}
+
+if (disconnectServerBtn != null) {
+	$(disconnectServerBtn).click((event) => {
+		event.preventDefault();
+
+		const serverUrl = $(event.target).data("server-baseurl");
+
+		console.log("url: ", serverUrl, $(event.target))
+		$(genericModal).show();
+		$(".modal__header__icon").addClass("aui-iconfont-warning").empty().append("Warning icon");
+		$(".modal__header__title").empty().append("Disconnect server?");
+		$(".modal__information")
+			.empty()
+			.append("Are you sure you want to disconnect your server? You'll need to recreate your GitHub apps and backfill historical data from your GitHub organisations and repositories again if you ever want to reconnect.");
+		$(".modal__footer__actionBtn").empty().append("Disconnect");
+		$(".modal__additionalContent").empty().append(serverUrl).css('font-weight', 'bold');
+	});
 }
 
 // When the user clicks anywhere outside of the modal, close it

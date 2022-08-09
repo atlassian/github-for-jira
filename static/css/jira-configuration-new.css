@@ -516,6 +516,11 @@
   padding: 0 0.5em;
 }
 
+.jiraConfiguration__enterpriseServer__header__container {
+  display: flex;
+  justify-content: space-between;
+}
+
 .jiraConfiguration__collapsibleHeader {
   cursor: pointer;
   padding: 0.8em 0;
@@ -524,7 +529,7 @@
   align-items: center;
 }
 
-.jiraConfiguration__collapsibleHeaderTitle {
+.jiraConfiguration__enterpriseServere__header {
   font-size: 1.25rem;
   margin: 0 0 1.5em;
 }
