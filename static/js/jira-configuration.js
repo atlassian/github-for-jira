@@ -60,9 +60,9 @@ $(".delete-connection-link").click(function(event) {
 			data: {
 				installationId: $(event.target).data("installation-id"),
 				jwt: token,
-				jiraHost: jiraHost
+				jiraHost
 			},
-			success: function(data) {
+			success: function() {
 				AP.navigator.reload();
 			}
 		});
@@ -178,11 +178,11 @@ $(".jiraConfiguration__deleteGitHubApp").click(function(event) {
 	AP.context.getToken(function(token) {
 		$.ajax({
 			type: "DELETE",
-			url: `/jira/connect/enterprise/app/:${uuid}`,
+			url: `/jira/connect/enterprise/app/${uuid}`,
 			data: {
 				uuid,
 				jwt: token,
-				jiraHost: jiraHost
+				jiraHost
 			},
 			success: function(data) {
 				if (data.success) {
@@ -190,7 +190,7 @@ $(".jiraConfiguration__deleteGitHubApp").click(function(event) {
 				}
 			},
 			error: function (error) {
-				console.log(error);
+				// TODO - we should render an error here when the app fails to delete
 			},
 		});
 	});
@@ -208,6 +208,3 @@ $(".jiraConfiguration__editGitHubApp").click(function(event) {
 		}
 	);
 });
-
-
-

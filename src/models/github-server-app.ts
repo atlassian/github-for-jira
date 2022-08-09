@@ -97,7 +97,7 @@ export class GitHubServerApp extends EncryptedModel {
 	 * @param installationId
 	 * @returns {GitHubServerApp[]}
 	 */
-	static getAllForGitHubBaseUrlAndInstallationId(
+	static async getAllForGitHubBaseUrlAndInstallationId(
 		gitHubBaseUrl: string,
 		installationId: number
 	): Promise<GitHubServerApp[]> {

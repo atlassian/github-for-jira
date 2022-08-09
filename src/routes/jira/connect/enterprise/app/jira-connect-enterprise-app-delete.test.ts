@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import Mock = jest.Mock;
 import { GitHubServerApp } from "models/github-server-app";
 import { JiraConnectEnterpriseAppDelete } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-delete";
 
@@ -8,7 +6,6 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 	const installationId = 72;
 	const appOneUuid = "c97806fc-c433-4ad5-b569-bf5191590be2";
 	const appTwoUuid = "9eaf28d5-fe18-42d8-a76d-eba80adc2295";
-	let next: Mock;
 
 	const mockRequest = (uuid: string): any => ({
 		log: {
@@ -57,11 +54,9 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 			privateKey: "privatekey",
 			installationId
 		});
-
-		next = jest.fn();
 	});
 
-	it("should DELETE GitHub app when uuid is found", async () => {
+	it("should delete GitHub app when uuid is found", async () => {
 		const records = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gitHubBaseUrl, installationId);
 		expect(records.length).toBe(2);
 
@@ -75,7 +70,7 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 
 	it("should send a successful response when app is deleted", async () => {
 		const response = mockResponse();
-		await JiraConnectEnterpriseAppDelete(mockRequest("95980446-16e1-11ed-861d-0242ac120002"), response, next);
+		await JiraConnectEnterpriseAppDelete(mockRequest("95980446-16e1-11ed-861d-0242ac120002"), response, jest.fn());
 
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({ success: true });
@@ -83,7 +78,7 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 
 	it("should send a failure response when unable to delete app", async () => {
 		const response = mockResponse();
-		await JiraConnectEnterpriseAppDelete(mockRequest("this is not a uuid"), response, next);
+		await JiraConnectEnterpriseAppDelete(mockRequest("this is not a uuid"), response, jest.fn());
 
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({ success: false, message: "Failed to delete GitHub App." });
