@@ -169,11 +169,12 @@ const mapDisconnectRequest = (disconnectType, disconnectData) => {
 			jwt: token,
 			jiraHost
 		}
-
+		console.log("disconnectData", disconnectData)
 		switch (disconnectType) {
 			case "server":
 				data.serverUrl = disconnectData;
-				// TODO - handle deleting server
+				console.log('DATA', data)
+				handleDisconnectRequest(`/jira/connect/enterprise`, data);
 				return;
 			case "app":
 				data.uuid = disconnectData;
