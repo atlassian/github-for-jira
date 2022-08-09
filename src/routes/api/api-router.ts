@@ -17,18 +17,24 @@ import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-clie
 import { ApiPingPost } from "routes/api/api-ping-post";
 import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
 import { TaskType } from "~/src/sync/sync.types";
+import { GitHubServerApp } from "~/src/models/github-server-app";
+
+const UUID_REGEX = "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}";
+
 
 export const ApiRouter = Router();
+const subRouter = Router({ mergeParams: true });
+ApiRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 
 // TODO: remove this duplication because of the horrible way to do logs through requests
-ApiRouter.use(urlencoded({ extended: false }));
-ApiRouter.use(json());
-ApiRouter.use(LogMiddleware);
+subRouter.use(urlencoded({ extended: false }));
+subRouter.use(json());
+subRouter.use(LogMiddleware);
 
 // Verify SLAuth headers to make sure that no open access was allowed for these endpoints
 // And also log how the request was authenticated
 
-ApiRouter.use(
+subRouter.use(
 	async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 		const mechanism = req.get("X-Slauth-Mechanism");
 		const issuer = req.get("X-Slauth-Issuer");
@@ -55,7 +61,7 @@ ApiRouter.use(
 	}
 );
 
-ApiRouter.use(rateLimit({
+subRouter.use(rateLimit({
 	store: new RedisStore({
 		client: new IORedis(getRedisInfo("express-rate-limit"))
 	}),
@@ -63,12 +69,12 @@ ApiRouter.use(rateLimit({
 	max: 60 // limit each IP to 60 requests per windowMs
 }));
 
-ApiRouter.get("/", (_: Request, res: Response): void => {
+subRouter.get("/", (_: Request, res: Response): void => {
 	res.send({});
 });
 
 // RESYNC ALL INSTANCES
-ApiRouter.post(
+subRouter.post(
 	"/resync",
 	body("commitsFromDate").optional().isISO8601(),
 	body("targetTasks").optional().isArray(),
@@ -100,8 +106,16 @@ ApiRouter.post(
 			res.status(400).send("Invalid date value, cannot select a future date!");
 			return;
 		}
-
-		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
+		const { uuid } = req.params;
+		let gitHubServerApp;
+		if (uuid) {
+			gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+			if (!gitHubServerApp) {
+				req.log.error("No GitHub app found for provided uuid.");
+				throw new Error("No GitHub app found for provided id.");
+			}
+		}
+		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds, gitHubServerApp?.id);
 
 		await Promise.all(subscriptions.map((subscription) =>
 			findOrStartSync(subscription, req.log, syncType, commitsFromDate, targetTasks)
