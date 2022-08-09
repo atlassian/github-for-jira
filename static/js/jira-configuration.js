@@ -133,9 +133,9 @@ const syncStatusCloseBtn = document.getElementById("status-close");
 const genericModal = document.getElementById("modal");
 const genericModalClose = document.getElementById("modal-close-btn");
 const genericModalAction = document.getElementById("modal-action-btn");
-const disconnectServerBtn = document.getElementById("disconnect-server-btn");
-const disconnectAppBtn = document.getElementById("disconnect-app-btn");
-const disconnectOrgBtn = document.getElementById("disconnect-org-btn");
+const disconnectServerBtn = document.getElementsByClassName("disconnect-server-btn");
+const disconnectAppBtn = document.getElementsByClassName("disconnect-app-btn");
+const disconnectOrgBtn = document.getElementsByClassName("delete-connection-link");
 
 if (syncStatusBtn != null) {
 	syncStatusBtn.onclick = function() {

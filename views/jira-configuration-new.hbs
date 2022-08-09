@@ -177,7 +177,6 @@
           {{/if}}
 
           {{#if hasCloudServers}}
-            {{> modal installationId=id modalType="cloud-modal" }}
             <div class="jiraConfiguration__cloudContainer">
               <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
               <div class="jiraConfiguration__cloudConnections">
@@ -194,12 +193,6 @@
           {{/if}}
 
           {{#if gheServers.length}}
-            {{> modal
-                appUuid=app.uuid
-                serverBaseUrl=server.gitHubBaseUrl
-                modalType="server-modal"
-            }}
-
             <div class="jiraConfiguration__enterpriseContainer">
               <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
               {{#each gheServers as |server|}}
@@ -207,8 +200,7 @@
                   <div class="jiraConfiguration__enterpriseServer__header__container" data-server-baseUrl="{{server.gitHubBaseUrl}}">
                     <div class="jiraConfiguration__enterpriseServere__header">{{server.gitHubBaseUrl}}</div>
                     <button
-                        class="aui-button jiraConfiguration__enterpriseServer__disconnectButton"
-                        id="disconnect-server-btn"
+                        class="aui-button jiraConfiguration__enterpriseServer__disconnectButton disconnect-server-btn"
                         data-server-baseurl="{{server.gitHubBaseUrl}}"
                     >
                       Disconnect server
@@ -243,11 +235,10 @@
                               </a>
                               <!--TODO: need to add functionality for this-->
                               <a
-                                  class=""
+                                  class="disconnect-app-btn"
                                   href="#"
                                   data-installation-link="{{html_url}}"
                                   target="_blank"
-                                  id="disconnect-app-btn"
                                   data-app-name="{{app.gitHubAppName}}"
                                   data-uuid="{{app.uuid}}"
                               >
@@ -288,6 +279,8 @@
         {{else}}
           {{> jira-configuration-empty-connections csrfToken=csrfToken}}
         {{/if}}
+
+        {{> modal }}
       </section>
 
     </div>
