@@ -1,7 +1,7 @@
 import { pushWebhookHandler } from "./push";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
-import { GitHubPushData } from "../interfaces/github";
+import { GitHubPushData, GitHubRepository } from "../interfaces/github";
 import { enqueuePush } from "../transforms/push";
 
 jest.mock("../transforms/push");
@@ -45,7 +45,7 @@ describe("PushWebhookHandler", ()=>{
 			},
 			webhookId: "aaa-bbb-ccc",
 			webhookReceived: Date.now(),
-			repository: { } as GitHubPushData["repository"], //force it as not required in test
+			repository: {} as GitHubRepository, //force it as not required in test
 			commits: [{
 				id: "commit-1",
 				message: "ARC-0001 some commit message"

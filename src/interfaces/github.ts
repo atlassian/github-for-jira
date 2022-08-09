@@ -185,7 +185,7 @@ export interface GitHubIssueData extends GitHubData {
 	issue_number: number;
 }
 
-interface GitHubRepository extends GitHubWorkflowRunRepository {
+export interface GitHubRepository extends GitHubWorkflowRunRepository {
 	created_at: number;
 	updated_at: string;
 	pushed_at: number;
