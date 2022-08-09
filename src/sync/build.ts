@@ -1,4 +1,3 @@
-import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import Logger from "bunyan";
 import { Repository } from "models/subscription";
@@ -23,7 +22,6 @@ const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logge
 
 export const getBuildTask = async (
 	logger: Logger,
-	_github: GitHubAPI,
 	gitHubInstallationClient: GitHubInstallationClient,
 	_jiraHost: string,
 	repository: Repository,
