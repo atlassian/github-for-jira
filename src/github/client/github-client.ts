@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_HOSTNAME } from "utils/get-github-client-config";
 import { getLogger } from "~/src/config/logger";
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { envVars } from "config/env";
@@ -16,19 +16,19 @@ export class GitHubClient {
 
 	constructor(
 		logger: Logger = getLogger("gitHub-client"),
-		baseUrl?: string
+		hostname?: string
 	) {
 		this.logger = logger;
 
 		// baseUrl is undefined when FF is false
 		// if FF is true and the githubAppId field is empty, it is set to https://api.github.com
 		// TODO - clean this logic up once we remove the GHE_SERVER flag
-		if (baseUrl == undefined || baseUrl === "https://api.github.com") {
+		if (hostname == undefined || hostname === GITHUB_CLOUD_HOSTNAME) {
 			this.restApiUrl = GITHUB_CLOUD_API_BASEURL;
 			this.graphqlUrl = `${GITHUB_CLOUD_API_BASEURL}/graphql`;
 		} else {
-			this.restApiUrl = `${baseUrl}/api/v3`;
-			this.graphqlUrl = `${baseUrl}/api/graphql`;
+			this.restApiUrl = `${hostname}/api/v3`;
+			this.graphqlUrl = `${hostname}/api/graphql`;
 		}
 
 		this.axios = axios.create({
