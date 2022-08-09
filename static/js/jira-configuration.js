@@ -17,7 +17,7 @@ function openChildWindow(url) {
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
 	const queryParameter = $(this).data("gh-cloud") ? "" : "?ghRedirect=to";
-	window.AP.context.getToken(function(token) {
+	AP.context.getToken(function(token) {
 		const child = openChildWindow("/session/github/configuration" + queryParameter);
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
@@ -156,7 +156,10 @@ const handleDisconnectRequest = (path, data) => {
 		data,
 		success: function() {
 			AP.navigator.reload();
-		}
+		},
+		error: function (error) {
+			// TODO - we should render an error here when the app fails to delete
+		},
 	});
 }
 
@@ -174,7 +177,7 @@ const mapDisconnectRequest = (disconnectType, disconnectData) => {
 				return;
 			case "app":
 				data.uuid = disconnectData;
-				// TODO -merge delete PR
+				handleDisconnectRequest(`/jira/connect/enterprise/app/${disconnectData}`, data);
 				return;
 			default:
 				data.installationId = disconnectData;
@@ -217,7 +220,7 @@ if (disconnectAppBtn != null) {
 	$(disconnectAppBtn).click((event) => {
 		event.preventDefault();
 		const appName = $(event.target).data("app-name");
-		const uuid = $(event.target).data("app-name");
+		const uuid = $(event.target).data("app-uuid");
 		const modalTitle = `Disconnect ${appName}?`;
 		const modalInfo = `Are you sure you want to delete your application, ${appName}? You’ll need to backfill your historical data again if you ever want to reconnect.`;
 		const disconnectType = "app";
@@ -254,4 +257,18 @@ window.onclick = function(event) {
 		restartBackfillModal.style.display = "none";
 	}
 };
+
+$(".jiraConfiguration__editGitHubApp").click(function(event) {
+	event.preventDefault();
+	const uuid = $(event.target).data("app-uuid");
+
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "github-edit-app-page",
+			customData: { uuid }
+		}
+	);
+});
+
 

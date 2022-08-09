@@ -97,14 +97,10 @@ export class GitHubServerApp extends EncryptedModel {
 	 * @param installationId
 	 * @returns {GitHubServerApp[]}
 	 */
-	static async getAllForGitHubBaseUrl(
+	static async getAllForGitHubBaseUrlAndInstallationId(
 		gitHubBaseUrl: string,
 		installationId: number
-	): Promise<GitHubServerApp[] | null> {
-		if (!gitHubBaseUrl || !installationId) {
-			return null;
-		}
-
+	): Promise<GitHubServerApp[]> {
 		return this.findAll({
 			where: {
 				gitHubBaseUrl,
@@ -159,6 +155,12 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 
 		return gitHubServerApp;
+	}
+
+	static async uninstall(uuid: string): Promise<void> {
+		await this.destroy({
+			where: { uuid }
+		});
 	}
 
 	/**

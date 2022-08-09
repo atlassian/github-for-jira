@@ -4,7 +4,6 @@ import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handle
 import { Context, ErrorHandlingResult } from "./sqs";
 import { getLogger } from "config/logger";
 import { JiraClientError } from "../jira/client/axios";
-import { RateLimitingError as OldRateLimitingError } from "config/enhance-octokit";
 import { Octokit } from "probot";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { AxiosResponse, AxiosResponseHeaders } from "axios";
@@ -97,14 +96,6 @@ describe("error-handlers", () => {
 
 			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(500), createContext(1, true));
 			expect(result.retryable).toBe(true);
-			expect(result.isFailure).toBe(true);
-		});
-
-		it("Retryable with proper delay on Rate Limiting (old)", async () => {
-			const result = await jiraAndGitHubErrorsHandler(new OldRateLimitingError(Math.floor(new Date("2020-01-01").getTime() / 1000) + 100), createContext(1, false));
-			expect(result.retryable).toBe(true);
-			//Make sure delay is equal to recommended delay + 10 seconds
-			expect(result.retryDelaySec).toBe(110);
 			expect(result.isFailure).toBe(true);
 		});
 
