@@ -37,6 +37,7 @@ describe("Github Setup", () => {
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
+			githubAppTokenNock();
 			await supertest(frontendApp)
 				.get("/github/setup")
 				.expect(422);
@@ -55,6 +56,7 @@ describe("Github Setup", () => {
 
 		it("should return 200 without jiraHost", async () => {
 			githubAppTokenNock();
+
 			githubNock
 				.get(`/app/installations/${installation_id}`)
 				.reply(200, singleInstallation);
@@ -66,6 +68,7 @@ describe("Github Setup", () => {
 
 		it("should return 200 with jiraHost", async () => {
 			githubAppTokenNock();
+
 			githubNock
 				.get(`/app/installations/${installation_id}`)
 				.reply(200, singleInstallation);

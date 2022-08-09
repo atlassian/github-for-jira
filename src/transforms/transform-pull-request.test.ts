@@ -6,8 +6,10 @@ import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
 
 describe("pull_request transform", () => {
-	const githubInstallationId = 1234;
+	const gitHubInstallationId = 1234;
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
+		githubUserTokenNock(gitHubInstallationId);
+
 		const fixture = transformPullRequestList[0];
 		fixture.title = "[TES-123] Branch payload Test";
 
@@ -19,7 +21,7 @@ describe("pull_request transform", () => {
 				name: "Some User Name"
 			});
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), getLogger("test"));
 		const data = await transformPullRequest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
@@ -56,6 +58,9 @@ describe("pull_request transform", () => {
 	});
 
 	it("should contain branches on the payload if pull request status is different than closed.", async () => {
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+
 		const pullRequestList = Object.assign({},
 			transformPullRequestList
 		);
@@ -77,7 +82,7 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), getLogger("test"));
 		const data = await transformPullRequest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
@@ -141,6 +146,9 @@ describe("pull_request transform", () => {
 	});
 
 	it("should not contain createPullRequestUrl on the payload if length > 2000", async () => {
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+
 		const pullRequestList = Object.assign({},
 			transformPullRequestList
 		);
@@ -162,7 +170,7 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), getLogger("test"));
 		const data = await transformPullRequest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
