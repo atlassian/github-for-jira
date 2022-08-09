@@ -37,7 +37,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 			baseUrl: `${gitHubServerApp.gitHubBaseUrl}/api/v3`,
 			appId: gitHubServerApp.appId,
 			gitHubClientId: gitHubServerApp.gitHubClientId,
-			gitHubClientSecret: gitHubServerApp.gitHubClientSecret,
+			gitHubClientSecret: await gitHubServerApp.decrypt("gitHubClientSecret"),
 			privateKey: await gitHubServerApp.decrypt("privateKey")
 		};
 	}
