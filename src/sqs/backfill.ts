@@ -1,5 +1,4 @@
 import { MessageHandler } from "./sqs";
-import { workerApp } from "../worker/app";
 import { processInstallation } from "../sync/installation";
 import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
@@ -27,7 +26,7 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	}
 
 	try {
-		const processor = await processInstallation(workerApp);
+		const processor = await processInstallation();
 		await processor(backfillData, sentry, context.log);
 	} catch (err) {
 		sentry.setExtra("job", {

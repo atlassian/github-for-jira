@@ -27,6 +27,8 @@
         "/public/**",
         "/session",
         "/session/**",
+        "/error",
+        "/error/**",
         "/setup"
       ],
       "methods": [
