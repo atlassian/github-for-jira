@@ -28,7 +28,7 @@ export class Installation extends EncryptedModel {
 	}
 
 	async getEncryptContext() {
-		return { clientKey: this.clientKey };
+		return { };
 	}
 
 	getSecretFields() {
