@@ -42,7 +42,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 	const mockGitHubReposResponses = () => {
 		githubUserTokenNock(TEST_INSTALLATION_ID);
 		githubNock
-			.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, cursor: null } })
+			.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20 } })
 			.reply(200, { data: getRepositories });
 	};
 
@@ -53,7 +53,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID);
 			expect(subscription).toBeTruthy();
 			const states = await RepoSyncState.findAllFromSubscription(subscription!);
-			expect(states.length).toBe(2);
+			expect(states?.length).toBe(2);
 		});
 	});
 });

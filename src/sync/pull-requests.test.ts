@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import { mocked } from "ts-jest/utils";
-import { Subscription, RepoSyncStateObject } from "models/subscription";
+import { Subscription } from "models/subscription";
 import { processInstallation } from "./installation";
 import nock from "nock";
 import { getLogger } from "config/logger";
@@ -19,37 +18,13 @@ describe.skip("sync/pull-request", () => {
 
 	beforeEach(async () => {
 		jest.setTimeout(10000);
-		const repoSyncStatus: RepoSyncStateObject = {
+		await Subscription.install({
 			installationId: 12345678,
-			jiraHost: "tcbyrd.atlassian.net",
-			repos: {
-				"test-repo-id": {
-					repository: {
-						name: "test-repo-name",
-						full_name: "test-repo-name",
-						owner: { login: "integrations" },
-						html_url: "test-repo-url",
-						id: 1234,
-						updated_at: "123456789"
-					},
-					pullStatus: "pending",
-					branchStatus: "complete",
-					commitStatus: "complete"
-				}
-			}
-		};
+			host: jiraHost,
+			clientKey: "client-key"
+		});
 
 		mockSystemTime(12345678);
-
-		mocked(Subscription.getSingleInstallation)
-			.mockResolvedValue({
-				jiraHost,
-				id: 1,
-				get: () => repoSyncStatus,
-				set: () => repoSyncStatus,
-				save: () => Promise.resolve({}),
-				update: () => Promise.resolve({})
-			} as any);
 
 	});
 

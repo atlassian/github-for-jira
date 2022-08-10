@@ -74,6 +74,8 @@ describe("sync/deployments", () => {
 			repoOwner: "integrations",
 			repoFullName: "test-repo-name",
 			repoUrl: "test-repo-url",
+			repoUpdatedAt: new Date(),
+			repoPushedAt: new Date(),
 			branchStatus: "complete",
 			commitStatus: "complete",
 			pullStatus: "complete",
@@ -85,7 +87,6 @@ describe("sync/deployments", () => {
 
 		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 		githubUserTokenNock(installationId);
-
 	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
