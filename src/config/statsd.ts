@@ -1,7 +1,7 @@
 import { StatsCb, StatsD, Tags } from "hot-shots";
 import { getLogger } from "./logger";
 import { NextFunction, Request, Response } from "express";
-import { isNodeDev, isNodeTest } from "utils/is-node-env";
+import { isNodeProd, isNodeTest } from "utils/is-node-env";
 import { metricHttpRequest } from "./metric-names";
 import { envVars } from "./env";
 
@@ -21,12 +21,12 @@ export const statsd = new StatsD({
 	port: 8125,
 	globalTags,
 	errorHandler: (err) => {
-		if (!isNodeDev()) {
+		if (isNodeProd()) {
 			logger.warn(err, "Error writing metrics");
 		}
 	},
 
-	mock: isNodeTest()
+	mock: !isNodeProd()
 });
 
 /**
