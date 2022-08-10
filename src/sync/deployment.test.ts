@@ -1,34 +1,26 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
-import { deploymentsNoLastCursor } from "fixtures/api/graphql/deployment-queries";
 import { processInstallation } from "./installation";
 import { Installation } from "models/installation";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
-import { mocked } from "ts-jest/utils";
-import { Application } from "probot";
-import { createWebhookApp } from "test/utils/probot";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import { BackfillMessagePayload } from "../sqs/backfill";
-
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
+import { getDeploymentsQuery } from "~/src/github/client/github-queries";
+import { waitUntil } from "test/utils/wait-until";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
 describe("sync/deployments", () => {
-	let app: Application;
 	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
-	const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
+	const mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
 
 	const makeExpectedJiraResponse = (deployments) => ({
 		deployments,
@@ -37,17 +29,16 @@ describe("sync/deployments", () => {
 		}
 	});
 
-	const getDeploymentsQuery = () => {
-		return deploymentsNoLastCursor({
-			owner: "integrations",
-			repo: "test-repo-name",
-			per_page: 20
-		});
-	};
-
 	const createGitHubNock = (deploymentsResponse?) => {
 		githubNock
-			.post("/graphql", getDeploymentsQuery())
+			.post("/graphql", {
+				query: getDeploymentsQuery,
+				variables: {
+					owner: "integrations",
+					repo: "test-repo-name",
+					per_page: 20
+				}
+			})
 			.query(true)
 			.reply(200, deploymentsResponse);
 	};
@@ -92,15 +83,7 @@ describe("sync/deployments", () => {
 			createdAt: new Date()
 		});
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.BACKFILL_FOR_BUILDS_AND_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-
-		app = await createWebhookApp();
-		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
-
+		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 		githubUserTokenNock(installationId);
 
 	});
@@ -115,8 +98,12 @@ describe("sync/deployments", () => {
 		const data: BackfillMessagePayload = { installationId, jiraHost };
 
 		githubUserTokenNock(installationId);
+		githubUserTokenNock(installationId);
+		githubUserTokenNock(installationId);
+		githubUserTokenNock(installationId);
 
 		createGitHubNock(deploymentNodesFixture);
+
 		githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)
 			.reply(200, {
 				commit: {
@@ -130,132 +117,280 @@ describe("sync/deployments", () => {
 				html_url: `test-repo-url/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`
 			});
 
-		const deployments = [
-			{
-				schemaVersion: "1.0",
-				deploymentSequenceNumber: 500226426,
-				updateSequenceNumber: 500226426,
-				issueKeys:
-					[
-						"TEST-123"
-					],
-				displayName: "deploy",
-				url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
-				description: "deploy",
-				lastUpdated: "2022-02-03T22:45:04.000Z",
-				state: "successful",
-				pipeline:
-					{
-						id: "deploy",
-						displayName: "deploy",
-						url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+		githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments`)
+			.query(true)
+			.reply(200, [
+				{
+					"id": 1,
+					"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+					"ref": "topic-branch",
+					"task": "deploy",
+					"payload": {},
+					"original_environment": "staging",
+					"environment": "production",
+					"description": "Deploy request from hubot",
+					"creator": {
+						"login": "test-repo-owner",
+						"id": 1,
+						"type": "User"
 					},
-				environment:
+					"created_at": "2012-07-20T01:19:13Z",
+					"updated_at": "2012-07-20T01:19:13Z",
+					"statuses_url": "https://api.github.com/repos/octocat/example/deployments/1/statuses",
+					"repository_url": "https://api.github.com/repos/octocat/example",
+					"transient_environment": false,
+					"production_environment": true
+				}
+			]);
+
+		githubNock.get(`/repos/test-repo-owner/test-repo-name/compare/a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d...51e16759cdac67b0d2a94e0674c9603b75a840f6`)
+			.reply(200, {
+				"total_commits": 2,
+				"commits": [
 					{
-						id: "prod",
-						displayName: "prod",
-						type: "production"
+						"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+						"commit": {
+							"message": "base commit"
+						}
+					},
+					{
+						"sha": "51e16759cdac67b0d2a94e0674c9603b75a840f6",
+						"commit": {
+							"message": "head commit"
+						}
 					}
-			}
-		];
+				]
+			});
 
-		createJiraNock(deployments);
+		githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/1/statuses`)
+			.query(true)
+			.reply(200, [
+				{
+					"id": 1,
+					"state": "success",
+					"description": "Deployment finished successfully.",
+					"environment": "production"
+				}
+			]);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		createJiraNock([{
+			"schemaVersion": "1.0",
+			"deploymentSequenceNumber": 500226426,
+			"updateSequenceNumber": 500226426,
+			"displayName": "deploy",
+			"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
+			"description": "deploy",
+			"lastUpdated": "2022-02-03T22:45:04.000Z",
+			"state": "successful",
+			"pipeline": {
+				"id": "deploy",
+				"displayName": "deploy",
+				"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+			},
+			"environment": {
+				"id": "prod",
+				"displayName": "prod",
+				"type": "production"
+			},
+			"associations": [
+				{
+					"associationType": "issueIdOrKeys",
+					"values": ["TEST-123"]
+				},
+				{
+					"associationType": "commit",
+					"values": [
+						{
+							"commitHash": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+							"repositoryId": "19"
+						},
+						{
+							"commitHash": "51e16759cdac67b0d2a94e0674c9603b75a840f6",
+							"repositoryId": "19"
+						}
+					]
+				}]
+		}]);
+
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+
+		await waitUntil(async () => {
+			expect(githubNock).toBeDone();
+			expect(jiraNock).toBeDone();
+		});
+
 		verifyMessageSent(data);
 	});
 
 	it("should send Jira all deployments that have Issue Keys", async () => {
 		const data = { installationId, jiraHost };
 
-		githubUserTokenNock(installationId);
-
 		createGitHubNock(mixedDeploymentNodes);
 
-		githubUserTokenNock(installationId);
-		githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)
-			.reply(200, {
-				commit: {
-					author: {
-						name: "test-branch-author-name",
-						email: "test-branch-author-name@github.com",
-						date: "test-branch-author-date"
-					},
-					message: "[TEST-123] test-commit-message"
-				},
-				html_url: `test-repo-url/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`
+		["51e16759cdac67b0d2a94e0674c9603b75a840f6", "7544f2fec0321a32d5effd421682463c2ebd5018"]
+			.forEach((commitId, index) => {
+				index++;
+				githubUserTokenNock(installationId);
+				githubUserTokenNock(installationId);
+				githubUserTokenNock(installationId);
+				githubUserTokenNock(installationId);
+				githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${commitId}`)
+					.reply(200, {
+						commit: {
+							author: {
+								name: "test-branch-author-name",
+								email: "test-branch-author-name@github.com",
+								date: "test-branch-author-date"
+							},
+							message: `[TEST-${index * 123}] test-commit-message ${index}`
+						},
+						html_url: `test-repo-url/commits/${commitId}`
+					});
+
+				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments`)
+					.query(true)
+					.reply(200, [
+						{
+							"id": 1,
+							"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+							"ref": "topic-branch",
+							"task": "deploy",
+							"payload": {},
+							"original_environment": "staging",
+							"environment": "production",
+							"description": "Deploy request from hubot",
+							"creator": {
+								"login": "test-repo-owner",
+								"id": 1,
+								"type": "User"
+							},
+							"created_at": "2012-07-20T01:19:13Z",
+							"updated_at": "2012-07-20T01:19:13Z",
+							"statuses_url": "https://api.github.com/repos/octocat/example/deployments/1/statuses",
+							"repository_url": "https://api.github.com/repos/octocat/example",
+							"transient_environment": false,
+							"production_environment": true
+						}
+					]);
+
+				githubNock.get(`/repos/test-repo-owner/test-repo-name/compare/a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d...${commitId}`)
+					.reply(200, {
+						"total_commits": 2,
+						"commits": [
+							{
+								"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+								"commit": {
+									"message": "base commit"
+								}
+							},
+							{
+								"sha": commitId,
+								"commit": {
+									"message": "head commit"
+								}
+							}
+						]
+					});
+
+				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/1/statuses`)
+					.query(true)
+					.reply(200, [
+						{
+							"id": 1,
+							"state": "success",
+							"description": "Deployment finished successfully.",
+							"environment": "production"
+						}
+					]);
 			});
 
-		githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)
-			.reply(200, {
-				commit: {
-					author: {
-						name: "test-branch-author-name",
-						email: "test-branch-author-name@github.com",
-						date: "test-branch-author-date"
-					},
-					message: "[TEST-222] test-commit-message"
-				},
-				html_url: `test-repo-url/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`
-			});
-
-		const deployments = [
+		createJiraNock([
 			{
 				schemaVersion: "1.0",
 				deploymentSequenceNumber: 500226426,
 				updateSequenceNumber: 500226426,
-				issueKeys:
-					[
-						"TEST-123"
-					],
 				displayName: "deploy",
 				url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
 				description: "deploy",
 				lastUpdated: "2022-02-03T22:45:04.000Z",
 				state: "successful",
-				pipeline:
+				pipeline: {
+					id: "deploy",
+					displayName: "deploy",
+					url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+				},
+				environment: {
+					id: "prod",
+					displayName: "prod",
+					type: "production"
+				},
+				associations: [
 					{
-						id: "deploy",
-						displayName: "deploy",
-						url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+						associationType: "issueIdOrKeys",
+						values: ["TEST-123"]
 					},
-				environment:
 					{
-						id: "prod",
-						displayName: "prod",
-						type: "production"
+						associationType: "commit",
+						values: [
+							{
+								commitHash: "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+								repositoryId: "24"
+							},
+							{
+								commitHash: "51e16759cdac67b0d2a94e0674c9603b75a840f6",
+								repositoryId: "24"
+							}
+						]
 					}
+				]
 			},
 			{
 				schemaVersion: "1.0",
 				deploymentSequenceNumber: 1234,
 				updateSequenceNumber: 1234,
-				issueKeys:
-					[
-						"TEST-222"
-					],
 				displayName: "deploy",
-				url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
+				url: "https://github.com/test-repo-owner/test-repo-name/commit/7544f2fec0321a32d5effd421682463c2ebd5018/checks",
 				description: "deploy",
 				lastUpdated: "2022-02-03T22:45:04.000Z",
 				state: "successful",
-				pipeline:
+				pipeline: {
+					id: "deploy",
+					displayName: "deploy",
+					url: "https://github.com/test-repo-owner/test-repo-name/commit/7544f2fec0321a32d5effd421682463c2ebd5018/checks"
+				},
+				environment: {
+					id: "prod",
+					displayName: "prod",
+					type: "production"
+				},
+				associations: [
 					{
-						id: "deploy",
-						displayName: "deploy",
-						url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+						associationType: "issueIdOrKeys",
+						values: ["TEST-246"]
 					},
-				environment:
 					{
-						id: "prod",
-						displayName: "prod",
-						type: "production"
+						associationType: "commit",
+						values: [
+							{
+								commitHash: "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+								repositoryId: "42"
+							},
+							{
+								commitHash: "7544f2fec0321a32d5effd421682463c2ebd5018",
+								repositoryId: "42"
+							}
+						]
 					}
+				]
 			}
-		];
-		createJiraNock(deployments);
+		]);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+
+		await waitUntil(async () => {
+			expect(githubNock).toBeDone();
+			expect(jiraNock).toBeDone();
+		});
 		verifyMessageSent(data);
 	});
 
@@ -281,7 +416,7 @@ describe("sync/deployments", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});
@@ -293,7 +428,7 @@ describe("sync/deployments", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});

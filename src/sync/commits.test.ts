@@ -6,12 +6,10 @@ import { Installation } from "models/installation";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
 import { mocked } from "ts-jest/utils";
-import { Application } from "probot";
-import { createWebhookApp } from "test/utils/probot";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import { BackfillMessagePayload } from "../sqs/backfill";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 import commitNodesFixture from "fixtures/api/graphql/commit-nodes.json";
 import mixedCommitNodes from "fixtures/api/graphql/commit-nodes-mixed.json";
 import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
@@ -22,7 +20,6 @@ jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
 describe("sync/commits", () => {
-	let app: Application;
 	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
 	const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
@@ -97,7 +94,6 @@ describe("sync/commits", () => {
 			createdAt: new Date()
 		});
 
-		app = await createWebhookApp();
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 		githubUserTokenNock(installationId);
 	});
@@ -133,7 +129,7 @@ describe("sync/commits", () => {
 		];
 		createJiraNock(commits);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 	});
 
@@ -200,7 +196,7 @@ describe("sync/commits", () => {
 		];
 		createJiraNock(commits);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 	});
 
@@ -212,7 +208,7 @@ describe("sync/commits", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});
@@ -224,7 +220,7 @@ describe("sync/commits", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});
@@ -269,8 +265,45 @@ describe("sync/commits", () => {
 			];
 			createJiraNock(commits);
 
-			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 			verifyMessageSent(data);
+		});
+
+
+		describe("Commit history value is passed", () => {
+			it("should use commit history depth parameter before feature flag time", async () => {
+
+				const time = Date.now();
+				const commitTimeLimitCutoff = 1000 * 60 * 60 * 72;
+				mockSystemTime(time);
+				const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
+				const data: BackfillMessagePayload = { installationId, jiraHost, commitsFromDate };
+
+				createGitHubNock(commitNodesFixture, { commitSince: commitsFromDate });
+				const commits = [
+					{
+						"author": {
+							"name": "test-author-name",
+							"email": "test-author-email@example.com"
+						},
+						"authorTimestamp": "test-authored-date",
+						"displayId": "test-o",
+						"fileCount": 0,
+						"hash": "test-oid",
+						"id": "test-oid",
+						"issueKeys": [
+							"TES-17"
+						],
+						"message": "[TES-17] test-commit-message",
+						"url": "https://github.com/test-login/test-repo/commit/test-sha",
+						"updateSequenceId": 12345678
+					}
+				];
+				createJiraNock(commits);
+
+				await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+				verifyMessageSent(data);
+			});
 		});
 	});
 });

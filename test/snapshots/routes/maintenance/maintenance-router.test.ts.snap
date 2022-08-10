@@ -28,6 +28,19 @@ Object {
         "name": Object {
           "value": "GitHub for Jira",
         },
+        "url": "/jira",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "gh-addon-admin-old",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub for Jira",
+        },
         "url": "/jira/configuration",
       },
     ],
@@ -38,12 +51,12 @@ Object {
             "condition": "user_is_admin",
           },
         ],
-        "key": "github-select-version-page",
+        "key": "github-select-product-page",
         "location": "none",
         "name": Object {
-          "value": "GitHub Select Version",
+          "value": "GitHub Select Product",
         },
-        "url": "/jira/select-version",
+        "url": "/jira/connect",
       },
       Object {
         "conditions": Array [
@@ -56,33 +69,7 @@ Object {
         "name": Object {
           "value": "GitHub Server Url",
         },
-        "url": "/jira/server-url",
-      },
-      Object {
-        "conditions": Array [
-          Object {
-            "condition": "user_is_admin",
-          },
-        ],
-        "key": "github-app-creation-page",
-        "location": "none",
-        "name": Object {
-          "value": "GitHub App Creation",
-        },
-        "url": "/jira/app-creation",
-      },
-      Object {
-        "conditions": Array [
-          Object {
-            "condition": "user_is_admin",
-          },
-        ],
-        "key": "github-edit-app-page",
-        "location": "none",
-        "name": Object {
-          "value": "GitHub Edit App",
-        },
-        "url": "/jira/edit-app/{ac.ghsaId}",
+        "url": "/jira/connect/enterprise?new={ac.new}",
       },
       Object {
         "conditions": Array [
@@ -95,7 +82,59 @@ Object {
         "name": Object {
           "value": "GitHub Enterprise Servers",
         },
-        "url": "/jira/ghe-servers",
+        "url": "/jira/connect/enterprise",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-app-creation-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub App Creation",
+        },
+        "url": "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-list-server-apps-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Server Apps",
+        },
+        "url": "/jira/connect/enterprise/{ac.serverUrl}/app",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-manual-app-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Manual App",
+        },
+        "url": "/jira/connect/enterprise/{ac.serverUrl}/app/new",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-edit-app-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Edit App",
+        },
+        "url": "/jira/connect/enterprise/app/{ac.uuid}",
       },
     ],
     "jiraBuildInfoProvider": Object {
@@ -148,7 +187,7 @@ Object {
       "name": Object {
         "value": "GitHub Configuration",
       },
-      "url": "/jira/configuration",
+      "url": "/jira",
     },
     "webSections": Array [
       Object {

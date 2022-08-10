@@ -1,15 +1,9 @@
 import { MessageHandler } from "./sqs";
-import { workerApp } from "../worker/app";
 import { processInstallation } from "../sync/installation";
 import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
-
-export type BackfillMessagePayload = {
-	installationId: number,
-	jiraHost: string,
-	startTime?: string
-}
+import { BackfillMessagePayload  } from "./sqs.types";
 
 export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload> = async (context) => {
 	const sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
@@ -32,7 +26,7 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	}
 
 	try {
-		const processor = await processInstallation(workerApp);
+		const processor = await processInstallation();
 		await processor(backfillData, sentry, context.log);
 	} catch (err) {
 		sentry.setExtra("job", {

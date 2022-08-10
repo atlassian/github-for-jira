@@ -1,30 +1,40 @@
-import Logger, { createLogger, INFO, levelFromName, stdSerializers } from "bunyan";
+import Logger, { createLogger, INFO, levelFromName, LoggerOptions, stdSerializers } from "bunyan";
 import { RawLogStream } from "utils/logger-utils";
-import { Request } from "express";
-import { AxiosResponse } from "axios";
-
+import { isArray, isString, omit } from "lodash";
 export const FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME = "frontend-log-middleware";
 
-const responseSerializer = (res: AxiosResponse) => ({
+const responseSerializer = (res) => res && ({
 	...stdSerializers.res(res),
-	config: res?.config,
+	config: res.config,
 	request: requestSerializer(res.request)
 });
 
-const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
+const requestSerializer = (req) => req && ({
 	method: req.method,
 	url: req.originalUrl || req.url,
 	path: req.path,
 	headers: req.headers,
-	remoteAddress: req.socket.remoteAddress,
-	remotePort: req.socket.remotePort,
+	remoteAddress: req.socket?.remoteAddress,
+	remotePort: req.socket?.remotePort,
 	body: req.body
-};
+});
 
-const errorSerializer = (err) => err && {
-	...err,
-	response: stdSerializers.res(err.response),
-	request: requestSerializer(err.request)
+const errorSerializer = (err) => {
+	if (!err) {
+		return err;
+	}
+
+	if (isArray(err)) {
+		err = { data: err };
+	} else if (isString(err)) {
+		err = { message: err };
+	}
+
+	return {
+		...err,
+		response: responseSerializer(err.response),
+		request: requestSerializer(err.request)
+	};
 };
 
 const logLevel = process.env.LOG_LEVEL || "info";
@@ -47,22 +57,24 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	probotLogger.addStream(loggerStream(true));
 };
 
-const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger => {
-	return createLogger(
-		{
-			name,
-			streams: [
-				loggerStream(false),
-				loggerStream(true)
-			],
-			level: globalLoggingLevel,
-			serializers: {
-				err: errorSerializer,
-				res: responseSerializer,
-				req: requestSerializer
-			},
-			...fields
-		});
+const createNewLogger = (name: string, options: Partial<LoggerOptions> = {}): Logger => {
+	return createLogger({
+		name,
+		streams: [
+			loggerStream(false),
+			loggerStream(true)
+		],
+		level: globalLoggingLevel,
+		serializers: {
+			err: errorSerializer,
+			error: errorSerializer,
+			res: responseSerializer,
+			response: responseSerializer,
+			req: requestSerializer,
+			request: requestSerializer
+		},
+		...options
+	});
 };
 
 export const getLogger = (name: string, fields?: Record<string, unknown>): Logger => {
@@ -70,17 +82,7 @@ export const getLogger = (name: string, fields?: Record<string, unknown>): Logge
 	return logger.child({ ...fields });
 };
 
-// This will log data to a restricted environment [env]-unsafe and not serialize sensitive data
-export const getUnsafeLogger = (name: string, fields?: Record<string, unknown>): Logger => {
-	const logger = createNewLogger(name, { env_suffix: "unsafe" });
-	return logger.child({ ...fields });
-};
-
-export const cloneAllowedLogFields = (fields: Record<string, any>) => {
-	const allowedFields = { ...fields };
-	delete allowedFields.name;
-	return allowedFields;
-};
+export const cloneAllowedLogFields = (fields: Record<string, unknown>) => omit(fields, ["name"]);
 
 //Override console.log with bunyan logger.
 //we shouldn't use console.log in our code, but it is done to catch

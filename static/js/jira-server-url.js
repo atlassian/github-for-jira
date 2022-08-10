@@ -13,7 +13,7 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 			field.invalidate(AJS.format('The entered URL is not valid. <a href="#">Learn more</a>.'));
 		}
 		else if (GITHUB_CLOUD.includes(hostname)) {
-			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration" target="_blank">Connect a GitHub Cloud site<a/>.'));
+			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
 		} else {
 			field.validate();
 		}
@@ -73,7 +73,7 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 	const csrf = document.getElementById("_csrf").value
 
 	AP.context.getToken(function(token) {
-		$.post("/jira/server-url", {
+		$.post("/jira/connect/enterprise", {
 				gheServerURL,
 				_csrf: csrf,
 				jwt: token,
@@ -81,11 +81,13 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 			},
 			function(data) {
 				if (data.success) {
-					const pagePath = data.appExists ? "github-list-servers-page" : "github-app-creation-page";
+					const pagePath = data.appExists ? "github-list-server-apps-page" : "github-app-creation-page";
+					const customData = data.appExists ?  { serverUrl: gheServerURL } : { serverUrl: gheServerURL, new: 1 };
 					AP.navigator.go(
 						"addonmodule",
 						{
-							moduleKey: pagePath
+							moduleKey: pagePath,
+							customData
 						}
 					);
 				} else {
