@@ -36,7 +36,7 @@ describe("webhook-receiver-post", () => {
 		};
 	};
 
-	const gitHubAppConfigForES= () => {
+	const gitHubAppConfigForGHES= () => {
 		return {
 			gitHubAppId: gitHubApp.id,
 			appId: gitHubApp.appId,
@@ -86,8 +86,7 @@ describe("webhook-receiver-post", () => {
 				send: jest.fn()
 			})
 		};
-		req = createGHESReqForEvent("push", "", EXIST_GHES_UUID);
-		req.headers["x-hub-signature-256"] = "invalid-signature";
+		req = createReqWithInvalidSignature("push", EXIST_GHES_UUID);
 
 		await WebhookReceiverPost(req, res);
 		expect(res.status).toBeCalledWith(400);
@@ -131,7 +130,7 @@ describe("webhook-receiver-post", () => {
 			expect(spy).toBeCalledWith(expect.objectContaining({
 				id: "100",
 				name: "push",
-				gitHubAppConfig: gitHubAppConfigForES()
+				gitHubAppConfig: gitHubAppConfigForGHES()
 			}));
 		});
 	});
@@ -145,7 +144,7 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "push",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
@@ -160,7 +159,7 @@ describe("webhook-receiver-post", () => {
 			id: "100",
 			name: "issues",
 			action: "opened",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
@@ -174,7 +173,7 @@ describe("webhook-receiver-post", () => {
 			id: "100",
 			name: "pull_request",
 			action: "opened",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
@@ -187,7 +186,7 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "pull_request_review",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
@@ -200,7 +199,7 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "create",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
@@ -213,7 +212,7 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "delete",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
@@ -227,7 +226,7 @@ describe("webhook-receiver-post", () => {
 			id: "100",
 			name: "repository",
 			action: "deleted",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
@@ -240,7 +239,7 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "workflow_run",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
@@ -253,7 +252,7 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "deployment_status",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
@@ -266,52 +265,37 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "code_scanning_alert",
-			gitHubAppConfig: gitHubAppConfigForES()
+			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
 
 });
 
 const createReqWithInvalidSignature = (event: string, uuid?: string) => {
-	const body = {};
-
-	const req = {
-		headers: {
-			"x-hub-signature-256": "invalid-signature",
-			"x-github-event": event,
-			"x-github-delivery": "100"
-		},
-		params: {
-			uuid
-		},
-		body
-	};
-	return req;
+	return createReqForEvent({ event, uuid, signature: "invalid-signature" });
 };
 
 const createCloudReqForEvent = (event: string, action?: string) => {
-	const body = action ? { action } : {};
-
-	const req = {
-		headers: {
-			"x-hub-signature-256": createHash(JSON.stringify(body), CLOUD_WEBHOOK_SECRET),
-			"x-github-event": event,
-			"x-github-delivery": "100"
-		},
-		params: {
-			uuid: undefined
-		},
-		body
-	};
-	return req;
+	return createReqForEvent({
+		event, action, webhookSecret: CLOUD_WEBHOOK_SECRET
+	});
 };
 
 const createGHESReqForEvent = (event: string, action?: string, uuid?: string) => {
+	return createReqForEvent({
+		event, action, uuid, webhookSecret: GHES_WEBHOOK_SECRET
+	});
+};
+
+const createReqForEvent = (
+	{ event, action, uuid, webhookSecret, signature }:
+	{event: string, action?: string, uuid?: string, webhookSecret?: string, signature?: string }
+) => {
 	const body = action ? { action } : {};
 
 	const req = {
 		headers: {
-			"x-hub-signature-256": createHash(JSON.stringify(body), GHES_WEBHOOK_SECRET),
+			"x-hub-signature-256": signature || createHash(JSON.stringify(body), webhookSecret || ""),
 			"x-github-event": event,
 			"x-github-delivery": "100"
 		},
