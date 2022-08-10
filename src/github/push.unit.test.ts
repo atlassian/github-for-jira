@@ -20,13 +20,13 @@ describe("PushWebhookHandler", ()=>{
 		util = null;
 	});
 	describe("GitHub Cloud", ()=>{
-		it("should NOT push GitHubAppConfig", async ()=>{
+		it("should be called WITHOUT GitHubAppConfig", async ()=>{
 			await pushWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID);
 			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), undefined);
 		});
 	});
-	describe("GitHub Enterprise Serer", ()=>{
-		it("should push GitHubAppConfig", async ()=>{
+	describe("GitHub Enterprise Server", ()=>{
+		it("should be called WITH GitHubAppConfig", async ()=>{
 			await pushWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID);
 			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), expect.objectContaining({
 				uuid: GHES_GITHUB_UUID,
