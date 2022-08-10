@@ -18,7 +18,7 @@ const getAppManifest = () => {
 	return {
 		"name": "ghe-app-for-jira",
 		"url": "https://github.com/marketplace/jira-software-github",
-		"redirect_url": `${appHost}/github/${uuid}/manifest/complete`,
+		"redirect_url": `${appHost}/github/manifest/${uuid}/complete`,
 		"hook_attributes": {
 			"url": `${appHost}/github/${uuid}/webhooks`
 		},

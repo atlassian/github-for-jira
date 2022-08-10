@@ -3,5 +3,5 @@ import { GithubManifestCompleteGet } from "~/src/routes/github/manifest/github-m
 
 export const GithubManifestRouter = Router();
 
-GithubManifestRouter.route("/complete")
+GithubManifestRouter.route("/:uuid/complete")
 	.get(GithubManifestCompleteGet);
