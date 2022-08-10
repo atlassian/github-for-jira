@@ -32,12 +32,12 @@ ApiRouter.use(LogMiddleware);
 // And also log how the request was authenticated
 
 ApiRouter.use(
-	async (_req: Request, _res: Response, next: NextFunction): Promise<void> => {
-		/* const mechanism = req.get("X-Slauth-Mechanism");
+	async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+		const mechanism = req.get("X-Slauth-Mechanism");
 		const issuer = req.get("X-Slauth-Issuer");
-		const principal = req.get("X-Slauth-Principal"); */
+		const principal = req.get("X-Slauth-Principal");
 
-		/* req.log = req.log.child({ slauth: {
+		req.log = req.log.child({ slauth: {
 			mechanism,
 			issuer,
 			principal,
@@ -52,7 +52,7 @@ ApiRouter.use(
 			return;
 		}
 
-		req.log.info("API Request successfully authenticated"); */
+		req.log.info("API Request successfully authenticated");
 
 		next();
 	}
