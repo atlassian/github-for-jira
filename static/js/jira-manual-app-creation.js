@@ -1,10 +1,57 @@
+const params = new URLSearchParams(window.location.search.substring(1));
+const jiraHost = params.get("xdm_e");
+
+const openChildWindow = (url) => {
+  const child = window.open(url);
+  const interval = setInterval(function () {
+    if (child.closed) {
+      clearInterval(interval);
+      AP.navigator.go(
+        'addonmodule',
+        {
+          moduleKey: "github-post-install-page"
+        }
+      );
+    }
+  }, 1000);
+
+  return child;
+}
+
 AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
   event.preventDefault();
   const form = event.target;
-  const data = new FormData(form);
+  const csrf = $("#_csrf").val();
+  const data = $(form).serializeObject();
+  const isUpdate = $('input[type=submit]').val() === "Update";
 
-  // TODO: Form submission
-  console.log("Submit Form", data);
+  // Reading the content of the file
+  const file = $("#privateKeyFile")[0].files[0];
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+
+  reader.onload = () => {
+    data.privateKey = reader.result;
+
+    AP.context.getToken((token) => {
+      data.jwt = token;
+      data._csrf = csrf;
+      data.jiraHost = jiraHost;
+
+      if (isUpdate) {
+        // TODO: Do a put request to update the existing app
+      } else {
+         $.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
+          if (result.status === 201) {
+            // TODO: This doesn't work, will be done in ARC-1565
+            const child = openChildWindow(`/session/github/${response.data.uuid}/configuration?ghRedirect=to`);
+            child.window.jiraHost = jiraHost;
+            child.window.jwt = token;
+          }
+        });
+      }
+    });
+  };
 });
 
 $(".jiraManualAppCreation__formFileInput")

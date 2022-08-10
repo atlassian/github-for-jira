@@ -4,13 +4,11 @@ import { mocked } from "ts-jest/utils";
 import { Installation } from "models/installation";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
-import { Application } from "probot";
-import { createWebhookApp } from "test/utils/probot";
 import { processInstallation } from "./installation";
 import { getLogger } from "config/logger";
 import { cleanAll } from "nock";
 import { Hub } from "@sentry/types/dist/hub";
-import { BackfillMessagePayload } from "../sqs/backfill";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { sqsQueues } from "../sqs/queues";
 
 import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
@@ -30,7 +28,6 @@ jest.mock("config/feature-flags");
 describe("sync/branches", () => {
 	const installationId = 1234;
 
-	let app: Application;
 	const sentry: Hub = { setUser: jest.fn() } as any;
 
 	const makeExpectedResponse = (branchName) => ({
@@ -153,9 +150,6 @@ describe("sync/branches", () => {
 		});
 
 		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
-
-		app = await createWebhookApp();
-
 		githubUserTokenNock(installationId);
 
 	});
@@ -177,7 +171,7 @@ describe("sync/branches", () => {
 			)
 			.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 	});
 
@@ -192,7 +186,7 @@ describe("sync/branches", () => {
 			)
 			.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 	});
 
@@ -244,7 +238,7 @@ describe("sync/branches", () => {
 			})
 			.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 	});
 
@@ -254,7 +248,7 @@ describe("sync/branches", () => {
 
 		jiraNock.post(/.*/).reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data);
 		expect(jiraNock).not.toBeDone();
 		cleanAll();
@@ -263,7 +257,7 @@ describe("sync/branches", () => {
 	it("should reschedule message with delay if there is rate limit", async () => {
 		const data = { installationId, jiraHost };
 		nockGitHubGraphQlRateLimit("12360");
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		verifyMessageSent(data, 15);
 	});
 
@@ -294,7 +288,7 @@ describe("sync/branches", () => {
 				)
 				.reply(200);
 
-			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 			verifyMessageSent(data);
 		});
 
@@ -315,7 +309,7 @@ describe("sync/branches", () => {
 					)
 					.reply(200);
 
-				await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+				await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 				verifyMessageSent(data);
 			});
 		});

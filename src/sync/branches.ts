@@ -1,16 +1,14 @@
 import { transformBranches } from "./transforms/branch";
-import { GitHubAPI } from "probot";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
-import { BackfillMessagePayload } from "~/src/sqs/backfill";
+import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { NumberFlags } from "config/feature-flags";
 import { getCommitSinceDate } from "~/src/sync/sync-utils";
 
 // TODO: better typings
 export const getBranchTask = async (
 	logger: Logger,
-	_github: GitHubAPI,
 	newGithub: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,

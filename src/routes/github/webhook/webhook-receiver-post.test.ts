@@ -5,6 +5,10 @@ import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
+import { deleteRepository } from "~/src/github/repository";
+import { workflowWebhookHandler } from "~/src/github/workflow";
+import { deploymentWebhookHandler } from "~/src/github/deployment";
+import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
 
@@ -15,6 +19,17 @@ describe("webhook-receiver-post", () => {
 
 	let req;
 	let res;
+	let gitHubApp: GitHubServerApp;
+
+	const gitHubAppConfig = () => {
+		return expect.objectContaining({
+			gitHubAppId: gitHubApp.id,
+			appId: gitHubApp.appId,
+			clientId: gitHubApp.gitHubClientId,
+			gitHubBaseUrl: gitHubApp.gitHubBaseUrl,
+			uuid: gitHubApp.uuid
+		});
+	};
 
 	beforeEach(async () => {
 		res = {
@@ -35,7 +50,7 @@ describe("webhook-receiver-post", () => {
 			privateKey: "myprivatekey",
 			installationId: 10
 		};
-		await GitHubServerApp.install(payload);
+		gitHubApp = await GitHubServerApp.install(payload);
 	});
 
 	it("should throw an error if github app not found", async () => {
@@ -105,7 +120,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(pushWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "push"
+			name: "push",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -119,7 +135,8 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "issues",
-			action: "opened"
+			action: "opened",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -132,7 +149,8 @@ describe("webhook-receiver-post", () => {
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "pull_request",
-			action: "opened"
+			action: "opened",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -144,7 +162,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(pullRequestWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "pull_request_review"
+			name: "pull_request_review",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -156,7 +175,8 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(createBranchWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "create"
+			name: "create",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 
@@ -168,7 +188,61 @@ describe("webhook-receiver-post", () => {
 		expect(GithubWebhookMiddleware).toBeCalledWith(deleteBranchWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
-			name: "delete"
+			name: "delete",
+			gitHubAppConfig: gitHubAppConfig()
+		}));
+	});
+
+	it("should call delete repository handler", async () => {
+		req = createReqForEvent("repository", "deleted");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		await WebhookReceiverPost(req, res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(deleteRepository);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "repository",
+			action: "deleted",
+			gitHubAppConfig: gitHubAppConfig()
+		}));
+	});
+
+	it("should call workflow handler", async () => {
+		req = createReqForEvent("workflow_run");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		await WebhookReceiverPost(req, res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(workflowWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "workflow_run",
+			gitHubAppConfig: gitHubAppConfig()
+		}));
+	});
+
+	it("should call deployment handler", async () => {
+		req = createReqForEvent("deployment_status");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		await WebhookReceiverPost(req, res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(deploymentWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "deployment_status",
+			gitHubAppConfig: gitHubAppConfig()
+		}));
+	});
+
+	it("should call code scanning handler", async () => {
+		req = createReqForEvent("code_scanning_alert");
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		await WebhookReceiverPost(req, res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(codeScanningAlertWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "code_scanning_alert",
+			gitHubAppConfig: gitHubAppConfig()
 		}));
 	});
 

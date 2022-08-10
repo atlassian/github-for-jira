@@ -5281,6 +5281,11 @@ makeerror@1.0.12:
   dependencies:
     tmpl "1.0.5"
 
+matchstick@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/matchstick/-/matchstick-1.2.1.tgz#23b2168e6916d8a1f05edc1db359612738788b23"
+  integrity sha512-shyh9IWHF0XbWZ3zK4pcIWTkick+qcNIV+ZWNcFHgwFG3fxUxksdYkA46FlkTpKltG3ug/b1ZKq/tsNMfQyv4A==
+
 md5@^2.2.1:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/md5/-/md5-2.3.0.tgz#c3da9a6aae3a30b46b7b0c349b87b110dc3bda4f"
@@ -5481,10 +5486,10 @@ moment-timezone@^0.5.21:
   dependencies:
     moment ">= 2.9.0"
 
-"moment@>= 2.9.0", moment@^2.19.3, moment@^2.24.0, moment@^2.29.2:
-  version "2.29.3"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.3.tgz#edd47411c322413999f7a5940d526de183c031f3"
-  integrity sha512-c6YRvhEo//6T2Jz/vVtYzqBzwvPT95JBQ+smCytzf7c50oMZRsR/a4w88aD34I+/QVSfnoAnSBFPJHItlOMJVw==
+"moment@>= 2.9.0", moment@^2.19.3, moment@^2.24.0, moment@^2.29.4:
+  version "2.29.4"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.4.tgz#3dbe052889fe7c1b2ed966fcb3a77328964ef108"
+  integrity sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==
 
 moo@^0.5.0:
   version "0.5.1"

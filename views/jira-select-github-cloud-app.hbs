@@ -35,7 +35,7 @@
     />
     <div class="jiraSelectGitHubCloudApp">
       <header>
-         {{> navigation previousPageName="GitHub Application Creation" }}
+         {{> navigation }}
       </header>
 
       <section class="jiraSelectGitHubCloudApp__content">
@@ -50,6 +50,7 @@
             contentTitle="Applications in your server"
             textForAddNew="Create new application"
             pathNameForAddNew="github-app-creation-page"
+            queryStringForPath=queryStringForPath
             list=list
         }}
       </section>

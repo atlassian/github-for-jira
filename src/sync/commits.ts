@@ -1,14 +1,13 @@
 import { transformCommit } from "../transforms/transform-commit";
-import { GitHubAPI } from "probot";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
 import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitData } from "src/interfaces/jira";
 import { NumberFlags } from "config/feature-flags";
-import { TaskPayload } from "~/src/sync/installation";
-import { BackfillMessagePayload } from "~/src/sqs/backfill";
+import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { getCommitSinceDate } from "~/src/sync/sync-utils";
+import { TaskPayload } from "~/src/sync/sync.types";
 
 const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
@@ -23,7 +22,6 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 
 export const getCommitTask = async (
 	logger: Logger,
-	_github: GitHubAPI,
 	gitHubClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
