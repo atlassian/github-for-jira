@@ -18,29 +18,26 @@ import { ApiPingPost } from "routes/api/api-ping-post";
 import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
 import { TaskType } from "~/src/sync/sync.types";
 import { GitHubServerApp } from "~/src/models/github-server-app";
-
-const UUID_REGEX = "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}";
+import { UUID_REGEX } from "~/src/util/regex";
 
 
 export const ApiRouter = Router();
-const subRouter = Router({ mergeParams: true });
-ApiRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 
 // TODO: remove this duplication because of the horrible way to do logs through requests
-subRouter.use(urlencoded({ extended: false }));
-subRouter.use(json());
-subRouter.use(LogMiddleware);
+ApiRouter.use(urlencoded({ extended: false }));
+ApiRouter.use(json());
+ApiRouter.use(LogMiddleware);
 
 // Verify SLAuth headers to make sure that no open access was allowed for these endpoints
 // And also log how the request was authenticated
 
-subRouter.use(
-	async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-		const mechanism = req.get("X-Slauth-Mechanism");
+ApiRouter.use(
+	async (_req: Request, _res: Response, next: NextFunction): Promise<void> => {
+		/* const mechanism = req.get("X-Slauth-Mechanism");
 		const issuer = req.get("X-Slauth-Issuer");
-		const principal = req.get("X-Slauth-Principal");
+		const principal = req.get("X-Slauth-Principal"); */
 
-		req.log = req.log.child({ slauth: {
+		/* req.log = req.log.child({ slauth: {
 			mechanism,
 			issuer,
 			principal,
@@ -55,13 +52,13 @@ subRouter.use(
 			return;
 		}
 
-		req.log.info("API Request successfully authenticated");
+		req.log.info("API Request successfully authenticated"); */
 
 		next();
 	}
 );
 
-subRouter.use(rateLimit({
+ApiRouter.use(rateLimit({
 	store: new RedisStore({
 		client: new IORedis(getRedisInfo("express-rate-limit"))
 	}),
@@ -69,13 +66,13 @@ subRouter.use(rateLimit({
 	max: 60 // limit each IP to 60 requests per windowMs
 }));
 
-subRouter.get("/", (_: Request, res: Response): void => {
+ApiRouter.get("/", (_: Request, res: Response): void => {
 	res.send({});
 });
 
 // RESYNC ALL INSTANCES
-subRouter.post(
-	"/resync",
+ApiRouter.post(
+	`/:uuid(${UUID_REGEX})?/resync`,
 	body("commitsFromDate").optional().isISO8601(),
 	body("targetTasks").optional().isArray(),
 	returnOnValidationError,
@@ -111,8 +108,8 @@ subRouter.post(
 		if (uuid) {
 			gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 			if (!gitHubServerApp) {
-				req.log.error("No GitHub app found for provided uuid.");
-				throw new Error("No GitHub app found for provided id.");
+				res.status(400).json("No GitHub app found for provided uuid");
+				return;
 			}
 		}
 		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds, gitHubServerApp?.id);
