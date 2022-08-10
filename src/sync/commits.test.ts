@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
-import { commitsNoLastCursor } from "fixtures/api/graphql/commit-queries";
 import { processInstallation } from "./installation";
 import { Installation } from "models/installation";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
-import { mocked } from "ts-jest/utils";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
@@ -15,6 +13,7 @@ import mixedCommitNodes from "fixtures/api/graphql/commit-nodes-mixed.json";
 import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
 import { when } from "jest-when";
 import { numberFlag, NumberFlags } from "config/feature-flags";
+import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-queries";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -22,7 +21,7 @@ jest.mock("config/feature-flags");
 describe("sync/commits", () => {
 	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
-	const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
+	const mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
 
 	const makeExpectedJiraResponse = (commits) => ({
 		preventTransitions: true,
@@ -40,18 +39,17 @@ describe("sync/commits", () => {
 		}
 	});
 
-	const getCommitsQuery = (variables?: Record<string, any>) => {
-		return commitsNoLastCursor({
-			owner: "integrations",
-			repo: "test-repo-name",
-			per_page: 20,
-			...variables
-		});
-	};
-
-	const createGitHubNock = (commitsResponse?, variables?: Record<string, any>) => {
+	const createGitHubNock = (commitsResponse, variables?: Record<string, any>) => {
 		githubNock
-			.post("/graphql", getCommitsQuery(variables))
+			.post("/graphql", {
+				query: getCommitsQueryWithChangedFiles,
+				variables: {
+					owner: "integrations",
+					repo: "test-repo-name",
+					per_page: 20,
+					...variables
+				}
+			})
 			.query(true)
 			.reply(200, commitsResponse);
 	};
@@ -87,6 +85,9 @@ describe("sync/commits", () => {
 			repoOwner: "integrations",
 			repoFullName: "test-repo-name",
 			repoUrl: "test-repo-url",
+			repoPushedAt: new Date(),
+			repoUpdatedAt: new Date(),
+			repoCreatedAt: new Date(),
 			branchStatus: "complete",
 			commitStatus: "pending", // We want the next process to be commits
 			pullStatus: "complete",
@@ -94,7 +95,7 @@ describe("sync/commits", () => {
 			createdAt: new Date()
 		});
 
-		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
+		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 		githubUserTokenNock(installationId);
 	});
 
@@ -215,7 +216,7 @@ describe("sync/commits", () => {
 
 	it("should not call Jira if no data is returned", async () => {
 		const data = { installationId, jiraHost };
-		createGitHubNock();
+		createGitHubNock(commitsNoKeys);
 
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
