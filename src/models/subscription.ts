@@ -147,6 +147,7 @@ export class Subscription extends Model {
 		});
 	}
 
+	// TODO: Change name to 'create' to follow sequelize standards
 	static async install(payload: SubscriptionInstallPayload): Promise<Subscription> {
 		const [subscription] = await this.findOrCreate({
 			where: {
@@ -162,6 +163,7 @@ export class Subscription extends Model {
 		return subscription;
 	}
 
+	// TODO: Change name to 'destroy' to follow sequelize standards
 	static async uninstall(payload: SubscriptionPayload): Promise<void> {
 		await this.destroy({
 			where: {
@@ -184,7 +186,7 @@ export class Subscription extends Model {
 		return results[0] as SyncStatusCount[];
 	}
 
-	// TODO: remove this, not necessary
+	// TODO: remove this, not necessary - just use destroy directly
 	async uninstall(): Promise<void> {
 		await this.destroy();
 	}
