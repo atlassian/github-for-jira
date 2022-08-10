@@ -13,4 +13,4 @@ JiraConnectEnterpriseAppRouter.post("/", JiraContextJwtTokenMiddleware, JiraConn
 JiraConnectEnterpriseAppRouter.route("/:uuid")
 	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseAppCreateOrEdit)
 	.put(csrfMiddleware, JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPut)
-	.delete(csrfMiddleware, JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppDelete);
+	.delete(JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppDelete);
