@@ -31,7 +31,7 @@ If you are using custom environment names in your deployments (for example non-e
 
 ![Undefined environment in the Jira issue view](undefined-environment.png)
 
-If this is the case, you can add a file called `.jira/config.yml` to you repository with the following content:
+If this is the case, you can add a file called `.jira/config.yml` to the main branch of your repository with the following content:
 
 ```yaml
 deployments:
