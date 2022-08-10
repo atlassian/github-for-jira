@@ -4,8 +4,6 @@ import { processInstallation } from "./installation";
 import { Installation } from "models/installation";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
-import { Application } from "probot";
-import { createWebhookApp } from "test/utils/probot";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
@@ -20,7 +18,6 @@ jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
 describe("sync/deployments", () => {
-	let app: Application;
 	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
 	const mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
@@ -77,6 +74,8 @@ describe("sync/deployments", () => {
 			repoOwner: "integrations",
 			repoFullName: "test-repo-name",
 			repoUrl: "test-repo-url",
+			repoUpdatedAt: new Date(),
+			repoPushedAt: new Date(),
 			branchStatus: "complete",
 			commitStatus: "complete",
 			pullStatus: "complete",
@@ -86,11 +85,8 @@ describe("sync/deployments", () => {
 			createdAt: new Date()
 		});
 
-		app = await createWebhookApp();
 		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
-
 		githubUserTokenNock(installationId);
-
 	});
 
 	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
@@ -217,7 +213,7 @@ describe("sync/deployments", () => {
 				}]
 		}]);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 
 		await waitUntil(async () => {
 			expect(githubNock).toBeDone();
@@ -390,7 +386,7 @@ describe("sync/deployments", () => {
 			}
 		]);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 
 		await waitUntil(async () => {
 			expect(githubNock).toBeDone();
@@ -421,7 +417,7 @@ describe("sync/deployments", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});
@@ -433,7 +429,7 @@ describe("sync/deployments", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});

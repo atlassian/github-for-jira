@@ -1,18 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as installation from "~/src/sync/installation";
-import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation, sortedRepos } from "~/src/sync/installation";
+import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
+import { Task } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
-import { Application } from "probot";
 import { getLogger } from "config/logger";
 import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
-import { mocked } from "ts-jest/utils";
 import { RateLimitingError } from "~/src/github/client/github-client-errors";
-import { Subscription, Repository } from "models/subscription";
+import { Repository, Subscription } from "models/subscription";
 
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
-import unsortedReposJson from "fixtures/repositories.json";
-import sortedReposJson from "fixtures/sorted-repos.json";
 
 const TEST_LOGGER = getLogger("test");
 
@@ -38,7 +35,7 @@ describe("sync/installation", () => {
 		updated_at: "1234"
 	};
 
-	const TASK: installation.Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
+	const TASK: Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
 
 	const TEST_SUBSCRIPTION: Subscription = {} as any;
 
@@ -49,7 +46,7 @@ describe("sync/installation", () => {
 	let mockBackfillQueueSendMessage;
 
 	beforeEach(() => {
-		mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
+		mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
 	});
 
 	describe("isRetryableWithSmallerRequest()", () => {
@@ -92,18 +89,15 @@ describe("sync/installation", () => {
 	});
 
 	describe("processInstallation", () => {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		const app: Application = jest.fn() as Application;
 
 		it("should process the installation with deduplication", async () => {
-			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
+			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 		});
 
 		it("should reschedule the job if deduplicator is unsure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
-			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
+			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 			expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(JOB_DATA);
 			expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(60);
@@ -112,7 +106,7 @@ describe("sync/installation", () => {
 
 		it("should also reschedule the job if deduplicator is sure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
-			await processInstallation(app)(JOB_DATA, sentry, TEST_LOGGER);
+			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockBackfillQueueSendMessage.mock.calls.length).toEqual(1);
 		});
 	});
@@ -293,10 +287,6 @@ describe("sync/installation", () => {
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-	});
-
-	it("sortedRepos should sort repos by updated_at", () => {
-		expect(sortedRepos(unsortedReposJson as any)).toEqual(sortedReposJson);
 	});
 
 	describe("handleNotFoundErrors", () => {

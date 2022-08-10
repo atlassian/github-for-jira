@@ -32,7 +32,7 @@ describe("github-manifest-complete-get", () => {
 			locals: {
 				jiraHost: "http://jira.example.com"
 			},
-			json: jest.fn()
+			redirect: jest.fn()
 		};
 
 	});
@@ -95,7 +95,7 @@ describe("github-manifest-complete-get", () => {
 		expect(clientSecret).toEqual("client_secret_test");
 		const privateKey = await githubServerApp?.decrypt("privateKey");
 		expect(privateKey).toEqual("private_key_test");
-		expect(res.json).toBeCalled();
+		expect(res.redirect).toBeCalled();
 	});
 
 });
