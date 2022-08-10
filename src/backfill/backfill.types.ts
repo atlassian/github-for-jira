@@ -1,4 +1,4 @@
-import { RepositoryData } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
 
 export type JobId = {
 	installationId: number;
@@ -15,7 +15,7 @@ export type JobState = {
 	installationId: number;
 	jiraHost: string;
 	numberOfSyncedRepos?: number;
-	repository: RepositoryData;
+	repository: RepoSyncState;
 }
 
 /**
