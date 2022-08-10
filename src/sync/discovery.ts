@@ -6,18 +6,6 @@ import { RepositoryNode } from "../github/client/github-queries";
 import { RepoSyncState } from "models/reposyncstate";
 import { TaskPayload } from "~/src/sync/sync.types";
 
-/*
-* Update the sync status of a batch of repos.
-*/
-/*const updateSyncState = async (subscription: Subscription, repositories: Repository[], totalNumberOfRepos?: number): Promise<void> => {
-	await Promise.all([
-		subscription.updateSyncState({
-			repos: mapRepositories(repositories)
-		}),
-		totalNumberOfRepos && subscription.update({ totalNumberOfRepos })
-	]);
-};*/
-
 export const getRepositoryTask = async (
 	logger: Logger,
 	newGithub: GitHubInstallationClient,
