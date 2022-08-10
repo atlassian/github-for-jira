@@ -46,11 +46,12 @@ export type PushQueueMessagePayload = {
 }
 
 export type GitHubAppConfig = {
-	gitHubAppId: number,
+	gitHubAppId?: number,
 	appId: number,
 	clientId: string,
 	gitHubBaseUrl: string,
-	uuid: string,
+	gitHubApiUrl: string,
+	uuid?: string,
 	//gitHubClientSecret: string,
 	//webhookSecret: string,
 	//privateKey: string
