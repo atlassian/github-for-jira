@@ -23,7 +23,7 @@ export const CryptorMigrationInstallationPost = async (req: Request, res: Respon
 				[Op.gt]: lastId
 			}
 		},
-		order: "id"
+		order: ["id"]
 	});
 	if (installations.length === 0) {
 		req.log.info("No matching batch found, all done, returning now...");
