@@ -20,7 +20,7 @@ export class GitHubClient {
 	) {
 		this.logger = logger;
 
-		// baseUrl is undefined when FF is false
+		// hostname is undefined when FF is false
 		// if FF is true and the githubAppId field is empty, it is set to https://api.github.com
 		// TODO - clean this logic up once we remove the GHE_SERVER flag
 		if (hostname == undefined || hostname === GITHUB_CLOUD_HOSTNAME) {
