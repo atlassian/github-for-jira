@@ -50,7 +50,7 @@
         <a href="#">Learn more about manual GitHub app creation.</a>
       </div>
 
-      <form id="jiraManualAppCreation__form" class="aui top-label" enctype="multipart/form-data">
+      <form id="jiraManualAppCreation__form" class="aui top-label" enctype="multipart/form-data" data-app-uuid="{{app.uuid}}">
         <div class="jiraManualAppCreation__formTitle">
           Details
           <i class="aui-icon aui-iconfont-question-filled"></i>
@@ -166,12 +166,13 @@
           {{> server-error-message-box }}
         </div>
 
-        <input
+        <button
             type="submit"
-            value="{{#if app.id}}Update{{else}}Next{{/if}}"
-            data-app-uuid="{{app.uuid}}"
             class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary"
-        />
+            id="{{#if app.id}}Update{{else}}Next{{/if}}"
+        >
+            {{#if app.id}}Update{{else}}Next{{/if}}
+        </button>
       </form>
     </div>
 

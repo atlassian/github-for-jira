@@ -32,8 +32,9 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 	const form = event.target;
 	const csrf = $("#_csrf").val();
 	const data = $(form).serializeObject();
-	const isUpdate = $('input[type=submit]').val() === "Update";
+	const isUpdate = document.getElementById("Update").innerText === "Update";
 	const uuid = $(event.target).data("app-uuid");
+	console.log("UUID", uuid)
 
 	// Reading the content of the file
 	const file = $("#privateKeyFile")[0].files[0];

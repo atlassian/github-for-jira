@@ -4,6 +4,7 @@ import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { EncryptedModel } from "./encrypted-model";
 
 import EncryptedField from "sequelize-encrypted";
+import { getLogger } from "../config/logger";
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
@@ -110,6 +111,27 @@ export class GitHubServerApp extends EncryptedModel {
 	}
 
 	/**
+	 * Get one GitHubServerApp for uuid with installationId
+	 *
+	 * @param uuid
+	 * @param installationId
+	 * @returns {GitHubServerApp[]}
+	 */
+	static async getForUuidAndInstallationId(
+		uuid: string,
+		installationId: number
+	): Promise<GitHubServerApp[]> {
+		const logger = getLogger("here");
+		logger.info("UUID", uuid)
+		return this.findOne({
+			where: {
+				uuid,
+				installationId
+			}
+		});
+	}
+
+	/**
 	 * Create a new GitHubServerApp object
 	 *
 	 * @param {{
@@ -185,7 +207,7 @@ export class GitHubServerApp extends EncryptedModel {
 	 * 	}} payload
 	 */
 
-	static async updateGitHubApp(payload: GitHubServerAppPayload): Promise<void> {
+	static async updateGitHubAppByUUID(payload: GitHubServerAppPayload): Promise<void> {
 		const {
 			uuid,
 			appId,
