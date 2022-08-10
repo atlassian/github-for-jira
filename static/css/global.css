@@ -156,7 +156,8 @@ a:focus {
 /* Modals */
 .jiraConfiguration__syncRetryModalOverlay,
 .jiraConfiguration__restartBackfillModalOverlay,
-.githubSetup__newJiraSiteModalOverlay {
+.githubSetup__newJiraSiteModalOverlay,
+.modal__modalOverlay {
   background: #091e42;
   opacity: 54%;
   z-index: 100;
@@ -164,16 +165,19 @@ a:focus {
 
 .jiraConfiguration__syncRetryModal,
 .jiraConfiguration__restartBackfillModal,
-.githubSetup__newJiraSiteModal {
+.githubSetup__newJiraSiteModal,
+.modal {
   display: none;
 }
 
 .jiraConfiguration__syncRetryModal,
-.jiraConfiguration__restartBackfillModal,
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__restartBackfillModal,
 .jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModal,
-.githubSetup__newJiraSiteModalOverlay {
+.githubSetup__newJiraSiteModalOverlay,
+.modal,
+.modal__modalOverlay {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -183,7 +187,8 @@ a:focus {
 
 .jiraConfiguration__syncRetryModalContent,
 .jiraConfiguration__restartBackfillModalContent,
-.githubSetup__newJiraSiteModalContent {
+.githubSetup__newJiraSiteModalContent,
+.modal__modalContent {
   -webkit-transform: translateX(-50%);
   background-color: #fff;
   box-shadow: 0 3px 5px rgb(9 30 66 / 20%), 0 0 1px rgb(9 30 66 / 31%);
@@ -207,17 +212,49 @@ a:focus {
 
 .githubSetup__newJiraSiteModalContent {
   top: 30%;
-  width: 30%;
+  width: 60%;
 }
 
 .jiraConfiguration__syncRetryModalOverlay,
 .jiraConfiguration__restartBackfillModalOverlay,
-.githubSetup__newJiraSiteModalOverlay {
+.githubSetup__newJiraSiteModalOverlay,
+.modal__modalOverlay {
   background: #091e42;
   opacity: 54%;
   z-index: 100;
 }
 
+.modal__modalContent {
+  top: 35%;
+  width: 50%;
+}
+
+.modal__additionalContent {
+  margin-top: 1em;
+}
+
+.modal__footer {
+  display: flex;
+  justify-content: end;
+  margin-top: 1em;
+}
+
+.modal__footer__actionBtn {
+  --aui-btn-bg: #FFAB00;
+  --aui-btn-text: #172B4D;
+}
+
+.modal__header__container {
+  align-items: center;
+  display: flex;
+  margin-bottom: 1em;
+}
+
+.modal__header__title {
+  margin: 0 0 0 0.5em;
+}
+
+/* Navigation */
 .navigation {
   display: flex;
   justify-content: space-between;
@@ -277,4 +314,8 @@ a:focus {
   font-size: 2rem;
   font-weight: 500;
   margin-top: 1.5em;
+}
+
+.aui-iconfont-warning {
+  color: #FFAB00;
 }
