@@ -173,7 +173,7 @@ const mapDisconnectRequest = (disconnectType, disconnectData) => {
 		switch (disconnectType) {
 			case "server":
 				data.serverUrl = disconnectData;
-				// TODO - handle deleting server
+				handleDisconnectRequest(`/jira/connect/enterprise`, data);
 				return;
 			case "app":
 				data.uuid = disconnectData;
