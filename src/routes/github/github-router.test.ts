@@ -51,7 +51,7 @@ const setupGitHubCloudPingNock = () => {
 };
 
 const setupGHEPingNock = () => {
-	gheNock.get("/").reply(200);
+	gheApiNock.get("").reply(200);
 };
 
 const prepareNewInstallationInDB = async () => {
