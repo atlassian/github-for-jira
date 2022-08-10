@@ -33,6 +33,15 @@ export const updateRepoConfig = async (
 	if (modifiedFiles.includes(USER_CONFIG_FILE)) {
 		try {
 			const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
+
+			if (!repoSyncState){
+				logger.error({
+					githubInstallationId,
+					repositoryId
+				}, "could not find RepoSyncState for repo");
+				return;
+			}
+
 			await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId);
 		} catch (err) {
 			logger.error({
@@ -51,7 +60,7 @@ export const getRepoConfig = async (subscription: Subscription, repositoryId: nu
 	// In the future, we may look in other places for a config than just in the RepoSyncState (for example,
 	// we might fall back to default configs on the level of a subscription or an installation).
 	const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
-	return repoSyncState.config;
+	return repoSyncState?.config;
 };
 
 /**

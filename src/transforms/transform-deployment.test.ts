@@ -25,6 +25,29 @@ const mockConfig = {
 };
 
 describe("deployment environment mapping", () => {
+
+	it("falls back to hardcoded config when user config doesn't match", () => {
+		const userConfig = {
+			deployments: {
+				environmentMapping: {
+					development: [
+						"foo*" // nonsense pattern to make sure that we're hitting it in the tests below
+					]
+				}
+			}
+		};
+
+		// match
+		expect(mapEnvironment("foo42", userConfig)).toBe("development");
+
+		// no match - fallback to hardcoded values
+		expect(mapEnvironment("dev", userConfig)).toBe("development");
+		expect(mapEnvironment("test", userConfig)).toBe("testing");
+		expect(mapEnvironment("stage", userConfig)).toBe("staging");
+		expect(mapEnvironment("prd", userConfig)).toBe("production");
+
+	});
+
 	it("classifies known environments correctly", () => {
 		// Development
 		expect(mapEnvironment("development")).toBe("development");

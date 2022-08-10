@@ -116,7 +116,7 @@ const matchesEnvironment = (environment: string, globPatterns: string[] = []): b
 };
 
 /**
- * Maps a given environment name to a Jira environment name using the custom mapping defined in a RepoConfig.
+ * Maps a given environment name to a Jira environment name using the custom mapping defined in a Config.
  */
 export const mapEnvironmentWithConfig = (environment: string, config: Config): string | undefined => {
 	return _.keys(config?.deployments?.environmentMapping)
