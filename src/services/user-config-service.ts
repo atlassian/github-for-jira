@@ -60,6 +60,7 @@ export const getRepoConfig = async (subscription: Subscription, repositoryId: nu
 	// In the future, we may look in other places for a config than just in the RepoSyncState (for example,
 	// we might fall back to default configs on the level of a subscription or an installation).
 	const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
+	// TODO: if repoSyncState is not available, try to get the config file from GitHub!
 	return repoSyncState?.config;
 };
 
