@@ -11,17 +11,22 @@ export enum BooleanEnum {
 
 // All variables below were defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
 export enum AnalyticsEventTypes {
-	ScreenEvent = "screen",
-	UiEvent = "ui",
-	TrackEvent = "track",
-	OperationalEvent = "operational",
-	TraitEvent = "trait",
-
+	ScreenEvent = "screen", // user navigates to a particular screen, tab, drawer, modal, or inline-dialog
+	UiEvent = "ui", // user interacts with a user interface element such as a button, text field, or link
+	TrackEvent = "track", // user completes a product action e.g. submits form
+	OperationalEvent = "operational" // help measure usages or performance of implementation detail
 }
 
 // All variables below were defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
 export enum AnalyticsScreenEventsEnum {
-	GitHubConfigScreenEventName = "githubConfigurationScreen"
+	GitHubConfigScreenEventName = "gitHubConfigurationScreen",
+	ConnectAnOrgScreenEventName = "connectAnOrgProductCount",
+	SelectGitHubProductEventName = "selectGitHubProductScreen"
+}
+
+export enum AnalyticsTrackEventsEnum {
+	GitHubServerUrlErrorTrackEventName = "gitHubServerUrlSubmittedError",
+	GitHubServerUrlTrackEventName = "gitHubServerUrlSubmitted"
 }
 
 // Adding session information to express Request type
@@ -32,6 +37,9 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
+				temp?:  {
+					[key: string]: any;
+				}
 			};
 		}
 	}

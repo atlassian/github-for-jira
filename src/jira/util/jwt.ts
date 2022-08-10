@@ -81,7 +81,16 @@ function decodeAsymmetricToken(token: string, publicKey: string, noVerify: boole
 
 function verifyQsh(qsh: string, req: Request): boolean {
 	// to get full path from express request, we need to add baseUrl with path
-	const requestInAtlassianJwtFormat = { ...req, pathname: req.baseUrl + req.path };
+	/**
+	 * TODO: Remove `decodeURIComponent` later
+	 * This has been added here as a temporarily until the `qsh` bug is fixed
+	 *
+	 * Bug: This method `createQueryStringHash` doesn't handle the decoded URI strings passed along the path
+	 * For e.g. If we pass a string `http%3A%2F%2Fabc.com`, it doesn't encode it to `http://abc.com`,
+	 * but uses the original string, which returns a different `qsh` value.
+	 * Because of this reason, if we have any decoded URI in the request path, then it always fails with an error `Wrong qsh`
+	 */
+	const requestInAtlassianJwtFormat = { ...req, pathname: req.baseUrl + decodeURIComponent(req.path) };
 	let expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, false, BASE_URL);
 	const signatureHashVerified = qsh === expectedHash;
 
