@@ -1,6 +1,6 @@
 import { enqueuePush } from "./push";
 import { sqsQueues } from "../sqs/queues";
-import { GitHubPushData } from "../interfaces/github";
+import { GitHubRepository } from "../interfaces/github";
 
 jest.mock("../sqs/queues");
 
@@ -11,7 +11,7 @@ describe("Enqueue push", ()=>{
 				installation: { id: 123, node_id: 456 },
 				webhookId: "wh123",
 				webhookReceived: Date.now(),
-				repository: {} as GitHubPushData["repository"],
+				repository: {} as GitHubRepository,
 				commits: [{
 					id: "c123",
 					message: "ARC-0001 some message"
