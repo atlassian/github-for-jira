@@ -197,7 +197,15 @@
               <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
               {{#each gheServers as |server|}}
                 <div class="jiraConfiguration__enterpriseServer">
-                  <div class="jiraConfiguration__collapsibleHeaderTitle">{{server.gitHubBaseUrl}}</div>
+                  <div class="jiraConfiguration__enterpriseServer__header__container" data-server-baseUrl="{{server.gitHubBaseUrl}}">
+                    <div class="jiraConfiguration__enterpriseServer__header">{{server.gitHubBaseUrl}}</div>
+                    <button
+                        class="aui-button jiraConfiguration__enterpriseServer__disconnectButton disconnect-server-btn"
+                        data-server-baseurl="{{server.gitHubBaseUrl}}"
+                    >
+                      Disconnect server
+                    </button>
+                  </div>
                   <div class="jiraConfiguration__enterpriseConnections">
                     <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATIONS</div>
                     {{#each server.applications as |app|}}
@@ -230,8 +238,9 @@
                              </div>
                              <div class="jiraConfiguration__table__cell__gitHubAppItem" data-app-uuid="{{app.gitHubAppName}}">
                                <button
-                                   class="jiraConfiguration__deleteGitHubApp"
+                                   class="jiraConfiguration__deleteGitHubApp disconnect-app-btn"
                                    data-app-uuid="{{app.uuid}}"
+                                   data-app-name="{{app.gitHubAppName}}"
                                >
                                  Delete
                                </button>
@@ -264,12 +273,15 @@
                     {{/each}}
                   </div>
                 </div>
+
               {{/each}}
             </div>
           {{/if}}
         {{else}}
           {{> jira-configuration-empty-connections csrfToken=csrfToken}}
         {{/if}}
+
+        {{> modal }}
       </section>
 
     </div>
