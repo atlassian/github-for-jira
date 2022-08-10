@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as installation from "~/src/sync/installation";
-import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation, sortedRepos } from "~/src/sync/installation";
+import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
+import { Task } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
 import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
-import { mocked } from "ts-jest/utils";
 import { RateLimitingError } from "~/src/github/client/github-client-errors";
-import { Subscription, Repository } from "models/subscription";
+import { Repository, Subscription } from "models/subscription";
 
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
-import unsortedReposJson from "fixtures/repositories.json";
-import sortedReposJson from "fixtures/sorted-repos.json";
 
 const TEST_LOGGER = getLogger("test");
 
@@ -37,7 +35,7 @@ describe("sync/installation", () => {
 		updated_at: "1234"
 	};
 
-	const TASK: installation.Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
+	const TASK: Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
 
 	const TEST_SUBSCRIPTION: Subscription = {} as any;
 
@@ -48,7 +46,7 @@ describe("sync/installation", () => {
 	let mockBackfillQueueSendMessage;
 
 	beforeEach(() => {
-		mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
+		mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
 	});
 
 	describe("isRetryableWithSmallerRequest()", () => {
@@ -289,10 +287,6 @@ describe("sync/installation", () => {
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-	});
-
-	it("sortedRepos should sort repos by updated_at", () => {
-		expect(sortedRepos(unsortedReposJson as any)).toEqual(sortedReposJson);
 	});
 
 	describe("handleNotFoundErrors", () => {
