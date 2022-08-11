@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 
 export const JiraConnectEnterpriseAppPut = async (
@@ -11,7 +11,7 @@ export const JiraConnectEnterpriseAppPut = async (
 	try {
 		const verifiedApp = await GitHubServerApp.getForUuidAndInstallationId(req.params.uuid, res.locals.installation.id);
 
-		if (!verifiedApp) {
+		if (!verifiedApp || req.params.uuid !== req.body.uuid) {
 			res.status(200).send({ success: false, message: "No GitHub App found. Cannot update." });
 			return next(new Error("No GitHub App found for provided UUID and installationId."));
 		}
