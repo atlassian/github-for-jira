@@ -56,9 +56,11 @@ interface GitHubWorkflowRunHeadCommit {
 	committer: GitHubWorkflowRunAuthorAndCommitter;
 }
 
+//refer from https://docs.github.com/en/rest/repos/repos#get-a-repository
 interface GitHubWorkflowRunRepositoryOwner {
 	login: string;
 	id: number;
+	name: string | null;
 	node_id: string;
 	avatar_url: string;
 	gravatar_id: string;
@@ -183,7 +185,7 @@ export interface GitHubIssueData extends GitHubData {
 	issue_number: number;
 }
 
-interface GitHubRepository extends GitHubWorkflowRunRepository {
+export interface GitHubRepository extends GitHubWorkflowRunRepository {
 	created_at: number;
 	updated_at: string;
 	pushed_at: number;
@@ -224,10 +226,17 @@ interface GitHubInstallation {
 	node_id: number;
 }
 
+//refer from here https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
+//TODO: tbh, I think we should use a better typing, something more official
+interface GitHubCommit {
+	id: string;
+	message: string;
+}
+
 export interface GitHubPushData {
 	webhookId: string;
 	webhookReceived: number;
 	repository: GitHubRepository;
-	commits: string[];
+	commits: GitHubCommit[];
 	installation: GitHubInstallation;
 }
