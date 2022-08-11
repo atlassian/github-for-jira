@@ -61,7 +61,7 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 	const form = event.target;
 	const data = $(form).serializeObject();
 	const updateElement = document.getElementById("Update");
-	const isUpdate = updateELement && updateElement.innerText === "Update";
+	const isUpdate = updateElement && updateElement.innerText === "Update";
 	const uuid = $(event.target).data("app-uuid");
 	const appName = $(event.target).data("app-appname");
 	const existingPrivateKey = $(event.target).data("app-privatekey");
@@ -103,9 +103,12 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 	});
 });
 
+
 $('#jiraManualAppCreation__uploadedFile').bind('DOMSubtreeModified', function () {
 	const hasFileName = document.getElementById("jiraManualAppCreation__uploadedFile").innerText !== "";
-	const appName = $(this).data("app-appname");
+	const appName = $(this).data("app-appname") // updating the app
+		|| $( "input[type=text][name=gitHubAppName]" ).val().replace(/\s+/g, '-').toLowerCase() // creating the app and gitHubAppName input has a value
+		|| "< github-app-name >"; // creating an app but no value entered in gitHubAppName field
 	const body = `
 			<p class="jiraManualAppCreation__flag__title"><strong>Your file has been uploaded</strong></p>
 			<p>Your file has been uploaded and will be </br>
@@ -140,8 +143,7 @@ $("#jiraManualAppCreation__clearUploadedFile").click(() => {
 	$(".jiraManualAppCreation__formFileUploaded").hide();
 
 	// Resetting the input field and its errors
-	$(".jiraManualAppCreation__formFileInput").val(null)
-		.attr("data-aui-validation-state", "unvalidated");
+	$(".jiraManualAppCreation__formFileInput").attr("data-aui-validation-state", "unvalidated");
 	$(".jiraManualAppCreation__formFileDropArea .error").remove();
 });
 
