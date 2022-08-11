@@ -71,7 +71,7 @@ function extractWebhookEventNameFromContext(context: WebhookContext): string {
 
 // TODO: fix typings
 export const GithubWebhookMiddleware = (
-	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
+	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number, subscription: Subscription) => Promise<void>
 ) => {
 	return withSentry(async (context: WebhookContext) => {
 		const webhookEvent = extractWebhookEventNameFromContext(context);
@@ -216,7 +216,7 @@ export const GithubWebhookMiddleware = (
 			const util = getJiraUtil(jiraClient);
 
 			try {
-				await callback(context, jiraClient, util, gitHubInstallationId);
+				await callback(context, jiraClient, util, gitHubInstallationId, subscription);
 			} catch (err) {
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
 				if (!isWarning) {

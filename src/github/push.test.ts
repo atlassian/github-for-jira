@@ -20,9 +20,12 @@ import pushMultiple from "fixtures/push-multiple.json";
 import moreThanTenFiles from "fixtures/more-than-10-files.json";
 import pushNoIssues from "fixtures/push-no-issues.json";
 import pushNoIssuekeyCommits from "fixtures/push-no-issuekey-commits.json";
+import pushWithConfigFile from "fixtures/push-with-config-file.json";
 import pushMergeCommit from "fixtures/push-merge-commit.json";
-import { shouldTagBackfillRequests } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldTagBackfillRequests } from "config/feature-flags";
 import { mocked } from "ts-jest/utils";
+import { updateRepoConfig } from "services/user-config-service";
+import { when } from "jest-when";
 
 const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
 	payload: createJobData(payload, jiraHost),
@@ -33,11 +36,13 @@ const createMessageProcessingContext = (payload, jiraHost: string): Context<Push
 });
 
 jest.mock("config/feature-flags");
+jest.mock("services/user-config-service");
 
 describe("Push Webhook", () => {
 
 	let app: Application;
 	beforeEach(async () => {
+		mocked(updateRepoConfig).mockResolvedValue(Promise.resolve());
 		mocked(shouldTagBackfillRequests).mockResolvedValue(true);
 		app = await createWebhookApp();
 		const clientKey = "client-key";
@@ -256,6 +261,47 @@ describe("Push Webhook", () => {
 			githubNock.get(/.*/).reply(200);
 
 			await expect(app.receive(pushNoIssuekeyCommits as any)).toResolve();
+			// Since no issues keys are found, there should be no calls to github's or jira's API
+			expect(nock).not.toBeDone();
+			// Clean up all nock mocks
+			nock.cleanAll();
+		});
+
+		it("should send list of added, modified, and removed files to updateRepoConfig()", async () => {
+			// match any post calls for jira and github
+			jiraNock.post(/.*/).reply(200);
+			githubNock.get(/.*/).reply(200);
+
+			when(jest.mocked(booleanFlag))
+				.calledWith(BooleanFlags.CONFIG_AS_CODE, expect.anything(), expect.anything())
+				.mockResolvedValue(true);
+
+			await expect(app.receive(pushWithConfigFile as any)).toResolve();
+			expect(updateRepoConfig).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.anything(),
+				expect.anything(),
+				["test-added", ".jira/config.yml", "test-modified", "test-removal"]
+			);
+
+			// Since no issues keys are found, there should be no calls to github's or jira's API
+			expect(nock).not.toBeDone();
+			// Clean up all nock mocks
+			nock.cleanAll();
+		});
+
+		it("should NOT send list of added, modified, and removed files to updateRepoConfig() when FF is disabled", async () => {
+			// match any post calls for jira and github
+			jiraNock.post(/.*/).reply(200);
+			githubNock.get(/.*/).reply(200);
+
+			when(jest.mocked(booleanFlag))
+				.calledWith(BooleanFlags.CONFIG_AS_CODE, expect.anything(), expect.anything())
+				.mockResolvedValue(false);
+
+			await expect(app.receive(pushWithConfigFile as any)).toResolve();
+			expect(updateRepoConfig).not.toHaveBeenCalled();
+
 			// Since no issues keys are found, there should be no calls to github's or jira's API
 			expect(nock).not.toBeDone();
 			// Clean up all nock mocks
