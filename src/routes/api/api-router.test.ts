@@ -57,7 +57,13 @@ describe("API Router", () => {
 			.get(`/api/${subscription.gitHubInstallationId}/${encodeURIComponent(subscription.jiraHost)}/syncstate`)
 			.set("X-Slauth-Mechanism", "asap")
 			.then((response) => {
-				expect(response.text).toStrictEqual(`{"installationId":${gitHubInstallationId},"jiraHost":"${jiraHost}","numberOfSyncedRepos":0,"repos":{}}`);
+				expect(response.body).toMatchObject({
+					jiraHost,
+					gitHubInstallationId,
+					numberOfSyncedRepos: 0,
+					totalNumberOfRepos: 0,
+					repositories: []
+				});
 			});
 	});
 
@@ -150,6 +156,7 @@ describe("API Router", () => {
 
 		describe("Repo Sync State", () => {
 			beforeEach(async () => {
+				await subscription.update({ numberOfSyncedRepos: 1 });
 				await RepoSyncState.create({
 					subscriptionId: subscription.id,
 					repoId: 1,
@@ -192,31 +199,22 @@ describe("API Router", () => {
 					.then((response) => {
 						expect(response.body).toMatchObject({
 							jiraHost,
+							gitHubInstallationId,
 							numberOfSyncedRepos: 1,
-							repos: {
-								"1": {
-									pullStatus: "complete",
-									branchStatus: "complete",
-									commitStatus: "complete",
-									buildStatus: "complete",
-									deploymentStatus: "complete",
-									lastBranchCursor: "foo",
-									lastCommitCursor: "bar",
-									lastDeploymentCursor: "buzz",
-									lastBuildCursor: "bang",
-									lastPullCursor: 12,
-									repository: {
-										id: 1,
-										name: "github-for-jira",
-										full_name: "atlassian/github-for-jira",
-										html_url: "github.com/atlassian/github-for-jira",
-										owner: {
-											login: "atlassian"
-										},
-										updated_at: new Date(0).toISOString()
-									}
-								}
-							}
+							totalNumberOfRepos: 1,
+							repositories: [{
+								pullStatus: "complete",
+								branchStatus: "complete",
+								commitStatus: "complete",
+								buildStatus: "complete",
+								deploymentStatus: "complete",
+								repoId: 1,
+								repoName: "github-for-jira",
+								repoFullName: "atlassian/github-for-jira",
+								repoUrl: "github.com/atlassian/github-for-jira",
+								repoOwner: "atlassian",
+								repoUpdatedAt: new Date(0).toISOString()
+							}]
 						});
 					});
 			});
