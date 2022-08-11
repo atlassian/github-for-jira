@@ -85,8 +85,8 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 	if (!code) return next("Missing OAuth Code");
 
-	const { jiraHost, hostname, clientId, gitHubClientSecret } = res.locals;
-
+	const { jiraHost, gitHubAppConfig } = res.locals;
+	const { hostname, clientId, gitHubClientSecret } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
