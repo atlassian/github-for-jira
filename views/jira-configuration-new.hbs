@@ -197,7 +197,15 @@
               <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
               {{#each gheServers as |server|}}
                 <div class="jiraConfiguration__enterpriseServer">
-                  <div class="jiraConfiguration__collapsibleHeaderTitle">{{server.gitHubBaseUrl}}</div>
+                  <div class="jiraConfiguration__enterpriseServer__header__container" data-server-baseUrl="{{server.gitHubBaseUrl}}">
+                    <div class="jiraConfiguration__enterpriseServer__header">{{server.gitHubBaseUrl}}</div>
+                    <button
+                        class="aui-button jiraConfiguration__enterpriseServer__disconnectButton disconnect-server-btn"
+                        data-server-baseurl="{{server.gitHubBaseUrl}}"
+                    >
+                      Disconnect server
+                    </button>
+                  </div>
                   <div class="jiraConfiguration__enterpriseConnections">
                     <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATIONS</div>
                     {{#each server.applications as |app|}}
@@ -214,28 +222,31 @@
                           >
                             <span class="jiraConfiguration__appDropdownIcon">...</span>
                           </button>
-                          <aui-dropdown-menu class="" id="app-settings-dropdown-{{id}}">
-                            <aui-section>
-                              <!--TODO: need to add url for this-->
-                              <a
-                                  class=""
-                                  href="#"
-                                  data-installation-link="{{html_url}}"
-                                  target="_blank"
-                              >
-                                Edit
-                              </a>
-                              <!--TODO: need to add functionality for this-->
-                              <a
-                                  class=""
-                                  href="#"
-                                  data-installation-link="{{html_url}}"
-                                  target="_blank"
-                              >
-                                Delete
-                              </a>
-                            </aui-section>
-                          </aui-dropdown-menu>
+                          <aui-dropdown-menu class="jiraConfiguration__table__dropdown" id="app-settings-dropdown-{{id}}">
+                          <h6 class="jiraConfiguration__table__cell__settings__header">
+                            <span class="jiraConfiguration__table__cell__settings__headerItem">Application</span>
+                          </h6>
+                          <aui-section class="jiraConfiguration__table__cell__settings__dropdownItems">
+                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                             <div class="jiraConfiguration__table__cell__gitHubAppItem">
+                               <button
+                                   class="jiraConfiguration__editGitHubApp"
+                                   data-app-uuid="{{app.uuid}}"
+                               >
+                                 Edit
+                               </button>
+                             </div>
+                             <div class="jiraConfiguration__table__cell__gitHubAppItem" data-app-uuid="{{app.gitHubAppName}}">
+                               <button
+                                   class="jiraConfiguration__deleteGitHubApp disconnect-app-btn"
+                                   data-app-uuid="{{app.uuid}}"
+                                   data-app-name="{{app.gitHubAppName}}"
+                               >
+                                 Delete
+                               </button>
+                             </div>
+                           </aui-section>
+                         </aui-dropdown-menu>
                         </summary>
                         <div class="jiraConfiguration__collapsibleBody">
                           {{#if app.installations.total}}
@@ -262,12 +273,15 @@
                     {{/each}}
                   </div>
                 </div>
+
               {{/each}}
             </div>
           {{/if}}
         {{else}}
           {{> jira-configuration-empty-connections csrfToken=csrfToken}}
         {{/if}}
+
+        {{> modal }}
       </section>
 
     </div>
