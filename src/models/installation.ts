@@ -3,14 +3,11 @@ import { Subscription } from "./subscription";
 import { encrypted, getHashedKey, sequelize } from "models/sequelize";
 import { EncryptedModel } from "models/encrypted-model";
 import { EncryptionSecretKeyEnum } from "utils/encryption-client";
-import { getLogger } from "config/logger";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
 	throw new Error("STORAGE_SECRET is not defined.");
 }
-
-const logger = getLogger("model-installations");
 
 export class Installation extends EncryptedModel {
 	id: number;
@@ -158,13 +155,6 @@ Installation.init({
 					opts.fields.push("encryptedSharedSecret");
 				}
 			}
-			try {
-				await instance.encryptChangedSecretFields(opts.fields);
-			} catch (_) {
-				//Just catch and swallow the error, don't want to fail installations right now if cryptor fail for whatever reason
-				//TODO: monitor the prod behaviour and remove this catch along with other migration rollout in another PR.
-				logger.error(`Fail encrypting sharedSecret using cryptor`);
-			}
 		},
 		beforeBulkCreate: async (instances: Installation[], opts) => {
 			for (const instance of instances) {
@@ -176,18 +166,12 @@ Installation.init({
 						opts.fields.push("encryptedSharedSecret");
 					}
 				}
-				try {
-					await instance.encryptChangedSecretFields(opts.fields);
-				} catch (_) {
-					//Just catch and swallow the error, don't want to fail installations right now if cryptor fail for whatever reason
-					//TODO: monitor the prod behaviour and remove this catch along with other migration rollout in another PR.
-					logger.error(`Fail encrypting sharedSecret using cryptor`);
-				}
 			}
 		}
 	},
 	sequelize
 });
+Installation.addEncryptionHooks();
 
 export interface InstallationPayload {
 	host: string;

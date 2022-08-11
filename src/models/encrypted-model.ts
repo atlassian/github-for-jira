@@ -13,6 +13,19 @@ export abstract class EncryptedModel extends Model {
 
 	abstract getSecretFields(): readonly (keyof StringValues<this>)[];
 
+	static addEncryptionHooks() {
+		//seems create/save/update all trigger this `beforeSave` hook at the end.
+		this.addHook("beforeSave", async (...args)=>{
+			await this._encryptAllSecretFields(...args);
+		});
+		this.addHook("beforeBulkCreate", async (...args) =>{
+			await this._encryptAllSecretFieldsArray(...args);
+		});
+		this.addHook("beforeBulkUpdate", async () =>{
+			await this._encryptAllSecretFieldsOnUpdate();
+		});
+	}
+
 	async decrypt(field: (keyof StringValues<this>)): Promise<string> {
 		const value = this[field];
 		if (typeof value !== "string") {
@@ -39,4 +52,22 @@ export abstract class EncryptedModel extends Model {
 				})
 		);
 	}
+
+	static async _encryptAllSecretFields(app: any, opts: any) {
+		await app.encryptChangedSecretFields(opts.fields);
+	}
+
+	static async _encryptAllSecretFieldsArray(apps: any[], opts: any) {
+		for (const app of apps) {
+			await app.encryptChangedSecretFields(opts.fields);
+		}
+	}
+
+	static async _encryptAllSecretFieldsOnUpdate() {
+		//nothing we can do here?
+		/* arguments looks like { fields: ['a', 'b', ...], attributes: {'a': 'value1', 'b': 'value2', ...}, where: { 'id': 'idValue' } }
+		 *
+		 */
+	}
 }
+

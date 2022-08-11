@@ -235,15 +235,7 @@ GitHubServerApp.init({
 		allowNull: false
 	}
 }, {
-	hooks: {
-		beforeSave: async (app: GitHubServerApp, opts) => {
-			await app.encryptChangedSecretFields(opts.fields);
-		},
-		beforeBulkCreate: async (apps: GitHubServerApp[], opts) => {
-			for (const app of apps) {
-				await app.encryptChangedSecretFields(opts.fields);
-			}
-		}
-	},
 	sequelize
 });
+
+GitHubServerApp.addEncryptionHooks();
