@@ -25,7 +25,7 @@ export interface GitHubClientConfig {
 export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number) {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost) && gitHubClientConfig
-		? `${gitHubClientConfig.baseUrl}`
+		? `${gitHubClientConfig.baseUrl}/api/v3`
 		: GITHUB_CLOUD_API_BASEURL;
 }
 
