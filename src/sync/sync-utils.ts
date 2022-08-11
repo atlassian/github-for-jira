@@ -71,7 +71,7 @@ const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): P
 	const gitHubServerApp = await GitHubServerApp.findByPk(gitHubAppId);
 	if (!gitHubServerApp) {
 		logger.error("Cannot find gitHubServerApp by pk", { gitHubAppId: gitHubAppId, subscriptionId: subscription.id });
-		throw new Error("Cannot find gitHubServerApp record by pk during findOrStartSync");
+		throw new Error("Error duing find and start sync. Reason: Cannot find ghes record from subscription.");
 	}
 	return ghesGitHubAppConfig(gitHubServerApp);
 
