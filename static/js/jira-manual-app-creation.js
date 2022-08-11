@@ -29,7 +29,8 @@ const handleFormErrors = (isUpdate) => {
 		: $(errorTitle).empty().append("We couldn't create your GitHub app.");
 }
 
-const gitHubAppPutRequest = (uuid, isUpdate) => {
+const gitHubAppPutRequest = (uuid, isUpdate, data) => {
+	console.log("data", data)
 	$.ajax({
 		type: "PUT",
 		url: `/jira/connect/enterprise/app/${uuid}`,
@@ -44,29 +45,56 @@ const gitHubAppPutRequest = (uuid, isUpdate) => {
 	});
 }
 
+$(document).ready(function() {
+	const update = document.getElementById("Update");
+	const isUpdate = update && update.innerText === "Update";
+
+	// Display the filename and make the data valid so users don't need to upload their pem file every time
+	if (isUpdate) {
+		$(".jiraManualAppCreation__formNoFileUploaded").hide();
+		$(".jiraManualAppCreation__formFileUploaded").css('display', 'flex');
+		$("#privateKeyFile").attr("data-aui-validation-state", "valid");
+	}
+});
+
 AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 	event.preventDefault();
 	const form = event.target;
 	const data = $(form).serializeObject();
-	const isUpdate = document.getElementById("Update").innerText === "Update";
+	const update = document.getElementById("Update");
+	const isUpdate = update && update.innerText === "Update";
 	const uuid = $(event.target).data("app-uuid");
+	const appName = $(event.target).data("app-appname");
+	const existingPrivateKey = $(event.target).data("app-privatekey");
 
 	AP.context.getToken((token) => {
 		data.jwt = token;
 		data.jiraHost = jiraHost;
 
-		// need isUpdate && fileChanged
-		if (isUpdate) {
+		const renderedFilename = document.getElementById("jiraManualAppCreation__uploadedFile").innerText;
+		const isFileChanged = renderedFilename !== `${appName}.private-key.pem`;
+		console.log("isUpdate", isUpdate)
+		if (isFileChanged || !isUpdate) {
+			console.log("iun here")
 			const file = $("#privateKeyFile")[0].files[0];
+			console.log("file", file)
 			const reader = new FileReader();
+			console.log("reader", reader)
 			reader.readAsDataURL(file);
 
 			reader.onload = () => {
+				console.log("setting private key... ", reader.result)
 				data.privateKey = reader.result;
-				console.log("in here")
-				gitHubAppPutRequest(uuid, isUpdate)
 			};
 		} else {
+			console.log("trying to use existing...")
+			data.privateKey = existingPrivateKey;
+		}
+
+		if (isUpdate) {
+			gitHubAppPutRequest(uuid, isUpdate, data);
+		} else {
+			console.log("redirecting...", data)
 			$.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
 				if (response.success) {
 					// TODO: This doesn't work, will be done in ARC-1565
@@ -105,16 +133,4 @@ $("#jiraManualAppCreation__clearUploadedFile").click(() => {
 	$(".jiraManualAppCreation__formFileDropArea .error").remove();
 });
 
-$( document ).ready(function() {
-	const isUpdate = document.getElementById("Update").innerText === "Update";
 
-	if (isUpdate) {
-		$(".jiraManualAppCreation__formNoFileUploaded").hide();
-		$(".jiraManualAppCreation__formFileUploaded").css('display', 'flex');
-		$("#privateKeyFile").attr("data-aui-validation-state", "valid");
-
-
-
-	}
-
-});

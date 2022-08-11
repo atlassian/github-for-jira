@@ -50,7 +50,14 @@
         <a href="#">Learn more about manual GitHub app creation.</a>
       </div>
 
-      <form id="jiraManualAppCreation__form" class="aui top-label" enctype="multipart/form-data" data-app-uuid="{{app.uuid}}">
+      <form
+        id="jiraManualAppCreation__form"
+        class="aui top-label"
+        enctype="multipart/form-data"
+        data-app-uuid="{{app.uuid}}"
+        data-app-privatekey="{{app.privateKey}}"
+        data-app-appname="{{app.gitHubAppName}}"
+    >
         <div class="jiraManualAppCreation__formTitle">
           Details
           <i class="aui-icon aui-iconfont-question-filled"></i>
