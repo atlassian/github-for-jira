@@ -6,15 +6,16 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit } from "interfaces/jira";
 import { isBlocked } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
-import { PushQueueMessagePayload } from "~/src/sqs/sqs.types";
+import { PushQueueMessagePayload, GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { isEmpty } from "lodash";
+import { GitHubPushData } from "../interfaces/github";
 
 // TODO: define better types for this file
 const mapFile = (
 	githubFile,
 	repoName: string,
-	repoOwner: string,
+	repoOwner: string | null,
 	commitHash: string
 ) => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
@@ -36,7 +37,7 @@ const mapFile = (
 	};
 };
 
-export const createJobData = (payload, jiraHost: string): PushQueueMessagePayload => {
+export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig): PushQueueMessagePayload => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 
@@ -64,12 +65,13 @@ export const createJobData = (payload, jiraHost: string): PushQueueMessagePayloa
 		jiraHost,
 		installationId: payload.installation.id,
 		webhookId: payload.webhookId || "none",
-		webhookReceived: payload.webhookReceived || undefined
+		webhookReceived: payload.webhookReceived || undefined,
+		gitHubAppConfig
 	};
 };
 
-export const enqueuePush = async (payload: unknown, jiraHost: string) =>
-	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost));
+export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig) =>
+	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost, gitHubAppConfig));
 
 export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {

@@ -21,7 +21,13 @@ import {
 	getDeploymentsResponse,
 	getDeploymentsQuery
 } from "./github-queries";
-import { ActionsListRepoWorkflowRunsResponseEnhanced, GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
+import {
+	ActionsListRepoWorkflowRunsResponseEnhanced,
+	GetPullRequestParams,
+	GraphQlQueryResponse,
+	PaginatedAxiosResponse,
+	ReposGetContentsResponse
+} from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { GitHubClient } from "./github-client";
@@ -269,6 +275,28 @@ export class GitHubInstallationClient extends GitHubClient {
 				repo,
 				comment_id
 			});
+	}
+
+	/**
+	 * Get a file at a given path from a repository.
+	 * Returns null if the file does not exist.
+	 */
+	public async getRepositoryFile(owner: string, repo: string, path: string): Promise<string | undefined> {
+		try {
+			// can't pass the path as a path param, because "/"s would be url encoded
+			const response = await this.get<ReposGetContentsResponse>(`/repos/{owner}/{repo}/contents/${path}`, {}, {
+				owner,
+				repo
+			});
+
+			return response.data.content;
+		} catch (err) {
+			if (err.status == 404) {
+				this.logger.warn({ err, owner, repo, path }, "could not find file in repo");
+				return undefined;
+			}
+			throw err;
+		}
 	}
 
 	/**

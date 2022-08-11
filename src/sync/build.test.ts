@@ -14,6 +14,7 @@ import buildFixture from "fixtures/api/build.json";
 import multiBuildFixture from "fixtures/api/build-multi.json";
 import noKeysBuildFixture from "fixtures/api/build-no-keys.json";
 import compareReferencesFixture from "fixtures/api/compare-references.json";
+import { waitUntil } from "test/utils/wait-until";
 
 jest.mock("../sqs/queues");
 
@@ -76,7 +77,11 @@ describe("sync/builds", () => {
 
 	});
 
-	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
+	const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
+		await waitUntil(async () => {
+			expect(githubNock).toBeDone();
+			expect(jiraNock).toBeDone();
+		});
 		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
@@ -125,7 +130,7 @@ describe("sync/builds", () => {
 		createJiraNock(builds);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
+		await verifyMessageSent(data);
 	});
 
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {
@@ -196,7 +201,7 @@ describe("sync/builds", () => {
 		createJiraNock(builds);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
+		await verifyMessageSent(data);
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
