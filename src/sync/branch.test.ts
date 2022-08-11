@@ -254,9 +254,9 @@ describe("sync/branches", () => {
 		jiraNock.post(/.*/).reply(200);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		await verifyMessageSent(data);
 		expect(jiraNock).not.toBeDone();
 		cleanAll();
+		await verifyMessageSent(data);
 	});
 
 	it("should reschedule message with delay if there is rate limit", async () => {
@@ -265,7 +265,6 @@ describe("sync/branches", () => {
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		await verifyMessageSent(data, 15);
 	});
-
 
 	describe("SYNC_BRANCH_COMMIT_TIME_LIMIT FF is enabled", () => {
 		let dateCutoff: Date;
