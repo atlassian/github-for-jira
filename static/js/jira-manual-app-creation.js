@@ -60,8 +60,8 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 	event.preventDefault();
 	const form = event.target;
 	const data = $(form).serializeObject();
-	const updateELement = document.getElementById("Update");
-	const isUpdate = updateELement && update.innerText === "Update";
+	const updateElement = document.getElementById("Update");
+	const isUpdate = updateELement && updateElement.innerText === "Update";
 	const uuid = $(event.target).data("app-uuid");
 	const appName = $(event.target).data("app-appname");
 	const existingPrivateKey = $(event.target).data("app-privatekey");
@@ -101,6 +101,24 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 			});
 		}
 	});
+});
+
+$('#jiraManualAppCreation__uploadedFile').bind('DOMSubtreeModified', function () {
+	const hasFileName = document.getElementById("jiraManualAppCreation__uploadedFile").innerText !== "";
+	const appName = $(this).data("app-appname");
+	const body = `
+			<p class="jiraManualAppCreation__flag__title"><strong>Your file has been uploaded</strong></p>
+			<p>Your file has been uploaded and will be </br>
+			stored with the filename in the format of </br>
+			${appName}.private-key.pem</p>
+	`
+
+	if (hasFileName) {
+		AJS.flag({
+			type: "success",
+			body
+		});
+	}
 });
 
 $(".jiraManualAppCreation__formFileInput")
