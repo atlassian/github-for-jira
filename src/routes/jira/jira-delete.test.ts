@@ -65,4 +65,36 @@ describe("DELETE /jira/configuration", () => {
 		expect(subscription.destroy).toHaveBeenCalled();
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 	});
+
+	it("Delete Jira Configuration with gitHubAppId", async () => {
+		jiraNock
+			.delete("/rest/devinfo/0.10/bulkByProperties")
+			.query({ installationId: subscription.githubInstallationId })
+			.reply(200, "OK");
+
+		jiraNock
+			.delete("/rest/builds/0.1/bulkByProperties")
+			.query({ gitHubInstallationId: subscription.githubInstallationId })
+			.reply(200, "OK");
+
+		jiraNock
+			.delete("/rest/deployments/0.1/bulkByProperties")
+			.query({ gitHubInstallationId: subscription.githubInstallationId })
+			.reply(200, "OK");
+
+		const req = {
+			log: getLogger("request"),
+			body: {
+				jiraHost: subscription.jiraHost
+			},
+			params: {
+				installationId: subscription.githubInstallationId
+			}
+		};
+
+		const res = { sendStatus: jest.fn(), locals: { installation, jiraHost, gitHubAppId: 1 } };
+		await JiraDelete(req as any, res as any);
+		expect(subscription.destroy).toHaveBeenCalled();
+		expect(res.sendStatus).toHaveBeenCalledWith(204);
+	});
 });
