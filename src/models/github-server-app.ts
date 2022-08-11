@@ -218,7 +218,7 @@ export class GitHubServerApp extends EncryptedModel {
 		} = payload;
 
 		const existApp = await this.findForUuid(uuid);
-		if(existApp) {
+		if (existApp) {
 			await existApp.update({
 				appId,
 				gitHubClientId,
