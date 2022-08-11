@@ -15,15 +15,13 @@ const GHES_GITHUB_APP_APP_ID = 1;
 const GHES_GITHUB_APP_CLIENT_ID = "client-id";
 
 describe("BranchhWebhookHandler", () => {
-	let jiraClient: any;
-	let util: any;
+	let jiraClient: { baseURL: string };
 	beforeEach(() => {
 		jiraClient = { baseURL: jiraHost };
-		util = null;
 	});
 	describe("GitHub Cloud", () => {
 		it("should be called with cloud GitHubAppConfig", async () => {
-			await createBranchWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GITHUB_INSTALLATION_ID);
+			await createBranchWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, undefined, GITHUB_INSTALLATION_ID);
 			expect(sqsQueues.branch.sendMessage).toBeCalledWith(expect.objectContaining({
 				gitHubAppConfig: {
 					uuid: undefined,
@@ -38,7 +36,7 @@ describe("BranchhWebhookHandler", () => {
 	});
 	describe("GitHub Enterprise Server", () => {
 		it("should be called with GHES GitHubAppConfig", async () => {
-			await createBranchWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GITHUB_INSTALLATION_ID);
+			await createBranchWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, undefined, GITHUB_INSTALLATION_ID);
 			expect(sqsQueues.branch.sendMessage).toBeCalledWith(expect.objectContaining({
 				gitHubAppConfig: {
 					uuid: GHES_GITHUB_UUID,
