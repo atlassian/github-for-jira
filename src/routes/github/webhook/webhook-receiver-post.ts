@@ -15,6 +15,7 @@ import { deleteRepository } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
+import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -36,15 +37,23 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			payload: payload,
 			log: logger,
 			action: payload.action,
-			...(!gitHubServerApp ? undefined : {
-				gitHubAppConfig: {
+			gitHubAppConfig: {
+				...(!gitHubServerApp ? {
+					gitHubAppId: undefined,
+					appId: parseInt(envVars.APP_ID),
+					clientId: envVars.GITHUB_CLIENT_ID,
+					gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
+					gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
+					uuid: undefined
+				} : {
 					gitHubAppId: gitHubServerApp.id,
 					appId: gitHubServerApp.appId,
 					clientId: gitHubServerApp.gitHubClientId,
 					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
+					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl,
 					uuid
-				}
-			})
+				})
+			}
 		});
 		webhookRouter(webhookContext);
 		response.sendStatus(204);
