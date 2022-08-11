@@ -14,7 +14,6 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 
 		if (uuid) {
 			const app = await GitHubServerApp.findForUuid(uuid);
-			req.log.info("APP", app);
 			config = {
 				app,
 				serverUrl: app?.gitHubBaseUrl,
