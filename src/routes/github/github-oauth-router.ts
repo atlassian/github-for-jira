@@ -8,7 +8,7 @@ import { Tracer } from "config/tracer";
 import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import { getGitHubHostname, getGitHubApiUrl, getGitHubClientConfigFromAppId } from "~/src/util/get-github-client-config";
+import { getGitHubApiUrl } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
@@ -17,11 +17,9 @@ const scopes = ["user", "repo"];
 const callbackPath = "/callback";
 
 const getRedirectUrl = async (req, res, state) => {
-	const { jiraHost, gitHubAppId } = res.locals;
+	const { hostname, clientId } = res.locals.gitHubAppConfig;
 	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
-	const { gitHubClientId } = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-	return `${gitHubHostname}/login/oauth/authorize?client_id=${gitHubClientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 
 const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> => {
@@ -87,22 +85,19 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 	if (!code) return next("Missing OAuth Code");
 
-	const { jiraHost, gitHubAppId } = res.locals;
+	const { jiraHost, hostname, clientId, gitHubClientSecret } = res.locals;
 
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
-
-	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
-	const { gitHubClientId, gitHubClientSecret } = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
 	logger.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
 
 	try {
 		const response = await axios.get(
-			`${gitHubHostname}/login/oauth/access_token`,
+			`${hostname}/login/oauth/access_token`,
 			{
 				params: {
-					client_id: gitHubClientId,
+					client_id: clientId,
 					client_secret: gitHubClientSecret,
 					code,
 					state
