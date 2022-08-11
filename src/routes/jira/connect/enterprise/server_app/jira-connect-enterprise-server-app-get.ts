@@ -16,7 +16,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 			throw new Error("No server URL passed!");
 		}
 
-		const gheServers = await GitHubServerApp.getAllForGitHubBaseUrl(decodeURIComponent(baseUrl), res.locals.installation.id);
+		const gheServers = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(decodeURIComponent(baseUrl), res.locals.installation.id);
 
 		if (!isNew && gheServers?.length) {
 			// `identifier` is the githubAppName for the GH server app
@@ -28,10 +28,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 				queryStringForPath: JSON.stringify({ new: 1, serverUrl: baseUrl })
 			});
 		} else {
-			res.render("jira-select-app-creation.hbs", {
-				baseUrl,
-				previousPagePath: "github-server-url-page"
-			});
+			res.render("jira-select-app-creation.hbs", { baseUrl });
 		}
 
 		req.log.debug("Jira Connect Enterprise App page rendered successfully.");

@@ -2,7 +2,6 @@ import { PullRequestSort, PullRequestState, SortDirection } from "../github/clie
 import url from "url";
 import { transformPullRequest } from "./transforms/pull-request";
 import { statsd }  from "config/statsd";
-import { GitHubAPI } from "probot";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -41,7 +40,6 @@ type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 
 export const getPullRequestTask = async (
 	logger: Logger,
-	_oldGithub: GitHubAPI,
 	newGithub: GitHubInstallationClient,
 	_jiraHost: string,
 	repository: Repository,

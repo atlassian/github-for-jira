@@ -19,7 +19,8 @@ export const createBranchWebhookHandler = async (context: WebhookContext, jiraCl
 		installationId: gitHubInstallationId,
 		webhookReceived: Date.now(),
 		webhookId: context.id,
-		webhookPayload
+		webhookPayload,
+		gitHubAppConfig: context.gitHubAppConfig
 	});
 };
 

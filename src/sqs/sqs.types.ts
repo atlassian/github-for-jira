@@ -45,22 +45,24 @@ export type PushQueueMessagePayload = {
 	webhookReceived?: number,
 }
 
-type GitHubAppConfig = {
+export type GitHubAppConfig = {
+	gitHubAppId?: number,
 	appId: number,
 	clientId: string,
 	gitHubBaseUrl: string,
-	uuid: string,
-	gitHubAppId: string,
+	gitHubApiUrl: string,
+	uuid?: string,
 	//gitHubClientSecret: string,
 	//webhookSecret: string,
 	//privateKey: string
 }
 
+//refer from https://docs.github.com/en/rest/repos/repos#get-a-repository
 type PayloadRepository = {
 	id: number,
 	name: string,
 	full_name: string,
 	html_url: string,
-	owner: { name: string, login: string },
+	owner: { name: string | null, login: string },
 }
 

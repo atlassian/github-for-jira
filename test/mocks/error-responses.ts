@@ -1,4 +1,4 @@
-import { Task } from "~/src/sync/installation";
+import { Task } from "~/src/sync/sync.types";
 
 export const mockNotFoundErrorOctokitRequest = {
 	status: 404,

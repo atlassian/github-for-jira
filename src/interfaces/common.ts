@@ -19,7 +19,7 @@ export enum AnalyticsEventTypes {
 
 // All variables below were defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
 export enum AnalyticsScreenEventsEnum {
-	GitHubConfigScreenEventName = "githubConfigurationScreen",
+	GitHubConfigScreenEventName = "gitHubConfigurationScreen",
 	ConnectAnOrgScreenEventName = "connectAnOrgProductCount",
 	SelectGitHubProductEventName = "selectGitHubProductScreen"
 }
@@ -41,6 +41,26 @@ declare global {
 					[key: string]: any;
 				}
 			};
+		}
+	}
+}
+
+/**
+ * Provides some configuration parameters that a user can define for a given repo. It's stored
+ * against a repo in the database.
+ */
+export interface Config {
+	deployments?: {
+
+		/**
+		 * globs that are used in the `mapEnvironment()` function to match a given environment with one
+		 * of the valid Jira environment types.
+		 */
+		environmentMapping?: {
+			development?: string[];
+			testing?: string[];
+			staging?: string[];
+			production?: string[];
 		}
 	}
 }

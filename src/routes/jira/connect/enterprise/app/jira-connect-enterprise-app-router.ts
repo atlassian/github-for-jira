@@ -8,9 +8,9 @@ import { JiraConnectEnterpriseAppCreateOrEdit } from "routes/jira/connect/enterp
 
 export const JiraConnectEnterpriseAppRouter = Router();
 
-JiraConnectEnterpriseAppRouter.post("/", csrfMiddleware, JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPost);
+JiraConnectEnterpriseAppRouter.post("/", JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPost);
 
 JiraConnectEnterpriseAppRouter.route("/:uuid")
 	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseAppCreateOrEdit)
 	.put(csrfMiddleware, JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPut)
-	.delete(csrfMiddleware, JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppDelete);
+	.delete(JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppDelete);
