@@ -4,13 +4,15 @@ import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { TaskType } from "~/src/sync/sync.types";
+import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 
 export async function findOrStartSync(
 	subscription: Subscription,
 	logger: Logger,
 	syncType?: "full" | "partial",
 	commitsFromDate?: Date,
-	targetTasks?: TaskType[]
+	targetTasks?: TaskType[],
+	gitHubAppConfig? :GitHubAppConfig
 ): Promise<void> {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
@@ -38,7 +40,8 @@ export async function findOrStartSync(
 		jiraHost,
 		startTime: fullSyncStartTime,
 		commitsFromDate: commitsFromDate?.toISOString(),
-		targetTasks
+		targetTasks,
+		gitHubAppConfig
 	}, 0, logger);
 }
 
