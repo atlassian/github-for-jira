@@ -180,8 +180,8 @@ describe("GitHubServerApp", () => {
 					const updatedApp = await GitHubServerApp.findForUuid(uuid);
 					expect(updatedApp && updatedApp.uuid).toEqual(gitHubServerApp.uuid);
 					expect(updatedApp && updatedApp.gitHubClientId).toEqual("lvl.1n23j12389wnde");
-					expect(updatedApp && updatedApp.webhookSecret).toEqual("anewsecret");
-					expect(updatedApp && updatedApp.privateKey).toEqual("privatekeyversion2");
+					expect(updatedApp && await updatedApp.decrypt("webhookSecret")).toEqual("anewsecret");
+					expect(updatedApp && await updatedApp.decrypt("privateKey")).toEqual("privatekeyversion2");
 				});
 
 				it("should not update GitHub app when uuid is not found", async () => {
@@ -215,7 +215,7 @@ describe("GitHubServerApp", () => {
 					expect(myApp && myApp.uuid).toEqual(uuid);
 					expect(myApp && myApp.appId).toEqual(gitHubServerApp.appId);
 					expect(myApp && myApp.gitHubBaseUrl).toEqual(gitHubServerApp.gitHubBaseUrl);
-					expect(myApp && myApp.webhookSecret).toEqual("updatedSecret");
+					expect(myApp && await myApp.decrypt("webhookSecret")).toEqual("updatedSecret");
 					expect(myApp && myApp.gitHubAppName).toEqual(gitHubServerApp.gitHubAppName);
 					expect(myApp && myApp.privateKey).toEqual(gitHubServerApp.privateKey);
 
