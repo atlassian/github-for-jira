@@ -23,7 +23,7 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 		messagePayload.jiraHost,
 		messagePayload.installationId,
 		context.log,
-		context.gitHubAppConfig?.gitHubAppId
+		messagePayload.gitHubAppConfig?.gitHubAppId
 	);
 
 };

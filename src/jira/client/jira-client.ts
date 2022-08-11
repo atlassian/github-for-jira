@@ -32,8 +32,8 @@ export interface DeploymentsResult {
 export const getJiraClient = async (
 	jiraHost: string,
 	installationId: number,
-	gitHubAppId?: number,
-	log: Logger = getLogger("jira-client")
+	log: Logger = getLogger("jira-client"),
+	gitHubAppId?: number
 ): Promise<any> => {
 	const installation = await Installation.getForHost(jiraHost);
 	const subscription = gitHubAppId && await Subscription.findOneForGitHubInstallationId(

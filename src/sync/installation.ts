@@ -23,6 +23,51 @@ import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
+import { GitHubAppConfig } from "~/src/sqs/sqs.types";
+import { envVars } from "config/env";
+import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { GitHubServerApp } from "models/github-server-app";
+
+// *********************** DELETE ME **************************
+const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): Promise<GitHubAppConfig> => {
+
+	const gitHubAppId = subscription.gitHubAppId;
+
+	//cloud
+	if (!gitHubAppId) return cloudGitHubAppConfig();
+
+	//ghes
+	const gitHubServerApp = await GitHubServerApp.findByPk(gitHubAppId);
+	if (!gitHubServerApp) {
+		logger.error("Cannot find gitHubServerApp by pk", { gitHubAppId: gitHubAppId, subscriptionId: subscription.id });
+		throw new Error("Error duing find and start sync. Reason: Cannot find ghes record from subscription.");
+	}
+	return ghesGitHubAppConfig(gitHubServerApp);
+
+};
+
+const cloudGitHubAppConfig = () => {
+	return {
+		gitHubAppId: undefined,
+		appId: parseInt(envVars.APP_ID),
+		clientId: envVars.GITHUB_CLIENT_ID,
+		gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
+		gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
+		uuid: undefined
+	};
+};
+
+const ghesGitHubAppConfig = (app: GitHubServerApp): GitHubAppConfig => {
+	return {
+		gitHubAppId: app.id,
+		appId: app.appId,
+		uuid: app.uuid,
+		clientId: app.gitHubClientId,
+		gitHubBaseUrl: app.gitHubBaseUrl,
+		gitHubApiUrl: app.gitHubBaseUrl
+	};
+};
+// *******************************************************
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -191,6 +236,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
 	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
+	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
 	if (!nextTask) {
 		await subscription.update({ syncStatus: "COMPLETE" });
@@ -263,7 +309,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 						});
 						break;
 					default:
-						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, {
+						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, gitHubAppConfig.gitHubAppId, {
 							preventTransitions: true,
 							operationType: "BACKFILL"
 						});
