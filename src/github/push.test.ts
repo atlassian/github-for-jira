@@ -5,6 +5,7 @@ import { GitHubPushData, GitHubRepository } from "../interfaces/github";
 import { enqueuePush } from "../transforms/push";
 import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { envVars } from "config/env";
+import { Subscription } from "models/subscription";
 
 jest.mock("../transforms/push");
 
@@ -17,13 +18,19 @@ const GHES_GITHUB_APP_CLIENT_ID = "client-id";
 describe("PushWebhookHandler", ()=>{
 	let jiraClient: any;
 	let util: any;
+	let subscription: Subscription;
 	beforeEach(() => {
 		jiraClient = { baseURL: jiraHost };
 		util = null;
+		subscription = Subscription.build({
+			gitHubInstallationId: 123,
+			jiraHost: jiraHost,
+			jiraClientKey: "client-key"
+		});
 	});
 	describe("GitHub Cloud", ()=>{
 		it("should be called with cloud GitHubAppConfig", async ()=>{
-			await pushWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID);
+			await pushWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID, subscription);
 			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), {
 				uuid: undefined,
 				gitHubAppId: undefined,
@@ -36,7 +43,7 @@ describe("PushWebhookHandler", ()=>{
 	});
 	describe("GitHub Enterprise Server", ()=>{
 		it("should be called with GHES GitHubAppConfig", async ()=>{
-			await pushWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID);
+			await pushWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID, subscription);
 			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), {
 				uuid: GHES_GITHUB_UUID,
 				gitHubAppId: GHES_GITHUB_APP_ID,
