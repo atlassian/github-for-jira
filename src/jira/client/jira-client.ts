@@ -332,12 +332,14 @@ export const getJiraClient = async (
 			}
 		},
 		remoteLink: {
-			submit: async (data, options?: JiraSubmitOptions) => {
+			submit: async (data, gitHubAppId?: number, options?: JiraSubmitOptions) => {
 				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
 				updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
+				const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
+				const installationId = subscription?.gitHubInstallationId || gitHubInstallationId;
+
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
 					updateIssueKeyAssociationValuesFor(data.remoteLinks, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;
@@ -345,7 +347,7 @@ export const getJiraClient = async (
 					payload = {
 						remoteLinks: data.remoteLinks,
 						properties: {
-							gitHubInstallationId
+							installationId
 						},
 						preventTransitions: options?.preventTransitions || false,
 						operationType: options?.operationType || "NORMAL"
@@ -354,7 +356,7 @@ export const getJiraClient = async (
 					payload = {
 						remoteLinks: data.remoteLinks,
 						properties: {
-							gitHubInstallationId
+							installationId
 						}
 					};
 				}
