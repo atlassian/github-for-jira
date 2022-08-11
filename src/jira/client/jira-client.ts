@@ -254,22 +254,25 @@ export const getJiraClient = async (
 			}
 		},
 		workflow: {
-			submit: async (data, options?: JiraSubmitOptions) => {
+			submit: async (data, gitHubAppId?: number, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
+				const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
+				const installationId = subscription?.gitHubInstallationId || gitHubInstallationId;
+
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
 						truncatedBuilds: getTruncatedIssuekeys(data.builds)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.builds, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
+
 				let payload;
 				if (await shouldTagBackfillRequests()) {
 					payload = {
 						builds: data.builds,
 						properties: {
-							gitHubInstallationId
+							installationId
 						},
 						providerMetadata: {
 							product: data.product
@@ -281,13 +284,14 @@ export const getJiraClient = async (
 					payload = {
 						builds: data.builds,
 						properties: {
-							gitHubInstallationId
+							installationId
 						},
 						providerMetadata: {
 							product: data.product
 						}
 					};
 				}
+
 				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
 				logger?.info("Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
