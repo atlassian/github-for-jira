@@ -16,7 +16,8 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 		installationId: gitHubInstallationId,
 		webhookPayload: context.payload,
 		webhookReceived: Date.now(),
-		webhookId: context.id
+		webhookId: context.id,
+		gitHubAppConfig: context.gitHubAppConfig
 	});
 };
 
