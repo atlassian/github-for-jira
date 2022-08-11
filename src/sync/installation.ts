@@ -263,7 +263,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 						});
 						break;
 					default:
-						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, {
+						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, 2, { // TODO - update once sync utils is merged
 							preventTransitions: true,
 							operationType: "BACKFILL"
 						});

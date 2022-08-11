@@ -223,8 +223,14 @@ export const getJiraClient = async (
 							repositoryId
 						}
 					}),
-				update: async (data, options?: JiraSubmitOptions) => {
+				update: async (data, gitHubAppId?: number, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
+					const subscription = await Subscription.getSingleInstallation(
+						jiraHost,
+						gitHubInstallationId,
+						gitHubAppId
+					);
+					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 
 					if (
 						!withinIssueKeyLimit(data.commits) ||
@@ -237,17 +243,12 @@ export const getJiraClient = async (
 							truncatedPRs: getTruncatedIssuekeys(data.pullRequests)
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
-						const subscription = await Subscription.getSingleInstallation(
-							jiraHost,
-							gitHubInstallationId
-						);
-						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
 
 					return batchedBulkUpdate(
 						data,
 						instance,
-						gitHubInstallationId,
+						subscription?.gitHubInstallationId || gitHubInstallationId,
 						options
 					);
 				}
