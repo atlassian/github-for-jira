@@ -20,7 +20,6 @@ export const JiraConnectEnterpriseAppPost = async (
 			webhookSecret,
 			privateKey
 		} = req.body;
-		req.log.info("HERE", req.body)
 
 		const githubServerApp = await GitHubServerApp.install({
 			uuid,

@@ -30,7 +30,6 @@ const handleFormErrors = (isUpdate) => {
 }
 
 const gitHubAppPutRequest = (uuid, isUpdate, data) => {
-	console.log("data", data)
 	$.ajax({
 		type: "PUT",
 		url: `/jira/connect/enterprise/app/${uuid}`,
@@ -61,8 +60,8 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 	event.preventDefault();
 	const form = event.target;
 	const data = $(form).serializeObject();
-	const update = document.getElementById("Update");
-	const isUpdate = update && update.innerText === "Update";
+	const updateELement = document.getElementById("Update");
+	const isUpdate = updateELement && update.innerText === "Update";
 	const uuid = $(event.target).data("app-uuid");
 	const appName = $(event.target).data("app-appname");
 	const existingPrivateKey = $(event.target).data("app-privatekey");
@@ -73,29 +72,24 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 
 		const renderedFilename = document.getElementById("jiraManualAppCreation__uploadedFile").innerText;
 		const isFileChanged = renderedFilename !== `${appName}.private-key.pem`;
-		console.log("isUpdate", isUpdate)
+
 		if (isFileChanged || !isUpdate) {
-			console.log("iun here")
+			// Reading the content of the file
 			const file = $("#privateKeyFile")[0].files[0];
-			console.log("file", file)
 			const reader = new FileReader();
-			console.log("reader", reader)
 			reader.readAsDataURL(file);
 
 			reader.onload = () => {
-				console.log("setting private key... ", reader.result)
 				data.privateKey = reader.result;
 			};
 		} else {
-			console.log("trying to use existing...")
 			data.privateKey = existingPrivateKey;
 		}
 
 		if (isUpdate) {
 			gitHubAppPutRequest(uuid, isUpdate, data);
 		} else {
-			console.log("redirecting...", data)
-			$.post("/jira/connect/enterprise/app", data, (response, _status, result) => {
+			$.post("/jira/connect/enterprise/app", data, (response, _status) => {
 				if (response.success) {
 					// TODO: This doesn't work, will be done in ARC-1565
 					const child = openChildWindow(`/session/github/${response.data.uuid}/configuration?ghRedirect=to`);
