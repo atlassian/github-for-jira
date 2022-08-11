@@ -31,16 +31,23 @@ export interface DeploymentsResult {
 // TODO: need to type jiraClient ASAP
 export const getJiraClient = async (
 	jiraHost: string,
-	gitHubInstallationId: number,
+	installationId: number,
+	gitHubAppId?: number,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
-	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
-	// const subscription = await Subscription.getSingleInstallation(
-	// 	jiraHost,
-	// 	gitHubInstallationId,
-	// 	gitHubAppId
-	// );
+	const subscription = gitHubAppId && await Subscription.findOneForGitHubInstallationId(
+		installationId,
+		gitHubAppId
+	);
+
+	// TODO - fix this
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	const gitHubInstallationId = subscription?.gitHubInstallationId || installationId;
+
+	const logger = log.child({ jiraHost, gitHubInstallationId });
+
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
 		return undefined;
@@ -201,7 +208,7 @@ export const getJiraClient = async (
 							repositoryId
 						}
 					}),
-				update: async (data, options?: JiraSubmitOptions) => {
+				update: async (data, gitHubAppId?: number, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
 
 					if (
@@ -217,7 +224,8 @@ export const getJiraClient = async (
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
 							jiraHost,
-							gitHubInstallationId
+							gitHubInstallationId,
+							gitHubAppId
 						);
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}

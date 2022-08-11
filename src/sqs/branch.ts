@@ -22,7 +22,8 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 		new Date(messagePayload.webhookReceived),
 		messagePayload.jiraHost,
 		messagePayload.installationId,
-		context.log
+		context.log,
+		context.gitHubAppConfig?.gitHubAppId
 	);
 
 };

@@ -30,7 +30,8 @@ export const processBranch = async (
 	webhookReceivedDate: Date,
 	jiraHost: string,
 	gitHubInstallationId: number,
-	rootLogger: Logger
+	rootLogger: Logger,
+	gitHubAppId?: number
 ) => {
 	const logger = rootLogger.child({
 		webhookId: webhookId,
@@ -51,10 +52,9 @@ export const processBranch = async (
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
-		logger
 	);
 
-	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
+	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload, gitHubAppId);
 
 	emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),
