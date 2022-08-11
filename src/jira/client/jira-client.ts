@@ -294,22 +294,25 @@ export const getJiraClient = async (
 			}
 		},
 		deployment: {
-			submit: async (data, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
+			submit: async (data, gitHubAppId?: number, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, uniq);
+				const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
+				const installationId = subscription?.gitHubInstallationId || gitHubInstallationId;
+
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
 						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.deployments, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
+
 				let payload;
 				if (await shouldTagBackfillRequests()) {
 					payload = {
 						deployments: data.deployments,
 						properties: {
-							gitHubInstallationId
+							installationId
 						},
 						preventTransitions: options?.preventTransitions || false,
 						operationType: options?.operationType || "NORMAL"
@@ -318,7 +321,7 @@ export const getJiraClient = async (
 					payload = {
 						deployments: data.deployments,
 						properties: {
-							gitHubInstallationId
+							installationId
 						}
 					};
 				}
