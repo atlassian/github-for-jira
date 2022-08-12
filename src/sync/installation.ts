@@ -257,7 +257,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 						});
 						break;
 					case "deployment":
-						await jiraClient.deployment.submit(taskPayload.jiraPayload, 2, { // update once sync utils pr gets merged
+						await jiraClient.deployment.submit(taskPayload.jiraPayload, data.gitHubAppConfig?.gitHubAppId, {
 							preventTransitions: true,
 							operationType: "BACKFILL"
 						});
