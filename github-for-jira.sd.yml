@@ -389,7 +389,39 @@ environmentOverrides:
         WebServerMemoryAlarmHigh: null
         WebServerServiceRespawnAlarm: null
 
-  staging:
+  stg-east:
+    config:
+      environmentVariables:
+        APP_URL: https://github.stg-east.atlassian.com
+        WEBHOOK_PROXY_URL: https://github.stg-east.atlassian.com
+        INSTANCE_NAME: stg-east
+        LOG_LEVEL: debug
+        SENTRY_ENVIRONMENT: stg-east
+        APP_ID: '12645'
+        GITHUB_CLIENT_ID: Iv1.2d8e2a184a746aec
+    resources:
+      - name: rds
+        type: dedicated-rds
+        attributes:
+          parameters:
+            # Adding read replica in staging as it's not enabled by default so we can read state
+            ReadReplica: true
+
+      - type: globaledge
+        name: proxy
+        attributes:
+          default_vanity_dns: false
+          domain:
+            - github.stg-east.atlassian.com
+          ip_whitelist:
+            - public
+          routes: *blackholeSpammingIPs
+
+      - *cryptorGithubServerAppSecrets
+
+      - *cryptorJiraInstanceSecrets
+
+  stg-west:
     config:
       environmentVariables:
         APP_URL: https://github.stg.atlassian.com
