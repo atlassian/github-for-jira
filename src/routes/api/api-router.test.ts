@@ -277,6 +277,17 @@ describe("API Router", () => {
 					.query({ gitHubInstallationId })
 					.reply(200);
 			});
+	
+			it("Should work with new delete installation route", () => {
+				return supertest(app)
+					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toMatchSnapshot();
+					});
+			});
 		});
 
 		describe("Hash data", () => {
