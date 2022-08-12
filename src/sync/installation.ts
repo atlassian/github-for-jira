@@ -251,7 +251,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			try {
 				switch (task) {
 					case "build":
-						await jiraClient.workflow.submit(taskPayload.jiraPayload, 2, { // TODO - update when push sync utils is merged
+						await jiraClient.workflow.submit(taskPayload.jiraPayload, data.gitHubAppConfig?.gitHubAppId, {
 							preventTransitions: true,
 							operationType: "BACKFILL"
 						});
