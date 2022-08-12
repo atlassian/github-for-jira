@@ -230,7 +230,6 @@ export const getJiraClient = async (
 						gitHubInstallationId,
 						gitHubAppId
 					);
-					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 
 					if (
 						!withinIssueKeyLimit(data.commits) ||
@@ -243,6 +242,7 @@ export const getJiraClient = async (
 							truncatedPRs: getTruncatedIssuekeys(data.pullRequests)
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
+						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
 
 					return batchedBulkUpdate(

@@ -23,7 +23,6 @@ import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
-import { getGitHubAppConfig } from "~/src/sync/sync-utils";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -246,8 +245,6 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		throw new Error(`Error processing task: installationId=${installationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
 	};
 
-	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
-
 	try {
 		const taskPayload = await execute();
 		if (taskPayload.jiraPayload) {
@@ -266,7 +263,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 						});
 						break;
 					default:
-						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, gitHubAppConfig?.gitHubAppId, {
+						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, data.gitHubAppConfig?.gitHubAppId, {
 							preventTransitions: true,
 							operationType: "BACKFILL"
 						});
