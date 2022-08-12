@@ -50,10 +50,10 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		const payload ={
 			gitHubAppName: "my-app",
-			webhookSecret: `encrypted:${uuid}`,
+			webhookSecret: `secret`,
 			appId: "1",
 			gitHubClientId: "Iv1.msdnf2893rwhdbf",
-			gitHubClientSecret: "encrypted:secret",
+			gitHubClientSecret: "secret",
 			uuid,
 			gitHubBaseUrl: "http://testserver.com",
 			privateKey: "privatekeycontents",
@@ -87,9 +87,9 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		const payload ={
 			gitHubAppName: "my-app",
-			webhookSecret: `encrypted:${uuid}`,
+			webhookSecret: `secret`,
 			gitHubClientId: "Iv1.msdnf2893rwhdbf",
-			gitHubClientSecret: "encrypted:secret",
+			gitHubClientSecret: "secret",
 			uuid,
 			jiraHost
 		};
@@ -121,10 +121,10 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		const payload ={
 			gitHubAppName: "my-app",
-			webhookSecret: `encrypted:${uuid}`,
+			webhookSecret: "secret",
 			appId: "1",
 			gitHubClientId: "Iv1.msdnf2893rwhdbf",
-			gitHubClientSecret: "encrypted:secret",
+			gitHubClientSecret: "secret",
 			uuid,
 			gitHubBaseUrl: "http://testserver.com",
 			privateKey: "privatekeycontents",
@@ -161,10 +161,10 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		const payload ={
 			gitHubAppName: "my-app",
-			webhookSecret: `encrypted:${uuid}`,
+			webhookSecret: "secret",
 			appId: "1",
 			gitHubClientId: "Iv1.msdnf2893rwhdbf",
-			gitHubClientSecret: "encrypted:secret",
+			gitHubClientSecret: "secret",
 			uuid,
 			gitHubBaseUrl: "http://testserver.com",
 			privateKey: "privatekeycontents",
