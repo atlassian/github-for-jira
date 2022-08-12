@@ -397,8 +397,8 @@ environmentOverrides:
         INSTANCE_NAME: stg-east
         LOG_LEVEL: debug
         SENTRY_ENVIRONMENT: stg-east
-        APP_ID: '12645'
-        GITHUB_CLIENT_ID: Iv1.2d8e2a184a746aec
+        APP_ID: '227826'
+        GITHUB_CLIENT_ID: Iv1.c05e2f0e8027204a
     resources:
       - name: rds
         type: dedicated-rds
