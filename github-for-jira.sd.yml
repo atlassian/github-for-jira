@@ -399,6 +399,8 @@ environmentOverrides:
         SENTRY_ENVIRONMENT: stg-east
         APP_ID: '227826'
         GITHUB_CLIENT_ID: Iv1.c05e2f0e8027204a
+        PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-stg-east
+        GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-stg-east
     resources:
       - name: rds
         type: dedicated-rds
