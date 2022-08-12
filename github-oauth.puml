@@ -1,0 +1,27 @@
+title OAuth2 Authorization Code Grant Sequence Diagram
+participant End User
+participant User-Agent
+participant Client
+participant Authorization Server
+participant Resource Server
+End User->+Client: Clicks on login link\nor button or launches app\n(if this is a web application or SPA,\nwill go through User-Agent).
+loop Governed by OAuth2 spec
+Client->+User-Agent: Redirect to Authorization Server (IdP)
+User-Agent->+Authorization Server: OAuth2 request to Authorization Endpoint with client_id and redirect_uri
+Authorization Server->User-Agent: Redirect to authentication workflow
+User-Agent->Authorization Server: Start authenticaction workflow
+Authorization Server->User-Agent: Return authentication workflow start
+User-Agent->End User: Prompt for credentials
+End User->User-Agent: Enter Credentials.
+User-Agent->Authorization Server: Submit Credentials
+Authorization Server->Authorization Server: Validate credentials
+Authorization Server->User-Agent: Redirect to Client with authorization code.
+User-Agent->-Client: Submit Authorization Code to redirect_uri
+Client->Authorization Server: Request Access Token based upon Authorization Code
+Authorization Server->-Authorization Server: Validate Authorization Code
+Authorization Server->Client: Return Access Token
+end
+Client->+Resource Server: Send request (API or otherwise) to Resource Server with Access Token
+Resource Server->Resource Server: Validate access token
+Resource Server->-Client:Return resource
+Client->End User: View Results\n(if this is a web application or SPA,\nwill go through User-Agent)
