@@ -140,9 +140,12 @@ describe("GitHubServerApp", () => {
 				const gitHubBaseUrl = "http://myinternalinstance.com";
 				const installationId = 42;
 				const uuid = "c97806fc-c433-4ad5-b569-bf5191590be2";
-				const clientIdWithTypo = "lvl.1n23j12389wndd";
+				const originalClientId = "lvl.1n23j12389wndd";
 				const originalWebhookSecret = "anothersecret";
 				const originalPrivateKey = "privatekey";
+				const newClientId = "lvl.1n23j12389wnde";
+				const newWebhookSecret = "anewsecret";
+				const newPrivateKey = "privatekeyversion2";
 				let gitHubServerApp;
 
 				beforeEach(async () => {
@@ -151,9 +154,9 @@ describe("GitHubServerApp", () => {
 						appId: 1,
 						gitHubAppName: "my awesome app",
 						gitHubBaseUrl,
-						gitHubClientId: clientIdWithTypo,
+						gitHubClientId: originalClientId,
 						gitHubClientSecret: "secret",
-						webhookSecret: "anothersecret",
+						webhookSecret: originalWebhookSecret,
 						privateKey: "privatekey",
 						installationId
 					});
@@ -161,7 +164,7 @@ describe("GitHubServerApp", () => {
 
 				it("should update GitHub app when uuid is found", async () => {
 					const originalApp = await GitHubServerApp.findForUuid(uuid);
-					expect(originalApp && originalApp.gitHubClientId).toEqual(clientIdWithTypo);
+					expect(originalApp && originalApp.gitHubClientId).toEqual(originalClientId);
 					expect(originalApp && originalApp.webhookSecret).toEqual(`encrypted:${originalWebhookSecret}`);
 					expect(originalApp && originalApp.privateKey).toEqual(`encrypted:${originalPrivateKey}`);
 
@@ -170,18 +173,18 @@ describe("GitHubServerApp", () => {
 						appId: 1,
 						gitHubAppName: "my awesome app",
 						gitHubBaseUrl,
-						gitHubClientId: "lvl.1n23j12389wnde",
+						gitHubClientId: newClientId,
 						gitHubClientSecret: "secret",
-						webhookSecret: "anewsecret",
-						privateKey: "privatekeyversion2",
+						webhookSecret: newWebhookSecret,
+						privateKey: newPrivateKey,
 						installationId
 					});
 
 					const updatedApp = await GitHubServerApp.findForUuid(uuid);
 					expect(updatedApp && updatedApp.uuid).toEqual(gitHubServerApp.uuid);
-					expect(updatedApp && updatedApp.gitHubClientId).toEqual("lvl.1n23j12389wnde");
-					expect(updatedApp && await updatedApp.decrypt("webhookSecret")).toEqual("anewsecret");
-					expect(updatedApp && await updatedApp.decrypt("privateKey")).toEqual("privatekeyversion2");
+					expect(updatedApp && updatedApp.gitHubClientId).toEqual(newClientId);
+					expect(updatedApp && await updatedApp.decrypt("webhookSecret")).toEqual(newWebhookSecret);
+					expect(updatedApp && await updatedApp.decrypt("privateKey")).toEqual(newPrivateKey);
 				});
 
 				it("should not update GitHub app when uuid is not found", async () => {
@@ -201,21 +204,21 @@ describe("GitHubServerApp", () => {
 
 					const updatedApp = await GitHubServerApp.findForUuid(mismatchedUUID);
 					expect(updatedApp && updatedApp.uuid).not.toEqual(gitHubServerApp.uuid);
-					expect(updatedApp && updatedApp.gitHubClientId).not.toEqual("lvl.1n23j12389wnde");
-					expect(updatedApp && updatedApp.webhookSecret).not.toEqual("anewsecret");
-					expect(updatedApp && updatedApp.privateKey).not.toEqual("privatekeyversion2");
+					expect(updatedApp && updatedApp.gitHubClientId).not.toEqual(newClientId);
+					expect(updatedApp && updatedApp.webhookSecret).not.toEqual(newWebhookSecret);
+					expect(updatedApp && updatedApp.privateKey).not.toEqual(newPrivateKey);
 				});
 
 				it("should only update values changed and leave other values as is", async () => {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-ignore
-					await GitHubServerApp.updateGitHubAppByUUID({ uuid, appId: 1, gitHubBaseUrl, webhookSecret: "updatedSecret" });
+					await GitHubServerApp.updateGitHubAppByUUID({ uuid, appId: 1, gitHubBaseUrl, webhookSecret: newWebhookSecret });
 					const myApp = await GitHubServerApp.findForUuid(uuid);
 
 					expect(myApp && myApp.uuid).toEqual(uuid);
 					expect(myApp && myApp.appId).toEqual(gitHubServerApp.appId);
 					expect(myApp && myApp.gitHubBaseUrl).toEqual(gitHubServerApp.gitHubBaseUrl);
-					expect(myApp && await myApp.decrypt("webhookSecret")).toEqual("updatedSecret");
+					expect(myApp && await myApp.decrypt("webhookSecret")).toEqual(newWebhookSecret);
 					expect(myApp && myApp.gitHubAppName).toEqual(gitHubServerApp.gitHubAppName);
 					expect(myApp && myApp.privateKey).toEqual(gitHubServerApp.privateKey);
 
