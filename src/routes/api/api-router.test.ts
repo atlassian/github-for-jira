@@ -260,36 +260,6 @@ describe("API Router", () => {
 			});
 		});
 
-		describe("Delete Installation", () => {
-			beforeEach(() => {
-				jiraNock
-					.delete("/rest/devinfo/0.10/bulkByProperties")
-					.query({ installationId: gitHubInstallationId })
-					.reply(200);
-
-				jiraNock
-					.delete("/rest/builds/0.1/bulkByProperties")
-					.query({ gitHubInstallationId })
-					.reply(200);
-
-				jiraNock
-					.delete("/rest/deployments/0.1/bulkByProperties")
-					.query({ gitHubInstallationId })
-					.reply(200);
-			});
-	
-			it("Should work with new delete installation route", () => {
-				return supertest(app)
-					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.expect(200)
-					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-		});
-
 		describe("Hash data", () => {
 
 			it("Should return error with message if no data provided", () => {
