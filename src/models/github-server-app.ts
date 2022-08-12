@@ -50,12 +50,6 @@ export class GitHubServerApp extends EncryptedModel {
 		return ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
 	}
 
-	/**
-	 * Get GitHubServerApp
-	 *
-	 * @param {{gitHubServerAppId: number}} gitHubServerAppId
-	 * @returns {GitHubServerApp}
-	 */
 	static async getForGitHubServerAppId(
 		gitHubServerAppId: number
 	): Promise<GitHubServerApp | null> {
@@ -70,12 +64,6 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	/**
-	 * Get all GitHubServerApps with installationId
-	 *
-	 * @param {{installationId: number}} installationId
-	 * @returns {GitHubServerApp[]}
-	 */
 	static async findForInstallationId(
 		installationId: number
 	): Promise<GitHubServerApp[] | null> {
@@ -90,13 +78,6 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	/**
-	 * Get all GitHubServerApps for gitHubBaseUrl with installationId
-	 *
-	 * @param gitHubBaseUrl
-	 * @param installationId
-	 * @returns {GitHubServerApp[]}
-	 */
 	static async getAllForGitHubBaseUrlAndInstallationId(
 		gitHubBaseUrl: string,
 		installationId: number
@@ -121,22 +102,6 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	/**
-	 * Create a new GitHubServerApp object
-	 *
-	 * @param {{
-	 * 		gitHubClientId: string,
-	 * 		uuid: string,
-	 * 		appId: number;
-	 * 		gitHubBaseUrl: string,
-	 * 		gitHubClientSecret: string,
-	 * 		webhookSecret: string,
-	 * 		privateKey: string,
-	 * 		gitHubAppName: string,
-	 * 		installationId: number
-	 * 	}} payload
-	 * @returns {GitHubServerApp}
-	 */
 	static async install(payload: GitHubServerAppPayload): Promise<GitHubServerApp> {
 		const {
 			uuid,
@@ -181,22 +146,6 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	/**
-	 * Update existing GitHubServerApp object
-	 *
-	 * @param {{
-	 * 		gitHubClientId: string,
-	 * 		uuid: string,
-	 * 		appId: number;
-	 * 		gitHubBaseUrl: string,
-	 * 		gitHubClientSecret: string,
-	 * 		webhookSecret: string,
-	 * 		privateKey: string,
-	 * 		gitHubAppName: string,
-	 * 		installationId: number
-	 * 	}} payload
-	 */
-
 	static async updateGitHubAppByUUID(payload: GitHubServerAppPayload): Promise<void> {
 		const {
 			uuid,
@@ -226,12 +175,6 @@ export class GitHubServerApp extends EncryptedModel {
 
 	}
 
-	/**
-	 * Get GitHubServerApp
-	 *
-	 * @param {{uuid: string}} uuid
-	 * @returns {GitHubServerApp}
-	 */
 	static async findForUuid(uuid: string): Promise<GitHubServerApp | null> {
 		return this.findOne({
 			where: {
