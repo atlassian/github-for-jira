@@ -10,7 +10,7 @@ export const HealthcheckGet = async (_: Request, res: Response): Promise<void> =
 		try {
 			await deepCheckCryptor();
 		} catch (e) {
-			logger.warn("Cryptor not ready yet", { error: e });
+			logger.warn("Cryptor deepcheck failed.", { error: e });
 			res.status(500).send("NOT OK");
 			return;
 		}
