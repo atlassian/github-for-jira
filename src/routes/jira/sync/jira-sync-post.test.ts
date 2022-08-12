@@ -53,7 +53,7 @@ describe("sync", () => {
 			})
 			.expect(202)
 			.then(() => {
-				expect(sqsQueues.backfill.sendMessage).toBeCalledWith({ installationId: installation.id, jiraHost, startTime: expect.anything() }, expect.anything(), expect.anything());
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({ installationId: installation.id, jiraHost, startTime: expect.anything() }), expect.anything(), expect.anything());
 			});
 	});
 });

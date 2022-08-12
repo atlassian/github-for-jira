@@ -210,9 +210,9 @@ export class GitHubServerApp extends EncryptedModel {
 			installationId
 		} = payload;
 
-		await this.update(
-			{
-				uuid,
+		const existApp = await this.findForUuid(uuid);
+		if (existApp) {
+			await existApp.update({
 				appId,
 				gitHubClientId,
 				gitHubBaseUrl,
@@ -221,11 +221,9 @@ export class GitHubServerApp extends EncryptedModel {
 				privateKey,
 				gitHubAppName,
 				installationId
-			},
-			{
-				where: { uuid }
-			}
-		);
+			});
+		}
+
 	}
 
 	/**

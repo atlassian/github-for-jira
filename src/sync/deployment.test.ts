@@ -74,6 +74,8 @@ describe("sync/deployments", () => {
 			repoOwner: "integrations",
 			repoFullName: "test-repo-name",
 			repoUrl: "test-repo-url",
+			repoUpdatedAt: new Date(),
+			repoPushedAt: new Date(),
 			branchStatus: "complete",
 			commitStatus: "complete",
 			pullStatus: "complete",
@@ -85,10 +87,13 @@ describe("sync/deployments", () => {
 
 		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 		githubUserTokenNock(installationId);
-
 	});
 
-	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
+	const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
+		await waitUntil(async () => {
+			expect(githubNock).toBeDone();
+			expect(jiraNock).toBeDone();
+		});
 		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
@@ -213,13 +218,7 @@ describe("sync/deployments", () => {
 		}]);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-
-		await waitUntil(async () => {
-			expect(githubNock).toBeDone();
-			expect(jiraNock).toBeDone();
-		});
-
-		verifyMessageSent(data);
+		await verifyMessageSent(data);
 	});
 
 	it("should send Jira all deployments that have Issue Keys", async () => {
@@ -386,12 +385,7 @@ describe("sync/deployments", () => {
 		]);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-
-		await waitUntil(async () => {
-			expect(githubNock).toBeDone();
-			expect(jiraNock).toBeDone();
-		});
-		verifyMessageSent(data);
+		await verifyMessageSent(data);
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
