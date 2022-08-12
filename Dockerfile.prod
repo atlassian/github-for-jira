@@ -19,6 +19,11 @@ RUN yarn list
 RUN yarn run build:release
 
 FROM node:14.19-alpine3.16
+
+# adding to solve vuln
+RUN apk add --update --upgrade busybox
+RUN apk add --update --upgrade openssl
+
 USER node
 COPY --chown=node:node --from=build /app /app
 WORKDIR /app
