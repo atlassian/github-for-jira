@@ -18,7 +18,7 @@ const callbackPath = "/callback";
 
 const getRedirectUrl = async (req, res, state) => {
 	const { hostname, clientId } = res.locals.gitHubAppConfig;
-	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
+	const callbackURI = new URL(`${req.baseUrl}${req.path}/..${callbackPath}`, baseURL).toString();
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 
