@@ -109,13 +109,6 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	/**
-	 * Get one GitHubServerApp for uuid with installationId
-	 *
-	 * @param uuid
-	 * @param installationId
-	 * @returns {GitHubServerApp[]}
-	 */
 	static async getForUuidAndInstallationId(
 		uuid: string,
 		installationId: number
