@@ -123,3 +123,9 @@ form#jiraManualAppCreation__form > div.field-group {
 .jiraManualAppCreation__flag__title {
   margin-bottom: 0.5em;
 }
+
+#aui-flag-container {
+  bottom: 30px;
+  left: 50px;
+  top: initial;
+}
