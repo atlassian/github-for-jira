@@ -4,8 +4,11 @@ const tableName = "GitHubServerApps";
 
 module.exports = {
 	up: async (queryInterface) => {
-		await queryInterface.removeColumn(tableName, "githubBaseUrl");
-		await queryInterface.removeColumn(tableName, "githubClientId");
+		// Staging database is out of sync - workaround so we can deploy to staging without it failing
+		try {
+			await queryInterface.removeColumn(tableName, "githubBaseUrl");
+			await queryInterface.removeColumn(tableName, "githubClientId");
+		} catch (err) {}
 	},
 
 	down: async (queryInterface, Sequelize) => {
