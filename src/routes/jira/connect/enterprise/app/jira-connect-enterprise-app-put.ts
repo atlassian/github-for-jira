@@ -16,6 +16,9 @@ export const JiraConnectEnterpriseAppPut = async (
 			return next(new Error("No GitHub App found for provided UUID and installationId."));
 		}
 
+		const updatedAppPayload = { ...req.body };
+		!updatedAppPayload.privateKey && (updatedAppPayload.privateKey = verifiedApp.privateKey);
+
 		await GitHubServerApp.updateGitHubAppByUUID(req.body);
 
 		res.status(200).send({ success: true });

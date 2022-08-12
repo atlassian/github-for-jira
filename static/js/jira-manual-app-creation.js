@@ -52,7 +52,7 @@ $(document).ready(function() {
 	if (isUpdate) {
 		$(".jiraManualAppCreation__formNoFileUploaded").hide();
 		$(".jiraManualAppCreation__formFileUploaded").css('display', 'flex');
-		$("#privateKeyFile").attr("data-aui-validation-state", "valid");
+		$("#privateKeyFile").attr("data-aui-validation-state", "valid").removeAttr("required");
 	}
 });
 
@@ -64,27 +64,23 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 	const isUpdate = updateElement && updateElement.innerText === "Update";
 	const uuid = $(event.target).data("app-uuid");
 	const appName = $(event.target).data("app-appname");
-	const existingPrivateKey = $(event.target).data("app-privatekey");
+	const renderedFilename = document.getElementById("jiraManualAppCreation__uploadedFile").innerText;
+	const isFileChanged = renderedFilename !== `${appName}.private-key.pem`;
+
+
+	if (isFileChanged || !isUpdate) {
+		const file = $("#privateKeyFile")[0].files[0];
+		const reader = new FileReader();
+		reader.readAsDataURL(file);
+
+		reader.onload = () => {
+			data.privateKey = reader.result;
+		};
+	}
 
 	AP.context.getToken((token) => {
 		data.jwt = token;
 		data.jiraHost = jiraHost;
-
-		const renderedFilename = document.getElementById("jiraManualAppCreation__uploadedFile").innerText;
-		const isFileChanged = renderedFilename !== `${appName}.private-key.pem`;
-
-		if (isFileChanged || !isUpdate) {
-			// Reading the content of the file
-			const file = $("#privateKeyFile")[0].files[0];
-			const reader = new FileReader();
-			reader.readAsDataURL(file);
-
-			reader.onload = () => {
-				data.privateKey = reader.result;
-			};
-		} else {
-			data.privateKey = existingPrivateKey;
-		}
 
 		if (isUpdate) {
 			gitHubAppPutRequest(uuid, isUpdate, data);
@@ -103,12 +99,20 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 	});
 });
 
+const replaceSpacesAndChangeCasing = (str) => str.replace(/\s+/g, '-').toLowerCase();
 
 $('#jiraManualAppCreation__uploadedFile').bind('DOMSubtreeModified', function () {
 	const hasFileName = document.getElementById("jiraManualAppCreation__uploadedFile").innerText !== "";
-	const appName = $(this).data("app-appname") // updating the app
-		|| $( "input[type=text][name=gitHubAppName]" ).val().replace(/\s+/g, '-').toLowerCase() // creating the app and gitHubAppName input has a value
-		|| "< github-app-name >"; // creating an app but no value entered in gitHubAppName field
+	// value used when user is updating up and app name already exists
+	const appNameFromData = $(this).data("app-appname");
+	// value used when creating an app and user has entered a value in gitHubAppName
+	const appNameFromInput = $( "input[name=gitHubAppName]" ).val();
+	// value used when creating an app but user has not entered a value in gitHubAppName
+	const unknownAppName = "< github-app-name >"; // needs spacing other AJS.flag omits the text and treats this as a HTML element
+
+	const appName = replaceSpacesAndChangeCasing(appNameFromData)
+		|| replaceSpacesAndChangeCasing(appNameFromInput)
+		|| unknownAppName;
 	const body = `
 			<p class="jiraManualAppCreation__flag__title"><strong>Your file has been uploaded</strong></p>
 			<p>Your file has been uploaded and will be </br>
@@ -122,6 +126,11 @@ $('#jiraManualAppCreation__uploadedFile').bind('DOMSubtreeModified', function ()
 			body
 		});
 	}
+});
+
+$('#jiraManualAppCreation__clearUploadedFile').click(function (event) {
+	event.preventDefault();
+	$("#privateKeyFile").attr("data-aui-validation-state", "unvalidated").attr("required", true)
 });
 
 $(".jiraManualAppCreation__formFileInput")

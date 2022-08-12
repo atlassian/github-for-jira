@@ -55,7 +55,6 @@
         class="aui top-label"
         enctype="multipart/form-data"
         data-app-uuid="{{app.uuid}}"
-        data-app-privatekey="{{app.privateKey}}"
         data-app-appname="{{app.gitHubAppName}}"
     >
         <div class="jiraManualAppCreation__formTitle">
@@ -148,11 +147,14 @@
               Regex pattern for empty string or strings ending with .pem
               The empty string pattern is added to avoid showing validation pattern error message when this field is empty.
             -->
-            <input class="jiraManualAppCreation__formFileInput" id="privateKeyFile"
+            <input class="jiraManualAppCreation__formFileInput"
+                   id="privateKeyFile"
                    data-aui-validation-pattern="^\s*$|^.*\.(pem|PEM)$"
                    data-aui-validation-pattern-msg="We couldn&#x2019;t upload this file. Please try again."
                    data-aui-validation-field
-                   required type="file">
+                   required
+                   type="file"
+            />
             <div class="jiraManualAppCreation__formNoFileUploaded">
               <img class="jiraManualAppCreation__formFileIcon" src="/public/assets/file-upload.svg" alt="Upload">
               <div>
