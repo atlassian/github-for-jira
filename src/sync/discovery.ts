@@ -1,36 +1,13 @@
-import { Repositories, Repository, Subscription } from "models/subscription";
+import { Repository, Subscription } from "models/subscription";
 import Logger from "bunyan";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { GitHubAPI } from "probot";
-import { TaskPayload } from "~/src/sync/installation";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { RepositoryNode } from "../github/client/github-queries";
-
-/*
-* Mapping the response data into a map by repo.id as required by subscription.updateSyncState.
-*/
-const mapRepositories = (repositories: Repository[]): Repositories => {
-	return repositories.reduce((obj, repo) => {
-		obj[repo.id] = { repository: repo };
-		return obj;
-	}, {});
-};
-
-/*
-* Update the sync status of a batch of repos.
-*/
-const updateSyncState = async (subscription: Subscription, repositories: Repository[], totalNumberOfRepos?: number): Promise<void> => {
-	await Promise.all([
-		subscription.updateSyncState({
-			repos: mapRepositories(repositories)
-		}),
-		totalNumberOfRepos && subscription.update({ totalNumberOfRepos })
-	]);
-};
+import { RepoSyncState } from "models/reposyncstate";
+import { TaskPayload } from "~/src/sync/sync.types";
 
 export const getRepositoryTask = async (
 	logger: Logger,
-	_github: GitHubAPI,
 	newGithub: GitHubInstallationClient,
 	jiraHost: string,
 	_repository: Repository,
@@ -76,7 +53,17 @@ export const getRepositoryTask = async (
 		repositories = edges.map(edge => edge?.node);
 	}
 
-	await updateSyncState(subscription, repositories, totalCount);
+	await subscription.update({ totalNumberOfRepos: totalCount });
+	await RepoSyncState.bulkCreate(repositories.map(repo => ({
+		subscriptionId: subscription.id,
+		repoId: repo.id,
+		repoName: repo.name,
+		repoFullName: repo.full_name,
+		repoOwner: repo.owner.login,
+		repoUrl: repo.html_url,
+		repoUpdatedAt: new Date(repo.updated_at)
+	})), { updateOnDuplicate: ["subscriptionId", "repoId"] });
+
 	logger.debug({ repositories }, `Added ${repositories.length} Repositories to state`);
 	logger.info(`Added ${repositories.length} Repositories to state`);
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
