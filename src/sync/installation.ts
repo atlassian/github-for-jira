@@ -188,7 +188,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		logger
 	);
 
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger);
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
 	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
