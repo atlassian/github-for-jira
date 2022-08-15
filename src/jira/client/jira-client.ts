@@ -231,9 +231,7 @@ export const getJiraClient = async (
 			submit: async (data, gitHubAppId?: number, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
-				console.log("SUBSCRIPTION: ", subscription)
 				const installationId = subscription?.gitHubInstallationId || gitHubInstallationId;
-				console.log("installationId: ", installationId)
 
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
@@ -244,11 +242,12 @@ export const getJiraClient = async (
 				}
 
 				let payload;
+
 				if (await shouldTagBackfillRequests()) {
 					payload = {
 						builds: data.builds,
 						properties: {
-							installationId
+							gitHubInstallationId: installationId
 						},
 						providerMetadata: {
 							product: data.product
@@ -260,7 +259,7 @@ export const getJiraClient = async (
 					payload = {
 						builds: data.builds,
 						properties: {
-							installationId
+							gitHubInstallationId: installationId
 						},
 						providerMetadata: {
 							product: data.product

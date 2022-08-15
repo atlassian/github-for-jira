@@ -202,8 +202,8 @@ describe("sync/builds", () => {
 
 		expect(data).toEqual(data);
 
-		// await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		// await verifyMessageSent(data);
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+		await verifyMessageSent(data);
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
