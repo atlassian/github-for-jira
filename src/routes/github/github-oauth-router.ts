@@ -12,13 +12,14 @@ import { getGitHubApiUrl } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
-const baseURL = envVars.APP_URL;
+const appUrl = envVars.APP_URL;
 const scopes = ["user", "repo"];
 const callbackPath = "/callback";
 
 const getRedirectUrl = async (req, res, state) => {
+	const { baseUrl } = req;
 	const { hostname, clientId } = res.locals.gitHubAppConfig;
-	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
+	const callbackURI = `${appUrl}${baseUrl}${callbackPath}`;
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 
