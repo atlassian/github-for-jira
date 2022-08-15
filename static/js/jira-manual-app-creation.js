@@ -71,7 +71,7 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 	if (isFileChanged || !isUpdate) {
 		const file = $("#privateKeyFile")[0].files[0];
 		const reader = new FileReader();
-		reader.readAsDataURL(file);
+		reader.readAsText(file);
 
 		reader.onload = () => {
 			data.privateKey = reader.result;
