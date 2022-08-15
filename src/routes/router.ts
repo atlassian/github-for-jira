@@ -15,6 +15,7 @@ import { ErrorRouter } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
 
 export const RootRouter = Router();
 
@@ -51,6 +52,9 @@ RootRouter.use(cookieSessionMiddleware);
 
 // Saves the jiraHost cookie to the secure session if available
 RootRouter.use(jirahostMiddleware);
+
+// App Manifest flow route
+RootRouter.get("/github-manifest", GithubManifestGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);

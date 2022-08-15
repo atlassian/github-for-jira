@@ -31,9 +31,9 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 		gitHubAppId
 	);
 
-	const gitHubInstallationId = subscription?.gitHubInstallationId || installationId;
+	const gitHubInstallationId = subscription?.gitHubInstallationId;
 
-	if (!subscription) {
+	if (!subscription || gitHubInstallationId) {
 		res.status(404).send("Cannot find Subscription");
 		return;
 	}
