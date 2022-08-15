@@ -1,18 +1,16 @@
 /* globals $ */
 $('.install-link').click(function (event) {
-  event.preventDefault()
-	const uuid = location.href.split("/")[4];
-	const url = uuid ? `/github/${uuid}/configuration` : `/github/configuration`;
+  event.preventDefault();
 
-  $.post(url, {
+  $.post(window.location.href, {
     installationId: $(event.target).data('installation-id'),
     _csrf: document.getElementById('_csrf').value,
     clientKey: document.getElementById('clientKey').value
   }, function (data) {
     if (data.err) {
-      return console.log(data.err)
+      console.log(data.err);
     }
-    window.close()
+    window.close();
   })
 })
 
