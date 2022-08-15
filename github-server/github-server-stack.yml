@@ -8,6 +8,12 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
+          default: 'Atlassian-specific tags'
+        Parameters:
+          - BusinessUnit
+          - Environment
+          - ResourceOwner
+      - Label:
           default: ' VPC Network Configuration'
         Parameters:
           - AccessCIDR
@@ -122,6 +128,18 @@ Outputs:
     Description: Public IP address of the newly created EC2 instance
     Value: !GetAtt 'EC2Instance.PublicIp'
 Parameters:
+  ResourceOwner:
+    Description: 'User name of the individual person responsible for this resource.'
+    Type: String
+    Default: crolf
+  BusinessUnit:
+    Description: 'Business unit this resource belongs to.'
+    Type: String
+    Default: Engineering-DevOps
+  Environment:
+    Description: 'Environment of this instance.'
+    Type: String
+    Default: dev
   AccessCIDR:
     AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
@@ -332,7 +350,15 @@ Resources:
       SubnetId: !Ref 'SubnetId'
       Tags:
         - Key: Name
-          Value: GitHub Enterprise
+          Value: GitHub Enterprise test instance
+        - Key: business_unit
+          Value: !Ref 'BusinessUnit'
+        - Key: environment
+          Value: !Ref 'Environment'
+        - Key: service_name
+          Value: fusion-ghe-testing-instance
+        - Key: service_name
+          Value: !Ref 'ResourceOwner'
       UserData: !Base64
         Fn::Join:
           - ''
