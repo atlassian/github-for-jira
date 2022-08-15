@@ -16,7 +16,7 @@ jest.mock("config/feature-flags");
 const VALID_TOKEN = "valid-token";
 const GITHUB_SERVER_APP_UUID: string = v4uuid();
 const GITHUB_SERVER_APP_ID = Math.floor(Math.random() * 10000);
-
+const GITHUB_SERVER_CLIENT_ID = "client-id";
 const turnGHE_FF_OnOff = (newStatus: boolean) => {
 	when(jest.mocked(booleanFlag))
 		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
@@ -37,7 +37,7 @@ const prepareGitHubServerAppInDB = async (jiraInstallaionId: number) => {
 		uuid: GITHUB_SERVER_APP_UUID,
 		appId: GITHUB_SERVER_APP_ID,
 		gitHubBaseUrl: gheUrl,
-		gitHubClientId: "client-id",
+		gitHubClientId: GITHUB_SERVER_CLIENT_ID,
 		gitHubClientSecret: "gitHubClientSecret",
 		webhookSecret: "webhookSecret",
 		privateKey: "privateKey",
@@ -78,10 +78,29 @@ describe("GitHub router", () => {
 			let app: Application;
 			beforeEach(() => {
 				app = setupAppAndRouter();
-				setupGitHubCloudPingNock();
 				mockConfigurationGetProceed();
 			});
+			it("testing the redirect URL in GithubOAuthLoginGet middleware", async () => {
+				await supertest(app)
+					.get(`/github/configuration`)
+					.set(
+						"Cookie",
+						getSignedCookieHeader({
+							jiraHost,
+							githubToken: VALID_TOKEN
+						})
+					)
+					.expect(302)
+					.then((response) => {
+						const resultUrl = response.headers.location;
+						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
+						const redirectUrl = `${envVars.APP_URL}/github/callback`;
+						const expectedUrlWithoutState = `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
+					});
+			});
 			it("should skip uuid when absent", async () => {
+				setupGitHubCloudPingNock();
 				await supertest(app)
 					.get(`/github/configuration`)
 					.set(
@@ -133,6 +152,25 @@ describe("GitHub router", () => {
 				const gitHubApp = await prepareGitHubServerAppInDB(jiraInstallaionId);
 				gitHubAppId = gitHubApp.id;
 				mockConfigurationGetProceed();
+			});
+			it("testing the redirect URL in GithubOAuthLoginGet middleware", async () => {
+				await supertest(app)
+					.get(`/github/${GITHUB_SERVER_APP_UUID}/configuration`)
+					.set(
+						"Cookie",
+						getSignedCookieHeader({
+							jiraHost,
+							githubToken: VALID_TOKEN
+						})
+					)
+					.expect(302)
+					.then((response) => {
+						const resultUrl = response.headers.location;
+						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
+						const redirectUrl = `${envVars.APP_URL}/github/${GITHUB_SERVER_APP_UUID}/callback`;
+						const expectedUrlWithoutState = `${gheUrl}/login/oauth/authorize?client_id=${GITHUB_SERVER_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
+					});
 			});
 			it("should extract uuid when present", async () => {
 				setupGHEPingNock();
