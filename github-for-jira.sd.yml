@@ -392,8 +392,8 @@ environmentOverrides:
   stg-east:
     config:
       environmentVariables:
-        APP_URL: https://github.stg-east.atlassian.com
-        WEBHOOK_PROXY_URL: https://github.stg-east.atlassian.com
+        APP_URL: https://github-east.stg.atlassian.com
+        WEBHOOK_PROXY_URL: https://github-east.stg.atlassian.com
         INSTANCE_NAME: stg-east
         LOG_LEVEL: debug
         SENTRY_ENVIRONMENT: stg-east
@@ -419,7 +419,7 @@ environmentOverrides:
         attributes:
           default_vanity_dns: false
           domain:
-            - github.stg-east.atlassian.com
+            - github-east.stg.atlassian.com
           ip_whitelist:
             - public
           routes: *blackholeSpammingIPs
