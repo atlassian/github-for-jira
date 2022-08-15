@@ -152,7 +152,6 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		res.locals.githubToken = githubToken;
 		// TODO: Not a great place to put this, but it'll do for now
 		res.locals.github = GithubAPI({ auth: githubToken });
-		// Find callback URL based on current url of this route
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);
