@@ -231,7 +231,9 @@ export const getJiraClient = async (
 			submit: async (data, gitHubAppId?: number, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
+				console.log("SUBSCRIPTION: ", subscription)
 				const installationId = subscription?.gitHubInstallationId || gitHubInstallationId;
+				console.log("installationId: ", installationId)
 
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
