@@ -1,5 +1,11 @@
 #When deploying to stg-east, I need to apply `atlas micros alias set -s github-for-jira -t staging -f serviceproxy-alias.yml`
 version: 2
+dnsAlias:
+	staging:
+		- domain: github-east.stg.atlassian.com
+			records:
+			- type: Simple
+				env: stg-east
 serviceProxy:
   staging:
     default:
