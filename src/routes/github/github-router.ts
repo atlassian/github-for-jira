@@ -9,8 +9,7 @@ import { header } from "express-validator";
 import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
 import { GithubManifestRouter } from "~/src/routes/github/manifest/github-manifest-router";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
-
-export const UUID_REGEX = "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}";
+import { UUID_REGEX } from "~/src/util/regex";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });

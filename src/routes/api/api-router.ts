@@ -18,7 +18,7 @@ import { ApiPingPost } from "routes/api/api-ping-post";
 import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
 import { TaskType } from "~/src/sync/sync.types";
 import { GitHubServerApp } from "~/src/models/github-server-app";
-import { UUID_REGEX } from "routes/github/github-router";
+import { UUID_REGEX } from "~/src/util/regex";
 
 
 export const ApiRouter = Router();
